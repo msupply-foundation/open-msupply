@@ -1,34 +1,22 @@
 import { useState, type ReactNode } from 'react';
-import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
-import LocalShippingOutlinedIcon from '@mui/icons-material/LocalShippingOutlined';
-import InputOutlinedIcon from '@mui/icons-material/InputOutlined';
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
-import LocalPharmacyOutlinedIcon from '@mui/icons-material/LocalPharmacyOutlined';
-import AcUnitOutlinedIcon from '@mui/icons-material/AcUnitOutlined';
-import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
-import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
-import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import SyncIcon from '@mui/icons-material/Sync';
-import LogoutIcon from '@mui/icons-material/Logout';
-import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
-import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import {
-  Badge,
-  Box,
-  Collapse,
-  Divider,
-  Drawer,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Popover,
-  TextField,
-  Typography,
-} from '@mui/material';
+  LayoutDashboardIcon,
+  TruckIcon,
+  DownloadIcon,
+  PackageIcon,
+  PillIcon,
+  SnowflakeIcon,
+  BookOpenIcon,
+  BarChart3Icon,
+  SlidersHorizontalIcon,
+  SettingsIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  RefreshCwIcon,
+  LogOutIcon,
+  ChevronsUpDownIcon,
+  CircleUserRoundIcon,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Link,
@@ -36,10 +24,23 @@ import {
   useParams,
   useRouterState,
 } from '@tanstack/react-router';
+import { cn } from '@/lib/utils';
 import { useSession } from '@/app/session';
 import { useTranslation, type TxKey } from '@/intl';
 import { syncStatusQueryOptions } from '@/features/sync/queries';
 import { MSupplyGuy } from '@/components/MSupplyGuy';
+import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 export const DRAWER_WIDTH = 240;
 
@@ -63,16 +64,19 @@ const UPPER: NavEntry[] = [
   {
     id: 'dashboard',
     labelKey: 'app.dashboard',
-    icon: <DashboardOutlinedIcon />,
+    icon: <LayoutDashboardIcon className="size-5" />,
     to: '/',
     exact: true,
   },
   {
     id: 'distribution',
     labelKey: 'app.distribution',
-    icon: <LocalShippingOutlinedIcon />,
+    icon: <TruckIcon className="size-5" />,
     children: [
-      { to: '/distribution/outbound-shipment', labelKey: 'app.outbound-shipment' },
+      {
+        to: '/distribution/outbound-shipment',
+        labelKey: 'app.outbound-shipment',
+      },
       {
         to: '/distribution/customer-requisition',
         labelKey: 'app.customer-requisition',
@@ -84,10 +88,13 @@ const UPPER: NavEntry[] = [
   {
     id: 'replenishment',
     labelKey: 'app.replenishment',
-    icon: <InputOutlinedIcon />,
+    icon: <DownloadIcon className="size-5" />,
     children: [
       { to: '/replenishment/internal-order', labelKey: 'app.internal-order' },
-      { to: '/replenishment/inbound-shipment', labelKey: 'app.inbound-shipment' },
+      {
+        to: '/replenishment/inbound-shipment',
+        labelKey: 'app.inbound-shipment',
+      },
       { to: '/replenishment/supplier-return', labelKey: 'app.supplier-return' },
       { to: '/replenishment/suppliers', labelKey: 'app.suppliers' },
     ],
@@ -95,7 +102,7 @@ const UPPER: NavEntry[] = [
   {
     id: 'inventory',
     labelKey: 'app.inventory',
-    icon: <Inventory2OutlinedIcon />,
+    icon: <PackageIcon className="size-5" />,
     children: [
       { to: '/stock', labelKey: 'app.stock' },
       { to: '/stocktake', labelKey: 'app.stocktakes' },
@@ -105,7 +112,7 @@ const UPPER: NavEntry[] = [
   {
     id: 'dispensary',
     labelKey: 'app.dispensary',
-    icon: <LocalPharmacyOutlinedIcon />,
+    icon: <PillIcon className="size-5" />,
     children: [
       { to: '/dispensary/patients', labelKey: 'app.patients' },
       { to: '/dispensary/prescription', labelKey: 'app.prescription' },
@@ -115,7 +122,7 @@ const UPPER: NavEntry[] = [
   {
     id: 'cold-chain',
     labelKey: 'app.cold-chain',
-    icon: <AcUnitOutlinedIcon />,
+    icon: <SnowflakeIcon className="size-5" />,
     children: [
       { to: '/cold-chain/equipment', labelKey: 'app.equipment' },
       { to: '/cold-chain/monitoring', labelKey: 'app.monitoring' },
@@ -125,7 +132,7 @@ const UPPER: NavEntry[] = [
   {
     id: 'catalogue',
     labelKey: 'app.catalogue',
-    icon: <MenuBookOutlinedIcon />,
+    icon: <BookOpenIcon className="size-5" />,
     children: [
       { to: '/catalogue/items', labelKey: 'app.items' },
       { to: '/catalogue/assets', labelKey: 'app.assets' },
@@ -135,7 +142,7 @@ const UPPER: NavEntry[] = [
   {
     id: 'reports',
     labelKey: 'app.reports',
-    icon: <AssessmentOutlinedIcon />,
+    icon: <BarChart3Icon className="size-5" />,
     to: '/reports',
   },
 ];
@@ -144,7 +151,7 @@ const LOWER: NavEntry[] = [
   {
     id: 'manage',
     labelKey: 'app.manage',
-    icon: <TuneOutlinedIcon />,
+    icon: <SlidersHorizontalIcon className="size-5" />,
     children: [
       { to: '/manage/stores', labelKey: 'app.stores' },
       { to: '/manage/campaigns', labelKey: 'app.campaigns' },
@@ -154,7 +161,7 @@ const LOWER: NavEntry[] = [
   {
     id: 'settings',
     labelKey: 'app.settings',
-    icon: <SettingsOutlinedIcon />,
+    icon: <SettingsIcon className="size-5" />,
     to: '/settings',
   },
 ];
@@ -187,7 +194,11 @@ interface NavDrawerProps {
   onOpenSync: () => void;
 }
 
-const paperSx = { width: DRAWER_WIDTH, boxSizing: 'border-box' } as const;
+const leafClass = (active: boolean) =>
+  cn(
+    'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
+    active && 'bg-accent font-medium text-accent-foreground',
+  );
 
 export function NavDrawer({ mobileOpen, onClose, onOpenSync }: NavDrawerProps) {
   const { t } = useTranslation();
@@ -197,11 +208,10 @@ export function NavDrawer({ mobileOpen, onClose, onOpenSync }: NavDrawerProps) {
   const stores = useSession(s => s.stores);
   const clear = useSession(s => s.clear);
 
-  // Account popover (store switcher + logout), anchored at the bottom button.
-  const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [storeQuery, setStoreQuery] = useState('');
   const closeAccount = () => {
-    setAccountAnchor(null);
+    setAccountOpen(false);
     setStoreQuery('');
   };
   const filteredStores = stores.filter(s =>
@@ -240,205 +250,187 @@ export function NavDrawer({ mobileOpen, onClose, onOpenSync }: NavDrawerProps) {
     navigate({ to: '/login' });
   };
 
+  const pushCount = syncStatus?.numberOfRecordsInPushQueue ?? 0;
+
   const renderEntry = (entry: NavEntry) => {
     // Leaf section (single destination).
     if (entry.to) {
       return (
-        <ListItemButton
+        <Link
           key={entry.id}
-          component={Link}
           to={withStore(entry.to)}
-          selected={isEntryActive(pathname, entry, withStore)}
           onClick={onClose}
+          className={leafClass(isEntryActive(pathname, entry, withStore))}
         >
-          <ListItemIcon sx={{ minWidth: 40 }}>{entry.icon}</ListItemIcon>
-          <ListItemText primary={t(entry.labelKey)} />
-        </ListItemButton>
+          <span className="shrink-0">{entry.icon}</span>
+          <span className="truncate">{t(entry.labelKey)}</span>
+        </Link>
       );
     }
 
     // Parent section with collapsible children.
     const open = isExpanded(entry);
     return (
-      <Box key={entry.id}>
-        <ListItemButton onClick={() => toggle(entry.id, open)}>
-          <ListItemIcon sx={{ minWidth: 40 }}>{entry.icon}</ListItemIcon>
-          <ListItemText primary={t(entry.labelKey)} />
-          {open ? <ExpandLess /> : <ExpandMore />}
-        </ListItemButton>
-        <Collapse in={open} timeout="auto" unmountOnExit>
-          <List disablePadding>
-            {entry.children?.map(child => (
-              <ListItemButton
-                key={child.to}
-                component={Link}
-                to={withStore(child.to)}
-                selected={isPathActive(pathname, withStore(child.to))}
-                onClick={onClose}
-                sx={{ pl: 4 }}
-              >
-                <ListItemText
-                  primary={t(child.labelKey)}
-                  slotProps={{ primary: { variant: 'body2' } }}
-                />
-              </ListItemButton>
-            ))}
-          </List>
-        </Collapse>
-      </Box>
+      <Collapsible
+        key={entry.id}
+        open={open}
+        onOpenChange={() => toggle(entry.id, open)}
+      >
+        <CollapsibleTrigger
+          className={cn(
+            'flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
+          )}
+        >
+          <span className="shrink-0">{entry.icon}</span>
+          <span className="grow truncate text-start">{t(entry.labelKey)}</span>
+          {open ? (
+            <ChevronDownIcon className="size-4 shrink-0" />
+          ) : (
+            <ChevronRightIcon className="size-4 shrink-0" />
+          )}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-0.5 space-y-0.5">
+          {entry.children?.map(child => (
+            <Link
+              key={child.to}
+              to={withStore(child.to)}
+              onClick={onClose}
+              className={cn(
+                leafClass(isPathActive(pathname, withStore(child.to))),
+                'ps-11 text-[0.8rem]',
+              )}
+            >
+              <span className="truncate">{t(child.labelKey)}</span>
+            </Link>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
     );
   };
 
   const content = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="flex h-full flex-col">
       {/* Logo */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 2,
-        }}
-      >
+      <div className="flex items-center justify-center py-4">
         <MSupplyGuy width={48} height={48} />
-      </Box>
-      <Divider />
+      </div>
+      <div className="border-b" />
 
       {/* Scrollable nav */}
-      <Box sx={{ flex: 1, overflowY: 'auto' }}>
-        <List>{UPPER.map(renderEntry)}</List>
-        <Divider />
-        <List>
+      <div className="flex-1 overflow-y-auto px-2 py-2">
+        <nav className="space-y-0.5">{UPPER.map(renderEntry)}</nav>
+        <div className="my-2 border-b" />
+        <nav className="space-y-0.5">
           {LOWER.map(renderEntry)}
-          <ListItemButton
+          <button
+            type="button"
             onClick={() => {
               onClose(); // close the mobile overlay before opening the modal
               onOpenSync();
             }}
+            className={leafClass(false)}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <Badge
-                color="primary"
-                max={999}
-                badgeContent={syncStatus?.numberOfRecordsInPushQueue ?? 0}
-              >
-                <SyncIcon />
-              </Badge>
-            </ListItemIcon>
-            <ListItemText primary={t('app.sync')} />
-          </ListItemButton>
-        </List>
-      </Box>
+            <span className="relative shrink-0">
+              <RefreshCwIcon className="size-5" />
+              {pushCount > 0 ? (
+                <span className="absolute -end-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground">
+                  {pushCount > 999 ? '999+' : pushCount}
+                </span>
+              ) : null}
+            </span>
+            <span className="truncate">{t('app.sync')}</span>
+          </button>
+        </nav>
+      </div>
 
       {/* Footer: account button (user + store switcher + logout), pinned bottom */}
-      <Divider />
-      <List disablePadding>
-        <ListItemButton
-          onClick={e => setAccountAnchor(e.currentTarget)}
-          sx={{ py: 1.25 }}
+      <div className="border-t p-2">
+        <Popover
+          open={accountOpen}
+          onOpenChange={o => (o ? setAccountOpen(true) : closeAccount())}
         >
-          <ListItemIcon sx={{ minWidth: 40 }}>
-            <AccountCircleOutlinedIcon />
-          </ListItemIcon>
-          <ListItemText
-            primary={user?.username ?? ''}
-            secondary={store?.name}
-            slotProps={{
-              primary: { noWrap: true, sx: { fontWeight: 600 } },
-              secondary: { noWrap: true },
-            }}
-          />
-          <UnfoldMoreIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-        </ListItemButton>
-      </List>
-
-      <Popover
-        open={Boolean(accountAnchor)}
-        anchorEl={accountAnchor}
-        onClose={closeAccount}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        slotProps={{ paper: { sx: { width: DRAWER_WIDTH - 16 } } }}
-      >
-        {stores.length > 1 ? (
-          <>
-            <Box sx={{ p: 1 }}>
-              <TextField
-                size="small"
-                fullWidth
-                autoFocus
-                placeholder={t('placeholder.search-stores')}
-                value={storeQuery}
-                onChange={e => setStoreQuery(e.target.value)}
-              />
-            </Box>
-            <List dense disablePadding sx={{ maxHeight: 240, overflowY: 'auto' }}>
-              {filteredStores.map(s => (
-                <ListItemButton
-                  key={s.id}
-                  selected={s.id === store?.id}
-                  onClick={() => switchStore(s.id)}
-                >
-                  <ListItemText
-                    primary={s.name}
-                    secondary={s.code}
-                    slotProps={{ primary: { noWrap: true } }}
+          <PopoverTrigger
+            className={cn(leafClass(false), 'py-2.5')}
+            aria-label={user?.username ?? ''}
+          >
+            <CircleUserRoundIcon className="size-5 shrink-0" />
+            <span className="min-w-0 flex-1 text-start">
+              <span className="block truncate font-semibold">
+                {user?.username ?? ''}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {store?.name}
+              </span>
+            </span>
+            <ChevronsUpDownIcon className="size-4 shrink-0 text-muted-foreground" />
+          </PopoverTrigger>
+          <PopoverContent side="top" align="center" className="w-[224px] p-1">
+            {stores.length > 1 ? (
+              <>
+                <div className="p-1">
+                  <Input
+                    autoFocus
+                    placeholder={t('placeholder.search-stores')}
+                    value={storeQuery}
+                    onChange={e => setStoreQuery(e.target.value)}
                   />
-                </ListItemButton>
-              ))}
-              {filteredStores.length === 0 ? (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ px: 2, py: 1 }}
-                >
-                  {t('messages.no-results')}
-                </Typography>
-              ) : null}
-            </List>
-            <Divider />
-          </>
-        ) : null}
-        <List disablePadding>
-          <ListItemButton onClick={onLogout}>
-            <ListItemIcon sx={{ minWidth: 40 }}>
-              <LogoutIcon />
-            </ListItemIcon>
-            <ListItemText primary={t('button.logout')} />
-          </ListItemButton>
-        </List>
-      </Popover>
-    </Box>
+                </div>
+                <div className="max-h-60 overflow-y-auto">
+                  {filteredStores.map(s => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => switchStore(s.id)}
+                      className={leafClass(s.id === store?.id)}
+                    >
+                      <span className="min-w-0 flex-1 text-start">
+                        <span className="block truncate">{s.name}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {s.code}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                  {filteredStores.length === 0 ? (
+                    <p className="px-3 py-2 text-sm text-muted-foreground">
+                      {t('messages.no-results')}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="my-1 border-b" />
+              </>
+            ) : null}
+            <button
+              type="button"
+              onClick={onLogout}
+              className={leafClass(false)}
+            >
+              <LogOutIcon className="size-5 shrink-0" />
+              <span>{t('button.logout')}</span>
+            </button>
+          </PopoverContent>
+        </Popover>
+      </div>
+    </div>
   );
 
   return (
     <>
       {/* Mobile: temporary overlay, toggled by the floating menu button. */}
-      <Drawer
-        variant="temporary"
-        open={mobileOpen}
-        onClose={onClose}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': paperSx,
-        }}
-      >
-        {content}
-      </Drawer>
+      <Sheet open={mobileOpen} onOpenChange={o => (o ? undefined : onClose())}>
+        <SheetContent
+          side="left"
+          className="w-[240px] p-0 md:hidden"
+          aria-describedby={undefined}
+        >
+          {content}
+        </SheetContent>
+      </Sheet>
 
       {/* Desktop: permanent sidebar that reserves layout width. */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          display: { xs: 'none', md: 'block' },
-          width: DRAWER_WIDTH,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': paperSx,
-        }}
-      >
+      <aside className="hidden w-[240px] shrink-0 border-e bg-drawer md:block">
         {content}
-      </Drawer>
+      </aside>
     </>
   );
 }

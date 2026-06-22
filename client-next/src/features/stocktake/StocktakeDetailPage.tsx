@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
-import { Typography } from '@mui/material';
 import { useTranslation } from '@/intl';
 import { stocktakeLinesQueryOptions, stocktakeQueryOptions } from './queries';
 import { StocktakeGrid } from './StocktakeGrid';
@@ -20,7 +19,7 @@ export function StocktakeDetailPage() {
     enabled: Boolean(storeId),
   });
 
-  if (isLoading) return <Typography>{t('messages.loading')}</Typography>;
+  if (isLoading) return <p>{t('messages.loading')}</p>;
 
   return (
     <StocktakeGrid

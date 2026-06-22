@@ -13,8 +13,14 @@ export function useStockColumns() {
   const { t } = useTranslation();
   return useMemo(
     () => [
-      helper.accessor(row => row.item.code, { id: 'code', header: t('label.code') }),
-      helper.accessor(row => row.item.name, { id: 'name', header: t('label.name') }),
+      helper.accessor(row => row.item.code, {
+        id: 'code',
+        header: t('label.code'),
+      }),
+      helper.accessor(row => row.item.name, {
+        id: 'name',
+        header: t('label.name'),
+      }),
       helper.accessor('batch', {
         id: 'batch',
         header: t('label.batch'),
@@ -25,7 +31,10 @@ export function useStockColumns() {
         header: t('label.expiry'),
         cell: c => fmtDate(c.getValue()),
       }),
-      helper.accessor('packSize', { id: 'packSize', header: t('label.pack-size') }),
+      helper.accessor('packSize', {
+        id: 'packSize',
+        header: t('label.pack-size'),
+      }),
       helper.accessor('totalNumberOfPacks', {
         id: 'totalNumberOfPacks',
         header: t('label.packs'),

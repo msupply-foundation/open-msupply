@@ -11,7 +11,10 @@ export const supplierReturnKeys = {
     ['invoices', storeId, 'supplier-return-detail', id] as const,
 };
 
-export const supplierReturnQueryOptions = (storeId: string, invoiceId: string) =>
+export const supplierReturnQueryOptions = (
+  storeId: string,
+  invoiceId: string,
+) =>
   queryOptions({
     queryKey: supplierReturnKeys.detail(storeId, invoiceId),
     queryFn: async () => {

@@ -1,5 +1,4 @@
-import { Box, Stack, Typography } from '@mui/material';
-import HandymanOutlinedIcon from '@mui/icons-material/HandymanOutlined';
+import { WrenchIcon } from 'lucide-react';
 import { useTranslation, type TxKey } from '@/intl';
 
 /**
@@ -9,23 +8,12 @@ import { useTranslation, type TxKey } from '@/intl';
 export function PlaceholderPage({ titleKey }: { titleKey: TxKey }) {
   const { t } = useTranslation();
   return (
-    <Stack spacing={2} sx={{ height: '100%' }}>
-      <Typography variant="h5">{t(titleKey)}</Typography>
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 1.5,
-          color: 'text.secondary',
-          minHeight: 240,
-        }}
-      >
-        <HandymanOutlinedIcon sx={{ fontSize: 56, opacity: 0.4 }} />
-        <Typography>{t('messages.not-implemented')}</Typography>
-      </Box>
-    </Stack>
+    <div className="flex h-full flex-col gap-4">
+      <h1 className="text-xl font-semibold">{t(titleKey)}</h1>
+      <div className="flex min-h-60 flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
+        <WrenchIcon className="size-14 opacity-40" />
+        <p>{t('messages.not-implemented')}</p>
+      </div>
+    </div>
   );
 }

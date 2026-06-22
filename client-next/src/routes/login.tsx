@@ -3,47 +3,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
-import {
-  Alert,
-  Box,
-  Button,
-  Stack,
-  TextField,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { ArrowRightIcon } from 'lucide-react';
 import { useSession } from '@/app/session';
 import { useLogin } from '@/features/auth/useLogin';
 import { serverInfoQueryOptions } from '@/features/server/queries';
 import { Environment } from '@/lib/config';
 import { MSupplyGuy } from '@/components/MSupplyGuy';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useIsSmallScreen } from '@/hooks/useMediaQuery';
 import { useTranslation } from '@/intl';
-
-// Login-screen palette, matching the legacy theme.
-const GRADIENT = 'linear-gradient(156deg, #f80 4%, #e63535 96%)';
-const FORM_BG = '#f2f2f5';
-const INPUT_BORDER = '#e4e4eb';
-const LABEL_COLOR = '#8f90a6';
-const INPUT_TEXT = '#555770';
-
-// Bordered, rounded, underline-less field — the legacy LoginTextInput look.
-const loginFieldSx = {
-  '& .MuiInputLabel-root, & .MuiInputLabel-root.Mui-focused': {
-    color: LABEL_COLOR,
-    paddingLeft: '10px',
-  },
-  '& .MuiInput-root': {
-    backgroundColor: '#fff',
-    border: `1px solid ${INPUT_BORDER}`,
-    borderRadius: '8px',
-    padding: '4px 8px',
-    '&:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
-    '&:before, &:after': { display: 'none' },
-  },
-  '& .MuiInput-input': { color: INPUT_TEXT },
-} as const;
 
 interface LoginValues {
   username: string;
@@ -73,9 +43,8 @@ export const Route = createFileRoute('/login')({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const theme = useTheme();
   const { t } = useTranslation();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallScreen = useIsSmallScreen();
   const { redirect: redirectTo } = Route.useSearch();
   const login = useLogin();
 
@@ -99,111 +68,80 @@ function LoginPage() {
   });
 
   return (
-    <Box sx={{ display: 'flex', width: '100%', minHeight: '100vh' }}>
+    <div className="flex min-h-screen w-full">
       {/* Branding panel — gradient, bottom-left copy. Hidden below sm. */}
-      <Box
-        sx={{
-          display: { xs: 'none', sm: 'flex' },
-          flex: '1 0 50%',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          justifyContent: 'flex-end',
-          backgroundImage: GRADIENT,
-          color: '#fafafa',
-          padding: '0 5% 7%',
-        }}
+      <div
+        className="hidden flex-[1_0_50%] flex-col items-start justify-end px-[5%] pb-[7%] text-[#fafafa] sm:flex"
+        style={{ backgroundImage: 'var(--gradient-primary)' }}
       >
-        <Typography
-          sx={{
-            fontSize: { sm: '30px', md: '48px', lg: '64px' },
-            fontWeight: 'bold',
-            lineHeight: 'normal',
-            whiteSpace: 'pre-line',
-          }}
-        >
+        <p className="text-3xl leading-tight font-bold whitespace-pre-line md:text-5xl lg:text-6xl">
           {t('login.heading')}
-        </Typography>
-        <Typography
-          sx={{
-            mt: '45px',
-            fontSize: { sm: '14px', md: '16px', lg: '20px' },
-            fontWeight: 600,
-          }}
-        >
+        </p>
+        <p className="mt-11 text-sm font-semibold md:text-base lg:text-xl">
           {t('login.body')}
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Form panel — form centred, server info pinned bottom-right. */}
-      <Box
-        sx={{
-          flex: '1 0 50%',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: FORM_BG,
-          minHeight: '100vh',
-        }}
-      >
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 3,
-          }}
-        >
-          <form onSubmit={onSubmit}>
-            <Stack spacing={5} sx={{ width: 320, maxWidth: '100%' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+      <div className="flex min-h-screen flex-[1_0_50%] flex-col bg-drawer">
+        <div className="flex grow items-center justify-center p-6">
+          <form onSubmit={onSubmit} className="w-80 max-w-full">
+            <div className="flex flex-col gap-8">
+              <div className="flex justify-center">
                 <MSupplyGuy
                   width={isSmallScreen ? 155 : 285}
                   height={isSmallScreen ? 90 : 180}
                 />
-              </Box>
+              </div>
               {login.error ? (
-                <Alert severity="error">{login.error.message}</Alert>
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {login.error.message}
+                </p>
               ) : null}
-              <TextField
-                label={t('heading.username')}
-                variant="standard"
-                fullWidth
-                autoFocus
-                focused
-                sx={loginFieldSx}
-                slotProps={{ input: { disableUnderline: true } }}
-                error={Boolean(errors.username)}
-                helperText={errors.username?.message}
-                {...register('username')}
-              />
-              <TextField
-                label={t('heading.password')}
-                type="password"
-                variant="standard"
-                fullWidth
-                focused
-                sx={loginFieldSx}
-                slotProps={{ input: { disableUnderline: true } }}
-                error={Boolean(errors.password)}
-                helperText={errors.password?.message}
-                {...register('password')}
-              />
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div className="grid gap-1.5">
+                <Label htmlFor="username">{t('heading.username')}</Label>
+                <Input
+                  id="username"
+                  autoFocus
+                  aria-invalid={Boolean(errors.username)}
+                  {...register('username')}
+                />
+                {errors.username ? (
+                  <p className="text-xs text-destructive">
+                    {errors.username.message}
+                  </p>
+                ) : null}
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="password">{t('heading.password')}</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  aria-invalid={Boolean(errors.password)}
+                  {...register('password')}
+                />
+                {errors.password ? (
+                  <p className="text-xs text-destructive">
+                    {errors.password.message}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex justify-end">
                 <Button
                   type="submit"
-                  variant="outlined"
-                  endIcon={<ArrowForwardIcon />}
+                  variant="outline"
                   disabled={login.isPending}
                 >
                   {login.isPending ? t('button.logging-in') : t('button.login')}
+                  <ArrowRightIcon />
                 </Button>
-              </Box>
-            </Stack>
+              </div>
+            </div>
           </form>
-        </Box>
+        </div>
         <ServerInfoFooter />
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
 
@@ -214,22 +152,13 @@ function ServerInfoFooter() {
   const { data } = useQuery(serverInfoQueryOptions());
 
   return (
-    <Box
-      sx={{
-        padding: 2,
-        textAlign: 'right',
-        color: 'text.secondary',
-        opacity: 0.6,
-      }}
-    >
-      <Typography variant="body2">
+    <div className="p-4 text-right text-muted-foreground opacity-60">
+      <p className="text-sm">
         <strong>{t('label.app-version')}</strong> {Environment.APP_VERSION}
-      </Typography>
+      </p>
       {data?.isCentralServer ? (
-        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-          {t('label.central-server')}
-        </Typography>
+        <p className="text-sm font-bold">{t('label.central-server')}</p>
       ) : null}
-    </Box>
+    </div>
   );
 }

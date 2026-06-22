@@ -6,7 +6,6 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Box, Typography } from '@mui/material';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
 import { stocktakesQueryOptions } from './queries';
@@ -47,8 +46,8 @@ export function StocktakeListPage() {
   });
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Typography variant="h5">{t('app.stocktakes')}</Typography>
+    <div className="flex h-full flex-col gap-2">
+      <h1 className="text-xl font-semibold">{t('app.stocktakes')}</h1>
       <DataTable
         table={table}
         onRowClick={row =>
@@ -58,6 +57,6 @@ export function StocktakeListPage() {
           })
         }
       />
-    </Box>
+    </div>
   );
 }

@@ -1,0 +1,253 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import '@fontsource-variable/inter';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * open-mSupply design tokens.
+ *
+ * Ported from the legacy theme (client/packages/common/src/styles/theme.ts).
+ * Everything the app colours with is a CSS variable here — components reference
+ * the semantic Tailwind utilities (bg-primary, text-cce-functioning, …), never a
+ * raw hex. Runtime branding overrides a curated subset of these vars on :root at
+ * startup (see src/app/branding.ts), so an org rebrand needs no rebuild.
+ */
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Inter Variable', sans-serif;
+
+  /* Legacy breakpoints (match the MUI defaults client-next shipped with so the
+     useMediaQuery hook and Tailwind utilities switch at the same widths). */
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 900px;
+  --breakpoint-lg: 1200px;
+  --breakpoint-xl: 1536px;
+
+  /* shadcn semantic tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* mSupply brand/semantic extras (no shadcn slot) */
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-gray: var(--gray);
+  --color-gray-light: var(--gray-light);
+  --color-gray-dark: var(--gray-dark);
+  --color-gray-pale: var(--gray-pale);
+  --color-drawer: var(--background-drawer);
+  --color-row: var(--background-row);
+  --color-form-label: var(--form-label);
+  --color-form-field: var(--form-field);
+
+  /* Cold-chain equipment status */
+  --color-cce-decommissioned: var(--cce-decommissioned);
+  --color-cce-functioning: var(--cce-functioning);
+  --color-cce-needs-attention: var(--cce-needs-attention);
+  --color-cce-not-functioning: var(--cce-not-functioning);
+  --color-cce-not-in-use: var(--cce-not-in-use);
+  --color-cce-unserviceable: var(--cce-unserviceable);
+
+  /* Invoice line status */
+  --color-invoice-passed: var(--invoice-passed);
+  --color-invoice-pending: var(--invoice-pending);
+  --color-invoice-rejected: var(--invoice-rejected);
+
+  /* Vaccination status */
+  --color-vaccination-given: var(--vaccination-given);
+  --color-vaccination-not-given: var(--vaccination-not-given);
+  --color-vaccination-pending: var(--vaccination-pending);
+  --color-vaccination-late: var(--vaccination-late);
+
+  /* Chart series + temperature */
+  --color-graph-1: var(--graph-1);
+  --color-graph-2: var(--graph-2);
+  --color-graph-3: var(--graph-3);
+  --color-graph-4: var(--graph-4);
+  --color-graph-5: var(--graph-5);
+  --color-graph-6: var(--graph-6);
+  --color-chart-cold: var(--chart-cold);
+  --color-chart-cold-light: var(--chart-cold-light);
+  --color-chart-hot: var(--chart-hot);
+  --color-chart-hot-light: var(--chart-hot-light);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Surfaces / text */
+  --background: #ffffff;
+  --foreground: #1c1c28;
+  --card: #ffffff;
+  --card-foreground: #1c1c28;
+  --popover: #ffffff;
+  --popover-foreground: #1c1c28;
+
+  /* Brand primary (mSupply orange) */
+  --primary: #e95c30;
+  --primary-foreground: #ffffff;
+
+  /* Subtle neutrals (shadcn secondary/muted/accent map to mSupply grays) */
+  --secondary: #f2f2f5;
+  --secondary-foreground: #28293d;
+  --muted: #f2f2f5;
+  --muted-foreground: #555770;
+  --accent: #f2f2f5;
+  --accent-foreground: #28293d;
+
+  --destructive: #e63535;
+  --destructive-foreground: #ffffff;
+
+  --border: #e4e4eb;
+  --input: #e4e4eb;
+  --ring: #e95c30;
+
+  /* Brand/semantic extras */
+  --info: #3e7bfa;
+  --info-foreground: #ffffff;
+  --success: #69a607;
+  --success-foreground: #ffffff;
+  --warning: #f2a001;
+  --warning-foreground: #ffffff;
+  --gray: #8f90a6;
+  --gray-light: #c7c9d9;
+  --gray-dark: #555770;
+  --gray-pale: #ccddff;
+  --background-drawer: #f2f2f5;
+  --background-row: #fafafc;
+  --form-label: #28293d;
+  --form-field: #555770;
+
+  /* Cold-chain equipment status */
+  --cce-decommissioned: #323232;
+  --cce-functioning: #69a607;
+  --cce-needs-attention: #f2a001;
+  --cce-not-functioning: #de0001;
+  --cce-not-in-use: #b0b0b0;
+  --cce-unserviceable: #555555;
+
+  /* Invoice line status */
+  --invoice-passed: #69a607;
+  --invoice-pending: #f2a001;
+  --invoice-rejected: #de0001;
+
+  /* Vaccination status */
+  --vaccination-given: #69a607;
+  --vaccination-not-given: #e63535;
+  --vaccination-pending: #5b8def;
+  --vaccination-late: #e63535;
+
+  /* Chart line palette */
+  --graph-1: #eed600;
+  --graph-2: #922dd0;
+  --graph-3: #e1a200;
+  --graph-4: #59639c;
+  --graph-5: #e500ea;
+  --graph-6: #00dbce;
+  --chart-cold: #aacae2;
+  --chart-cold-light: #d9edfa;
+  --chart-hot: #db6974;
+  --chart-hot-light: #fbe2e4;
+
+  /* Gradients (legacy mixins.gradient) */
+  --gradient-primary: linear-gradient(156deg, #ff8800 4%, #e63535 96%);
+  --gradient-secondary: linear-gradient(156deg, #78a3fc 4%, #3e7bfa 96%);
+  --gradient-tertiary: linear-gradient(156deg, #e63535 4%, #78a3fc 96%);
+
+  /* Sidebar (shadcn) — mSupply drawer surface */
+  --sidebar: #f2f2f5;
+  --sidebar-foreground: #1c1c28;
+  --sidebar-primary: #e95c30;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffffff;
+  --sidebar-accent-foreground: #28293d;
+  --sidebar-border: #eaeaea;
+  --sidebar-ring: #e95c30;
+}
+
+/*
+ * Dark mode is a bonus (legacy had none). Sensible inversion so .dark never
+ * breaks; brand orange is preserved. Not a v1 requirement.
+ */
+.dark {
+  --background: #1c1c28;
+  --foreground: #fafafc;
+  --card: #28293d;
+  --card-foreground: #fafafc;
+  --popover: #28293d;
+  --popover-foreground: #fafafc;
+  --primary: #e95c30;
+  --primary-foreground: #ffffff;
+  --secondary: #555770;
+  --secondary-foreground: #fafafc;
+  --muted: #3a3a4a;
+  --muted-foreground: #c7c9d9;
+  --accent: #3a3a4a;
+  --accent-foreground: #fafafc;
+  --destructive: #e63535;
+  --destructive-foreground: #ffffff;
+  --border: #3a3a4a;
+  --input: #3a3a4a;
+  --ring: #e95c30;
+  --info: #5b8def;
+  --info-foreground: #ffffff;
+  --success: #7cbf12;
+  --success-foreground: #ffffff;
+  --warning: #f2a001;
+  --warning-foreground: #1c1c28;
+  --gray: #8f90a6;
+  --gray-light: #555770;
+  --gray-dark: #c7c9d9;
+  --gray-pale: #3a3a4a;
+  --background-drawer: #28293d;
+  --background-row: #28293d;
+  --form-label: #fafafc;
+  --form-field: #c7c9d9;
+  --sidebar: #28293d;
+  --sidebar-foreground: #fafafc;
+  --sidebar-primary: #e95c30;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #3a3a4a;
+  --sidebar-accent-foreground: #fafafc;
+  --sidebar-border: #3a3a4a;
+  --sidebar-ring: #e95c30;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

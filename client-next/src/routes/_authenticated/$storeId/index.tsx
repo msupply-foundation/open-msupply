@@ -1,5 +1,4 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Stack, Typography } from '@mui/material';
 import { useTranslation } from '@/intl';
 
 export const Route = createFileRoute('/_authenticated/$storeId/')({
@@ -9,9 +8,9 @@ export const Route = createFileRoute('/_authenticated/$storeId/')({
 function HomePage() {
   const { t } = useTranslation();
   return (
-    <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
-      <Typography variant="h5">{t('app.dashboard')}</Typography>
-      <Typography color="text.secondary">{t('messages.dashboard-intro')}</Typography>
-    </Stack>
+    <div className="flex flex-col items-start gap-4">
+      <h1 className="text-xl font-semibold">{t('app.dashboard')}</h1>
+      <p className="text-muted-foreground">{t('messages.dashboard-intro')}</p>
+    </div>
   );
 }

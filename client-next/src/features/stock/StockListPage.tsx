@@ -7,9 +7,9 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table';
-import { Box, TablePagination, Typography } from '@mui/material';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
+import { DataTablePagination } from '@/components/DataTablePagination';
 import { useStockColumns } from './columns';
 import { stockListQueryOptions } from './queries';
 
@@ -71,10 +71,8 @@ export function StockListPage() {
   });
 
   return (
-    <Box
-      sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}
-    >
-      <Typography variant="h5">{t('app.stock')}</Typography>
+    <div className="flex h-full flex-col gap-2">
+      <h1 className="text-xl font-semibold">{t('app.stock')}</h1>
       <DataTable
         table={table}
         onRowClick={row =>
@@ -84,25 +82,7 @@ export function StockListPage() {
           })
         }
       />
-      <TablePagination
-        component="div"
-        count={data?.totalCount ?? 0}
-        page={search.page - 1}
-        rowsPerPage={search.pageSize}
-        rowsPerPageOptions={[25, 50, 100]}
-        onPageChange={(_, p) =>
-          navigate({ search: prev => ({ ...prev, page: p + 1 }) })
-        }
-        onRowsPerPageChange={e =>
-          navigate({
-            search: prev => ({
-              ...prev,
-              pageSize: Number(e.target.value),
-              page: 1,
-            }),
-          })
-        }
-      />
-    </Box>
+      <DataTablePagination table={table} />
+    </div>
   );
 }

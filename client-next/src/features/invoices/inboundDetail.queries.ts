@@ -11,11 +11,17 @@ export const inboundKeys = {
     ['invoices', storeId, 'inbound-detail', id] as const,
 };
 
-export const inboundShipmentQueryOptions = (storeId: string, invoiceId: string) =>
+export const inboundShipmentQueryOptions = (
+  storeId: string,
+  invoiceId: string,
+) =>
   queryOptions({
     queryKey: inboundKeys.detail(storeId, invoiceId),
     queryFn: async () => {
-      const { invoice } = await inboundSdk.inboundShipment({ storeId, invoiceId });
+      const { invoice } = await inboundSdk.inboundShipment({
+        storeId,
+        invoiceId,
+      });
       return invoice.__typename === 'InvoiceNode' ? invoice : null;
     },
   });

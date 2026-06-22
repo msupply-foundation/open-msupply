@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Autocomplete, TextField } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from '@/intl';
+import { Label } from '@/components/ui/label';
+import { SearchSelect } from '@/components/SearchSelect';
 import { itemSearchQueryOptions } from '@/features/items/queries';
 import type { ItemOptionFragment } from '@/features/items/items.generated';
 
@@ -50,27 +51,22 @@ export function ItemSearchInput({
   );
 
   return (
-    <Autocomplete
-      fullWidth
-      disabled={disabled}
-      value={value}
-      options={options}
-      filterOptions={x => x} // server-side filtering; don't re-filter locally
-      getOptionLabel={o => `${o.code}  ${o.name}`}
-      isOptionEqualToValue={(o, v) => o.id === v.id}
-      loading={isFetching}
-      loadingText={t('messages.loading')}
-      noOptionsText={t('messages.no-results')}
-      onChange={(_, v) => onChange(v)}
-      onInputChange={(_, v) => setInput(v)}
-      renderInput={params => (
-        <TextField
-          {...params}
-          autoFocus={autoFocus}
-          label={t('label.item')}
-          placeholder={t('placeholder.search')}
-        />
-      )}
-    />
+    <div className="grid gap-1.5">
+      <Label>{t('label.item')}</Label>
+      <SearchSelect
+        disabled={disabled}
+        autoFocus={autoFocus}
+        value={value}
+        options={options}
+        getOptionLabel={o => `${o.code}  ${o.name}`}
+        getOptionKey={o => o.id}
+        onInputChange={setInput}
+        loading={isFetching}
+        loadingText={t('messages.loading')}
+        noOptionsText={t('messages.no-results')}
+        placeholder={t('placeholder.search')}
+        onChange={onChange}
+      />
+    </div>
   );
 }

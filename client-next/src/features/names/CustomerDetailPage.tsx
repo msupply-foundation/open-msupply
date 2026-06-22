@@ -1,16 +1,9 @@
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
-import {
-  Card,
-  CardContent,
-  Divider,
-  Link as MuiLink,
-  Stack,
-  Typography,
-} from '@mui/material';
 import { useTranslation } from '@/intl';
 import { formatDate } from '@/lib/format';
+import { Card, CardContent } from '@/components/ui/card';
 import { customerByIdQueryOptions } from './customerDetail.queries';
 import type { CustomerDetailFragment } from './customerDetail.generated';
 
@@ -18,37 +11,17 @@ const route = getRouteApi(
   '/_authenticated/$storeId/distribution/customers/$nameId',
 );
 
-function Field({
-  label,
-  value,
-}: {
-  label: string;
-  value: ReactNode;
-}) {
+function Field({ label, value }: { label: string; value: ReactNode }) {
   // Stack the label above the value on phones (xs) and place them side by side
-  // from sm up. minWidth:0 + word-break let long values (URLs, addresses) wrap
+  // from sm up. min-w-0 + overflow-wrap let long values (URLs, addresses) wrap
   // instead of forcing horizontal overflow on a narrow viewport.
   return (
-    <Stack
-      direction={{ xs: 'column', sm: 'row' }}
-      spacing={{ xs: 0.25, sm: 2 }}
-      sx={{ justifyContent: 'space-between', alignItems: { sm: 'baseline' } }}
-    >
-      <Typography color="text.secondary" sx={{ flexShrink: 0 }}>
-        {label}
-      </Typography>
-      <Typography
-        component="div"
-        sx={{
-          fontWeight: 500,
-          minWidth: 0,
-          textAlign: { sm: 'right' },
-          overflowWrap: 'anywhere',
-        }}
-      >
+    <div className="flex flex-col justify-between gap-0.5 py-2 first:pt-0 last:pb-0 sm:flex-row sm:items-baseline sm:gap-4">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <div className="min-w-0 font-medium [overflow-wrap:anywhere] sm:text-right">
         {value}
-      </Typography>
-    </Stack>
+      </div>
+    </div>
   );
 }
 
@@ -61,27 +34,25 @@ export function CustomerDetailPage() {
     enabled: Boolean(storeId),
   });
 
-  if (isLoading) return <Typography>{t('messages.loading')}</Typography>;
-  if (!data) return <Typography>{t('messages.name-not-found')}</Typography>;
+  if (isLoading) return <p>{t('messages.loading')}</p>;
+  if (!data) return <p>{t('messages.name-not-found')}</p>;
 
   return <CustomerDetail customer={data} />;
 }
 
 function CustomerDetail({ customer }: { customer: CustomerDetailFragment }) {
   const { t } = useTranslation();
-  const yesNo = (value: boolean) => (value ? t('messages.yes') : t('messages.no'));
+  const yesNo = (value: boolean) =>
+    value ? t('messages.yes') : t('messages.no');
 
   return (
-    <Stack spacing={2} sx={{ width: '100%', maxWidth: 560 }}>
-      <Typography
-        variant="h5"
-        sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}
-      >
+    <div className="flex w-full max-w-[560px] flex-col gap-4">
+      <h1 className="text-xl font-bold [overflow-wrap:anywhere]">
         {customer.name}
-      </Typography>
+      </h1>
       <Card>
         <CardContent>
-          <Stack spacing={1} divider={<Divider flexItem />}>
+          <div className="flex flex-col divide-y">
             <Field label={t('label.code')} value={customer.code} />
             <Field
               label={t('label.charge-code')}
@@ -98,7 +69,10 @@ function CustomerDetail({ customer }: { customer: CustomerDetailFragment }) {
               value={yesNo(customer.isManufacturer)}
             />
             <Field label={t('label.donor')} value={yesNo(customer.isDonor)} />
-            <Field label={t('label.on-hold')} value={yesNo(customer.isOnHold)} />
+            <Field
+              label={t('label.on-hold')}
+              value={yesNo(customer.isOnHold)}
+            />
             <Field
               label={t('label.address')}
               value={
@@ -112,21 +86,22 @@ function CustomerDetail({ customer }: { customer: CustomerDetailFragment }) {
               label={t('label.website')}
               value={
                 customer.website ? (
-                  <MuiLink
+                  <a
+                    className="text-primary underline-offset-4 hover:underline"
                     href={customer.website}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     {customer.website}
-                  </MuiLink>
+                  </a>
                 ) : (
                   '—'
                 )
               }
             />
-          </Stack>
+          </div>
         </CardContent>
       </Card>
-    </Stack>
+    </div>
   );
 }

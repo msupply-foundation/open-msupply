@@ -9,9 +9,9 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table';
-import { Box, TablePagination, Typography } from '@mui/material';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
+import { DataTablePagination } from '@/components/DataTablePagination';
 import { SearchField } from '@/components/SearchField';
 import { nameListQueryOptions } from '@/features/names/queries';
 import { suppliersFilter } from '@/features/names/suppliers';
@@ -45,16 +45,32 @@ export function SuppliersListPage() {
   );
 
   const sorting: SortingState = [{ id: search.sortKey, desc: search.sortDesc }];
-  const pagination: PaginationState = { pageIndex: search.page - 1, pageSize: search.pageSize };
+  const pagination: PaginationState = {
+    pageIndex: search.page - 1,
+    pageSize: search.pageSize,
+  };
 
   const onSortingChange: OnChangeFn<SortingState> = updater => {
     const next = typeof updater === 'function' ? updater(sorting) : updater;
     const first = next[0];
-    navigate({ search: prev => ({ ...prev, sortKey: first?.id ?? 'name', sortDesc: first?.desc ?? false, page: 1 }) });
+    navigate({
+      search: prev => ({
+        ...prev,
+        sortKey: first?.id ?? 'name',
+        sortDesc: first?.desc ?? false,
+        page: 1,
+      }),
+    });
   };
   const onPaginationChange: OnChangeFn<PaginationState> = updater => {
     const next = typeof updater === 'function' ? updater(pagination) : updater;
-    navigate({ search: prev => ({ ...prev, page: next.pageIndex + 1, pageSize: next.pageSize }) });
+    navigate({
+      search: prev => ({
+        ...prev,
+        page: next.pageIndex + 1,
+        pageSize: next.pageSize,
+      }),
+    });
   };
 
   const table = useReactTable({
@@ -71,19 +87,25 @@ export function SuppliersListPage() {
   });
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-        <Typography variant="h5" sx={{ flexGrow: 1 }}>
+    <div className="flex h-full flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="flex-grow text-xl font-semibold">
           {t('app.suppliers')}
-        </Typography>
+        </h1>
         <SearchField
           value={search.search ?? ''}
           onChange={value =>
-            navigate({ search: prev => ({ ...prev, search: value || undefined, page: 1 }) })
+            navigate({
+              search: prev => ({
+                ...prev,
+                search: value || undefined,
+                page: 1,
+              }),
+            })
           }
           placeholder={t('placeholder.search')}
         />
-      </Box>
+      </div>
       <DataTable
         table={table}
         onRowClick={row =>
@@ -93,15 +115,7 @@ export function SuppliersListPage() {
           })
         }
       />
-      <TablePagination
-        component="div"
-        count={data?.totalCount ?? 0}
-        page={search.page - 1}
-        rowsPerPage={search.pageSize}
-        rowsPerPageOptions={[25, 50, 100]}
-        onPageChange={(_, p) => navigate({ search: prev => ({ ...prev, page: p + 1 }) })}
-        onRowsPerPageChange={e => navigate({ search: prev => ({ ...prev, pageSize: Number(e.target.value), page: 1 }) })}
-      />
-    </Box>
+      <DataTablePagination table={table} />
+    </div>
   );
 }

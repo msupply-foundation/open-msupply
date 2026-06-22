@@ -12,7 +12,9 @@ export interface CustomerReturnSearch {
 // Built from URL search state. Shared by the page and the route loader so their
 // query keys match (loader prefetch hits the same cache entry). Kept out of the
 // component file so it isn't a non-component export (fast-refresh).
-export function customerReturnFilter(s: CustomerReturnSearch): InvoiceFilterInput {
+export function customerReturnFilter(
+  s: CustomerReturnSearch,
+): InvoiceFilterInput {
   return {
     type: { equalTo: InvoiceNodeType.CustomerReturn },
     ...(s.search ? { otherPartyName: { like: s.search } } : {}),

@@ -1,23 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
-import {
-  Box,
-  Button,
-  Paper,
-  Snackbar,
-  Alert,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { toast } from 'sonner';
 import {
   InvoiceNodeType,
   type InvoiceNodeStatus,
@@ -25,6 +9,18 @@ import {
 } from '@/gql/schema';
 import { useTranslation } from '@/intl';
 import { formatCurrency } from '@/lib/format';
+import { useIsPhone } from '@/hooks/useMediaQuery';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { DetailHeaderBar } from '@/components/detail/DetailHeaderBar';
 import { StatusBar } from '@/components/detail/StatusBar';
 import { useConfirm } from '@/components/detail/useConfirm';
@@ -55,33 +51,31 @@ const TO_CUSTOMER_RETURN_STATUS: Partial<
 // One stacked label/value row inside a mobile line card.
 function CardRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, minWidth: 0 }}>
-      <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
-        {label}
-      </Typography>
-      <Typography variant="body2" sx={{ textAlign: 'right', minWidth: 0, wordBreak: 'break-word' }}>
-        {value}
-      </Typography>
-    </Box>
+    <div className="flex min-w-0 justify-between gap-2">
+      <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
+      <span className="min-w-0 break-words text-right text-sm">{value}</span>
+    </div>
   );
 }
 
-// Phone equivalent of a read-only line table row: one outlined Paper card with
+// Phone equivalent of a read-only line table row: one outlined card with
 // stacked label/value rows. No editable inputs (lines are read-only here).
 function LineCard({ line }: { line: CustomerReturnLineRowFragment }) {
   const { t } = useTranslation();
   return (
-    <Paper variant="outlined" sx={{ p: 1.5, mb: 1 }}>
-      <Stack spacing={0.5}>
-        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2" sx={{ flex: 1, minWidth: 0, wordBreak: 'break-word' }}>
+    <div className="mb-2 rounded-md border bg-card p-3">
+      <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <span className="min-w-0 flex-1 break-words text-sm font-semibold">
             {line.item.name}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+          </span>
+          <span className="shrink-0 text-xs text-muted-foreground">
             {line.item.code}
-          </Typography>
-        </Box>
-        {line.batch ? <CardRow label={t('label.batch')} value={line.batch} /> : null}
+          </span>
+        </div>
+        {line.batch ? (
+          <CardRow label={t('label.batch')} value={line.batch} />
+        ) : null}
         {line.expiryDate ? (
           <CardRow label={t('label.expiry')} value={line.expiryDate} />
         ) : null}
@@ -99,8 +93,8 @@ function LineCard({ line }: { line: CustomerReturnLineRowFragment }) {
           label={t('label.total')}
           value={formatCurrency(line.sellPricePerPack * line.numberOfPacks)}
         />
-      </Stack>
-    </Paper>
+      </div>
+    </div>
   );
 }
 
@@ -113,8 +107,8 @@ export function CustomerReturnDetailPage() {
     enabled: Boolean(storeId),
   });
 
-  if (isLoading) return <Typography>{t('messages.loading')}</Typography>;
-  if (!data) return <Typography>{t('messages.invoice-not-found')}</Typography>;
+  if (isLoading) return <p>{t('messages.loading')}</p>;
+  if (!data) return <p>{t('messages.invoice-not-found')}</p>;
 
   return <CustomerReturnEditor storeId={storeId} invoice={data} />;
 }
@@ -127,8 +121,7 @@ function CustomerReturnEditor({
   invoice: CustomerReturnDetailFragment;
 }) {
   const { t } = useTranslation();
-  const theme = useTheme();
-  const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
+  const isPhone = useIsPhone();
   const queryClient = useQueryClient();
   const statusName = useInvoiceStatusName();
   const { confirm, dialog } = useConfirm();
@@ -139,13 +132,12 @@ function CustomerReturnEditor({
   const editable = flow.editable.includes(invoice.status);
   const lines = invoice.lines.nodes;
 
-  // Header fields are controlled (MUI inputs); lines are read-only (the
+  // Header fields are controlled inputs; lines are read-only (the
   // generate-lines wizard is deferred), so Save only ever pushes the header.
   const [theirReference, setTheirReference] = useState(
     invoice.theirReference ?? '',
   );
   const [comment, setComment] = useState(invoice.comment ?? '');
-  const [snackbar, setSnackbar] = useState<string | null>(null);
 
   // Re-baseline whenever the document refetches (after a save/status change).
   useEffect(() => {
@@ -168,13 +160,11 @@ function CustomerReturnEditor({
         storeId,
         input: { id: invoice.id, theirReference, comment },
       });
-      if (
-        res.updateCustomerReturn.__typename === 'UpdateCustomerReturnError'
-      )
+      if (res.updateCustomerReturn.__typename === 'UpdateCustomerReturnError')
         throw new Error(res.updateCustomerReturn.error.description);
     },
     onSuccess: invalidate,
-    onError: e => setSnackbar(e instanceof Error ? e.message : String(e)),
+    onError: e => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
   const advance = useMutation({
@@ -184,13 +174,11 @@ function CustomerReturnEditor({
         storeId,
         input: { id: invoice.id, status },
       });
-      if (
-        res.updateCustomerReturn.__typename === 'UpdateCustomerReturnError'
-      )
+      if (res.updateCustomerReturn.__typename === 'UpdateCustomerReturnError')
         throw new Error(res.updateCustomerReturn.error.description);
     },
     onSuccess: invalidate,
-    onError: e => setSnackbar(e instanceof Error ? e.message : String(e)),
+    onError: e => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
   const toggleHold = useMutation({
@@ -223,7 +211,7 @@ function CustomerReturnEditor({
   });
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1.5 }}>
+    <div className="flex h-full flex-col gap-3">
       <DetailHeaderBar
         title={t('heading.customer-return', { number: invoice.invoiceNumber })}
         statusLabel={statusName(invoice.status)}
@@ -234,8 +222,8 @@ function CustomerReturnEditor({
         actions={
           editable ? (
             <Button
-              size="small"
-              color="inherit"
+              size="sm"
+              variant="ghost"
               onClick={onToggleHold}
               disabled={toggleHold.isPending}
             >
@@ -245,85 +233,92 @@ function CustomerReturnEditor({
         }
       />
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <TextField
-          label={t('label.customer-name')}
-          value={invoice.otherPartyName}
-          size="small"
-          disabled
-          sx={{ minWidth: 220 }}
-        />
-        <TextField
-          label={t('label.customer-ref')}
-          value={theirReference}
-          onChange={e => setTheirReference(e.target.value)}
-          size="small"
-          disabled={!editable}
-          sx={{ minWidth: 220 }}
-        />
-        <TextField
-          label={t('label.comment')}
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-          size="small"
-          fullWidth
-          disabled={!editable}
-        />
-      </Stack>
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="grid gap-1.5 sm:min-w-[220px]">
+          <Label>{t('label.customer-name')}</Label>
+          <Input value={invoice.otherPartyName} disabled />
+        </div>
+        <div className="grid gap-1.5 sm:min-w-[220px]">
+          <Label>{t('label.customer-ref')}</Label>
+          <Input
+            value={theirReference}
+            onChange={e => setTheirReference(e.target.value)}
+            disabled={!editable}
+          />
+        </div>
+        <div className="grid flex-1 gap-1.5">
+          <Label>{t('label.comment')}</Label>
+          <Input
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            disabled={!editable}
+          />
+        </div>
+      </div>
 
       {isPhone ? (
-        <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div className="min-h-0 flex-1 overflow-auto">
           {lines.map(line => (
             <LineCard key={line.id} line={line} />
           ))}
           {lines.length === 0 ? (
-            <Typography color="text.secondary" sx={{ py: 2 }}>
+            <p className="py-4 text-muted-foreground">
               {t('messages.no-lines')}
-            </Typography>
+            </p>
           ) : null}
-        </Box>
+        </div>
       ) : (
-        <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          <Table stickyHeader size="small">
-            <TableHead>
+        <div className="min-h-0 flex-1 overflow-auto rounded-md border bg-card">
+          <Table>
+            <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.batch')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.expiry')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
+                <TableHead className="font-semibold">
+                  {t('label.code')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.name')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.batch')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.expiry')}
+                </TableHead>
+                <TableHead className="text-right font-semibold">
                   {t('label.pack-size')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
+                </TableHead>
+                <TableHead className="text-right font-semibold">
                   {t('label.pack-quantity')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
+                </TableHead>
+                <TableHead className="text-right font-semibold">
                   {t('label.total-quantity')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
+                </TableHead>
+                <TableHead className="text-right font-semibold">
                   {t('label.price-per-pack')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
+                </TableHead>
+                <TableHead className="text-right font-semibold">
                   {t('label.total')}
-                </TableCell>
+                </TableHead>
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {lines.map(line => (
-                <TableRow key={line.id} hover>
+                <TableRow key={line.id}>
                   <TableCell>{line.item.code}</TableCell>
                   <TableCell>{line.item.name}</TableCell>
                   <TableCell>{line.batch ?? ''}</TableCell>
                   <TableCell>{line.expiryDate ?? ''}</TableCell>
-                  <TableCell align="right">{line.packSize}</TableCell>
-                  <TableCell align="right">{line.numberOfPacks}</TableCell>
-                  <TableCell align="right">
+                  <TableCell className="text-right">{line.packSize}</TableCell>
+                  <TableCell className="text-right">
+                    {line.numberOfPacks}
+                  </TableCell>
+                  <TableCell className="text-right">
                     {(line.packSize * line.numberOfPacks).toLocaleString()}
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell className="text-right">
                     {formatCurrency(line.sellPricePerPack)}
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell className="text-right">
                     {formatCurrency(line.sellPricePerPack * line.numberOfPacks)}
                   </TableCell>
                 </TableRow>
@@ -331,15 +326,15 @@ function CustomerReturnEditor({
               {lines.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9}>
-                    <Typography color="text.secondary" sx={{ py: 2 }}>
+                    <p className="py-4 text-muted-foreground">
                       {t('messages.no-lines')}
-                    </Typography>
+                    </p>
                   </TableCell>
                 </TableRow>
               ) : null}
             </TableBody>
           </Table>
-        </Paper>
+        </div>
       )}
 
       <StatusBar
@@ -354,17 +349,6 @@ function CustomerReturnEditor({
       />
 
       {dialog}
-
-      <Snackbar
-        open={Boolean(snackbar)}
-        autoHideDuration={8000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="error" variant="filled" onClose={() => setSnackbar(null)}>
-          {snackbar}
-        </Alert>
-      </Snackbar>
-    </Box>
+    </div>
   );
 }

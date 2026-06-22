@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useMemo, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
@@ -6,20 +6,12 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import {
-  Box,
-  Card,
-  CardContent,
-  Divider,
-  Link as MuiLink,
-  Stack,
-  Tab,
-  Tabs,
-  Typography,
-} from '@mui/material';
 import { useTranslation, type TxKey } from '@/intl';
 import { formatDate } from '@/lib/format';
 import { DataTable } from '@/components/DataTable';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PurchaseOrderNodeStatus } from '@/gql/schema';
 import {
   supplierByIdQueryOptions,
@@ -46,29 +38,15 @@ const PO_STATUS_KEY: Partial<Record<PurchaseOrderNodeStatus, TxKey>> = {
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
   // Stack the label above the value on phones (xs) and place them side by side
-  // from sm up. minWidth:0 + word-break let long values (URLs, addresses) wrap
+  // from sm up. min-w-0 + word-break let long values (URLs, addresses) wrap
   // instead of forcing horizontal overflow on a narrow viewport.
   return (
-    <Stack
-      direction={{ xs: 'column', sm: 'row' }}
-      spacing={{ xs: 0.25, sm: 2 }}
-      sx={{ justifyContent: 'space-between', alignItems: { sm: 'baseline' } }}
-    >
-      <Typography color="text.secondary" sx={{ flexShrink: 0 }}>
-        {label}
-      </Typography>
-      <Typography
-        component="div"
-        sx={{
-          fontWeight: 500,
-          minWidth: 0,
-          textAlign: { sm: 'right' },
-          overflowWrap: 'anywhere',
-        }}
-      >
+    <div className="flex flex-col justify-between gap-0.5 sm:flex-row sm:items-baseline sm:gap-4">
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <div className="min-w-0 font-medium [overflow-wrap:anywhere] sm:text-right">
         {value}
-      </Typography>
-    </Stack>
+      </div>
+    </div>
   );
 }
 
@@ -81,8 +59,8 @@ export function SupplierDetailPage() {
     enabled: Boolean(storeId),
   });
 
-  if (isLoading) return <Typography>{t('messages.loading')}</Typography>;
-  if (!data) return <Typography>{t('messages.name-not-found')}</Typography>;
+  if (isLoading) return <p>{t('messages.loading')}</p>;
+  if (!data) return <p>{t('messages.name-not-found')}</p>;
 
   return <SupplierDetail storeId={storeId} nameId={nameId} supplier={data} />;
 }
@@ -97,108 +75,101 @@ function SupplierDetail({
   supplier: SupplierDetailFragment;
 }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState(0);
 
   return (
-    // minWidth:0 lets the flex children (the scrollable tables below) shrink
+    // min-w-0 lets the flex children (the scrollable tables below) shrink
     // narrower than their content instead of pushing the page wide on a phone.
-    <Stack spacing={2} sx={{ height: '100%', minWidth: 0 }}>
-      <Typography
-        variant="h5"
-        sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}
-      >
+    <div className="flex h-full min-w-0 flex-col gap-4">
+      <h1 className="text-xl font-bold [overflow-wrap:anywhere]">
         {supplier.name}
-      </Typography>
+      </h1>
       <Tabs
-        value={tab}
-        onChange={(_, v) => setTab(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        allowScrollButtonsMobile
+        defaultValue="details"
+        className="flex min-h-0 flex-1 flex-col gap-4"
       >
-        <Tab label={t('label.details')} />
-        <Tab label={t('label.purchase-orders')} />
-        <Tab label={t('label.contacts')} />
+        <TabsList>
+          <TabsTrigger value="details">{t('label.details')}</TabsTrigger>
+          <TabsTrigger value="purchase-orders">
+            {t('label.purchase-orders')}
+          </TabsTrigger>
+          <TabsTrigger value="contacts">{t('label.contacts')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="details">
+          <DetailsTab supplier={supplier} />
+        </TabsContent>
+        <TabsContent value="purchase-orders" className="flex min-h-0 flex-col">
+          <PurchaseOrdersTab
+            storeId={storeId}
+            nameId={nameId}
+            supplierName={supplier.name}
+          />
+        </TabsContent>
+        <TabsContent value="contacts" className="flex min-h-0 flex-col">
+          <ContactsTab storeId={storeId} nameId={nameId} />
+        </TabsContent>
       </Tabs>
-      {tab === 0 ? <DetailsTab supplier={supplier} /> : null}
-      {tab === 1 ? (
-        <PurchaseOrdersTab
-          storeId={storeId}
-          nameId={nameId}
-          supplierName={supplier.name}
-        />
-      ) : null}
-      {tab === 2 ? <ContactsTab storeId={storeId} nameId={nameId} /> : null}
-    </Stack>
+    </div>
   );
 }
 
 function DetailsTab({ supplier }: { supplier: SupplierDetailFragment }) {
   const { t } = useTranslation();
-  const yesNo = (value: boolean) => (value ? t('messages.yes') : t('messages.no'));
+  const yesNo = (value: boolean) =>
+    value ? t('messages.yes') : t('messages.no');
+
+  const fields: { label: string; value: ReactNode }[] = [
+    { label: t('label.code'), value: supplier.code },
+    { label: t('label.charge-code'), value: supplier.chargeCode ?? '—' },
+    { label: t('label.comment'), value: supplier.comment ?? '—' },
+    { label: t('label.phone'), value: supplier.phone ?? '—' },
+    { label: t('label.email'), value: supplier.email ?? '—' },
+    { label: t('label.hsh-code'), value: supplier.hshCode ?? '—' },
+    { label: t('label.hsh-name'), value: supplier.hshName ?? '—' },
+    { label: t('label.currency'), value: supplier.currency?.code ?? '—' },
+    { label: t('label.margin'), value: supplier.margin ?? '—' },
+    { label: t('label.freight-factor'), value: supplier.freightFactor ?? '—' },
+    {
+      label: t('label.date-created'),
+      value: formatDate(supplier.createdDatetime) || '—',
+    },
+    { label: t('label.manufacturer'), value: yesNo(supplier.isManufacturer) },
+    { label: t('label.donor'), value: yesNo(supplier.isDonor) },
+    { label: t('label.on-hold'), value: yesNo(supplier.isOnHold) },
+    {
+      label: t('label.address'),
+      value:
+        [supplier.address1, supplier.address2].filter(Boolean).join(', ') ||
+        '—',
+    },
+    { label: t('label.country'), value: supplier.country ?? '—' },
+    {
+      label: t('label.website'),
+      value: supplier.website ? (
+        <a
+          className="text-primary underline-offset-4 hover:underline"
+          href={supplier.website}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {supplier.website}
+        </a>
+      ) : (
+        '—'
+      ),
+    },
+  ];
 
   return (
-    <Card sx={{ maxWidth: 560 }}>
+    <Card className="max-w-[560px]">
       <CardContent>
-        <Stack spacing={1} divider={<Divider flexItem />}>
-          <Field label={t('label.code')} value={supplier.code} />
-          <Field
-            label={t('label.charge-code')}
-            value={supplier.chargeCode ?? '—'}
-          />
-          <Field label={t('label.comment')} value={supplier.comment ?? '—'} />
-          <Field label={t('label.phone')} value={supplier.phone ?? '—'} />
-          <Field label={t('label.email')} value={supplier.email ?? '—'} />
-          <Field label={t('label.hsh-code')} value={supplier.hshCode ?? '—'} />
-          <Field label={t('label.hsh-name')} value={supplier.hshName ?? '—'} />
-          <Field
-            label={t('label.currency')}
-            value={supplier.currency?.code ?? '—'}
-          />
-          <Field
-            label={t('label.margin')}
-            value={supplier.margin ?? '—'}
-          />
-          <Field
-            label={t('label.freight-factor')}
-            value={supplier.freightFactor ?? '—'}
-          />
-          <Field
-            label={t('label.date-created')}
-            value={formatDate(supplier.createdDatetime) || '—'}
-          />
-          <Field
-            label={t('label.manufacturer')}
-            value={yesNo(supplier.isManufacturer)}
-          />
-          <Field label={t('label.donor')} value={yesNo(supplier.isDonor)} />
-          <Field label={t('label.on-hold')} value={yesNo(supplier.isOnHold)} />
-          <Field
-            label={t('label.address')}
-            value={
-              [supplier.address1, supplier.address2]
-                .filter(Boolean)
-                .join(', ') || '—'
-            }
-          />
-          <Field label={t('label.country')} value={supplier.country ?? '—'} />
-          <Field
-            label={t('label.website')}
-            value={
-              supplier.website ? (
-                <MuiLink
-                  href={supplier.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {supplier.website}
-                </MuiLink>
-              ) : (
-                '—'
-              )
-            }
-          />
-        </Stack>
+        <div className="flex flex-col gap-2">
+          {fields.map((field, i) => (
+            <Fragment key={field.label}>
+              {i > 0 ? <Separator /> : null}
+              <Field label={field.label} value={field.value} />
+            </Fragment>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );
@@ -276,13 +247,7 @@ function PurchaseOrdersTab({
 
 const contactHelper = createColumnHelper<SupplierContactRowFragment>();
 
-function ContactsTab({
-  storeId,
-  nameId,
-}: {
-  storeId: string;
-  nameId: string;
-}) {
+function ContactsTab({ storeId, nameId }: { storeId: string; nameId: string }) {
   const { t } = useTranslation();
 
   const { data } = useQuery({
@@ -338,8 +303,8 @@ function ContactsTab({
 
 function EmptyTab({ message }: { message: string }) {
   return (
-    <Box sx={{ py: 4 }}>
-      <Typography color="text.secondary">{message}</Typography>
-    </Box>
+    <div className="py-4">
+      <p className="text-muted-foreground">{message}</p>
+    </div>
   );
 }

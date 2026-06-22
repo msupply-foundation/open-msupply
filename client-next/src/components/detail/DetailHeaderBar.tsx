@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
-import { Box, Button, Chip, Typography } from '@mui/material';
 import { useTranslation } from '@/intl';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 interface DetailHeaderBarProps {
   title: string;
@@ -30,27 +32,20 @@ export function DetailHeaderBar({
 }: DetailHeaderBarProps) {
   const { t } = useTranslation();
   return (
-    <Box
-      sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}
-    >
-      <Typography variant="h5">{title}</Typography>
-      {statusLabel ? <Chip label={statusLabel} size="small" /> : null}
-      <Box sx={{ flexGrow: 1 }} />
+    <div className="flex flex-wrap items-center gap-3">
+      <h1 className="text-xl font-semibold">{title}</h1>
+      {statusLabel ? <Badge variant="secondary">{statusLabel}</Badge> : null}
+      <div className="grow" />
       {actions}
       {summary ? (
-        <Typography variant="body2" color="text.secondary">
-          {summary}
-        </Typography>
+        <span className="text-sm text-muted-foreground">{summary}</span>
       ) : null}
       {onSave ? (
-        <Button
-          variant="contained"
-          disabled={saveDisabled || saving}
-          onClick={onSave}
-        >
+        <Button disabled={saveDisabled || saving} onClick={onSave}>
+          {saving ? <Spinner className="size-4 text-current" /> : null}
           {saving ? t('button.saving') : t('button.save')}
         </Button>
       ) : null}
-    </Box>
+    </div>
   );
 }

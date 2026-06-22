@@ -68,7 +68,10 @@ export const nameSearchQueryOptions = (
         first: 50,
         key: NameSortFieldInput.Name,
         desc: false,
-        filter: { ...filter, ...(search ? { codeOrName: { like: search } } : {}) },
+        filter: {
+          ...filter,
+          ...(search ? { codeOrName: { like: search } } : {}),
+        },
       });
       return res.names.__typename === 'NameConnector' ? res.names.nodes : [];
     },

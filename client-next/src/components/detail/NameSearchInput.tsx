@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Autocomplete, TextField } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import type { NameFilterInput } from '@/gql/schema';
 import { useTranslation } from '@/intl';
+import { Label } from '@/components/ui/label';
+import { SearchSelect } from '@/components/SearchSelect';
 import { nameSearchQueryOptions } from '@/features/names/queries';
 import type { NameRowFragment } from '@/features/names/names.generated';
 
@@ -45,27 +46,22 @@ export function NameSearchInput({
   });
 
   return (
-    <Autocomplete
-      fullWidth
-      disabled={disabled}
-      value={value}
-      options={data}
-      filterOptions={x => x}
-      getOptionLabel={o => `${o.code}  ${o.name}`}
-      isOptionEqualToValue={(o, v) => o.id === v.id}
-      loading={isFetching}
-      loadingText={t('messages.loading')}
-      noOptionsText={t('messages.no-results')}
-      onChange={(_, v) => onChange(v)}
-      onInputChange={(_, v) => setInput(v)}
-      renderInput={params => (
-        <TextField
-          {...params}
-          autoFocus={autoFocus}
-          label={label}
-          placeholder={t('placeholder.search')}
-        />
-      )}
-    />
+    <div className="grid gap-1.5">
+      <Label>{label}</Label>
+      <SearchSelect
+        disabled={disabled}
+        autoFocus={autoFocus}
+        value={value}
+        options={data}
+        getOptionLabel={o => `${o.code}  ${o.name}`}
+        getOptionKey={o => o.id}
+        onInputChange={setInput}
+        loading={isFetching}
+        loadingText={t('messages.loading')}
+        noOptionsText={t('messages.no-results')}
+        placeholder={t('placeholder.search')}
+        onChange={onChange}
+      />
+    </div>
   );
 }

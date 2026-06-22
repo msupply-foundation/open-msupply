@@ -2,39 +2,42 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
-import {
-  Box,
-  Button,
-  IconButton,
-  Paper,
-  Snackbar,
-  Alert,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { PlusIcon, Trash2Icon } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   RequisitionNodeType,
   RequisitionNodeStatus,
   UpdateRequestRequisitionStatusInput,
 } from '@/gql/schema';
 import { useTranslation } from '@/intl';
+import { useIsPhone } from '@/hooks/useMediaQuery';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { DetailHeaderBar } from '@/components/detail/DetailHeaderBar';
 import { StatusBar } from '@/components/detail/StatusBar';
 import { LineEditDialog } from '@/components/detail/LineEditDialog';
 import { ItemSearchInput } from '@/components/detail/ItemSearchInput';
 import { useConfirm } from '@/components/detail/useConfirm';
-import { INPUT_BASE, inputStyle, makeNonNegativeValidator, numericField } from '@/components/detail/inputs';
+import {
+  INPUT_BASE,
+  inputStyle,
+  makeNonNegativeValidator,
+  numericField,
+} from '@/components/detail/inputs';
 import type { ItemOptionFragment } from '@/features/items/items.generated';
 import { useRequisitionStatusName } from './status';
 import { requisitionStatusFlow, requisitionReachedAt } from './statusFlow';
@@ -61,8 +64,8 @@ export function InternalOrderDetailPage() {
     enabled: Boolean(storeId),
   });
 
-  if (isLoading) return <Typography>{t('messages.loading')}</Typography>;
-  if (!data) return <Typography>{t('messages.requisition-not-found')}</Typography>;
+  if (isLoading) return <p>{t('messages.loading')}</p>;
+  if (!data) return <p>{t('messages.requisition-not-found')}</p>;
 
   return <RequestEditor storeId={storeId} requisition={data} />;
 }
@@ -89,12 +92,10 @@ function CardField({
   children: ReactNode;
 }) {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, minWidth: 0 }}>
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
       {children}
-    </Box>
+    </div>
   );
 }
 
@@ -109,19 +110,17 @@ function RequestEditor({
   const queryClient = useQueryClient();
   const statusName = useRequisitionStatusName();
   const { confirm, dialog } = useConfirm();
-  const theme = useTheme();
-  const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
+  const isPhone = useIsPhone();
 
   const flow = requisitionStatusFlow(RequisitionNodeType.Request);
   const editable = flow.editable.includes(requisition.status);
   const lines = requisition.lines.nodes;
-  const linesById = useMemo(
-    () => new Map(lines.map(l => [l.id, l])),
-    [lines],
-  );
+  const linesById = useMemo(() => new Map(lines.map(l => [l.id, l])), [lines]);
 
   const defaultValues = useMemo<FormValues>(
-    () => ({ lines: Object.fromEntries(lines.map(l => [l.id, toLineForm(l)])) }),
+    () => ({
+      lines: Object.fromEntries(lines.map(l => [l.id, toLineForm(l)])),
+    }),
     [lines],
   );
 
@@ -132,11 +131,12 @@ function RequestEditor({
     formState: { dirtyFields, isDirty, errors },
   } = useForm<FormValues>({ defaultValues, mode: 'onChange' });
 
-  // Header fields are controlled (MUI inputs) and tracked separately from the
+  // Header fields are controlled and tracked separately from the
   // line grid; both feed the single Save.
-  const [theirReference, setTheirReference] = useState(requisition.theirReference ?? '');
+  const [theirReference, setTheirReference] = useState(
+    requisition.theirReference ?? '',
+  );
   const [comment, setComment] = useState(requisition.comment ?? '');
-  const [snackbar, setSnackbar] = useState<string | null>(null);
 
   // Re-baseline the form whenever the document refetches (after a save/status change).
   useEffect(() => {
@@ -145,7 +145,10 @@ function RequestEditor({
     setComment(requisition.comment ?? '');
   }, [requisition, defaultValues, reset]);
 
-  const numeric = useMemo(() => ({ validate: makeNonNegativeValidator(t) }), [t]);
+  const numeric = useMemo(
+    () => ({ validate: makeNonNegativeValidator(t) }),
+    [t],
+  );
 
   const invalidate = () =>
     queryClient.invalidateQueries({
@@ -200,7 +203,7 @@ function RequestEditor({
     },
     onSuccess: errs => {
       invalidate();
-      if (errs.length) setSnackbar(errs.join(' '));
+      if (errs.length) toast.error(errs.join(' '));
     },
   });
 
@@ -221,7 +224,7 @@ function RequestEditor({
         throw new Error(res.updateRequestRequisition.error.description);
     },
     onSuccess: invalidate,
-    onError: e => setSnackbar(e instanceof Error ? e.message : String(e)),
+    onError: e => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
   const useSuggested = useMutation({
@@ -230,13 +233,11 @@ function RequestEditor({
         storeId,
         input: { requestRequisitionId: requisition.id },
       });
-      if (
-        res.useSuggestedQuantity.__typename === 'UseSuggestedQuantityError'
-      )
+      if (res.useSuggestedQuantity.__typename === 'UseSuggestedQuantityError')
         throw new Error(res.useSuggestedQuantity.error.description);
     },
     onSuccess: invalidate,
-    onError: e => setSnackbar(e instanceof Error ? e.message : String(e)),
+    onError: e => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
   const deleteLine = useMutation({
@@ -274,7 +275,9 @@ function RequestEditor({
   const summary = [
     t('messages.line-count', { value: lines.length.toLocaleString() }),
     dirtyLineCount || headerDirty
-      ? t('messages.edited-count', { value: dirtyLineCount + (headerDirty ? 1 : 0) })
+      ? t('messages.edited-count', {
+          value: dirtyLineCount + (headerDirty ? 1 : 0),
+        })
       : null,
   ]
     .filter(Boolean)
@@ -283,9 +286,11 @@ function RequestEditor({
   const [addOpen, setAddOpen] = useState(false);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1.5 }}>
+    <div className="flex h-full flex-col gap-3">
       <DetailHeaderBar
-        title={t('heading.internal-order', { number: requisition.requisitionNumber })}
+        title={t('heading.internal-order', {
+          number: requisition.requisitionNumber,
+        })}
         statusLabel={statusName(requisition.status)}
         summary={summary}
         onSave={onSave}
@@ -295,19 +300,19 @@ function RequestEditor({
           editable ? (
             <>
               <Button
-                size="small"
-                color="inherit"
+                size="sm"
+                variant="ghost"
                 onClick={onUseSuggested}
                 disabled={useSuggested.isPending || lines.length === 0}
               >
                 {t('button.use-suggested')}
               </Button>
               <Button
-                size="small"
-                variant="outlined"
-                startIcon={<AddIcon />}
+                size="sm"
+                variant="outline"
                 onClick={() => setAddOpen(true)}
               >
+                <PlusIcon />
                 {t('button.add-item')}
               </Button>
             </>
@@ -315,95 +320,167 @@ function RequestEditor({
         }
       />
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <TextField
-          label={t('label.supplier-name')}
-          value={requisition.otherPartyName}
-          size="small"
-          disabled
-          sx={{ minWidth: 220 }}
-        />
-        <TextField
-          label={t('label.number')}
-          value={requisition.requisitionNumber}
-          size="small"
-          disabled
-          sx={{ minWidth: 120 }}
-        />
-        <TextField
-          label={t('label.supplier-ref')}
-          value={theirReference}
-          onChange={e => setTheirReference(e.target.value)}
-          size="small"
-          disabled={!editable}
-          sx={{ minWidth: 220 }}
-        />
-        <TextField
-          label={t('label.comment')}
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-          size="small"
-          fullWidth
-          disabled={!editable}
-        />
-      </Stack>
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="grid gap-1.5 sm:min-w-[220px]">
+          <Label>{t('label.supplier-name')}</Label>
+          <Input value={requisition.otherPartyName} disabled />
+        </div>
+        <div className="grid gap-1.5 sm:min-w-[120px]">
+          <Label>{t('label.number')}</Label>
+          <Input value={requisition.requisitionNumber} disabled />
+        </div>
+        <div className="grid gap-1.5 sm:min-w-[220px]">
+          <Label>{t('label.supplier-ref')}</Label>
+          <Input
+            value={theirReference}
+            onChange={e => setTheirReference(e.target.value)}
+            disabled={!editable}
+          />
+        </div>
+        <div className="grid flex-1 gap-1.5">
+          <Label>{t('label.comment')}</Label>
+          <Input
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            disabled={!editable}
+          />
+        </div>
+      </div>
 
-      <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        {isPhone ? (
-          <Box sx={{ p: 1 }}>
-            {lines.map(line => {
-              const lineErr = errors.lines?.[line.id];
-              return (
-                <Paper
-                  key={line.id}
-                  variant="outlined"
-                  sx={{ p: 1.5, mb: 1 }}
-                >
-                  <Stack spacing={1}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'baseline',
-                        gap: 1,
-                      }}
-                    >
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ flex: 1, minWidth: 0 }}
+      {isPhone ? (
+        <div className="min-h-0 flex-1 overflow-auto">
+          {lines.map(line => {
+            const lineErr = errors.lines?.[line.id];
+            return (
+              <div key={line.id} className="mb-2 rounded-md border bg-card p-3">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-baseline gap-2">
+                    <span className="min-w-0 flex-1 text-sm font-semibold">
+                      {line.item.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {line.item.code}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <CardField label={t('label.available-soh')}>
+                      <span className="text-sm">
+                        {line.itemStats.availableStockOnHand.toLocaleString()}
+                      </span>
+                    </CardField>
+                    <CardField label={t('label.amc')}>
+                      <span className="text-sm">
+                        {line.itemStats.averageMonthlyConsumption.toLocaleString()}
+                      </span>
+                    </CardField>
+                    <CardField label={t('label.suggested')}>
+                      <span className="text-sm">
+                        {line.suggestedQuantity.toLocaleString()}
+                      </span>
+                    </CardField>
+                  </div>
+                  <CardField label={t('label.requested')}>
+                    {editable ? (
+                      <input
+                        style={inputStyle(Boolean(lineErr?.requestedQuantity))}
+                        {...numericField(
+                          register(
+                            `lines.${line.id}.requestedQuantity`,
+                            numeric,
+                          ),
+                        )}
+                      />
+                    ) : (
+                      <span className="text-sm">{line.requestedQuantity}</span>
+                    )}
+                  </CardField>
+                  <CardField label={t('label.comment')}>
+                    {editable ? (
+                      <input
+                        style={INPUT_BASE}
+                        {...register(`lines.${line.id}.comment`)}
+                      />
+                    ) : (
+                      <span className="text-sm">{line.comment ?? ''}</span>
+                    )}
+                  </CardField>
+                  {editable ? (
+                    <div className="flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => onDeleteLine(line)}
                       >
-                        {line.item.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {line.item.code}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr 1fr',
-                        gap: 1,
-                      }}
-                    >
-                      <CardField label={t('label.available-soh')}>
-                        <Typography variant="body2">
-                          {line.itemStats.availableStockOnHand.toLocaleString()}
-                        </Typography>
-                      </CardField>
-                      <CardField label={t('label.amc')}>
-                        <Typography variant="body2">
-                          {line.itemStats.averageMonthlyConsumption.toLocaleString()}
-                        </Typography>
-                      </CardField>
-                      <CardField label={t('label.suggested')}>
-                        <Typography variant="body2">
-                          {line.suggestedQuantity.toLocaleString()}
-                        </Typography>
-                      </CardField>
-                    </Box>
-                    <CardField label={t('label.requested')}>
+                        <Trash2Icon />
+                        {t('button.delete')}
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+          {lines.length === 0 ? (
+            <p className="px-1 py-4 text-muted-foreground">
+              {t('messages.no-lines')}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-auto rounded-md border bg-card">
+          <Table>
+            <TableHeader className="sticky top-0 z-10 bg-card">
+              <TableRow>
+                <TableHead className="font-semibold">
+                  {t('label.code')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.name')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.unit')}
+                </TableHead>
+                <TableHead className="text-right font-semibold">
+                  {t('label.available-soh')}
+                </TableHead>
+                <TableHead className="text-right font-semibold">
+                  {t('label.amc')}
+                </TableHead>
+                <TableHead className="text-right font-semibold">
+                  {t('label.suggested')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.requested')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.comment')}
+                </TableHead>
+                {editable ? <TableHead className="w-px" /> : null}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {lines.map(line => {
+                const lineErr = errors.lines?.[line.id];
+                return (
+                  <TableRow key={line.id}>
+                    <TableCell>{line.item.code}</TableCell>
+                    <TableCell>{line.item.name}</TableCell>
+                    <TableCell>{line.item.unitName ?? ''}</TableCell>
+                    <TableCell className="text-right">
+                      {line.itemStats.availableStockOnHand.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {line.itemStats.averageMonthlyConsumption.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {line.suggestedQuantity.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="w-[110px]">
                       {editable ? (
                         <input
-                          style={inputStyle(Boolean(lineErr?.requestedQuantity))}
+                          style={inputStyle(
+                            Boolean(lineErr?.requestedQuantity),
+                          )}
                           {...numericField(
                             register(
                               `lines.${line.id}.requestedQuantity`,
@@ -412,114 +489,33 @@ function RequestEditor({
                           )}
                         />
                       ) : (
-                        <Typography variant="body2">
-                          {line.requestedQuantity}
-                        </Typography>
-                      )}
-                    </CardField>
-                    <CardField label={t('label.comment')}>
-                      {editable ? (
-                        <input
-                          style={INPUT_BASE}
-                          {...register(`lines.${line.id}.comment`)}
-                        />
-                      ) : (
-                        <Typography variant="body2">
-                          {line.comment ?? ''}
-                        </Typography>
-                      )}
-                    </CardField>
-                    {editable ? (
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button
-                          size="small"
-                          color="error"
-                          startIcon={<DeleteIcon fontSize="small" />}
-                          onClick={() => onDeleteLine(line)}
-                        >
-                          {t('button.delete')}
-                        </Button>
-                      </Box>
-                    ) : null}
-                  </Stack>
-                </Paper>
-              );
-            })}
-            {lines.length === 0 ? (
-              <Typography color="text.secondary" sx={{ py: 2, px: 1 }}>
-                {t('messages.no-lines')}
-              </Typography>
-            ) : null}
-          </Box>
-        ) : (
-          <Table stickyHeader size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.unit')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
-                  {t('label.available-soh')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
-                  {t('label.amc')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
-                  {t('label.suggested')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.requested')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.comment')}</TableCell>
-                {editable ? <TableCell padding="checkbox" /> : null}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {lines.map(line => {
-                const lineErr = errors.lines?.[line.id];
-                return (
-                  <TableRow key={line.id} hover>
-                    <TableCell>{line.item.code}</TableCell>
-                    <TableCell>{line.item.name}</TableCell>
-                    <TableCell>{line.item.unitName ?? ''}</TableCell>
-                    <TableCell align="right">
-                      {line.itemStats.availableStockOnHand.toLocaleString()}
-                    </TableCell>
-                    <TableCell align="right">
-                      {line.itemStats.averageMonthlyConsumption.toLocaleString()}
-                    </TableCell>
-                    <TableCell align="right">
-                      {line.suggestedQuantity.toLocaleString()}
-                    </TableCell>
-                    <TableCell sx={{ width: 110 }}>
-                      {editable ? (
-                        <input
-                          style={inputStyle(Boolean(lineErr?.requestedQuantity))}
-                          {...numericField(
-                            register(`lines.${line.id}.requestedQuantity`, numeric),
-                          )}
-                        />
-                      ) : (
                         line.requestedQuantity
                       )}
                     </TableCell>
-                    <TableCell sx={{ width: 200 }}>
+                    <TableCell className="w-[200px]">
                       {editable ? (
                         <input
                           style={INPUT_BASE}
                           {...register(`lines.${line.id}.comment`)}
                         />
                       ) : (
-                        line.comment ?? ''
+                        (line.comment ?? '')
                       )}
                     </TableCell>
                     {editable ? (
-                      <TableCell padding="checkbox">
-                        <Tooltip title={t('button.delete')}>
-                          <IconButton
-                            size="small"
-                            onClick={() => onDeleteLine(line)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                      <TableCell className="w-px">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              onClick={() => onDeleteLine(line)}
+                              aria-label={t('button.delete')}
+                            >
+                              <Trash2Icon />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t('button.delete')}</TooltipContent>
                         </Tooltip>
                       </TableCell>
                     ) : null}
@@ -529,16 +525,16 @@ function RequestEditor({
               {lines.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9}>
-                    <Typography color="text.secondary" sx={{ py: 2 }}>
+                    <p className="py-4 text-muted-foreground">
                       {t('messages.no-lines')}
-                    </Typography>
+                    </p>
                   </TableCell>
                 </TableRow>
               ) : null}
             </TableBody>
           </Table>
-        )}
-      </Paper>
+        </div>
+      )}
 
       <StatusBar
         sequence={flow.sequence}
@@ -564,18 +560,7 @@ function RequestEditor({
       />
 
       {dialog}
-
-      <Snackbar
-        open={Boolean(snackbar)}
-        autoHideDuration={8000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="error" variant="filled" onClose={() => setSnackbar(null)}>
-          {snackbar}
-        </Alert>
-      </Snackbar>
-    </Box>
+    </div>
   );
 }
 
@@ -635,7 +620,7 @@ function AddRequestLineDialog({
       okDisabled={!item}
       saving={insert.isPending}
     >
-      <Stack spacing={2} sx={{ pt: 1 }}>
+      <div className="flex flex-col gap-4 pt-1">
         <ItemSearchInput
           storeId={storeId}
           value={item}
@@ -643,8 +628,8 @@ function AddRequestLineDialog({
           excludeItemIds={existingItemIds}
           autoFocus
         />
-        {error ? <Alert severity="error">{error}</Alert> : null}
-      </Stack>
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </div>
     </LineEditDialog>
   );
 }

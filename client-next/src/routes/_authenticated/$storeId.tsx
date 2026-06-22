@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { Box, CircularProgress } from '@mui/material';
+import { Spinner } from '@/components/ui/spinner';
 import { AppLayout } from '@/app/AppLayout';
 import { useSession } from '@/app/session';
 import { userStoresQueryOptions } from '@/features/auth/queries';
@@ -66,16 +66,9 @@ function StoreLayout() {
   // session's — avoids flashing the wrong store's data/label on a cold load.
   if (store?.id !== storeId && !match && isLoading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          height: '100vh',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <div className="flex h-screen items-center justify-center">
+        <Spinner className="size-8" />
+      </div>
     );
   }
 

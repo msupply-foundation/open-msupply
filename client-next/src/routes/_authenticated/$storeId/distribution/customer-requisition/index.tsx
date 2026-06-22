@@ -23,7 +23,12 @@ export const Route = createFileRoute(
     const storeId = params.storeId;
     if (storeId) {
       return context.queryClient.ensureQueryData(
-        requisitionListQueryOptions(storeId, 'customer-requisition', customerRequisitionFilter(deps), deps),
+        requisitionListQueryOptions(
+          storeId,
+          'customer-requisition',
+          customerRequisitionFilter(deps),
+          deps,
+        ),
       );
     }
   },

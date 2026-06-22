@@ -1,10 +1,11 @@
 import { useState, type ReactNode } from 'react';
-import MenuIcon from '@mui/icons-material/Menu';
-import { Box, IconButton } from '@mui/material';
+import { MenuIcon } from 'lucide-react';
 import { useTokenRefresh } from '@/app/useTokenRefresh';
 import { useIdleTimeout } from '@/app/useIdleTimeout';
+import { useBranding } from '@/features/branding/useBranding';
 import { NavDrawer } from '@/app/NavDrawer';
 import { SyncModal } from '@/features/sync/SyncModal';
+import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/intl';
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -16,9 +17,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
   // log out after 15 minutes of inactivity.
   useTokenRefresh();
   useIdleTimeout();
+  // Fetch + apply server-distributed org branding (cheap; hash-gated server-side).
+  useBranding();
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh' }}>
+    <div className="flex h-screen">
       <NavDrawer
         mobileOpen={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
@@ -27,35 +30,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <SyncModal open={syncOpen} onClose={() => setSyncOpen(false)} />
 
       {/* No top bar — mobile gets a floating button to open the drawer. */}
-      <IconButton
+      <Button
+        variant="outline"
+        size="icon"
         onClick={() => setMobileNavOpen(true)}
         aria-label={t('label.open-navigation')}
-        sx={{
-          display: { md: 'none' },
-          position: 'fixed',
-          top: 8,
-          left: 8,
-          zIndex: theme => theme.zIndex.appBar,
-          bgcolor: 'background.paper',
-          boxShadow: 2,
-          '&:hover': { bgcolor: 'background.paper' },
-        }}
+        className="fixed start-2 top-2 z-50 bg-background shadow-md md:hidden"
       >
         <MenuIcon />
-      </IconButton>
+      </Button>
 
-      <Box
-        component="main"
-        sx={{
-          flex: 1,
-          overflow: 'auto',
-          minWidth: 0,
-          p: 3,
-          pt: { xs: 7, md: 3 }, // clear the floating menu button on mobile
-        }}
-      >
+      <main className="min-w-0 flex-1 overflow-auto p-6 pt-16 md:pt-6">
         {children}
-      </Box>
-    </Box>
+      </main>
+    </div>
   );
 }

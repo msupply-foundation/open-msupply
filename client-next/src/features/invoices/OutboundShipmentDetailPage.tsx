@@ -2,31 +2,8 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useForm, type UseFormRegister } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
-import {
-  Box,
-  Button,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Snackbar,
-  Alert,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { PlusIcon, Trash2Icon } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   InvoiceNodeType,
   type InvoiceNodeStatus,
@@ -34,6 +11,30 @@ import {
 } from '@/gql/schema';
 import { useTranslation } from '@/intl';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { useIsPhone } from '@/hooks/useMediaQuery';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { DetailHeaderBar } from '@/components/detail/DetailHeaderBar';
 import { StatusBar } from '@/components/detail/StatusBar';
 import { LineEditDialog } from '@/components/detail/LineEditDialog';
@@ -82,8 +83,8 @@ export function OutboundShipmentDetailPage() {
     enabled: Boolean(storeId),
   });
 
-  if (isLoading) return <Typography>{t('messages.loading')}</Typography>;
-  if (!data) return <Typography>{t('messages.invoice-not-found')}</Typography>;
+  if (isLoading) return <p>{t('messages.loading')}</p>;
+  if (!data) return <p>{t('messages.invoice-not-found')}</p>;
 
   return <OutboundEditor storeId={storeId} invoice={data} />;
 }
@@ -110,19 +111,17 @@ function OutboundEditor({
   const queryClient = useQueryClient();
   const statusName = useInvoiceStatusName();
   const { confirm, dialog } = useConfirm();
-  const theme = useTheme();
-  const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
+  const isPhone = useIsPhone();
 
   const flow = invoiceStatusFlow(InvoiceNodeType.OutboundShipment);
   const editable = flow.editable.includes(invoice.status);
   const lines = invoice.lines.nodes;
-  const linesById = useMemo(
-    () => new Map(lines.map(l => [l.id, l])),
-    [lines],
-  );
+  const linesById = useMemo(() => new Map(lines.map(l => [l.id, l])), [lines]);
 
   const defaultValues = useMemo<FormValues>(
-    () => ({ lines: Object.fromEntries(lines.map(l => [l.id, toLineForm(l)])) }),
+    () => ({
+      lines: Object.fromEntries(lines.map(l => [l.id, toLineForm(l)])),
+    }),
     [lines],
   );
 
@@ -133,13 +132,12 @@ function OutboundEditor({
     formState: { dirtyFields, isDirty, errors },
   } = useForm<FormValues>({ defaultValues, mode: 'onChange' });
 
-  // Header fields are controlled (MUI inputs) and tracked separately from the
-  // line grid; both feed the single Save.
+  // Header fields are controlled and tracked separately from the line grid;
+  // both feed the single Save.
   const [theirReference, setTheirReference] = useState(
     invoice.theirReference ?? '',
   );
   const [comment, setComment] = useState(invoice.comment ?? '');
-  const [snackbar, setSnackbar] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
   // Re-baseline the form whenever the document refetches (after a save/status change).
@@ -149,7 +147,10 @@ function OutboundEditor({
     setComment(invoice.comment ?? '');
   }, [invoice, defaultValues, reset]);
 
-  const numeric = useMemo(() => ({ validate: makeNonNegativeValidator(t) }), [t]);
+  const numeric = useMemo(
+    () => ({ validate: makeNonNegativeValidator(t) }),
+    [t],
+  );
 
   const invalidate = () =>
     queryClient.invalidateQueries({
@@ -200,7 +201,7 @@ function OutboundEditor({
     },
     onSuccess: errs => {
       invalidate();
-      if (errs.length) setSnackbar(errs.join(' '));
+      if (errs.length) toast.error(errs.join(' '));
     },
   });
 
@@ -219,7 +220,7 @@ function OutboundEditor({
         throw new Error(r.error.description);
     },
     onSuccess: invalidate,
-    onError: e => setSnackbar(e instanceof Error ? e.message : String(e)),
+    onError: e => toast.error(e instanceof Error ? e.message : String(e)),
   });
 
   const toggleHold = useMutation({
@@ -279,9 +280,11 @@ function OutboundEditor({
     .join(' · ');
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1.5 }}>
+    <div className="flex h-full flex-col gap-3">
       <DetailHeaderBar
-        title={t('heading.outbound-shipment', { number: invoice.invoiceNumber })}
+        title={t('heading.outbound-shipment', {
+          number: invoice.invoiceNumber,
+        })}
         statusLabel={statusName(invoice.status)}
         summary={summary}
         onSave={onSave}
@@ -291,19 +294,19 @@ function OutboundEditor({
           editable ? (
             <>
               <Button
-                size="small"
-                color="inherit"
+                size="sm"
+                variant="ghost"
                 onClick={onToggleHold}
                 disabled={toggleHold.isPending}
               >
                 {invoice.onHold ? t('button.take-off-hold') : t('button.hold')}
               </Button>
               <Button
-                size="small"
-                variant="outlined"
-                startIcon={<AddIcon />}
+                size="sm"
+                variant="outline"
                 onClick={() => setAddOpen(true)}
               >
+                <PlusIcon />
                 {t('button.add-item')}
               </Button>
             </>
@@ -311,34 +314,31 @@ function OutboundEditor({
         }
       />
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <TextField
-          label={t('label.customer-name')}
-          value={invoice.otherPartyName}
-          size="small"
-          disabled
-          sx={{ minWidth: 220 }}
-        />
-        <TextField
-          label={t('label.customer-ref')}
-          value={theirReference}
-          onChange={e => setTheirReference(e.target.value)}
-          size="small"
-          disabled={!editable}
-          sx={{ minWidth: 220 }}
-        />
-        <TextField
-          label={t('label.comment')}
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-          size="small"
-          fullWidth
-          disabled={!editable}
-        />
-      </Stack>
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="grid gap-1.5 sm:min-w-[220px]">
+          <Label>{t('label.customer-name')}</Label>
+          <Input value={invoice.otherPartyName} disabled />
+        </div>
+        <div className="grid gap-1.5 sm:min-w-[220px]">
+          <Label>{t('label.customer-ref')}</Label>
+          <Input
+            value={theirReference}
+            onChange={e => setTheirReference(e.target.value)}
+            disabled={!editable}
+          />
+        </div>
+        <div className="grid flex-1 gap-1.5">
+          <Label>{t('label.comment')}</Label>
+          <Input
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            disabled={!editable}
+          />
+        </div>
+      </div>
 
       {isPhone ? (
-        <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div className="min-h-0 flex-1 overflow-auto">
           {lines.map(line => (
             <OutboundLineCard
               key={line.id}
@@ -350,40 +350,54 @@ function OutboundEditor({
             />
           ))}
           {lines.length === 0 ? (
-            <Typography color="text.secondary" sx={{ py: 2 }}>
+            <p className="py-4 text-muted-foreground">
               {t('messages.no-lines')}
-            </Typography>
+            </p>
           ) : null}
-        </Box>
+        </div>
       ) : (
-        <Paper variant="outlined" sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          <Table stickyHeader size="small">
-            <TableHead>
+        <div className="min-h-0 flex-1 overflow-auto rounded-md border bg-card">
+          <Table>
+            <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.code')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.name')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.batch')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.expiry')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.pack-size')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.pack-quantity')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{t('label.price-per-pack')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
+                <TableHead className="font-semibold">
+                  {t('label.code')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.name')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.batch')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.expiry')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.pack-size')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.pack-quantity')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {t('label.price-per-pack')}
+                </TableHead>
+                <TableHead className="text-right font-semibold">
                   {t('label.total')}
-                </TableCell>
-                {editable ? <TableCell padding="checkbox" /> : null}
+                </TableHead>
+                {editable ? <TableHead className="w-px" /> : null}
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {lines.map(line => {
                 const lineErr = errors.lines?.[line.id];
                 return (
-                  <TableRow key={line.id} hover>
+                  <TableRow key={line.id}>
                     <TableCell>{line.item.code}</TableCell>
                     <TableCell>{line.item.name}</TableCell>
                     <TableCell>{line.batch ?? ''}</TableCell>
                     <TableCell>{line.expiryDate ?? ''}</TableCell>
                     <TableCell>{line.packSize}</TableCell>
-                    <TableCell sx={{ width: 90 }}>
+                    <TableCell className="w-[90px]">
                       {editable ? (
                         <input
                           style={inputStyle(Boolean(lineErr?.numberOfPacks))}
@@ -395,19 +409,28 @@ function OutboundEditor({
                         line.numberOfPacks
                       )}
                     </TableCell>
-                    <TableCell>{formatCurrency(line.sellPricePerPack)}</TableCell>
-                    <TableCell align="right">
-                      {formatCurrency(line.sellPricePerPack * line.numberOfPacks)}
+                    <TableCell>
+                      {formatCurrency(line.sellPricePerPack)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(
+                        line.sellPricePerPack * line.numberOfPacks,
+                      )}
                     </TableCell>
                     {editable ? (
-                      <TableCell padding="checkbox">
-                        <Tooltip title={t('button.delete')}>
-                          <IconButton
-                            size="small"
-                            onClick={() => onDeleteLine(line)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                      <TableCell className="w-px">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon-sm"
+                              variant="ghost"
+                              onClick={() => onDeleteLine(line)}
+                              aria-label={t('button.delete')}
+                            >
+                              <Trash2Icon />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t('button.delete')}</TooltipContent>
                         </Tooltip>
                       </TableCell>
                     ) : null}
@@ -417,15 +440,15 @@ function OutboundEditor({
               {lines.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9}>
-                    <Typography color="text.secondary" sx={{ py: 2 }}>
+                    <p className="py-4 text-muted-foreground">
                       {t('messages.no-lines')}
-                    </Typography>
+                    </p>
                   </TableCell>
                 </TableRow>
               ) : null}
             </TableBody>
           </Table>
-        </Paper>
+        </div>
       )}
 
       <StatusBar
@@ -451,29 +474,16 @@ function OutboundEditor({
       />
 
       {dialog}
-
-      <Snackbar
-        open={Boolean(snackbar)}
-        autoHideDuration={8000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="error" variant="filled" onClose={() => setSnackbar(null)}>
-          {snackbar}
-        </Alert>
-      </Snackbar>
-    </Box>
+    </div>
   );
 }
 
 function CardRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, minWidth: 0 }}>
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
       {children}
-    </Box>
+    </div>
   );
 }
 
@@ -495,40 +505,39 @@ function OutboundLineCard({
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
-  const numeric = useMemo(() => ({ validate: makeNonNegativeValidator(t) }), [t]);
+  const numeric = useMemo(
+    () => ({ validate: makeNonNegativeValidator(t) }),
+    [t],
+  );
   return (
-    <Paper variant="outlined" sx={{ p: 1.5, mb: 1 }}>
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2">{line.item.name}</Typography>
-          <Typography variant="caption" color="text.secondary">
+    <div className="mb-2 rounded-md border bg-card p-3">
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <span className="text-sm font-semibold">{line.item.name}</span>
+          <span className="block text-xs text-muted-foreground">
             {line.item.code}
-          </Typography>
-        </Box>
+          </span>
+        </div>
         {editable ? (
-          <Tooltip title={t('button.delete')}>
-            <IconButton size="small" onClick={onDelete}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={onDelete}
+            aria-label={t('button.delete')}
+          >
+            <Trash2Icon />
+          </Button>
         ) : null}
-      </Box>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 1,
-          mt: 1,
-        }}
-      >
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2">
         <CardRow label={t('label.batch')}>
-          <Typography variant="body2">{line.batch ?? '—'}</Typography>
+          <span className="text-sm">{line.batch ?? '—'}</span>
         </CardRow>
         <CardRow label={t('label.expiry')}>
-          <Typography variant="body2">{line.expiryDate ?? '—'}</Typography>
+          <span className="text-sm">{line.expiryDate ?? '—'}</span>
         </CardRow>
         <CardRow label={t('label.pack-size')}>
-          <Typography variant="body2">{line.packSize}</Typography>
+          <span className="text-sm">{line.packSize}</span>
         </CardRow>
         <CardRow label={t('label.pack-quantity')}>
           {editable ? (
@@ -539,23 +548,25 @@ function OutboundLineCard({
               )}
             />
           ) : (
-            <Typography variant="body2">{line.numberOfPacks}</Typography>
+            <span className="text-sm">{line.numberOfPacks}</span>
           )}
         </CardRow>
         <CardRow label={t('label.price-per-pack')}>
-          <Typography variant="body2">
+          <span className="text-sm">
             {formatCurrency(line.sellPricePerPack)}
-          </Typography>
+          </span>
         </CardRow>
         <CardRow label={t('label.total')}>
-          <Typography variant="body2">
+          <span className="text-sm">
             {formatCurrency(line.sellPricePerPack * line.numberOfPacks)}
-          </Typography>
+          </span>
         </CardRow>
-      </Box>
-    </Paper>
+      </div>
+    </div>
   );
 }
+
+const NONE = 'none';
 
 // Add an outbound line: pick an item, then a specific available batch (stock
 // line), then the number of packs to issue (capped at what's available). This
@@ -630,7 +641,7 @@ function AddOutboundLineDialog({
       okDisabled={!valid}
       saving={insert.isPending}
     >
-      <Stack spacing={2} sx={{ pt: 1 }}>
+      <div className="flex flex-col gap-4 pt-1">
         <ItemSearchInput
           storeId={storeId}
           value={item}
@@ -642,45 +653,50 @@ function AddOutboundLineDialog({
           autoFocus
         />
         {item ? (
-          <FormControl
-            fullWidth
-            size="small"
-            disabled={isFetching || stockLines.length === 0}
-          >
-            <InputLabel>{t('label.batch')}</InputLabel>
+          <div className="grid gap-1.5">
+            <Label>{t('label.batch')}</Label>
             <Select
-              label={t('label.batch')}
-              value={stockLineId}
-              onChange={e => setStockLineId(e.target.value)}
+              value={stockLineId === '' ? NONE : stockLineId}
+              onValueChange={v => setStockLineId(v === NONE ? '' : v)}
+              disabled={isFetching || stockLines.length === 0}
             >
-              {stockLines.map(s => (
-                <MenuItem key={s.id} value={s.id}>
-                  {(s.batch || '—') +
-                    ` · ${t('label.expiry')} ${formatDate(s.expiryDate) || '—'}` +
-                    ` · ${s.availableNumberOfPacks} ${t('label.available-packs')}` +
-                    ` · ${t('label.pack-size')} ${s.packSize}`}
-                </MenuItem>
-              ))}
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {stockLines.map(s => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {(s.batch || '—') +
+                      ` · ${t('label.expiry')} ${formatDate(s.expiryDate) || '—'}` +
+                      ` · ${s.availableNumberOfPacks} ${t('label.available-packs')}` +
+                      ` · ${t('label.pack-size')} ${s.packSize}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
-          </FormControl>
+          </div>
         ) : null}
         {item && !isFetching && stockLines.length === 0 ? (
-          <Alert severity="info">{t('messages.no-results')}</Alert>
+          <p className="text-sm text-muted-foreground">
+            {t('messages.no-results')}
+          </p>
         ) : null}
         {selected ? (
-          <TextField
-            label={t('label.pack-quantity')}
-            value={numberOfPacks}
-            onChange={e => setNumberOfPacks(sanitizeNumeric(e.target.value))}
-            size="small"
-            fullWidth
-            inputMode="decimal"
-            error={packs > maxPacks}
-            helperText={`${t('label.available-packs')}: ${maxPacks}`}
-          />
+          <div className="grid gap-1.5">
+            <Label>{t('label.pack-quantity')}</Label>
+            <Input
+              value={numberOfPacks}
+              onChange={e => setNumberOfPacks(sanitizeNumeric(e.target.value))}
+              inputMode="decimal"
+              aria-invalid={packs > maxPacks}
+            />
+            <span className="text-xs text-muted-foreground">
+              {`${t('label.available-packs')}: ${maxPacks}`}
+            </span>
+          </div>
         ) : null}
-        {error ? <Alert severity="error">{error}</Alert> : null}
-      </Stack>
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </div>
     </LineEditDialog>
   );
 }

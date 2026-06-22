@@ -23,7 +23,12 @@ export const Route = createFileRoute(
     const storeId = params.storeId;
     if (storeId) {
       return context.queryClient.ensureQueryData(
-        invoiceListQueryOptions(storeId, 'inbound-shipment', inboundFilter(deps), deps),
+        invoiceListQueryOptions(
+          storeId,
+          'inbound-shipment',
+          inboundFilter(deps),
+          deps,
+        ),
       );
     }
   },

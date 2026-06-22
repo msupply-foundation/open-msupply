@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { InputAdornment, TextField } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import { SearchIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 interface SearchFieldProps {
   /** Current committed value (from the URL search state). */
@@ -35,21 +35,14 @@ export function SearchField({
   };
 
   return (
-    <TextField
-      size="small"
-      value={local}
-      placeholder={placeholder}
-      onChange={e => handle(e.target.value)}
-      sx={{ width: 260 }}
-      slotProps={{
-        input: {
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon fontSize="small" />
-            </InputAdornment>
-          ),
-        },
-      }}
-    />
+    <div className="relative w-[260px]">
+      <SearchIcon className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        value={local}
+        placeholder={placeholder}
+        onChange={e => handle(e.target.value)}
+        className="ps-8"
+      />
+    </div>
   );
 }

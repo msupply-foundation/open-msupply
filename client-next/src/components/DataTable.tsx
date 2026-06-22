@@ -1,14 +1,14 @@
+import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from 'lucide-react';
+import { flexRender, type Table as TanstackTable } from '@tanstack/react-table';
+import { cn } from '@/lib/utils';
 import {
-  Paper,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  TableSortLabel,
-} from '@mui/material';
-import { flexRender, type Table as TanstackTable } from '@tanstack/react-table';
+} from '@/components/ui/table';
 
 interface DataTableProps<T> {
   table: TanstackTable<T>;
@@ -16,54 +16,67 @@ interface DataTableProps<T> {
 }
 
 /**
- * Lean headless table renderer (TanStack Table + MUI). The page owns all state
- * (sorting/pagination wired to URL search params); this just renders.
+ * Lean headless table renderer (TanStack Table + shadcn Table). The page owns
+ * all state (sorting/pagination wired to URL search params); this just renders.
  */
 export function DataTable<T>({ table, onRowClick }: DataTableProps<T>) {
   return (
-    <TableContainer component={Paper} sx={{ flex: 1, overflow: 'auto' }}>
-      <Table stickyHeader size="small">
-        <TableHead>
+    <div className="flex-1 overflow-auto rounded-md border bg-card">
+      <Table>
+        <TableHeader className="sticky top-0 z-10 bg-card">
           {table.getHeaderGroups().map(headerGroup => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map(header => {
                 const sorted = header.column.getIsSorted();
+                const canSort = header.column.getCanSort();
                 return (
-                  <TableCell
+                  <TableHead
                     key={header.id}
-                    sortDirection={sorted || false}
-                    sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
+                    aria-sort={
+                      sorted === 'asc'
+                        ? 'ascending'
+                        : sorted === 'desc'
+                          ? 'descending'
+                          : undefined
+                    }
+                    className="font-semibold whitespace-nowrap"
                   >
-                    {header.column.getCanSort() ? (
-                      <TableSortLabel
-                        active={Boolean(sorted)}
-                        direction={sorted === 'desc' ? 'desc' : 'asc'}
+                    {canSort ? (
+                      <button
+                        type="button"
                         onClick={header.column.getToggleSortingHandler()}
+                        className="-mx-1 flex items-center gap-1 rounded px-1 hover:text-foreground"
                       >
                         {flexRender(
                           header.column.columnDef.header,
                           header.getContext(),
                         )}
-                      </TableSortLabel>
+                        {sorted === 'asc' ? (
+                          <ArrowUpIcon className="size-3.5" />
+                        ) : sorted === 'desc' ? (
+                          <ArrowDownIcon className="size-3.5" />
+                        ) : (
+                          <ChevronsUpDownIcon className="size-3.5 opacity-40" />
+                        )}
+                      </button>
                     ) : (
                       flexRender(
                         header.column.columnDef.header,
                         header.getContext(),
                       )
                     )}
-                  </TableCell>
+                  </TableHead>
                 );
               })}
             </TableRow>
           ))}
-        </TableHead>
+        </TableHeader>
         <TableBody>
           {table.getRowModel().rows.map(row => (
             <TableRow
               key={row.id}
-              hover
               onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-              sx={{ cursor: onRowClick ? 'pointer' : 'default' }}
+              className={cn(onRowClick && 'cursor-pointer')}
             >
               {row.getVisibleCells().map(cell => (
                 <TableCell key={cell.id}>
@@ -74,6 +87,6 @@ export function DataTable<T>({ table, onRowClick }: DataTableProps<T>) {
           ))}
         </TableBody>
       </Table>
-    </TableContainer>
+    </div>
   );
 }

@@ -87,6 +87,8 @@
     "central-server": "Central server",
     "store": "Store",
     "open-navigation": "Open navigation",
+    "rows-per-page": "Rows per page",
+    "pagination-range": "{{from}}–{{to}} of {{count}}",
 
     "code": "Code",
     "name": "Name",

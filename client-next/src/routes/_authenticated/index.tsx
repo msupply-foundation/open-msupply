@@ -21,8 +21,7 @@ export const Route = createFileRoute('/_authenticated/')({
         const { user, stores, defaultStoreId } =
           await queryClient.ensureQueryData(userStoresQueryOptions());
         if (!session.user) session.setUser(user); // repair a partial cookie
-        const resolved =
-          stores.find(s => s.id === defaultStoreId) ?? stores[0];
+        const resolved = stores.find(s => s.id === defaultStoreId) ?? stores[0];
         if (resolved) {
           session.setStores(stores);
           session.setStore(resolved); // also repairs the cookie's store

@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/PlaceholderPage";
+import { createFileRoute } from '@tanstack/react-router';
+import { PlaceholderPage } from '@/components/PlaceholderPage';
 
-export const Route = createFileRoute("/_authenticated/$storeId/settings")({
+export const Route = createFileRoute('/_authenticated/$storeId/settings')({
   component: () => <PlaceholderPage titleKey="app.settings" />,
 });

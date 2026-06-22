@@ -1,17 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Alert,
-  Box,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  LinearProgress,
-  Typography,
-} from '@mui/material';
 import { format } from 'date-fns';
 import { useTranslation } from '@/intl';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { syncSdk } from './api';
 import { syncKeys, syncStatusQueryOptions } from './queries';
 
@@ -50,27 +47,33 @@ export function SyncModal({
   const records = status?.numberOfRecordsInPushQueue ?? 0;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>{t('app.sync')}</DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 1 }}>
-          <Typography>
+    <Dialog open={open} onOpenChange={next => (next ? undefined : onClose())}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t('app.sync')}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-4 py-1">
+          <p>
             {busy
               ? t('messages.syncing')
               : records > 0
                 ? t('messages.records-to-push', { value: records })
                 : t('messages.no-records-to-push')}
-          </Typography>
+          </p>
 
-          {busy ? <LinearProgress /> : null}
-
-          {status?.errorMessage ? (
-            <Alert severity="error" sx={{ whiteSpace: 'pre-wrap' }}>
-              {status.errorMessage}
-            </Alert>
+          {busy ? (
+            <div className="h-1 w-full overflow-hidden rounded bg-muted">
+              <div className="h-full w-1/3 animate-pulse rounded bg-primary" />
+            </div>
           ) : null}
 
-          <Typography variant="body2" color="text.secondary">
+          {status?.errorMessage ? (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm whitespace-pre-wrap text-destructive">
+              {status.errorMessage}
+            </p>
+          ) : null}
+
+          <p className="text-sm text-muted-foreground">
             {status?.lastSuccessfulSync
               ? t('messages.last-synced', {
                   time: format(
@@ -79,17 +82,16 @@ export function SyncModal({
                   ),
                 })
               : t('messages.never-synced')}
-          </Typography>
+          </p>
 
           <Button
-            variant="contained"
+            className="self-end"
             onClick={() => sync.mutate()}
             disabled={busy}
-            sx={{ alignSelf: 'flex-end' }}
           >
             {busy ? t('messages.syncing') : t('button.sync-now')}
           </Button>
-        </Box>
+        </div>
       </DialogContent>
     </Dialog>
   );

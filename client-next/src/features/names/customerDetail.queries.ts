@@ -15,7 +15,10 @@ export const customerByIdQueryOptions = (storeId: string, nameId: string) =>
   queryOptions({
     queryKey: customerDetailKeys.detail(storeId, nameId),
     queryFn: async () => {
-      const { names } = await customerDetailSdk.customerById({ storeId, nameId });
+      const { names } = await customerDetailSdk.customerById({
+        storeId,
+        nameId,
+      });
       return names.__typename === 'NameConnector'
         ? (names.nodes[0] ?? null)
         : null;

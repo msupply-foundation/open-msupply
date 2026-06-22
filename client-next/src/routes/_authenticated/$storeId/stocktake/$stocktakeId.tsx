@@ -5,7 +5,9 @@ import {
 } from '@/features/stocktake/queries';
 import { StocktakeDetailPage } from '@/features/stocktake/StocktakeDetailPage';
 
-export const Route = createFileRoute('/_authenticated/$storeId/stocktake/$stocktakeId')({
+export const Route = createFileRoute(
+  '/_authenticated/$storeId/stocktake/$stocktakeId',
+)({
   loader: ({ context, params }) => {
     const storeId = params.storeId;
     if (storeId) {

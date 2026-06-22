@@ -1,13 +1,15 @@
 import { useCallback, useState } from 'react';
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-} from '@mui/material';
 import { useTranslation } from '@/intl';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ConfirmOptions {
   title?: string;
@@ -40,20 +42,29 @@ export function useConfirm() {
   };
 
   const dialog = (
-    <Dialog open={Boolean(state)} onClose={() => close(false)}>
-      {state?.title ? <DialogTitle>{state.title}</DialogTitle> : null}
-      <DialogContent>
-        <DialogContentText sx={{ whiteSpace: 'pre-line' }}>
-          {state?.message}
-        </DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => close(false)}>{t('button.cancel')}</Button>
-        <Button variant="contained" onClick={() => close(true)} autoFocus>
-          {state?.confirmLabel ?? t('button.confirm')}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <AlertDialog
+      open={Boolean(state)}
+      onOpenChange={open => (open ? undefined : close(false))}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {state?.title ?? t('button.confirm')}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="whitespace-pre-line">
+            {state?.message}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => close(false)}>
+            {t('button.cancel')}
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={() => close(true)}>
+            {state?.confirmLabel ?? t('button.confirm')}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 
   return { confirm, dialog };

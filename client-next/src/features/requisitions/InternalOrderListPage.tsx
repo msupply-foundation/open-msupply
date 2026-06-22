@@ -9,22 +9,21 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table';
-import {
-  Alert,
-  Box,
-  Button,
-  FormControl,
-  MenuItem,
-  Select,
-  Stack,
-  TablePagination,
-  TextField,
-  Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import { PlusIcon } from 'lucide-react';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
+import { DataTablePagination } from '@/components/DataTablePagination';
 import { SearchField } from '@/components/SearchField';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { LineEditDialog } from '@/components/detail/LineEditDialog';
 import { NameSearchInput } from '@/components/detail/NameSearchInput';
 import { formatDate } from '@/lib/format';
@@ -36,8 +35,13 @@ import { requestSdk } from '@/features/requisitions/requestDetail.queries';
 import type { RequisitionRowFragment } from '@/features/requisitions/requisitions.generated';
 import type { NameRowFragment } from '@/features/names/names.generated';
 
-const route = getRouteApi('/_authenticated/$storeId/replenishment/internal-order/');
+const route = getRouteApi(
+  '/_authenticated/$storeId/replenishment/internal-order/',
+);
 const helper = createColumnHelper<RequisitionRowFragment>();
+
+// Sentinel for the "all statuses" option (shadcn Select can't use an empty value).
+const ALL = 'all';
 
 // Statuses a requisition moves through (drives the filter dropdown).
 const STATUS_OPTIONS: RequisitionNodeStatus[] = [
@@ -67,28 +71,70 @@ export function InternalOrderListPage() {
 
   const columns = useMemo(
     () => [
-      helper.accessor('otherPartyName', { id: 'otherPartyName', header: t('label.name') }),
-      helper.accessor('theirReference', { id: 'theirReference', header: t('label.reference'), cell: c => c.getValue() ?? '' }),
-      helper.accessor('status', { id: 'status', header: t('label.status'), cell: c => statusName(c.getValue()) }),
-      helper.accessor('requisitionNumber', { id: 'requisitionNumber', header: t('label.number') }),
-      helper.accessor('createdDatetime', { id: 'createdDatetime', header: t('label.created'), cell: c => formatDate(c.getValue()) }),
-      helper.accessor(row => row.lines.totalCount, { id: 'count-rows', header: t('label.count-rows'), enableSorting: false }),
-      helper.accessor('comment', { id: 'comment', header: t('label.comment'), cell: c => c.getValue() ?? '' }),
+      helper.accessor('otherPartyName', {
+        id: 'otherPartyName',
+        header: t('label.name'),
+      }),
+      helper.accessor('theirReference', {
+        id: 'theirReference',
+        header: t('label.reference'),
+        cell: c => c.getValue() ?? '',
+      }),
+      helper.accessor('status', {
+        id: 'status',
+        header: t('label.status'),
+        cell: c => statusName(c.getValue()),
+      }),
+      helper.accessor('requisitionNumber', {
+        id: 'requisitionNumber',
+        header: t('label.number'),
+      }),
+      helper.accessor('createdDatetime', {
+        id: 'createdDatetime',
+        header: t('label.created'),
+        cell: c => formatDate(c.getValue()),
+      }),
+      helper.accessor(row => row.lines.totalCount, {
+        id: 'count-rows',
+        header: t('label.count-rows'),
+        enableSorting: false,
+      }),
+      helper.accessor('comment', {
+        id: 'comment',
+        header: t('label.comment'),
+        cell: c => c.getValue() ?? '',
+      }),
     ],
     [t, statusName],
   );
 
   const sorting: SortingState = [{ id: search.sortKey, desc: search.sortDesc }];
-  const pagination: PaginationState = { pageIndex: search.page - 1, pageSize: search.pageSize };
+  const pagination: PaginationState = {
+    pageIndex: search.page - 1,
+    pageSize: search.pageSize,
+  };
 
   const onSortingChange: OnChangeFn<SortingState> = updater => {
     const next = typeof updater === 'function' ? updater(sorting) : updater;
     const first = next[0];
-    navigate({ search: prev => ({ ...prev, sortKey: first?.id ?? 'createdDatetime', sortDesc: first?.desc ?? false, page: 1 }) });
+    navigate({
+      search: prev => ({
+        ...prev,
+        sortKey: first?.id ?? 'createdDatetime',
+        sortDesc: first?.desc ?? false,
+        page: 1,
+      }),
+    });
   };
   const onPaginationChange: OnChangeFn<PaginationState> = updater => {
     const next = typeof updater === 'function' ? updater(pagination) : updater;
-    navigate({ search: prev => ({ ...prev, page: next.pageIndex + 1, pageSize: next.pageSize }) });
+    navigate({
+      search: prev => ({
+        ...prev,
+        page: next.pageIndex + 1,
+        pageSize: next.pageSize,
+      }),
+    });
   };
 
   const table = useReactTable({
@@ -105,48 +151,55 @@ export function InternalOrderListPage() {
   });
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-        <Typography variant="h5" sx={{ flexGrow: 1 }}>
+    <div className="flex h-full flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="grow text-xl font-semibold">
           {t('app.internal-order')}
-        </Typography>
+        </h1>
         <SearchField
           value={search.search ?? ''}
           onChange={value =>
-            navigate({ search: prev => ({ ...prev, search: value || undefined, page: 1 }) })
+            navigate({
+              search: prev => ({
+                ...prev,
+                search: value || undefined,
+                page: 1,
+              }),
+            })
           }
           placeholder={t('placeholder.search')}
         />
-        <FormControl size="small" sx={{ minWidth: 170 }}>
-          <Select
-            displayEmpty
-            value={search.status ?? ''}
-            onChange={e =>
-              navigate({
-                search: prev => ({
-                  ...prev,
-                  status: (e.target.value || undefined) as RequisitionNodeStatus | undefined,
-                  page: 1,
-                }),
-              })
-            }
-          >
-            <MenuItem value="">{t('label.all-statuses')}</MenuItem>
-            {STATUS_OPTIONS.map(s => (
-              <MenuItem key={s} value={s}>
-                {statusName(s)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateOpen(true)}
+        <Select
+          value={search.status ?? ALL}
+          onValueChange={value =>
+            navigate({
+              search: prev => ({
+                ...prev,
+                status: (value === ALL ? undefined : value) as
+                  | RequisitionNodeStatus
+                  | undefined,
+                page: 1,
+              }),
+            })
+          }
         >
+          <SelectTrigger size="sm" className="min-w-[170px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>{t('label.all-statuses')}</SelectItem>
+            {STATUS_OPTIONS.map(s => (
+              <SelectItem key={s} value={s}>
+                {statusName(s)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button onClick={() => setCreateOpen(true)}>
+          <PlusIcon />
           {t('button.new')}
         </Button>
-      </Box>
+      </div>
 
       <CreateInternalOrderDialog
         open={createOpen}
@@ -162,16 +215,8 @@ export function InternalOrderListPage() {
           })
         }
       />
-      <TablePagination
-        component="div"
-        count={data?.totalCount ?? 0}
-        page={search.page - 1}
-        rowsPerPage={search.pageSize}
-        rowsPerPageOptions={[25, 50, 100]}
-        onPageChange={(_, p) => navigate({ search: prev => ({ ...prev, page: p + 1 }) })}
-        onRowsPerPageChange={e => navigate({ search: prev => ({ ...prev, pageSize: Number(e.target.value), page: 1 }) })}
-      />
-    </Box>
+      <DataTablePagination table={table} />
+    </div>
   );
 }
 
@@ -243,7 +288,7 @@ function CreateInternalOrderDialog({
       okDisabled={!party}
       saving={create.isPending}
     >
-      <Stack spacing={2} sx={{ pt: 1 }}>
+      <div className="flex flex-col gap-4 pt-1">
         <NameSearchInput
           storeId={storeId}
           filter={{ isStore: true, isVisible: true }}
@@ -252,26 +297,26 @@ function CreateInternalOrderDialog({
           label={t('label.supplier-name')}
           autoFocus
         />
-        <Stack direction="row" spacing={2}>
-          <TextField
-            label={t('label.min-months-of-stock')}
-            value={minMonths}
-            onChange={e => setMinMonths(e.target.value)}
-            size="small"
-            fullWidth
-            type="number"
-          />
-          <TextField
-            label={t('label.max-months-of-stock')}
-            value={maxMonths}
-            onChange={e => setMaxMonths(e.target.value)}
-            size="small"
-            fullWidth
-            type="number"
-          />
-        </Stack>
-        {error ? <Alert severity="error">{error}</Alert> : null}
-      </Stack>
+        <div className="flex gap-4">
+          <div className="grid flex-1 gap-1.5">
+            <Label>{t('label.min-months-of-stock')}</Label>
+            <Input
+              type="number"
+              value={minMonths}
+              onChange={e => setMinMonths(e.target.value)}
+            />
+          </div>
+          <div className="grid flex-1 gap-1.5">
+            <Label>{t('label.max-months-of-stock')}</Label>
+            <Input
+              type="number"
+              value={maxMonths}
+              onChange={e => setMaxMonths(e.target.value)}
+            />
+          </div>
+        </div>
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </div>
     </LineEditDialog>
   );
 }

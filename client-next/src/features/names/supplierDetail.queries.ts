@@ -37,10 +37,12 @@ export const supplierPurchaseOrdersQueryOptions = (
   queryOptions({
     queryKey: supplierKeys.purchaseOrders(storeId, nameId),
     queryFn: async () => {
-      const { purchaseOrders } = await supplierDetailSdk.supplierPurchaseOrders({
-        storeId,
-        supplierName,
-      });
+      const { purchaseOrders } = await supplierDetailSdk.supplierPurchaseOrders(
+        {
+          storeId,
+          supplierName,
+        },
+      );
       return purchaseOrders.__typename === 'PurchaseOrderConnector'
         ? purchaseOrders.nodes
         : [];

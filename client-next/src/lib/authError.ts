@@ -33,7 +33,11 @@ export function redirectToLogin(): void {
   useSession.getState().clear();
   void import('@/app/router')
     .then(({ router }) =>
-      router.navigate({ to: '/login', search: { redirect: from }, replace: true }),
+      router.navigate({
+        to: '/login',
+        search: { redirect: from },
+        replace: true,
+      }),
     )
     .finally(() => {
       redirecting = false;

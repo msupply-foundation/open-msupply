@@ -16,20 +16,15 @@ import {
 } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { toast } from 'sonner';
 import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Paper,
-  Snackbar,
-  Stack,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
-import { ReasonOptionNodeType, type UpdateStocktakeLineInput } from '@/gql/schema';
+  ReasonOptionNodeType,
+  type UpdateStocktakeLineInput,
+} from '@/gql/schema';
 import { numericField } from '@/components/detail/inputs';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useIsPhone } from '@/hooks/useMediaQuery';
 import { useTranslation, type TxKey } from '@/intl';
 import type { TFunction } from 'i18next';
 import { stocktakeSdk } from './api';
@@ -163,7 +158,10 @@ function useRowReasons(
   reasons: RowReasons,
 ) {
   const counted = useWatch({ control, name: `lines.${line.id}.counted` });
-  const direction = adjustmentDirection(counted ?? '', line.snapshotNumberOfPacks);
+  const direction = adjustmentDirection(
+    counted ?? '',
+    line.snapshotNumberOfPacks,
+  );
   const list =
     direction === 'positive'
       ? reasons.positive
@@ -274,14 +272,18 @@ function DesktopRow({
   );
 }
 
-function CardField({ label, children }: { label: string; children: ReactNode }) {
+function CardField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, minWidth: 0 }}>
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <span className="text-xs text-muted-foreground">{label}</span>
       {children}
-    </Box>
+    </div>
   );
 }
 
@@ -298,16 +300,14 @@ function MobileCard({
   const numericReg = useMemo(() => ({ validate: makeValidateNonNeg(t) }), [t]);
   const reason = useRowReasons(control, line, reasons);
   return (
-    <Stack spacing={1} sx={{ height: '100%' }}>
-      <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-        <Typography variant="subtitle2" sx={{ ...cell, flex: 1 }}>
+    <div className="flex h-full flex-col gap-2">
+      <div className="flex items-baseline gap-2">
+        <span className="flex-1 truncate text-sm font-semibold">
           {line.item.name}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {line.item.code}
-        </Typography>
-      </Box>
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+        </span>
+        <span className="text-xs text-muted-foreground">{line.item.code}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
         <CardField
           label={t('label.counted-snapshot', {
             snapshot: line.snapshotNumberOfPacks,
@@ -342,17 +342,21 @@ function MobileCard({
           <input
             type="text"
             style={inputBase}
-            {...numericField(register(`lines.${line.id}.costPrice`, numericReg))}
+            {...numericField(
+              register(`lines.${line.id}.costPrice`, numericReg),
+            )}
           />
         </CardField>
         <CardField label={t('label.sell-price')}>
           <input
             type="text"
             style={inputBase}
-            {...numericField(register(`lines.${line.id}.sellPrice`, numericReg))}
+            {...numericField(
+              register(`lines.${line.id}.sellPrice`, numericReg),
+            )}
           />
         </CardField>
-      </Box>
+      </div>
       <CardField label={t('label.reason')}>
         <ReasonSelect
           line={line}
@@ -365,15 +369,14 @@ function MobileCard({
       <CardField label={t('label.comment')}>
         <input style={inputBase} {...register(`lines.${line.id}.comment`)} />
       </CardField>
-    </Stack>
+    </div>
   );
 }
 
 export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
   const queryClient = useQueryClient();
-  const theme = useTheme();
   const { t } = useTranslation();
-  const isPhone = useMediaQuery(theme.breakpoints.down('sm'));
+  const isPhone = useIsPhone();
 
   const { data: reasonOptions = [] } = useQuery(reasonOptionsQueryOptions());
   const reasons = useMemo<RowReasons>(
@@ -388,10 +391,7 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
     [reasonOptions],
   );
 
-  const linesById = useMemo(
-    () => new Map(lines.map(l => [l.id, l])),
-    [lines],
-  );
+  const linesById = useMemo(() => new Map(lines.map(l => [l.id, l])), [lines]);
 
   const defaultValues = useMemo<FormValues>(
     () => ({
@@ -424,7 +424,6 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
 
   // lineId -> server error __typename from the last save.
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
-  const [snackbar, setSnackbar] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const rowHeight = isPhone ? CARD_HEIGHT : ROW_HEIGHT;
@@ -495,7 +494,8 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
       // Count and reason must travel together: the server validates the reason
       // against the adjustment, and rejects a reason sent without its count.
       if (d.counted || d.reasonId) {
-        input.countedNumberOfPacks = f.counted === '' ? null : Number(f.counted);
+        input.countedNumberOfPacks =
+          f.counted === '' ? null : Number(f.counted);
         const direction = adjustmentDirection(
           f.counted,
           line.snapshotNumberOfPacks,
@@ -528,12 +528,11 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
 
     if (Object.keys(failed).length === 0) {
       setServerErrors({});
-      setSnackbar(null);
       reset(values); // clean baseline without a refetch round-trip
     } else {
       // Keep edits dirty so the user can fix the flagged lines and re-save.
       setServerErrors(failed);
-      setSnackbar([...messages].join(' '));
+      toast.error([...messages].join(' '));
     }
   });
 
@@ -561,21 +560,16 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 1.5,
-        }}
-      >
-        <Typography variant="h5">
+    <div className="flex h-full flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-xl font-semibold">
           {t('heading.stocktake', { number: header?.stocktakeNumber ?? '' })}
-        </Typography>
-        {header?.status ? <Chip label={header.status} size="small" /> : null}
-        <Box sx={{ flexGrow: 1 }} />
-        <Typography variant="body2" color="text.secondary">
+        </h1>
+        {header?.status ? (
+          <Badge variant="secondary">{header.status}</Badge>
+        ) : null}
+        <div className="grow" />
+        <span className="text-sm text-muted-foreground">
           {[
             t('messages.line-count', { value: lines.length.toLocaleString() }),
             dirtyCount
@@ -587,107 +581,67 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
           ]
             .filter(Boolean)
             .join(' · ')}
-        </Typography>
+        </span>
         <Button
-          variant="contained"
           disabled={!isDirty || errorCount > 0 || save.isPending}
           onClick={onSave}
         >
           {save.isPending ? t('button.saving') : t('button.save')}
         </Button>
-      </Box>
+      </div>
 
-      <Paper
-        variant="outlined"
-        sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
-      >
-        <Box ref={scrollRef} sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          <Box sx={{ minWidth: isPhone ? undefined : GRID_MIN_WIDTH }}>
+      <div className="flex min-h-0 flex-1 flex-col rounded-md border bg-card">
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto">
+          <div style={{ minWidth: isPhone ? undefined : GRID_MIN_WIDTH }}>
             {!isPhone && (
-              <Box
-                sx={{
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 1,
-                  display: 'grid',
-                  gridTemplateColumns: COLS,
-                  gap: 1,
-                  px: 2,
-                  py: 1,
-                  borderBottom: 1,
-                  borderColor: 'divider',
-                  bgcolor: 'grey.100',
-                  fontWeight: 600,
-                  fontSize: 13,
-                }}
+              <div
+                className="sticky top-0 z-10 grid gap-2 border-b bg-muted px-4 py-2 text-[13px] font-semibold"
+                style={{ gridTemplateColumns: COLS }}
               >
                 <span>{t('label.code')}</span>
                 <span>{t('label.item')}</span>
                 <span>{t('label.batch')}</span>
                 <span>{t('label.expiry')}</span>
                 <span>{t('label.pack')}</span>
-                <span style={{ textAlign: 'right' }}>{t('label.snapshot')}</span>
+                <span className="text-right">{t('label.snapshot')}</span>
                 <span>{t('label.counted')}</span>
                 <span>{t('label.cost')}</span>
                 <span>{t('label.sell')}</span>
                 <span>{t('label.reason')}</span>
                 <span>{t('label.comment')}</span>
-              </Box>
+              </div>
             )}
 
-            <Box
-              sx={{
-                height: virtualizer.getTotalSize(),
-                position: 'relative',
-                width: '100%',
-              }}
+            <div
+              className="relative w-full"
+              style={{ height: virtualizer.getTotalSize() }}
             >
               {virtualizer.getVirtualItems().map(vi => {
                 const line = lines[vi.index];
                 return (
-                  <Box
+                  <div
                     key={line.id}
-                    sx={{
+                    className={
+                      isPhone
+                        ? 'absolute left-0 w-full border-b px-4 py-3 text-[13px]'
+                        : 'absolute left-0 grid w-full items-center gap-2 border-b px-4 text-[13px]'
+                    }
+                    style={{
                       // Position with `top` (not `transform`): a transformed
                       // ancestor breaks native <select>/date popups in Chromium.
-                      position: 'absolute',
                       top: vi.start,
-                      left: 0,
-                      width: '100%',
                       height: vi.size,
-                      borderBottom: 1,
-                      borderColor: 'divider',
-                      px: 2,
-                      fontSize: 13,
-                      ...(isPhone
-                        ? { py: 1.5 }
-                        : {
-                            display: 'grid',
-                            gridTemplateColumns: COLS,
-                            gap: 1,
-                            alignItems: 'center',
-                          }),
+                      ...(isPhone ? {} : { gridTemplateColumns: COLS }),
                     }}
                   >
                     {renderRow(vi.index)}
-                  </Box>
+                  </div>
                 );
               })}
-            </Box>
-          </Box>
-        </Box>
-      </Paper>
-
-      <Snackbar
-        open={Boolean(snackbar)}
-        autoHideDuration={10000}
-        onClose={() => setSnackbar(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="error" onClose={() => setSnackbar(null)} variant="filled">
-          {snackbar}
-        </Alert>
-      </Snackbar>
-    </Box>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

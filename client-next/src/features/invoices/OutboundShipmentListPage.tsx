@@ -9,20 +9,19 @@ import {
   type PaginationState,
   type SortingState,
 } from '@tanstack/react-table';
-import {
-  Alert,
-  Box,
-  Button,
-  FormControl,
-  MenuItem,
-  Select,
-  Stack,
-  TablePagination,
-  Typography,
-} from '@mui/material';
+import { PlusIcon } from 'lucide-react';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
+import { DataTablePagination } from '@/components/DataTablePagination';
 import { SearchField } from '@/components/SearchField';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { LineEditDialog } from '@/components/detail/LineEditDialog';
 import { NameSearchInput } from '@/components/detail/NameSearchInput';
 import { formatDate, formatCurrency } from '@/lib/format';
@@ -34,8 +33,13 @@ import { outboundSdk } from '@/features/invoices/outboundDetail.queries';
 import type { InvoiceRowFragment } from '@/features/invoices/invoices.generated';
 import type { NameRowFragment } from '@/features/names/names.generated';
 
-const route = getRouteApi('/_authenticated/$storeId/distribution/outbound-shipment/');
+const route = getRouteApi(
+  '/_authenticated/$storeId/distribution/outbound-shipment/',
+);
 const helper = createColumnHelper<InvoiceRowFragment>();
+
+// Sentinel for the "all statuses" option (shadcn Select can't use an empty value).
+const ALL = 'all';
 
 // Statuses an outbound shipment moves through (drives the filter dropdown).
 const STATUS_OPTIONS: InvoiceNodeStatus[] = [
@@ -66,13 +70,40 @@ export function OutboundShipmentListPage() {
 
   const columns = useMemo(
     () => [
-      helper.accessor('otherPartyName', { id: 'otherPartyName', header: t('label.name') }),
-      helper.accessor('status', { id: 'status', header: t('label.status'), cell: c => statusName(c.getValue()) }),
-      helper.accessor('invoiceNumber', { id: 'invoiceNumber', header: t('label.number') }),
-      helper.accessor('createdDatetime', { id: 'createdDatetime', header: t('label.created'), cell: c => formatDate(c.getValue()) }),
-      helper.accessor('theirReference', { id: 'theirReference', header: t('label.reference'), cell: c => c.getValue() ?? '' }),
-      helper.accessor('comment', { id: 'comment', header: t('label.comment'), cell: c => c.getValue() ?? '' }),
-      helper.accessor(row => row.pricing.totalAfterTax, { id: 'total', header: t('label.total'), enableSorting: false, cell: c => formatCurrency(c.getValue()) }),
+      helper.accessor('otherPartyName', {
+        id: 'otherPartyName',
+        header: t('label.name'),
+      }),
+      helper.accessor('status', {
+        id: 'status',
+        header: t('label.status'),
+        cell: c => statusName(c.getValue()),
+      }),
+      helper.accessor('invoiceNumber', {
+        id: 'invoiceNumber',
+        header: t('label.number'),
+      }),
+      helper.accessor('createdDatetime', {
+        id: 'createdDatetime',
+        header: t('label.created'),
+        cell: c => formatDate(c.getValue()),
+      }),
+      helper.accessor('theirReference', {
+        id: 'theirReference',
+        header: t('label.reference'),
+        cell: c => c.getValue() ?? '',
+      }),
+      helper.accessor('comment', {
+        id: 'comment',
+        header: t('label.comment'),
+        cell: c => c.getValue() ?? '',
+      }),
+      helper.accessor(row => row.pricing.totalAfterTax, {
+        id: 'total',
+        header: t('label.total'),
+        enableSorting: false,
+        cell: c => formatCurrency(c.getValue()),
+      }),
     ],
     [t, statusName],
   );
@@ -80,16 +111,32 @@ export function OutboundShipmentListPage() {
   const [createOpen, setCreateOpen] = useState(false);
 
   const sorting: SortingState = [{ id: search.sortKey, desc: search.sortDesc }];
-  const pagination: PaginationState = { pageIndex: search.page - 1, pageSize: search.pageSize };
+  const pagination: PaginationState = {
+    pageIndex: search.page - 1,
+    pageSize: search.pageSize,
+  };
 
   const onSortingChange: OnChangeFn<SortingState> = updater => {
     const next = typeof updater === 'function' ? updater(sorting) : updater;
     const first = next[0];
-    navigate({ search: prev => ({ ...prev, sortKey: first?.id ?? 'invoiceNumber', sortDesc: first?.desc ?? false, page: 1 }) });
+    navigate({
+      search: prev => ({
+        ...prev,
+        sortKey: first?.id ?? 'invoiceNumber',
+        sortDesc: first?.desc ?? false,
+        page: 1,
+      }),
+    });
   };
   const onPaginationChange: OnChangeFn<PaginationState> = updater => {
     const next = typeof updater === 'function' ? updater(pagination) : updater;
-    navigate({ search: prev => ({ ...prev, page: next.pageIndex + 1, pageSize: next.pageSize }) });
+    navigate({
+      search: prev => ({
+        ...prev,
+        page: next.pageIndex + 1,
+        pageSize: next.pageSize,
+      }),
+    });
   };
 
   const table = useReactTable({
@@ -106,44 +153,55 @@ export function OutboundShipmentListPage() {
   });
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-        <Typography variant="h5" sx={{ flexGrow: 1 }}>
+    <div className="flex h-full flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="grow text-xl font-semibold">
           {t('app.outbound-shipment')}
-        </Typography>
+        </h1>
         <SearchField
           value={search.search ?? ''}
           onChange={value =>
-            navigate({ search: prev => ({ ...prev, search: value || undefined, page: 1 }) })
+            navigate({
+              search: prev => ({
+                ...prev,
+                search: value || undefined,
+                page: 1,
+              }),
+            })
           }
           placeholder={t('placeholder.search')}
         />
-        <FormControl size="small" sx={{ minWidth: 170 }}>
-          <Select
-            displayEmpty
-            value={search.status ?? ''}
-            onChange={e =>
-              navigate({
-                search: prev => ({
-                  ...prev,
-                  status: (e.target.value || undefined) as InvoiceNodeStatus | undefined,
-                  page: 1,
-                }),
-              })
-            }
-          >
-            <MenuItem value="">{t('label.all-statuses')}</MenuItem>
+        <Select
+          value={search.status ?? ALL}
+          onValueChange={value =>
+            navigate({
+              search: prev => ({
+                ...prev,
+                status: (value === ALL ? undefined : value) as
+                  | InvoiceNodeStatus
+                  | undefined,
+                page: 1,
+              }),
+            })
+          }
+        >
+          <SelectTrigger size="sm" className="min-w-[170px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>{t('label.all-statuses')}</SelectItem>
             {STATUS_OPTIONS.map(s => (
-              <MenuItem key={s} value={s}>
+              <SelectItem key={s} value={s}>
                 {statusName(s)}
-              </MenuItem>
+              </SelectItem>
             ))}
-          </Select>
-        </FormControl>
-        <Button variant="contained" onClick={() => setCreateOpen(true)}>
+          </SelectContent>
+        </Select>
+        <Button onClick={() => setCreateOpen(true)}>
+          <PlusIcon />
           {t('button.new')}
         </Button>
-      </Box>
+      </div>
 
       <NewOutboundDialog
         open={createOpen}
@@ -166,16 +224,8 @@ export function OutboundShipmentListPage() {
           })
         }
       />
-      <TablePagination
-        component="div"
-        count={data?.totalCount ?? 0}
-        page={search.page - 1}
-        rowsPerPage={search.pageSize}
-        rowsPerPageOptions={[25, 50, 100]}
-        onPageChange={(_, p) => navigate({ search: prev => ({ ...prev, page: p + 1 }) })}
-        onRowsPerPageChange={e => navigate({ search: prev => ({ ...prev, pageSize: Number(e.target.value), page: 1 }) })}
-      />
-    </Box>
+      <DataTablePagination table={table} />
+    </div>
   );
 }
 
@@ -240,7 +290,7 @@ function NewOutboundDialog({
       okDisabled={!customer}
       saving={create.isPending}
     >
-      <Stack spacing={2} sx={{ pt: 1 }}>
+      <div className="flex flex-col gap-4 pt-1">
         <NameSearchInput
           storeId={storeId}
           filter={CUSTOMER_FILTER}
@@ -249,8 +299,8 @@ function NewOutboundDialog({
           label={t('label.customer-name')}
           autoFocus
         />
-        {error ? <Alert severity="error">{error}</Alert> : null}
-      </Stack>
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </div>
     </LineEditDialog>
   );
 }

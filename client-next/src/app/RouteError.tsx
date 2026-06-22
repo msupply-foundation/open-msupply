@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import type { ErrorComponentProps } from '@tanstack/react-router';
-import { Box, Button, Stack, Typography } from '@mui/material';
 import { isAuthError } from '@/lib/authError';
 import { handleAuthError } from '@/app/tokenRefresh';
 import { useTranslation } from '@/intl';
+import { Button } from '@/components/ui/button';
 
 /**
  * Router-wide error UI. An auth failure tries a silent refresh (recovering the
@@ -20,29 +20,23 @@ export function RouteError({ error }: ErrorComponentProps) {
 
   if (expired) {
     return (
-      <Box sx={{ p: 4 }}>
-        <Typography color="text.secondary">
+      <div className="p-8">
+        <p className="text-muted-foreground">
           {t('messages.restoring-session')}
-        </Typography>
-      </Box>
+        </p>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
-        <Typography variant="h6">{t('heading.something-wrong')}</Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ whiteSpace: 'pre-wrap' }}
-        >
-          {error.message}
-        </Typography>
-        <Button variant="outlined" onClick={() => window.location.reload()}>
-          {t('button.reload')}
-        </Button>
-      </Stack>
-    </Box>
+    <div className="flex flex-col items-start gap-4 p-8">
+      <h2 className="text-lg font-semibold">{t('heading.something-wrong')}</h2>
+      <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+        {error.message}
+      </p>
+      <Button variant="outline" onClick={() => window.location.reload()}>
+        {t('button.reload')}
+      </Button>
+    </div>
   );
 }

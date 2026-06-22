@@ -1,0 +1,13 @@
+query displaySettings($input: DisplaySettingsHash!) {
+  displaySettings(input: $input) {
+    __typename
+    customLogo {
+      value
+      hash
+    }
+    customTheme {
+      value
+      hash
+    }
+  }
+}

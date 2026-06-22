@@ -23,7 +23,9 @@ const RESPONSE: RequisitionFlow = {
   editable: [R.New],
 };
 
-export function requisitionStatusFlow(type: RequisitionNodeType): RequisitionFlow {
+export function requisitionStatusFlow(
+  type: RequisitionNodeType,
+): RequisitionFlow {
   return type === RequisitionNodeType.Request ? REQUEST : RESPONSE;
 }
 

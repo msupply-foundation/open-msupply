@@ -1,18 +1,19 @@
-import { useRef, useState } from 'react';
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  Menu,
-  MenuItem,
-  Paper,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import ArrowRightIcon from '@mui/icons-material/ArrowRight';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { ArrowRightIcon, ChevronDownIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useTranslation } from '@/intl';
 import { formatDate } from '@/lib/format';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface StatusBarProps<S extends string> {
   /** Ordered status sequence to display as crumbs. */
@@ -44,86 +45,74 @@ export function StatusBar<S extends string>({
   disabled,
 }: StatusBarProps<S>) {
   const { t } = useTranslation();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const anchorRef = useRef<HTMLDivElement>(null);
-
   const currentIndex = sequence.indexOf(current);
   const primary = nextOptions[0];
 
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        px: 2,
-        py: 1,
-        flexWrap: 'wrap',
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+    <div className="flex flex-wrap items-center gap-4 rounded-md border bg-card px-4 py-2">
+      <div className="flex flex-wrap items-center gap-1">
         {sequence.map((s, i) => {
           const reached = i <= currentIndex;
           const when = reachedAt?.[s];
           return (
-            <Box key={s} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              {i > 0 ? (
-                <Typography component="span" color="text.disabled">
-                  ›
-                </Typography>
-              ) : null}
-              <Tooltip title={reached && when ? formatDate(when) : ''}>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: s === current ? 700 : 500,
-                    color: reached ? 'text.primary' : 'text.disabled',
-                  }}
-                >
-                  {label(s)}
-                </Typography>
+            <div key={s} className="flex items-center gap-1">
+              {i > 0 ? <span className="text-muted-foreground">›</span> : null}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={cn(
+                      'text-sm',
+                      s === current ? 'font-bold' : 'font-medium',
+                      reached ? 'text-foreground' : 'text-muted-foreground/60',
+                    )}
+                  >
+                    {label(s)}
+                  </span>
+                </TooltipTrigger>
+                {reached && when ? (
+                  <TooltipContent>{formatDate(when)}</TooltipContent>
+                ) : null}
               </Tooltip>
-            </Box>
+            </div>
           );
         })}
-      </Box>
+      </div>
 
-      <Box sx={{ flexGrow: 1 }} />
+      <div className="grow" />
 
       {!disabled && primary ? (
-        <>
-          <ButtonGroup ref={anchorRef} variant="contained" disabled={advancing}>
-            <Button endIcon={<ArrowRightIcon />} onClick={() => onAdvance(primary)}>
-              {t('button.save-confirm-status', { status: label(primary) })}
-            </Button>
-            {nextOptions.length > 1 ? (
-              <Button size="small" onClick={() => setMenuOpen(o => !o)}>
-                <ArrowDropDownIcon />
-              </Button>
-            ) : null}
-          </ButtonGroup>
-          <Menu
-            open={menuOpen}
-            anchorEl={anchorRef.current}
-            onClose={() => setMenuOpen(false)}
-            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        <div className="flex items-center">
+          <Button
+            disabled={advancing}
+            onClick={() => onAdvance(primary)}
+            className={cn(nextOptions.length > 1 && 'rounded-e-none')}
           >
-            {nextOptions.map(s => (
-              <MenuItem
-                key={s}
-                onClick={() => {
-                  setMenuOpen(false);
-                  onAdvance(s);
-                }}
-              >
-                {t('button.save-confirm-status', { status: label(s) })}
-              </MenuItem>
-            ))}
-          </Menu>
-        </>
+            {t('button.save-confirm-status', { status: label(primary) })}
+            <ArrowRightIcon />
+          </Button>
+          {nextOptions.length > 1 ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  disabled={advancing}
+                  size="icon"
+                  aria-label={t('button.save')}
+                  className="rounded-s-none border-s border-s-primary-foreground/20"
+                >
+                  <ChevronDownIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {nextOptions.map(s => (
+                  <DropdownMenuItem key={s} onSelect={() => onAdvance(s)}>
+                    {t('button.save-confirm-status', { status: label(s) })}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        </div>
       ) : null}
-    </Paper>
+    </div>
   );
 }
