@@ -21,7 +21,7 @@ impl SyncSettingsInput {
             interval_seconds: self.interval_seconds,
             batch_size: Default::default(),
             disable_integration_transaction: false,
-            disable_remote_site_auth: false,
+            relax_hardware_id_token_checks: false,
         }
     }
 }

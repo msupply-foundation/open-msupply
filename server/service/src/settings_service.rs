@@ -41,7 +41,7 @@ pub trait SettingsServiceTrait: Sync + Send {
 
         let batch_size = ctx.batch_size.clone();
         let disable_integration_transaction = ctx.disable_integration_transaction;
-        let disable_remote_site_auth = ctx.disable_remote_site_auth;
+        let relax_hardware_id_token_checks = ctx.relax_hardware_id_token_checks;
 
         // `?` inside this closure would result in closure returning `None`
         let make_settings = || {
@@ -52,7 +52,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 interval_seconds: interval_seconds? as u64,
                 batch_size,
                 disable_integration_transaction,
-                disable_remote_site_auth,
+                relax_hardware_id_token_checks,
             })
         };
 
