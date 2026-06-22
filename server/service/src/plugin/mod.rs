@@ -679,4 +679,81 @@ mod test {
             .unwrap_err();
         assert!(matches!(err, UninstallPluginError::PluginNotFound));
     }
+
+    // Deleting the active (highest) version of a backend plugin must fall back
+    // to the next-highest version still in the DB, not remove the plugin
+    // entirely. See issue #12169.
+    #[actix_rt::test]
+    async fn uninstall_backend_plugin_falls_back_to_lower_version() {
+        use crate::backend_plugin::plugin_provider::PluginInstance;
+        use repository::migrations::Version;
+
+        // Two versions of the same code coexist in the DB because a row id
+        // embeds its version (backend_{code}_{version}), so uploading a new
+        // version inserts a new row rather than replacing the old one. Both must
+        // be compatible with the running app version, so derive them from it. A
+        // unique code keeps the assertions isolated from any other plugin in the
+        // process-wide PLUGINS cache.
+        let app = Version::from_package_json();
+        let code = "fallback_backend_plugin";
+        let plugin_type = PluginType::AverageMonthlyConsumption;
+        let low_version = format!("{}.{}.0", app.major, app.minor);
+        let high_version = format!("{}.{}.1", app.major, app.minor);
+
+        let row_low = BackendPluginRow {
+            id: format!("backend_{code}_low"),
+            code: code.to_string(),
+            version: low_version.clone(),
+            types: PluginTypes(vec![plugin_type.clone()]),
+            ..Default::default()
+        };
+        let row_high = BackendPluginRow {
+            id: format!("backend_{code}_high"),
+            code: code.to_string(),
+            version: high_version.clone(),
+            types: PluginTypes(vec![plugin_type.clone()]),
+            ..Default::default()
+        };
+
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "uninstall_backend_plugin_falls_back_to_lower_version",
+            MockDataInserts::none(),
+            MockData::default(),
+        )
+        .await;
+
+        let repo = BackendPluginRowRepository::new(&connection);
+        repo.upsert_one(row_low.clone()).unwrap();
+        repo.upsert_one(row_high.clone()).unwrap();
+
+        // Populate the in-memory cache from the DB; the higher version wins.
+        service_provider
+            .plugin_service
+            .reload_all_plugins(&service_context)
+            .unwrap();
+
+        let active = PluginInstance::get_one_with_code(code, plugin_type.clone())
+            .expect("higher version should be active");
+        assert_eq!(active.id, row_high.id);
+
+        // Simulate uninstalling the active (higher) version: delete the DB row,
+        // then run the same unbind the LoadPlugin processor runs on a Delete.
+        repo.delete(&row_high.id).unwrap();
+        PluginInstance::unbind_by_id(&connection, &row_high.id).unwrap();
+
+        // The plugin must fall back to the remaining lower version, not vanish.
+        let after = PluginInstance::get_one_with_code(code, plugin_type.clone())
+            .expect("plugin should fall back to lower version, not be removed");
+        assert_eq!(after.id, row_low.id);
+
+        // Deleting the last remaining version removes the plugin for good.
+        repo.delete(&row_low.id).unwrap();
+        PluginInstance::unbind_by_id(&connection, &row_low.id).unwrap();
+        assert!(PluginInstance::get_one_with_code(code, plugin_type).is_none());
+    }
 }
