@@ -1391,9 +1391,12 @@ export type CentralGeneralMutationsConfigureNamePropertiesArgs = {
 export type CentralPatientNode = {
   __typename: 'CentralPatientNode';
   code: Scalars['String']['output'];
+  code2?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   firstName: Scalars['String']['output'];
+  gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
+  isDeceased: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
 };
 

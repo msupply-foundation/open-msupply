@@ -355,6 +355,9 @@ fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
         last: name.last_name.unwrap_or_default(),
         first: name.first_name.unwrap_or_default(),
         date_of_birth: name.date_of_birth,
+        gender: name.gender,
+        code_2: name.national_health_number,
+        is_deceased: name.is_deceased,
     }
 }
 
