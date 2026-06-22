@@ -10,6 +10,7 @@ import { useReportGraphQL } from '../useReportGraphQL';
 export type CsvToExcelParams = {
   csvData: string;
   filename: string;
+  sheetName?: string;
 };
 
 export const useCsvToExcel = () => {
@@ -19,12 +20,13 @@ export const useCsvToExcel = () => {
   const downloadFile = useDownloadFile();
 
   const mutationFn = async (params: CsvToExcelParams) => {
-    const { csvData, filename } = params;
+    const { csvData, filename, sheetName } = params;
 
     const result = await reportApi.csvToExcel({
       storeId,
       csvData,
       filename,
+      sheetName,
     });
 
     if (result?.csvToExcel?.__typename === 'PrintReportNode') {

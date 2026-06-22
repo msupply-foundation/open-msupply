@@ -119,6 +119,7 @@ export type CsvToExcelQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   csvData: Types.Scalars['String']['input'];
   filename: Types.Scalars['String']['input'];
+  sheetName?: Types.InputMaybe<Types.Scalars['String']['input']>;
 }>;
 
 export type CsvToExcelQuery = {
@@ -240,8 +241,18 @@ export const GenerateReportDocument = gql`
   }
 `;
 export const CsvToExcelDocument = gql`
-  query csvToExcel($storeId: String!, $csvData: String!, $filename: String!) {
-    csvToExcel(storeId: $storeId, csvData: $csvData, filename: $filename) {
+  query csvToExcel(
+    $storeId: String!
+    $csvData: String!
+    $filename: String!
+    $sheetName: String
+  ) {
+    csvToExcel(
+      storeId: $storeId
+      csvData: $csvData
+      filename: $filename
+      sheetName: $sheetName
+    ) {
       ... on PrintReportNode {
         __typename
         fileId
