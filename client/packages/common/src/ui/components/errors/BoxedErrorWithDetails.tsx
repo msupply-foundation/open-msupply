@@ -89,7 +89,10 @@ export const BoxedErrorWithDetails = ({
             </Typography>
             {expand && (
               <Box>
-                <Typography sx={{ textWrap: 'wrap' }} variant="body2">
+                <Typography
+                  sx={{ textWrap: 'wrap', overflowWrap: 'break-word' }}
+                  variant="body2"
+                >
                   {!!hint && hint}
                   {!!hint && !!details && <br />}
                   {!!details && details}
