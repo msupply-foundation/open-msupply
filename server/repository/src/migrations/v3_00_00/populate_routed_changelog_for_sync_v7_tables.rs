@@ -13,6 +13,7 @@ impl MigrationFragment for Migrate {
         // so sync v7 routes them to the owning store's site instead of broadcasting.
         const ROUTED_TABLES: &[(&str, &str)] = &[
             ("user_permission", "t.store_id"),
+            ("item_store_join", "t.store_id"),
         ];
 
         let mut sql = String::new();
