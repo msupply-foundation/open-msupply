@@ -1,4 +1,7 @@
-use std::sync::{Arc, RwLock};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 
@@ -196,5 +199,62 @@ impl PluginInstance {
         (*plugins).retain(|p| p.instance.code != code);
 
         (*plugins).push(Plugin { types, instance });
+    }
+
+    /// Rebuild the whole backend cache from `rows` and atomically swap it in.
+    /// `bind` is forward-only (it won't downgrade), so a delete falls back to a
+    /// lower remaining version by rebuilding from scratch here. Built off to the
+    /// side before locking, so readers never see a half-built cache. See #12169.
+    pub fn reload(rows: Vec<BackendPluginRow>) {
+        let app_version = Version::from_package_json();
+
+        // Highest compatible version per code wins (mirrors `bind`).
+        let mut chosen: HashMap<String, BackendPluginRow> = HashMap::new();
+        for row in rows {
+            let version = Version::from_str(&row.version);
+            if !version.is_compatible_by_major_and_minor(&app_version) {
+                continue;
+            }
+            match chosen.get(&row.code) {
+                Some(existing) if Version::from_str(&existing.version) >= version => {}
+                _ => {
+                    chosen.insert(row.code.clone(), row);
+                }
+            }
+        }
+
+        // Build off to the side, then swap under one write lock.
+        let new_plugins: Vec<Plugin> = chosen
+            .into_values()
+            .map(
+                |BackendPluginRow {
+                     id,
+                     bundle_base64,
+                     variant_type,
+                     types,
+                     code,
+                     version,
+                     ..
+                 }| {
+                    let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
+                    let version = Version::from_str(&version);
+                    let instance = match variant_type {
+                        PluginVariantType::BoaJs => PluginInstance {
+                            id,
+                            code,
+                            variant: PluginInstanceVariant::BoaJs(plugin_bundle),
+                            version,
+                        },
+                    };
+                    Plugin {
+                        types,
+                        instance: Arc::new(instance),
+                    }
+                },
+            )
+            .collect();
+
+        let mut plugins = PLUGINS.write().unwrap();
+        *plugins = new_plugins;
     }
 }

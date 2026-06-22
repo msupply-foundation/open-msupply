@@ -131,6 +131,55 @@ pub enum InstalledPluginKind {
     Frontend,
 }
 
+/// Decode a frontend plugin row into its cached form (base64 → bytes + content
+/// hash). Shared by `bind_frontend_plugin` and `reload_frontend_plugins`.
+fn build_frontend_plugin(
+    FrontendPluginRow {
+        id,
+        code,
+        entry_point,
+        files,
+        version,
+        ..
+    }: FrontendPluginRow,
+) -> FrontendPlugin {
+    let version = Version::from_str(&version);
+
+    let mut files_content = HashMap::new();
+    for FrontendPluginFile {
+        file_name,
+        file_content_base64,
+    } in files.0.into_iter()
+    {
+        files_content.insert(
+            file_name,
+            BASE64_STANDARD.decode(file_content_base64).unwrap(),
+        );
+    }
+
+    // Hash all files (sorted by name for stability) so the URL token only
+    // changes when the bundle's bytes change.
+    let mut hasher = Sha256::new();
+    let mut file_names: Vec<&String> = files_content.keys().collect();
+    file_names.sort();
+    for name in file_names {
+        hasher.update(name.as_bytes());
+        hasher.update(&files_content[name]);
+    }
+    let hash = hex::encode(hasher.finalize());
+
+    FrontendPlugin {
+        metadata: FrontendPluginMetadata {
+            id,
+            code,
+            version,
+            entry_point,
+            hash,
+        },
+        files_content,
+    }
+}
+
 // TODO should really pass through StaticFileService
 pub trait PluginServiceTrait: Sync + Send {
     fn installed_plugins(
@@ -174,18 +223,46 @@ pub trait PluginServiceTrait: Sync + Send {
         uploaded_file.as_json_file(settings)
     }
 
+    /// Atomically rebuild both caches from the DB (build-then-swap). Runs at
+    /// startup and on plugin deletes, so downgrades/removals take effect. #12169
     fn reload_all_plugins(&self, ctx: &ServiceContext) -> Result<(), RepositoryError> {
-        let repo = BackendPluginRowRepository::new(&ctx.connection);
-        for row in repo.all()? {
-            PluginInstance::bind(row);
-        }
+        let backend_rows = BackendPluginRowRepository::new(&ctx.connection).all()?;
+        PluginInstance::reload(backend_rows);
 
-        let repo = FrontendPluginRowRepository::new(&ctx.connection);
-        for row in repo.all()? {
-            self.bind_frontend_plugin(ctx, row);
-        }
+        let frontend_rows = FrontendPluginRowRepository::new(&ctx.connection).all()?;
+        self.reload_frontend_plugins(ctx, frontend_rows);
 
         Ok(())
+    }
+
+    /// Frontend equivalent of [`PluginInstance::reload`]: build-then-swap
+    /// rebuild of the frontend cache from `rows`.
+    fn reload_frontend_plugins(&self, ctx: &ServiceContext, rows: Vec<FrontendPluginRow>) {
+        let app_version = Version::from_package_json();
+
+        // Highest compatible version per code wins (mirrors `bind_frontend_plugin`).
+        let mut chosen: HashMap<String, FrontendPluginRow> = HashMap::new();
+        for row in rows {
+            let version = Version::from_str(&row.version);
+            if !version.is_compatible_by_major_and_minor(&app_version) {
+                continue;
+            }
+            match chosen.get(&row.code) {
+                Some(existing) if Version::from_str(&existing.version) >= version => {}
+                _ => {
+                    chosen.insert(row.code.clone(), row);
+                }
+            }
+        }
+
+        // Build off to the side, then swap under one write lock.
+        let new_cache: HashMap<String, FrontendPlugin> = chosen
+            .into_iter()
+            .map(|(code, row)| (code, build_frontend_plugin(row)))
+            .collect();
+
+        let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
+        *plugins = new_cache;
     }
 
     fn get_frontend_plugin_file(
