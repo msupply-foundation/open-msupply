@@ -285,6 +285,7 @@ pub enum PreferenceKey {
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
     Backdating,
+    InactivityTimeoutMinutes,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,

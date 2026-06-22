@@ -72,6 +72,8 @@ pub mod global_table_configs;
 pub use global_table_configs::*;
 pub mod backdating;
 pub use backdating::*;
+pub mod inactivity_timeout_minutes;
+pub use inactivity_timeout_minutes::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -92,6 +94,7 @@ pub struct PreferenceProvider {
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub global_table_configs: GlobalTableConfigs,
     pub backdating: Backdating,
+    pub inactivity_timeout_minutes: InactivityTimeoutMinutes,
 
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
@@ -141,6 +144,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         global_table_configs: GlobalTableConfigs,
         backdating: Backdating,
+        inactivity_timeout_minutes: InactivityTimeoutMinutes,
 
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,

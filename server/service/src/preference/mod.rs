@@ -43,6 +43,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             display_population_based_forecasting,
             global_table_configs: _, // Not included in preference descriptions UI
             backdating,
+            inactivity_timeout_minutes,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -97,6 +98,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(is_gaps, &mut prefs, &input)?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(backdating, &mut prefs, &input)?;
+        append_if_type(inactivity_timeout_minutes, &mut prefs, &input)?;
 
         // Store preferences
         append_if_type(order_in_packs, &mut prefs, &input)?;

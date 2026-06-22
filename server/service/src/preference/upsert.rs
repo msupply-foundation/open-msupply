@@ -33,6 +33,7 @@ pub struct UpsertPreferences {
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
     pub backdating: Option<BackdatingData>,
+    pub inactivity_timeout_minutes: Option<i32>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
@@ -83,6 +84,7 @@ pub fn upsert_preferences(
         display_population_based_forecasting: display_population_based_forecasting_input,
         global_table_configs: global_table_configs_input,
         backdating: backdating_input,
+        inactivity_timeout_minutes: inactivity_timeout_minutes_input,
 
         // Store preferences
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
@@ -132,6 +134,7 @@ pub fn upsert_preferences(
         display_population_based_forecasting,
         global_table_configs,
         backdating,
+        inactivity_timeout_minutes,
 
         // Store preferences
         manage_vaccines_in_doses,
@@ -226,6 +229,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = backdating_input {
                 backdating.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = inactivity_timeout_minutes_input {
+                inactivity_timeout_minutes.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...

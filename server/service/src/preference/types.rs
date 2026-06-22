@@ -30,6 +30,7 @@ pub enum PrefKey {
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
     Backdating,
+    InactivityTimeoutMinutes,
 
     // Store preferences
     ManageVaccinesInDoses,

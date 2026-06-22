@@ -82,6 +82,7 @@ pub struct UpsertPreferencesInput {
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
     pub backdating: Option<BackdatingInput>,
+    pub inactivity_timeout_minutes: Option<i32>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -153,6 +154,7 @@ impl UpsertPreferencesInput {
             display_population_based_forecasting,
             global_table_configs,
             backdating,
+            inactivity_timeout_minutes,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -204,6 +206,7 @@ impl UpsertPreferencesInput {
                 inventory_adjustments_enabled: b.inventory_adjustments_enabled,
                 max_days: b.max_days,
             }),
+            inactivity_timeout_minutes: *inactivity_timeout_minutes,
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
