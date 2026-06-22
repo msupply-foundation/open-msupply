@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   isEmpty,
   PreferenceNodeType,
@@ -5,6 +6,7 @@ import {
   UpsertPreferencesInput,
   useMutation,
   useNotification,
+  usePatchState,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
@@ -34,17 +36,34 @@ export const useEditPreferences = (
     }
   };
 
+  const { patch, updatePatch, resetDraft, isDirty } =
+    usePatchState<UpsertPreferencesInput>({});
+
+  useEffect(() => {
+    resetDraft();
+  }, [storeId, resetDraft]);
+
+  const saveDraft = async (): Promise<boolean> => {
+    if (isEmpty(patch)) return true;
+    return update(patch);
+  };
+
   return {
     preferences: data ?? [],
     update,
+    draft: patch,
+    updateDraft: updatePatch,
+    resetDraft,
+    saveDraft,
+    isDirty,
   };
 };
 
 const useUpsertPref = () => {
   const { api, storeId: requestStoreId, queryClient } = usePreferencesGraphQL();
 
-  return useMutation(
-    async (input: Partial<UpsertPreferencesInput>) => {
+  return useMutation({
+    mutationFn: async (input: Partial<UpsertPreferencesInput>) => {
       const result = await api.upsertPreferences({
         input,
         storeId: requestStoreId,
@@ -54,17 +73,17 @@ const useUpsertPref = () => {
       }
       throw new Error('Could not update preferences');
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(PREFERENCES_QUERY_KEY);
-        queryClient.invalidateQueries(PREFERENCE_DESCRIPTION_QUERY_KEY);
-        queryClient.invalidateQueries([
-          'dashboard',
-          'count',
-          requestStoreId,
-          'stock',
-        ]);
-      },
-    }
-  );
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [PREFERENCES_QUERY_KEY],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [PREFERENCE_DESCRIPTION_QUERY_KEY],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboard', 'count', requestStoreId, 'stock'],
+      });
+    },
+  });
 };

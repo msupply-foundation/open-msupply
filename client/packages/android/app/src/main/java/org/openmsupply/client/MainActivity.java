@@ -4,12 +4,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.webkit.WebView;
 
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.WebViewListener;
 import java.io.File;
 
 
@@ -18,6 +20,7 @@ public class MainActivity extends BridgeActivity {
     RemoteServer server = new RemoteServer();
     DiscoveryConstants discoveryConstants;
     private FileManager fileManager;
+    private String js = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,18 +28,65 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(HoneywellScannerPlugin.class);
         super.onCreate(savedInstanceState);
 
+        // Replace Capacitor's auto-loaded https://localhost:<PORT>/ with an inline
+        // "Starting omSupply…" page. Without this, the WebView fires a GET against
+        // a server that hasn't bound yet, which paints Chromium's native error page
+        // and leaks through the brief window between splash dismissal and the real
+        // /android URL finishing its load.
+        WebView webView = getBridge().getWebView();
+        webView.addJavascriptInterface(new LoadingPage(this), "LoadingPageInject");
+        webView.loadUrl(LoadingPage.URL);
+
+        ViewCompat.setOnApplyWindowInsetsListener(webView, (v, insets) -> {
+            Insets bars = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+                            | WindowInsetsCompat.Type.displayCutout()
+                            | WindowInsetsCompat.Type.ime());
+
+            float d = v.getResources().getDisplayMetrics().density;
+            // set inset styles so that we can avoid edge-to-edge content being obscured by system bars, cutouts, or the keyboard
+            js = "document.documentElement.style.setProperty('--inset-top',    '" + (bars.top / d)    + "px');" +
+                    "document.documentElement.style.setProperty('--inset-bottom', '" + (bars.bottom / d) + "px');" +
+                    "document.documentElement.style.setProperty('--inset-left',   '" + (bars.left / d)   + "px');" +
+                    "document.documentElement.style.setProperty('--inset-right',  '" + (bars.right / d)  + "px');";
+
+            // Apply immediately to the currently loaded document
+            ((WebView) v).evaluateJavascript(js, null);
+
+            return WindowInsetsCompat.CONSUMED;
+        });
+
+        // Re-inject the inset variables after every page navigation. A full page
+        // load replaces the document, discarding any custom properties previously
+        // set on documentElement, so the values must be re-applied to the new page.
+        getBridge().addWebViewListener(new WebViewListener() {
+            @Override
+            public void onPageLoaded(WebView view) {
+                if (!js.isEmpty()) {
+                    view.evaluateJavascript(js, null);
+                }
+            }
+        });
+
+
+        // The LoadingPage IS our loading UX now — release the native splash on the
+        // next UI message (after loadData has been queued for rendering) so the
+        // spinner becomes visible immediately rather than waiting for the readiness
+        // poll to finish.
+        webView.post(() -> AppState.getInstance().setWebViewReady(true));
+
         discoveryConstants = new DiscoveryConstants(getContentResolver());
         fileManager = new FileManager(this);
 
         // Set up an OnPreDrawListener to the root view
-        // This allows us to show the splash until the server is ready
+        // This holds the native splash up until the WebView has its initial
+        // content (the LoadingPage), so there's no white flash on cold start.
         final View content = findViewById(android.R.id.content);
         content.getViewTreeObserver().addOnPreDrawListener(
                 new ViewTreeObserver.OnPreDrawListener() {
                     @Override
                     public boolean onPreDraw() {
-                        // Check whether the server has started (or is in error state)
-                        if (AppState.getInstance().isServerReady()) {
+                        if (AppState.getInstance().isWebViewReady()) {
                             // The content is ready: start drawing
                             content.getViewTreeObserver().removeOnPreDrawListener(this);
                             return true;

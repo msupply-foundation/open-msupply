@@ -56,6 +56,8 @@ pub struct TransLineRowOmsFields {
     pub manufacture_date: Option<NaiveDate>,
     #[serde(default)]
     pub purchase_order_line_id: Option<String>,
+    #[serde(default)]
+    pub received_number_of_packs: Option<f64>,
 }
 
 #[allow(non_snake_case)]
@@ -115,6 +117,10 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "linked_transact_id")]
     pub linked_invoice_id: Option<String>,
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "linked_trans_line_ID")]
+    pub linked_invoice_line_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub donor_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -191,6 +197,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
+            linked_invoice_line_id,
             donor_id,
             vvm_status_id,
             oms_fields,
@@ -343,6 +350,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             status,
             manufacture_date,
             purchase_order_line_id,
+            received_number_of_packs,
         } = oms_fields.unwrap_or_default();
 
         let campaign_id = clear_invalid_fk(
@@ -367,7 +375,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         let result = InvoiceLineRow {
             id,
             invoice_id,
-            item_link_id: item_id,
+            item_id: item_id,
             item_name,
             item_code,
             stock_line_id,
@@ -387,6 +395,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
+            linked_invoice_line_id,
             donor_id,
             reason_option_id,
             vvm_status_id,
@@ -403,6 +412,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
             manufacture_date,
             purchase_order_line_id,
+            received_number_of_packs,
             manufacturer_id,
         };
 
@@ -439,7 +449,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 InvoiceLineRow {
                     id,
                     invoice_id,
-                    item_link_id: _,
+                    item_id: _,
                     item_name,
                     item_code,
                     stock_line_id,
@@ -470,6 +480,8 @@ impl SyncTranslation for InvoiceLineTranslation {
                     status,
                     manufacture_date,
                     purchase_order_line_id,
+                    received_number_of_packs,
+                    linked_invoice_line_id,
                     manufacturer_id,
                 },
             item_row,
@@ -487,6 +499,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
             manufacture_date,
             purchase_order_line_id,
+            received_number_of_packs,
         });
 
         let legacy_row = LegacyTransLineRow {
@@ -513,6 +526,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             reason_option_id,
             linked_invoice_id,
+            linked_invoice_line_id,
             donor_id,
             vvm_status_id,
             oms_fields,
@@ -633,7 +647,7 @@ mod tests {
                 item_variants: vec![ItemVariantRow {
                     id: "5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string(),
                     name: "test variant".to_string(),
-                    item_link_id: mock_item_a().id,
+                    item_id: mock_item_a().id,
                     location_type_id: None,
                     manufacturer_id: None,
                     deleted_datetime: None,

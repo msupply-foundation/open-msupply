@@ -7,6 +7,7 @@ use crate::{
         check_master_list_for_store, check_requisition_row_exists, get_lines_for_requisition,
     },
     service_provider::ServiceContext,
+    validate::check_other_party_store_is_disabled,
     PluginOrRepositoryError,
 };
 use repository::{
@@ -96,6 +97,10 @@ fn validate(
     }
 
     if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
+    }
+
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
     }
 
@@ -285,19 +290,19 @@ mod test {
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_link_id: mock_item_a().id,
+                        item_id: mock_item_a().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_link_id: test_item_stats::item().id,
+                        item_id: test_item_stats::item().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_link_id: test_item_stats::item2().id,
+                        item_id: test_item_stats::item2().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
@@ -361,11 +366,19 @@ mod test {
         test_item_ids.sort();
 
         assert_eq!(item_ids, test_item_ids);
+
         let line = lines
             .iter()
-            .find(|line| line.requisition_line_row.item_link_id == test_item_stats::item().id)
+            .find(|line| line.requisition_line_row.item_id == test_item_stats::item().id)
             .unwrap();
 
+        // Regression for #11843: item_name is denormalised onto the line from
+        // the item table (not from stock data), so generated lines carry the
+        // name regardless of whether the store holds stock for the item.
+        assert_eq!(
+            line.requisition_line_row.item_name,
+            test_item_stats::item().name
+        );
         assert_eq!(
             line.requisition_line_row.available_stock_on_hand,
             test_item_stats::item_1_soh()
@@ -382,9 +395,13 @@ mod test {
 
         let line = lines
             .iter()
-            .find(|line| line.requisition_line_row.item_link_id == test_item_stats::item2().id)
+            .find(|line| line.requisition_line_row.item_id == test_item_stats::item2().id)
             .unwrap();
 
+        assert_eq!(
+            line.requisition_line_row.item_name,
+            test_item_stats::item2().name
+        );
         assert_eq!(
             line.requisition_line_row.available_stock_on_hand,
             test_item_stats::item_2_soh()

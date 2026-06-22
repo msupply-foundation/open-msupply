@@ -8,6 +8,7 @@ import {
   useTranslation,
   Alert,
   InvoiceNodeStatus,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import { CustomerReturnFragment, useReturns } from '../api';
 import { CustomerSearchInput } from '@openmsupply-client/system';
@@ -64,13 +65,14 @@ export const Toolbar: FC = () => {
                   size="small"
                   sx={{ width: 250 }}
                   disabled={isDisabled}
-                  value={theirReference}
+                  value={theirReference ?? ''}
                   onChange={event => {
                     update({ theirReference: event.target.value });
                   }}
                 />
               }
             />
+            <DisabledStoreNotice otherParty={otherParty} />
             <InfoAlert customerReturn={draft} />
           </Box>
         </Grid>

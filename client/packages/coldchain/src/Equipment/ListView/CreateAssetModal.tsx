@@ -190,7 +190,7 @@ export const CreateAssetModal = ({
 
   return (
     <Modal
-      title={t('heading.add-cold-chain-equipment')}
+      title={t('heading.new-cold-chain-equipment')}
       width={700}
       height={100}
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
@@ -267,9 +267,7 @@ export const CreateAssetModal = ({
                     updateDraft({ catalogueItemId: selected?.id ?? '' })
                   }
                   paginationDebounce={DEBOUNCE_TIMEOUT}
-                  onPageChange={pageNumber =>
-                    fetchNextPage({ pageParam: pageNumber })
-                  }
+                  onPageChange={() => fetchNextPage()}
                   loading={isFetching}
                   onInputChange={(reason, value) => {
                     if (reason?.type === 'change') debounceOnFilter(value);

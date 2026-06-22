@@ -1,8 +1,14 @@
 {
+    "//lib": "Backend plugins run in boajs (not a browser) so we use the ESNext lib without DOM, and `types: []` disables auto-included ambient @types globals (e.g. @types/node's promise-based `fetch`). Together this lets backendCommon declare a synchronous `fetch` global without clashing. Imported packages like lodash still resolve their types.",
     "compilerOptions": {
         "noImplicitAny": true,
         "module": "ESNext",
         "target": "ESNext",
+        "lib": [
+            "ESNext"
+        ],
+        "skipLibCheck": true,
+        "types": [],
         "moduleResolution": "node",
         "strict": true,
         "esModuleInterop": true,

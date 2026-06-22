@@ -20,6 +20,13 @@ export const Formatter = {
     if (date && isValid(date)) return date.toISOString();
     else return null;
   },
+  // RFC3339 datetime that preserves the local UTC offset (e.g. 2024-12-10T00:00:00+13:00),
+  // unlike toIsoString which always emits UTC ("Z"). Use when the server needs the calendar
+  // date as the user sees it (e.g. backdating, where the audit log records the picked date).
+  localIsoString: (date?: Date | null): string | null => {
+    if (date && isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ssxxx");
+    else return null;
+  },
   dateTime: (date?: Date | null): string =>
     date && isValid(date)
       ? format(date, "dd/MM/yyyy' 'HH:mm:ss")

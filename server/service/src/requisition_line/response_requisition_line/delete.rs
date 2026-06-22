@@ -6,6 +6,7 @@ use repository::{
 use crate::{
     requisition::common::check_requisition_row_exists,
     requisition_line::common::check_requisition_line_exists, service_provider::ServiceContext,
+    validate::check_other_party_store_is_disabled,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -70,6 +71,10 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
+        return Err(OutError::CannotEditRequisition);
+    }
+
     if requisition_row.linked_requisition_id.is_some() {
         return Err(OutError::CannotDeleteLineFromTransferredRequisition);
     }
@@ -80,7 +85,7 @@ fn validate(
     )?;
 
     if invoice_lines.iter().any(|invoice_line| {
-        requisition_line_row.item_link_id == invoice_line.invoice_line_row.item_link_id
+        requisition_line_row.item_id == invoice_line.invoice_line_row.item_id
     }) {
         return Err(OutError::CannotDeleteLineLinkedToShipment);
     }
@@ -132,8 +137,8 @@ mod test {
         InvoiceLineRow {
             id: "invoice_line_linked_to_requisition_line".to_string(),
             invoice_id: invoice_linked_to_req().id,
-            item_link_id: mock_full_new_response_requisition_for_update_test().lines[0]
-                .item_link_id
+            item_id: mock_full_new_response_requisition_for_update_test().lines[0]
+                .item_id
                 .clone(),
             ..Default::default()
         }

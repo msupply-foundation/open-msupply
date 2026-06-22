@@ -4,6 +4,7 @@ use crate::{
         stock_out_line::delete::DeleteStockOutLine,
         validate::{check_line_belongs_to_invoice, check_line_row_exists},
     },
+    validate::check_other_party_store_is_disabled,
 };
 use repository::{InvoiceLineRow, InvoiceType, StorageConnection};
 
@@ -26,6 +27,9 @@ pub fn validate(
         return Err(NotAnOutboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditInvoice);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(CannotEditInvoice);
     }
     if !check_line_belongs_to_invoice(&line, &invoice) {

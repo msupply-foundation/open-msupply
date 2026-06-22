@@ -34,7 +34,6 @@ const skipNoStoreRequests = (documentNode?: DocumentNode) => {
     case AuthError.NoStoreAssigned:
     case AuthError.Unauthenticated:
     case AuthError.Timeout:
-    case AuthError.ServerError:
       return true;
     default:
       return false;
@@ -85,7 +84,7 @@ export const getStore = async (
 export const useLogin = (
   setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>
 ) => {
-  const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
+  const { mutateAsync, isPending: isLoggingIn } = useGetAuthToken();
   const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
   const { setSkipRequest } = useGql();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
@@ -113,8 +112,6 @@ export const useLogin = (
   };
 
   const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
-    if (LocalStorage.getItem('/error/auth') === AuthError.ServerError) return;
-
     switch (true) {
       case isLoggedIn && hasValidStore: {
         removeError();
@@ -133,7 +130,20 @@ export const useLogin = (
 
   const login = async (username: string, password: string) => {
     const { token, error } = await mutateAsync({ username, password });
-    const userDetails = await getUserDetails(token);
+    if (!token) return { token, error };
+
+    let userDetails;
+    try {
+      userDetails = await getUserDetails(token);
+    } catch (e) {
+      return {
+        token: '',
+        error: {
+          message: 'ConnectionError',
+          detail: (e as Error)?.message,
+        },
+      };
+    }
     queryClient.setQueryData(api.keys.me(token), userDetails);
     const store = await getStore(userDetails, mostRecentCredentials);
     const permissions = await getUserPermissions(token, store);

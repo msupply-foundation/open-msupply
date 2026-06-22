@@ -21,6 +21,7 @@ export type DemographicFragment = {
   __typename: 'DemographicNode';
   id: string;
   name: string;
+  populationPercentage: number;
 };
 
 export type DemographicProjectionFragment = {
@@ -48,7 +49,12 @@ export type DemographicsQuery = {
   demographics: {
     __typename: 'DemographicConnector';
     totalCount: number;
-    nodes: Array<{ __typename: 'DemographicNode'; id: string; name: string }>;
+    nodes: Array<{
+      __typename: 'DemographicNode';
+      id: string;
+      name: string;
+      populationPercentage: number;
+    }>;
   };
 };
 
@@ -276,6 +282,7 @@ export const DemographicFragmentDoc = gql`
   fragment Demographic on DemographicNode {
     id
     name
+    populationPercentage
   }
 `;
 export const DemographicProjectionFragmentDoc = gql`

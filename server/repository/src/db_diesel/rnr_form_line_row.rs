@@ -1,8 +1,9 @@
 use super::{
-    item_link_row::item_link, item_row::item, requisition_line_row::requisition_line,
+    item_row::item, requisition_line_row::requisition_line,
     rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
 };
 use crate::{
+    diesel_macros::define_linked_tables,
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
     RnRFormRowRepository, RowActionType, StorageConnection, Upsert,
 };
@@ -12,11 +13,13 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-table! {
-    rnr_form_line (id) {
-        id -> Text,
+define_linked_tables! {
+    view: rnr_form_line = "rnr_form_line_view",
+    core: rnr_form_line_with_links = "rnr_form_line",
+    struct: RnRFormLineRow,
+    repo: RnRFormLineRowRepository,
+    shared: {
         rnr_form_id -> Text,
-        item_link_id -> Text,
         requisition_line_id -> Nullable<Text>,
         previous_monthly_consumption_values -> Text,
         average_monthly_consumption -> Double,
@@ -39,27 +42,29 @@ table! {
         low_stock -> crate::db_diesel::rnr_form_line_row::RnRFormLowStockMapping,
         comment -> Nullable<Text>,
         confirmed -> Bool,
+    },
+    links: {
+        item_link_id -> item_id,
+    },
+    optional_links: {
     }
 }
 
+joinable!(rnr_form_line -> item (item_id));
 joinable!(rnr_form_line -> rnr_form (rnr_form_id));
-joinable!(rnr_form_line -> item_link (item_link_id));
 joinable!(rnr_form_line -> requisition_line (requisition_line_id));
 
 allow_tables_to_appear_in_same_query!(rnr_form_line, rnr_form);
 allow_tables_to_appear_in_same_query!(rnr_form_line, item);
-allow_tables_to_appear_in_same_query!(rnr_form_line, item_link);
 allow_tables_to_appear_in_same_query!(rnr_form_line, requisition_line);
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default,
+    Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, Default,
 )]
 #[diesel(table_name = rnr_form_line)]
-#[diesel(treat_none_as_null = true)]
 pub struct RnRFormLineRow {
     pub id: String,
     pub rnr_form_id: String,
-    pub item_link_id: String,
     pub requisition_line_id: Option<String>,
     pub previous_monthly_consumption_values: String,
     pub average_monthly_consumption: f64,
@@ -82,6 +87,10 @@ pub struct RnRFormLineRow {
     pub low_stock: RnRFormLowStock,
     pub comment: Option<String>,
     pub confirmed: bool,
+    // Resolved from item_link - must be last to match view column order.
+    // Serialises as `item_id`; the sync translator also emits the legacy `item_link_id`
+    // alias for cross-version compatibility (see `RenamedKeys`).
+    pub item_id: String,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -104,12 +113,7 @@ impl<'a> RnRFormLineRowRepository<'a> {
     }
 
     pub fn _upsert_one(&self, row: &RnRFormLineRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(rnr_form_line)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 
@@ -127,9 +131,9 @@ impl<'a> RnRFormLineRowRepository<'a> {
         rnr_form_line_id: &str,
         linked_requisition_line_id: &str,
     ) -> Result<(), RepositoryError> {
-        diesel::update(rnr_form_line)
-            .filter(id.eq(rnr_form_line_id))
-            .set(requisition_line_id.eq(linked_requisition_line_id))
+        diesel::update(rnr_form_line_with_links::table)
+            .filter(rnr_form_line_with_links::id.eq(rnr_form_line_id))
+            .set(rnr_form_line_with_links::requisition_line_id.eq(linked_requisition_line_id))
             .execute(self.connection.lock().connection())?;
 
         let form_id = self
@@ -209,8 +213,11 @@ impl<'a> RnRFormLineRowRepository<'a> {
         let change_log_id =
             self.insert_changelog(rnr_form_line_id.to_string(), form_id, RowActionType::Delete)?;
 
-        diesel::delete(rnr_form_line.filter(id.eq(rnr_form_line_id)))
-            .execute(self.connection.lock().connection())?;
+        diesel::delete(
+            rnr_form_line_with_links::table
+                .filter(rnr_form_line_with_links::id.eq(rnr_form_line_id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(Some(change_log_id))
     }
 }

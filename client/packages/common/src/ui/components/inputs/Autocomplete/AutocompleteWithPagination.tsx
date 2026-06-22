@@ -1,5 +1,4 @@
 import React, {
-  FC,
   PropsWithChildren,
   SyntheticEvent,
   useState,
@@ -169,7 +168,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
     />
   );
 
-  const DefaultRenderOption: FC = (
+  const DefaultRenderOption = (
     props: React.HTMLAttributes<HTMLLIElement>,
     option: { id?: string; label?: string } & T
   ) => (

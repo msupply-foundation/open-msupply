@@ -5,6 +5,7 @@ use crate::{
         get_lines_for_requisition,
     },
     service_provider::ServiceContext,
+    validate::check_other_party_store_is_disabled,
 };
 use chrono::Utc;
 use repository::{
@@ -83,6 +84,10 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
+        return Err(OutError::CannotEditRequisition);
+    }
+
     check_master_list_for_store(connection, store_id, &input.master_list_id)?
         .ok_or(OutError::MasterListNotFoundForThisStore)?;
 
@@ -140,7 +145,7 @@ fn generate(
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
-                item_link_id: item.item_row.id.clone(),
+                item_id: item.item_row.id.clone(),
                 item_name: item.item_row.name,
                 snapshot_datetime: Some(Utc::now().naive_utc()),
                 price_per_unit: if let Some(price_list) = &price_list {
@@ -316,13 +321,13 @@ mod test {
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_link_id: mock_item_a().id,
+                        item_id: mock_item_a().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_link_id: mock_item_b().id,
+                        item_id: mock_item_b().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },

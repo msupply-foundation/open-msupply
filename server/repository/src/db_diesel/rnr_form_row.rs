@@ -64,7 +64,9 @@ pub struct RnRFormRow {
     pub linked_requisition_id: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
-    // Resolved from name_link - must be last to match view column order
+    // Resolved from name_link - must be last to match view column order.
+    // Serialises as `name_id`; the sync translator also emits the legacy `name_link_id`
+    // alias for cross-version compatibility (see `RenamedKeys`).
     pub name_id: String,
 }
 

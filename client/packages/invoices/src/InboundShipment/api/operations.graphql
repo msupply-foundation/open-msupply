@@ -105,6 +105,14 @@ fragment InboundLine on InvoiceLineNode {
     }
   }
 
+  reasonOption {
+    __typename
+    id
+    reason
+    type
+    isActive
+  }
+
   purchaseOrderLine {
     __typename
     id
@@ -190,6 +198,7 @@ fragment Inbound on InvoiceNode {
     store {
       id
       code
+      isDisabled
     }
   }
 
@@ -579,6 +588,26 @@ mutation insertInboundShipmentExternal(
       __typename
       id
       invoiceNumber
+    }
+  }
+}
+
+mutation duplicateInboundShipment($id: String!, $storeId: String!) {
+  duplicateInboundShipment(storeId: $storeId, id: $id) {
+    __typename
+    ... on DuplicateInboundShipmentNode {
+      invoice {
+        __typename
+        id
+        invoiceNumber
+      }
+      skippedItemCount
+    }
+    ... on DuplicateInboundShipmentError {
+      error {
+        __typename
+        description
+      }
     }
   }
 }

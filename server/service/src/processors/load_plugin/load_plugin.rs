@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use repository::{
     BackendPluginRowRepository, ChangelogRow, ChangelogTableName, FrontendPluginRowRepository,
-    KeyType,
+    KeyType, RowActionType,
 };
 
 use crate::{
@@ -27,8 +27,14 @@ impl Processor for LoadPlugin {
         service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
-        match changelog.table_name {
-            ChangelogTableName::BackendPlugin => {
+        // Plugin deletes are intentionally not applied to the in-memory cache:
+        // only the DB row is removed (by uninstall_plugin / a sync delete), while
+        // the cached instance keeps serving until the next server restart, when
+        // reload_all_plugins rebuilds the cache from the DB. This avoids
+        // reconciling the live cache against remaining DB versions on delete.
+        // See issue #12169.
+        match (&changelog.table_name, &changelog.row_action) {
+            (ChangelogTableName::BackendPlugin, RowActionType::Upsert) => {
                 let plugin = BackendPluginRowRepository::new(&ctx.connection)
                     .find_one_by_id(&changelog.record_id)?
                     .ok_or(ProcessorError::RecordNotFound(
@@ -38,7 +44,7 @@ impl Processor for LoadPlugin {
 
                 PluginInstance::bind(plugin);
             }
-            ChangelogTableName::FrontendPlugin => {
+            (ChangelogTableName::FrontendPlugin, RowActionType::Upsert) => {
                 let plugin = FrontendPluginRowRepository::new(&ctx.connection)
                     .find_one_by_id(&changelog.record_id)?
                     .ok_or(ProcessorError::RecordNotFound(

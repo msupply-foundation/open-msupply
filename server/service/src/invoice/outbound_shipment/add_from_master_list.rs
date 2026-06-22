@@ -1,6 +1,7 @@
 use crate::invoice::common::check_master_list_for_name_id;
 use crate::invoice::common::get_lines_for_invoice;
 use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
+use crate::validate::check_other_party_store_is_disabled;
 use crate::{invoice::check_invoice_exists, service_provider::ServiceContext};
 use repository::EqualFilter;
 use repository::ItemType;
@@ -74,6 +75,9 @@ fn validate(
         || invoice_row.status == InvoiceStatus::Received
         || invoice_row.status == InvoiceStatus::Verified
     {
+        return Err(OutError::CannotEditShipment);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice_row.name_id)? {
         return Err(OutError::CannotEditShipment);
     }
 
@@ -240,25 +244,25 @@ mod test {
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_link_id: mock_item_a().id,
+                        item_id: mock_item_a().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_link_id: mock_item_b().id,
+                        item_id: mock_item_b().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_link_id: mock_item_c().id,
+                        item_id: mock_item_c().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line4.clone(),
-                        item_link_id: mock_item_d().id,
+                        item_id: mock_item_d().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
@@ -298,7 +302,7 @@ mod test {
         let mut item_ids: Vec<String> = result
             .clone()
             .into_iter()
-            .map(|invoice_line| invoice_line.item_link_id)
+            .map(|invoice_line| invoice_line.item_id)
             .collect();
         item_ids.sort();
 
@@ -313,7 +317,7 @@ mod test {
         assert_eq!(item_ids, test_item_ids);
         let line = result
             .iter()
-            .find(|line| line.item_link_id == mock_item_a().id)
+            .find(|line| line.item_id == mock_item_a().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);
@@ -322,7 +326,7 @@ mod test {
 
         let line = result
             .iter()
-            .find(|line| line.item_link_id == mock_item_b().id)
+            .find(|line| line.item_id == mock_item_b().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);

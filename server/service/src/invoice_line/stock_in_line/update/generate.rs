@@ -157,6 +157,7 @@ fn generate_line(
         item_id: _,
         r#type: _,
         status,
+        reason_option_id,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
@@ -220,7 +221,7 @@ fn generate_line(
     }
 
     if let Some(item) = new_item_option {
-        update_line.item_link_id = item.id;
+        update_line.item_id = item.id;
         update_line.item_code = item.code;
         update_line.item_name = item.name;
     }
@@ -249,6 +250,10 @@ fn generate_line(
     update_line.shipped_pack_size = shipped_pack_size.or(update_line.shipped_pack_size);
 
     update_line.volume_per_pack = volume_per_pack.unwrap_or(update_line.volume_per_pack);
+
+    update_line.reason_option_id = reason_option_id
+        .map(|r| r.value)
+        .unwrap_or(update_line.reason_option_id);
 
     Ok(update_line)
 }

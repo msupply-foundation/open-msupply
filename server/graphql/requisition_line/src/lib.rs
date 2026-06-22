@@ -15,7 +15,7 @@ impl RequisitionLineMutations {
         store_id: String,
         input: InsertInput,
     ) -> Result<InsertResponse> {
-        insert(ctx, &store_id, input)
+        insert(ctx, &store_id, input).await
     }
 
     async fn update_request_requisition_line(

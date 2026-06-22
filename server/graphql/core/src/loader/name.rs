@@ -50,7 +50,12 @@ impl Loader<NameByIdLoaderInput> for NameByIdLoader {
                     &service_context,
                     &store_id,
                     None, // TODO this needs to be ALL without limit
-                    Some(NameFilter::new().id(EqualFilter::equal_any(names))),
+                    // Names referenced by an existing record should still show
+                    Some(
+                        NameFilter::new()
+                            .id(EqualFilter::equal_any(names))
+                            .include_disabled(true),
+                    ),
                     None,
                 )
                 .map_err(|err| StandardGraphqlError::InternalError(format!("{err:?}")))?;

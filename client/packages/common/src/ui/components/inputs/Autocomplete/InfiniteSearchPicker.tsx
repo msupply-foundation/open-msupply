@@ -36,7 +36,7 @@ interface InfiniteQueryResult<T> {
   isLoading: boolean;
   isFetching: boolean;
   isFetchingNextPage: boolean;
-  fetchNextPage: (opts: { pageParam: number }) => unknown;
+  fetchNextPage: () => unknown;
 }
 
 export interface InfiniteSearchPickerProps<T extends HasId, TFilter> {
@@ -158,7 +158,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
   // on any loaded page (e.g. past the first page, or excluded by the filter).
   const fromCache = useMemo(() => {
     if (!currentId) return null;
-    const all = data?.pages.flatMap(page => page.data.nodes) ?? [];
+    const all = data?.pages.flatMap(page => page.data?.nodes ?? []) ?? [];
     return all.find(item => item.id === currentId) ?? null;
   }, [currentId, data?.pages]);
 
@@ -257,7 +257,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
       pages={data?.pages ?? []}
       pageNumber={pageNumber}
       rowsPerPage={ROWS_PER_PAGE}
-      totalRows={data?.pages?.[0]?.data.totalCount ?? 0}
+      totalRows={data?.pages?.[0]?.data?.totalCount ?? 0}
       loading={isLoading || isFetching || isFetchingNextPage}
       loadingInputOnly
       noOptionsText={noOptionsText}
@@ -325,7 +325,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
       textSx={textSx}
       isOptionEqualToValue={(option, val) => option?.id === val?.id}
       paginationDebounce={PAGINATION_DEBOUNCE_TIMEOUT}
-      onPageChange={page => fetchNextPage({ pageParam: page })}
+      onPageChange={() => fetchNextPage()}
       mapOptions={items =>
         defaultOptionMapper(
           items.map(i => ({ ...i, label: getOptionLabel(i) })),

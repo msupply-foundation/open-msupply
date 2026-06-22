@@ -274,7 +274,12 @@ export type ItemVariantFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   locationType?: {
     __typename: 'LocationTypeNode';
@@ -465,7 +470,12 @@ export type ItemFragment = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
-      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      store?: {
+        __typename: 'StoreNode';
+        id: string;
+        code: string;
+        isDisabled: boolean;
+      } | null;
     } | null;
     locationType?: {
       __typename: 'LocationTypeNode';
@@ -709,7 +719,12 @@ export type ItemsWithStockLinesQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -875,6 +890,11 @@ export type ItemsWithStatsFragment = {
   isVaccine: boolean;
   doses: number;
   availableStockOnHand: number;
+  masterLists?: Array<{
+    __typename: 'MasterListNode';
+    id: string;
+    name: string;
+  }> | null;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -910,6 +930,11 @@ export type ItemsWithStatsQuery = {
       isVaccine: boolean;
       doses: number;
       availableStockOnHand: number;
+      masterLists?: Array<{
+        __typename: 'MasterListNode';
+        id: string;
+        name: string;
+      }> | null;
       stats: {
         __typename: 'ItemStatsNode';
         averageMonthlyConsumption: number;
@@ -1071,7 +1096,12 @@ export type ItemByIdQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -1210,7 +1240,12 @@ export type ItemVariantsQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -1391,6 +1426,7 @@ export type UpsertItemVariantMutation = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             locationType?: {
@@ -1994,6 +2030,10 @@ export const ItemsWithStatsFragmentDoc = gql`
     isVaccine
     doses
     availableStockOnHand(storeId: $storeId)
+    masterLists(storeId: $storeId) {
+      id
+      name
+    }
     stats(storeId: $storeId) {
       __typename
       averageMonthlyConsumption

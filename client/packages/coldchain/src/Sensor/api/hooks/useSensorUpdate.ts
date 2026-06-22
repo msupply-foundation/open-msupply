@@ -1,6 +1,7 @@
 import { UpdateSensorInput } from '@common/types';
 import { setNullableInput, useMutation } from '@openmsupply-client/common';
 import { SENSOR } from './keys';
+import { TEMPERATURE_NOTIFICATION } from '../../../Monitoring/api/TemperatureNotification';
 import { useSensorGraphQL } from '../useSensorGraphQL';
 import { SensorFragment } from '../operations.generated';
 
@@ -23,12 +24,15 @@ export const useSensorUpdate = () => {
     return result?.updateSensor;
   };
 
-  const invalidateQueries = () => queryClient.invalidateQueries([SENSOR]);
+  const invalidateQueries = () => queryClient.invalidateQueries({
+    queryKey: [SENSOR]
+  });
 
   const mutation = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([SENSOR]);
+      queryClient.invalidateQueries({ queryKey: [SENSOR] });
+      queryClient.invalidateQueries({ queryKey: [TEMPERATURE_NOTIFICATION] });
     },
     onError: e => {
       console.error(e);

@@ -3,6 +3,7 @@ import {
   MRT_Row,
   MRT_RowData,
   MRT_ShowHideColumnsButton,
+  MRT_TableInstance,
   MRT_TableOptions,
   MRT_ToggleFiltersButton,
   MRT_ToggleFullScreenButton,
@@ -17,26 +18,12 @@ import {
 import { MenuItem, Typography, alpha } from '@mui/material';
 import { ColumnDef } from './types';
 import { IconButton } from '@common/components';
-import { useTranslation } from '@common/intl';
+import { useIntlUtils, useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
-import { SettingsMenu } from './components/SettingsMenu';
-import { ManagedTableState } from './tableState/utils';
-import {
-  useColumnDensity,
-  useColumnOrder,
-  useColumnPinning,
-  useColumnSizing,
-  useColumnVisibility,
-} from './tableState';
+import { useTableKeyboardNavigation } from './useTableKeyboardNavigation';
 
 export const useTableDisplayOptions = <T extends MRT_RowData>({
-  tableId,
-  density,
-  columnSizing,
-  columnVisibility,
-  columnPinning,
-  columnOrder,
-  resetTableState,
+  renderSettingsMenu,
   onRowClick,
   isGrouped,
   toggleGrouped,
@@ -46,16 +33,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsRestrictedRow = () => false,
   muiTableBodyRowProps = {},
   isMobile = false,
-  onSaveAsGlobalDefault,
-  globalDefaults,
 }: {
-  tableId: string;
-  density: ReturnType<typeof useColumnDensity>;
-  columnSizing: ReturnType<typeof useColumnSizing>;
-  columnVisibility: ReturnType<typeof useColumnVisibility>;
-  columnPinning: ReturnType<typeof useColumnPinning>;
-  columnOrder: ReturnType<typeof useColumnOrder>;
-  resetTableState: () => void;
+  renderSettingsMenu: (table: MRT_TableInstance<T>) => React.ReactNode;
   onRowClick?: (row: T, isCtrlClick: boolean) => void;
   isGrouped: boolean;
   hasColumnFilters: boolean;
@@ -64,14 +43,17 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   getIsPlaceholderRow?: (row: MRT_Row<T>) => boolean;
   getIsRestrictedRow?: (row: MRT_Row<T>) => boolean;
   isMobile?: boolean;
-  onSaveAsGlobalDefault?: () => void;
-  globalDefaults?: ManagedTableState;
 
   // This object is merged with the default row props in muiTableBodyRowProps
   // below. We can do the same for other muiTable props if needed in future.
   muiTableBodyRowProps?: MRT_TableOptions<T>['muiTableBodyRowProps'];
 }): Partial<MRT_TableOptions<T>> => {
   const t = useTranslation();
+  const { isRtl } = useIntlUtils();
+  // Collapsed expand-chevron points "into" the row; mirror it for RTL
+  const collapsedRotation = isRtl ? 'rotate(90deg)' : 'rotate(-90deg)';
+  const { focusedRowId, containerRef, rowVirtualizerRef, handleKeyDown } =
+    useTableKeyboardNavigation<T>(onRowClick);
 
   // shared between the table body and head to ensure consistent padding
   const padding = (
@@ -89,6 +71,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           : '0.8rem';
 
   return {
+    rowVirtualizerInstanceRef: rowVirtualizerRef,
     // Add description to column menu
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
       const { description, header } = column.columnDef as ColumnDef<T>; // MRT doesn't support typing custom column props, but we know it will be here
@@ -134,18 +117,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
         <MRT_ShowHideColumnsButton table={table} />
         {!isMobile && <MRT_ToggleFullScreenButton table={table} />}
-        <SettingsMenu
-          table={table}
-          tableId={tableId}
-          density={density}
-          columnSizing={columnSizing}
-          columnVisibility={columnVisibility}
-          columnPinning={columnPinning}
-          columnOrder={columnOrder}
-          resetTableState={resetTableState}
-          onSaveAsGlobalDefault={onSaveAsGlobalDefault}
-          globalDefaults={globalDefaults}
-        />
+        {renderSettingsMenu(table)}
       </>
     ),
 
@@ -166,13 +138,17 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         boxShadow: 'none',
       },
     },
-    muiTableContainerProps: {
+    muiTableContainerProps: ({ table }) => ({
+      ref: containerRef,
+      tabIndex: 0,
+      onKeyDown: (e: React.KeyboardEvent) => handleKeyDown(e, table),
       sx: {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
+        outline: 'none',
       },
-    },
+    }),
     muiTableProps: ({ table }) => ({
       // Need to apply this here so that relative sizes (ems, %) within table
       // are correct
@@ -189,6 +165,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
 
     muiTableHeadCellProps: ({ column, table }) => ({
       sx: {
+        height: '100%',
         fontWeight: 600,
         fontSize: table.getState().density !== 'spacious' ? '0.9em' : '1em',
         lineHeight: 1.2,
@@ -234,6 +211,21 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           fontSize:
             table.getState().density === 'compact' ? '0.90em' : '0.95em',
         },
+        '& .MuiDivider-root': {
+          height: '100%',
+          borderWidth: 1,
+        },
+        '& .Mui-TableHeadCell-ResizeHandle-Wrapper': {
+          height: '100%',
+        },
+        '& .Mui-TableHeadCell-Content': {
+          alignItems: 'flex-end',
+          height: '100%',
+          '& .MuiIconButton-root': {
+            height: '100%',
+            marginTop: 0.25,
+          },
+        },
       },
     }),
 
@@ -241,15 +233,15 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       // Make the NothingHere component vertically centred when there are no rows
       table.getRowCount() === 0
         ? {
-          sx: { height: '100%' },
-        }
+            sx: { height: '100%' },
+          }
         : {
-          sx: () => ({
-            '& tr:nth-of-type(odd)': {
-              backgroundColor: 'background.row',
-            },
-          }),
-        },
+            sx: () => ({
+              '& tr:nth-of-type(odd)': {
+                backgroundColor: 'background.row',
+              },
+            }),
+          },
 
     muiTableBodyRowProps: params => {
       const { row, table } = params;
@@ -257,6 +249,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         typeof muiTableBodyRowProps === 'function'
           ? muiTableBodyRowProps(params)
           : muiTableBodyRowProps;
+
+      const isFocused = row.id === focusedRowId;
 
       const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
         ...(onRowClick
@@ -283,6 +277,12 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           },
           fontStyle: row.getCanExpand() ? 'italic' : 'normal',
           cursor: onRowClick ? 'pointer' : 'default',
+          ...(isFocused
+            ? {
+                backgroundColor: theme =>
+                  alpha(theme.palette.gray.main, 0.2) + '!important',
+              }
+            : {}),
         },
       };
       return {
@@ -314,32 +314,32 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
           !row.getIsGrouped() && table.getState().grouping?.length
             ? '2em'
             : // Little bit of extra padding for first column, unless it's the "Select" checkbox column
-            column.getIndex() === 0 && column.id !== 'mrt-row-select'
+              column.getIndex() === 0 && column.id !== 'mrt-row-select'
               ? '1em'
               : undefined,
         backgroundColor:
           column.getIsPinned() || row.getIsSelected()
             ? // Remove transparency from pinned backgrounds
-            'rgba(252, 252, 252, 1)'
+              'rgba(252, 252, 252, 1)'
             : undefined,
 
         ...((column.columnDef as ColumnDef<T>).getIsError?.(row.original)
           ? {
-            border: '2px solid',
-            borderColor: 'error.main',
-            borderRadius: '8px',
-          }
+              border: '2px solid',
+              borderColor: 'error.main',
+              borderRadius: '8px',
+            }
           : {
-            borderBottom: '1px solid',
-            borderColor: 'border',
-          }),
+              borderBottom: '1px solid',
+              borderColor: 'border',
+            }),
       },
     }),
 
     muiExpandButtonProps: ({ row }) => ({
       sx: {
         display: row.getCanExpand() ? 'flex' : 'none',
-        transform: row.getIsExpanded() ? 'rotate(180deg)' : 'rotate(-90deg)',
+        transform: row.getIsExpanded() ? 'rotate(180deg)' : collapsedRotation,
         transition: 'transform 0.2s',
       },
     }),
@@ -349,7 +349,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         transform: table.getIsAllRowsExpanded()
           ? 'rotate(180deg)'
           : !table.getIsSomeRowsExpanded()
-            ? 'rotate(-90deg)'
+            ? collapsedRotation
             : undefined,
         transition: 'transform 0.2s',
       },

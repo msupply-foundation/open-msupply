@@ -91,7 +91,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::InvoiceDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))

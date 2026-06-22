@@ -18,7 +18,7 @@ fn vaccine_course_item1() -> VaccineCourseItemRow {
     VaccineCourseItemRow {
         id: VACCINE_COURSE_ITEM1.0.to_string(),
         vaccine_course_id: "test_vaccine_course".to_string(),
-        item_link_id: "item_a".to_string(),
+        item_id: "item_a".to_string(),
         deleted_datetime: None,
     }
 }
@@ -35,6 +35,12 @@ pub(crate) fn test_v6_records() -> Vec<TestSyncOutgoingRecord> {
     vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: VACCINE_COURSE_ITEM1.0.to_string(),
-        push_data: json!(vaccine_course_item1()),
+        push_data: json!({
+            "id": "test_vaccine_course_item",
+            "vaccine_course_id": "test_vaccine_course",
+            "deleted_datetime": null,
+            "item_id": "item_a",
+            "item_link_id": "item_a",
+        }),
     }]
 }

@@ -60,6 +60,7 @@ export interface AutocompleteProps<T> extends Omit<
   inputValue?: string;
   popperMinWidth?: number;
   inputProps?: BasicTextInputProps;
+  error?: boolean;
   required?: boolean;
   textSx?: SxProps<Theme>;
   clickableOption?: ClickableOptionConfig;
@@ -90,6 +91,7 @@ export function Autocomplete<T>({
   getOptionLabel,
   popperMinWidth,
   inputProps,
+  error,
   required,
   textSx,
   clickableOption,
@@ -122,7 +124,7 @@ export function Autocomplete<T>({
       required={required}
       {...props}
       {...inputProps}
-      error={inputProps?.error}
+      error={error || inputProps?.error}
       autoFocus={autoFocus}
       slotProps={{
         input: {

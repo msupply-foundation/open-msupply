@@ -19,8 +19,8 @@ use thiserror::Error as ThisError;
 use util::format_error;
 
 use crate::{
-    queries_mutations::INSTALL_PLUGINS, run_command_with_error, Api, ApiError, CommandError,
-    YARN_COMMAND,
+    queries_mutations::{INSTALLED_PLUGINS, INSTALL_PLUGINS, UNINSTALL_PLUGIN},
+    run_command_with_error, Api, ApiError, CommandError, YARN_COMMAND,
 };
 
 #[derive(ThisError, Debug)]
@@ -82,6 +82,35 @@ pub struct GenerateAndInstallPluginBundle {
     /// Directory in which to search for plugins
     #[clap(short, long)]
     in_dir: PathBuf,
+    /// Server url
+    #[clap(short, long)]
+    url: Url,
+    /// Username
+    #[clap(long)]
+    username: String,
+    /// Password
+    #[clap(long)]
+    password: String,
+}
+
+#[derive(clap::Parser, Debug)]
+pub struct UninstallPlugin {
+    /// Id of the plugin row to uninstall (as returned by list-installed-plugins).
+    #[clap(long)]
+    id: String,
+    /// Server url
+    #[clap(short, long)]
+    url: Url,
+    /// Username
+    #[clap(long)]
+    username: String,
+    /// Password
+    #[clap(long)]
+    password: String,
+}
+
+#[derive(clap::Parser, Debug)]
+pub struct ListInstalledPlugins {
     /// Server url
     #[clap(short, long)]
     url: Url,
@@ -202,17 +231,16 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
     // Yarn install
     run_command_with_error(
         Command::new(YARN_COMMAND)
-            .args(["install", "--cwd"])
-            .arg(plugin_root),
+            .arg("install")
+            .current_dir(plugin_root),
     )
     .map_err(|e| Error::FailedToYarnInstall(plugin_root.to_path_buf(), e))?;
 
     // Yarn build plugin
     run_command_with_error(
         Command::new(YARN_COMMAND)
-            .arg("--cwd")
-            .arg(plugin_root)
-            .arg("build-plugin"),
+            .arg("build-plugin")
+            .current_dir(plugin_root),
     )
     .map_err(|e| Error::FailedToBuildPlugin(plugin_root.to_path_buf(), e))?;
 
@@ -385,6 +413,56 @@ pub async fn generate_and_install_plugin_bundle(
     })
     .await?;
     fs::remove_file(out_file.clone()).map_err(|e| Error::FiledToRemoveTempFile(e, out_file))?;
+
+    Ok(())
+}
+
+pub async fn uninstall_plugin(
+    UninstallPlugin {
+        id,
+        url,
+        username,
+        password,
+    }: UninstallPlugin,
+) -> Result<(), Error> {
+    let api = Api::new_with_token(url.clone(), username, password).await?;
+
+    let result = api
+        .gql(
+            UNINSTALL_PLUGIN,
+            json!({ "id": id }),
+            Some("CentralServerMutationNode"),
+        )
+        .await?;
+
+    info!("Result:{}", serde_json::to_string_pretty(&result).unwrap());
+
+    Ok(())
+}
+
+/// Prints the installed plugins array as JSON on stdout so callers (e.g. the
+/// yarn plugin script) can parse it. All other output goes to log/stderr.
+pub async fn list_installed_plugins(
+    ListInstalledPlugins {
+        url,
+        username,
+        password,
+    }: ListInstalledPlugins,
+) -> Result<(), Error> {
+    let api = Api::new_with_token(url.clone(), username, password).await?;
+
+    let result = api
+        .gql(INSTALLED_PLUGINS, json!({}), Some("CentralServerQueryNode"))
+        .await?;
+
+    let nodes = result
+        .get("plugin")
+        .and_then(|p| p.get("installedPlugins"))
+        .and_then(|p| p.get("nodes"))
+        .cloned()
+        .unwrap_or_else(|| serde_json::json!([]));
+
+    println!("{}", serde_json::to_string(&nodes).unwrap());
 
     Ok(())
 }

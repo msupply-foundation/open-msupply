@@ -1,13 +1,13 @@
+use crate::store_preference::get_store_preferences;
 use chrono::Utc;
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, CurrencyFilter, CurrencyRepository,
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
-    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, RepositoryError,
-    StockLineRow, StorageConnection,
+    InvoiceRow, ItemFilter, ItemRepository, MasterList, MasterListFilter, MasterListRepository,
+    RepositoryError, StockLineRow, StorageConnection,
 };
+use std::collections::HashSet;
 use util::uuid::uuid;
-
-use crate::store_preference::get_store_preferences;
 
 pub fn generate_invoice_user_id_update(
     user_id: &str,
@@ -30,6 +30,33 @@ pub(crate) fn get_lines_for_invoice(
     )?;
 
     Ok(result)
+}
+
+pub fn generate_duplicate_comment(source_number: i64, source_comment: &Option<String>) -> String {
+    match source_comment {
+        Some(comment) => format!("Copied from shipment #{source_number} ({comment})"),
+        None => format!("Copied from shipment #{source_number}"),
+    }
+}
+
+pub fn active_items(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_ids: Vec<String>,
+) -> Result<HashSet<String>, RepositoryError> {
+    if item_ids.is_empty() {
+        return Ok(HashSet::new());
+    }
+
+    let items = ItemRepository::new(connection).query_by_filter(
+        ItemFilter::new()
+            .id(EqualFilter::equal_any(item_ids))
+            .is_visible(true)
+            .is_active(true),
+        Some(store_id.to_string()),
+    )?;
+
+    Ok(items.into_iter().map(|item| item.item_row.id).collect())
 }
 
 pub fn calculate_total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64 {

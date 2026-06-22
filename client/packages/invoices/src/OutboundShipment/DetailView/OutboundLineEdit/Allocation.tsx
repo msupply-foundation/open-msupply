@@ -8,9 +8,10 @@ import {
   Grid,
   useIntlUtils,
   BasicSpinner,
-  Divider,
   useFormatNumber,
   usePreferences,
+  UsePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import {
@@ -32,6 +33,7 @@ interface AllocationProps {
   invoiceId: string;
   allowPlaceholder: boolean;
   scannedBatch?: string;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }
 
 export const Allocation = ({
@@ -39,6 +41,7 @@ export const Allocation = ({
   invoiceId,
   allowPlaceholder,
   scannedBatch,
+  pluginEvents,
 }: AllocationProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -72,9 +75,9 @@ export const Allocation = ({
       const allocateInPacksize: AllocateInOption | undefined =
         packsizes.length === 1 && packsizes[0]
           ? {
-              type: AllocateInType.Packs,
-              packSize: packsizes[0],
-            }
+            type: AllocateInType.Packs,
+            packSize: packsizes[0],
+          }
           : undefined;
 
       initialise(
@@ -103,10 +106,18 @@ export const Allocation = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return isFetching ? <BasicSpinner /> : item ? <AllocationInner /> : null;
+  return isFetching ? (
+    <BasicSpinner />
+  ) : item ? (
+    <AllocationInner pluginEvents={pluginEvents} />
+  ) : null;
 };
 
-const AllocationInner = () => {
+const AllocationInner = ({
+  pluginEvents,
+}: {
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
+}) => {
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
 
@@ -130,21 +141,29 @@ const AllocationInner = () => {
 
     return allocateIn.type === AllocateInType.Doses
       ? t('label.available-quantity-doses', {
-          doseCount: sumAvailableDoses(draftLines).toFixed(0),
-          unitCount: unitCount,
-          unitName: pluralisedUnitName,
-        })
+        doseCount: sumAvailableDoses(draftLines).toFixed(0),
+        unitCount: unitCount,
+        unitName: pluralisedUnitName,
+      })
       : t('label.available-quantity', {
-          number: unitCount,
-          unitName: pluralisedUnitName,
-        });
+        number: unitCount,
+        unitName: pluralisedUnitName,
+      });
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
       <ModalRow>
         <ModalLabel label="" />
-        <Grid display="flex">
+        <Grid display="flex" pt={0.25} pb={0.25}>
           <Typography
             sx={{
               display: 'flex',
@@ -156,21 +175,20 @@ const AllocationInner = () => {
           </Typography>
         </Grid>
       </ModalRow>
-      <Grid container gap="4px" width="100%">
-        <Divider margin={10} />
-
-        <Box display="flex" alignItems="flex-start" gap={2}>
-          <Grid container alignItems="center" pt={1} gap={1}>
+      <Grid container gap="2px" width="100%">
+        <Box display="flex" alignItems="center" gap={1}>
+          <Grid container alignItems="center" pt={0} gap={1}>
             <AutoAllocateField />
             <AllocateInSelector includePackSizeOptions />
           </Grid>
-          <AutoAllocationAlerts />
+          <AutoAllocationAlerts sx={{ paddingTop: 0, paddingBottom: 0 }} />
         </Box>
       </Grid>
       <OutboundLineEditTable
         currency={currency}
         isExternalSupplier={!otherParty?.store}
+        pluginEvents={pluginEvents}
       />
-    </>
+    </Box>
   );
 };

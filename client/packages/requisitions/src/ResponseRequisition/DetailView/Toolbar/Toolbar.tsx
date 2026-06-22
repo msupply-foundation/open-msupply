@@ -10,6 +10,7 @@ import {
   Tooltip,
   BasicTextInput,
   SearchBar,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useResponse } from '../../api';
@@ -103,6 +104,7 @@ export const Toolbar = () => {
                   }
                 />
               )}
+              <DisabledStoreNotice otherParty={otherParty} />
             </Box>
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
               <InputWithLabelRow

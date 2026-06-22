@@ -71,12 +71,14 @@ pub(crate) mod sensor;
 pub(crate) mod shipping_method;
 pub(crate) mod special;
 pub(crate) mod stock_line;
+pub(crate) mod stock_relocation;
 pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod sync_file_reference;
 pub(crate) mod sync_message;
+pub(crate) mod sync_message_om;
 pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
@@ -184,6 +186,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut name_insurance_join::test_pull_upsert_records());
     test_records.append(&mut vvm_status_log::test_pull_upsert_records());
     test_records.append(&mut sync_message::test_pull_upsert_records());
+    test_records.append(&mut sync_message_om::test_pull_upsert_records());
     test_records.append(&mut purchase_order::test_pull_upsert_records());
     test_records.append(&mut purchase_order_line::test_pull_upsert_records());
     // goods_received and goods_received_line are pull-only translators tested
@@ -214,6 +217,11 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut clinician_store_join::test_pull_delete_records());
     test_records.append(&mut rnr_form_line::test_pull_delete_records());
     test_records.append(&mut rnr_form::test_pull_delete_records());
+
+    // Open mSupply central
+    test_records.append(&mut backend_plugin::test_pull_delete_records());
+    test_records.append(&mut frontend_plugin::test_pull_delete_records());
+    test_records.append(&mut plugin_data::test_pull_delete_records());
 
     test_records
 }
@@ -255,6 +263,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut name_insurance_join::test_push_records());
     test_records.append(&mut vvm_status_log::test_push_records());
     test_records.append(&mut sync_message::test_push_records());
+    test_records.append(&mut sync_message_om::test_push_records());
     test_records.append(&mut clinician::test_push_records());
     test_records.append(&mut clinician_store_join::test_push_records());
     test_records.append(&mut purchase_order::test_push_records());
