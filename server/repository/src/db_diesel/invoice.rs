@@ -28,7 +28,7 @@ pub struct Invoice {
     pub store_row: StoreRow,
     pub clinician_row: Option<ClinicianRow>,
 }
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct InvoiceFilter {
     pub id: Option<EqualFilter<String>>,
     pub invoice_number: Option<EqualFilter<i64>>,
@@ -81,6 +81,11 @@ pub enum InvoiceSortField {
 
 pub type InvoiceSort = Sort<InvoiceSortField>;
 
+/// Threshold below which `count_fast` runs an exact count instead of trusting the planner
+/// estimate (see `count_fast`).
+#[cfg(feature = "postgres")]
+const FAST_COUNT_EXACT_THRESHOLD: i64 = 10_000;
+
 pub struct InvoiceRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -104,6 +109,31 @@ impl<'a> InvoiceRepository<'a> {
         Ok(query
             .count()
             .get_result(self.connection.lock().connection())?)
+    }
+
+    /// Like `count`, but on Postgres answers large counts with the query planner's row
+    /// estimate (`EXPLAIN`, milliseconds regardless of table size) instead of an exact scan.
+    /// Estimates below [`FAST_COUNT_EXACT_THRESHOLD`] are re-checked with an exact count:
+    /// cheap when the result really is small, and self-correcting when the estimate is
+    /// wrong-low. Estimate accuracy depends on table statistics freshness (autovacuum
+    /// ANALYZE). SQLite has no equivalent estimator and always counts exactly.
+    pub fn count_fast(&self, filter: Option<InvoiceFilter>) -> Result<i64, RepositoryError> {
+        #[cfg(feature = "postgres")]
+        {
+            use super::estimated_count::{plan_rows, Explained};
+
+            // Explain the un-aggregated select: explaining `.count()` would report the
+            // aggregate node's `Plan Rows: 1`. On any explain/parse failure, fall through
+            // to the exact count.
+            let explain = Explained(create_filtered_query(filter.clone()))
+                .get_result::<serde_json::Value>(self.connection.lock().connection());
+            if let Some(estimate) = explain.ok().as_ref().and_then(plan_rows) {
+                if estimate >= FAST_COUNT_EXACT_THRESHOLD {
+                    return Ok(estimate);
+                }
+            }
+        }
+        self.count(filter)
     }
 
     pub fn query_by_filter(&self, filter: InvoiceFilter) -> Result<Vec<Invoice>, RepositoryError> {

@@ -174,6 +174,7 @@ impl<'a> InvoiceRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &InvoiceRow) -> Result<i64, RepositoryError> {
         self._upsert(row)?;
+        super::invoice_count_cache::clear();
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
@@ -204,6 +205,7 @@ impl<'a> InvoiceRowRepository<'a> {
 
         diesel::delete(invoice_with_links::table.filter(invoice_with_links::id.eq(invoice_id)))
             .execute(self.connection.lock().connection())?;
+        super::invoice_count_cache::clear();
         Ok(Some(change_log_id))
     }
 

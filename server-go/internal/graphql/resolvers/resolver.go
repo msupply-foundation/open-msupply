@@ -10,4 +10,7 @@ import (
 type Resolver struct {
 	DB      *sql.DB
 	Dialect db.Dialect
+	// JWTSecret / SecureCookie support the auth resolvers (issue tokens, set the refresh cookie).
+	JWTSecret    []byte
+	SecureCookie bool
 }

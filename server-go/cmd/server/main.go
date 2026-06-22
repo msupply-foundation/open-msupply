@@ -1,9 +1,12 @@
 // Command server runs the spike Go GraphQL server.
 //
 // SQLite (migrates on startup):
-//   go run ./cmd/server -driver sqlite -db path.sqlite -addr :8001
+//
+//	go run ./cmd/server -driver sqlite -db path.sqlite -addr :8001
+//
 // Postgres against an already-initialised DB (skip migration, read as-is):
-//   go run ./cmd/server -driver postgres -dsn "host=localhost port=5433 dbname=afg_lt sslmode=disable" -migrate=false -addr :8001
+//
+//	go run ./cmd/server -driver postgres -dsn "host=localhost port=5433 dbname=afg_lt sslmode=disable" -migrate=false -addr :8001
 package main
 
 import (
@@ -15,6 +18,7 @@ import (
 	"github.com/msupply-foundation/open-msupply/server-go/internal/db"
 	gql "github.com/msupply-foundation/open-msupply/server-go/internal/graphql"
 	"github.com/msupply-foundation/open-msupply/server-go/internal/migrations"
+	"github.com/msupply-foundation/open-msupply/server-go/internal/seed"
 	_ "modernc.org/sqlite"
 )
 
@@ -24,6 +28,10 @@ func main() {
 	dsn := flag.String("dsn", "", "Postgres DSN")
 	addr := flag.String("addr", ":8001", "listen address")
 	doMigrate := flag.Bool("migrate", true, "run migrations on startup (set false for an already-initialised DB)")
+	jwtSecret := flag.String("jwt-secret", "dev-insecure-secret-change-me", "HS256 secret for auth tokens")
+	corsOrigin := flag.String("cors-origin", "http://localhost:3003", "allowed frontend origin for CORS")
+	noSSL := flag.Bool("no-ssl", true, "dev mode: serve plain HTTP and omit the Secure cookie attribute")
+	doSeed := flag.Bool("seed", false, "seed a demo admin user + store on startup (idempotent)")
 	flag.Parse()
 
 	var (
@@ -57,7 +65,22 @@ func main() {
 		log.Printf("skipping migration (reading already-initialised %s DB)", dialect)
 	}
 
-	http.Handle("/graphql", gql.NewHandler(conn, dialect))
-	log.Printf("Go GraphQL server (%s) listening on %s/graphql", dialect, *addr)
+	if *doSeed {
+		if err := seed.Seed(conn, dialect); err != nil {
+			log.Fatalf("seed: %v", err)
+		}
+		if err := seed.Demo(conn, dialect); err != nil {
+			log.Fatalf("seed demo data: %v", err)
+		}
+		log.Printf("seeded demo admin user (%s/%s) + store + demo dataset", seed.AdminUsername, seed.AdminPassword)
+	}
+
+	handler := gql.NewHandler(conn, dialect, gql.Config{
+		JWTSecret:    []byte(*jwtSecret),
+		AllowOrigin:  *corsOrigin,
+		SecureCookie: !*noSSL,
+	})
+	http.Handle("/graphql", handler)
+	log.Printf("Go GraphQL server (%s) listening on %s/graphql (cors origin %s)", dialect, *addr, *corsOrigin)
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }

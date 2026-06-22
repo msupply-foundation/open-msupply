@@ -307,6 +307,90 @@ incremental + test loop, 6× smaller binary, ~40× smaller build footprint, triv
 cross-compile). The choice is an efficiency-vs-iteration-velocity trade, and the spike's
 premise was that iteration velocity (compile/test/disk) is the current pain.
 
+## totalCount strategies (WS6 follow-up) — the big-query wall is the COUNT, and it's fixable
+
+The ~20–30 rps collapse on the 1M-invoice store is **entirely the exact COUNT behind
+`totalCount`**, not the page query and not the server language. EXPLAIN ANALYZE on
+`demoivory_lt` split it: with a composite index `(store_id, invoice_number)` the 50-row page
+query is **<1 ms**; the exact COUNT (seq scan + invoice→name_link join over 1M rows) is
+~75–110 ms in psql and ~250–280 ms measured at the API, and the resolver ran it **eagerly on
+every request**.
+
+Index notes (applied to `demoivory_lt` only — production would need a migration):
+- Added `idx_invoice_store_sort (store_id, invoice_number)` → page query <1 ms.
+- **Dropped `index_invoice_invoice_number`** — it was actively harmful for this query: the
+  planner walked the whole-table invoice_number index and post-filtered (707 rows discarded
+  per page) instead of using the composite.
+- **Indexes do NOT speed up the exact COUNT**: counting 1M matching rows visits 1M rows
+  regardless; Postgres already picks a parallel seq scan as the cheapest plan (~75 ms beats
+  any index path tried, incl. partial and covering indexes).
+
+Three count strategies were implemented in the **Rust server** behind an env switch
+(`OMS_INVOICE_COUNT=exact|estimate|cache`, spike-only) plus a lazy skip, and load-tested on
+the 1M store (50 VUs / 20 s, same binary, same DB, auth bypassed via a develop-mode build):
+
+| scenario (Rust, 1M-row store) | rps | p95 | count accuracy |
+|---|---|---|---|
+| baseline: exact COUNT every request | 21 | 3.7 s | exact |
+| **A — planner estimate** (`EXPLAIN (FORMAT JSON)` → `Plan Rows`) | **1,467** | 51 ms | 1,004,007 vs 1,004,135 actual (0.013% off) |
+| **C — in-memory cache** (keyed by filter, cleared on invoice writes) | **1,664** | 47 ms | exact (until next write) |
+| **B — client caches count** (rows-only + 1-in-25 exact counts) | 300 | 634 ms | exact, refreshed per filter change |
+| B ceiling: rows-only (count never requested) | 1,884 | 40 ms | n/a |
+| **A+B combined** (lazy client + estimate server) | 1,790 | 44 ms | estimate |
+
+Implementation (all in the Rust server, ~200 lines total):
+- `repository/src/db_diesel/estimated_count.rs`: `Explained<T>` diesel `QueryFragment` wrapper
+  (binds preserved, no SQL interpolation); `InvoiceRepository::count_fast` returns the planner
+  estimate, re-checking with an exact count when the estimate is <10k (cheap when small,
+  self-corrects wrong-low estimates). **Postgres-only** (`#[cfg(feature = "postgres")]`);
+  SQLite has no cheap estimator and falls back to exact. NOTE: SQLite remotes are not always
+  small — sites with 100k+ prescriptions exist. Measured on SQLite (warm, dev hardware): the
+  production-shaped count (view + name join) costs ~25 ms at 100k rows / ~260 ms at 1M, but
+  ~13× of that is the name_link join — counting the invoice table directly is 1.8 ms / 24 ms.
+  SQLite's levers are therefore the skip-the-join count (valid whenever the filter doesn't
+  touch the customer name — not yet implemented), option C, and option B.
+- `repository/src/db_diesel/invoice_count_cache.rs`: process-wide `HashMap<filter, count>`,
+  cleared in `InvoiceRowRepository::upsert_one`/`delete` (covers sync via the `Upsert` impl).
+  Caveats: per-process (multi-instance deployments would serve stale counts), and a busy
+  central server syncing invoices continuously will clear it constantly — hit rate under real
+  sync load is unmeasured.
+- `graphql/invoice`: `ctx.look_ahead().field("totalCount").exists()` skips the COUNT entirely
+  when the client doesn't select it (verified: works through the `... on InvoiceConnector`
+  union fragment; rows-only requests dropped from ~280 ms to ~17 ms).
+- `service/invoice/query.rs` `clamp_count_to_page`: corrects the count against the page result
+  (which is ground truth and already in hand). A wrong-LOW estimate would otherwise make
+  trailing pages unreachable — the UI derives its page count from totalCount and disables
+  next-page past it. The clamp guarantees: a full page past the reported count bumps the count
+  (`offset + rows + 1`, next page stays reachable — the count refines as the user browses); a
+  non-empty short page proves the exact total and snaps the count to it (also fixes wrong-HIGH
+  estimates when the real last page is reached). Exact counts are never altered.
+- k6: `bench/load/invoices_lazy.js` simulates a client that fetches count separately
+  (per-filter cache) — counts depend only on the filter, never sort/page.
+
+Read on the options (for production):
+- **A (estimate)** is the best effort-to-value: one repository method, no invalidation logic,
+  no frontend change, 70× throughput. Costs: count is approximate above the threshold (UI
+  shows it as exact), and stale `pg_class` statistics skew it until autovacuum ANALYZEs —
+  worst case ~10% off right after a bulk load (`autovacuum_analyze_scale_factor` default).
+  The page clamp (above) removes the dangerous consequence (unreachable tail pages); a
+  scheduled `ANALYZE invoice` after bulk operations bounds the cosmetic error. Postgres-only.
+- **C (cache)** keeps counts exact and is marginally faster than A, but invalidation is the
+  classic hard part: per-process only, and continuous sync writes on a central server may
+  gut the hit rate. Needs a real-traffic measurement before trusting it.
+- **B (client-side)** reaches the same ceiling *combined with A or C*, keeps the API exact,
+  and additionally removes the count from every page navigation — but requires frontend
+  changes (separate cached count query) and benefits Postgres and SQLite alike.
+- Strategies compose: **A or C server-side now** (flag-gated), **B as the frontend follow-up**.
+
+Fairness caveats for this matrix: single local Postgres 16, warm cache, one filter shape
+(store_id + is_cancellation); the auth layer was bypassed (develop-mode build, as in the WS6
+baseline). Separately noted: the earlier Rust-vs-Go comparison has a **connection-pool
+asymmetry** — Rust caps its r2d2 pool at 10 connections (`base.yaml
+connection_pool_max_connections: 10`) while the Go spike's `database/sql` pool is unbounded
+(no `SetMaxOpenConns`), so under 50 VUs Go could use ~50 PG connections to Rust's 10. Go's
+big-query "lead" (30 vs 20 rps) is partly that, not language speed; the strategy matrix above
+is unaffected (Rust-only, pool constant).
+
 ## Still required before a go/no-go (open workstreams)
 
 - WS5 finish (optional): rebuild the Boa-CGO Rust→Go `sql` callback (code scaffolded) — blocked

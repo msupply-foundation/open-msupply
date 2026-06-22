@@ -19,6 +19,7 @@ diesel = { version = "2.3.7", default-features = false, features = [
     "chrono",
     "64-column-tables",
     "with-deprecated",
+    "serde_json",
 ] }
 diesel-derive-enum = { version = "2.1.0", default-features = false }
 futures-util = { workspace = true }

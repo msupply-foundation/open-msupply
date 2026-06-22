@@ -80,7 +80,7 @@ func postGraphQL(t *testing.T, h http.Handler, query string, vars map[string]any
 }
 
 func TestInvoicesParity_Envelope(t *testing.T) {
-	h := NewHandler(seedDB(t), db.SQLite)
+	h := NewHandler(seedDB(t), db.SQLite, Config{})
 	raw := postGraphQL(t, h, invoicesQuery, map[string]any{"storeId": "store-1"})
 	t.Logf("Go GraphQL response:\n%s", raw)
 
@@ -150,7 +150,7 @@ func TestInvoicesParity_LiveRustDiff(t *testing.T) {
 	storeID := os.Getenv("RUST_STORE_ID")
 	vars := map[string]any{"storeId": storeID}
 
-	goResp := postGraphQL(t, NewHandler(seedDB(t), db.SQLite), invoicesQuery, vars)
+	goResp := postGraphQL(t, NewHandler(seedDB(t), db.SQLite, Config{}), invoicesQuery, vars)
 
 	body, _ := json.Marshal(map[string]any{"query": invoicesQuery, "variables": vars})
 	req, _ := http.NewRequest(http.MethodPost, rustURL, bytes.NewReader(body))

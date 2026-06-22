@@ -45,6 +45,9 @@ pub mod document_registry_row;
 pub mod email_queue_row;
 pub mod encounter;
 pub mod encounter_row;
+#[cfg(feature = "postgres")]
+pub mod estimated_count;
+pub mod invoice_count_cache;
 mod filter_restriction;
 mod filter_sort_pagination;
 pub mod form_schema;

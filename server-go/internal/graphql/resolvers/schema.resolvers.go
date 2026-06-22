@@ -20,12 +20,12 @@ func (r *invoiceNodeResolver) OtherParty(ctx context.Context, obj *model.Invoice
 
 // InsertOutboundShipment is the resolver for the insertOutboundShipment field.
 func (r *mutationsResolver) InsertOutboundShipment(ctx context.Context, storeID string, input model.InsertOutboundShipmentInput) (model.InsertOutboundShipmentResponse, error) {
-	panic(fmt.Errorf("not implemented: InsertOutboundShipment - insertOutboundShipment"))
+	return r.insertOutboundShipment(ctx, storeID, input)
 }
 
 // UpdateOutboundShipment is the resolver for the updateOutboundShipment field.
 func (r *mutationsResolver) UpdateOutboundShipment(ctx context.Context, storeID string, input model.UpdateOutboundShipmentInput) (model.UpdateOutboundShipmentResponse, error) {
-	panic(fmt.Errorf("not implemented: UpdateOutboundShipment - updateOutboundShipment"))
+	return r.updateOutboundShipment(ctx, storeID, input)
 }
 
 // UpdateOutboundShipmentName is the resolver for the updateOutboundShipmentName field.
@@ -35,7 +35,7 @@ func (r *mutationsResolver) UpdateOutboundShipmentName(ctx context.Context, stor
 
 // DeleteOutboundShipment is the resolver for the deleteOutboundShipment field.
 func (r *mutationsResolver) DeleteOutboundShipment(ctx context.Context, storeID string, id string) (model.DeleteOutboundShipmentResponse, error) {
-	panic(fmt.Errorf("not implemented: DeleteOutboundShipment - deleteOutboundShipment"))
+	return r.deleteOutboundShipment(ctx, storeID, id)
 }
 
 // InsertInboundShipment is the resolver for the insertInboundShipment field.
@@ -140,7 +140,7 @@ func (r *mutationsResolver) DeleteCustomerReturn(ctx context.Context, storeID st
 
 // InsertOutboundShipmentLine is the resolver for the insertOutboundShipmentLine field.
 func (r *mutationsResolver) InsertOutboundShipmentLine(ctx context.Context, storeID string, input model.InsertOutboundShipmentLineInput) (model.InsertOutboundShipmentLineResponse, error) {
-	panic(fmt.Errorf("not implemented: InsertOutboundShipmentLine - insertOutboundShipmentLine"))
+	return r.insertOutboundShipmentLine(ctx, storeID, input)
 }
 
 // UpdateOutboundShipmentLine is the resolver for the updateOutboundShipmentLine field.
@@ -150,7 +150,7 @@ func (r *mutationsResolver) UpdateOutboundShipmentLine(ctx context.Context, stor
 
 // DeleteOutboundShipmentLine is the resolver for the deleteOutboundShipmentLine field.
 func (r *mutationsResolver) DeleteOutboundShipmentLine(ctx context.Context, storeID string, input model.DeleteOutboundShipmentLineInput) (model.DeleteOutboundShipmentLineResponse, error) {
-	panic(fmt.Errorf("not implemented: DeleteOutboundShipmentLine - deleteOutboundShipmentLine"))
+	return r.deleteOutboundShipmentLine(ctx, storeID, input)
 }
 
 // InsertOutboundShipmentServiceLine is the resolver for the insertOutboundShipmentServiceLine field.
@@ -830,7 +830,7 @@ func (r *queriesResolver) APIVersion(ctx context.Context) (string, error) {
 
 // AuthToken is the resolver for the authToken field.
 func (r *queriesResolver) AuthToken(ctx context.Context, username string, password string) (model.AuthTokenResponse, error) {
-	panic(fmt.Errorf("not implemented: AuthToken - authToken"))
+	return r.authToken(ctx, username, password)
 }
 
 // ItemPrice is the resolver for the itemPrice field.
@@ -840,22 +840,22 @@ func (r *queriesResolver) ItemPrice(ctx context.Context, storeID string, input m
 
 // Logout is the resolver for the logout field.
 func (r *queriesResolver) Logout(ctx context.Context) (model.LogoutResponse, error) {
-	panic(fmt.Errorf("not implemented: Logout - logout"))
+	return r.logout(ctx)
 }
 
 // RefreshToken is the resolver for the refreshToken field.
 func (r *queriesResolver) RefreshToken(ctx context.Context) (model.RefreshTokenResponse, error) {
-	panic(fmt.Errorf("not implemented: RefreshToken - refreshToken"))
+	return r.refreshToken(ctx)
 }
 
 // Me is the resolver for the me field.
 func (r *queriesResolver) Me(ctx context.Context) (model.UserResponse, error) {
-	panic(fmt.Errorf("not implemented: Me - me"))
+	return r.me(ctx)
 }
 
 // IsCentralServer is the resolver for the isCentralServer field.
 func (r *queriesResolver) IsCentralServer(ctx context.Context) (bool, error) {
-	panic(fmt.Errorf("not implemented: IsCentralServer - isCentralServer"))
+	return r.isCentralServer(ctx)
 }
 
 // FeatureFlags is the resolver for the featureFlags field.
@@ -870,12 +870,12 @@ func (r *queriesResolver) Names(ctx context.Context, storeID string, page *model
 
 // Store is the resolver for the store field.
 func (r *queriesResolver) Store(ctx context.Context, id string) (model.StoreResponse, error) {
-	panic(fmt.Errorf("not implemented: Store - store"))
+	return r.store(ctx, id)
 }
 
 // Stores is the resolver for the stores field.
 func (r *queriesResolver) Stores(ctx context.Context, page *model.PaginationInput, filter *model.StoreFilterInput, sort []*model.StoreSortInput) (model.StoresResponse, error) {
-	panic(fmt.Errorf("not implemented: Stores - stores"))
+	return r.stores(ctx)
 }
 
 // MasterLists is the resolver for the masterLists field.
@@ -905,17 +905,17 @@ func (r *queriesResolver) ItemLedger(ctx context.Context, storeID string, page *
 
 // OutboundShipmentCounts is the resolver for the outboundShipmentCounts field.
 func (r *queriesResolver) OutboundShipmentCounts(ctx context.Context, storeID string, timezoneOffset *int) (*model.OutboundInvoiceCounts, error) {
-	panic(fmt.Errorf("not implemented: OutboundShipmentCounts - outboundShipmentCounts"))
+	return r.outboundShipmentCounts(ctx, storeID, timezoneOffset)
 }
 
 // InboundShipmentCounts is the resolver for the inboundShipmentCounts field.
 func (r *queriesResolver) InboundShipmentCounts(ctx context.Context, storeID string, timezoneOffset *int) (*model.InboundInvoiceCounts, error) {
-	panic(fmt.Errorf("not implemented: InboundShipmentCounts - inboundShipmentCounts"))
+	return r.inboundCounts(storeID, false)
 }
 
 // InboundShipmentExternalCounts is the resolver for the inboundShipmentExternalCounts field.
 func (r *queriesResolver) InboundShipmentExternalCounts(ctx context.Context, storeID string, timezoneOffset *int) (*model.InboundInvoiceCounts, error) {
-	panic(fmt.Errorf("not implemented: InboundShipmentExternalCounts - inboundShipmentExternalCounts"))
+	return r.inboundCounts(storeID, true)
 }
 
 // InvoiceCounts is the resolver for the invoiceCounts field.
@@ -925,7 +925,7 @@ func (r *queriesResolver) InvoiceCounts(ctx context.Context, storeID string, tim
 
 // StockCounts is the resolver for the stockCounts field.
 func (r *queriesResolver) StockCounts(ctx context.Context, storeID string, timezoneOffset *int, daysTillExpired *int) (*model.StockCounts, error) {
-	panic(fmt.Errorf("not implemented: StockCounts - stockCounts"))
+	return r.stockCounts(ctx, storeID, timezoneOffset, daysTillExpired)
 }
 
 // RequisitionLineChart is the resolver for the requisitionLineChart field.
@@ -940,7 +940,7 @@ func (r *queriesResolver) ActivityLogs(ctx context.Context, storeID string, page
 
 // InitialisationStatus is the resolver for the initialisationStatus field.
 func (r *queriesResolver) InitialisationStatus(ctx context.Context) (*model.InitialisationStatusNode, error) {
-	panic(fmt.Errorf("not implemented: InitialisationStatus - initialisationStatus"))
+	return r.initialisationStatus(ctx)
 }
 
 // MigrationStatus is the resolver for the migrationStatus field.
@@ -980,7 +980,7 @@ func (r *queriesResolver) InventoryAdjustmentReasons(ctx context.Context, page *
 
 // ItemCounts is the resolver for the itemCounts field.
 func (r *queriesResolver) ItemCounts(ctx context.Context, storeID string, lowStockThreshold *float64, highStockThreshold *float64) (*model.ItemCounts, error) {
-	panic(fmt.Errorf("not implemented: ItemCounts - itemCounts"))
+	return r.itemCounts(ctx, storeID, lowStockThreshold, highStockThreshold)
 }
 
 // StorePreferences is the resolver for the storePreferences field.
@@ -995,7 +995,7 @@ func (r *queriesResolver) BarcodeByGtin(ctx context.Context, storeID string, gti
 
 // RequisitionCounts is the resolver for the requisitionCounts field.
 func (r *queriesResolver) RequisitionCounts(ctx context.Context, storeID string) (*model.RequisitionCounts, error) {
-	panic(fmt.Errorf("not implemented: RequisitionCounts - requisitionCounts"))
+	return r.requisitionCounts(ctx, storeID)
 }
 
 // LogFileNames is the resolver for the logFileNames field.
@@ -1425,7 +1425,7 @@ func (r *queriesResolver) ItemVariantsConfigured(ctx context.Context, storeID st
 
 // Preferences is the resolver for the preferences field.
 func (r *queriesResolver) Preferences(ctx context.Context, storeID string) (*model.PreferencesNode, error) {
-	panic(fmt.Errorf("not implemented: Preferences - preferences"))
+	return r.preferences(ctx, storeID)
 }
 
 // PreferenceDescriptions is the resolver for the preferenceDescriptions field.

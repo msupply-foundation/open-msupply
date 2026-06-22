@@ -237,9 +237,14 @@ pub fn get_invoices(
         apply_type_filters(&mut domain_filter, types);
     }
 
+    // Spike: the COUNT behind totalCount dominates response time on large stores, so skip it
+    // when the client didn't select the field. look_ahead resolves through the
+    // `... on InvoiceConnector` fragment of the union response.
+    let include_count = ctx.look_ahead().field("totalCount").exists();
+
     let invoices = service_provider
         .invoice_service
-        .get_invoices(
+        .get_invoices_with_options(
             &service_context,
             Some(&store_id),
             page.map(PaginationOption::from),
@@ -247,6 +252,7 @@ pub fn get_invoices(
             // Currently only one sort option is supported, use the first from the list.
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
+            include_count,
         )
         .map_err(StandardGraphqlError::from_list_error)?;
 

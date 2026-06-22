@@ -2,30 +2,72 @@ package migrations
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/msupply-foundation/open-msupply/server-go/internal/db"
 )
 
-// Link views (invoice_view, stock_line_view, …) resolve *_link_id columns back to their
-// *_id via the name_link / item_link tables. They are NOT in the base dump — the Rust server
-// drops & rebuilds them around migrations (server/repository/src/migrations/views/link_views.rs).
-// The SQL below is lifted verbatim; reads in the repository layer go through these views,
-// exactly as Diesel's `define_linked_tables! { view: invoice = "invoice_view", ... }` does.
+// Views are (re)created after migrations, mirroring the Rust server's drop_views + rebuild_views
+// step (server/repository/src/migrations/views/mod.rs): the Rust server recreates ALL views on
+// startup, in a hardcoded dependency order, so they never go stale. orderedViews() is the Go
+// analogue of all_views() — views are dropped in REVERSE order and rebuilt in FORWARD order.
 //
-// This is the subset needed for the WS2 repository slice; the remaining link views and the
-// ~28 stat/ledger views port the same way (pure SQL).
+// This matters because the Go base dumps are inconsistent: sqlite_latest.sql bakes in the
+// stat/ledger views, but postgres_latest.sql contains NO views at all. Recreating here is what
+// gives a freshly-bootstrapped Postgres database its views (and idempotently refreshes SQLite's).
+//
+// Only the views the ported subsystems need are defined so far:
+//   - changelog_deduped: required by the sync push path (reads the deduped changelog view).
+//   - invoice_view: the linked-table read view for the WS2 repository slice.
+//
+// The remaining ~28 stat/ledger/report/link views in link_views.rs port the same way (pure SQL).
+// Several reference columns added by post-v2.15.0 migrations, so they are deferred — and remain a
+// known Postgres gap until added here (SQLite gets them from its base dump).
+//
+// Behavioural note: SQLite validates view column references lazily (at query time) while Postgres
+// validates eagerly (at CREATE VIEW), so a premature rebuild silently succeeds on SQLite but
+// errors on Postgres — which is why only fully-satisfiable views are listed.
 
-// NOTE: only invoice_view is rebuilt here — it's all the WS2 repository slice reads. The
-// full set in link_views.rs (stock_line_view, etc.) references columns added by migrations
-// AFTER the v2.15.0 base (e.g. stock_line.manufacturer_link_id), so it can only be created
-// once those migrations have run. Behavioral finding worth recording: SQLite validates view
-// column references LAZILY (at query time) while Postgres validates EAGERLY (at CREATE VIEW),
-// so a premature rebuild silently succeeds on SQLite but errors on Postgres.
-const dropLinkViews = `
-	DROP VIEW IF EXISTS invoice_view;
+type viewDef struct {
+	name string
+	sql  string
+}
+
+func orderedViews() []viewDef {
+	return []viewDef{
+		{name: "changelog_deduped", sql: changelogDedupedView},
+		{name: "invoice_view", sql: invoiceView},
+	}
+}
+
+// changelogDedupedView keeps only the latest change per (record_id, store_id). Identical SQL on
+// both dialects (matches the definition in the SQLite base dump and the columns the sync
+// changelog repository reads). Mirrors server/repository/src/migrations/views/changelog_deduped.rs.
+const changelogDedupedView = `
+	CREATE VIEW changelog_deduped AS
+	SELECT c.cursor,
+		c.table_name,
+		c.record_id,
+		c.row_action,
+		c.name_link_id,
+		c.store_id,
+		c.is_sync_update,
+		c.source_site_id
+	FROM (
+		SELECT record_id, store_id, MAX(cursor) AS max_cursor
+		FROM changelog
+		GROUP BY record_id, store_id
+	) grouped
+	INNER JOIN changelog c
+		ON c.record_id = grouped.record_id
+		AND (c.store_id = grouped.store_id OR (c.store_id IS NULL AND grouped.store_id IS NULL))
+		AND c.cursor = grouped.max_cursor
+	ORDER BY c.cursor;
 `
 
-const rebuildLinkViews = `
+// invoiceView resolves *_link_id columns back to *_id via name_link, exactly as Diesel's
+// define_linked_tables! { view: invoice = "invoice_view", ... } does.
+const invoiceView = `
 	CREATE VIEW invoice_view AS
 	SELECT
 		invoice.*,
@@ -39,11 +81,19 @@ const rebuildLinkViews = `
 		name_link AS default_donor_link ON invoice.default_donor_link_id = default_donor_link.id;
 `
 
-// rebuildViews mirrors the Rust drop_views + rebuild_views step run after migrations.
+// rebuildViews drops (reverse order) and recreates (forward order) the views after migrations,
+// mirroring the Rust drop_views + rebuild_views step.
 func rebuildViews(conn *sql.DB, _ db.Dialect) error {
-	if _, err := conn.Exec(dropLinkViews); err != nil {
-		return err
+	views := orderedViews()
+	for i := len(views) - 1; i >= 0; i-- {
+		if _, err := conn.Exec("DROP VIEW IF EXISTS " + views[i].name); err != nil {
+			return fmt.Errorf("drop view %s: %w", views[i].name, err)
+		}
 	}
-	_, err := conn.Exec(rebuildLinkViews)
-	return err
+	for _, v := range views {
+		if _, err := conn.Exec(v.sql); err != nil {
+			return fmt.Errorf("rebuild view %s: %w", v.name, err)
+		}
+	}
+	return nil
 }

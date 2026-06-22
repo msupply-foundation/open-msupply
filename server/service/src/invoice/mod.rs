@@ -67,6 +67,27 @@ pub trait InvoiceServiceTrait: Sync + Send {
         get_invoices(ctx, store_id_option, pagination, filter, sort)
     }
 
+    /// As `get_invoices`, but `include_count: false` skips the COUNT query (count is returned
+    /// as 0). Only pass false when the client did not select totalCount.
+    fn get_invoices_with_options(
+        &self,
+        ctx: &ServiceContext,
+        store_id_option: Option<&str>,
+        pagination: Option<PaginationOption>,
+        filter: Option<InvoiceFilter>,
+        sort: Option<InvoiceSort>,
+        include_count: bool,
+    ) -> Result<ListResult<Invoice>, ListError> {
+        get_invoices_with_options(
+            ctx,
+            store_id_option,
+            pagination,
+            filter,
+            sort,
+            include_count,
+        )
+    }
+
     fn get_invoice_by_number(
         &self,
         ctx: &ServiceContext,
