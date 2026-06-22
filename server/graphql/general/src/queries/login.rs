@@ -1,12 +1,12 @@
 use async_graphql::*;
-use chrono::Utc;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use http2::header::SET_COOKIE;
 use service::{
     auth_data::AuthData,
     login::{LoginError, LoginFailure, LoginInput, LoginService, LoginSuccess},
-    session_store::SESSION_LIFETIME,
+    preference::{InactivityTimeoutMinutes, Preference},
+    session_store::lifetime_from_minutes,
 };
 
 // Fixed login response time in case of an error (see service)
@@ -166,34 +166,47 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                 LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
                 | LoginError::FetchUserError(_)
-                | LoginError::UpdateUserError(_) => StandardGraphqlError::InternalError(formatted_error),
+                | LoginError::UpdateUserError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
             };
             return Err(graphql_error.extend());
         }
     };
 
     let LoginSuccess { user_id, password } = success;
-    let token = auth_data
+
+    // Inactivity timeout is a global preference (minutes); captured per-session at login.
+    let inactivity_minutes = InactivityTimeoutMinutes
+        .load(&service_context.connection, None)
+        .map_err(|e| StandardGraphqlError::InternalError(e.to_string()))?;
+    let lifetime = lifetime_from_minutes(inactivity_minutes);
+
+    let (token, expires_at) = auth_data
         .session_store
         .write()
         .map_err(|e| {
             StandardGraphqlError::InternalError(format!("Session store lock poisoned: {e}"))
         })?
-        .create(&user_id, &password);
+        .create(&user_id, &password, lifetime);
 
-    let expiry_date = (Utc::now() + SESSION_LIFETIME).timestamp() as usize;
+    let expiry_date = expires_at.timestamp() as usize;
     set_session_cookie(ctx, &token, auth_data);
 
-    Ok(AuthTokenResponse::Response(AuthToken { token, expiry_date }))
+    Ok(AuthTokenResponse::Response(AuthToken {
+        token,
+        expiry_date,
+    }))
 }
 
 /// How long the browser is allowed to keep the session cookie. Intentionally **much longer** than
-/// [`SESSION_LIFETIME`] — the server is sole source of truth for whether a session is still
-/// valid, and we never re-emit `Set-Cookie` on individual authenticated responses. If we used the
-/// session lifetime here, the browser would silently drop the cookie 60 minutes after login
-/// regardless of activity (the server's sliding window only updates `SessionStore` in memory).
-/// With a long cookie lifetime the worst case for an inactive user is one trailing
-/// `Unauthenticated` response, which is the same as if the cookie had expired naturally.
+/// the session's inactivity timeout (the `InactivityTimeoutMinutes` preference) — the server is
+/// sole source of truth for whether a session is still valid, and we never re-emit `Set-Cookie` on
+/// individual authenticated responses. If we used the session lifetime here, the browser would
+/// silently drop the cookie when the inactivity window elapsed regardless of activity (the
+/// server's sliding window only updates `SessionStore` in memory). With a long cookie lifetime the
+/// worst case for an inactive user is one trailing `Unauthenticated` response, which is the same
+/// as if the cookie had expired naturally.
 const COOKIE_MAX_AGE_SECONDS: usize = 60 * 60 * 24 * 30; // 30 days
 
 /// Stores the opaque session token in an HttpOnly cookie. The cookie name is suffixed with the

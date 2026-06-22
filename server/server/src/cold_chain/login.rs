@@ -10,7 +10,9 @@ use repository::RepositoryError;
 use service::{
     auth_data::AuthData,
     login::{LoginInput, LoginService},
+    preference::{InactivityTimeoutMinutes, Preference},
     service_provider::ServiceProvider,
+    session_store::lifetime_from_minutes,
 };
 
 use super::{validate_access, COOKIE_NAME, URL_PATH};
@@ -70,8 +72,19 @@ async fn do_login(
             // against central using the cold-chain login's credentials. That's surprising but
             // intentional — the alternative would be a duplicated store-without-password code
             // path. Preserves the pre-refactor behaviour (the old `TokenBucket` did the same).
+            // Inactivity timeout is a global preference (minutes); captured per-session at login.
+            let lifetime = match InactivityTimeoutMinutes.load(&service_context.connection, None) {
+                Ok(minutes) => lifetime_from_minutes(minutes),
+                Err(err) => {
+                    error!("Failed to load inactivity timeout preference: {err}");
+                    return Ok(None);
+                }
+            };
             let token = match auth_data.session_store.write() {
-                Ok(mut store) => store.create(&success.user_id, &success.password),
+                Ok(mut store) => {
+                    let (token, _) = store.create(&success.user_id, &success.password, lifetime);
+                    token
+                }
                 Err(err) => {
                     error!("Session store lock poisoned: {err}");
                     return Ok(None);

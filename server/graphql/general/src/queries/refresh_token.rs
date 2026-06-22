@@ -1,10 +1,8 @@
 use async_graphql::*;
-use chrono::Utc;
 use graphql_core::{
     simple_generic_errors::{DatabaseError, InternalError},
     ContextExt,
 };
-use service::session_store::SESSION_LIFETIME;
 
 use crate::set_session_cookie;
 
@@ -108,7 +106,7 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
         }
     };
 
-    {
+    let expires_at = {
         let mut store = match auth_data.session_store.write() {
             Ok(s) => s,
             Err(e) => {
@@ -119,17 +117,20 @@ pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
                 })
             }
         };
-        if store.validate_and_slide(&token).is_none() {
-            return RefreshTokenResponse::Error(RefreshTokenError {
-                error: RefreshTokenErrorInterface::TokenExpired(TokenExpired),
-            });
+        match store.validate_and_slide(&token) {
+            Some(session) => session.expires_at,
+            None => {
+                return RefreshTokenResponse::Error(RefreshTokenError {
+                    error: RefreshTokenErrorInterface::TokenExpired(TokenExpired),
+                })
+            }
         }
-    }
+    };
 
     // Re-emit the cookie so legacy clients still see a Set-Cookie response. Browser-side this is
     // a no-op for active users (Max-Age is server-fixed and far exceeds the session lifetime).
     set_session_cookie(ctx, &token, auth_data);
 
-    let expiry_date = (Utc::now() + SESSION_LIFETIME).timestamp() as usize;
+    let expiry_date = expires_at.timestamp() as usize;
     RefreshTokenResponse::Response(RefreshToken { token, expiry_date })
 }

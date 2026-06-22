@@ -1426,7 +1426,10 @@ mod permission_validation_test {
     use std::sync::{Arc, RwLock};
 
     use super::*;
-    use crate::{service_provider::ServiceProvider, session_store::SessionStore};
+    use crate::{
+        service_provider::ServiceProvider,
+        session_store::{lifetime_from_minutes, SessionStore},
+    };
     use repository::{
         mock::{mock_user_account_a, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
@@ -1443,11 +1446,11 @@ mod permission_validation_test {
         };
         let user_id = "test_user_id";
         let password = "pass";
-        let token = auth_data
+        let (token, _) = auth_data
             .session_store
             .write()
             .unwrap()
-            .create(user_id, password);
+            .create(user_id, password, lifetime_from_minutes(60));
 
         let (_, _, connection_manager, _) = setup_all(
             "basic_permission_validation",
@@ -1638,11 +1641,11 @@ mod permission_validation_test {
             debug_no_access_control: false,
         };
 
-        let token = auth_data
+        let (token, _) = auth_data
             .session_store
             .write()
             .unwrap()
-            .create(&user().id, password);
+            .create(&user().id, password, lifetime_from_minutes(60));
 
         assert!(service_provider
             .validation_service
@@ -1658,11 +1661,11 @@ mod permission_validation_test {
             )
             .is_ok());
 
-        let token = auth_data
+        let (token, _) = auth_data
             .session_store
             .write()
             .unwrap()
-            .create(&user_without_permission().id, password);
+            .create(&user_without_permission().id, password, lifetime_from_minutes(60));
         assert!(service_provider
             .validation_service
             .validate(
