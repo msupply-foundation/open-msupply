@@ -1,11 +1,7 @@
 use async_trait::async_trait;
-use repository::{
-    BackendPluginRowRepository, ChangelogRow, ChangelogTableName, FrontendPluginRowRepository,
-    KeyType, RowActionType,
-};
+use repository::{ChangelogRow, ChangelogTableName, KeyType};
 
 use crate::{
-    backend_plugin::plugin_provider::PluginInstance,
     cursor_controller::CursorType,
     processors::general_processor::{Processor, ProcessorError},
     service_provider::{ServiceContext, ServiceProvider},
@@ -27,35 +23,11 @@ impl Processor for LoadPlugin {
         service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
-        // Upserts bind the single changed row (forward-only). A delete can't be
-        // applied that way (a fall-back to a lower version is a downgrade, which
-        // bind refuses), so it rebuilds the whole cache from the DB instead. See
-        // issue #12169.
-        match (&changelog.table_name, &changelog.row_action) {
-            (ChangelogTableName::BackendPlugin, RowActionType::Upsert) => {
-                let plugin = BackendPluginRowRepository::new(&ctx.connection)
-                    .find_one_by_id(&changelog.record_id)?
-                    .ok_or(ProcessorError::RecordNotFound(
-                        "Backend plugin".to_string(),
-                        changelog.record_id.clone(),
-                    ))?;
-
-                PluginInstance::bind(plugin);
-            }
-            (ChangelogTableName::FrontendPlugin, RowActionType::Upsert) => {
-                let plugin = FrontendPluginRowRepository::new(&ctx.connection)
-                    .find_one_by_id(&changelog.record_id)?
-                    .ok_or(ProcessorError::RecordNotFound(
-                        "Frontend plugin".to_string(),
-                        changelog.record_id.clone(),
-                    ))?;
-
-                service_provider
-                    .plugin_service
-                    .bind_frontend_plugin(ctx, plugin);
-            }
-            (ChangelogTableName::BackendPlugin, RowActionType::Delete)
-            | (ChangelogTableName::FrontendPlugin, RowActionType::Delete) => {
+        // Any plugin changelog — upsert or delete — rebuilds the whole cache
+        // from the DB and atomically swaps it in (reload_all_plugins). One path
+        // covers installs, deletes, downgrades and removals. See issue #12169.
+        match &changelog.table_name {
+            ChangelogTableName::BackendPlugin | ChangelogTableName::FrontendPlugin => {
                 service_provider.plugin_service.reload_all_plugins(ctx)?;
             }
             _ => {}

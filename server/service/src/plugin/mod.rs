@@ -1,11 +1,9 @@
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
-    time::Instant,
 };
 
 use base64::{prelude::BASE64_STANDARD, Engine};
-use log::info;
 use repository::{
     migrations::Version, BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow,
     FrontendPluginRowRepository, PluginType, RepositoryError,
@@ -132,7 +130,7 @@ pub enum InstalledPluginKind {
 }
 
 /// Decode a frontend plugin row into its cached form (base64 → bytes + content
-/// hash). Shared by `bind_frontend_plugin` and `reload_frontend_plugins`.
+/// hash). Used by `reload_frontend_plugins` to build each cache entry.
 fn build_frontend_plugin(
     FrontendPluginRow {
         id,
@@ -240,7 +238,7 @@ pub trait PluginServiceTrait: Sync + Send {
     fn reload_frontend_plugins(&self, ctx: &ServiceContext, rows: Vec<FrontendPluginRow>) {
         let app_version = Version::from_package_json();
 
-        // Highest compatible version per code wins (mirrors `bind_frontend_plugin`).
+        // Highest compatible version per code wins.
         let mut chosen: HashMap<String, FrontendPluginRow> = HashMap::new();
         for row in rows {
             let version = Version::from_str(&row.version);
@@ -286,94 +284,6 @@ pub trait PluginServiceTrait: Sync + Send {
             .ok_or(Error::CannotFindFile)?;
 
         Ok(file_content.clone())
-    }
-
-    fn bind_frontend_plugin(
-        &self,
-        ctx: &ServiceContext,
-        FrontendPluginRow {
-            id,
-            code,
-            entry_point,
-            files,
-            version,
-            ..
-        }: FrontendPluginRow,
-    ) {
-        let started = Instant::now();
-        let file_count = files.0.len();
-        let total_bytes: usize = files.0.iter().map(|f| f.file_content_base64.len()).sum();
-
-        let version = Version::from_str(&version);
-        let app_version = Version::from_package_json();
-
-        // Skip if not compatible
-        if !version.is_compatible_by_major_and_minor(&app_version) {
-            return;
-        }
-
-        // Get the existing cached version of the plugin
-        {
-            let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
-            if let Some(existing_plugin) = (*plugins).get(&code) {
-                if existing_plugin.metadata.version > version {
-                    // Existing cached plugin is higher version, skip (still install if same version)
-                    return;
-                }
-            }
-        } // Drop read lock
-
-        let mut files_content = HashMap::new();
-        // Prepare
-        for FrontendPluginFile {
-            file_name,
-            file_content_base64,
-        } in files.0.into_iter()
-        {
-            files_content.insert(
-                file_name,
-                BASE64_STANDARD.decode(file_content_base64).unwrap(),
-            );
-        }
-
-        // Hash all files (sorted by name for stability) so the URL token only
-        // changes when the bundle's bytes change.
-        let mut hasher = Sha256::new();
-        let mut file_names: Vec<&String> = files_content.keys().collect();
-        file_names.sort();
-        for name in file_names {
-            hasher.update(name.as_bytes());
-            hasher.update(&files_content[name]);
-        }
-        let hash = hex::encode(hasher.finalize());
-
-        let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
-        // Remove all plugins with this code
-        (*plugins).remove(&code);
-
-        // Add plugin with this code
-        let code_for_log = code.clone();
-        (*plugins).insert(
-            code.clone(),
-            FrontendPlugin {
-                metadata: FrontendPluginMetadata {
-                    id,
-                    code,
-                    version,
-                    entry_point,
-                    hash,
-                },
-                files_content,
-            },
-        );
-
-        info!(
-            "Loaded frontend plugin '{}' ({} files, {} base64 bytes) in {:?}",
-            code_for_log,
-            file_count,
-            total_bytes,
-            started.elapsed(),
-        );
     }
 
     fn get_frontend_plugins_metadata(&self, ctx: &ServiceContext) -> Vec<FrontendPluginMetadata> {

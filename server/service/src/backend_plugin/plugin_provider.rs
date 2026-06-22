@@ -150,65 +150,15 @@ impl PluginInstance {
             .map(|p| p.instance.clone())
     }
 
-    pub fn bind(
-        BackendPluginRow {
-            id,
-            bundle_base64,
-            variant_type,
-            types,
-            code,
-            version,
-            ..
-        }: BackendPluginRow,
-    ) {
-        let version = Version::from_str(&version);
-        let app_version = Version::from_package_json();
-
-        // Skip if not compatible
-        if !version.is_compatible_by_major_and_minor(&app_version) {
-            return;
-        }
-
-        // Get existing plugin with same code in the plugin provider
-        {
-            let plugins = PLUGINS.read().unwrap();
-            if let Some(existing_plugin) = (*plugins).iter().find(|p| p.instance.code == code) {
-                if existing_plugin.instance.version > version {
-                    // Existing plugin is higher version, skip (still install if same version)
-                    return;
-                }
-            }
-        } // Drop read lock
-
-        // Prepare plugin bundle
-        let plugin_bundle = BASE64_STANDARD.decode(bundle_base64).unwrap();
-        let plugin = match variant_type {
-            PluginVariantType::BoaJs => PluginInstance {
-                id,
-                code: code.clone(),
-                variant: PluginInstanceVariant::BoaJs(plugin_bundle),
-                version,
-            },
-        };
-
-        let instance = Arc::new(plugin);
-
-        let mut plugins = PLUGINS.write().unwrap();
-
-        // Remove existing plugins of older versions with same code
-        (*plugins).retain(|p| p.instance.code != code);
-
-        (*plugins).push(Plugin { types, instance });
-    }
-
-    /// Rebuild the whole backend cache from `rows` and atomically swap it in.
-    /// `bind` is forward-only (it won't downgrade), so a delete falls back to a
-    /// lower remaining version by rebuilding from scratch here. Built off to the
-    /// side before locking, so readers never see a half-built cache. See #12169.
+    /// Rebuild the whole backend cache from `rows` (every backend plugin row in
+    /// the DB) and atomically swap it in: highest compatible version per code
+    /// wins. Built off to the side before locking, so readers never see a
+    /// half-built or empty cache. The single path for startup, installs,
+    /// deletes, downgrades and removals. See #12169.
     pub fn reload(rows: Vec<BackendPluginRow>) {
         let app_version = Version::from_package_json();
 
-        // Highest compatible version per code wins (mirrors `bind`).
+        // Highest compatible version per code wins.
         let mut chosen: HashMap<String, BackendPluginRow> = HashMap::new();
         for row in rows {
             let version = Version::from_str(&row.version);
