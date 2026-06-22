@@ -107,7 +107,7 @@ const useHostSync = (enabled: boolean) => {
   };
 };
 
-export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
+export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { userHasPermission } = useAuthContext();
@@ -182,10 +182,13 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     });
   };
 
-  const modalWidth = Math.min(width, window.innerWidth - 50);
   return (
     <BasicModal
-      width={!isExtraSmallScreen ? modalWidth : 340}
+      // BasicModal clamps to the viewport itself (min(width, 100vw - 64px)),
+      // so pass the desired width straight through. Don't re-clamp here against
+      // a window.innerWidth snapshot - with no resize listener it gets stuck at
+      // a stale narrow value when the window grows back. See issue #12172.
+      width={!isExtraSmallScreen ? width : 340}
       open={open}
       onKeyDown={e => {
         if (e.key === 'Escape') onCancel();
