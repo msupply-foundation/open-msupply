@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Craig Was Right — Postgres Counts Are Slow (and what we can do about it)</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1b2733; --muted:#5b6b7b; --line:#e3e8ee;
+    --indigo:#4f46e5; --indigo-soft:#eef0fe;
+    --green:#16a34a; --green-soft:#e7f6ec; --amber:#c2790b; --amber-soft:#fbf1de;
+    --slate:#64748b; --slate-soft:#eef2f6; --red:#b91c1c; --red-soft:#fdeceb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px 80px}
+  code,.mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
+  header.hero{background:linear-gradient(135deg,#1b2733,#27384a);color:#fff;
+    margin-bottom:30px;border-radius:0 0 14px 14px}
+  .hero .wrap{padding:46px 22px 38px}
+  .eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:700;
+    color:#9db3c9;margin:0 0 10px}
+  .hero h1{margin:0 0 12px;font-size:34px;line-height:1.2;font-weight:800;letter-spacing:-.02em}
+  .hero p{margin:0;color:#c7d4e1;max-width:720px}
+  .meta{margin-top:20px;font-size:13px;color:#90a4b8;display:flex;gap:18px;flex-wrap:wrap}
+  .meta b{color:#cdd9e5;font-weight:600}
+  h2{font-size:22px;font-weight:800;letter-spacing:-.01em;margin:46px 0 14px;
+    padding-bottom:8px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;font-weight:700;margin:26px 0 8px}
+  p{margin:12px 0}
+  .lead{font-size:17px;color:#33424f}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;
+    margin:16px 0;box-shadow:0 1px 2px rgba(16,32,48,.04)}
+  .summary{border-left:5px solid var(--indigo)}
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .stat .big{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+  .stat .lbl{font-size:13px;color:var(--muted);margin-top:6px}
+  .stat .sub{font-size:12px;color:var(--slate);margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+  .good{color:var(--green)} .bad{color:var(--red)} .mid{color:var(--amber)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+  tbody tr:nth-child(odd){background:#fafbfc}
+  .badge{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;
+    text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+  .b-rec{background:var(--green-soft);color:var(--green)}
+  .b-eval{background:var(--amber-soft);color:var(--amber)}
+  .b-follow{background:var(--slate-soft);color:var(--slate)}
+  .callout{border-radius:12px;padding:16px 20px;margin:18px 0}
+  .callout.key{background:var(--indigo-soft);border:1px solid #d9ddfb}
+  .callout.risk{background:var(--red-soft);border:1px solid #f6cfcc}
+  .callout.caveat{background:var(--amber-soft);border:1px solid #f0d9a8;border-left:6px solid var(--amber)}
+  .callout h3{margin-top:0}
+  figure{margin:22px 0}
+  figure img{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff;padding:8px}
+  figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+  ul{margin:10px 0;padding-left:24px}
+  li{margin:6px 0}
+  .small{font-size:13.5px;color:var(--muted)}
+  pre{background:#f3f5f8;border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+    overflow-x:auto;font-size:13px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<header class="hero"><div class="wrap">
+  <p class="eyebrow">Open mSupply · Performance investigation · Follow-up to the Go-port spike</p>
+  <h1>Craig Was Right: Postgres Counts Are Slow</h1>
+  <p>…and they're the entire reason large invoice lists collapse under load. The good news: we
+     measured three fixes, the cheapest is ~200 lines of backend code, and it takes a 1M-invoice
+     store from <b>21 requests/sec to ~1,500–1,900 requests/sec</b>.</p>
+  <div class="meta">
+    <span><b>Database</b> demoivory_lt (production-shaped copy, 1,004,135 invoices in one store)</span>
+    <span><b>Load</b> k6, 50 concurrent users, 20&nbsp;s runs</span>
+    <span><b>Server</b> Rust release build, local Postgres 16</span>
+  </div>
+</div></header>
+
+<div class="wrap">
+
+<div class="card summary">
+  <h3 style="margin-top:0">Executive summary</h3>
+  <p class="lead">While load-testing the Rust server against the Go-port spike, both servers
+  collapsed from &gt;1,000 req/s to ~20–30 req/s on a 1M-invoice store — even though every
+  request only asks for 50 rows. The language was irrelevant: <b>94% of each request is the
+  exact <code>COUNT(*)</code> that feeds the page-list's <code>totalCount</code></b>, and it runs on
+  every request. Indexes cannot fix an exact count over a million rows. We implemented and
+  benchmarked three strategies — a <b>query-planner estimate</b>, a <b>backend count cache</b>,
+  and <b>client-side count caching</b> — all individually restore ~70–90× throughput, they
+  compose, and a small server-side "clamp" removes the one dangerous failure mode of
+  estimation.</p>
+</div>
+
+<div class="stat-grid">
+  <div class="stat"><div class="big bad">21 req/s</div><div class="lbl">today — exact count on every request</div>
+    <div class="sub">p95 response time 3.7 s at 50 users</div></div>
+  <div class="stat"><div class="big good">1,664 req/s</div><div class="lbl">with a count strategy (backend cache)</div>
+    <div class="sub">p95 47 ms — estimate option: 1,467 req/s / 51 ms</div></div>
+  <div class="stat"><div class="big good">0.013%</div><div class="lbl">planner-estimate error on the 1M store</div>
+    <div class="sub">1,004,007 estimated vs 1,004,135 actual</div></div>
+</div>
+
+<h2>How we got here</h2>
+<p>This came out of the Rust&nbsp;→&nbsp;Go backend-port spike. To compare the servers fairly we
+ran identical GraphQL invoice-list queries against the same Postgres database at three scales.
+On small stores both servers comfortably exceed 1,000 req/s. On the 1M-invoice store, both
+collapsed to ~20–30 req/s — and the ordering even flipped (Go slightly ahead, partly a
+connection-pool artefact: Rust caps its pool at 10 connections, the Go spike's was unbounded).</p>
+<p><b>That convergence was the tell.</b> When two completely different implementations hit the
+same wall, the wall is the database. And the more important realisation: this isn't a
+Rust-vs-Go question at all — <b>it's a scaling question we already own in production today</b>.
+Any site whose invoice table grows large will see its list screens degrade exactly this way,
+on either backend.</p>
+
+<figure>
+  <img src="{{CHART:ANATOMY}}" alt="Anatomy of one request: 17ms page query, 263ms count">
+  <figcaption>One invoice-list request on the 1M store, measured at the API. The 50 rows the
+  user sees cost 17&nbsp;ms; the <code>totalCount</code> the pager needs costs 263&nbsp;ms — and today it
+  is recomputed, exactly, on <em>every</em> request.</figcaption>
+</figure>
+
+<h2>What indexing can fix — and what it can't</h2>
+<p>First suspicion was a missing index, and indexing did matter — just not for the count:</p>
+<ul>
+  <li><b>Added</b> a composite index <code>(store_id, invoice_number)</code>: the sorted 50-row page
+      query now reads exactly 50 rows. Execution time 2.1&nbsp;ms → 0.9&nbsp;ms.</li>
+  <li><b>Dropped</b> the existing single-column <code>invoice_number</code> index — it was actively
+      <em>harmful</em> here: the planner walked the whole-table index in sort order and post-filtered,
+      discarding 707 rows for every 50 returned.</li>
+  <li><b>But the k6 numbers didn't move</b> (~20 req/s before and after). The count dominates so
+      completely that fixing the page query is invisible until the count is dealt with.</li>
+  <li>We also tried partial and covering indexes for the count itself. Postgres declined them
+      all — correctly. <b>An exact count must visit every matching row</b>; with 1M matches the
+      planner's parallel seq scan (~75–110&nbsp;ms) is already the cheapest plan there is.</li>
+</ul>
+
+<figure>
+  <img src="{{CHART:INDEX}}" alt="Page query: 2.1ms with old index vs 0.9ms with composite index">
+  <figcaption>The index work is real and worth shipping (it keeps the page query &lt;1&nbsp;ms at any
+  table size) — it just can't touch the count. Production would take these as a migration.</figcaption>
+</figure>
+
+<h2>Three ways out (plus the cheap trick that makes counts cheap)</h2>
+<p>If exact counting can't be made fast, stop counting exactly — or stop counting so often.
+Single-query costs for counting the same 1,004,135 rows:</p>
+
+<figure>
+  <img src="{{CHART:COUNTMETHODS}}" alt="Cost of one count by method">
+  <figcaption>The planner estimate is ~13× cheaper than today's count because <code>EXPLAIN</code>
+  never executes the query — it only consults table statistics, so it costs the same whether
+  the answer is 50 or 50 million.</figcaption>
+</figure>
+
+<p>We implemented all three strategies in the Rust server behind a switch
+(<code>OMS_INVOICE_COUNT=exact|estimate|cache</code>) so they could be benchmarked against the same
+binary, plus a fourth lever: the resolver now <b>skips the count entirely when the client
+doesn't ask for <code>totalCount</code></b> (a rows-only request dropped from ~280&nbsp;ms to ~17&nbsp;ms).</p>
+
+<table>
+  <thead><tr><th>Option</th><th>What it does</th><th>Count accuracy</th><th>Changes needed</th><th>SQLite?</th></tr></thead>
+  <tbody>
+    <tr><td><b>A — Planner estimate</b> <span class="badge b-rec">recommended first</span></td>
+        <td>Ask the Postgres query planner for its row estimate (~8&nbsp;ms) instead of counting.
+            Hybrid: estimates under 10,000 are re-checked with a real count.</td>
+        <td>Exact for small results; ~0.01% off at 1M (worst case ~10% after a bulk load,
+            until auto-ANALYZE runs)</td>
+        <td>Backend only, ~200 lines</td>
+        <td><b class="bad">No.</b> SQLite has no cheap row estimator — sites on SQLite silently
+            fall back to exact counts and get <em>none</em> of this option's speed-up. Large
+            SQLite sites (we have remotes with 100k+ prescriptions) need B or C instead — see
+            the Postgres&nbsp;vs&nbsp;SQLite section for measurements.</td></tr>
+    <tr><td><b>B — Client caches the count</b> <span class="badge b-follow">follow-up</span></td>
+        <td>Frontend fetches <code>totalCount</code> as a separate query, cached per filter. Counts
+            don't depend on sort or page, so paging never re-counts.</td>
+        <td>Exact (refreshed on filter change)</td>
+        <td>Frontend</td>
+        <td><b class="good">Yes</b> — database-agnostic; the only option that also reduces
+            count work on SQLite sites.</td></tr>
+    <tr><td><b>C — Backend count cache</b> <span class="badge b-eval">evaluate under sync</span></td>
+        <td>In-memory map of filter&nbsp;→&nbsp;count; any invoice insert/update/delete clears it.
+            First request per filter pays the full count, the rest are map lookups.</td>
+        <td>Exact, always</td>
+        <td>Backend only</td>
+        <td><b class="good">Yes</b> — works identically on both databases.</td></tr>
+  </tbody>
+</table>
+
+<h2>The results</h2>
+
+<figure>
+  <img src="{{CHART:THROUGHPUT}}" alt="Throughput by strategy">
+  <figcaption>Throughput on the 1M-invoice store, 50 concurrent users — <b>higher is better</b>,
+  so today's 21 req/s is the barely-visible red sliver at the top. Every strategy individually
+  is a ~15–80× improvement; A, C, and the combinations all land within ~10% of the theoretical
+  ceiling (count never requested at all).</figcaption>
+</figure>
+
+<figure>
+  <img src="{{CHART:LATENCY}}" alt="p95 latency by strategy">
+  <figcaption>p95 response time — <b>lower is better</b>, so here the same comparison inverts:
+  today's 3.7-second wait is the huge red bar. Users go from waiting ~4 seconds per page to
+  ~50&nbsp;ms — list screens on huge stores feel like list screens on small ones.</figcaption>
+</figure>
+
+<h2>How the exact ↔ estimate switch works (Option A)</h2>
+<p>It is <b>not</b> "always an estimate". Every count request first runs
+<code>EXPLAIN (FORMAT JSON)</code> on the already-built, filtered query — same SQL, same bind
+parameters, just prefixed. <code>EXPLAIN</code> only <em>plans</em>: it reads table statistics and
+computes selectivity, never touching the rows, which is why it costs ~8&nbsp;ms at any scale.
+The planner's row estimate then decides:</p>
+<ul>
+  <li><b>Estimate ≥ 10,000</b> → return the estimate. Counting precisely past tens of thousands
+      of rows is expensive, and no user distinguishes 1,004,007 from 1,004,135 in a pager.</li>
+  <li><b>Estimate &lt; 10,000</b> → run the real <code>COUNT(*)</code>. Small counts are
+      milliseconds-cheap, so most stores keep today's exact behaviour — and this branch
+      <b>self-corrects a wrong-low estimate</b> (stale stats saying "800" when there are 2M
+      rows results in one slow-but-correct count, never a wildly wrong number).</li>
+  <li><b><code>EXPLAIN</code> fails for any reason</b> → silently fall back to the exact count.</li>
+</ul>
+
+<h2>The failure mode that matters — and the clamp that closes it</h2>
+<div class="callout risk">
+  <h3>Wrong-low estimates would hide data</h3>
+  <p>The frontend derives its page count from <code>totalCount</code> and disables paging past it. If
+  the estimate ran low (worst case ~10% after a bulk import, before auto-ANALYZE), the last
+  pages of the list — the <em>newest</em> invoices under the default sort — would be unreachable.
+  Estimating too high is benign by comparison (one short/empty page at the end).</p>
+</div>
+<p>The fix costs nothing: the resolver already fetched the page, and the page is ground truth.
+Before returning, the count is <b>clamped against what the page proved</b>:</p>
+<ul>
+  <li>A <b>full page</b> at an offset the count doesn't cover proves at least one more row exists →
+      report <code>offset + rows + 1</code>, so the "next page" button stays alive and the count
+      refines as the user browses. The true end of the list is always reachable.</li>
+  <li>A <b>non-empty short page</b> means the query ran past the end of the data →
+      <code>offset + rows</code> <em>is</em> the exact total; the count snaps to it (this also corrects
+      wrong-<em>high</em> estimates the moment the real last page is reached).</li>
+  <li>Exact counts are never altered by the clamp — every branch is a no-op for them.</li>
+</ul>
+<p class="small">Verified live against the 1M store: at offset 1,004,000 (a full page past the
+1,004,007 estimate) the API reports 1,004,051 and keeps paging; at offset 1,004,100 (a 35-row
+short page) it snaps to the exact 1,004,135. Belt-and-braces operational extra: schedule an
+<code>ANALYZE invoice</code> after bulk loads/sync catch-ups to bound the cosmetic error window.</p>
+
+<h2>Postgres vs SQLite — both deployment targets, handled differently</h2>
+<table>
+  <thead><tr><th></th><th>Postgres (central servers)</th><th>SQLite (remote sites)</th></tr></thead>
+  <tbody>
+    <tr><td><b>Where the problem lives</b></td>
+        <td>Yes — central servers aggregate many stores and grow to millions of invoices</td>
+        <td>Less acute, but real: remotes with 100k+ prescriptions exist. Measured (warm, fast
+            dev hardware — site hardware is slower): the production-shaped count costs
+            <b>~25&nbsp;ms at 100k rows</b> and ~260&nbsp;ms at 1M, growing linearly.</td></tr>
+    <tr><td><b>A — planner estimate</b></td>
+        <td>Available (this is a Postgres planner feature)</td>
+        <td>Not available — SQLite has no cheap row estimator. Code falls back to exact
+            counts automatically (compile-time switch, zero overhead).</td></tr>
+    <tr><td><b>C — backend cache</b></td><td>Works</td><td>Works</td></tr>
+    <tr><td><b>B — client-side caching</b></td><td>Works</td><td>Works</td></tr>
+    <tr><td><b>Count-skip when not requested</b></td><td>Works</td><td>Works</td></tr>
+  </tbody>
+</table>
+<p>So SQLite is not off the hook — a 100k-prescription remote pays a measurable count tax on
+every list request today, it just hasn't reached the cliff the central servers are at. Two
+SQLite-friendly levers cover it:</p>
+<ul>
+  <li><b>Most of SQLite's count cost is the join, not the counting.</b> Measured at 100k rows:
+      25&nbsp;ms through the production view + name join vs <b>1.8&nbsp;ms counting the invoice table
+      directly</b> (13×). The count only needs that join when the filter touches the customer
+      name, so a "skip the join when unused" optimisation — not yet implemented — recovers most
+      of the cost on both databases.</li>
+  <li><b>Options B and C work fully on SQLite</b> — the count cache turns repeat counts into map
+      lookups, and client-side caching stops paging from re-counting at all.</li>
+</ul>
+
+<h2>Frontend changes — what's required vs optional</h2>
+<ul>
+  <li><b>Options A and C need no frontend changes at all.</b> <code>totalCount</code> keeps its shape;
+      the UI is unmodified. (With A, very large totals are estimates displayed as exact numbers —
+      with the clamp, never in a way that hides data.)</li>
+  <li><b>Option B</b> is the frontend's half of the story: fetch <code>totalCount</code> as a separate
+      query cached per filter (react-query makes this natural), and drop it from the rows query.
+      Because a count depends only on the <em>filter</em> — never on sort or page — paging and
+      re-sorting never re-count. It composes with A or C (measured: 1,790 req/s combined) and
+      additionally benefits SQLite sites. Recommended as a follow-up, one list view at a time.</li>
+</ul>
+
+<h2>Recommendation</h2>
+<div class="callout key">
+  <ol style="margin:6px 0;padding-left:22px">
+    <li><b>Ship Option A (planner estimate + clamp) for Postgres, feature-flagged</b>, with the
+        SQLite exact fallback. Smallest change, no frontend work, ~70× measured.</li>
+    <li><b>Ship the index migration</b>: add composite <code>(store_id, invoice_number)</code>; drop the
+        harmful single-column <code>invoice_number</code> index (after checking no other query depends
+        on it).</li>
+    <li><b>Keep the count-skip</b> (don't count when <code>totalCount</code> isn't selected) — free, and
+        it's what makes Option B possible later.</li>
+    <li><b>Add the skip-the-join count</b> (count the invoice table directly unless the filter
+        uses the customer name): 13× cheaper exact counts, benefits SQLite remotes — including
+        the 100k+ prescription sites — and Postgres alike. Small, not yet implemented.</li>
+    <li><b>Evaluate Option C against real sync traffic</b> before trusting it: the cache clears on
+        every invoice write, and a busy central server syncs invoices continuously — the hit
+        rate is the open question. (It's also per-process: multi-instance deployments would
+        need shared invalidation.)</li>
+    <li><b>Adopt Option B in the frontend as a follow-up</b> — exact counts, works everywhere,
+        and removes the count from every page click permanently.</li>
+  </ol>
+</div>
+
+<div class="callout caveat">
+  <h3>Caveats on the numbers</h3>
+  <p>Single local Postgres 16 on developer hardware; one filter shape (store + non-cancelled);
+  warm cache; auth bypassed (develop-mode build, same as the spike baseline — the baseline
+  re-measured identically at 21 req/s, so comparisons are apples-to-apples). The earlier
+  Rust-vs-Go throughput comparison carries a connection-pool asymmetry (Rust pool = 10, Go
+  unbounded); the strategy benchmarks above are unaffected (single server, pool constant).
+  All schema/index changes were made to the disposable test copy only.</p>
+</div>
+
+<p class="small">Implementation: <code>server/repository/src/db_diesel/estimated_count.rs</code>
+(EXPLAIN wrapper + plan parsing), <code>invoice_count_cache.rs</code> (option C),
+<code>service/src/invoice/query.rs</code> (strategy switch + clamp),
+<code>graphql/invoice/src/invoice_queries.rs</code> (count-skip via look-ahead). Full details and
+raw numbers in <code>server-go/docs/DECISION.md</code>. Charts generated by
+<code>count_report_charts.py</code>.</p>
+
+</div>
+</body>
+</html>
