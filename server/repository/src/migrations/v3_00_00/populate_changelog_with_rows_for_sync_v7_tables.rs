@@ -49,7 +49,6 @@ impl MigrationFragment for Migrate {
             "store_preference",
             "unit",
             "user_account",
-            "user_permission",
             "user_store_join",
             "vvm_status",
         ];
