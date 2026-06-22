@@ -14,6 +14,7 @@ import {
   usePreferences,
   NameNodeType,
   SearchBar,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import {
   CustomerSearchInput,
@@ -125,6 +126,7 @@ export const Toolbar = () => {
               }
             />
           )}
+          <DisabledStoreNotice otherParty={otherParty} />
           {isProgram && (
             <Alert severity="info" sx={{ maxWidth: 1000 }}>
               {t('info.cannot-edit-program-requisition')}
