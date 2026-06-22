@@ -384,7 +384,6 @@
   "error.failed-to-save-vaccination": "Failed to save vaccination!",
   "error.failed-to-save-vaccine-course": "Failed to save vaccine course",
   "error.fetch-notifications": "Unable to display cold chain notifications",
-  "error.fetch-patient-not-supported-on-v7": "Fetching a single patient on demand is not supported under sync v7. The patient will arrive on the next sync.",
   "error.field-must-be-specified": "{{field}} must be specified",
   "error.foreign-key-error": "Database error",
   "error.fridge-tag-import": "Unable to import fridge sensor logs: {{message}}",
