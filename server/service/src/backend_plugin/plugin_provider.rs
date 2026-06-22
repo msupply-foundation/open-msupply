@@ -197,12 +197,4 @@ impl PluginInstance {
 
         (*plugins).push(Plugin { types, instance });
     }
-
-    /// Drop any cached backend plugin whose row id matches. Used when a plugin
-    /// row is deleted (via the uninstall mutation or a sync delete record) so
-    /// the in-memory cache doesn't outlive the database row.
-    pub fn unbind_by_id(id: &str) {
-        let mut plugins = PLUGINS.write().unwrap();
-        plugins.retain(|p| p.instance.id != id);
-    }
 }
