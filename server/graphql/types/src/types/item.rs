@@ -153,6 +153,22 @@ impl ItemNode {
         let result = loader
             .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
             .await?
+            .map(|soh| soh.available_stock_on_hand)
+            .unwrap_or(0);
+
+        Ok(result)
+    }
+
+    /// Total stock on hand (all packs, not just available) for this item + store.
+    /// Backed by the same batched `ItemsStockOnHandLoader` as `availableStockOnHand`,
+    /// so unlike `stats { stockOnHand }` it does not trigger the item-stats / AMC
+    /// backend-plugin path.
+    pub async fn stock_on_hand(&self, ctx: &Context<'_>, store_id: String) -> Result<u32> {
+        let loader = ctx.get_loader::<DataLoader<ItemsStockOnHandLoader>>();
+        let result = loader
+            .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
+            .await?
+            .map(|soh| soh.total_stock_on_hand)
             .unwrap_or(0);
 
         Ok(result)
