@@ -591,6 +591,7 @@ impl LoadTest {
                         central_pull: 512,
                     },
                     disable_integration_transaction: false,
+                    relax_hardware_id_token_checks: false,
                 }),
                 logging: None,
                 backup: None,

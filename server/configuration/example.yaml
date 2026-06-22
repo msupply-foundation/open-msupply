@@ -21,6 +21,8 @@
 #     ] # Used to set the allowed Origin in Cross Origin Request Security
 #   base_dir: "app_data"
 # sync:
+#   # url/username/password_sha256/interval_seconds are all-or-nothing: set them all, or omit them
+#   # all to carry only flags (e.g. on a central server). A partial set is a startup error.
 #   url: "http://localhost:2048"
 #   username: "demo"
 #   # 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1' = 'pass'
@@ -33,6 +35,10 @@
 #   # Set to true to disable the outer transaction during integration. This can prevent PostgreSQL
 #   # from exhausting max_locks_per_transaction during large store migrations. Use with caution.
 #   disable_integration_transaction: false
+#   # Central server only. Relax the v7 hardware-id and "token already allocated" guards so a site
+#   # can re-pair from a new machine without an admin reset (name + password still required). For
+#   # recovery/migration only — leave false in normal operation.
+#   relax_hardware_id_token_checks: false
 # database:
 #   host: "localhost"
 #   port: 5432
