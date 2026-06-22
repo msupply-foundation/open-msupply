@@ -489,8 +489,8 @@ impl ChangelogTableName {
                 transport: V5,
             },
             UserStoreJoin => SyncStyle {
-                authoring: vec![Central],
-                distribution: vec![D::Central],
+                authoring: vec![Remote],
+                distribution: vec![D::Remote],
                 transport: V5,
             },
             VVMStatus => SyncStyle {
