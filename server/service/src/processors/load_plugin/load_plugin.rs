@@ -56,7 +56,7 @@ impl Processor for LoadPlugin {
             (ChangelogTableName::FrontendPlugin, RowActionType::Delete) => {
                 service_provider
                     .plugin_service
-                    .unbind_frontend_plugin_by_id(ctx, &changelog.record_id);
+                    .unbind_frontend_plugin_by_id(ctx, &changelog.record_id)?;
             }
             _ => {}
         }

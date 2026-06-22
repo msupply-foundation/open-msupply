@@ -305,11 +305,50 @@ pub trait PluginServiceTrait: Sync + Send {
         plugins.values().map(|p| p.metadata.clone()).collect()
     }
 
-    /// Drop any cached frontend plugin whose row id matches. Used when a
-    /// plugin row is deleted so the served files don't outlive the DB row.
-    fn unbind_frontend_plugin_by_id(&self, ctx: &ServiceContext, id: &str) {
-        let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
-        plugins.retain(|_code, plugin| plugin.metadata.id != id);
+    /// Remove the cached frontend plugin whose row id matches a deleted DB row,
+    /// then re-bind the highest remaining version for that code (if any).
+    ///
+    /// A frontend plugin's row id embeds its version
+    /// (`frontend_{code}_{version}`), so multiple versions of the same code can
+    /// coexist in the DB while the cache (keyed by code) holds only the highest.
+    /// Deleting the active (highest) version must fall back to the next-highest
+    /// remaining version rather than dropping the plugin entirely. See issue
+    /// #12169.
+    fn unbind_frontend_plugin_by_id(
+        &self,
+        ctx: &ServiceContext,
+        id: &str,
+    ) -> Result<(), RepositoryError> {
+        // Remove the cached entry for the deleted id and remember its code. If
+        // the deleted version wasn't the cached (active) one, nothing is removed
+        // and there's nothing to reconcile.
+        let removed_code = {
+            let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
+            let code = plugins
+                .iter()
+                .find(|(_code, plugin)| plugin.metadata.id == id)
+                .map(|(code, _plugin)| code.clone());
+            if let Some(code) = &code {
+                plugins.remove(code);
+            }
+            code
+        }; // Drop the write lock before bind_frontend_plugin, which locks internally.
+
+        let code = match removed_code {
+            Some(code) => code,
+            None => return Ok(()),
+        };
+
+        // Re-bind any remaining rows for that code. bind_frontend_plugin keeps
+        // the highest compatible version, so the next-highest survivor becomes
+        // active (or nothing, if no remaining version is compatible).
+        for row in FrontendPluginRowRepository::new(&ctx.connection).all()? {
+            if row.code == code {
+                self.bind_frontend_plugin(ctx, row);
+            }
+        }
+
+        Ok(())
     }
 
     fn install_uploaded_plugin(
@@ -409,6 +448,7 @@ mod test {
         UploadedFile,
     };
     use repository::{
+        migrations::Version,
         mock::{MockData, MockDataInserts},
         BackendPluginRow, BackendPluginRowRepository, ChangelogFilter, ChangelogRepository,
         ChangelogTableName, FrontendPluginRow, FrontendPluginRowRepository, FrontendPluginTypes,
@@ -686,7 +726,6 @@ mod test {
     #[actix_rt::test]
     async fn uninstall_backend_plugin_falls_back_to_lower_version() {
         use crate::backend_plugin::plugin_provider::PluginInstance;
-        use repository::migrations::Version;
 
         // Two versions of the same code coexist in the DB because a row id
         // embeds its version (backend_{code}_{version}), so uploading a new
@@ -755,5 +794,92 @@ mod test {
         repo.delete(&row_low.id).unwrap();
         PluginInstance::unbind_by_id(&connection, &row_low.id).unwrap();
         assert!(PluginInstance::get_one_with_code(code, plugin_type).is_none());
+    }
+
+    // Deleting the active (highest) version of a frontend plugin must fall back
+    // to the next-highest version still in the DB, not remove the plugin
+    // entirely. See issue #12169.
+    #[actix_rt::test]
+    async fn uninstall_frontend_plugin_falls_back_to_lower_version() {
+        // Two versions of the same code coexist in the DB because a row id
+        // embeds its version (frontend_{code}_{version}), so uploading a new
+        // version inserts a new row rather than replacing the old one. Both must
+        // be compatible with the running app version, so derive them from it.
+        let app = Version::from_package_json();
+        let code = "fallback_plugin";
+        let low_version = format!("{}.{}.0", app.major, app.minor);
+        let high_version = format!("{}.{}.1", app.major, app.minor);
+
+        let row_low = FrontendPluginRow {
+            id: format!("frontend_{code}_low"),
+            code: code.to_string(),
+            version: low_version.clone(),
+            entry_point: "plugin.js".to_string(),
+            types: FrontendPluginTypes(vec!["report".to_string()]),
+            ..Default::default()
+        };
+        let row_high = FrontendPluginRow {
+            id: format!("frontend_{code}_high"),
+            code: code.to_string(),
+            version: high_version.clone(),
+            entry_point: "plugin.js".to_string(),
+            types: FrontendPluginTypes(vec!["report".to_string()]),
+            ..Default::default()
+        };
+
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "uninstall_frontend_plugin_falls_back_to_lower_version",
+            MockDataInserts::none(),
+            MockData::default(),
+        )
+        .await;
+
+        let repo = FrontendPluginRowRepository::new(&connection);
+        repo.upsert_one(row_low.clone()).unwrap();
+        repo.upsert_one(row_high.clone()).unwrap();
+
+        // Populate the in-memory cache from the DB; the higher version wins.
+        service_provider
+            .plugin_service
+            .reload_all_plugins(&service_context)
+            .unwrap();
+
+        let active = service_provider
+            .plugin_service
+            .get_frontend_plugins_metadata(&service_context);
+        assert_eq!(active.len(), 1);
+        assert_eq!(active[0].id, row_high.id);
+
+        // Simulate uninstalling the active (higher) version: delete the DB row,
+        // then run the same unbind the LoadPlugin processor runs on a Delete.
+        repo.delete(&row_high.id).unwrap();
+        service_provider
+            .plugin_service
+            .unbind_frontend_plugin_by_id(&service_context, &row_high.id)
+            .unwrap();
+
+        // The plugin must fall back to the remaining lower version, not vanish.
+        let after = service_provider
+            .plugin_service
+            .get_frontend_plugins_metadata(&service_context);
+        assert_eq!(after.len(), 1, "plugin should fall back, not be removed");
+        assert_eq!(after[0].id, row_low.id);
+        assert_eq!(after[0].code, code);
+
+        // Deleting the last remaining version removes the plugin for good.
+        repo.delete(&row_low.id).unwrap();
+        service_provider
+            .plugin_service
+            .unbind_frontend_plugin_by_id(&service_context, &row_low.id)
+            .unwrap();
+        assert!(service_provider
+            .plugin_service
+            .get_frontend_plugins_metadata(&service_context)
+            .is_empty());
     }
 }
