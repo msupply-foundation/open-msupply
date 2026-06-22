@@ -31,7 +31,7 @@ use service::usize_to_i32;
 use thiserror::Error;
 use util::format_error;
 
-use crate::authentication::validate_cookie_auth;
+use crate::authentication::{extract_auth_token, validate_cookie_auth};
 use crate::middleware::limit_content_length;
 
 #[derive(Debug, MultipartForm)]
@@ -65,26 +65,6 @@ struct LogFileQuery {
     download: Option<bool>,
 }
 
-#[derive(Deserialize)]
-struct AuthCookieToken {
-    token: String,
-}
-
-/// Extracts the auth token from the `Authorization: Bearer ...` header (used by the
-/// web and Capacitor clients) falling back to the `auth` cookie.
-fn extract_auth_token(req: &HttpRequest) -> Option<String> {
-    if let Some(value) = req.headers().get("Authorization") {
-        if let Ok(header) = value.to_str() {
-            if let Some(token) = header.strip_prefix("Bearer ") {
-                return Some(token.to_string());
-            }
-        }
-    }
-    req.cookie("auth")
-        .and_then(|cookie| serde_json::from_str::<AuthCookieToken>(cookie.value()).ok())
-        .map(|auth_cookie| auth_cookie.token)
-}
-
 /// Streams a server log file as plain text. Used by the admin log viewer for both
 /// displaying and downloading logs, replacing the previous GraphQL query that
 /// returned the whole file as an array of lines.
@@ -99,7 +79,8 @@ async fn download_log_file(
         .basic_context()
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
-    let token = extract_auth_token(&req);
+    let token = extract_auth_token(&req)
+        .map_err(|_| InternalError::new("You are not authorised", StatusCode::UNAUTHORIZED))?;
     service_provider
         .validation_service
         .validate(
