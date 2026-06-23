@@ -405,14 +405,12 @@ impl GraphqlSchema {
         .data(service_provider.clone())
         .data(subscription_broadcast.clone())
         .data(operational_status_ref.clone())
-        .data(subscription_broadcast.clone())
-        .extension(GraphQLRequestLogger);
+        .data(subscription_broadcast.clone());
 
         let migration_builder =
             MigrationSchema::build(MigrationQueries, EmptyMutation, EmptySubscription)
                 .data(service_provider.clone())
-                .data(operational_status_ref.clone())
-                .extension(GraphQLRequestLogger);
+                .data(operational_status_ref.clone());
 
         GraphqlSchema {
             operational: operational_builder.finish(),
