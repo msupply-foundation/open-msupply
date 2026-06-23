@@ -7,9 +7,9 @@ use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{
-        BackdatingData, StorePrefUpdate, UpsertPreferences,
-        WarnWhenMissingRecentStocktakeData,
+        BackdatingData, StorePrefUpdate, UpsertPreferences, WarnWhenMissingRecentStocktakeData,
     },
+    session_store::lifetime_from_minutes,
 };
 
 #[derive(InputObject)]
@@ -126,9 +126,17 @@ pub fn upsert_preferences(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
+    let inactivity_timeout_minutes = input.inactivity_timeout_minutes;
+
     service_provider
         .preference_service
         .upsert(&service_context, input.to_domain())?;
+
+    if let Some(minutes) = inactivity_timeout_minutes {
+        if let Ok(mut store) = ctx.get_auth_data().session_store.write() {
+            store.set_lifetime_for_all(lifetime_from_minutes(minutes));
+        }
+    }
 
     Ok(())
 }

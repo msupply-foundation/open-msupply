@@ -108,6 +108,14 @@ impl SessionStore {
         self.user_passwords.remove(user_id);
     }
 
+    pub fn set_lifetime_for_all(&mut self, lifetime: Duration) {
+        let now = Utc::now();
+        for entry in self.sessions.values_mut() {
+            entry.lifetime = lifetime;
+            entry.expires_at = now + lifetime;
+        }
+    }
+
     /// Cached plaintext password for a user. Used by sync to re-auth against the central server.
     /// Returns `None` if the user has no active sessions (or never logged in this run).
     pub fn get_password(&self, user_id: &str) -> Option<String> {
@@ -242,6 +250,23 @@ mod tests {
         assert!(
             slid < Utc::now() + Duration::hours(1),
             "slide should use the per-session lifetime, not the default"
+        );
+    }
+
+    #[test]
+    fn set_lifetime_for_all_reslides_live_sessions() {
+        let mut store = SessionStore::new();
+        let (long, _) = store.create("u", "p", Duration::hours(1));
+
+        // Admin shortens the inactivity timeout to 5 minutes.
+        store.set_lifetime_for_all(Duration::minutes(5));
+        let slid = store
+            .validate_and_slide(&long)
+            .expect("session still valid")
+            .expires_at;
+        assert!(
+            slid < Utc::now() + Duration::minutes(10),
+            "live session should pick up the new 5-minute lifetime, not its original 1h"
         );
     }
 }

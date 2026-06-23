@@ -102,6 +102,10 @@ impl PreferencesNode {
         ))
     }
 
+    pub async fn inactivity_timeout_minutes(&self) -> Result<i32> {
+        self.load_preference(&self.preferences.inactivity_timeout_minutes)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
