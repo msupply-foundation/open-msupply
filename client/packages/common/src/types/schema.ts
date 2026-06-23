@@ -1382,10 +1382,20 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface &
 export type CentralGeneralMutations = {
   __typename: 'CentralGeneralMutations';
   configureNameProperties: ConfigureNamePropertiesResponse;
+  /**
+   * Set how a property is displayed on a given table scope
+   * (`HIDDEN`/`VISIBLE`/`PROMINENT`), or omit `displayMode` to disassociate
+   * the property from the scope. Central-server only configuration.
+   */
+  setPropertyDisplayMode: SetPropertyDisplayModeResponse;
 };
 
 export type CentralGeneralMutationsConfigureNamePropertiesArgs = {
   input: Array<ConfigureNamePropertyInput>;
+};
+
+export type CentralGeneralMutationsSetPropertyDisplayModeArgs = {
+  input: SetPropertyDisplayModeInput;
 };
 
 export type CentralPatientNode = {
@@ -7579,6 +7589,17 @@ export type ProgramsResponse = ProgramConnector;
 
 export type PropertiesV2Response = PropertyV2Connector;
 
+/**
+ * The settable display modes for a property scope. Excludes the repository
+ * enum's forwards-compat `Other` variant — a client can't author an unknown
+ * mode, only modes this site understands.
+ */
+export enum PropertyDisplayModeV2Input {
+  Hidden = 'HIDDEN',
+  Prominent = 'PROMINENT',
+  Visible = 'VISIBLE',
+}
+
 export type PropertyNode = {
   __typename: 'PropertyNode';
   /**
@@ -7647,6 +7668,14 @@ export type PropertyOptionV2Node = {
   propertyId: Scalars['String']['output'];
 };
 
+export type PropertyScopeV2Node = {
+  __typename: 'PropertyScopeV2Node';
+  displayMode: PropertyNodeDisplayModeV2;
+  id: Scalars['String']['output'];
+  propertyId: Scalars['String']['output'];
+  tableName: Scalars['String']['output'];
+};
+
 export type PropertyV2Connector = {
   __typename: 'PropertyV2Connector';
   nodes: Array<PropertyV2Node>;
@@ -7685,6 +7714,17 @@ export type PropertyV2Node = {
    * single batched lookup.
    */
   options: Array<PropertyOptionV2Node>;
+  /**
+   * Every table scope this property is associated with, and how it's
+   * displayed on each (`HIDDEN`/`VISIBLE`/`PROMINENT`). Includes hidden
+   * scopes — the admin "Manage properties" config UI lists all associations
+   * so they can be changed. The absence of an entry for a `tableName` means
+   * the property is *not associated* with that scope at all (which is
+   * distinct from being associated-but-hidden: associated properties still
+   * transfer between records). Resolved via dataloader so a list of N
+   * properties triggers a single batched lookup.
+   */
+  scopes: Array<PropertyScopeV2Node>;
   valueType: PropertyNodeValueTypeV2;
 };
 
@@ -9722,6 +9762,30 @@ export type SetPrescribedQuantityWithId = {
   id: Scalars['String']['output'];
   response: SetPrescribedQuantityResponse;
 };
+
+export type SetPropertyDisplayModeInput = {
+  /**
+   * Omit (or pass `null`) to *disassociate* the property from the scope
+   * (removes the `property_table_v2` row). This differs from `HIDDEN`:
+   * a hidden-but-associated property still transfers between records.
+   */
+  displayMode?: InputMaybe<PropertyDisplayModeV2Input>;
+  propertyId: Scalars['String']['input'];
+  tableName: Scalars['String']['input'];
+};
+
+export type SetPropertyDisplayModeNode = {
+  __typename: 'SetPropertyDisplayModeNode';
+  /**
+   * The resulting display mode, or `null` when the property was
+   * disassociated from the scope.
+   */
+  displayMode?: Maybe<PropertyNodeDisplayModeV2>;
+  propertyId: Scalars['String']['output'];
+  tableName: Scalars['String']['output'];
+};
+
+export type SetPropertyDisplayModeResponse = SetPropertyDisplayModeNode;
 
 export type ShippingMethodConnector = {
   __typename: 'ShippingMethodConnector';

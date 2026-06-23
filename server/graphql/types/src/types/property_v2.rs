@@ -1,9 +1,11 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use graphql_core::loader::PropertyOptionsV2ByPropertyIdLoader;
+use graphql_core::loader::{PropertyOptionsV2ByPropertyIdLoader, PropertyScopesV2ByPropertyIdLoader};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
-use repository::{PropertyDisplayModeV2, PropertyOptionV2Row, PropertyV2, PropertyV2Row};
+use repository::{
+    PropertyDisplayModeV2, PropertyOptionV2Row, PropertyTableV2Row, PropertyV2, PropertyV2Row,
+};
 use serde::Serialize;
 use service::ListResult;
 
@@ -131,6 +133,24 @@ impl PropertyV2Node {
             .unwrap_or_default();
         Ok(options.into_iter().map(PropertyOptionV2Node::from_domain).collect())
     }
+
+    /// Every table scope this property is associated with, and how it's
+    /// displayed on each (`HIDDEN`/`VISIBLE`/`PROMINENT`). Includes hidden
+    /// scopes — the admin "Manage properties" config UI lists all associations
+    /// so they can be changed. The absence of an entry for a `tableName` means
+    /// the property is *not associated* with that scope at all (which is
+    /// distinct from being associated-but-hidden: associated properties still
+    /// transfer between records). Resolved via dataloader so a list of N
+    /// properties triggers a single batched lookup.
+    pub async fn scopes(&self, ctx: &Context<'_>) -> Result<Vec<PropertyScopeV2Node>> {
+        let loader = ctx.get_loader::<DataLoader<PropertyScopesV2ByPropertyIdLoader>>();
+        let scopes = loader
+            .load_one(self.property.id.clone())
+            .await
+            .map_err(StandardGraphqlError::from_repository_error)?
+            .unwrap_or_default();
+        Ok(scopes.into_iter().map(PropertyScopeV2Node::from_domain).collect())
+    }
 }
 
 #[Object]
@@ -152,6 +172,29 @@ impl PropertyOptionV2Node {
     }
 }
 
+/// One `property_table_v2` row — the association between a property and a table
+/// scope, carrying the per-scope `displayMode`. Exposed via `PropertyV2Node.scopes`.
+#[derive(PartialEq, Debug)]
+pub struct PropertyScopeV2Node {
+    pub scope: PropertyTableV2Row,
+}
+
+#[Object]
+impl PropertyScopeV2Node {
+    pub async fn id(&self) -> &str {
+        &self.scope.id
+    }
+    pub async fn property_id(&self) -> &str {
+        &self.scope.property_id
+    }
+    pub async fn table_name(&self) -> &str {
+        &self.scope.table_name
+    }
+    pub async fn display_mode(&self) -> PropertyNodeDisplayModeV2 {
+        PropertyNodeDisplayModeV2::from(self.scope.display_mode.clone())
+    }
+}
+
 impl PropertyV2Node {
     pub fn from_domain(property: PropertyV2) -> PropertyV2Node {
         PropertyV2Node {
@@ -164,6 +207,12 @@ impl PropertyV2Node {
 impl PropertyOptionV2Node {
     pub fn from_domain(option: PropertyOptionV2Row) -> PropertyOptionV2Node {
         PropertyOptionV2Node { option }
+    }
+}
+
+impl PropertyScopeV2Node {
+    pub fn from_domain(scope: PropertyTableV2Row) -> PropertyScopeV2Node {
+        PropertyScopeV2Node { scope }
     }
 }
 

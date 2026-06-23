@@ -41,6 +41,9 @@ use mutations::{
     },
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
+    set_property_display_mode::{
+        set_property_display_mode, SetPropertyDisplayModeInput, SetPropertyDisplayModeResponse,
+    },
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
     update_insurance::{update_insurance, UpdateInsuranceInput, UpdateInsuranceResponse},
     update_name_properties::{
@@ -751,5 +754,16 @@ impl CentralGeneralMutations {
         input: Vec<ConfigureNamePropertyInput>,
     ) -> Result<ConfigureNamePropertiesResponse> {
         configure_name_properties(ctx, input)
+    }
+
+    /// Set how a property is displayed on a given table scope
+    /// (`HIDDEN`/`VISIBLE`/`PROMINENT`), or omit `displayMode` to disassociate
+    /// the property from the scope. Central-server only configuration.
+    pub async fn set_property_display_mode(
+        &self,
+        ctx: &Context<'_>,
+        input: SetPropertyDisplayModeInput,
+    ) -> Result<SetPropertyDisplayModeResponse> {
+        set_property_display_mode(ctx, input)
     }
 }

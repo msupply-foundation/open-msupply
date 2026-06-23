@@ -7,6 +7,7 @@ pub mod insert_insurance;
 pub mod label_printer_settings;
 pub mod log;
 pub mod manual_sync;
+pub mod set_property_display_mode;
 pub mod sync_settings;
 pub mod update_insurance;
 pub mod update_name_properties;

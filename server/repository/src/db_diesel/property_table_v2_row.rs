@@ -121,7 +121,48 @@ impl<'a> PropertyTableV2RowRepository<'a> {
         Ok(result)
     }
 
+    /// Looks up the single scope row for a (property, table_name) pair — the
+    /// real uniqueness key (the table has `UNIQUE (property_id, table_name)`).
+    /// Used by the admin config write path to find an existing row to update
+    /// rather than insert a conflicting one.
+    pub fn find_one_by_property_id_and_table_name(
+        &self,
+        prop_id: &str,
+        scope_table: &str,
+    ) -> Result<Option<PropertyTableV2Row>, RepositoryError> {
+        let result = property_table_v2
+            .filter(property_id.eq(prop_id).and(table_name.eq(scope_table)))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    /// Fetches every scope row (incl. `Hidden`) for the given properties.
+    /// Unlike the read-path query, nothing is filtered out — the admin config
+    /// UI needs to see hidden scopes to un-hide them. Batched per `property_id`
+    /// by the `PropertyScopesV2ByPropertyIdLoader`.
+    pub fn find_many_by_property_ids(
+        &self,
+        property_ids: &[String],
+    ) -> Result<Vec<PropertyTableV2Row>, RepositoryError> {
+        Ok(property_table_v2
+            .filter(property_id.eq_any(property_ids))
+            .order((table_name.asc(), id.asc()))
+            .load(self.connection.lock().connection())?)
+    }
+
     pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
+        // Record the changelog before the row is gone so the delete propagates
+        // to remote sites (these are Central-authored rows). Mirrors the
+        // location_row delete pattern.
+        let changelog = PropertyTableV2Row::generate_changelog(
+            row_id.to_string(),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
+
         diesel::delete(property_table_v2)
             .filter(id.eq(row_id))
             .execute(self.connection.lock().connection())?;

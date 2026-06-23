@@ -4,7 +4,8 @@ use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
 use repository::{
-    PropertyOptionV2Row, PropertyOptionV2RowRepository, RepositoryError, StorageConnectionManager,
+    PropertyOptionV2Row, PropertyOptionV2RowRepository, PropertyTableV2Row,
+    PropertyTableV2RowRepository, RepositoryError, StorageConnectionManager,
 };
 use service::service_provider::ServiceProvider;
 
@@ -64,6 +65,37 @@ impl Loader<String> for PropertyOptionsV2ByPropertyIdLoader {
         let mut result: HashMap<String, Self::Value> = HashMap::new();
         for option in options {
             result.entry(option.property_id.clone()).or_default().push(option);
+        }
+        Ok(result)
+    }
+}
+
+/// Groups `property_table_v2` scope rows by their `property_id`. Backs the
+/// `scopes` sub-field on `PropertyV2Node` (the admin "Manage properties" config
+/// UI) so a list of N properties resolves their per-scope display modes in a
+/// single batched query. Includes `Hidden` scopes — unlike the read-path
+/// `propertiesV2(filter: { tableName })` query, the admin needs to see hidden
+/// scopes to be able to un-hide them.
+pub struct PropertyScopesV2ByPropertyIdLoader {
+    pub connection_manager: StorageConnectionManager,
+}
+
+impl Loader<String> for PropertyScopesV2ByPropertyIdLoader {
+    type Value = Vec<PropertyTableV2Row>;
+    type Error = RepositoryError;
+
+    async fn load(
+        &self,
+        property_ids: &[String],
+    ) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let connection = self.connection_manager.connection()?;
+        let repo = PropertyTableV2RowRepository::new(&connection);
+
+        let scopes = repo.find_many_by_property_ids(property_ids)?;
+
+        let mut result: HashMap<String, Self::Value> = HashMap::new();
+        for scope in scopes {
+            result.entry(scope.property_id.clone()).or_default().push(scope);
         }
         Ok(result)
     }

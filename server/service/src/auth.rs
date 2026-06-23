@@ -36,6 +36,8 @@ pub enum Resource {
     QueryName,
     MutateNameProperties,
     ConfigureNameProperties,
+    // properties v2 (central-only configuration of property visibility/scopes)
+    ConfigurePropertyDisplayMode,
     // location
     QueryLocation,
     MutateLocation,
@@ -201,6 +203,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(PermissionType::EditCentralData),
             PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
         ]),
+    );
+
+    map.insert(
+        Resource::ConfigurePropertyDisplayMode,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
 
     // location

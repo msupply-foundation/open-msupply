@@ -6,6 +6,7 @@ import { EditGlobalPreferencesPage } from '../Preferences/EditPage';
 import { CampaignsList } from '../Campaigns';
 import { ReportsList } from '../Reports';
 import { SitesList } from '../Sites';
+import { PropertiesListView, PropertiesDetailView } from '../Properties';
 
 export const ManageService: FC = () => {
   const indicatorsDemographicsRoute = RouteBuilder.create(
@@ -19,6 +20,10 @@ export const ManageService: FC = () => {
   const campaignsRoute = RouteBuilder.create(AppRoute.Campaigns).build();
   const reportsRoute = RouteBuilder.create(AppRoute.Reports).build();
   const sitesRoute = RouteBuilder.create(AppRoute.Sites).build();
+  const propertiesRoute = RouteBuilder.create(AppRoute.Properties).build();
+  const propertyDetailRoute = RouteBuilder.create(AppRoute.Properties)
+    .addPart(':id')
+    .build();
 
   return (
     <Routes>
@@ -30,6 +35,8 @@ export const ManageService: FC = () => {
       <Route path={campaignsRoute} element={<CampaignsList />} />
       <Route path={reportsRoute} element={<ReportsList />} />
       <Route path={sitesRoute} element={<SitesList />} />
+      <Route path={propertyDetailRoute} element={<PropertiesDetailView />} />
+      <Route path={propertiesRoute} element={<PropertiesListView />} />
     </Routes>
   );
 };

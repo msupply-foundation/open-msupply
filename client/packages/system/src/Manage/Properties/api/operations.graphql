@@ -1,0 +1,45 @@
+fragment PropertyConfigScope on PropertyScopeV2Node {
+  __typename
+  id
+  tableName
+  displayMode
+}
+
+fragment PropertyConfigRow on PropertyV2Node {
+  __typename
+  id
+  key
+  name
+  valueType
+  isLegacy
+  scopes {
+    ...PropertyConfigScope
+  }
+}
+
+query propertyConfigList {
+  propertiesV2 {
+    ... on PropertyV2Connector {
+      __typename
+      totalCount
+      nodes {
+        ...PropertyConfigRow
+      }
+    }
+  }
+}
+
+mutation setPropertyDisplayMode($input: SetPropertyDisplayModeInput!) {
+  centralServer {
+    general {
+      setPropertyDisplayMode(input: $input) {
+        ... on SetPropertyDisplayModeNode {
+          __typename
+          propertyId
+          tableName
+          displayMode
+        }
+      }
+    }
+  }
+}

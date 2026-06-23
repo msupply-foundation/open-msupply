@@ -2903,5 +2903,14 @@
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "error.failed-to-save-properties": "Failed to save properties"
+  "error.failed-to-save-properties": "Failed to save properties",
+  "properties": "Properties",
+  "label.facilities": "Facilities",
+  "label.items": "Items",
+  "label.hidden": "Hidden",
+  "label.visible": "Visible",
+  "label.prominent": "Prominent",
+  "label.appears-on": "Appears on",
+  "heading.where-this-appears": "Where this appears",
+  "error.no-properties": "No properties have been configured"
 }
