@@ -31,6 +31,7 @@ pub enum PrefKey {
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
     Backdating,
+    ReceivePaymentsFromPrescriptions,
 
     // Store preferences
     ManageVaccinesInDoses,
