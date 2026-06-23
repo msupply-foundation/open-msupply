@@ -98,9 +98,9 @@ pub struct BatchSize {
 impl Default for BatchSize {
     fn default() -> Self {
         Self {
-            remote_pull: 500,
+            remote_pull: 5000,
             remote_push: 1024,
-            central_pull: 500,
+            central_pull: 5000,
         }
     }
 }
