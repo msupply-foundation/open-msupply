@@ -7063,6 +7063,7 @@ export type PreferencesNode = {
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
   globalTableConfigs: Scalars['JSON']['output'];
+  inactivityTimeoutMinutes: Scalars['Int']['output'];
   inboundShipmentAutoVerify: Scalars['Boolean']['output'];
   invoiceStatusOptions: Array<InvoiceNodeStatus>;
   isGaps: Scalars['Boolean']['output'];

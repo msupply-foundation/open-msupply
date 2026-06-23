@@ -1,3 +1,4 @@
+export * from './useInactivityTimeout';
 export * from './usePermissionCheck';
 export * from './useCallbackWithPermission';
 export * from './useLogout';

@@ -25,6 +25,7 @@ import {
   useIsCentralServerApi,
   useRootNavigationPath,
   useIntlUtils,
+  useInactivityTimeout,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -86,6 +87,8 @@ export const Site: FC = () => {
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
   const pluginRoutes = usePluginRoutes();
+
+  useInactivityTimeout();
 
   useEffect(() => {
     setPageTitle(pageTitle);

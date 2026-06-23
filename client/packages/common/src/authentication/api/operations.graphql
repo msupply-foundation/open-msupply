@@ -201,6 +201,7 @@ query preferences($storeId: String!) {
       inventoryAdjustmentsEnabled
       maxDays
     }
+    inactivityTimeoutMinutes
   }
 }
 
