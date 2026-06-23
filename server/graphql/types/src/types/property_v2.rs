@@ -108,7 +108,7 @@ impl PropertyV2Node {
         PropertyNodeValueTypeV2::from(self.property.value_type.clone())
     }
     pub async fn is_legacy(&self) -> bool {
-        self.property.is_legacy
+        self.property.kind == repository::PropertyKindV2::Legacy
     }
 
     /// How prominently this property is shown on the queried table scope

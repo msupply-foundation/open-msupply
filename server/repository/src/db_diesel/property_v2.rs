@@ -136,8 +136,7 @@ impl<'a> PropertyV2Repository<'a> {
                     allowed_ids
                 };
                 query = query.filter(
-                    property_v2::id
-                        .eq_any(allowed_ids.select(property_table_v2::property_id)),
+                    property_v2::id.eq_any(allowed_ids.select(property_table_v2::property_id)),
                 );
             }
         }
@@ -163,6 +162,12 @@ impl PropertyV2Filter {
         self
     }
 
+    /// Restricts to properties visible on the given table(s).
+    ///
+    /// Only `equal_to` and `equal_any` are honoured — the negative/null
+    /// `EqualFilter` modes have no well-defined meaning against the
+    /// `property_table_v2` visibility join and are silently ignored (no
+    /// `table_name` restriction is applied).
     pub fn table_name(mut self, filter: EqualFilter<String>) -> Self {
         self.table_name = Some(filter);
         self
@@ -175,7 +180,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        mock::MockDataInserts, test_db, PropertyDisplayModeV2, PropertyTableV2Row,
+        mock::MockDataInserts, test_db, PropertyDisplayModeV2, PropertyKindV2, PropertyTableV2Row,
         PropertyTableV2RowRepository, PropertyV2RowRepository, PropertyValueTypeV2,
     };
 
@@ -185,9 +190,14 @@ mod tests {
             key: key.to_string(),
             name: key.to_string(),
             value_type: PropertyValueTypeV2::Text,
-            is_legacy: false,
+            kind: PropertyKindV2::Standard,
             deleted_datetime: if deleted {
-                Some(NaiveDate::from_ymd_opt(2024, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap())
+                Some(
+                    NaiveDate::from_ymd_opt(2024, 1, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                )
             } else {
                 None
             },
@@ -215,10 +225,18 @@ mod tests {
         .await;
 
         let prop_repo = PropertyV2RowRepository::new(&connection);
-        prop_repo.upsert_one(&property("p_visible_name", "visible_name", false)).unwrap();
-        prop_repo.upsert_one(&property("p_hidden_name", "hidden_name", false)).unwrap();
-        prop_repo.upsert_one(&property("p_other_table", "other_table_only", false)).unwrap();
-        prop_repo.upsert_one(&property("p_deleted", "deleted", true)).unwrap();
+        prop_repo
+            .upsert_one(&property("p_visible_name", "visible_name", false))
+            .unwrap();
+        prop_repo
+            .upsert_one(&property("p_hidden_name", "hidden_name", false))
+            .unwrap();
+        prop_repo
+            .upsert_one(&property("p_other_table", "other_table_only", false))
+            .unwrap();
+        prop_repo
+            .upsert_one(&property("p_deleted", "deleted", true))
+            .unwrap();
 
         let table_repo = PropertyTableV2RowRepository::new(&connection);
         table_repo
@@ -371,5 +389,35 @@ mod tests {
             .find(|r| r.property.id == "p_prominent_name")
             .unwrap();
         assert_eq!(prominent.display_mode, None);
+    }
+
+    #[actix_rt::test]
+    async fn property_v2_db_roundtrip_preserves_unknown_value_type() {
+        // A value type unknown to this build (added on a newer central) must
+        // survive a DB write→read unchanged. Without `#[strum(default,
+        // transparent)]` on the `Other` catch-all, `to_sql` would persist the
+        // literal "OTHER" and silently destroy the original value.
+        let (_, connection, _, _) = test_db::setup_all(
+            "property_v2_db_roundtrip_unknown_value_type",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let repo = PropertyV2RowRepository::new(&connection);
+        let row = PropertyV2Row {
+            id: "p_unknown_type".to_string(),
+            key: "future_key".to_string(),
+            name: "Future".to_string(),
+            value_type: PropertyValueTypeV2::Other("FUTURE_TYPE".to_string()),
+            kind: PropertyKindV2::Standard,
+            deleted_datetime: None,
+        };
+        repo.upsert_one(&row).unwrap();
+
+        let found = repo.find_one_by_id("p_unknown_type").unwrap().unwrap();
+        assert_eq!(
+            found.value_type,
+            PropertyValueTypeV2::Other("FUTURE_TYPE".to_string())
+        );
     }
 }

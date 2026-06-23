@@ -4,8 +4,9 @@ mod graphql {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::MockDataInserts, EqualFilter, PropertyV2, PropertyV2Filter, PropertyV2Row,
-        PropertyValueTypeV2, RepositoryError, StorageConnection, StorageConnectionManager,
+        mock::MockDataInserts, EqualFilter, PropertyKindV2, PropertyV2, PropertyV2Filter,
+        PropertyV2Row, PropertyValueTypeV2, RepositoryError, StorageConnection,
+        StorageConnectionManager,
     };
     use serde_json::json;
 
@@ -57,7 +58,11 @@ mod graphql {
                 key: key.to_string(),
                 name: key.to_string(),
                 value_type: PropertyValueTypeV2::Text,
-                is_legacy,
+                kind: if is_legacy {
+                    PropertyKindV2::Legacy
+                } else {
+                    PropertyKindV2::Standard
+                },
                 deleted_datetime: None,
             },
             display_mode: None,

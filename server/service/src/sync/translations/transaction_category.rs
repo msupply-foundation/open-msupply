@@ -124,8 +124,8 @@ impl SyncTranslation for TransactionCategoryTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, PropertyOptionV2RowRepository, PropertyV2Row,
-        PropertyV2RowRepository, PropertyValueTypeV2, SyncAction, SyncRecordData,
+        mock::MockDataInserts, test_db::setup_all, PropertyKindV2, PropertyOptionV2RowRepository,
+        PropertyV2Row, PropertyV2RowRepository, PropertyValueTypeV2, SyncAction, SyncRecordData,
     };
 
     fn sync_record(category_type: &str) -> SyncBufferRow {
@@ -221,7 +221,7 @@ mod tests {
                 key: "inbound_shipment_category".to_string(),
                 name: "Category".to_string(),
                 value_type: PropertyValueTypeV2::Option,
-                is_legacy: true,
+                kind: PropertyKindV2::Legacy,
                 deleted_datetime: None,
             })
             .unwrap();

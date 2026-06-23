@@ -89,8 +89,9 @@ impl From<RepositoryError> for UpdatePatientPropertiesV2Error {
 #[cfg(test)]
 mod test {
     use repository::{
-        NameRow, NameRowRepository, NameRowType, PropertyDisplayModeV2, PropertyTableV2Row,
-        PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository, PropertyValueTypeV2,
+        NameRow, NameRowRepository, NameRowType, PropertyDisplayModeV2, PropertyKindV2,
+        PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository,
+        PropertyValueTypeV2,
     };
     use serde_json::json;
     use util::uuid::uuid;
@@ -107,7 +108,7 @@ mod test {
                 key: "custom_1".to_string(),
                 name: "Custom 1".to_string(),
                 value_type: PropertyValueTypeV2::Text,
-                is_legacy: true,
+                kind: PropertyKindV2::Legacy,
                 deleted_datetime: None,
             })
             .unwrap();

@@ -40,8 +40,8 @@ mod test {
     use repository::mock::MockDataInserts;
     use repository::test_db::setup_all;
     use repository::{
-        InvoiceType, PropertyDisplayModeV2, PropertyTableV2Row, PropertyTableV2RowRepository,
-        PropertyV2Row, PropertyV2RowRepository, PropertyValueTypeV2,
+        InvoiceType, PropertyDisplayModeV2, PropertyKindV2, PropertyTableV2Row,
+        PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository, PropertyValueTypeV2,
     };
     use serde_json::json;
 
@@ -68,7 +68,7 @@ mod test {
                 key: "inbound_shipment_category".to_string(),
                 name: "Category".to_string(),
                 value_type: PropertyValueTypeV2::Option,
-                is_legacy: true,
+                kind: PropertyKindV2::Legacy,
                 deleted_datetime: None,
             })
             .unwrap();

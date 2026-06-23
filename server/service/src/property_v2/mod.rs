@@ -149,7 +149,7 @@ fn set_property_display_mode(
 #[cfg(test)]
 mod tests {
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, PropertyDisplayModeV2,
+        mock::MockDataInserts, test_db::setup_all, PropertyDisplayModeV2, PropertyKindV2,
         PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository, PropertyValueTypeV2,
     };
 
@@ -163,7 +163,7 @@ mod tests {
             key: id.to_string(),
             name: id.to_string(),
             value_type: PropertyValueTypeV2::Text,
-            is_legacy: false,
+            kind: PropertyKindV2::Standard,
             deleted_datetime: None,
         }
     }
