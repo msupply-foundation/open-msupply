@@ -9708,6 +9708,7 @@ export type StockLineConnector = {
 };
 
 export type StockLineFilterInput = {
+  campaignId?: InputMaybe<EqualFilterStringInput>;
   code?: InputMaybe<StringFilterInput>;
   expiryDate?: InputMaybe<DateFilterInput>;
   hasPacksInStore?: InputMaybe<Scalars['Boolean']['input']>;
