@@ -12,7 +12,10 @@ struct MappingProperty {
     id: &'static str,
     /// JSONB key written into `<table>.properties_v2` by the v5 import.
     key: &'static str,
-    /// Display name (overridable later only via a visibility/label UI).
+    /// Initial display name, used only when the row is first created. Once a
+    /// row exists its name is owned by the label sync (mSupply's configurable
+    /// field labels, see `translations/legacy_field_labels.rs`) — the seeder
+    /// never overwrites it.
     name: &'static str,
     value_type: PropertyValueTypeV2,
     /// Per-scope display mode applied to each `property_table_v2` row this
@@ -290,8 +293,10 @@ fn mapping_properties() -> Vec<MappingProperty> {
 ///
 /// Idempotent and change-aware: a row is only upserted when missing or when its
 /// code-authoritative content differs, so steady-state runs add no changelog
-/// churn. The `property_table_v2` mapping is only created when **absent**, so a
-/// later display-mode edit (`display_mode`) is preserved rather than reset here.
+/// churn. An existing row's `name` is preserved (it's owned by the mSupply
+/// field-label sync once created), and the `property_table_v2` mapping is only
+/// created when **absent**, so a later display-mode edit (`display_mode`) is
+/// preserved rather than reset here.
 pub(crate) fn seed_central_mapping_properties(
     connection: &StorageConnection,
 ) -> Result<(), RepositoryError> {
@@ -299,16 +304,22 @@ pub(crate) fn seed_central_mapping_properties(
     let table_repo = PropertyTableV2RowRepository::new(connection);
 
     for def in mapping_properties() {
+        let existing = property_repo.find_one_by_id(def.id)?;
         let property = PropertyV2Row {
             id: def.id.to_string(),
             key: def.key.to_string(),
-            name: def.name.to_string(),
+            // Code is the source of truth for key/value_type, but only the
+            // *initial* name: once the row exists, the name is owned by the
+            // mSupply field-label sync (`translations/legacy_field_labels.rs`)
+            // and must survive re-seeds.
+            name: existing
+                .as_ref()
+                .map_or_else(|| def.name.to_string(), |row| row.name.clone()),
             value_type: def.value_type.clone(),
             kind: PropertyKindV2::Legacy,
             deleted_datetime: None,
         };
-        // Code is the source of truth for the definition (key/name/value_type).
-        if property_repo.find_one_by_id(def.id)?.as_ref() != Some(&property) {
+        if existing.as_ref() != Some(&property) {
             property_repo.upsert_one(&property)?;
         }
 
@@ -392,6 +403,24 @@ mod tests {
         let cursor_before = changelog_repo.max_cursor().unwrap();
         seed_central_mapping_properties(&connection).unwrap();
         assert_eq!(changelog_repo.max_cursor().unwrap(), cursor_before);
+
+        // A renamed property (mSupply label sync / admin edit) must keep its
+        // name across re-seeds — only key/value_type are code-authoritative.
+        property_repo
+            .upsert_one(&PropertyV2Row {
+                name: "ABC classification".to_string(),
+                ..name_1.clone()
+            })
+            .unwrap();
+        seed_central_mapping_properties(&connection).unwrap();
+        let renamed = property_repo
+            .find_one_by_id("legacy_name_custom_1")
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            renamed.name, "ABC classification",
+            "seeder must not reset a synced name"
+        );
 
         // A display-mode edit on a table mapping must be preserved across re-seeds.
         table_repo

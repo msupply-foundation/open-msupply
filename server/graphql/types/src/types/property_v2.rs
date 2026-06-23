@@ -30,7 +30,10 @@ impl From<repository::PropertyValueTypeV2> for PropertyNodeValueTypeV2 {
     fn from(value: repository::PropertyValueTypeV2) -> Self {
         use repository::PropertyValueTypeV2 as RepoType;
         match value {
-            RepoType::Number => Self::Number,
+            // The repository enum renamed `Number` -> `Integer` (forwards-compatible
+            // value_type refinement); keep the existing GraphQL `NUMBER` variant so
+            // the client contract is unchanged.
+            RepoType::Integer => Self::Number,
             RepoType::Text => Self::Text,
             RepoType::Date => Self::Date,
             RepoType::Real => Self::Real,
