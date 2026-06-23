@@ -5,7 +5,7 @@ import { useStocktakeOld } from '..';
 import { isStocktakeDisabled } from '../../../../utils';
 import { useStocktakeLines } from './useStocktakeLines';
 import { useMemo } from 'react';
-import { useItemUtils } from '@openmsupply-client/common';
+import { useItemUtils, useUrlQuery } from '@openmsupply-client/common';
 
 const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
   Object.entries(ArrayUtils.groupBy(lines, 'itemId')).map(([itemId, lines]) => {
@@ -16,6 +16,9 @@ const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
     } as StocktakeSummaryItem;
   });
 
+const getCampaignOrProgramName = (line: StocktakeLineFragment) =>
+  line.campaign?.name ?? line.program?.name ?? '';
+
 export const useStocktakeRows = (itemId?: string) => {
   const { data: stocktake } = useStocktakeOld.document.get();
   const { data: lineData, isLoading } = useStocktakeLines(
@@ -24,11 +27,30 @@ export const useStocktakeRows = (itemId?: string) => {
   );
 
   const { itemFilter, setItemFilter, matchItem } = useItemUtils();
+  const { urlQuery } = useUrlQuery();
+  const campaignFilter = (urlQuery['campaign'] as string) ?? '';
   const lines = lineData?.nodes;
 
+  const campaignOptions = useMemo(() => {
+    if (!lines) return [];
+    const names = new Set<string>();
+    lines.forEach(line => {
+      const name = getCampaignOrProgramName(line);
+      if (name) names.add(name);
+    });
+    return Array.from(names)
+      .sort((a, b) => a.localeCompare(b))
+      .map(name => ({ label: name, value: name }));
+  }, [lines]);
+
   const filteredLines = useMemo(() => {
-    return lines?.filter(item => matchItem(itemFilter, item.item));
-  }, [lines, itemFilter]);
+    return lines
+      ?.filter(item => matchItem(itemFilter, item.item))
+      .filter(
+        line =>
+          !campaignFilter || getCampaignOrProgramName(line) === campaignFilter
+      );
+  }, [lines, itemFilter, campaignFilter]);
 
   const items = useMemo(
     () => getStocktakeItems(filteredLines ?? []),
@@ -46,5 +68,6 @@ export const useStocktakeRows = (itemId?: string) => {
     totalLineCount,
     itemFilter,
     setItemFilter,
+    campaignOptions,
   };
 };
