@@ -693,3 +693,65 @@ impl Tester {
         response
     }
 }
+
+/// `number_of_records_in_push_queue` must read the push cursor that matches the
+/// site's sync version: `SyncPushCursorV7` for v7 sites, `RemoteSyncPushCursor`
+/// for v5/v6 sites. Reading the wrong cursor was the root cause of issue #12186,
+/// where a v7 site read the never-advanced v5 cursor and reported ~240k records
+/// to push when there were none.
+#[actix_rt::test]
+async fn number_of_records_in_push_queue_uses_version_specific_cursor() {
+    use repository::SyncVersion;
+
+    use crate::cursor_controller::CursorController;
+
+    let ServiceTestContext {
+        connection,
+        service_provider,
+        ..
+    } = setup_all_and_service_provider(
+        "number_of_records_in_push_queue_uses_version_specific_cursor",
+        MockDataInserts::none().names().stores(),
+    )
+    .await;
+
+    let ctx = service_provider.basic_context().unwrap();
+    let push_queue_count = || {
+        service_provider
+            .sync_status_service
+            .number_of_records_in_push_queue(&ctx)
+            .unwrap()
+    };
+
+    let max_cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+    // Park both cursors well behind the changelog so the queue starts non-empty,
+    // and so advancing one cursor can't be confused with the other.
+    CursorController::new(KeyType::RemoteSyncPushCursor)
+        .update(&connection, 0)
+        .unwrap();
+    CursorController::new(KeyType::SyncPushCursorV7)
+        .update(&connection, 0)
+        .unwrap();
+
+    // --- v7 site reads the v7 cursor ---
+    SyncVersion::set(&connection, SyncVersion::V7).unwrap();
+    assert_eq!(push_queue_count(), max_cursor);
+
+    // Advancing the v5 cursor must NOT affect the v7 count (this is the bug).
+    CursorController::new(KeyType::RemoteSyncPushCursor)
+        .update(&connection, max_cursor)
+        .unwrap();
+    assert_eq!(push_queue_count(), max_cursor);
+
+    // Advancing the v7 cursor to max drains the queue, as it does after v7 init.
+    CursorController::new(KeyType::SyncPushCursorV7)
+        .update(&connection, max_cursor)
+        .unwrap();
+    assert_eq!(push_queue_count(), 0);
+
+    // --- v5/v6 site reads the v5 cursor ---
+    SyncVersion::set(&connection, SyncVersion::V5V6).unwrap();
+    // v5 cursor is at max (set above) -> empty.
+    assert_eq!(push_queue_count(), 0);
+}
