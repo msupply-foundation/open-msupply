@@ -12,6 +12,7 @@ import {
   LocaleKey,
   FieldUpdateMutation,
   SearchBar,
+  FilterMenu,
 } from '@openmsupply-client/common';
 import { StocktakeFragment, useStocktakeOld } from '../api';
 import { useStocktakeRows } from '../api/hooks/line/useStocktakeRows';
@@ -30,7 +31,7 @@ export const Toolbar = () => {
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
 
-  const { itemFilter, setItemFilter } = useStocktakeRows();
+  const { itemFilter, setItemFilter, campaignOptions } = useStocktakeRows();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -70,6 +71,18 @@ export const Toolbar = () => {
               justifyContent="flex-end"
               alignItems="center"
             >
+              {campaignOptions.length > 0 && (
+                <FilterMenu
+                  filters={[
+                    {
+                      type: 'enum',
+                      name: t('label.campaign'),
+                      urlParameter: 'campaign',
+                      options: campaignOptions,
+                    },
+                  ]}
+                />
+              )}
               <SearchBar
                 placeholder={t('placeholder.filter-items')}
                 value={itemFilter}
