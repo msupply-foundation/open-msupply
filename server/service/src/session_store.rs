@@ -60,6 +60,8 @@ impl SessionStore {
         password: &str,
         lifetime: Duration,
     ) -> (SessionToken, DateTime<Utc>) {
+        self.prune_expired();
+
         let token = generate_token();
         let expires_at = Utc::now() + lifetime;
         self.sessions.insert(
@@ -128,6 +130,17 @@ impl SessionStore {
             self.user_passwords.remove(user_id);
         }
     }
+
+    /// Drop every expired session and any password cache left with no remaining active sessions.
+    /// Safe to call at any time (e.g. from a scheduled sweep); `create` calls it on each login.
+    pub fn prune_expired(&mut self) {
+        let now = Utc::now();
+        self.sessions.retain(|_, entry| entry.expires_at >= now);
+        let active_users: std::collections::HashSet<&String> =
+            self.sessions.values().map(|e| &e.user_id).collect();
+        self.user_passwords
+            .retain(|user_id, _| active_users.contains(user_id));
+    }
 }
 
 fn generate_token() -> SessionToken {
@@ -190,6 +203,22 @@ mod tests {
             store.get_password("u").is_none(),
             "password should be pruned when user has no sessions left"
         );
+    }
+
+    #[test]
+    fn create_sweeps_expired_sessions() {
+        let mut store = SessionStore::new();
+        let (abandoned, _) = store.create("idle-user", "pw", Duration::hours(1));
+        store.sessions.get_mut(&abandoned).unwrap().expires_at = Utc::now() - Duration::seconds(1);
+
+        // A fresh login should sweep the abandoned entry as a side effect.
+        store.create("new-user", "pw2", Duration::hours(1));
+
+        assert!(
+            !store.sessions.contains_key(&abandoned),
+            "create should sweep expired sessions"
+        );
+        assert!(store.get_password("idle-user").is_none());
     }
 
     #[test]
