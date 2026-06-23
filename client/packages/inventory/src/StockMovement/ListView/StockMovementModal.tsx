@@ -19,7 +19,7 @@ import {
   ItemStockOnHandFragment,
   LocationRowFragment,
   StockItemSearchInput,
-  StockLineRowFragment,
+  StockLineListRowFragment,
   useLocationList,
   useStockList,
 } from '@openmsupply-client/system';
@@ -47,7 +47,7 @@ interface StockMovementModalProps {
 }
 
 const lineFromStockLine = (
-  stockLine: StockLineRowFragment
+  stockLine: StockLineListRowFragment
 ): DraftStockMovementLineState => {
   const onHold = stockLine.onHold || (stockLine.location?.onHold ?? false);
   return {

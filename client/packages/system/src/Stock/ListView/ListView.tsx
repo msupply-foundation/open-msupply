@@ -16,7 +16,7 @@ import {
   ExpiryDateCell,
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../api';
+import { StockLineListRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
 import { useGroupedStockList } from '../api/hooks/useGroupedStockList';
@@ -102,7 +102,7 @@ export const StockListView = () => {
   const isError = isGrouped ? groupedResult.isError : ungroupedResult.isError;
 
   const mrtColumns = useMemo(
-    (): ColumnDef<StockLineRowFragment>[] => [
+    (): ColumnDef<StockLineListRowFragment>[] => [
       {
         id: 'code',
         accessorKey: 'item.code',
@@ -289,7 +289,7 @@ export const StockListView = () => {
     [isGrouped, manageVvmStatusForStock, plugins.stockLine?.tableColumn, t]
   );
 
-  const { table } = usePaginatedMaterialTable<StockLineRowFragment>({
+  const { table } = usePaginatedMaterialTable<StockLineListRowFragment>({
     tableId: 'stock-list',
     isLoading: isFetching,
     isError,
