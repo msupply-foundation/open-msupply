@@ -1,7 +1,10 @@
 use std::collections::BTreeMap;
 
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use graphql_types::types::{patient::GenderTypeNode, InvoiceNodeStatus};
 use repository::{GenderType, InvoiceStatus};
 use service::{
@@ -133,9 +136,13 @@ pub fn upsert_preferences(
         .upsert(&service_context, input.to_domain())?;
 
     if let Some(minutes) = inactivity_timeout_minutes {
-        if let Ok(mut store) = ctx.get_auth_data().session_store.write() {
-            store.set_lifetime_for_all(lifetime_from_minutes(minutes));
-        }
+        let mut store = ctx.get_auth_data().session_store.write().map_err(|e| {
+            StandardGraphqlError::InternalError(format!(
+                "The inactivity timeout was saved, but it couldn't be applied to users who are already signed in. {e}"
+            ))
+            .extend()
+        })?;
+        store.set_lifetime_for_all(lifetime_from_minutes(minutes));
     }
 
     Ok(())
