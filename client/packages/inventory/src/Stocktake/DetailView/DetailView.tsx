@@ -13,10 +13,17 @@ import {
   useNonPaginatedMaterialTable,
   NothingHere,
   MaterialTable,
+  AppFooterStatusPortal,
+  useToggle,
+  useQueryClient,
 } from '@openmsupply-client/common';
-import { ActivityLogList } from '@openmsupply-client/system';
+import {
+  ActivityLogList,
+  DocumentsTable,
+  UploadDocumentModal,
+} from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
-import { Footer } from './Footer';
+import { Footer, StatusFooter } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
@@ -44,6 +51,15 @@ const DetailViewInner = () => {
     isLoading: rowsLoading,
     lines,
   } = useStocktakeOld.line.rows();
+
+  const stocktakeApi = useStocktakeOld.utils.api();
+  const queryClient = useQueryClient();
+  const invalidateDocuments = () =>
+    queryClient.invalidateQueries({
+      queryKey: stocktakeApi.keys.detail(stocktake?.id ?? ''),
+    });
+
+  const uploadModal = useToggle();
 
   const { isOpen, entity, onOpen, onClose, mode } =
     useEditModal<StocktakeLineFragment['item']>();
@@ -83,6 +99,18 @@ const DetailViewInner = () => {
       value: 'Details',
     },
     {
+      Component: (
+        <DocumentsTable
+          documents={stocktake?.documents.nodes ?? []}
+          recordId={stocktake?.id ?? ''}
+          tableName="stocktake"
+          openUploadModal={uploadModal.toggleOn}
+          invalidateQueries={invalidateDocuments}
+        />
+      ),
+      value: 'Documents',
+    },
+    {
       Component: <ActivityLogList recordId={stocktake?.id ?? ''} />,
       value: 'Log',
     },
@@ -108,7 +136,10 @@ const DetailViewInner = () => {
 
   return (
     <>
-      <AppBarButtons onAddItem={() => onOpen()} />
+      <AppBarButtons
+        onAddItem={() => onOpen()}
+        openUploadModal={uploadModal.toggleOn}
+      />
 
       <Footer
         selectedRows={selectedRows}
@@ -131,6 +162,11 @@ const DetailViewInner = () => {
         <DetailTabs tabs={tabs} />
       )}
 
+      {/* Fallback status footer for tabs that don't own the lines table.
+        The lines table's `Footer` mounts an `AppFooterPortal` only when
+        rows are selected; otherwise this portal shows the status crumbs. */}
+      <AppFooterStatusPortal Content={<StatusFooter />} />
+
       {isOpen && (
         <StocktakeLineEdit
           isOpen={isOpen}
@@ -138,6 +174,15 @@ const DetailViewInner = () => {
           mode={mode}
           item={entity}
           isInitialStocktake={stocktake.isInitialStocktake}
+        />
+      )}
+      {uploadModal.isOn && (
+        <UploadDocumentModal
+          isOn={uploadModal.isOn}
+          toggleOff={uploadModal.toggleOff}
+          recordId={stocktake.id}
+          tableName="stocktake"
+          invalidateQueries={invalidateDocuments}
         />
       )}
       <StocktakeErrorModal />
