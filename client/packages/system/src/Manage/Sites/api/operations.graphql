@@ -4,6 +4,7 @@ fragment SiteRow on SiteNode {
   code
   name
   hardwareId
+  isMultiDevice
 }
 
 fragment SiteStoreRow on StoreNode {
@@ -123,6 +124,16 @@ mutation clearSiteHardwareId($siteId: Int!) {
   centralServer {
     site {
       clearSiteHardwareId(siteId: $siteId) {
+        id
+      }
+    }
+  }
+}
+
+mutation setSiteMultiDevice($siteId: Int!, $isMultiDevice: Boolean!) {
+  centralServer {
+    site {
+      setSiteMultiDevice(siteId: $siteId, isMultiDevice: $isMultiDevice) {
         id
       }
     }
