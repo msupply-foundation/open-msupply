@@ -72,7 +72,11 @@ export const Toolbar = () => {
         flexDirection: 'column',
       }}
     >
-      <Grid container flexWrap="nowrap">
+      <Grid
+        container
+        flexWrap="nowrap"
+        sx={{ flexDirection: { xs: 'column', md: 'row' } }}
+      >
         <Grid display="flex" flex={1} flexDirection="column" gap={1}>
           {otherParty && (
             <InputWithLabelRow
@@ -144,7 +148,7 @@ export const Toolbar = () => {
         >
           <InputWithLabelRow
             label={t('label.min-months-of-stock')}
-            labelWidth={'350px'}
+            labelWidth={'250px'}
             Input={
               <Autocomplete
                 disabled={isDisabled || isProgram}
@@ -188,7 +192,7 @@ export const Toolbar = () => {
           />
           <InputWithLabelRow
             label={t('label.max-months-of-stock')}
-            labelWidth={'350px'}
+            labelWidth={'250px'}
             Input={
               <Autocomplete
                 disabled={isDisabled || isProgram}
