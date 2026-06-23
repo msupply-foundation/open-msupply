@@ -176,13 +176,13 @@ async fn subscription_worker_loop(
 
                 if just_finished_successfully {
                     last_successful = Some(summary);
-                    // if finished successfully whatever is remaining is should be the push queue count
+                    // If finished successfully, whatever is remaining should be the push queue count
                     push_queue_count = push_remaining;
                 }
 
                 if is_error {
-                    // On an error its possible that push remaining shows 0 when in reality nothing was pushed
-                    // Thus requery here to get latest info, fallback to remaining
+                    // On an error it's possible that push remaining shows 0 when in reality nothing was pushed.
+                    // Thus, requery here to get latest info, fallback to remaining
                     push_queue_count =
                         get_push_queue_count(&service_provider).unwrap_or(push_remaining);
                 }
