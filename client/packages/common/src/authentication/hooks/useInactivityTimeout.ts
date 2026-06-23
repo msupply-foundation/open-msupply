@@ -10,13 +10,20 @@ const ACTIVITY_EVENTS: (keyof DocumentEventMap)[] = [
   'touchstart',
 ];
 
+const MIN_INACTIVITY_TIMEOUT_MINUTES = 5;
+
 export const useInactivityTimeout = () => {
   const { isAuthenticated } = useAuthContext();
   const { inactivityTimeoutMinutes } = usePreferences();
   const api = useAuthApi();
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const timeoutMs = (inactivityTimeoutMinutes ?? 0) * 60 * 1000;
+  const inactivityMinutes = inactivityTimeoutMinutes ?? 0;
+  const mins =
+    inactivityMinutes > 0
+      ? Math.max(inactivityMinutes, MIN_INACTIVITY_TIMEOUT_MINUTES)
+      : 0;
+  const timeoutMs = mins * 60 * 1000;
 
   const onTimeout = useCallback(async () => {
     try {
