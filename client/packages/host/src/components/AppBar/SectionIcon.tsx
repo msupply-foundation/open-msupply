@@ -98,7 +98,9 @@ const useSection = (): Section | undefined => {
     if (!match) continue;
     return {
       icon: resolvePluginIcon(category.icon),
-      title: category.label,
+      // Plugin labels are static English; translate via the label-as-key
+      // lookup with an English fallback (see usePluginLabelTranslation / #12090).
+      title: t(category.label as LocaleKey, { defaultValue: category.label }),
     };
   }
 

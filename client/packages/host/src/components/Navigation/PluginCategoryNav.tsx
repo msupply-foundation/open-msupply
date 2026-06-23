@@ -4,8 +4,10 @@ import {
   AppNavSection,
   Collapse,
   List,
+  LocaleKey,
   resolvePluginIcon,
   useAuthContext,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useNestedNav } from './useNestedNav';
 import {
@@ -18,6 +20,7 @@ import {
 export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
   category,
 }) => {
+  const t = useTranslation();
   const { userHasPermission } = useAuthContext();
   const visiblePages = category.pages.filter(page =>
     hasAllPermissions(page.menu.permissions, userHasPermission)
@@ -38,7 +41,7 @@ export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
       <AppNavLink
         to={categoryPath}
         icon={resolvePluginIcon(category.icon)}
-        text={category.label}
+        text={t(category.label as LocaleKey)}
       />
     );
   }
@@ -49,7 +52,7 @@ export const PluginCategoryNav: React.FC<{ category: PluginNewCategory }> = ({
         isParent
         to={categoryPath}
         icon={resolvePluginIcon(category.icon)}
-        text={category.label}
+        text={t(category.label as LocaleKey)}
       />
       <Collapse in={isActive}>
         <List>

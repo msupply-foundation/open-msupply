@@ -1,6 +1,6 @@
 import React from 'react';
 import { Paper, SxProps, Theme, Tooltip, Typography } from '@mui/material';
-import { InlineSpinner, StockIcon } from '../../../';
+import { InfoOutlineIcon, InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 import { ApiException, isPermissionDeniedException } from '@common/types';
 import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
@@ -16,6 +16,7 @@ export type Stat = {
   extraMessage?: string;
   alertFlag?: boolean;
   labelSx?: SxProps<Theme>;
+  infoTooltip?: string;
 };
 export interface StatsPanelProps {
   error?: ApiException;
@@ -36,6 +37,7 @@ export const Statistic = ({
   alertFlag = false,
   extraMessage,
   labelSx,
+  infoTooltip,
 }: Stat) => {
   const t = useTranslation();
   return (
@@ -71,16 +73,26 @@ export const Statistic = ({
           )}
         </Grid>
         <Grid
+          container
+          alignItems="center"
           sx={{
             color: 'gray.main',
             flex: 1,
             fontSize: '12px',
             fontWeight: 500,
             marginInlineStart: '8px',
+            gap: '4px',
             ...labelSx,
           }}
         >
           {link ? <SimpleLink to={link}>{label}</SimpleLink> : label}
+          {infoTooltip && (
+            <Tooltip title={infoTooltip}>
+              <Grid display="flex" sx={{ cursor: 'help' }}>
+                <InfoOutlineIcon sx={{ fontSize: 14 }} color="primary" />
+              </Grid>
+            </Tooltip>
+          )}
         </Grid>
       </Grid>
       {extraMessage && (

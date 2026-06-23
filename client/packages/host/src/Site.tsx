@@ -96,6 +96,7 @@ export const Site: FC = () => {
     setPageTitle(pageTitle);
   }, [location, pageTitle, setPageTitle]);
 
+  // Listen for modifier keys to show keyboard shortcut hints in the UI
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
       if (isModifierKey(e)) document.body.classList.add('show-hints');
@@ -139,9 +140,9 @@ export const Site: FC = () => {
       <Blocker />
       <GlobalStyles
         styles={{
-          'body.show-hints [data-shortcut]:not(:disabled):not([aria-disabled="true"])::after':
+          'body.show-hints [aria-keyshortcuts]:not(:disabled):not([aria-disabled="true"])::after':
             {
-              content: 'attr(data-shortcut)',
+              content: 'attr(aria-keyshortcuts)',
               position: 'absolute',
               background: theme.mixins.dialog.button.primary.backgroundColor,
               color: theme.mixins.dialog.button.primary.color,

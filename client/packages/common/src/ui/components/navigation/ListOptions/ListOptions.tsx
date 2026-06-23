@@ -1,5 +1,6 @@
 import { useWindowDimensions } from '@common/hooks';
 import { CheckIcon, ChevronDownIcon } from '@common/icons';
+import { useIntlUtils } from '@common/intl';
 import {
   List,
   ListItemIcon,
@@ -32,6 +33,7 @@ export const ListOptions = ({
   scrollRef,
 }: ListProps) => {
   const { height } = useWindowDimensions();
+  const { isRtl } = useIntlUtils();
 
   const startIcon = (
     <CheckIcon
@@ -48,7 +50,11 @@ export const ListOptions = ({
 
   const endIcon = (
     <ChevronDownIcon
-      style={{ width: 17, height: 17, transform: 'rotate(-90deg)' }}
+      style={{
+        width: 17,
+        height: 17,
+        transform: isRtl ? 'rotate(90deg)' : 'rotate(-90deg)',
+      }}
     />
   );
 
@@ -69,7 +75,6 @@ export const ListOptions = ({
               sx={{ padding: '5px 0px', cursor: 'pointer' }}
               onClick={() => onClick(option.id)}
               ref={option.id === currentId ? scrollRef : null}
-              data-shortcut={shortcut}
               aria-keyshortcuts={shortcut}
             >
               <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>

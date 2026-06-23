@@ -138,7 +138,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     0,
     0,
     0,
-    syncStatus?.summary?.durationInSeconds || 0
+    syncStatus?.lastSuccessfulSync?.durationInSeconds || 0
   );
 
   const getSyncStatusMessage = (): string => {
@@ -234,7 +234,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           </Alert>
         )}
 
-        {!error && latestSuccessfulSyncDate && (
+        {!error && !syncStatus?.isSyncing && latestSuccessfulSyncDate && (
           <Alert
             sx={{
               backgroundColor: theme.palette.background.drawer,

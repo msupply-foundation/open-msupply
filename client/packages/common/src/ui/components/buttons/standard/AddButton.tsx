@@ -57,7 +57,6 @@ export const AddButton = React.forwardRef<HTMLButtonElement, AddButtonProps>(
         startIcon={<PlusCircleIcon />}
         ref={ref}
         label={label}
-        data-shortcut="Alt+N"
         aria-keyshortcuts="Alt+N"
         {...buttonProps}
       />
