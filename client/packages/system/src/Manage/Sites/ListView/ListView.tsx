@@ -36,6 +36,7 @@ export const SitesList = () => {
     deleteSite: { deleteSite },
     clearSyncToken: { clearSyncToken, isClearingSyncToken },
     clearHardwareId: { clearHardwareId, isClearingHardwareId },
+    setMultiDevice: { setMultiDevice },
     draft,
     updateDraft,
   } = useSites(queryParams);
@@ -111,6 +112,7 @@ export const SitesList = () => {
         name: selected.name,
         password: '',
         hardwareId: selected.hardwareId,
+        isMultiDevice: selected.isMultiDevice,
         isNew: false,
       } as DraftSite);
       onOpen();
@@ -144,6 +146,7 @@ export const SitesList = () => {
           isClearingSyncToken={isClearingSyncToken}
           clearHardwareId={clearHardwareId}
           isClearingHardwareId={isClearingHardwareId}
+          setMultiDevice={setMultiDevice}
           upsert={save}
           onDelete={() => confirmDelete()}
           isEditable={isCentralStandalone}
