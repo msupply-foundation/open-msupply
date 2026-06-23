@@ -2,8 +2,8 @@
 
 - _Date_: 
 - _Deciders_: 
-- _Status_:  
-- _Outcome_: 
+- _Status_: PROPOSED — draft recommendation below, pending deciders
+- _Outcome_: Option 2 - JSON (proposed)
 
 ## Context
 
@@ -122,8 +122,30 @@ OMS legacy properties migration?
 
 [Thoughts on sync implementation](https://github.com/msupply-foundation/open-msupply/blob/078958fec1557c51a2d7ddd5561df1057a396221/docs/content/server/service/properties/_index.md)
 
-### Consequences
+## Decision
 
+> ⚠️ **Draft recommendation — not yet ratified.** Drafted from the performance findings in the Appendix and the option write-ups above. To be reviewed and confirmed by the deciders (fill in _Date_/_Deciders_/_Status_ above when agreed).
+
+**Option 2 - JSON**
+
+Store property values as binary JSON (JSONB in PostgreSQL, binary JSON in SQLite) on the owning record, rather than in a separate relational `property_value` table.
+
+Rationale:
+
+- Slots into the existing sync model cleanly — the codebase already syncs JSON categories/properties, and values travel along with their attached row, avoiding the separate record-tracking/lookup that Option 1 requires.
+- Conceptually simpler and more discoverable than the relational graph in Option 1.
+- Performance is competitive: with binary JSON columns and a targeted index per filtered/sorted property it matches or beats the relational approach, and is only modestly slower in the general case even at ~60 properties per row (see Appendix).
+- Options 4 and 5 collapse into this approach.
+
+Trade-offs accepted:
+
+- More data sent per sync update — JSON has no per-field partial updates, so the whole record syncs on any property change.
+- Requirement 8 (surfacing a subset of legacy mSupply custom properties) needs explicit filter/merge logic on sync; Option 1 would have handled this more naturally.
+
+## Consequences
+
+- Filtering/sorting on a property in the DB must go through binary JSON columns, and hot paths need a targeted (expression) index on the specific property.
+- Open questions in "Further consideration" remain to be resolved before/while implementing — notably the mSupply property migration & backfill strategy (Requirement 8) and whether per-store/site scoping (Requirement 7) is in scope.
 
 ## Appendix - Performance testing
 
