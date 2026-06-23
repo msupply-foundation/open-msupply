@@ -52,6 +52,11 @@ export const useBlockNavigation = () => {
   const blockers: BlockingState[] = Array.from(blocking.values());
 
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    // Same-pathname "navigations" are re-render artifacts, not real navigations.
+    // React Router fires them on the destination after a proceed() completes, which
+    // would re-block before the destination component has reset its dirty state.
+    if (currentLocation.pathname === nextLocation.pathname) return false;
+
     for (const b of blockers) {
       if (b.options?.disabled) {
         return false;
@@ -62,7 +67,7 @@ export const useBlockNavigation = () => {
         return b.options.customCheck.navigate(currentLocation, nextLocation);
       }
 
-      if (b.shouldBlock && currentLocation.pathname !== nextLocation.pathname) {
+      if (b.shouldBlock) {
         // Set the blocker that is blocking navigation, so we can show the correct modal content
         setActiveBlocker(b);
         return true;
