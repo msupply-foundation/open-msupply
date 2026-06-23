@@ -400,7 +400,7 @@ impl GraphqlSchema {
         let initialisation_builder = InitialisationSchema::build(
             InitialisationQueries,
             InitialisationMutations,
-            InitialisationSubscriptions::default(),
+            InitialisationSubscriptions,
         )
         .data(service_provider.clone())
         .data(subscription_broadcast.clone())
