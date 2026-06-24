@@ -677,6 +677,7 @@ export const InboundLineEditCards = ({
             <DateTimePickerInput
               value={value}
               disabled={isDisabled}
+              disableFuture
               onChange={date =>
                 updateDraftLine({
                   id: row.original.id,
