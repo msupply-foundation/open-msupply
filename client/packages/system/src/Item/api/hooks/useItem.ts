@@ -1,12 +1,10 @@
-import { ItemNodeType, useParams, useQuery } from '@openmsupply-client/common';
+import { ItemNodeType, useQuery } from '@openmsupply-client/common';
 import { useItemGraphQL } from '../useItemGraphQL';
 import { useItemApi } from './useItemApi';
 import { useItemsByFilter } from './useItems';
 
 export function useItem(id?: string) {
-  const { id: paramId = '' } = useParams();
-
-  const itemId = id || paramId;
+  const itemId = id ?? '';
 
   const { data, isLoading, error } = useGetById(itemId);
   const { data: stockLinesFromItem, isLoading: stockLinesIsLoading } =
