@@ -119,3 +119,40 @@ hr {
 .batch-wrap {
   word-break: break-word;
 }
+
+.signoff {
+  width: 100%;
+  margin-inline-start: 8px;
+  margin-top: 40px;
+  display: flex;
+  justify-content: space-between;
+  font-family: Tahoma;
+  font-size: 8pt;
+}
+
+.signoff-col {
+  width: 45%;
+  border-top: 0.5px solid black;
+  padding-top: 6px;
+}
+
+.signoff-heading {
+  font-weight: bold;
+  margin: 0 0 4px 0;
+}
+
+.signoff-field {
+  display: flex;
+  align-items: flex-end;
+  margin-top: 14px;
+}
+
+.signoff-label {
+  white-space: nowrap;
+  margin-inline-end: 6px;
+}
+
+.signoff-line {
+  flex: 1;
+  border-bottom: 0.5px solid black;
+}
