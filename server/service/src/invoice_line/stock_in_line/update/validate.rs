@@ -13,8 +13,8 @@ use crate::{
         },
     },
     validate::{
-        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
-        OtherPartyErrors,
+        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
+        CheckOtherPartyType, OtherPartyErrors,
     },
     NullableUpdate,
 };
@@ -43,6 +43,15 @@ pub fn validate(
     }
     if !check_number_of_packs(input.number_of_packs) {
         return Err(NumberOfPacksBelowZero);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(manufacture_date),
+    }) = &input.manufacture_date
+    {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
     }
 
     let item = check_item_option(&input.item_id, connection)?;

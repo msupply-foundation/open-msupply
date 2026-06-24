@@ -148,6 +148,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
         ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
+        ServiceError::CannotSetManufactureDateInFuture => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
