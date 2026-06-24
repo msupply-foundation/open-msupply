@@ -1,10 +1,6 @@
 use super::{
-<<<<<<< HEAD
-    name_row::name, store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    RowActionType, StorageConnection,
-=======
-    store_row::store, ChangelogRepository, RowActionType, RowOrId, StorageConnection,
->>>>>>> origin/v3.0.0-RC
+    name_row::name, store_row::store, ChangelogRepository, RowActionType, RowOrId,
+    StorageConnection,
 };
 use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
 use ts_rs::TS;
@@ -29,11 +25,8 @@ pub enum SyncMessageRowStatus {
 pub enum SyncMessageRowType {
     #[default]
     RequestFieldChange,
-<<<<<<< HEAD
     SupportUpload,
-=======
     Merge,
->>>>>>> origin/v3.0.0-RC
     #[serde(untagged)]
     Other(String),
 }
@@ -102,9 +95,6 @@ impl<'a> SyncMessageRowRepository<'a> {
             .do_update()
             .set(row.clone())
             .execute(self.connection.lock().connection())?;
-<<<<<<< HEAD
-        self.insert_changelog(&row)
-=======
         Ok(())
     }
 
@@ -117,7 +107,6 @@ impl<'a> SyncMessageRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
->>>>>>> origin/v3.0.0-RC
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncMessageRow>, RepositoryError> {
@@ -128,23 +117,10 @@ impl<'a> SyncMessageRowRepository<'a> {
         Ok(result)
     }
 
-<<<<<<< HEAD
-    fn insert_changelog(&self, row: &SyncMessageRow) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::SyncMessage,
-            record_id: row.id.to_string(),
-            row_action: RowActionType::Upsert,
-            name_id: None,
-            store_id: row.to_store_id.clone(),
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
-=======
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SyncMessageRow>, RepositoryError> {
         Ok(sync_message::table
             .filter(sync_message::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
->>>>>>> origin/v3.0.0-RC
     }
 }
 

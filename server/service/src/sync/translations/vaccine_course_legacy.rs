@@ -121,13 +121,7 @@ mod tests {
         .await;
 
         // Get the current cursor value
-<<<<<<< HEAD
-        let cursor = ChangelogRepository::new(&connection)
-            .absolute_latest_cursor()
-            .unwrap();
-=======
         let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
->>>>>>> origin/v3.0.0-RC
 
         // Create a new VaccineCourseRow (this will get a changelog entry created automatically)
         let vaccine_course_row = VaccineCourseRow {

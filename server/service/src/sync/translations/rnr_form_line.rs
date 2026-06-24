@@ -11,14 +11,10 @@ use crate::sync::translations::{
 
 };
 
-<<<<<<< HEAD
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
-=======
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
->>>>>>> origin/v3.0.0-RC
 
 /// FK column renamed during the entity-link abstraction. Central emits both the canonical
 /// `item_id` and the legacy `item_link_id` alias and accepts either, for cross-version sync.
@@ -51,14 +47,11 @@ impl SyncTranslation for RnRFormLineTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-<<<<<<< HEAD
-        let row = from_renamed_keys_str::<RnRFormLineRow>(&sync_record.data, RENAMED_KEYS)?;
+        let row = from_renamed_keys_str::<RnRFormLineRow>(
+            &sync_record.data.0.to_string(),
+            RENAMED_KEYS,
+        )?;
         Ok(PullTranslateResult::upsert(row))
-=======
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            RnRFormLineRow,
-        >(sync_record.data.0.clone())?))
->>>>>>> origin/v3.0.0-RC
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -91,17 +84,11 @@ impl SyncTranslation for RnRFormLineTranslation {
             return Ok(PushTranslateResult::NotMatched);
         };
 
-<<<<<<< HEAD
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            to_renamed_keys_value(&row, RENAMED_KEYS)?,
+            to_renamed_keys_value(&rnr_form_line_row, RENAMED_KEYS)?,
         ))
-=======
-        let row = rnr_form_line_row;
-
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
->>>>>>> origin/v3.0.0-RC
     }
 
     fn try_translate_from_delete_sync_record(

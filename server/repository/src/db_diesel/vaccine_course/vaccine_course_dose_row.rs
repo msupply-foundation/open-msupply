@@ -4,18 +4,11 @@ use super::{
 
 use crate::{
     db_diesel::{
-<<<<<<< HEAD
         clinician_link_row::clinician_link, clinician_row::clinician, item_row::item,
         name_row::name,
     },
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
-=======
-        clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
-        item_row::item, name_row::name,
-    }, ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
->>>>>>> origin/v3.0.0-RC
 };
 
 use chrono::NaiveDateTime;

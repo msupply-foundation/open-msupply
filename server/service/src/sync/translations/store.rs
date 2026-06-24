@@ -1,11 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-<<<<<<< HEAD
-    NameLinkRowRepository, StorageConnection, StoreLogoRow, StoreMode, StoreRow, StoreRowDelete,
-    SyncBufferRow,
-=======
-    NameLinkRowRepository, StorageConnection, StoreMode, StoreRow, SyncBufferRow,
->>>>>>> origin/v3.0.0-RC
+    NameLinkRowRepository, StorageConnection, StoreLogoRow, StoreMode, StoreRow, SyncBufferRow,
 };
 
 use crate::sync::translations::name::NameTranslation;

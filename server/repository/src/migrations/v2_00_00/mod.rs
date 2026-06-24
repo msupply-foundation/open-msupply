@@ -97,21 +97,12 @@ async fn migration_2_00_00() {
     .await;
 
     insert_merge_test_data(&connection);
-<<<<<<< HEAD
-    let changelog_repo = ChangelogRepository::new(&connection);
-    let cursor_before = changelog_repo.absolute_latest_cursor().unwrap();
-=======
     let cursor_before = latest_changelog_cursor(&connection);
->>>>>>> origin/v3.0.0-RC
 
     migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
     assert_eq!(get_database_version(&connection), version);
 
-<<<<<<< HEAD
-    let cursor_after = changelog_repo.absolute_latest_cursor().unwrap();
-=======
     let cursor_after = latest_changelog_cursor(&connection);
->>>>>>> origin/v3.0.0-RC
 
     assert_eq!(cursor_before, cursor_after);
 }

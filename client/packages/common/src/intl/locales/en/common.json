@@ -27,8 +27,6 @@
   "button.add-from-master-list": "Add from master list",
   "button.add-insurance": "Add insurance",
   "button.add-item": "Add item",
-<<<<<<< HEAD
-=======
   "button.add-new-campaign": "Add new campaign",
   "button.add-new-indicator": "Add new indicator",
   "button.add-new-program": "New program",
@@ -38,7 +36,6 @@
   "button.add-printer": "Add printer",
   "button.add-program": "Add program",
   "button.add-status-entry": "Add status entry",
->>>>>>> origin/v3.0.0-RC
   "button.add-with-all-lines": "Add with all lines",
   "button.add-with-no-lines": "Add with no lines",
   "button.adjust": "Adjust",
@@ -593,11 +590,8 @@
   "error.unable-to-create-cce": "Unable to create CCE",
   "error.unable-to-create-immunisation-program": "Unable to create immunisation program",
   "error.unable-to-create-requisition": "Unable to create requisition",
-<<<<<<< HEAD
   "error.unable-to-delete-plugin": "Unable to delete plugin",
-=======
   "error.unable-to-delete-site": "Unable to delete site",
->>>>>>> origin/v3.0.0-RC
   "error.unable-to-detect-scanner": "Unable to detect a scanner",
   "error.unable-to-initialise": "Unable to initialise",
   "error.unable-to-insert-purchase-order-line": "Unable to insert purchase order line",
@@ -764,12 +758,9 @@
   "heading.stock-details": "Stock details",
   "heading.stock-evolution": "Stock evolution (past & projected)",
   "heading.stock-levels": "Stock levels",
-<<<<<<< HEAD
   "heading.stock-movement-created": "Stock movement created",
   "heading.stocktake-errors": "Stocktake errors",
-=======
   "heading.stores": "Stores",
->>>>>>> origin/v3.0.0-RC
   "heading.sub-total": "Sub total",
   "heading.supply-to-approved": "Set supply to approved",
   "heading.supply-to-requested": "Set supply to requested",
@@ -800,12 +791,8 @@
   "info.manual-shipment": "This shipment was created manually. The delivery status will not be automatically updated.",
   "info.no-shipment": "Finalising this requisition will prevent you from creating a shipment for it.",
   "info.server-restarting": "Server restarting...",
-<<<<<<< HEAD
-  "initialise.body": "To get started, we'll need to configure the settings to synchronise with mSupply. Please enter the values and click Initialise.\n\nIf you're not sure what to enter, contact support@msupply.foundation.",
-=======
   "initialise.body": "To get started, we'll need to configure the settings to synchronise with mSupply. Please enter the values and click Save.\n\nIf you're not sure what to enter, contact support@msupply.foundation.",
   "initialise.central-standalone": "Standalone central server",
->>>>>>> origin/v3.0.0-RC
   "initialise.heading": "Welcome!",
   "initialise.legacy-sync": "Central with legacy sync",
   "internal-order": "Internal Orders",
@@ -1235,12 +1222,8 @@
   "label.group-by-po-line": "Group by PO line",
   "label.growth-on-previous-year": "Growth on previous year",
   "label.gtin": "GTIN",
-<<<<<<< HEAD
-  "label.have-not-shipped": "Not shipped",
-=======
   "label.hardware-id": "Hardware ID",
   "label.have-not-shipped": "Have not been shipped",
->>>>>>> origin/v3.0.0-RC
   "label.heading-message": "Heading message",
   "label.hide-stock-over-minimum": "Hide stock over minimum",
   "label.high-stock-items_few": "Items with more than {{num}} months of stock",
@@ -2203,14 +2186,11 @@
   "messages.confirm-delete-shipments_many": "This will permanently remove {{count}} shipments",
   "messages.confirm-delete-shipments_one": "This will permanently remove 1 shipment",
   "messages.confirm-delete-shipments_other": "This will permanently remove {{count}} shipments",
-<<<<<<< HEAD
+  "messages.confirm-delete-sites_one": "This will permanently remove 1 site",
+  "messages.confirm-delete-sites_other": "This will permanently remove {{count}} sites",
   "messages.confirm-delete-stock-movement": "This will permanently remove this stock movement.",
   "messages.confirm-delete-stock-movements_one": "This will permanently remove 1 stock movement",
   "messages.confirm-delete-stock-movements_other": "This will permanently remove {{count}} stock movements",
-=======
-  "messages.confirm-delete-sites_one": "This will permanently remove 1 site",
-  "messages.confirm-delete-sites_other": "This will permanently remove {{count}} sites",
->>>>>>> origin/v3.0.0-RC
   "messages.confirm-delete-stocktake": "This will permanently remove Stocktake #{{number}}",
   "messages.confirm-delete-stocktake_lines_few": "This will permanently remove {{count}} stocktake lines",
   "messages.confirm-delete-stocktake_lines_many": "This will permanently remove {{count}} stocktake lines",
@@ -2323,13 +2303,10 @@
   "messages.deleted-shipments_many": "Deleted {{count}} shipments",
   "messages.deleted-shipments_one": "Deleted {{count}} shipment",
   "messages.deleted-shipments_other": "Deleted {{count}} shipments",
-<<<<<<< HEAD
-  "messages.deleted-stock-movements_one": "Deleted {{count}} stock movement",
-  "messages.deleted-stock-movements_other": "Deleted {{count}} stock movements",
-=======
   "messages.deleted-sites_one": "Deleted {{count}} site",
   "messages.deleted-sites_other": "Deleted {{count}} sites",
->>>>>>> origin/v3.0.0-RC
+  "messages.deleted-stock-movements_one": "Deleted {{count}} stock movement",
+  "messages.deleted-stock-movements_other": "Deleted {{count}} stock movements",
   "messages.deleted-stocktakes_few": "Deleted {{count}} stocktakes",
   "messages.deleted-stocktakes_many": "Deleted {{count}} stocktakes",
   "messages.deleted-stocktakes_one": "Deleted {{count}} stocktake",
@@ -2983,12 +2960,9 @@
   "sync-info.syncing": "Syncing...",
   "sync-info.updating-user": "Updating user...",
   "sync-info.user-last-updated": "User configuration last updated",
-<<<<<<< HEAD
   "sync-message": "Sync message",
-=======
   "sync-status.description.all-store-data": "All data for store {{storeName}}",
   "sync-status.description.table-name": "All data in {{tableName}}",
->>>>>>> origin/v3.0.0-RC
   "sync-status.integrate": "Integrate",
   "sync-status.linked-sync-requests": "Special syncs ({{count}})",
   "sync-status.prepare": "Prepare",
@@ -3016,19 +2990,13 @@
   "title.configure-supply-levels": "Configure supply levels",
   "title.confirm-delete-encounter": "Delete encounter",
   "title.create-campaign": "Create campaign",
-<<<<<<< HEAD
   "title.create-message": "Create message",
-  "title.details": "Details",
-  "title.edit-campaign": "Edit campaign",
-  "title.edit-insurance": "Edit insurance policy",
-  "title.message": "Message",
-=======
   "title.create-site": "Create site",
   "title.details": "Details",
   "title.edit-campaign": "Edit campaign",
   "title.edit-insurance": "Edit insurance policy",
   "title.edit-site": "Edit site",
->>>>>>> origin/v3.0.0-RC
+  "title.message": "Message",
   "title.months-of-stock": "Months of stock",
   "title.new-insurance": "New insurance policy",
   "title.new-sensor": "New sensor added",

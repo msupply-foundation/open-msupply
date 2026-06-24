@@ -59,12 +59,12 @@ impl Loader<String> for AssetByLocationLoader {
 mod tests {
     use async_graphql::dataloader::Loader;
     use repository::{
-        asset_internal_location_row::AssetInternalLocationRow,
+        asset_internal_location_row::{AssetInternalLocationRow, AssetInternalLocationRowRepository},
         mock::{
             mock_asset_a, mock_asset_b, mock_location_1, mock_location_2, mock_location_3,
             MockDataInserts,
         },
-        test_db, Upsert,
+        test_db,
     };
 
     use crate::loader::AssetByLocationLoader;
@@ -85,13 +85,13 @@ mod tests {
             ("ail_2", mock_asset_a().id, mock_location_2().id),
             ("ail_3", mock_asset_b().id, mock_location_3().id),
         ] {
-            AssetInternalLocationRow {
-                id: id.to_string(),
-                asset_id,
-                location_id,
-            }
-            .upsert(&storage_connection)
-            .unwrap();
+            AssetInternalLocationRowRepository::new(&storage_connection)
+                .upsert_one(&AssetInternalLocationRow {
+                    id: id.to_string(),
+                    asset_id,
+                    location_id,
+                })
+                .unwrap();
         }
 
         let loader = AssetByLocationLoader { connection_manager };

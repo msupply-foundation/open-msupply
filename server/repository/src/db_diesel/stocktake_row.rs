@@ -8,7 +8,6 @@ use crate::{ChangelogSyncType, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
-use serde::{Deserialize, Serialize};
 
 table! {
     stocktake (id) {
@@ -34,11 +33,7 @@ table! {
 
 joinable!(stocktake -> user_account (user_id));
 
-<<<<<<< HEAD
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
-=======
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
->>>>>>> origin/v3.0.0-RC
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StocktakeStatus {
     #[default]
@@ -46,13 +41,7 @@ pub enum StocktakeStatus {
     Finalised,
 }
 
-<<<<<<< HEAD
-#[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default, Serialize, Deserialize,
-)]
-=======
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
->>>>>>> origin/v3.0.0-RC
 #[diesel(table_name = stocktake)]
 pub struct StocktakeRow {
     pub id: String,

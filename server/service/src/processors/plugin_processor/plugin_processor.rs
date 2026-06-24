@@ -1,16 +1,12 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-<<<<<<< HEAD
-use repository::{ChangelogFilter, ChangelogRow, PluginType};
-=======
-use repository::{ChangelogRow, CompatibilityChangelogFilter};
->>>>>>> origin/v3.0.0-RC
+use repository::{ChangelogRow, CompatibilityChangelogFilter, PluginType};
 use util::format_error;
 
 use crate::{
     backend_plugin::{
-        plugin_provider::{call_plugin_async, PluginInstance},
+        plugin_provider::{call_plugin, call_plugin_async, PluginInstance},
         types::processor,
     },
     cursor_controller::CursorType,
@@ -61,20 +57,18 @@ impl Processor for PluginProcessor {
         }
     }
 
-<<<<<<< HEAD
-    /// Default to using change_log_table_names
-    async fn changelogs_filter(
-        &self,
-        _: &ServiceContext,
-    ) -> Result<ChangelogFilter, ProcessorError> {
-=======
+    /// Plugins use the pre-v7 compatibility changelog filter path. This is the synchronous
+    /// trait method (see `Processor::compatibility_filter`), so it calls the plugin via the
+    /// synchronous `call_plugin` rather than the async `call` helper used elsewhere.
     fn compatibility_filter(
         &self,
         _: &ServiceContext,
     ) -> Result<Option<CompatibilityChangelogFilter>, ProcessorError> {
->>>>>>> origin/v3.0.0-RC
         let input = processor::Input::Filter;
-        let processor::Output::Filter(filter) = self.call(input.clone()).await? else {
+        let result = call_plugin(input.clone(), PluginType::Processor, &self.0)
+            .map_err(|e| ProcessorError::PluginError(input.clone(), e))?;
+
+        let processor::Output::Filter(filter) = result else {
             return Err(ProcessorError::PluginOutputMismatch(input));
         };
 

@@ -4,13 +4,8 @@ use crate::{
         location_type_row::location_type, name_link_row::name_link, name_row::name,
     },
     diesel_macros::define_linked_tables,
-<<<<<<< HEAD
-    user_account, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
-    RepositoryError, RowActionType, StorageConnection, Upsert,
-=======
-    item_link, user_account, ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
-    StorageConnection, Upsert,
->>>>>>> origin/v3.0.0-RC
+    user_account, ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType,
+    SourceSiteId, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;

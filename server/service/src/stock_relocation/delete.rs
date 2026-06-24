@@ -62,8 +62,8 @@ impl From<RepositoryError> for DeleteStockRelocationError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, StockLineRow, StockRelocationRowRepository,
-        StockRelocationStatus, Upsert,
+        mock::MockDataInserts, test_db::setup_all, StockLineRow, StockLineRowRepository,
+        StockRelocationRowRepository, StockRelocationStatus,
     };
     use util::uuid::uuid;
 
@@ -121,7 +121,9 @@ mod test {
     #[actix_rt::test]
     async fn delete_stock_relocation_success() {
         let (service_provider, ctx) = setup("delete_stock_relocation_success").await;
-        whole_line("delete_sl").upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&whole_line("delete_sl"))
+            .unwrap();
         let service = &service_provider.stock_relocation_service;
 
         let id = insert_relocation(&service_provider, &ctx, "delete_sl").await;
@@ -141,7 +143,9 @@ mod test {
     #[actix_rt::test]
     async fn delete_validation_errors() {
         let (service_provider, ctx) = setup("delete_validation_errors").await;
-        whole_line("delete_sl").upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&whole_line("delete_sl"))
+            .unwrap();
         let service = &service_provider.stock_relocation_service;
 
         assert_eq!(

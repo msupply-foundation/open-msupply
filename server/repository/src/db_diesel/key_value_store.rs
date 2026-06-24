@@ -37,11 +37,8 @@ pub enum KeyType {
     LoadPluginProcessorCursor,
     AssignRequisitionNumberProcessorCursor,
     RequisitionAutoFinaliseProcessorCursor,
-<<<<<<< HEAD
     SupportUploadFilesProcessorCursor,
-=======
     MergeSyncMessageProcessorCursor,
->>>>>>> origin/v3.0.0-RC
     // Nested key value store to store dynamic cursor values as JSON text
     DynamicCursor,
 

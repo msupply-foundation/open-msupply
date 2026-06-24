@@ -5,16 +5,10 @@ use std::{
 
 use actix_multipart::form::tempfile::TempFile;
 use chrono::Utc;
-use repository::SyncFileDirection;
+use repository::{SyncFileDirection, SyncFileStatus};
 use repository::{
-<<<<<<< HEAD
-    ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRow,
-    SyncFileReferenceRowRepository, SyncFileStatus,
-=======
-    ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit, FilterBuilder,
-    QueryWithData, SyncBufferRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository,
-    SyncVersions,
->>>>>>> origin/v3.0.0-RC
+    ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit, QueryWithData,
+    SyncBufferRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncVersions,
 };
 use util::format_error;
 
@@ -84,25 +78,12 @@ pub async fn pull(
     // We don't need a filter here, as we are filtering in the repository layer
     let filter = ChangelogFilter::all_data_for_site(
         response.site_id,
-<<<<<<< HEAD
-        is_initialised,
-    )?;
-    let total_records = changelog_repo.count_outgoing_sync_records_from_central(
-        cursor,
-        response.site_id,
-        is_initialised,
-    )?;
-    // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
-    // changelog cursor. The non-empty path is already safe because the query is clamped.
-    let max_cursor = changelog_repo.latest_cursor()?;
-=======
         !is_initialised,
         Some(SyncVersions {
             is_v6: true,
             is_v5: false,
         }),
     );
->>>>>>> origin/v3.0.0-RC
 
     let QueryWithData {
         rows,
@@ -271,17 +252,6 @@ pub async fn patient_pull(
             limit: batch_size as i64,
         },
     )?;
-<<<<<<< HEAD
-    let total_records = changelog_repo.count_outgoing_patient_sync_records_from_central(
-        cursor,
-        response.site_id,
-        fetch_patient_id,
-    )?;
-    // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
-    // changelog cursor. The non-empty path is already safe because the query is clamped.
-    let max_cursor = changelog_repo.latest_cursor()?;
-=======
->>>>>>> origin/v3.0.0-RC
 
     let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
         &ctx.connection,

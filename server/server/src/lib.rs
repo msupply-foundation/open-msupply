@@ -146,14 +146,9 @@ pub async fn start_server(
             }
         },
     ));
-<<<<<<< HEAD
-    let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
-    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
-=======
     // let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init();
 
->>>>>>> origin/v3.0.0-RC
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
     let (site_is_initialise_trigger, site_is_initialised_callback) =
         SiteIsInitialisedCallback::init();

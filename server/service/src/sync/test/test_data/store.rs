@@ -3,11 +3,9 @@ use crate::sync::{
     translations::{IntegrationOperation, PullTranslateResult},
 };
 use chrono::NaiveDate;
-<<<<<<< HEAD
-use repository::{StoreLogoRow, StoreRow, StoreRowDelete, SyncAction, SyncBufferRow};
-=======
-use repository::{sync_buffer::SyncRecordData, StoreRow, SyncBufferRow};
->>>>>>> origin/v3.0.0-RC
+use repository::{
+    sync_buffer::SyncRecordData, StoreLogoRow, StoreRow, SyncAction, SyncBufferRow,
+};
 
 const TABLE_NAME: &str = "store";
 
@@ -77,7 +75,7 @@ fn store_1() -> TestSyncIncomingRecord {
         sync_buffer_row: SyncBufferRow {
             table_name: TABLE_NAME.to_string(),
             record_id: STORE_1.0.to_string(),
-            data: STORE_1.1.to_string(),
+            data: SyncRecordData(serde_json::from_str(STORE_1.1).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         },

@@ -110,11 +110,8 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 10.0,
             shipped_pack_size: Some(1.0),
             status: None,
-<<<<<<< HEAD
             received_number_of_packs: None,
-=======
             legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
         },
     )
 }
@@ -265,11 +262,8 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             status: None,
-<<<<<<< HEAD
             received_number_of_packs: None,
-=======
             legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
         },
     )
 }
@@ -428,11 +422,8 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             status: Some(repository::InvoiceLineStatus::Pending),
-<<<<<<< HEAD
             received_number_of_packs: None,
-=======
             legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
         },
     )
 }
@@ -586,11 +577,8 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             status: None,
-<<<<<<< HEAD
             received_number_of_packs: None,
-=======
             legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
         },
     )
 }
@@ -744,11 +732,8 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
-<<<<<<< HEAD
             received_number_of_packs: None,
-=======
             legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
         },
     )
 }
@@ -903,11 +888,8 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
-<<<<<<< HEAD
             received_number_of_packs: None,
-=======
             legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
         },
     )
 }
@@ -1061,11 +1043,8 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
-<<<<<<< HEAD
             received_number_of_packs: None,
-=======
             legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
         },
     )
 }
@@ -1218,11 +1197,8 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
-<<<<<<< HEAD
             received_number_of_packs: None,
-=======
             legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
         },
     )
 }

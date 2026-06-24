@@ -143,14 +143,6 @@ diesel::table! {
 #[cfg(test)]
 mod tests {
     use super::*;
-<<<<<<< HEAD
-    use crate::db_diesel::backend_plugin_row::backend_plugin;
-    use crate::db_diesel::changelog::changelog;
-    use crate::db_diesel::plugin_data_row::plugin_data;
-    use crate::db_diesel::requisition_line::requisition_line_row::requisition_line_with_links;
-    use crate::frontend_plugin_row;
-=======
->>>>>>> origin/v3.0.0-RC
     use crate::{
         migrations::{v2_16_00::V2_16_00, v2_17_00::V2_17_00},
         test_db::*,
@@ -285,14 +277,14 @@ mod tests {
         migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
-        let results = requisition_line_with_links::table
+        let results = requisition_line::table
             .select((
-                requisition_line_with_links::id,
-                requisition_line_with_links::forecast_total_units,
-                requisition_line_with_links::forecast_total_doses,
-                requisition_line_with_links::vaccine_courses,
+                requisition_line::id,
+                requisition_line::forecast_total_units,
+                requisition_line::forecast_total_doses,
+                requisition_line::vaccine_courses,
             ))
-            .order(requisition_line_with_links::id.asc())
+            .order(requisition_line::id.asc())
             .load::<(String, Option<f64>, Option<f64>, Option<String>)>(
                 connection.lock().connection(),
             )

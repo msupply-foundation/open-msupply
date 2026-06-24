@@ -72,11 +72,8 @@ pub(crate) fn generate_inbound_lines(
                     status,
                     manufacture_date,
                     purchase_order_line_id,
-<<<<<<< HEAD
                     received_number_of_packs: _,
-=======
                     legacy_goods_received_line_id: _,
->>>>>>> origin/v3.0.0-RC
                 },
                 ItemRow {
                     id: item_id,
@@ -162,11 +159,8 @@ pub(crate) fn generate_inbound_lines(
                     stock_line_id: None,
                     location_id: None,
                     status,
-<<<<<<< HEAD
                     received_number_of_packs: None,
-=======
                     legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
                 }
             },
         )

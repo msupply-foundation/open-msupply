@@ -66,17 +66,10 @@ impl Processor for AssignRequisitionNumber {
         Ok(Some(result))
     }
 
-<<<<<<< HEAD
     async fn changelogs_filter(
         &self,
         ctx: &ServiceContext,
-    ) -> Result<ChangelogFilter, ProcessorError> {
-=======
-    fn changelogs_filter(
-        &self,
-        ctx: &ServiceContext,
     ) -> Result<ChangelogCondition::Inner, ProcessorError> {
->>>>>>> origin/v3.0.0-RC
         let active_stores = ActiveStoresOnSite::get(&ctx.connection)
             .map_err(ProcessorError::GetActiveStoresOnSiteError)?;
 

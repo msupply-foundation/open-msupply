@@ -44,16 +44,11 @@ impl SyncTranslation for ItemVariantTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-<<<<<<< HEAD
-        let row = from_renamed_keys_str::<ItemVariantRow>(&sync_record.data, RENAMED_KEYS)?;
+        let row = from_renamed_keys_str::<ItemVariantRow>(
+            &sync_record.data.0.to_string(),
+            RENAMED_KEYS,
+        )?;
         Ok(PullTranslateResult::upsert(row))
-=======
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            ItemVariantRow,
-        >(
-            sync_record.data.0.clone()
-        )?))
->>>>>>> origin/v3.0.0-RC
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

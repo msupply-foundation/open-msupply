@@ -4,12 +4,7 @@ use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-<<<<<<< HEAD
-    vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName, StorageConnection,
-    VaccinationRow,
-=======
-    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, Row, StorageConnection, VaccinationRow,
->>>>>>> origin/v3.0.0-RC
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, VaccinationRow,
 };
 
 /*
@@ -79,7 +74,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
         row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
@@ -112,6 +107,10 @@ impl SyncTranslation for VaccinationLegacyTranslation {
         // patient_id and facility_name_id are already resolved by the view
         let patient_name_id = patient_id;
         let legacy_facility_name_id = facility_name_id;
+
+        // `item_id` is already the resolved canonical item id (the view resolves
+        // `item_link_id` -> `item_id` per the item_link abstraction), so no
+        // further lookup is needed here.
 
         let legacy_row = LegacyVaccinationRow {
             ID: id,
@@ -172,13 +171,7 @@ mod tests {
         .await;
 
         // Get the current cursor value
-<<<<<<< HEAD
-        let cursor = ChangelogRepository::new(&connection)
-            .absolute_latest_cursor()
-            .unwrap();
-=======
         let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
->>>>>>> origin/v3.0.0-RC
 
         // Create a new VaccinationRow (this will get a changelog entry created automatically)
         let vaccination_row = VaccinationRow {

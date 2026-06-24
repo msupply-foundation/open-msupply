@@ -1,13 +1,6 @@
 use repository::{
-<<<<<<< HEAD
-    ChangelogRow, ChangelogTableName, PluginDataRow, PluginDataRowDelete, PluginDataRowRepository,
-    StorageConnection, SyncBufferRow,
-=======
-    ChangelogRow, ChangelogTableName, PluginDataRow, StorageConnection,
+    ChangelogRow, ChangelogTableName, PluginDataRow, PluginDataRowDelete, Row, StorageConnection,
     SyncBufferRow,
-    Row,
-
->>>>>>> origin/v3.0.0-RC
 };
 
 use crate::sync::translations::store::StoreTranslation;

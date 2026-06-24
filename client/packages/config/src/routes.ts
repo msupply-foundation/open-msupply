@@ -49,11 +49,8 @@ export enum AppRoute {
   Stores = 'stores',
   GlobalPreferences = 'global-preferences',
   Campaigns = 'campaigns',
-<<<<<<< HEAD
   Plugins = 'plugins',
-=======
   Sites = 'sites',
->>>>>>> origin/v3.0.0-RC
 
   Tools = 'tools',
 

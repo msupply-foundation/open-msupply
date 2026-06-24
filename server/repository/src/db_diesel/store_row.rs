@@ -84,7 +84,6 @@ pub struct StoreRow {
     pub name_id: String,
 }
 
-<<<<<<< HEAD
 /// `(id, logo)` projection. Used in two places:
 /// - the GraphQL `StoreLogoLoader` dataloader, so `StoreNode.logo` can be
 ///   resolved on demand without dragging the column through every store join;
@@ -95,7 +94,8 @@ pub struct StoreRow {
 pub struct StoreLogoRow {
     pub id: String,
     pub logo: Option<String>,
-=======
+}
+
 impl StoreRow {
     pub fn table_name() -> ChangelogTableName {
         ChangelogTableName::Store
@@ -103,7 +103,6 @@ impl StoreRow {
     pub fn record_id(&self) -> String {
         self.id.clone()
     }
->>>>>>> origin/v3.0.0-RC
 }
 
 pub struct StoreRowRepository<'a> {
@@ -180,7 +179,6 @@ impl<'a> StoreRowRepository<'a> {
         let result = store::table.load(self.connection.lock().connection())?;
         Ok(result)
     }
-<<<<<<< HEAD
 
     pub fn find_logo_by_id(&self, store_id: &str) -> Result<Option<StoreLogoRow>, RepositoryError> {
         let result = store_logo_row::table
@@ -209,31 +207,6 @@ impl<'a> StoreRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(store_with_links::table.filter(store_with_links::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct StoreRowDelete(pub String);
-// TODO soft delete
-impl Delete for StoreRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StoreRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StoreRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
-=======
->>>>>>> origin/v3.0.0-RC
 }
 
 impl Upsert for StoreRow {
@@ -261,9 +234,14 @@ impl Upsert for StoreRow {
 }
 
 impl Upsert for StoreLogoRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        _sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         StoreRowRepository::new(con).update_logo(&self.id, self.logo.as_deref())?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog (logo lives on the store row, whose
+               // changelog is emitted via the lean StoreRow upsert)
     }
 
     // Test only — verify the logo round-trip by reading the (id, logo)

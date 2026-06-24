@@ -1,14 +1,9 @@
-<<<<<<< HEAD
 use super::{item_row::item, warning_row::warning};
 use crate::diesel_macros::define_linked_tables;
-use crate::{RepositoryError, StorageConnection, Upsert};
-=======
-use super::{item_link, item_row::item, warning_row::warning};
 use crate::{
     ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
 };
->>>>>>> origin/v3.0.0-RC
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -55,18 +50,8 @@ impl<'a> ItemWarningJoinRowRepository<'a> {
         ItemWarningJoinRowRepository { connection }
     }
 
-<<<<<<< HEAD
-    pub fn upsert_one(&self, row: &ItemWarningJoinRow) -> Result<(), RepositoryError> {
-        self._upsert(row)?;
-=======
     fn _upsert_one(&self, row: &ItemWarningJoinRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(item_warning_join::table)
-            .values(row)
-            .on_conflict(item_warning_join::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
->>>>>>> origin/v3.0.0-RC
+        self._upsert(row)?;
         Ok(())
     }
 

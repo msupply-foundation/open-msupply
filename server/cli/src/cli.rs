@@ -53,16 +53,10 @@ use cli::LoadTest;
 use cli::{
     all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
     generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
-<<<<<<< HEAD
     install_plugin_bundle, list_installed_plugins, uninstall_plugin,
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
-    ListInstalledPlugins, RefreshDatesRepository, ReportError, TestCredentials, TestData,
-    UninstallPlugin,
-=======
-    install_plugin_bundle, GenerateAndInstallPluginBundle, GeneratePluginBundle,
-    InstallPluginBundle, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
-    TestData,
->>>>>>> origin/v3.0.0-RC
+    ListInstalledPlugins, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
+    TestData, UninstallPlugin,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";

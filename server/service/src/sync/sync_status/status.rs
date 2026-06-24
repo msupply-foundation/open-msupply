@@ -294,26 +294,18 @@ fn get_initialisation_status(
     let v5_has_any = v5_latest.is_some();
 
     if v7_has_success || v5_has_success {
-        let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
+        // Get sync site name
+        // Safe to unwrap since sync settings will be available after initialisation
+        let site_name = SettingsService::new(None)
+            .sync_settings(ctx)?
+            .unwrap()
+            .username;
         return Ok(InitialisationStatus::Initialised(site_name));
     }
     if v7_has_any || v5_has_any {
         return Ok(InitialisationStatus::Initialising);
-<<<<<<< HEAD
-    };
-
-    // Get sync site name
-    // Safe to unwrap since sync settings will be available after initialisation
-    let site_name = SettingsService::new(None)
-        .sync_settings(ctx)?
-        .unwrap()
-        .username;
-
-    Ok(InitialisationStatus::Initialised(site_name))
-=======
     }
     Ok(InitialisationStatus::PreInitialisation)
->>>>>>> origin/v3.0.0-RC
 }
 
 /// During initial sync remote server asks central server to initialise remote data

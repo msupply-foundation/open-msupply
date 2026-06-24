@@ -157,11 +157,8 @@ pub mod sync_file_reference;
 pub mod sync_file_reference_row;
 pub mod sync_log;
 mod sync_log_row;
-<<<<<<< HEAD
-pub mod sync_message;
-=======
 pub mod sync_log_v7;
->>>>>>> origin/v3.0.0-RC
+pub mod sync_message;
 pub mod sync_message_row;
 pub mod sync_request;
 pub mod system_log_row;
@@ -317,11 +314,8 @@ pub use sync_file_reference::*;
 pub use sync_file_reference_row::*;
 pub use sync_log::*;
 pub use sync_log_row::*;
-<<<<<<< HEAD
-pub use sync_message::*;
-=======
 pub use sync_log_v7::*;
->>>>>>> origin/v3.0.0-RC
+pub use sync_message::*;
 pub use sync_message_row::*;
 pub use sync_request::*;
 pub use temperature_breach::*;

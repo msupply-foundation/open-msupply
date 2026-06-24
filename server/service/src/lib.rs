@@ -100,11 +100,8 @@ pub mod store;
 pub mod store_preference;
 pub mod subscription;
 pub mod sync;
-<<<<<<< HEAD
 pub mod sync_message;
-=======
 pub mod sync_v7;
->>>>>>> origin/v3.0.0-RC
 pub mod temperature_excursion;
 pub mod token;
 pub mod token_bucket;

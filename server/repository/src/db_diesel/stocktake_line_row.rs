@@ -1,13 +1,7 @@
 use super::{
-<<<<<<< HEAD
     item_row::item, location_row::location, name_row::name,
     reason_option_row::reason_option, stock_line_row::stock_line,
     stocktake_row::stocktake, StorageConnection,
-=======
-    item_link_row::item_link, location_row::location, name_row::name,
-    reason_option_row::reason_option, stock_line_row::stock_line, stocktake_row::stocktake,
-    StorageConnection,
->>>>>>> origin/v3.0.0-RC
 };
 
 use crate::db_diesel::changelog::changelog::RowOrId;

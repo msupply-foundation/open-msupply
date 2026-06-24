@@ -56,7 +56,9 @@ table! {
 // Local/synced split lives in `SyncFileReferenceWire` (below). Anything absent
 // from the wire DTO is local-only by construction; the pull translator merges
 // the wire payload over an existing row to preserve those local fields.
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
+)]
 #[diesel(table_name = sync_file_reference)]
 pub struct SyncFileReferenceRow {
     pub id: String,
@@ -64,18 +66,32 @@ pub struct SyncFileReferenceRow {
     pub record_id: String,
     pub file_name: String,
     pub mime_type: Option<String>,
+    #[serde(skip_serializing)]
+    #[serde(default)]
     pub uploaded_bytes: i32,
+    #[serde(skip_serializing)]
+    #[serde(default)]
     pub downloaded_bytes: i32,
+    #[serde(default)]
     pub total_bytes: i32,
+    #[serde(skip_serializing)]
+    #[serde(default)]
     pub retries: i32,
+    #[serde(skip_serializing)]
+    #[serde(default)]
     pub retry_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
+    #[serde(default)]
     pub direction: SyncFileDirection,
+    #[serde(skip_serializing)]
+    #[serde(default)]
     pub status: SyncFileStatus,
+    #[serde(skip_serializing)]
+    #[serde(default)]
     pub error: Option<String>,
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
-<<<<<<< HEAD
 
 /// Subset of `SyncFileReferenceRow` that crosses sync. Anything not listed here
 /// is local-only per-site state (retry counters, transfer progress, direction).
@@ -139,8 +155,6 @@ impl SyncFileReferenceWire {
     }
 }
 
-=======
->>>>>>> origin/v3.0.0-RC
 pub struct SyncFileReferenceRowRepository<'a> {
     connection: &'a StorageConnection,
 }

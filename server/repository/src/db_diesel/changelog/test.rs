@@ -42,13 +42,8 @@ async fn test_changelog() {
     let location_repo = LocationRowRepository::new(&connection);
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
-<<<<<<< HEAD
-    let starting_cursor = repo.absolute_latest_cursor().unwrap();
-    repo.delete(0).unwrap();
-=======
     let starting_cursor = repo.max_cursor().unwrap();
     delete_all_changelog(&connection);
->>>>>>> origin/v3.0.0-RC
     // single entry:
     location_repo.upsert_one(&mock_location_1()).unwrap();
     let mut result = query_all(&connection, starting_cursor as i64, 10);
@@ -144,13 +139,8 @@ async fn test_changelog_iteration() {
     let location_repo = LocationRowRepository::new(&connection);
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
-<<<<<<< HEAD
-    let starting_cursor = repo.absolute_latest_cursor().unwrap();
-    repo.delete(0).unwrap();
-=======
     let starting_cursor = repo.max_cursor().unwrap();
     delete_all_changelog(&connection);
->>>>>>> origin/v3.0.0-RC
 
     // Insert 4 locations (4 changelog rows)
     location_repo.upsert_one(&mock_location_1()).unwrap();
