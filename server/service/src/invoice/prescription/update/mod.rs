@@ -487,8 +487,12 @@ mod test {
             volume_per_pack: 0.0,
             shipped_pack_size: None,
             status: None,
+<<<<<<< HEAD
             received_number_of_packs: None,
             linked_invoice_line_id: None,
+=======
+            legacy_goods_received_line_id: None,
+>>>>>>> origin/v3.0.0-RC
         };
 
         invoice_line_row_repo.upsert_one(&invoice_line).unwrap();

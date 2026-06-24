@@ -1,18 +1,25 @@
 use repository::{
-    rnr_form_row::{RnRFormRow, RnRFormRowRepository},
+    rnr_form_row::RnRFormRow,
     ChangelogRow, ChangelogTableName, RnRFormDelete, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 
 use crate::sync::translations::{
     master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
     program_requisition_settings::ProgramRequisitionSettingsTranslation,
     requisition::RequisitionTranslation, store::StoreTranslation,
+
 };
 
+<<<<<<< HEAD
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
+=======
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+>>>>>>> origin/v3.0.0-RC
 
 /// FK column renamed during the name_link abstraction. Central emits both the canonical
 /// `name_id` and the legacy `name_link_id` alias and accepts either, for cross-version sync.
@@ -48,8 +55,14 @@ impl SyncTranslation for RnRFormTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
+<<<<<<< HEAD
         let row = from_renamed_keys_str::<RnRFormRow>(&sync_record.data, RENAMED_KEYS)?;
         Ok(PullTranslateResult::upsert(row))
+=======
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
+            RnRFormRow,
+        >(sync_record.data.0.clone())?))
+>>>>>>> origin/v3.0.0-RC
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -74,21 +87,25 @@ impl SyncTranslation for RnRFormTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = RnRFormRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "RnRForm row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::RnrForm(rnr_form_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
+<<<<<<< HEAD
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
             to_renamed_keys_value(&row, RENAMED_KEYS)?,
         ))
+=======
+        let row = rnr_form_row;
+
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+>>>>>>> origin/v3.0.0-RC
     }
 
     fn try_translate_from_delete_sync_record(

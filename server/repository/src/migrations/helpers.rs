@@ -1,6 +1,24 @@
-use std::convert::TryInto;
+use diesel::{prelude::*, sql_types::BigInt};
 
-use crate::{ChangelogRepository, StorageConnection};
+use crate::{
+    db_diesel::changelog::changelog::changelog_with_links, ChangelogRepository, RepositoryError,
+    StorageConnection,
+};
+
+/// Highest allocated changelog cursor, read from the sequence so it includes
+/// values handed out by uncommitted `nextval` calls. Postgres-only.
+pub(crate) fn max_sequence(connection: &StorageConnection) -> Result<i64, RepositoryError> {
+    #[derive(QueryableByName)]
+    struct Bigint {
+        #[diesel(sql_type = BigInt)]
+        value: i64,
+    }
+    let row: Bigint = diesel::sql_query(
+        "SELECT COALESCE(pg_sequence_last_value('changelog_cursor_seq'), 0) AS value",
+    )
+    .get_result(connection.lock().connection())?;
+    Ok(row.value)
+}
 
 /// For testing, it returns the change_log cursors as if the changelog would have been updated.
 pub(crate) fn run_without_change_log_updates<
@@ -11,6 +29,7 @@ pub(crate) fn run_without_change_log_updates<
 ) -> anyhow::Result<u64> {
     // Remember the current changelog cursor in order to be able to delete all changelog entries
     // triggered by the merge migrations.
+<<<<<<< HEAD
     let cursor_before_job = ChangelogRepository::new(connection).absolute_latest_cursor()?;
 
     job(connection)?;
@@ -18,6 +37,18 @@ pub(crate) fn run_without_change_log_updates<
     let cursor_after_job = ChangelogRepository::new(connection).absolute_latest_cursor()?;
     // Revert changelog to the state before the merge migrations
     ChangelogRepository::new(connection).delete((cursor_before_job + 1).try_into()?)?;
+=======
+    let cursor_before_job = ChangelogRepository::new(connection).max_cursor()?;
+
+    job(connection)?;
+
+    let cursor_after_job = ChangelogRepository::new(connection).max_cursor()?;
+    // Revert changelog to the state before the merge migrations. Delete via the
+    // underlying table — `changelog::table` (the view) is read-only.
+    diesel::delete(changelog_with_links::table)
+        .filter(changelog_with_links::cursor.gt(cursor_before_job as i64))
+        .execute(connection.lock().connection())?;
+>>>>>>> origin/v3.0.0-RC
     Ok(cursor_after_job)
 }
 
@@ -39,6 +70,7 @@ async fn check_change_log_update() {
     };
 
     // First insert
+<<<<<<< HEAD
     let cursor = ChangelogRepository::new(&connection)
         .absolute_latest_cursor()
         .unwrap();
@@ -69,6 +101,22 @@ async fn check_change_log_update() {
     let cursor = ChangelogRepository::new(&connection)
         .absolute_latest_cursor()
         .unwrap();
+=======
+    let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
+    NameRowRepository::new(&connection)
+        .upsert_one(&name_row)
+        .unwrap();
+    assert!(cursor < ChangelogRepository::new(&connection).max_cursor().unwrap());
+    // Now update
+    let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
+    NameRowRepository::new(&connection)
+        .upsert_one(&name_row)
+        .unwrap();
+    assert!(cursor < ChangelogRepository::new(&connection).max_cursor().unwrap());
+
+    // Now update with run_without_change_log_updates
+    let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
+>>>>>>> origin/v3.0.0-RC
     run_without_change_log_updates(&connection, |connection| {
         NameRowRepository::new(connection).upsert_one(&name_row)?;
         Ok(())
@@ -76,8 +124,12 @@ async fn check_change_log_update() {
     .unwrap();
     assert_eq!(
         cursor,
+<<<<<<< HEAD
         ChangelogRepository::new(&connection)
             .absolute_latest_cursor()
             .unwrap()
+=======
+        ChangelogRepository::new(&connection).max_cursor().unwrap()
+>>>>>>> origin/v3.0.0-RC
     );
 }

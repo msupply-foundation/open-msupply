@@ -1,16 +1,20 @@
 use repository::{
-    vaccine_course::vaccine_course_item_row::{
-        VaccineCourseItemRow, VaccineCourseItemRowRepository,
-    },
+    vaccine_course::vaccine_course_item_row::VaccineCourseItemRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 
 use crate::sync::translations::{item::ItemTranslation, vaccine_course::VaccineCourseTranslation};
 
+<<<<<<< HEAD
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
+=======
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+>>>>>>> origin/v3.0.0-RC
 
 /// FK column renamed during the entity-link abstraction. Central emits both the canonical
 /// `item_id` and the legacy `item_link_id` alias and accepts either, for cross-version sync.
@@ -42,8 +46,14 @@ impl SyncTranslation for VaccineCourseItemTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
+<<<<<<< HEAD
         let row = from_renamed_keys_str::<VaccineCourseItemRow>(&sync_record.data, RENAMED_KEYS)?;
         Ok(PullTranslateResult::upsert(row))
+=======
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
+            VaccineCourseItemRow,
+        >(sync_record.data.0.clone())?))
+>>>>>>> origin/v3.0.0-RC
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -71,21 +81,25 @@ impl SyncTranslation for VaccineCourseItemTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = VaccineCourseItemRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "VaccineCourseItem row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::VaccineCourseItem(vaccine_course_item_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
+<<<<<<< HEAD
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
             to_renamed_keys_value(&row, RENAMED_KEYS)?,
         ))
+=======
+        let row = vaccine_course_item_row;
+
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+>>>>>>> origin/v3.0.0-RC
     }
 }
 

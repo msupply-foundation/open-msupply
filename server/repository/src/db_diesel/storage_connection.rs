@@ -90,6 +90,7 @@ impl StorageConnection {
         &self.changelog_cursor_tracker
     }
 
+<<<<<<< HEAD
     /// Execute a raw SQL statement (or batch of statements) directly against the underlying
     /// connection. Useful for backend-specific statements that diesel doesn't model — e.g. sqlite's
     /// `VACUUM INTO 'path'`. Caller is responsible for any quoting/escaping in the SQL string.
@@ -100,6 +101,8 @@ impl StorageConnection {
             .map_err(RepositoryError::from)
     }
 
+=======
+>>>>>>> origin/v3.0.0-RC
     /// Queue a notification to be fired after the transaction commits.
     pub fn notify(&self, notification: TransactionNotification) {
         if self.on_commit.is_some() {
@@ -238,12 +241,23 @@ impl StorageConnection {
 
         let inner_result = f(self);
 
+<<<<<<< HEAD
         // Commit or rollback based on the inner result.
         let result = match inner_result {
             Ok(value) => {
                 let mut guard = self.raw_connection.lock().unwrap();
                 let con: &mut DBBackendConnection = &mut guard;
                 match AnsiTransactionManager::commit_transaction(con) {
+=======
+        // Try commit or rollback based on inner_result
+        // Block is needed for guard to be dropped
+        let result = {
+            let mut guard = self.raw_connection.lock().unwrap();
+            let con: &mut DBBackendConnection = &mut guard;
+
+            match inner_result {
+                Ok(value) => match AnsiTransactionManager::commit_transaction(con) {
+>>>>>>> origin/v3.0.0-RC
                     Ok(_) => Ok(value),
                     Err(err) => {
                         error!("Failed to end tx: {err:?}");
@@ -252,6 +266,7 @@ impl StorageConnection {
                             level: current_level + 1,
                         })
                     }
+<<<<<<< HEAD
                 }
             }
             Err(e) => {
@@ -274,6 +289,24 @@ impl StorageConnection {
         // changelog cursor and then fire pending notifications. Untrack runs first (on both
         // commit and rollback) so a processor task woken by the on-commit hook sees the
         // just-committed rows with an un-clamped tracker.
+=======
+                },
+                Err(e) => match AnsiTransactionManager::rollback_transaction(con) {
+                    Ok(_) => Err(TransactionError::Inner(e)),
+                    Err(err) => {
+                        error!("Failed to rollback tx: {err:?}");
+                        Err(TransactionError::Transaction {
+                            msg: format!("Failed to rollback tx: {err}"),
+                            level: current_level + 1,
+                        })
+                    }
+                },
+            }
+        };
+
+        // If we are closing off the outermost transaction, flush notifications and untrack changelog cursor
+        // Untrack first in case notifications triggers something that uses changelog
+>>>>>>> origin/v3.0.0-RC
         if current_level == 0 {
             ChangelogCursorTracker::untrack(self);
             if result.is_ok() {

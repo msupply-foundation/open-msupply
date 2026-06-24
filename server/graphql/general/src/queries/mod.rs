@@ -52,8 +52,6 @@ pub use self::barcode::*;
 pub use self::requisition_counts::*;
 pub mod log;
 pub use self::log::*;
-pub mod last_successful_user_sync;
-pub use self::last_successful_user_sync::*;
 pub use self::plugin::*;
 pub mod currency;
 pub mod label_printer_settings;
@@ -77,6 +75,5 @@ pub mod diagnosis;
 pub mod insurance_policies;
 pub mod insurance_providers;
 pub mod shipping_method;
-
 #[cfg(test)]
 mod tests;

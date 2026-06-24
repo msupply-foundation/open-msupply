@@ -1,5 +1,6 @@
 use crate::sync::translations::{
     form_schema::FormSchemaTranslation, master_list::MasterListTranslation,
+
 };
 
 use repository::{
@@ -73,7 +74,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
             name,
             form_schema_id,
             config,
-        } = serde_json::from_str::<LegacyDocumentRegistryRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let form_schema_id = clear_invalid_fk(
             connection,

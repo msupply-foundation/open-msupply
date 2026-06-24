@@ -1,7 +1,11 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+<<<<<<< HEAD
 use repository::{ChangelogFilter, ChangelogRow, PluginType};
+=======
+use repository::{ChangelogRow, CompatibilityChangelogFilter};
+>>>>>>> origin/v3.0.0-RC
 use util::format_error;
 
 use crate::{
@@ -57,17 +61,24 @@ impl Processor for PluginProcessor {
         }
     }
 
+<<<<<<< HEAD
     /// Default to using change_log_table_names
     async fn changelogs_filter(
         &self,
         _: &ServiceContext,
     ) -> Result<ChangelogFilter, ProcessorError> {
+=======
+    fn compatibility_filter(
+        &self,
+        _: &ServiceContext,
+    ) -> Result<Option<CompatibilityChangelogFilter>, ProcessorError> {
+>>>>>>> origin/v3.0.0-RC
         let input = processor::Input::Filter;
         let processor::Output::Filter(filter) = self.call(input.clone()).await? else {
             return Err(ProcessorError::PluginOutputMismatch(input));
         };
 
-        Ok(filter)
+        Ok(Some(filter))
     }
 
     async fn try_process_record(

@@ -5,7 +5,7 @@ use crate::sync::translations::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow,
-    PurchaseOrderLineRowRepository, PurchaseOrderLineStatus, StorageConnection, SyncBufferRow,
+    PurchaseOrderLineStatus, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -131,7 +131,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             note,
             unit,
             oms_fields,
-        } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let result = PurchaseOrderLineRow {
             id,
@@ -170,9 +170,14 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::PurchaseOrderLine(purchase_order_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let PurchaseOrderLineRow {
             id,
             store_id,
@@ -194,9 +199,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             note,
             unit,
             status,
-        } = PurchaseOrderLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
+        } = purchase_order_line_row;
 
         // Total Cost calculated in Front End: price_per_pack_after_discount * number_of_packs
         // Number of packs = (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
@@ -254,7 +257,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
 
@@ -298,25 +302,26 @@ mod tests {
         .await;
 
         let translator = PurchaseOrderLineTranslation {};
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new()
-                        .table_name(ChangelogTableName::PurchaseOrderLine.equal_to()),
-                ),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrderLine),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

@@ -1,9 +1,13 @@
 use super::{
-    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    store_row::store, ChangelogRepository, RowActionType,
     StorageConnection,
 };
 
+<<<<<<< HEAD
 use crate::{repository_error::RepositoryError, Delete, Upsert};
+=======
+use crate::{repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert};
+>>>>>>> origin/v3.0.0-RC
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -42,7 +46,6 @@ pub struct PluginDataRow {
     #[serde(default)]
     pub datetime: Option<NaiveDateTime>,
 }
-
 pub struct PluginDataRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -52,14 +55,24 @@ impl<'a> PluginDataRowRepository<'a> {
         PluginDataRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &PluginDataRow) -> Result<i64, RepositoryError> {
+    fn _upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         diesel::insert_into(plugin_data::table)
             .values(row)
             .on_conflict(plugin_data::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id, row.store_id.clone(), RowActionType::Upsert)
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<PluginDataRow>, RepositoryError> {
@@ -71,6 +84,7 @@ impl<'a> PluginDataRowRepository<'a> {
         Ok(result)
     }
 
+<<<<<<< HEAD
     pub fn delete(&self, id: &str, store_id: Option<String>) -> Result<i64, RepositoryError> {
         diesel::delete(plugin_data::table.filter(plugin_data::id.eq(id)))
             .execute(self.connection.lock().connection())?;
@@ -92,13 +106,34 @@ impl<'a> PluginDataRowRepository<'a> {
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
+=======
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PluginDataRow>, RepositoryError> {
+        Ok(plugin_data::table
+            .filter(plugin_data::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+>>>>>>> origin/v3.0.0-RC
     }
 }
 
 impl Upsert for PluginDataRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log = PluginDataRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        PluginDataRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

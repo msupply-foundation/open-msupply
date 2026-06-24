@@ -57,6 +57,12 @@ pub mod android {
                 base_dir: files_dir.to_str().unwrap().to_string(),
                 machine_uid: Some(android_id),
                 override_is_central_server: false,
+<<<<<<< HEAD
+=======
+                standalone_store_name: None,
+                standalone_admin_username: None,
+                standalone_admin_password: None,
+>>>>>>> origin/v3.0.0-RC
                 workers: None,
             },
             database: DatabaseSettings {
@@ -83,6 +89,7 @@ pub mod android {
             mail: None,
             // Feature flags won't work using tablet as a server. Run in client mode and connect to a desktop server instead
             features: None,
+            changelog_partition: None,
         };
 
         logging_init(settings.logging.clone(), None);
@@ -102,7 +109,10 @@ pub mod android {
     }
 
     #[no_mangle]
-    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(_: EnvUnowned, _: JClass) {
+    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(
+        _: EnvUnowned,
+        _: JClass,
+    ) {
         let ServerBucket { off_switch, thread } = SERVER_BUCKET.lock().unwrap().take().unwrap();
         futures::executor::block_on(off_switch.send(())).unwrap();
         thread.join().unwrap();

@@ -88,6 +88,8 @@ pub mod service_provider;
 pub mod settings;
 pub mod settings_service;
 pub mod shipping_method;
+pub mod site;
+pub mod standalone_central;
 pub mod standard_reports;
 pub mod static_files;
 pub mod stock_line;
@@ -98,7 +100,11 @@ pub mod store;
 pub mod store_preference;
 pub mod subscription;
 pub mod sync;
+<<<<<<< HEAD
 pub mod sync_message;
+=======
+pub mod sync_v7;
+>>>>>>> origin/v3.0.0-RC
 pub mod temperature_excursion;
 pub mod token;
 pub mod token_bucket;

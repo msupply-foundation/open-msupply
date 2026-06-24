@@ -3,7 +3,12 @@ use copy_dir::copy_dir;
 use diesel::{Connection, RunQueryDsl};
 use repository::DBBackendConnection;
 use service::settings::{is_develop, Settings};
-use std::{fs, io, path::PathBuf, process::Command, str::FromStr};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+    process::Command,
+    str::FromStr,
+};
 
 pub(crate) fn restore(
     settings: &Settings,
@@ -167,18 +172,25 @@ fn copy_sqlite_files(
     let sqlite_files = get_sqlite_files_paths(settings)?;
 
     for sqlite_filename in sqlite_files {
-        // Unwrap should be safe (would panic only if pathname terminates with '...')
-        let sqlite_filename = sqlite_filename.file_name().unwrap();
-
-        fs::remove_file(sqlite_filename)?;
+        fs::remove_file(&sqlite_filename)?;
     }
 
     // omSupply database name can be specified with .sqlite extension, remove it here
-    let database_name = settings
-        .database
-        .database_name
-        .clone()
-        .replace(".sqlite", "");
+    let database_path = PathBuf::from_str(&settings.database.database_name)
+        .map_err(|_| BackupError::InvalidPath(settings.database.database_name.clone()))?;
+
+    let database_stem = database_path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .ok_or_else(|| BackupError::InvalidPath(settings.database.database_name.clone()))?;
+
+    let database_dir = database_path.parent().unwrap_or(Path::new("."));
+
+    // Ensure destination directory exists
+    if !database_dir.as_os_str().is_empty() && !database_dir.exists() {
+        fs::create_dir_all(database_dir)
+            .map_err(|e| BackupError::CannotCreateBaseDirFolder(e, database_dir.to_path_buf()))?;
+    }
 
     // Move backup files
     for sqlite_filename in fs::read_dir(backup_database_dir)
@@ -190,7 +202,10 @@ fn copy_sqlite_files(
             .and_then(|e| e.to_str())
             .ok_or(BackupError::InvalidSqliteFile(from_file.clone()))?;
         // Preserve database name
-        fs::copy(&from_file, format!("{database_name}.{extension}"))?;
+        fs::copy(
+            &from_file,
+            database_dir.join(format!("{database_stem}.{extension}")),
+        )?;
     }
 
     Ok(())

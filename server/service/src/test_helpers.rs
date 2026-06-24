@@ -14,7 +14,7 @@ use crate::{
     settings::{DiscoveryMode, MailSettings, ServerSettings, Settings},
     subscription::SubscriptionTriggerHandle,
     sync::{
-        file_sync_driver::FileSyncDriver,
+        settings::BatchSize,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
     },
 };
@@ -48,6 +48,12 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             base_dir: "test_output".to_string(),
             machine_uid: None,
             override_is_central_server: false,
+<<<<<<< HEAD
+=======
+            standalone_store_name: None,
+            standalone_admin_username: None,
+            standalone_admin_password: None,
+>>>>>>> origin/v3.0.0-RC
             workers: None,
         },
         database: db_settings,
@@ -64,9 +70,9 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             interval: 1,
         }),
         features: None,
+        changelog_partition: None,
     };
-    let (file_sync_trigger, _) = FileSyncDriver::init(&settings);
-    let (sync_trigger, _) = SynchroniserDriver::init(file_sync_trigger);
+    let (sync_trigger, _) = SynchroniserDriver::init();
     let (ledger_fix_trigger, _) = LedgerFixDriver::init();
     let (site_is_initialise_trigger, _) = SiteIsInitialisedCallback::init();
 
@@ -79,6 +85,9 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         settings.mail.clone(),
         Some(settings.clone()),
         SubscriptionTriggerHandle::new_void(),
+        BatchSize::default(),
+        false,
+        false,
     ));
 
     let processors_task = processors.spawn(service_provider.clone());

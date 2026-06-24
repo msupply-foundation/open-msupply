@@ -12,7 +12,7 @@ mod transfer;
 use self::central_server_configurations::NewSiteProperties;
 use crate::{
     sync::{
-        synchroniser::Synchroniser, translation_and_integration::integrate,
+        synchroniser::SynchroniserV5V6, translation_and_integration::integrate,
         translations::IntegrationOperation,
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
@@ -25,7 +25,7 @@ use std::{error::Error, future::Future};
 pub(super) struct FullSiteConfig {
     config: SiteConfiguration,
     context: ServiceTestContext,
-    synchroniser: Synchroniser,
+    synchroniser: SynchroniserV5V6,
 }
 
 pub(super) async fn init_test_context(
@@ -47,8 +47,8 @@ pub(super) async fn init_test_context(
     let SiteConfiguration { sync_settings, .. } = &config;
 
     service_provider
-        .site_info_service
-        .request_and_set_site_info(service_provider, sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(service_provider, sync_settings)
         .await
         .unwrap();
     service_provider
@@ -57,7 +57,7 @@ pub(super) async fn init_test_context(
         .unwrap();
 
     let synchroniser =
-        Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
+        SynchroniserV5V6::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
 
     FullSiteConfig {
         config,
@@ -133,8 +133,7 @@ async fn random_delay(min_millisecond: u64, max_millisecond: u64) {
     use rand::RngExt;
     let diff = max_millisecond - min_millisecond;
     // .random::<f64>() generates a float between 0 and 1
-    let delay_millisecond =
-        (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
+    let delay_millisecond = (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
     tokio::time::sleep(std::time::Duration::from_millis(delay_millisecond)).await;
 }
 
@@ -143,13 +142,17 @@ pub(crate) fn integrate_with_is_sync_reset(
     integrations: Vec<IntegrationOperation>,
 ) -> Vec<IntegrationOperation> {
     let changelog_repo = ChangelogRepository::new(&connection);
+<<<<<<< HEAD
     let cursor = changelog_repo.absolute_latest_cursor().unwrap();
+=======
+    let cursor = changelog_repo.max_cursor().unwrap();
+>>>>>>> origin/v3.0.0-RC
     // Need to reset is_sync_update since we've inserted test data with sync methods
     // they need to sync to central (if is_sync_update is set to true they will not sync to central)
     let integrations: Vec<(Option<_>, IntegrationOperation)> =
         integrations.into_iter().map(|i| (None, i)).collect();
     integrate(&connection, &integrations).unwrap();
-    changelog_repo.reset_is_sync_update(cursor).unwrap();
+    // changelog_repo.reset_is_sync_update(cursor).unwrap();
 
     integrations.into_iter().map(|(_, i)| i).collect()
 }
