@@ -23,6 +23,7 @@ pub struct Settings {
     pub mail: Option<MailSettings>,
     pub features: Option<HashMap<String, bool>>,
     pub changelog_partition: Option<ChangelogPartitionSettings>,
+    pub changelog_dedup: Option<ChangelogDedupSettings>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -281,6 +282,82 @@ impl ChangelogPartitionSettings {
         ChangelogPartitionConfig {
             partition_size: self.partition_size(),
             lookahead: self.lookahead(),
+        }
+    }
+}
+
+/// yaml-bound config for the scheduled changelog deduplication task
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct ChangelogDedupSettings {
+    #[serde(default)]
+    pub interval: IntervalSettings,
+    /// When set, dedup only runs while the local clock is within [from, to].
+    /// When absent, dedup runs on every `interval` tick with no time gating.
+    #[serde(default)]
+    pub time_window: Option<TimeWindow>,
+    // Private — exposed via getter.
+    #[serde(default = "default_dedup_batch")]
+    batch_size: i64,
+}
+
+/// A local-clock time-of-day window, `"HH:MM"` strings. Same-day only
+/// (midnight-crossing windows are not yet supported).
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TimeWindow {
+    pub from: String,
+    pub to: String,
+}
+
+fn default_dedup_batch() -> i64 {
+    50_000
+}
+
+fn default_dedup_interval_hours() -> u64 {
+    24
+}
+
+impl Default for ChangelogDedupSettings {
+    fn default() -> Self {
+        Self {
+            interval: IntervalSettings {
+                hours: default_dedup_interval_hours(),
+                mins: 0,
+                secs: 0,
+            },
+            time_window: None,
+            batch_size: default_dedup_batch(),
+        }
+    }
+}
+
+impl ChangelogDedupSettings {
+    /// Effective batch size — yaml value clamped to at least 1.
+    pub fn batch_size(&self) -> i64 {
+        self.batch_size.max(1)
+    }
+}
+
+impl TimeWindow {
+    /// Parse `"HH:MM"` into a `NaiveTime`. Returns `None` on malformed input so
+    /// the caller can log and skip rather than panic.
+    fn parse(raw: &str) -> Option<chrono::NaiveTime> {
+        chrono::NaiveTime::parse_from_str(raw.trim(), "%H:%M").ok()
+    }
+
+    pub fn from_time(&self) -> Option<chrono::NaiveTime> {
+        Self::parse(&self.from)
+    }
+
+    pub fn to_time(&self) -> Option<chrono::NaiveTime> {
+        Self::parse(&self.to)
+    }
+
+    /// True when `now` is within [from, to] (same-day). Malformed bounds → false
+    /// (fail closed: don't run dedup if the window can't be parsed).
+    pub fn contains(&self, now: chrono::NaiveTime) -> bool {
+        match (self.from_time(), self.to_time()) {
+            (Some(from), Some(to)) => now >= from && now <= to,
+            _ => false,
         }
     }
 }
