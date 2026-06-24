@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
 use super::{
-    property_table_v2_row::property_table_v2, property_v2_row::property_v2, PropertyV2Row,
-    StorageConnection,
+    property_table_v2_row::property_table_v2, property_v2_row::property_v2, PropertyKindV2,
+    PropertyV2Row, PropertyValueTypeV2, StorageConnection,
 };
 
 use crate::{diesel_macros::apply_equal_filter, EqualFilter};
@@ -10,6 +10,20 @@ use crate::{repository_error::RepositoryError, DBType};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type PropertyV2 = PropertyV2Row;
+
+/// Whether a property is surfaced to read paths. The `Other` catch-all on
+/// either `value_type` or `kind` marks an unrecognised value from a newer
+/// central (see [`PropertyValueTypeV2`] / [`PropertyKindV2`]): such properties
+/// are tolerated in storage and sync for v7 forwards-compatibility, but never
+/// displayed. Everything this build recognises is shown — matched exhaustively
+/// (rather than against an allow-list) so a newly added known variant is
+/// displayable by default instead of silently hidden until someone updates a
+/// list. SQL can't express "not Other" (the catch-all holds arbitrary
+/// strings), so this is applied in Rust over the loaded rows.
+fn is_displayable(value_type: &PropertyValueTypeV2, kind: &PropertyKindV2) -> bool {
+    !matches!(value_type, PropertyValueTypeV2::Other(_))
+        && !matches!(kind, PropertyKindV2::Other(_))
+}
 
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct PropertyV2Filter {
@@ -30,11 +44,11 @@ impl<'a> PropertyV2Repository<'a> {
     }
 
     pub fn count(&self, filter: Option<PropertyV2Filter>) -> Result<i64, RepositoryError> {
-        let query = Self::create_filtered_query(filter);
-
-        Ok(query
-            .count()
-            .get_result(self.connection.lock().connection())?)
+        // `Other` rows are excluded in Rust (see `is_displayable`), which a SQL
+        // COUNT can't do — so count the filtered query result instead. The
+        // property_v2 table is small (config definitions), so loading to count
+        // is cheap.
+        Ok(self.query(filter)?.len() as i64)
     }
 
     pub fn query_by_filter(
@@ -52,7 +66,10 @@ impl<'a> PropertyV2Repository<'a> {
 
         let result = query.load::<PropertyV2>(self.connection.lock().connection())?;
 
-        Ok(result)
+        Ok(result
+            .into_iter()
+            .filter(|row| is_displayable(&row.value_type, &row.kind))
+            .collect())
     }
 
     /// Returns the set of property keys that are visible on the given table
@@ -63,20 +80,28 @@ impl<'a> PropertyV2Repository<'a> {
         &self,
         target_table_name: &str,
     ) -> Result<HashSet<String>, RepositoryError> {
-        let keys: Vec<String> = property_v2::table
+        let rows: Vec<(String, PropertyValueTypeV2, PropertyKindV2)> = property_v2::table
             .inner_join(property_table_v2::table)
             .filter(property_v2::deleted_datetime.is_null())
             .filter(property_table_v2::table_name.eq(target_table_name))
             .filter(property_table_v2::is_visible.eq(true))
-            .select(property_v2::key)
+            .select((property_v2::key, property_v2::value_type, property_v2::kind))
             .load(self.connection.lock().connection())?;
 
-        Ok(keys.into_iter().collect())
+        // Unrecognised value_type/kind stay hidden — same rule as `query`.
+        Ok(rows
+            .into_iter()
+            .filter(|(_, value_type, kind)| is_displayable(value_type, kind))
+            .map(|(key, _, _)| key)
+            .collect())
     }
 
     pub fn create_filtered_query(filter: Option<PropertyV2Filter>) -> BoxedPropertyV2Query {
         // Soft-deleted property definitions are never surfaced via Stage 4
         // read paths. Reconsider if/when a config UI needs to manage them.
+        // Unrecognised value_type/kind (`Other`) are also hidden, but in Rust
+        // (see `is_displayable`) — they're stored as their raw string, so SQL
+        // can't tell them apart from known types here.
         let mut query = property_v2::table
             .filter(property_v2::deleted_datetime.is_null())
             .into_boxed();
@@ -287,6 +312,70 @@ mod tests {
         let count = repo.count(None).unwrap();
         let rows = repo.query(None).unwrap();
         assert_eq!(count as usize, rows.len());
+    }
+
+    #[actix_rt::test]
+    async fn property_v2_query_excludes_unrecognised_kind_and_value_type() {
+        // A property whose kind or value_type is an unrecognised value from a
+        // newer central (the `Other` catch-all) is tolerated in storage/sync
+        // for v7 forwards-compatibility, but must never appear in a read path.
+        let (_, connection, _, _) = test_db::setup_all(
+            "property_v2_query_excludes_unrecognised",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let prop_repo = PropertyV2RowRepository::new(&connection);
+        let rows = [
+            (
+                "p_standard",
+                "standard_key",
+                PropertyValueTypeV2::Text,
+                PropertyKindV2::Standard,
+            ),
+            (
+                "p_other_kind",
+                "other_kind_key",
+                PropertyValueTypeV2::Text,
+                PropertyKindV2::Other("FUTURE_KIND".to_string()),
+            ),
+            (
+                "p_other_value_type",
+                "other_value_type_key",
+                PropertyValueTypeV2::Other("FUTURE_TYPE".to_string()),
+                PropertyKindV2::Standard,
+            ),
+        ];
+        let table_repo = PropertyTableV2RowRepository::new(&connection);
+        for (id, key, value_type, kind) in rows {
+            prop_repo
+                .upsert_one(&PropertyV2Row {
+                    id: id.to_string(),
+                    key: key.to_string(),
+                    name: key.to_string(),
+                    value_type,
+                    kind,
+                    deleted_datetime: None,
+                })
+                .unwrap();
+            table_repo.upsert_one(&property_table(id, "name", true)).unwrap();
+        }
+
+        let repo = PropertyV2Repository::new(&connection);
+
+        let ids: Vec<_> = repo.query(None).unwrap().into_iter().map(|r| r.id).collect();
+        assert!(ids.contains(&"p_standard".to_string()));
+        assert!(!ids.contains(&"p_other_kind".to_string()));
+        assert!(!ids.contains(&"p_other_value_type".to_string()));
+
+        // count() delegates to query(), so it excludes them too.
+        assert_eq!(repo.count(None).unwrap() as usize, ids.len());
+
+        // allowed_keys_for_table applies the same exclusion.
+        let keys = repo.allowed_keys_for_table("name").unwrap();
+        assert!(keys.contains("standard_key"));
+        assert!(!keys.contains("other_kind_key"));
+        assert!(!keys.contains("other_value_type_key"));
     }
 
     #[actix_rt::test]
