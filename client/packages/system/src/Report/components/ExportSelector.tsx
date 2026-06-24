@@ -4,6 +4,7 @@ import {
   DownloadIcon,
   SplitButton,
   SplitButtonOption,
+  useAuthContext,
   useExportCSV,
   useNotification,
   useTranslation,
@@ -26,6 +27,8 @@ export const ExportSelector = ({
 }: ExportSelectorProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+  const { store } = useAuthContext();
+  const storeCode = store?.code;
   const exportCSV = useExportCSV();
   const { convertCsvToExcel, isConverting } = useCsvToExcel();
 
@@ -58,10 +61,11 @@ export const ExportSelector = ({
     if (option.value === 'excel') {
       convertCsvToExcel({
         csvData: csv,
-        filename,
+        filename: storeCode ? `${storeCode}_${filename}` : filename,
+        sheetName: storeCode,
       });
     } else {
-      exportCSV(csv, filename);
+      exportCSV(csv, filename, storeCode);
     }
   };
 

@@ -280,14 +280,14 @@
       "excel_template_buffer": null
     },
     {
-      "id": "outbound-invoice-landscape-with-logo_2_6_6_false",
+      "id": "outbound-invoice-landscape-with-logo_2_6_7_false",
       "name": "Outbound Shipment (landscape)",
       "description": null,
       "template": {
         "index": {
           "template": "template.html",
           "header": "header.html",
-          "footer": null,
+          "footer": "footer.html",
           "query": [
             "outbound.graphql"
           ],
@@ -295,6 +295,13 @@
           "convert_data_type": "Extism"
         },
         "entries": {
+          "footer.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div class=\"signoff\">\n    <div class=\"signoff-col\">\n        <p class=\"signoff-heading\">{{t(k=\"label.completed-by\", f=\"Completed by\")}}</p>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.name\", f=\"Name\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.signature\", f=\"Signature\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.date\", f=\"Date\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n    </div>\n\n    <div class=\"signoff-col\">\n        <p class=\"signoff-heading\">{{t(k=\"label.verified-by\", f=\"Verified by\")}}</p>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.name\", f=\"Name\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.signature\", f=\"Signature\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.date\", f=\"Date\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n    </div>\n</div>\n"
+            }
+          },
           "header.html": {
             "type": "TeraTemplate",
             "data": {
@@ -311,7 +318,7 @@
           },
           "style.css": {
             "type": "Resource",
-            "data": "@media print {\n  @page {\n    size: A4 landscape;\n    @bottom-right {\n      font-family: Tahoma;\n      font-size: 8pt;\n      /* do not allow formatter to add a line break in the content */\n      /* prettier-ignore*/\n      content: '{{t(k=\"report.page\",f=\"Page\")}} ' counter(page) ' {{t(k=\"report.of\",f=\"of\")}} ' counter(pages);\n    }\n  }\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section,\n.header_supplied_section,\n.header_date_section,\n.body_section,\n.body_total_section {\n  margin-inline-start: 8px;\n  width: 100%;\n}\n\n.header_supplied_section {\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header-space-between {\n  display: flex;\n  justify-content: space-between;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n  font-family: Tahoma;\n}\n\n.header_date_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header_section_field_right {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_section_field_left {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.line_number,\n.quantity,\n.pack,\n.sell_price,\n.cost_price,\n.total_quantity,\n.total_extension {\n  text-align: right;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.expiry {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.item_code,\n.item_name,\n.batch {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.body_section,\n.body_total_section {\n  width: 100%;\n  font-family: Tahoma;\n}\n\n.body_total_section {\n  font-weight: bold;\n}\n\n.body_section tr.body_column_label th {\n  border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n  border-bottom: 0.5px solid black;\n}\n\nhr {\n  width: 100%;\n  margin-inline-start: 8px;\n  border: 0.1px solid black;\n}\n\n.batch-wrap {\n  word-break: break-word;\n}\n"
+            "data": "@media print {\n  @page {\n    size: A4 landscape;\n    @bottom-right {\n      font-family: Tahoma;\n      font-size: 8pt;\n      /* do not allow formatter to add a line break in the content */\n      /* prettier-ignore*/\n      content: '{{t(k=\"report.page\",f=\"Page\")}} ' counter(page) ' {{t(k=\"report.of\",f=\"of\")}} ' counter(pages);\n    }\n  }\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section,\n.header_supplied_section,\n.header_date_section,\n.body_section,\n.body_total_section {\n  margin-inline-start: 8px;\n  width: 100%;\n}\n\n.header_supplied_section {\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header-space-between {\n  display: flex;\n  justify-content: space-between;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n  font-family: Tahoma;\n}\n\n.header_date_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header_section_field_right {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_section_field_left {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.line_number,\n.quantity,\n.pack,\n.sell_price,\n.cost_price,\n.total_quantity,\n.total_extension {\n  text-align: right;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.expiry {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.item_code,\n.item_name,\n.batch {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.body_section,\n.body_total_section {\n  width: 100%;\n  font-family: Tahoma;\n}\n\n.body_total_section {\n  font-weight: bold;\n}\n\n.body_section tr.body_column_label th {\n  border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n  border-bottom: 0.5px solid black;\n}\n\nhr {\n  width: 100%;\n  margin-inline-start: 8px;\n  border: 0.1px solid black;\n}\n\n.batch-wrap {\n  word-break: break-word;\n}\n\n.signoff {\n  width: 100%;\n  margin-inline-start: 8px;\n  margin-top: 40px;\n  display: flex;\n  justify-content: space-between;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.signoff-col {\n  width: 45%;\n  border-top: 0.5px solid black;\n  padding-top: 6px;\n}\n\n.signoff-heading {\n  font-weight: bold;\n  margin: 0 0 4px 0;\n}\n\n.signoff-field {\n  display: flex;\n  align-items: flex-end;\n  margin-top: 14px;\n}\n\n.signoff-label {\n  white-space: nowrap;\n  margin-inline-end: 6px;\n}\n\n.signoff-line {\n  flex: 1;\n  border-bottom: 0.5px solid black;\n}\n"
           },
           "template.html": {
             "type": "TeraTemplate",
@@ -327,7 +334,7 @@
       "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "2.6.6",
+      "version": "2.6.7",
       "code": "outbound-invoice-landscape-with-logo",
       "form_schema": null,
       "excel_template_buffer": null
@@ -393,14 +400,14 @@
       "excel_template_buffer": null
     },
     {
-      "id": "outbound-invoice-portrait-with-logo_2_6_5_false",
+      "id": "outbound-invoice-portrait-with-logo_2_6_6_false",
       "name": "Outbound Shipment (portrait)",
       "description": null,
       "template": {
         "index": {
           "template": "template.html",
           "header": "header.html",
-          "footer": null,
+          "footer": "footer.html",
           "query": [
             "picklist.graphql"
           ],
@@ -408,6 +415,13 @@
           "convert_data_type": "Extism"
         },
         "entries": {
+          "footer.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div class=\"signoff\">\n    <div class=\"signoff-col\">\n        <p class=\"signoff-heading\">{{t(k=\"label.completed-by\", f=\"Completed by\")}}</p>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.name\", f=\"Name\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.signature\", f=\"Signature\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.date\", f=\"Date\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n    </div>\n\n    <div class=\"signoff-col\">\n        <p class=\"signoff-heading\">{{t(k=\"label.verified-by\", f=\"Verified by\")}}</p>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.name\", f=\"Name\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.signature\", f=\"Signature\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n        <div class=\"signoff-field\">\n            <span class=\"signoff-label\">{{t(k=\"label.date\", f=\"Date\")}}</span>\n            <span class=\"signoff-line\"></span>\n        </div>\n    </div>\n</div>\n"
+            }
+          },
           "header.html": {
             "type": "TeraTemplate",
             "data": {
@@ -424,7 +438,7 @@
           },
           "style.css": {
             "type": "Resource",
-            "data": "@media print {\n  @page {\n    size: portrait;\n    @bottom-right {\n      font-family: Tahoma;\n      font-size: 8pt;\n      /* do not allow formatter to add a line break in the content */\n      /* prettier-ignore*/\n      content: '{{t(k=\"report.page\",f=\"Page\")}} ' counter(page) ' {{t(k=\"report.of\",f=\"of\")}} ' counter(pages);\n    }\n  }\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section,\n.header_supplied_section,\n.header_date_section,\n.body_section,\n.body_total_section {\n  margin-inline-start: 8px;\n  width: 100%;\n}\n\n.header_supplied_section {\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header-space-between {\n  display: flex;\n  justify-content: space-between;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;\n}\n\n.header_date_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header_section_field_right {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_section_field_left {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.line_number,\n.quantity,\n.pack {\n  text-align: right;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.expiry {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.location_code,\n.item_name,\n.batch,\n.issued {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.body_section,\n.body_total_section {\n  width: 98%;\n  font-family: Tahoma;\n}\n\n.body_section tr.body_column_label th {\n  border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n  border-bottom: 0.5px solid black;\n}\n\nhr {\n  width: 100%;\n  margin-inline-start: 8px;\n  border: 0.1px solid black;\n}\n\n.batch-wrap {\n  word-break: break-word;\n}\n"
+            "data": "@media print {\n  @page {\n    size: portrait;\n    @bottom-right {\n      font-family: Tahoma;\n      font-size: 8pt;\n      /* do not allow formatter to add a line break in the content */\n      /* prettier-ignore*/\n      content: '{{t(k=\"report.page\",f=\"Page\")}} ' counter(page) ' {{t(k=\"report.of\",f=\"of\")}} ' counter(pages);\n    }\n  }\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section,\n.header_supplied_section,\n.header_date_section,\n.body_section,\n.body_total_section {\n  margin-inline-start: 8px;\n  width: 100%;\n}\n\n.header_supplied_section {\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header-space-between {\n  display: flex;\n  justify-content: space-between;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;\n}\n\n.header_date_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header_section_field_right {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.header_section_field_left {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.line_number,\n.quantity,\n.pack {\n  text-align: right;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.expiry {\n  text-align: end;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.location_code,\n.item_name,\n.batch,\n.issued {\n  text-align: start;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.body_section,\n.body_total_section {\n  width: 98%;\n  font-family: Tahoma;\n}\n\n.body_section tr.body_column_label th {\n  border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n  border-bottom: 0.5px solid black;\n}\n\nhr {\n  width: 100%;\n  margin-inline-start: 8px;\n  border: 0.1px solid black;\n}\n\n.batch-wrap {\n  word-break: break-word;\n}\n\n.signoff {\n  width: 98%;\n  margin-inline-start: 8px;\n  margin-top: 40px;\n  display: flex;\n  justify-content: space-between;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.signoff-col {\n  width: 45%;\n  border-top: 0.5px solid black;\n  padding-top: 6px;\n}\n\n.signoff-heading {\n  font-weight: bold;\n  margin: 0 0 4px 0;\n}\n\n.signoff-field {\n  display: flex;\n  align-items: flex-end;\n  margin-top: 14px;\n}\n\n.signoff-label {\n  white-space: nowrap;\n  margin-inline-end: 6px;\n}\n\n.signoff-line {\n  flex: 1;\n  border-bottom: 0.5px solid black;\n}\n"
           },
           "template.html": {
             "type": "TeraTemplate",
@@ -440,7 +454,7 @@
       "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "2.6.5",
+      "version": "2.6.6",
       "code": "outbound-invoice-portrait-with-logo",
       "form_schema": null,
       "excel_template_buffer": null
