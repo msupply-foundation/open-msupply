@@ -108,27 +108,6 @@ export const LocationSearchInput = ({
 
   const hasVolumeFilter = typeof volumeRequired === 'number';
 
-  const paperSlot = useMemo(() => {
-    if (!hasVolumeFilter && !includeRemoveOption) return undefined;
-    return ({
-      children,
-      ...paperProps
-    }: React.ComponentProps<typeof Paper> & { children?: React.ReactNode }) => (
-      <Paper {...paperProps} sx={{ minWidth: '300px' }}>
-        {hasVolumeFilter && (
-          <LocationFilters
-            filter={filterRef.current}
-            setFilter={setFilterRef.current}
-          />
-        )}
-        {children}
-        {includeRemoveOption && (
-          <StickyRemoveButton onChangeRef={onChangeRef} />
-        )}
-      </Paper>
-    );
-  }, [hasVolumeFilter, includeRemoveOption]);
-
   const {
     query: { data, isLoading },
   } = useLocationList(
@@ -144,6 +123,27 @@ export const LocationSearchInput = ({
   );
 
   const locations = data?.nodes || [];
+  const showRemoveOption =
+    includeRemoveOption && (locations.length > 0 || !!selectedLocation);
+
+  const paperSlot = useMemo(() => {
+    if (!hasVolumeFilter && !showRemoveOption) return undefined;
+    return ({
+      children,
+      ...paperProps
+    }: React.ComponentProps<typeof Paper> & { children?: React.ReactNode }) => (
+      <Paper {...paperProps} sx={{ minWidth: '300px' }}>
+        {hasVolumeFilter && (
+          <LocationFilters
+            filter={filterRef.current}
+            setFilter={setFilterRef.current}
+          />
+        )}
+        {children}
+        {showRemoveOption && <StickyRemoveButton onChangeRef={onChangeRef} />}
+      </Paper>
+    );
+  }, [hasVolumeFilter, showRemoveOption]);
 
   // Filter locations based on selected filter
   const filteredLocations = locations.filter(location => {
@@ -187,17 +187,17 @@ export const LocationSearchInput = ({
   // Same goes if the location is not valid given the location type restriction
   const selectedLocationOption: LocationOption | null = selectedLocation
     ? {
-        value: selectedLocation.id,
-        label: formatLocationLabel(selectedLocation),
-        code: selectedLocation.code,
-        volumeUsed: getVolumeUsedLabel(selectedLocation),
-      }
+      value: selectedLocation.id,
+      label: formatLocationLabel(selectedLocation),
+      code: selectedLocation.code,
+      volumeUsed: getVolumeUsedLabel(selectedLocation),
+    }
     : null;
 
   const isInvalidLocation = !!selectedLocation
     ? checkInvalidLocationLines(restrictedToLocationTypeId ?? null, [
-        { location: selectedLocation },
-      ])
+      { location: selectedLocation },
+    ])
     : null;
 
   const errorStyles = {
