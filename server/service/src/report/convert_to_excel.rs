@@ -9,6 +9,7 @@ use umya_spreadsheet::{
     writer::xlsx,
     Cell, FontSize, Spreadsheet, Worksheet,
 };
+use util::sanitize_filename;
 
 pub fn csv_to_excel(
     base_dir: &str,
@@ -26,7 +27,8 @@ pub fn csv_to_excel(
         .records()
         .collect::<Result<_, _>>()
         .map_err(|e| ReportError::DocGenerationError(e.to_string()))?;
-    let reserved_file = reserve_file(base_dir, filename)?;
+    let sanitized_filename = sanitize_filename(filename.to_string());
+    let reserved_file = reserve_file(base_dir, &sanitized_filename)?;
 
     // Create Excel workbook
     let mut book = umya_spreadsheet::new_file();
@@ -801,6 +803,24 @@ mod report_to_excel_test {
         // Truncated to 31 chars
         let long = "a".repeat(50);
         assert_eq!(sanitize_sheet_name(&long).len(), 31);
+    }
+
+    #[test]
+    fn test_csv_to_excel_sanitizes_filename() {
+        // mSupply allows store codes with crazy characters — make sure they
+        // can't escape the temp dir or break the path on disk.
+        let csv_data = "Name\nHarry\n";
+        let file_id =
+            csv_to_excel(".", csv_data, "../etc/passwd_stock", Some("any")).unwrap();
+
+        let file_service = StaticFileService::new(".").unwrap();
+        let generated_file = file_service
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        // No path separators survive — the stored name is a plain filename.
+        assert!(!generated_file.name.contains('/'));
+        assert!(!generated_file.name.contains('\\'));
     }
 
     #[test]
