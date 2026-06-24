@@ -10,7 +10,7 @@ mod query {
         },
         mock::{mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
-        EqualFilter,
+        EqualFilter, LocationRowRepository, LocationTypeRow, LocationTypeRowRepository,
     };
 
     use crate::{
@@ -23,8 +23,26 @@ mod query {
 
     #[actix_rt::test]
     async fn asset_service_insert() {
-        let (_, _connection, connection_manager, _) =
+        let (_, connection, connection_manager, _) =
             setup_all("asset_service_insert", MockDataInserts::none().stores()).await;
+
+        let location_type_repo = LocationTypeRowRepository::new(&connection);
+        location_type_repo
+            .upsert_one(&LocationTypeRow {
+                id: "fridge_type".to_string(),
+                name: "Fridge 2-8°C".to_string(),
+                min_temperature: 2.0,
+                max_temperature: 8.0,
+            })
+            .unwrap();
+        location_type_repo
+            .upsert_one(&LocationTypeRow {
+                id: "freezer_type".to_string(),
+                name: "Freezer".to_string(),
+                min_temperature: -25.0,
+                max_temperature: -15.0,
+            })
+            .unwrap();
 
         let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider
@@ -32,8 +50,14 @@ mod query {
             .unwrap();
         let service = service_provider.asset_service;
 
-        // 1. Check we can create an asset
         let id = "test_id".to_string();
+        let catalogue_item_id = "783da0b3-f157-46a2-9b78-1430b8680753".to_string();
+        let properties = serde_json::json!({
+            "storage_capacity_5c": 99.0,
+            "storage_capacity_20c": 42.0,
+            "storage_capacity_70c": 0.0,
+        })
+        .to_string();
         let asset = service
             .insert_asset(
                 &ctx,
@@ -43,7 +67,8 @@ mod query {
                     notes: Some("test_note".to_string()),
                     asset_number: Some("test_code".to_string()),
                     serial_number: Some("test_serial_number".to_string()),
-                    catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()),
+                    catalogue_item_id: Some(catalogue_item_id.clone()),
+                    properties: Some(properties),
                     ..Default::default()
                 },
             )
@@ -59,10 +84,37 @@ mod query {
                 >= chrono::Utc::now().naive_utc() - chrono::Duration::seconds(5)
         );
 
-        // Check that the asset has an internal location assigned
-        let internal_location_repo = AssetInternalLocationRowRepository::new(&ctx.connection);
-        let internal_locations = internal_location_repo.find_all_by_asset(&id).unwrap();
-        assert_eq!(internal_locations.len(), 1);
+        let asset_locations = AssetInternalLocationRowRepository::new(&connection)
+            .find_all_by_asset(&id)
+            .unwrap();
+        assert_eq!(asset_locations.len(), 2);
+
+        let location_repo = LocationRowRepository::new(&connection);
+        let mut locations: Vec<_> = asset_locations
+            .iter()
+            .map(|il| {
+                location_repo
+                    .find_one_by_id(&il.location_id)
+                    .unwrap()
+                    .unwrap()
+            })
+            .collect();
+        locations.sort_by(|a, b| b.volume.partial_cmp(&a.volume).unwrap());
+
+        // +5°C zone -> fridge type, volume 99
+        assert_eq!(locations[0].volume, 99.0);
+        assert_eq!(
+            locations[0].location_type_id.as_deref(),
+            Some("fridge_type")
+        );
+        assert_eq!(locations[0].name, "test_code +5°C");
+        // -20°C zone -> freezer type, volume 42
+        assert_eq!(locations[1].volume, 42.0);
+        assert_eq!(
+            locations[1].location_type_id.as_deref(),
+            Some("freezer_type")
+        );
+        assert_eq!(locations[1].name, "test_code -20°C");
 
         // 2. Check we can't create an asset with the same id
         assert_eq!(
@@ -74,7 +126,7 @@ mod query {
                     notes: Some("test_note".to_string()),
                     asset_number: Some("test_code".to_string()),
                     serial_number: Some("test_serial_number".to_string()),
-                    catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
+                    catalogue_item_id: Some(catalogue_item_id.clone()),
                     ..Default::default()
                 },
             ),
@@ -91,7 +143,7 @@ mod query {
                     notes: Some("test_note".to_string()),
                     asset_number: Some("test_code".to_string()),
                     serial_number: Some("test_serial_number_2".to_string()),
-                    catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
+                    catalogue_item_id: Some(catalogue_item_id.clone()),
                     ..Default::default()
                 },
             ),
@@ -108,7 +160,7 @@ mod query {
                     notes: Some("test_note".to_string()),
                     asset_number: Some("test_code_2".to_string()),
                     serial_number: Some("test_serial_number".to_string()),
-                    catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
+                    catalogue_item_id: Some(catalogue_item_id.clone()),
                     ..Default::default()
                 },
             ),
@@ -262,5 +314,4 @@ mod query {
             "2024-02-01"
         );
     }
-
 }
