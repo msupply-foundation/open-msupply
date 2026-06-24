@@ -132,7 +132,7 @@ mod test {
     fn seed_patient_property(connection: &repository::StorageConnection) {
         PropertyV2RowRepository::new(connection)
             .upsert_one(&PropertyV2Row {
-                id: "legacy_name_custom_1".to_string(),
+                id: "custom_1".to_string(),
                 key: "custom_1".to_string(),
                 name: "Custom 1".to_string(),
                 value_type: PropertyValueTypeV2::Text,
@@ -142,8 +142,8 @@ mod test {
             .unwrap();
         PropertyTableV2RowRepository::new(connection)
             .upsert_one(&PropertyTableV2Row {
-                id: "legacy_name_custom_1__patient".to_string(),
-                property_id: "legacy_name_custom_1".to_string(),
+                id: "custom_1__patient".to_string(),
+                property_id: "custom_1".to_string(),
                 table_name: "patient".to_string(),
                 is_visible: true,
             })

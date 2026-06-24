@@ -318,10 +318,10 @@ mod tests {
 
         // The name customs are shared by patients (same definition, extra mapping).
         let patient_mapping = table_repo
-            .find_one_by_id("legacy_name_custom_1__patient")
+            .find_one_by_id("custom_1__patient")
             .unwrap()
-            .expect("missing legacy_name_custom_1__patient mapping");
-        assert_eq!(patient_mapping.property_id, "legacy_name_custom_1");
+            .expect("missing custom_1__patient mapping");
+        assert_eq!(patient_mapping.property_id, "custom_1");
         assert_eq!(patient_mapping.table_name, "patient");
         assert!(patient_mapping.is_visible);
 

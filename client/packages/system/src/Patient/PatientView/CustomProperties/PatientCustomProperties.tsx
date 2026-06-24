@@ -24,9 +24,10 @@ interface PatientCustomPropertiesProps {
  * definition (all definitions, so empty fields are fillable), sorted by name.
  *
  * Each control is the shared {@link PropertyV2Input} in its editable mode
- * (`onChange` supplied): TEXT/NUMBER/REAL/DATE/BOOLEAN are editable; OPTION/OTHER
- * fall back to read-only (the legacy control can't safely edit id-based options
- * yet — see the adapter).
+ * (`onChange` supplied): TEXT/INTEGER/REAL/DATE render their native inputs,
+ * BOOLEAN a checkbox, and OPTION (the name categories) an id-aware autocomplete
+ * of leaf options. Value types the shared control doesn't recognise fall back to
+ * a read-only display.
  */
 export const PatientCustomProperties = ({
   definitions,
