@@ -2895,10 +2895,10 @@ impl Row {
                 UserAccountRow::generate_changelog(r.id.clone(), con, action, source_site_id)?
             }
             Row::UserPermission(r) => {
-                UserPermissionRow::generate_changelog(r.id.clone(), con, action, source_site_id)?
+                UserPermissionRow::generate_changelog(RowOrId::Row(r), con, action, source_site_id)?
             }
             Row::UserStoreJoin(r) => {
-                UserStoreJoinRow::generate_changelog(r.id.clone(), con, action, source_site_id)?
+                UserStoreJoinRow::generate_changelog(RowOrId::Row(r), con, action, source_site_id)?
             }
             Row::VVMStatus(r) => {
                 VVMStatusRow::generate_changelog(r.id.clone(), con, action, source_site_id)?
@@ -3361,13 +3361,13 @@ pub fn generate_delete_changelog(
             source_site_id,
         )?],
         ChangelogTableName::UserPermission => vec![UserPermissionRow::generate_changelog(
-            record_id.to_string(),
+            RowOrId::Id(record_id),
             con,
             RowActionType::Delete,
             source_site_id,
         )?],
         ChangelogTableName::UserStoreJoin => vec![UserStoreJoinRow::generate_changelog(
-            record_id.to_string(),
+            RowOrId::Id(record_id),
             con,
             RowActionType::Delete,
             source_site_id,
