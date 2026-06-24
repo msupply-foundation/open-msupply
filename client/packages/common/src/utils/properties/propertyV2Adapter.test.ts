@@ -6,7 +6,7 @@ describe('toLegacyPropertyInput', () => {
     expect(toLegacyPropertyInput(PropertyNodeValueTypeV2.Text)).toEqual({
       valueType: PropertyNodeValueType.String,
     });
-    expect(toLegacyPropertyInput(PropertyNodeValueTypeV2.Number)).toEqual({
+    expect(toLegacyPropertyInput(PropertyNodeValueTypeV2.Integer)).toEqual({
       valueType: PropertyNodeValueType.Integer,
     });
     expect(toLegacyPropertyInput(PropertyNodeValueTypeV2.Real)).toEqual({
@@ -20,10 +20,9 @@ describe('toLegacyPropertyInput', () => {
     });
   });
 
-  it('returns null (render read-only) for OPTION and OTHER', () => {
+  it('returns null (render read-only) for OPTION', () => {
     // OPTION values are ids; the legacy control is name-based, so editing is
-    // deferred to a follow-up id-aware control. OTHER is an opaque future type.
+    // deferred to a follow-up id-aware control.
     expect(toLegacyPropertyInput(PropertyNodeValueTypeV2.Option)).toBeNull();
-    expect(toLegacyPropertyInput(PropertyNodeValueTypeV2.Other)).toBeNull();
   });
 });

@@ -97,7 +97,7 @@ export const resolveOptionValue = (
 /**
  * Format a single propertiesV2 value for read-only text display, given its
  * definition. OPTION values resolve option-id → option name; DATE values are
- * localised when parseable; everything else (TEXT, REAL, NUMBER) is
+ * localised when parseable; everything else (TEXT, REAL, INTEGER) is
  * stringified. BOOLEAN values are typically rendered as a checkbox by the
  * presenter rather than via this function.
  */
