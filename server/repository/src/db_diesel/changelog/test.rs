@@ -1035,3 +1035,154 @@ async fn test_max_cursor_clamped_by_in_flight_tx() {
     assert_eq!(rows_after.rows.len(), 1);
     assert_eq!(rows_after.rows[0].record_id, "clinician_in_flight");
 }
+
+/// Windowed changelog dedup (postgres-only). Verifies:
+/// - within a window, only the newest row per (table_name, record_id, row_action) survives;
+/// - UPSERT and DELETE for the same record survive separately (row_action in the key);
+/// - the second run dedups the new window AND removes the old-part leftover of a record
+///   that reappears 
+/// - the dead-set table + concurrent index are dropped, and changelog_dead_log is populated.
+/// Insert a single changelog row with an explicit cursor (table is always Invoice).
+#[cfg(feature = "postgres")]
+fn dedup_test_insert(
+    connection: &StorageConnection,
+    cursor: i64,
+    record_id: &str,
+    store_id: Option<&str>,
+    action: RowActionType,
+) {
+    #[derive(Insertable)]
+    #[diesel(table_name = changelog_with_links)]
+    struct Ins<'a> {
+        cursor: i64,
+        table_name: ChangelogTableName,
+        record_id: &'a str,
+        row_action: RowActionType,
+        store_id: Option<&'a str>,
+        is_sync_update: bool,
+    }
+    diesel::insert_into(changelog_with_links::table)
+        .values(&Ins {
+            cursor,
+            table_name: ChangelogTableName::Invoice,
+            record_id,
+            row_action: action,
+            store_id,
+            is_sync_update: false,
+        })
+        .execute(connection.lock().connection())
+        .unwrap();
+}
+
+/// All changelog cursors that remain, ascending.
+#[cfg(feature = "postgres")]
+fn dedup_test_surviving_cursors(connection: &StorageConnection) -> Vec<i64> {
+    #[derive(QueryableByName)]
+    struct C {
+        #[diesel(sql_type = diesel::sql_types::BigInt)]
+        cursor: i64,
+    }
+    diesel::sql_query("SELECT cursor FROM changelog ORDER BY cursor")
+        .get_results::<C>(connection.lock().connection())
+        .unwrap()
+        .into_iter()
+        .map(|c| c.cursor)
+        .collect()
+}
+
+/// Drive one dedup run over the window `(marker, max]` (batch size 2 to exercise
+/// the batch loop) and return the number of rows deleted.
+#[cfg(feature = "postgres")]
+fn dedup_test_run(connection: &StorageConnection, marker: i64, max: i64) -> u64 {
+    let repo = ChangelogRepository::new(connection);
+    repo.prepare_dead_set(marker, max).unwrap();
+    let mut total = 0u64;
+    loop {
+        let n = repo.delete_dead_batch(2, total as i64).unwrap();
+        total += n;
+        if n == 0 {
+            break;
+        }
+    }
+    repo.finish_dead_set().unwrap();
+    total
+}
+
+/// Whether a relation (table or index) currently exists.
+#[cfg(feature = "postgres")]
+fn dedup_test_relation_exists(connection: &StorageConnection, name: &str) -> bool {
+    #[derive(QueryableByName)]
+    struct Exists {
+        #[diesel(sql_type = diesel::sql_types::Bool)]
+        present: bool,
+    }
+    let result: Exists = diesel::sql_query(format!(
+        "SELECT to_regclass('{name}') IS NOT NULL AS present"
+    ))
+    .get_result(connection.lock().connection())
+    .unwrap();
+    result.present
+}
+
+#[cfg(feature = "postgres")]
+#[actix_rt::test]
+async fn test_changelog_dedupe_windowed() {
+    use crate::test_db::SetupResult;
+    use diesel::sql_types::BigInt;
+    use RowActionType::{Delete, Upsert};
+
+    let SetupResult { connection, .. } = test_db::setup_test(test_db::SetupOption {
+        db_name: "test_changelog_dedupe_windowed",
+        inserts: MockDataInserts::none(),
+        ..Default::default()
+    })
+    .await;
+    delete_all_changelog(&connection);
+
+    // The marker (KeyType::ChangelogDedupCursor) is persisted by the task layer, not
+    // the repo; here we drive the repo helpers directly over explicit (marker, max]
+    // windows, so the marker is just a local value.
+
+    // rec_a: 3 upserts (only @3 survives). rec_b: single. rec_d: upsert@5 + delete@6 (both survive).
+    dedup_test_insert(&connection, 1, "rec_a", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 2, "rec_a", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 3, "rec_a", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 4, "rec_b", Some("store2"), Upsert);
+    dedup_test_insert(&connection, 5, "rec_d", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 6, "rec_d", Some("store1"), Delete);
+
+    // Run 1: window (0, 6].
+    let deleted = dedup_test_run(&connection, 0, 6);
+    assert_eq!(deleted, 2, "run 1 should delete rec_a @1,@2");
+    assert_eq!(dedup_test_surviving_cursors(&connection), vec![3, 4, 5, 6]);
+
+    // rec_a reappears at @7 — its old survivor @3 is now stranded below the marker.
+    dedup_test_insert(&connection, 7, "rec_a", Some("store1"), Upsert);
+
+    // Run 2: window (6, 7]. Step 1 keeps @7; step 2 removes the old rec_a @3.
+    let deleted = dedup_test_run(&connection, 6, 7);
+    assert_eq!(deleted, 1, "run 2 should delete the stranded rec_a @3");
+    assert_eq!(dedup_test_surviving_cursors(&connection), vec![4, 5, 6, 7]);
+
+    // dead-set table + index dropped.
+    assert!(
+        !dedup_test_relation_exists(&connection, "changelog_dead"),
+        "changelog_dead should be dropped"
+    );
+    assert!(
+        !dedup_test_relation_exists(&connection, "index_changelog_dedup"),
+        "index_changelog_dedup should be dropped"
+    );
+
+    // changelog_dead_log captured the batches.
+    #[derive(QueryableByName)]
+    struct Count {
+        #[diesel(sql_type = BigInt)]
+        count: i64,
+    }
+    let log_count: Count =
+        diesel::sql_query("SELECT count(*)::bigint AS count FROM changelog_dead_log")
+            .get_result(connection.lock().connection())
+            .unwrap();
+    assert!(log_count.count > 0, "changelog_dead_log should have rows");
+}
