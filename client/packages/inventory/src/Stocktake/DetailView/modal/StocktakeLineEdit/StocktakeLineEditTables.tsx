@@ -96,6 +96,7 @@ export const BatchTable = ({
           <CheckBoxCell
             isError={!!errors[row.original.id]}
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -311,6 +312,7 @@ export const PricingTable = ({
         Cell: ({ cell, row }) => (
           <CheckBoxCell
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -408,6 +410,7 @@ export const LocationTable = ({
         Cell: ({ cell, row }) => (
           <CheckBoxCell
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
