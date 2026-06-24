@@ -151,13 +151,12 @@ impl CentralServerQueryNode {
         CentralPluginQueries
     }
 
-<<<<<<< HEAD
     async fn sync_message(&self) -> SyncMessageQueries {
         SyncMessageQueries
-=======
+    }
+
     async fn site(&self) -> CentralSiteQueries {
         CentralSiteQueries
->>>>>>> origin/v3.0.0-RC
     }
 }
 

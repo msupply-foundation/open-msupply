@@ -6,16 +6,11 @@ use user_login::user_on_central;
 use crate::central_server_only;
 
 mod name_store_join;
-<<<<<<< HEAD
 use name_store_join::patient_name_store_join;
 pub(crate) mod sync;
 pub(crate) mod tus;
-=======
-mod sync;
 mod sync_v7;
 mod user_login;
-use name_store_join::patient_name_store_join;
->>>>>>> origin/v3.0.0-RC
 
 pub fn config_central(cfg: &mut web::ServiceConfig) {
     cfg.service(

@@ -37,6 +37,7 @@ pub fn uninstall_plugin(ctx: &Context<'_>, id: String) -> Result<UninstallPlugin
         &ResourceAccessRequest {
             resource: Resource::ConfigurePlugin,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

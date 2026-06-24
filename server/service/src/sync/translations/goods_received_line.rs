@@ -161,12 +161,9 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             purchase_order_line_id: data.order_line_ID,
             donor_id: None,
             manufacturer_id: None,
-<<<<<<< HEAD
             received_number_of_packs: None,
             linked_invoice_line_id: None,
-=======
             legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
         };
 
         Ok(PullTranslateResult::upsert(line))

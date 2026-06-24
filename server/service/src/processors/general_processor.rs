@@ -52,11 +52,7 @@ pub enum ProcessorType {
     ContactFormEmail,
     LoadPlugin,
     AssignRequisitionNumber,
-<<<<<<< HEAD
-    AddPatientVisibilityForCentral,
     SupportUploadFiles,
-=======
->>>>>>> origin/v3.0.0-RC
     Plugins,
     RequisitionAutoFinalise,
     MergeSyncMessage,
@@ -73,13 +69,10 @@ impl ProcessorType {
             ProcessorType::RequisitionAutoFinalise => {
                 vec![Box::new(RequisitionAutoFinaliseProcessor)]
             }
-<<<<<<< HEAD
             ProcessorType::SupportUploadFiles => {
                 vec![Box::new(SupportUploadFilesProcessor)]
             }
-=======
             ProcessorType::MergeSyncMessage => vec![Box::new(MergeSyncMessageProcessor)],
->>>>>>> origin/v3.0.0-RC
         }
     }
 
@@ -113,14 +106,16 @@ enum ProcessorFilter {
 }
 
 impl ProcessorFilter {
-    fn from_processor(
+    async fn from_processor(
         processor: &dyn Processor,
         ctx: &ServiceContext,
     ) -> Result<Self, ProcessorError> {
         if let Some(compat) = processor.compatibility_filter(ctx)? {
             Ok(ProcessorFilter::Compatibility(compat))
         } else {
-            Ok(ProcessorFilter::Normal(processor.changelogs_filter(ctx)?))
+            Ok(ProcessorFilter::Normal(
+                processor.changelogs_filter(ctx).await?,
+            ))
         }
     }
 
@@ -164,13 +159,11 @@ pub(crate) async fn process_records(
             .map_err(Error::DatabaseError)?;
 
         let cursor_controller = CursorController::from_cursor_type(processor.cursor_type());
-<<<<<<< HEAD
 
-        // Only process the changelogs we care about
-        let filter = processor.changelogs_filter(&ctx).await?;
-=======
-        let filter = ProcessorFilter::from_processor(processor.as_ref(), &ctx)?;
->>>>>>> origin/v3.0.0-RC
+        // Only process the changelogs we care about.
+        // `from_processor` is async because `changelogs_filter` runs plugin-backed
+        // processors off the runtime (see #11949).
+        let filter = ProcessorFilter::from_processor(processor.as_ref(), &ctx).await?;
 
         loop {
             let cursor = cursor_controller
@@ -212,27 +205,15 @@ pub(crate) async fn process_records(
 pub(super) trait Processor: Sync + Send {
     fn get_description(&self) -> String;
 
-<<<<<<< HEAD
     /// Default to using change_log_table_names.
     /// Async so plugin-backed processors can run the plugin off the runtime (see #11949).
     async fn changelogs_filter(
-        &self,
-        _ctx: &ServiceContext,
-    ) -> Result<ChangelogFilter, ProcessorError> {
-        Ok(ChangelogFilter::new().table_name(EqualFilter {
-            equal_any: Some(self.change_log_table_names()),
-            ..Default::default()
-        }))
-=======
-    /// Default to using change_log_table_names
-    fn changelogs_filter(
         &self,
         _ctx: &ServiceContext,
     ) -> Result<ChangelogCondition::Inner, ProcessorError> {
         Ok(ChangelogCondition::table_name::any(
             self.change_log_table_names(),
         ))
->>>>>>> origin/v3.0.0-RC
     }
 
     /// Default to empty array in case changelogs_filter is manually implemented

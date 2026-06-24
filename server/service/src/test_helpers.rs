@@ -48,12 +48,9 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             base_dir: "test_output".to_string(),
             machine_uid: None,
             override_is_central_server: false,
-<<<<<<< HEAD
-=======
             standalone_store_name: None,
             standalone_admin_username: None,
             standalone_admin_password: None,
->>>>>>> origin/v3.0.0-RC
             workers: None,
         },
         database: db_settings,

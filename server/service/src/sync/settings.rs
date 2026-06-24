@@ -2,11 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
 // See README.md for description of when this API version needs to be updated
-<<<<<<< HEAD
-pub(crate) static SYNC_V5_VERSION: u32 = 15; // bumped for 2.20.0 OG v9.0.X?
-=======
 pub(crate) static SYNC_V5_VERSION: u32 = 15; // bumped for OMS v3.00.00 OG version 9.01.00
->>>>>>> origin/v3.0.0-RC
 pub(crate) static SYNC_V6_VERSION: u32 = 5; // bumped for 2.9.02 (adding new types to system log)
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Default)]

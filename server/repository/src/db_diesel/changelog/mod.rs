@@ -4,8 +4,6 @@ pub use self::changelog::*;
 pub mod changelog_cursor_tracker;
 pub use self::changelog_cursor_tracker::*;
 
-<<<<<<< HEAD
-=======
 pub mod sync_style;
 pub use self::sync_style::*;
 
@@ -21,6 +19,5 @@ pub(crate) use self::generate_changelog::Changelogs;
 pub mod partition;
 pub use self::partition::ensure_partition_lookahead;
 
->>>>>>> origin/v3.0.0-RC
 #[cfg(test)]
 mod test;

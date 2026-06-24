@@ -48,11 +48,8 @@ graphql_vvm = { path = "vvm" }
 graphql_purchase_order = { path = "purchase_order" }
 graphql_purchase_order_line = { path = "purchase_order_line" }
 graphql_contact = { path = "contact" }
-<<<<<<< HEAD
 graphql_sync_message = { path = "sync_message" }
-=======
 graphql_site = { path = "site" }
->>>>>>> origin/v3.0.0-RC
 
 actix-web = { workspace = true }
 async-graphql = { workspace = true }

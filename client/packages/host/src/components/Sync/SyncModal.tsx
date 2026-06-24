@@ -127,24 +127,11 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-<<<<<<< HEAD
-  const { updateUserIsLoading } = useAuthContext();
-=======
-  const { refreshUserCookie } = useAuthContext();
->>>>>>> origin/v3.0.0-RC
+  const { updateUserIsLoading, refreshUserCookie } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
-<<<<<<< HEAD
-  const durationAsDate = new Date(
-    0,
-    0,
-    0,
-    0,
-    0,
-    syncStatus?.lastSuccessfulSync?.durationInSeconds || 0
-=======
   const sync = async () => {
     await onManualSync();
     // Pick up permission/user-detail changes that sync just brought in,
@@ -152,12 +139,13 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
     await refreshUserCookie();
   };
 
-  const durationAsDate = DateUtils.secondsAsDate(
-    DateUtils.durationInSeconds(
-      syncStatus?.summary?.started,
-      syncStatus?.summary?.finished
-    )
->>>>>>> origin/v3.0.0-RC
+  const durationAsDate = new Date(
+    0,
+    0,
+    0,
+    0,
+    0,
+    syncStatus?.lastSuccessfulSync?.durationInSeconds || 0
   );
 
   const getSyncStatusMessage = (): string => {
@@ -249,7 +237,6 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
           </Box>
         )}
 
-<<<<<<< HEAD
         {!!numberOfRecordsInPushQueue && numberOfRecordsInPushQueue >= 100 && (
           <Alert
             severity="warning"
@@ -260,9 +247,6 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
         )}
 
         {!error && !syncStatus?.isSyncing && latestSuccessfulSyncDate && (
-=======
-        {!error && latestSuccessfulSyncDate && (
->>>>>>> origin/v3.0.0-RC
           <Alert
             sx={{
               backgroundColor: theme.palette.background.drawer,
@@ -290,11 +274,11 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
           <LoadingButton
             shouldShrink={false}
             autoFocus
-            isLoading={isLoading}
+            isLoading={isLoading || updateUserIsLoading}
             startIcon={<RadioIcon />}
             variant="contained"
             disabled={false}
-            onClick={onManualSync}
+            onClick={sync}
             label={t('button.sync-now')}
             sx={theme => ({
               marginRight: 1,

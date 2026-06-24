@@ -70,6 +70,7 @@ pub fn insert_sync_message(
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

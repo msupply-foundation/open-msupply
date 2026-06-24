@@ -28,7 +28,7 @@ impl Processor for MergeSyncMessageProcessor {
         DESCRIPTION.to_string()
     }
 
-    fn changelogs_filter(
+    async fn changelogs_filter(
         &self,
         _ctx: &ServiceContext,
     ) -> Result<ChangelogCondition::Inner, ProcessorError> {

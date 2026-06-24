@@ -3,8 +3,8 @@ use super::{
     ToSyncRecordTranslationType,
 };
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, SyncMessageRow,
-    SyncMessageRowRepository, SyncMessageRowType,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow, SyncMessageRow,
+    SyncMessageRowType,
 };
 
 // Needs to be added to all_translators()
@@ -29,9 +29,9 @@ impl SyncTranslation for OmSyncMessageTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
             SyncMessageRow,
-        >(&sync_record.data)?))
+        >(sync_record.data.0.clone())?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -54,15 +54,13 @@ impl SyncTranslation for OmSyncMessageTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = SyncMessageRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Sync message row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::SyncMessage(row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
         // Only the SupportUpload flow uses OMS central — everything else goes
         // via legacy mSupply through `MessageTranslation`. Without this filter,

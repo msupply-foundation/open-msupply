@@ -110,7 +110,6 @@ pub trait SettingsServiceTrait: Sync + Send {
     fn get_server_settings_info(&self) -> Result<ServerSettings, UpdateSettingsError>;
 }
 
-<<<<<<< HEAD
 pub struct SettingsService {
     pub service: Option<Settings>,
 }
@@ -140,8 +139,3 @@ impl SettingsServiceTrait for SettingsService {
         }
     }
 }
-=======
-pub struct SettingsService;
-
-impl SettingsServiceTrait for SettingsService {}
->>>>>>> origin/v3.0.0-RC

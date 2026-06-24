@@ -290,12 +290,8 @@ impl ServiceProvider {
             clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
-<<<<<<< HEAD
             settings: Box::new(SettingsService::new(settings.clone())),
-=======
-            settings: Box::new(SettingsService),
             batch_size,
->>>>>>> origin/v3.0.0-RC
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
             form_schema_service: Box::new(FormSchemaService {}),

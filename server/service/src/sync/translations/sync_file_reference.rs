@@ -1,12 +1,6 @@
 use repository::{
-<<<<<<< HEAD
     sync_file_reference_row::{SyncFileReferenceRowRepository, SyncFileReferenceWire},
-=======
-    sync_file_reference_row::SyncFileReferenceRow,
->>>>>>> origin/v3.0.0-RC
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::asset::AssetTranslation;
@@ -35,17 +29,10 @@ impl SyncTranslation for SyncFileReferenceTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-<<<<<<< HEAD
-        let wire: SyncFileReferenceWire = serde_json::from_str(&sync_record.data)?;
-        let existing =
-            SyncFileReferenceRowRepository::new(connection).find_one_by_id(&wire.id)?;
+        let wire: SyncFileReferenceWire = serde_json::from_value(sync_record.data.0.clone())?;
+        let existing = SyncFileReferenceRowRepository::new(connection).find_one_by_id(&wire.id)?;
 
         Ok(PullTranslateResult::upsert(wire.into_row(existing)))
-=======
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            SyncFileReferenceRow,
-        >(sync_record.data.0.clone())?))
->>>>>>> origin/v3.0.0-RC
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -78,17 +65,11 @@ impl SyncTranslation for SyncFileReferenceTranslation {
             return Ok(PushTranslateResult::NotMatched);
         };
 
-<<<<<<< HEAD
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(SyncFileReferenceWire::from_row(&row))?,
+            serde_json::to_value(SyncFileReferenceWire::from_row(&sync_file_reference_row))?,
         ))
-=======
-        let row = sync_file_reference_row;
-
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
->>>>>>> origin/v3.0.0-RC
     }
 }
 

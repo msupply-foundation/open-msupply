@@ -3,15 +3,9 @@ use super::{
     rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
 };
 use crate::{
-<<<<<<< HEAD
-    diesel_macros::define_linked_tables,
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
-    RnRFormRowRepository, RowActionType, StorageConnection, Upsert,
-=======
-    db_diesel::changelog::changelog::RowOrId, ChangelogRepository,
-    ChangelogSyncType, Delete, RepositoryError, RowActionType,
-    SourceSiteId, StorageConnection, Upsert,
->>>>>>> origin/v3.0.0-RC
+    db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables,
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -205,16 +199,11 @@ impl<'a> RnRFormLineRowRepository<'a> {
         };
         ChangelogRepository::new(self.connection).insert(&changelog)?;
 
-<<<<<<< HEAD
         diesel::delete(
             rnr_form_line_with_links::table
                 .filter(rnr_form_line_with_links::id.eq(rnr_form_line_id)),
         )
         .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
-=======
-        diesel::delete(rnr_form_line.filter(id.eq(rnr_form_line_id)))
-            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -222,7 +211,6 @@ impl<'a> RnRFormLineRowRepository<'a> {
         Ok(rnr_form_line::table
             .filter(rnr_form_line::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
->>>>>>> origin/v3.0.0-RC
     }
 }
 

@@ -29,11 +29,7 @@ define_linked_tables! {
 joinable!(master_list_line -> item (item_id));
 joinable!(master_list_line -> master_list (master_list_id));
 
-<<<<<<< HEAD
-#[derive(Clone, Queryable, Debug, Default, PartialEq)]
-=======
-#[derive(Clone, Insertable, Queryable, Debug, Default, PartialEq, AsChangeset, serde::Serialize, serde::Deserialize)]
->>>>>>> origin/v3.0.0-RC
+#[derive(Clone, Queryable, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = master_list_line)]
 pub struct MasterListLineRow {
     pub id: String,
@@ -52,23 +48,8 @@ impl<'a> MasterListLineRowRepository<'a> {
         MasterListLineRowRepository { connection }
     }
 
-<<<<<<< HEAD
     pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-=======
-    fn _upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(master_list_line)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
->>>>>>> origin/v3.0.0-RC
-        Ok(())
-    }
-
-    pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
         let changelog = MasterListLineRow::generate_changelog(
             row.id.clone(),
             self.connection,
@@ -89,13 +70,6 @@ impl<'a> MasterListLineRowRepository<'a> {
         Ok(result)
     }
 
-<<<<<<< HEAD
-    pub fn delete(&self, line_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            master_list_line_with_links::table.filter(master_list_line_with_links::id.eq(line_id)),
-        )
-        .execute(self.connection.lock().connection())?;
-=======
     pub fn find_many_by_id(
         &self,
         ids: &[String],
@@ -106,9 +80,10 @@ impl<'a> MasterListLineRowRepository<'a> {
     }
 
     fn _delete(&self, line_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(master_list_line.filter(id.eq(line_id)))
-            .execute(self.connection.lock().connection())?;
->>>>>>> origin/v3.0.0-RC
+        diesel::delete(
+            master_list_line_with_links::table.filter(master_list_line_with_links::id.eq(line_id)),
+        )
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -130,7 +105,7 @@ impl Upsert for MasterListLineRow {
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
-        MasterListLineRowRepository::new(con)._upsert_one(self)?;
+        MasterListLineRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(

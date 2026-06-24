@@ -79,6 +79,7 @@ pub fn generate(
         linked_invoice_id: None,
         original_shipment_id: None,
         is_cancellation: false,
+        legacy_goods_received_id: None,
     };
 
     let source_lines =
@@ -151,6 +152,7 @@ pub fn generate(
             linked_invoice_line_id: None,
             vvm_status_id: None,
             shipped_number_of_packs: None,
+            legacy_goods_received_line_id: None,
         });
     }
 

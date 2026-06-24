@@ -56,24 +56,11 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
     pub fn _upsert_one(
         &self,
         vaccine_course_item_row: &VaccineCourseItemRow,
-<<<<<<< HEAD
-    ) -> Result<i64, RepositoryError> {
-        self._upsert(vaccine_course_item_row)?;
-
-        self.insert_changelog(
-            vaccine_course_item_row.id.to_string(),
-            RowActionType::Upsert,
-        )
-=======
     ) -> Result<(), RepositoryError> {
-        diesel::insert_into(vaccine_course_item)
-            .values(vaccine_course_item_row)
-            .on_conflict(id)
-            .do_update()
-            .set(vaccine_course_item_row)
-            .execute(self.connection.lock().connection())?;
+        // Write goes through the linked-tables core table (`vaccine_course_item_with_links`)
+        // via the macro-generated `_upsert`, since `vaccine_course_item` is a read-only view.
+        self._upsert(vaccine_course_item_row)?;
         Ok(())
->>>>>>> origin/v3.0.0-RC
     }
 
     pub fn upsert_one(
@@ -106,8 +93,9 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         Ok(result)
     }
 
-<<<<<<< HEAD
-    pub fn mark_deleted(&self, vaccine_course_item_id: &str) -> Result<i64, RepositoryError> {
+    pub fn mark_deleted(&self, vaccine_course_item_id: &str) -> Result<(), RepositoryError> {
+        // Update the linked-tables core table (`vaccine_course_item_with_links`); the
+        // `vaccine_course_item` view is read-only.
         diesel::update(
             vaccine_course_item_with_links::table
                 .filter(vaccine_course_item_with_links::id.eq(vaccine_course_item_id)),
@@ -116,12 +104,6 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
             chrono::Utc::now().naive_utc(),
         )))
         .execute(self.connection.lock().connection())?;
-=======
-    pub fn mark_deleted(&self, vaccine_course_item_id: &str) -> Result<(), RepositoryError> {
-        diesel::update(vaccine_course_item.filter(id.eq(vaccine_course_item_id)))
-            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(self.connection.lock().connection())?;
->>>>>>> origin/v3.0.0-RC
 
         // Upsert row action as this is a soft delete, not actual delete
         let changelog = VaccineCourseItemRow::generate_changelog(

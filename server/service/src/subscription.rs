@@ -1,13 +1,8 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-<<<<<<< HEAD
-use repository::SyncLogRow;
-use tokio::sync::{broadcast, mpsc, watch};
-=======
 use repository::{Description, SyncLogV5V6Row, SyncLogV7Row};
-use tokio::sync::{broadcast, mpsc};
->>>>>>> origin/v3.0.0-RC
+use tokio::sync::{broadcast, mpsc, watch};
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
@@ -207,15 +202,9 @@ async fn subscription_worker_loop(
                     None => continue,
                 };
 
-<<<<<<< HEAD
-                let status = FullSyncStatus::from_sync_log_row(row.clone());
-=======
-        match trigger {
-            SubscriptionTrigger::SyncStatus(row) => {
                 let push_queue_count =
                     (row.push_progress_total() - row.push_progress_done()) as u64;
                 let status = row.full_sync_status();
->>>>>>> origin/v3.0.0-RC
 
                 let just_finished_successfully = status.is_finished_successfully();
                 if just_finished_successfully {

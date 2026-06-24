@@ -47,8 +47,6 @@ pub struct ServerSettings {
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
-<<<<<<< HEAD
-=======
 
     // Standalone central initialisation; requires `override_is_central_server: true`
     #[serde(default)]
@@ -58,7 +56,6 @@ pub struct ServerSettings {
     #[serde(default)]
     pub standalone_admin_password: Option<String>,
 
->>>>>>> origin/v3.0.0-RC
     /// Number of actix-web worker threads. Defaults to the number of logical CPUs.
     /// Increase if 408 timeouts are observed under load.
     pub workers: Option<usize>,
@@ -85,6 +82,9 @@ pub fn test_settings(
             base_dir: "test_output".to_string(),
             machine_uid: None,
             override_is_central_server: false,
+            standalone_store_name: None,
+            standalone_admin_username: None,
+            standalone_admin_password: None,
             workers: None,
         },
         database,
@@ -93,6 +93,7 @@ pub fn test_settings(
         backup: None,
         mail: None,
         features,
+        changelog_partition: None,
     }
 }
 

@@ -1,14 +1,9 @@
 use crate::{
-<<<<<<< HEAD
-    db_diesel::{item_row::item, purchase_order_row::purchase_order},
-=======
     db_diesel::{
         changelog::{changelog::RowOrId, Changelogs},
-        item_link_row::item_link,
         item_row::item,
         purchase_order_row::purchase_order,
     },
->>>>>>> origin/v3.0.0-RC
     diesel_macros::define_linked_tables,
     ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };

@@ -212,12 +212,9 @@ fn generate_line(
         prescribed_quantity: None,
         reason_option_id: None,
         status,
-<<<<<<< HEAD
         received_number_of_packs: None,
         linked_invoice_line_id: None,
-=======
         legacy_goods_received_line_id: None,
->>>>>>> origin/v3.0.0-RC
     }
 }
 

@@ -2,8 +2,6 @@
 # yarn lockfile v1
 
 
-<<<<<<< HEAD
-=======
 "@playwright/test@^1.58.2":
   version "1.58.2"
   resolved "https://registry.npmjs.org/@playwright/test/-/test-1.58.2.tgz"
@@ -30,7 +28,6 @@ playwright@1.58.2:
   optionalDependencies:
     fsevents "2.3.2"
 
->>>>>>> origin/v3.0.0-RC
 typescript@^5.9.2:
   version "5.9.3"
   resolved "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz"

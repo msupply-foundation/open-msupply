@@ -1,26 +1,11 @@
 use diesel::prelude::*;
 
-<<<<<<< HEAD
 use crate::db_diesel::item_row::item;
 use crate::diesel_macros::define_linked_tables;
-use crate::{RepositoryError, StorageConnection, Upsert};
-=======
 use crate::{
-    item_link, ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType,
-    SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
-
-table! {
-  item_store_join (id) {
-    id -> Text,
-    item_link_id  -> Text,
-    store_id -> Text,
-    default_sell_price_per_pack -> Double,
-    ignore_for_orders -> Bool,
-    margin -> Double,
-    default_location_id -> Nullable<Text>,
-  }
->>>>>>> origin/v3.0.0-RC
 
 define_linked_tables! {
     view: item_store_join = "item_store_join_view",
@@ -41,14 +26,20 @@ define_linked_tables! {
     }
 }
 
-<<<<<<< HEAD
 joinable!(item_store_join -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_store_join, item);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
-=======
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
->>>>>>> origin/v3.0.0-RC
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = item_store_join)]
 pub struct ItemStoreJoinRow {
     pub id: String,
@@ -98,10 +89,7 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> 
     }
 
     fn upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
-<<<<<<< HEAD
         self._upsert(row)?;
-=======
-        self._upsert_one(row)?;
         let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
@@ -114,17 +102,6 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> 
 impl<'a> ItemStoreJoinRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ItemStoreJoinRowRepository { connection }
-    }
-
-    fn _upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(item_store_join::dsl::item_store_join)
-            .values(row)
-            .on_conflict(item_store_join::dsl::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
->>>>>>> origin/v3.0.0-RC
-        Ok(())
     }
 
     pub fn find_many_by_id(
@@ -155,7 +132,7 @@ impl Upsert for ItemStoreJoinRow {
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
-        ItemStoreJoinRowRepository::new(con)._upsert_one(self)?;
+        ItemStoreJoinRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(

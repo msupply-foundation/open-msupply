@@ -5,14 +5,8 @@ use crate::{
 };
 
 use super::{
-<<<<<<< HEAD
-    clinician_link_row::clinician_link, clinician_row::clinician,
-    item_row::item, name_row::name, name_store_join::name_store_join,
-    store_row::store,
-=======
-    clinician_link_row::clinician_link, clinician_row::clinician, item_link_row::item_link,
-    item_row::item, name_row::name, name_store_join::name_store_join, store_row::store,
->>>>>>> origin/v3.0.0-RC
+    clinician_link_row::clinician_link, clinician_row::clinician, item_row::item, name_row::name,
+    name_store_join::name_store_join, store_row::store,
     vaccine_course::vaccine_course_dose_row::vaccine_course_dose,
 };
 

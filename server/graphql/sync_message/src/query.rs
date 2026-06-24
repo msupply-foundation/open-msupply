@@ -64,6 +64,7 @@ pub fn get_sync_message(
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -97,6 +98,7 @@ pub fn get_sync_messages(
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

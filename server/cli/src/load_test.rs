@@ -486,14 +486,10 @@ impl LoadTest {
                 base_dir: "app_data".to_string(),
                 machine_uid: None,
                 override_is_central_server: false,
-<<<<<<< HEAD
-                workers: None,
-=======
                 standalone_store_name: None,
                 standalone_admin_username: None,
                 standalone_admin_password: None,
                 workers: Some(2),
->>>>>>> origin/v3.0.0-RC
             },
             database: DatabaseSettings {
                 username: "postgres".to_string(),
@@ -585,14 +581,10 @@ impl LoadTest {
                     base_dir: database_path.to_string(),
                     machine_uid: Some("1337_test".to_string()),
                     override_is_central_server: false,
-<<<<<<< HEAD
-                    workers: None,
-=======
                     standalone_store_name: None,
                     standalone_admin_username: None,
                     standalone_admin_password: None,
                     workers: Some(1), // We're spawning many remote site in separate processes. Each one of these remote sites don't need several actix workers. Their main runtime will still have num CPU cores workers.
->>>>>>> origin/v3.0.0-RC
                 },
                 database: DatabaseSettings {
                     username: "postgres".to_string(),

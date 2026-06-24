@@ -124,6 +124,7 @@ fn translate_delete(
         ChangelogTableName::RnrFormLine => Box::new(RnRFormLineDelete(id)),
         ChangelogTableName::Site => Box::new(SiteRowDelete(id)),
         ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
+        ChangelogTableName::StockRelocation => Box::new(StockRelocationRowDelete(id)),
         ChangelogTableName::Stocktake => Box::new(StocktakeRowDelete(id)),
         ChangelogTableName::StocktakeLine => Box::new(StocktakeLineRowDelete(id)),
         ChangelogTableName::UserAccount => Box::new(UserAccountRowDelete(id)),
