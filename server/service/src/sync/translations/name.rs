@@ -89,6 +89,21 @@ fn build_legacy_properties(legacy: &LegacyNameRow) -> Option<serde_json::Value> 
         .build()
 }
 
+/// Inverse of [`build_legacy_properties`]: read a single legacy custom-field
+/// value out of `properties_v2` for the v5 push back to OG. custom1/2/3 are TEXT,
+/// so only string values are returned; an absent or non-string key yields `None`.
+fn legacy_custom_field_from_properties(
+    properties_v2: &Option<serde_json::Value>,
+    key: &str,
+) -> Option<String> {
+    properties_v2
+        .as_ref()?
+        .as_object()?
+        .get(key)?
+        .as_str()
+        .map(str::to_string)
+}
+
 impl LegacyNameRowType {
     fn to_name_type(&self) -> NameRowType {
         match self {
@@ -516,7 +531,7 @@ impl SyncTranslation for NameTranslation {
             currency_id,
             // See comment in pull translation
             custom_data_string: _,
-            properties_v2: _,
+            properties_v2,
         } = name_row;
         if deleted_datetime.is_some() {
             return Ok(PushTranslateResult::Ignored(
@@ -573,17 +588,25 @@ impl SyncTranslation for NameTranslation {
             freight_factor,
             currency_id,
             custom_data: None,
-            // Import-only: `properties_v2` values (custom fields and category
-            // dimensions) are never round-tripped back to the legacy wire columns.
-            custom_1: None,
-            custom_2: None,
-            custom_3: None,
-            category1_id: None,
-            category2_id: None,
-            category3_id: None,
-            category4_id: None,
-            category5_id: None,
-            category6_id: None,
+            // Reverse of `build_legacy_properties`: carry the patient's
+            // `properties_v2` custom fields back into the legacy custom1/2/3 wire
+            // columns. This wiring is currently INERT for OMS-originated names —
+            // the `PushToLegacyCentral` guard (see `should_translate_to_sync_record`,
+            // added by #9430 for the patient-DOB round-trip bug) blocks the push.
+            // It's wired here so that if/when the general patient → OG sync path is
+            // re-enabled, patient property edits flow back to OG automatically.
+            custom_1: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CUSTOM_1),
+            custom_2: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CUSTOM_2),
+            custom_3: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CUSTOM_3),
+            // Same inert reverse-mapping for the category dimensions: the stored
+            // option id is the leaf `categoryN_ID`. Carried back behind the same
+            // `PushToLegacyCentral` guard as the custom fields.
+            category1_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_1),
+            category2_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_2),
+            category3_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_3),
+            category4_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_4),
+            category5_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_5),
+            category6_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_6),
         };
 
         Ok(PushTranslateResult::upsert(
@@ -717,6 +740,23 @@ mod tests {
             merge_legacy_properties(existing, build_legacy_properties(&row), LEGACY_NAME_OWNED_KEYS),
             Some(json!({ "name_category_2": "OG_VALUE", "patient_note": "keep" }))
         );
+    }
+
+    #[test]
+    fn legacy_custom_field_from_properties_extracts_string_values() {
+        // Inverse of build_legacy_properties: present string keys map back to the
+        // legacy custom columns; absent/non-string keys and a NULL blob → None.
+        let properties = Some(json!({ "custom_1": "A", "custom_3": 42, "other": "x" }));
+        assert_eq!(
+            legacy_custom_field_from_properties(&properties, "custom_1"),
+            Some("A".to_string())
+        );
+        // absent key
+        assert_eq!(legacy_custom_field_from_properties(&properties, "custom_2"), None);
+        // non-string value is not pushed to a TEXT column
+        assert_eq!(legacy_custom_field_from_properties(&properties, "custom_3"), None);
+        // NULL blob
+        assert_eq!(legacy_custom_field_from_properties(&None, "custom_1"), None);
     }
 
     #[test]

@@ -56,6 +56,7 @@ fragment ProgramPatientRow on PatientNode {
   dateOfDeath
   nextOfKinId
   nextOfKinName
+  propertiesV2
   programEnrolments {
     ... on ProgramEnrolmentConnector {
       __typename
@@ -68,6 +69,44 @@ fragment ProgramPatientRow on PatientNode {
         }
       }
       totalCount
+    }
+  }
+}
+
+fragment PropertyV2 on PropertyV2Node {
+  id
+  key
+  name
+  valueType
+  kind
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
+}
+
+query patientPropertiesV2 {
+  propertiesV2(filter: { tableName: { equalTo: "patient" } }) {
+    ... on PropertyV2Connector {
+      __typename
+      totalCount
+      nodes {
+        ...PropertyV2
+      }
+    }
+  }
+}
+
+mutation updatePatientPropertiesV2(
+  $storeId: String!
+  $input: UpdatePatientPropertiesV2Input!
+) {
+  updatePatientPropertiesV2(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...ProgramPatientRow
     }
   }
 }

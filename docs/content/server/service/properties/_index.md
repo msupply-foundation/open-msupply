@@ -72,13 +72,24 @@ The three definition tables (`property_v2`, `property_option_v2`, `property_tabl
 
 The property **values** live in ordinary columns on their host record — `name.properties_v2` and `item.properties_v2` (binary JSON: `JSONB` on Postgres, `TEXT` JSON on SQLite). They are **not** synced as separate records: they ride the host record's own changelog (`Name` / `Item`) and are served raw over v7 (no translator rewrite), reaching remotes via that record's existing sync style (Central / Patient). There is no dedicated property-value sync path.
 
-The legacy mapping property values are **central-authored and flow one-way down** — COMS derives them from the OG record during its v5 import (gated on being central) and they flow out to v7 remotes via the host record. Values are never pushed on to OG.
+By default the legacy mapping property values are **central-authored and flow one-way down** — COMS derives them from the OG record during its v5 import (gated on being central) and they flow out to v7 remotes via the host record. **Editable** properties (currently patient — see [Patient Properties](#patient-properties)) are the exception: edited on a remote, they flow back *up* to COMS via the host record's changelog (still v7-only, and the v5 import on COMS must merge rather than overwrite so a re-pull can't clobber the edit). Either way, values are never pushed on to OG.
 
-Note the value rides the **whole host-record row** over v7, so concurrent edits across sites are **last-writer-wins** — there is no key-level merge on the v7 side. The v5 import on COMS *merges* (`merge_legacy_properties`) rather than overwriting: it refreshes only the OG-owned keys and preserves any other keys already in the blob, so an OG re-pull can't clobber OMS-authored values.
+Note the value rides the **whole host-record row** over v7, so concurrent edits across sites are **last-writer-wins** — there is no key-level merge on the v7 side (the merge is only on the v5 import, to protect OMS-authored keys from being clobbered by an OG re-pull).
 
 **Forwards compatibility on read.** When a value blob is rendered, the resolver filters it to keys that are defined and visible in `property_v2` for that table. A remote therefore silently ignores values for properties it doesn't yet know about — so a newer central can start sending a value before every remote understands it, without breaking the older remote.
 
 ## Currently Implemented
+
+### Patient Properties
+
+Patients are `name` rows, so they reuse `name.properties_v2` and the shared legacy `custom_1/2/3` defs — but they are the first **editable** properties (the one place the one-way rule is relaxed), edited on a remote and shown in a "Custom properties" tab on the patient detail view.
+
+- **Scope.** `custom_1/2/3` are seeded for both `name` and `patient` (`central_mapping_properties`); `PatientNode.properties_v2` filters to the `patient` scope, so patients can surface a different visible set from suppliers/facilities (which use `name`).
+- **Write path.** `updatePatientPropertiesV2` patch-merges into `name.properties_v2` and emits a `Name` changelog (`NameRowRepository::update_properties_v2`); gated on `MutatePatient`.
+- **Sync up.** Rides the `Name` changelog (Central + Patient) — the local edit is stamped with the site's own `source_site_id`, so it flows remote→COMS→visible remotes with no translator change.
+- **Overwrite guard.** The v5 name import on COMS *merges* (`merge_legacy_properties`) instead of overwriting: it refreshes the OG-owned `custom_1/2/3` and preserves OMS-authored keys, so a v5 re-pull can't clobber a patient edit.
+
+OG push-back is **wired but inert**: the name push derives `custom_1/2/3` from `properties_v2` (`legacy_custom_field_from_properties`), but the `PushToLegacyCentral` guard (#9430, the patient-DOB round-trip bug) blocks it — so edits only reach OG if/when the general patient→OG sync path is re-enabled.
 
 ### Item Categories
 
@@ -94,12 +105,12 @@ Sync is unchanged from the rules above: options are v7-only central data; the va
 
 There are also two **flat** extra dimensions — `[item]category2_ID`/`category3_ID` (no level tables) — modelled the same way under keys `item_category_2`/`item_category_3`. They emit only the option (no relational `CategoryRow`, since they aren't part of the relational `category` tree).
 
-### Name categories
+### Name / patient categories
 
-`[name]`'s six independent category dimensions become six OPTION properties with keys `name_category_1..6` (prefixed `name_` since `property_v2.key` is globally unique — and the key is also the id — so they can't reuse item's `item_category_2/3`), visible on `name`. There's no relational name-category table, so this is pure propertiesV2.
+`[name]`'s six independent category dimensions become six OPTION properties with keys `name_category_1..6` (prefixed `name_` since `property_v2.key` is globally unique — and the key is also the id — so they can't reuse item's `item_category_2/3`), visible on `name` and `patient`. There's no relational name-category table, so this is pure propertiesV2.
 
 - **Options** authored by `NameCategoryTranslation` (central-only). category1 is hierarchical (`name_category1_level1`→`_level2`→`name_category1` leaf, `parent_ID → parent_option_id`); 2–6 are flat. Option `id` = category id; `build_legacy_properties` writes each leaf `categoryN_ID` to `name.properties_v2["name_category_N"]`.
-- Keys are OG-owned (`LEGACY_NAME_OWNED_KEYS`), so the import/merge/last-writer-wins model matches `custom_1/2/3`.
+- **Editable on patients** — the first editable OPTION. `PropertyV2Input` renders OPTION as an id-aware Autocomplete of the leaf options (read-only = same control disabled). Keys are OG-owned (`LEGACY_NAME_OWNED_KEYS`), so the import/merge/last-writer-wins model matches `custom_1/2/3`.
 
 > **`property_option_v2.parent_option_id` is deliberately not a FK.** Options sync in cursor order with no retry, so a child can arrive before its parent — a FK would silently drop it. Same reason `category.parent_id` isn't a FK.
 

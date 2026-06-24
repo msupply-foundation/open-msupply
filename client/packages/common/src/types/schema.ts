@@ -5737,6 +5737,11 @@ export type Mutations = {
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
   /** Updates a new patient (without document data) */
   updatePatient: UpdatePatientResponse;
+  /**
+   * Update a patient's new-system custom property values (`properties_v2`).
+   * Accepts a key->value patch; merges it into the patient's existing blob.
+   */
+  updatePatientPropertiesV2: UpdatePatientPropertiesV2Response;
   updatePluginData: UpdatePluginDataResponse;
   updatePrescription: UpdatePrescriptionResponse;
   updatePrescriptionLine: UpdatePrescriptionLineResponse;
@@ -6362,6 +6367,11 @@ export type MutationsUpdatePatientArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdatePatientPropertiesV2Args = {
+  input: UpdatePatientPropertiesV2Input;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUpdatePluginDataArgs = {
   input: UpdatePluginDataInput;
   storeId: Scalars['String']['input'];
@@ -6564,8 +6574,11 @@ export type NameNode = {
   /**
    * Properties v2 values for this name. The raw `name.properties_v2` JSONB
    * blob is filtered server-side to keys that are (a) defined in
-   * `property_v2` and not soft-deleted, (b) marked visible for the `name`
-   * table via `property_table_v2`. Stray keys never reach the client.
+   * `property_v2` and not soft-deleted, (b) marked visible for this name's
+   * table scope via `property_table_v2`. Stray keys never reach the client.
+   *
+   * Patients have their own visible set (`table_name = "patient"`); every
+   * other name type uses the generic `"name"` scope.
    */
   propertiesV2?: Maybe<Scalars['JSON']['output']>;
   store?: Maybe<StoreNode>;
@@ -6937,6 +6950,12 @@ export type PatientNode = {
   nextOfKinName?: Maybe<Scalars['String']['output']>;
   phone?: Maybe<Scalars['String']['output']>;
   programEnrolments: ProgramEnrolmentResponse;
+  /**
+   * Patient custom property values (`name.properties_v2`), filtered to keys
+   * defined and visible for the `patient` table scope. Mirrors
+   * `NameNode.properties_v2` but always uses the `"patient"` scope.
+   */
+  propertiesV2?: Maybe<Scalars['JSON']['output']>;
   website?: Maybe<Scalars['String']['output']>;
 };
 
@@ -11072,6 +11091,18 @@ export type UpdatePatientInput = {
   nextOfKinName?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
 };
+
+/**
+ * Patch of patient `properties_v2` values. `propertiesV2` must be a JSON object
+ * of `key -> value`; a `null` value clears that key. Keys absent from the patch
+ * are left unchanged.
+ */
+export type UpdatePatientPropertiesV2Input = {
+  id: Scalars['String']['input'];
+  propertiesV2: Scalars['JSON']['input'];
+};
+
+export type UpdatePatientPropertiesV2Response = PatientNode;
 
 export type UpdatePatientResponse = PatientNode;
 

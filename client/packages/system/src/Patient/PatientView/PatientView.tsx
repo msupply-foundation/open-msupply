@@ -28,6 +28,7 @@ import { InsuranceListView, InsuranceModal } from '../Insurance';
 import { PatientDetailView } from './PatientDetailView';
 import { useInsuranceProviders } from '../apiModern';
 import { ActivityLogList } from '../../ActivityLog';
+import { CustomPropertiesTab } from './CustomProperties/CustomPropertiesTab';
 
 export enum PatientTabValue {
   Details = 'details',
@@ -36,6 +37,7 @@ export enum PatientTabValue {
   ContactTracing = 'contact-tracing',
   Vaccinations = 'vaccinations',
   Insurance = 'insurance',
+  CustomProperties = 'properties',
   ActivityLog = 'log',
 }
 
@@ -48,6 +50,7 @@ export const PatientView = () => {
   const { setCurrentPatient, createNewPatient } = usePatientStore();
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
+  const [isDirtyProperties, setIsDirtyProperties] = useState(false);
   const { store, storeId } = useAuthContext();
   const { showContactTracing } = usePreferences();
   const {
@@ -55,7 +58,9 @@ export const PatientView = () => {
   } = useInsuranceProviders();
 
   const requiresConfirmation = (tab: string) => {
-    return tab === PatientTabValue.Details && isDirtyPatient;
+    if (tab === PatientTabValue.Details) return isDirtyPatient;
+    if (tab === PatientTabValue.CustomProperties) return isDirtyProperties;
+    return false;
   };
 
   useEffect(() => {
@@ -123,6 +128,16 @@ export const PatientView = () => {
       Component: <InsuranceListView patientId={patientId} />,
       value: PatientTabValue.Insurance,
     });
+
+  // Show the custom-properties tab; it renders an empty state when no
+  // patient property definitions exist.
+  tabs.push({
+    Component: (
+      <CustomPropertiesTab patientId={patientId} onEdit={setIsDirtyProperties} />
+    ),
+    value: PatientTabValue.CustomProperties,
+    confirmOnLeaving: isDirtyProperties,
+  });
 
   // Add activity log tab
   tabs.push({

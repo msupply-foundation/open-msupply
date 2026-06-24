@@ -345,6 +345,40 @@ impl<'a> NameRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
+    /// Update the new-system `name.properties_v2` JSONB blob.
+    ///
+    /// Column-scoped (`UPDATE ... SET properties_v2`) rather than a whole-row
+    /// `_upsert_one`. This is a property of the *local* write only: it avoids a
+    /// read-modify-write race (writing the whole row back would revert any sibling
+    /// column a concurrent sync integrated meanwhile) and touches only this column.
+    /// It is NOT a sync-time guarantee — the `Name` changelog carries record_id and
+    /// the full current row is whole-row upserted at receiving sites, so
+    /// `properties_v2` is overwritten wholesale on integration. Owned legacy keys
+    /// (custom_1/2/3) clobbered by a stale remote push are healed by the central v5
+    /// merge-on-import (see `merge_legacy_properties`); non-owned (OMS-authored)
+    /// keys are last-writer-wins like every other name column.
+    ///
+    /// Emits a `Name` changelog so the value rides the existing Name sync (Central +
+    /// Patient). Unlike the legacy [`update_properties`], this targets the
+    /// `name.properties_v2` column and the `Name` table rather than
+    /// `name_oms_fields.properties` / `NameOmsFields`.
+    pub fn update_properties_v2(
+        &self,
+        name_id: &str,
+        properties_v2: &Option<JsonValue>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(name::table.find(name_id))
+            .set(name::properties_v2.eq(properties_v2))
+            .execute(self.connection.lock().connection())?;
+
+        let changelog = NameRow::generate_changelog(
+            RowOrId::Id(name_id),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
 }
 
 impl NameRowType {
@@ -471,8 +505,10 @@ mod test {
     use util::uuid::uuid;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, EqualFilter, NameFilter, NameRepository,
-        NameRow, NameRowRepository,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        ChangelogTableName, CursorAndLimit, EqualFilter, FilterBuilder, KeyType,
+        KeyValueStoreRepository, NameFilter, NameRepository, NameRow, NameRowRepository,
+        NameRowType,
     };
 
     // Covers the v2.01 legacy `name.properties` column. A NameRow upsert must
@@ -546,5 +582,60 @@ mod test {
 
         let fetched = row_repo.find_one_by_id(&row.id).unwrap().unwrap();
         assert_eq!(fetched.properties_v2, Some(properties));
+    }
+
+    // `update_properties_v2` writes the JSONB column and emits a `Name`
+    // changelog (so the value rides Name sync) stamped with this site's id.
+    #[actix_rt::test]
+    async fn name_properties_v2_update_generates_name_changelog() {
+        let (_, connection, _, _) = setup_all(
+            "name_properties_v2_update_generates_name_changelog",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // CurrentSiteId reads SettingsSyncSiteId; set it so the changelog gets a
+        // non-null source_site_id.
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(42))
+            .unwrap();
+
+        let row_repo = NameRowRepository::new(&connection);
+        let row = NameRow {
+            id: uuid(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        row_repo.upsert_one(&row).unwrap();
+
+        let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
+        let properties = serde_json::json!({"custom_1": "edited"});
+        row_repo
+            .update_properties_v2(&row.id, &Some(properties.clone()))
+            .unwrap();
+
+        // Value persisted.
+        let fetched = row_repo.find_one_by_id(&row.id).unwrap().unwrap();
+        assert_eq!(fetched.properties_v2, Some(properties));
+
+        // A Name changelog was emitted for this record with a non-null source_site_id.
+        let changelogs: Vec<_> = ChangelogRepository::new(&connection)
+            .query(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Name),
+                CursorAndLimit {
+                    cursor: cursor_before,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .filter(|c| c.record_id == row.id)
+            .collect();
+        assert_eq!(changelogs.len(), 1);
+        assert_eq!(changelogs[0].source_site_id, Some(42));
+        // Patient rows carry patient_id for Patient-style routing.
+        assert_eq!(changelogs[0].patient_id, Some(row.id));
     }
 }

@@ -57,6 +57,7 @@ export type ProgramPatientRowFragment = {
   dateOfDeath?: string | null;
   nextOfKinId?: string | null;
   nextOfKinName?: string | null;
+  propertiesV2?: any | null;
   document?: {
     __typename: 'DocumentNode';
     id: string;
@@ -77,6 +78,100 @@ export type ProgramPatientRowFragment = {
         } | null;
       };
     }>;
+  };
+};
+
+export type PropertyV2Fragment = {
+  __typename: 'PropertyV2Node';
+  id: string;
+  key: string;
+  name: string;
+  valueType: Types.PropertyNodeValueTypeV2;
+  kind: Types.PropertyNodeKindV2;
+  options: Array<{
+    __typename: 'PropertyOptionV2Node';
+    id: string;
+    key: string;
+    name: string;
+    parentOptionId?: string | null;
+  }>;
+};
+
+export type PatientPropertiesV2QueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type PatientPropertiesV2Query = {
+  __typename: 'Queries';
+  propertiesV2: {
+    __typename: 'PropertyV2Connector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PropertyV2Node';
+      id: string;
+      key: string;
+      name: string;
+      valueType: Types.PropertyNodeValueTypeV2;
+      kind: Types.PropertyNodeKindV2;
+      options: Array<{
+        __typename: 'PropertyOptionV2Node';
+        id: string;
+        key: string;
+        name: string;
+        parentOptionId?: string | null;
+      }>;
+    }>;
+  };
+};
+
+export type UpdatePatientPropertiesV2MutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdatePatientPropertiesV2Input;
+}>;
+
+export type UpdatePatientPropertiesV2Mutation = {
+  __typename: 'Mutations';
+  updatePatientPropertiesV2: {
+    __typename: 'PatientNode';
+    id: string;
+    code: string;
+    code2?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    name: string;
+    dateOfBirth?: string | null;
+    address1?: string | null;
+    phone?: string | null;
+    gender?: Types.GenderTypeNode | null;
+    email?: string | null;
+    createdDatetime?: string | null;
+    documentDraft?: any | null;
+    isDeceased: boolean;
+    dateOfDeath?: string | null;
+    nextOfKinId?: string | null;
+    nextOfKinName?: string | null;
+    propertiesV2?: any | null;
+    document?: {
+      __typename: 'DocumentNode';
+      id: string;
+      name: string;
+      type: string;
+    } | null;
+    programEnrolments: {
+      __typename: 'ProgramEnrolmentConnector';
+      totalCount: number;
+      nodes: Array<{
+        __typename: 'ProgramEnrolmentNode';
+        programEnrolmentId?: string | null;
+        document: {
+          __typename: 'DocumentNode';
+          documentRegistry?: {
+            __typename: 'DocumentRegistryNode';
+            name?: string | null;
+          } | null;
+        };
+      }>;
+    };
   };
 };
 
@@ -160,6 +255,7 @@ export type PatientByIdQuery = {
       dateOfDeath?: string | null;
       nextOfKinId?: string | null;
       nextOfKinName?: string | null;
+      propertiesV2?: any | null;
       document?: {
         __typename: 'DocumentNode';
         id: string;
@@ -217,6 +313,7 @@ export type PatientSearchQuery = {
         dateOfDeath?: string | null;
         nextOfKinId?: string | null;
         nextOfKinName?: string | null;
+        propertiesV2?: any | null;
         document?: {
           __typename: 'DocumentNode';
           id: string;
@@ -315,6 +412,7 @@ export type InsertProgramPatientMutation = {
     dateOfDeath?: string | null;
     nextOfKinId?: string | null;
     nextOfKinName?: string | null;
+    propertiesV2?: any | null;
     document?: {
       __typename: 'DocumentNode';
       id: string;
@@ -365,6 +463,7 @@ export type UpdateProgramPatientMutation = {
     dateOfDeath?: string | null;
     nextOfKinId?: string | null;
     nextOfKinName?: string | null;
+    propertiesV2?: any | null;
     document?: {
       __typename: 'DocumentNode';
       id: string;
@@ -415,6 +514,7 @@ export type InsertPatientMutation = {
     dateOfDeath?: string | null;
     nextOfKinId?: string | null;
     nextOfKinName?: string | null;
+    propertiesV2?: any | null;
     document?: {
       __typename: 'DocumentNode';
       id: string;
@@ -465,6 +565,7 @@ export type UpdatePatientMutation = {
     dateOfDeath?: string | null;
     nextOfKinId?: string | null;
     nextOfKinName?: string | null;
+    propertiesV2?: any | null;
     document?: {
       __typename: 'DocumentNode';
       id: string;
@@ -574,6 +675,7 @@ export const ProgramPatientRowFragmentDoc = gql`
     dateOfDeath
     nextOfKinId
     nextOfKinName
+    propertiesV2
     programEnrolments {
       ... on ProgramEnrolmentConnector {
         __typename
@@ -589,6 +691,49 @@ export const ProgramPatientRowFragmentDoc = gql`
       }
     }
   }
+`;
+export const PropertyV2FragmentDoc = gql`
+  fragment PropertyV2 on PropertyV2Node {
+    id
+    key
+    name
+    valueType
+    kind
+    options {
+      id
+      key
+      name
+      parentOptionId
+    }
+  }
+`;
+export const PatientPropertiesV2Document = gql`
+  query patientPropertiesV2 {
+    propertiesV2(filter: { tableName: { equalTo: "patient" } }) {
+      ... on PropertyV2Connector {
+        __typename
+        totalCount
+        nodes {
+          ...PropertyV2
+        }
+      }
+    }
+  }
+  ${PropertyV2FragmentDoc}
+`;
+export const UpdatePatientPropertiesV2Document = gql`
+  mutation updatePatientPropertiesV2(
+    $storeId: String!
+    $input: UpdatePatientPropertiesV2Input!
+  ) {
+    updatePatientPropertiesV2(storeId: $storeId, input: $input) {
+      ... on PatientNode {
+        __typename
+        ...ProgramPatientRow
+      }
+    }
+  }
+  ${ProgramPatientRowFragmentDoc}
 `;
 export const PatientsDocument = gql`
   query patients(
@@ -789,6 +934,42 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
+    patientPropertiesV2(
+      variables?: PatientPropertiesV2QueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PatientPropertiesV2Query> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PatientPropertiesV2Query>({
+            document: PatientPropertiesV2Document,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'patientPropertiesV2',
+        'query',
+        variables
+      );
+    },
+    updatePatientPropertiesV2(
+      variables: UpdatePatientPropertiesV2MutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdatePatientPropertiesV2Mutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePatientPropertiesV2Mutation>({
+            document: UpdatePatientPropertiesV2Document,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updatePatientPropertiesV2',
+        'mutation',
+        variables
+      );
+    },
     patients(
       variables: PatientsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
