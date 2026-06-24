@@ -1,49 +1,7 @@
-use chrono::NaiveDateTime;
 use repository::{
-    CursorDirection, IntegrationResult, PendingQuery, RepositoryError, StorageConnection,
-    SyncAction, SyncBufferRepository, SyncBufferRow, SyncVersion,
+    CursorDirection, PendingQuery, RepositoryError, StorageConnection, SyncAction,
+    SyncBufferRepository, SyncBufferRow, SyncVersion,
 };
-
-pub(crate) fn write_sync_buffer_success(
-    connection: &StorageConnection,
-    cursor: i32,
-    started_datetime: NaiveDateTime,
-) -> Result<(), RepositoryError> {
-    SyncBufferRepository::new(connection).set_integration_result(
-        cursor,
-        started_datetime,
-        IntegrationResult::Success,
-        None,
-    )
-}
-
-pub(crate) fn write_sync_buffer_error(
-    connection: &StorageConnection,
-    cursor: i32,
-    started_datetime: NaiveDateTime,
-    error: &str,
-) -> Result<(), RepositoryError> {
-    SyncBufferRepository::new(connection).set_integration_result(
-        cursor,
-        started_datetime,
-        IntegrationResult::Error,
-        Some(error),
-    )
-}
-
-pub(crate) fn write_sync_buffer_ignored(
-    connection: &StorageConnection,
-    cursor: i32,
-    started_datetime: NaiveDateTime,
-    message: &str,
-) -> Result<(), RepositoryError> {
-    SyncBufferRepository::new(connection).set_integration_result(
-        cursor,
-        started_datetime,
-        IntegrationResult::Ignored,
-        Some(message),
-    )
-}
 
 pub(crate) fn get_sync_buffer_for_table(
     connection: &StorageConnection,
@@ -168,8 +126,23 @@ mod test {
 
         // Recording results moves rows out of the pending set.
         let started = datetime_now();
-        write_sync_buffer_error(&connection, transacts[0].cursor, started, "Error 1").unwrap();
-        write_sync_buffer_error(&connection, trans_lines[0].cursor, started, "Error 2").unwrap();
+        let buffer_repo = SyncBufferRepository::new(&connection);
+        buffer_repo
+            .set_integration_result(
+                transacts[0].cursor,
+                started,
+                IntegrationResult::Error,
+                Some("Error 1"),
+            )
+            .unwrap();
+        buffer_repo
+            .set_integration_result(
+                trans_lines[0].cursor,
+                started,
+                IntegrationResult::Error,
+                Some("Error 2"),
+            )
+            .unwrap();
 
         assert!(
             get_sync_buffer_for_table(&connection, SyncAction::Upsert, "transact", 0, 100)
@@ -189,8 +162,12 @@ mod test {
         assert_eq!(r1.integration_result, Some(IntegrationResult::Error));
         assert_eq!(r1.integration_error.as_deref(), Some("Error 1"));
 
-        write_sync_buffer_success(&connection, names[0].cursor, started).unwrap();
-        write_sync_buffer_success(&connection, stores[0].cursor, started).unwrap();
+        buffer_repo
+            .set_integration_result(names[0].cursor, started, IntegrationResult::Success, None)
+            .unwrap();
+        buffer_repo
+            .set_integration_result(stores[0].cursor, started, IntegrationResult::Success, None)
+            .unwrap();
 
         assert!(
             get_sync_buffer_for_table(&connection, SyncAction::Upsert, "name", 0, 100)

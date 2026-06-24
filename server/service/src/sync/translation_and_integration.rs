@@ -1,8 +1,5 @@
-use super::{
-    sync_buffer::{write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success},
-    translations::{
-        FkChecker, IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators,
-    },
+use super::translations::{
+    FkChecker, IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators,
 };
 use log::{debug, warn};
 use repository::*;
@@ -93,41 +90,43 @@ impl RecordOutcome {
         }
     }
 
-    /// Write the record's sync_buffer result and tally it into `results`, matching the
-    /// per-record semantics of the old flow.
-    fn write(
+    /// Tally the record's result into `results` and produce its sync_buffer update (written in
+    /// one batched statement by the caller), matching the per-record semantics of the old flow.
+    fn into_buffer_update(
         self,
-        connection: &StorageConnection,
         cursor: i32,
         started: chrono::NaiveDateTime,
         results: &mut TranslationAndIntegrationResults,
-    ) -> Result<(), RepositoryError> {
-        match self.state {
+    ) -> IntegrationResultUpdate {
+        let (result, error) = match self.state {
             RecordState::Ok => {
-                write_sync_buffer_success(connection, cursor, started)?;
                 results.insert_success(&self.table_name);
+                (IntegrationResult::Success, None)
             }
             RecordState::Ignored(message) => {
-                write_sync_buffer_ignored(connection, cursor, started, &message)?;
                 results.insert_error(&self.table_name);
+                (IntegrationResult::Ignored, Some(message))
             }
             RecordState::NoTranslator => {
-                write_sync_buffer_error(
-                    connection,
-                    cursor,
-                    started,
-                    "Translator for record not found",
-                )?;
                 results.insert_error(&self.table_name);
+                (
+                    IntegrationResult::Error,
+                    Some("Translator for record not found".to_string()),
+                )
             }
             RecordState::Error(message) => {
-                write_sync_buffer_error(connection, cursor, started, &message)?;
                 results.insert_error(&self.table_name);
+                (IntegrationResult::Error, Some(message))
             }
-        }
+        };
         // record_id retained for parity with prior logging; not otherwise needed here.
         let _ = self.record_id;
-        Ok(())
+        IntegrationResultUpdate {
+            cursor,
+            started_datetime: started,
+            result,
+            error,
+        }
     }
 }
 
@@ -284,10 +283,13 @@ impl<'a> TranslationAndIntegration<'a> {
         // Integrate all accumulated operations as one batch, attributing results per cursor.
         self.integrate_batch(all_ops, &mut record_outcomes, &mut error_count)?;
 
-        // Write each record's final sync_buffer result + tally.
-        for (cursor, outcome) in record_outcomes {
-            outcome.write(self.connection, cursor, started, &mut self.result)?;
-        }
+        // Tally each record's result and collect its sync_buffer update; write them all in one
+        // batched statement (records in this call are all for the same table — see process_action).
+        let buffer_updates: Vec<IntegrationResultUpdate> = record_outcomes
+            .into_iter()
+            .map(|(cursor, outcome)| outcome.into_buffer_update(cursor, started, &mut self.result))
+            .collect();
+        SyncBufferRepository::new(self.connection).set_batch_integration_result(&buffer_updates)?;
 
         Ok(error_count)
     }
