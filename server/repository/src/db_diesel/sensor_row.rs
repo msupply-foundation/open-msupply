@@ -128,7 +128,14 @@ impl<'a> SensorRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._mark_deleted(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(sensor::table)
+            .filter(sensor::id.eq_any(ids))
+            .set(sensor::is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 }

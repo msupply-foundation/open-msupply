@@ -118,7 +118,12 @@ impl<'a> VVMStatusRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._delete(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(vvm_status.filter(id.eq_any(ids)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 }

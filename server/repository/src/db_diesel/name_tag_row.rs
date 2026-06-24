@@ -91,8 +91,13 @@ impl<'a> NameTagRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._delete(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(name_tag::table.filter(name_tag::id.eq_any(ids)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {

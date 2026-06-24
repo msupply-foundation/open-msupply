@@ -1,21 +1,19 @@
 use repository::{syncv7::SyncRecordSerializeError, ChangeLogInsertRow, InvoiceLineRow, Row};
 
-use crate::sync_v7::{
-    serde::{DeserializeResult, V7Upsert},
-    validate_translate_integrate::SyncContext,
-};
+use crate::sync_v7::validate_translate_integrate::SyncContext;
 
 /// Deserialise an invoice_line and, when this site is a transfer recipient
 /// (a remote site receiving the row for a store it doesn't own), null
 /// `stock_line_id` and `location_id` — those FKs reference records on the
 /// sending site that won't exist here.
 pub(crate) fn translate_invoice_line(
+    record_id: String,
     changelog_insert: ChangeLogInsertRow,
     owning_store_id: Option<&str>,
-    data: &serde_json::Value,
+    data: serde_json::Value,
     sync_context: &SyncContext,
-) -> DeserializeResult {
-    let mut row: InvoiceLineRow = serde_json::from_value(data.clone())
+) -> Result<Vec<(Row, String, Option<ChangeLogInsertRow>)>, SyncRecordSerializeError> {
+    let mut row: InvoiceLineRow = serde_json::from_value(data)
         .map_err(|e| SyncRecordSerializeError::SerdeError(e.to_string()))?;
 
     if let (SyncContext::Remote { active_stores, .. }, Some(store_id)) =
@@ -28,8 +26,9 @@ pub(crate) fn translate_invoice_line(
     }
 
     Ok(vec![(
-        V7Upsert::Row(Row::InvoiceLine(row)),
-        changelog_insert,
+        Row::InvoiceLine(row),
+        record_id,
+        Some(changelog_insert),
     )])
 }
 
@@ -70,11 +69,13 @@ mod test {
         }
     }
 
-    fn translated(result: DeserializeResult) -> InvoiceLineRow {
-        let (upsert, _) = result.unwrap().pop().unwrap();
-        match upsert {
-            V7Upsert::Row(Row::InvoiceLine(row)) => row,
-            other => panic!("expected V7Upsert::Row(Row::InvoiceLine), got {other:?}"),
+    fn translated(
+        result: Result<Vec<(Row, String, Option<ChangeLogInsertRow>)>, SyncRecordSerializeError>,
+    ) -> InvoiceLineRow {
+        let (row, _record_id, _changelog) = result.unwrap().pop().unwrap();
+        match row {
+            Row::InvoiceLine(row) => row,
+            other => panic!("expected Row::InvoiceLine, got {other:?}"),
         }
     }
 
@@ -88,9 +89,10 @@ mod test {
         };
 
         let translated_row = translated(translate_invoice_line(
+            input.id.clone(),
             changelog_for(&input),
             Some("sender_store"),
-            &data,
+            data,
             &ctx,
         ));
 
@@ -108,9 +110,10 @@ mod test {
         };
 
         let translated_row = translated(translate_invoice_line(
+            input.id.clone(),
             changelog_for(&input),
             Some("our_store"),
-            &data,
+            data.clone(),
             &ctx,
         ));
 
@@ -127,9 +130,10 @@ mod test {
         };
 
         let translated_row = translated(translate_invoice_line(
+            input.id.clone(),
             changelog_for(&input),
             Some("any_store"),
-            &data,
+            data,
             &ctx,
         ));
 

@@ -16,12 +16,12 @@ define_batch_table! {
     table: asset_catalogue_item (id) {
         id -> Text,
         sub_catalogue -> Text,
-        asset_category_id -> Text,
-        asset_class_id -> Text,
+        asset_category_id as category_id -> Text,
+        asset_class_id as class_id -> Text,
         code -> Text,
         manufacturer -> Nullable<Text>,
         model -> Text,
-        asset_catalogue_type_id -> Text,
+        asset_catalogue_type_id as type_id -> Text,
         properties -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
     }
@@ -124,5 +124,59 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
+    }
+}
+
+#[cfg(test)]
+mod batch_upsert_test {
+    use crate::db_diesel::assets::asset_category_row::{AssetCategoryRow, AssetCategoryRowRepository};
+    use crate::db_diesel::assets::asset_class_row::{AssetClassRow, AssetClassRowRepository};
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+
+    fn category(id: &str, class_id: &str) -> AssetCategoryRow {
+        AssetCategoryRow {
+            id: id.to_string(),
+            name: format!("name_{id}"),
+            // `class_id` is remapped to column `asset_class_id` via
+            // `#[diesel(column_name = ..)]` — the generated `WalkRow` must bind the
+            // FIELD (class_id) to the COLUMN (asset_class_id).
+            class_id: class_id.to_string(),
+        }
+    }
+
+    /// Proves the generated raw-SQL `batch_upsert` binds a `#[diesel(column_name)]`
+    /// remapped field to the correct column (asset_category.class_id -> asset_class_id),
+    /// in one multi-row `INSERT ... ON CONFLICT DO UPDATE` on SQLite.
+    #[actix_rt::test]
+    async fn generated_batch_upsert_round_trips_remapped_columns() {
+        let (_, con, _, _) = setup_all(
+            "asset_category_generated_batch_upsert",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // FK parent for class_id -> asset_class_id.
+        AssetClassRowRepository::new(&con)
+            ._upsert_one(&AssetClassRow {
+                id: "class_1".to_string(),
+                name: "class".to_string(),
+            })
+            .unwrap();
+
+        let repo = AssetCategoryRowRepository::new(&con);
+        let row1 = category("cat_1", "class_1");
+        let row2 = category("cat_2", "class_1");
+
+        repo.batch_upsert(vec![&row1, &row2]).unwrap();
+        assert_eq!(repo.find_one_by_id("cat_1").unwrap(), Some(row1));
+        assert_eq!(repo.find_one_by_id("cat_2").unwrap(), Some(row2));
+
+        // Conflict on cat_2 -> UPDATE (name flips); cat_3 new -> INSERT.
+        let mut row2_v2 = category("cat_2", "class_1");
+        row2_v2.name = "renamed".to_string();
+        let row3 = category("cat_3", "class_1");
+        repo.batch_upsert(vec![&row2_v2, &row3]).unwrap();
+        assert_eq!(repo.find_one_by_id("cat_2").unwrap(), Some(row2_v2));
+        assert_eq!(repo.find_one_by_id("cat_3").unwrap(), Some(row3));
     }
 }

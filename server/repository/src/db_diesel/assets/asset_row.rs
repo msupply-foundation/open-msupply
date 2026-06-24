@@ -18,10 +18,10 @@ define_batch_table! {
         asset_number -> Nullable<Text>,
         asset_category_id -> Nullable<Text>,
         asset_class_id -> Nullable<Text>,
-        asset_catalogue_type_id -> Nullable<Text>,
+        asset_catalogue_type_id as asset_type_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         serial_number -> Nullable<Text>,
-        asset_catalogue_item_id -> Nullable<Text>,
+        asset_catalogue_item_id as catalogue_item_id -> Nullable<Text>,
         installation_date -> Nullable<Date>,
         replacement_date -> Nullable<Date>,
         created_datetime -> Timestamp,
@@ -165,7 +165,13 @@ impl<'a> AssetRowRepository<'a> {
         Ok(exists)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._mark_deleted(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(asset.filter(id.eq_any(ids)))
+            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 }

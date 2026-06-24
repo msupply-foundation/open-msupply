@@ -1,15 +1,9 @@
-use futures_util::stream::TakeUntil;
 use itertools::Itertools;
 
 use crate::{
-    syncv7::INTEGRATION_ORDER, BatchOperation, ChangelogTableName, DeleteOutcome, RepositoryError,
-    Row, StorageConnection,
+    batch_delete, max_rows_per_chunk, syncv7::INTEGRATION_ORDER, BatchOperation,
+    ChangelogTableName, RepositoryError, Row, StorageConnection,
 };
-
-enum GroupedBatchOperations {
-    
-
-}
 
 /// A single DB operation to run as part of a batch. Generic over:
 /// - `T` (`extra`): caller payload carried alongside the operation (e.g. a sync cursor). Because
@@ -36,9 +30,6 @@ impl BatchOperation {
     }
 }
 
-/// Postgres caps a statement at 65535 bind parameters; stay under it with headroom.
-const PARAM_BUDGET: usize = 60000;
-
 /// Result for one de-duplicated operation group, in execution order. Carries the `operation`
 /// that ran, every input `extra` that shared the group's `(dedup_key, priority, op-type)`, and
 /// `error` if it failed.
@@ -50,126 +41,137 @@ pub struct BatchDbOperationResult<T> {
 
 /// FK-order rank for a table (lower = integrated earlier). Tables missing from
 /// `INTEGRATION_ORDER` sort last.
-fn integration_rank(table_name: &ChangelogTableName) -> usize {
+fn integration_rank(table_name: &ChangelogTableName) -> isize {
     INTEGRATION_ORDER
         .iter()
         .position(|t| t == table_name)
-        .unwrap_or(usize::MAX)
+        .map(|pos| pos as isize)
+        .unwrap_or(isize::MAX)
 }
 
-fn attempt_upsert(con: &StorageConnection, upserts: Vec<(BatchOperation, Vec<T>)>, max_number_of_rows: usize) -> (Vec<(BatchOperation, Vec<T>)>, Option<RepositoryError>)
-
-{
-    let mut taken = Vec::new();
-    if cfg!(feature = "postgres") {
-        con.transaction_sync_etc(|sub| {
-            taken = 
-        }, false)
-            .map_err(|e| e.to_inner_error())
-    } else {
-        f(con);
-        Ok(())
-    }
-}
-
-fn attempt<R, E, F>(con: &StorageConnection, f: F) -> Result<R, RepositoryError>
-where
-    F: FnOnce(&StorageConnection) -> Result<R, RepositoryError>,
-{
-    if cfg!(feature = "postgres") {
-        con.transaction_sync_etc(|sub| f(sub), false)
-            .map_err(|e| e.to_inner_error())
-    } else {
-        f(con)
-    }
-}
-
-fn batch_operation<T>(
+fn attempt_upsert<'a>(
     con: &StorageConnection,
-    operations: Vec<(BatchOperation, Vec<T>)>,
-) -> Vec<(BatchOperation, Vec<T>, Option<RepositoryError>)> {
+    upserts: &[&'a BatchOperation],
+    max_number_of_rows: usize,
+    row: &'a Row,
+    // Needed to populate default result
+    op: &'a BatchOperation,
+    wrap_record_in_tx: bool,
+) -> (Vec<(&'a BatchOperation, &'a Row)>, Option<RepositoryError>) {
+    if wrap_record_in_tx {
+        match con.transaction_sync_etc(
+            |tx_con| Ok(row.batch_upsert(tx_con, max_number_of_rows, &upserts)),
+            false,
+        ) {
+            Ok(result) => result,
+            // If transaction fails, do one by one starting with next op
+            Err(e) => (vec![(op, row)], Some(e.into())),
+        }
+    } else {
+        row.batch_upsert(con, max_number_of_rows, &upserts)
+    }
+}
+
+fn attempt_delete<'a>(
+    con: &StorageConnection,
+    deletes: &[&'a BatchOperation],
+    max_number_of_rows: usize,
+    table_name: &'a ChangelogTableName,
+    // Needed to populate default result
+    op: &'a BatchOperation,
+    wrap_record_in_tx: bool,
+) -> (
+    Vec<(&'a BatchOperation, &'a ChangelogTableName)>,
+    Option<RepositoryError>,
+) {
+    // `batch_delete` returns a typed `BatchDeleteError` (so v7 can distinguish
+    // `NoDeletePath`); here we just collapse it to a `RepositoryError`.
+    let to_repo_error = |(ops, error): (
+        Vec<(&'a BatchOperation, &'a ChangelogTableName)>,
+        Option<crate::BatchDeleteError>,
+    )| (ops, error.map(Into::into));
+
+    if wrap_record_in_tx {
+        match con.transaction_sync_etc(
+            |tx_con| {
+                Ok(to_repo_error(batch_delete(
+                    tx_con,
+                    table_name,
+                    max_number_of_rows,
+                    &deletes,
+                )))
+            },
+            false,
+        ) {
+            Ok(result) => result,
+            Err(e) => (vec![(op, table_name)], Some(e.into())),
+        }
+    } else {
+        to_repo_error(batch_delete(con, table_name, max_number_of_rows, &deletes))
+    }
+}
+
+fn batch_operation<'a>(
+    con: &StorageConnection,
+    operations: Vec<&'a BatchOperation>,
+    wrap_record_in_tx: bool,
+) -> Vec<Option<RepositoryError>> {
     let mut completed = Vec::new();
-    let mut remaining = operations;
-    // Infinite loop protection ?
-    loop {
+    while completed.len() < operations.len() {
+        let remaining = &operations[completed.len()..];
         // Exit when no more
         let Some(first) = &remaining.first() else {
             break;
         };
-        let done = match &first.0 {
+        let done: Vec<Option<RepositoryError>> = match &first {
             BatchOperation::Upsert(row) => {
+                // `number_of_columns() == 0` => variant isn't wired with `define_batch_table!`
+                // (per-row fallback), so send one at a time; otherwise chunk under the budget.
                 let max_number_of_rows = match row.number_of_columns() {
                     0 => 1,
-                    columns => (PARAM_BUDGET / columns).max(1),
+                    columns => max_rows_per_chunk(columns),
                 };
 
-                match attempt(con, |con| {
-                    Ok(row.batch_upsert(con, max_number_of_rows, &mut remaining))
-                }) {
-                    Ok(rows, extra, None) => remaining
-                        .drain(0..number_of_rows)
+                match attempt_upsert(
+                    con,
+                    remaining,
+                    max_number_of_rows,
+                    &row,
+                    first,
+                    wrap_record_in_tx,
+                ) {
+                    (rows, None) => rows.into_iter().map(|_| None).collect(),
+                    (rows, Some(_)) => rows
                         .into_iter()
-                        .map(|(op, extra)| (op, extra, None))
+                        .map(|(op, row)| {
+                            attempt_upsert(con, &[op], 1, row, op, wrap_record_in_tx).1
+                        })
                         .collect(),
-                    Err((_, number_of_rows)) => {
-                        // Integrate one by one
-                        remaining
-                            .drain(0..number_of_rows)
-                            .into_iter()
-                            .map_while(|(op, extra)| match op {
-                                BatchOperation::Upsert(row)
-                                    if row.table_name() == first.0.table_name() =>
-                                {
-                                    Some(op, row, extra)
-                                }
-                                _ => None,
-                            })
-                            .map(|reference_row_row| {
-                                match attempt_upsert(con, |con| {
-                                    reference_row_row.batch_upsert(con, &vec![&reference_row_row])
-                                }) {
-                                    Ok(_) => (row, extra, None),
-                                    Err((e, _)) => (row, extra, Some(e)),
-                                }
-                            })
-                            .collect()
-                    }
                 }
             }
             BatchOperation::Delete { table_name, .. } => {
-                let number_of_statements = PARAM_BUDGET;
-                // Extract consequitive record ids matching this table_name
-                let record_ids = remaining
-                    .iter()
-                    .take(number_of_statements)
-                    .map_while(|(op, _)| match op {
-                        BatchOperation::Delete {
-                            record_id,
-                            table_name: tn,
-                        } if tn == table_name => Some(record_id.as_str()),
-                        _ => None,
-                    })
-                    .collect::<Vec<&str>>();
-
-                let err = match attempt_delete(con, |con| {
-                    Row::batch_delete(con, table_name, &record_ids)
-                }) {
-                    Ok(DeleteOutcome::NoDeletePath) => Some(RepositoryError::as_db_error(
-                        "Cannot delete record with this type",
-                        Some(table_name),
-                    )),
-                    Err(e) => Some(e),
-                    Ok(DeleteOutcome::Deleted) => None,
-                };
-
-                remaining
-                    .drain(0..record_ids.len())
-                    .into_iter()
-                    .map(|(op, extra)| (op, extra, err.clone()))
-                    .collect()
+                // A delete binds one param per id (`WHERE id IN (?, ?, ...)`).
+                let max_number_of_rows = max_rows_per_chunk(1);
+                // Extract consecutive record ids matching this table_name
+                match attempt_delete(
+                    con,
+                    remaining,
+                    max_number_of_rows,
+                    &table_name,
+                    first,
+                    wrap_record_in_tx,
+                ) {
+                    (ops, None) => ops.into_iter().map(|_| None).collect(),
+                    (ops, Some(_)) => ops
+                        .into_iter()
+                        .map(|(op, table_name)| {
+                            attempt_delete(con, &[op], 1, table_name, op, wrap_record_in_tx).1
+                        })
+                        .collect(),
+                }
             }
         };
-        completed.extend(done);
+        completed.extend(done.into_iter());
     }
 
     completed
@@ -178,11 +180,12 @@ fn batch_operation<T>(
 pub fn batch_operations<T, D>(
     con: &StorageConnection,
     operations: Vec<BatchDbOperation<T, D>>,
+    wrap_record_in_tx: bool,
 ) -> Vec<BatchDbOperationResult<T>>
 where
     D: std::hash::Hash + Eq + Ord,
 {
-    let deduped_sorted_grouped = operations
+    let deduped_and_sorted: Vec<(BatchOperation, Vec<T>)> = operations
         .into_iter()
         .map(|op| {
             let BatchDbOperation {
@@ -215,25 +218,40 @@ where
             )
         })
         // (p, u, t), vec(o, vec(e))
-        .sorted_by_key(|&(priority, is_upsert, table_name)| {
-            let ranked = integration_rank(&table_name);
+        .sorted_by_key(|((priority, is_upsert, table_name), _)| {
+            let ranked = integration_rank(table_name);
 
+            // `sorted_by_key` is ascending, so wrap the descending keys in `Reverse`:
+            // - highest priority first
+            // - upserts (true) before deletes (false)
+            // - within upserts: FK parents first (`ranked` asc); within deletes: children first
+            //   (`-ranked` asc == `ranked` desc)
             (
-                priority,
-                is_upsert,
-                if is_upsert { ranked } else { ranked * -1 },
+                std::cmp::Reverse(*priority),
+                std::cmp::Reverse(*is_upsert),
+                if *is_upsert { ranked } else { ranked * -1 },
             )
         })
-        .map(|(_, group)| group)
+        .map(|(_, op_with_extra)| op_with_extra)
         .collect();
 
     // Execute
-    let mut results = Vec::new();
-    for (_, group) in deduped_sorted_grouped {
-        batch_operation
-    }
+    let errors = batch_operation(
+        con,
+        deduped_and_sorted.iter().map(|(op, _)| op).collect(),
+        wrap_record_in_tx,
+    );
 
-    results
+    // Merge errors in result
+    deduped_and_sorted
+        .into_iter()
+        .zip(errors.into_iter())
+        .map(|((operation, extra), error)| BatchDbOperationResult {
+            operation,
+            extra,
+            error,
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -272,7 +290,7 @@ mod test {
             upsert(0, "u1", 1usize, unit("u1", "one")),
             upsert(0, "u2", 2usize, unit("u2", "two")),
         ];
-        let results = perform_batch_operations(&con, ops);
+        let results = batch_operations(&con, ops, false);
 
         assert_eq!(results.len(), 2);
         assert!(results.iter().all(|r| r.error.is_none()));
@@ -298,7 +316,7 @@ mod test {
             upsert(0, "u1", "second", unit("u1", "second")),
             upsert(0, "u1", "third", unit("u1", "third")),
         ];
-        let results = perform_batch_operations(&con, ops);
+        let results = batch_operations(&con, ops, false);
 
         assert_eq!(results.len(), 1);
         let mut extras = results[0].extra.clone();
@@ -323,7 +341,7 @@ mod test {
             upsert(1, "u_low", "low", unit("u_low", "low")),
             upsert(5, "u_high", "high", unit("u_high", "high")),
         ];
-        let results = perform_batch_operations(&con, ops);
+        let results = batch_operations(&con, ops, false);
 
         assert_eq!(results.len(), 2);
         assert_eq!(results[0].extra, vec!["high"]);
@@ -357,7 +375,7 @@ mod test {
             extra: (),
             dedup_key: "u1".to_string(),
         }];
-        let results = perform_batch_operations(&con, ops);
+        let results = batch_operations(&con, ops, false);
 
         assert_eq!(results.len(), 1);
         assert!(results[0].error.is_none());
@@ -400,9 +418,10 @@ mod test {
         }
 
         // Three deletes of the same table => one batched `UPDATE ... WHERE id IN (...)`.
-        let results = perform_batch_operations(
+        let results = batch_operations(
             &con,
             vec![delete("d1", "d1"), delete("d2", "d2"), delete("d3", "d3")],
+            false,
         );
 
         assert_eq!(results.len(), 3);
@@ -430,7 +449,7 @@ mod test {
             delete("old", "old"),
             upsert(0, "new", (), unit("new", "new")),
         ];
-        let results = perform_batch_operations(&con, ops);
+        let results = batch_operations(&con, ops, false);
 
         assert_eq!(results.len(), 2);
         // Upsert is ordered first.
@@ -442,5 +461,84 @@ mod test {
         assert!(results.iter().all(|r| r.error.is_none()));
         assert!(repo.find_one_by_id("new").unwrap().is_some()); // upsert applied
         assert!(!repo.find_one_by_id("old").unwrap().unwrap().is_active); // delete (soft) applied
+    }
+
+    #[actix_rt::test]
+    async fn no_delete_path_surfaces_error_per_group() {
+        let (_, con, _, _) = setup_all(
+            "perform_batch_operations_no_delete_path",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let repo = UnitRowRepository::new(&con);
+        repo._upsert_one(&UnitRow {
+            id: "u1".to_string(),
+            is_active: true,
+            ..Default::default()
+        })
+        .unwrap();
+
+        // A deletable table (Unit) and a non-deletable one (Barcode has no batch delete path).
+        let ops: Vec<BatchDbOperation<&str, String>> = vec![
+            BatchDbOperation {
+                priority: 0,
+                operation: BatchOperation::Delete {
+                    table_name: ChangelogTableName::Unit,
+                    record_id: "u1".to_string(),
+                },
+                extra: "unit",
+                dedup_key: "u1".to_string(),
+            },
+            BatchDbOperation {
+                priority: 0,
+                operation: BatchOperation::Delete {
+                    table_name: ChangelogTableName::Barcode,
+                    record_id: "b1".to_string(),
+                },
+                extra: "barcode",
+                dedup_key: "b1".to_string(),
+            },
+        ];
+        let results = batch_operations(&con, ops, false);
+
+        assert_eq!(results.len(), 2);
+        let unit_result = results.iter().find(|r| r.extra == vec!["unit"]).unwrap();
+        let barcode_result = results.iter().find(|r| r.extra == vec!["barcode"]).unwrap();
+        // Unit delete succeeds; Barcode (no delete path) reports an error.
+        assert!(unit_result.error.is_none());
+        assert!(barcode_result.error.is_some());
+        assert!(!repo.find_one_by_id("u1").unwrap().unwrap().is_active);
+    }
+
+    #[actix_rt::test]
+    async fn larger_batch_upsert_writes_all() {
+        let (_, con, _, _) = setup_all(
+            "perform_batch_operations_larger_batch",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let ops: Vec<BatchDbOperation<(), String>> = (0..250)
+            .map(|i| {
+                upsert(
+                    0,
+                    &format!("u{i}"),
+                    (),
+                    unit(&format!("u{i}"), &format!("name{i}")),
+                )
+            })
+            .collect();
+        let results = batch_operations(&con, ops, false);
+
+        assert_eq!(results.len(), 250);
+        assert!(results.iter().all(|r| r.error.is_none()));
+
+        let repo = UnitRowRepository::new(&con);
+        assert_eq!(repo.find_one_by_id("u0").unwrap().unwrap().name, "name0");
+        assert_eq!(
+            repo.find_one_by_id("u249").unwrap().unwrap().name,
+            "name249"
+        );
     }
 }

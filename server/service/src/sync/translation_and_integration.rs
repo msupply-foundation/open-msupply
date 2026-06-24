@@ -185,9 +185,12 @@ impl IntegrationOperation {
     ) -> Result<(), RepositoryError> {
         match self {
             IntegrationOperation::Upsert(row) => {
-                // v5/v6: write the row, then generate + insert its changelog(s) with
-                // the originating site id.
-                row.integrate_no_changelog(connection)?;
+                // v5/v6: write the row (via the batch path, single-element), then generate
+                // + insert its changelog(s) with the originating site id.
+                let op = BatchOperation::Upsert(row.clone());
+                if let (_, Some(error)) = row.batch_upsert(connection, 1, &[&op]) {
+                    return Err(error);
+                }
                 let changelogs = row.generate_changelog(
                     connection,
                     RowActionType::Upsert,
@@ -224,7 +227,17 @@ impl IntegrationOperation {
                     record_id,
                     SourceSiteId::SourceSiteId(source_site_id),
                 )?;
-                integrate_delete_no_changelog(connection, table_name, record_id)?;
+                // Delete the row via the batch path (single-element). A `NoDeletePath`
+                // outcome means the table isn't deleted via sync — a no-op here, matching
+                // the previous v5/v6 behaviour (it swallowed `NoDeletePath`).
+                let op = BatchOperation::Delete {
+                    table_name: table_name.clone(),
+                    record_id: record_id.clone(),
+                };
+                match batch_delete(connection, table_name, 1, &[&op]) {
+                    (_, None) | (_, Some(BatchDeleteError::NoDeletePath)) => {}
+                    (_, Some(BatchDeleteError::RepositoryError(error))) => return Err(error),
+                }
                 let changelog_repo = ChangelogRepository::new(connection);
                 for changelog in &changelogs {
                     changelog_repo.insert(changelog)?;

@@ -98,7 +98,15 @@ impl<'a> MasterListNameJoinRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._delete(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(
+            master_list_name_join_with_links::table
+                .filter(master_list_name_join_with_links::id.eq_any(ids)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 }

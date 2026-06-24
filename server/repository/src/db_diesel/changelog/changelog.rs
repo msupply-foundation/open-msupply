@@ -381,12 +381,19 @@ impl<'a> ChangelogRepository<'a> {
     }
 
     pub fn batch_insert(&self, rows: Vec<ChangeLogInsertRow>) -> Result<(), RepositoryError> {
-        //TODO: Need to handle batch insert size limit
+        if rows.is_empty() {
+            return Ok(());
+        }
         ChangelogCursorTracker::track(self.connection)?;
 
-        diesel::insert_into(changelog_with_links::table)
-            .values(rows)
-            .execute(self.connection.lock().connection())?;
+        // `ChangeLogInsertRow` binds 7 columns per row (cursor is auto-assigned). Chunk under
+        // the backend bind-parameter limit so large batches don't exceed it.
+        let max_rows = crate::max_rows_per_chunk(7);
+        for chunk in rows.chunks(max_rows) {
+            diesel::insert_into(changelog_with_links::table)
+                .values(chunk)
+                .execute(self.connection.lock().connection())?;
+        }
         self.connection
             .notify(TransactionNotification::ChangelogInsert);
         Ok(())

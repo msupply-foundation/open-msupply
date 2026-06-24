@@ -203,9 +203,12 @@ impl<'a> RequisitionRowRepository<'a> {
         Ok(exists)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
         diesel::delete(
-            requisition_with_links::table.filter(requisition_with_links::id.eq(record_id)),
+            requisition_with_links::table.filter(requisition_with_links::id.eq_any(ids)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(())

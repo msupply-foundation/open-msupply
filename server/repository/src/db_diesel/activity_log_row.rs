@@ -187,7 +187,7 @@ impl<'a> ActivityLogRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub(crate) fn delete_no_changelog(&self, _record_id: &str) -> Result<(), RepositoryError> {
+    pub(crate) fn _batch_delete(&self, _ids: &[&str]) -> Result<(), RepositoryError> {
         // Not deleting in tests, just want to check asserted_deleted
         Ok(())
     }

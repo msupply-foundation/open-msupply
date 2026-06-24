@@ -2,7 +2,7 @@ use std::{ops::Deref, str::FromStr};
 
 use super::StorageConnection;
 use crate::{
-    diesel_macros::{diesel_json_type, diesel_string_enum},
+    diesel_macros::{define_batch_table, diesel_json_type, diesel_string_enum},
     migrations::Version,
     repository_error::RepositoryError,
     KeyType, KeyValueStoreRepository,
@@ -222,6 +222,80 @@ pub struct SyncBufferRepository<'a> {
     connection: &'a StorageConnection,
 }
 
+pub struct IntegrationResultUpdate {
+    pub cursor: i32,
+    pub started_datetime: NaiveDateTime,
+    pub result: IntegrationResult,
+    pub error: Option<String>,
+}
+
+// Reduced view of `sync_buffer` for the integration-result batch upsert. It maps onto the
+// SAME physical table but lists only the columns we write: the `cursor` conflict target, the
+// integration_* outcome columns we update, plus the table's NOT-NULL columns (which the INSERT
+// candidate row must supply even though they're never updated — verified: the DB validates
+// NOT-NULL before resolving the conflict). `update: [..]` restricts `ON CONFLICT DO UPDATE SET`
+// to just the integration_* columns, so the bogus NOT-NULL fillers are insert-only and never
+// overwrite the existing row's real data (the cursor always exists -> conflict always fires).
+define_batch_table! {
+    struct: SyncBufferIntegrationResultRow,
+    repo: SyncBufferIntegrationResultRepository,
+    update: [
+        integration_started_datetime,
+        integration_datetime,
+        integration_result,
+        integration_error,
+        is_integrated,
+    ],
+    table: #[sql_name = "sync_buffer"] sync_buffer_integration_result (cursor) {
+        cursor -> Integer,
+        // Updated columns.
+        integration_started_datetime -> Nullable<Timestamp>,
+        integration_datetime -> Nullable<Timestamp>,
+        integration_result -> Nullable<Text>,
+        integration_error -> Nullable<Text>,
+        is_integrated -> Bool,
+        // NOT-NULL fillers (insert-only; never in DO UPDATE SET).
+        record_id -> Text,
+        received_datetime -> Timestamp,
+        table_name -> Text,
+        action -> Text,
+        data -> Text,
+        sync_version -> Text,
+        source_site_id -> Integer,
+    }
+}
+
+/// Thin repo wrapper that `define_batch_table!` hangs the generated `batch_upsert` off.
+struct SyncBufferIntegrationResultRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> SyncBufferIntegrationResultRepository<'a> {
+    fn new(connection: &'a StorageConnection) -> Self {
+        Self { connection }
+    }
+}
+
+#[derive(Clone, Insertable, AsChangeset)]
+#[diesel(table_name = sync_buffer_integration_result)]
+struct SyncBufferIntegrationResultRow {
+    cursor: i32,
+    integration_started_datetime: Option<NaiveDateTime>,
+    integration_datetime: Option<NaiveDateTime>,
+    integration_result: Option<String>,
+    integration_error: Option<String>,
+    is_integrated: bool,
+    // Bogus fillers — present only so the INSERT candidate row satisfies NOT-NULL; never
+    // written on conflict (not in the update set).
+    record_id: String,
+    received_datetime: NaiveDateTime,
+    table_name: String,
+    action: String,
+    data: String,
+    sync_version: String,
+    source_site_id: i32,
+}
+
 impl<'a> SyncBufferRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         SyncBufferRepository { connection }
@@ -303,6 +377,50 @@ impl<'a> SyncBufferRepository<'a> {
 
         let count: i64 = q.count().get_result(self.connection.lock().connection())?;
         Ok(count)
+    }
+
+    /// Records the integration outcome for a batch of buffer rows in ONE statement on both
+    /// backends, via the generated `INSERT ... ON CONFLICT(cursor) DO UPDATE` over a reduced
+    /// view of `sync_buffer`. Each cursor already exists, so every row hits `DO UPDATE`; the
+    /// bogus NOT-NULL filler values are insert-only and never overwrite real data. The caller
+    /// wraps in a transaction.
+    pub fn set_batch_integration_result(
+        &self,
+        updates: &[IntegrationResultUpdate],
+    ) -> Result<(), RepositoryError> {
+        if updates.is_empty() {
+            return Ok(());
+        }
+        // One `integration_datetime` for the whole batch (the rows all complete together).
+        let integration_datetime = Utc::now().naive_utc();
+        let rows: Vec<SyncBufferIntegrationResultRow> = updates
+            .iter()
+            .map(|u| SyncBufferIntegrationResultRow {
+                cursor: u.cursor,
+                integration_started_datetime: Some(u.started_datetime),
+                integration_datetime: Some(integration_datetime),
+                integration_result: Some(u.result.as_ref().to_string()),
+                integration_error: u.error.clone(),
+                is_integrated: true,
+                // Bogus fillers (never written on conflict).
+                record_id: String::new(),
+                received_datetime: integration_datetime,
+                table_name: String::new(),
+                action: String::new(),
+                data: String::new(),
+                sync_version: String::new(),
+                source_site_id: 0,
+            })
+            .collect();
+        // Chunk under the backend bind-parameter limit: 10k updates × 13 columns would
+        // otherwise blow past it.
+        let max_rows =
+            crate::max_rows_per_chunk(SyncBufferIntegrationResultRow::BATCH_COLUMN_COUNT);
+        let repo = SyncBufferIntegrationResultRepository::new(self.connection);
+        for chunk in rows.chunks(max_rows) {
+            repo.batch_upsert(chunk.iter().collect())?;
+        }
+        Ok(())
     }
 
     /// Records the outcome of integrating a single buffer row.
@@ -557,6 +675,115 @@ mod test {
             .unwrap();
         assert_eq!(r3.integration_result, Some(IntegrationResult::Ignored));
         assert_eq!(r3.integration_error.as_deref(), Some("not for us"));
+    }
+
+    /// Drives all three distinct outcomes through a SINGLE `set_batch_integration_result`
+    /// call, proving the one-statement `UPDATE ... FROM (VALUES ...)` applies the correct
+    /// per-row result/error on both backends.
+    #[actix_rt::test]
+    async fn test_sync_buffer_set_batch_integration_result() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_sync_buffer_set_batch_integration_result",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SyncBufferRepository::new(&connection);
+
+        repo.insert_many(&[
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                ..insert("br1", "store")
+            },
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                ..insert("br2", "store")
+            },
+            SyncBufferRowInsert {
+                source_site_id: 1,
+                ..insert("br3", "store")
+            },
+        ])
+        .unwrap();
+
+        let rows = repo
+            .pending_ordered_by_cursor(PendingQuery {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                reference_id: None,
+                table_name: "store",
+                action: SyncAction::Upsert,
+                direction: CursorDirection::Asc,
+                limit: i64::MAX,
+            })
+            .unwrap();
+        assert_eq!(rows.len(), 3);
+
+        let started = chrono::Utc::now().naive_utc();
+        // One call, three heterogeneous outcomes -> one UPDATE ... FROM (VALUES ...).
+        repo.set_batch_integration_result(&[
+            IntegrationResultUpdate {
+                cursor: rows[0].cursor,
+                started_datetime: started,
+                result: IntegrationResult::Success,
+                error: None,
+            },
+            IntegrationResultUpdate {
+                cursor: rows[1].cursor,
+                started_datetime: started,
+                result: IntegrationResult::Error,
+                error: Some("oh no".to_string()),
+            },
+            IntegrationResultUpdate {
+                cursor: rows[2].cursor,
+                started_datetime: started,
+                result: IntegrationResult::Ignored,
+                error: Some("not for us".to_string()),
+            },
+        ])
+        .unwrap();
+
+        // No rows pending after recording results.
+        let pending = repo
+            .pending_ordered_by_cursor(PendingQuery {
+                source_site_id: 1,
+                sync_version: SyncVersion::V5V6,
+                reference_id: None,
+                table_name: "store",
+                action: SyncAction::Upsert,
+                direction: CursorDirection::Asc,
+                limit: i64::MAX,
+            })
+            .unwrap();
+        assert!(pending.is_empty());
+
+        let br1 = repo
+            .find_latest_by_record_id_slow_unindexed("br1")
+            .unwrap()
+            .unwrap();
+        assert_eq!(br1.integration_result, Some(IntegrationResult::Success));
+        assert_eq!(br1.integration_error, None);
+        assert!(br1.integration_started_datetime.is_some());
+        assert!(br1.integration_datetime.is_some());
+        // The bogus NOT-NULL fillers in the INSERT candidate row must NOT overwrite the
+        // existing row on conflict (they're insert-only, not in DO UPDATE SET). If they
+        // had, record_id would be "" (and this lookup-by-record-id would have returned None)
+        // and table_name would be "" instead of the original "store".
+        assert_eq!(br1.record_id, "br1");
+        assert_eq!(br1.table_name, "store");
+
+        let br2 = repo
+            .find_latest_by_record_id_slow_unindexed("br2")
+            .unwrap()
+            .unwrap();
+        assert_eq!(br2.integration_result, Some(IntegrationResult::Error));
+        assert_eq!(br2.integration_error.as_deref(), Some("oh no"));
+
+        let br3 = repo
+            .find_latest_by_record_id_slow_unindexed("br3")
+            .unwrap()
+            .unwrap();
+        assert_eq!(br3.integration_result, Some(IntegrationResult::Ignored));
+        assert_eq!(br3.integration_error.as_deref(), Some("not for us"));
     }
 
     #[actix_rt::test]

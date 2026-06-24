@@ -9774,6 +9774,7 @@ dependencies = [
  "headless_chrome",
  "hex",
  "httpmock",
+ "itertools 0.14.0",
  "jsonschema",
  "jsonwebtoken",
  "lettre",

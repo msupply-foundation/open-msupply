@@ -98,8 +98,13 @@ impl<'a> DiagnosisRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._delete(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(diagnosis.filter(id.eq_any(ids)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn delete(&self, diagnosis_id: &str) -> Result<(), RepositoryError> {
@@ -113,4 +118,3 @@ impl<'a> DiagnosisRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
-

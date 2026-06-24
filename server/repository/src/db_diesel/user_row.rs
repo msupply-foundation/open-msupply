@@ -27,7 +27,6 @@ define_batch_table! {
     }
 }
 
-
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -175,8 +174,13 @@ impl<'a> UserAccountRowRepository<'a> {
         Ok(result)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._delete_by_id(record_id)?;
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(user_account::table)
+            .filter(user_account::id.eq_any(ids))
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

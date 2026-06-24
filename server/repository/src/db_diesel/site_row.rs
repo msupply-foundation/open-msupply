@@ -115,13 +115,16 @@ impl<'a> SiteRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        // record_id is the og_id (site id is i32); look up the row to find the integer id,
-        // matching the old delete_sync behaviour.
-        let Some(site) = self.find_one_by_og_id(record_id)? else {
-            return Ok(());
-        };
-        self._delete(site.id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        // Each id is an og_id requiring its own lookup to resolve the integer pk,
+        // so this can't be a single set-based statement — loop per id.
+        for record_id in ids {
+            // og_id -> integer pk lookup, matching the old delete_sync behaviour.
+            if let Some(site) = self.find_one_by_og_id(record_id)? {
+                self._delete(site.id)?;
+            }
+        }
+        Ok(())
     }
 }
 

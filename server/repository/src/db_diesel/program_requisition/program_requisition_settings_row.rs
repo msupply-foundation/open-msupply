@@ -107,8 +107,16 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._delete(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(
+            program_requisition_settings::table
+                .filter(program_requisition_settings::id.eq_any(ids)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn delete(&self, settings_id: &str) -> Result<(), RepositoryError> {
@@ -122,4 +130,3 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
-

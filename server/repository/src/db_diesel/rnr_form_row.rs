@@ -139,8 +139,11 @@ impl<'a> RnRFormRowRepository<'a> {
         Ok(exists)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(rnr_form_with_links::table.filter(rnr_form_with_links::id.eq(record_id)))
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(rnr_form_with_links::table.filter(rnr_form_with_links::id.eq_any(ids)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

@@ -87,9 +87,13 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         Ok(())
     }
 
-    /// Row-only delete used by sync integration; no changelog.
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self.delete_by_id(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(user_store_join::table.filter(user_store_join::id.eq_any(ids)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn find_many_by_id(

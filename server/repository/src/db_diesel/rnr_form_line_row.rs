@@ -208,8 +208,11 @@ impl<'a> RnRFormLineRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(rnr_form_line.filter(id.eq(record_id)))
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(rnr_form_line.filter(id.eq_any(ids)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

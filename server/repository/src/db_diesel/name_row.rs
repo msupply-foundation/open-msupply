@@ -254,10 +254,6 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._mark_deleted(record_id)
-    }
-
     pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = NameRow::generate_changelog(
@@ -271,6 +267,16 @@ impl<'a> NameRowRepository<'a> {
 
     fn _mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
         diesel::update(name::table.filter(name::id.eq(name_id)))
+            .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(name::table.filter(name::id.eq_any(ids)))
             .set(name::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
         Ok(())

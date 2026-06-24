@@ -119,6 +119,10 @@ pub enum Row {
     NameOmsFields(NameOmsFieldsRow),
     Site(SiteRow),
     AssetCatalogueType(AssetTypeRow),
+    /// Remote-site-only record: never in the changelog and never propagated over
+    /// sync. Carried in `Row` so the v7 upsert path can write it via `batch_upsert`;
+    /// `generate_changelog`/`detail` are `unreachable!` for it.
+    SyncRequest(SyncRequestRow),
 }
 
 /// Output entry of `query_with_data`. `Row` carries the loaded row

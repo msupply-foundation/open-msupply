@@ -206,8 +206,13 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._delete(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(invoice_with_links::table.filter(invoice_with_links::id.eq_any(ids)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn find_one_by_id(&self, invoice_id: &str) -> Result<Option<InvoiceRow>, RepositoryError> {
@@ -256,4 +261,3 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(result)
     }
 }
-

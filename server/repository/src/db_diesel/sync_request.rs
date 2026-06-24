@@ -22,6 +22,15 @@ impl std::fmt::Debug for SyncRequestFilter {
     }
 }
 
+// `ChangelogCondition::Inner` doesn't implement `PartialEq`; compare via the JSON
+// form (the same representation used for storage), so `SyncRequestRow` can derive
+// `PartialEq` (needed by the `Row` enum).
+impl PartialEq for SyncRequestFilter {
+    fn eq(&self, other: &Self) -> bool {
+        serde_json::to_string(&self.0).ok() == serde_json::to_string(&other.0).ok()
+    }
+}
+
 // Localisable description payload stored as JSON text. Each variant carries
 // just the localisation parameters; the frontend renders the user-facing
 // string from `kind` and the parameters.
@@ -46,7 +55,9 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Selectable, Insertable, Deserialize, Debug, Serialize, AsChangeset)]
+#[derive(
+    Clone, Queryable, Selectable, Insertable, Deserialize, Debug, Serialize, AsChangeset, PartialEq,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = sync_request)]
 pub struct SyncRequestRow {

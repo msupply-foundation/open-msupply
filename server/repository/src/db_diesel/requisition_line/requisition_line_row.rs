@@ -48,7 +48,6 @@ define_batch_table! {
     }
 }
 
-
 joinable!(requisition_line -> item_link (item_link_id));
 joinable!(requisition_line -> requisition (requisition_id));
 allow_tables_to_appear_in_same_query!(requisition_line, item_link);
@@ -181,8 +180,11 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(requisition_line::table.filter(requisition_line::id.eq(record_id)))
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(requisition_line::table.filter(requisition_line::id.eq_any(ids)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

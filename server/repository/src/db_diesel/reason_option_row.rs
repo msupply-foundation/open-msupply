@@ -126,9 +126,15 @@ impl<'a> ReasonOptionRowRepository<'a> {
         Ok(())
     }
 
-    /// Row-only delete (soft delete) used by sync integration; no changelog.
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._mark_deleted(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(reason_option::table)
+            .filter(reason_option::id.eq_any(ids))
+            .set(reason_option::is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn mark_deleted(&self, reason_option_id: &str) -> Result<(), RepositoryError> {

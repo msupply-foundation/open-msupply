@@ -133,11 +133,7 @@ impl<'a> UnitRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._mark_deleted(record_id)
-    }
-
-    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+    pub(crate) fn _batch_delete(&self, ids: &Vec<&str>) -> Result<(), RepositoryError> {
         if ids.is_empty() {
             return Ok(());
         }

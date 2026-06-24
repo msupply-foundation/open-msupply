@@ -105,8 +105,14 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._mark_deleted(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(currency::table.filter(currency::id.eq_any(ids)))
+            .set(currency::is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn mark_deleted(&self, currency_id: &str) -> Result<(), RepositoryError> {
@@ -120,4 +126,3 @@ impl<'a> CurrencyRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
-

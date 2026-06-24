@@ -77,10 +77,13 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
         diesel::delete(
             clinician_store_join::dsl::clinician_store_join
-                .filter(clinician_store_join::dsl::id.eq(record_id)),
+                .filter(clinician_store_join::dsl::id.eq_any(ids)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(())

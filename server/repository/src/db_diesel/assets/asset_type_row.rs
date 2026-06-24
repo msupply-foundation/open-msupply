@@ -17,7 +17,7 @@ define_batch_table! {
     table: asset_catalogue_type (id) {
         id -> Text,
         name -> Text,
-        asset_category_id -> Text,
+        asset_category_id as category_id -> Text,
     }
 }
 

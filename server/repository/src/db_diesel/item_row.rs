@@ -258,9 +258,15 @@ impl<'a> ItemRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        // Soft delete: keep the row, just mark it inactive.
-        self._mark_deleted(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        // Soft delete: keep the rows, just mark them inactive.
+        diesel::update(item.filter(id.eq_any(ids)))
+            .set(is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 }
 

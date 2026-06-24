@@ -155,8 +155,13 @@ impl<'a> FormSchemaRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self.delete(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(form_schema::dsl::form_schema.filter(form_schema::dsl::id.eq_any(ids)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 
     pub fn _upsert_one_row(&self, row: &FormSchemaRow) -> Result<(), RepositoryError> {
@@ -169,4 +174,3 @@ impl<'a> FormSchemaRowRepository<'a> {
         Ok(())
     }
 }
-

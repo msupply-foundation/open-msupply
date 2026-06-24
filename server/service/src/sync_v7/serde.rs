@@ -6,37 +6,15 @@ use crate::sync_v7::{
     validate_translate_integrate::{create_changelog, SyncContext},
 };
 
-/// What a v7 upsert deserialises into: either a changelog-tracked `Row`, or a
-/// non-changelog row (link tables / sync_request). Replaces `Box<dyn Upsert>`.
-#[derive(Debug)]
-pub(crate) enum V7Upsert {
-    Row(Row),
-    NonSync(NonSyncRow),
-}
-
-impl V7Upsert {
-    /// Write the row only (no changelog); the v7 integrator inserts the changelog
-    /// separately from the changelog row it carries.
-    pub(crate) fn integrate_no_changelog(
-        &self,
-        con: &StorageConnection,
-    ) -> Result<(), RepositoryError> {
-        match self {
-            V7Upsert::Row(row) => row.integrate_no_changelog(con),
-            V7Upsert::NonSync(row) => row.upsert_no_changelog(con),
-        }
-    }
-}
-
 /// Deserialise `data` as `T`, then map it into a `Row` variant via `wrap` (e.g.
 /// `Row::Invoice`). The wrapper is passed explicitly per table since there is no
 /// blanket `From<XRow> for Row`.
 fn from_value<T: DeserializeOwned>(
-    data: &serde_json::Value,
+    data: serde_json::Value,
     wrap: impl FnOnce(T) -> Row,
-) -> Result<V7Upsert, SyncRecordSerializeError> {
-    serde_json::from_value::<T>(data.clone())
-        .map(|r| V7Upsert::Row(wrap(r)))
+) -> Result<Row, SyncRecordSerializeError> {
+    serde_json::from_value::<T>(data)
+        .map(|r| wrap(r))
         .map_err(|e| SyncRecordSerializeError::SerdeError(e.to_string()))
 }
 
@@ -146,25 +124,27 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::NameOmsFields(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Site(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::AssetCatalogueType(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::SyncRequest(r) => serde_json::to_value(r).map_err(map_serde_err),
     }
 }
-
-pub(crate) type DeserializeResult =
-    Result<Vec<(V7Upsert, ChangeLogInsertRow)>, SyncRecordSerializeError>;
 
 pub(crate) fn deserialize(
     connection: &StorageConnection,
     table_name: &ChangelogTableName,
-    row: &SyncBufferRow,
+    row: SyncBufferRow,
     sync_context: &SyncContext,
-) -> DeserializeResult {
-    let changelog_insert = create_changelog(table_name.clone(), RowActionType::Upsert, row);
-    let data = &row.data;
+) -> Result<Vec<(Row, String, Option<ChangeLogInsertRow>)>, SyncRecordSerializeError> {
+    let changelog_insert = create_changelog(table_name.clone(), RowActionType::Upsert, &row);
+    let data = row.data.0;
+    let record_id = row.record_id.clone();
     let upsert = match table_name {
         // Special
-        ChangelogTableName::Store => return translate_store(connection, changelog_insert, data),
+        ChangelogTableName::Store => {
+            return translate_store(connection, record_id, changelog_insert, data)
+        }
         ChangelogTableName::InvoiceLine => {
             return translate_invoice_line(
+                record_id,
                 changelog_insert,
                 row.store_id.as_deref(),
                 data,
@@ -280,5 +260,5 @@ pub(crate) fn deserialize(
         ChangelogTableName::SystemLog => from_value(data, Row::SystemLog),
     }?;
 
-    Ok(vec![(upsert, changelog_insert)])
+    Ok(vec![(upsert, record_id, Some(changelog_insert))])
 }

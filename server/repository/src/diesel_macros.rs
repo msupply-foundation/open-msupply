@@ -525,6 +525,49 @@ macro_rules! define_linked_tables {
         $table::$field.eq(&$record.$field)
     };
 
+    // Owned field access for batch inserts (a `Vec<tuple>` can't borrow from per-row references).
+    (@field_owned $table:ident, type_, $record:ident) => {
+        $table::type_.eq($record.r#type.clone())
+    };
+    (@field_owned $table:ident, $field:ident, $record:ident) => {
+        $table::$field.eq($record.$field.clone())
+    };
+
+    // `excluded`-based changeset for on-conflict updates (column = the value being inserted).
+    (@excluded $table:ident, type_) => {
+        $table::type_.eq(diesel::upsert::excluded($table::type_))
+    };
+    (@excluded $table:ident, $field:ident) => {
+        $table::$field.eq(diesel::upsert::excluded($table::$field))
+    };
+
+    // `WalkRow` binding for a CORE column whose value comes from the SAME-named struct field
+    // (special case: column `type_` binds the raw-ident field `r#type`). Skip-aware + comma-joined.
+    (@walk_field $out:ident, $self:ident, $table:ident, $first:ident, $excludes:ident, type_) => {
+        define_linked_tables!(@walk_bind $out, $self, $table, $first, $excludes, type_, r#type);
+    };
+    (@walk_field $out:ident, $self:ident, $table:ident, $first:ident, $excludes:ident, $col:ident) => {
+        define_linked_tables!(@walk_bind $out, $self, $table, $first, $excludes, $col, $col);
+    };
+
+    // `WalkRow` binding for a link-id CORE column bound from a differently-named resolved field.
+    (@walk_resolved $out:ident, $self:ident, $table:ident, $first:ident, $excludes:ident, $col:ident, $field:ident) => {
+        define_linked_tables!(@walk_bind $out, $self, $table, $first, $excludes, $col, $field);
+    };
+
+    // Core `WalkRow` bind: push `$self.$field` with column `$col`'s diesel SQL type, unless excluded.
+    (@walk_bind $out:ident, $self:ident, $table:ident, $first:ident, $excludes:ident, $col:ident, $field:ident) => {
+        if !$excludes.contains(&<$table::$col as ::diesel::Column>::NAME) {
+            if !$first {
+                $out.push_sql(", ");
+            }
+            $first = false;
+            $out.push_bind_param::<
+                <$table::$col as ::diesel::expression::Expression>::SqlType, _,
+            >(&$self.$field)?;
+        }
+    };
+
     (
         view: $view_table:ident = $view_sql_name:literal,
         core: $core_table:ident = $core_sql_name:literal,
@@ -575,6 +618,57 @@ macro_rules! define_linked_tables {
             }
         }
 
+        // Bind parameters per row for the CORE table (id + shared fields + link-id columns).
+        impl $struct_name {
+            pub const BATCH_COLUMN_COUNT: usize =
+                1usize $(+ { let _ = stringify!($field); 1usize })*
+                      $(+ { let _ = stringify!($link_id); 1usize })*
+                      $(+ { let _ = stringify!($opt_link_id); 1usize })*;
+        }
+
+        // Raw-SQL batch upsert metadata/bindings for the CORE table. The struct carries
+        // RESOLVED ids (`$resolved_id`); the core table stores LINK ids (`$link_id`), so
+        // `WalkRow` binds the resolved field into the link-id column position.
+        impl $crate::db_diesel::batch_upsert::BatchUpsertable for $struct_name {
+            const TABLE_NAME: &'static str = $core_sql_name;
+            const COLUMNS: &'static [&'static str] = &[
+                <$core_table::id as ::diesel::Column>::NAME,
+                $(<$core_table::$field as ::diesel::Column>::NAME,)*
+                $(<$core_table::$link_id as ::diesel::Column>::NAME,)*
+                $(<$core_table::$opt_link_id as ::diesel::Column>::NAME,)*
+            ];
+            const CONFLICT: &'static str = <$core_table::id as ::diesel::Column>::NAME;
+            const UPDATE: &'static [&'static str] = &[
+                $(<$core_table::$field as ::diesel::Column>::NAME,)*
+                $(<$core_table::$link_id as ::diesel::Column>::NAME,)*
+                $(<$core_table::$opt_link_id as ::diesel::Column>::NAME,)*
+            ];
+        }
+
+        impl $crate::db_diesel::batch_upsert::WalkRow for $struct_name {
+            fn walk_row<'b>(
+                &'b self,
+                excludes: &[&str],
+                mut out: ::diesel::query_builder::AstPass<
+                    '_, 'b, $crate::db_diesel::batch_upsert::DbType,
+                >,
+            ) -> ::diesel::QueryResult<()> {
+                let mut __first = true;
+                define_linked_tables!(@walk_field out, self, $core_table, __first, excludes, id);
+                // Shared fields: `@walk_field` special-cases the `type_` column to bind `r#type`.
+                $(define_linked_tables!(@walk_field out, self, $core_table, __first, excludes, $field);)*
+                // Link columns: bind the struct's RESOLVED-id field into the link-id column slot.
+                $(define_linked_tables!(
+                    @walk_resolved out, self, $core_table, __first, excludes, $link_id, $resolved_id
+                );)*
+                $(define_linked_tables!(
+                    @walk_resolved out, self, $core_table, __first, excludes, $opt_link_id, $opt_resolved_id
+                );)*
+                let _ = __first;
+                Ok(())
+            }
+        }
+
         // Generate upsert method on repository
         impl<'a> $repo_name<'a> {
             pub fn _upsert(&self, record: &$struct_name) -> Result<(), crate::RepositoryError> {
@@ -594,6 +688,24 @@ macro_rules! define_linked_tables {
                     ))
                     .execute(self.connection.lock().connection())?;
 
+                Ok(())
+            }
+
+            /// Batch upsert a slice of rows into the CORE table in ONE statement (NO
+            /// changelog), on both backends, via the hand-built `INSERT ... ON CONFLICT
+            /// DO UPDATE` (resolved-id fields are bound into the link-id columns). The
+            /// caller chunks via `BATCH_COLUMN_COUNT` and wraps in a transaction.
+            /// Generated by `define_linked_tables!`.
+            pub(crate) fn batch_upsert(
+                &self,
+                rows: Vec<&$struct_name>,
+            ) -> Result<(), crate::RepositoryError> {
+                use ::diesel::query_dsl::RunQueryDsl;
+                if rows.is_empty() {
+                    return Ok(());
+                }
+                $crate::db_diesel::batch_upsert::batch_upsert(rows.as_slice())
+                    .execute(self.connection.lock().connection())?;
                 Ok(())
             }
         }
@@ -766,46 +878,80 @@ pub(crate) use diesel_string_enum;
 /// }
 /// ```
 macro_rules! define_batch_table {
-    // Default per-row writer is `_upsert_one`. Append-only tables (e.g. activity_log, system_log)
-    // pass `writer: _insert_one`.
-    (
-        struct: $struct:ident,
-        repo: $repo:ident,
-        table:
+    // ---- Front arms: fill in defaults, then forward to `@build`. ----
+    // The Postgres batch insert borrows rows by default (no clone). Rows whose struct has a
+    // `#[diesel(serialize_as = ..)]` field only implement `Insertable` for the OWNED type (the
+    // field is moved during serialization), so those tables pass `owned_insert,` to clone first.
+    // `writer:` overrides the per-row sqlite writer (default `_upsert_one`; logs use `_insert_one`).
+
+    // (no writer, no owned_insert)
+    (struct: $struct:ident, repo: $repo:ident, table: $($table:tt)*) => {
+        define_batch_table!(@build $struct, $repo, _upsert_one, borrow, [], $($table)*);
+    };
+    // (no writer, owned_insert)
+    (struct: $struct:ident, repo: $repo:ident, owned_insert, table: $($table:tt)*) => {
+        define_batch_table!(@build $struct, $repo, _upsert_one, owned, [], $($table)*);
+    };
+    // (writer, no owned_insert)
+    (struct: $struct:ident, repo: $repo:ident, writer: $writer:ident, table: $($table:tt)*) => {
+        define_batch_table!(@build $struct, $repo, $writer, borrow, [], $($table)*);
+    };
+    // (writer, owned_insert)
+    (struct: $struct:ident, repo: $repo:ident, writer: $writer:ident, owned_insert, table: $($table:tt)*) => {
+        define_batch_table!(@build $struct, $repo, $writer, owned, [], $($table)*);
+    };
+    // (update-set override) Restrict `ON CONFLICT DO UPDATE SET` to just `$ucol`s; all other
+    // non-pk columns become insert-only (their VALUES satisfy NOT-NULL but never overwrite on
+    // conflict). For reduced tables that map onto an existing table and only touch some columns.
+    (struct: $struct:ident, repo: $repo:ident, update: [$($ucol:ident),* $(,)?], table: $($table:tt)*) => {
+        define_batch_table!(@build $struct, $repo, _upsert_one, borrow, [$($ucol)*], $($table)*);
+    };
+
+    // ---- Canonical builder. `$mode` is `borrow` or `owned` (Postgres `.values(..)` form). ----
+    // Each column may optionally name its struct field via `col as field -> Type` for tables that
+    // remap with `#[diesel(column_name = ..)]` (e.g. `asset_category_id as category_id`, or
+    // `type_ as r#type`). When omitted, the field name equals the column name.
+    // `[$($ucol)*]` is the optional update-set override (empty = update all non-pk columns).
+    // A leading `#[sql_name = ".."]` on the table maps the Rust module onto a differently-named
+    // physical table (used by reduced views of an existing table); the raw-SQL `TABLE_NAME` must
+    // be that sql-name, not the module ident. This arm captures it; the next defaults it.
+    (@build $struct:ident, $repo:ident, $writer:ident, $mode:ident, [$($ucol:ident)*],
+        #[sql_name = $sqlname:literal]
         $(#[$tmeta:meta])*
         $table:ident ($pk:ident) {
             $(
                 $(#[$cmeta:meta])*
-                $col:ident -> $cty:ty
+                $col:ident $(as $field:ident)? -> $cty:ty
             ),* $(,)?
         }
         $(,)?
     ) => {
-        define_batch_table! {
-            struct: $struct,
-            repo: $repo,
-            writer: _upsert_one,
-            table:
-            $(#[$tmeta])*
-            $table ($pk) {
-                $(
-                    $(#[$cmeta])*
-                    $col -> $cty,
-                )*
-            }
-        }
+        define_batch_table!(@build_inner $struct, $repo, $writer, $mode, [$($ucol)*], $sqlname,
+            #[sql_name = $sqlname] $(#[$tmeta])*
+            $table ($pk) { $($(#[$cmeta])* $col $(as $field)? -> $cty,)* });
     };
-
-    (
-        struct: $struct:ident,
-        repo: $repo:ident,
-        writer: $writer:ident,
-        table:
+    (@build $struct:ident, $repo:ident, $writer:ident, $mode:ident, [$($ucol:ident)*],
         $(#[$tmeta:meta])*
         $table:ident ($pk:ident) {
             $(
                 $(#[$cmeta:meta])*
-                $col:ident -> $cty:ty
+                $col:ident $(as $field:ident)? -> $cty:ty
+            ),* $(,)?
+        }
+        $(,)?
+    ) => {
+        define_batch_table!(@build_inner $struct, $repo, $writer, $mode, [$($ucol)*], stringify!($table),
+            $(#[$tmeta])*
+            $table ($pk) { $($(#[$cmeta])* $col $(as $field)? -> $cty,)* });
+    };
+
+    // Canonical builder body; `$sqlname` is the physical table name (expr/literal).
+    (@build_inner $struct:ident, $repo:ident, $writer:ident, $mode:ident, [$($ucol:ident)*], $sqlname:expr,
+        $(#[$tmeta:meta])*
+        $table:ident ($pk:ident) {
+            $(
+                $(#[$cmeta:meta])*
+                $col:ident $(as $field:ident)? -> $cty:ty
             ),* $(,)?
         }
         $(,)?
@@ -823,42 +969,119 @@ macro_rules! define_batch_table {
         impl $struct {
             /// Bind parameters per row (every column, incl. pk). Used to chunk batch upserts
             /// under the backend's parameter limit. Generated by `define_batch_table!`.
-            pub const BATCH_COLUMN_COUNT: usize = define_batch_table!(@count $($col)*);
+            pub const BATCH_COLUMN_COUNT: usize = define_batch_table!(@count $pk $($col)*);
+        }
+
+        // Normalize each column into a `[col field]` pair (filling in field = col when
+        // not overridden) via a tt-muncher, then emit the batch machinery. `borrow`
+        // tables get the generated raw-SQL path (one statement on BOTH backends);
+        // `owned` tables (serialize_as fields whose types don't match the SQL column)
+        // hand-write their own `batch_upsert`, so the macro emits nothing for them.
+        define_batch_table!(@norm
+            { $mode $struct $repo $writer $table [$pk $pk] [$($ucol)*] $sqlname }
+            [ $( $col $(as $field)? , )* ]
+            []
+        );
+    };
+
+    // tt-muncher: consume `col` / `col as field` from the input list, push `[col field]`
+    // onto the accumulator, recurse; dispatch to `@batch_methods` when the list is empty.
+    // Explicit field override (`col as field`):
+    (@norm { $($ctx:tt)* } [ $col:ident as $field:ident , $($rest:tt)* ] [ $($acc:tt)* ]) => {
+        define_batch_table!(@norm { $($ctx)* } [ $($rest)* ] [ $($acc)* [$col $field] ]);
+    };
+    // Special case: the `type_` column always maps to the raw-ident field `r#type`
+    // (SQL `type` is a keyword), so callers never write `type_ as r#type`.
+    (@norm { $($ctx:tt)* } [ type_ , $($rest:tt)* ] [ $($acc:tt)* ]) => {
+        define_batch_table!(@norm { $($ctx)* } [ $($rest)* ] [ $($acc)* [type_ r#type] ]);
+    };
+    // Default: field name equals column name.
+    (@norm { $($ctx:tt)* } [ $col:ident , $($rest:tt)* ] [ $($acc:tt)* ]) => {
+        define_batch_table!(@norm { $($ctx)* } [ $($rest)* ] [ $($acc)* [$col $col] ]);
+    };
+    (@norm { $mode:ident $struct:ident $repo:ident $writer:ident $table:ident [$pk:ident $pkf:ident] [$($ucol:ident)*] $sqlname:expr }
+        [] [ $($pairs:tt)* ]) => {
+        define_batch_table!(@batch_methods $mode, $struct, $repo, $writer, $table, [$pk $pkf], [$($ucol)*], $sqlname, $($pairs)*);
+    };
+
+    // ---- `borrow` mode: generate BatchUpsertable + WalkRow + batch_upsert (raw SQL). ----
+    // Columns arrive as `[col field]` pairs (`$pk` separately, also as `[pk pk]`).
+    // `[$($ucol)*]` is the optional update-set override (empty = all non-pk columns).
+    // `$sqlname` is the physical table name (honours `#[sql_name]`).
+    (@batch_methods borrow, $struct:ident, $repo:ident, $writer:ident, $table:ident,
+        [$pk:ident $pkf:ident], [$($ucol:ident)*], $sqlname:expr, $([$col:ident $field:ident])*) => {
+        impl $crate::db_diesel::batch_upsert::BatchUpsertable for $struct {
+            const TABLE_NAME: &'static str = $sqlname;
+            const COLUMNS: &'static [&'static str] = &[
+                <$table::$pk as ::diesel::Column>::NAME,
+                $(<$table::$col as ::diesel::Column>::NAME,)*
+            ];
+            const CONFLICT: &'static str = <$table::$pk as ::diesel::Column>::NAME;
+            const UPDATE: &'static [&'static str] =
+                define_batch_table!(@update_set $table, [$($ucol)*], [$($col)*]);
+        }
+
+        impl $crate::db_diesel::batch_upsert::WalkRow for $struct {
+            fn walk_row<'b>(
+                &'b self,
+                excludes: &[&str],
+                mut out: ::diesel::query_builder::AstPass<
+                    '_, 'b, $crate::db_diesel::batch_upsert::DbType,
+                >,
+            ) -> ::diesel::QueryResult<()> {
+                let mut __first = true;
+                define_batch_table!(@bind out, self, $table, __first, excludes, $pk, $pkf);
+                $(define_batch_table!(@bind out, self, $table, __first, excludes, $col, $field);)*
+                let _ = __first;
+                Ok(())
+            }
         }
 
         impl<'a> $repo<'a> {
-            /// Upsert a caller-chunked slice of rows in one statement (NO changelog). The
+            /// Upsert a caller-chunked slice of rows in ONE statement (NO changelog), on
+            /// both backends, via the hand-built `INSERT ... ON CONFLICT DO UPDATE`. The
             /// caller chunks via `BATCH_COLUMN_COUNT` and wraps in a transaction.
             /// Generated by `define_batch_table!`.
             pub(crate) fn batch_upsert(
                 &self,
                 rows: Vec<&$struct>,
             ) -> Result<(), $crate::RepositoryError> {
+                use ::diesel::query_dsl::RunQueryDsl;
                 if rows.is_empty() {
                     return Ok(());
                 }
-                // Postgres: one multi-row statement. Takes owned rows — the caller already owns the
-                // concrete vec (moved in, no copy), and owning side-steps the fact that structs with
-                // `#[diesel(serialize_as = ..)]` fields only implement `Insertable` for the owned type.
-                #[cfg(feature = "postgres")]
-                {
-                    diesel::insert_into($table::table)
-                        .values(rows)
-                        .on_conflict($table::$pk)
-                        .do_update()
-                        .set((
-                            $($table::$col.eq(diesel::upsert::excluded($table::$col)),)*
-                        ))
-                        .execute(self.connection.lock().connection())?;
-                }
-                // Sqlite has no multi-row on-conflict upsert; delegate to the per-row writer
-                // (borrows each row — no clone).
-                #[cfg(not(feature = "postgres"))]
-                for record in rows {
-                    self.$writer(record)?;
-                }
+                $crate::db_diesel::batch_upsert::batch_upsert(rows.as_slice())
+                    .execute(self.connection.lock().connection())?;
                 Ok(())
             }
+        }
+    };
+
+    // ---- `owned` mode: serialize_as table — no generated batch machinery (hand-written). ----
+    (@batch_methods owned, $struct:ident, $repo:ident, $writer:ident, $table:ident,
+        [$pk:ident $pkf:ident], [$($ucol:ident)*], $sqlname:expr, $([$col:ident $field:ident])*) => {};
+
+    // `DO UPDATE SET` column list. Empty override -> all non-pk columns ($allcols);
+    // otherwise exactly the override columns ($ucol), leaving the rest insert-only.
+    (@update_set $table:ident, [], [$($allcol:ident)*]) => {
+        &[ $(<$table::$allcol as ::diesel::Column>::NAME,)* ]
+    };
+    (@update_set $table:ident, [$($ucol:ident)+], [$($allcol:ident)*]) => {
+        &[ $(<$table::$ucol as ::diesel::Column>::NAME,)+ ]
+    };
+
+    // One column binding for `WalkRow`: skip-aware, comma-separated. Binds struct
+    // field `$field` with column `$col`'s diesel SQL type (field may differ from
+    // column when remapped via `#[diesel(column_name = ..)]`).
+    (@bind $out:ident, $self:ident, $table:ident, $first:ident, $excludes:ident, $col:ident, $field:ident) => {
+        if !$excludes.contains(&<$table::$col as ::diesel::Column>::NAME) {
+            if !$first {
+                $out.push_sql(", ");
+            }
+            $first = false;
+            $out.push_bind_param::<
+                <$table::$col as ::diesel::expression::Expression>::SqlType, _,
+            >(&$self.$field)?;
         }
     };
 

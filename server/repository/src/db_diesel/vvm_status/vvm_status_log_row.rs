@@ -25,7 +25,6 @@ define_batch_table! {
     }
 }
 
-
 joinable!(vvm_status_log -> stock_line (stock_line_id));
 joinable!(vvm_status_log -> invoice_line (invoice_line_id));
 joinable!(vvm_status_log -> store (store_id));
@@ -116,8 +115,11 @@ impl<'a> VVMStatusLogRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(vvm_status_log.filter(id.eq(record_id)))
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::delete(vvm_status_log.filter(id.eq_any(ids)))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

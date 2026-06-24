@@ -109,7 +109,13 @@ impl<'a> CategoryRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
-        self._mark_deleted(record_id)
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        diesel::update(category::table.filter(category::id.eq_any(ids)))
+            .set(category::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
     }
 }

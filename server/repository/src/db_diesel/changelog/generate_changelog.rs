@@ -2094,131 +2094,7 @@ pub enum BatchOperation {
 }
 
 impl Row {
-    /// Write the row only (no changelog), dispatching to the concrete repository's
-    /// private row-only writer. Mirrors what `Upsert::upsert_sync` did before it
-    /// inserted the changelog.
-    pub fn integrate_no_changelog(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        match self {
-            Row::Abbreviation(r) => AbbreviationRowRepository::new(con)._upsert_one(r)?,
-            Row::ActivityLog(r) => ActivityLogRowRepository::new(con)._insert_one(r)?,
-            Row::AncillaryItem(r) => AncillaryItemRowRepository::new(con)._upsert(r)?,
-            Row::Asset(r) => AssetRowRepository::new(con)._upsert_one(r)?,
-            Row::AssetCatalogueItem(r) => {
-                AssetCatalogueItemRowRepository::new(con)._upsert_one(r)?
-            }
-            Row::AssetCatalogueType(r) => AssetTypeRowRepository::new(con)._upsert_one(r)?,
-            Row::AssetCategory(r) => AssetCategoryRowRepository::new(con)._upsert_one(r)?,
-            Row::AssetClass(r) => AssetClassRowRepository::new(con)._upsert_one(r)?,
-            Row::AssetInternalLocation(r) => {
-                AssetInternalLocationRowRepository::new(con)._upsert_one(r)?
-            }
-            Row::AssetLog(r) => AssetLogRowRepository::new(con)._upsert_one(r)?,
-            Row::AssetLogReason(r) => AssetLogReasonRowRepository::new(con)._upsert_one(r)?,
-            Row::AssetProperty(r) => AssetPropertyRowRepository::new(con)._upsert_one(r)?,
-            Row::BackendPlugin(r) => BackendPluginRowRepository::new(con)._upsert_one(r)?,
-            Row::Barcode(r) => BarcodeRowRepository::new(con)._upsert(r)?,
-            Row::BundledItem(r) => BundledItemRowRepository::new(con)._upsert_one(r)?,
-            Row::Campaign(r) => CampaignRowRepository::new(con)._upsert_one(r)?,
-            Row::Category(r) => CategoryRowRepository::new(con)._upsert_one(r)?,
-            Row::Clinician(r) => ClinicianRowRepository::new(con)._upsert_one(r)?,
-            Row::ClinicianStoreJoin(r) => {
-                ClinicianStoreJoinRowRepository::new(con)._upsert_one(r)?
-            }
-            Row::Contact(r) => ContactRowRepository::new(con)._upsert(r)?,
-            Row::ContactForm(r) => ContactFormRowRepository::new(con)._upsert_one(r)?,
-            Row::ContactTrace(r) => ContactTraceRowRepository::new(con)._upsert_one(r)?,
-            Row::Context(r) => ContextRowRepository::new(con)._upsert_one(r)?,
-            Row::Currency(r) => CurrencyRowRepository::new(con)._upsert_one(r)?,
-            Row::Demographic(r) => DemographicRowRepository::new(con)._upsert_one(r)?,
-            Row::DemographicIndicator(r) => {
-                DemographicIndicatorRowRepository::new(con)._upsert_one(r)?
-            }
-            Row::Diagnosis(r) => DiagnosisRowRepository::new(con)._upsert_one(r)?,
-            Row::Document(r) => DocumentRepository::new(con)._upsert(r)?,
-            Row::DocumentRegistry(r) => DocumentRegistryRowRepository::new(con)._upsert_one(r)?,
-            Row::Encounter(r) => EncounterRowRepository::new(con)._upsert(r)?,
-            Row::FormSchema(r) => FormSchemaRowRepository::new(con)._upsert_one_row(r)?,
-            Row::FrontendPlugin(r) => FrontendPluginRowRepository::new(con)._upsert_one(r)?,
-            Row::IndicatorColumn(r) => IndicatorColumnRowRepository::new(con)._upsert_one(r)?,
-            Row::IndicatorLine(r) => IndicatorLineRowRepository::new(con)._upsert_one(r)?,
-            Row::IndicatorValue(r) => IndicatorValueRowRepository::new(con)._upsert(r)?,
-            Row::InsuranceProvider(r) => InsuranceProviderRowRepository::new(con)._upsert_one(r)?,
-            Row::Invoice(r) => InvoiceRowRepository::new(con)._upsert(r)?,
-            Row::InvoiceLine(r) => InvoiceLineRowRepository::new(con)._upsert(r)?,
-            Row::Item(r) => ItemRowRepository::new(con)._upsert_one(r)?,
-            Row::ItemCategoryJoin(r) => ItemCategoryJoinRowRepository::new(con)._upsert_one(r)?,
-            Row::ItemDirection(r) => ItemDirectionRowRepository::new(con)._upsert_one(r)?,
-            Row::ItemStoreJoin(r) => ItemStoreJoinRowRepository::new(con)._upsert_one(r)?,
-            Row::ItemVariant(r) => ItemVariantRowRepository::new(con)._upsert(r)?,
-            Row::ItemWarningJoin(r) => ItemWarningJoinRowRepository::new(con)._upsert_one(r)?,
-            Row::Location(r) => LocationRowRepository::new(con)._upsert_one(r)?,
-            Row::LocationMovement(r) => LocationMovementRowRepository::new(con)._upsert_one(r)?,
-            Row::LocationType(r) => LocationTypeRowRepository::new(con)._upsert_one(r)?,
-            Row::MasterList(r) => MasterListRowRepository::new(con)._upsert_one(r)?,
-            Row::MasterListLine(r) => MasterListLineRowRepository::new(con)._upsert_one(r)?,
-            Row::MasterListNameJoin(r) => MasterListNameJoinRepository::new(con)._upsert(r)?,
-            Row::Name(r) => NameRowRepository::new(con)._upsert_one(r)?,
-            Row::NameInsuranceJoin(r) => NameInsuranceJoinRowRepository::new(con)._upsert(r)?,
-            Row::NameOmsFields(r) => NameRowRepository::new(con)._upsert_oms_fields_one(r)?,
-            Row::NameProperty(r) => NamePropertyRowRepository::new(con)._upsert_one(r)?,
-            Row::NameStoreJoin(r) => NameStoreJoinRepository::new(con)._upsert(r)?,
-            Row::NameTag(r) => NameTagRowRepository::new(con)._upsert_one(r)?,
-            Row::NameTagJoin(r) => NameTagJoinRepository::new(con)._upsert(r)?,
-            Row::PackagingVariant(r) => PackagingVariantRowRepository::new(con)._upsert_one(r)?,
-            Row::Period(r) => PeriodRowRepository::new(con)._upsert_one(r)?,
-            Row::PeriodSchedule(r) => PeriodScheduleRowRepository::new(con)._upsert_one(r)?,
-            Row::PluginData(r) => PluginDataRowRepository::new(con)._upsert_one(r)?,
-            Row::Preference(r) => PreferenceRowRepository::new(con)._upsert_one(r)?,
-            Row::Printer(r) => PrinterRowRepository::new(con)._upsert_one(r)?,
-            Row::Program(r) => ProgramRowRepository::new(con)._upsert_one(r)?,
-            Row::ProgramEnrolment(r) => ProgramEnrolmentRowRepository::new(con)._upsert(r)?,
-            Row::ProgramEvent(r) => ProgramEventRowRepository::new(con)._upsert(r)?,
-            Row::ProgramIndicator(r) => ProgramIndicatorRowRepository::new(con)._upsert_one(r)?,
-            Row::ProgramRequisitionOrderType(r) => {
-                ProgramRequisitionOrderTypeRowRepository::new(con)._upsert_one(r)?
-            }
-            Row::ProgramRequisitionSettings(r) => {
-                ProgramRequisitionSettingsRowRepository::new(con)._upsert_one(r)?
-            }
-            Row::Property(r) => PropertyRowRepository::new(con)._upsert_one(r)?,
-            Row::PurchaseOrder(r) => PurchaseOrderRowRepository::new(con)._upsert(r)?,
-            Row::PurchaseOrderLine(r) => PurchaseOrderLineRowRepository::new(con)._upsert(r)?,
-            Row::ReasonOption(r) => ReasonOptionRowRepository::new(con)._upsert_one(r)?,
-            Row::Report(r) => ReportRowRepository::new(con)._upsert_one(r)?,
-            Row::Requisition(r) => RequisitionRowRepository::new(con)._upsert(r)?,
-            Row::RequisitionLine(r) => RequisitionLineRowRepository::new(con)._upsert_one(r)?,
-            Row::RnrForm(r) => RnRFormRowRepository::new(con)._upsert(r)?,
-            Row::RnrFormLine(r) => RnRFormLineRowRepository::new(con)._upsert_one(r)?,
-            Row::Sensor(r) => SensorRowRepository::new(con)._upsert_one(r)?,
-            Row::ShippingMethod(r) => ShippingMethodRowRepository::new(con)._upsert_one(r)?,
-            Row::Site(r) => SiteRowRepository::new(con)._upsert(r)?,
-            Row::StockLine(r) => StockLineRowRepository::new(con)._upsert(r)?,
-            Row::Stocktake(r) => StocktakeRowRepository::new(con)._upsert_one(r)?,
-            Row::StocktakeLine(r) => StocktakeLineRowRepository::new(con)._upsert(r)?,
-            Row::Store(r) => StoreRowRepository::new(con)._upsert(r)?,
-            Row::StorePreference(r) => StorePreferenceRowRepository::new(con)._upsert_one(r)?,
-            Row::SyncFileReference(r) => SyncFileReferenceRowRepository::new(con)._upsert_one(r)?,
-            Row::SyncMessage(r) => SyncMessageRowRepository::new(con)._upsert_one(r)?,
-            Row::SystemLog(r) => SystemLogRowRepository::new(con)._insert_one(r)?,
-            Row::TemperatureBreach(r) => TemperatureBreachRowRepository::new(con)._upsert_one(r)?,
-            Row::TemperatureLog(r) => TemperatureLogRowRepository::new(con)._upsert_one(r)?,
-            Row::Unit(r) => UnitRowRepository::new(con)._upsert_one(r)?,
-            Row::UserAccount(r) => UserAccountRowRepository::new(con)._upsert_one(r)?,
-            Row::UserPermission(r) => UserPermissionRowRepository::new(con)._upsert_one(r)?,
-            Row::UserStoreJoin(r) => UserStoreJoinRowRepository::new(con)._upsert_one(r)?,
-            Row::VVMStatus(r) => VVMStatusRowRepository::new(con)._upsert_one(r)?,
-            Row::VVMStatusLog(r) => VVMStatusLogRowRepository::new(con)._upsert_one(r)?,
-            Row::Vaccination(r) => VaccinationRowRepository::new(con)._upsert_one(r)?,
-            Row::VaccineCourse(r) => VaccineCourseRowRepository::new(con)._upsert_one(r)?,
-            Row::VaccineCourseDose(r) => VaccineCourseDoseRowRepository::new(con)._upsert_one(r)?,
-            Row::VaccineCourseItem(r) => VaccineCourseItemRowRepository::new(con)._upsert_one(r)?,
-            Row::VaccineCourseStoreConfig(r) => {
-                VaccineCourseStoreConfigRowRepository::new(con)._upsert_one(r)?
-            }
-        };
-        Ok(())
-    }
-
+    
     /// (table_name, record_id) for this row, mapped directly per variant (no changelog
     /// round-trip). The variant name matches its `ChangelogTableName`; `Site` has an i32 id.
     fn detail(&self) -> (ChangelogTableName, String) {
@@ -2336,6 +2212,9 @@ impl Row {
             Row::NameOmsFields(r) => (ChangelogTableName::NameOmsFields, r.id.clone()),
             Row::Site(r) => (ChangelogTableName::Site, r.id.to_string()),
             Row::AssetCatalogueType(r) => (ChangelogTableName::AssetCatalogueType, r.id.clone()),
+            // Remote-site-only record with no `ChangelogTableName`; only ever written via
+            // the single-element v7 upsert path, never routed through changelog grouping.
+            Row::SyncRequest(_) => unreachable!("sync_request has no ChangelogTableName"),
         }
     }
 
@@ -2349,36 +2228,56 @@ impl Row {
         self.detail().1
     }
 
-    pub fn batch_upsert<T>(
+    // Picks up the first x records matching 'self' from the front of 'rows', up to max_number_of_rows
+    pub fn batch_upsert<'a>(
+        &self,
         con: &StorageConnection,
         max_number_of_rows: usize,
-        rows: &mut Vec<(BatchOperation, Vec<T>)>,
-    ) -> (Vec<(BatchOperation, Vec<T>)>, Option<RepositoryError>) {
-        let mut taken = Vec::new();
+        in_operations: &[&'a BatchOperation],
+    ) -> (Vec<(&'a BatchOperation, &'a Row)>, Option<RepositoryError>) {
+        let mut out = Vec::new();
+
         macro_rules! concrete {
             ($variant:ident) => {{
-                let mut exact_rows = Vec::new();
-                for _ in 0..max_number_of_rows {
-                    let Some(r) = rows.pop() else {
-                        break;
+                let picked_rows = in_operations
+                    .iter()
+                    .take(max_number_of_rows)
+                    .filter_map(|op| match op {
+                        BatchOperation::Upsert(row) => {
+                            if let Row::$variant(r) = row {
+                                out.push((*op, row));
+                                Some(r)
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>();
+                picked_rows
+            }};
+        }
+
+        // Per-row fallback for variants not wired up with a real set-based batch upsert
+        // (link-parent tables that also insert a link row, append-only/special tables, etc.).
+        // Picks the matching run into `out` exactly like `concrete!`, then upserts each row via
+        // the caller-supplied single-row writer expression (`|r| <repo>._upsert_one(r)`).
+        macro_rules! per_row {
+            ($variant:ident, |$r:ident| $write:expr) => {{
+                let mut result = Ok(());
+                for op in in_operations.iter().take(max_number_of_rows) {
+                    let BatchOperation::Upsert(row) = op else {
+                        continue;
                     };
-
-                    if !matches!(r.0, BatchOperation::Upsert(Row::$variant(_))) {
-                        rows.insert(0, r);
-                        break;
+                    let Row::$variant($r) = row else {
+                        continue;
+                    };
+                    out.push((*op, row));
+                    if result.is_ok() {
+                        result = $write;
                     }
-
-                    taken.push(r);
                 }
-                // Now take as ref from taken
-                taken.iter().for_each(|r| match r.0 {
-                    BatchOperation::Upsert(Row::$variant(ref exact_row)) => {
-                        exact_rows.push(exact_row);
-                    }
-                    _ => unreachable!("We just filtered these out in the loop above"),
-                });
-
-                exact_rows
+                result
             }};
         }
         let result = match self {
@@ -2569,15 +2468,45 @@ impl Row {
             Row::AssetCatalogueType(_) => {
                 AssetTypeRowRepository::new(con).batch_upsert(concrete!(AssetCatalogueType))
             }
-            // TODO add them all
-            _ => {
-                unreachable!("variant without batch upsert should have been filtered out by caller")
-            }
+            Row::Barcode(_) => BarcodeRowRepository::new(con).batch_upsert(concrete!(Barcode)),
+            Row::Document(_) => DocumentRepository::new(con).batch_upsert(concrete!(Document)),
+            Row::IndicatorValue(_) => IndicatorValueRowRepository::new(con).batch_upsert(concrete!(IndicatorValue)),
+            Row::Item(_) => per_row!(Item, |r| ItemRowRepository::new(con)._upsert_one(r)),
+            Row::Name(_) => per_row!(Name, |r| NameRowRepository::new(con)._upsert_one(r)),
+            Row::NameInsuranceJoin(_) => NameInsuranceJoinRowRepository::new(con).batch_upsert(concrete!(NameInsuranceJoin)),
+            Row::NameStoreJoin(_) => NameStoreJoinRepository::new(con).batch_upsert(concrete!(NameStoreJoin)),
+            Row::PurchaseOrder(_) => PurchaseOrderRowRepository::new(con).batch_upsert(concrete!(PurchaseOrder)),
+            Row::PurchaseOrderLine(_) => PurchaseOrderLineRowRepository::new(con).batch_upsert(concrete!(PurchaseOrderLine)),
+            Row::StockLine(_) => StockLineRowRepository::new(con).batch_upsert(concrete!(StockLine)),
+            Row::StocktakeLine(_) => StocktakeLineRowRepository::new(con).batch_upsert(concrete!(StocktakeLine)),
+            Row::Requisition(_) => RequisitionRowRepository::new(con).batch_upsert(concrete!(Requisition)),
+            Row::Invoice(_) => InvoiceRowRepository::new(con).batch_upsert(concrete!(Invoice)),
+            Row::InvoiceLine(_) => InvoiceLineRowRepository::new(con).batch_upsert(concrete!(InvoiceLine)),
+            Row::AncillaryItem(_) => AncillaryItemRowRepository::new(con).batch_upsert(concrete!(AncillaryItem)),
+            Row::ItemVariant(_) => ItemVariantRowRepository::new(con).batch_upsert(concrete!(ItemVariant)),
+            Row::Store(_) => StoreRowRepository::new(con).batch_upsert(concrete!(Store)),
+            Row::AssetLog(_) => per_row!(AssetLog, |r| AssetLogRowRepository::new(con)
+                ._upsert_one(r)),
+            Row::Encounter(_) => EncounterRowRepository::new(con).batch_upsert(concrete!(Encounter)),
+            Row::RnrForm(_) => RnRFormRowRepository::new(con).batch_upsert(concrete!(RnrForm)),
+            Row::Vaccination(_) => VaccinationRowRepository::new(con).batch_upsert(concrete!(Vaccination)),
+            Row::Contact(_) => ContactRowRepository::new(con).batch_upsert(concrete!(Contact)),
+            Row::ContactTrace(_) => per_row!(ContactTrace, |r| ContactTraceRowRepository::new(con)
+                ._upsert_one(r)),
+            Row::MasterListNameJoin(_) => MasterListNameJoinRepository::new(con).batch_upsert(concrete!(MasterListNameJoin)),
+            Row::NameTagJoin(_) => NameTagJoinRepository::new(con).batch_upsert(concrete!(NameTagJoin)),
+            Row::ProgramEnrolment(_) => ProgramEnrolmentRowRepository::new(con).batch_upsert(concrete!(ProgramEnrolment)),
+            Row::ProgramEvent(_) => ProgramEventRowRepository::new(con).batch_upsert(concrete!(ProgramEvent)),
+            Row::NameOmsFields(_) => per_row!(NameOmsFields, |r| NameRowRepository::new(con)
+                ._upsert_oms_fields_one(r)),
+            Row::Site(_) => per_row!(Site, |r| SiteRowRepository::new(con)._upsert(r)),
+            Row::SyncRequest(_) => per_row!(SyncRequest, |r| SyncRequestRepository::new(con)
+                .upsert_one(r)),
         };
 
         match result {
-            Ok(_) => (taken, None),
-            Err(e) => (taken, Some(e)),
+            Ok(_) => (out, None),
+            Err(e) => (out, Some(e)),
         }
     }
 
@@ -2693,6 +2622,8 @@ impl Row {
         let single_log = match self {
             // Handled by the early return above; listed so this match stays exhaustive.
             Row::PurchaseOrderLine(_) => unreachable!("handled by early return above"),
+            // Remote-site-only record: not in the changelog and never propagated over sync.
+            Row::SyncRequest(_) => unreachable!("sync_request is not in the changelog"),
             Row::ActivityLog(r) => r.generate_changelog(con, action, source_site_id)?,
             Row::Barcode(r) => {
                 BarcodeRow::generate_changelog(r.id.clone(), con, action, source_site_id)?
@@ -2984,179 +2915,167 @@ impl Row {
     }
 }
 
-/// Outcome of `integrate_delete_no_changelog`: whether the table had a delete path.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DeleteOutcome {
-    /// The row was deleted (row only, no changelog).
-    Deleted,
-    /// The table is not synced out on delete, so nothing was deleted. Callers that
-    /// require a delete (v7) treat this as "delete translator not found".
+#[derive(Debug)]
+pub enum BatchDeleteError {
+    RepositoryError(RepositoryError),
     NoDeletePath,
 }
 
-/// Delete a row by identity (row only, no changelog), dispatched by table. Returns
-/// `NoDeletePath` (not an error) for tables that are never deleted via sync.
-/// TODO remove once all tables are listed in batch_delete
-pub fn integrate_delete_no_changelog(
+impl From<BatchDeleteError> for RepositoryError {
+    fn from(error: BatchDeleteError) -> Self {
+        match error {
+            BatchDeleteError::RepositoryError(error) => error,
+            BatchDeleteError::NoDeletePath => {
+                RepositoryError::as_db_error("Cannot delete from table", "NoDeletePath")
+            }
+        }
+    }
+}
+
+pub fn batch_delete<'a>(
     con: &StorageConnection,
     table_name: &ChangelogTableName,
-    record_id: &str,
-) -> Result<DeleteOutcome, RepositoryError> {
-    match table_name {
+    max_number_of_rows: usize,
+    in_operations: &[&'a BatchOperation],
+) -> (
+    Vec<(&'a BatchOperation, &'a ChangelogTableName)>,
+    Option<BatchDeleteError>,
+) {
+    let mut out = Vec::new();
+    let picked_ids = in_operations
+        .iter()
+        .take(max_number_of_rows)
+        .filter_map(|op| match op {
+            BatchOperation::Delete {
+                table_name: tn,
+                record_id,
+            } => {
+                if tn == table_name {
+                    out.push((*op, tn));
+                    Some(record_id.as_str())
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+
+    let result = match table_name {
         ChangelogTableName::Abbreviation => {
-            AbbreviationRowRepository::new(con).delete_no_changelog(record_id)?
+            AbbreviationRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::ActivityLog => {
-            ActivityLogRowRepository::new(con).delete_no_changelog(record_id)?
+            ActivityLogRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Asset => AssetRowRepository::new(con).delete_no_changelog(record_id)?,
+        ChangelogTableName::Asset => AssetRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::AssetInternalLocation => {
-            AssetInternalLocationRowRepository::new(con).delete_no_changelog(record_id)?
+            AssetInternalLocationRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::BackendPlugin => {
-            BackendPluginRowRepository::new(con).delete_no_changelog(record_id)?
+            BackendPluginRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Category => {
-            CategoryRowRepository::new(con).delete_no_changelog(record_id)?
-        }
+        ChangelogTableName::Category => CategoryRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::ClinicianStoreJoin => {
-            ClinicianStoreJoinRowRepository::new(con).delete_no_changelog(record_id)?
+            ClinicianStoreJoinRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Contact => {
-            ContactRowRepository::new(con).delete_no_changelog(record_id)?
-        }
-        ChangelogTableName::Currency => {
-            CurrencyRowRepository::new(con).delete_no_changelog(record_id)?
-        }
-        ChangelogTableName::Diagnosis => {
-            DiagnosisRowRepository::new(con).delete_no_changelog(record_id)?
-        }
+        ChangelogTableName::Contact => ContactRowRepository::new(con)._batch_delete(&picked_ids),
+        ChangelogTableName::Currency => CurrencyRowRepository::new(con)._batch_delete(&picked_ids),
+        ChangelogTableName::Diagnosis => DiagnosisRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::FormSchema => {
-            FormSchemaRowRepository::new(con).delete_no_changelog(record_id)?
+            FormSchemaRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::FrontendPlugin => {
-            FrontendPluginRowRepository::new(con).delete_no_changelog(record_id)?
+            FrontendPluginRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::IndicatorValue => {
-            IndicatorValueRowRepository::new(con).delete_no_changelog(record_id)?
+            IndicatorValueRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Invoice => {
-            InvoiceRowRepository::new(con).delete_no_changelog(record_id)?
-        }
+        ChangelogTableName::Invoice => InvoiceRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::InvoiceLine => {
-            InvoiceLineRowRepository::new(con).delete_no_changelog(record_id)?
+            InvoiceLineRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Item => ItemRowRepository::new(con).delete_no_changelog(record_id)?,
+        ChangelogTableName::Item => ItemRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::ItemDirection => {
-            ItemDirectionRowRepository::new(con).delete_no_changelog(record_id)?
+            ItemDirectionRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Location => {
-            LocationRowRepository::new(con).delete_no_changelog(record_id)?
-        }
+        ChangelogTableName::Location => LocationRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::MasterListLine => {
-            MasterListLineRowRepository::new(con).delete_no_changelog(record_id)?
+            MasterListLineRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::MasterListNameJoin => {
-            MasterListNameJoinRepository::new(con).delete_no_changelog(record_id)?
+            MasterListNameJoinRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Name => NameRowRepository::new(con).delete_no_changelog(record_id)?,
+        ChangelogTableName::Name => NameRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::NameStoreJoin => {
-            NameStoreJoinRepository::new(con).delete_no_changelog(record_id)?
+            NameStoreJoinRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::NameTag => {
-            NameTagRowRepository::new(con).delete_no_changelog(record_id)?
-        }
+        ChangelogTableName::NameTag => NameTagRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::NameTagJoin => {
-            NameTagJoinRepository::new(con).delete_no_changelog(record_id)?
+            NameTagJoinRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::Preference => {
-            PreferenceRowRepository::new(con).delete_no_changelog(record_id)?
+            PreferenceRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Program => {
-            ProgramRowRepository::new(con).delete_no_changelog(record_id)?
-        }
+        ChangelogTableName::Program => ProgramRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::ProgramRequisitionOrderType => {
-            ProgramRequisitionOrderTypeRowRepository::new(con).delete_no_changelog(record_id)?
+            ProgramRequisitionOrderTypeRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::ProgramRequisitionSettings => {
-            ProgramRequisitionSettingsRowRepository::new(con).delete_no_changelog(record_id)?
+            ProgramRequisitionSettingsRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::PurchaseOrder => {
-            PurchaseOrderRowRepository::new(con).delete_no_changelog(record_id)?
+            PurchaseOrderRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::PurchaseOrderLine => {
-            PurchaseOrderLineRowRepository::new(con).delete_no_changelog(record_id)?
+            PurchaseOrderLineRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Report => {
-            ReportRowRepository::new(con).delete_no_changelog(record_id)?
-        }
+        ChangelogTableName::Report => ReportRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::Requisition => {
-            RequisitionRowRepository::new(con).delete_no_changelog(record_id)?
+            RequisitionRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::RequisitionLine => {
-            RequisitionLineRowRepository::new(con).delete_no_changelog(record_id)?
+            RequisitionLineRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::RnrForm => {
-            RnRFormRowRepository::new(con).delete_no_changelog(record_id)?
-        }
+        ChangelogTableName::RnrForm => RnRFormRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::RnrFormLine => {
-            RnRFormLineRowRepository::new(con).delete_no_changelog(record_id)?
+            RnRFormLineRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Sensor => {
-            SensorRowRepository::new(con).delete_no_changelog(record_id)?
-        }
-        ChangelogTableName::Site => SiteRowRepository::new(con).delete_no_changelog(record_id)?,
-        ChangelogTableName::StockLine => {
-            StockLineRowRepository::new(con).delete_no_changelog(record_id)?
-        }
-        ChangelogTableName::Stocktake => {
-            StocktakeRowRepository::new(con).delete_no_changelog(record_id)?
-        }
+        ChangelogTableName::Sensor => SensorRowRepository::new(con)._batch_delete(&picked_ids),
+        ChangelogTableName::Site => SiteRowRepository::new(con)._batch_delete(&picked_ids),
+        ChangelogTableName::StockLine => StockLineRowRepository::new(con)._batch_delete(&picked_ids),
+        ChangelogTableName::Stocktake => StocktakeRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::StocktakeLine => {
-            StocktakeLineRowRepository::new(con).delete_no_changelog(record_id)?
+            StocktakeLineRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::Unit => UnitRowRepository::new(con).delete_no_changelog(record_id)?,
+        ChangelogTableName::Unit => UnitRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::UserAccount => {
-            UserAccountRowRepository::new(con).delete_no_changelog(record_id)?
+            UserAccountRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::UserPermission => {
-            UserPermissionRowRepository::new(con).delete_no_changelog(record_id)?
+            UserPermissionRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::UserStoreJoin => {
-            UserStoreJoinRowRepository::new(con).delete_no_changelog(record_id)?
+            UserStoreJoinRowRepository::new(con)._batch_delete(&picked_ids)
         }
         ChangelogTableName::ReasonOption => {
-            ReasonOptionRowRepository::new(con).delete_no_changelog(record_id)?
+            ReasonOptionRowRepository::new(con)._batch_delete(&picked_ids)
         }
-        ChangelogTableName::VVMStatus => {
-            VVMStatusRowRepository::new(con).delete_no_changelog(record_id)?
-        }
+        ChangelogTableName::VVMStatus => VVMStatusRowRepository::new(con)._batch_delete(&picked_ids),
         ChangelogTableName::VVMStatusLog => {
-            VVMStatusLogRowRepository::new(con).delete_no_changelog(record_id)?
+            VVMStatusLogRowRepository::new(con)._batch_delete(&picked_ids)
         }
         // Table has no delete path (not synced out on delete). Signal to the caller
         // rather than erroring — v7 maps this to "delete translator not found".
-        _ => return Ok(DeleteOutcome::NoDeletePath),
-    }
-    Ok(DeleteOutcome::Deleted)
-}
+        _ => return (out, Some(BatchDeleteError::NoDeletePath)),
+    };
 
-impl Row {
-    pub fn batch_delete(
-        con: &StorageConnection,
-        table_name: &ChangelogTableName,
-        record_ids: &[&str],
-    ) -> Result<DeleteOutcome, RepositoryError> {
-        match table_name {
-            // Tables wired up with a real set-based delete.
-            ChangelogTableName::Unit => UnitRowRepository::new(con)._batch_delete(record_ids)?,
-            // Everything else: per-id (preserves soft/hard/Site/no-op semantics exactly).
-            _ => return Ok(DeleteOutcome::NoDeletePath),
-        };
-
-        Ok(DeleteOutcome::Deleted)
+    match result {
+        Ok(_) => (out, None),
+        Err(e) => (out, Some(BatchDeleteError::RepositoryError(e))),
     }
 }
+
 /// Build the changelog row(s) to record a delete of `record_id` in `table_name`,
 /// for the v5/v6 integration path. MUST be called BEFORE the row is deleted, because
 /// store-scoped tables read the row's `store_id`/`transfer_store_id`/`patient_id` to

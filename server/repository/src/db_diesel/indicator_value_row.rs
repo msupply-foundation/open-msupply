@@ -77,9 +77,12 @@ impl<'a> IndicatorValueRowRepository<'a> {
         Ok(())
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
         diesel::delete(
-            indicator_value_with_links::table.filter(indicator_value_with_links::id.eq(record_id)),
+            indicator_value_with_links::table.filter(indicator_value_with_links::id.eq_any(ids)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(())
@@ -102,4 +105,3 @@ impl<'a> IndicatorValueRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 }
-

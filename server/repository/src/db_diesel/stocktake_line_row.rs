@@ -144,9 +144,12 @@ impl<'a> StocktakeLineRowRepository<'a> {
         Ok(result)
     }
 
-    pub(crate) fn delete_no_changelog(&self, record_id: &str) -> Result<(), RepositoryError> {
+    pub(crate) fn _batch_delete(&self, ids: &[&str]) -> Result<(), RepositoryError> {
+        if ids.is_empty() {
+            return Ok(());
+        }
         diesel::delete(
-            stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq(record_id)),
+            stocktake_line_with_links::table.filter(stocktake_line_with_links::id.eq_any(ids)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(())

@@ -4,6 +4,7 @@ use diesel::prelude::*;
 use crate::{
     asset_class_row::{AssetClassRow, AssetClassRowRepository},
     asset_row::AssetRow,
+    BatchOperation,
     mock::{
         mock_item_a, mock_location_1, mock_location_2, mock_location_in_another_store,
         mock_location_on_hold, mock_name_store_b, mock_store_a, mock_store_b, MockData,
@@ -716,7 +717,8 @@ async fn test_changelog_outgoing_sync_records() {
 
     // We want to test the sync scenario where changelog is set with site id = site1_id.
     let row = Row::Asset(row);
-    row.integrate_no_changelog(&connection).unwrap();
+    let op = BatchOperation::Upsert(row.clone());
+    assert!(row.batch_upsert(&connection, 1, &[&op]).1.is_none());
     for changelog in row
         .generate_changelog(
             &connection,
@@ -838,7 +840,11 @@ async fn test_changelog_outgoing_sync_records() {
         store_id: Some(site1_store_id.clone()),
         ..Default::default()
     });
-    central_asset.integrate_no_changelog(&connection).unwrap();
+    let central_asset_op = BatchOperation::Upsert(central_asset.clone());
+    assert!(central_asset
+        .batch_upsert(&connection, 1, &[&central_asset_op])
+        .1
+        .is_none());
     for changelog in central_asset
         .generate_changelog(
             &connection,

@@ -94,3 +94,48 @@ impl<'a> BarcodeRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 }
+
+#[cfg(test)]
+mod batch_upsert_test {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+
+    fn barcode_row(id: &str, gtin: &str) -> BarcodeRow {
+        BarcodeRow {
+            id: id.to_string(),
+            gtin: gtin.to_string(),
+            item_id: "item_a".to_string(),
+            pack_size: Some(1.0),
+            parent_id: None,
+            // Optional link: resolved field `manufacturer_id` is bound into the
+            // `manufacturer_link_id` CORE column by the generated `WalkRow`.
+            manufacturer_id: None,
+        }
+    }
+
+    /// Proves the generated raw-SQL `batch_upsert` for a `define_linked_tables!` table
+    /// writes the CORE table in one multi-row `INSERT ... ON CONFLICT DO UPDATE` and
+    /// round-trips through the resolving view, on SQLite.
+    #[actix_rt::test]
+    async fn linked_table_generated_batch_upsert_round_trips() {
+        let (_, con, _, _) = setup_all(
+            "barcode_linked_generated_batch_upsert",
+            MockDataInserts::none().items(),
+        )
+        .await;
+        let repo = BarcodeRowRepository::new(&con);
+
+        let row1 = barcode_row("bc_1", "gtin_1");
+        let row2 = barcode_row("bc_2", "gtin_2");
+        repo.batch_upsert(vec![&row1, &row2]).unwrap();
+        assert_eq!(repo.find_one_by_id("bc_1").unwrap(), Some(row1));
+        assert_eq!(repo.find_one_by_id("bc_2").unwrap(), Some(row2));
+
+        // Conflict on bc_2 -> UPDATE (gtin flips); bc_3 new -> INSERT.
+        let row2_v2 = barcode_row("bc_2", "gtin_updated");
+        let row3 = barcode_row("bc_3", "gtin_3");
+        repo.batch_upsert(vec![&row2_v2, &row3]).unwrap();
+        assert_eq!(repo.find_one_by_id("bc_2").unwrap(), Some(row2_v2));
+        assert_eq!(repo.find_one_by_id("bc_3").unwrap(), Some(row3));
+    }
+}
