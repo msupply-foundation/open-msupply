@@ -19,11 +19,7 @@ interface PropertyV2InputProps {
   definition: PropertyV2DefinitionLike;
   /** The current value for this property (from the record's `propertiesV2`). */
   value: unknown;
-  /**
-   * Supply to make the field editable. When omitted the field is read-only.
-   * OPTION/OTHER value types stay read-only even when an `onChange` is given
-   * (see {@link toLegacyPropertyInput}).
-   */
+  /** Supply to make the field editable. When omitted the field is read-only. */
   onChange?: (value: PropertyValue | null) => void;
   disabled?: boolean;
 }
@@ -39,9 +35,8 @@ interface PropertyV2InputProps {
  *   levels are indented, non-selectable headers and only leaves can be picked
  *   (flat dimensions are a plain list). The stored value is the leaf option id.
  *   Read-only is the same control, disabled — so display and edit stay in sync.
- * - TEXT/NUMBER/REAL/DATE render via the shared legacy `PropertyInput` when
+ * - TEXT/INTEGER/REAL/DATE render via the shared legacy `PropertyInput` when
  *   editable, otherwise as a disabled text row.
- * - OTHER is always read-only text (the opaque future-type fallback).
  */
 export const PropertyV2Input = ({
   definition,
@@ -124,7 +119,7 @@ export const PropertyV2Input = ({
     );
   }
 
-  // Read-only (and OPTION/OTHER even when editable): disabled text.
+  // Read-only: a disabled text row showing the formatted value.
   return (
     <BasicTextInput
       disabled
