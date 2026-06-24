@@ -3,8 +3,8 @@ use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
     item_category_row::ItemCategoryJoinRow,
     ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemType,
-    LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow,
-    UnitRowRepository, VENCategory,
+    LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow, UnitRowRepository,
+    VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
@@ -48,6 +48,13 @@ pub struct LegacyItemRow {
     doses: i32,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     category_ID: Option<String>,
+    // Two additional flat category dimensions (`item_category2`/`3`), parallel to
+    // the main hierarchical `category_ID`. Stored as OPTION ids; no relational
+    // counterpart. `default` so older payloads still deserialize.
+    #[serde(default, deserialize_with = "empty_str_as_option_string")]
+    category2_ID: Option<String>,
+    #[serde(default, deserialize_with = "empty_str_as_option_string")]
+    category3_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     restricted_location_type_ID: Option<String>,
     volume_per_pack: f64,
@@ -85,14 +92,24 @@ pub struct LegacyItemRow {
 /// so default-only items keep `properties_v2` NULL rather than carrying noise
 /// rows that 4D would otherwise emit for every item.
 fn build_legacy_item_properties(legacy: &LegacyItemRow) -> Option<serde_json::Value> {
+    use crate::sync::central_mapping_properties::keys;
     LegacyPropertiesBuilder::new()
-        .text("user_field_1", legacy.user_field_1.as_deref())
-        .text("user_field_2", legacy.user_field_2.as_deref())
-        .text("user_field_3", legacy.user_field_3.as_deref())
-        .text("user_field_6", legacy.user_field_6.as_deref())
-        .real("user_field_5", legacy.user_field_5)
-        .boolean("user_field_4", legacy.user_field_4)
-        .boolean("user_field_7", legacy.user_field_7)
+        .text(keys::ITEM_USER_FIELD_1, legacy.user_field_1.as_deref())
+        .text(keys::ITEM_USER_FIELD_2, legacy.user_field_2.as_deref())
+        .text(keys::ITEM_USER_FIELD_3, legacy.user_field_3.as_deref())
+        .text(keys::ITEM_USER_FIELD_6, legacy.user_field_6.as_deref())
+        .real(keys::ITEM_USER_FIELD_5, legacy.user_field_5)
+        .boolean(keys::ITEM_USER_FIELD_4, legacy.user_field_4)
+        .boolean(keys::ITEM_USER_FIELD_7, legacy.user_field_7)
+        // Item category as a propertiesV2 OPTION (parallel to the existing
+        // relational `item_category_join` path, which is left untouched). 4D
+        // gives an item one leaf `category_ID`; stored as the option id so the
+        // client resolves it against the `property_option_v2` rows authored by
+        // the category import. See central_mapping_properties (`ITEM_CATEGORY_1`).
+        .option(keys::ITEM_CATEGORY_1, legacy.category_ID.as_deref())
+        // Flat category dimensions 2 & 3 (`item_category2`/`3`).
+        .option(keys::ITEM_CATEGORY_2, legacy.category2_ID.as_deref())
+        .option(keys::ITEM_CATEGORY_3, legacy.category3_ID.as_deref())
         .build()
 }
 
@@ -288,6 +305,8 @@ impl SyncTranslation for ItemTranslation {
             // Probably better to move management of categories to OMS Central than
             // build out the syncing back and forth of categories to OG!
             category_ID: None,
+            category2_ID: None,
+            category3_ID: None,
             restricted_location_type_ID: restricted_location_type_id,
             volume_per_pack,
             universal_code,
@@ -492,6 +511,8 @@ mod tests {
             strength: None,
             doses: 0,
             category_ID: None,
+            category2_ID: None,
+            category3_ID: None,
             restricted_location_type_ID: None,
             volume_per_pack: 0.0,
             universal_code: None,
@@ -540,6 +561,32 @@ mod tests {
                 "user_field_5": 12.5,
                 "user_field_7": true,
             }))
+        );
+    }
+
+    #[test]
+    fn build_legacy_item_properties_category_option() {
+        // The leaf `category_ID` is stored under the `item_category_1` key as the
+        // option id (parallel to the relational item_category_join path).
+        let mut legacy = legacy_with(None, None, None, None);
+        legacy.category_ID = Some("CAT_LEAF_ID".to_string());
+        assert_eq!(
+            build_legacy_item_properties(&legacy),
+            Some(serde_json::json!({ "item_category_1": "CAT_LEAF_ID" }))
+        );
+
+        // Empty/absent category is omitted, like every other default field.
+        legacy.category_ID = Some("".to_string());
+        assert_eq!(build_legacy_item_properties(&legacy), None);
+        legacy.category_ID = None;
+        assert_eq!(build_legacy_item_properties(&legacy), None);
+
+        // The two flat dimensions store their ids under `item_category_2`/`_3`.
+        legacy.category2_ID = Some("CAT2_ID".to_string());
+        legacy.category3_ID = Some("CAT3_ID".to_string());
+        assert_eq!(
+            build_legacy_item_properties(&legacy),
+            Some(serde_json::json!({ "item_category_2": "CAT2_ID", "item_category_3": "CAT3_ID" }))
         );
     }
 
