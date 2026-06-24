@@ -136,8 +136,8 @@ impl SyncRecordTester for UnitAndItemTester {
         result.push(TestStepData {
             central_delete: json!({ "item": [item_row2.id], "unit": [unit_row1.id] }),
             integration_records: vec![
-                IntegrationOperation::upsert(UnitRowDelete(unit_row1.id)),
-                IntegrationOperation::upsert(ItemRowDelete(item_row2.id)),
+                IntegrationOperation::delete(UnitRowDelete(unit_row1.id)),
+                IntegrationOperation::delete(ItemRowDelete(item_row2.id)),
             ],
             ..Default::default()
         });
@@ -146,8 +146,10 @@ impl SyncRecordTester for UnitAndItemTester {
 }
 
 fn extend_base(value: serde_json::Value) -> serde_json::Value {
-    let mut base: serde_json::Value =
-        test_pull_upsert_records()[0].sync_buffer_row.deserialize().unwrap();
+    let mut base: serde_json::Value = test_pull_upsert_records()[0]
+        .sync_buffer_row
+        .deserialize()
+        .unwrap();
     merge_json(&mut base, &value);
     base
 }

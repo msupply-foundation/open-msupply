@@ -131,8 +131,7 @@ async fn random_delay(min_millisecond: u64, max_millisecond: u64) {
     use rand::RngExt;
     let diff = max_millisecond - min_millisecond;
     // .random::<f64>() generates a float between 0 and 1
-    let delay_millisecond =
-        (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
+    let delay_millisecond = (rand::rng().random::<f64>() * diff as f64) as u64 + min_millisecond;
     tokio::time::sleep(std::time::Duration::from_millis(delay_millisecond)).await;
 }
 
@@ -147,7 +146,7 @@ pub(crate) fn integrate_with_is_sync_reset(
     let integrations: Vec<(Option<_>, IntegrationOperation)> =
         integrations.into_iter().map(|i| (None, i)).collect();
     integrate(&connection, &integrations).unwrap();
-    changelog_repo.reset_is_sync_update(cursor).unwrap();
+    // changelog_repo.reset_is_sync_update(cursor).unwrap();
 
     integrations.into_iter().map(|(_, i)| i).collect()
 }
