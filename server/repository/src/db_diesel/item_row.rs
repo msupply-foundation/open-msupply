@@ -90,7 +90,7 @@ pub struct ItemRow {
     pub universal_code: Option<String>,
     /// Properties v2 values keyed by `property_v2.key`. Imported from legacy
     /// mSupply `[item]user_field_1..7` via the v5 sync translator; central-only
-    /// and never edited in OMS. See PROPERTIES_PLAN.md.
+    /// and never edited in OMS. See docs/content/server/service/properties/_index.md.
     pub properties_v2: Option<JsonValue>,
 }
 
