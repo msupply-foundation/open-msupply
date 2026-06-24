@@ -218,11 +218,11 @@ At worst having to sync say 3 million records in one go is manageable\! By the a
 This leads to attempting syncing one store at a time:
 
 1. COGS is upgraded to a version supporting this, and we initiate it.
-2. COGS marks a store.coms_migration_status (starting with most trans_lines \+ requisition_lines first) in COGS as “queuing” and begins a process adding all of the store’s records to the COMS central queue.
+2. COGS marks a store.coms_migration_status in COGS as “queuing” and begins a process adding all of the store’s records to the COMS central queue.
    1. From this point, all records destined for that store going through COGS’ sync routing logic will be forwarded to COMS. Doing it any sooner may result in sending records without parents, failing FK constraints. (TODO: proof of concept (PoC) validation\!)
    2. Alternative: (C)OMS should be improved to remain performant despite FK constraints (or other errors) and retry the failing records each time (which is a bit wasteful\! But will iron out eventually as all stores and sent over). Then it doesn’t matter much if we make extremely simple (i.e. low overhead\!) forwarding logic that sends everything to COMS
-3. COMS can start pulling these records into its buffer on next sync
-   1. If COMS manages to pull the queue to 0 while COGS is still queuing records (e.g. COGS is doing a big query for the next table of records to queue), it might start integrating prematurely. COGS can prevent this by checking for “queuing” stores and sending that there are more records remaining than it would otherwise send to trick COMS into waiting longer (TODO: PoC)
+3. COMS can start pulling these records into its buffer on next sync, even before COGS has finished queuing
+   1. If COMS is pulling faster than COGS can generate records, when COGS queue for COMS is below a threshold, it will respond with an "Integration in progress" status preventing COMS from prematurely starting the atomic integration. Once it has completed queuing, the next sync will pull all records and start integration on COMS.
 4. Once COGS has added all the records to the queue, it marks the store as “moved”. These continue to be included in COGS store data forwarding logic.
 5. COMS begins integration of sync_buffer. This may take a while with 1-3 million records.
    1. The place to discuss performance of integration is [here](https://github.com/msupply-foundation/open-msupply/issues/10295)

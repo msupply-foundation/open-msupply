@@ -25,7 +25,7 @@ pub(crate) enum SyncContext {
     },
     /// Records arrived via a patient-lookup pull. They belong to other sites'
     /// stores.
-    PatientLookup,
+    PatientLookup { active_stores: ActiveStoresOnSite },
 }
 
 #[derive(Error, Debug)]
@@ -97,7 +97,7 @@ fn validate_and_translate(
                     is_initialising,
                     active_stores,
                 } => validate_on_remote(&row, &table_name, active_stores, *is_initialising),
-                SyncContext::PatientLookup => Ok(()), // Patient records belong to another store
+                SyncContext::PatientLookup { .. } => Ok(()), // Patient records belong to another store
             };
 
             if let Err(e) = validation_result {
@@ -297,7 +297,13 @@ fn validate_translate_integrate_inner<'a>(
 
     let repo = SyncBufferRepository::new(connection);
 
-    let mut total = repo.count_pending(source_site_id, SyncVersion::V7, reference_id)?;
+    let integration_tables: Vec<&str> = INTEGRATION_ORDER.iter().map(|t| t.as_ref()).collect();
+    let mut total = repo.count_pending(
+        source_site_id,
+        SyncVersion::V7,
+        reference_id,
+        Some(&integration_tables),
+    )?;
     let mut last_progress = total / PROGRESS_INTERVAL;
 
     if let Some(logger) = logger.as_mut() {

@@ -161,7 +161,9 @@ export const SiteEditModal = ({
                     value={hardwareId ?? ''}
                     disabled
                   />
-                  {isEditable && showClearButtons && !!hardwareId && (
+                  {/* Standalone COMS or non-standalone, 
+                  COMS is now responsible for managing ROMS hardware ids */}
+                  {showClearButtons && !!hardwareId && (
                     <LoadingButton
                       color="secondary"
                       variant="contained"
@@ -176,7 +178,8 @@ export const SiteEditModal = ({
               }
             />
           )}
-          {isEditable && isExisting && showClearButtons && (
+          {/* Token is solely managed by COMS, so show regardless of standalone */}
+          {isExisting && showClearButtons && (
             <InputWithLabelRow
               key="sync-token"
               label={t('label.clear-sync-token')}

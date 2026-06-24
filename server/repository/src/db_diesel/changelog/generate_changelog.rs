@@ -169,6 +169,7 @@ impl NameStoreJoinRow {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
+            // TODO does this need to be here
             transfer_store_id: transfer_store_id_for_name(con, &row.name_id)?,
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
@@ -320,6 +321,30 @@ impl VVMStatusLogRow {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl UserPermissionRow {
+    pub(crate) fn generate_changelog(
+        row_or_id: RowOrId<UserPermissionRow>,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &UserPermissionRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::UserPermission,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: row.store_id.clone(),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })
@@ -1914,34 +1939,24 @@ impl UserAccountRow {
     }
 }
 
-impl UserPermissionRow {
-    pub(crate) fn generate_changelog(
-        record_id: String,
-        con: &StorageConnection,
-        action: RowActionType,
-        source_site_id: SourceSiteId,
-    ) -> Result<ChangeLogInsertRow, RepositoryError> {
-        Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::UserPermission,
-            record_id,
-            row_action: action,
-            source_site_id: source_site_id.get_id(con)?,
-            ..Default::default()
-        })
-    }
-}
-
 impl UserStoreJoinRow {
     pub(crate) fn generate_changelog(
-        record_id: String,
+        row_or_id: RowOrId<UserStoreJoinRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &UserStoreJoinRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::UserStoreJoin,
-            record_id,
+            record_id: row.id.clone(),
             row_action: action,
+            store_id: Some(row.store_id.clone()),
             source_site_id: source_site_id.get_id(con)?,
             ..Default::default()
         })

@@ -1,6 +1,5 @@
-use repository::{ChangeLogSyncStyle, ChangelogTableName, SyncBufferRow};
+use repository::{Authoring, ChangelogTableName, SyncBufferRow};
 use thiserror::Error;
-use ChangeLogSyncStyle::*;
 
 use crate::sync::ActiveStoresOnSite;
 
@@ -30,12 +29,13 @@ pub(crate) fn validate_on_remote(
     active_on_site: &ActiveStoresOnSite,
     is_initialising: bool,
 ) -> Result<(), ValidationError> {
-    let (sync_styles, _) = table_name.sync_style();
+    use Authoring::*;
+    let sync_style = table_name.sync_style();
 
     let active_store_ids = active_on_site.store_ids();
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
 
-    for style in sync_styles {
+    for style in &sync_style.authoring {
         match style {
             // Reject rows that have a store id or patient id - these are remote or patient data, not central
             Central => match (&sync_buffer_row.store_id, &sync_buffer_row.patient_id) {
@@ -69,9 +69,8 @@ pub(crate) fn validate_on_remote(
                 Some(_) => return Ok(()),
                 None => last_err = ValidationError::NoPatientId,
             },
-            File => return Ok(()),
-            ToLegacyCentralOnly => last_err = ValidationError::UnexpectedSyncStyleForV7,
-            RemoteToCentral => last_err = ValidationError::UnexpectedSyncStyleForV7,
+            Anyone => return Ok(()),
+            LegacyOnly => last_err = ValidationError::UnexpectedSyncStyleForV7,
         }
     }
 
@@ -83,12 +82,13 @@ pub(crate) fn validate_on_central(
     table_name: &ChangelogTableName,
     source_site_active_store_ids: &[String],
 ) -> Result<(), ValidationError> {
-    let (sync_styles, _) = table_name.sync_style();
+    use Authoring::*;
+    let sync_style = table_name.sync_style();
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
 
     let store_active_on_source = |id: &String| source_site_active_store_ids.iter().any(|s| s == id);
 
-    for style in sync_styles {
+    for style in &sync_style.authoring {
         match style {
             Central => last_err = ValidationError::CentralOnlyEditableByCentral,
             // Accept only if the row's store belongs to the source site —
@@ -98,16 +98,14 @@ pub(crate) fn validate_on_central(
                 Some(id) if store_active_on_source(id) => return Ok(()),
                 Some(_) => last_err = ValidationError::StoreNotActiveOnSourceSite,
             },
-
             Patient => match (&sync_buffer_row.patient_id, &sync_buffer_row.store_id) {
                 (None, _) => last_err = ValidationError::NoPatientId,
                 (Some(_), None) => return Ok(()),
                 (Some(_), Some(id)) if store_active_on_source(id) => return Ok(()),
                 (Some(_), Some(_)) => last_err = ValidationError::StoreNotActiveOnSourceSite,
             },
-            File => return Ok(()),
-            ToLegacyCentralOnly => last_err = ValidationError::UnexpectedSyncStyleForV7,
-            RemoteToCentral => return Ok(()),
+            Anyone => return Ok(()),
+            LegacyOnly => last_err = ValidationError::UnexpectedSyncStyleForV7,
         }
     }
 
@@ -216,7 +214,7 @@ mod tests {
             ),
             Err(ValidationError::InactiveStore)
         );
-        // Post-initialisation, reject a record for one of our own stores
+        // Sync style: RemoteOwned - Post-initialisation, reject a record for one of our own stores
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
@@ -239,28 +237,15 @@ mod tests {
                     source_site_id: 2,
                     ..Default::default()
                 },
-                &NameStoreJoin,
+                &Preference,
                 &site(),
                 false,
             ),
             Ok(())
         );
-        assert_eq!(
-            validate_on_remote(
-                &SyncBufferRow {
-                    store_id: Some("inactive_store".into()),
-                    source_site_id: 2,
-                    ..Default::default()
-                },
-                &NameStoreJoin,
-                &site(),
-                false,
-            ),
-            Err(ValidationError::InactiveStore)
-        );
 
         // Sync style: Transfer — transfer_store must be active.
-        // (Requisition's styles are Remote+Transfer; the Remote arm rejects
+        // (Requisition's styles are RemoteOwned+Transfer; the RemoteOwned arm rejects
         // with NoStoreId, but Transfer accepts.)
         assert_eq!(
             validate_on_remote(
@@ -314,6 +299,20 @@ mod tests {
                 false,
             ),
             Err(ValidationError::NoPatientId)
+        );
+
+        // Sync style: LegacyOnly — not a v7 record, always rejected.
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &Site,
+                &site(),
+                false,
+            ),
+            Err(ValidationError::UnexpectedSyncStyleForV7)
         );
     }
 
@@ -451,6 +450,32 @@ mod tests {
                 &source_site_stores,
             ),
             Err(ValidationError::NoPatientId)
+        );
+
+        // Sync style: Anyone — central accepts the push as-is, no checks.
+        assert_eq!(
+            validate_on_central(
+                &SyncBufferRow {
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &Clinician,
+                &source_site_stores,
+            ),
+            Ok(())
+        );
+
+        // Sync style: LegacyOnly — not a v7 record, always rejected.
+        assert_eq!(
+            validate_on_central(
+                &SyncBufferRow {
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &Site,
+                &source_site_stores,
+            ),
+            Err(ValidationError::UnexpectedSyncStyleForV7)
         );
     }
 }

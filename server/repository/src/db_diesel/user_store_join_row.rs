@@ -1,5 +1,6 @@
 use super::{store_row::store, user_row::user_account, StorageConnection};
 
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_batch_table;
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, RowActionType, SourceSiteId};
@@ -65,7 +66,7 @@ impl<'a> UserStoreJoinRowRepository<'a> {
     pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = UserStoreJoinRow::generate_changelog(
-            row.id.clone(),
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,

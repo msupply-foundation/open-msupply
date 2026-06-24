@@ -1,4 +1,5 @@
 use super::StorageConnection;
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::diesel_string_enum;
 use crate::diesel_macros::define_batch_table;
 use crate::repository_error::RepositoryError;
@@ -188,7 +189,7 @@ impl<'a> UserPermissionRowRepository<'a> {
     pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = UserPermissionRow::generate_changelog(
-            row.id.clone(),
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -226,13 +227,13 @@ impl<'a> UserPermissionRowRepository<'a> {
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        self._delete(id)?;
         let changelog = UserPermissionRow::generate_changelog(
-            id.to_string(),
+            RowOrId::Id(id),
             self.connection,
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
+        self._delete(id)?;
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
