@@ -2,7 +2,7 @@ use std::{ops::Deref, str::FromStr};
 
 use super::StorageConnection;
 use crate::{
-    diesel_macros::{define_batch_table, diesel_json_type, diesel_string_enum},
+    diesel_macros::{diesel_json_type, diesel_string_enum},
     migrations::Version,
     repository_error::RepositoryError,
     KeyType, KeyValueStoreRepository,
@@ -248,72 +248,82 @@ pub struct IntegrationResultUpdate {
     pub error: Option<String>,
 }
 
-// Reduced view of `sync_buffer` for the integration-result batch upsert. It maps onto the
-// SAME physical table but lists only the columns we write: the `cursor` conflict target, the
-// integration_* outcome columns we update, plus the table's NOT-NULL columns (which the INSERT
-// candidate row must supply even though they're never updated — verified: the DB validates
-// NOT-NULL before resolving the conflict). `update: [..]` restricts `ON CONFLICT DO UPDATE SET`
-// to just the integration_* columns, so the bogus NOT-NULL fillers are insert-only and never
-// overwrite the existing row's real data (the cursor always exists -> conflict always fires).
-define_batch_table! {
-    struct: SyncBufferIntegrationResultRow,
-    repo: SyncBufferIntegrationResultRepository,
-    update: [
-        integration_started_datetime,
-        integration_datetime,
-        integration_result,
-        integration_error,
-        is_integrated,
-    ],
-    table: #[sql_name = "sync_buffer"] sync_buffer_integration_result (cursor) {
-        cursor -> Integer,
-        // Updated columns.
-        integration_started_datetime -> Nullable<Timestamp>,
-        integration_datetime -> Nullable<Timestamp>,
-        integration_result -> Nullable<Text>,
-        integration_error -> Nullable<Text>,
-        is_integrated -> Bool,
-        // NOT-NULL fillers (insert-only; never in DO UPDATE SET).
-        record_id -> Text,
-        received_datetime -> Timestamp,
-        table_name -> Text,
-        action -> Text,
-        data -> Text,
-        sync_version -> Text,
-        source_site_id -> Integer,
+/// Hand-built `UPDATE sync_buffer SET ... FROM (VALUES ...) WHERE cursor = v.cursor` so a whole
+/// batch of per-row integration outcomes is written in ONE statement on both backends.
+///
+/// Why not `INSERT ... ON CONFLICT`: on Postgres `sync_buffer` is PARTITIONED by `is_integrated`
+/// with `PRIMARY KEY (cursor, is_integrated)`. There is no unique constraint on `cursor` alone,
+/// and we update `is_integrated` (the partition key) false->true — so an upsert keyed on
+/// `(cursor, is_integrated)` would never match the existing pending row and would instead INSERT
+/// a bogus duplicate. A plain `UPDATE` flips the row across partitions correctly (PG 11+), and
+/// works on SQLite >= 3.33 (our bundled libsqlite3-sys is newer). Variable-length SQL is kept
+/// out of the prepared-statement cache.
+struct BatchIntegrationResultUpdate<'a> {
+    updates: &'a [IntegrationResultUpdate],
+    /// `result` rendered to its stored string form, parallel to `updates`. Held here so the
+    /// bound values outlive the AST walk (`push_bind_param` borrows for the query's lifetime).
+    result_strings: Vec<String>,
+    integration_datetime: NaiveDateTime,
+}
+
+impl diesel::query_builder::QueryId for BatchIntegrationResultUpdate<'_> {
+    type QueryId = ();
+    const HAS_STATIC_QUERY_ID: bool = false;
+}
+
+impl diesel::query_builder::QueryFragment<crate::DBType> for BatchIntegrationResultUpdate<'_> {
+    fn walk_ast<'b>(
+        &'b self,
+        mut out: diesel::query_builder::AstPass<'_, 'b, crate::DBType>,
+    ) -> diesel::QueryResult<()> {
+        use diesel::sql_types::{Integer, Nullable, Text, Timestamp};
+        if self.updates.is_empty() {
+            return Ok(());
+        }
+        out.unsafe_to_cache_prepared();
+
+        // `integration_datetime` is shared across the batch, so bind it once and reference the
+        // bound literal in SET; per-row values come from the VALUES table `v`.
+        out.push_sql(
+            "UPDATE sync_buffer SET \
+             integration_started_datetime = v.started, \
+             integration_datetime = ",
+        );
+        out.push_bind_param::<Timestamp, _>(&self.integration_datetime)?;
+        out.push_sql(
+            ", integration_result = v.result, \
+             integration_error = v.error, \
+             is_integrated = ",
+        );
+        out.push_bind_param::<diesel::sql_types::Bool, _>(&true)?;
+        // SQLite doesn't accept a column-alias list on a VALUES table source (`AS v(col, ..)`),
+        // so wrap it in a SELECT that aliases the implicit `column1..N`. Accepted by both
+        // SQLite (>= 3.33) and Postgres.
+        out.push_sql(
+            " FROM (SELECT column1 AS cursor, column2 AS started, \
+             column3 AS result, column4 AS error FROM (VALUES ",
+        );
+        for (i, u) in self.updates.iter().enumerate() {
+            if i > 0 {
+                out.push_sql(", ");
+            }
+            out.push_sql("(");
+            out.push_bind_param::<Integer, _>(&u.cursor)?;
+            out.push_sql(", ");
+            out.push_bind_param::<Timestamp, _>(&u.started_datetime)?;
+            out.push_sql(", ");
+            // The enum's stored string form (precomputed so it outlives this walk).
+            out.push_bind_param::<Text, _>(&self.result_strings[i])?;
+            out.push_sql(", ");
+            out.push_bind_param::<Nullable<Text>, _>(&u.error)?;
+            out.push_sql(")");
+        }
+        out.push_sql(")) AS v WHERE sync_buffer.cursor = v.cursor");
+        Ok(())
     }
 }
 
-/// Thin repo wrapper that `define_batch_table!` hangs the generated `batch_upsert` off.
-struct SyncBufferIntegrationResultRepository<'a> {
-    connection: &'a StorageConnection,
-}
-
-impl<'a> SyncBufferIntegrationResultRepository<'a> {
-    fn new(connection: &'a StorageConnection) -> Self {
-        Self { connection }
-    }
-}
-
-#[derive(Clone, Insertable, AsChangeset)]
-#[diesel(table_name = sync_buffer_integration_result)]
-struct SyncBufferIntegrationResultRow {
-    cursor: i32,
-    integration_started_datetime: Option<NaiveDateTime>,
-    integration_datetime: Option<NaiveDateTime>,
-    integration_result: Option<String>,
-    integration_error: Option<String>,
-    is_integrated: bool,
-    // Bogus fillers — present only so the INSERT candidate row satisfies NOT-NULL; never
-    // written on conflict (not in the update set).
-    record_id: String,
-    received_datetime: NaiveDateTime,
-    table_name: String,
-    action: String,
-    data: String,
-    sync_version: String,
-    source_site_id: i32,
-}
+impl<Conn> diesel::query_dsl::RunQueryDsl<Conn> for BatchIntegrationResultUpdate<'_> {}
 
 impl<'a> SyncBufferRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -410,45 +420,31 @@ impl<'a> SyncBufferRepository<'a> {
     }
 
     /// Records the integration outcome for a batch of buffer rows in ONE statement on both
-    /// backends, via the generated `INSERT ... ON CONFLICT(cursor) DO UPDATE` over a reduced
-    /// view of `sync_buffer`. Each cursor already exists, so every row hits `DO UPDATE`; the
-    /// bogus NOT-NULL filler values are insert-only and never overwrite real data. The caller
-    /// wraps in a transaction.
+    /// backends, via `UPDATE sync_buffer SET ... FROM (VALUES (..),(..)) WHERE cursor = v.cursor`.
+    /// An `UPDATE` (not an upsert) is required because on Postgres `sync_buffer` is partitioned
+    /// by `is_integrated` (which this flips), so `INSERT ... ON CONFLICT` can't target it. Each
+    /// row carries its own result/error/started values. Chunks under the bind-parameter limit;
+    /// the caller wraps in a transaction.
     pub fn set_batch_integration_result(
         &self,
         updates: &[IntegrationResultUpdate],
     ) -> Result<(), RepositoryError> {
+        use diesel::query_dsl::RunQueryDsl;
         if updates.is_empty() {
             return Ok(());
         }
         // One `integration_datetime` for the whole batch (the rows all complete together).
         let integration_datetime = Utc::now().naive_utc();
-        let rows: Vec<SyncBufferIntegrationResultRow> = updates
-            .iter()
-            .map(|u| SyncBufferIntegrationResultRow {
-                cursor: u.cursor,
-                integration_started_datetime: Some(u.started_datetime),
-                integration_datetime: Some(integration_datetime),
-                integration_result: Some(u.result.as_ref().to_string()),
-                integration_error: u.error.clone(),
-                is_integrated: true,
-                // Bogus fillers (never written on conflict).
-                record_id: String::new(),
-                received_datetime: integration_datetime,
-                table_name: String::new(),
-                action: String::new(),
-                data: String::new(),
-                sync_version: String::new(),
-                source_site_id: 0,
-            })
-            .collect();
-        // Chunk under the backend bind-parameter limit: 10k updates × 13 columns would
-        // otherwise blow past it.
-        let max_rows =
-            crate::max_rows_per_chunk(SyncBufferIntegrationResultRow::BATCH_COLUMN_COUNT);
-        let repo = SyncBufferIntegrationResultRepository::new(self.connection);
-        for chunk in rows.chunks(max_rows) {
-            repo.batch_upsert(chunk.iter().collect())?;
+        // 4 bound params per VALUES row (cursor, started, result, error) + 1 shared datetime.
+        let max_rows = crate::max_rows_per_chunk(4);
+        for chunk in updates.chunks(max_rows) {
+            let result_strings = chunk.iter().map(|u| u.result.as_ref().to_string()).collect();
+            BatchIntegrationResultUpdate {
+                updates: chunk,
+                result_strings,
+                integration_datetime,
+            }
+            .execute(self.connection.lock().connection())?;
         }
         Ok(())
     }
