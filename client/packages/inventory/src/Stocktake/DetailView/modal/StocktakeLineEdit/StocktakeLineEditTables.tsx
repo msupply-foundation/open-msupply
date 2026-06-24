@@ -147,6 +147,7 @@ export const BatchTable = ({
             <DateTimePickerInput
               value={value}
               disabled={disabled || !row.original.countThisLine}
+              disableFuture
               onChange={date =>
                 update({
                   id: row.original.id,
@@ -549,7 +550,7 @@ const getPackSizeChangePatch = (
   const shouldClearSellPrice =
     row.item.defaultPackSize !== newPackSize &&
     row.item.itemStoreProperties?.defaultSellPricePerPack ===
-      row.sellPricePerPack;
+    row.sellPricePerPack;
 
   return {
     id: row.id,
@@ -571,7 +572,7 @@ const getCountedPacksChangePatch = (
   const keepReason =
     typeof row.countedNumberOfPacks === 'number' &&
     countedPacks > row.snapshotNumberOfPacks ===
-      row.countedNumberOfPacks > row.snapshotNumberOfPacks;
+    row.countedNumberOfPacks > row.snapshotNumberOfPacks;
 
   return {
     id: row.id,
