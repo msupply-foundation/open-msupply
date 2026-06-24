@@ -2617,6 +2617,7 @@
   "preference.daysInMonth": "Days in a month",
   "preference.disableManualReturns": "Disable manual returns",
   "preference.displayPopulationBasedForecasting": "Display population based forecasting",
+  "preference.doNotPrintPlaceholderLineLabels": "Do not print labels for placeholder (zero quantity) prescription lines",
   "preference.expiredStockIssueThreshold": "Expired stock issue threshold (days)",
   "preference.expiredStockPreventIssue": "Prevent issuing expired stock",
   "preference.externalInboundShipmentLinesMustBeAuthorised": "Inbound shipment (external) lines must be authorised",
