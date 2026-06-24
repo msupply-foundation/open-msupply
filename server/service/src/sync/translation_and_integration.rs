@@ -130,6 +130,30 @@ impl RecordOutcome {
     }
 }
 
+/// Generate a delete changelog inside a savepoint (it reads the still-present row to route
+/// store_id/transfer_store_id/patient_id). The savepoint keeps a failing generation from
+/// poisoning the outer transaction on Postgres. On SQLite the outer tx is reused (`reuse_tx`).
+fn gen_delete_changelog_isolated(
+    con: &StorageConnection,
+    table_name: &ChangelogTableName,
+    record_id: &str,
+    source_site_id: Option<i32>,
+    wrap_in_tx: bool,
+) -> Result<Vec<ChangeLogInsertRow>, RepositoryError> {
+    con.transaction_sync_etc(
+        |tx| {
+            generate_delete_changelog(
+                tx,
+                table_name,
+                record_id,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )
+        },
+        !wrap_in_tx,
+    )
+    .map_err(|e: repository::TransactionError<RepositoryError>| e.to_inner_error())
+}
+
 impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(connection: &'a StorageConnection) -> TranslationAndIntegration<'a> {
         TranslationAndIntegration {
@@ -294,10 +318,18 @@ impl<'a> TranslationAndIntegration<'a> {
         Ok(error_count)
     }
 
-    /// Run the accumulated operations: pre-generate delete changelogs, split batchable
-    /// (`Upsert(Row)`/`Delete`) from per-record (`UpsertNonSync`/`UpsertDocument`) ops, run
-    /// `batch_operations` for the batchable ones, then generate + insert all changelogs and
-    /// fold per-operation errors back into the owning record's outcome.
+    /// Run the accumulated operations, mirroring the v7 integrator's structure so the outer
+    /// transaction is never poisoned on Postgres:
+    ///
+    /// 1. **Writes (savepoint-isolated).** Batchable `Upsert(Row)`/`Delete` go through
+    ///    `batch_operations` (each chunk/op in its own savepoint). Non-batchable
+    ///    `UpsertNonSync`/`UpsertDocument` each run in their own savepoint too. A failure is
+    ///    captured as DATA (the owning record's outcome) and rolled back at the savepoint —
+    ///    it never aborts the outer tx.
+    /// 2. **Collect changelogs** only for operations that SUCCEEDED. Delete changelogs are
+    ///    generated before the delete (read of the still-present row); upsert changelogs after
+    ///    (the row is then written). Both reads are inside the same savepoint as the write.
+    /// 3. **Insert changelogs in a dedicated inner transaction** — never raw on the outer tx.
     fn integrate_batch(
         &mut self,
         all_ops: Vec<TranslatedOp>,
@@ -307,12 +339,12 @@ impl<'a> TranslationAndIntegration<'a> {
         if all_ops.is_empty() {
             return Ok(());
         }
+        // On Postgres every statement that can fail must run in a savepoint, otherwise a single
+        // error aborts the whole outer transaction. SQLite doesn't poison on error, so the
+        // nested savepoint is skipped there for speed.
+        let wrap_in_tx = cfg!(feature = "postgres");
 
-        let changelog_repo = ChangelogRepository::new(self.connection);
-        // Delete changelogs must be generated BEFORE the rows are deleted (they read the
-        // still-present row to route store_id/transfer_store_id/patient_id).
         let mut pending_changelogs: Vec<ChangeLogInsertRow> = Vec::new();
-
         let mut batch_input: Vec<BatchDbOperation<i32, (i32, ChangelogTableName, String)>> =
             Vec::new();
 
@@ -337,13 +369,16 @@ impl<'a> TranslationAndIntegration<'a> {
                     table_name,
                     record_id,
                 } => {
-                    // Generate the delete changelog now, while the row still exists.
-                    match generate_delete_changelog(
+                    let dedup_key = (cursor, table_name.clone(), record_id.clone());
+                    // Generate the delete changelog now (savepoint-isolated), while the row exists.
+                    let generated = gen_delete_changelog_isolated(
                         self.connection,
                         &table_name,
                         &record_id,
-                        SourceSiteId::SourceSiteId(source_site_id),
-                    ) {
+                        source_site_id,
+                        wrap_in_tx,
+                    );
+                    match generated {
                         Ok(mut changelogs) => pending_changelogs.append(&mut changelogs),
                         Err(e) => {
                             outcomes.get_mut(&cursor).unwrap().mark_op_error(format!("{e:?}"));
@@ -351,7 +386,6 @@ impl<'a> TranslationAndIntegration<'a> {
                             continue;
                         }
                     }
-                    let dedup_key = (cursor, table_name.clone(), record_id.clone());
                     batch_input.push(BatchDbOperation {
                         priority,
                         operation: BatchOperation::Delete {
@@ -362,17 +396,33 @@ impl<'a> TranslationAndIntegration<'a> {
                         dedup_key,
                     });
                 }
-                // Not batchable — write per-record (link tables / documents), then their changelog.
+                // Not batchable (link tables / documents) — write each in its own savepoint so a
+                // failure is captured as data instead of poisoning the outer transaction.
                 IntegrationOperation::UpsertNonSync(row) => {
-                    if let Err(e) = row.upsert_no_changelog(self.connection) {
+                    let result = self
+                        .connection
+                        .transaction_sync_etc(|tx| row.upsert_no_changelog(tx), !wrap_in_tx)
+                        .map_err(|e: repository::TransactionError<RepositoryError>| {
+                            e.to_inner_error()
+                        });
+                    if let Err(e) = result {
                         outcomes.get_mut(&cursor).unwrap().mark_op_error(format!("{e:?}"));
                         *error_count += 1;
                     }
                 }
                 IntegrationOperation::UpsertDocument(document) => {
-                    if let Err(e) =
-                        crate::sync::integrate_document::sync_upsert_document(self.connection, &document)
-                    {
+                    let result = self
+                        .connection
+                        .transaction_sync_etc(
+                            |tx| {
+                                crate::sync::integrate_document::sync_upsert_document(tx, &document)
+                            },
+                            !wrap_in_tx,
+                        )
+                        .map_err(|e: repository::TransactionError<RepositoryError>| {
+                            e.to_inner_error()
+                        });
+                    if let Err(e) = result {
                         outcomes.get_mut(&cursor).unwrap().mark_op_error(format!("{e:?}"));
                         *error_count += 1;
                     }
@@ -380,19 +430,17 @@ impl<'a> TranslationAndIntegration<'a> {
             }
         }
 
-        // Run the batched upserts + deletes.
-        let wrap_record_in_tx = cfg!(feature = "postgres");
-        let results = batch_operations(self.connection, batch_input, wrap_record_in_tx);
+        // Run the batched upserts + deletes (savepoint-isolated per chunk/op on postgres).
+        let results = batch_operations(self.connection, batch_input, wrap_in_tx);
 
-        // Fold batch errors into outcomes, and generate upsert changelogs for the rows that
-        // succeeded (the row is now in the DB).
+        // Fold batch errors into outcomes; generate upsert changelogs for rows that succeeded
+        // (savepoint-isolated read of the now-written row).
         for BatchDbOperationResult {
             operation,
             error,
             extra: cursors,
         } in results
         {
-            // `cursors` are all the (deduped) records that shared this operation.
             if let Some(error) = error {
                 let message = format!("{error:?}");
                 for cursor in &cursors {
@@ -404,16 +452,24 @@ impl<'a> TranslationAndIntegration<'a> {
                 continue;
             }
 
-            // Upsert succeeded: generate its changelog(s) from the now-written row, attributing
-            // any generation error to the (single) originating record's source site.
             if let BatchOperation::Upsert(row) = &operation {
-                // All cursors in a deduped upsert group are the same record/source; use the first.
                 let source_site_id = cursors.first().copied();
-                match row.generate_changelog(
-                    self.connection,
-                    RowActionType::Upsert,
-                    SourceSiteId::SourceSiteId(source_site_id),
-                ) {
+                let generated = self
+                    .connection
+                    .transaction_sync_etc(
+                        |tx| {
+                            row.generate_changelog(
+                                tx,
+                                RowActionType::Upsert,
+                                SourceSiteId::SourceSiteId(source_site_id),
+                            )
+                        },
+                        !wrap_in_tx,
+                    )
+                    .map_err(|e: repository::TransactionError<RepositoryError>| {
+                        e.to_inner_error()
+                    });
+                match generated {
                     Ok(mut changelogs) => pending_changelogs.append(&mut changelogs),
                     Err(e) => {
                         let message = format!("{e:?}");
@@ -428,8 +484,11 @@ impl<'a> TranslationAndIntegration<'a> {
             }
         }
 
-        // Insert all changelogs (pre-generated deletes + post-batch upserts) in one go.
-        changelog_repo.batch_insert(pending_changelogs)?;
+        // Insert all changelogs (pre-generated deletes + post-batch upserts) in a dedicated
+        // inner transaction, so it's never a raw statement on the outer tx.
+        self.connection
+            .transaction_sync(|tx| ChangelogRepository::new(tx).batch_insert(pending_changelogs))
+            .map_err(|e: repository::TransactionError<RepositoryError>| e.to_inner_error())?;
 
         Ok(())
     }
