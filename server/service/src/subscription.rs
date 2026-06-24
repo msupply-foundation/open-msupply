@@ -30,20 +30,6 @@ pub enum SyncLogRow {
 }
 
 impl SyncLogRow {
-    fn push_progress_total(&self) -> i32 {
-        match self {
-            SyncLogRow::V5V6(row) => row.push_progress_total.unwrap_or(0),
-            SyncLogRow::V7 { row, .. } => row.push_progress_total.unwrap_or(0),
-        }
-    }
-
-    fn push_progress_done(&self) -> i32 {
-        match self {
-            SyncLogRow::V5V6(row) => row.push_progress_done.unwrap_or(0),
-            SyncLogRow::V7 { row, .. } => row.push_progress_done.unwrap_or(0),
-        }
-    }
-
     fn full_sync_status(self) -> FullSyncStatus {
         match self {
             SyncLogRow::V5V6(row) => {
@@ -166,25 +152,21 @@ async fn subscription_worker_loop(
 
         match trigger {
             SubscriptionTrigger::SyncStatus(row) => {
-                let push_remaining = (row.push_progress_total() - row.push_progress_done()) as u64;
                 let status = row.full_sync_status();
                 let summary = status.summary();
 
                 let just_finished_successfully = status.is_finished_successfully();
-                let is_error = summary.finished.is_some()
-                    && (status.error_v5v6().is_some() || status.error_v7().is_some());
+                let is_finished = summary.finished.is_some();
 
                 if just_finished_successfully {
                     last_successful = Some(summary);
-                    // If finished successfully, whatever is remaining should be the push queue count
-                    push_queue_count = push_remaining;
                 }
 
-                if is_error {
-                    // On an error it's possible that push remaining shows 0 when in reality nothing was pushed.
-                    // Thus, requery here to get latest info, fallback to remaining
+                if is_finished {
+                    // Once the sync has finished, requery to get the accurate push
+                    // queue count, falling back to the existing count if the query fails.
                     push_queue_count =
-                        get_push_queue_count(&service_provider).unwrap_or(push_remaining);
+                        get_push_queue_count(&service_provider).unwrap_or(push_queue_count);
                 }
 
                 last_status = Some(status.clone());
