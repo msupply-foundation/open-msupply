@@ -143,12 +143,14 @@ export const Toolbar = () => {
           flex={1}
           flexDirection="column"
           gap={1}
-          justifyContent="flex-end"
-          alignItems="flex-end"
+          sx={{
+            justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            alignItems: { xs: 'flex-start', md: 'flex-end' },
+          }}
         >
           <InputWithLabelRow
             label={t('label.min-months-of-stock')}
-            labelWidth={'250px'}
+            labelProps={{ sx: { width: { xs: '120px', md: '250px' } } }}
             Input={
               <Autocomplete
                 disabled={isDisabled || isProgram}
@@ -192,7 +194,7 @@ export const Toolbar = () => {
           />
           <InputWithLabelRow
             label={t('label.max-months-of-stock')}
-            labelWidth={'250px'}
+            labelProps={{ sx: { width: { xs: '120px', md: '250px' } } }}
             Input={
               <Autocomplete
                 disabled={isDisabled || isProgram}
