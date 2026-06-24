@@ -958,6 +958,7 @@
   "label.comment-for-supplier": "Comment (for supplier)",
   "label.comments-required": "Comments required",
   "label.communication-charge": "Communications charge",
+  "label.completed-by": "Completed by",
   "label.configure-supply-level": "Configure supply levels",
   "label.confirmation-date": "Confirmation date",
   "label.confirmed": "Confirmed",
@@ -1652,6 +1653,7 @@
   "label.show-products-not-at-risk": "Show products not at risk",
   "label.show-zeroed-lines": "Show lines where counted quantity is zero",
   "label.showing": "Showing",
+  "label.signature": "Signature",
   "label.site": "Site:",
   "label.snapshot": "Snapshot",
   "label.snapshot-num-of-packs": "Packs snapshot",
@@ -2992,7 +2994,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "label.completed-by": "Completed by",
-  "label.signature": "Signature"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
