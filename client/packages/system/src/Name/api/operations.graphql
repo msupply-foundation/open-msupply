@@ -50,6 +50,7 @@ fragment Name on NameNode {
     code
   }
   properties
+  propertiesV2
   hshCode
   hshName
   margin
@@ -66,6 +67,20 @@ fragment Property on PropertyNode {
   name
   allowedValues
   valueType
+}
+
+fragment PropertyV2 on PropertyV2Node {
+  id
+  key
+  name
+  valueType
+  kind
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
 }
 
 query names(
@@ -139,6 +154,18 @@ query nameProperties {
         property {
           ...Property
         }
+      }
+    }
+  }
+}
+
+query namePropertiesV2 {
+  propertiesV2(filter: { tableName: { equalTo: "name" } }) {
+    ... on PropertyV2Connector {
+      __typename
+      totalCount
+      nodes {
+        ...PropertyV2
       }
     }
   }

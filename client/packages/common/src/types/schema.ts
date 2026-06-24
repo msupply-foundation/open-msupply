@@ -5065,6 +5065,14 @@ export type ItemNode = {
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
   programs?: Maybe<Array<ProgramNode>>;
+  /**
+   * Properties v2 values for this item. The raw `item.properties_v2` JSONB
+   * blob is filtered server-side to keys that are (a) defined in
+   * `property_v2` and not soft-deleted, (b) marked visible for the `item`
+   * table via `property_table_v2`. Stray keys never reach the client.
+   * Imported from legacy mSupply `[item]user_field_1..7`; read-only.
+   */
+  propertiesV2?: Maybe<Scalars['JSON']['output']>;
   restrictedLocationType?: Maybe<LocationTypeNode>;
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
@@ -6553,6 +6561,13 @@ export type NameNode = {
   phone?: Maybe<Scalars['String']['output']>;
   /** Returns a JSON string of the name properties e.g {"property_key": "value"} */
   properties: Scalars['String']['output'];
+  /**
+   * Properties v2 values for this name. The raw `name.properties_v2` JSONB
+   * blob is filtered server-side to keys that are (a) defined in
+   * `property_v2` and not soft-deleted, (b) marked visible for the `name`
+   * table via `property_table_v2`. Stray keys never reach the client.
+   */
+  propertiesV2?: Maybe<Scalars['JSON']['output']>;
   store?: Maybe<StoreNode>;
   type: NameNodeType;
   website?: Maybe<Scalars['String']['output']>;
@@ -7508,6 +7523,8 @@ export type ProgramSortInput = {
 
 export type ProgramsResponse = ProgramConnector;
 
+export type PropertiesV2Response = PropertyV2Connector;
+
 export type PropertyNode = {
   __typename: 'PropertyNode';
   /**
@@ -7523,6 +7540,13 @@ export type PropertyNode = {
   valueType: PropertyNodeValueType;
 };
 
+export enum PropertyNodeKindV2 {
+  /** Synced from legacy mSupply. */
+  Legacy = 'LEGACY',
+  /** Configured natively in open-mSupply. */
+  Standard = 'STANDARD',
+}
+
 export enum PropertyNodeValueType {
   Boolean = 'BOOLEAN',
   Date = 'DATE',
@@ -7530,6 +7554,56 @@ export enum PropertyNodeValueType {
   Integer = 'INTEGER',
   String = 'STRING',
 }
+
+export enum PropertyNodeValueTypeV2 {
+  Boolean = 'BOOLEAN',
+  Date = 'DATE',
+  Integer = 'INTEGER',
+  Option = 'OPTION',
+  Real = 'REAL',
+  Text = 'TEXT',
+}
+
+export type PropertyOptionV2Node = {
+  __typename: 'PropertyOptionV2Node';
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  parentOptionId?: Maybe<Scalars['String']['output']>;
+  propertyId: Scalars['String']['output'];
+};
+
+export type PropertyV2Connector = {
+  __typename: 'PropertyV2Connector';
+  nodes: Array<PropertyV2Node>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PropertyV2FilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  key?: InputMaybe<EqualFilterStringInput>;
+  /**
+   * Restricts to properties marked visible (`property_table_v2.is_visible
+   * = true`) on this table_name. Use `{ equalTo: "name" }` to fetch the
+   * definitions that drive name list views / modal.
+   */
+  tableName?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type PropertyV2Node = {
+  __typename: 'PropertyV2Node';
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  kind: PropertyNodeKindV2;
+  name: Scalars['String']['output'];
+  /**
+   * Options for OPTION-type properties. Empty list for any other value
+   * type. Resolved via dataloader so a list of N properties triggers a
+   * single batched lookup.
+   */
+  options: Array<PropertyOptionV2Node>;
+  valueType: PropertyNodeValueTypeV2;
+};
 
 export type PurchaseOrderConnector = {
   __typename: 'PurchaseOrderConnector';
@@ -7867,6 +7941,12 @@ export type Queries = {
   programIndicators: ProgramIndicatorResponse;
   programRequisitionSettingsByCustomer: CustomerProgramRequisitionSettingNode;
   programs: ProgramsResponse;
+  /**
+   * Properties v2 definitions. Used by list views, detail views and modals
+   * to learn what columns/fields to render. Filter by `tableName` to scope
+   * to a record kind (`{ equalTo: "name" }`).
+   */
+  propertiesV2: PropertiesV2Response;
   purchaseOrder: PurchaseOrderResponse;
   purchaseOrderLine: PurchaseOrderLineResponse;
   purchaseOrderLines: PurchaseOrderLinesResponse;
@@ -8430,6 +8510,10 @@ export type QueriesProgramsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
   storeId: Scalars['String']['input'];
+};
+
+export type QueriesPropertiesV2Args = {
+  filter?: InputMaybe<PropertyV2FilterInput>;
 };
 
 export type QueriesPurchaseOrderArgs = {

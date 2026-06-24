@@ -353,6 +353,7 @@ export type ItemFragment = {
   weight: number;
   restrictedLocationTypeId?: string | null;
   availableStockOnHand: number;
+  propertiesV2?: any | null;
   restrictedLocationType?: {
     __typename: 'LocationTypeNode';
     id: string;
@@ -593,6 +594,7 @@ export type ItemsWithStockLinesQuery = {
       weight: number;
       restrictedLocationTypeId?: string | null;
       availableStockOnHand: number;
+      propertiesV2?: any | null;
       restrictedLocationType?: {
         __typename: 'LocationTypeNode';
         id: string;
@@ -955,6 +957,7 @@ export type ItemByIdQuery = {
       weight: number;
       restrictedLocationTypeId?: string | null;
       availableStockOnHand: number;
+      propertiesV2?: any | null;
       stats: {
         __typename: 'ItemStatsNode';
         averageMonthlyConsumption: number;
@@ -1676,6 +1679,49 @@ export type ItemLedgerQuery = {
   };
 };
 
+export type PropertyV2Fragment = {
+  __typename: 'PropertyV2Node';
+  id: string;
+  key: string;
+  name: string;
+  valueType: Types.PropertyNodeValueTypeV2;
+  kind: Types.PropertyNodeKindV2;
+  options: Array<{
+    __typename: 'PropertyOptionV2Node';
+    id: string;
+    key: string;
+    name: string;
+    parentOptionId?: string | null;
+  }>;
+};
+
+export type ItemPropertiesV2QueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type ItemPropertiesV2Query = {
+  __typename: 'Queries';
+  propertiesV2: {
+    __typename: 'PropertyV2Connector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PropertyV2Node';
+      id: string;
+      key: string;
+      name: string;
+      valueType: Types.PropertyNodeValueTypeV2;
+      kind: Types.PropertyNodeKindV2;
+      options: Array<{
+        __typename: 'PropertyOptionV2Node';
+        id: string;
+        key: string;
+        name: string;
+        parentOptionId?: string | null;
+      }>;
+    }>;
+  };
+};
+
 export const ItemRowFragmentDoc = gql`
   fragment ItemRow on ItemNode {
     __typename
@@ -1976,6 +2022,7 @@ export const ItemFragmentDoc = gql`
       defaultSellPricePerPack
       ignoreForOrders
     }
+    propertiesV2
   }
   ${LocationTypeFragmentDoc}
   ${StockLineFragmentDoc}
@@ -2027,6 +2074,21 @@ export const ItemLedgerFragmentDoc = gql`
     numberOfPacks
     user {
       username
+    }
+  }
+`;
+export const PropertyV2FragmentDoc = gql`
+  fragment PropertyV2 on PropertyV2Node {
+    id
+    key
+    name
+    valueType
+    kind
+    options {
+      id
+      key
+      name
+      parentOptionId
     }
   }
 `;
@@ -2379,6 +2441,20 @@ export const ItemLedgerDocument = gql`
   }
   ${ItemLedgerFragmentDoc}
 `;
+export const ItemPropertiesV2Document = gql`
+  query itemPropertiesV2 {
+    propertiesV2(filter: { tableName: { equalTo: "item" } }) {
+      ... on PropertyV2Connector {
+        __typename
+        totalCount
+        nodes {
+          ...PropertyV2
+        }
+      }
+    }
+  }
+  ${PropertyV2FragmentDoc}
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2683,6 +2759,24 @@ export function getSdk(
             signal,
           }),
         'itemLedger',
+        'query',
+        variables
+      );
+    },
+    itemPropertiesV2(
+      variables?: ItemPropertiesV2QueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ItemPropertiesV2Query> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ItemPropertiesV2Query>({
+            document: ItemPropertiesV2Document,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'itemPropertiesV2',
         'query',
         variables
       );

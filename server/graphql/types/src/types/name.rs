@@ -3,8 +3,10 @@ use crate::types::CurrencyNode;
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
-    loader::CurrencyByIdLoader, simple_generic_errors::NodeError,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    loader::{AllowedPropertyV2KeysByTableLoader, CurrencyByIdLoader},
+    simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
 use repository::{Name, NameRow, NameRowType, NameType, Store, StoreRow};
 use serde::Serialize;
@@ -142,6 +144,27 @@ impl NameNode {
             Some(properties) => properties.to_owned(),
             None => "{}".to_string(), // Empty JSON object
         }
+    }
+
+    /// Properties v2 values for this name. The raw `name.properties_v2` JSONB
+    /// blob is filtered server-side to keys that are (a) defined in
+    /// `property_v2` and not soft-deleted, (b) marked visible for the `name`
+    /// table via `property_table_v2`. Stray keys never reach the client.
+    pub async fn properties_v2(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.row().properties_v2.clone() else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<AllowedPropertyV2KeysByTableLoader>>();
+        let allowed_keys = loader
+            .load_one("name".to_string())
+            .await?
+            .unwrap_or_default();
+
+        Ok(Some(crate::types::filter_properties_v2(raw, &allowed_keys)))
     }
 
     pub async fn hsh_code(&self) -> &Option<String> {

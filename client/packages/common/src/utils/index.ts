@@ -18,6 +18,7 @@ export * from './reasons';
 export * from './mappers';
 export * from './display';
 export * from './barcode';
+export * from './properties';
 
 // having issues with tree shaking lodash
 // so we're just importing the functions we need

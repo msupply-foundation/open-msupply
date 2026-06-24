@@ -76,6 +76,8 @@ The legacy mapping property values are **central-authored and flow one-way down*
 
 Note the value rides the **whole host-record row** over v7, so concurrent edits across sites are **last-writer-wins** — there is no key-level merge on the v7 side. The v5 import on COMS *merges* (`merge_legacy_properties`) rather than overwriting: it refreshes only the OG-owned keys and preserves any other keys already in the blob, so an OG re-pull can't clobber OMS-authored values.
 
+**Forwards compatibility on read.** When a value blob is rendered, the resolver filters it to keys that are defined and visible in `property_v2` for that table. A remote therefore silently ignores values for properties it doesn't yet know about — so a newer central can start sending a value before every remote understands it, without breaking the older remote.
+
 ## Currently Implemented
 
 ### Item Categories

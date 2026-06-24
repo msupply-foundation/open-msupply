@@ -268,6 +268,7 @@ fragment Item on ItemNode {
     defaultSellPricePerPack
     ignoreForOrders
   }
+  propertiesV2
 }
 
 query itemsWithStockLines(
@@ -616,6 +617,32 @@ query itemLedger(
         ...ItemLedger
       }
       totalCount
+    }
+  }
+}
+
+fragment PropertyV2 on PropertyV2Node {
+  id
+  key
+  name
+  valueType
+  kind
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
+}
+
+query itemPropertiesV2 {
+  propertiesV2(filter: { tableName: { equalTo: "item" } }) {
+    ... on PropertyV2Connector {
+      __typename
+      totalCount
+      nodes {
+        ...PropertyV2
+      }
     }
   }
 }
