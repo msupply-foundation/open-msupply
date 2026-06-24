@@ -410,6 +410,8 @@ or build and run the binary. Pass in `--features postgres` to run the postgres v
 
 # [Backup and Restore](cli/src/backup/README.md)
 
+# [Replay Sync Buffer](cli/reintegrate_buffer/_index.md)
+
 # Discovery
 
 DNS-SD is available for all targets except for Android (for Android DNS-SD is toggled at runtime and is done in native java code).
