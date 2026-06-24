@@ -1,5 +1,24 @@
 use crate::migrations::*;
 
+#[cfg(test)]
+use diesel_derive_enum::DbEnum;
+
+#[cfg(test)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum ContextType {
+    PurchaseOrder,
+}
+
+#[cfg(test)]
+diesel::table! {
+    report (id) {
+        id -> Text,
+        code -> Text,
+        context -> crate::migrations::v2_11_00::update_goods_received_report_context::ContextTypeMapping,
+    }
+}
+
 pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
@@ -25,7 +44,6 @@ impl MigrationFragment for Migrate {
 #[cfg(test)]
 #[actix_rt::test]
 async fn migration_report_context() {
-    use crate::db_diesel::report_row::{report, ContextType};
     use crate::migrations::*;
     use crate::test_db::*;
     use diesel::prelude::*;
@@ -59,5 +77,5 @@ async fn migration_report_context() {
     );
 
     // Run migration
-    migrate(&connection, Some(version.clone())).unwrap();
+    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
 }

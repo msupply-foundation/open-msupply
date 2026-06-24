@@ -47,6 +47,7 @@ pub fn upsert_bundled_item(
         &ResourceAccessRequest {
             resource: Resource::MutateItemNamesCodesAndUnits,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

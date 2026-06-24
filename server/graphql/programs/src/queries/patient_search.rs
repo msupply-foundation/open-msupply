@@ -60,6 +60,7 @@ pub fn patient_search(
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

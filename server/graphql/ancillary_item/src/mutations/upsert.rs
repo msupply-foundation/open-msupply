@@ -87,6 +87,7 @@ pub fn upsert_ancillary_item(
         &ResourceAccessRequest {
             resource: Resource::MutateItemNamesCodesAndUnits,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -150,9 +151,11 @@ fn map_error(error: ServiceError) -> Result<UpsertAncillaryItemErrorInterface> {
             ))
         }
         ServiceError::MaxDepthExceeded { max, actual } => {
-            return Ok(UpsertAncillaryItemErrorInterface::AncillaryMaxDepthExceeded(
-                AncillaryMaxDepthExceeded { max, actual },
-            ))
+            return Ok(
+                UpsertAncillaryItemErrorInterface::AncillaryMaxDepthExceeded(
+                    AncillaryMaxDepthExceeded { max, actual },
+                ),
+            )
         }
         // Internal errors
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),

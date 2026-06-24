@@ -3,10 +3,7 @@ use serde::Serialize;
 use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
-use repository::{
-    vaccine_course::vaccine_course_dose_row::VaccineCourseDoseRowRepository, ChangelogRow,
-    ChangelogTableName, StorageConnection,
-};
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection};
 
 /*
     This translator is only used to push VaccineCourseDose rows to the legacy mSupply server.
@@ -65,15 +62,15 @@ impl SyncTranslation for VaccineCourseDoseLegacyTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = VaccineCourseDoseRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "VaccineCourseDose row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::VaccineCourseDose(vaccine_course_dose_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = vaccine_course_dose_row;
 
         let legacy_row = LegacyVaccineCourseDoseRow {
             ID: row.id.clone(),
@@ -103,8 +100,12 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all,
-        vaccine_course::vaccine_course_dose_row::VaccineCourseDoseRow, ChangelogRepository,
+        mock::MockDataInserts,
+        test_db::setup_all,
+        vaccine_course::vaccine_course_dose_row::{
+            VaccineCourseDoseRow, VaccineCourseDoseRowRepository,
+        },
+        ChangelogRepository,
     };
 
     #[actix_rt::test]
@@ -123,9 +124,13 @@ mod tests {
         .await;
 
         // Get the current cursor value
+<<<<<<< HEAD
         let cursor = ChangelogRepository::new(&connection)
             .absolute_latest_cursor()
             .unwrap();
+=======
+        let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
+>>>>>>> origin/v3.0.0-RC
 
         // Create a new VaccineCourseDoseRow (this will get a changelog entry created automatically)
         let vaccine_course_dose_row = VaccineCourseDoseRow {
@@ -143,11 +148,25 @@ mod tests {
             .upsert_one(&vaccine_course_dose_row)
             .unwrap();
 
-        let changelog_row = ChangelogRepository::new(&connection)
-            .changelogs(cursor, 100, None)
+        let entry = ChangelogRepository::new(&connection)
+            .query_with_data(
+                repository::ChangelogCondition::True(),
+                repository::CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: 100,
+                },
+            )
             .unwrap()
+            .rows
             .pop()
             .unwrap();
+        let repository::RowOrDelete::Row {
+            changelog: changelog_row,
+            row,
+        } = entry
+        else {
+            panic!("expected upsert row")
+        };
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
@@ -164,17 +183,14 @@ mod tests {
         ));
 
         let translation_result = translator
-            .try_translate_to_upsert_sync_record(&connection, &changelog_row)
+            .try_translate_to_upsert_sync_record(&connection, &changelog_row, row)
             .unwrap();
 
         match translation_result {
-            PushTranslateResult::PushRecord(upsert_result) => {
+            PushTranslateResult::PushRecord(records) => {
+                assert_eq!(records[0].record.record_id, "test_vaccine_course_dose_id");
                 assert_eq!(
-                    upsert_result[0].record.record_id,
-                    "test_vaccine_course_dose_id"
-                );
-                assert_eq!(
-                    upsert_result[0].record.table_name,
+                    records[0].record.table_name,
                     LEGACY_VACCINE_COURSE_DOSE_TABLE_NAME
                 );
             }

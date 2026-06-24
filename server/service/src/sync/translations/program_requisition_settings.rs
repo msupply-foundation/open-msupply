@@ -4,6 +4,7 @@ use repository::{
     ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowDelete,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, StorageConnection,
     SyncBufferRow,
+
 };
 
 use serde::Deserialize;
@@ -11,11 +12,13 @@ use std::collections::HashMap;
 
 use crate::sync::translations::{
     name_tag::NameTagTranslation, period_schedule::PeriodScheduleTranslation,
+
 };
 use util::sync_serde::{empty_str_as_option, empty_str_or_i32, object_fields_as_option};
 
 use super::{
     master_list::MasterListTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
+
 };
 
 #[allow(non_snake_case)]
@@ -90,7 +93,7 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyListMasterRow>()?;
 
         let program_repo = ProgramRowRepository::new(connection);
 

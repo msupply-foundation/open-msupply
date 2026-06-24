@@ -29,6 +29,7 @@ pub fn delete_ancillary_item(
         &ResourceAccessRequest {
             resource: Resource::MutateItemNamesCodesAndUnits,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -53,7 +54,9 @@ fn map_response(
     from: Result<String, DeleteAncillaryItemError>,
 ) -> Result<DeleteAncillaryItemResponse> {
     match from {
-        Ok(result) => Ok(DeleteAncillaryItemResponse::Response(DeleteResponse(result))),
+        Ok(result) => Ok(DeleteAncillaryItemResponse::Response(DeleteResponse(
+            result,
+        ))),
         Err(error) => {
             let formatted_error = format!("{error:#?}");
 

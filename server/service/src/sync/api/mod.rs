@@ -8,6 +8,7 @@ mod get_site_status;
 mod post_acknowledged_records;
 mod post_initialise;
 mod post_queued_records;
+mod v7_url_and_upgrade;
 
 pub(crate) use self::common_records::*;
 pub use self::core::*;

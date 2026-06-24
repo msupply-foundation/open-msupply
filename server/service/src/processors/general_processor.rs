@@ -1,7 +1,8 @@
 use async_trait::async_trait;
 use repository::{
-    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter,
-    PluginType, RepositoryError, TransactionError,
+    ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName,
+    CompatibilityChangelogFilter, CursorAndLimit, FilterBuilder, PluginType, RepositoryError,
+    TransactionError,
 };
 use strum::Display;
 use thiserror::Error;
@@ -19,9 +20,9 @@ use crate::{
 };
 
 use super::{
-    add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
-    load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
+    load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
+    plugin_processor::PluginProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
     support_upload_files::SupportUploadFilesProcessor,
 };
@@ -51,10 +52,14 @@ pub enum ProcessorType {
     ContactFormEmail,
     LoadPlugin,
     AssignRequisitionNumber,
+<<<<<<< HEAD
     AddPatientVisibilityForCentral,
     SupportUploadFiles,
+=======
+>>>>>>> origin/v3.0.0-RC
     Plugins,
     RequisitionAutoFinalise,
+    MergeSyncMessage,
 }
 
 impl ProcessorType {
@@ -64,16 +69,17 @@ impl ProcessorType {
             ProcessorType::ContactFormEmail => vec![Box::new(QueueContactEmailProcessor)],
             ProcessorType::LoadPlugin => vec![Box::new(LoadPlugin)],
             ProcessorType::AssignRequisitionNumber => vec![Box::new(AssignRequisitionNumber)],
-            ProcessorType::AddPatientVisibilityForCentral => {
-                vec![Box::new(AddPatientVisibilityForCentral)]
-            }
             ProcessorType::Plugins => get_plugin_processors(),
             ProcessorType::RequisitionAutoFinalise => {
                 vec![Box::new(RequisitionAutoFinaliseProcessor)]
             }
+<<<<<<< HEAD
             ProcessorType::SupportUploadFiles => {
                 vec![Box::new(SupportUploadFilesProcessor)]
             }
+=======
+            ProcessorType::MergeSyncMessage => vec![Box::new(MergeSyncMessageProcessor)],
+>>>>>>> origin/v3.0.0-RC
         }
     }
 
@@ -98,6 +104,48 @@ fn get_plugin_processors() -> Vec<Box<dyn Processor>> {
         .collect()
 }
 
+/// A processor either uses the new changelog filter or the pre-v7 compatibility filter.
+/// Plugins (and other legacy callers) opt into the compatibility path by returning
+/// `Some` from `Processor::compatibility_filter`.
+enum ProcessorFilter {
+    Compatibility(CompatibilityChangelogFilter),
+    Normal(ChangelogCondition::Inner),
+}
+
+impl ProcessorFilter {
+    fn from_processor(
+        processor: &dyn Processor,
+        ctx: &ServiceContext,
+    ) -> Result<Self, ProcessorError> {
+        if let Some(compat) = processor.compatibility_filter(ctx)? {
+            Ok(ProcessorFilter::Compatibility(compat))
+        } else {
+            Ok(ProcessorFilter::Normal(processor.changelogs_filter(ctx)?))
+        }
+    }
+
+    fn query(
+        &self,
+        changelog_repo: &ChangelogRepository,
+        cursor: u64,
+    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+        match self {
+            ProcessorFilter::Compatibility(f) => {
+                changelog_repo.compatibility_query(cursor, CHANGELOG_BATCH_SIZE, Some(f.clone()))
+            }
+            ProcessorFilter::Normal(f) => changelog_repo
+                .query(
+                    f.clone(),
+                    CursorAndLimit {
+                        cursor: cursor as i64,
+                        limit: CHANGELOG_BATCH_SIZE as i64,
+                    },
+                )
+                .map(|q| q.rows),
+        }
+    }
+}
+
 pub(crate) async fn process_records(
     service_provider: &ServiceProvider,
     r#type: ProcessorType,
@@ -114,20 +162,24 @@ pub(crate) async fn process_records(
         let ctx = service_provider
             .basic_context()
             .map_err(Error::DatabaseError)?;
-        let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
         let cursor_controller = CursorController::from_cursor_type(processor.cursor_type());
+<<<<<<< HEAD
 
         // Only process the changelogs we care about
         let filter = processor.changelogs_filter(&ctx).await?;
+=======
+        let filter = ProcessorFilter::from_processor(processor.as_ref(), &ctx)?;
+>>>>>>> origin/v3.0.0-RC
 
         loop {
             let cursor = cursor_controller
                 .get(&ctx.connection)
                 .map_err(Error::DatabaseError)?;
 
-            let logs = changelog_repo
-                .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
+            let changelog_repo = ChangelogRepository::new(&ctx.connection);
+            let logs = filter
+                .query(&changelog_repo, cursor)
                 .map_err(Error::DatabaseError)?;
 
             if logs.is_empty() {
@@ -148,7 +200,7 @@ pub(crate) async fn process_records(
                 }
 
                 cursor_controller
-                    .update(&ctx.connection, (log.cursor + 1) as u64)
+                    .update(&ctx.connection, log.cursor as u64)
                     .map_err(Error::DatabaseError)?;
             }
         }
@@ -160,6 +212,7 @@ pub(crate) async fn process_records(
 pub(super) trait Processor: Sync + Send {
     fn get_description(&self) -> String;
 
+<<<<<<< HEAD
     /// Default to using change_log_table_names.
     /// Async so plugin-backed processors can run the plugin off the runtime (see #11949).
     async fn changelogs_filter(
@@ -170,11 +223,31 @@ pub(super) trait Processor: Sync + Send {
             equal_any: Some(self.change_log_table_names()),
             ..Default::default()
         }))
+=======
+    /// Default to using change_log_table_names
+    fn changelogs_filter(
+        &self,
+        _ctx: &ServiceContext,
+    ) -> Result<ChangelogCondition::Inner, ProcessorError> {
+        Ok(ChangelogCondition::table_name::any(
+            self.change_log_table_names(),
+        ))
+>>>>>>> origin/v3.0.0-RC
     }
 
     /// Default to empty array in case changelogs_filter is manually implemented
     fn change_log_table_names(&self) -> Vec<ChangelogTableName> {
         Vec::new()
+    }
+
+    /// Plugins (and other legacy callers) can return a compatibility filter to use the
+    /// pre-v7 changelog query path. When `Some`, the processor loop uses
+    /// `compatibility_query` and ignores `changelogs_filter`.
+    fn compatibility_filter(
+        &self,
+        _ctx: &ServiceContext,
+    ) -> Result<Option<CompatibilityChangelogFilter>, ProcessorError> {
+        Ok(None)
     }
 
     /// Extra check to see if processor should trigger, like if it's central for contact form email

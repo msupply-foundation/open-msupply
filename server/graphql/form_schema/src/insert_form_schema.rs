@@ -33,6 +33,7 @@ pub fn insert_form_schema(
         &ResourceAccessRequest {
             resource: Resource::MutateJsonSchema,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

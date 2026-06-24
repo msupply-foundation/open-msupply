@@ -22,11 +22,11 @@ pub enum InitialisationStatusType {
 pub(crate) fn initialisation_status(ctx: &Context<'_>) -> Result<InitialisationStatusNode> {
     let service_provider = ctx.service_provider();
     let ctx = service_provider.basic_context()?;
-    let initialisation_status = service_provider
+    let status = service_provider
         .sync_status_service
         .get_initialisation_status(&ctx)?;
 
-    Ok(InitialisationStatusNode::from_domain(initialisation_status))
+    Ok(InitialisationStatusNode::from_domain(status))
 }
 
 impl InitialisationStatusNode {

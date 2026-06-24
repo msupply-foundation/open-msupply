@@ -4,8 +4,12 @@ use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
+<<<<<<< HEAD
     vaccination_row::VaccinationRowRepository, ChangelogRow, ChangelogTableName, StorageConnection,
     VaccinationRow,
+=======
+    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, Row, StorageConnection, VaccinationRow,
+>>>>>>> origin/v3.0.0-RC
 };
 
 /*
@@ -77,7 +81,12 @@ impl SyncTranslation for VaccinationLegacyTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Vaccination(vaccination_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let VaccinationRow {
             id,
             store_id,
@@ -98,12 +107,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             given,
             not_given_reason,
             comment,
-        } = VaccinationRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Vaccination row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = vaccination_row;
 
         // patient_id and facility_name_id are already resolved by the view
         let patient_name_id = patient_id;
@@ -151,7 +155,9 @@ mod tests {
         mock_store_a, mock_user_account_a, mock_vaccine_course_a_dose_a, mock_vaccine_item_a,
     };
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, vaccination_row::VaccinationRow,
+        mock::MockDataInserts,
+        test_db::setup_all,
+        vaccination_row::{VaccinationRow, VaccinationRowRepository},
         ChangelogRepository,
     };
 
@@ -166,9 +172,13 @@ mod tests {
         .await;
 
         // Get the current cursor value
+<<<<<<< HEAD
         let cursor = ChangelogRepository::new(&connection)
             .absolute_latest_cursor()
             .unwrap();
+=======
+        let cursor = ChangelogRepository::new(&connection).max_cursor().unwrap();
+>>>>>>> origin/v3.0.0-RC
 
         // Create a new VaccinationRow (this will get a changelog entry created automatically)
         let vaccination_row = VaccinationRow {
@@ -193,11 +203,25 @@ mod tests {
             .upsert_one(&vaccination_row)
             .unwrap();
 
-        let changelog_row = ChangelogRepository::new(&connection)
-            .changelogs(cursor, 100, None)
+        let entry = ChangelogRepository::new(&connection)
+            .query_with_data(
+                repository::ChangelogCondition::True(),
+                repository::CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: 100,
+                },
+            )
             .unwrap()
+            .rows
             .pop()
             .unwrap();
+        let repository::RowOrDelete::Row {
+            changelog: changelog_row,
+            row,
+        } = entry
+        else {
+            panic!("expected upsert row")
+        };
 
         // Shouldn't translate if not a central server
         test_util_set_is_central_server(false);
@@ -214,16 +238,13 @@ mod tests {
         ));
 
         let translation_result = translator
-            .try_translate_to_upsert_sync_record(&connection, &changelog_row)
+            .try_translate_to_upsert_sync_record(&connection, &changelog_row, row)
             .unwrap();
 
         match translation_result {
-            PushTranslateResult::PushRecord(upsert_result) => {
-                assert_eq!(upsert_result[0].record.record_id, "test_vaccination_id");
-                assert_eq!(
-                    upsert_result[0].record.table_name,
-                    LEGACY_VACCINATION_TABLE_NAME
-                );
+            PushTranslateResult::PushRecord(records) => {
+                assert_eq!(records[0].record.record_id, "test_vaccination_id");
+                assert_eq!(records[0].record.table_name, LEGACY_VACCINATION_TABLE_NAME);
             }
             _ => panic!("Expected Upsert result"),
         }

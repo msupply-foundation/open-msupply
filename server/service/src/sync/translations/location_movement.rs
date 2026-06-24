@@ -1,12 +1,15 @@
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationMovementRow, LocationMovementRowRepository,
+    ChangelogRow, ChangelogTableName, LocationMovementRow,
     LocationRowRepository, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::{
     location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
+
 };
 
 use super::{
@@ -15,6 +18,7 @@ use super::{
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
+
 };
 
 #[derive(Deserialize, Serialize)]
@@ -79,7 +83,7 @@ impl SyncTranslation for LocationMovementTranslation {
             enter_time,
             exit_date,
             exit_time,
-        } = serde_json::from_str::<LegacyLocationMovementRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let location_id = clear_invalid_fk(
             connection,
@@ -105,9 +109,14 @@ impl SyncTranslation for LocationMovementTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::LocationMovement(location_movement_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let LocationMovementRow {
             id,
             store_id,
@@ -115,12 +124,7 @@ impl SyncTranslation for LocationMovementTranslation {
             location_id,
             enter_datetime,
             exit_datetime,
-        } = LocationMovementRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Location movement row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = location_movement_row;
 
         let legacy_row = LegacyLocationMovementRow {
             id: id.clone(),
@@ -137,11 +141,7 @@ impl SyncTranslation for LocationMovementTranslation {
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

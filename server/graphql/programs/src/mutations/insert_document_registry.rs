@@ -35,6 +35,7 @@ pub fn insert_document_registry(
         &ResourceAccessRequest {
             resource: Resource::MutateDocumentRegistry,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

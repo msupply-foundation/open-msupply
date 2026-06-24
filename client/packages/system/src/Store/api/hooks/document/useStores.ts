@@ -1,5 +1,6 @@
 import {
   FilterBy,
+  StoreFilterInput,
   useInfiniteQuery,
   useQuery,
   useQueryParamsStore,
@@ -23,7 +24,7 @@ export const useStores = () => {
 };
 
 interface useStoresProps {
-  filter: FilterBy | null;
+  filter: StoreFilterInput | null;
   rowsPerPage: number;
 }
 
@@ -36,7 +37,7 @@ export const usePaginatedStores = ({ rowsPerPage, filter }: useStoresProps) => {
       const pageNumber = Number(pageParam);
 
       const data = await api.get.list({
-        filter,
+        filter: filter as FilterBy | null,
         first: rowsPerPage,
         offset: rowsPerPage * pageNumber,
       });

@@ -45,6 +45,7 @@ pub fn update_plugin_data(
         &ResourceAccessRequest {
             store_id: Some(store_id.to_string()),
             resource: Resource::MutatePluginData,
+            require_central_standalone: false,
         },
     )?;
 

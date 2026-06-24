@@ -258,9 +258,12 @@ export type CentralPatientSearchQuery = {
           __typename: 'CentralPatientNode';
           id: string;
           code: string;
+          code2?: string | null;
           dateOfBirth?: string | null;
           firstName: string;
           lastName: string;
+          gender?: Types.GenderTypeNode | null;
+          isDeceased: boolean;
         }>;
       }
     | {
@@ -651,9 +654,12 @@ export const CentralPatientSearchDocument = gql`
         nodes {
           id
           code
+          code2
           dateOfBirth
           firstName
           lastName
+          gender
+          isDeceased
         }
         totalCount
       }

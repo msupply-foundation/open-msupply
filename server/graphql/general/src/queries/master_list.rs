@@ -76,6 +76,7 @@ pub fn master_lists(
         &ResourceAccessRequest {
             resource: Resource::QueryMasterList,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

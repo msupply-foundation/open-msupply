@@ -1,6 +1,7 @@
 pub mod barcode;
 pub mod common;
 pub mod display_settings;
+pub mod initialise_as_central_server;
 pub mod initialise_site;
 pub mod insert_insurance;
 pub mod label_printer_settings;
@@ -9,4 +10,3 @@ pub mod manual_sync;
 pub mod sync_settings;
 pub mod update_insurance;
 pub mod update_name_properties;
-pub mod update_user;

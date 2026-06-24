@@ -1,7 +1,9 @@
 use chrono::NaiveDateTime;
 use repository::{
-    ActivityLogRow, ActivityLogRowRepository, ActivityLogType, ChangelogRow, ChangelogTableName,
+    ActivityLogRow, ActivityLogType, ChangelogRow, ChangelogTableName,
     StorageConnection, SyncBufferRow,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 
@@ -52,7 +54,7 @@ impl SyncTranslation for ActivityLogTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyActivityLogRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyActivityLogRow>()?;
 
         let result = ActivityLogRow {
             id: data.id.to_string(),
@@ -74,9 +76,14 @@ impl SyncTranslation for ActivityLogTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::ActivityLog(activity_log_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let ActivityLogRow {
             id,
             r#type,
@@ -86,12 +93,7 @@ impl SyncTranslation for ActivityLogTranslation {
             datetime,
             changed_to,
             changed_from,
-        } = ActivityLogRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Activity log row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = activity_log_row;
 
         let (Some(store_id), Some(record_id), Some(user_id)) = (store_id, record_id, user_id)
         else {
@@ -111,11 +113,7 @@ impl SyncTranslation for ActivityLogTranslation {
             changed_from,
         };
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(legacy_row)?,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
     }
 }
 

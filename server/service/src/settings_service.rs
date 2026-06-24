@@ -35,7 +35,8 @@ fn validate(settings: &SyncSettings) -> Result<(), UpdateSettingsError> {
 }
 
 pub trait SettingsServiceTrait: Sync + Send {
-    /// Loads sync settings from the DB
+    /// Loads sync settings from the DB. Batch sizes come from `ctx.batch_size`
+    /// (YAML or defaults), not from the DB.
     fn sync_settings(&self, ctx: &ServiceContext) -> Result<Option<SyncSettings>, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
@@ -44,6 +45,10 @@ pub trait SettingsServiceTrait: Sync + Send {
         let password_sha256 = key_value_store.get_string(KeyType::SettingsSyncPasswordSha256)?;
         let interval_seconds = key_value_store.get_i64(KeyType::SettingsSyncIntervalSeconds)?;
 
+        let batch_size = ctx.batch_size.clone();
+        let disable_integration_transaction = ctx.disable_integration_transaction;
+        let relax_hardware_id_token_checks = ctx.relax_hardware_id_token_checks;
+
         // `?` inside this closure would result in closure returning `None`
         let make_settings = || {
             Some(SyncSettings {
@@ -51,8 +56,9 @@ pub trait SettingsServiceTrait: Sync + Send {
                 username: username?,
                 password_sha256: password_sha256?,
                 interval_seconds: interval_seconds? as u64,
-                batch_size: Default::default(),
-                disable_integration_transaction: false,
+                batch_size,
+                disable_integration_transaction,
+                relax_hardware_id_token_checks,
             })
         };
 
@@ -104,6 +110,7 @@ pub trait SettingsServiceTrait: Sync + Send {
     fn get_server_settings_info(&self) -> Result<ServerSettings, UpdateSettingsError>;
 }
 
+<<<<<<< HEAD
 pub struct SettingsService {
     pub service: Option<Settings>,
 }
@@ -133,3 +140,8 @@ impl SettingsServiceTrait for SettingsService {
         }
     }
 }
+=======
+pub struct SettingsService;
+
+impl SettingsServiceTrait for SettingsService {}
+>>>>>>> origin/v3.0.0-RC

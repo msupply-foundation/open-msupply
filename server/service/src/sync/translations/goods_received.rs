@@ -6,7 +6,7 @@ use super::{
 use chrono::NaiveDate;
 use repository::{
     InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, PurchaseOrderRowRepository,
-    StorageConnection, SyncBufferRow, SyncBufferRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 use serde::Deserialize;
 use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
@@ -31,37 +31,6 @@ struct LegacyGoodsReceivedRow {
     entry_date: Option<NaiveDate>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     donor_id: Option<String>,
-}
-
-/// Helper to extract goods_received_ID from a transact sync buffer record
-#[allow(non_snake_case)]
-#[derive(Deserialize)]
-struct TransactGoodsReceivedId {
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    goods_received_ID: Option<String>,
-}
-
-/// Find the invoice ID of the supplier invoice that was created from a finalized GR,
-/// by searching transact sync_buffer records for one with goods_received_ID matching the GR's ID.
-fn find_linked_invoice_id(
-    connection: &StorageConnection,
-    goods_received_id: &str,
-) -> Result<Option<String>, anyhow::Error> {
-    let pattern = format!("%\"goods_received_ID\"%\"{goods_received_id}\"%");
-    let rows = SyncBufferRowRepository::new(connection)
-        .find_by_table_and_data_like("transact", &pattern)?;
-
-    // Verify the match by parsing JSON (LIKE can produce false positives)
-    for row in rows {
-        if let Ok(parsed) = serde_json::from_str::<TransactGoodsReceivedId>(&row.data) {
-            if parsed.goods_received_ID.as_deref() == Some(goods_received_id) {
-                return Ok(Some(row.record_id));
-            }
-        }
-    }
-
-    Ok(None)
 }
 
 pub(super) fn is_finalised(status: &str) -> bool {
@@ -95,7 +64,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data: LegacyGoodsReceivedRow = serde_json::from_str(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyGoodsReceivedRow>()?;
 
         // Skip if an invoice with this ID already exists — the invoice may have been
         // created in OMS (from an earlier non-finalised import) and pushed back to central
@@ -131,26 +100,20 @@ impl SyncTranslation for GoodsReceivedTranslation {
             }
         };
 
-        // Finalized GR: find the supplier invoice (transact with goods_received_ID = this GR)
-        // and update it with the PO link
+        // Finalised GR: find the invoice that was spawned from this GR via the
+        // `legacy_goods_received_id` column the invoice translator populated from
+        // `transact.goods_received_ID`, and stamp the PO link onto it.
         if is_finalised(&data.status) {
-            let linked_invoice_id = find_linked_invoice_id(connection, &data.id)?;
+            let linked_invoice = InvoiceRowRepository::new(connection)
+                .find_one_by_legacy_goods_received_id(&data.id)?;
 
-            return match linked_invoice_id {
-                Some(invoice_id) => {
-                    match InvoiceRowRepository::new(connection).find_one_by_id(&invoice_id)? {
-                        Some(mut invoice) => {
-                            invoice.purchase_order_id = data.purchase_order_ID;
-                            Ok(PullTranslateResult::upsert(invoice))
-                        }
-                        None => Ok(PullTranslateResult::Ignored(format!(
-                            "linked invoice {invoice_id} not found for goods_received {}",
-                            data.id
-                        ))),
-                    }
+            return match linked_invoice {
+                Some(mut invoice) => {
+                    invoice.purchase_order_id = data.purchase_order_ID;
+                    Ok(PullTranslateResult::upsert(invoice))
                 }
                 None => Ok(PullTranslateResult::Ignored(format!(
-                    "no transact with goods_received_ID found for goods_received {}",
+                    "no invoice with legacy_goods_received_id {} found",
                     data.id
                 ))),
             };
@@ -210,6 +173,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
             default_donor_id: data.donor_id,
+            legacy_goods_received_id: None,
         };
 
         Ok(PullTranslateResult::upsert(invoice))

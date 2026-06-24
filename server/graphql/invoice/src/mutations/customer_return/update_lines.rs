@@ -35,6 +35,7 @@ pub fn update_lines(
         &ResourceAccessRequest {
             resource: Resource::MutateCustomerReturn,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

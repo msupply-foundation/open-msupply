@@ -21,6 +21,7 @@ pub fn update_name_properties(
         &ResourceAccessRequest {
             resource: Resource::MutateNameProperties,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

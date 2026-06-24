@@ -8,15 +8,15 @@ use crate::diesel_macros::define_linked_tables;
 use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, InvoiceRowRepository,
-    RowActionType,
+    db_diesel::changelog::changelog::RowOrId, ChangelogRepository, ChangelogSyncType, Delete,
+    RowActionType, SourceSiteId, Upsert,
 };
-use crate::{Delete, Upsert};
 
 use diesel::prelude::*;
 
 use chrono::NaiveDate;
 use diesel_derive_enum::DbEnum;
+use std::any::Any;
 
 define_linked_tables! {
     view: invoice_line = "invoice_line_view",
@@ -55,8 +55,12 @@ define_linked_tables! {
         status -> Nullable<crate::db_diesel::invoice_line_row::InvoiceLineStatusMapping>,
         manufacture_date -> Nullable<Date>,
         purchase_order_line_id -> Nullable<Text>,
+<<<<<<< HEAD
         received_number_of_packs -> Nullable<Double>,
         linked_invoice_line_id -> Nullable<Text>,
+=======
+        legacy_goods_received_line_id -> Nullable<Text>,
+>>>>>>> origin/v3.0.0-RC
     },
     links: {
         item_link_id -> item_id,
@@ -91,7 +95,7 @@ allow_tables_to_appear_in_same_query!(invoice_line_stats, stock_line);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, reason_option);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, item);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceLineType {
     #[default]
@@ -101,7 +105,7 @@ pub enum InvoiceLineType {
     Service,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceLineStatus {
     Pending,
@@ -109,7 +113,7 @@ pub enum InvoiceLineStatus {
     Rejected,
 }
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = invoice_line)]
 pub struct InvoiceLineRow {
     pub id: String,
@@ -146,14 +150,21 @@ pub struct InvoiceLineRow {
     pub status: Option<InvoiceLineStatus>,
     pub manufacture_date: Option<NaiveDate>,
     pub purchase_order_line_id: Option<String>,
+<<<<<<< HEAD
     pub received_number_of_packs: Option<f64>,
     pub linked_invoice_line_id: Option<String>,
     // Resolved from link tables - must be last to match view column order
     pub item_id: String,
+=======
+    /// Legacy `trans_line.goods_received_lines_ID` carried over from OG so the
+    /// goods_received_line translator can find the invoice_line spawned by a
+    /// finalised GR line without scanning sync_buffer. Internal only — never synced.
+    pub legacy_goods_received_line_id: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+>>>>>>> origin/v3.0.0-RC
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
 }
-
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
 #[diesel(table_name = invoice_line_stats)]
 pub struct InvoiceLineStatsRow {
@@ -169,31 +180,15 @@ impl<'a> InvoiceLineRowRepository<'a> {
         InvoiceLineRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        self.insert_changelog(row, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(
-        &self,
-        row: &InvoiceLineRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let invoice = InvoiceRowRepository::new(self.connection).find_one_by_id(&row.invoice_id)?;
-        let invoice = match invoice {
-            Some(invoice) => invoice,
-            None => return Err(RepositoryError::NotFound),
-        };
-
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::InvoiceLine,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: Some(invoice.store_id.clone()),
-            name_id: Some(invoice.name_id.clone()),
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        let changelog = InvoiceLineRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn update_reason_option_id(
@@ -269,20 +264,24 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn delete(&self, invoice_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let old_row = self.find_one_by_id(invoice_line_id)?;
-        let change_log_id = match old_row {
-            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
-            None => {
-                return Ok(None);
-            }
-        };
-
+    fn _delete(&self, invoice_line_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             invoice_line_with_links::table.filter(invoice_line_with_links::id.eq(invoice_line_id)),
         )
         .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+        Ok(())
+    }
+
+    pub fn delete(&self, invoice_line_id: &str) -> Result<(), RepositoryError> {
+        let changelog = InvoiceLineRow::generate_changelog(
+            RowOrId::Id(invoice_line_id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
+        self._delete(invoice_line_id)?;
+        Ok(())
     }
 
     pub fn find_one_by_id(
@@ -300,6 +299,17 @@ impl<'a> InvoiceLineRowRepository<'a> {
         let result = invoice_line
             .filter(id.eq_any(ids))
             .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_one_by_legacy_goods_received_line_id(
+        &self,
+        goods_received_line_id: &str,
+    ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
+        let result = invoice_line
+            .filter(legacy_goods_received_line_id.eq(goods_received_line_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
         Ok(result)
     }
 
@@ -328,9 +338,28 @@ impl<'a> InvoiceLineRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct InvoiceLineRowDelete(pub String);
 impl Delete for InvoiceLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = InvoiceLineRowRepository::new(con).delete(&self.0)?;
-        Ok(change_log_id)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = InvoiceLineRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                InvoiceLineRow::generate_changelog(
+                    RowOrId::Id(&self.0),
+                    con,
+                    RowActionType::Delete,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -342,16 +371,37 @@ impl Delete for InvoiceLineRowDelete {
 }
 
 impl Upsert for InvoiceLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = InvoiceLineRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
-    }
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        InvoiceLineRowRepository::new(con)._upsert(self)?;
 
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                InvoiceLineRow::generate_changelog(
+                    RowOrId::Row(self),
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             InvoiceLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+
+    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
+        Some(self)
     }
 }

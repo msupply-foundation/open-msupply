@@ -1,7 +1,11 @@
 use chrono::NaiveDate;
 use repository::{
+<<<<<<< HEAD
     NameLinkRowRepository, StorageConnection, StoreLogoRow, StoreMode, StoreRow, StoreRowDelete,
     SyncBufferRow,
+=======
+    NameLinkRowRepository, StorageConnection, StoreMode, StoreRow, SyncBufferRow,
+>>>>>>> origin/v3.0.0-RC
 };
 
 use crate::sync::translations::name::NameTranslation;
@@ -59,7 +63,7 @@ impl SyncTranslation for StoreTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyStoreRow>()?;
 
         // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
         // HIS -> Hospital Information System (no name_id)
@@ -119,16 +123,6 @@ impl SyncTranslation for StoreTranslation {
             IntegrationOperation::upsert(logo_row),
         ]))
     }
-    // TODO soft delete
-    fn try_translate_from_delete_sync_record(
-        &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(StoreRowDelete(
-            sync_record.record_id.clone(),
-        )))
-    }
 }
 
 #[cfg(test)]
@@ -168,15 +162,6 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_delete_records() {
-            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            let translation_result = translator
-                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

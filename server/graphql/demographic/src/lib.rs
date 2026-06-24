@@ -47,6 +47,7 @@ impl DemographicIndicatorQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryDemographic,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
         let service_provider = ctx.service_provider();
@@ -82,6 +83,7 @@ impl DemographicIndicatorQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryDemographic,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
         let service_provider = ctx.service_provider();
@@ -116,6 +118,7 @@ impl DemographicIndicatorQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryDemographic,
                 store_id: None,
+                require_central_standalone: false,
             },
         )?;
         let service_provider = ctx.service_provider();
@@ -148,6 +151,7 @@ impl DemographicIndicatorQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryDemographic,
                 store_id: None,
+                require_central_standalone: false,
             },
         )?;
         let service_provider = ctx.service_provider();

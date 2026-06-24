@@ -21,6 +21,7 @@ pub async fn get_repack(
         &ResourceAccessRequest {
             resource: Resource::QueryStockLine,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -45,6 +46,7 @@ pub async fn get_repacks_by_stock_line(
         &ResourceAccessRequest {
             resource: Resource::QueryStockLine,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

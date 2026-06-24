@@ -1,6 +1,6 @@
 use repository::{
-    asset_row::{AssetRow, AssetRowDelete, AssetRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    asset_row::{AssetRow, AssetRowDelete},
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
@@ -42,7 +42,7 @@ impl SyncTranslation for AssetTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(
-            serde_json::from_str::<AssetRow>(&sync_record.data)?,
+            sync_record.deserialize::<AssetRow>()?,
         ))
     }
 
@@ -68,15 +68,15 @@ impl SyncTranslation for AssetTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = AssetRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Asset row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::Asset(asset_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = asset_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,

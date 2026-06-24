@@ -59,6 +59,7 @@ use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
+use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
@@ -136,6 +137,10 @@ impl CentralServerMutationNode {
     async fn reports(&self) -> CentralReportMutations {
         CentralReportMutations
     }
+
+    async fn site(&self) -> CentralSiteMutations {
+        CentralSiteMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -146,8 +151,13 @@ impl CentralServerQueryNode {
         CentralPluginQueries
     }
 
+<<<<<<< HEAD
     async fn sync_message(&self) -> SyncMessageQueries {
         SyncMessageQueries
+=======
+    async fn site(&self) -> CentralSiteQueries {
+        CentralSiteQueries
+>>>>>>> origin/v3.0.0-RC
     }
 }
 

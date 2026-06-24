@@ -1,0 +1,99 @@
+use async_graphql::*;
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    site::delete::DeleteSiteError as ServiceError,
+};
+
+pub struct DeleteSiteNode {
+    pub id: i32,
+}
+
+#[Object]
+impl DeleteSiteNode {
+    pub async fn id(&self) -> i32 {
+        self.id
+    }
+}
+
+pub struct SiteHasStores;
+#[Object]
+impl SiteHasStores {
+    pub async fn description(&self) -> &str {
+        "Cannot delete a site that has stores assigned to it"
+    }
+}
+
+pub struct CannotDeleteCentralSite;
+#[Object]
+impl CannotDeleteCentralSite {
+    pub async fn description(&self) -> &str {
+        "Cannot delete the central server site"
+    }
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum DeleteSiteErrorInterface {
+    SiteHasStores(SiteHasStores),
+    CannotDeleteCentralSite(CannotDeleteCentralSite),
+}
+
+#[derive(SimpleObject)]
+pub struct DeleteSiteError {
+    pub error: DeleteSiteErrorInterface,
+}
+
+#[derive(Union)]
+pub enum DeleteSiteResponse {
+    Error(DeleteSiteError),
+    Response(DeleteSiteNode),
+}
+
+pub fn delete_site(ctx: &Context<'_>, site_id: i32) -> Result<DeleteSiteResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateSites,
+            store_id: None,
+            require_central_standalone: true,
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.basic_context()?;
+
+    match service_provider
+        .site_service
+        .delete_site(&service_context, site_id)
+    {
+        Ok(id) => Ok(DeleteSiteResponse::Response(DeleteSiteNode { id })),
+        Err(error) => Ok(DeleteSiteResponse::Error(DeleteSiteError {
+            error: map_error(error)?,
+        })),
+    }
+}
+
+fn map_error(error: ServiceError) -> Result<DeleteSiteErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{error:#?}");
+
+    let graphql_error = match error {
+        ServiceError::SiteHasStores => {
+            return Ok(DeleteSiteErrorInterface::SiteHasStores(SiteHasStores))
+        }
+        ServiceError::CannotDeleteCentralSite => {
+            return Ok(DeleteSiteErrorInterface::CannotDeleteCentralSite(
+                CannotDeleteCentralSite,
+            ))
+        }
+        ServiceError::SiteDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::NotStandaloneCentral => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
+}

@@ -26,6 +26,7 @@ pub fn update_sensor(
         &ResourceAccessRequest {
             resource: Resource::MutateSensor,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

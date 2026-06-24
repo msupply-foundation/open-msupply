@@ -40,6 +40,7 @@ pub fn save_outbound_shipment_item_lines(
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

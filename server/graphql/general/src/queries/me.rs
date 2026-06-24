@@ -19,6 +19,7 @@ pub fn me(ctx: &Context<'_>) -> Result<UserResponse> {
         &ResourceAccessRequest {
             resource: Resource::RouteMe,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

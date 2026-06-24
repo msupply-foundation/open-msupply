@@ -107,6 +107,7 @@ pub fn validate_access(
     let access_request = ResourceAccessRequest {
         resource: Resource::ServerAdmin,
         store_id: None,
+        require_central_standalone: false,
     };
 
     let validated_user = service_provider.validation_service.validate(

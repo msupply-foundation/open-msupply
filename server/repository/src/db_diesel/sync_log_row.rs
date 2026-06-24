@@ -22,6 +22,7 @@ pub enum SyncApiErrorCode {
     ApiVersionIncompatible,
     CentralV6NotConfigured,
     V6ApiVersionIncompatible,
+    V7UpgradeFailed,
 }
 
 table! {
@@ -64,7 +65,7 @@ table! {
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = sync_log)]
-pub struct SyncLogRow {
+pub struct SyncLogV5V6Row {
     pub id: String,
     pub started_datetime: NaiveDateTime,
     pub finished_datetime: Option<NaiveDateTime>,
@@ -99,16 +100,16 @@ pub struct SyncLogRow {
     pub duration_in_seconds: i32,
 }
 
-pub struct SyncLogRowRepository<'a> {
+pub struct SyncLogV5V6RowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> SyncLogRowRepository<'a> {
+impl<'a> SyncLogV5V6RowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        SyncLogRowRepository { connection }
+        SyncLogV5V6RowRepository { connection }
     }
 
-    pub fn _upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &SyncLogV5V6Row) -> Result<(), RepositoryError> {
         diesel::insert_into(sync_log::table)
             .values(row)
             .on_conflict(sync_log::id)
@@ -118,31 +119,31 @@ impl<'a> SyncLogRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &SyncLogV5V6Row) -> Result<(), RepositoryError> {
         row.cache_row();
         self._upsert_one(row)
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncLogRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncLogV5V6Row>, RepositoryError> {
         let result = sync_log::table
             .filter(sync_log::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?
-            .map(SyncLogRow::or_latest_row);
+            .map(SyncLogV5V6Row::or_latest_row);
         Ok(result)
     }
 }
 
-// When starting the integration process an initial SyncLogRow is written to the database.
+// When starting the integration process an initial SyncLogV5V6Row is written to the database.
 // While this initial row is immediately visible, progress updates to this row are done in a
 // long-running transaction, i.e. updates are only visible after the transaction finished.
 //
-// To make progress updates visible in the UI, the latest call to SyncLogRowRepository::upsert_one()
+// To make progress updates visible in the UI, the latest call to SyncLogV5V6RowRepository::upsert_one()
 // is cached in memory.
 // If a database query returns the row for the current integration process, this potentially stale
 // row is replaced with the latest cached row.
-static LATEST_SYNC_LOG: RwLock<Option<SyncLogRow>> = RwLock::new(None);
-impl SyncLogRow {
+static LATEST_SYNC_LOG: RwLock<Option<SyncLogV5V6Row>> = RwLock::new(None);
+impl SyncLogV5V6Row {
     fn cache_row(&self) {
         *LATEST_SYNC_LOG.write().unwrap() = Some(self.clone());
     }
@@ -164,18 +165,18 @@ mod test {
     use strum::IntoEnumIterator;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, SyncApiErrorCode, SyncLogRow,
-        SyncLogRowRepository,
+        mock::MockDataInserts, test_db::setup_all, SyncApiErrorCode, SyncLogV5V6Row,
+        SyncLogV5V6RowRepository,
     };
 
     #[actix_rt::test]
     async fn sync_log_row_enum() {
         let (_, connection, _, _) = setup_all("sync_log_row_enum", MockDataInserts::none()).await;
 
-        let repo = SyncLogRowRepository::new(&connection);
+        let repo = SyncLogV5V6RowRepository::new(&connection);
         // Try upsert all variants of SyncApiErrorCode, confirm that diesel enums match postgres
         for variant in SyncApiErrorCode::iter() {
-            let result = repo.upsert_one(&SyncLogRow {
+            let result = repo.upsert_one(&SyncLogV5V6Row {
                 id: "test".to_string(),
                 error_code: Some(variant.clone()),
                 ..Default::default()

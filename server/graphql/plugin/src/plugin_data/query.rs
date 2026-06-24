@@ -56,6 +56,7 @@ pub fn get_plugin_data(
         &ResourceAccessRequest {
             resource: Resource::ReadPluginData,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

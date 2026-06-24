@@ -1,0 +1,110 @@
+import React, { useMemo, useState } from 'react';
+import {
+  Box,
+  ColumnDef,
+  DeleteIcon,
+  IconButton,
+  MaterialTable,
+  Typography,
+  useNonPaginatedMaterialTable,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { StoreRowFragment } from '../../../Store/api';
+import { StoreSearchInput } from '../../../Store/components';
+import { SiteStoreDraftRow } from '../api';
+import { useSyncSettings } from '../../../Sync/api/hooks/settings/useSyncSettings';
+
+interface SiteStoresSectionProps {
+  siteId: number;
+  stores: SiteStoreDraftRow[];
+  isFetching: boolean;
+  onAddStore: (store: SiteStoreDraftRow) => void;
+  onRemoveStore: (storeId: string) => void;
+  isEditable: boolean;
+}
+
+export const SiteStoresSection = ({
+  siteId,
+  stores,
+  isFetching,
+  onAddStore,
+  onRemoveStore,
+  isEditable,
+}: SiteStoresSectionProps) => {
+  const t = useTranslation();
+  const [searchKey, setSearchKey] = useState(0);
+  const { data: syncSettings } = useSyncSettings();
+  const unassignedSiteId = syncSettings?.centralServerSiteId;
+
+  const columns = useMemo((): ColumnDef<SiteStoreDraftRow>[] => {
+    const baseColumns: ColumnDef<SiteStoreDraftRow>[] = [
+      {
+        accessorKey: 'code',
+        header: t('label.code'),
+        size: 120,
+      },
+      {
+        accessorKey: 'storeName',
+        header: t('label.name'),
+        size: 240,
+      },
+    ];
+
+    if (!isEditable) return baseColumns;
+
+    return [
+      ...baseColumns,
+      {
+        id: 'remove',
+        header: '',
+        size: 48,
+        enableColumnActions: false,
+        enableResizing: false,
+        Cell: ({ row }) => (
+          <IconButton
+            icon={<DeleteIcon fontSize="small" />}
+            label={t('label.remove')}
+            disabled={siteId === unassignedSiteId}
+            onClick={() => onRemoveStore(row.original.id)}
+          />
+        ),
+      },
+    ];
+  }, [t, isEditable, siteId, unassignedSiteId, onRemoveStore]);
+
+  const { table } = useNonPaginatedMaterialTable<SiteStoreDraftRow>({
+    tableId: 'site-stores-table',
+    columns,
+    data: stores,
+    isLoading: isFetching,
+    enableRowSelection: false,
+  });
+
+  const handleSelect = (store: StoreRowFragment) => {
+    onAddStore({
+      id: store.id,
+      code: store.code,
+      storeName: store.storeName,
+    });
+    setSearchKey(k => k + 1);
+  };
+
+  return (
+    <Box display="flex" flexDirection="column" gap={1}>
+      <Typography variant="subtitle1" fontWeight="bold">
+        {t('heading.stores')}
+      </Typography>
+      {isEditable && (
+        <StoreSearchInput
+          key={searchKey}
+          clearable
+          fullWidth
+          excludeStoreIds={stores.map(s => s.id)}
+          onChange={handleSelect}
+          onInputChange={() => { }}
+        />
+      )}
+      <MaterialTable table={table} />
+    </Box>
+  );
+};

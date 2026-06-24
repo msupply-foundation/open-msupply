@@ -92,6 +92,7 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
             is_emergency: false,
             created_from_requisition_id: Some("created_from_id".to_string()),
             destination_customer_id: Some("name1".to_string()),
+            ..Default::default()
         },
     )
 }
@@ -214,6 +215,7 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             is_emergency: true,
             created_from_requisition_id: None,
             destination_customer_id: None,
+            ..Default::default()
         },
     )
 }
@@ -345,6 +347,7 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             is_emergency: false,
             created_from_requisition_id: None,
             destination_customer_id: None,
+            ..Default::default()
         },
     )
 }
@@ -476,6 +479,7 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
             is_emergency: false,
             created_from_requisition_id: None,
             destination_customer_id: None,
+            ..Default::default()
         },
     )
 }
@@ -600,6 +604,7 @@ fn requisition_imprest_pull_record() -> TestSyncIncomingRecord {
             is_emergency: false,
             created_from_requisition_id: None,
             destination_customer_id: None,
+            ..Default::default()
         },
     )
 }
@@ -721,6 +726,7 @@ fn requisition_stock_history_pull_record() -> TestSyncIncomingRecord {
             is_emergency: false,
             created_from_requisition_id: None,
             destination_customer_id: None,
+            ..Default::default()
         },
     )
 }

@@ -70,6 +70,7 @@ pub fn activity_logs(
         &ResourceAccessRequest {
             resource: Resource::QueryLog,
             store_id: Some(store_id),
+            require_central_standalone: false,
         },
     )?;
 

@@ -21,6 +21,7 @@ pub fn program_indicators(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

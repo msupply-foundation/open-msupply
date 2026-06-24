@@ -207,12 +207,16 @@ fn generate_line(
             .unwrap_or(existing_reason_option_id),
         linked_invoice_id: None,
         status: None,
+<<<<<<< HEAD
         received_number_of_packs: input
             .received_number_of_packs
             .as_ref()
             .map(|u| u.value)
             .unwrap_or(existing_received_number_of_packs),
         linked_invoice_line_id: None,
+=======
+        legacy_goods_received_line_id: None,
+>>>>>>> origin/v3.0.0-RC
     };
 
     if let Some(number_of_packs) = input.number_of_packs {
