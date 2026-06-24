@@ -64,6 +64,7 @@ use util::format_error;
 
 mod authentication;
 pub mod certs;
+mod changelog_dedup;
 mod changelog_partitions;
 pub mod cold_chain;
 pub mod configuration;
@@ -365,6 +366,7 @@ pub async fn start_server(
     info!("Run DB migrations...");
     // start database migrations
     let changelog_partition_settings = settings.changelog_partition.clone().unwrap_or_default();
+    let changelog_dedup_settings = settings.changelog_dedup.clone().unwrap_or_default();
     let migration_config = MigrationConfig {
         changelog_partition: changelog_partition_settings.to_migration_config(),
     };
@@ -541,6 +543,10 @@ pub async fn start_server(
         service_provider.clone().into_inner(),
         changelog_partition_settings,
     );
+    let changelog_dedup_task = changelog_dedup::spawn(
+        service_provider.clone().into_inner(),
+        changelog_dedup_settings,
+    );
     let scheduled_task_handle = spawn_scheduled_task_runner(
         service_provider.clone().into_inner(),
         settings.mail.clone().map(|m| m.interval).unwrap_or(60),
@@ -559,6 +565,7 @@ pub async fn start_server(
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
         result = schedule_plugin_task => unreachable!("Schedule plugin runner terminated ({:?})", result),
         result = changelog_partitions_task => unreachable!("Changelog partition top-up terminated ({:?})", result),
+        result = changelog_dedup_task => unreachable!("Changelog dedup terminated ({:?})", result),
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
         subscription_error = subscription_task_handle => unreachable!("Subscription task stopped unexpectedly: {:?}", subscription_error),
     };
