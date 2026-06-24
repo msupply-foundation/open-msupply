@@ -10,7 +10,10 @@ use util::sync_serde::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::{translations::currency::CurrencyTranslation, CentralServerConfig};
+use crate::sync::{
+    central_mapping_properties::keys, translations::currency::CurrencyTranslation,
+    CentralServerConfig,
+};
 
 use super::{
     utils::{clear_invalid_fk, merge_legacy_properties, LegacyPropertiesBuilder},
@@ -27,17 +30,17 @@ use super::{
 /// refreshes them — last-writer-wins, identical to the custom fields (push-back
 /// to OG is inert behind the `PushToLegacyCentral` guard).
 const LEGACY_NAME_OWNED_KEYS: &[&str] = &[
-    "custom_1",
-    "custom_2",
-    "custom_3",
+    keys::NAME_CUSTOM_1,
+    keys::NAME_CUSTOM_2,
+    keys::NAME_CUSTOM_3,
     // `property_v2.key` is globally unique, so the name category dimensions are
     // prefixed `name_category*` (item already owns `category2`/`category3`).
-    "name_category1",
-    "name_category2",
-    "name_category3",
-    "name_category4",
-    "name_category5",
-    "name_category6",
+    keys::NAME_CATEGORY_1,
+    keys::NAME_CATEGORY_2,
+    keys::NAME_CATEGORY_3,
+    keys::NAME_CATEGORY_4,
+    keys::NAME_CATEGORY_5,
+    keys::NAME_CATEGORY_6,
 ];
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -70,19 +73,19 @@ pub enum LegacyNameRowType {
 /// the 4D column names (`custom1` etc.) via this mapping.
 fn build_legacy_properties(legacy: &LegacyNameRow) -> Option<serde_json::Value> {
     LegacyPropertiesBuilder::new()
-        .text("custom_1", legacy.custom_1.as_deref())
-        .text("custom_2", legacy.custom_2.as_deref())
-        .text("custom_3", legacy.custom_3.as_deref())
+        .text(keys::NAME_CUSTOM_1, legacy.custom_1.as_deref())
+        .text(keys::NAME_CUSTOM_2, legacy.custom_2.as_deref())
+        .text(keys::NAME_CUSTOM_3, legacy.custom_3.as_deref())
         // Name categories 1–6 as OPTIONs (parallel to item categories). 4D gives
         // a name one leaf id per dimension; stored as the option id so the client
         // resolves it against the `property_option_v2` rows authored by the name
-        // category import. See central_mapping_properties (`legacy_name_category_*`).
-        .option("name_category1", legacy.category1_id.as_deref())
-        .option("name_category2", legacy.category2_id.as_deref())
-        .option("name_category3", legacy.category3_id.as_deref())
-        .option("name_category4", legacy.category4_id.as_deref())
-        .option("name_category5", legacy.category5_id.as_deref())
-        .option("name_category6", legacy.category6_id.as_deref())
+        // category import. See central_mapping_properties (`NAME_CATEGORY_*`).
+        .option(keys::NAME_CATEGORY_1, legacy.category1_id.as_deref())
+        .option(keys::NAME_CATEGORY_2, legacy.category2_id.as_deref())
+        .option(keys::NAME_CATEGORY_3, legacy.category3_id.as_deref())
+        .option(keys::NAME_CATEGORY_4, legacy.category4_id.as_deref())
+        .option(keys::NAME_CATEGORY_5, legacy.category5_id.as_deref())
+        .option(keys::NAME_CATEGORY_6, legacy.category6_id.as_deref())
         .build()
 }
 
@@ -722,7 +725,7 @@ mod tests {
         row.category6_id = Some("".to_string()); // empty → omitted
         assert_eq!(
             build_legacy_properties(&row),
-            Some(json!({ "name_category1": "CAT1_LEAF", "name_category3": "CAT3" }))
+            Some(json!({ "name_category_1": "CAT1_LEAF", "name_category_3": "CAT3" }))
         );
     }
 
@@ -732,10 +735,10 @@ mod tests {
         // re-import refreshes it from OG; a non-owned OMS key is preserved.
         let mut row = legacy_row_with_customs(None, None, None);
         row.category2_id = Some("OG_VALUE".to_string());
-        let existing = Some(json!({ "name_category2": "OMS_EDIT", "patient_note": "keep" }));
+        let existing = Some(json!({ "name_category_2": "OMS_EDIT", "patient_note": "keep" }));
         assert_eq!(
             merge_legacy_properties(existing, build_legacy_properties(&row), LEGACY_NAME_OWNED_KEYS),
-            Some(json!({ "name_category2": "OG_VALUE", "patient_note": "keep" }))
+            Some(json!({ "name_category_2": "OG_VALUE", "patient_note": "keep" }))
         );
     }
 

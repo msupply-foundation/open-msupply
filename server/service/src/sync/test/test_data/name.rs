@@ -596,9 +596,9 @@ fn name_4() -> TestSyncIncomingRecord {
             freight_factor: Some(0.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             // The raw record carries `category1_ID`, imported as the
-            // `name_category1` OPTION value (option id = category id).
+            // `name_category_1` OPTION value (option id = category id).
             properties_v2: Some(json!({
-                "name_category1": "8C4DDF227AFB4FD6A09445C949079597"
+                "name_category_1": "8C4DDF227AFB4FD6A09445C949079597"
             })),
         },
     )
