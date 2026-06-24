@@ -595,18 +595,18 @@ impl SyncTranslation for NameTranslation {
             // added by #9430 for the patient-DOB round-trip bug) blocks the push.
             // It's wired here so that if/when the general patient → OG sync path is
             // re-enabled, patient property edits flow back to OG automatically.
-            custom_1: legacy_custom_field_from_properties(&properties_v2, "custom_1"),
-            custom_2: legacy_custom_field_from_properties(&properties_v2, "custom_2"),
-            custom_3: legacy_custom_field_from_properties(&properties_v2, "custom_3"),
+            custom_1: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CUSTOM_1),
+            custom_2: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CUSTOM_2),
+            custom_3: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CUSTOM_3),
             // Same inert reverse-mapping for the category dimensions: the stored
             // option id is the leaf `categoryN_ID`. Carried back behind the same
             // `PushToLegacyCentral` guard as the custom fields.
-            category1_id: legacy_custom_field_from_properties(&properties_v2, "name_category1"),
-            category2_id: legacy_custom_field_from_properties(&properties_v2, "name_category2"),
-            category3_id: legacy_custom_field_from_properties(&properties_v2, "name_category3"),
-            category4_id: legacy_custom_field_from_properties(&properties_v2, "name_category4"),
-            category5_id: legacy_custom_field_from_properties(&properties_v2, "name_category5"),
-            category6_id: legacy_custom_field_from_properties(&properties_v2, "name_category6"),
+            category1_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_1),
+            category2_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_2),
+            category3_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_3),
+            category4_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_4),
+            category5_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_5),
+            category6_id: legacy_custom_field_from_properties(&properties_v2, keys::NAME_CATEGORY_6),
         };
 
         Ok(PushTranslateResult::upsert(

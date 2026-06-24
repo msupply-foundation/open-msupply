@@ -189,20 +189,21 @@ mod tests {
             .try_translate_from_upsert_sync_record(&connection, &cat1)
             .unwrap();
         let debug = format!("{result:?}");
-        assert!(debug.contains("PropertyOptionV2Row"), "{debug}");
+        assert!(debug.contains("PropertyOptionV2Row"), "{}", debug);
         // Hardcoded, not `keys::*`: these keys are a frozen contract once released,
         // so a const rename must fail the test rather than silently pass.
-        assert!(debug.contains("name_category_1"), "{debug}");
+        assert!(debug.contains("name_category_1"), "{}", debug);
         assert!(
             debug.contains("N_CAT1_L2"),
-            "category1 hierarchy must map parent_ID -> parent_option_id: {debug}"
+            "category1 hierarchy must map parent_ID -> parent_option_id: {}",
+            debug
         );
 
         let result = translator
             .try_translate_from_upsert_sync_record(&connection, &cat4)
             .unwrap();
         let debug = format!("{result:?}");
-        assert!(debug.contains("name_category_4"), "{debug}");
+        assert!(debug.contains("name_category_4"), "{}", debug);
 
         // On a remote, nothing is authored (options arrive via v7).
         test_util_set_is_central_server(false);
@@ -211,7 +212,8 @@ mod tests {
             .unwrap();
         assert!(
             matches!(result, PullTranslateResult::Ignored(_)),
-            "remote must not author name category options: {result:?}"
+            "remote must not author name category options: {:?}",
+            result
         );
     }
 }

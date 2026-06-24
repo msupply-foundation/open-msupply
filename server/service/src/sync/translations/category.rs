@@ -206,17 +206,19 @@ mod tests {
             .try_translate_from_upsert_sync_record(&connection, &sync_record)
             .unwrap();
         let debug = format!("{result:?}");
-        assert!(debug.contains("CategoryRow"), "{debug}");
-        assert!(debug.contains("PropertyOptionV2Row"), "{debug}");
+        assert!(debug.contains("CategoryRow"), "{}", debug);
+        assert!(debug.contains("PropertyOptionV2Row"), "{}", debug);
         // Hardcoded, not `keys::ITEM_CATEGORY_1`: this key is a frozen contract
         // once released, so the test must fail if the const is ever changed.
         assert!(
             debug.contains("item_category_1"),
-            "option must reference the mapping property: {debug}"
+            "option must reference the mapping property: {}",
+            debug
         );
         assert!(
             debug.contains("CAT_PARENT"),
-            "hierarchy must map parent_ID -> parent_option_id: {debug}"
+            "hierarchy must map parent_ID -> parent_option_id: {}",
+            debug
         );
 
         // On a remote, only the relational category row is emitted.
@@ -225,10 +227,11 @@ mod tests {
             .try_translate_from_upsert_sync_record(&connection, &sync_record)
             .unwrap();
         let debug = format!("{result:?}");
-        assert!(debug.contains("CategoryRow"), "{debug}");
+        assert!(debug.contains("CategoryRow"), "{}", debug);
         assert!(
             !debug.contains("PropertyOptionV2Row"),
-            "remote must not author options: {debug}"
+            "remote must not author options: {}",
+            debug
         );
     }
 
@@ -268,11 +271,12 @@ mod tests {
                 .try_translate_from_upsert_sync_record(&connection, &sync_record)
                 .unwrap();
             let debug = format!("{result:?}");
-            assert!(debug.contains("PropertyOptionV2Row"), "{debug}");
-            assert!(debug.contains(property_id), "{debug}");
+            assert!(debug.contains("PropertyOptionV2Row"), "{}", debug);
+            assert!(debug.contains(property_id), "{}", debug);
             assert!(
                 !debug.contains("CategoryRow"),
-                "flat dimensions have no relational category row: {debug}"
+                "flat dimensions have no relational category row: {}",
+                debug
             );
 
             // On a remote, nothing is authored at all for the flat dimensions.
@@ -283,7 +287,8 @@ mod tests {
             let debug = format!("{result:?}");
             assert!(
                 !debug.contains("PropertyOptionV2Row") && !debug.contains("CategoryRow"),
-                "remote authors nothing for flat dimensions: {debug}"
+                "remote authors nothing for flat dimensions: {}",
+                debug
             );
         }
     }
