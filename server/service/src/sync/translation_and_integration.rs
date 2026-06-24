@@ -26,6 +26,111 @@ type TableName = String;
 #[derive(Default, Debug)]
 pub struct TranslationAndIntegrationResults(HashMap<TableName, TranslationAndIntegrationResult>);
 
+/// Default batch priority for translated operations.
+const PRIORITY_DEFAULT: i32 = 1;
+/// Higher priority for a `Delete` that a translator emitted before an `Upsert` in the same
+/// record (must run before upserts; batch ordering runs higher priority first).
+const PRIORITY_PRE_UPSERT_DELETE: i32 = 2;
+
+/// One translated operation tagged with its originating buffer cursor + source site and the
+/// batch priority it should run at.
+struct TranslatedOp {
+    cursor: i32,
+    source_site_id: Option<i32>,
+    priority: i32,
+    operation: IntegrationOperation,
+}
+
+/// The final sync_buffer outcome for one buffer record, accumulated across translation and
+/// the (later) batch integration. The first error wins; a record with no error succeeds.
+struct RecordOutcome {
+    table_name: String,
+    record_id: String,
+    state: RecordState,
+}
+
+enum RecordState {
+    /// No operations recorded an error yet -> success when written.
+    Ok,
+    /// Translator returned `Ignored` (written as ignored; not counted as a hard error).
+    Ignored(String),
+    /// No translator matched (written as error; not counted as a hard error).
+    NoTranslator,
+    /// A translation or integration error (written as error).
+    Error(String),
+}
+
+impl RecordOutcome {
+    fn new(table_name: String, record_id: String) -> Self {
+        Self {
+            table_name,
+            record_id,
+            state: RecordState::Ok,
+        }
+    }
+
+    fn mark_translation_error(&mut self, message: String) {
+        self.state = RecordState::Error(message);
+    }
+
+    fn mark_ignored(&mut self, message: String) {
+        // Ignored only matters if nothing has already errored.
+        if matches!(self.state, RecordState::Ok) {
+            self.state = RecordState::Ignored(message);
+        }
+    }
+
+    fn mark_no_translator(&mut self) {
+        if matches!(self.state, RecordState::Ok) {
+            self.state = RecordState::NoTranslator;
+        }
+    }
+
+    fn mark_op_error(&mut self, message: String) {
+        // First integration error wins; don't downgrade an existing error.
+        if !matches!(self.state, RecordState::Error(_)) {
+            self.state = RecordState::Error(message);
+        }
+    }
+
+    /// Write the record's sync_buffer result and tally it into `results`, matching the
+    /// per-record semantics of the old flow.
+    fn write(
+        self,
+        connection: &StorageConnection,
+        cursor: i32,
+        started: chrono::NaiveDateTime,
+        results: &mut TranslationAndIntegrationResults,
+    ) -> Result<(), RepositoryError> {
+        match self.state {
+            RecordState::Ok => {
+                write_sync_buffer_success(connection, cursor, started)?;
+                results.insert_success(&self.table_name);
+            }
+            RecordState::Ignored(message) => {
+                write_sync_buffer_ignored(connection, cursor, started, &message)?;
+                results.insert_error(&self.table_name);
+            }
+            RecordState::NoTranslator => {
+                write_sync_buffer_error(
+                    connection,
+                    cursor,
+                    started,
+                    "Translator for record not found",
+                )?;
+                results.insert_error(&self.table_name);
+            }
+            RecordState::Error(message) => {
+                write_sync_buffer_error(connection, cursor, started, &message)?;
+                results.insert_error(&self.table_name);
+            }
+        }
+        // record_id retained for parity with prior logging; not otherwise needed here.
+        let _ = self.record_id;
+        Ok(())
+    }
+}
+
 impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(connection: &'a StorageConnection) -> TranslationAndIntegration<'a> {
         TranslationAndIntegration {
@@ -70,60 +175,63 @@ impl<'a> TranslationAndIntegration<'a> {
     /// Translate and integrate a single batch of sync records. Returns the number of records in
     /// this batch that errored — the caller accumulates this across batches to report a true
     /// cumulative error count (instead of resetting per batch).
+    ///
+    /// Translates every record first, then integrates all the resulting operations as ONE
+    /// batch (`batch_operations`) so the underlying upserts/deletes go out as multi-row
+    /// statements. Changelogs are generated *around* the batch (mirroring the old per-record
+    /// order): delete changelogs BEFORE the batch (they read the still-present row to route),
+    /// upsert changelogs AFTER (the row is then in the DB). A record's sync_buffer result is
+    /// derived from whether any of its operations errored.
     pub(crate) fn translate_and_integrate_sync_records(
         &mut self,
         sync_records: &[SyncBufferRow],
         translators: &Vec<Box<dyn SyncTranslation>>,
     ) -> Result<u32, RepositoryError> {
+        let started = datetime_now();
         let mut error_count: u32 = 0;
 
+        // Per-cursor outcome from the translate phase; integratable ops are accumulated
+        // separately and their batch result folded back in afterwards.
+        let mut record_outcomes: HashMap<i32, RecordOutcome> = HashMap::new();
+        // (cursor, source_site_id, operation) for every batchable/per-record op, in order.
+        let mut all_ops: Vec<TranslatedOp> = Vec::new();
+
         for sync_record in sync_records.iter() {
-            let started = datetime_now();
             let cursor = sync_record.cursor;
+            record_outcomes.insert(
+                cursor,
+                RecordOutcome::new(sync_record.table_name.clone(), sync_record.record_id.clone()),
+            );
 
             let translation_results = match self.translate_sync_record(sync_record, translators) {
                 Ok(translation_result) => translation_result,
-                // Record error in sync buffer and in result, continue to next sync_record
                 Err(translation_error) => {
-                    write_sync_buffer_error(
-                        self.connection,
-                        cursor,
-                        started,
-                        &format!("{:?}", translation_error),
-                    )?;
-                    self.result.insert_error(&sync_record.table_name);
-                    error_count += 1; // We want to count these as errors as this is likely to be FK or other data issues, that might affect performance of integration and we want to track that.
+                    // Count as an error — likely FK/data issue that affects integration.
+                    record_outcomes.get_mut(&cursor).unwrap().mark_translation_error(
+                        format!("{:?}", translation_error),
+                    );
+                    error_count += 1;
                     warn!(
                         "{:?} {:?} {:?}",
                         translation_error, sync_record.record_id, sync_record.table_name
                     );
-                    // Next sync_record
                     continue;
                 }
             };
 
-            let mut integration_records = Vec::new();
             let mut ignored = false;
+            let mut record_ops: Vec<IntegrationOperation> = Vec::new();
             for translation_result in translation_results {
                 match translation_result {
                     PullTranslateResult::IntegrationOperations(operations) => {
-                        // Add source site id to each operations, based on sync buffer row
-                        let operations_with_source_site_id = operations
-                            .into_iter()
-                            .map(|operation| (Some(sync_record.source_site_id), operation));
-                        integration_records.extend(operations_with_source_site_id)
+                        record_ops.extend(operations)
                     }
                     PullTranslateResult::Ignored(ignore_message) => {
                         ignored = true;
-                        write_sync_buffer_ignored(
-                            self.connection,
-                            cursor,
-                            started,
-                            &ignore_message,
-                        )?;
-                        self.result.insert_error(&sync_record.table_name);
-                        // Don't count this as an error in the count, it's valid to have records that are ignored based on translation logic.
-
+                        record_outcomes
+                            .get_mut(&cursor)
+                            .unwrap()
+                            .mark_ignored(ignore_message.clone());
                         debug!(
                             "Ignored record: {:?} {:?} {:?}",
                             ignore_message, sync_record.record_id, sync_record.table_name
@@ -138,42 +246,190 @@ impl<'a> TranslationAndIntegration<'a> {
                 continue;
             }
 
-            // Record translator not found error in sync buffer and in result, continue to next sync_record
-            if integration_records.is_empty() {
-                let error = "Translator for record not found";
-                write_sync_buffer_error(self.connection, cursor, started, error)?;
-                self.result.insert_error(&sync_record.table_name);
-                // Don't count this as an error in the count, it's valid to have no translators for a record matching.
+            if record_ops.is_empty() {
+                // No translator matched — not counted as a hard error (parity with old behaviour).
+                record_outcomes
+                    .get_mut(&cursor)
+                    .unwrap()
+                    .mark_no_translator();
                 warn!(
                     "{:?} {:?} {:?}",
-                    error, sync_record.record_id, sync_record.table_name
+                    "Translator for record not found", sync_record.record_id, sync_record.table_name
                 );
-                // Next sync_record
                 continue;
             }
 
-            // Integrate
-            let integration_result = integrate(self.connection, &integration_records);
-            match integration_result {
-                Ok(_) => {
-                    write_sync_buffer_success(self.connection, cursor, started)?;
-                    self.result.insert_success(&sync_record.table_name)
+            // A `Delete` positioned before any `Upsert` in this record's op list must run before
+            // upserts (e.g. program_requisition_settings replaces order types). Bump its priority
+            // so batch ordering (higher priority first) keeps it ahead of normal-priority upserts.
+            let first_upsert_index = record_ops
+                .iter()
+                .position(|op| !matches!(op, IntegrationOperation::Delete { .. }));
+            for (index, operation) in record_ops.into_iter().enumerate() {
+                let is_pre_upsert_delete = matches!(operation, IntegrationOperation::Delete { .. })
+                    && first_upsert_index.map(|u| index < u).unwrap_or(false);
+                all_ops.push(TranslatedOp {
+                    cursor,
+                    source_site_id: Some(sync_record.source_site_id),
+                    priority: if is_pre_upsert_delete {
+                        PRIORITY_PRE_UPSERT_DELETE
+                    } else {
+                        PRIORITY_DEFAULT
+                    },
+                    operation,
+                });
+            }
+        }
+
+        // Integrate all accumulated operations as one batch, attributing results per cursor.
+        self.integrate_batch(all_ops, &mut record_outcomes, &mut error_count)?;
+
+        // Write each record's final sync_buffer result + tally.
+        for (cursor, outcome) in record_outcomes {
+            outcome.write(self.connection, cursor, started, &mut self.result)?;
+        }
+
+        Ok(error_count)
+    }
+
+    /// Run the accumulated operations: pre-generate delete changelogs, split batchable
+    /// (`Upsert(Row)`/`Delete`) from per-record (`UpsertNonSync`/`UpsertDocument`) ops, run
+    /// `batch_operations` for the batchable ones, then generate + insert all changelogs and
+    /// fold per-operation errors back into the owning record's outcome.
+    fn integrate_batch(
+        &mut self,
+        all_ops: Vec<TranslatedOp>,
+        outcomes: &mut HashMap<i32, RecordOutcome>,
+        error_count: &mut u32,
+    ) -> Result<(), RepositoryError> {
+        if all_ops.is_empty() {
+            return Ok(());
+        }
+
+        let changelog_repo = ChangelogRepository::new(self.connection);
+        // Delete changelogs must be generated BEFORE the rows are deleted (they read the
+        // still-present row to route store_id/transfer_store_id/patient_id).
+        let mut pending_changelogs: Vec<ChangeLogInsertRow> = Vec::new();
+
+        let mut batch_input: Vec<BatchDbOperation<i32, (i32, ChangelogTableName, String)>> =
+            Vec::new();
+
+        for TranslatedOp {
+            cursor,
+            source_site_id,
+            priority,
+            operation,
+        } in all_ops
+        {
+            match operation {
+                IntegrationOperation::Upsert(row) => {
+                    let dedup_key = (cursor, row.table_name(), row.record_id());
+                    batch_input.push(BatchDbOperation {
+                        priority,
+                        operation: BatchOperation::Upsert(row),
+                        extra: cursor,
+                        dedup_key,
+                    });
                 }
-                // Record database_error in sync buffer and in result
-                Err(database_error) => {
-                    let error = format!("{database_error:?}");
-                    write_sync_buffer_error(self.connection, cursor, started, &error)?;
-                    self.result.insert_error(&sync_record.table_name);
-                    error_count += 1;
-                    warn!(
-                        "{:?} {:?} {:?}",
-                        error, sync_record.record_id, sync_record.table_name
-                    );
+                IntegrationOperation::Delete {
+                    table_name,
+                    record_id,
+                } => {
+                    // Generate the delete changelog now, while the row still exists.
+                    match generate_delete_changelog(
+                        self.connection,
+                        &table_name,
+                        &record_id,
+                        SourceSiteId::SourceSiteId(source_site_id),
+                    ) {
+                        Ok(mut changelogs) => pending_changelogs.append(&mut changelogs),
+                        Err(e) => {
+                            outcomes.get_mut(&cursor).unwrap().mark_op_error(format!("{e:?}"));
+                            *error_count += 1;
+                            continue;
+                        }
+                    }
+                    let dedup_key = (cursor, table_name.clone(), record_id.clone());
+                    batch_input.push(BatchDbOperation {
+                        priority,
+                        operation: BatchOperation::Delete {
+                            table_name,
+                            record_id,
+                        },
+                        extra: cursor,
+                        dedup_key,
+                    });
+                }
+                // Not batchable — write per-record (link tables / documents), then their changelog.
+                IntegrationOperation::UpsertNonSync(row) => {
+                    if let Err(e) = row.upsert_no_changelog(self.connection) {
+                        outcomes.get_mut(&cursor).unwrap().mark_op_error(format!("{e:?}"));
+                        *error_count += 1;
+                    }
+                }
+                IntegrationOperation::UpsertDocument(document) => {
+                    if let Err(e) =
+                        crate::sync::integrate_document::sync_upsert_document(self.connection, &document)
+                    {
+                        outcomes.get_mut(&cursor).unwrap().mark_op_error(format!("{e:?}"));
+                        *error_count += 1;
+                    }
                 }
             }
         }
 
-        Ok(error_count)
+        // Run the batched upserts + deletes.
+        let wrap_record_in_tx = cfg!(feature = "postgres");
+        let results = batch_operations(self.connection, batch_input, wrap_record_in_tx);
+
+        // Fold batch errors into outcomes, and generate upsert changelogs for the rows that
+        // succeeded (the row is now in the DB).
+        for BatchDbOperationResult {
+            operation,
+            error,
+            extra: cursors,
+        } in results
+        {
+            // `cursors` are all the (deduped) records that shared this operation.
+            if let Some(error) = error {
+                let message = format!("{error:?}");
+                for cursor in &cursors {
+                    if let Some(outcome) = outcomes.get_mut(cursor) {
+                        outcome.mark_op_error(message.clone());
+                    }
+                }
+                *error_count += cursors.len() as u32;
+                continue;
+            }
+
+            // Upsert succeeded: generate its changelog(s) from the now-written row, attributing
+            // any generation error to the (single) originating record's source site.
+            if let BatchOperation::Upsert(row) = &operation {
+                // All cursors in a deduped upsert group are the same record/source; use the first.
+                let source_site_id = cursors.first().copied();
+                match row.generate_changelog(
+                    self.connection,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                ) {
+                    Ok(mut changelogs) => pending_changelogs.append(&mut changelogs),
+                    Err(e) => {
+                        let message = format!("{e:?}");
+                        for cursor in &cursors {
+                            if let Some(outcome) = outcomes.get_mut(cursor) {
+                                outcome.mark_op_error(message.clone());
+                            }
+                        }
+                        *error_count += cursors.len() as u32;
+                    }
+                }
+            }
+        }
+
+        // Insert all changelogs (pre-generated deletes + post-batch upserts) in one go.
+        changelog_repo.batch_insert(pending_changelogs)?;
+
+        Ok(())
     }
 }
 
@@ -449,5 +705,121 @@ mod test {
         // data from earlier batches which potentially results in a slowdown.
         println!("Without error:");
         run(false);
+    }
+
+    /// Drives the batched `translate_and_integrate_sync_records` end to end with two
+    /// translatable `unit` upserts + one record with no translator: asserts the rows are
+    /// upserted, changelogs are generated, and each buffer row gets the right result.
+    #[actix_rt::test]
+    async fn test_batch_translate_and_integrate() {
+        use repository::{
+            ChangelogCondition, ChangelogRepository, CursorAndLimit, IntegrationResult,
+            SyncBufferRepository, SyncBufferRowInsert, UnitRowRepository,
+        };
+
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_batch_translate_and_integrate",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let unit_buffer = |id: &str, name: &str| SyncBufferRowInsert {
+            record_id: id.to_string(),
+            table_name: "unit".to_string(),
+            action: SyncAction::Upsert,
+            data: repository::SyncRecordData(serde_json::json!({
+                "ID": id,
+                "units": name,
+                "comment": "",
+                "order_number": 1,
+            })),
+            sync_version: SyncVersion::V5V6,
+            source_site_id: 0,
+            received_datetime: datetime_now(),
+            ..Default::default()
+        };
+
+        let buffer_repo = SyncBufferRepository::new(&connection);
+        buffer_repo
+            .insert_many(&[
+                unit_buffer("unit_1", "Unit One"),
+                unit_buffer("unit_2", "Unit Two"),
+                // No translator matches this table -> "Translator for record not found".
+                SyncBufferRowInsert {
+                    record_id: "nope_1".to_string(),
+                    table_name: "no_such_table".to_string(),
+                    action: SyncAction::Upsert,
+                    data: repository::SyncRecordData(serde_json::json!({})),
+                    sync_version: SyncVersion::V5V6,
+                    source_site_id: 0,
+                    received_datetime: datetime_now(),
+                    ..Default::default()
+                },
+            ])
+            .unwrap();
+
+        let records =
+            crate::sync::sync_buffer::get_sync_buffer_for_table(&connection, SyncAction::Upsert, "unit", 0, 100)
+                .unwrap();
+        assert_eq!(records.len(), 2);
+        let no_translator = crate::sync::sync_buffer::get_sync_buffer_for_table(
+            &connection,
+            SyncAction::Upsert,
+            "no_such_table",
+            0,
+            100,
+        )
+        .unwrap();
+
+        let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+        let mut integrator = TranslationAndIntegration::new(&connection);
+        let all: Vec<SyncBufferRow> = records.iter().cloned().chain(no_translator).collect();
+        let errors = integrator
+            .translate_and_integrate_sync_records(&all, &crate::sync::translations::all_translators())
+            .unwrap();
+
+        // No-translator is not a hard error count (parity with old behaviour).
+        assert_eq!(errors, 0);
+
+        // Both rows upserted in the batch.
+        let unit_repo = UnitRowRepository::new(&connection);
+        assert_eq!(unit_repo.find_one_by_id("unit_1").unwrap().unwrap().name, "Unit One");
+        assert_eq!(unit_repo.find_one_by_id("unit_2").unwrap().unwrap().name, "Unit Two");
+
+        // A changelog was generated for each upserted unit (generated AFTER the batch).
+        let changelogs = ChangelogRepository::new(&connection)
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: cursor_before as i64,
+                    limit: 1000,
+                },
+            )
+            .unwrap()
+            .rows;
+        let unit_ids: Vec<String> = changelogs
+            .into_iter()
+            .filter(|c| c.table_name == ChangelogTableName::Unit)
+            .map(|c| c.record_id)
+            .collect();
+        assert!(unit_ids.contains(&"unit_1".to_string()));
+        assert!(unit_ids.contains(&"unit_2".to_string()));
+
+        // Buffer results: units succeeded, no-translator row errored.
+        let r1 = buffer_repo
+            .find_latest_by_record_id_slow_unindexed("unit_1")
+            .unwrap()
+            .unwrap();
+        assert_eq!(r1.integration_result, Some(IntegrationResult::Success));
+        let r_nope = buffer_repo
+            .find_latest_by_record_id_slow_unindexed("nope_1")
+            .unwrap()
+            .unwrap();
+        assert_eq!(r_nope.integration_result, Some(IntegrationResult::Error));
+        assert_eq!(
+            r_nope.integration_error.as_deref(),
+            Some("Translator for record not found")
+        );
     }
 }

@@ -114,9 +114,10 @@ mod test {
         };
 
         let translated_row = translated(translate_invoice_line(
+            input.id.clone(),
             changelog_for(&input),
             Some("sender_store"),
-            &data,
+            data,
             &ctx,
         ));
 
