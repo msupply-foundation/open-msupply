@@ -106,7 +106,7 @@ CREATE TABLE sync_buffer (
 ) PARTITION BY LIST (is_integrated);
 
 CREATE TABLE sync_buffer_pending PARTITION OF sync_buffer FOR VALUES IN (FALSE);
-CREATE TABLE sync_buffer_done    PARTITION OF sync_buffer FOR VALUES IN (TRUE);
+CREATE TABLE sync_buffer_archive PARTITION OF sync_buffer FOR VALUES IN (TRUE);
 
 CREATE INDEX idx_sb_pending_query ON sync_buffer
     (table_name, operation_type, source_site_id, cursor DESC)

@@ -1,6 +1,6 @@
 use repository::{
-    PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository,
-    PropertyValueTypeV2, RepositoryError, StorageConnection,
+    PropertyKindV2, PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row,
+    PropertyV2RowRepository, PropertyValueTypeV2, RepositoryError, StorageConnection,
 };
 
 /// A code-defined mSupply "mapping property" — a property in the new system
@@ -188,9 +188,12 @@ fn mapping_properties() -> Vec<MappingProperty> {
 }
 
 /// Seed the code-defined mapping property definitions. **Central-server only** —
-/// callers must gate on `CentralServerConfig::is_central_server()`. Remotes
-/// receive these over v7; they must never seed their own (see the properties
-/// dev doc for why version-safety lives entirely in the v7 path).
+/// callers must gate on `CentralServerConfig::is_central_server()` and exclude
+/// standalone central (`!is_standalone_central()`): standalone has no legacy
+/// mSupply upstream, so the v5 import never runs and these definitions could only
+/// ever be empty. Remotes receive these over v7; they must never seed their own
+/// (see the properties dev doc for why version-safety lives entirely in the v7
+/// path).
 ///
 /// Idempotent and change-aware: a row is only upserted when missing or when its
 /// code-authoritative content differs, so steady-state runs add no changelog
@@ -208,7 +211,7 @@ pub(crate) fn seed_central_mapping_properties(
             key: def.key.to_string(),
             name: def.name.to_string(),
             value_type: def.value_type.clone(),
-            is_legacy: true,
+            kind: PropertyKindV2::Legacy,
             deleted_datetime: None,
         };
         // Code is the source of truth for the definition (key/name/value_type).
@@ -256,7 +259,7 @@ mod tests {
             .unwrap()
             .expect("missing legacy_name_custom_1");
         assert_eq!(name_1.key, "custom_1");
-        assert!(name_1.is_legacy);
+        assert_eq!(name_1.kind, PropertyKindV2::Legacy);
         assert_eq!(name_1.value_type, PropertyValueTypeV2::Text);
 
         let item_5 = property_repo
