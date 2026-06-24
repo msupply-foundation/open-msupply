@@ -67,8 +67,8 @@ async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferC
         .await
         .expect("Problem inserting central data");
 
-    site1.synchroniser.sync(None).await.unwrap();
-    site2.synchroniser.sync(None).await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
+    site2.synchroniser.sync().await.unwrap();
 
     let (site_1, site_1_processors_task) = to_site_context_and_processors_task(site1);
     let (site_2, site_2_processors_task) = to_site_context_and_processors_task(site2);
@@ -165,18 +165,18 @@ async fn new_instance_of_existing_site(
     identifier: &str,
 ) -> (SiteContext, JoinHandle<()>) {
     let sync_context = init_test_context(config, &format!("{}_site2_2", identifier)).await;
-    sync_context.synchroniser.sync(None).await.unwrap();
+    sync_context.synchroniser.sync().await.unwrap();
     to_site_context_and_processors_task(sync_context)
 }
 
 async fn sync_and_delay(site_1: &SiteContext, site_2: &SiteContext) {
     log::info!("syncing site {:?}", site_1.config);
-    site_1.synchroniser.sync(None).await.unwrap();
+    site_1.synchroniser.sync().await.unwrap();
 
     tokio::time::sleep(Duration::from_secs(1)).await;
 
     log::info!("syncing site {:?}", site_2.config);
-    site_2.synchroniser.sync(None).await.unwrap();
+    site_2.synchroniser.sync().await.unwrap();
 
     tokio::time::sleep(Duration::from_secs(1)).await;
 }

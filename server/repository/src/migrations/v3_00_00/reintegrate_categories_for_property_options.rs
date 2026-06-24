@@ -11,8 +11,8 @@ impl MigrationFragment for Migrate {
     ///
     /// `CategoryTranslation` / `NameCategoryTranslation` now (central-only) also
     /// emit a `property_option_v2` row per category record, mapping mSupply
-    /// categories onto the new `legacy_item_category*` / `legacy_name_category_*`
-    /// OPTION properties. But the original category records were integrated before
+    /// categories onto the new `item_category*` / `name_category*` OPTION
+    /// properties. But the original category records were integrated before
     /// those translators existed, and central data only re-flows from OG on
     /// initialisation or change — so on existing sites the options would otherwise
     /// stay empty until a category is edited.

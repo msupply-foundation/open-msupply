@@ -45,6 +45,9 @@ use tokio::task::spawn_blocking;
 mod backup;
 use backup::*;
 
+mod reintegrate_buffer;
+use reintegrate_buffer::reintegrate_buffer;
+
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
@@ -248,6 +251,26 @@ enum Action {
         #[clap(long, short, default_value = "false")]
         skip_prettify: bool,
     },
+    /// Re-run sync buffer integration against the sync_buffer already in the database.
+    /// Resets the buffer's integration state, then re-runs translate + integrate.
+    /// Useful for re-processing already-pulled records after fixing a translator, or for
+    /// replaying a `sync_buffer` dump loaded into a database.
+    ReintegrateBuffer {
+        /// Source site id whose records to integrate (V5/V6 buffer rows for this site).
+        #[clap(short, long, default_value = "1")]
+        source_site_id: i32,
+        /// Wrap integration in a transaction (outer batch + per-record sub-transactions).
+        /// Off by default for speed; turn on to integrate the whole batch atomically.
+        #[clap(short, long)]
+        use_transaction: bool,
+        /// Run pending database migrations before reintegrating.
+        #[clap(short, long)]
+        migrate: bool,
+        /// Skip resetting the buffer's integration state — re-run integration against the
+        /// buffer as it already is (e.g. to only retry rows that are still pending).
+        #[clap(long)]
+        skip_buffer_reset: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -369,6 +392,20 @@ async fn main() -> anyhow::Result<()> {
             .expect("Failed to run DB migrations");
 
             info!("Finished applying database migrations");
+        }
+        Action::ReintegrateBuffer {
+            source_site_id,
+            use_transaction,
+            migrate: should_migrate,
+            skip_buffer_reset,
+        } => {
+            reintegrate_buffer(
+                &settings,
+                source_site_id,
+                use_transaction,
+                should_migrate,
+                skip_buffer_reset,
+            )?;
         }
         Action::InitialiseFromCentral { users } => {
             initialise_from_central(settings, &users).await?;
