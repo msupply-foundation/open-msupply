@@ -42,7 +42,7 @@ pub fn line_to_supply_q5() -> RequisitionLineRow {
     RequisitionLineRow {
         requisition_id: requisition().id,
         id: "line_to_supply_q5".to_string(),
-        item_link_id: mock_item_a().id,
+        item_id: mock_item_a().id,
         supply_quantity: 5.0,
         ..Default::default()
     }
@@ -52,7 +52,7 @@ pub fn line_to_supply_q2() -> RequisitionLineRow {
     RequisitionLineRow {
         requisition_id: requisition().id,
         id: "line_to_supply_q2".to_string(),
-        item_link_id: mock_item_b().id,
+        item_id: mock_item_b().id,
         supply_quantity: 5.0,
         ..Default::default()
     }
@@ -62,7 +62,7 @@ pub fn linked_line_1() -> InvoiceLineRow {
     InvoiceLineRow {
         invoice_id: linked_invoice_1().id,
         id: "linked_line_1".to_string(),
-        item_link_id: line_to_supply_q2().item_link_id,
+        item_id: line_to_supply_q2().item_id,
         r#type: InvoiceLineType::UnallocatedStock,
         pack_size: 1.0,
         number_of_packs: 3.0,
@@ -75,7 +75,7 @@ pub fn line_to_supply_q1() -> RequisitionLineRow {
     RequisitionLineRow {
         requisition_id: requisition().id,
         id: "line_to_supply_q1".to_string(),
-        item_link_id: mock_item_c().id,
+        item_id: mock_item_c().id,
         supply_quantity: 10.0,
         ..Default::default()
     }
@@ -84,7 +84,7 @@ pub fn linked_line_2() -> InvoiceLineRow {
     InvoiceLineRow {
         invoice_id: linked_invoice_1().id,
         id: "linked_line_2".to_string(),
-        item_link_id: line_to_supply_q1().item_link_id,
+        item_id: line_to_supply_q1().item_id,
         r#type: InvoiceLineType::UnallocatedStock,
         pack_size: 1.0,
         number_of_packs: 3.0,
@@ -95,7 +95,7 @@ pub fn linked_line_3() -> InvoiceLineRow {
     InvoiceLineRow {
         invoice_id: linked_invoice_2().id,
         id: "linked_line_3".to_string(),
-        item_link_id: line_to_supply_q1().item_link_id,
+        item_id: line_to_supply_q1().item_id,
         r#type: InvoiceLineType::StockOut,
         pack_size: 3.0,
         number_of_packs: 2.0,
@@ -107,7 +107,7 @@ pub fn line_to_supply_q0() -> RequisitionLineRow {
     RequisitionLineRow {
         requisition_id: requisition().id,
         id: "line_to_supply_q0".to_string(),
-        item_link_id: mock_item_d().id,
+        item_id: mock_item_d().id,
         supply_quantity: 2.0,
         ..Default::default()
     }
@@ -116,7 +116,7 @@ pub fn linked_line_4() -> InvoiceLineRow {
     InvoiceLineRow {
         invoice_id: linked_invoice_1().id,
         id: "linked_line_4".to_string(),
-        item_link_id: line_to_supply_q0().item_link_id,
+        item_id: line_to_supply_q0().item_id,
         r#type: InvoiceLineType::UnallocatedStock,
         pack_size: 2.0,
         number_of_packs: 1.0,

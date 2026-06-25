@@ -17,6 +17,7 @@ import {
   multipleKeys,
   Tooltip,
   useGetColumnTypeDefaults,
+  useIntlUtils,
   useTranslation,
 } from '@openmsupply-client/common';
 
@@ -26,6 +27,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
   omsColumns: ColumnDef<T>[]
 ) => {
   const t = useTranslation();
+  const { isRtl } = useIntlUtils();
   const getColumnTypeDefaults = useGetColumnTypeDefaults();
 
   const tableDefinition = useMemo(() => {
@@ -38,13 +40,42 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         // so all the mapping is in one place, easily discoverable?
 
         // Add alignment styling
-        const alignment = col.align ?? columnDefaults.align;
+        const physicalAlignment = col.align ?? columnDefaults.align;
+
+        // Logical text alignment, for wide/block cell content that fills the
+        // column (e.g. item names). Text columns use the logical start edge so
+        // they flip naturally with direction. Numeric/date columns instead stay
+        // on the physical right in both LTR and RTL, so digits line up by place
+        // value for comparison (the units digit is always on the right) — they
+        // take whichever logical edge is physically right in each direction.
+        const textAlign =
+          physicalAlignment === 'right'
+            ? isRtl
+              ? 'start' // RTL: the start edge is on the right
+              : 'end' // LTR: the end edge is on the right
+            : physicalAlignment === 'center'
+              ? 'center'
+              : 'start';
+
+        // Flexbox alignment, for narrow content positioned via justifyContent
+        // (numbers, icons). MRT sets every cell to align="right" in RTL,
+        // applying flex-direction: row-reverse, which cancels the cell's
+        // direction: rtl and leaves the flex main axis physically LTR — so
+        // flex-end is physically right in both LTR and RTL.
+        const alignment = !isRtl
+          ? physicalAlignment
+          : physicalAlignment === 'right'
+            ? 'right' // numeric/date: stay right in RTL too (place-value line-up)
+            : physicalAlignment === 'center'
+              ? 'center'
+              : 'right'; // text: the start edge is on the right in RTL
         if (alignment) {
           col.muiTableBodyCellProps = params => {
             return mergeCellProps(
               {
-                sx:
-                  alignment === 'right'
+                sx: {
+                  textAlign,
+                  ...(alignment === 'right'
                     ? {
                         justifyContent: 'flex-end',
                       }
@@ -58,7 +89,8 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
                             params.table.getState().density === 'compact'
                               ? '0.7em'
                               : '1.2em',
-                        },
+                        }),
+                },
               },
               params
             );
@@ -120,7 +152,7 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
       });
 
     return { columns };
-  }, [omsColumns]);
+  }, [omsColumns, isRtl]);
 
   return tableDefinition;
 };

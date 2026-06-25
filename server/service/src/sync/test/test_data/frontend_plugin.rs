@@ -1,4 +1,7 @@
-use repository::{FrontendPluginFile, FrontendPluginFiles, FrontendPluginRow, FrontendPluginTypes};
+use repository::{
+    FrontendPluginFile, FrontendPluginFiles, FrontendPluginRow, FrontendPluginRowDelete,
+    FrontendPluginTypes,
+};
 use serde_json::json;
 
 // Data in this file is used in "test_frontend_plugin_translation" and "test_sync_pull_and_push"
@@ -40,6 +43,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TABLE_NAME,
         FRONTEND_PLUGIN,
         frontend_plugin(),
+    )]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
+        FRONTEND_PLUGIN.0,
+        FrontendPluginRowDelete(FRONTEND_PLUGIN.0.to_string()),
     )]
 }
 

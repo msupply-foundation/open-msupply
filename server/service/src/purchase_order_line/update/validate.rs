@@ -105,7 +105,7 @@ pub fn validate(
                     input
                         .item_id
                         .clone()
-                        .unwrap_or(line.item_link_id.clone())
+                        .unwrap_or(line.item_id.clone())
                         .to_owned(),
                 )),
         ),
@@ -113,7 +113,7 @@ pub fn validate(
     )?;
 
     let item = ItemRowRepository::new(connection)
-        .find_one_by_id(&input.item_id.clone().unwrap_or(line.item_link_id.clone()))?
+        .find_one_by_id(&input.item_id.clone().unwrap_or(line.item_id.clone()))?
         .ok_or(UpdatePurchaseOrderLineInputError::ItemDoesNotExist)?;
 
     let item_store = ItemStoreJoinRowRepository::new(connection)

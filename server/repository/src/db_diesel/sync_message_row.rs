@@ -1,5 +1,6 @@
 use super::{
-    store_row::store, ChangelogRepository, RowActionType, RowOrId, StorageConnection,
+    name_row::name, store_row::store, ChangelogRepository, RowActionType, RowOrId,
+    StorageConnection,
 };
 use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
 use ts_rs::TS;
@@ -15,13 +16,16 @@ use serde::{Deserialize, Serialize};
 pub enum SyncMessageRowStatus {
     #[default]
     New,
+    InProgress,
     Processed,
+    Error,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
 pub enum SyncMessageRowType {
     #[default]
     RequestFieldChange,
+    SupportUpload,
     Merge,
     #[serde(untagged)]
     Other(String),
@@ -55,6 +59,7 @@ table! {
 
 joinable!(sync_message -> store (to_store_id));
 allow_tables_to_appear_in_same_query!(sync_message, store);
+allow_tables_to_appear_in_same_query!(sync_message, name);
 
 #[derive(
     Clone, Queryable, Insertable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize, TS,

@@ -63,6 +63,7 @@ fragment SupplierReturn on InvoiceNode {
     store {
       id
       code
+      isDisabled
     }
   }
 
@@ -139,6 +140,7 @@ fragment CustomerReturn on InvoiceNode {
     store {
       id
       code
+      isDisabled
     }
   }
 }
@@ -347,6 +349,7 @@ query supplierReturnById($invoiceId: String!, $storeId: String!) {
         nodes {
           ...SupplierReturnLine
         }
+        totalCount
       }
     }
   }

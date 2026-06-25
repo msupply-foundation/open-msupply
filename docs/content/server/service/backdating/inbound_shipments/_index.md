@@ -24,8 +24,8 @@ Allow users to backdate the **received date** on an inbound shipment that has al
 - Location movements belonging to stock lines from this invoice have their `enter_datetime` updated to the new received date; if `exit_datetime` was set, it is also updated.
 - Only editable when the shipment is in `Received` or `Verified` status.
 - Gated by the global `Backdating` preference (`enabled` + `max_days`).
-- The frontend sends `DateTime<Utc>` (full ISO datetime with timezone via `.toISOString()`) so there is no naive-date timezone ambiguity.
-- On backdating, an `InvoiceDateBackdated` activity log entry is written with the old and new received dates.
+- The frontend sends a full RFC3339 datetime **carrying the client's UTC offset** (e.g. `2024-12-10T00:00:00+13:00`), parsed server-side as `DateTime<FixedOffset>`. Storage and validation use `.naive_utc()`; the offset is retained only so the audit log can record the calendar date the user actually picked.
+- On backdating, an `InvoiceDateBackdated` activity log entry is written with the old and new received dates, **formatted in the client's offset** (not raw UTC) so they match the date the user selected — otherwise a user east of UTC picking local midnight would see the previous day in the log (issue [#11673](https://github.com/msupply-foundation/open-msupply/issues/11673)).
 - The user is shown a confirmation warning that the change is one-way before it is applied.
 - A stocktake warning is shown if a stocktake exists after the selected date.
 
@@ -46,7 +46,7 @@ From [inbound_shipment/update/generate.rs](https://github.com/msupply-foundation
 - All stock lines linked to invoice lines of this invoice (StockIn lines) are queried, and every `location_movement` for those stock lines has its `enter_datetime` (and `exit_datetime`, when set) updated to the new received date. These are returned as `backdate_location_movements` and upserted in the transaction.
 - `shipped_datetime`, `delivered_datetime`, and `created_datetime` are **not** modified.
 
-The `InvoiceDateBackdated` activity log entry is written at the top-level update in [inbound_shipment/update/mod.rs](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/invoice/inbound_shipment/update/mod.rs), capturing the pre-update `received_datetime` and the new value (both formatted as `%Y-%m-%d`).
+The `InvoiceDateBackdated` activity log entry is written at the top-level update in [inbound_shipment/update/mod.rs](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/invoice/inbound_shipment/update/mod.rs), capturing the pre-update `received_datetime` and the new value. Both are formatted as `%Y-%m-%d` after converting the stored naive-UTC datetime into the client's offset, so the logged dates match what the user picked.
 
 ## Key files
 
@@ -54,19 +54,19 @@ The `InvoiceDateBackdated` activity log entry is written at the top-level update
 
 | File | Change |
 |------|--------|
-| `server/service/src/invoice/inbound_shipment/update/mod.rs` | `received_datetime: Option<DateTime<Utc>>` field; new error variants; upsert of `backdate_location_movements`; `InvoiceDateBackdated` activity log entry |
+| `server/service/src/invoice/inbound_shipment/update/mod.rs` | `received_datetime: Option<DateTime<FixedOffset>>` field; new error variants; upsert of `backdate_location_movements`; `InvoiceDateBackdated` activity log entry (dates formatted in the client's offset) |
 | `server/service/src/invoice/inbound_shipment/update/validate.rs` | Validation: preference enabled, received/verified status, strictly earlier (UTC datetime comparison), within `max_days` |
 | `server/service/src/invoice/inbound_shipment/update/generate.rs` | Updates `received_datetime` via `.naive_utc()`; collects location movement rows to update `enter_datetime` / `exit_datetime` |
 | `server/repository/src/db_diesel/activity_log_row.rs` | `InvoiceDateBackdated` activity log type |
 | `server/graphql/types/src/types/activity_log.rs` | `InvoiceDateBackdated` GraphQL enum variant |
-| `server/graphql/invoice/src/mutations/inbound_shipment/update.rs` | `receivedDatetime: DateTime<Utc>` on the GraphQL input; error mapping |
+| `server/graphql/invoice/src/mutations/inbound_shipment/update.rs` | `receivedDatetime: DateTime<FixedOffset>` on the GraphQL input (preserves the client's UTC offset); error mapping |
 | `server/repository/src/migrations/v2_18_00/add_invoice_date_backdated_activity_log_type.rs` | Postgres migration for the `InvoiceDateBackdated` enum value |
 
 ### Frontend (TypeScript)
 
 | File | Change |
 |------|--------|
-| `client/packages/invoices/src/InboundShipment/DetailView/ReceivedDateInput.tsx` | Received date picker in the toolbar; sends `DateTime` via `.toISOString()`; `maxDate` is the current received date (server-side check enforces strictly earlier) |
+| `client/packages/invoices/src/InboundShipment/DetailView/ReceivedDateInput.tsx` | Received date picker in the toolbar; sends `DateTime` via `Formatter.localIsoString` (RFC3339 with the local offset, so the audit log shows the picked date); `maxDate` is the current received date (server-side check enforces strictly earlier) |
 | `client/packages/invoices/src/InboundShipment/api/api.ts` | `receivedDatetime` in `toUpdate` |
 | `client/packages/invoices/src/InboundShipment/api/operations.graphql` | `stocktakeCountAfterDate` query for the stocktake warning |
 | `client/packages/common/src/authentication/api/operations.graphql` | `backdating` preference query (combined struct) |

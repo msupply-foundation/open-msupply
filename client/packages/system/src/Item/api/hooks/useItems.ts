@@ -1,6 +1,7 @@
 import {
   FilterBy,
   ItemFilterInput,
+  ItemNodeType,
   ItemSortFieldInput,
   SortBy,
   useQuery,
@@ -47,6 +48,7 @@ export const useVisibleOrOnHandItems = (queryParams: ItemParams) => {
       ...restOfFilterBy,
       ...getVisibleOrOnHandFilter(stockStatusValue as string | undefined),
       isActive: true,
+      type: { equalTo: ItemNodeType.Stock },
       minMonthsOfStock: filterBy?.['minMonthsOfStock'] as number | undefined,
       maxMonthsOfStock: filterBy?.['maxMonthsOfStock'] as number | undefined,
     };

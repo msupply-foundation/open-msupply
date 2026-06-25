@@ -8,6 +8,7 @@ import {
   useTranslation,
   Alert,
   InvoiceNodeStatus,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import { CustomerReturnFragment, useReturns } from '../api';
 import { CustomerSearchInput } from '@openmsupply-client/system';
@@ -71,6 +72,7 @@ export const Toolbar: FC = () => {
                 />
               }
             />
+            <DisabledStoreNotice otherParty={otherParty} />
             <InfoAlert customerReturn={draft} />
           </Box>
         </Grid>

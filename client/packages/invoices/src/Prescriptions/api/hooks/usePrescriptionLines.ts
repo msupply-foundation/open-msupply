@@ -12,8 +12,8 @@ import { usePrescription } from './usePrescription';
 import { DraftPrescriptionLine } from '@openmsupply-client/invoices/src/types';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import {
+  PrescriptionFragment,
   PrescriptionLineFragment,
-  PrescriptionRowFragment,
 } from '../operations.generated';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { createInputObject, mapStatus } from './utils';
@@ -43,7 +43,7 @@ export const usePrescriptionLines = (id?: string) => {
     patch,
   }: {
     draftPrescriptionLines: DraftPrescriptionLine[];
-    patch?: RecordPatch<PrescriptionRowFragment>;
+    patch?: RecordPatch<PrescriptionFragment>;
   }) => {
     return await updateMutation({
       draftPrescriptionLines,
@@ -77,7 +77,7 @@ const useSaveLines = (id: string, invoiceId: string) => {
     patch,
   }: {
     draftPrescriptionLines: DraftPrescriptionLine[];
-    patch?: RecordPatch<PrescriptionRowFragment>;
+    patch?: RecordPatch<PrescriptionFragment>;
   }) => {
     if (patch && id !== '') patch.id = id;
     const input = {

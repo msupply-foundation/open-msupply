@@ -31,7 +31,7 @@ fn gr_line_non_finalised_pull_record() -> TestSyncIncomingRecord {
         InvoiceLineRow {
             id: "gr_line_test_1".to_string(),
             invoice_id: "gr_non_finalised_test".to_string(),
-            item_link_id: "item_a".to_string(),
+            item_id: "item_a".to_string(),
             item_name: "Item A".to_string(),
             item_code: "item_a_code".to_string(),
             pack_size: 10.0,
@@ -110,7 +110,7 @@ fn gr_line_finalised_pull_record() -> TestSyncIncomingRecord {
     let existing_line = InvoiceLineRow {
         id: "gr_existing_line".to_string(),
         invoice_id: "gr_existing_si".to_string(),
-        item_link_id: "item_a".to_string(),
+        item_id: "item_a".to_string(),
         item_name: "Item A".to_string(),
         item_code: "item_a_code".to_string(),
         pack_size: 10.0,

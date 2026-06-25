@@ -140,6 +140,7 @@ diesel_string_enum! {
         ShippingMethod,
         Site,
         StockLine,
+        StockRelocation,
         Stocktake,
         StocktakeLine,
         Store,

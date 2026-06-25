@@ -26,6 +26,8 @@ pub struct OutboundShipmentLineInput {
     pub program_id: Option<String>,
     pub campaign_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub received_number_of_packs: Option<f64>,
+    pub reason_option_id: Option<String>,
 }
 
 pub fn save_outbound_shipment_item_lines(
@@ -83,6 +85,8 @@ impl SaveOutboundShipmentLinesInput {
                     campaign_id: line.campaign_id,
                     program_id: line.program_id,
                     vvm_status_id: line.vvm_status_id,
+                    received_number_of_packs: line.received_number_of_packs,
+                    reason_option_id: line.reason_option_id,
                 })
                 .collect(),
             prescribed_quantity: None, // Only used for prescription lines

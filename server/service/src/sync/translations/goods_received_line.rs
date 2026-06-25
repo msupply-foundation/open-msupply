@@ -129,7 +129,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         let line = InvoiceLineRow {
             id: data.id,
             invoice_id: data.goods_received_ID,
-            item_link_id: data.item_ID,
+            item_id: data.item_ID,
             item_name: data.item_name,
             item_code,
             stock_line_id: None,
@@ -161,6 +161,8 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             purchase_order_line_id: data.order_line_ID,
             donor_id: None,
             manufacturer_id: None,
+            received_number_of_packs: None,
+            linked_invoice_line_id: None,
             legacy_goods_received_line_id: None,
         };
 

@@ -3,7 +3,9 @@ use super::{location_row::location, LocationRow, StorageConnection};
 use crate::{
     asset_internal_location_row::asset_internal_location,
     diesel_extensions::OrderByExtensions,
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{
+        apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
+    },
     StringFilter,
 };
 
@@ -20,6 +22,7 @@ pub struct LocationFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub code: Option<StringFilter>,
+    pub code_or_name: Option<StringFilter>,
     pub on_hold: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
     pub assigned_to_asset: Option<bool>,
@@ -94,6 +97,12 @@ impl<'a> LocationRepository<'a> {
         let mut query = location::table.into_boxed();
 
         if let Some(filter) = filter {
+            // or filter needs to be applied before and filters
+            if filter.code_or_name.is_some() {
+                apply_string_filter!(query, filter.code_or_name.clone(), location::code);
+                apply_string_or_filter!(query, filter.code_or_name, location::name);
+            }
+
             apply_equal_filter!(query, filter.id, location::id);
             apply_string_filter!(query, filter.name, location::name);
             apply_string_filter!(query, filter.code, location::code);
@@ -146,6 +155,11 @@ impl LocationFilter {
 
     pub fn code(mut self, filter: StringFilter) -> Self {
         self.code = Some(filter);
+        self
+    }
+
+    pub fn code_or_name(mut self, filter: StringFilter) -> Self {
+        self.code_or_name = Some(filter);
         self
     }
 
