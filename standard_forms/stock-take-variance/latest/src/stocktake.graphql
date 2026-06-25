@@ -73,4 +73,7 @@ query StocktakeQuery(
       }
     }
   }
+  preferences(storeId: $storeId) {
+    blindStocktake
+  }
 }
