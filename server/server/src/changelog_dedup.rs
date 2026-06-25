@@ -16,19 +16,19 @@ use tokio::task::JoinHandle;
 /// - **Postgres-only**: `run_dedup` is a no-op under SQLite (remotes have small,
 ///   unpartitioned changelogs and don't need it).
 /// - **Time-window-gated**: if a `time_window` is configured, a run only starts
-///   while the local clock is within it, and stops between batches once `to` passes.
+///   while the local clock is within it.
 pub fn spawn(
     service_provider: Arc<ServiceProvider>,
     settings: ChangelogDedupSettings,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
-        if !CentralServerConfig::is_central_server() {
-            return;
-        }
-
         let mut interval = tokio::time::interval(settings.interval.as_duration());
         loop {
             interval.tick().await;
+
+            if !CentralServerConfig::is_central_server() {
+                continue;
+            }
 
             // Only start a run inside the configured window (if any).
             if let Some(window) = &settings.time_window {
