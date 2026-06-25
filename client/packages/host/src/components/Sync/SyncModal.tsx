@@ -51,6 +51,7 @@ const useHostSync = (enabled: boolean) => {
   const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
+  const { refreshUserCookie } = useAuthContext();
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
@@ -76,11 +77,17 @@ const useHostSync = (enabled: boolean) => {
       keepAwake();
     } else {
       allowSleep();
-      queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
 
-      // Reload custom translations, in case we received new ones via sync
       // Shouldn't run on first mount, when translations might still be loading - see issue #9042
-      !isInitialMount && invalidateCustomTranslations();
+      if (!isInitialMount) {
+        // Mark all queries stale but don't refetch active ones immediately.
+        // This avoids surrounding UI components to jump around
+        queryClient.invalidateQueries({ refetchType: 'none' });
+        invalidateCustomTranslations();
+        // Pick up permission/user-detail changes that the just-completed sync
+        // brought in, so the UI reflects them without forcing a re-login.
+        refreshUserCookie();
+      }
     }
   }, [syncStatus?.isSyncing]);
 
@@ -230,7 +237,16 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
           </Box>
         )}
 
-        {!error && latestSuccessfulSyncDate && (
+        {!!numberOfRecordsInPushQueue && numberOfRecordsInPushQueue >= 100 && (
+          <Alert
+            severity="warning"
+            sx={{ fontSize: '14px', marginTop: error ? '5' : '20' }}
+          >
+            {t('warning.high-number-records-to-sync')}
+          </Alert>
+        )}
+
+        {!error && !syncStatus?.isSyncing && latestSuccessfulSyncDate && (
           <Alert
             sx={{
               backgroundColor: theme.palette.background.drawer,
@@ -239,7 +255,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
               marginTop:
                 (!!numberOfRecordsInPushQueue &&
                   numberOfRecordsInPushQueue >= 100) ||
-                error
+                  error
                   ? '5'
                   : '20',
             }}

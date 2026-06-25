@@ -14,6 +14,7 @@ import {
   usePreferences,
   NameNodeType,
   SearchBar,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import {
   CustomerSearchInput,
@@ -71,7 +72,11 @@ export const Toolbar = () => {
         flexDirection: 'column',
       }}
     >
-      <Grid container flexWrap="nowrap">
+      <Grid
+        container
+        flexWrap="nowrap"
+        sx={{ flexDirection: { xs: 'column', md: 'row' } }}
+      >
         <Grid display="flex" flex={1} flexDirection="column" gap={1}>
           {otherParty && (
             <InputWithLabelRow
@@ -79,6 +84,7 @@ export const Toolbar = () => {
               Input={
                 <InternalSupplierSearchInput
                   disabled={isDisabled || isProgram}
+                  width={250}
                   value={otherParty ?? null}
                   onChange={otherParty =>
                     update({ otherParty: otherParty ?? undefined })
@@ -88,7 +94,7 @@ export const Toolbar = () => {
             />
           )}
           <InputWithLabelRow
-            label={t('label.supplier-ref')}
+            label={t('label.supplier-reference')}
             Input={
               <Tooltip title={theirReference} placement="bottom-start">
                 <Box>
@@ -124,6 +130,7 @@ export const Toolbar = () => {
               }
             />
           )}
+          <DisabledStoreNotice otherParty={otherParty} />
           {isProgram && (
             <Alert severity="info" sx={{ maxWidth: 1000 }}>
               {t('info.cannot-edit-program-requisition')}
@@ -136,12 +143,14 @@ export const Toolbar = () => {
           flex={1}
           flexDirection="column"
           gap={1}
-          justifyContent="flex-end"
-          alignItems="flex-end"
+          sx={{
+            justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            alignItems: { xs: 'flex-start', md: 'flex-end' },
+          }}
         >
           <InputWithLabelRow
             label={t('label.min-months-of-stock')}
-            labelWidth={'350px'}
+            labelProps={{ sx: { width: { xs: '120px', md: '250px' } } }}
             Input={
               <Autocomplete
                 disabled={isDisabled || isProgram}
@@ -185,7 +194,7 @@ export const Toolbar = () => {
           />
           <InputWithLabelRow
             label={t('label.max-months-of-stock')}
-            labelWidth={'350px'}
+            labelProps={{ sx: { width: { xs: '120px', md: '250px' } } }}
             Input={
               <Autocomplete
                 disabled={isDisabled || isProgram}

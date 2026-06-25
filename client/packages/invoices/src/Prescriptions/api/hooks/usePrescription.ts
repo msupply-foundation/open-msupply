@@ -9,7 +9,7 @@ import {
   InsertPrescriptionInput,
   InvoiceNode,
 } from '@openmsupply-client/common';
-import { PrescriptionRowFragment } from '../operations.generated';
+import { PrescriptionFragment } from '../operations.generated';
 import { usePrescriptionGraphQL } from '../usePrescriptionGraphQL';
 import { PRESCRIPTION, PRESCRIPTION_LINE } from './keys';
 import { isPrescriptionDisabled } from '@openmsupply-client/invoices/src/utils';
@@ -41,7 +41,7 @@ export const usePrescription = (id?: string) => {
 
   // UPDATE
   const { patch, updatePatch, resetDraft, isDirty } =
-    usePatchState<PrescriptionRowFragment>(data ?? {});
+    usePatchState<PrescriptionFragment>(data ?? {});
 
   const {
     mutateAsync: updateMutation,
@@ -49,7 +49,7 @@ export const usePrescription = (id?: string) => {
     error: updateError,
   } = useUpdate(data?.id ?? '');
 
-  const update = async (newData?: Partial<PrescriptionRowFragment>) => {
+  const update = async (newData?: Partial<PrescriptionFragment>) => {
     if (!data?.id) return;
     // Data can be passed directly to the update method, or if omitted will use
     // the current patch data
@@ -100,7 +100,7 @@ export const usePrescription = (id?: string) => {
 const useGetById = (invoiceId: string | undefined) => {
   const { prescriptionApi, storeId } = usePrescriptionGraphQL();
 
-  const queryFn = async (): Promise<PrescriptionRowFragment | void> => {
+  const queryFn = async (): Promise<PrescriptionFragment | void> => {
     const result = await prescriptionApi.prescriptionById({
       invoiceId: invoiceId ?? '',
       storeId,
@@ -128,7 +128,7 @@ const useGetById = (invoiceId: string | undefined) => {
 const useUpdate = (id: string) => {
   const { prescriptionApi, storeId, queryClient } = usePrescriptionGraphQL();
 
-  const mutationFn = async (patch: RecordPatch<PrescriptionRowFragment>) => {
+  const mutationFn = async (patch: RecordPatch<PrescriptionFragment>) => {
     const input: UpdatePrescriptionInput = {
       ...patch,
       id,

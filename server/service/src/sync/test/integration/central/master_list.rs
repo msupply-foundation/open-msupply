@@ -74,14 +74,14 @@ impl SyncRecordTester for MasterListTester {
         let item_id = uuid();
         let master_list_line_row = MasterListLineRow {
             id: uuid(),
-            item_link_id: item_id.clone(),
+            item_id: item_id.clone(),
             master_list_id: master_list_row1.id.clone(),
             price_per_unit: Some(2.5),
         };
         let master_list_line_json = json!({
             "ID": master_list_line_row.id,
             "item_master_ID": master_list_line_row.master_list_id,
-            "item_ID":  master_list_line_row.item_link_id,
+            "item_ID":  master_list_line_row.item_id,
             "price": 2.5,
         });
 

@@ -1,47 +1,66 @@
 use diesel::prelude::*;
 
+use crate::db_diesel::item_row::item;
+use crate::diesel_macros::define_linked_tables;
 use crate::{
-    item_link, ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType,
-    SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 
-table! {
-  item_store_join (id) {
-    id -> Text,
-    item_link_id  -> Text,
-    store_id -> Text,
-    default_sell_price_per_pack -> Double,
-    ignore_for_orders -> Bool,
-    margin -> Double,
-    default_location_id -> Nullable<Text>,
-  }
-
+define_linked_tables! {
+    view: item_store_join = "item_store_join_view",
+    core: item_store_join_with_links = "item_store_join",
+    struct: ItemStoreJoinRow,
+    repo: ItemStoreJoinRowRepository,
+    shared: {
+        store_id -> Text,
+        default_sell_price_per_pack -> Double,
+        ignore_for_orders -> Bool,
+        margin -> Double,
+        default_location_id -> Nullable<Text>,
+    },
+    links: {
+        item_link_id -> item_id,
+    },
+    optional_links: {
+    }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+joinable!(item_store_join -> item (item_id));
+allow_tables_to_appear_in_same_query!(item_store_join, item);
+
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = item_store_join)]
 pub struct ItemStoreJoinRow {
     pub id: String,
-    pub item_link_id: String,
     pub store_id: String,
     pub default_sell_price_per_pack: f64,
     pub ignore_for_orders: bool,
     pub margin: f64,
     pub default_location_id: Option<String>,
+    // Resolved from item_link - must be last to match view column order
+    pub item_id: String,
 }
 
 pub struct ItemStoreJoinRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-joinable!(item_store_join -> item_link (item_link_id));
-allow_tables_to_appear_in_same_query!(item_store_join, item_link);
-
 pub trait ItemStoreJoinRowRepositoryTrait<'a> {
     fn find_one_by_id(&self, row_id: &str) -> Result<Option<ItemStoreJoinRow>, RepositoryError>;
     fn find_one_by_item_and_store_id(
         &self,
-        item_link_id: &str,
+        item_id: &str,
         store_id: &str,
     ) -> Result<Option<ItemStoreJoinRow>, RepositoryError>;
     fn upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError>;
@@ -49,8 +68,8 @@ pub trait ItemStoreJoinRowRepositoryTrait<'a> {
 
 impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> {
     fn find_one_by_id(&self, row_id: &str) -> Result<Option<ItemStoreJoinRow>, RepositoryError> {
-        let result = item_store_join::dsl::item_store_join
-            .filter(item_store_join::dsl::id.eq(row_id))
+        let result = item_store_join::table
+            .filter(item_store_join::id.eq(row_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -58,19 +77,19 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> 
 
     fn find_one_by_item_and_store_id(
         &self,
-        item_link_id: &str,
+        item_id_param: &str,
         store_id: &str,
     ) -> Result<Option<ItemStoreJoinRow>, RepositoryError> {
-        let result = item_store_join::dsl::item_store_join
-            .filter(item_store_join::dsl::item_link_id.eq(item_link_id))
-            .filter(item_store_join::dsl::store_id.eq(store_id))
+        let result = item_store_join::table
+            .filter(item_store_join::item_id.eq(item_id_param))
+            .filter(item_store_join::store_id.eq(store_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     fn upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
+        self._upsert(row)?;
         let changelog = row.generate_changelog(
             self.connection,
             RowActionType::Upsert,
@@ -85,16 +104,6 @@ impl<'a> ItemStoreJoinRowRepository<'a> {
         ItemStoreJoinRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(item_store_join::dsl::item_store_join)
-            .values(row)
-            .on_conflict(item_store_join::dsl::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
     pub fn find_many_by_id(
         &self,
         ids: &[String],
@@ -102,6 +111,18 @@ impl<'a> ItemStoreJoinRowRepository<'a> {
         Ok(item_store_join::dsl::item_store_join
             .filter(item_store_join::dsl::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
+    }
+
+    pub fn find_many_by_item_and_store_ids(
+        &self,
+        item_ids: &[String],
+        store_ids: &[String],
+    ) -> Result<Vec<ItemStoreJoinRow>, RepositoryError> {
+        let result = item_store_join::table
+            .filter(item_store_join::item_id.eq_any(item_ids))
+            .filter(item_store_join::store_id.eq_any(store_ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
     }
 }
 
@@ -111,7 +132,7 @@ impl Upsert for ItemStoreJoinRow {
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
-        ItemStoreJoinRowRepository::new(con)._upsert_one(self)?;
+        ItemStoreJoinRowRepository::new(con)._upsert(self)?;
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
@@ -154,7 +175,7 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for MockItemStoreJoinRowRepository 
 
     fn find_one_by_item_and_store_id(
         &self,
-        _item_link_id: &str,
+        _item_id: &str,
         _store_id: &str,
     ) -> Result<Option<ItemStoreJoinRow>, RepositoryError> {
         Ok(self.find_one_by_item_and_store_id_result.clone())

@@ -23,6 +23,7 @@ mod load_plugin;
 mod merge_sync_message;
 mod plugin_processor;
 mod requisition_auto_finalise;
+mod support_upload_files;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;

@@ -22,19 +22,19 @@ pub fn mock_ledger_data() -> (
     };
     let stock_line_a = StockLineRow {
         id: "ledger_stock_line_a".to_string(),
-        item_link_id: ledger_test_item_a.id.clone(),
+        item_id: ledger_test_item_a.id.clone(),
         store_id: "store_a".to_string(),
         ..Default::default()
     };
     let stock_line_b = StockLineRow {
         id: "ledger_stock_line_b".to_string(),
-        item_link_id: ledger_test_item_a.id.clone(),
+        item_id: ledger_test_item_a.id.clone(),
         store_id: "store_a".to_string(),
         ..Default::default()
     };
     let stock_line_c_item_b = StockLineRow {
         id: "ledger_stock_line_c_item_b".to_string(),
-        item_link_id: ledger_test_item_b.id.clone(),
+        item_id: ledger_test_item_b.id.clone(),
         store_id: "store_a".to_string(),
         ..Default::default()
     };
@@ -46,7 +46,7 @@ pub fn mock_ledger_data() -> (
         ..Default::default()
     };
     let default_invoice_line = InvoiceLineRow {
-        item_link_id: "ledger_test_item".to_string(),
+        item_id: "ledger_test_item".to_string(),
         stock_line_id: Some(stock_line_a.id.clone()),
         number_of_packs: 10.0,
         pack_size: 5.0,
@@ -170,7 +170,7 @@ pub fn mock_ledger_data() -> (
     let verified_inventory_adjustment_b_line = InvoiceLineRow {
         id: "verified_inventory_adjustment_b_line".to_string(),
         invoice_id: "verified_inventory_adjustment_b".to_string(),
-        item_link_id: ledger_test_item_b.id.clone(),
+        item_id: ledger_test_item_b.id.clone(),
         stock_line_id: Some(stock_line_c_item_b.id.clone()),
         ..default_invoice_line.clone()
     };

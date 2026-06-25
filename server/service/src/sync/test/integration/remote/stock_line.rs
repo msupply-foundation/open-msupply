@@ -27,7 +27,7 @@ impl SyncRecordTester for StockLineRecordTester {
 
         let stock_line_row = StockLineRow {
             id: uuid(),
-            item_link_id: uuid(),
+            item_id: uuid(),
             store_id: store_id.to_string(),
             location_id: Some(location_row.id.clone()),
             batch: Some("some remote sync test batch".to_string()),
@@ -48,7 +48,7 @@ impl SyncRecordTester for StockLineRecordTester {
 
         result.push(TestStepData {
             central_upsert: json!({"item": [{
-                "ID": stock_line_row.item_link_id,
+                "ID": stock_line_row.item_id,
                 "type_of": "general"
             }]}),
             integration_records: vec![
@@ -59,7 +59,7 @@ impl SyncRecordTester for StockLineRecordTester {
         });
         // STEP 2 - mutate
         let mut stock_line_row = stock_line_row.clone();
-        stock_line_row.item_link_id = uuid();
+        stock_line_row.item_id = uuid();
         stock_line_row.location_id = None;
         stock_line_row.batch = Some("some remote sync test batch 2".to_string());
         stock_line_row.pack_size = 10.0;
@@ -74,7 +74,7 @@ impl SyncRecordTester for StockLineRecordTester {
 
         result.push(TestStepData {
             central_upsert: json!({"item": [{
-                "ID": stock_line_row.item_link_id,
+                "ID": stock_line_row.item_id,
                 "type_of": "general"
             }]}),
             integration_records: vec![IntegrationOperation::upsert(stock_line_row.clone())],

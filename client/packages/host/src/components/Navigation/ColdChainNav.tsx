@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
+import { usePluginNavLinksForCategory } from './usePluginNavLinks';
 
 export interface ColdChainNavProps {
   store?: UserStoreNodeFragment;
@@ -24,6 +25,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
   const t = useTranslation();
   const visible = store?.preferences.vaccineModule ?? false;
   const isExtraSmallScreen = useIsExtraSmallScreen();
+  const pluginLinks = usePluginNavLinksForCategory(AppRoute.Coldchain);
 
   return (
     <AppNavSection
@@ -64,6 +66,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
               />
             </>
           )}
+          {pluginLinks}
         </List>
       </Collapse>
     </AppNavSection>

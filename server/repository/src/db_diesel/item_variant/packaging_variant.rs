@@ -157,7 +157,7 @@ mod tests {
             .upsert_one(&ItemVariantRow {
                 id: item_variant_id.clone(),
                 name: name.clone(),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 location_type_id: None,
                 deleted_datetime: None,
                 vvm_type: None,

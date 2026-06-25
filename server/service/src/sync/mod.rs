@@ -218,3 +218,11 @@ pub fn test_util_set_is_central_server(is_central: bool) {
         }
     }
 }
+
+// TEST ONLY — override the central server URL the FileSyncDriver reads on
+// each iteration. Used by integration tests that need to route file uploads
+// through toxiproxy after the initial sync has populated the config with the
+// real central URL.
+pub fn test_util_set_central_server_url(url: String) {
+    *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::CentralServerUrl(url);
+}

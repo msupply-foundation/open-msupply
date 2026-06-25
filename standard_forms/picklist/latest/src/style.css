@@ -1,6 +1,5 @@
 @media print {
   @page {
-    size: A4 landscape;
     margin: 0;
     margin-right: 3mm;
     margin-bottom: 7mm;

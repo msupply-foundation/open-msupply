@@ -41,7 +41,7 @@ export const StockListView = () => {
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },
       {
-        key: 'location.code',
+        key: 'location.codeOrName',
       },
       {
         key: 'name',
@@ -54,7 +54,8 @@ export const StockListView = () => {
         condition: 'between',
       },
       {
-        key: 'masterList.name',
+        key: 'masterList.id',
+        condition: 'equalTo',
       },
     ],
   });
@@ -63,8 +64,7 @@ export const StockListView = () => {
   // there are no grouped-only filters yet). Clear them on toggle so stale URL
   // params don't silently affect the ungrouped query when the user switches back.
   const stockLineFilterKeys = [
-    'location.code',
-    'masterList.name',
+    'location.codeOrName',
     'expiryDate',
     'vvmStatusId',
   ];
@@ -173,12 +173,21 @@ export const StockListView = () => {
       {
         id: 'location.code',
         accessorFn: row => row.location?.code || '',
-        header: t('label.location'),
+        header: t('label.location-code'),
         Cell: TextWithTooltipCell,
         size: 100,
         defaultHideOnMobile: true,
         enableSorting: !isGrouped,
         enableColumnFilter: true,
+      },
+      {
+        id: 'location.name',
+        accessorFn: row => row.location?.name || '',
+        header: t('label.location-name'),
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+        enableSorting: false,
       },
       {
         id: 'itemUnit',
@@ -239,6 +248,14 @@ export const StockListView = () => {
         enableSorting: !isGrouped,
       },
       {
+        header: t('label.pack-sell-price'),
+        accessorKey: 'sellPricePerPack',
+        columnType: ColumnType.Currency,
+        size: 125,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+      },
+      {
         id: 'totalCost',
         header: t('label.total'),
         description: t('description.total-cost'),
@@ -289,7 +306,7 @@ export const StockListView = () => {
       <NothingHere
         body={t('error.no-stock')}
         onCreate={onOpen}
-        buttonText={t('button.add-new-stock')}
+        buttonText={t('button.new-stock')}
       />
     ),
   });

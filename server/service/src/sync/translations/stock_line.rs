@@ -203,7 +203,7 @@ impl SyncTranslation for StockLineTranslation {
         let result = StockLineRow {
             id: ID,
             store_id: store_ID,
-            item_link_id: item_ID,
+            item_id: item_ID,
             location_id,
             batch,
             pack_size,
@@ -254,7 +254,7 @@ impl SyncTranslation for StockLineTranslation {
             stock_line_row:
                 StockLineRow {
                     id,
-                    item_link_id: _,
+                    item_id: _,
                     store_id,
                     location_id,
                     batch,
@@ -444,7 +444,7 @@ mod tests {
         let expected = PullTranslateResult::upsert(StockLineRow {
             id: "ITEM_LINE_FK_INVALID".to_string(),
             store_id: "store_a".to_string(),
-            item_link_id: "item_a".to_string(),
+            item_id: "item_a".to_string(),
             location_id: None,
             batch: None,
             pack_size: 1.0,

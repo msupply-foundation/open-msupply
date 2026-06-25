@@ -1,0 +1,85 @@
+fragment InstalledPluginNode on InstalledPluginNode {
+  __typename
+  id
+  code
+  version
+  kind
+  types
+}
+
+query installedPlugins {
+  centralServer {
+    plugin {
+      installedPlugins {
+        __typename
+        totalCount
+        nodes {
+          ...InstalledPluginNode
+        }
+      }
+    }
+  }
+}
+
+mutation installUploadedPlugin($fileId: String!) {
+  centralServer {
+    plugins {
+      installUploadedPlugin(fileId: $fileId) {
+        pluginInfo
+      }
+    }
+  }
+}
+
+mutation uninstallPlugin($id: String!) {
+  centralServer {
+    plugins {
+      uninstallPlugin(id: $id) {
+        id
+        code
+        kind
+      }
+    }
+  }
+}
+
+query pluginConfiguration($pluginCode: String!, $storeId: String!) {
+  pluginData(
+    pluginCode: $pluginCode
+    storeId: $storeId
+    filter: { dataIdentifier: { equalTo: "configuration" } }
+  ) {
+    __typename
+    ... on PluginDataConnector {
+      nodes {
+        id
+        data
+        storeId
+      }
+    }
+  }
+}
+
+mutation insertPluginConfiguration(
+  $storeId: String!
+  $input: InsertPluginDataInput!
+) {
+  insertPluginData(input: $input, storeId: $storeId) {
+    ... on PluginDataNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updatePluginConfiguration(
+  $storeId: String!
+  $input: UpdatePluginDataInput!
+) {
+  updatePluginData(input: $input, storeId: $storeId) {
+    ... on PluginDataNode {
+      __typename
+      id
+    }
+  }
+}

@@ -5,3 +5,5 @@ export * from './ReplenishmentNav';
 export * from './DispensaryNav';
 export * from './ManageNav';
 export * from './ProgramsNav';
+export * from './PluginCategoryNav';
+export * from './usePluginNavLinks';

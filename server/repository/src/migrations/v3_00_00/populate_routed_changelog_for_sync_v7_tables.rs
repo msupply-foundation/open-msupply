@@ -17,6 +17,7 @@ impl MigrationFragment for Migrate {
         const ROUTED_TABLES: &[(&str, &str)] = &[
             ("user_permission", "t.store_id"),
             ("item_store_join", "t.store_id"),
+            ("user_store_join", "t.store_id"),
         ];
 
         let mut sql = String::new();
@@ -96,6 +97,8 @@ mod tests {
                 INSERT INTO context (id, name) VALUES ('context_x', 'context_x');
                 INSERT INTO user_permission (id, user_id, store_id, permission, context_id) VALUES
                     ('perm_x', 'user_x', 'store_x', 'DOCUMENT_QUERY', 'context_x');
+                INSERT INTO user_store_join (id, user_id, store_id, is_default) VALUES
+                    ('usj_x', 'user_x', 'store_x', true);
                 INSERT INTO key_value_store (id, value_int) VALUES
                     ('SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID', 42);
                 "#,
@@ -105,10 +108,10 @@ mod tests {
         migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
-        let load = || {
+        let load = |table: &'static str, record_id: &'static str| {
             changelog::table
-                .filter(changelog::table_name.eq("user_permission"))
-                .filter(changelog::record_id.eq("perm_x"))
+                .filter(changelog::table_name.eq(table))
+                .filter(changelog::record_id.eq(record_id))
                 .select((
                     changelog::row_action,
                     changelog::store_id,
@@ -120,25 +123,38 @@ mod tests {
 
         // INSERT path: record with no changelog row is seeded with its store_id.
         assert_eq!(
-            load(),
+            load("user_permission", "perm_x"),
             vec![("UPSERT".to_string(), Some("store_x".to_string()), Some(42))],
             "record without a changelog row should get a routed row inserted"
         );
+        assert_eq!(
+            load("user_store_join", "usj_x"),
+            vec![("UPSERT".to_string(), Some("store_x".to_string()), Some(42))],
+            "user_store_join without a changelog row should get a routed row inserted"
+        );
 
-        // UPDATE path: a DB that seeded this row store_id-less (back when these tables were
-        // in populate_changelog_with_rows_for_sync_v7_tables); re-running backfills it in
+        // UPDATE path: a DB that seeded these rows store_id-less (back when these tables were
+        // in populate_changelog_with_rows_for_sync_v7_tables); re-running backfills them in
         // place, no duplicate.
-        diesel::update(changelog::table.filter(changelog::record_id.eq("perm_x")))
-            .set(changelog::store_id.eq(None::<String>))
-            .execute(connection.lock().connection())
-            .unwrap();
+        diesel::update(
+            changelog::table
+                .filter(changelog::record_id.eq("perm_x").or(changelog::record_id.eq("usj_x"))),
+        )
+        .set(changelog::store_id.eq(None::<String>))
+        .execute(connection.lock().connection())
+        .unwrap();
 
         super::Migrate.migrate(&connection).unwrap();
 
         assert_eq!(
-            load(),
+            load("user_permission", "perm_x"),
             vec![("UPSERT".to_string(), Some("store_x".to_string()), Some(42))],
             "store_id-less changelog row should be backfilled in place, not duplicated"
+        );
+        assert_eq!(
+            load("user_store_join", "usj_x"),
+            vec![("UPSERT".to_string(), Some("store_x".to_string()), Some(42))],
+            "store_id-less user_store_join changelog row should be backfilled in place, not duplicated"
         );
     }
 }

@@ -4,6 +4,7 @@ use crate::{
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
+    validate::check_other_party_store_is_disabled,
 };
 
 use repository::{
@@ -82,6 +83,10 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
+        return Err(OutError::CannotEditRequisition);
+    }
+
     if store_preference.use_consumption_and_stock_from_customers_for_internal_orders
         && requisition_row.program_id.is_some()
     {
@@ -119,9 +124,9 @@ fn generate(
     let available_volume_by_type = get_available_volume_by_location_type(
         &ctx.connection,
         &ctx.store_id,
-        &[existing.item_link_id.clone()],
+        &[existing.item_id.clone()],
     )?
-    .get(&existing.item_link_id)
+    .get(&existing.item_id)
     .cloned()
     .unwrap_or_default();
 
@@ -165,7 +170,7 @@ mod test {
         RequisitionLineRow {
             id: "program_request_line".to_string(),
             requisition_id: mock_request_program_requisition().id.clone(),
-            item_link_id: mock_item_a().id.clone(),
+            item_id: mock_item_a().id.clone(),
             suggested_quantity: 10.0,
             ..Default::default()
         }

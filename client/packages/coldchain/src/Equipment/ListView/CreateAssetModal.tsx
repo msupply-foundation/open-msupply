@@ -190,7 +190,7 @@ export const CreateAssetModal = ({
 
   return (
     <Modal
-      title={t('heading.add-cold-chain-equipment')}
+      title={t('heading.new-cold-chain-equipment')}
       width={700}
       height={100}
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}

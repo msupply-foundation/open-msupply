@@ -185,7 +185,7 @@ export const ResponseLineEdit = ({
         ) : null}
         <ModalPanelArea>
           <ResponseNumInputRow
-            label={t('label.requested')}
+            label={t('label.customer-requested')}
             value={draft?.requestedQuantity}
             onChange={value => {
               draft?.suggestedQuantity === value
