@@ -484,10 +484,15 @@ impl<'a> TranslationAndIntegration<'a> {
             }
         }
 
-        // Insert all changelogs (pre-generated deletes + post-batch upserts) in a dedicated
-        // inner transaction, so it's never a raw statement on the outer tx.
+        // Insert all changelogs (pre-generated deletes + post-batch upserts) in its OWN
+        // savepoint (reuse=false). Inside the outer integration transaction a plain
+        // `transaction_sync` (reuse=true) would run this raw on the outer tx, so a failing
+        // insert would poison the whole transaction; a savepoint contains the failure.
         self.connection
-            .transaction_sync(|tx| ChangelogRepository::new(tx).batch_insert(pending_changelogs))
+            .transaction_sync_etc(
+                |tx| ChangelogRepository::new(tx).batch_insert(pending_changelogs),
+                false,
+            )
             .map_err(|e: repository::TransactionError<RepositoryError>| e.to_inner_error())?;
 
         Ok(())

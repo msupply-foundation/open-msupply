@@ -397,18 +397,23 @@ fn integrate_sync_buffer_batch<'a>(
 
     let (integration_errors, oks) = integrate_in_batch(connection, operations, wrap_record_in_tx);
 
-    // Do this in transaction either way to ensure changelog and buffer are consistent
-    // Rollback all sync_buffer integrations if there is an error
+    // Write changelogs + buffer results in their OWN savepoint (reuse=false) so changelog and
+    // buffer stay consistent (both roll back together on error) AND a failure here can't poison
+    // the outer integration transaction. A plain `transaction_sync` (reuse=true) would run this
+    // raw on the outer tx when nested, leaving the whole transaction aborted on error.
     let number_of_buffers_updated = connection
-        .transaction_sync(|con| {
-            write_changelogs_and_sync_buffer(
-                con,
-                started,
-                translation_errors,
-                integration_errors,
-                oks,
-            )
-        })
+        .transaction_sync_etc(
+            |con| {
+                write_changelogs_and_sync_buffer(
+                    con,
+                    started,
+                    translation_errors,
+                    integration_errors,
+                    oks,
+                )
+            },
+            false,
+        )
         .map_err(|e| e.to_inner_error())?;
 
     *total -= number_of_buffers_updated;
