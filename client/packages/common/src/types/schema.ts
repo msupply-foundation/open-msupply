@@ -7577,6 +7577,13 @@ export type PropertyNode = {
   valueType: PropertyNodeValueType;
 };
 
+export enum PropertyNodeKindV2 {
+  /** Synced from legacy mSupply. */
+  Legacy = 'LEGACY',
+  /** Configured natively in open-mSupply. */
+  Standard = 'STANDARD',
+}
+
 export enum PropertyNodeValueType {
   Boolean = 'BOOLEAN',
   Date = 'DATE',
@@ -7588,16 +7595,8 @@ export enum PropertyNodeValueType {
 export enum PropertyNodeValueTypeV2 {
   Boolean = 'BOOLEAN',
   Date = 'DATE',
-  Number = 'NUMBER',
+  Integer = 'INTEGER',
   Option = 'OPTION',
-  /**
-   * A value type configured on a newer central that this site doesn't yet
-   * recognise (the repository enum's `Other(String)` catch-all). Clients
-   * should treat it as opaque, e.g. render as read-only text. Mapped
-   * manually rather than via `#[graphql(remote)]` because the GraphQL enum
-   * can't carry the captured string payload.
-   */
-  Other = 'OTHER',
   Real = 'REAL',
   Text = 'TEXT',
 }
@@ -7631,8 +7630,8 @@ export type PropertyV2FilterInput = {
 export type PropertyV2Node = {
   __typename: 'PropertyV2Node';
   id: Scalars['String']['output'];
-  isLegacy: Scalars['Boolean']['output'];
   key: Scalars['String']['output'];
+  kind: PropertyNodeKindV2;
   name: Scalars['String']['output'];
   /**
    * Options for OPTION-type properties. Empty list for any other value

@@ -184,7 +184,8 @@ impl SynchroniserV5V6 {
         // them over v7 and must never seed their own (see the properties dev
         // doc). Change-aware, so steady-state syncs add no changelog churn; a new
         // mapping property added in a later version is picked up on the next sync.
-        if CentralServerConfig::is_central_server() {
+        if CentralServerConfig::is_central_server() && !CentralServerConfig::is_standalone_central()
+        {
             crate::sync::central_mapping_properties::seed_central_mapping_properties(
                 &ctx.connection,
             )?;

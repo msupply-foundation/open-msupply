@@ -6,29 +6,24 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
 
+use crate::sync::central_mapping_properties::keys;
 use crate::sync::CentralServerConfig;
 
 use super::{IntegrationOperation, PullTranslateResult, SyncTranslation};
 
-/// `property_v2.id` of the OPTION mapping property the main item category
-/// hierarchy maps onto. Must match the `legacy_item_category` definition seeded
-/// by `central_mapping_properties`.
-const ITEM_CATEGORY_PROPERTY_ID: &str = "legacy_item_category";
-
 /// Map an `item_category*` sync table to `(property_v2.id, is_relational)`.
 ///
 /// The main hierarchy (`item_category` / `_level1` / `_level2`) feeds both the
-/// relational `category` tree **and** the `legacy_item_category` OPTION. The two
+/// relational `category` tree **and** the [`keys::ITEM_CATEGORY_1`] OPTION. The two
 /// extra flat dimensions (`item_category2`/`3`, no level tables) are
 /// propertiesV2-only — they have no relational counterpart, so `is_relational`
-/// is false and no `CategoryRow` is emitted. Property ids must match
-/// `central_mapping_properties`.
+/// is false and no `CategoryRow` is emitted.
 fn item_category_mapping(table_name: &str) -> (&'static str, bool) {
     match table_name {
-        "item_category2" => ("legacy_item_category_2", false),
-        "item_category3" => ("legacy_item_category_3", false),
+        "item_category2" => (keys::ITEM_CATEGORY_2, false),
+        "item_category3" => (keys::ITEM_CATEGORY_3, false),
         // item_category / item_category_level1 / item_category_level2
-        _ => (ITEM_CATEGORY_PROPERTY_ID, true),
+        _ => (keys::ITEM_CATEGORY_1, true),
     }
 }
 
@@ -211,15 +206,19 @@ mod tests {
             .try_translate_from_upsert_sync_record(&connection, &sync_record)
             .unwrap();
         let debug = format!("{result:?}");
-        assert!(debug.contains("CategoryRow"), "{debug}");
-        assert!(debug.contains("PropertyOptionV2Row"), "{debug}");
+        assert!(debug.contains("CategoryRow"), "{}", debug);
+        assert!(debug.contains("PropertyOptionV2Row"), "{}", debug);
+        // Hardcoded, not `keys::ITEM_CATEGORY_1`: this key is a frozen contract
+        // once released, so the test must fail if the const is ever changed.
         assert!(
-            debug.contains("legacy_item_category"),
-            "option must reference the mapping property: {debug}"
+            debug.contains("item_category_1"),
+            "option must reference the mapping property: {}",
+            debug
         );
         assert!(
             debug.contains("CAT_PARENT"),
-            "hierarchy must map parent_ID -> parent_option_id: {debug}"
+            "hierarchy must map parent_ID -> parent_option_id: {}",
+            debug
         );
 
         // On a remote, only the relational category row is emitted.
@@ -228,10 +227,11 @@ mod tests {
             .try_translate_from_upsert_sync_record(&connection, &sync_record)
             .unwrap();
         let debug = format!("{result:?}");
-        assert!(debug.contains("CategoryRow"), "{debug}");
+        assert!(debug.contains("CategoryRow"), "{}", debug);
         assert!(
             !debug.contains("PropertyOptionV2Row"),
-            "remote must not author options: {debug}"
+            "remote must not author options: {}",
+            debug
         );
     }
 
@@ -248,9 +248,11 @@ mod tests {
 
         // Flat dimensions (no level tables, no parent): central emits the option
         // under the matching property but NO relational CategoryRow.
+        // (sync table name -> property key). Keys hardcoded, not `keys::*`: they
+        // are a frozen contract, so a const rename must fail the test.
         for (table_name, property_id) in [
-            ("item_category2", "legacy_item_category_2"),
-            ("item_category3", "legacy_item_category_3"),
+            ("item_category2", "item_category_2"),
+            ("item_category3", "item_category_3"),
         ] {
             let sync_record = SyncBufferRow {
                 table_name: table_name.to_string(),
@@ -269,11 +271,12 @@ mod tests {
                 .try_translate_from_upsert_sync_record(&connection, &sync_record)
                 .unwrap();
             let debug = format!("{result:?}");
-            assert!(debug.contains("PropertyOptionV2Row"), "{debug}");
-            assert!(debug.contains(property_id), "{debug}");
+            assert!(debug.contains("PropertyOptionV2Row"), "{}", debug);
+            assert!(debug.contains(property_id), "{}", debug);
             assert!(
                 !debug.contains("CategoryRow"),
-                "flat dimensions have no relational category row: {debug}"
+                "flat dimensions have no relational category row: {}",
+                debug
             );
 
             // On a remote, nothing is authored at all for the flat dimensions.
@@ -284,7 +287,8 @@ mod tests {
             let debug = format!("{result:?}");
             assert!(
                 !debug.contains("PropertyOptionV2Row") && !debug.contains("CategoryRow"),
-                "remote authors nothing for flat dimensions: {debug}"
+                "remote authors nothing for flat dimensions: {}",
+                debug
             );
         }
     }
