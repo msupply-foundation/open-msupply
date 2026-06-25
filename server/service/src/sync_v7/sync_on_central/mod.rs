@@ -291,6 +291,7 @@ pub async fn site_status(
         Ok(status::Output {
             site_id: site.id,
             central_site_id,
+            is_multi_device_site: site.is_multi_device,
         })
     })
     .await
