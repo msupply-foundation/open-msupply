@@ -11,10 +11,10 @@ import { useStocktakeOld } from '../../api';
 export const StocktakeLockButton: FC = () => {
   const t = useTranslation();
   const isDisabled = useStocktakeOld.utils.isDisabled();
-  const { isLocked, status, update } = useStocktakeOld.document.fields([
-    'isLocked',
-    'status',
-  ]);
+  const { isLocked, status, update } = useStocktakeOld.document.fields(
+    ['isLocked', 'status'],
+    0
+  );
 
   const message = isLocked
     ? t('messages.not-on-hold-description')
