@@ -10,31 +10,52 @@ use service::ListResult;
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum PropertyNodeValueTypeV2 {
-    Number,
+    Integer,
     Text,
     Date,
     Real,
     Option,
     Boolean,
-    /// A value type configured on a newer central that this site doesn't yet
-    /// recognise (the repository enum's `Other(String)` catch-all). Clients
-    /// should treat it as opaque, e.g. render as read-only text. Mapped
-    /// manually rather than via `#[graphql(remote)]` because the GraphQL enum
-    /// can't carry the captured string payload.
-    Other,
 }
 
 impl From<repository::PropertyValueTypeV2> for PropertyNodeValueTypeV2 {
     fn from(value: repository::PropertyValueTypeV2) -> Self {
         use repository::PropertyValueTypeV2 as RepoType;
         match value {
-            RepoType::Number => Self::Number,
+            RepoType::Integer => Self::Integer,
             RepoType::Text => Self::Text,
             RepoType::Date => Self::Date,
             RepoType::Real => Self::Real,
             RepoType::Option => Self::Option,
             RepoType::Boolean => Self::Boolean,
-            RepoType::Other(_) => Self::Other,
+            // Any unrecognised value type from a newer central. Rows whose
+            // value type is the `Other` catch-all are filtered out at the
+            // repository read path (PropertyV2Repository::is_displayable), so
+            // `Other` never reaches here — default it to Text defensively.
+            RepoType::Other(_) => Self::Text,
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum PropertyNodeKindV2 {
+    /// Configured natively in open-mSupply.
+    Standard,
+    /// Synced from legacy mSupply.
+    Legacy,
+}
+
+impl From<repository::PropertyKindV2> for PropertyNodeKindV2 {
+    fn from(value: repository::PropertyKindV2) -> Self {
+        use repository::PropertyKindV2 as RepoKind;
+        match value {
+            RepoKind::Legacy => Self::Legacy,
+            // Standard, plus any unrecognised kind from a newer central. Rows
+            // whose kind is the `Other` catch-all are filtered out at the
+            // repository read path (PropertyV2Repository::is_displayable), so
+            // `Other` never reaches here — default it to Standard defensively.
+            RepoKind::Standard | RepoKind::Other(_) => Self::Standard,
         }
     }
 }
@@ -74,8 +95,8 @@ impl PropertyV2Node {
     pub async fn value_type(&self) -> PropertyNodeValueTypeV2 {
         PropertyNodeValueTypeV2::from(self.property.value_type.clone())
     }
-    pub async fn is_legacy(&self) -> bool {
-        self.property.is_legacy
+    pub async fn kind(&self) -> PropertyNodeKindV2 {
+        PropertyNodeKindV2::from(self.property.kind.clone())
     }
 
     /// Options for OPTION-type properties. Empty list for any other value

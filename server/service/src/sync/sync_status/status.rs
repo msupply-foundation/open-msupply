@@ -1,6 +1,6 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRepository, DatetimeFilter, EqualFilter, FilterBuilder, KeyType,
+    syncv7::SyncError, ChangelogRepository, DatetimeFilter, EqualFilter, FilterBuilder, KeyType,
     KeyValueStoreRepository, Pagination, RepositoryError, SiteRowRepository, Sort,
     SyncLogV5V6Filter, SyncLogV5V6Repository, SyncLogV5V6Row, SyncLogV5V6SortField,
     SyncLogV7Condition, SyncLogV7Repository, SyncLogV7SortField,
@@ -182,6 +182,20 @@ impl FullSyncStatus {
             FullSyncStatus::V7(s) => s.summary.finished.is_some() && s.error.is_none(),
         }
     }
+
+    pub fn error_v5v6(&self) -> Option<SyncLogError> {
+        match self {
+            FullSyncStatus::V5V6(status_v5v6) => status_v5v6.error.clone(),
+            FullSyncStatus::V7(_) => None,
+        }
+    }
+
+    pub fn error_v7(&self) -> Option<SyncError> {
+        match self {
+            FullSyncStatus::V5V6(_) => None,
+            FullSyncStatus::V7(status_v7) => status_v7.error.clone(),
+        }
+    }
 }
 
 pub trait SyncStatusTrait: Sync + Send {
@@ -321,7 +335,8 @@ fn get_latest_v5_v6(ctx: &ServiceContext) -> Result<Option<FullSyncStatusV5V6>, 
 }
 
 fn get_latest_v7(ctx: &ServiceContext) -> Result<Option<FullSyncStatusV7>, RepositoryError> {
-    let Some(row) = SyncLogV7Repository::new(&ctx.connection).query_one(SyncLogV7Condition::TRUE)?
+    let Some(row) =
+        SyncLogV7Repository::new(&ctx.connection).query_one(SyncLogV7Condition::TRUE)?
     else {
         return Ok(None);
     };

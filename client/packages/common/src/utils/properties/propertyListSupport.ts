@@ -7,6 +7,7 @@ import {
 import { ColumnDef } from '../../ui/layout/tables/types';
 import { ColumnType } from '../../ui/layout/tables/useGetColumnDefDefaults';
 import { FilterBy, FilterRule } from '../../hooks/useQueryParams';
+import { noOtherVariants } from '../types';
 import { PropertyNodeValueTypeV2 } from '@common/types';
 import {
   formatPropertyV2Value,
@@ -72,7 +73,7 @@ export interface PropertyFilterRangeLabels {
  * One FilterMenu definition per property, by value type: TEXT → substring
  * text filter, OPTION → hierarchical dropdown (same control as the edit
  * input, but any level can be picked — a parent means "anything under it"),
- * NUMBER/REAL → min/max range pair, DATE → date range pair, BOOLEAN →
+ * INTEGER/REAL → min/max range pair, DATE → date range pair, BOOLEAN →
  * toggle. Properties with an unknown value type get no filter.
  */
 export const buildPropertyFilterDefinitions = (
@@ -96,7 +97,7 @@ export const buildPropertyFilterDefinitions = (
               options: getHierarchicalOptions(property),
             },
           ];
-        case PropertyNodeValueTypeV2.Number:
+        case PropertyNodeValueTypeV2.Integer:
         case PropertyNodeValueTypeV2.Real:
           return [
             {
@@ -141,9 +142,9 @@ export const buildPropertyFilterDefinitions = (
           ];
         case PropertyNodeValueTypeV2.Boolean:
           return [{ type: 'boolean' as const, name, urlParameter }];
-        default:
-          return [];
       }
+      // Exhaustive over the value type enum — a new variant fails to compile here.
+      return noOtherVariants(property.valueType);
     }
   );
 
@@ -162,15 +163,15 @@ export const buildPropertyUrlFilterConfigs = (
         return [{ key }]; // default condition: like
       case PropertyNodeValueTypeV2.Option:
         return [{ key, condition: 'equalTo' }];
-      case PropertyNodeValueTypeV2.Number:
+      case PropertyNodeValueTypeV2.Integer:
       case PropertyNodeValueTypeV2.Real:
       case PropertyNodeValueTypeV2.Date:
         return [{ key, condition: 'between' }];
       case PropertyNodeValueTypeV2.Boolean:
         return [{ key, condition: '=' }];
-      default:
-        return [];
     }
+    // Exhaustive over the value type enum — a new variant fails to compile here.
+    return noOtherVariants(property.valueType);
   });
 
 const toNumber = (value: unknown): number | undefined => {
@@ -201,7 +202,7 @@ const propertyValueFilters = (
         ? [{ Option: { In: ids } }]
         : [{ Option: { Equal: String(equalTo) } }];
     }
-    case PropertyNodeValueTypeV2.Number:
+    case PropertyNodeValueTypeV2.Integer:
     case PropertyNodeValueTypeV2.Real: {
       const rule = entry as FilterRule;
       const from = toNumber(rule?.afterOrEqualTo);
@@ -228,9 +229,9 @@ const propertyValueFilters = (
     }
     case PropertyNodeValueTypeV2.Boolean:
       return typeof entry === 'boolean' ? [{ Boolean: { Equal: entry } }] : [];
-    default:
-      return [];
   }
+  // Exhaustive over the value type enum — a new variant fails to compile here.
+  return noOtherVariants(property.valueType);
 };
 
 /**

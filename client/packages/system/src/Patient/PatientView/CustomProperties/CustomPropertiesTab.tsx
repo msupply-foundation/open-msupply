@@ -2,6 +2,8 @@ import React, { useCallback, useEffect } from 'react';
 import {
   Box,
   LoadingButton,
+  NothingHere,
+  PropertyV2DetailRows,
   SaveIcon,
   useConfirmationModal,
   useNotification,
@@ -12,7 +14,6 @@ import {
 } from '@openmsupply-client/common';
 import { usePatient } from '../../api';
 import { useDraftPatientProperties } from './useDraftPatientProperties';
-import { PatientCustomProperties } from './PatientCustomProperties';
 
 export const CustomPropertiesTab = ({
   patientId,
@@ -55,15 +56,32 @@ export const CustomPropertiesTab = ({
 
   if (isLoading) return <BasicSpinner />;
 
+  if (!definitions.length) {
+    return <NothingHere body={t('messages.no-properties')} />;
+  }
+
   return (
     <Box display="flex" flexDirection="column" alignItems="center" flex={1}>
-      <PatientCustomProperties
-        definitions={definitions}
-        draftProperties={draftProperties}
-        updateProperty={updateProperty}
-        disabled={disabled}
-      />
-      {!disabled && definitions.length > 0 && (
+      <Box
+        sx={theme => ({
+          [theme.breakpoints.down('sm')]: {
+            width: '95%',
+            minWidth: '340px',
+            paddingX: '2em',
+          },
+          width: '600px',
+          margin: '0 auto',
+          paddingTop: 2,
+        })}
+      >
+        <PropertyV2DetailRows
+          definitions={definitions}
+          properties={draftProperties}
+          onChange={(key, value) => updateProperty({ [key]: value })}
+          disabled={disabled}
+        />
+      </Box>
+      {!disabled && (
         <Box paddingTop={2}>
           <LoadingButton
             onClick={() => showSaveConfirmation()}
