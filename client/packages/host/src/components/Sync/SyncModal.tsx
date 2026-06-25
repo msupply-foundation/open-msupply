@@ -51,7 +51,7 @@ const useHostSync = (enabled: boolean) => {
   const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
-  const { updateUser } = useAuthContext();
+  const { refreshUserCookie } = useAuthContext();
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
@@ -84,7 +84,9 @@ const useHostSync = (enabled: boolean) => {
         // This avoids surrounding UI components to jump around
         queryClient.invalidateQueries({ refetchType: 'none' });
         invalidateCustomTranslations();
-        updateUser();
+        // Pick up permission/user-detail changes that the just-completed sync
+        // brought in, so the UI reflects them without forcing a re-login.
+        refreshUserCookie();
       }
     }
   }, [syncStatus?.isSyncing]);
@@ -127,7 +129,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading, refreshUserCookie } = useAuthContext();
+  const { refreshUserCookie } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
@@ -139,13 +141,11 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
     await refreshUserCookie();
   };
 
-  const durationAsDate = new Date(
-    0,
-    0,
-    0,
-    0,
-    0,
-    syncStatus?.lastSuccessfulSync?.durationInSeconds || 0
+  const durationAsDate = DateUtils.secondsAsDate(
+    DateUtils.durationInSeconds(
+      syncStatus?.summary?.started,
+      syncStatus?.summary?.finished
+    )
   );
 
   const getSyncStatusMessage = (): string => {
@@ -274,7 +274,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
           <LoadingButton
             shouldShrink={false}
             autoFocus
-            isLoading={isLoading || updateUserIsLoading}
+            isLoading={isLoading}
             startIcon={<RadioIcon />}
             variant="contained"
             disabled={false}
