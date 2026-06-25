@@ -136,8 +136,9 @@ impl ReportQueries {
         store_id: String,
         csv_data: String,
         filename: String,
+        sheet_name: Option<String>,
     ) -> Result<PrintReportResponse> {
-        csv_to_excel(ctx, store_id, csv_data, filename).await
+        csv_to_excel(ctx, store_id, csv_data, filename, sheet_name).await
     }
 }
 

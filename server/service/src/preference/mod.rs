@@ -27,7 +27,10 @@ pub trait PreferenceServiceTrait: Sync + Send {
             // Global preferences
             allow_tracking_of_stock_by_donor,
             authorise_purchase_order,
-            custom_translations,
+            // v1 custom translations are hidden from the preferences edit list; they can still
+            // be edited via the v2 custom translations editor (legacy namespace) when needed.
+            custom_translations: _,
+            custom_translations_v2,
             gender_options,
             prevent_transfers_months_before_initialisation,
             show_contact_tracing,
@@ -65,6 +68,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             warn_when_missing_recent_stocktake,
             store_custom_colour,
             invoice_status_options,
+            do_not_print_placeholder_line_labels,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -78,7 +82,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         // Global preferences
         append_if_type(allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
         append_if_type(authorise_purchase_order, &mut prefs, &input)?;
-        append_if_type(custom_translations, &mut prefs, &input)?;
+        append_if_type(custom_translations_v2, &mut prefs, &input)?;
         append_if_type(gender_options, &mut prefs, &input)?;
         append_if_type(
             prevent_transfers_months_before_initialisation,
@@ -143,6 +147,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(store_custom_colour, &mut prefs, &input)?;
         append_if_type(warn_when_missing_recent_stocktake, &mut prefs, &input)?;
         append_if_type(invoice_status_options, &mut prefs, &input)?;
+        append_if_type(do_not_print_placeholder_line_labels, &mut prefs, &input)?;
 
         Ok(prefs)
     }

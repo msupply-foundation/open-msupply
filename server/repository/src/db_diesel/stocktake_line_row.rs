@@ -1,7 +1,7 @@
 use super::{
-    item_link_row::item_link, location_row::location, name_row::name,
-    reason_option_row::reason_option, stock_line_row::stock_line, stocktake_row::stocktake,
-    StorageConnection,
+    item_row::item, location_row::location, name_row::name,
+    reason_option_row::reason_option, stock_line_row::stock_line,
+    stocktake_row::stocktake, StorageConnection,
 };
 
 use crate::db_diesel::changelog::changelog::RowOrId;
@@ -28,7 +28,6 @@ define_linked_tables! {
         comment -> Nullable<Text>,
         snapshot_number_of_packs -> Double,
         counted_number_of_packs -> Nullable<Double>,
-        item_link_id -> Text,
         item_name -> Text,
         batch -> Nullable<Text>,
         expiry_date -> Nullable<Date>,
@@ -45,6 +44,7 @@ define_linked_tables! {
         program_id -> Nullable<Text>,
     },
     links: {
+        item_link_id -> item_id,
     },
     optional_links: {
         donor_link_id -> donor_id,
@@ -52,13 +52,12 @@ define_linked_tables! {
     }
 }
 
-joinable!(stocktake_line -> item_link (item_link_id));
+joinable!(stocktake_line -> item (item_id));
 joinable!(stocktake_line -> location (location_id));
 joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(stocktake_line -> reason_option (reason_option_id));
 joinable!(stocktake_line -> name (donor_id));
-allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
 allow_tables_to_appear_in_same_query!(stocktake_line, reason_option);
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
@@ -75,7 +74,6 @@ pub struct StocktakeLineRow {
     pub counted_number_of_packs: Option<f64>,
 
     // stock line related fields:
-    pub item_link_id: String,
     pub item_name: String,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
@@ -90,7 +88,8 @@ pub struct StocktakeLineRow {
     pub volume_per_pack: f64,
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
-    // Resolved from name_link - must be last to match view column order
+    // Resolved from link tables - must be last to match view column order
+    pub item_id: String,
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
 }

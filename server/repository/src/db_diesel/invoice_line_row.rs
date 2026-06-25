@@ -1,7 +1,7 @@
 use super::{
     campaign_row::campaign, invoice_line_row::invoice_line::dsl::*, invoice_row::invoice,
-    item_link_row::item_link, location_row::location, reason_option_row::reason_option,
-    stock_line_row::stock_line, vvm_status::vvm_status_row::vvm_status, StorageConnection,
+    location_row::location, reason_option_row::reason_option, stock_line_row::stock_line,
+    vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
 
 use crate::diesel_macros::define_linked_tables;
@@ -25,7 +25,6 @@ define_linked_tables! {
     repo: InvoiceLineRowRepository,
     shared: {
         invoice_id -> Text,
-        item_link_id -> Text,
         item_name -> Text,
         item_code -> Text,
         stock_line_id -> Nullable<Text>,
@@ -56,9 +55,12 @@ define_linked_tables! {
         status -> Nullable<crate::db_diesel::invoice_line_row::InvoiceLineStatusMapping>,
         manufacture_date -> Nullable<Date>,
         purchase_order_line_id -> Nullable<Text>,
+        received_number_of_packs -> Nullable<Double>,
+        linked_invoice_line_id -> Nullable<Text>,
         legacy_goods_received_line_id -> Nullable<Text>,
     },
     links: {
+        item_link_id -> item_id,
     },
     optional_links: {
         donor_link_id -> donor_id,
@@ -66,7 +68,7 @@ define_linked_tables! {
     }
 }
 
-joinable!(invoice_line -> item_link (item_link_id));
+joinable!(invoice_line -> item (item_id));
 joinable!(invoice_line -> stock_line (stock_line_id));
 joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
@@ -74,7 +76,6 @@ joinable!(invoice_line -> vvm_status (vvm_status_id));
 joinable!(invoice_line -> reason_option (reason_option_id));
 joinable!(invoice_line -> campaign (campaign_id));
 
-allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, reason_option);
 
 table! {
@@ -89,7 +90,6 @@ allow_tables_to_appear_in_same_query!(invoice_line_stats, invoice);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, location);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, stock_line);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, reason_option);
-allow_tables_to_appear_in_same_query!(invoice_line_stats, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, item);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
@@ -115,7 +115,6 @@ pub enum InvoiceLineStatus {
 pub struct InvoiceLineRow {
     pub id: String,
     pub invoice_id: String,
-    pub item_link_id: String,
     pub item_name: String,
     pub item_code: String,
     pub stock_line_id: Option<String>,
@@ -148,11 +147,14 @@ pub struct InvoiceLineRow {
     pub status: Option<InvoiceLineStatus>,
     pub manufacture_date: Option<NaiveDate>,
     pub purchase_order_line_id: Option<String>,
+    pub received_number_of_packs: Option<f64>,
+    pub linked_invoice_line_id: Option<String>,
     /// Legacy `trans_line.goods_received_lines_ID` carried over from OG so the
     /// goods_received_line translator can find the invoice_line spawned by a
     /// finalised GR line without scanning sync_buffer. Internal only — never synced.
     pub legacy_goods_received_line_id: Option<String>,
-    // Resolved from name_link - must be last to match view column order
+    // Resolved from link tables - must be last to match view column order
+    pub item_id: String,
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
 }

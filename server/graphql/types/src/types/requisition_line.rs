@@ -48,7 +48,15 @@ impl RequisitionLineNode {
     }
 
     pub async fn item_name(&self) -> &str {
-        &self.row().item_name
+        // Older lines can have an empty item_name on the row when the line was
+        // auto-generated for a stockless item before the #11843 fix. Falling
+        // back to the joined item row keeps those rows displaying the name.
+        let stored = self.row().item_name.as_str();
+        if stored.is_empty() {
+            self.item_row().name.as_str()
+        } else {
+            stored
+        }
     }
 
     pub async fn comment(&self) -> &Option<String> {

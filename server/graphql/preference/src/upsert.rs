@@ -68,6 +68,9 @@ pub struct UpsertPreferencesInput {
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
+    /// v2 custom translations, shape: `language -> namespace -> key -> value`.
+    /// Passed as a JSON value to avoid nested-map InputObject friction.
+    pub custom_translations_v2: Option<serde_json::Value>,
     pub gender_options: Option<Vec<GenderTypeNode>>,
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
@@ -108,6 +111,7 @@ pub struct UpsertPreferencesInput {
     pub store_custom_colour: Option<Vec<StringStorePrefInput>>,
     pub invoice_status_options: Option<Vec<InvoiceStatusOptionsInput>>,
     pub show_indicative_price_in_requisitions: Option<Vec<BoolStorePrefInput>>,
+    pub do_not_print_placeholder_line_labels: Option<Vec<BoolStorePrefInput>>,
 }
 
 pub fn upsert_preferences(
@@ -140,6 +144,7 @@ impl UpsertPreferencesInput {
             allow_tracking_of_stock_by_donor,
             authorise_purchase_order,
             custom_translations,
+            custom_translations_v2,
             prevent_transfers_months_before_initialisation,
             gender_options,
             show_contact_tracing,
@@ -176,6 +181,7 @@ impl UpsertPreferencesInput {
             invoice_status_options,
             external_inbound_shipment_lines_must_be_authorised,
             show_indicative_price_in_requisitions,
+            do_not_print_placeholder_line_labels,
         } = self;
 
         UpsertPreferences {
@@ -183,6 +189,9 @@ impl UpsertPreferencesInput {
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
             authorise_purchase_order: *authorise_purchase_order,
             custom_translations: custom_translations.clone(),
+            custom_translations_v2: custom_translations_v2
+                .clone()
+                .and_then(|v| serde_json::from_value(v).ok()),
             gender_options: gender_options
                 .as_ref()
                 .map(|i| i.iter().map(|i| GenderType::from(*i)).collect()),
@@ -273,6 +282,9 @@ impl UpsertPreferencesInput {
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             show_indicative_price_in_requisitions: show_indicative_price_in_requisitions
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
         }

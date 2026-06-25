@@ -31,6 +31,21 @@ export async function login(page: Page, options: LoginOptions = {}) {
     if (text) throw new Error(`Login failed: ${text}`);
   }
 
+  // Post-login the user either lands at /manage|dashboard, or stops on the
+  // store-selector panel (introduced in #11593). Race the two — whichever
+  // appears first wins — so we don't pay a flat timeout in either branch.
+  // Each branch swallows its own rejection so Promise.race resolves on the
+  // first observable signal rather than on the first rejection.
+  const continueButton = page.locator('button:has-text("Continue")');
+  await Promise.race([
+    page.waitForURL(/manage|dashboard/, { timeout: 15000 }).catch(() => {}),
+    continueButton.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {}),
+  ]);
+
+  if (await continueButton.isVisible().catch(() => false)) {
+    await continueButton.click();
+  }
+
   await page.waitForURL(/manage|dashboard/, { timeout: 10000 });
   await page.waitForTimeout(1000);
 

@@ -67,7 +67,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             comment: None,
             snapshot_number_of_packs: 100.13,
             counted_number_of_packs: None,
-            item_link_id: uuid(),
+            item_id: uuid(),
             item_name: "test item".to_string(),
             batch: None,
             expiry_date: None,
@@ -81,7 +81,7 @@ impl SyncRecordTester for StocktakeRecordTester {
         };
         result.push(TestStepData {
             central_upsert: json!({"item": [{
-                "ID": stocktake_line_row.item_link_id,
+                "ID": stocktake_line_row.item_id,
                 "type_of": "general"
             }],
             "currency": [{
@@ -111,7 +111,7 @@ impl SyncRecordTester for StocktakeRecordTester {
 
         let stock_line_row = StockLineRow {
             id: uuid(),
-            item_link_id: uuid(),
+            item_id: uuid(),
             store_id: store_id.clone(),
             ..Default::default()
         };
@@ -135,7 +135,7 @@ impl SyncRecordTester for StocktakeRecordTester {
         stocktake_line_row.location_id = None;
         stocktake_line_row.snapshot_number_of_packs = 110.12;
         stocktake_line_row.counted_number_of_packs = Some(90.3219);
-        stocktake_line_row.item_link_id = stock_line_row.item_link_id.clone();
+        stocktake_line_row.item_id = stock_line_row.item_id.clone();
         stocktake_line_row.stock_line_id = Some(stock_line_row.id.clone());
         stocktake_line_row.batch = Some(uuid());
         stocktake_line_row.expiry_date = NaiveDate::from_ymd_opt(2025, 03, 24);
@@ -146,7 +146,7 @@ impl SyncRecordTester for StocktakeRecordTester {
 
         result.push(TestStepData {
             central_upsert: json!({"item": [{
-                "ID": stock_line_row.item_link_id,
+                "ID": stock_line_row.item_id,
                 "type_of": "general"
             }],
             "currency": [{

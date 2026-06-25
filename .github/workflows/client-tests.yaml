@@ -33,11 +33,16 @@ jobs:
         with:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
-      - name: Install dependencies
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install client dependencies
+        run: cd ./client && yarn install --immutable
+
+      - name: Install report/form dependencies
         run: |
-          cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
-          cd ./../standard_reports && rm -rf node_modules && yarn install --frozen-lockfile
-          cd ./../standard_forms && rm -rf node_modules && yarn install --frozen-lockfile
+          cd ./standard_reports && yarn install --frozen-lockfile
+          cd ../standard_forms && yarn install --frozen-lockfile
 
       - name: Run tests
         run: cd ./client && yarn test

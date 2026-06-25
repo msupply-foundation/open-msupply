@@ -196,7 +196,7 @@ mod test {
 
         let stock_line_a = StockLineRow {
             id: "stock_line_a".to_string(),
-            item_link_id: "item_a".to_string(),
+            item_id: "item_a".to_string(),
             store_id: mock_store_a().id.clone(),
             pack_size: 5.0,
             cost_price_per_pack: 0.20,
@@ -286,7 +286,7 @@ mod test {
             InvoiceLineRow {
                 id: in_line.id.clone(),
                 invoice_id: invoice.id.clone(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 item_name: "Item A".to_string(),
                 item_code: "item_a_code".to_string(),
                 stock_line_id: Some(new_stock.id.clone()),
@@ -308,7 +308,7 @@ mod test {
             InvoiceLineRow {
                 id: out_line.id.clone(),
                 invoice_id: invoice.id.clone(),
-                item_link_id: mock_stock_line_a().item_link_id,
+                item_id: mock_stock_line_a().item_id,
                 item_name: "Item A".to_string(),
                 item_code: "item_a_code".to_string(),
                 stock_line_id: Some(mock_stock_line_a().id),
@@ -331,7 +331,7 @@ mod test {
             new_stock,
             StockLineRow {
                 id: new_stock.id.clone(),
-                item_link_id: mock_stock_line_a().item_link_id,
+                item_id: mock_stock_line_a().item_id,
                 store_id: mock_stock_line_a().store_id,
                 supplier_id: mock_stock_line_a().supplier_id,
                 available_number_of_packs: 4.0,
@@ -621,7 +621,7 @@ mod test {
             new_stock,
             StockLineRow {
                 id: new_stock.id.clone(),
-                item_link_id: stock_line_with_volume().item_link_id,
+                item_id: stock_line_with_volume().item_id,
                 store_id: stock_line_with_volume().store_id,
                 batch: Some("batch".to_string()),
                 pack_size: 4.0,

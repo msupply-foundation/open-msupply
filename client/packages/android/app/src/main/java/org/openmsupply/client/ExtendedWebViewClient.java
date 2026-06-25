@@ -1,6 +1,10 @@
 package org.openmsupply.client;
 
 import android.graphics.Bitmap;
+import android.util.Log;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 
 import com.getcapacitor.Bridge;
@@ -31,6 +35,29 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
         }
     }
 
+    @Override
+    public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+        Log.e(NativeApi.OM_SUPPLY, "WebView onReceivedError"
+                + " url=" + request.getUrl()
+                + " mainFrame=" + request.isForMainFrame()
+                + " method=" + request.getMethod()
+                + " errorCode=" + error.getErrorCode()
+                + " description=" + error.getDescription()
+                + " atMs=" + System.currentTimeMillis());
+        super.onReceivedError(view, request, error);
+    }
+
+    @Override
+    public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
+        Log.e(NativeApi.OM_SUPPLY, "WebView onReceivedHttpError"
+                + " url=" + request.getUrl()
+                + " mainFrame=" + request.isForMainFrame()
+                + " status=" + errorResponse.getStatusCode()
+                + " reason=" + errorResponse.getReasonPhrase()
+                + " atMs=" + System.currentTimeMillis());
+        super.onReceivedHttpError(view, request, errorResponse);
+    }
+
     // Have to manually inject Capacitor JS, this typically happens in
     // WebViewLocalServer.handleProxyRequest
     // but since it manually uses net.URL to fetch the content of request, this
@@ -38,6 +65,10 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
     @Override
     public void onPageStarted(WebView webView, String url, Bitmap favicon) {
         if (url.startsWith("data:text")) return;
+        // Skip Capacitor JS injection for our bundled native pages
+        // (LoadingPage / ErrorPage). They only need their own JS bridge
+        // and don't talk to the rest of the Capacitor plugin system.
+        if (url.startsWith("file:///android_asset/native/")) return;
 
         // Just incase the js hasn't been generated yet, generate it here.
         this.loadJsInject();

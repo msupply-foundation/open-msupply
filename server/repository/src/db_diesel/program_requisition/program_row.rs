@@ -2,10 +2,7 @@ use chrono::NaiveDateTime;
 use program::deleted_datetime;
 
 use crate::{
-    db_diesel::{
-        context_row::context, document::document, item_link_row::item_link,
-        master_list_row::master_list,
-    },
+    db_diesel::{context_row::context, document::document, master_list_row::master_list},
     repository_error::RepositoryError,
     ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, StorageConnection,
     Upsert,
@@ -28,7 +25,6 @@ table! {
 joinable!(program -> master_list (master_list_id));
 joinable!(program -> context (context_id));
 allow_tables_to_appear_in_same_query!(program, document);
-allow_tables_to_appear_in_same_query!(program, item_link);
 
 #[derive(
     Clone,

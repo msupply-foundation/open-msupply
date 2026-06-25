@@ -317,7 +317,7 @@ fn generate_response_requisition_lines(
                 requisition_id: _,
                 approved_quantity: _,
                 approval_comment: _,
-                item_link_id: _,
+                item_id: _,
                 supply_quantity: _,
                 requested_quantity,
                 suggested_quantity,
@@ -363,7 +363,7 @@ fn generate_response_requisition_lines(
         response_lines.push(RequisitionLineRow {
             id: uuid(),
             requisition_id: response_requisition.id.to_string(),
-            item_link_id: item_id,
+            item_id: item_id,
             requested_quantity,
             suggested_quantity,
             available_stock_on_hand,
@@ -571,7 +571,7 @@ mod test {
         let requisition_line_1 = RequisitionLineRow {
             id: "line_1".to_string(),
             requisition_id: requisition_row.id.to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             price_per_unit: Some(0.0),
             ..Default::default()
         };
@@ -579,7 +579,7 @@ mod test {
         let requisition_line_2 = RequisitionLineRow {
             id: "line_2".to_string(),
             requisition_id: requisition_row.id.to_string(),
-            item_link_id: mock_item_b().id,
+            item_id: mock_item_b().id,
             price_per_unit: None,
             ..Default::default()
         };

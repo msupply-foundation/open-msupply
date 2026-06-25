@@ -16,6 +16,7 @@ pub enum PrefKey {
     AllowTrackingOfStockByDonor,
     AuthorisePurchaseOrder,
     CustomTranslations,
+    CustomTranslationsV2,
     GenderOptions,
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
@@ -54,6 +55,7 @@ pub enum PrefKey {
     WarnWhenMissingRecentStocktake,
     InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
+    DoNotPrintPlaceholderLineLabels,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -72,6 +74,7 @@ pub enum PreferenceValueType {
     MultiChoice,
     // specific type to CustomTranslations preference
     CustomTranslations,
+    CustomTranslationsV2,
     WarnWhenMissingRecentStocktakeData,
     BackdatingData,
     String,
