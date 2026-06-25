@@ -154,9 +154,15 @@ pub struct LoggingSettings {
     pub max_file_count: Option<i64>,
     /// Max logfile size in MB
     pub max_file_size: Option<usize>,
+    /// Log every GraphQL request/response
+    pub log_graphql_queries: Option<bool>,
 }
 
 impl LoggingSettings {
+    pub fn log_graphql_queries(&self) -> bool {
+        self.log_graphql_queries.unwrap_or(true)
+    }
+
     pub fn new(mode: LogMode, level: Level) -> Self {
         LoggingSettings {
             mode,
@@ -165,6 +171,7 @@ impl LoggingSettings {
             filename: None,
             max_file_count: None,
             max_file_size: None,
+            log_graphql_queries: None,
         }
     }
 
