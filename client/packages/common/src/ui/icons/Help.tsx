@@ -1,9 +1,10 @@
 import React from 'react';
-import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { SvgIconProps } from '@mui/material/SvgIcon';
+import { RtlFlipIcon } from './RtlFlipIcon';
 
 export const HelpIcon = (props: SvgIconProps): JSX.Element => {
   return (
-    <SvgIcon
+    <RtlFlipIcon
       {...props}
       style={{
         fill: 'none',
@@ -20,6 +21,6 @@ export const HelpIcon = (props: SvgIconProps): JSX.Element => {
         stroke="currentColor"
       ></path>
       <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor"></line>
-    </SvgIcon>
+    </RtlFlipIcon>
   );
 };

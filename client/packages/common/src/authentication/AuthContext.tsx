@@ -24,7 +24,6 @@ const TOKEN_CHECK_INTERVAL = 60 * 1000;
 export enum AuthError {
   NoStoreAssigned = 'NoStoreAssigned',
   PermissionDenied = 'Forbidden',
-  ServerError = 'ServerError',
   Unauthenticated = 'Unauthenticated',
   Timeout = 'Timeout',
 }

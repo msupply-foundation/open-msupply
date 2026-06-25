@@ -6,9 +6,9 @@ use std::{
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogFilter, EqualFilter, FilterBuilder, KeyType,
-    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
-    SiteRowRepository, SourceSiteId, StorageConnection, SyncBufferRepository, SyncVersion,
+    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
+    RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
+    StorageConnection, SyncBufferRepository, SyncVersion,
 };
 use thiserror::Error;
 use util::format_error;
@@ -93,14 +93,17 @@ pub async fn get_token(
     tokio::task::spawn_blocking(move || {
         let ctx = service_provider.basic_context()?;
 
+        // name + password were verified above; relaxing here lets a site re-pair from a new machine.
+        let relax_checks = ctx.relax_hardware_id_token_checks;
+
         ctx.connection
             .transaction_sync(|connection| {
-                if site.token.is_some() {
+                if !relax_checks && site.token.is_some() {
                     return Err(SyncError::TokenAlreadyAllocated);
                 }
 
                 let hardware_id = match &site.hardware_id {
-                    Some(existing) if existing != &input.hardware_id => {
+                    Some(existing) if !relax_checks && existing != &input.hardware_id => {
                         return Err(SyncError::HardwareIdMismatch);
                     }
                     _ => input.hardware_id.clone(),
@@ -243,9 +246,12 @@ fn validate(
     let site =
         get_site_by_token(&ctx.connection, &common.token)?.ok_or(SyncError::TokenNotFound)?;
 
-    match site.hardware_id.as_deref() {
-        Some(id) if id == common.hardware_id => {}
-        _ => return Err(SyncError::HardwareIdMismatch),
+    // The token above already identified the site; the hardware-id match is the relaxable part.
+    if !ctx.relax_hardware_id_token_checks {
+        match site.hardware_id.as_deref() {
+            Some(id) if id == common.hardware_id => {}
+            _ => return Err(SyncError::HardwareIdMismatch),
+        }
     }
 
     // Defense in depth: any v7 endpoint must refuse a site that has not been
@@ -349,6 +355,9 @@ fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
         last: name.last_name.unwrap_or_default(),
         first: name.first_name.unwrap_or_default(),
         date_of_birth: name.date_of_birth,
+        gender: name.gender,
+        code_2: name.national_health_number,
+        is_deceased: name.is_deceased,
     }
 }
 
@@ -381,7 +390,7 @@ pub async fn patient_data_for_site(
 
         let filter = ChangelogCondition::And(vec![
             ChangelogFilter::patient_data_for_site(site.id, None),
-            ChangelogCondition::patient_id::equal(patient_id),
+            ChangelogCondition::patient_id::matching(patient_id),
         ]);
 
         let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
@@ -754,6 +763,86 @@ mod tests {
         .err()
         .unwrap();
         assert!(matches!(err, SyncError::SyncVersionMismatch { .. }));
+    }
+
+    #[actix_rt::test]
+    async fn get_token_with_relaxed_checks_skips_token_and_hardware_id_guards() {
+        let (_, connection, connection_manager, _) =
+            setup_all("get_token_relaxed_checks", MockDataInserts::none()).await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
+
+        // Site already has a token AND a different hardware id — normally rejected.
+        let site = test_site(&connection, Some("existing_token".to_string()));
+        SiteRowRepository::new(&connection)
+            .upsert(&SiteRow {
+                hardware_id: Some("old-hw".to_string()),
+                ..site
+            })
+            .unwrap();
+
+        let mut sp = ServiceProvider::new(connection_manager);
+        sp.relax_hardware_id_token_checks = true;
+        let sp = Arc::new(sp);
+
+        let output = get_token(sp, input()).await.unwrap();
+
+        // A fresh token and the incoming hardware id overwrite the stored ones.
+        assert!(!output.token.is_empty());
+        assert_ne!(output.token, "existing_token");
+        let stored = SiteRowRepository::new(&connection)
+            .find_one_by_id(1)
+            .unwrap()
+            .unwrap();
+        assert_eq!(stored.token.as_deref(), Some(output.token.as_str()));
+        assert_eq!(stored.hardware_id.as_deref(), Some(HARDWARE_ID));
+    }
+
+    #[actix_rt::test]
+    async fn validate_with_relaxed_checks_ignores_hardware_id_mismatch() {
+        let (_, connection, connection_manager, _) =
+            setup_all("validate_relaxed_checks", MockDataInserts::none()).await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
+        test_site(&connection, None);
+
+        // Allocate a token normally.
+        let sp = Arc::new(ServiceProvider::new(connection_manager.clone()));
+        let allocated = get_token(sp, input()).await.unwrap();
+
+        let wrong_hw = Common {
+            token: allocated.token.clone(),
+            hardware_id: "wrong_hw".to_string(),
+            version: Version::from_package_json(),
+        };
+
+        // A mismatched hardware id is normally rejected.
+        let sp = Arc::new(ServiceProvider::new(connection_manager.clone()));
+        let err = validate(&sp, &wrong_hw).err().unwrap();
+        assert!(matches!(err, SyncError::HardwareIdMismatch));
+
+        // With the checks relaxed the mismatch is ignored.
+        let mut sp = ServiceProvider::new(connection_manager);
+        sp.relax_hardware_id_token_checks = true;
+        let sp = Arc::new(sp);
+        let (site, _) = validate(&sp, &wrong_hw).unwrap();
+        assert_eq!(site.id, 1);
+
+        // The token still identifies the site, so an unknown token is still rejected.
+        let err = validate(
+            &sp,
+            &Common {
+                token: "wrong_token".to_string(),
+                ..wrong_hw
+            },
+        )
+        .err()
+        .unwrap();
+        assert!(matches!(err, SyncError::TokenNotFound));
     }
 
     #[actix_rt::test]

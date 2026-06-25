@@ -21,5 +21,8 @@ export const useAdminPrefsList = (
 
       return result.preferenceDescriptions;
     },
+    // Store preferences require a store id to load - skip the query until one
+    // is available (e.g. while the store is loading, or for non-store names)
+    enabled: prefType !== PreferenceNodeType.Store || !!storeId,
   });
 };

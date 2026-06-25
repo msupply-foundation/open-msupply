@@ -1,4 +1,4 @@
 # Server
 
-- **Docs site**: https://dev-docs.msupply.foundation/server/
-- **Source**: [docs/content/server/_index.md](../docs/content/server/_index.md)
+- **Docs site**: [https://dev-docs.msupply.foundation/](https://dev-docs.msupply.foundation/docs/introduction/)
+- **Source**: [docs/content/server/\_index.md](../docs/content/server/_index.md)

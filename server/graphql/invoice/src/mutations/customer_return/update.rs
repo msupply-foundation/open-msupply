@@ -102,6 +102,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::ReturnIsNotEditable
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
+        | ServiceError::CannotIssueCustomerReturnWithNoLines
         | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
 
         ServiceError::UpdatedInvoiceDoesNotExist | ServiceError::DatabaseError(_) => {

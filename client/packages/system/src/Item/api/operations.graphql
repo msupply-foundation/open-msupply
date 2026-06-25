@@ -352,6 +352,10 @@ fragment ItemsWithStats on ItemNode {
   isVaccine
   doses
   availableStockOnHand(storeId: $storeId)
+  masterLists(storeId: $storeId) {
+    id
+    name
+  }
   stats(storeId: $storeId) {
     __typename
     averageMonthlyConsumption

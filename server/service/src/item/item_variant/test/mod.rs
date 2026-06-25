@@ -135,27 +135,31 @@ mod query {
             )
             .unwrap();
 
-        // Name update log
-        let name_update_log = get_activity_logs(
+        // Update log (single diff entry keyed by parent item_id)
+        let update_log = get_activity_logs(
             &connection_manager,
             None,
             Some(
                 ActivityLogFilter::new()
-                    .r#type(ActivityLogType::ItemVariantUpdatedName.equal_to())
-                    .record_id(EqualFilter::equal_to(test_item_a_variant_id.to_string())),
+                    .r#type(ActivityLogType::ItemVariantUpdated.equal_to())
+                    .record_id(EqualFilter::equal_to(mock_item_a().id)),
             ),
             None,
         )
         .unwrap();
 
-        assert_eq!(
-            name_update_log.rows[0].activity_log_row.changed_from,
-            Some("item_a_variant_a".to_string())
-        );
-        assert_eq!(
-            name_update_log.rows[0].activity_log_row.changed_to,
-            Some("updated_name".to_string())
-        );
+        let changed_from = update_log.rows[0]
+            .activity_log_row
+            .changed_from
+            .as_deref()
+            .unwrap_or("");
+        let changed_to = update_log.rows[0]
+            .activity_log_row
+            .changed_to
+            .as_deref()
+            .unwrap_or("");
+        assert!(changed_from.contains("item_a_variant_a"));
+        assert!(changed_to.contains("updated_name"));
 
         // Query the item variant by name
         let item_variant = service

@@ -224,6 +224,8 @@ fn try_allocate_existing_line(
                 total_before_tax: None,
                 tax: None,
                 note: None,
+                received_number_of_packs: None,
+                reason_option_id: None,
             }
         })
 }

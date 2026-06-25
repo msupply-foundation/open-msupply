@@ -16,6 +16,7 @@ import { ItemStockOnHandFragment } from '@openmsupply-client/system';
 import { PurchaseOrderFragment, usePurchaseOrderLine } from '../../api';
 import { PurchaseOrderLineEdit } from './PurchaseOrderLineEdit';
 import { createDraftPurchaseOrderLine } from './utils';
+import { PurchaseOrderDetailTabs } from '../types';
 
 interface PurchaseOrderLineEditModalProps {
   lineId: string | null;
@@ -85,7 +86,7 @@ export const PurchaseOrderLineEditModal = React.memo(
       try {
         if (mode === ModalMode.Create) {
           await create();
-          updateQuery({ tab: t('label.general') });
+          updateQuery({ tab: PurchaseOrderDetailTabs.General });
         } else if (mode === ModalMode.Update) {
           const res = await update();
           const { success, error: updateError } = res;

@@ -320,6 +320,9 @@ impl SynchroniserV5V6 {
             self.try_upgrade_to_v7(ctx).await?;
         }
 
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::SupportUploadFiles);
+
         Ok(())
     }
 

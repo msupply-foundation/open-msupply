@@ -1,7 +1,7 @@
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use repository::{EqualFilter, Store, StoreFilter};
+use repository::{EqualFilter, RepositoryError, Store, StoreFilter, StoreLogoRow, StoreRowRepository};
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
@@ -34,5 +34,25 @@ impl Loader<String> for StoreByIdLoader {
             .into_iter()
             .map(|store| (store.store_row.id.clone(), store))
             .collect())
+    }
+}
+
+/// Lazy-loads `store.logo` for the GraphQL `StoreNode.logo` resolver. Logos
+/// are large base64 TEXT blobs, so they're kept out of the default `StoreRow`
+/// shape and fetched only when explicitly requested.
+pub struct StoreLogoLoader {
+    pub service_provider: Data<ServiceProvider>,
+}
+
+impl Loader<String> for StoreLogoLoader {
+    type Value = StoreLogoRow;
+    type Error = RepositoryError;
+
+    async fn load(&self, keys: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
+        let service_context = self.service_provider.basic_context()?;
+        let results =
+            StoreRowRepository::new(&service_context.connection).find_logos_by_ids(keys)?;
+
+        Ok(results.into_iter().map(|row| (row.id.clone(), row)).collect())
     }
 }

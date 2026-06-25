@@ -179,7 +179,7 @@ mod test {
             InvoiceLineRow {
                 id: "wrong_store_return_line".to_string(),
                 invoice_id: wrong_store().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 ..Default::default()
             }
         }

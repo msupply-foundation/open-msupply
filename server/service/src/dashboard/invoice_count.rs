@@ -266,7 +266,10 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
             InvoiceFilter::new()
                 .store_id(EqualFilter::equal_to(store_id.to_string()))
                 .r#type(InvoiceType::InboundShipment.equal_to())
-                .status(InvoiceStatus::Shipped.equal_to()),
+                .status(InvoiceStatus::equal_any(vec![
+                    InvoiceStatus::Shipped,
+                    InvoiceStatus::New,
+                ])),
         ))
     }
 
@@ -312,7 +315,10 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         let mut filter = InvoiceFilter::new()
             .store_id(EqualFilter::equal_to(store_id.to_string()))
             .r#type(InvoiceType::InboundShipment.equal_to())
-            .status(InvoiceStatus::Shipped.equal_to());
+            .status(InvoiceStatus::equal_any(vec![
+                InvoiceStatus::Shipped,
+                InvoiceStatus::New,
+            ]));
         filter = filter.purchase_order_id(po_filter_for_external(is_external));
         repo.count(Some(filter))
     }
