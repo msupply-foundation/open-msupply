@@ -2,6 +2,7 @@ import { PropertyNodeValueTypeV2 } from '@common/types';
 import {
   formatPropertyV2Value,
   getHierarchicalOptions,
+  getOptionAndDescendantIds,
   getSelectableOptions,
   getVisiblePropertyRows,
   resolveOptionValue,
@@ -93,7 +94,7 @@ describe('getHierarchicalOptions', () => {
       ],
     });
     expect(
-      getHierarchicalOptions(hierarchy).map(o => [o.id, o.depth, o.selectable])
+      getHierarchicalOptions(hierarchy).map(o => [o.id, o.depth, o.isLeaf])
     ).toEqual([
       ['lvl1', 0, false],
       ['lvl2', 1, false],
@@ -102,13 +103,13 @@ describe('getHierarchicalOptions', () => {
     ]);
   });
 
-  it('returns a flat depth-0 list (all selectable) for a flat dimension', () => {
+  it('returns a flat depth-0 list of leaves for a flat dimension', () => {
     const flat = def({
       valueType: PropertyNodeValueTypeV2.Option,
       options: [option('a', 'A'), option('b', 'B')],
     });
     expect(
-      getHierarchicalOptions(flat).map(o => [o.id, o.depth, o.selectable])
+      getHierarchicalOptions(flat).map(o => [o.id, o.depth, o.isLeaf])
     ).toEqual([
       ['a', 0, true],
       ['b', 0, true],
@@ -135,6 +136,51 @@ describe('getHierarchicalOptions', () => {
     });
     // Both are mutual parents, so neither is a root → nothing is visited.
     expect(getHierarchicalOptions(cyclic)).toEqual([]);
+  });
+});
+
+describe('getOptionAndDescendantIds', () => {
+  const hierarchy = def({
+    valueType: PropertyNodeValueTypeV2.Option,
+    options: [
+      { id: 'lvl1', name: 'Level 1' },
+      { id: 'lvl2', name: 'Level 2', parentOptionId: 'lvl1' },
+      { id: 'leafA', name: 'Leaf A', parentOptionId: 'lvl2' },
+      { id: 'leafB', name: 'Leaf B', parentOptionId: 'lvl2' },
+      { id: 'other', name: 'Other root' },
+    ],
+  });
+
+  it('returns the id plus all descendants, including intermediate levels', () => {
+    expect(getOptionAndDescendantIds(hierarchy, 'lvl1')).toEqual([
+      'lvl1',
+      'lvl2',
+      'leafA',
+      'leafB',
+    ]);
+    expect(getOptionAndDescendantIds(hierarchy, 'lvl2')).toEqual([
+      'lvl2',
+      'leafA',
+      'leafB',
+    ]);
+  });
+
+  it('returns just the id for a leaf or an unknown id', () => {
+    expect(getOptionAndDescendantIds(hierarchy, 'leafA')).toEqual(['leafA']);
+    expect(getOptionAndDescendantIds(hierarchy, 'missing')).toEqual([
+      'missing',
+    ]);
+  });
+
+  it('does not loop on a cyclic parent reference', () => {
+    const cyclic = def({
+      valueType: PropertyNodeValueTypeV2.Option,
+      options: [
+        { id: 'x', name: 'X', parentOptionId: 'y' },
+        { id: 'y', name: 'Y', parentOptionId: 'x' },
+      ],
+    });
+    expect(getOptionAndDescendantIds(cyclic, 'x')).toEqual(['x', 'y']);
   });
 });
 

@@ -173,6 +173,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       first,
       offset,
       sortBy,
+      filterBy,
     }: ListParams): Promise<{
       nodes: NameRowFragment[];
       totalCount: number;
@@ -189,6 +190,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy?.isDesc,
         storeId,
         filter: {
+          ...filterBy,
           [type === 'customer' ? 'isCustomer' : 'isSupplier']: true,
           type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
         },

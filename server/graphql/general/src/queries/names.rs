@@ -1,5 +1,6 @@
 use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 use graphql_core::{
+    dynamic_filter::{parse_dynamic_filter, validate_property_filter_keys},
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
@@ -8,7 +9,7 @@ use graphql_core::{
 };
 use graphql_types::types::{NameNode, NameNodeType};
 use repository::{EqualFilter, NameType, PaginationOption, StringFilter};
-use repository::{Name, NameFilter, NameSort, NameSortField};
+use repository::{Name, NameCondition, NameFilter, NameSort, NameSortField};
 
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -69,6 +70,11 @@ pub struct NameFilterInput {
     pub code_or_name: Option<StringFilterInput>,
 
     pub supplying_store_id: Option<EqualFilterStringInput>,
+
+    /// Dynamic filter condition AST, currently supporting property conditions
+    /// on keys visible for the "name" table scope, e.g.
+    /// `{"And": [{"Property": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+    pub dynamic_filter: Option<serde_json::Value>,
 }
 
 #[derive(SimpleObject)]
@@ -109,13 +115,30 @@ pub fn get_names(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
+    let filter = filter
+        .map(|filter| -> Result<NameFilter> {
+            let dynamic_filter: Option<NameCondition::Inner> =
+                parse_dynamic_filter(filter.dynamic_filter.clone())?;
+            if let Some(condition) = &dynamic_filter {
+                validate_property_filter_keys(
+                    &service_context.connection,
+                    "name",
+                    &condition.property_conditions(),
+                )?;
+            }
+            let mut filter = filter.to_domain();
+            filter.dynamic_filter = dynamic_filter;
+            Ok(filter)
+        })
+        .transpose()?;
+
     let names = service_provider
         .name_service
         .get_names(
             &service_context,
             &store_id,
             page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
+            filter,
             // Currently only one sort option is supported, use the first from the list.
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
@@ -147,6 +170,8 @@ impl NameFilterInput {
             email,
             code_or_name,
             supplying_store_id,
+            // Parsed and validated in the resolver, not here (to_domain is infallible)
+            dynamic_filter: _,
         } = self;
 
         NameFilter {
@@ -170,6 +195,10 @@ impl NameFilterInput {
             email: email.map(StringFilter::from),
             supplying_store_id: supplying_store_id.map(EqualFilter::from),
             store: None,
+            // Parsed from the JSON `dynamicFilter` input in the resolver (a
+            // serde error there must surface as BadUserInput, so the infallible
+            // to_domain can't do it)
+            dynamic_filter: None,
         }
     }
 }

@@ -7,6 +7,7 @@ use crate::{
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
+    dynamic_query_filter::create_condition,
     name_oms_fields_alias,
     repository_error::RepositoryError,
     EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StoreFilter, StoreRepository,
@@ -56,6 +57,11 @@ pub struct NameFilter {
 
     pub code_or_name: Option<StringFilter>,
     pub store: Option<StoreFilter>,
+
+    /// Client-provided dynamic filter AST (currently property conditions only).
+    /// ANDs with the other filters. Keys must be validated against the table
+    /// scope's allowed property keys in the service layer.
+    pub dynamic_filter: Option<NameCondition::Inner>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -193,6 +199,7 @@ impl<'a> NameRepository<'a> {
                 code_or_name,
                 supplying_store_id,
                 store,
+                dynamic_filter,
             } = f;
 
             // or filter need to be applied before and filters
@@ -254,6 +261,16 @@ impl<'a> NameRepository<'a> {
                 let store_ids = StoreRepository::create_filtered_query(store).select(store::id);
                 query = query.filter(store::id.eq_any(store_ids));
             }
+
+            // The condition compiles against the bare name table, so apply it
+            // to this joined query through a sub-select
+            if let Some(condition) = dynamic_filter {
+                let name_ids = name::table
+                    .filter(condition.to_boxed())
+                    .select(name::id)
+                    .into_boxed();
+                query = query.filter(name::id.eq_any(name_ids));
+            }
         };
 
         // Only return active (not deleted) names
@@ -296,6 +313,15 @@ fn query(store_id: String) -> _ {
 }
 
 type BoxedNameQuery = IntoBoxed<'static, query, DBType>;
+
+// Dynamic query filter for the name table. Shared by the name and patient
+// repositories (patients are name rows), and applied to joined queries via a
+// `name::id.eq_any(subquery)` sub-select.
+create_condition!(
+    NameCondition,
+    name::table,
+    (Property, properties, name::properties_v2),
+);
 
 impl NameFilter {
     pub fn new() -> NameFilter {
@@ -364,6 +390,11 @@ impl NameFilter {
 
     pub fn store(mut self, filter: StoreFilter) -> Self {
         self.store = Some(filter);
+        self
+    }
+
+    pub fn dynamic_filter(mut self, condition: NameCondition::Inner) -> Self {
+        self.dynamic_filter = Some(condition);
         self
     }
 }

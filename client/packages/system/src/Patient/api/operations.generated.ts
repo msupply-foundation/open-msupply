@@ -20,6 +20,7 @@ export type PatientRowFragment = {
   createdDatetime?: string | null;
   isDeceased: boolean;
   dateOfDeath?: string | null;
+  propertiesV2?: any | null;
   document?: { __typename: 'DocumentNode'; name: string } | null;
   programEnrolments: {
     __typename: 'ProgramEnrolmentConnector';
@@ -206,6 +207,7 @@ export type PatientsQuery = {
       createdDatetime?: string | null;
       isDeceased: boolean;
       dateOfDeath?: string | null;
+      propertiesV2?: any | null;
       document?: { __typename: 'DocumentNode'; name: string } | null;
       programEnrolments: {
         __typename: 'ProgramEnrolmentConnector';
@@ -635,6 +637,7 @@ export const PatientRowFragmentDoc = gql`
     }
     isDeceased
     dateOfDeath
+    propertiesV2
     programEnrolments {
       ... on ProgramEnrolmentConnector {
         __typename

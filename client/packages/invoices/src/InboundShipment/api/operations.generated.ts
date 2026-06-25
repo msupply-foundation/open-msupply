@@ -38,6 +38,7 @@ export type InboundLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    propertiesV2?: any | null;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
@@ -196,6 +197,7 @@ export type InboundFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        propertiesV2?: any | null;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
@@ -541,6 +543,7 @@ export type InvoiceQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
+              propertiesV2?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -801,6 +804,7 @@ export type InboundByNumberQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
+              propertiesV2?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
