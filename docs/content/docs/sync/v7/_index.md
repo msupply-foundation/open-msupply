@@ -1,234 +1,11 @@
-# Sync V7
-
-[Introduction](#introduction)
-
-[Conventions](#conventions)
-
-[References](#references)
-
-[Non-technical Overview](#non-technical-overview)
-
-[Terminology](#terminology)
-
-[Offline vs Online](#offline-vs-online)
-
-[Sync in simple terms](#sync-in-simple-terms)
-
-[Principles](#principles)
-
-[Central server notes](#central-server-notes)
-
-[Exceptions to the One Direction rule](#exceptions-to-the-one-direction-rule)
-
-[Technical requirements](#technical-requirements)
-
-[V7 Sync](#v7-sync)
-
-[The Changelog](#the-changelog)
-
-[Changelog Logic](#changelog-logic)
-
-[store\_id justification for inclusion](#store_id-justification-for-inclusion)
-
-[transfer\_store\_id justification for inclusion](#transfer_store_id-justification-for-inclusion)
-
-[patient\_id justification for inclusion](#patient_id-justification-for-inclusion)
-
-[Considerations](#considerations)
-
-[Other uses of changelog](#other-uses-of-changelog)
-
-[No database mutations allowed outside of the application logic](#no-database-mutations-allowed-outside-of-the-application-logic)
-
-[Performance considerations](#performance-considerations)
-
-[Conflict considerations](#conflict-considerations)
-
-[Implementation details](#implementation-details)
-
-[changelog filter](#changelog-filter)
-
-[Cursor](#cursor)
-
-[source\_site\_id](#source_site_id)
-
-[Sync Type Specific Filters](#sync-type-specific-filters)
-
-[Limits and Order](#limits-and-order)
-
-[Example Pull](#example-pull)
-
-[Example Push](#example-push)
-
-[Sanity check](#sanity-check)
-
-[de-duplication](#de-duplication)
-
-[Alternatives to de-duplication](#alternatives-to-de-duplication)
-
-[Performance considerations of de-duplication](#performance-considerations-of-de-duplication)
-
-[Filter overrides](#filter-overrides)
-
-[Implementation details](#implementation-details-1)
-
-[Sync\_buffer and atomic batch sync](#sync_buffer-and-atomic-batch-sync)
-
-[Shape of the Sync\_Buffer](#shape-of-the-sync_buffer)
-
-[Uniqueness of record\_id](#uniqueness-of-record_id)
-
-[Logic of Sync\_buffer](#logic-of-sync_buffer)
-
-[Historic records](#historic-records)
-
-[Consideration to keep all states of sync\_buffer](#consideration-to-keep-all-states-of-sync_buffer)
-
-[Consideration errors](#consideration-errors)
-
-[Implementation details](#implementation-details-2)
-
-[Central api and sync\_record](#central-api-and-sync_record)
-
-[Common parameters](#common-parameters)
-
-[Site Status](#site-status)
-
-[Pull](#pull)
-
-[Consideration](#consideration)
-
-[Push](#push)
-
-[SyncBatch](#syncbatch)
-
-[sync\_record](#sync_record)
-
-[Implementation details](#implementation-details-3)
-
-[Store Merge](#store-merge)
-
-[The Synchroniser](#the-synchroniser)
-
-[Sync Driver](#sync-driver)
-
-[Push synchronisation](#push-synchronisation)
-
-[Consideration of push before pull](#consideration-of-push-before-pull)
-
-[wait\_for\_integration](#wait_for_integration)
-
-[Pull synchronisation](#pull-synchronisation)
-
-[Integrate](#integrate)
-
-[sync\_log](#sync_log)
-
-[Implementation details](#implementation-details-4)
-
-[Translation and Integration of sync records](#translation-and-integration-of-sync-records)
-
-[Foreign key constraint order](#foreign-key-constraint-order)
-
-[Sanity Check](#sanity-check-1)
-
-[Translation](#translation)
-
-[Transaction](#transaction)
-
-[Transaction performance](#transaction-performance)
-
-[Central Site push Integration](#central-site-push-integration)
-
-[Use case of the same record pushed by multiple sites](#use-case-of-the-same-record-pushed-by-multiple-sites)
-
-[Progress tracking](#progress-tracking)
-
-[Implementation details](#implementation-details-5)
-
-[Initialisation of new Sites](#initialisation-of-new-sites)
-
-[App initial state](#app-initial-state)
-
-[Initialisation mode](#initialisation-mode)
-
-[Synchroniser](#synchroniser)
-
-[Synchroniser: Implementation details](#synchroniser:-implementation-details)
-
-[Store and patient re-sync](#store-and-patient-re-sync)
-
-[Store re-syncs](#store-re-syncs)
-
-[Patient re-syncs](#patient-re-syncs)
-
-[Patient data visibility](#patient-data-visibility)
-
-[Transfers](#transfers)
-
-[Example Transfer](#example-transfer)
-
-[Transfer Processors](#transfer-processors)
-
-[Merging](#merging)
-
-[Merging Considerations](#merging-considerations)
-
-[Patient Lookup](#patient-lookup)
-
-[Lookup](#lookup)
-
-[Lookup Considerations](#lookup-considerations)
-
-[Patient data sync](#patient-data-sync)
-
-[Patient data sync Considerations](#patient-data-sync-considerations)
-
-[Prescriber lookup](#prescriber-lookup)
-
-[Compatibility](#compatibility)
-
-[Tests](#tests)
-
-[Consideration](#consideration-1)
-
-[Tables](#tables)
-
-[Site](#site)
-
-[Store](#store)
-
-[key\_value\_store](#key_value_store)
-
-[changelog](#changelog)
-
-[sync\_buffer](#sync_buffer)
-
-[sync\_log](#sync_log-1)
-
-[name\_store\_join](#name_store_join)
-
-[Specifications for specific tables](#specifications-for-specific-tables)
-
-[Users](#users)
-
-[Patients](#patients)
-
-[Patient Visibility](#patient-visibility)
-
-[Remote patient lookup](#remote-patient-lookup)
-
-[What happens in v5?](#what-happens-in-v5?)
-
-[V7 Specification](#v7-specification)
-
-[Assets](#assets)
-
-[Security](#security)
-
-## 
-
-# **Introduction** {#introduction}
++++
+title = "Sync V7"
+weight = 30
+sort_by = "weight"
+template = "docs/section.html"
++++
+
+# Introduction {#introduction}
 
 This document details the Sync V7 specification. 
 
@@ -274,7 +51,7 @@ The sync (short for synchronisation) system is how Open mSupply implements offli
 
 Sync is a Hub and Spokes model, or Star Network:
 
-![sync_v7_simple_terms](./sync_v7_simple_terms.drawio.svg)
+![sync_v7_simple_terms](./images/sync_v7_simple_terms.drawio.svg)
 
 #### **Principles** {#principles}
 
@@ -379,14 +156,9 @@ Notes on backend handling:
 
 * When records are being mutated by the site itself (graphql mutation, side effect, etc..), current site id is queried from key\_value\_store (cached)
 
-* **store\_id**, **transfer\_store\_id** and **patient\_id** are set based on record sync type, these fields need to be available on the record and sometimes are de-normalised (for example invoice\_line will have store\_id and transfer\_store\_id even though those can be deduced from invoice, also invoice\_line may have patient\_id based on invoice type, if it’s related to a patient)
+* **store_id**, **transfer_store_id** and **patient_id** are set based on record sync type, these fields are not always available on the record itself and will need to be queried based on related record when they are updated during normal operations. However when records are integrated via sync, these fields will be populated from sync_buffer which in turn is populated from sync_record, and sync_record will have these fields populated from changelog (full circle)
 
-* ~~Otherwise, if store\_id and/or name\_id are required for the record sync\_type~~  
-  * ~~Use current record store\_id and/or name\_id if they exist on the record~~  
-  * ~~Query for related record\_store\_id and/or name\_id (i.e. invoice\_line queries invoice)~~  
-* ~~Discuss Propo	sal: add store\_id and name\_id to every record that currently has just store\_id~~  
-  * ~~I.e. It would mean~~   
-    * ~~Migration for existing records and making sure those are set correctly throughout all of the code base, vs as currently, just being separated to just insert changelog/sync. However if they are made compulsory fields it would be easy enough to make sure they are set, and a lot more performant when inserting change log. I think I would rather add them to every record.~~
+(TODO: here a link to all sync types and explanation about how/when they sync, what actual tables relate to what type should really be in code).
 
 ##### store\_id justification for inclusion {#store_id-justification-for-inclusion}
 
@@ -415,23 +187,32 @@ Changelog is also used by **processors**, either for core logic like creating tr
 
 #### **No database mutations allowed outside of the application logic** {#no-database-mutations-allowed-outside-of-the-application-logic}
 
-No code is allowed to mutate our database should never be mutated manually, as this will bypass application logic
+Manual database manipulations will bypass application logic and mess with changelog, they should not be allowed and the risk needs to be communicated to support
 
-Draft: Footrunner and old ways (allow fixing data somehow), changelog will need to be added, we also have checks to ‘reject’ records that are owned, but are received via sync
+TODO: Outline strategy for data fixes, if they need to happen, with equivalant effect to footrunner code and manual database fixes that were done in OG.
 
 ### **Performance considerations** {#performance-considerations}
 
-Draft: We want to reduce the effect of changelog insert on operations that require it, changelog will be the biggest table in the database and adding to a huge index will become an issue. This will be a problem for a central site, vs remote site (validate this), since the central site will use postgres, we can use partitioning to deal with this. See changelog partitioning section (Draft add, it touches more then just changelog inserts, also filtering/routing)
+We want to reduce the effect of changelog insert on operations that require it, changelog will be the biggest table in the database and adding to a huge index will become an issue. This will be a problem for a central site, vs remote site (validate this), since the central site will use postgres, we can use partitioning to deal with this.
 
-Draft: We will also have duplicates in the changelog, we are deliberately not dealing with those when changelogs are being inserted, to keep the operation lean. These will need to be removed on a schedule
+We ran an insert-rate benchmark on Postgres to confirm this and to test partitioning as a fix. Summary:
+
+* With only the primary key, inserts stay flat at \~80K rows/s across 100M rows.  
+* With the v7 secondary indexes (`source_site_id`, `store_id`, `transfer_store_id`, `patient_id`), insert rate collapses more than 10× before reaching 100M rows, because each insert writes to random spots in indexes that no longer fit in cache.  
+* Range-partitioning by `cursor` (5M rows per partition) keeps each partition's indexes small enough to stay in cache. Insert rate oscillates in a sawtooth but does **not** trend downward — performance at 100M rows matches performance at 10M rows.  
+* Partitions will be maintained by a scheduled task in the Rust server (the same task that runs changelog deduplication), not by `pg_partman`.
+
+Full test method, results on two servers, and proposed partitioning/migration strategy: [changelog bench summary](https://github.com/msupply-foundation/open-msupply/blob/develop/server/sync_v7_investigation/changelog/results/bench_summary.md).
+
+We will also have duplicates in the changelog, we are deliberately not dealing with those when changelogs are being inserted, to keep the operation lean. These will need to be removed on a schedule
 
 ### **Conflict considerations** {#conflict-considerations}
 
-Draft: There needs to be a way to make sure that when changelogs are added (say in a big transaction during sync), and there is another sync or processor running that is using those changelogs, that we don’t ‘skip’ changelogs that are still inside transaction, there was implementation of [this done here](https://github.com/msupply-foundation/open-msupply/pull/3904), but this means any operations on changelog will completely lock any other operations (so 1 site sync at a time). Quick thought is to overcome this by making sure we ‘cache’ changelog inserts when they happen in a transaction and only do the lock at the very end when changelogs are ‘flushed’ to the database.
+When changelogs are inserted inside a large transaction (e.g. sync integration) while another consumer (a different sync, or a processor) is reading the changelog, a cursor-based reader must not **skip** entries that are still inside an uncommitted transaction. Under PostgreSQL's default Read Committed isolation the `changelog.cursor` sequence is allocated outside the transaction but the row only becomes visible on commit, so a reader can see a non-contiguous set of cursors (e.g. `[1, 3]` while `2` is still in flight) and advance past the gap — permanently missing cursor `2` once it commits. SQLite is unaffected (Serializable isolation, no concurrent writers).
 
-CP: could add another system to sorta pub/sub it \- i.e. give the processors a task queue (table) that is added to within the transaction. When sync is done the processors should have all the new committed tasks to do.
+The implemented solution is a **Rust-side in-flight cursor tracker** rather than a table lock. A manager-owned map records, per connection per transaction, a lower bound on the cursors that transaction will produce (registered on its first changelog insert, removed on the outermost commit/rollback). Readers clamp `query()` and `max_cursor()` to `min(in-flight bounds) - 1`, so they only ever read cursors guaranteed to be gap-free. Unlike the earlier table-lock approach, writers are never blocked by readers; a reader near an unrelated long-running transaction simply returns fewer rows and catches up on its next cycle.
 
-CP: End of sync integration could move all cursors back. E.g. transfer processor cursor 1000, sync\_buffer integration earliest changelog cursor is 900, move all processor cursors \> 900 back to 900\. They’d have to be idempotent when potentially reprocessing records they’ve gone over (such as changelog 1000), which we already do (to not accidentally create a transfer twice\!). With this, there does not need to be a lock on changelog.
+The full investigation — the five approaches explored (table lock, lower lock levels, Postgres-internals gap detection, the Rust tracker, cursor rollback) and why the tracker was chosen — is in the [changelog locking investigation](https://github.com/msupply-foundation/open-msupply/blob/develop/server/sync_v7_investigation/changelog/locking/README.md).
 
 What this solution might not be suitable for is sync cursors, as it may result in sending records that are already sent. E.g. sync is running from 900, it’s progressing to 1000\. Concurrently an invoice is being updated in a transaction occupying 940-950. If we set the sync cursor back to 940, we’d potentially be resyncing 950-1000.
 
@@ -450,6 +231,8 @@ Draft: Here we talk about the abstractions for V7 and implementation details
 ## **changelog filter** {#changelog-filter}
 
 There are two sync directions, from remote site to central server (push) and from central server to remote site (pull), in both cases we need to determine how many total records need to be sent (for progress indication) and what records to sync in the current batch. Database level filter on changelog is used for this.
+
+> The routing filter, cursor windowing, de-duplication and the **full generated SQL** of the pull query are documented on a dedicated page: [Changelog filter, windowing & de-duplication](../changelog-filter/). The sections below summarise the conceptual structure.
 
 ### **Cursor** {#cursor}
 
@@ -472,6 +255,23 @@ Additional filters are separated by an OR condition and are based on a sync type
 
 * Matching any table\_names for the given sync type  
 * AND matching site specific criteria for the sync type
+
+### **Sync rules per sync style** {#sync-rules-per-sync-style}
+
+The push and pull behaviour for each sync style is summarised below. The push side is the same for every style that pushes at all: the site sends records where `source_site_id` equals its own site id. This is set by application logic at the point of mutation and is not trusted from the client. The pull side varies by style and is the OR of the per-style conditions in the Example Pull query.
+
+| Sync style | Push from a remote site | Pull to a remote site |
+| :---- | :---- | :---- |
+| Central | Not applicable. Central data is only edited on the central server. | Pulled when both `store_id` and `patient_id` are null on the changelog row. The `patient_id` exclusion lets tables that mix Central and Patient routing (e.g. Name, which is Central + Patient) route patient rows via the Patient condition instead. |
+| Remote | The site pushes records it owns, identified by `source_site_id` matching the site. | Pulled when `store_id` is one of the active stores on the site. The anti-circular condition (`source_site_id != site_id`) is skipped during initialisation. |
+| Transfer | Same as Remote. | Pulled when `transfer_store_id` is one of the active stores on the site. |
+| Patient | Same as Remote. | Pulled when `patient_id` is visible to one of the active stores on the site, via `name_store_join`. |
+| File | Handled by the file sync pipeline, not by this changelog flow. | Handled by the file sync pipeline. |
+| RemoteToCentral | Same as Remote: the site pushes records with `source_site_id` matching the site. | Never pulled back to a remote site. This is the difference from Remote — Remote records can flow back to a remote site (during initialisation, or when a store is re-synced); RemoteToCentral records cannot. Used today for `ContactForm` and `SystemLog`. |
+
+Tables that have more than one sync style (for example `Invoice`, which is Remote + Transfer + Patient; `Name`, which is Central + Patient) are pulled if any of the applicable conditions match. This is the OR in the Example Pull query.
+
+> For the authoritative per-table classification — which sync style(s) each table has, what changelog metadata each populates, the exact outgoing filters, and the translation directions per transport — see the [Sync styles, changelog generation & outgoing filters](../sync_styles/) reference. It is generated from the code and is the source of truth for the table-by-table detail this section summarises.
 
 ### **Limits and Order** {#limits-and-order}
 
@@ -515,9 +315,21 @@ We want to deal with these use cases when considering validation and sanity chec
 
 `note:` at the time of this writing, we are not intending to support bespoke sync clients, thus a mechanism for making sure data is consistent with our business rules is not planned 
 
-For 1, there is a basic sanity check to examine sync_buffer record and make sure it can be integrated based on it's sync type, store_id, transfer_store_id and patient_id
+For 1, there is a basic sanity check to examine sync_buffer record and make sure it can be integrated based on its sync style, `store_id`, `transfer_store_id` and `patient_id`. The rules mirror the pull side: a record is accepted on the receiving site if at least one of its sync styles' checks passes, the same OR semantics as the pull filter.
 
-TODO: Implementer to update this doc with all of the rules ([examples in the prototype](https://github.com/msupply-foundation/open-msupply/blob/v7-prototype/server/service/src/sync_v7/validate.rs))
+| Sync style | On the central server when receiving from a remote site | On a remote site when receiving from the central server |
+| :---- | :---- | :---- |
+| Central | Reject. Central data can only be edited on the central server. | Accept when both `store_id` and `patient_id` are null. Records with either field set are meant to route via another style (e.g. patient rows of Central + Patient tables). |
+| Remote | Accept when `store_id` is present. Source site identity is verified by token authentication. | Accept when `store_id` is one of the active stores on this site AND the site is initialising. Post-init, a record for one of our own stores is treated as an escaped own-echo (Central's pull filter excludes `source_site_id == requesting_site`, so it should never have arrived) and rejected. Pre-init the same record is legitimate hydration of historical data and is accepted. |
+| Transfer | Accept (alongside the Remote check on the same record, where applicable). | Accept when the record's `transfer_store_id` is an active store on this site. |
+| Patient | Accept when `patient_id` is present. The source site is authenticated. | Accept when `patient_id` is present. The central pull filter has already gated patient visibility for this site. |
+| File | Accept when `store_id` and `patient_id` are null — File rows carry no routing metadata. The file blob itself is handled by the file sync pipeline. | Accept when `store_id` and `patient_id` are null. The file blob itself is handled by the file sync pipeline. |
+| ToLegacyCentralOnly | Reject — v7 does not carry these records. | Reject — v7 does not carry these records. |
+| RemoteToCentral | Accept unconditionally. There is no record-level invariant to verify — auth establishes the sender, and `store_id` is set for some tables (e.g. `ContactForm`) but absent for others (e.g. `SystemLog`) which are site-scoped rather than store-scoped. | Reject — these records are deliberately one-way and are never sent back to a remote, including on re-initialisation. |
+
+A record can have more than one sync style (e.g. `Invoice` is Remote + Transfer + Patient). A row is accepted if at least one of its styles' checks passes, mirroring the OR semantics of the pull filter.
+
+When a sanity check rejects a record, the rejection reason is written to the sync buffer row's `integration_error`, the row is marked integrated so it is not retried, and sync continues to the next record. A partial inconsistency is preferred over total sync failure (see [Consideration errors](#consideration-errors)).
 
 For 2, it would be a hard and would impact performance to
 
@@ -573,40 +385,21 @@ Is it worth having a sanity check at the time of push ? There is a potential of 
 </details>
 
 
-
 ### **de-duplication** {#de-duplication}
 
 Changelog records are generally append only to minimise overhead to updating records in general, thus there will be multiple changelogs for the same record. 
 
-Reasons for de-duplication:
+Previous reasons for de-duplication:
 
-1. To avoid syncing or processing the record multiple times by only  considering the latest action for any particular record.  
+1. To avoid syncing or processing the record multiple times by only considering the latest action for any particular record.  
 2. De-duplication can also help reduce conditions when processing changelog, for example when a record is deleted it would have at least two entries in changelog, upsert followed by delete. If changelog is not deduped then when processing it, we would need to deal with a condition that a record may not exist at all, even though it has upsert operation.
 
-#### **Alternatives to de-duplication[^3]** {#alternatives-to-de-duplication}
+Changelog table will grow over time to be very big as it has a row for every record in every other table in the database. As it's the core mechanism for selecting what records to pull from COMS we need to minimise overhead of querying the changelog to maintain high performance of COMS. Although various optimisations can be done to indexing and queries, the best solution of the problem is sometimes the absence of the problem. We shouldn't try to de-duplicate on the go, only do it as a scheduled task, allow for duplicates and deal with those in application logic. This would mean:
 
-1. Return a response when attempting to fetch a deleted record that equates to if the row being fetched was deleted. This adds a conditional statement to each record fetch which might not be good.  
-2. When inserting a record in the changelog with a DELETE action, do one of hte following  
-   1. Delete all prior changelog records for that record.  
-   2. Update all prior records to have a “DELETE” action rather than UPSERT  
-3. James’s fix for SL: before sync do a quick single query clean up deleting duplicate changelog records  
-4. CP: When reading a changelog upsert, we have to read the related record in order to do anything with it. If that record does not exist, we should gracefully delete the changelog (if another process hasn’t already 😉) and skip it. (This is what OG does for both sync\_out and central\_change\_log). This would not solve multiple “upserts” in the change log, just make it robust to “U” with since deleted related records.
-
-Here is the ratio of actions in the db I have
-
-![][image2]
-
-\>\> doing a query on the very rare occasion of a adding a DELETE record to the changelog is much less work than running an expensive query all the time.
-
-\>\> CP: you have a very small datafile ;-). Try adding an internal order with 1000+ master list lines, then pruning 900 of them when sent\! 
-
-\>\> CD: bring data from a large file- still 20:1 ratio?
-
-#### **Performance considerations of de-duplication** {#performance-considerations-of-de-duplication}
-
-de-duplication creates substantial overhead and drastically impacts query speed, we may consider only doing this when pushing from a remote site (to avoid freshly added and deleted records syncing twice), and not doing it at all when pulling records from central. The combination of scheduled cleanup de-duplication and perhaps running cleanup de-duplication of changelogs on remote sites before sync should reduce/eliminate the need for de-duplication in changelog filters during sync. de-duplication may still happen during processor operations.
-
-There is also a more performant way to do de-duplication, by applying changelog filter prior to de-duplication. We can also restrict changelog filters by cursor range, as a guesstimate of **batch\_size** to reduce initial condition even further.
+1. If records that are reference by changelog are not found in database, skip them rather then surfacing errors
+2. We will not have reliable 'count' of changelogs based on a particular filter, thus the progress indications will need to be changed from 'counts' to percentages of current cursor progress to max cursor
+3. When a batch of particular size is being prepared (say for sync), and there we have a scenario from 1, then application logic will re-query changelog until batch is full
+4. Together with sync_buffer being append only, after ROMS pulling from COMS we may have multiple operations in sync_buffer for the same record, in order to deal with this, we would de-duplicate in application logic (see the [sync_buffer investigation](https://github.com/msupply-foundation/open-msupply/blob/develop/server/sync_v7_investigation/sync_buffer/sync_buffer.md) for the append-only design and de-duplication rationale)
 
 #### **Filter overrides** {#filter-overrides}
 
@@ -616,7 +409,37 @@ See re-syncing data for more detail
 
 #### **Implementation details** {#implementation-details-1}
 
-Draft: Here we talk about dynamic filtering with diesel, and how it can be serialized/deserialized and sent. Also how we can store temporary cursors for new stores or new patient sync. And how sync types fit together with filters
+The filter is a serialisable AST (`ChangelogCondition::Inner`) built per request from the parameters in the [Pull](#pull) call. It serialises to JSON for transport in the optional `filter` field, and on the central server it deserialises and compiles to a boxed Diesel `WHERE` expression applied to a four-join changelog query.
+
+We left-join `store` three times so the filter can reach `site_id` via any of the three routing paths in a single query — directly via `store_id`, via `transfer_store_id` (aliased as `transfer_stores`), and via `name_store_join` then `store` (aliased as `patient_stores`):
+
+```mermaid
+flowchart LR
+    cl[changelog]
+    s[store]
+    ts["transfer_stores<br/>(alias of store)"]
+    nsj[name_store_join]
+    ps["patient_stores<br/>(alias of store)"]
+    cl -- "store_id = store.id" --> s
+    cl -- "transfer_store_id = id" --> ts
+    cl -- "patient_id = name_id" --> nsj
+    nsj -- "store_id = id" --> ps
+```
+
+All edges are LEFT JOINs, so changelog rows with none of those keys set (e.g. central data) still appear. Filter fields map onto the diagram as follows:
+
+| Filter field | Column reached | Used by sync type |
+| :--- | :--- | :--- |
+| `store_id` | `changelog.store_id` | Remote |
+| `transfer_store_id` | `changelog.transfer_store_id` | Transfer |
+| `patient_id` | `changelog.patient_id` | Patient |
+| `site_id` | `store.site_id` | Remote (owning site) |
+| `transfer_site_id` | `transfer_stores.site_id` | Transfer |
+| `patient_site_id` | `patient_stores.site_id` | Patient |
+
+Temporary cursors for store and patient re-syncs (see [Store re-syncs](#store-re-syncs)) reuse the same machinery — a new filter is built with the relevant field constrained to the specific store or patient, serialised, and sent in the `filter` parameter alongside a temporary cursor starting at 0.
+
+For the macro that generates the filter AST and the recipe for declaring the joined `Source` type, see [Conditional Filters](https://dev-docs.msupply.foundation/server/repository/).
 
 ### **Sync\_buffer and atomic batch sync** {#sync_buffer-and-atomic-batch-sync}
 
@@ -639,27 +462,46 @@ Above, together with a promise that database operations and their side effects a
 
 #### **Shape of the Sync\_Buffer** {#shape-of-the-sync_buffer}
 
-sync\_buffer is essentially a copy of sync\_record, it contains all of the information required to save the record in a database, it’s basically a changelog, including the data of the records itself in a json form.
+sync\_buffer is essentially a copy of sync\_record, it contains all of the information required to save the record in a database, it’s basically a changelog, including the data of the records itself in a json form. For v7, we alter the existing sync\_buffer table to be compatible with both v7 and older versions of sync
 
 * **table\_name** and **record\_id** identify a record, it’s unique in sync\_buffer by **record\_id**  
-* **row\_action** determines if it’s UPSERT or DELETE  
-* **source\_site\_id** records the origin of the record  
+* **row\_action** determines if it’s UPSERT or DELETE for v7. MERGE variant is maintained for sync v5 and v6 
+* **source\_site\_id** records the origin of the record 
+* **transfer_store_id**, **store_id**, **patient_id** to populate changelog record
 * **data** is used to store a json version of the record  
 * **received\_datetime**, **integration\_datetime** and **error** fields keep track of integration status
 
-#### **Uniqueness of record\_id** {#uniqueness-of-record_id}
+#### **Append-only, cursor as primary key** {#append-only-cursor-as-primary-key}
 
-**record\_id** is the primary key and there will only be one version of the record in sync buffer, all mutations on sync\_buffer are upserts by **record\_id**.
+sync\_buffer is **append-only**. Every sync record received is inserted as a new row; **record\_id is not unique**. The primary key is **cursor** (BIGINT auto-increment). The only in-place mutations after insert are setting **integrated\_datetime** and **error**.
+
+This was validated by benchmark — upserts by **record\_id** under partitioning required a CTE delete-then-insert to keep uniqueness across partitions, which costs ~20–30% on writes. Append-only avoids that entirely, and as a bonus preserves full sync history for free (see [Historic records](#historic-records)).
+
+Queries that need "latest version of record X" use a `DISTINCT ON (record_id) ... ORDER BY cursor DESC` pattern. The hot integration path iterates by **cursor** ascending and naturally sees the latest version last.
 
 #### **Logic of Sync\_buffer** {#logic-of-sync_buffer}
 
-sync\_record can be deserialised directly into sync\_buffer, and sync\_buffer is saved in the database upon receival, if records already exist, **received\_datetime**, **integration\_datetime** and **error** are reset.
+sync\_record can be deserialised directly into sync\_buffer, and sync\_buffer is saved in the database upon receival as a new row (append-only — no conflict handling on **record\_id**).
 
 When records are integrated they are integrated based on **source\_site\_id**. The central server may be in the process of receiving data from multiple sites, and should only integrate data for a site that’s finished its push entirely.
 
-**integration\_datetime** allows for records to be marked as integrated and filtered to be excluded in future integrations. 
+**integration\_datetime** allows for records to be marked as integrated and filtered to be excluded in future integrations.
 
 **error** is populated if there is error in integration.
+
+#### **Performance and partitioning** {#sync_buffer-performance-and-partitioning}
+
+We ran a scaling benchmark on the sync\_buffer design (single table + partial index vs several LIST-partitioned variants) up to ~75M rows. Summary:
+
+* Indexes for the queries we care about don't grow unbounded — they scale with the number of *pending* rows, which is stable in steady state, not with total table size.
+* A partial index on pending rows *looks* equivalent to partitioning but query latency still creeps up as the table grows, because pending-row heap fetches get scattered across a bigger and bigger table. At ~60M rows, `basic` filtered queries crept to ~76–96 ms.
+* LIST-partitioning on `(is_integrated)` keeps pending rows co-located in one small partition and holds query latency flat (~40–50 ms at 75M rows). Bulk mark-integrated is also ~2–3× faster.
+* Further sub-partitioning the done side by `cursor` range wasn't measurably better for the workloads tested — revisit only if we add operations that scan the done partition.
+* Ordering queries by **cursor** (monotonic PK) rather than **received\_datetime** is preferred — it uses the PK directly and is not sensitive to clock movement.
+
+Recommended strategy: append-only (above), with LIST partitioning by `is_integrated BOOLEAN` on the central server. Remote sites can run unpartitioned (pending set is small).
+
+Full test method, results, and schema proposal: [sync\_buffer investigation](https://github.com/msupply-foundation/open-msupply/blob/develop/server/sync_v7_investigation/sync_buffer/sync_buffer.md).
 
 ### **Historic records** {#historic-records}
 
@@ -690,20 +532,29 @@ The central server exposes two endpoints that allow the remote site to initiate 
 
 And additional endpoint to query for status of sync site, **site\_status**.
 
-All three are HTTP POST requests, with error handling done entirely through the response, not using HTTP statuses to simplify error handling and general implementation.
+All three are HTTP POST requests. Error handling is done through the response body; every response returns HTTP 200 with the result encoded in the body, with one exception: **401** is reserved as a signal a proxy can use for rate limiting. This keeps error handling and general implementation simple.
 
-Using the json body of the request to specify parameters.
+Authentication is sent via HTTP headers; endpoint-specific parameters are sent in the JSON body.
 
-#### **Common parameters** {#common-parameters}
+#### **Common headers** {#common-headers}
 
-* **name** name of the site  
-* **passwordHash** hashed password for the site  
-* **hardwareId** unique hardware identifier, only one instance of a site can exist  
-* **version** site sync version to validate compatibility
+These headers are sent on every authenticated request (push, pull, site\_status):
 
-For all endpoints, the first step is authentication, checking name and passwordHash, then checking or setting hardwareId. Followed by a version check and a site status check.
+* **Authorization: Bearer \<token\>** — token allocated during initial login (see [Sanity check and record validation](#sanity-check-and-record-validation))
+* **hardware-id** — unique hardware identifier
+* **app-version** — site sync version, used to validate compatibility
 
-Successful authentication will result in **site\_id** being passed to the endpoint logic.
+For all authenticated endpoints, the first step is to look up the site by token, then check that the supplied HardwareId matches the one bound to the site at login. Followed by a version check and a site status check.
+
+Authentication is performed at the application level inside each handler, not as middleware; this lets the handler return the resolved **site\_id** and **version** to downstream sync\_buffer / changelog logic.
+
+Successful authentication results in **site\_id** being passed to the endpoint logic.
+
+Token format is a UUID for the V7 MVP. JWT may be adopted later.
+
+#### **Initialisation (get\_site\_info)** {#initialisation-get_site_info}
+
+Initialisation is a separate endpoint that allocates the token. It does **not** use the headers above; instead it takes site name + hashed password (Basic-auth-style credentials) plus the hardwareId and version in the JSON body. On success the response contains the allocated **token**, **siteId**, and **centralSiteId**. See [Sanity check and record validation](#sanity-check-and-record-validation) for the full token lifecycle (allocation, single-use, admin clear).
 
 #### **Site Status** {#site-status}
 
@@ -748,11 +599,7 @@ A common shape in the request of the **push** and response of the **pull**
 
 #### **Sync\_record** {#sync_record}
 
-```ts
-CP: I can't delete this code block help lol
-```
-
-A **cursor** of the current record, coming from the change log. And a serialized version of sync\_buffer row (and can be deserialized straight into sync\_buffer) This sync record can be produced by a common function, built from a changelog and a query for the related record
+A **cursor** of the current record, coming from the change log, and a serialized version of sync\_buffer row (can be deserialized straight into sync\_buffer). This sync record can be produced by a common function, built from a changelog and a query for the related record
 
 #### **Implementation details** {#implementation-details-3}
 
@@ -821,7 +668,7 @@ For each step it has the following fields (prefixed by the step name)
 
 As well as overall **started\_datetime** and **finished\_datetime** along with an error field to record any error in any of the steps (unless deliberately skipped, like in the wait\_for\_integration step).
 
-Draft: Should be able to call Synchroniser with overriding push filter, pull filter, cursor and extra sync\_buffer identifier. See adding store and patient lookup.
+This is implemented as the **`sync_request`** mechanism: an auxiliary sync run can override the push filter, pull filter and cursor, and stamps the records it buffers with its own `reference_id` so they integrate separately from the main sync. It is used for store transfers and post-migration table re-syncs. See [Store re-syncs](#store-re-syncs) for the full mechanism.
 
 #### **Implementation details** {#implementation-details-4}
 
@@ -844,11 +691,9 @@ Within a definition of each record, there is a dependency array, it is used to c
 
 #### **Sanity Check** {#sanity-check-1}
 
-A simple sanity check is used to check if a record can be integrated on this site. 
+Before a record is translated and integrated, the sanity check confirms it is consistent with its sync style on this site. The full per-style rules are described in [Sanity check and record validation](#sanity-check). On rejection, the reason is written to `integration_error`, the sync buffer row is marked integrated, and processing continues with the next record.
 
-Draft: Rules to be written out, an example, on a central site don’t integrate any central record via sync, allow all central record types to be integrated on remote, remote record being integrated on remote site only allowed when transfer transfer\_store\_id matches store\_id active on site, otherwise only remote record that are allowed are the ones with store\_id matching active store on site, but only during initialisation.
-
-[OG sync v5](https://github.com/msupply-foundation/msupply/blob/acdefd4ef9f32b90e55ded6936b27846822beb5d/Project/Sources/Methods/syncV5CentralProcessSyncRecord.4dm#L93-L201) has rules to prevent changes of record ownership or modification of unowned records during sync buffer integration
+[OG sync v5](https://github.com/msupply-foundation/msupply/blob/acdefd4ef9f32b90e55ded6936b27846822beb5d/Project/Sources/Methods/syncV5CentralProcessSyncRecord.4dm#L93-L201) has rules to prevent changes of record ownership or modification of unowned records during sync buffer integration; the v7 sanity check above plays the same role.
 
 #### **Translation** {#translation}
 
@@ -913,25 +758,62 @@ Draft: Front end will know the status, if initialised or not, and can change syn
 
 ## **Store and patient re-sync** {#store-and-patient-re-sync}
 
-### **Store re-syncs** {#store-re-syncs}
+### **Store re-syncs (and auxiliary sync via `sync_request`)** {#store-re-syncs}
 
-When a store is moved to a remote site, we need to re-sync all of its data, this poses a challenge since we don’t want to re-sync data for other stores we have active on the site, so full re-initialisation is out of the question. However we can request the central server to filter by this store id, rather than all stores active on site, and use a temporary cursor that starts at 0\.
+When a store is moved to a remote site, we need to re-sync all of its data. This poses a challenge since we don’t want to re-sync data for other stores we have active on the site, so full re-initialisation is out of the question. Instead we ask the central server to filter by this store’s id (rather than all stores active on the site), pull those records, and integrate them — using a **temporary cursor that starts at 0** so we get the store’s full history, not just changes since the main cursor.
 
-* **sync\_message** is sent to remote site asking for store to be re-initialised  
-* When this message is processed a new temporary cursor is created together with a new filter that will filter by this new store\_Id, following that a manual trigger of sync with this new cursor is queued.  
-* Manual trigger will trigger Synchroniser, will will use provided cursor and filter do to the pull  
-* After successful Synchronisation, the new cursor will be deleted.   
-* If synchronization was not successful, it will be executed before the next normal Synchronization.
+This is generalised into the **`sync_request`** mechanism: an *auxiliary* (a.k.a. special) sync run, parameterised by its own pull/push filter and cursor, that runs **after** the normal main sync each tick. Anything that needs to backfill a subset of records — a transferred store, a re-synced patient, or a newly-added table after a v7 migration (see [Re-sync after a v7 migration](#re-sync-after-v7-migration)) — is expressed as a `sync_request` row.
 
-We have to be careful to not try to integrate part of the sync\_buffer populated by the other sync operation.
+**Mechanism**
 
-Draft: A bit more thought required here, can see edge cases where some of the sync buffer is from normal and some are from store or patient specific sync, we may need to flag sync\_buffer rows as ‘from particular site’ or make sure we fully sync one before the other. 
+* A row is inserted into the **`sync_request`** table (see [Tables](#sync_request)) with a `pull_filter` (a serialised changelog filter, e.g. *all data for store X*), an optional `push_filter`, and a human-readable `description`.
+* After the main sync completes on each tick, the **sync\_request\_runner** forms **one group** of pending (unfinished) requests and runs it as a single auxiliary `SyncRequest`:
+  * If any active rows already carry a `reference_id`, the rows sharing the **first** such `reference_id` form the group — this is an in-flight retry resuming.
+  * Otherwise all active rows are grouped together and assigned a **new uuid `reference_id`**, which is persisted on the rows *before* the run so a crash mid-run is recoverable.
+  * Per-direction filters across the group are **OR**’d together.
+* The group runs with **dynamic temporary cursors** derived from the group `reference_id`: `pull_<reference_id>` and `push_<reference_id>`. These live in `key_value_store`, start at 0, advance as batches are pulled, and are **deleted when the group finishes successfully** so the KV blob doesn’t grow unbounded.
+* Auxiliary requests always run with `is_initialising = true` (the central pull filter and the integration transaction wrapping behave like initialisation, since we’re backfilling full history for the filtered subset).
+* On success every member row is stamped with `finished_datetime` and drops out of the active set. On failure the rows keep their `reference_id`, so the next tick re-picks them as the in-flight group and retries from where the cursor left off.
 
-TODO also mention somewhere about sanity check on central and remote data not being integrated if store was moved (i.e. store is not active anymore for the site that is pushing it, which would protect from multiple sites having the same store active and ledger issues etc..)
+**Keeping auxiliary records isolated from the main sync — important**
+
+The critical correctness property is that an auxiliary run’s buffered records must **never** be integrated by the main sync (and vice-versa). This is enforced through `reference_id`:
+
+* Every `sync_buffer` row carries a nullable **`reference_id`** (a logical FK to `sync_request.reference_id`). The main sync inserts rows with `reference_id = NULL`; an auxiliary run stamps every row it inserts with its group `reference_id`.
+* The integrate step **filters pending `sync_buffer` rows by the run’s `reference_id`**: the main sync only integrates `NULL`-reference rows, and an auxiliary run only integrates rows matching its own `reference_id`. They are integrated as separate, independent batches.
+* This isolation is what makes partial-failure recovery safe. Without it, an auxiliary (special) sync that pulled records into the buffer but failed before finishing integration could be **partially integrated by the next normal sync run** — integrating an incomplete, inconsistent subset of the store’s data. Scoping by `reference_id` guarantees each run only ever sees and integrates its own rows, and a failed run resumes its own leftovers on the next tick.
+
+> Orphan note: removing a `reference_id` (e.g. a request abandoned) without finishing its integrate leaves its rows in `sync_buffer`. Sweeping such orphans is currently out of scope.
+
+**Store-move trigger (`translate_store`)**
+
+The store-move case is detected during the v7 store translation, not via a separate message. When a `store` row arrives on a remote and (a) the site already has that store locally, (b) with a *different* `site_id`, and (c) the new `site_id` is *this* site’s id — that’s a transfer (not the store’s first arrival). The store translation emits a `sync_request` row alongside the store upsert, with `pull_filter = ChangelogFilter::data_for_store(store_id)`. The sync\_request\_runner consumes it on the next tick.
+
+Sanity-check counterpart: central and remote both refuse to integrate records for a store that is no longer active for the pushing site (i.e. the store was moved away). This protects against two sites having the same store active and the resulting ledger issues.
+
+### **Re-sync after a v7 migration** {#re-sync-after-v7-migration}
+
+`sync_request` is also how we backfill records that a site would otherwise **miss when it migrates to v7**.
+
+When a remote site transitions from v5/v6 to v7, it does one last v5/v6 sync and then switches transport. Its v7 **pull cursor is seeded from the v6 cursor position** — i.e. it is already “up to date” with central as of the moment v7 started. The consequence:
+
+* Any records that became v7-eligible **after v7 started on central** but **before this site migrated** sit *behind* the seeded cursor. A normal v7 pull starts from that cursor and **will never re-pull them** — they’re silently skipped.
+* This bites hardest for **tables that are new in v7** (had no v5/v6 translator, so were never pulled on the old transport) and for tables whose v7 coverage was switched on after central’s v7 cutover.
+
+The fix is a **migration that seeds a `sync_request`** per affected table, so the auxiliary runner re-pulls those records (from cursor 0, filtered to just that table) on the next tick — without disturbing the main cursor or re-initialising the whole site.
+
+Two shared helpers in `repository/src/migrations/helpers.rs` make such a migration a few lines:
+
+* `seed_sync_request_for_table(connection, table_name)` — inserts one `sync_request` with `pull_filter = ChangelogCondition::table_name::equal(table_name)` and `reference_id = NULL` (so the runner groups it fresh and assigns a reference on first run).
+* `pull_has_started(connection)` — the fresh-install guard. Returns true only if a pull has run before (checks `sync_log_v7.pull_started_datetime` or `sync_log.pull_central_started_datetime`). On a brand-new site the upcoming initial sync already covers everything, so the seed is skipped and a queued request would just sit unrun.
+
+The precedent is `repository/src/migrations/v3_00_00/seed_sync_request_user_tables.rs`, which guards on `pull_has_started()` then loops `seed_sync_request_for_table` over `user_account`, `user_permission` and `user_store_join`.
+
+> Implication for adding a new table: if you add a table that is **new in v7** (or you turn on v7 coverage for an existing table) and sites are already running v7, you must add a migration that seeds a `sync_request` for it — otherwise already-migrated sites never pull the historic records, only ones changed after the migration. This is called out in the [add-a-table reference docs and skill](#tables).
 
 ### **Patient re-syncs** {#patient-re-syncs}
 
-Similar to store, however we would need to wait for this operation to finish before replying to front end that patient data was synced and is now available.
+Unlike store re-sync (which goes via the auxiliary `sync_request` runner), bringing a patient's data onto a site is done **synchronously and in memory** via the `patient_data_for_site` API call, so the front end can be told immediately that the data is available. See [Patient data sync](#patient-data-sync) for the full flow; the rest of [Patient Lookup](#patient-lookup) covers the search step.
 
 ### **Patient data visibility** {#patient-data-visibility}
 
@@ -989,34 +871,36 @@ Draft: It sounds like there is a use case of order we need to consider for sync\
 
 ## **Patient Lookup** {#patient-lookup}
 
-### **Lookup** {#lookup}
+Remote patient lookup is two separate operations against the central server, both over the **v7 sync API** (not proxied GraphQL): first a **search** to find candidates, then — once the user picks one — a **link + data pull** that makes the patient and their data immediately available locally. Both run synchronously, outside the normal Synchroniser loop.
 
-When a patient is not found locally and central lookup is required, the same graphql query can be proxied from remote site backend to central server. For this, remote site will need to authenticate against COMS with users credentials from user table, and then use acquired token to run the same query against COMS
+### **Lookup (search)** {#lookup}
 
-Central server should allow non active store access for this endpoint, as the store\_id from original query will be used
+When a patient is not found locally, the remote calls the central server's v7 sync **`patient_search`** endpoint with the search filter. Central runs the search against its full name table and returns matching patient candidates. Because this goes over the v7 sync API it uses sync-site authentication (the remote authenticates as a site), and the central search is not limited to stores active on the requesting site.
+
+Code: `patient_search_central_v7` in `service/src/programs/patient/search_central.rs` → `SyncApiV7::patient_search`. (On a v6 remote the legacy v4/COGS path is used instead — see [What happens in v5?](#what-happens-in-v5?).)
 
 #### **Lookup Considerations** {#lookup-considerations}
 
-Draft: Specialised graphql endpoint can be made, that uses sync site authentication and passes through the user, however this would bypass user authentication, which is important for patient data.
-
 Draft: Logging for every patient request query, and rate limits ?
 
-### **Patient data sync** {#patient-data-sync}
+### **Patient data sync (link + in-memory integration)** {#patient-data-sync}
 
-When a patient is found on central server and there is a request to make them accessible on the remote site.
+When the user picks a found patient and requests they be made accessible on this site, the remote does a **single synchronous API call** and integrates the result **in memory** — there is no temporary cursor, no `sync_request`, and the records are **not persisted to the `sync_buffer` table**. This is `link_patient_to_store_v7` → `pull_and_integrate_patient_data` (`service/src/sync_v7/patient_lookup.rs`):
 
-* Patient is created on remote site with information from the graphql query, making sure that source\_site\_id is set to central server  
-* A new store join is created   
-* A new request to sync patient data is made by creating a new cursor with filter to only push created name\_store\_join, and to pull only things related to this patient  
-* Synchroniser is triggered with this request
+1. The remote generates a `name_store_join` id (uuid) up front and calls the central v7 **`patient_data_for_site`** endpoint with `{ patient_id, store_id, name_store_join_id }`.
+2. On central (`sync_on_central::patient_data_for_site`): in one transaction it **creates the `name_store_join`** (via `create_patient_name_store_join`) making the patient visible to that store, then generates a `SyncBatchV7` of all the patient's records, filtered by `patient_data_for_site(site_id) AND patient_id matching`, starting at **cursor 0** (full history, not a delta). It returns the batch plus the created `name_store_join_id`.
+3. Back on the remote, the returned records are mapped into **in-memory `SyncBufferRow`s** (`source_site_id` = central's site id) and passed to **`validate_translate_integrate_in_memory`** with `SyncContext::PatientLookup { active_stores }`. This runs the normal validate→translate→integrate pipeline in a single transaction, ordered by `INTEGRATION_ORDER` (upserts forward, deletes in reverse), but reading from the in-memory slice instead of querying `sync_buffer`.
+4. The remote returns the `name_store_join_id`; the patient and their data are now available locally and the operation is complete — synchronously, so the front end can proceed immediately.
+
+Because integration is in memory and synchronous, it doesn't touch the main pull cursor or interleave with the Synchroniser, so it can't partially-integrate against a normal sync (contrast the `reference_id` isolation needed for [auxiliary `sync_request` syncs](#store-re-syncs)). The patient's *ongoing* changes thereafter sync normally, because the `name_store_join` created in step 2 makes the patient visible to the site (see [Patient Visibility](#patient-visibility)).
 
 #### **Patient data sync Considerations** {#patient-data-sync-considerations}
 
-Draft: For patient data can we simplify it all by just having one query that gets all patient data ? We can use parts of existing mechanisms, the query could return the same result as 'pull' would ? I think we would still need to put the results into the sync buffer and do integration, but this would allow us to do this step in parallel to normal synchroniser, just need to make sure that there is a field in sync buffer to allow for differentiation between different things being synchronised. 
+Draft: There is a product question about what data can be synced and whether a recorded user acknowledgement / throttling is needed, so the sync API can't be used to harvest all patients and their data (see [Patient data visibility](#patient-data-visibility)).
 
 ## **Prescriber lookup** {#prescriber-lookup}
 
-This would happen in the same way as patient lookup, except that we don't need to sync anything from the central server, just:
+Draft: not yet implemented. This would happen in the same way as patient [lookup (search)](#lookup), except that we don't need to pull/integrate any data from the central server afterwards, just:
 
 \* Prescriber is created on remote site with information from the lookup result
 
@@ -1123,13 +1007,25 @@ Key value store repository is queried a lot throughout sync operations and in ou
 
 ### **sync\_buffer** {#sync_buffer}
 
-Draft: Should add something to identify this as part of a particular sync, like for patient\_123, or for store\_123, or ‘general’
-
 | record\_id | text | primary key |
 | :---- | :---- | :---- |
 | table\_name | text |  |
 | row\_action | text | UPSERT or DELETE |
 | source\_site\_id | text |  |
+| reference\_id | text | nullable; logical FK to `sync_request.reference_id`. `NULL` = main sync. Set to the auxiliary run’s group reference so its rows are integrated separately (see [Store re-syncs](#store-re-syncs)) |
+
+### **sync\_request** {#sync_request}
+
+Drives [auxiliary sync](#store-re-syncs): one row per backfill request (transferred store, re-synced patient, post-migration table re-sync). Persisted so requests survive restarts and partial-failure retries.
+
+| id | text | primary key |
+| :---- | :---- | :---- |
+| reference\_id | text | nullable; assigned a uuid when the request is first grouped and run. Stamped onto the run’s `sync_buffer` rows and dynamic cursors. Shared by all rows retried together |
+| description | text | serialised `Description` (e.g. `AllStoreData { store_name }`, `TableName { table_name }`) — human-readable purpose |
+| pull\_filter | text | nullable; serialised changelog filter for the pull direction (e.g. all data for a store, or a single table) |
+| push\_filter | text | nullable; serialised changelog filter for the push direction |
+| created\_datetime | timestamp |  |
+| finished\_datetime | timestamp | nullable; set when the group completes successfully. Active (unfinished) rows are the ones the runner picks up |
 
 ### **sync\_log** {#sync_log-1}
 
@@ -1165,9 +1061,14 @@ Only fields related to sync are listed
 
 ### **Users** {#users}
 
-Draft: We need to sync users. I believe we’re gonna continue with the compromise that all users are centrally configured. The key difference with now is that they should be *synced* out cause that’s really helpful on initialisation in particular.
+Users remain centrally configured, but under V7 their state is **synced** rather than fetched on demand. `user_account` (including the password hash), `user_store_join` and `user_permission` all have V7 sync styles, so a site keeps a current local copy of every user relevant to it — which is what makes a site immediately usable after initialisation and keeps permissions current without a central round-trip.
 
-Draft: There is a use case where permission is changed, and should really be available when logging in (if there is internet), the main reason is if users permission is restricted to say not being able to log in to the current store. My original plan for sync status result for front end to include what tables have synced in the previous sync, and to use those to refresh caches in tanstack, similar approach can be used for permissions (query for ‘me’ again and if cannot login to current store then show this to the user \<- here the modal for store selection would be my preferred option).
+Login uses this synced state:
+
+- A **V7 remote** validates credentials by asking the central server's user-login endpoint (a password check only — it returns no user state). On success it trusts central and reads the local user row; if central is unreachable it falls back to verifying against the locally-synced password hash. Permissions and password changes are **not** fetched at login — they arrive via regular sync, so a permission change takes effect once sync propagates it (a manual sync can refresh sooner).
+- The **central server** is the source of truth for users: it has no remote login lookup and verifies locally, relying on frequent sync to keep every site's user data current.
+
+This is the V7 behaviour; the legacy per-version login flow and the transition implications are described in the [transition doc](../transition/#users-passwords-and-permissions).
 
 ### **Patients** {#patients}
 
@@ -1198,15 +1099,25 @@ Remote patient look up is used to enable dispensaries to use an active internet 
 
 As patients only sync to a remote site if they are visible to that site, without this feature users would otherwise create many duplicates if they could only search their site’s local database.
 
+In v7 this is implemented over the v7 sync API as two synchronous steps — a `patient_search` call, then a `patient_data_for_site` call whose returned batch is integrated **in memory** on the remote (no `sync_buffer` persistence, no Synchroniser run). See [Patient Lookup](#patient-lookup) for the full flow and code references.
+
 ##### What happens in v5? {#what-happens-in-v5?}
 
-The remote patient lookup end point used by ROMS is on COGS \- this needs to be moved over to COMS
+On a v6 remote (i.e. not yet on v7), the legacy v4 lookup path is used instead: the remote patient lookup endpoint lives on COGS (`patient_search_central_v4` / `link_patient_to_store_v6` in `service/src/programs/patient/search_central.rs`). The v7 path above replaces this with the v7 sync API endpoints on COMS.
+
+#### Store merge and creating store from names
+
+TODO: Capturing those two use cases as per the header.
+TODO: The latter case would suggest that changelogs might need to be updated to have transfer_store_id set
+
 
 ##### V7 Specification {#v7-specification}
 
 Draft: The COMS site is configured to have all patients and their data visible via COGS (investigate what this looks like on a large data file with lots of patients, when initialising).
 
-Draft: Normal patient lookup endpoint is used, but ROMS proxies graphql call to COMS (in terms of permissions for user, should just work). To sync patient and their detail, an endpoint/graphql, to add name\_store\_join is called from COMS to ROMS, name\_store\_join is added, and then similar operation to ‘Moving stores between sites’ is called \<- however since patient details need to be available now, we can call sync ‘pull’ and integrate logic (sync buffer to be filtered by patient\_id ?), for data for that patient, outside of sync.
+As implemented, the remote does not proxy a GraphQL call. It uses the V7 sync API: a `patient_search` call to find the patient, then a `patient_data_for_site` call where COMS creates the `name_store_join` and returns the patient's records as a batch, which the remote integrates **in memory** (filtered to that patient, outside the normal Synchroniser loop) so the data is available immediately. See [Patient Lookup](#patient-lookup) for the full mechanism.
+
+
 
 ### **Assets**  {#assets}
 
