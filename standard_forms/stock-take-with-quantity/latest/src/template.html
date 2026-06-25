@@ -2,6 +2,13 @@
     {% include "style.css" %}
 </style>
 
+{# Blind stock take: hide the theoretical (snapshot) quantity while counting
+(status NEW) so the count sheet can't be reverse-engineered to match. It
+reappears once finalised. #}
+{% set is_blind = data.preferences.blindStocktake | default(value=false) %}
+{% set is_new = data.stocktake.status == "NEW" %}
+{% set hide_snapshot = is_blind and is_new %}
+
 <table class="body_section">
     <thead>
         <tr class="body_column_label">
@@ -11,7 +18,9 @@
             <th>{{t(k="label.batch", f="batch")}}</th>
             <th>{{t(k="label.expiry", f="Expiry")}}</th>
             <th>{{t(k="report.pack-size",f="Pack size")}}</th>
+            {% if not hide_snapshot %}
             <th>{{t(k="report.quan",f="Quan")}}</th>
+            {% endif %}
             <th>{{t(k="report.actual-stock",f="Actual Stock")}}</th>
         </tr>
     </thead>
@@ -27,7 +36,9 @@
             {% endif %}
         </td>
         <td>{{ line.packSize }}</td>
+        {% if not hide_snapshot %}
         <td>{{ line.snapshotNumberOfPacks | round(precision=2) }}</td>
+        {% endif %}
         <td>.....................</td>
     </tr>
     {%- endfor %}
