@@ -8,6 +8,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::convert::TryInto;
 
+use crate::sync::central_mapping_properties::keys;
 use crate::sync::CentralServerConfig;
 
 use super::{PullTranslateResult, SyncTranslation};
@@ -36,17 +37,31 @@ use super::{PullTranslateResult, SyncTranslation};
 
 /// `pref_blob` "name_cat_custom_values" element order, as authored by OG's
 /// `startup_create_prefs_records` (1-based 4D indices 1..9): categories 1–3,
-/// customs 1–3, categories 4–6. Ids must match `central_mapping_properties`.
+/// customs 1–3, categories 4–6. The ids are the shared `central_mapping_properties`
+/// key constants, so only the element *order* is maintained by hand here.
 const NAME_LABEL_PROPERTY_IDS: [&str; 9] = [
-    "legacy_name_category_1",
-    "legacy_name_category_2",
-    "legacy_name_category_3",
-    "legacy_name_custom_1",
-    "legacy_name_custom_2",
-    "legacy_name_custom_3",
-    "legacy_name_category_4",
-    "legacy_name_category_5",
-    "legacy_name_category_6",
+    keys::NAME_CATEGORY_1,
+    keys::NAME_CATEGORY_2,
+    keys::NAME_CATEGORY_3,
+    keys::NAME_CUSTOM_1,
+    keys::NAME_CUSTOM_2,
+    keys::NAME_CUSTOM_3,
+    keys::NAME_CATEGORY_4,
+    keys::NAME_CATEGORY_5,
+    keys::NAME_CATEGORY_6,
+];
+
+/// Item `user_field_1..7` keys, in 4D field-number order. The property id is the
+/// wire field name 1:1, so each const is both the JSON lookup key and the
+/// `property_v2` id. Ids are the shared `central_mapping_properties` constants.
+const ITEM_USER_FIELD_IDS: [&str; 7] = [
+    keys::ITEM_USER_FIELD_1,
+    keys::ITEM_USER_FIELD_2,
+    keys::ITEM_USER_FIELD_3,
+    keys::ITEM_USER_FIELD_4,
+    keys::ITEM_USER_FIELD_5,
+    keys::ITEM_USER_FIELD_6,
+    keys::ITEM_USER_FIELD_7,
 ];
 
 /// Load the mapping property and return it with the new display name, or None
@@ -160,9 +175,8 @@ fn translate_user_field_labels(
     };
 
     let mut upserts = Vec::new();
-    for i in 1..=7 {
-        let key = format!("user_field_{i}");
-        let Some(label) = labels.get(&key).and_then(|value| value.as_str()) else {
+    for &key in &ITEM_USER_FIELD_IDS {
+        let Some(label) = labels.get(key).and_then(|value| value.as_str()) else {
             continue;
         };
         // OG's factory default label is the raw key itself — keep the
@@ -172,8 +186,7 @@ fn translate_user_field_labels(
         if label == key {
             continue;
         }
-        let property_id = format!("legacy_item_user_field_{i}");
-        if let Some(property) = updated_property_name(connection, &property_id, label)? {
+        if let Some(property) = updated_property_name(connection, key, label)? {
             upserts.push(property);
         }
     }
@@ -480,11 +493,11 @@ mod tests {
         let debug = format!("{result:?}");
         assert!(debug.contains("ABC classification"), "{debug}");
         assert!(
-            !debug.contains("legacy_item_user_field_2"),
+            !debug.contains("user_field_2"),
             "default label must not override the seeded name: {debug}"
         );
         assert!(
-            !debug.contains("legacy_item_user_field_3"),
+            !debug.contains("user_field_3"),
             "blank label must be skipped: {debug}"
         );
 
@@ -492,7 +505,7 @@ mod tests {
         // pref: no change, no churn.
         let repo = PropertyV2RowRepository::new(&connection);
         let mut property = repo
-            .find_one_by_id("legacy_item_user_field_1")
+            .find_one_by_id("user_field_1")
             .unwrap()
             .unwrap();
         property.name = "ABC classification".to_string();
@@ -600,11 +613,11 @@ mod tests {
             )
             .unwrap();
         let debug = format!("{result:?}");
-        assert!(debug.contains("legacy_name_custom_1"), "{debug}");
+        assert!(debug.contains("custom_1"), "{debug}");
         assert!(debug.contains("Donor code"), "{debug}");
-        assert!(debug.contains("legacy_name_category_4"), "{debug}");
+        assert!(debug.contains("name_category_4"), "{debug}");
         assert!(debug.contains("Region"), "{debug}");
-        assert!(!debug.contains("legacy_name_category_2"), "{debug}");
+        assert!(!debug.contains("name_category_2"), "{debug}");
 
         // The live captured post-rename payload (non-zero current-element
         // word, scratch element 0) renames Custom 1.
@@ -615,7 +628,7 @@ mod tests {
             )
             .unwrap();
         let debug = format!("{result:?}");
-        assert!(debug.contains("legacy_name_custom_1"), "{debug}");
+        assert!(debug.contains("custom_1"), "{debug}");
         assert!(debug.contains("OWIEGh"), "{debug}");
 
         // A malformed blob is ignored, never an error.
@@ -686,7 +699,7 @@ mod tests {
         // ...and the mapping property is renamed.
         assert_eq!(
             PropertyV2RowRepository::new(&connection)
-                .find_one_by_id("legacy_item_user_field_1")
+                .find_one_by_id("user_field_1")
                 .unwrap()
                 .unwrap()
                 .name,

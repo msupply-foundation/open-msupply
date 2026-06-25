@@ -9,7 +9,6 @@ interface NamePropertiesV2Props {
    * its keys. JSON scalar arrives as a parsed object (no JSON.parse needed).
    */
   properties?: Record<string, unknown> | null;
-  labelWidthPercentage?: number;
 }
 
 /**
@@ -19,19 +18,12 @@ interface NamePropertiesV2Props {
  * the name hasn't set, which render blank. No edit controls — editing is a
  * later stage.
  */
-export const NamePropertiesV2 = ({
-  properties,
-  labelWidthPercentage,
-}: NamePropertiesV2Props) => {
+export const NamePropertiesV2 = ({ properties }: NamePropertiesV2Props) => {
   const { data: definitions } = useName.document.propertiesV2();
 
   if (!definitions?.length) return null;
 
   return (
-    <PropertyV2DetailRows
-      definitions={definitions}
-      properties={properties}
-      labelWidthPercentage={labelWidthPercentage}
-    />
+    <PropertyV2DetailRows definitions={definitions} properties={properties} />
   );
 };
