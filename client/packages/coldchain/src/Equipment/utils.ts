@@ -82,7 +82,7 @@ const baseAssetFields = (t: TypedTFunction<LocaleKey>): string[] => [
   t('label.warranty-start-date'),
   t('label.warranty-end-date'),
   t('label.serial'),
-  t('label.status'),
+  t('label.functional-status'),
   t('label.needs-replacement'),
   t('label.asset-notes'),
 ];

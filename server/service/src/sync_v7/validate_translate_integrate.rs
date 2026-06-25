@@ -26,7 +26,7 @@ pub(crate) enum SyncContext {
     },
     /// Records arrived via a patient-lookup pull. They belong to other sites'
     /// stores.
-    PatientLookup,
+    PatientLookup { active_stores: ActiveStoresOnSite },
 }
 
 #[derive(Error, Debug)]
@@ -124,6 +124,7 @@ fn translate_delete(
         ChangelogTableName::RnrFormLine => Box::new(RnRFormLineDelete(id)),
         ChangelogTableName::Site => Box::new(SiteRowDelete(id)),
         ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
+        ChangelogTableName::StockRelocation => Box::new(StockRelocationRowDelete(id)),
         ChangelogTableName::Stocktake => Box::new(StocktakeRowDelete(id)),
         ChangelogTableName::StocktakeLine => Box::new(StocktakeLineRowDelete(id)),
         ChangelogTableName::UserAccount => Box::new(UserAccountRowDelete(id)),
@@ -232,7 +233,7 @@ fn validate_translate_integrate_one(
             is_initialising,
             active_stores,
         } => validate_on_remote(row, &table_name, active_stores, *is_initialising)?,
-        SyncContext::PatientLookup => {} // Patient records belong to another store
+        SyncContext::PatientLookup { .. } => {}
     };
 
     match row.action {

@@ -237,7 +237,7 @@ mod test {
             InvoiceLineRow {
                 id: String::from("outbound_shipment_no_stock_line_a"),
                 invoice_id: String::from("outbound_shipment_no_stock"),
-                item_link_id: String::from("item_a"),
+                item_id: String::from("item_a"),
                 item_name: String::from("Item A"),
                 item_code: String::from("item_a_code"),
                 batch: None,
@@ -369,7 +369,7 @@ mod test {
             InvoiceLineRow {
                 id: "invoice_line".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::UnallocatedStock,
                 pack_size: 1.0,
                 number_of_packs: 0.0,
@@ -605,7 +605,7 @@ mod test {
                 available_number_of_packs: 8.0,
                 total_number_of_packs: 10.0,
                 pack_size: 1.0,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -616,7 +616,7 @@ mod test {
                 invoice_id: invoice().id,
                 stock_line_id: Some(stock_line().id),
                 number_of_packs: 2.0,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
@@ -812,7 +812,7 @@ mod test {
             InvoiceLineRow {
                 id: "line_for_backdate_test".to_string(),
                 invoice_id: outbound_with_line().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
