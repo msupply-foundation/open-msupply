@@ -541,4 +541,73 @@ mod test {
             "name249"
         );
     }
+
+    fn item(id: &str, unit_id: Option<&str>) -> Row {
+        Row::Item(crate::ItemRow {
+            id: id.to_string(),
+            name: id.to_string(),
+            unit_id: unit_id.map(|u| u.to_string()),
+            ..Default::default()
+        })
+    }
+
+    /// A batched op that violates an FK must be isolated to that op WITHOUT poisoning the
+    /// surrounding transaction. This reproduces the production failure: on Postgres a failed
+    /// statement inside a savepoint aborts the (sub)transaction, and if the savepoint is
+    /// RELEASEd (committed) instead of ROLLed BACK the whole outer tx is poisoned and its
+    /// commit fails with "current transaction is aborted".
+    ///
+    /// Runs with `wrap_record_in_tx = true` (the Postgres path) INSIDE an outer
+    /// `transaction_sync`, mirroring how the v5/v6 + v7 integrators call `batch_operations`.
+    /// On SQLite this passes trivially (no poisoning); on Postgres it's the real regression guard.
+    #[actix_rt::test]
+    async fn fk_error_is_isolated_without_poisoning_outer_tx() {
+        use crate::{ItemRowRepository, RepositoryError};
+
+        let (_, con, _, _) = setup_all(
+            "batch_operations_fk_error_isolation",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // A valid parent unit, a child item with a DANGLING unit_id (FK violation at the DB),
+        // and a valid child item. Ordering within the batch shouldn't matter — batch_operations
+        // sorts upserts FK-parents-first, and the bad item must not take down its siblings.
+        let ops = vec![
+            upsert(0, "u1", "unit", unit("u1", "one")),
+            upsert(0, "bad", "item_bad", item("bad", Some("does_not_exist"))),
+            upsert(0, "good", "item_good", item("good", Some("u1"))),
+        ];
+
+        // The whole thing runs in one outer transaction (as the integrators do). The key
+        // assertion is that this transaction COMMITS — i.e. the FK failure was contained.
+        let results = con
+            .transaction_sync(|tx| -> Result<_, RepositoryError> {
+                Ok(batch_operations(tx, ops, true))
+            })
+            .expect("outer transaction must commit — a contained FK error must not poison it");
+
+        // The bad item errored; the unit and good item did not.
+        let error_for = |key: &str| {
+            results
+                .iter()
+                .find(|r| r.extra.iter().any(|e| *e == key))
+                .map(|r| r.error.is_some())
+        };
+        assert_eq!(error_for("item_bad"), Some(true), "bad item should error");
+        assert_eq!(error_for("unit"), Some(false), "unit should succeed");
+        assert_eq!(error_for("item_good"), Some(false), "good item should succeed");
+
+        // The good rows were actually written (committed with the outer tx).
+        assert!(UnitRowRepository::new(&con)
+            .find_one_by_id("u1")
+            .unwrap()
+            .is_some());
+        let item_repo = ItemRowRepository::new(&con);
+        assert!(item_repo.find_one_by_id("good").unwrap().is_some());
+        assert!(
+            item_repo.find_one_by_id("bad").unwrap().is_none(),
+            "the FK-violating item must not have been written"
+        );
+    }
 }
