@@ -345,7 +345,7 @@ impl<'a> TranslationAndIntegration<'a> {
         let wrap_in_tx = cfg!(feature = "postgres");
 
         let mut pending_changelogs: Vec<ChangeLogInsertRow> = Vec::new();
-        let mut batch_input: Vec<BatchDbOperation<i32, (i32, ChangelogTableName, String)>> =
+        let mut batch_input: Vec<BatchDbOperation<i32, (ChangelogTableName, String)>> =
             Vec::new();
 
         for TranslatedOp {
@@ -357,7 +357,14 @@ impl<'a> TranslationAndIntegration<'a> {
         {
             match operation {
                 IntegrationOperation::Upsert(row) => {
-                    let dedup_key = (cursor, row.table_name(), row.record_id());
+                    // Dedup by (table, record_id) ONLY — NOT cursor. The same record_id can
+                    // arrive on multiple buffer cursors in one pull (a record changed twice);
+                    // if they aren't deduped they both land in one `INSERT ... ON CONFLICT(id)
+                    // DO UPDATE`, which Postgres rejects ("ON CONFLICT DO UPDATE command cannot
+                    // affect row a second time"). batch_operations keeps the LAST op (latest
+                    // cursor wins) and collects ALL the cursors into `extra`, so every buffer
+                    // row still gets its result. (Matches the v7 integrator's dedup.)
+                    let dedup_key = (row.table_name(), row.record_id());
                     batch_input.push(BatchDbOperation {
                         priority,
                         operation: BatchOperation::Upsert(row),
@@ -369,7 +376,9 @@ impl<'a> TranslationAndIntegration<'a> {
                     table_name,
                     record_id,
                 } => {
-                    let dedup_key = (cursor, table_name.clone(), record_id.clone());
+                    // Dedup by (table, record_id) ONLY (see the upsert note above) so the same
+                    // record deleted on multiple cursors collapses to one statement.
+                    let dedup_key = (table_name.clone(), record_id.clone());
                     // Generate the delete changelog now (savepoint-isolated), while the row exists.
                     let generated = gen_delete_changelog_isolated(
                         self.connection,
@@ -887,5 +896,98 @@ mod test {
             r_nope.integration_error.as_deref(),
             Some("Translator for record not found")
         );
+    }
+
+    /// The SAME record_id arriving on two different buffer cursors in one batch (a record
+    /// changed twice in a single pull) must be deduped to ONE upsert. Otherwise both land in
+    /// one `INSERT ... ON CONFLICT(id) DO UPDATE`, which Postgres rejects with "ON CONFLICT DO
+    /// UPDATE command cannot affect row a second time" — poisoning the whole integration tx.
+    /// The latest cursor wins; BOTH buffer rows are marked integrated.
+    #[actix_rt::test]
+    async fn test_batch_dedups_same_record_across_cursors() {
+        use repository::{
+            IntegrationResult, SyncBufferRepository, SyncBufferRowInsert, UnitRowRepository,
+        };
+
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_batch_dedups_same_record_across_cursors",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let unit_buffer = |name: &str| SyncBufferRowInsert {
+            record_id: "dup_unit".to_string(), // SAME record_id, different cursors
+            table_name: "unit".to_string(),
+            action: SyncAction::Upsert,
+            data: repository::SyncRecordData(serde_json::json!({
+                "ID": "dup_unit",
+                "units": name,
+                "comment": "",
+                "order_number": 1,
+            })),
+            sync_version: SyncVersion::V5V6,
+            source_site_id: 0,
+            received_datetime: datetime_now(),
+            ..Default::default()
+        };
+
+        let buffer_repo = SyncBufferRepository::new(&connection);
+        buffer_repo
+            .insert_many(&[unit_buffer("First Value"), unit_buffer("Latest Value")])
+            .unwrap();
+
+        let records = crate::sync::sync_buffer::get_sync_buffer_for_table(
+            &connection,
+            SyncAction::Upsert,
+            "unit",
+            0,
+            100,
+        )
+        .unwrap();
+        assert_eq!(records.len(), 2, "two buffer rows for the same record");
+
+        let mut integrator = TranslationAndIntegration::new(&connection);
+        let errors = integrator
+            .translate_and_integrate_sync_records(
+                &records,
+                &crate::sync::translations::all_translators(),
+            )
+            .unwrap();
+
+        // No error (this would be > 0 and the tx would be poisoned without dedup on PG).
+        assert_eq!(errors, 0);
+
+        // Latest cursor won.
+        assert_eq!(
+            UnitRowRepository::new(&connection)
+                .find_one_by_id("dup_unit")
+                .unwrap()
+                .unwrap()
+                .name,
+            "Latest Value"
+        );
+
+        // BOTH buffer rows are marked integrated (out of the pending set).
+        let still_pending = crate::sync::sync_buffer::get_sync_buffer_for_table(
+            &connection,
+            SyncAction::Upsert,
+            "unit",
+            0,
+            100,
+        )
+        .unwrap();
+        assert!(
+            still_pending.is_empty(),
+            "both buffer rows for the deduped record must be marked integrated"
+        );
+
+        // And both got a Success result.
+        for record in &records {
+            let r = buffer_repo
+                .find_latest_by_record_id_slow_unindexed(&record.record_id)
+                .unwrap()
+                .unwrap();
+            assert_eq!(r.integration_result, Some(IntegrationResult::Success));
+        }
     }
 }
