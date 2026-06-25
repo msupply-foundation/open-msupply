@@ -1,7 +1,6 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-mod add_changelog_dead_log;
 mod add_changelog_dedup_cursor_key_type;
 mod add_is_standalone_central_pg_enum;
 mod add_legacy_goods_received_link_fields;
@@ -71,7 +70,6 @@ impl Migration for V3_00_00 {
             Box::new(remove_add_central_patient_visibility_processor_cursor::Migrate),
             Box::new(populate_routed_changelog_for_sync_v7_tables::Migrate),
             Box::new(add_changelog_dedup_cursor_key_type::Migrate),
-            Box::new(add_changelog_dead_log::Migrate),
         ]
     }
 }

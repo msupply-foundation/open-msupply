@@ -61,8 +61,7 @@ pub fn spawn(
 }
 
 /// Run one dedup pass over the window `(marker, max]`, deleting in committed
-/// batches. Advances the `ChangelogDedupCursor` marker only if the run completes
-/// before the time window's `to` cutoff. Returns the number of rows deleted.
+/// batches. Advances the `ChangelogDedupCursor` marker after completion
 fn run_dedup(
     ctx: &service::service_provider::ServiceContext,
     settings: &ChangelogDedupSettings,
@@ -85,32 +84,17 @@ fn run_dedup(
 
     let batch_size = settings.batch_size();
     let mut total: u64 = 0;
-    let completed = loop {
-        // Stop cleanly between batches once the window's `to` time has passed.
-        // Committed batches stay (they only deleted true duplicates); the marker
-        // is not advanced, so the next eligible run re-does this window.
-        if let Some(window) = &settings.time_window {
-            if !window.contains(Local::now().time()) {
-                log::info!(
-                    "changelog dedup task: time window passed, stopping after {total} row(s)"
-                );
-                break false;
-            }
-        }
-
-        let n = repo.delete_dead_batch(batch_size, total as i64)?;
+    loop {
+        let n = repo.delete_dead_batch(batch_size)?;
         total += n;
         if n == 0 {
-            break true;
+            break;
         }
-    };
+    }
 
     repo.finish_dead_set()?;
-
-    // Only advance the marker on a complete run.
-    if completed {
-        kv.set_i64(KeyType::ChangelogDedupCursor, Some(max))?;
-    }
+    // Advance the dedup cursor after it has finished
+    kv.set_i64(KeyType::ChangelogDedupCursor, Some(max))?;
 
     Ok(total)
 }
