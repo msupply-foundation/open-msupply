@@ -13,7 +13,7 @@ declare const LOCAL_PLUGINS: { pluginPath: string; pluginCode: string }[];
 export const useInitPlugins = () => {
   const { setPluginBundles } = usePluginProvider();
   const { query } = usePlugins();
-  const { token, storeId, lastSuccessfulSync } = useAuthContext();
+  const { token, storeId } = useAuthContext();
 
   const initRemotePlugins = async () => {
     const plugins = await query();
@@ -54,14 +54,14 @@ export const useInitPlugins = () => {
   }, []);
 
   // Remote plugins are re-fetched whenever the auth context changes - on
-  // login, store switch, or after a successful sync (lastSuccessfulSync). This
-  // ensures newly uploaded or updated plugins appear without a full page
-  // reload (previously only triggered by switching languages, which calls
-  // navigate(0)). See issue #12169.
+  // login or store switch. (The v3.0.0-RC merge removed the auth context's
+  // `lastSuccessfulSync` signal that previously also triggered a re-fetch after
+  // each successful sync - see issue #12169; that after-sync reload can be
+  // re-added on top of RC's auth model if needed.)
   useEffect(() => {
     if (process.env['NODE_ENV'] !== 'production') return;
     if (!token || !storeId) return;
     initRemotePlugins();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, storeId, lastSuccessfulSync]);
+  }, [token, storeId]);
 };
