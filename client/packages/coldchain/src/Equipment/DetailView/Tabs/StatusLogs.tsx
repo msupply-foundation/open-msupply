@@ -23,7 +23,7 @@ import {
   useTranslation,
 } from '@common/intl';
 import { ColdchainAssetLogFragment, useAssets } from '../../api';
-import { FileList } from '../../Components';
+import { FileList } from '@openmsupply-client/system';
 import { statusColourMap, useIsColdRoom } from '../../utils';
 import { AssetLogTypeNodeType } from '@openmsupply-client/common';
 

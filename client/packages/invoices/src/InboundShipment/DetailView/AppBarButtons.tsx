@@ -17,13 +17,11 @@ import { ScannedBarcode } from '../../types';
 
 interface AppBarButtonProps {
   onAddItem: (scannedBarcode?: ScannedBarcode) => void;
-  openUploadModal: () => void;
   simplifiedTabletView?: boolean;
 }
 
 export const AppBarButtonsComponent = ({
   onAddItem,
-  openUploadModal,
   simplifiedTabletView,
 }: AppBarButtonProps) => {
   const { store } = useAuthContext();
@@ -71,7 +69,6 @@ export const AppBarButtonsComponent = ({
       <Grid container gap={1}>
         <AddButton
           onAddItem={onAddItem}
-          openUploadModal={openUploadModal}
           requisitionId={data?.requisition?.id ?? ''}
           invoice={data}
           disable={isAddOrDeleteLinesDisabled}
