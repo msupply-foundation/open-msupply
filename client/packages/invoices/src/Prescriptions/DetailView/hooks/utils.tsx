@@ -17,17 +17,12 @@ interface Label {
 }
 
 export const groupItems = (
-  lines: PrescriptionLineFragment[],
-  doNotPrintPlaceholderLineLabels = false
+  lines: PrescriptionLineFragment[]
 ): ItemDetails[] => {
   const linesByItem: { [key: string]: PrescriptionLineFragment[] } = {};
 
-  // Groups all batches of an item by id. Ignore placeholder lines if store
-  // preference for this is turned on
+  // groups all batches of an item by id
   lines.forEach(line => {
-    if (doNotPrintPlaceholderLineLabels && line.numberOfPacks * line.packSize <= 0) {
-      return;
-    }
     const { id } = line.item;
     if (!linesByItem[id]) {
       linesByItem[id] = [];
