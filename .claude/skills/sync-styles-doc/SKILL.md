@@ -1,4 +1,9 @@
-Regenerate `server/repository/src/db_diesel/changelog/sync_styles.md` from the current state of the code.
+---
+name: sync-styles-doc
+description: Regenerate the plain-English sync-styles reference doc (`docs/content/docs/sync/sync_styles/_index.md`) from the current state of the code. Use this whenever `sync_style.rs`, `generate_changelog.rs`, the changelog row shape, transport filters, or translator opt-ins change, so the human-readable doc stays in sync with the code. Trigger on "regenerate sync styles doc", "update sync_styles", or after editing sync-style classification.
+---
+
+Regenerate `docs/content/docs/sync/sync_styles/_index.md` from the current state of the code.
 
 Arguments: $ARGUMENTS (none expected — this command always regenerates the full doc)
 
@@ -41,6 +46,6 @@ Steps:
    - **When the code *has* changed, re-derive freely.** If a sync style is added, removed, renamed, or has its membership/predicate changed; if a filter gains or loses a branch; if a translator's opt-in changes — the affected sections must be rewritten from the code, and headings/structure must follow the code. The previous doc has no authority over content that's gone stale; it only has authority over content that's still accurate.
    - **Cross-check translator special cases.** If a Central-style table also pushes to OMS central, or a legacy-style table also round-trips via OMS, call it out. Read the relevant translator file rather than trusting the previous doc.
    - **Optimise for "explain the system."** A reader should leave knowing *why* each piece exists, not just what's wired to what.
-   - **Tone and layout.** Tight prose, short tables (no padded-column alignment), `---` separators between top-level sections, a "single useful invariant" callout near the end. Read the current `sync_styles.md` only to lock in voice — not to lift structure or content.
+   - **Tone and layout.** Tight prose, short tables (no padded-column alignment), `---` separators between top-level sections, a "single useful invariant" callout near the end. Read the current doc only to lock in voice — not to lift structure or content.
 
-5. **Write the rendered doc** to `server/repository/src/db_diesel/changelog/sync_styles.md`, replacing the existing content.
+5. **Write the rendered doc** to `docs/content/docs/sync/sync_styles/_index.md`, replacing the body. **Preserve the Zola front-matter** at the top (the `+++ ... +++` block with `title`/`weight`/`template`) — replace only the markdown body below it.

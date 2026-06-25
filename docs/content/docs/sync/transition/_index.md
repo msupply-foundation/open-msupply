@@ -1,8 +1,15 @@
++++
+title = "Living with V5, V6 and V7"
+weight = 40
+sort_by = "weight"
+template = "docs/section.html"
++++
+
 # Living with V5, V6 and V7
 
 Even though v7 leads a path to a stand alone omSupply with an independent central server, we would still need to support existing deployments where the OG central server would remain as the central site.
 
-This scenario and transition towards it can be explained in this diagram, both diagrams can be found [here](https://app.diagrams.net/#G1qGGk1wXaiQHm8u9MUBgbJjyXtSY8BMkZ#%7B%22pageId%22%3A%22h7FEzXcejfu2p3egsU6T%22%7D), in separate tabs. Please note the new terms COGS, COMS, ROGS, ROMS (C \= central, R \= remote, OG \= mSupply, OMS \= open mSupply)
+This scenario and the transition towards it are illustrated in the diagrams below. Note the terms **COGS**, **COMS**, **ROGS**, **ROMS** (C = central, R = remote, OG = mSupply, OMS = open mSupply): so COGS = central OG mSupply, COMS = central open mSupply, ROMS = remote open mSupply.
 
 Things and tradeoffs to keep in mind:
 
@@ -14,13 +21,13 @@ Things and tradeoffs to keep in mind:
 
 This is where we are now. We already have sync directly between COMS and ROMS which allows for sync of omSupply specific data, (i.e. global/store preferences, name properties, etc..), however remote sites require syncing with two different API and there are too many moving pieces, like a proxy of authorisation to COGS when ROMS syncs with COMS.
 
-![transition_sync_v5_v6](./transition_sync_v5_v6.drawio.svg)
+![transition_sync_v5_v6](./images/transition_sync_v5_v6.drawio.svg)
 
 The main change here is introduction of V7 api for all new versions of COMS and ROMS and adding site configurations to COMS. When V7 is introduced ROMS will not sync with COGS anymore and will communicate solely with COMS via V7 sync. COMS will still sync with COGS via V5 api and will support existing ROMS sites via V6 api while they transition towards V7.
 
 From COGS perspective COMS is just another remote site using V5 api, with active stores. COMS in turn has its own association with stores and V7 sites. This setup conforms with existing COGS sync modal while allowing ROMS to transition to V7.
 
-![transition_sync_v5_v6](./transition_sync_v7_v5_v6.drawio.svg)
+![transition_sync_v5_v6](./images/transition_sync_v7_v5_v6.drawio.svg)
 
 ## Examples
 
@@ -60,17 +67,21 @@ The manual process above is quite tedious and would impede the process of upgrad
 
 ### Automated procedure
 
-1. Upgrade to OMS3.0 with sync v7
-2. Startup run migrations
-3. Check a key_value_store setting for if the sync v7 URL is known
-4. If not begin the transition procedure as below, otherwise do the new regular sync v7
-5. Do one last v5/6 sync cycle. This is to ensure all data is pulled updating the v6 pull cursor to a valid point (see cursor problem below)
-6. Copy the sync v6 pull cursor to the sync v7 cursor key_store_value
-7. Request from COGS the COMS central server URL and save in key_value_store. If not all stores active on the site are "moved", reject/return. COGS should change the site.sync_version to "v7" at this point. Any records in sync_out table should be moved to oms_central_queue table.
-8. Do first sync v7 sync (likely little to no records to pull or push)
-9. Done! There after only sync v7
+This is the implemented flow. A ROMS that has been upgraded to a V7-capable version detects on sync that it doesn't yet know its COMS URL and runs the transition handshake instead of a normal sync:
 
-![migration_to_v7](./migrating_to_v7.drawio.svg)
+1. Upgrade ROMS to a version with sync V7; run migrations on startup.
+2. Check whether the sync V7 URL is known (a `key_value_store` setting). If known, do a normal V7 sync. If not, run the transition handshake (steps 3–7).
+3. Do **one last V5/V6 sync cycle**. This pulls any outstanding central/transfer records and leaves the V6 pull cursor at a valid point (see [cursor problem](#cursor-problem) below).
+4. Ask COGS to change this site's version to V7. **COGS only allows this once every store active on the site has been moved to COMS** (see [Moving one Store at a Time](#moving-one-store-at-a-time)). If any store is not yet moved, COGS rejects the request, an error is surfaced, and ROMS retries on the next sync. On success COGS records the site as V7 and its queued records for this site move from the legacy `sync_out` table to the OMS central queue.
+5. Seed the V7 pull cursor from the V6 cursor position (both index the same `changelog.cursor`), so the site does not re-pull all of its already-moved store data.
+6. Save the COMS URL (and that the current sync URL is now COMS, not OG) in `key_value_store`.
+7. Do the first V7 sync (typically little or nothing to pull/push). Thereafter the site only syncs V7.
+
+**Re-initialising a V7 site.** When a site that was previously on V5/V6 re-initialises against COMS, COMS itself checks with COGS whether the site is marked V7; if it isn't, COMS moves it back to V5/V6 so the two stay consistent.
+
+**Hardware id.** During the transition the hardware id sometimes has to be reset on OG — but only once, before the V7 transition (for example when the site was previously running a legacy app such as legacy mSupply mobile). After transition, V7 site authentication is handled by COMS.
+
+![migration_to_v7](./images/migrating_to_v7.drawio.svg)
 
 ## Cursor problem
 
@@ -124,20 +135,23 @@ V6 server API would remain, it should not need any changes, transfers will still
 
 ## Patients
 
-We would need to either proxy remote lookup for patients to OG or make them all available in COMS. The latter is the preferred option, it would need some investigation
+Remote patient lookup is now served by COMS over the V7 sync API (search, then a synchronous `patient_data_for_site` call whose batch is integrated in memory on the remote) rather than proxying the lookup to OG. See the [Patient Lookup](../v7/#patient-lookup) section of the V7 spec for the implemented mechanism.
 
-## Users
+## Users, passwords and permissions
 
-Draft: ( CP: should I be writing this here or in technical spec?)
+Under V7, users — including their password hashes, store joins and permissions — are **synced** like any other central data (`user_account`, `user_store_join`, `user_permission` all have V7 sync styles). This is a deliberate change from the legacy model, where after initialisation users were not kept current across sites.
 
-OG pain points:
+Login behaviour follows from this and differs by the site's sync version (the flow is chosen at login time from the site's recorded sync version):
 
-- Users need to be routed correctly wherever their related records go (e.g. user relating to patient records need to sync along with patient visibility)
-- User sync is a hot mess where after initialisation users aren’t sync centrally to other sites. This regularly ends up with dozens of
+- **V5/V6 sites** authenticate against legacy mSupply (`/api/v4/login`), which also returns the user row, store joins and permissions to store locally; the password is then verified against the freshly stored hash. If central is unreachable it falls back to verifying against the local hash.
+- **V7 ROMS** authenticate by asking COMS `/central/user/login` whether the credentials are valid — a **remote lookup used only to validate the password**, not to fetch user state. On a confirmed match the site trusts COMS and looks up the local user row; if COMS is unreachable it falls back to the local hash (kept current by the user sync translation). Permissions and password changes are **not** fetched at login — they arrive via regular sync, so a permission change becomes effective once sync propagates it (a manual sync can be triggered if a user believes their permissions changed).
+- **On COMS itself** there is no remote login lookup. COMS is the source of truth for users and verifies credentials locally; it relies on frequent sync intervals to keep every site's user passwords and permissions current.
 
-At our current scale there are at most thousands of user records. This is a trivial amount in the scheme of things.
+At our current scale there are at most thousands of user records, so syncing them everywhere is a trivial volume.
 
 ## V6 support
+
+The V6 server API on COMS remains for the duration of the transition: ROMS sites that have not yet been upgraded to V7 keep syncing omSupply-specific central data over V6 (with transfers still routed via OG). Once a site is upgraded and its stores moved to COMS it syncs solely over V7, but V6 cannot be retired until all sites have transitioned.
 
 # Table Changes
 
@@ -215,7 +229,9 @@ Our biggest stores (central warehouses and busy dispensaries) tend to have 1-3 m
 
 At worst having to sync say 3 million records in one go is manageable\! By the above math it’d be 5-10 hours.
 
-This leads to attempting syncing one store at a time:
+This leads to syncing one store at a time. In COGS this is initiated by checking a setting that we want to migrate all sites to COMS; COGS then queues **one store at a time**, generating that store's data into its OMS central queue, and only moves on to the next store after COMS has synced (i.e. each COMS sync receives one store, then COGS generates the next store's data for the following sync). By default stores are processed by **site id in descending order**; a site can be **prioritised** in its COGS site settings to jump the queue. COGS shows the migration status of each store and site in its UI.
+
+The mechanism:
 
 1. COGS is upgraded to a version supporting this, and we initiate it.
 2. COGS marks a store.coms_migration_status in COGS as “queuing” and begins a process adding all of the store’s records to the COMS central queue.

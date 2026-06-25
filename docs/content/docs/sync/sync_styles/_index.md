@@ -1,3 +1,10 @@
++++
+title = "Sync styles, changelog generation & outgoing filters"
+weight = 50
+sort_by = "weight"
+template = "docs/section.html"
++++
+
 # Sync styles, changelog generation, and outgoing-sync filters
 
 This document describes how Open-mSupply decides **what records leave a site, what records arrive at a site, and over which transport**. It is descriptive — read it to understand the rules, then go to the code if you need to see them in action.
@@ -326,4 +333,4 @@ Run the slash command:
 /sync-styles-doc
 ```
 
-(skill defined at `.claude/commands/sync-styles-doc.md`). It reads the current code and rewrites this file from scratch — useful after sync-style changes, new tables, or new translators.
+(skill defined at `.claude/skills/sync-styles-doc/SKILL.md`). It reads the current code and rewrites this file from scratch — useful after sync-style changes, new tables, or new translators.
