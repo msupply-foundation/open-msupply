@@ -360,6 +360,17 @@ pub struct GraphSchemaData {
     pub subscription_broadcast: broadcast::Sender<ResolvedSubscription>,
 }
 
+fn with_request_logger<Q, M, S>(
+    builder: async_graphql::SchemaBuilder<Q, M, S>,
+    enabled: bool,
+) -> async_graphql::SchemaBuilder<Q, M, S> {
+    if enabled {
+        builder.extension(GraphQLRequestLogger)
+    } else {
+        builder
+    }
+}
+
 impl GraphqlSchema {
     pub fn new(data: GraphSchemaData, operational_status: OperationalStatus) -> GraphqlSchema {
         let GraphSchemaData {
@@ -373,19 +384,25 @@ impl GraphqlSchema {
         } = data;
         let subscription_broadcast = Data::new(subscription_broadcast);
 
+        // Setting for logging graphQL
+        let log_graphql_queries = settings
+            .logging
+            .as_ref()
+            .map(|logging| logging.log_graphql_queries())
+            .unwrap_or(true);
+
         // Self requester schema is a copy of operational schema, used for reports
         // needs to be available as data in operational schema
-        let self_requester_schema =
+        let self_requester_builder =
             OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
                 .data(connection_manager.clone())
                 .data(loader_registry.clone())
                 .data(service_provider.clone())
                 .data(auth.clone())
                 .data(settings.clone())
-                .data(validated_plugins.clone())
-                .extension(GraphQLRequestLogger)
-                .finish();
-        // Self requester does not need loggers
+                .data(validated_plugins.clone());
+        let self_requester_schema =
+            with_request_logger(self_requester_builder, log_graphql_queries).finish();
 
         // Shared operational status across all schemas
         let operational_status_ref = Data::new(RwLock::new(operational_status.clone()));
@@ -402,26 +419,24 @@ impl GraphqlSchema {
                 .data(subscription_broadcast.clone())
                 // Add self requester to operational
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
-                .data(operational_status_ref.clone())
-                .extension(GraphQLRequestLogger);
+                .data(operational_status_ref.clone());
+        let operational_builder = with_request_logger(operational_builder, log_graphql_queries);
 
         // Initialisation schema should ony need service_provider
         let initialisation_builder = InitialisationSchema::build(
             InitialisationQueries,
             InitialisationMutations,
-            InitialisationSubscriptions::default(),
+            InitialisationSubscriptions,
         )
         .data(service_provider.clone())
         .data(subscription_broadcast.clone())
         .data(operational_status_ref.clone())
-        .data(subscription_broadcast.clone())
-        .extension(GraphQLRequestLogger);
+        .data(subscription_broadcast.clone());
 
         let migration_builder =
             MigrationSchema::build(MigrationQueries, EmptyMutation, EmptySubscription)
                 .data(service_provider.clone())
-                .data(operational_status_ref.clone())
-                .extension(GraphQLRequestLogger);
+                .data(operational_status_ref.clone());
 
         GraphqlSchema {
             operational: operational_builder.finish(),
@@ -533,7 +548,6 @@ async fn graphql_playground() -> HttpResponse {
 
 // TODO remove this and just do reqwest query to self
 /// Used for reports
-
 struct SelfRequestImpl {
     schema: OperationalSchema,
 }
