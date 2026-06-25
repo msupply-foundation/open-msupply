@@ -72,6 +72,18 @@ export const DetailsTab = ({ lineEdit }: DetailsTabProps) => {
     ),
   });
 
+  const getSortedItems = useCallback(
+    () =>
+      table
+        .getSortedRowModel()
+        .rows.reduce<RequestLineFragment['item'][]>((acc, row) => {
+          const item = row.original?.item;
+          if (item && !acc.some(i => i?.id === item.id)) acc.push(item);
+          return acc;
+        }, []),
+    [table]
+  );
+
   return (
     <>
       {plugins.requestRequisitionLine?.tableStateLoader?.map(
@@ -97,6 +109,7 @@ export const DetailsTab = ({ lineEdit }: DetailsTabProps) => {
           onClose={lineEdit.onClose}
           mode={lineEdit.mode}
           store={store}
+          getSortedItems={getSortedItems}
         />
       )}
     </>
