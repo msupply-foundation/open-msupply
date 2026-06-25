@@ -61,7 +61,7 @@ export const EnumFilter: FC<{
             sx: {
               backgroundColor: 'background.input.main',
               borderRadius: 2,
-              padding: '4px 8px',
+              padding: '0.25rem 0.5rem',
             },
           },
           inputLabel: {
