@@ -250,10 +250,15 @@ pub async fn is_central_token_cleared(
 /// extra round-trip.
 async fn check_site_status<'a>(session: &SyncV7<'a>) -> Result<(), SyncError> {
     let status = session.sync_api_v7.site_status(()).await?;
-    KeyValueStoreRepository::new(session.connection).set_i32(
+    let kvs = KeyValueStoreRepository::new(session.connection);
+    kvs.set_i32(
         KeyType::SettingsSyncCentralServerSiteId,
         Some(status.central_site_id),
     )?;
+    // Only written once it's true and never cleared; single-device remotes never get the key, so it's read as `unwrap_or(false)`.
+    if status.is_multi_device_site {
+        kvs.set_bool(KeyType::SettingsSyncSiteIsMultiDevice, Some(true))?;
+    }
     Ok(())
 }
 
