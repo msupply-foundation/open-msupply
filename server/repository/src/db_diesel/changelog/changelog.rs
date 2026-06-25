@@ -127,6 +127,7 @@ pub enum ChangelogTableName {
     PurchaseOrderLine,
     StockRelocation,
     MasterList,
+    HelpDocument,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -213,6 +214,7 @@ impl ChangelogTableName {
             ChangelogTableName::PurchaseOrderLine => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::StockRelocation => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::MasterList => ChangeLogSyncStyle::ProcessorOnly,
+            ChangelogTableName::HelpDocument => ChangeLogSyncStyle::Central,
         }
     }
 }
