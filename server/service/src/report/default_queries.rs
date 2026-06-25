@@ -240,6 +240,9 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
       }
     }
   }
+  preferences(storeId: $storeId) {
+    blindStocktake
+  }
 }"#;
 
 const REQUISITION_QUERY: &str = r#"query RequisitionQuery($storeId: String, $dataId: String) {

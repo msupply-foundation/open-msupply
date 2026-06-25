@@ -74,6 +74,8 @@ pub mod global_table_configs;
 pub use global_table_configs::*;
 pub mod backdating;
 pub use backdating::*;
+pub mod blind_stocktake;
+pub use blind_stocktake::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -97,6 +99,7 @@ pub struct PreferenceProvider {
     pub backdating: Backdating,
 
     // Store preferences
+    pub blind_stocktake: BlindStocktake,
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub order_in_packs: OrderInPacks,
@@ -147,6 +150,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         backdating: Backdating,
 
         // Store preferences
+        blind_stocktake: BlindStocktake,
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         order_in_packs: OrderInPacks,

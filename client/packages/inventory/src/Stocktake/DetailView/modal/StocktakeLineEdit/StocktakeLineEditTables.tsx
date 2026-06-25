@@ -74,9 +74,13 @@ export const BatchTable = ({
   disabled = false,
   isInitialStocktake,
   isVaccineItem = false,
+  hideSnapshotStock = false,
+  hideReason = false,
 }: StocktakeLineEditTableProps & {
   isVaccineItem: boolean;
   isInitialStocktake: boolean;
+  hideSnapshotStock?: boolean;
+  hideReason?: boolean;
 }) => {
   const t = useTranslation();
   const { manageVvmStatusForStock, manageVaccinesInDoses } = usePreferences();
@@ -196,6 +200,7 @@ export const BatchTable = ({
         header: t('label.snapshot-num-of-packs'),
         columnType: ColumnType.Number,
         size: 100,
+        includeColumn: !hideSnapshotStock,
         getIsError: rowData =>
           errors[rowData.id]?.__typename ===
           'SnapshotCountCurrentCountMismatchLine',
@@ -249,6 +254,7 @@ export const BatchTable = ({
         id: 'inventoryAdjustmentReasonInput',
         header: t('label.reason'),
         accessorFn: row => row.reasonOption || '',
+        includeColumn: !hideReason,
         Cell: props => (
           <InventoryAdjustmentReasonInputCell
             updateFn={reasonOption =>
@@ -262,7 +268,13 @@ export const BatchTable = ({
         ),
       },
     ],
-    [showVVMStatusColumn, showDosesCountedColumn, errors]
+    [
+      showVVMStatusColumn,
+      showDosesCountedColumn,
+      hideSnapshotStock,
+      hideReason,
+      errors,
+    ]
   );
 
   const table = useSimpleMaterialTable({
