@@ -7141,6 +7141,7 @@ export enum PreferenceKey {
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   Backdating = 'backdating',
+  BlindStocktake = 'blindStocktake',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
@@ -7213,6 +7214,7 @@ export type PreferencesNode = {
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   backdating: BackdatingNode;
+  blindStocktake: Scalars['Boolean']['output'];
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
@@ -11865,6 +11867,7 @@ export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   backdating?: InputMaybe<BackdatingInput>;
+  blindStocktake?: InputMaybe<Array<BoolStorePrefInput>>;
   canCreateInternalOrderFromARequisition?: InputMaybe<
     Array<BoolStorePrefInput>
   >;

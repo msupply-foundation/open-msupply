@@ -48,6 +48,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             backdating,
 
             // Store preferences
+            blind_stocktake,
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
@@ -102,6 +103,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(backdating, &mut prefs, &input)?;
 
         // Store preferences
+        append_if_type(blind_stocktake, &mut prefs, &input)?;
         append_if_type(order_in_packs, &mut prefs, &input)?;
         append_if_type(use_procurement_functionality, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
