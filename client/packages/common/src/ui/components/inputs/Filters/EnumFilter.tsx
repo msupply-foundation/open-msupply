@@ -1,6 +1,11 @@
 import React, { FC } from 'react';
 import { useUrlQuery } from '@common/hooks';
-import { Checkbox, ListItemText, MenuItem } from '@mui/material';
+import {
+  Checkbox,
+  ListItemText,
+  MenuItem,
+  SelectChangeEvent,
+} from '@mui/material';
 import { Select } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { FilterLabelSx } from './styleConstants';
@@ -15,7 +20,6 @@ type EnumOption = { label: string; value: string };
 
 export const EnumFilter: FC<{
   filterDefinition: EnumFilterDefinition;
-  remove: () => void;
 }> = ({ filterDefinition }) => {
   const { urlParameter, options, name, isMultiSelect } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
@@ -25,14 +29,11 @@ export const EnumFilter: FC<{
   if (isMultiSelect) {
     const selectedValues = rawValue ? String(rawValue).split(',') : [];
 
-    const handleMultiChange = (
-      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-      const value = event.target.value;
-      // MUI multi-select returns an array via event.target.value
+    const handleMultiChange = (event: SelectChangeEvent<unknown>) => {
+      const value = event.target.value as string | string[];
       const newValues = typeof value === 'string' ? value.split(',') : value;
       updateQuery({
-        [urlParameter]: (newValues as string[]).join(',') || undefined,
+        [urlParameter]: newValues.join(',') || undefined,
       });
     };
 
@@ -41,7 +42,6 @@ export const EnumFilter: FC<{
         options={options}
         label={name}
         value={selectedValues}
-        onChange={handleMultiChange}
         sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}
         renderOption={option => (
           <MenuItem key={option.value} value={option.value}>
@@ -54,6 +54,7 @@ export const EnumFilter: FC<{
         slotProps={{
           select: {
             multiple: true,
+            onChange: handleMultiChange,
             renderValue: (selected: unknown) => {
               const values = selected as string[];
               return values
