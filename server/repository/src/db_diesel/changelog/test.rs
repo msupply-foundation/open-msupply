@@ -1040,8 +1040,8 @@ async fn test_max_cursor_clamped_by_in_flight_tx() {
 /// - within a window, only the newest row per (table_name, record_id, row_action) survives;
 /// - UPSERT and DELETE for the same record survive separately (row_action in the key);
 /// - the second run dedups the new window AND removes the old-part leftover of a record
-///   that reappears 
-/// - the dead-set table + concurrent index are dropped, and changelog_dead_log is populated.
+///   that reappears;
+/// - the dead-set table + concurrent index are dropped afterwards.
 /// Insert a single changelog row with an explicit cursor (table is always Invoice).
 #[cfg(feature = "postgres")]
 fn dedup_test_insert(
@@ -1098,7 +1098,7 @@ fn dedup_test_run(connection: &StorageConnection, marker: i64, max: i64) -> u64 
     repo.prepare_dead_set(marker, max).unwrap();
     let mut total = 0u64;
     loop {
-        let n = repo.delete_dead_batch(2, total as i64).unwrap();
+        let n = repo.delete_dead_batch(2).unwrap();
         total += n;
         if n == 0 {
             break;
@@ -1128,7 +1128,6 @@ fn dedup_test_relation_exists(connection: &StorageConnection, name: &str) -> boo
 #[actix_rt::test]
 async fn test_changelog_dedupe_windowed() {
     use crate::test_db::SetupResult;
-    use diesel::sql_types::BigInt;
     use RowActionType::{Delete, Upsert};
 
     let SetupResult { connection, .. } = test_db::setup_test(test_db::SetupOption {
@@ -1173,16 +1172,4 @@ async fn test_changelog_dedupe_windowed() {
         !dedup_test_relation_exists(&connection, "index_changelog_dedup"),
         "index_changelog_dedup should be dropped"
     );
-
-    // changelog_dead_log captured the batches.
-    #[derive(QueryableByName)]
-    struct Count {
-        #[diesel(sql_type = BigInt)]
-        count: i64,
-    }
-    let log_count: Count =
-        diesel::sql_query("SELECT count(*)::bigint AS count FROM changelog_dead_log")
-            .get_result(connection.lock().connection())
-            .unwrap();
-    assert!(log_count.count > 0, "changelog_dead_log should have rows");
 }

@@ -3,18 +3,13 @@
 //! The changelog is append-only, so a record accumulates one row per change.
 //! Dedup keeps only the newest row per (table_name, record_id, row_action) group
 //! and deletes the rest.
-//! 
+//!
 //! These helpers MUST be called outside a `transaction_sync` (each statement
-//! autocommits): the per-batch deletes commit independently so the task can check
-//! the clock between batches.
+//! autocommits): the per-batch deletes commit independently.
 
 use crate::{ChangelogRepository, RepositoryError};
-use diesel::{
-    prelude::*,
-    sql_types::{BigInt, Integer},
-};
+use diesel::{prelude::*, sql_types::BigInt};
 use std::time::Instant;
-
 
 impl<'a> ChangelogRepository<'a> {
     /// Build `changelog_dead` — the set of cursors to delete — for the window
@@ -59,7 +54,10 @@ impl<'a> ChangelogRepository<'a> {
         .bind::<BigInt, _>(marker)
         .bind::<BigInt, _>(max)
         .execute(self.connection.lock().connection())?;
-        log::info!("changelog dedup: step 1 (build dead-set) in {:?}", t.elapsed());
+        log::info!(
+            "changelog dedup: step 1 (build dead-set) in {:?}",
+            t.elapsed()
+        );
 
         // Step 2: handle records that reappear across the marker.
         // Step 1 only looks inside the window, so it can't see a record's older row
@@ -101,14 +99,9 @@ impl<'a> ChangelogRepository<'a> {
     }
 
     /// Delete one batch of dead cursors from `changelog` (and pop them from
-    /// `changelog_dead`), logging the batch to `changelog_dead_log`. Each call
-    /// autocommits. Returns the number of changelog rows deleted; 0 means the
-    /// dead-set is drained.
-    pub fn delete_dead_batch(
-        &self,
-        batch_size: i64,
-        running_total: i64,
-    ) -> Result<u64, RepositoryError> {
+    /// `changelog_dead`). Each call autocommits. Returns the number of changelog
+    /// rows deleted; 0 means the dead-set is drained.
+    pub fn delete_dead_batch(&self, batch_size: i64) -> Result<u64, RepositoryError> {
         if !cfg!(feature = "postgres") {
             return Ok(0);
         }
@@ -129,19 +122,11 @@ impl<'a> ChangelogRepository<'a> {
         .bind::<BigInt, _>(batch_size)
         .execute(self.connection.lock().connection())?;
 
-        // Per-batch progress is persisted to changelog_dead_log (with a timestamp)
-        diesel::sql_query(
-            "INSERT INTO changelog_dead_log (deleted_batch, deleted_total) VALUES ($1, $2)",
-        )
-        .bind::<Integer, _>(n as i32)
-        .bind::<BigInt, _>(running_total + n)
-        .execute(self.connection.lock().connection())?;
-
         Ok(n as u64)
     }
 
-    /// Drop the dead-set table and the dedup index. Called on both success and
-    /// time-window cutoff (and idempotent via IF EXISTS for crash recovery).
+    /// Drop the dead-set table and the dedup index after a run (idempotent via
+    /// IF EXISTS for crash recovery).
     pub fn finish_dead_set(&self) -> Result<(), RepositoryError> {
         if !cfg!(feature = "postgres") {
             return Ok(());
