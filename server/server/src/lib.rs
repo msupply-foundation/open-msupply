@@ -60,6 +60,7 @@ use service::{
 
 use actix_web::{web, web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Instant;
 use util::format_error;
 
 mod authentication;
@@ -177,13 +178,19 @@ pub async fn start_server(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        Some(settings.clone()),
         subscription_trigger,
         batch_size,
         disable_integration_transaction,
         relax_hardware_id_token_checks,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
+    let cert_start = Instant::now();
     let certificates = Certificates::try_load(&settings.server).unwrap();
+    info!(
+        "Certificates loaded in {} ms",
+        cert_start.elapsed().as_millis()
+    );
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
     let token_secret_copy = token_secret.clone();

@@ -37,7 +37,7 @@ pub fn mock_draft_outbound_service_line() -> InvoiceLineRow {
     InvoiceLineRow {
         id: "mock_draft_outbound_service_line".to_string(),
         invoice_id: mock_draft_outbound_with_service_lines().id,
-        item_link_id: mock_default_service_item().id,
+        item_id: mock_default_service_item().id,
         ..Default::default()
     }
 }
@@ -57,7 +57,7 @@ pub fn mock_draft_outbound_shipped_service_line() -> InvoiceLineRow {
     InvoiceLineRow {
         id: "mock_draft_outbound_shipped_service_line".to_string(),
         invoice_id: mock_draft_outbound_shipped_with_service_lines().id,
-        item_link_id: mock_default_service_item().id,
+        item_id: mock_default_service_item().id,
         ..Default::default()
     }
 }
@@ -79,7 +79,7 @@ pub fn mock_draft_inbound_service_line() -> InvoiceLineRow {
     InvoiceLineRow {
         id: "mock_draft_inbound_service_line".to_string(),
         invoice_id: mock_draft_inbound_shipment_with_service_lines().id,
-        item_link_id: mock_default_service_item().id,
+        item_id: mock_default_service_item().id,
         ..Default::default()
     }
 }
@@ -110,7 +110,7 @@ pub fn mock_draft_inbound_verified_service_line() -> InvoiceLineRow {
     InvoiceLineRow {
         id: "mock_draft_inbound_shipped_service_line".to_string(),
         invoice_id: mock_draft_inbound_verified_with_service_lines().id,
-        item_link_id: mock_default_service_item().id,
+        item_id: mock_default_service_item().id,
         ..Default::default()
     }
 }

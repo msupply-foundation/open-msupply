@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Starting omSupply</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+      body {
+        background: #f2f2f5;
+        color: #1c1c28;
+        font-family: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+      }
+      .root {
+        text-align: center;
+        padding: 24px;
+      }
+      .spinner {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 24px;
+        border-radius: 50%;
+        background: conic-gradient(
+          from 0deg,
+          #ff7a0a,
+          #e83b30,
+          rgba(232, 59, 48, 0)
+        );
+        -webkit-mask: radial-gradient(
+          circle at center,
+          transparent 58%,
+          #000 60%
+        );
+        mask: radial-gradient(circle at center, transparent 58%, #000 60%);
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(1turn);
+        }
+      }
+      h2 {
+        margin: 0 0 8px;
+        font-weight: 600;
+        font-size: 1.125rem;
+      }
+      .subtext {
+        margin: 0;
+        color: #677285;
+        font-size: 0.875rem;
+      }
+      #logBtn {
+        display: block;
+        margin: 32px auto 0;
+        background: #e95c30;
+        color: #fff;
+        border: none;
+        border-radius: 24px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        height: 40px;
+        min-width: 115px;
+        padding: 0 24px;
+        opacity: 0;
+        transition: opacity 400ms ease;
+      }
+      #logBtn[hidden] {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="root">
+      <div class="spinner" role="status" aria-label="Loading"></div>
+      <h2>Starting omSupply…</h2>
+      <p class="subtext">This usually only takes a few seconds.</p>
+      <button id="logBtn" hidden onclick="LoadingPageInject.showLogs()">
+        Show Log File
+      </button>
+    </div>
+    <script>
+      // Reveal the log button after 5s — fast cold starts (~500ms) never see
+      // it; slow startups give the user a way to grab logs for support.
+      setTimeout(function () {
+        var b = document.getElementById('logBtn');
+        if (!b) return;
+        b.hidden = false;
+        requestAnimationFrame(function () {
+          b.style.opacity = 1;
+        });
+      }, 5000);
+    </script>
+  </body>
+</html>

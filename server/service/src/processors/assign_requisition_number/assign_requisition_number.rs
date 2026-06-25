@@ -66,7 +66,7 @@ impl Processor for AssignRequisitionNumber {
         Ok(Some(result))
     }
 
-    fn changelogs_filter(
+    async fn changelogs_filter(
         &self,
         ctx: &ServiceContext,
     ) -> Result<ChangelogCondition::Inner, ProcessorError> {

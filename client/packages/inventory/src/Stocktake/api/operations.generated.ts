@@ -45,7 +45,12 @@ export type StocktakeLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   location?: {
     __typename: 'LocationNode';
@@ -152,7 +157,12 @@ export type StocktakeFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
       location?: {
         __typename: 'LocationNode';
@@ -307,6 +317,7 @@ export type StocktakeQuery = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             location?: {
@@ -438,6 +449,7 @@ export type StocktakeByNumberQuery = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             location?: {
@@ -550,7 +562,12 @@ export type StocktakeLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
       location?: {
         __typename: 'LocationNode';
@@ -621,8 +638,12 @@ export type StockLineReducedBelowZeroErrorFragment = {
   stockLine: {
     __typename: 'StockLineNode';
     id: string;
+    itemId: string;
+    itemName: string;
+    batch?: string | null;
     totalNumberOfPacks: number;
     availableNumberOfPacks: number;
+    item: { __typename: 'ItemNode'; code: string };
   };
 };
 
@@ -639,7 +660,15 @@ export type AdjustmentReasonNotValidErrorFragment = {
 export type SnapshotCountCurrentCountMismatchLineErrorFragment = {
   __typename: 'SnapshotCountCurrentCountMismatchLine';
   description: string;
-  stocktakeLine: { __typename: 'StocktakeLineNode'; id: string };
+  stocktakeLine: {
+    __typename: 'StocktakeLineNode';
+    id: string;
+    itemId: string;
+    itemName: string;
+    batch?: string | null;
+    item: { __typename: 'ItemNode'; code: string };
+    stockLine?: { __typename: 'StockLineNode'; id: string } | null;
+  };
 };
 
 export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
@@ -688,8 +717,12 @@ export type UpsertStocktakeLinesMutation = {
                   stockLine: {
                     __typename: 'StockLineNode';
                     id: string;
+                    itemId: string;
+                    itemName: string;
+                    batch?: string | null;
                     totalNumberOfPacks: number;
                     availableNumberOfPacks: number;
+                    item: { __typename: 'ItemNode'; code: string };
                   };
                 };
           }
@@ -715,6 +748,14 @@ export type UpsertStocktakeLinesMutation = {
                   stocktakeLine: {
                     __typename: 'StocktakeLineNode';
                     id: string;
+                    itemId: string;
+                    itemName: string;
+                    batch?: string | null;
+                    item: { __typename: 'ItemNode'; code: string };
+                    stockLine?: {
+                      __typename: 'StockLineNode';
+                      id: string;
+                    } | null;
                   };
                 }
               | {
@@ -723,8 +764,12 @@ export type UpsertStocktakeLinesMutation = {
                   stockLine: {
                     __typename: 'StockLineNode';
                     id: string;
+                    itemId: string;
+                    itemName: string;
+                    batch?: string | null;
                     totalNumberOfPacks: number;
                     availableNumberOfPacks: number;
+                    item: { __typename: 'ItemNode'; code: string };
                   };
                 };
           };
@@ -759,8 +804,12 @@ export type StockLinesReducedBelowZeroErrorFragment = {
     stockLine: {
       __typename: 'StockLineNode';
       id: string;
+      itemId: string;
+      itemName: string;
+      batch?: string | null;
       totalNumberOfPacks: number;
       availableNumberOfPacks: number;
+      item: { __typename: 'ItemNode'; code: string };
     };
   }>;
 };
@@ -770,7 +819,15 @@ export type SnapshotCountCurrentCountMismatchErrorFragment = {
   lines: Array<{
     __typename: 'SnapshotCountCurrentCountMismatchLine';
     description: string;
-    stocktakeLine: { __typename: 'StocktakeLineNode'; id: string };
+    stocktakeLine: {
+      __typename: 'StocktakeLineNode';
+      id: string;
+      itemId: string;
+      itemName: string;
+      batch?: string | null;
+      item: { __typename: 'ItemNode'; code: string };
+      stockLine?: { __typename: 'StockLineNode'; id: string } | null;
+    };
   }>;
 };
 
@@ -793,7 +850,18 @@ export type UpdateStocktakeMutation = {
               lines: Array<{
                 __typename: 'SnapshotCountCurrentCountMismatchLine';
                 description: string;
-                stocktakeLine: { __typename: 'StocktakeLineNode'; id: string };
+                stocktakeLine: {
+                  __typename: 'StocktakeLineNode';
+                  id: string;
+                  itemId: string;
+                  itemName: string;
+                  batch?: string | null;
+                  item: { __typename: 'ItemNode'; code: string };
+                  stockLine?: {
+                    __typename: 'StockLineNode';
+                    id: string;
+                  } | null;
+                };
               }>;
             }
           | {
@@ -805,8 +873,12 @@ export type UpdateStocktakeMutation = {
                 stockLine: {
                   __typename: 'StockLineNode';
                   id: string;
+                  itemId: string;
+                  itemName: string;
+                  batch?: string | null;
                   totalNumberOfPacks: number;
                   availableNumberOfPacks: number;
+                  item: { __typename: 'ItemNode'; code: string };
                 };
               }>;
             }
@@ -971,6 +1043,12 @@ export const StockLineReducedBelowZeroErrorFragmentDoc = gql`
     __typename
     stockLine {
       id
+      itemId
+      itemName
+      batch
+      item {
+        code
+      }
       totalNumberOfPacks
       availableNumberOfPacks
     }
@@ -992,6 +1070,15 @@ export const SnapshotCountCurrentCountMismatchLineErrorFragmentDoc = gql`
     __typename
     stocktakeLine {
       id
+      itemId
+      itemName
+      batch
+      item {
+        code
+      }
+      stockLine {
+        id
+      }
     }
     description
   }
