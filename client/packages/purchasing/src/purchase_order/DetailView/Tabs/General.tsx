@@ -57,13 +57,6 @@ export const GeneralTab = ({ lineEdit }: GeneralTabProps) => {
     [lineEdit]
   );
 
-  const openNext = useCallback(() => {
-    const currentIndex = lines?.findIndex(line => line.id === lineEdit.entity);
-    const nextLine = lines[currentIndex + 1];
-    if (!nextLine) return;
-    lineEdit.onOpen(nextLine.id);
-  }, [lines, lineEdit]);
-
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<PurchaseOrderLineFragment>({
       tableId: 'purchase-order-detail-view',
@@ -85,6 +78,22 @@ export const GeneralTab = ({ lineEdit }: GeneralTabProps) => {
 
   if (!data) return null;
 
+  // Navigate lines in the order they're currently displayed in the table
+  // (respecting the user's sort), so "OK & Next" matches what the user sees.
+  const sortedLineIds = table
+    .getSortedRowModel()
+    .rows.map(row => row.original.id);
+  const currentLineIndex = sortedLineIds.findIndex(
+    id => id === lineEdit.entity
+  );
+  const hasNext =
+    currentLineIndex !== -1 && currentLineIndex < sortedLineIds.length - 1;
+  const openNext = () => {
+    const nextId = sortedLineIds[currentLineIndex + 1];
+    if (!nextId) return;
+    lineEdit.onOpen(nextId);
+  };
+
   return (
     <>
       <MaterialTable table={table} />
@@ -101,10 +110,7 @@ export const GeneralTab = ({ lineEdit }: GeneralTabProps) => {
           mode={lineEdit.mode}
           lineId={lineEdit.entity}
           isDisabled={isDisabled}
-          hasNext={
-            lines.findIndex(line => line.id === lineEdit.entity) <
-            lines.length - 1
-          }
+          hasNext={hasNext}
           openNext={openNext}
         />
       )}

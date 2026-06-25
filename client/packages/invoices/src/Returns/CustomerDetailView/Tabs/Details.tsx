@@ -10,7 +10,6 @@ import { CustomerReturnLineFragment, useReturns } from '../../api';
 import { useCustomerReturnColumns } from '../columns';
 import { Footer } from '../Footer';
 import { CustomerReturnEditModal } from '../../modals';
-import { getNextItemId } from '../../../utils';
 
 export interface DetailsTabLineEdit {
   isOpen: boolean;
@@ -55,7 +54,24 @@ export const DetailsTab = ({ lineEdit }: DetailsTabProps) => {
       ),
     });
 
-  const nextItemId = getNextItemId(lines ?? [], lineEdit.entity);
+  // Navigate items in the order they're currently displayed in the table
+  // (respecting the user's sort), so "OK & Next" matches what the user sees.
+  const sortedItemIds = table
+    .getSortedRowModel()
+    .rows.reduce<string[]>((acc, row) => {
+      const leafRows = row.getLeafRows();
+      const rows = leafRows.length ? leafRows : [row];
+      rows.forEach(leaf => {
+        const itemId = leaf.original?.itemId;
+        if (itemId && !acc.includes(itemId)) acc.push(itemId);
+      });
+      return acc;
+    }, []);
+  const currentItemIndex = sortedItemIds.findIndex(
+    id => id === lineEdit.entity
+  );
+  const nextItemId =
+    currentItemIndex === -1 ? undefined : sortedItemIds[currentItemIndex + 1];
 
   if (!data) return null;
 
