@@ -1,11 +1,6 @@
 import React, { FC } from 'react';
 import { useUrlQuery } from '@common/hooks';
-import {
-  Checkbox,
-  ListItemText,
-  MenuItem,
-  TextField,
-} from '@mui/material';
+import { Checkbox, ListItemText, MenuItem } from '@mui/material';
 import { Select } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { FilterLabelSx } from './styleConstants';
@@ -42,31 +37,21 @@ export const EnumFilter: FC<{
     };
 
     return (
-      <TextField
-        select
-        variant="standard"
-        size="small"
+      <Select
+        options={options}
         label={name}
         value={selectedValues}
         onChange={handleMultiChange}
-        sx={{
-          ...FilterLabelSx,
-          width: FILTER_WIDTH,
-          '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-          '& .MuiInput-input': { color: theme => theme.palette.gray.dark },
-        }}
+        sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}
+        renderOption={option => (
+          <MenuItem key={option.value} value={option.value}>
+            <Checkbox
+              checked={selectedValues.includes(String(option.value))}
+            />
+            <ListItemText primary={option.label} />
+          </MenuItem>
+        )}
         slotProps={{
-          input: {
-            color: 'secondary',
-            sx: {
-              backgroundColor: 'background.input.main',
-              borderRadius: 2,
-              padding: '0.25rem 0.5rem',
-            },
-          },
-          inputLabel: {
-            color: 'secondary',
-          },
           select: {
             multiple: true,
             renderValue: (selected: unknown) => {
@@ -77,14 +62,7 @@ export const EnumFilter: FC<{
             },
           },
         }}
-      >
-        {options.map(option => (
-          <MenuItem key={option.value} value={option.value}>
-            <Checkbox checked={selectedValues.includes(option.value)} />
-            <ListItemText primary={option.label} />
-          </MenuItem>
-        ))}
-      </TextField>
+      />
     );
   }
 
