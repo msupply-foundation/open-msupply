@@ -10,9 +10,9 @@ mod graphql {
             mock_store_linked_to_name, MockDataInserts,
         },
         EqualFilter, GeneralFilter, Name, NameCondition, NameFilter, NameSort, NameSortField,
-        NameType, PaginationOption, PropertyTableV2Row, PropertyTableV2RowRepository,
-        PropertyV2Row, PropertyV2RowRepository, PropertyValueFilter, PropertyValueTypeV2,
-        StorageConnectionManager, StringFilter,
+        NameType, PaginationOption, PropertyKindV2, PropertyTableV2Row,
+        PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository, PropertyValueFilter,
+        PropertyValueTypeV2, StorageConnectionManager, StringFilter,
     };
     use serde_json::json;
     use service::{
@@ -254,7 +254,7 @@ mod graphql {
                 key: "category".to_string(),
                 name: "Category".to_string(),
                 value_type: PropertyValueTypeV2::Text,
-                is_legacy: false,
+                kind: PropertyKindV2::Standard,
                 deleted_datetime: None,
             })
             .unwrap();
