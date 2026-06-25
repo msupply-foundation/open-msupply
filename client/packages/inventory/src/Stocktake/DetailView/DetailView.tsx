@@ -14,14 +14,9 @@ import {
   NothingHere,
   MaterialTable,
   AppFooterStatusPortal,
-  useToggle,
   useQueryClient,
 } from '@openmsupply-client/common';
-import {
-  ActivityLogList,
-  DocumentsTable,
-  UploadDocumentModal,
-} from '@openmsupply-client/system';
+import { ActivityLogList, DocumentsTab } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer, StatusFooter } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -58,8 +53,6 @@ const DetailViewInner = () => {
     queryClient.invalidateQueries({
       queryKey: stocktakeApi.keys.detail(stocktake?.id ?? ''),
     });
-
-  const uploadModal = useToggle();
 
   const { isOpen, entity, onOpen, onClose, mode } =
     useEditModal<StocktakeLineFragment['item']>();
@@ -100,11 +93,10 @@ const DetailViewInner = () => {
     },
     {
       Component: (
-        <DocumentsTable
+        <DocumentsTab
           documents={stocktake?.documents.nodes ?? []}
           recordId={stocktake?.id ?? ''}
           tableName="stocktake"
-          openUploadModal={uploadModal.toggleOn}
           invalidateQueries={invalidateDocuments}
         />
       ),
@@ -136,10 +128,7 @@ const DetailViewInner = () => {
 
   return (
     <>
-      <AppBarButtons
-        onAddItem={() => onOpen()}
-        openUploadModal={uploadModal.toggleOn}
-      />
+      <AppBarButtons onAddItem={() => onOpen()} />
 
       <Footer
         selectedRows={selectedRows}
@@ -174,15 +163,6 @@ const DetailViewInner = () => {
           mode={mode}
           item={entity}
           isInitialStocktake={stocktake.isInitialStocktake}
-        />
-      )}
-      {uploadModal.isOn && (
-        <UploadDocumentModal
-          isOn={uploadModal.isOn}
-          toggleOff={uploadModal.toggleOff}
-          recordId={stocktake.id}
-          tableName="stocktake"
-          invalidateQueries={invalidateDocuments}
         />
       )}
       <StocktakeErrorModal />
