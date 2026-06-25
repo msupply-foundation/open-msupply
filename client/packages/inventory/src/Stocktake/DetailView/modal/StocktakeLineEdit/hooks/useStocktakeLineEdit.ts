@@ -7,7 +7,6 @@ import { useStocktakeOld } from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
 import { useDraftStocktakeLines } from './useDraftStocktakeLines';
-import { StocktakeSummaryItem } from '../../../../../types';
 import { StocktakeLineFragment } from '../../../../api';
 
 interface useStocktakeLineEditController {
@@ -21,12 +20,11 @@ interface useStocktakeLineEditController {
 
 export const useStocktakeLineEdit = (
   item: DraftStocktakeLine['item'] | null,
-  items: StocktakeSummaryItem[],
+  getSortedItems: () => StocktakeLineFragment['item'][],
   lines?: StocktakeLineFragment[]
 ): useStocktakeLineEditController => {
   const { id } = useStocktakeOld.document.fields('id');
-  const filteredItems = items.filter(item => item.item?.id === item?.id);
-  const nextItem = useNextItem(filteredItems, item?.id);
+  const nextItem = useNextItem(getSortedItems, item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item, lines);
   const { saveAndMapStructuredErrors: upsertLines, isPending: isSaving } =
     useStocktakeOld.line.save();
