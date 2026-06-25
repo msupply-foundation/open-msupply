@@ -1,3 +1,9 @@
+---
+name: sync-context
+description: Load the context required to work on Open-mSupply's synchronisation system. Use this before answering any non-trivial sync question or making changes to sync code — it reads the canonical sync design docs and points at the code entry points (v5/v6/v7 transports, changelog, sync buffer, translations, sync styles). Trigger when the task touches sync, the changelog, sync_buffer, translators, or sync-style classification. To add a brand-new synced table, use the add-synced-table skill (which builds on this context).
+argument-hint: "[v7|changelog|sync_buffer|translations|styles]"
+---
+
 Load the context required to work on Open-mSupply's synchronisation system.
 
 Arguments: $ARGUMENTS (optional — a sub-area to focus on: `v7`, `changelog`, `sync_buffer`, `translations`, `styles`. If omitted, load the general overview set.)
@@ -10,12 +16,12 @@ Sync in this repo spans three transports (v5, v6, v7), a changelog, a sync buffe
 
 Always read these first (they are the canonical specification, not just background):
 
-- [syncdoc/README.md](syncdoc/README.md) — orientation for the syncdoc folder
-- [syncdoc/content/v7.md](syncdoc/content/v7.md) — **the core spec.** Covers v7 design, changelog logic, source_site_id, sync-type filters, sync rules per sync style, the sync buffer, central API, pull/push examples, sanity checks, de-duplication. Large; read it in full when working on v7 or changelog code, otherwise read the section relevant to the task.
-- [syncdoc/content/transition.md](syncdoc/content/transition.md) — how v5/v6/v7 coexist; COGS / COMS / ROGS / ROMS terminology; the manual + automatic v6→v7 transition steps.
-- [syncdoc/content/sync_buffer/sync_buffer.md](syncdoc/content/sync_buffer/sync_buffer.md) — sync_buffer shape, append-only design, partitioning recommendation, perf summary.
-- [syncdoc/content/changelog/locking/locking.md](syncdoc/content/changelog/locking/locking.md) — changelog write-lock analysis (contention behaviour, why insert ordering matters).
-- [server/repository/src/db_diesel/changelog/sync_styles.md](server/repository/src/db_diesel/changelog/sync_styles.md) — **plain-English reference** for sync transports, sync styles, table-by-style lists, changelog row metadata, outgoing filters, and translation directions. Generated from code via [.claude/commands/sync-styles-doc.md](.claude/commands/sync-styles-doc.md).
+- [docs/content/docs/sync/v7/_index.md](docs/content/docs/sync/v7/_index.md) — **the core spec.** Covers v7 design, changelog logic, source_site_id, sync-type filters, sync rules per sync style, the sync buffer, central API, pull/push examples, sanity checks, de-duplication, store/patient re-sync. Large; read it in full when working on v7 or changelog code, otherwise read the section relevant to the task.
+- [docs/content/docs/sync/transition/_index.md](docs/content/docs/sync/transition/_index.md) — how v5/v6/v7 coexist; COGS / COMS / ROGS / ROMS terminology; the manual + automatic v6→v7 transition steps.
+- [docs/content/docs/sync/sync_styles/_index.md](docs/content/docs/sync/sync_styles/_index.md) — **plain-English reference** for sync transports, sync styles, table-by-style lists, changelog row metadata, outgoing filters, and translation directions. Generated from code via the [sync-styles-doc skill](.claude/skills/sync-styles-doc/SKILL.md).
+- [docs/content/docs/sync/adding-a-table/](docs/content/docs/sync/adding-a-table/) — guides for adding a new synced table (V7-only, or integrating an existing v5/v6 table). Also surfaced by the [add-synced-table skill](.claude/skills/add-synced-table/SKILL.md).
+- [server/sync_v7_investigation/sync_buffer/sync_buffer.md](server/sync_v7_investigation/sync_buffer/sync_buffer.md) — sync_buffer shape, append-only design, partitioning recommendation, perf summary.
+- [server/sync_v7_investigation/changelog/locking/locking.md](server/sync_v7_investigation/changelog/locking/locking.md) — changelog write-lock analysis (contention behaviour, why insert ordering matters).
 - [server/service/src/sync/README.md](server/service/src/sync/README.md) and [docs/content/server/service/sync/_index.md](docs/content/server/service/sync/_index.md) — glossary (site, central server, transfer, record types) and stage overview (initialisation vs operational).
 - [server/docs/content/docs/sync/basics.md](server/docs/content/docs/sync/basics.md), [advanced.md](server/docs/content/docs/sync/advanced.md), [api.md](server/docs/content/docs/sync/api.md), [sync-queue.md](server/docs/content/docs/sync/sync-queue.md), [change-log.md](server/docs/content/docs/sync/change-log.md) — published docs; lighter weight, use for high-level explanations.
 - [server/service/src/sync/sync_status/README.md](server/service/src/sync/sync_status/README.md) — sync status / logger overview.
@@ -24,10 +30,10 @@ Always read these first (they are the canonical specification, not just backgrou
 - [decisions/2024-02-28_file_sync.md](decisions/2024-02-28_file_sync.md) — file sync design decision.
 - [decisions/2024-08-30_central_sync_queue_pull_reduction.md](decisions/2024-08-30_central_sync_queue_pull_reduction.md) — central queue pull reduction decision.
 
-Benchmark / performance reading (only when the task touches changelog or sync_buffer performance):
+Benchmark / performance reading (only when the task touches changelog or sync_buffer performance) — now under [server/sync_v7_investigation/](server/sync_v7_investigation/README.md):
 
-- [syncdoc/content/changelog/bench/README.md](syncdoc/content/changelog/bench/README.md), [syncdoc/content/changelog/query-speed/README.md](syncdoc/content/changelog/query-speed/README.md), [syncdoc/content/changelog/locking/README.md](syncdoc/content/changelog/locking/README.md), [syncdoc/content/changelog/results/bench_summary.md](syncdoc/content/changelog/results/bench_summary.md)
-- [syncdoc/content/sync_buffer/bench/README.md](syncdoc/content/sync_buffer/bench/README.md)
+- [server/sync_v7_investigation/changelog/bench/README.md](server/sync_v7_investigation/changelog/bench/README.md), [changelog/query-speed/README.md](server/sync_v7_investigation/changelog/query-speed/README.md), [changelog/locking/README.md](server/sync_v7_investigation/changelog/locking/README.md), [changelog/results/bench_summary.md](server/sync_v7_investigation/changelog/results/bench_summary.md)
+- [server/sync_v7_investigation/sync_buffer/bench/README.md](server/sync_v7_investigation/sync_buffer/bench/README.md)
 
 ## Step 2: Open the code entry points
 
@@ -89,14 +95,18 @@ The docs reference these by purpose; here is where to find each. Read the file w
 
 If `$ARGUMENTS` specifies a sub-area, prioritise these on top of the general doc set:
 
-- **`v7`** — `syncdoc/content/v7.md` (full); `syncdoc/content/transition.md` (how v5/v6/v7 coexist and the v6→v7 migration); v7 transport code under `server/service/src/sync_v7/`; v7 repository under `server/repository/src/syncv7/`; `batch_query.rs`. Also skim the v5/v6 transport entry points listed above so you can see how the three coexist.
-- **`changelog`** — `syncdoc/content/v7.md` (changelog sections), `server/repository/src/db_diesel/changelog/sync_styles.md`; the entire `server/repository/src/db_diesel/changelog/` module; `changelog_partitions.rs`; bench/locking/query-speed docs if perf-related.
-- **`sync_buffer`** — `syncdoc/content/sync_buffer/sync_buffer.md`; `server/repository/src/db_diesel/sync_buffer.rs`; `server/service/src/sync/sync_buffer.rs`; `translation_and_integration.rs`; bench docs if perf-related.
+- **`v7`** — `docs/content/docs/sync/v7/_index.md` (full); `docs/content/docs/sync/transition/_index.md` (how v5/v6/v7 coexist and the v6→v7 migration); v7 transport code under `server/service/src/sync_v7/`; v7 repository under `server/repository/src/syncv7/`; `batch_query.rs`. Also skim the v5/v6 transport entry points listed above so you can see how the three coexist.
+- **`changelog`** — `docs/content/docs/sync/v7/_index.md` (changelog sections), `docs/content/docs/sync/sync_styles/_index.md`; the entire `server/repository/src/db_diesel/changelog/` module; `changelog_partitions.rs`; bench/locking/query-speed docs under `server/sync_v7_investigation/changelog/` if perf-related.
+- **`sync_buffer`** — `server/sync_v7_investigation/sync_buffer/sync_buffer.md`; `server/repository/src/db_diesel/sync_buffer.rs`; `server/service/src/sync/sync_buffer.rs`; `translation_and_integration.rs`; bench docs if perf-related.
 - **`translations`** — `server/service/src/sync/translations/mod.rs` (trait + defaults); `legacy_row_types.md`; relevant per-table translator files; `server/service/src/sync_v7/translations/`.
-- **`styles`** — `server/repository/src/db_diesel/changelog/sync_styles.md`; `sync_style.rs`; `generate_changelog.rs`; the filter call sites for each transport.
+- **`styles`** — `docs/content/docs/sync/sync_styles/_index.md`; `sync_style.rs`; `generate_changelog.rs`; the filter call sites for each transport.
 
 ## Conventions reminder
 
 - Per [CLAUDE.md](CLAUDE.md) / [AGENT.md](AGENT.md): use `cargo nextest run`, not `cargo test`, for server tests.
 - The sync code is one of the most consequential surfaces in the repo. Bugs here corrupt data on real sites. Prefer explaining what you'd change and asking before editing non-trivial sync code, especially anything that affects the changelog row shape, sync-style classification, transport filters, or translator opt-ins.
 - When `sync_style.rs`, `generate_changelog.rs`, or translator opt-ins change, regenerate the plain-English doc via `/sync-styles-doc`.
+
+## Adding a new synced table
+
+If the task is to add a **brand-new table and make it sync** (V7 only), or to **integrate a table that already syncs in central mSupply (v5/v6) but isn't processed yet**, use the **`/add-synced-table`** skill. It builds on this context and walks through every layer (repository, migration, changelog, sync-style classification, legacy translation, V7 integration) with worked diff examples.
