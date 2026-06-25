@@ -6,8 +6,6 @@ export const useInternalSuppliers = () => {
 
   return useQuery({
     queryKey: [...api.keys.list(), 'internalSuppliers'],
-
-    queryFn: () =>
-      api.get.internalSuppliers()
+    queryFn: () => api.get.internalSuppliers({ first: 1000 }),
   });
 };

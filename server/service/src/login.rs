@@ -7,7 +7,7 @@ use repository::{
     ActivityLogType, LanguageType, PermissionType, RepositoryError, SyncVersion, UserAccountRow,
     UserAccountRowRepository, UserPermissionRow, UserStoreJoinRow,
 };
-use reqwest::{ClientBuilder, Url};
+use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -359,7 +359,7 @@ impl LoginService {
         let central_server_url = Url::parse(&input.central_server_url).map_err(|err| {
             FetchUserError::InternalError(format!("Failed to parse central server url: {err}"))
         })?;
-        let client = ClientBuilder::new()
+        let client = util::https_client_builder()
             .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SEC))
             .build()
             .map_err(|err| FetchUserError::ConnectionError(format!("{err:?}")))?;

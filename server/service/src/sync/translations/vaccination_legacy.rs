@@ -4,7 +4,7 @@ use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 use repository::{
-    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, Row, StorageConnection, VaccinationRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, VaccinationRow,
 };
 
 /*
@@ -74,7 +74,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
         row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
@@ -96,7 +96,7 @@ impl SyncTranslation for VaccinationLegacyTranslation {
             facility_free_text: _,
             invoice_id,
             stock_line_id,
-            item_link_id,
+            item_id,
             clinician_link_id,
             vaccination_date,
             given,
@@ -108,16 +108,9 @@ impl SyncTranslation for VaccinationLegacyTranslation {
         let patient_name_id = patient_id;
         let legacy_facility_name_id = facility_name_id;
 
-        // Look up item link ID, if it exists
-
-        let item_link_repo = ItemLinkRowRepository::new(connection);
-
-        let item_id = match item_link_id {
-            Some(item_link_id) => item_link_repo
-                .find_one_by_id(&item_link_id)?
-                .map(|item_link| item_link.id),
-            None => None,
-        };
+        // `item_id` is already the resolved canonical item id (the view resolves
+        // `item_link_id` -> `item_id` per the item_link abstraction), so no
+        // further lookup is needed here.
 
         let legacy_row = LegacyVaccinationRow {
             ID: id,
@@ -190,7 +183,7 @@ mod tests {
             encounter_id: mock_immunisation_encounter_a().id,
             given: true,
             given_store_id: Some(mock_store_a().id),
-            item_link_id: Some(mock_vaccine_item_a().id),
+            item_id: Some(mock_vaccine_item_a().id),
             patient_id: mock_patient().id,
             created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
                 .unwrap()

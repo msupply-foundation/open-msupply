@@ -74,7 +74,7 @@ mod test_sync_v7_client_api {
     fn stock_line() -> StockLineRow {
         StockLineRow {
             id: "stock_line_test_1".to_string(),
-            item_link_id: "item_test_1".to_string(),
+            item_id: "item_test_1".to_string(),
             store_id: "store_test_1".to_string(),
             pack_size: 1.0,
             available_number_of_packs: 100.0,

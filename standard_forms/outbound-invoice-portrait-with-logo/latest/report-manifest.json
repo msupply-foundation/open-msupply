@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.6.5",
+  "version": "2.6.6",
   "code": "outbound-invoice-portrait-with-logo",
   "context": "OUTBOUND_SHIPMENT",
   "name": "Outbound Shipment (portrait)",
@@ -8,5 +8,6 @@
     "gql": "picklist.graphql"
   },
   "arguments": {},
-  "header": "header.html"
+  "header": "header.html",
+  "footer": "footer.html"
 }

@@ -66,7 +66,7 @@ export const VvmStatusLogModal = ({
     <Modal
       width={400}
       title={
-        isCreating ? t('label.add-vvm-status') : t('label.edit-vvm-status')
+        isCreating ? t('label.new-vvm-status') : t('label.edit-vvm-status')
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={<DialogButton variant="ok" onClick={handleConfirm} disabled={isCreating && !selectedStatus} />}
