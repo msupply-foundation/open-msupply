@@ -12,6 +12,7 @@ pub async fn csv_to_excel(
     store_id: String,
     csv_data: String,
     filename: String,
+    sheet_name: Option<String>,
 ) -> Result<PrintReportResponse> {
     validate_auth(
         ctx,
@@ -24,7 +25,12 @@ pub async fn csv_to_excel(
     let service_provider = ctx.service_provider();
     let service = &service_provider.report_service;
 
-    match service.csv_to_excel(&ctx.get_settings().server.base_dir, &csv_data, &filename) {
+    match service.csv_to_excel(
+        &ctx.get_settings().server.base_dir,
+        &csv_data,
+        &filename,
+        sheet_name.as_deref(),
+    ) {
         Ok(file_id) => Ok(PrintReportResponse::Response(PrintReportNode { file_id })),
         Err(err) => Err(StandardGraphqlError::InternalError(format!(
             "Failed to convert CSV to Excel: {err:?}"

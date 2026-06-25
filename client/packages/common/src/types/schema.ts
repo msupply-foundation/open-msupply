@@ -8123,6 +8123,7 @@ export type QueriesContactsArgs = {
 export type QueriesCsvToExcelArgs = {
   csvData: Scalars['String']['input'];
   filename: Scalars['String']['input'];
+  sheetName?: InputMaybe<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
