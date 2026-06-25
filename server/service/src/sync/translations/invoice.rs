@@ -314,8 +314,8 @@ pub struct LegacyTransactRow {
 /// `properties_v2` keys the legacy OG→OMS invoice import owns (derived from
 /// `transact.category_ID` / `category2_ID`). On a v5 re-import these are
 /// refreshed from OG; every other key in the blob (OMS-authored values) is
-/// preserved. See [`merge_legacy_properties`]. The keys match the
-/// `legacy_transaction_category_*` mapping properties seeded by
+/// preserved. See [`merge_legacy_properties`]. The keys match the per-type
+/// category mapping properties (keyed `<type>_category`) seeded by
 /// `central_mapping_properties` — one OPTION property per transact type, since
 /// mSupply partitions its category pool by type, plus the second prescription
 /// dimension (`pi2`, the OG Patient Type dropdown → `transact.category2_ID`).
@@ -324,8 +324,8 @@ pub struct LegacyTransactRow {
 /// back to OG (`category_ID`/`category2_ID` in the push below) — invoices are
 /// store data OMS actively authors, so the one-way rule is relaxed (see the
 /// properties dev doc).
-/// NOTE: this list, [`category_key_for_invoice_type`], the
-/// `legacy_transaction_category_*` seeder entries (`central_mapping_properties`)
+/// NOTE: this list, [`category_key_for_invoice_type`], the category seeder
+/// entries (`central_mapping_properties`)
 /// and `invoice_property_table_name` must stay in lock-step — the
 /// `transaction_category_mappings_stay_in_lock_step` test in
 /// `central_mapping_properties` asserts it (the migration SQL backfill is the

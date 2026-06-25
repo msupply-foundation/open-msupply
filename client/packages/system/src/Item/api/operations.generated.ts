@@ -1693,7 +1693,7 @@ export type PropertyV2Fragment = {
   key: string;
   name: string;
   valueType: Types.PropertyNodeValueTypeV2;
-  isLegacy: boolean;
+  kind: Types.PropertyNodeKindV2;
   options: Array<{
     __typename: 'PropertyOptionV2Node';
     id: string;
@@ -1718,7 +1718,7 @@ export type ItemPropertiesV2Query = {
       key: string;
       name: string;
       valueType: Types.PropertyNodeValueTypeV2;
-      isLegacy: boolean;
+      kind: Types.PropertyNodeKindV2;
       options: Array<{
         __typename: 'PropertyOptionV2Node';
         id: string;
@@ -2092,7 +2092,7 @@ export const PropertyV2FragmentDoc = gql`
     key
     name
     valueType
-    isLegacy
+    kind
     options {
       id
       key
