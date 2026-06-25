@@ -193,7 +193,6 @@ query preferences($storeId: String!) {
     invoiceStatusOptions
     itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions
-    doNotPrintPlaceholderLineLabels
     isGaps
     globalTableConfigs
     backdating {

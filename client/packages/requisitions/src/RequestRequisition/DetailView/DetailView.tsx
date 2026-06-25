@@ -158,13 +158,7 @@ export const DetailView = () => {
       {/* Fallback status footer for tabs that don't own the lines table.
         The Details tab's `Footer` mounts an `AppFooterPortal` only when rows
         are selected; otherwise this portal shows the status crumbs. */}
-      <AppFooterStatusPortal
-        Content={
-          <StatusFooter
-            indicators={showIndicatorTab ? programIndicators?.nodes : undefined}
-          />
-        }
-      />
+      <AppFooterStatusPortal Content={<StatusFooter />} />
 
       <SidePanel />
 

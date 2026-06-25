@@ -55,7 +55,6 @@ pub enum PrefKey {
     WarnWhenMissingRecentStocktake,
     InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
-    DoNotPrintPlaceholderLineLabels,
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -52,7 +52,6 @@ export const ListItems = ({
   }
 
   const changeItem = (id: string) => {
-    if (id === currentItemId) return;
     if (currentItemId === 'new' && isDirty) {
       showSaveNewConfirmation();
     } else navigate(route.addPart(id).build());
