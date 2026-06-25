@@ -1,6 +1,6 @@
 use repository::{
-    rnr_form_row::{RnRFormRow, RnRFormRowRepository},
-    ChangelogRow, ChangelogTableName, RnRFormDelete, StorageConnection, SyncBufferRow,
+    rnr_form_row::RnRFormRow,
+    ChangelogRow, ChangelogTableName, RnRFormDelete, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
@@ -48,7 +48,8 @@ impl SyncTranslation for RnRFormTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let row = from_renamed_keys_str::<RnRFormRow>(&sync_record.data, RENAMED_KEYS)?;
+        let row =
+            from_renamed_keys_str::<RnRFormRow>(&sync_record.data.0.to_string(), RENAMED_KEYS)?;
         Ok(PullTranslateResult::upsert(row))
     }
 
@@ -74,15 +75,15 @@ impl SyncTranslation for RnRFormTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = RnRFormRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "RnRForm row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::RnrForm(rnr_form_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = rnr_form_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,

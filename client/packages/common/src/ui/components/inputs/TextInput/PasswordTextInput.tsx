@@ -49,6 +49,7 @@ export const PasswordTextInput = React.forwardRef<
             ),
           ...props.slotProps?.input,
         },
+        htmlInput: props.slotProps?.htmlInput,
         formHelperText: { error: true },
       }}
       ref={ref}

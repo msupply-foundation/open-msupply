@@ -29,6 +29,7 @@ pub fn r_and_r_forms(
         &ResourceAccessRequest {
             resource: Resource::QueryRnRForms,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -60,6 +61,7 @@ pub fn r_and_r_form(
         &ResourceAccessRequest {
             resource: Resource::QueryRnRForms,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -96,6 +98,7 @@ pub fn get_schedules_with_periods_by_program(
         &ResourceAccessRequest {
             resource: Resource::QueryRnRForms,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

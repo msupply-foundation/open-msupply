@@ -83,6 +83,7 @@ pub fn generate(
         shipping_method_id: None,
         charges_local_currency: 0.0,
         charges_foreign_currency: 0.0,
+        ..Default::default()
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
@@ -130,6 +131,7 @@ pub fn generate_invoice_lines(
             linked_invoice_id: None,
             donor_id: None,
             manufacturer_id: None,
+            legacy_goods_received_line_id: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,

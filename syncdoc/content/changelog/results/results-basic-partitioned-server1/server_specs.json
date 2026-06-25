@@ -1,0 +1,14 @@
+{
+  "hostname": "SYNCSERVER",
+  "os": "Microsoft Windows Server 2025 Standard (10.0.26100 Build 26100)",
+  "processor": "Intel(R) Xeon(R) Gold 6242 CPU @ 2.80GHz, 2793 MHz, 3 Core(s), 6 Logical Processor(s)",
+  "ram_installed_gb": 32.0,
+  "ram_total_gb": 32.0,
+  "ram_available_gb": 25.6,
+  "virtual_memory_gb": 36.7,
+  "virtual_memory_available_gb": 31.2,
+  "page_file_space_gb": 4.75,
+  "storage": "\\Device\\HarddiskVolume1",
+  "hypervisor": "Microsoft Corporation Hyper-V",
+  "virtualization_based_security": "Not enabled"
+}

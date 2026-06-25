@@ -82,6 +82,7 @@ pub fn insert_stock_relocation(
         &ResourceAccessRequest {
             resource: Resource::MutateStockLine,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

@@ -1,4 +1,4 @@
-use repository::{mock::MockData, NameRow, NameStoreJoinRow, StoreRow, SyncBufferRow};
+use repository::{mock::MockData, sync_buffer::SyncRecordData, NameRow, NameStoreJoinRow, StoreRow, SyncBufferRow};
 use serde_json::json;
 
 use crate::sync::{
@@ -181,7 +181,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         sync_buffer_row: SyncBufferRow {
             table_name: "name".to_string(),
             record_id: NAME_1.0.to_string(),
-            data: NAME_1.1.to_string(),
+            data: SyncRecordData(serde_json::from_str(NAME_1.1).unwrap()),
             ..Default::default()
         },
         extra_data: Some(MockData {

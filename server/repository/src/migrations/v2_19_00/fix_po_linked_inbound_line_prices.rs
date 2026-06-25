@@ -192,7 +192,7 @@ mod tests {
         // (6) Outbound shipment line linked to PO somehow (unusual); type mismatch excludes it.
         create_invoice_line(&connection, "il_outbound", "inv_outbound", Some("pol_foreign"), "STOCK_OUT", 84.6, 84.6, 12.0);
 
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
         let rows = invoice_line::table
