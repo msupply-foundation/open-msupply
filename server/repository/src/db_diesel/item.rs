@@ -228,7 +228,10 @@ impl<'a> ItemRepository<'a> {
             query = query.order(item::id.asc())
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let final_query = query
+            .then_order_by(item::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
