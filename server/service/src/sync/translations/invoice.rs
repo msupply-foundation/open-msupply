@@ -8,6 +8,7 @@ use crate::sync::translations::{
     name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
     shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
 };
+use crate::sync::central_mapping_properties::keys;
 use crate::sync::CentralServerConfig;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -172,7 +173,7 @@ pub struct LegacyTransactRow {
     pub category_ID: Option<String>,
     /// Second transaction category — prescriptions only in OG (the Patient Type
     /// dropdown, from the "pi2" category pool). Mapped to/from
-    /// [`PRESCRIPTION_CATEGORY2_KEY`].
+    /// [`keys::PRESCRIPTION_CATEGORY_2`].
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub category2_ID: Option<String>,
@@ -332,29 +333,27 @@ pub struct LegacyTransactRow {
 /// one copy a test can't reach; a future category-bearing type needs a NEW
 /// migration anyway, since shipped ones are frozen).
 pub(crate) const LEGACY_INVOICE_OWNED_KEYS: &[&str] = &[
-    "inbound_shipment_category",
-    "outbound_shipment_category",
-    "prescription_category",
-    "supplier_return_category",
-    "customer_return_category",
-    PRESCRIPTION_CATEGORY2_KEY,
+    keys::INBOUND_SHIPMENT_CATEGORY,
+    keys::OUTBOUND_SHIPMENT_CATEGORY,
+    keys::PRESCRIPTION_CATEGORY,
+    keys::SUPPLIER_RETURN_CATEGORY,
+    keys::CUSTOMER_RETURN_CATEGORY,
+    // `transact.category2_ID` is only ever written for prescriptions in OG
+    // (dispensary mode, from the "pi2" category pool), so it maps to a single
+    // prescription-scoped key rather than one per type.
+    keys::PRESCRIPTION_CATEGORY_2,
 ];
-
-/// `transact.category2_ID` is only ever written for prescriptions in OG
-/// (dispensary mode, from the "pi2" category pool), so it maps to a single
-/// prescription-scoped key rather than one per type.
-pub(crate) const PRESCRIPTION_CATEGORY2_KEY: &str = "prescription_category2";
 
 /// The `properties_v2` key holding the transaction category for an invoice of
 /// this type — `None` for types without a mapped category property (repack,
 /// inventory adjustments).
 pub(crate) fn category_key_for_invoice_type(invoice_type: &InvoiceType) -> Option<&'static str> {
     match invoice_type {
-        InvoiceType::InboundShipment => Some("inbound_shipment_category"),
-        InvoiceType::OutboundShipment => Some("outbound_shipment_category"),
-        InvoiceType::Prescription => Some("prescription_category"),
-        InvoiceType::SupplierReturn => Some("supplier_return_category"),
-        InvoiceType::CustomerReturn => Some("customer_return_category"),
+        InvoiceType::InboundShipment => Some(keys::INBOUND_SHIPMENT_CATEGORY),
+        InvoiceType::OutboundShipment => Some(keys::OUTBOUND_SHIPMENT_CATEGORY),
+        InvoiceType::Prescription => Some(keys::PRESCRIPTION_CATEGORY),
+        InvoiceType::SupplierReturn => Some(keys::SUPPLIER_RETURN_CATEGORY),
+        InvoiceType::CustomerReturn => Some(keys::CUSTOMER_RETURN_CATEGORY),
         InvoiceType::InventoryAddition | InvoiceType::InventoryReduction | InvoiceType::Repack => {
             None
         }
@@ -372,7 +371,7 @@ fn build_legacy_invoice_properties(
     let key = category_key_for_invoice_type(invoice_type)?;
     let mut builder = LegacyPropertiesBuilder::new().option(key, category_id);
     if *invoice_type == InvoiceType::Prescription {
-        builder = builder.option(PRESCRIPTION_CATEGORY2_KEY, category2_id);
+        builder = builder.option(keys::PRESCRIPTION_CATEGORY_2, category2_id);
     }
     builder.build()
 }
@@ -404,7 +403,7 @@ fn legacy_category2_id_from_properties(
     if *invoice_type != InvoiceType::Prescription {
         return None;
     }
-    property_string(properties_v2, PRESCRIPTION_CATEGORY2_KEY)
+    property_string(properties_v2, keys::PRESCRIPTION_CATEGORY_2)
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the

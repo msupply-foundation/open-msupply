@@ -4,6 +4,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::sync::central_mapping_properties::keys;
 use crate::sync::CentralServerConfig;
 
 use super::{PullTranslateResult, SyncTranslation};
@@ -18,12 +19,12 @@ use super::{PullTranslateResult, SyncTranslation};
 /// "in" (inventory adjustment), "te" (tender).
 fn transaction_category_property_id(category_type: &str) -> Option<&'static str> {
     match category_type {
-        "si" => Some("inbound_shipment_category"),
-        "ci" => Some("outbound_shipment_category"),
-        "pi" => Some("prescription_category"),
-        "sc" => Some("supplier_return_category"),
-        "cc" => Some("customer_return_category"),
-        "pi2" => Some("prescription_category2"),
+        "si" => Some(keys::INBOUND_SHIPMENT_CATEGORY),
+        "ci" => Some(keys::OUTBOUND_SHIPMENT_CATEGORY),
+        "pi" => Some(keys::PRESCRIPTION_CATEGORY),
+        "sc" => Some(keys::SUPPLIER_RETURN_CATEGORY),
+        "cc" => Some(keys::CUSTOMER_RETURN_CATEGORY),
+        "pi2" => Some(keys::PRESCRIPTION_CATEGORY_2),
         _ => None,
     }
 }

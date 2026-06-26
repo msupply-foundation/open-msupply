@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { isEqual } from '@common/utils';
+import isEqual from 'lodash/isEqual';
 
 export type DraftProperties = Record<string, string | number | boolean | null>;
 
@@ -12,7 +12,7 @@ export type DraftProperties = Record<string, string | number | boolean | null>;
 const withoutNulls = (props: DraftProperties): DraftProperties =>
   Object.fromEntries(Object.entries(props).filter(([, v]) => v !== null));
 
-interface DraftPatientProperties {
+export interface UseDraftProperties {
   draftProperties: DraftProperties;
   /** Merge a partial update (key -> value) into the draft. */
   updateProperty: (update: DraftProperties) => void;
@@ -21,14 +21,14 @@ interface DraftPatientProperties {
 }
 
 /**
- * Draft state for a patient's `properties_v2` blob. Unlike the legacy store
- * draft hook, the value arrives already parsed (JSON scalar object), so it's
- * used directly. Resets whenever the loaded blob changes (e.g. after a save
- * invalidates and re-fetches the patient).
+ * Draft state for a record's `properties_v2` blob, shared by every editable
+ * properties tab (patient, invoice, …). The value arrives already parsed (a JSON
+ * scalar object), so it's used directly. Resets whenever the loaded blob changes
+ * (e.g. after a save invalidates and re-fetches the record).
  */
-export const useDraftPatientProperties = (
+export const useDraftProperties = (
   initialProperties?: Record<string, unknown> | null
-): DraftPatientProperties => {
+): UseDraftProperties => {
   const initial = useMemo(
     () => (initialProperties ?? {}) as DraftProperties,
     [initialProperties]

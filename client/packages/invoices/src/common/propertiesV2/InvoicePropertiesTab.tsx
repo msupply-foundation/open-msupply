@@ -1,15 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
-  InputWithLabelRow,
+  DraftProperties,
   InvoiceNodeType,
   LoadingButton,
   NothingHere,
-  PropertyV2Input,
+  PropertyV2DetailRows,
   SaveIcon,
-  Typography,
   useConfirmationModal,
-  useIsExtraSmallScreen,
+  useDraftProperties,
   useNotification,
   useTranslation,
   useAuthContext,
@@ -17,10 +16,6 @@ import {
 } from '@openmsupply-client/common';
 import { useInvoicePropertiesV2 } from './hooks';
 import { throwIfStructuredError } from './saveResult';
-import {
-  DraftProperties,
-  useDraftInvoiceProperties,
-} from './useDraftInvoiceProperties';
 
 /** The permission gating property edits for each invoice type's tab. */
 const MUTATE_PERMISSION: Partial<Record<InvoiceNodeType, UserPermission>> = {
@@ -66,12 +61,11 @@ export const InvoicePropertiesTab = ({
   const t = useTranslation();
   const { error, success } = useNotification();
   const { userHasPermission } = useAuthContext();
-  const isExtraSmallScreen = useIsExtraSmallScreen();
   const [isSaving, setIsSaving] = useState(false);
 
   const { data: definitions = [] } = useInvoicePropertiesV2(invoiceType);
   const { draftProperties, updateProperty, isDirty } =
-    useDraftInvoiceProperties(propertiesV2);
+    useDraftProperties(propertiesV2);
 
   const permission = MUTATE_PERMISSION[invoiceType];
   const disabled =
@@ -116,29 +110,20 @@ export const InvoicePropertiesTab = ({
             paddingX: '2em',
           },
           width: '600px',
-          display: 'grid',
-          gap: 1,
           margin: '0 auto',
           paddingTop: 2,
         })}
       >
-        {[...definitions]
-          .sort((a, b) => (a.name || a.key).localeCompare(b.name || b.key))
-          .map(definition => (
-            <Row
-              key={definition.id}
-              label={definition.name || definition.key}
-              isExtraSmallScreen={isExtraSmallScreen}
-              input={
-                <PropertyV2Input
-                  definition={definition}
-                  value={draftProperties[definition.key] ?? null}
-                  disabled={disabled}
-                  onChange={v => updateProperty({ [definition.key]: v ?? null })}
-                />
-              }
-            />
-          ))}
+        <PropertyV2DetailRows
+          // Alphabetical by label, as this tab has always rendered them — the
+          // shared renderer keeps whatever order it's handed.
+          definitions={[...definitions].sort((a, b) =>
+            (a.name || a.key).localeCompare(b.name || b.key)
+          )}
+          properties={draftProperties}
+          onChange={(key, value) => updateProperty({ [key]: value })}
+          disabled={disabled}
+        />
       </Box>
       {!disabled && (
         <Box paddingTop={2}>
@@ -152,37 +137,6 @@ export const InvoicePropertiesTab = ({
           />
         </Box>
       )}
-    </Box>
-  );
-};
-
-const Row = ({
-  label,
-  isExtraSmallScreen,
-  input,
-}: {
-  label: string;
-  isExtraSmallScreen: boolean;
-  input: React.ReactNode;
-}) => {
-  if (!isExtraSmallScreen)
-    return (
-      <InputWithLabelRow
-        label={label}
-        sx={{ width: '100%' }}
-        labelProps={{
-          sx: { width: '250px', fontSize: '16px', paddingRight: 2 },
-        }}
-        Input={<Box flex={1}>{input}</Box>}
-      />
-    );
-
-  return (
-    <Box paddingTop={1.5}>
-      <Typography sx={{ fontSize: '1rem!important', fontWeight: 'bold' }}>
-        {label}
-      </Typography>
-      {input}
     </Box>
   );
 };
