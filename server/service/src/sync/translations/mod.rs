@@ -38,6 +38,7 @@ pub(crate) mod item_direction;
 pub(crate) mod item_store_join;
 pub(crate) mod item_variant;
 pub(crate) mod item_warning_join;
+pub(crate) mod legacy_field_labels;
 pub(crate) mod location;
 pub(crate) mod location_movement;
 pub(crate) mod location_type;
@@ -153,6 +154,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         property_v2::boxed(),
         property_option_v2::boxed(),
         property_table_v2::boxed(),
+        legacy_field_labels::boxed(),
         location_type::boxed(),
         campaign::boxed(),
         contact::boxed(),

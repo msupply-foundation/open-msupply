@@ -1,17 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import {
-  Box,
-  InputWithLabelRow,
+  DraftProperties,
   InvoiceNodeType,
-  LoadingButton,
-  NothingHere,
-  PropertyV2Input,
-  SaveIcon,
-  Typography,
-  useConfirmationModal,
-  useIsExtraSmallScreen,
-  useNotification,
-  useTranslation,
+  PropertiesEditTab,
   useAuthContext,
 } from '@openmsupply-client/common';
 import {
@@ -19,10 +10,6 @@ import {
   useInvoicePropertiesV2,
 } from './hooks';
 import { throwIfStructuredError } from './saveResult';
-import {
-  DraftProperties,
-  useDraftInvoiceProperties,
-} from './useDraftInvoiceProperties';
 
 interface InvoicePropertiesTabProps {
   invoiceType: InvoiceNodeType;
@@ -45,9 +32,8 @@ interface InvoicePropertiesTabProps {
 }
 
 /**
- * "Properties" tab shared by every invoice detail view — editable list of the
- * type's custom (propertiesV2) values, mirroring the patient Custom properties
- * tab: edits collect in a draft and save via an explicit confirmed Save button.
+ * "Properties" tab for every invoice detail view — wires the type's definitions,
+ * permission and status-gated save into the shared {@link PropertiesEditTab}.
  */
 export const InvoicePropertiesTab = ({
   invoiceType,
@@ -56,126 +42,26 @@ export const InvoicePropertiesTab = ({
   disabled: statusDisabled,
   onEdit,
 }: InvoicePropertiesTabProps) => {
-  const t = useTranslation();
-  const { error, success } = useNotification();
   const { userHasPermission } = useAuthContext();
-  const isExtraSmallScreen = useIsExtraSmallScreen();
-  const [isSaving, setIsSaving] = useState(false);
-
   const { data: definitions = [] } = useInvoicePropertiesV2(invoiceType);
-  const { draftProperties, updateProperty, isDirty } =
-    useDraftInvoiceProperties(propertiesV2);
 
   const permission = INVOICE_PROPERTY_MUTATE_PERMISSION[invoiceType];
   const disabled =
     !!statusDisabled || !permission || !userHasPermission(permission);
 
-  useEffect(() => {
-    onEdit(isDirty);
-  }, [isDirty, onEdit]);
-
-  const handleSave = useCallback(async () => {
-    setIsSaving(true);
-    try {
-      // Some update hooks resolve structured error payloads rather than
-      // throwing — scan the result so a server rejection isn't reported as
-      // saved (see throwIfStructuredError).
-      throwIfStructuredError(await onSave(draftProperties));
-      success(t('success.data-saved'))();
-    } catch {
-      error(t('error.failed-to-save-properties'))();
-    } finally {
-      setIsSaving(false);
-    }
-  }, [onSave, draftProperties, success, error, t]);
-
-  const showSaveConfirmation = useConfirmationModal({
-    onConfirm: handleSave,
-    message: t('messages.confirm-save-generic'),
-    title: t('heading.are-you-sure'),
-  });
-
-  if (!definitions.length) {
-    return <NothingHere body={t('messages.no-properties')} />;
-  }
-
   return (
-    <Box display="flex" flexDirection="column" alignItems="center" flex={1}>
-      <Box
-        sx={theme => ({
-          [theme.breakpoints.down('sm')]: {
-            width: '95%',
-            minWidth: '340px',
-            paddingX: '2em',
-          },
-          width: '600px',
-          display: 'grid',
-          gap: 1,
-          margin: '0 auto',
-          paddingTop: 2,
-        })}
-      >
-        {[...definitions]
-          .sort((a, b) => (a.name || a.key).localeCompare(b.name || b.key))
-          .map(definition => (
-            <Row
-              key={definition.id}
-              label={definition.name || definition.key}
-              isExtraSmallScreen={isExtraSmallScreen}
-              input={
-                <PropertyV2Input
-                  definition={definition}
-                  value={draftProperties[definition.key] ?? null}
-                  disabled={disabled}
-                  onChange={v => updateProperty({ [definition.key]: v ?? null })}
-                />
-              }
-            />
-          ))}
-      </Box>
-      {!disabled && (
-        <Box paddingTop={2}>
-          <LoadingButton
-            onClick={() => showSaveConfirmation()}
-            isLoading={isSaving}
-            disabled={!isDirty}
-            startIcon={<SaveIcon />}
-            label={t('button.save')}
-            variant="contained"
-          />
-        </Box>
+    <PropertiesEditTab
+      // Alphabetical by label, as this tab has always rendered them — the shared
+      // renderer keeps whatever order it's handed.
+      definitions={[...definitions].sort((a, b) =>
+        (a.name || a.key).localeCompare(b.name || b.key)
       )}
-    </Box>
-  );
-};
-
-const Row = ({
-  label,
-  isExtraSmallScreen,
-  input,
-}: {
-  label: string;
-  isExtraSmallScreen: boolean;
-  input: React.ReactNode;
-}) => {
-  if (!isExtraSmallScreen)
-    return (
-      <InputWithLabelRow
-        label={label}
-        sx={{ width: '100%' }}
-        labelProps={{
-          sx: { width: '250px', fontSize: '16px', paddingRight: 2 },
-        }}
-        Input={<Box flex={1}>{input}</Box>}
-      />
-    );
-
-  return (
-    <Box paddingTop={1.5}>
-      <Typography sx={{ fontSize: '1rem!important', fontWeight: 'bold' }}>
-        {label}
-      </Typography>
-      {input}
-    </Box>
+      properties={propertiesV2}
+      disabled={disabled}
+      onEdit={onEdit}
+      // Some update hooks resolve structured error payloads rather than throwing
+      // — surface those so a rejection isn't reported as saved.
+      onSave={async draft => throwIfStructuredError(await onSave(draft))}
+    />
   );
 };

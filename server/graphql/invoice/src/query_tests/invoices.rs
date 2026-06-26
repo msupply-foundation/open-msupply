@@ -8,7 +8,8 @@ mod test {
     use repository::{
         mock::{mock_inbound_shipment_a, MockDataInserts},
         InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowRepository, PropertyDisplayModeV2,
-        PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository,
+        PropertyKindV2, PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row,
+        PropertyV2RowRepository,
         PropertyValueTypeV2,
     };
     use serde_json::json;
@@ -150,18 +151,18 @@ mod test {
         // A property visible on the "inbound_shipment" table scope
         PropertyV2RowRepository::new(&connection)
             .upsert_one(&PropertyV2Row {
-                id: "legacy_transaction_category_si".to_string(),
+                id: "inbound_shipment_category".to_string(),
                 key: "inbound_shipment_category".to_string(),
                 name: "Category".to_string(),
                 value_type: PropertyValueTypeV2::Option,
-                is_legacy: true,
+                kind: PropertyKindV2::Legacy,
                 deleted_datetime: None,
             })
             .unwrap();
         PropertyTableV2RowRepository::new(&connection)
             .upsert_one(&PropertyTableV2Row {
-                id: "legacy_transaction_category_si__inbound_shipment".to_string(),
-                property_id: "legacy_transaction_category_si".to_string(),
+                id: "inbound_shipment_category__inbound_shipment".to_string(),
+                property_id: "inbound_shipment_category".to_string(),
                 table_name: "inbound_shipment".to_string(),
                 display_mode: PropertyDisplayModeV2::Visible,
             })

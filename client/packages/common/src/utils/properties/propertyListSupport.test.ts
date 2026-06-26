@@ -32,7 +32,7 @@ const option = def({
 const number = def({
   key: 'population',
   name: 'Population',
-  valueType: PropertyNodeValueTypeV2.Number,
+  valueType: PropertyNodeValueTypeV2.Integer,
 });
 const date = def({
   key: 'opened',
@@ -43,11 +43,6 @@ const boolean = def({
   key: 'active',
   name: 'Active',
   valueType: PropertyNodeValueTypeV2.Boolean,
-});
-const other = def({
-  key: 'mystery',
-  name: 'Mystery',
-  valueType: PropertyNodeValueTypeV2.Other,
 });
 
 const rangeLabels = {
@@ -128,23 +123,12 @@ describe('buildPropertyFilterDefinitions', () => {
       { type: 'boolean', name: 'Active', urlParameter: 'prop-active' },
     ]);
   });
-
-  it('skips properties with an unknown value type', () => {
-    expect(buildPropertyFilterDefinitions([other], rangeLabels)).toEqual([]);
-  });
 });
 
 describe('buildPropertyUrlFilterConfigs', () => {
   it('maps value types to url filter conditions', () => {
     expect(
-      buildPropertyUrlFilterConfigs([
-        text,
-        option,
-        number,
-        date,
-        boolean,
-        other,
-      ])
+      buildPropertyUrlFilterConfigs([text, option, number, date, boolean])
     ).toEqual([
       { key: 'prop-note' },
       { key: 'prop-category', condition: 'equalTo' },

@@ -3,7 +3,7 @@ fragment InvoicePropertyV2 on PropertyV2Node {
   key
   name
   valueType
-  isLegacy
+  kind
   displayMode
   options {
     id

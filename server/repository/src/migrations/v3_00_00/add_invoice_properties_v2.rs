@@ -20,8 +20,8 @@ impl MigrationFragment for Migrate {
         // sync_buffer: invoices were integrated before the invoice translator
         // mapped the categories, and (unlike central data) transact records
         // don't re-flow from OG, so without this the historical values would
-        // stay empty. The JSONB key is per invoice type, matching the
-        // `legacy_transaction_category_*` mapping properties seeded by
+        // stay empty. The JSONB key is per invoice type, matching the per-type
+        // category mapping properties (keyed `<type>_category`) seeded by
         // `central_mapping_properties` and written by the invoice translator.
         //
         // Same approach as `add_legacy_goods_received_link_fields`: temporary

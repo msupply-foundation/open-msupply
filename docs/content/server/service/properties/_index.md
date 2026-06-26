@@ -89,7 +89,7 @@ Patients are `name` rows, so they reuse `name.properties_v2` and the shared lega
 - **Sync up.** Rides the `Name` changelog (Central + Patient) — the local edit is stamped with the site's own `source_site_id`, so it flows remote→COMS→visible remotes with no translator change.
 - **Overwrite guard.** The v5 name import on COMS *merges* (`merge_legacy_properties`) instead of overwriting: it refreshes the OG-owned `custom_1/2/3` and preserves OMS-authored keys, so a v5 re-pull can't clobber a patient edit.
 
-OG push-back is **wired but inert**: the name push derives `custom1/2/3` from `properties_v2` (`legacy_custom_field_from_properties`), but the `PushToLegacyCentral` guard (#9430, the patient-DOB round-trip bug) blocks it — so edits only reach OG if/when the general patient→OG sync path is re-enabled.
+OG push-back is **wired but inert**: the name push derives `custom_1/2/3` from `properties_v2` (`legacy_custom_field_from_properties`), but the `PushToLegacyCentral` guard (#9430, the patient-DOB round-trip bug) blocks it — so edits only reach OG if/when the general patient→OG sync path is re-enabled.
 
 ### Item Categories
 
@@ -97,19 +97,19 @@ Item categories are the case flagged above as *not* mapping generically. They're
 
 The fit is near 1:1 (`category.parent_id` ↔ `property_option_v2.parent_option_id`), so categories are a single OPTION property:
 
-- **Mapping property** `legacy_item_category` (key `item_category`, OPTION, table `item`), seeded by `central_mapping_properties`.
+- **Mapping property** key `item_category_1` (OPTION, table `item`), seeded by `central_mapping_properties`.
 - **Options.** `CategoryTranslation` (central-only) emits a `property_option_v2` row per `item_category*` record — `parent_ID → parent_option_id`, option `id` = category id.
-- **Value.** `build_legacy_item_properties` writes the leaf `category_ID` to `item.properties_v2["item_category"]`. Since option `id` = category id, the client's `resolveOptionValue` renders the name with no client changes.
+- **Value.** `build_legacy_item_properties` writes the leaf `category_ID` to `item.properties_v2["item_category_1"]`. Since option `id` = category id, the client's `resolveOptionValue` renders the name with no client changes.
 
 Sync is unchanged from the rules above: options are v7-only central data; the value rides the `Item` changelog; both are central-authored and one-way.
 
-There are also two **flat** extra dimensions — `[item]category2_ID`/`category3_ID` → `item_category2`/`item_category3` (no level tables) — modelled the same way as `legacy_item_category_2`/`_3` (keys `item_category2`/`item_category3`). They emit only the option (no relational `CategoryRow`, since they aren't part of the relational `category` tree).
+There are also two **flat** extra dimensions — `[item]category2_ID`/`category3_ID` (no level tables) — modelled the same way under keys `item_category_2`/`item_category_3`. They emit only the option (no relational `CategoryRow`, since they aren't part of the relational `category` tree).
 
 ### Name / patient categories
 
-`[name]`'s six independent category dimensions become six OPTION properties `legacy_name_category_1..6` (keys `name_category1..6` — prefixed since `property_v2.key` is globally unique and item already owns `category2/3`), visible on `name` and `patient`. There's no relational name-category table, so this is pure propertiesV2.
+`[name]`'s six independent category dimensions become six OPTION properties with keys `name_category_1..6` (prefixed `name_` since `property_v2.key` is globally unique — and the key is also the id — so they can't reuse item's `item_category_2/3`), visible on `name` and `patient`. There's no relational name-category table, so this is pure propertiesV2.
 
-- **Options** authored by `NameCategoryTranslation` (central-only). category1 is hierarchical (`name_category1_level1`→`_level2`→`name_category1` leaf, `parent_ID → parent_option_id`); 2–6 are flat. Option `id` = category id; `build_legacy_properties` writes each leaf `categoryN_ID` to `name.properties_v2["name_categoryN"]`.
+- **Options** authored by `NameCategoryTranslation` (central-only). category1 is hierarchical (`name_category1_level1`→`_level2`→`name_category1` leaf, `parent_ID → parent_option_id`); 2–6 are flat. Option `id` = category id; `build_legacy_properties` writes each leaf `categoryN_ID` to `name.properties_v2["name_category_N"]`.
 - **Editable on patients** — the first editable OPTION. `PropertyV2Input` renders OPTION as an id-aware Autocomplete of the leaf options (read-only = same control disabled). Keys are OG-owned (`LEGACY_NAME_OWNED_KEYS`), so the import/merge/last-writer-wins model matches `custom_1/2/3`.
 
 > **`property_option_v2.parent_option_id` is deliberately not a FK.** Options sync in cursor order with no retry, so a child can arrive before its parent — a FK would silently drop it. Same reason `category.parent_id` isn't a FK.

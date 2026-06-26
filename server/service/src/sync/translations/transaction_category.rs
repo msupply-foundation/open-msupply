@@ -4,26 +4,27 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::sync::central_mapping_properties::keys;
 use crate::sync::CentralServerConfig;
 
 use super::{PullTranslateResult, SyncTranslation};
 
 /// Map a `transaction_category.type` to the `property_v2.id` of the OPTION
-/// mapping property its categories belong to. Property ids must match the
-/// `legacy_transaction_category_*` definitions seeded by
-/// `central_mapping_properties`. "pi2" is the second prescription dimension
-/// (the OG Patient Type dropdown, stored in `transact.category2_ID`).
+/// mapping property its categories belong to. The key *is* the id (see
+/// `central_mapping_properties`), so these must match the category keys seeded
+/// there. "pi2" is the second prescription dimension (the OG Patient Type
+/// dropdown, stored in `transact.category2_ID`).
 ///
 /// OG types with no OMS UI surface are not mapped: "sr" (repack), "bu" (build),
 /// "in" (inventory adjustment), "te" (tender).
 fn transaction_category_property_id(category_type: &str) -> Option<&'static str> {
     match category_type {
-        "si" => Some("legacy_transaction_category_si"),
-        "ci" => Some("legacy_transaction_category_ci"),
-        "pi" => Some("legacy_transaction_category_pi"),
-        "sc" => Some("legacy_transaction_category_sc"),
-        "cc" => Some("legacy_transaction_category_cc"),
-        "pi2" => Some("legacy_transaction_category_pi2"),
+        "si" => Some(keys::INBOUND_SHIPMENT_CATEGORY),
+        "ci" => Some(keys::OUTBOUND_SHIPMENT_CATEGORY),
+        "pi" => Some(keys::PRESCRIPTION_CATEGORY),
+        "sc" => Some(keys::SUPPLIER_RETURN_CATEGORY),
+        "cc" => Some(keys::CUSTOMER_RETURN_CATEGORY),
+        "pi2" => Some(keys::PRESCRIPTION_CATEGORY_2),
         _ => None,
     }
 }
@@ -124,8 +125,8 @@ impl SyncTranslation for TransactionCategoryTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, PropertyOptionV2RowRepository, PropertyV2Row,
-        PropertyV2RowRepository, PropertyValueTypeV2, SyncAction, SyncRecordData,
+        mock::MockDataInserts, test_db::setup_all, PropertyKindV2, PropertyOptionV2RowRepository,
+        PropertyV2Row, PropertyV2RowRepository, PropertyValueTypeV2, SyncAction, SyncRecordData,
     };
 
     fn sync_record(category_type: &str) -> SyncBufferRow {
@@ -159,12 +160,12 @@ mod tests {
         // id/key equal the category id and the hierarchy stays flat.
         test_util_set_is_central_server(true);
         for (category_type, property_id) in [
-            ("si", "legacy_transaction_category_si"),
-            ("ci", "legacy_transaction_category_ci"),
-            ("pi", "legacy_transaction_category_pi"),
-            ("sc", "legacy_transaction_category_sc"),
-            ("cc", "legacy_transaction_category_cc"),
-            ("pi2", "legacy_transaction_category_pi2"),
+            ("si", "inbound_shipment_category"),
+            ("ci", "outbound_shipment_category"),
+            ("pi", "prescription_category"),
+            ("sc", "supplier_return_category"),
+            ("cc", "customer_return_category"),
+            ("pi2", "prescription_category2"),
         ] {
             let record = sync_record(category_type);
             assert!(translator.should_translate_from_sync_record(&record));
@@ -217,18 +218,18 @@ mod tests {
         // FK target for the option row.
         PropertyV2RowRepository::new(&connection)
             .upsert_one(&PropertyV2Row {
-                id: "legacy_transaction_category_si".to_string(),
+                id: "inbound_shipment_category".to_string(),
                 key: "inbound_shipment_category".to_string(),
                 name: "Category".to_string(),
                 value_type: PropertyValueTypeV2::Option,
-                is_legacy: true,
+                kind: PropertyKindV2::Legacy,
                 deleted_datetime: None,
             })
             .unwrap();
         PropertyOptionV2RowRepository::new(&connection)
             .upsert_one(&PropertyOptionV2Row {
                 id: "CAT_SI".to_string(),
-                property_id: "legacy_transaction_category_si".to_string(),
+                property_id: "inbound_shipment_category".to_string(),
                 key: "CAT_SI".to_string(),
                 name: "Donation".to_string(),
                 parent_option_id: None,

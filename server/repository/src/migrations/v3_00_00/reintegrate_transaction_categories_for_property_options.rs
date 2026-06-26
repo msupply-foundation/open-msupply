@@ -11,8 +11,9 @@ impl MigrationFragment for Migrate {
     ///
     /// `TransactionCategoryTranslation` (central-only) emits a
     /// `property_option_v2` row per `transaction_category` record, mapping
-    /// mSupply transaction categories onto the typed
-    /// `legacy_transaction_category_*` OPTION properties. Existing sites
+    /// mSupply transaction categories onto the per-type category OPTION
+    /// properties (keyed `<type>_category`, e.g. `inbound_shipment_category`)
+    /// seeded by `central_mapping_properties`. Existing sites
     /// integrated those records before the translator existed (previously
     /// untranslated), and central data only re-flows from OG on initialisation
     /// or change — so the options would otherwise stay empty.

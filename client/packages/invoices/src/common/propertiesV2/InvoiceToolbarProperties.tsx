@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Box,
+  DraftProperties,
   InputWithLabelRow,
   InvoiceNodeType,
   PropertyNodeDisplayModeV2,
@@ -11,7 +12,6 @@ import {
   INVOICE_PROPERTY_MUTATE_PERMISSION,
   useInvoicePropertiesV2,
 } from './hooks';
-import { DraftProperties } from './useDraftInvoiceProperties';
 
 interface InvoiceToolbarPropertiesProps {
   invoiceType: InvoiceNodeType;

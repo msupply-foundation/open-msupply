@@ -61,14 +61,14 @@ mod tests {
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, &hardware_id);
 
-        synchroniser.sync(None).await.unwrap();
+        synchroniser.sync().await.unwrap();
 
         // Change hardware id
         let synchroniser =
             get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, "id2");
 
         let error = synchroniser
-            .sync(None)
+            .sync()
             .await
             .err()
             .expect("Should result in error");
@@ -91,7 +91,7 @@ mod tests {
             .expect("Sync log row should exist");
 
         assert_matches!(
-            status.error,
+            status.error_v5v6(),
             Some(SyncLogError {
                 code: Some(SyncApiErrorCode::HardwareIdMismatch),
                 ..
@@ -114,11 +114,12 @@ mod tests {
             sync_settings.clone(),
             service_provider.clone(),
             10000,
+            10000,
         )
         .unwrap();
 
         let error = synchroniser
-            .sync(None)
+            .sync()
             .await
             .err()
             .expect("Should result in error");
