@@ -59,7 +59,7 @@ pub(crate) mod keys {
     pub(crate) const PRESCRIPTION_CATEGORY: &str = "prescription_category";
     pub(crate) const SUPPLIER_RETURN_CATEGORY: &str = "supplier_return_category";
     pub(crate) const CUSTOMER_RETURN_CATEGORY: &str = "customer_return_category";
-    pub(crate) const PRESCRIPTION_CATEGORY_2: &str = "prescription_category2";
+    pub(crate) const PRESCRIPTION_CATEGORY_2: &str = "prescription_category_2";
 }
 
 /// A code-defined mSupply "mapping property" — a property in the new system that
@@ -543,7 +543,7 @@ mod tests {
             let def = seeded
                 .iter()
                 .find(|def| def.key == key)
-                .unwrap_or_else(|| panic!("no seeded property for key {key:?}"));
+                .unwrap_or_else(|| panic!("no seeded property for key {:?}", key));
             assert_eq!(
                 def.table_names,
                 &[scope],

@@ -83,9 +83,12 @@ impl<'a> PropertyV2Repository<'a> {
 
         // When scoped to one table, fetch each property's display_mode for that
         // table so it can be surfaced per-scope (e.g. to drive toolbar promotion).
+        // Skip Hidden mappings to stay in lock-step with the main query (which
+        // already excludes them) — those rows could never be matched anyway.
         let modes: HashMap<String, PropertyDisplayModeV2> = match &scope_table {
             Some(table_name) => property_table_v2::table
                 .filter(property_table_v2::table_name.eq(table_name))
+                .filter(property_table_v2::display_mode.ne(PropertyDisplayModeV2::Hidden))
                 .select((
                     property_table_v2::property_id,
                     property_table_v2::display_mode,
@@ -402,7 +405,7 @@ mod tests {
             scoped
                 .iter()
                 .find(|r| r.property.id == id)
-                .unwrap_or_else(|| panic!("missing {id} in scoped result"))
+                .unwrap_or_else(|| panic!("missing {} in scoped result", id))
                 .display_mode
                 .clone()
         };

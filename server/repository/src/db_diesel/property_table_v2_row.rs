@@ -29,7 +29,12 @@ diesel_string_enum! {
         /// Visible, and additionally promoted to the scope's primary surface
         /// (e.g. the invoice detail-view toolbar).
         Prominent,
-        #[strum(default)]
+        // `transparent` makes `as_ref()`/Display (and so the custom Serialize and
+        // the diesel ToSql) emit the captured inner string, not the variant name
+        // "OTHER" — without it an unrecognised mode would round-trip to "OTHER"
+        // and the original value would be lost. Matches PropertyValueTypeV2/
+        // PropertyKindV2; pinned by the serde round-trip test below.
+        #[strum(default, transparent)]
         Other(String),
     }
 }
@@ -165,5 +170,40 @@ impl Upsert for PropertyTableV2Row {
             PropertyTableV2RowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // The whole `property_table_v2` row is the sync wire format (see
+    // service/src/sync/translations/property_table_v2.rs), so serde IS the wire
+    // form for `display_mode`. Mirrors the PropertyValueTypeV2/PropertyKindV2
+    // round-trip tests: pins the flat-string form and verifies a mode unknown to
+    // this build (added on a newer central) survives losslessly.
+    #[test]
+    fn property_display_mode_v2_serde_wire_form() {
+        // Known variants <-> flat SCREAMING_SNAKE_CASE string, matching the DB TEXT column.
+        assert_eq!(
+            serde_json::to_value(PropertyDisplayModeV2::Prominent).unwrap(),
+            serde_json::json!("PROMINENT")
+        );
+        assert_eq!(
+            serde_json::from_value::<PropertyDisplayModeV2>(serde_json::json!("HIDDEN")).unwrap(),
+            PropertyDisplayModeV2::Hidden
+        );
+
+        // Unknown variant serialises to its raw inner string — NOT the variant
+        // name "OTHER" (the bug `transparent` prevents) — and round-trips back.
+        assert_eq!(
+            serde_json::to_value(PropertyDisplayModeV2::Other("FUTURE_MODE".to_string())).unwrap(),
+            serde_json::json!("FUTURE_MODE")
+        );
+        assert_eq!(
+            serde_json::from_value::<PropertyDisplayModeV2>(serde_json::json!("FUTURE_MODE"))
+                .unwrap(),
+            PropertyDisplayModeV2::Other("FUTURE_MODE".to_string())
+        );
     }
 }
