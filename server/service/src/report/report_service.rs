@@ -75,6 +75,14 @@ pub enum InstallReportError {
     FileNotFound,
 }
 
+#[derive(Debug, Error)]
+pub enum UpdateReportError {
+    #[error(transparent)]
+    RepositoryError(RepositoryError),
+    #[error("Report not found")]
+    ReportNotFound,
+}
+
 #[derive(Debug, Clone)]
 pub enum ResolvedReportQuery {
     SQLQuery(SQLQuery),
@@ -235,6 +243,15 @@ pub trait ReportServiceTrait: Sync + Send {
         sheet_name: Option<&str>,
     ) -> Result<String, ReportError> {
         csv_to_excel(base_dir, csv_data, filename, sheet_name)
+    }
+
+    fn update_report(
+        &self,
+        ctx: &ServiceContext,
+        id: &str,
+        is_active: bool,
+    ) -> Result<repository::ReportRow, UpdateReportError> {
+        update_report(ctx, id, is_active)
     }
 }
 
@@ -433,6 +450,24 @@ fn query_all_report_versions(
         ),
         rows: reports,
     })
+}
+
+fn update_report(
+    ctx: &ServiceContext,
+    id: &str,
+    is_active: bool,
+) -> Result<repository::ReportRow, UpdateReportError> {
+    let repo = ReportRowRepository::new(&ctx.connection);
+    let mut row = repo
+        .find_one_by_id(id)
+        .map_err(UpdateReportError::RepositoryError)?
+        .ok_or(UpdateReportError::ReportNotFound)?;
+
+    row.is_active = is_active;
+    repo.upsert_one(&row)
+        .map_err(UpdateReportError::RepositoryError)?;
+
+    Ok(row)
 }
 
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {

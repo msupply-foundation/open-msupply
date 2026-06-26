@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   NothingHere,
   useUrlQueryParams,
@@ -12,6 +12,7 @@ import {
 import { AppBarButtons } from './AppBarButtons';
 import { useCentralReports } from '../api/hooks/useAllReportVersionsList';
 import { ReportUploadModal } from './ReportUploadModal';
+import { ReportEditModal } from './ReportEditModal';
 import { ReportWithVersionRowFragment } from '../api/operations.generated';
 
 export const ReportsList = () => {
@@ -35,11 +36,14 @@ export const ReportsList = () => {
   const {
     query: { data, isError, isFetching },
     install: { installMutation },
+    update: { updateMutation, updateLoading },
   } = useCentralReports({
     queryParams,
   });
 
   const { isOpen, onClose, onOpen } = useEditModal();
+  const [editingReport, setEditingReport] =
+    useState<ReportWithVersionRowFragment | null>(null);
 
   const columns = useMemo(
     (): ColumnDef<ReportWithVersionRowFragment>[] => [
@@ -95,6 +99,7 @@ export const ReportsList = () => {
     isError,
     noDataElement: <NothingHere body={t('error.no-reports')} />,
     enableRowSelection: false,
+    onRowClick: row => setEditingReport(row),
   });
 
   return (
@@ -105,6 +110,15 @@ export const ReportsList = () => {
           isOpen={isOpen}
           onClose={onClose}
           install={installMutation}
+        />
+      )}
+      {editingReport && (
+        <ReportEditModal
+          isOpen
+          report={editingReport}
+          onClose={() => setEditingReport(null)}
+          update={updateMutation}
+          isUpdating={updateLoading}
         />
       )}
       <MaterialTable table={table} />
