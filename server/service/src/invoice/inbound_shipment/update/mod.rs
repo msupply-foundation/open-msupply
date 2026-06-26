@@ -2383,8 +2383,8 @@ mod test {
     #[actix_rt::test]
     async fn update_inbound_shipment_properties_v2() {
         use repository::{
-            PropertyDisplayModeV2, PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row,
-            PropertyV2RowRepository, PropertyValueTypeV2,
+            PropertyDisplayModeV2, PropertyKindV2, PropertyTableV2Row, PropertyTableV2RowRepository,
+            PropertyV2Row, PropertyV2RowRepository, PropertyValueTypeV2,
         };
         use serde_json::json;
 
@@ -2394,18 +2394,18 @@ mod test {
         // Seed one visible inbound shipment property so key validation passes.
         PropertyV2RowRepository::new(&connection)
             .upsert_one(&PropertyV2Row {
-                id: "legacy_transaction_category_si".to_string(),
+                id: "inbound_shipment_category".to_string(),
                 key: "inbound_shipment_category".to_string(),
                 name: "Category".to_string(),
                 value_type: PropertyValueTypeV2::Option,
-                is_legacy: true,
+                kind: PropertyKindV2::Legacy,
                 deleted_datetime: None,
             })
             .unwrap();
         PropertyTableV2RowRepository::new(&connection)
             .upsert_one(&PropertyTableV2Row {
-                id: "legacy_transaction_category_si__inbound_shipment".to_string(),
-                property_id: "legacy_transaction_category_si".to_string(),
+                id: "inbound_shipment_category__inbound_shipment".to_string(),
+                property_id: "inbound_shipment_category".to_string(),
                 table_name: "inbound_shipment".to_string(),
                 display_mode: PropertyDisplayModeV2::Visible,
             })

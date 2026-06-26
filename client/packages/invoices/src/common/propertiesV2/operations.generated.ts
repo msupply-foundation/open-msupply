@@ -9,7 +9,7 @@ export type InvoicePropertyV2Fragment = {
   key: string;
   name: string;
   valueType: Types.PropertyNodeValueTypeV2;
-  isLegacy: boolean;
+  kind: Types.PropertyNodeKindV2;
   displayMode?: Types.PropertyNodeDisplayModeV2 | null;
   options: Array<{
     __typename: 'PropertyOptionV2Node';
@@ -35,7 +35,7 @@ export type InvoicePropertiesV2Query = {
       key: string;
       name: string;
       valueType: Types.PropertyNodeValueTypeV2;
-      isLegacy: boolean;
+      kind: Types.PropertyNodeKindV2;
       displayMode?: Types.PropertyNodeDisplayModeV2 | null;
       options: Array<{
         __typename: 'PropertyOptionV2Node';
@@ -54,7 +54,7 @@ export const InvoicePropertyV2FragmentDoc = gql`
     key
     name
     valueType
-    isLegacy
+    kind
     displayMode
     options {
       id
