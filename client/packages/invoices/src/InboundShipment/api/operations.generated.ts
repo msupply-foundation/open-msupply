@@ -1103,6 +1103,15 @@ export type DeleteInboundShipmentsMutation = {
                   __typename: 'CannotDeleteInvoiceWithLines';
                   description: string;
                 }
+              | {
+                  __typename: 'CannotDeleteInvoiceWithReservedStock';
+                  lineId: string;
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotDeleteTransferInvoice';
+                  description: string;
+                }
               | { __typename: 'CannotEditInvoice'; description: string }
               | { __typename: 'RecordNotFound'; description: string };
           }
@@ -1131,6 +1140,15 @@ export type DeleteInboundShipmentsExternalMutation = {
             error:
               | {
                   __typename: 'CannotDeleteInvoiceWithLines';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotDeleteInvoiceWithReservedStock';
+                  lineId: string;
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotDeleteTransferInvoice';
                   description: string;
                 }
               | { __typename: 'CannotEditInvoice'; description: string }
@@ -1345,6 +1363,14 @@ export type UpsertInboundShipmentMutation = {
                   __typename: 'CannotDeleteInvoiceWithLines';
                   description: string;
                 }
+              | {
+                  __typename: 'CannotDeleteInvoiceWithReservedStock';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotDeleteTransferInvoice';
+                  description: string;
+                }
               | { __typename: 'CannotEditInvoice'; description: string }
               | { __typename: 'RecordNotFound'; description: string };
           }
@@ -1520,6 +1546,14 @@ export type UpsertInboundShipmentExternalMutation = {
             error:
               | {
                   __typename: 'CannotDeleteInvoiceWithLines';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotDeleteInvoiceWithReservedStock';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotDeleteTransferInvoice';
                   description: string;
                 }
               | { __typename: 'CannotEditInvoice'; description: string }
@@ -2363,7 +2397,11 @@ export const DeleteInboundShipmentsDocument = gql`
           ... on DeleteInboundShipmentError {
             __typename
             error {
+              __typename
               description
+              ... on CannotDeleteInvoiceWithReservedStock {
+                lineId
+              }
             }
           }
           ... on DeleteResponse {
@@ -2391,7 +2429,11 @@ export const DeleteInboundShipmentsExternalDocument = gql`
           ... on DeleteInboundShipmentError {
             __typename
             error {
+              __typename
               description
+              ... on CannotDeleteInvoiceWithReservedStock {
+                lineId
+              }
             }
           }
           ... on DeleteResponse {

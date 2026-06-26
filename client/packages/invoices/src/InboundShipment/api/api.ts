@@ -32,6 +32,7 @@ import {
   InsertInboundShipmentMutationVariables,
   InboundLineFragment,
 } from './operations.generated';
+import { DeleteResponseNode } from './mapInboundDeleteError';
 
 export type ListParams = {
   first: number;
@@ -320,7 +321,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   delete: async (
     invoices: InboundRowFragment[],
     isExternal = false
-  ): Promise<string[]> => {
+  ): Promise<DeleteResponseNode[]> => {
     const variables = {
       storeId,
       deleteInboundShipments: invoices.map(invoice => ({ id: invoice.id })),
@@ -331,11 +332,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
           ?.batchInboundShipmentExternal
       : (await sdk.deleteInboundShipments(variables))?.batchInboundShipment;
 
-    if (batchInboundShipment?.deleteInboundShipments) {
-      return batchInboundShipment.deleteInboundShipments.map(({ id }) => id);
-    }
-
-    throw new Error('Could not delete invoices');
+    return batchInboundShipment?.deleteInboundShipments ?? [];
   },
   insert: async (
     patch: Omit<InsertInboundShipmentMutationVariables, 'storeId'>,

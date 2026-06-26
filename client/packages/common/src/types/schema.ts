@@ -1263,6 +1263,13 @@ export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
     lines: InvoiceLineConnector;
   };
 
+export type CannotDeleteInvoiceWithReservedStock =
+  DeleteInboundShipmentErrorInterface & {
+    __typename: 'CannotDeleteInvoiceWithReservedStock';
+    description: Scalars['String']['output'];
+    lineId: Scalars['String']['output'];
+  };
+
 export type CannotDeleteLineLinkedToShipment =
   DeleteResponseRequisitionLineErrorInterface & {
     __typename: 'CannotDeleteLineLinkedToShipment';
@@ -1277,6 +1284,12 @@ export type CannotDeletePurchaseOrder = DeletePurchaseOrderErrorInterface & {
 export type CannotDeleteRequisitionWithLines =
   DeleteRequestRequisitionErrorInterface & {
     __typename: 'CannotDeleteRequisitionWithLines';
+    description: Scalars['String']['output'];
+  };
+
+export type CannotDeleteTransferInvoice =
+  DeleteInboundShipmentErrorInterface & {
+    __typename: 'CannotDeleteTransferInvoice';
     description: Scalars['String']['output'];
   };
 

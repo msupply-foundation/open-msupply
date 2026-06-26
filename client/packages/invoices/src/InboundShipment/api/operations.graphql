@@ -481,7 +481,11 @@ mutation deleteInboundShipments(
         ... on DeleteInboundShipmentError {
           __typename
           error {
+            __typename
             description
+            ... on CannotDeleteInvoiceWithReservedStock {
+              lineId
+            }
           }
         }
         ... on DeleteResponse {
@@ -508,7 +512,11 @@ mutation deleteInboundShipmentsExternal(
         ... on DeleteInboundShipmentError {
           __typename
           error {
+            __typename
             description
+            ... on CannotDeleteInvoiceWithReservedStock {
+              lineId
+            }
           }
         }
         ... on DeleteResponse {
