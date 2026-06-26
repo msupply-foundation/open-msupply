@@ -1,9 +1,9 @@
 # Properties in Open mSupply
 
-- _Date_: 
-- _Deciders_: 
-- _Status_: PROPOSED — draft recommendation below, pending deciders
-- _Outcome_: Option 2 - JSON (proposed)
+- _Date_: 2026-06-23
+- _Deciders_: @jmbrunskill, @ria8651, @andreievg
+- _Status_: DECIDED
+- _Outcome_: Option 2 - JSON
 
 ## Context
 
@@ -124,8 +124,6 @@ OMS legacy properties migration?
 
 ## Decision
 
-> ⚠️ **Draft recommendation — not yet ratified.** Drafted from the performance findings in the Appendix and the option write-ups above. To be reviewed and confirmed by the deciders (fill in _Date_/_Deciders_/_Status_ above when agreed).
-
 **Option 2 - JSON**
 
 Store property values as binary JSON (JSONB in PostgreSQL, binary JSON in SQLite) on the owning record, rather than in a separate relational `property_value` table.
@@ -145,24 +143,35 @@ Trade-offs accepted:
 ## Consequences
 
 - Filtering/sorting on a property in the DB must go through binary JSON columns, and hot paths need a targeted (expression) index on the specific property.
+- We accept that the whole record will sync on any property update — JSON has no per-field partial updates, so a property change re-syncs the entire owning record (unless a property-specific sync mechanism is added in future).
 - Open questions in "Further consideration" remain to be resolved before/while implementing — notably the mSupply property migration & backfill strategy (Requirement 8) and whether per-store/site scoping (Requirement 7) is in scope.
 
 ## Appendix - Performance testing
 
-![Performance testing results for JSON vs Relational](media/perf_date_sparse_quad.png)
+![Filter & sort latency vs dataset size for the date_sparse property](media/perf_date_sparse_quad.png)
 
-The performance testing was done on `9583-properties-kdd-prototype-feature-sync` from the scripts in the `server/scripts/` folder. They targeted the use case of filtering/sorting in a table so they fetched the first 50 rows for each query. The tests were done with a warm cache for repeatability and consistency, this does mean the numbers are best case performance but should still be valid for comparing the different methods. 
+Benchmarks from `9583-properties-kdd-prototype-feature-sync` (scripts in `server/scripts/`), timing raw SQL against synthetic data on both Postgres and SQLite. Three storage strategies are compared — **Json** (text blob), **Jsonb** (binary-JSON column), and **Relational** (Option 1: one `property_v2_value` row per value) — plus dashed **(idx)** variants where a targeted index exists for the queried property.
 
-![Insertion performance](media/perf_insert.png)
+### How to read these graphs
 
-As you can see from the insertion performance the indexing doesn't have a big cost compared to not having the index. However Relational is much slower. I only go down to 1000 records here as my testing methodology wouldn't scale down to individual inserts.
+- **X axis is dataset size** (number of records, 1k → 1M). Both axes are log, so each gridline is 10×; lower and flatter is better.
+- **Each line is one storage strategy.**
+- On the **read** charts (filter & sort), **each dot is how long a single query takes** — fetching one page (the first 50 matching rows) at that dataset size. A line at ~10ms over 1k rows and ~100ms over 1M rows means that query gets ~10× slower as the table grows.
+- On the **insert / delete** chart, **each dot is the total time to do the whole operation on all N records at once** (one bulk statement) — *not* a per-record average. Solid vs dashed is the same write without vs with the extra index, so the gap between them is what the index costs to maintain.
+
+### What they show
+
+- **Reads** — un-indexed Json/Jsonb get slower as the table grows (every query parses every row's blob); Relational and any indexed path stay low and roughly flat. With a targeted index, Jsonb matches or beats Relational.
+- **Writes** — Relational is consistently slowest, because each record becomes 1 `name` row + 4 value rows (plus baseline indexes). Adding the index barely changes insert/delete time.
+
+![Insert, delete and index-build time vs record count](media/perf_insert.png)
 
 <details>
-<summary>
-Full performance testing matrix
-</summary>
+<summary>Full matrix — every property type × backend × operation (<code>perf_scale_log.png</code>)</summary>
 
 ![Full performance testing matrix](media/perf_scale_log.png)
 
 </details>
+
+Caveats: raw-SQL timing excludes app/GraphQL overhead; numbers are warm-cache best case; the **(idx)** lines assume an index per queried property (unrealistic for arbitrary ad-hoc filtering); and the Relational **sort** uses a `LEFT JOIN` rewrite, not the correlated subquery the server's current `apply_property_v2_sort` uses (which the index does *not* help).
 
