@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DetailViewSkeleton,
   AlertModal,
@@ -11,6 +11,7 @@ import {
   NothingHere,
   useNonPaginatedMaterialTable,
   MaterialTable,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -21,6 +22,7 @@ import { SupplierReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierReturnEditModal } from '../modals';
 import { getNextItemId } from '../../utils';
+import { InvoicePropertiesTab } from '../../common';
 import { useSupplierReturnColumns } from './columns';
 
 export const SupplierReturnsDetailView = () => {
@@ -33,9 +35,11 @@ export const SupplierReturnsDetailView = () => {
   } = useEditModal<string>();
   const { data, isLoading } = useReturns.document.supplierReturn();
   const { lines } = useReturns.lines.supplierReturnRows();
+  const { mutateAsync: update } = useReturns.document.updateSupplierReturn();
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
+  const [isDirtyProperties, setIsDirtyProperties] = useState(false);
 
   const onAddItem = () => onOpen();
 
@@ -68,6 +72,22 @@ export const SupplierReturnsDetailView = () => {
     {
       Component: <MaterialTable table={table} />,
       value: 'Details',
+    },
+    {
+      Component: (
+        <InvoicePropertiesTab
+          invoiceType={InvoiceNodeType.SupplierReturn}
+          propertiesV2={data?.propertiesV2}
+          onSave={async patch => {
+            if (!data?.id) return;
+            return update({ id: data.id, propertiesV2: patch });
+          }}
+          disabled={isDisabled}
+          onEdit={setIsDirtyProperties}
+        />
+      ),
+      value: 'Properties',
+      confirmOnLeaving: isDirtyProperties,
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
@@ -109,7 +129,12 @@ export const SupplierReturnsDetailView = () => {
           )}
 
           <Toolbar />
-          <DetailTabs tabs={tabs} />
+          <DetailTabs
+            tabs={tabs}
+            requiresConfirmation={tab =>
+              tab === 'Properties' && isDirtyProperties
+            }
+          />
           <Footer
             selectedRows={selectedRows}
             resetRowSelection={table.resetRowSelection}

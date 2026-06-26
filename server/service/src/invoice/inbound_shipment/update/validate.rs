@@ -1,7 +1,8 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, common::check_can_issue_in_foreign_currency,
-    inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
+    inbound_shipment::UpdateInboundShipmentStatus, properties::check_unknown_properties_v2_key,
+    InvoiceRowStatusError,
 };
 use crate::preference::{preferences::Backdating, Preference};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
@@ -34,6 +35,14 @@ pub fn validate(
     }
     if !r#type.matches_input(invoice.purchase_order_id.is_some()) {
         return Err(WrongInboundShipmentType);
+    }
+
+    if let Some(properties) = &patch.properties_v2 {
+        if let Some(unknown) =
+            check_unknown_properties_v2_key(connection, &invoice.r#type, properties)?
+        {
+            return Err(UnknownPropertyKey(unknown));
+        }
     }
 
     // Status check

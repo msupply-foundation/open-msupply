@@ -3,9 +3,14 @@ mod test {
     use async_graphql::EmptyMutation;
     use chrono::{DateTime, Utc};
     use graphql_core::test_helpers::setup_graphql_test;
-    use graphql_core::{assert_graphql_query, get_invoice_lines_inline};
+    use graphql_core::{assert_graphql_query, assert_standard_graphql_error, get_invoice_lines_inline};
     use repository::EqualFilter;
-    use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceRepository};
+    use repository::{
+        mock::{mock_inbound_shipment_a, MockDataInserts},
+        InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowRepository, PropertyKindV2,
+        PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository,
+        PropertyValueTypeV2,
+    };
     use serde_json::json;
 
     use crate::InvoiceQueries;
@@ -129,6 +134,137 @@ mod test {
                     })).collect::<Vec<serde_json::Value>>(),
             },
         });
+        assert_graphql_query!(&settings, &query, &variables, &expected, None);
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_invoices_query_dynamic_filter() {
+        let (_, connection, _, settings) = setup_graphql_test(
+            InvoiceQueries,
+            EmptyMutation,
+            "test_graphql_invoices_query_dynamic_filter",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        // A property visible on the "inbound_shipment" table scope
+        PropertyV2RowRepository::new(&connection)
+            .upsert_one(&PropertyV2Row {
+                id: "inbound_shipment_category".to_string(),
+                key: "inbound_shipment_category".to_string(),
+                name: "Category".to_string(),
+                value_type: PropertyValueTypeV2::Option,
+                kind: PropertyKindV2::Legacy,
+                deleted_datetime: None,
+            })
+            .unwrap();
+        PropertyTableV2RowRepository::new(&connection)
+            .upsert_one(&PropertyTableV2Row {
+                id: "inbound_shipment_category__inbound_shipment".to_string(),
+                property_id: "inbound_shipment_category".to_string(),
+                table_name: "inbound_shipment".to_string(),
+                is_visible: true,
+            })
+            .unwrap();
+
+        // Tag one inbound shipment with a property value for the success cases
+        let tagged_invoice = InvoiceRow {
+            properties_v2: Some(json!({ "inbound_shipment_category": "CAT_1" })),
+            ..mock_inbound_shipment_a()
+        };
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&tagged_invoice)
+            .unwrap();
+
+        let query = r#"query Invoices($filter: InvoiceFilterInput, $type: [InvoiceTypeInput!]) {
+            invoices(filter: $filter, type: $type, storeId: \"store_a\"){
+                ... on InvoiceConnector {
+                    nodes {
+                        id
+                    }
+                    totalCount
+                }
+            }
+        }"#;
+
+        let category_condition = json!({
+            "And": [
+                { "Property": { "key": "inbound_shipment_category", "filter": { "Option": { "Equal": "CAT_1" } } } }
+            ]
+        });
+        let single_scope_error = json!({
+            "details": "dynamicFilter requires the invoice type (argument or filter) to specify a single invoice type with property support"
+        });
+
+        // dynamicFilter without a type (argument or filter) can't resolve a
+        // single properties scope
+        let variables = Some(json!({
+          "filter": { "dynamicFilter": category_condition.clone() }
+        }));
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            &"Bad user input",
+            Some(single_scope_error.clone()),
+            None
+        );
+
+        // ... and neither can multiple types
+        let variables = Some(json!({
+          "type": ["INBOUND_SHIPMENT", "OUTBOUND_SHIPMENT"],
+          "filter": { "dynamicFilter": category_condition.clone() }
+        }));
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            &"Bad user input",
+            Some(single_scope_error),
+            None
+        );
+
+        // A key that is not visible for the pinned scope is a BadUserInput
+        let variables = Some(json!({
+          "type": ["INBOUND_SHIPMENT"],
+          "filter": {
+            "dynamicFilter": {
+                "Property": { "key": "not_a_key", "filter": { "Text": { "Like": "abc" } } }
+            }
+          }
+        }));
+        assert_standard_graphql_error!(
+            &settings,
+            &query,
+            &variables,
+            &"Bad user input",
+            Some(json!({
+                "details": "Unknown property filter key(s) for inbound_shipment: not_a_key"
+            })),
+            None
+        );
+
+        // A visible key with the type pinned by the argument matches the
+        // tagged invoice
+        let variables = Some(json!({
+          "type": ["INBOUND_SHIPMENT"],
+          "filter": { "dynamicFilter": category_condition.clone() }
+        }));
+        let expected = json!({
+            "invoices": {
+                "nodes": [{ "id": tagged_invoice.id }],
+                "totalCount": 1
+            }
+        });
+        assert_graphql_query!(&settings, &query, &variables, &expected, None);
+
+        // ... or pinned by the filter's type field
+        let variables = Some(json!({
+          "filter": {
+            "type": { "equalTo": "INBOUND_SHIPMENT" },
+            "dynamicFilter": category_condition
+          }
+        }));
         assert_graphql_query!(&settings, &query, &variables, &expected, None);
     }
 

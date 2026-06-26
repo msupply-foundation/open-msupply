@@ -1,0 +1,29 @@
+fragment InvoicePropertyV2 on PropertyV2Node {
+  id
+  key
+  name
+  valueType
+  kind
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
+}
+
+# Properties configured for one invoice type's scope (e.g. "inbound_shipment").
+# Each invoice type has its own table scope and so its own visible set — see
+# the properties dev doc (transaction categories).
+query invoicePropertiesV2($tableName: String!) {
+  propertiesV2(filter: { tableName: { equalTo: $tableName } }) {
+    ... on PropertyV2Connector {
+      __typename
+      totalCount
+      nodes {
+        ...InvoicePropertyV2
+      }
+    }
+  }
+}
+

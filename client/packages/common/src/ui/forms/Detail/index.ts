@@ -5,3 +5,4 @@ export * from './NumericTextDisplay';
 export * from './CurrencyTextDisplay';
 export * from './TextWithLabelRow';
 export * from './PropertyV2DetailRows';
+export * from './PropertiesEditTab';

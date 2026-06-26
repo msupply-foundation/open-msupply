@@ -89,6 +89,7 @@ const outboundParsers = {
     shippingMethodId: setNullableInput('id', patch?.shippingMethod),
     backdatedDatetime:
       'backdatedDatetime' in patch ? patch.backdatedDatetime : undefined,
+    propertiesV2: 'propertiesV2' in patch ? patch.propertiesV2 : undefined,
   }),
   toUpdateName: (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>

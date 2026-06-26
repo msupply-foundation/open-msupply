@@ -88,6 +88,7 @@ pub(crate) mod sync_message;
 pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
+pub(crate) mod transaction_category;
 pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
@@ -129,6 +130,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_tag_join::boxed(),
         unit::boxed(),
         category::boxed(),
+        transaction_category::boxed(),
         item::boxed(),
         item_store_join::boxed(),
         site::boxed(),

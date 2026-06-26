@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -12,6 +12,7 @@ import {
   useBreadcrumbs,
   useNonPaginatedMaterialTable,
   InvoiceLineNodeType,
+  InvoiceNodeType,
   MaterialTable,
   NothingHere,
 } from '@openmsupply-client/common';
@@ -29,6 +30,7 @@ import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { StockOutLineFragment } from '../../StockOut';
 import { CustomerReturnEditModal } from '../../Returns';
+import { InvoicePropertiesTab } from '../../common';
 import { canReturnOutboundLines } from '../../utils';
 import { OutboundLineEdit, OutboundOpenedWith } from './OutboundLineEdit';
 import { useOutboundLines } from '../api';
@@ -51,7 +53,9 @@ export const DetailView = () => {
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
+  const { mutateAsync: update } = useOutbound.document.update();
   const { data: rows, isError } = useOutboundLines();
+  const [isDirtyProperties, setIsDirtyProperties] = useState(false);
 
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -135,6 +139,22 @@ export const DetailView = () => {
       value: 'Details',
     },
     {
+      Component: (
+        <InvoicePropertiesTab
+          invoiceType={InvoiceNodeType.OutboundShipment}
+          propertiesV2={data?.propertiesV2}
+          onSave={async patch => {
+            if (!data?.id) return;
+            return update({ id: data.id, propertiesV2: patch });
+          }}
+          disabled={isDisabled}
+          onEdit={setIsDirtyProperties}
+        />
+      ),
+      value: 'Properties',
+      confirmOnLeaving: isDirtyProperties,
+    },
+    {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
@@ -169,7 +189,10 @@ export const DetailView = () => {
       )}
 
       <Toolbar />
-      <DetailTabs tabs={tabs} />
+      <DetailTabs
+        tabs={tabs}
+        requiresConfirmation={tab => tab === 'Properties' && isDirtyProperties}
+      />
       <Footer
         onReturnLines={onReturn}
         selectedRows={selectedRows}

@@ -50,6 +50,16 @@ pub(crate) mod keys {
     pub(crate) const NAME_CATEGORY_4: &str = "name_category_4";
     pub(crate) const NAME_CATEGORY_5: &str = "name_category_5";
     pub(crate) const NAME_CATEGORY_6: &str = "name_category_6";
+
+    // transaction categories — one OPTION property per OG transact type, keyed
+    // by the invoice type it surfaces as. `PRESCRIPTION_CATEGORY_2` is the second
+    // prescription dimension (OG "pi2" Patient Type, `transact.category2_ID`).
+    pub(crate) const INBOUND_SHIPMENT_CATEGORY: &str = "inbound_shipment_category";
+    pub(crate) const OUTBOUND_SHIPMENT_CATEGORY: &str = "outbound_shipment_category";
+    pub(crate) const PRESCRIPTION_CATEGORY: &str = "prescription_category";
+    pub(crate) const SUPPLIER_RETURN_CATEGORY: &str = "supplier_return_category";
+    pub(crate) const CUSTOMER_RETURN_CATEGORY: &str = "customer_return_category";
+    pub(crate) const PRESCRIPTION_CATEGORY_2: &str = "prescription_category2";
 }
 
 /// A code-defined mSupply "mapping property" — a property in the new system that
@@ -223,6 +233,56 @@ fn mapping_properties() -> Vec<MappingProperty> {
             value_type: Option,
             table_names: &["name", "patient"],
         },
+        // transaction categories — mSupply's `transaction_category` table holds
+        // one flat pool of categories partitioned by a 3-char `type` matching the
+        // transact type they apply to. Each OMS-supported type becomes its own
+        // OPTION property (one option set per type), scoped to the UI record kind
+        // the invoice type renders as. Options are authored by
+        // `translations/transaction_category.rs` (central-only); the invoice
+        // stores the chosen id under the type's key, mapped to/from legacy
+        // `transact.category_ID` by the invoice translator. `master_category_ID`
+        // grouping is ignored for now (flat). OG types with no OMS UI surface
+        // (sr repack, bu build, in inventory adjustment, te tender) are not
+        // mapped.
+        MappingProperty {
+            key: INBOUND_SHIPMENT_CATEGORY,
+            name: "Category",
+            value_type: Option,
+            table_names: &["inbound_shipment"],
+        },
+        MappingProperty {
+            key: OUTBOUND_SHIPMENT_CATEGORY,
+            name: "Category",
+            value_type: Option,
+            table_names: &["outbound_shipment"],
+        },
+        MappingProperty {
+            key: PRESCRIPTION_CATEGORY,
+            name: "Category",
+            value_type: Option,
+            table_names: &["prescription"],
+        },
+        MappingProperty {
+            key: SUPPLIER_RETURN_CATEGORY,
+            name: "Category",
+            value_type: Option,
+            table_names: &["supplier_return"],
+        },
+        MappingProperty {
+            key: CUSTOMER_RETURN_CATEGORY,
+            name: "Category",
+            value_type: Option,
+            table_names: &["customer_return"],
+        },
+        // OG's second prescription dimension — the "Prescriptions (2)" category
+        // pool ("pi2"), shown on the OG prescription form as the Patient Type
+        // dropdown and stored in `transact.category2_ID` (dispensary mode only).
+        MappingProperty {
+            key: PRESCRIPTION_CATEGORY_2,
+            name: "Patient type",
+            value_type: Option,
+            table_names: &["prescription"],
+        },
     ]
 }
 
@@ -319,13 +379,22 @@ mod tests {
             .expect("missing user_field_5");
         assert_eq!(item_5.value_type, PropertyValueTypeV2::Real);
 
-        // 19 properties: 3 name customs + 6 name categories + 7 item user fields
-        // + 3 item categories (main + 2 & 3).
-        assert_eq!(property_repo.find_all().unwrap().len(), 19);
-        // 28 table mappings: the 3 name customs + 6 name categories map to both
+        let trans_si = property_repo
+            .find_one_by_id("inbound_shipment_category")
+            .unwrap()
+            .expect("missing inbound_shipment_category");
+        assert_eq!(trans_si.key, "inbound_shipment_category");
+        assert_eq!(trans_si.value_type, PropertyValueTypeV2::Option);
+
+        // 25 properties: 3 name customs + 6 name categories + 7 item user fields
+        // + 3 item categories (main + 2 & 3) + 6 transaction categories (5 typed
+        // + the pi2 prescription "Patient type" dimension).
+        assert_eq!(property_repo.find_all().unwrap().len(), 25);
+        // 34 table mappings: the 3 name customs + 6 name categories map to both
         // "name" and "patient" (9×2 = 18), the 7 item fields + 3 item categories
-        // to "item" (10×1 = 10).
-        assert_eq!(table_repo.find_all().unwrap().len(), 28);
+        // to "item" (10×1 = 10), the 6 transaction categories to one invoice
+        // scope each (6×1 = 6).
+        assert_eq!(table_repo.find_all().unwrap().len(), 34);
 
         // The name customs are shared by patients (same definition, extra mapping).
         let patient_mapping = table_repo
@@ -375,5 +444,75 @@ mod tests {
             .unwrap()
             .unwrap();
         assert!(!table_row.is_visible, "seeder must not reset is_visible");
+    }
+
+    /// A category-bearing invoice type is wired up across four places the
+    /// compiler can't tie together: the seeder entries here,
+    /// `category_key_for_invoice_type`, `LEGACY_INVOICE_OWNED_KEYS`, and
+    /// `invoice_property_table_name`. Shared `keys::` constants keep the key
+    /// strings in step; this guards the rest — that every type appears in all
+    /// four, and that the seeder's scope matches `invoice_property_table_name`.
+    /// (The migration SQL backfill can't be reached, but shipped migrations are
+    /// frozen so a new category-bearing type needs a new migration anyway.)
+    #[test]
+    fn transaction_category_mappings_stay_in_lock_step() {
+        use crate::invoice::invoice_property_table_name;
+        use crate::sync::translations::invoice::{
+            category_key_for_invoice_type, LEGACY_INVOICE_OWNED_KEYS,
+        };
+        use repository::InvoiceType::*;
+
+        let seeded: Vec<_> = mapping_properties()
+            .into_iter()
+            .filter(|def| LEGACY_INVOICE_OWNED_KEYS.contains(&def.key))
+            .collect();
+
+        // Every invoice type with a properties scope has exactly one seeded
+        // category property whose key and scope match the translator's maps.
+        let all_types = [
+            OutboundShipment,
+            InboundShipment,
+            Prescription,
+            InventoryAddition,
+            InventoryReduction,
+            Repack,
+            SupplierReturn,
+            CustomerReturn,
+        ];
+        let mut expected_keys = vec![keys::PRESCRIPTION_CATEGORY_2];
+        for invoice_type in &all_types {
+            let (key, scope) = (
+                category_key_for_invoice_type(invoice_type),
+                invoice_property_table_name(invoice_type),
+            );
+            assert_eq!(
+                key.is_some(),
+                scope.is_some(),
+                "type {invoice_type:?}: category key and properties scope must both exist or both not"
+            );
+            let (Some(key), Some(scope)) = (key, scope) else {
+                continue;
+            };
+            expected_keys.push(key);
+            let def = seeded
+                .iter()
+                .find(|def| def.key == key)
+                .unwrap_or_else(|| panic!("no seeded property for key {key:?}"));
+            assert_eq!(
+                def.table_names,
+                &[scope],
+                "seeded scope for {key:?} must match invoice_property_table_name"
+            );
+        }
+
+        // The owned-keys list is exactly the seeded category keys (the per-type
+        // keys + the pi2 prescription dimension), no more, no less.
+        let mut owned: Vec<_> = LEGACY_INVOICE_OWNED_KEYS.to_vec();
+        let mut seeded_keys: Vec<_> = seeded.iter().map(|def| def.key).collect();
+        owned.sort_unstable();
+        seeded_keys.sort_unstable();
+        expected_keys.sort_unstable();
+        assert_eq!(owned, seeded_keys);
+        assert_eq!(owned, expected_keys);
     }
 }
