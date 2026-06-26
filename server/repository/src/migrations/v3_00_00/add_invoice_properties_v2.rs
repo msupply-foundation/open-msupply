@@ -72,7 +72,7 @@ impl MigrationFragment for Migrate {
                 UPDATE invoice
                 SET properties_v2 = COALESCE(invoice.properties_v2, '{{}}'::jsonb)
                     || jsonb_build_object(
-                        'prescription_category2',
+                        'prescription_category_2',
                         NULLIF(sb.data::jsonb ->> 'category2_ID', '')
                     )
                 FROM sync_buffer sb
@@ -117,7 +117,7 @@ impl MigrationFragment for Migrate {
                 UPDATE invoice
                 SET properties_v2 = json_set(
                     COALESCE(invoice.properties_v2, '{{}}'),
-                    '$.prescription_category2',
+                    '$.prescription_category_2',
                     NULLIF(json_extract(sb.data, '$.category2_ID'), '')
                 )
                 FROM sync_buffer sb
@@ -266,7 +266,7 @@ mod test {
             value("invoice_rx"),
             Some(serde_json::json!({
                 "prescription_category": "cat_pi",
-                "prescription_category2": "cat_pi2",
+                "prescription_category_2": "cat_pi2",
             }))
         );
     }

@@ -165,7 +165,7 @@ mod tests {
             ("pi", "prescription_category"),
             ("sc", "supplier_return_category"),
             ("cc", "customer_return_category"),
-            ("pi2", "prescription_category2"),
+            ("pi2", "prescription_category_2"),
         ] {
             let record = sync_record(category_type);
             assert!(translator.should_translate_from_sync_record(&record));
