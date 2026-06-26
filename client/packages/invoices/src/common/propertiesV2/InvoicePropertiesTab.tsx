@@ -1,18 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import {
-  Box,
   DraftProperties,
   InvoiceNodeType,
-  LoadingButton,
-  NothingHere,
-  PropertyV2DetailRows,
-  SaveIcon,
-  useConfirmationModal,
-  useDraftProperties,
-  useNotification,
-  useTranslation,
-  useAuthContext,
+  PropertiesEditTab,
   UserPermission,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { useInvoicePropertiesV2 } from './hooks';
 import { throwIfStructuredError } from './saveResult';
@@ -47,9 +39,8 @@ interface InvoicePropertiesTabProps {
 }
 
 /**
- * "Properties" tab shared by every invoice detail view — editable list of the
- * type's custom (propertiesV2) values, mirroring the patient Custom properties
- * tab: edits collect in a draft and save via an explicit confirmed Save button.
+ * "Properties" tab for every invoice detail view — wires the type's definitions,
+ * permission and status-gated save into the shared {@link PropertiesEditTab}.
  */
 export const InvoicePropertiesTab = ({
   invoiceType,
@@ -58,85 +49,26 @@ export const InvoicePropertiesTab = ({
   disabled: statusDisabled,
   onEdit,
 }: InvoicePropertiesTabProps) => {
-  const t = useTranslation();
-  const { error, success } = useNotification();
   const { userHasPermission } = useAuthContext();
-  const [isSaving, setIsSaving] = useState(false);
-
   const { data: definitions = [] } = useInvoicePropertiesV2(invoiceType);
-  const { draftProperties, updateProperty, isDirty } =
-    useDraftProperties(propertiesV2);
 
   const permission = MUTATE_PERMISSION[invoiceType];
   const disabled =
     !!statusDisabled || !permission || !userHasPermission(permission);
 
-  useEffect(() => {
-    onEdit(isDirty);
-  }, [isDirty, onEdit]);
-
-  const handleSave = useCallback(async () => {
-    setIsSaving(true);
-    try {
-      // Some update hooks resolve structured error payloads rather than
-      // throwing — scan the result so a server rejection isn't reported as
-      // saved (see throwIfStructuredError).
-      throwIfStructuredError(await onSave(draftProperties));
-      success(t('success.data-saved'))();
-    } catch {
-      error(t('error.failed-to-save-properties'))();
-    } finally {
-      setIsSaving(false);
-    }
-  }, [onSave, draftProperties, success, error, t]);
-
-  const showSaveConfirmation = useConfirmationModal({
-    onConfirm: handleSave,
-    message: t('messages.confirm-save-generic'),
-    title: t('heading.are-you-sure'),
-  });
-
-  if (!definitions.length) {
-    return <NothingHere body={t('messages.no-properties')} />;
-  }
-
   return (
-    <Box display="flex" flexDirection="column" alignItems="center" flex={1}>
-      <Box
-        sx={theme => ({
-          [theme.breakpoints.down('sm')]: {
-            width: '95%',
-            minWidth: '340px',
-            paddingX: '2em',
-          },
-          width: '600px',
-          margin: '0 auto',
-          paddingTop: 2,
-        })}
-      >
-        <PropertyV2DetailRows
-          // Alphabetical by label, as this tab has always rendered them — the
-          // shared renderer keeps whatever order it's handed.
-          definitions={[...definitions].sort((a, b) =>
-            (a.name || a.key).localeCompare(b.name || b.key)
-          )}
-          properties={draftProperties}
-          onChange={(key, value) => updateProperty({ [key]: value })}
-          disabled={disabled}
-        />
-      </Box>
-      {!disabled && (
-        <Box paddingTop={2}>
-          <LoadingButton
-            onClick={() => showSaveConfirmation()}
-            isLoading={isSaving}
-            disabled={!isDirty}
-            startIcon={<SaveIcon />}
-            label={t('button.save')}
-            variant="contained"
-          />
-        </Box>
+    <PropertiesEditTab
+      // Alphabetical by label, as this tab has always rendered them — the shared
+      // renderer keeps whatever order it's handed.
+      definitions={[...definitions].sort((a, b) =>
+        (a.name || a.key).localeCompare(b.name || b.key)
       )}
-    </Box>
+      properties={propertiesV2}
+      disabled={disabled}
+      onEdit={onEdit}
+      // Some update hooks resolve structured error payloads rather than throwing
+      // — surface those so a rejection isn't reported as saved.
+      onSave={async draft => throwIfStructuredError(await onSave(draft))}
+    />
   );
 };
