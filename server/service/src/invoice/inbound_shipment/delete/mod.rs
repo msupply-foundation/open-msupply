@@ -74,6 +74,7 @@ pub enum DeleteInboundShipmentError {
     WrongInboundShipmentType,
     NotThisStoreInvoice,
     CannotEditFinalised,
+    CannotDeleteTransferInvoice,
     OtherPartyStoreDisabled,
     LineDeleteError {
         line_id: String,
@@ -105,7 +106,7 @@ mod test {
         mock::{
             mock_inbound_shipment_a, mock_inbound_shipment_b, mock_inbound_shipment_c,
             mock_inbound_shipment_e, mock_outbound_shipment_e, mock_store_a, mock_store_b,
-            mock_user_account_a, MockDataInserts,
+            mock_transferred_inbound_shipment_a, mock_user_account_a, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceRowRepository,
@@ -192,6 +193,17 @@ mod test {
                 InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::NotThisStoreInvoice)
+        );
+
+        assert_eq!(
+            service.delete_inbound_shipment(
+                &context,
+                DeleteInboundShipment {
+                    id: mock_transferred_inbound_shipment_a().id.clone(),
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotDeleteTransferInvoice)
         );
     }
 

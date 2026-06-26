@@ -28,6 +28,9 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
+    if invoice.linked_invoice_id.is_some() {
+        return Err(CannotDeleteTransferInvoice);
+    }
     if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(OtherPartyStoreDisabled);
     }

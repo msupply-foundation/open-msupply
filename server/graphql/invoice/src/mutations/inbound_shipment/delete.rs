@@ -99,6 +99,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         }
         // Standard Graphql Errors
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
+        ServiceError::CannotDeleteTransferInvoice => BadUserInput(formatted_error),
         ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
