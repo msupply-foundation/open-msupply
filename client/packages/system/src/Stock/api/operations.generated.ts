@@ -117,6 +117,79 @@ export type StockLineRowFragment = {
   } | null;
 };
 
+export type StockLineListRowFragment = {
+  __typename: 'StockLineNode';
+  availableNumberOfPacks: number;
+  batch?: string | null;
+  costPricePerPack: number;
+  expiryDate?: string | null;
+  manufactureDate?: string | null;
+  id: string;
+  itemId: string;
+  locationId?: string | null;
+  vvmStatusId?: string | null;
+  locationName?: string | null;
+  onHold: boolean;
+  packSize: number;
+  sellPricePerPack: number;
+  storeId: string;
+  totalNumberOfPacks: number;
+  supplierName?: string | null;
+  volumePerPack: number;
+  totalVolume: number;
+  barcode?: string | null;
+  location?: {
+    __typename: 'LocationNode';
+    id: string;
+    name: string;
+    onHold: boolean;
+    code: string;
+    volume: number;
+    volumeUsed: number;
+    locationType?: {
+      __typename: 'LocationTypeNode';
+      id: string;
+      name: string;
+      maxTemperature: number;
+      minTemperature: number;
+    } | null;
+    stock: { __typename: 'StockLineConnector'; totalCount: number };
+  } | null;
+  item: {
+    __typename: 'ItemNode';
+    code: string;
+    name: string;
+    unitName?: string | null;
+    isVaccine: boolean;
+    doses: number;
+    restrictedLocationTypeId?: string | null;
+    defaultPackSize: number;
+    masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
+  };
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    priority: number;
+    unusable: boolean;
+    description: string;
+  } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
+  } | null;
+};
+
 export type RepackStockLineFragment = {
   __typename: 'RepackStockLineNode';
   packSize: number;
@@ -308,33 +381,7 @@ export type StockLinesQuery = {
           __typename: 'MasterListNode';
           name: string;
         }> | null;
-        itemStoreProperties?: {
-          __typename: 'ItemStorePropertiesNode';
-          defaultSellPricePerPack: number;
-        } | null;
       };
-      vvmStatusLogs?: {
-        __typename: 'VvmstatusLogConnector';
-        nodes: Array<{
-          __typename: 'VvmstatusLogNode';
-          id: string;
-          createdDatetime: string;
-          comment?: string | null;
-          user?: {
-            __typename: 'UserNode';
-            firstName?: string | null;
-            lastName?: string | null;
-            username: string;
-          } | null;
-          status?: {
-            __typename: 'VvmstatusNode';
-            id: string;
-            description: string;
-            code: string;
-            priority: number;
-          } | null;
-        }>;
-      } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
@@ -342,7 +389,6 @@ export type StockLinesQuery = {
         unusable: boolean;
         description: string;
       } | null;
-      donor?: { __typename: 'NameNode'; id: string } | null;
       manufacturer?: {
         __typename: 'NameNode';
         code: string;
@@ -357,22 +403,6 @@ export type StockLinesQuery = {
           code: string;
           isDisabled: boolean;
         } | null;
-      } | null;
-      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
-      campaign?: {
-        __typename: 'CampaignNode';
-        id: string;
-        name: string;
-      } | null;
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        packagingVariants: Array<{
-          __typename: 'PackagingVariantNode';
-          id: string;
-          packSize?: number | null;
-          volumePerUnit?: number | null;
-        }>;
       } | null;
     }>;
   };
@@ -1149,33 +1179,7 @@ export type ItemsByStockLineFilterQuery = {
               __typename: 'MasterListNode';
               name: string;
             }> | null;
-            itemStoreProperties?: {
-              __typename: 'ItemStorePropertiesNode';
-              defaultSellPricePerPack: number;
-            } | null;
           };
-          vvmStatusLogs?: {
-            __typename: 'VvmstatusLogConnector';
-            nodes: Array<{
-              __typename: 'VvmstatusLogNode';
-              id: string;
-              createdDatetime: string;
-              comment?: string | null;
-              user?: {
-                __typename: 'UserNode';
-                firstName?: string | null;
-                lastName?: string | null;
-                username: string;
-              } | null;
-              status?: {
-                __typename: 'VvmstatusNode';
-                id: string;
-                description: string;
-                code: string;
-                priority: number;
-              } | null;
-            }>;
-          } | null;
           vvmStatus?: {
             __typename: 'VvmstatusNode';
             id: string;
@@ -1183,7 +1187,6 @@ export type ItemsByStockLineFilterQuery = {
             unusable: boolean;
             description: string;
           } | null;
-          donor?: { __typename: 'NameNode'; id: string } | null;
           manufacturer?: {
             __typename: 'NameNode';
             code: string;
@@ -1198,26 +1201,6 @@ export type ItemsByStockLineFilterQuery = {
               code: string;
               isDisabled: boolean;
             } | null;
-          } | null;
-          program?: {
-            __typename: 'ProgramNode';
-            id: string;
-            name: string;
-          } | null;
-          campaign?: {
-            __typename: 'CampaignNode';
-            id: string;
-            name: string;
-          } | null;
-          itemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            packagingVariants: Array<{
-              __typename: 'PackagingVariantNode';
-              id: string;
-              packSize?: number | null;
-              volumePerUnit?: number | null;
-            }>;
           } | null;
         }>;
       };
@@ -1324,6 +1307,56 @@ export const StockLineRowFragmentDoc = gql`
   ${VvmStatusLogRowFragmentDoc}
   ${NameRowFragmentDoc}
 `;
+export const StockLineListRowFragmentDoc = gql`
+  fragment StockLineListRow on StockLineNode {
+    availableNumberOfPacks
+    batch
+    costPricePerPack
+    expiryDate
+    manufactureDate
+    id
+    itemId
+    locationId
+    vvmStatusId
+    locationName
+    onHold
+    packSize
+    sellPricePerPack
+    storeId
+    totalNumberOfPacks
+    supplierName
+    volumePerPack
+    totalVolume
+    barcode
+    location {
+      ...LocationRow
+    }
+    item {
+      code
+      name
+      unitName
+      masterLists(storeId: $storeId) {
+        name
+      }
+      isVaccine
+      doses
+      restrictedLocationTypeId
+      defaultPackSize
+    }
+    vvmStatus {
+      __typename
+      id
+      priority
+      unusable
+      description
+    }
+    manufacturer(storeId: $storeId) {
+      ...NameRow
+    }
+  }
+  ${LocationRowFragmentDoc}
+  ${NameRowFragmentDoc}
+`;
 export const RepackStockLineFragmentDoc = gql`
   fragment RepackStockLine on RepackStockLineNode {
     location {
@@ -1411,13 +1444,13 @@ export const StockLinesDocument = gql`
         __typename
         nodes {
           __typename
-          ...StockLineRow
+          ...StockLineListRow
         }
         totalCount
       }
     }
   }
-  ${StockLineRowFragmentDoc}
+  ${StockLineListRowFragmentDoc}
 `;
 export const StockLineDocument = gql`
   query stockLine($id: String!, $storeId: String!) {
@@ -1664,7 +1697,7 @@ export const ItemsByStockLineFilterDocument = gql`
             totalCount
             nodes {
               __typename
-              ...StockLineRow
+              ...StockLineListRow
             }
           }
         }
@@ -1672,7 +1705,7 @@ export const ItemsByStockLineFilterDocument = gql`
       }
     }
   }
-  ${StockLineRowFragmentDoc}
+  ${StockLineListRowFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
