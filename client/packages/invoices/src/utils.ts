@@ -43,7 +43,6 @@ export const getInboundShipmentType = (inbound: {
   return InboundShipmentType.Manual;
 };
 
-
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'status.allocated',
   PICKED: 'status.picked',
@@ -257,8 +256,11 @@ export const canDeletePrescription = (
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Picked;
 
-export const canDeleteInbound = (inbound: InboundRowFragment): boolean =>
-  inbound.status === InvoiceNodeStatus.New;
+export const canDeleteInbound = (inbound: InboundRowFragment): boolean => {
+  const isTransfer = !!inbound.linkedShipment?.id;
+  if (isTransfer) return false;
+  return !isInboundDisabled(inbound);
+};
 
 export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
   inbound.status === InvoiceNodeStatus.Delivered ||

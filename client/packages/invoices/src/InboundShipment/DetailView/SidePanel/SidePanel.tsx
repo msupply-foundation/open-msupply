@@ -4,7 +4,6 @@ import {
   DeleteIcon,
   DetailPanelAction,
   DetailPanelPortal,
-  InvoiceNodeStatus,
   useNotification,
   useDeleteConfirmation,
   useTranslation,
@@ -27,11 +26,12 @@ export const SidePanel = () => {
     query: { data },
     delete: { deleteInbound },
     hasMutatePermission,
+    isDisabled,
   } = useInboundShipment();
   const { duplicateInbound } = useDuplicateInbound();
 
   const isTransfer = !!data?.linkedShipment?.id;
-  const canDelete = data?.status === InvoiceNodeStatus.New && hasMutatePermission;
+  const canDelete = !!data && !isDisabled && !isTransfer;
 
   const copyToClipboard = () => {
     navigator.clipboard
