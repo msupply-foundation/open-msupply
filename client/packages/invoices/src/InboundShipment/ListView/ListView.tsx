@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   InvoiceTypeInput,
   UserPermission,
@@ -44,6 +44,7 @@ export const InboundListView = () => {
   const navigate = useNavigate();
   const { invoiceStatusOptions } = usePreferences();
   const { userHasPermission } = useAuthContext();
+  const [failedDeleteIds, setFailedDeleteIds] = useState<string[]>([]);
 
   const {
     filter,
@@ -145,6 +146,7 @@ export const InboundListView = () => {
         size: 90,
         enableColumnFilter: true,
         enableSorting: true,
+        getIsError: row => failedDeleteIds.includes(row.id),
       },
       {
         header: t('label.linked-order'),
@@ -191,7 +193,7 @@ export const InboundListView = () => {
         defaultHideOnMobile: true,
       },
     ],
-    [t]
+    [t, failedDeleteIds]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable<InboundRowFragment>(
@@ -244,6 +246,7 @@ export const InboundListView = () => {
       <Footer
         selectedRows={selectedRows}
         resetRowSelection={table.resetRowSelection}
+        setFailedDeleteIds={setFailedDeleteIds}
       />
     </>
   );

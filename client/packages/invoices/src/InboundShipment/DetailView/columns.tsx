@@ -46,9 +46,13 @@ export const useInboundShipmentColumns = (
         enableColumnFilter: true,
         enableSorting: true,
         getIsError: row =>
-          getLinesFromRow(row).some(
-            r => getError(r)?.__typename === 'LineLinkedToTransferredInvoice'
-          ),
+          getLinesFromRow(row).some(r => {
+            const errorType = getError(r)?.__typename;
+            return (
+              errorType === 'LineLinkedToTransferredInvoice' ||
+              errorType === 'BatchIsReserved'
+            );
+          }),
       },
       {
         accessorKey: 'itemName',

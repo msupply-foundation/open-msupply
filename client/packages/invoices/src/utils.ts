@@ -256,11 +256,8 @@ export const canDeletePrescription = (
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Picked;
 
-export const canDeleteInbound = (inbound: InboundRowFragment): boolean => {
-  const isTransfer = !!inbound.linkedShipment?.id;
-  if (isTransfer) return false;
-  return !isInboundDisabled(inbound);
-};
+export const canDeleteInbound = (inbound: InboundRowFragment): boolean =>
+  !isInboundDisabled(inbound);
 
 export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
   inbound.status === InvoiceNodeStatus.Delivered ||

@@ -31,7 +31,7 @@ export const SidePanel = () => {
   const { duplicateInbound } = useDuplicateInbound();
 
   const isTransfer = !!data?.linkedShipment?.id;
-  const canDelete = !!data && !isDisabled && !isTransfer;
+  const canDelete = !!data && !isDisabled;
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -59,6 +59,7 @@ export const SidePanel = () => {
       deleteSuccess: t('messages.deleted-shipments', {
         count: 1,
       }),
+      cantDelete: err => err.message,
     },
   });
 

@@ -12,15 +12,18 @@ import {
   InboundRowFragment,
   useInboundList,
   useDuplicateInbound,
+  mapInboundDeleteError,
 } from '../api';
 import { canDeleteInbound } from '../../utils';
 
 export const FooterComponent = ({
   selectedRows,
   resetRowSelection,
+  setFailedDeleteIds,
 }: {
   selectedRows: InboundRowFragment[];
   resetRowSelection: () => void;
+  setFailedDeleteIds: (ids: string[]) => void;
 }) => {
   const t = useTranslation();
 
@@ -30,7 +33,23 @@ export const FooterComponent = ({
   const { duplicateInbound, hasMutatePermission } = useDuplicateInbound();
 
   const deleteAction = async () => {
-    await deleteInbounds(selectedRows);
+    setFailedDeleteIds([]);
+    const nodes = await deleteInbounds(selectedRows);
+
+    const failedIds: string[] = [];
+    const messages: string[] = [];
+    nodes.forEach(node => {
+      const errMessage = mapInboundDeleteError(node, t);
+      if (errMessage) {
+        failedIds.push(node.id);
+        messages.push(errMessage);
+      }
+    });
+    setFailedDeleteIds(failedIds);
+
+    if (messages.length > 0) {
+      throw new Error(Array.from(new Set(messages)).join('\n'));
+    }
     resetRowSelection();
   };
 
@@ -45,6 +64,7 @@ export const FooterComponent = ({
       deleteSuccess: t('messages.deleted-shipments', {
         count: selectedRows.length,
       }),
+      cantDelete: err => err.message,
     },
   });
 
