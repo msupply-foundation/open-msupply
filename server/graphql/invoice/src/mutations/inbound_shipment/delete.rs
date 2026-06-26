@@ -5,12 +5,15 @@ use graphql_core::simple_generic_errors::RecordNotFound;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
-use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
+use graphql_types::generic_errors::{
+    CannotDeleteInvoiceWithLines, CannotDeleteInvoiceWithReservedStock, CannotDeleteTransferInvoice,
+};
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::{
     DeleteInboundShipment as ServiceInput, DeleteInboundShipmentError as ServiceError,
 };
+use service::invoice_line::stock_in_line::DeleteStockInLineError;
 
 #[derive(InputObject)]
 #[graphql(name = "DeleteInboundShipmentInput")]
@@ -63,6 +66,8 @@ pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditInvoice(CannotEditInvoice),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
+    CannotDeleteTransferInvoice(CannotDeleteTransferInvoice),
+    CannotDeleteInvoiceWithReservedStock(CannotDeleteInvoiceWithReservedStock),
 }
 
 impl DeleteInput {
@@ -97,9 +102,21 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
                 CannotEditInvoice {},
             ))
         }
+        ServiceError::CannotDeleteTransferInvoice => {
+            return Ok(DeleteErrorInterface::CannotDeleteTransferInvoice(
+                CannotDeleteTransferInvoice {},
+            ))
+        }
+        ServiceError::LineDeleteError {
+            error: DeleteStockInLineError::BatchIsReserved,
+            line_id,
+        } => {
+            return Ok(DeleteErrorInterface::CannotDeleteInvoiceWithReservedStock(
+                CannotDeleteInvoiceWithReservedStock { line_id },
+            ))
+        }
         // Standard Graphql Errors
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
-        ServiceError::CannotDeleteTransferInvoice => BadUserInput(formatted_error),
         ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
@@ -214,6 +231,52 @@ mod test {
             "deleteInboundShipment": {
               "error": {
                 "__typename": "CannotEditInvoice"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        //CannotDeleteTransferInvoice
+        let test_service =
+            TestService(Box::new(|_| Err(ServiceError::CannotDeleteTransferInvoice)));
+
+        let expected = json!({
+            "deleteInboundShipment": {
+              "error": {
+                "__typename": "CannotDeleteTransferInvoice"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        //CannotDeleteInvoiceWithReservedStock
+        let test_service = TestService(Box::new(|_| {
+            Err(ServiceError::LineDeleteError {
+                line_id: "some_line".to_string(),
+                error: DeleteStockInLineError::BatchIsReserved,
+            })
+        }));
+
+        let expected = json!({
+            "deleteInboundShipment": {
+              "error": {
+                "__typename": "CannotDeleteInvoiceWithReservedStock"
               }
             }
           }

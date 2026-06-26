@@ -17,6 +17,29 @@ impl CannotDeleteInvoiceWithLines {
     }
 }
 
+pub struct CannotDeleteTransferInvoice;
+#[Object]
+impl CannotDeleteTransferInvoice {
+    pub async fn description(&self) -> &str {
+        "Cannot delete a shipment that is linked to a transfer"
+    }
+}
+
+pub struct CannotDeleteInvoiceWithReservedStock {
+    /// The offending invoice line whose stock has already been issued/reserved.
+    pub line_id: String,
+}
+#[Object]
+impl CannotDeleteInvoiceWithReservedStock {
+    pub async fn description(&self) -> &str {
+        "Cannot delete a shipment whose stock has already been issued"
+    }
+
+    pub async fn line_id(&self) -> &str {
+        &self.line_id
+    }
+}
+
 pub struct StockLineReducedBelowZero(pub StockLineNode);
 
 impl StockLineReducedBelowZero {
