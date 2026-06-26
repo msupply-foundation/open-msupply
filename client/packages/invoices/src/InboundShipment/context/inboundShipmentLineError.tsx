@@ -3,7 +3,8 @@ import { PropsWithChildrenOnly, RecordWithId } from '@common/types';
 import { LineLinkedToTransferredInvoiceErrorFragment } from '../api';
 
 export type InboundShipmentLineError =
-  LineLinkedToTransferredInvoiceErrorFragment;
+  | LineLinkedToTransferredInvoiceErrorFragment
+  | { __typename: 'BatchIsReserved'; description: string };
 
 const useInboundShipmentLineErrors = () => {
   const [errors, setErrors] = useState<{
