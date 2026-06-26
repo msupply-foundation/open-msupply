@@ -1418,10 +1418,16 @@ export type CentralPluginQueriesUploadedPluginInfoArgs = {
 export type CentralReportMutations = {
   __typename: 'CentralReportMutations';
   installUploadedReports: Array<Scalars['String']['output']>;
+  updateReport: UpdateReportNode;
 };
 
 export type CentralReportMutationsInstallUploadedReportsArgs = {
   fileId: Scalars['String']['input'];
+};
+
+export type CentralReportMutationsUpdateReportArgs = {
+  id: Scalars['String']['input'];
+  isActive: Scalars['Boolean']['input'];
 };
 
 export type CentralServerMutationNode = {
@@ -11317,6 +11323,12 @@ export type UpdatePurchaseOrderLineResponse =
   | UpdatePurchaseOrderLineError;
 
 export type UpdatePurchaseOrderResponse = IdResponse | UpdatePurchaseOrderError;
+
+export type UpdateReportNode = {
+  __typename: 'UpdateReportNode';
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+};
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';
