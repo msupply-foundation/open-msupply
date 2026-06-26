@@ -11,9 +11,9 @@ import {
   useAuthContext,
   UserPermission,
   BasicSpinner,
+  useDraftProperties,
 } from '@openmsupply-client/common';
 import { usePatient } from '../../api';
-import { useDraftPatientProperties } from './useDraftPatientProperties';
 
 export const CustomPropertiesTab = ({
   patientId,
@@ -28,8 +28,9 @@ export const CustomPropertiesTab = ({
 
   const { data: patient, isLoading } = usePatient.document.get(patientId);
   const { data: definitions = [] } = usePatient.document.propertiesV2();
-  const { draftProperties, updateProperty, isDirty } =
-    useDraftPatientProperties(patient?.propertiesV2);
+  const { draftProperties, updateProperty, isDirty } = useDraftProperties(
+    patient?.propertiesV2
+  );
   const { mutateAsync, isPending: isSaving } =
     usePatient.document.updatePropertiesV2(patientId);
 

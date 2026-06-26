@@ -50,6 +50,16 @@ pub(crate) mod keys {
     pub(crate) const NAME_CATEGORY_4: &str = "name_category_4";
     pub(crate) const NAME_CATEGORY_5: &str = "name_category_5";
     pub(crate) const NAME_CATEGORY_6: &str = "name_category_6";
+
+    // transaction categories — one OPTION property per OG transact type, keyed
+    // by the invoice type it surfaces as. `PRESCRIPTION_CATEGORY_2` is the second
+    // prescription dimension (OG "pi2" Patient Type, `transact.category2_ID`).
+    pub(crate) const INBOUND_SHIPMENT_CATEGORY: &str = "inbound_shipment_category";
+    pub(crate) const OUTBOUND_SHIPMENT_CATEGORY: &str = "outbound_shipment_category";
+    pub(crate) const PRESCRIPTION_CATEGORY: &str = "prescription_category";
+    pub(crate) const SUPPLIER_RETURN_CATEGORY: &str = "supplier_return_category";
+    pub(crate) const CUSTOMER_RETURN_CATEGORY: &str = "customer_return_category";
+    pub(crate) const PRESCRIPTION_CATEGORY_2: &str = "prescription_category2";
 }
 
 /// A code-defined mSupply "mapping property" — a property in the new system that
@@ -235,31 +245,31 @@ fn mapping_properties() -> Vec<MappingProperty> {
         // (sr repack, bu build, in inventory adjustment, te tender) are not
         // mapped.
         MappingProperty {
-            key: "inbound_shipment_category",
+            key: INBOUND_SHIPMENT_CATEGORY,
             name: "Category",
             value_type: Option,
             table_names: &["inbound_shipment"],
         },
         MappingProperty {
-            key: "outbound_shipment_category",
+            key: OUTBOUND_SHIPMENT_CATEGORY,
             name: "Category",
             value_type: Option,
             table_names: &["outbound_shipment"],
         },
         MappingProperty {
-            key: "prescription_category",
+            key: PRESCRIPTION_CATEGORY,
             name: "Category",
             value_type: Option,
             table_names: &["prescription"],
         },
         MappingProperty {
-            key: "supplier_return_category",
+            key: SUPPLIER_RETURN_CATEGORY,
             name: "Category",
             value_type: Option,
             table_names: &["supplier_return"],
         },
         MappingProperty {
-            key: "customer_return_category",
+            key: CUSTOMER_RETURN_CATEGORY,
             name: "Category",
             value_type: Option,
             table_names: &["customer_return"],
@@ -268,7 +278,7 @@ fn mapping_properties() -> Vec<MappingProperty> {
         // pool ("pi2"), shown on the OG prescription form as the Patient Type
         // dropdown and stored in `transact.category2_ID` (dispensary mode only).
         MappingProperty {
-            key: "prescription_category2",
+            key: PRESCRIPTION_CATEGORY_2,
             name: "Patient type",
             value_type: Option,
             table_names: &["prescription"],
@@ -436,18 +446,19 @@ mod tests {
         assert!(!table_row.is_visible, "seeder must not reset is_visible");
     }
 
-    /// The transaction category type→key/scope relationship is encoded in
-    /// several places that the compiler can't tie together: the seeder entries
-    /// here, the invoice translator's `category_key_for_invoice_type` +
-    /// `LEGACY_INVOICE_OWNED_KEYS`, and `invoice_property_table_name`. This
-    /// test fails if any of them drift (the migration SQL backfill is the one
-    /// copy it can't reach — but shipped migrations are frozen, so a future
-    /// category-bearing type needs a new migration regardless).
+    /// A category-bearing invoice type is wired up across four places the
+    /// compiler can't tie together: the seeder entries here,
+    /// `category_key_for_invoice_type`, `LEGACY_INVOICE_OWNED_KEYS`, and
+    /// `invoice_property_table_name`. Shared `keys::` constants keep the key
+    /// strings in step; this guards the rest — that every type appears in all
+    /// four, and that the seeder's scope matches `invoice_property_table_name`.
+    /// (The migration SQL backfill can't be reached, but shipped migrations are
+    /// frozen so a new category-bearing type needs a new migration anyway.)
     #[test]
     fn transaction_category_mappings_stay_in_lock_step() {
         use crate::invoice::invoice_property_table_name;
         use crate::sync::translations::invoice::{
-            category_key_for_invoice_type, LEGACY_INVOICE_OWNED_KEYS, PRESCRIPTION_CATEGORY2_KEY,
+            category_key_for_invoice_type, LEGACY_INVOICE_OWNED_KEYS,
         };
         use repository::InvoiceType::*;
 
@@ -468,7 +479,7 @@ mod tests {
             SupplierReturn,
             CustomerReturn,
         ];
-        let mut expected_keys = vec![PRESCRIPTION_CATEGORY2_KEY];
+        let mut expected_keys = vec![keys::PRESCRIPTION_CATEGORY_2];
         for invoice_type in &all_types {
             let (key, scope) = (
                 category_key_for_invoice_type(invoice_type),
