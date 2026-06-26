@@ -1,0 +1,82 @@
+# To use custom server settings for a local or a production environment create a copy
+# of this example file and name it local.yaml or production.yaml, respectively.
+server:
+  host: 127.0.0.1
+  develop: true
+  port: 8002
+  # discovery: Enabled # Enabled, Disabled, or Auto
+  # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
+  # danger_allow_http: true # allow http in production mode
+  # override_is_central_server: true # set server mode as central server, should only be used in testing, demo and development, sync calls can override this back to normal
+  # # Setting all three values below on a fresh DB initialises OMS central and comment out sync settings.
+  # # Requires `override_is_central_server: true` above as well.
+  # standalone_store_name: 'Central Config'
+  # standalone_admin_username: 'admin'
+  # standalone_admin_password: 'pass'
+  # workers: 8 # number of actix-web worker threads; defaults to logical CPU count. Increase to reduce 408 timeouts under heavy load.
+  cors_origins: [
+      http://localhost:3003,
+      https://demo-open.msupply.org,
+      http://localhost:8000,
+    ] # Used to set the allowed Origin in Cross Origin Request Security
+  base_dir: "app_data"
+# sync:
+#   # url/username/password_sha256/interval_seconds are all-or-nothing: set them all, or omit them
+#   # all to carry only flags (e.g. on a central server). A partial set is a startup error.
+#   url: "http://localhost:2048"
+#   username: "demo"
+#   # 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1' = 'pass'
+#   password_sha256: "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
+#   interval_seconds: 300
+#   batch_size:
+#     remote_push: 1024
+#     remote_pull: 5000
+#     central_pull: 5000
+#   # Set to true to disable the outer transaction during integration. This can prevent PostgreSQL
+#   # from exhausting max_locks_per_transaction during large store migrations. Use with caution.
+#   disable_integration_transaction: false
+#   # Central server only. Relax the v7 hardware-id and "token already allocated" guards so a site
+#   # can re-pair from a new machine without an admin reset (name + password still required). For
+#   # recovery/migration only — leave false in normal operation.
+#   relax_hardware_id_token_checks: false
+database:
+  host: "localhost"
+  port: 5432
+  username: "postgres"
+  password: "password"
+  database_name: "remotecheck"
+  connection_pool_min_idle: 2
+  connection_pool_max_connections: 10
+  connection_pool_timeout_seconds: 30
+logging:
+#   one of: All | Console | File
+  mode: All
+#   one of:  Error | Warn | Info (default) | Debug | Trace
+  level: Info
+  directory: log
+  filename: remote_server.log
+  max_file_count: 10
+  max_file_size: 1
+# backup: # see cli backup/restore
+#   backup_dir: "~/Documents/omSupply_backup"
+#   pg_bin_dir: "/Applications/Postgres.app/Contents/Versions/16/bin"  # Optional
+#   max_number_of_backups: 10  # Optional, defaults to unlimited
+# mail: # required on Open mSupply Central Server only
+#   host: "localhost"
+#   #1025 is the default port for mailhog (https://github.com/mailhog/MailHog)
+#   port: "1025"
+#   starttls: false
+#   username: ""
+#   password: ""
+#   from: "no-reply@msupply.foundation"
+#   #  Can make this smaller for testing emails
+#   interval: 60 # in seconds
+# features:
+#   example_feature: true
+# changelog_partition: # postgres-only; controls partitioning of the changelog table
+#   partition_size: 5000000      # cursor values per partition
+#   lookahead: 30000000          # number of insertable records headroom for changelog; also the lower bound — yaml values below this are clamped up
+#   interval:                    # poll period for the runtime top-up task
+#     hours: 0
+#     mins: 1
+#     secs: 0

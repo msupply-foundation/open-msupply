@@ -43,6 +43,9 @@ configuration/*.yaml
 # Keep the example and base configuration files
 !configuration/base.yaml
 !configuration/example.yaml
+# Keep the shared central/remote configs (used by both dev and docker/scripts compose)
+!configuration/central.yaml
+!configuration/remote.yaml
 app_data/
 
 # operational logfiles

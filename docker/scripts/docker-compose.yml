@@ -1,0 +1,87 @@
+# Open mSupply — central + remote servers via Docker Compose.
+#
+# Replaces the run-*.sh / restore-*.sh scripts. See ../../docs/content/docker/compose.md
+# (https://dev-docs.msupply.foundation/docker/compose/) for full usage.
+#
+#   docker compose up central          # start the central server
+#   docker compose up remote           # start the remote (site) server
+#   docker compose up                  # start both
+#   docker compose run --rm central-restore   # restore central from ./central/backup
+#   docker compose run --rm remote-restore    # restore remote from ./remote/backup
+#
+# Image version: every service derives from one tag. Override it (e.g. a newer build) with:
+#   VERSION=v3.00.00-RC-05261934 docker compose up
+# central uses the -postgres build (postgres-capable server + pg client tools), remote uses
+# the -sqlite build.
+#
+# Networking: both servers join the HOST network (network_mode: host) so that "localhost"
+# inside the container is the host's localhost. The central server therefore talks to the
+# Postgres running on your host, and ports are published directly onto the host (the usual
+# `ports:` mapping is ignored under host networking, so the listen port is set via
+# APP_SERVER__PORT instead). On Docker Desktop (macOS/Windows) host networking must be
+# enabled in Settings → Resources → Network ("Enable host networking").
+
+services:
+  # Central server — connects to PostgreSQL running on the HOST machine.
+  #
+  # Uses the -postgres image (postgres-capable server binary) but overrides the entrypoint
+  # to entry.sh so the image's *embedded* PostgreSQL is NOT started — the server connects to
+  # the host's Postgres on localhost:5432 instead (host networking). Listens on host port 8003.
+  central:
+    image: msupplyfoundation/omsupply:${VERSION:-v3.00.00-RC-05261934}-postgres-amd64
+    platform: linux/amd64
+    network_mode: host
+    # Skip entry-postgres.sh (embedded postgres); connect to the host's Postgres instead.
+    entrypoint: ["/usr/src/omsupply/server/entry.sh"]
+    environment:
+      APP_SERVER__PORT: 8003
+    volumes:
+      # Shared config, mounted over the image's configuration/local.yaml (auto-loaded).
+      - ../../server/configuration/central.yaml:/usr/src/omsupply/server/configuration/local.yaml:ro
+      # Stable hardware id (see docs). Created by `touch machine-id` on first use.
+      - ./machine-id:/etc/machine-id
+      # Backups land here (backup.backup_dir: /backup in central.yaml).
+      - ./central/backup:/backup
+
+  # Remote (site) server — embedded SQLite, data persisted to ./remote/database on the host.
+  # Listens on host port 8008.
+  remote:
+    image: msupplyfoundation/omsupply:${VERSION:-v3.00.00-RC-05261934}-sqlite-amd64
+    platform: linux/amd64
+    network_mode: host
+    environment:
+      APP_SERVER__PORT: 8008
+    volumes:
+      - ../../server/configuration/remote.yaml:/usr/src/omsupply/server/configuration/local.yaml:ro
+      - ./machine-id:/etc/machine-id
+      - ./remote/backup:/backup
+      # SQLite database directory (database_name: /database/omsupply-database).
+      - ./remote/database:/database
+
+  # --- One-shot restore jobs (run with `docker compose run --rm <name>`) ---
+
+  # Restore the central database from a backup named "central_backup" in ./central/backup.
+  # Uses the -postgres image (pg_restore is on PATH) and connects to the host's Postgres.
+  central-restore:
+    image: msupplyfoundation/omsupply:${VERSION:-v3.00.00-RC-05261934}-postgres-amd64
+    platform: linux/amd64
+    network_mode: host
+    volumes:
+      - ../../server/configuration/central.yaml:/usr/src/omsupply/server/configuration/local.yaml:ro
+      - ./central/backup:/backup
+    entrypoint: ["/usr/src/omsupply/server/entry.sh"]
+    command: ["restore", "-b", "central_backup"]
+    profiles: ["tools"]
+
+  # Restore the remote database from a backup named "remote_backup" in ./remote/backup.
+  remote-restore:
+    image: msupplyfoundation/omsupply:${VERSION:-v3.00.00-RC-05261934}-sqlite-amd64
+    platform: linux/amd64
+    network_mode: host
+    volumes:
+      - ../../server/configuration/remote.yaml:/usr/src/omsupply/server/configuration/local.yaml:ro
+      - ./remote/backup:/backup
+      - ./remote/database:/database
+    entrypoint: ["/usr/src/omsupply/server/entry.sh"]
+    command: ["restore", "-b", "remote_backup"]
+    profiles: ["tools"]

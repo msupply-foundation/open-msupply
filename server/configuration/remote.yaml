@@ -1,0 +1,44 @@
+# Remote (site) server configuration.
+#
+# Shared between local development and the Docker Compose setup in
+# docker/scripts/docker-compose.yml, where this file is bind-mounted over
+# configuration/local.yaml inside the container.
+#
+# To load this file for local dev, point the server at it explicitly — APP_ENVIRONMENT only
+# selects local.yaml or production.yaml, not this file:
+#   cd server && cargo run -- --config-path configuration/remote.yaml
+#
+# Layered on top of base.yaml. Env vars (APP_*) override everything.
+#
+# A remote server is an ordinary site that syncs to a central server. It stores its data
+# in an embedded SQLite database (a file on disk), so the default (SQLite) image is used.
+server:
+  port: 8000
+  danger_allow_http: true # allow http in production mode
+  override_is_central_server: false
+# Sync settings are commented out by default — initialise the site through the UI, or
+# uncomment and fill these in to auto-pair with a central server on first run.
+# With host networking, "localhost" is the host's localhost, so the central server below
+# is reached on the host port the central service publishes (see docker-compose.yml).
+# sync:
+#   url: "http://localhost:8003"
+#   username: "remote"
+#   # 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1' = 'pass'
+#   password_sha256: "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
+#   interval_seconds: 300
+#   batch_size:
+#     remote_push: 1024
+#     remote_pull: 10000
+#     central_pull: 10000
+database:
+  # Embedded SQLite. The /database directory is bind-mounted to a host folder (see
+  # docker-compose.yml) so the database file persists across container recreations.
+  database_name: "/database/omsupply-database"
+logging:
+  # one of: All | Console | File
+  mode: Console
+  # one of: Error | Warn | Info (default) | Debug | Trace
+  level: Info
+backup: # see cli backup/restore
+  backup_dir: "/backup" # Required, must be an absolute path
+  max_number_of_backups: 10 # Optional, defaults to unlimited

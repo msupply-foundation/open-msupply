@@ -10,6 +10,11 @@ source = "code"
 
 # Open omSupply Docker
 
+<div class="alert alert-info">
+Want to <strong>run</strong> a central + remote pair locally rather than build images? See
+<a href="./compose/">Central + Remote with Docker Compose</a>.
+</div>
+
 ## Quick start
 
 An interactive build script is available that handles the full pipeline (client build, server compile, Docker image build, and optional push):
