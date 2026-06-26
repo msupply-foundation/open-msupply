@@ -8,7 +8,10 @@ use crate::{
         check_snapshot_matches_current_count, check_stock_line_reduced_below_zero,
         check_stocktake_line_exist, stocktake_reduction_amount,
     },
-    validate::{check_other_party, check_store_id_matches, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_date_is_not_in_future, check_other_party, check_store_id_matches,
+        CheckOtherPartyType, OtherPartyErrors,
+    },
     NullableUpdate,
 };
 use repository::{RepositoryError, StocktakeLine, StorageConnection};
@@ -41,6 +44,15 @@ pub fn validate(
 
     if !check_store_id_matches(store_id, &stocktake.store_id) {
         return Err(InvalidStore);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(manufacture_date),
+    }) = &input.manufacture_date
+    {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
     }
 
     let stock_line = match &stocktake_line_row.stock_line_id {

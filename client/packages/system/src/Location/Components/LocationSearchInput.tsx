@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { ComponentProps, useState } from 'react';
 import {
   Autocomplete,
   CloseIcon,
@@ -97,37 +97,7 @@ export const LocationSearchInput = ({
 
   const [filter, setFilter] = useState<LocationFilter>(LocationFilter.All);
 
-  // Refs let the memoised Paper slot read fresh values without
-  // changing the component identity (which would remount the slot).
-  const filterRef = useRef(filter);
-  filterRef.current = filter;
-  const setFilterRef = useRef(setFilter);
-  setFilterRef.current = setFilter;
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-
   const hasVolumeFilter = typeof volumeRequired === 'number';
-
-  const paperSlot = useMemo(() => {
-    if (!hasVolumeFilter && !includeRemoveOption) return undefined;
-    return ({
-      children,
-      ...paperProps
-    }: React.ComponentProps<typeof Paper> & { children?: React.ReactNode }) => (
-      <Paper {...paperProps} sx={{ minWidth: '300px' }}>
-        {hasVolumeFilter && (
-          <LocationFilters
-            filter={filterRef.current}
-            setFilter={setFilterRef.current}
-          />
-        )}
-        {children}
-        {includeRemoveOption && (
-          <StickyRemoveButton onChangeRef={onChangeRef} />
-        )}
-      </Paper>
-    );
-  }, [hasVolumeFilter, includeRemoveOption]);
 
   const {
     query: { data, isLoading },
@@ -144,6 +114,8 @@ export const LocationSearchInput = ({
   );
 
   const locations = data?.nodes || [];
+  const showRemoveOption =
+    includeRemoveOption && (locations.length > 0 || !!selectedLocation);
 
   // Filter locations based on selected filter
   const filteredLocations = locations.filter(location => {
@@ -187,17 +159,17 @@ export const LocationSearchInput = ({
   // Same goes if the location is not valid given the location type restriction
   const selectedLocationOption: LocationOption | null = selectedLocation
     ? {
-        value: selectedLocation.id,
-        label: formatLocationLabel(selectedLocation),
-        code: selectedLocation.code,
-        volumeUsed: getVolumeUsedLabel(selectedLocation),
-      }
+      value: selectedLocation.id,
+      label: formatLocationLabel(selectedLocation),
+      code: selectedLocation.code,
+      volumeUsed: getVolumeUsedLabel(selectedLocation),
+    }
     : null;
 
   const isInvalidLocation = !!selectedLocation
     ? checkInvalidLocationLines(restrictedToLocationTypeId ?? null, [
-        { location: selectedLocation },
-      ])
+      { location: selectedLocation },
+    ])
     : null;
 
   const errorStyles = {
@@ -228,9 +200,19 @@ export const LocationSearchInput = ({
       placeholder={placeholder}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       slots={{
-        paper: paperSlot,
+        paper:
+          hasVolumeFilter || showRemoveOption
+            ? (LocationPaper as React.ComponentType)
+            : undefined,
       }}
       slotProps={{
+        paper: {
+          hasVolumeFilter,
+          showRemoveOption,
+          filter,
+          setFilter,
+          onRemove: onChange,
+        } as LocationPaperProps,
         listbox: { style: { maxHeight: '35vh' } },
       }}
     />
@@ -242,10 +224,36 @@ export const formatLocationLabel = (location: LocationRowFragment) => {
   return `${name}${locationType ? ` (${locationType.name})` : ''}`;
 };
 
+type LocationPaperProps = ComponentProps<typeof Paper> & {
+  hasVolumeFilter: boolean;
+  showRemoveOption: boolean;
+  filter: LocationFilter;
+  setFilter: (filter: LocationFilter) => void;
+  onRemove: (location: LocationRowFragment | null) => void;
+};
+
+const LocationPaper = ({
+  children,
+  hasVolumeFilter,
+  showRemoveOption,
+  filter,
+  setFilter,
+  onRemove,
+  ...paperProps
+}: LocationPaperProps) => (
+  <Paper {...paperProps} sx={{ minWidth: '300px' }}>
+    {hasVolumeFilter && (
+      <LocationFilters filter={filter} setFilter={setFilter} />
+    )}
+    {children}
+    {showRemoveOption && <StickyRemoveButton onChange={onRemove} />}
+  </Paper>
+);
+
 const StickyRemoveButton = ({
-  onChangeRef,
+  onChange,
 }: {
-  onChangeRef: React.RefObject<(location: LocationRowFragment | null) => void>;
+  onChange: (location: LocationRowFragment | null) => void;
 }) => {
   const t = useTranslation();
 
@@ -254,7 +262,7 @@ const StickyRemoveButton = ({
       onMouseDown={e => {
         e.stopPropagation();
         e.preventDefault();
-        onChangeRef.current?.(null);
+        onChange(null);
       }}
       sx={{
         display: 'inline-flex',
