@@ -23,6 +23,7 @@ export const mapErrorToMessageAndSetContext = (
 
   switch (error.__typename) {
     case 'BatchIsReserved':
+      setLinkedInvoiceErrorContext?.(line.id, error);
       const row = rowsToDelete.find(it => it.id === line.id);
       return t('label.inbound-shipment-cant-delete-reserved-line', {
         batch: row?.batch ?? '',

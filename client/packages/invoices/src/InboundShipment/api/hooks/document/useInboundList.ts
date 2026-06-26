@@ -12,6 +12,7 @@ import {
 import { useInboundGraphQL } from '../../useInboundGraphQL';
 import { LIST, INBOUND } from './keys';
 import { InboundRowFragment } from '../../operations.generated';
+import { DeleteResponseNode } from '../../mapInboundDeleteError';
 
 export type ListParams = {
   first?: number;
@@ -93,9 +94,8 @@ export const useInboundList = (queryParams?: ListParams) => {
     error: deleteError,
   } = useDelete();
 
-  const deleteInbounds = async (selectedRows: InboundRowFragment[]) => {
-    await deleteMutation(selectedRows);
-  };
+  const deleteInbounds = async (selectedRows: InboundRowFragment[]) =>
+    deleteMutation(selectedRows);
 
   return {
     query: { data, isLoading, isFetching, isError, refetch },
@@ -108,15 +108,10 @@ const useDelete = () => {
 
   const mutationFn = async (
     invoices: InboundRowFragment[]
-  ): Promise<string[]> => {
+  ): Promise<DeleteResponseNode[]> => {
     const internal = invoices.filter(inv => !inv.purchaseOrder);
     const external = invoices.filter(inv => !!inv.purchaseOrder);
-    const deletedIds: string[] = [];
-
-    const extractIds = (
-      result: { deleteInboundShipments?: { id: string }[] | null } | undefined
-    ) =>
-      result?.deleteInboundShipments?.map(({ id }: { id: string }) => id) ?? [];
+    const nodes: DeleteResponseNode[] = [];
 
     if (internal.length > 0) {
       const variables = {
@@ -125,7 +120,7 @@ const useDelete = () => {
       };
       const result = (await inboundApi.deleteInboundShipments(variables))
         ?.batchInboundShipment;
-      deletedIds.push(...extractIds(result));
+      nodes.push(...(result?.deleteInboundShipments ?? []));
     }
 
     if (external.length > 0) {
@@ -136,19 +131,15 @@ const useDelete = () => {
       const result = (
         await inboundApi.deleteInboundShipmentsExternal(variables)
       )?.batchInboundShipmentExternal;
-      deletedIds.push(...extractIds(result));
+      nodes.push(...(result?.deleteInboundShipments ?? []));
     }
 
-    if (deletedIds.length === 0) {
-      throw new Error('Could not delete invoices');
-    }
-
-    return deletedIds;
+    return nodes;
   };
 
   return useMutation({
     mutationFn,
-    onSuccess: () =>
+    onSettled: () =>
       queryClient.invalidateQueries({
         queryKey: [LIST],
       }),
