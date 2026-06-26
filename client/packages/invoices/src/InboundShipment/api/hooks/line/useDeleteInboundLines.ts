@@ -20,13 +20,14 @@ export const useDeleteInboundLines = (isExternal: boolean) => {
 
     onMutate: async lines => {
       await queryClient.cancelQueries({
-        queryKey: queryKey
+        queryKey: queryKey,
       });
       const previous = queryClient.getQueryData<InboundFragment>(queryKey);
       if (previous) {
-        const nodes = previous.lines.nodes.filter(
-          ({ id: lineId }) => !lines.find(({ id }) => lineId === id)
-        );
+        const nodes = previous.lines.nodes.filter(line => {
+          const beingDeleted = lines.some(({ id }) => line.id === id);
+          return !beingDeleted || !!line.linkedInvoiceId;
+        });
         queryClient.setQueryData<InboundFragment>(queryKey, {
           ...previous,
           lines: {
@@ -50,8 +51,9 @@ export const useDeleteInboundLines = (isExternal: boolean) => {
       queryClient.setQueryData(queryKey, context?.previous);
     },
 
-    onSettled: () => queryClient.invalidateQueries({
-      queryKey: queryKey
-    })
+    onSettled: () =>
+      queryClient.invalidateQueries({
+        queryKey: queryKey,
+      }),
   });
 };
