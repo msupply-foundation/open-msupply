@@ -18,6 +18,7 @@ import {
   getPreviousStatus,
   getStatusTranslator,
   getInboundShipmentType,
+  InboundShipmentType,
 } from '../../../utils';
 import { InboundLineFragment, useInboundShipment } from '../../api';
 import { getStatusOptions, getStatusSequence } from '../../../statuses';
@@ -60,12 +61,12 @@ const StatusChangeButtonContent = ({
     !invoiceStatusOptions || invoiceStatusOptions.includes(status)
       ? status
       : getPreviousStatus(
-          status,
-          invoiceStatusOptions,
-          getStatusSequence(InvoiceNodeType.InboundShipment, {
-            inboundShipmentType: shipmentType,
-          })
-        );
+        status,
+        invoiceStatusOptions,
+        getStatusSequence(InvoiceNodeType.InboundShipment, {
+          inboundShipmentType: shipmentType,
+        })
+      );
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
@@ -88,11 +89,10 @@ const StatusChangeButtonContent = ({
       status: selectedOption?.value
         ? getStatusTranslator(t)(selectedOption?.value)
         : '',
-    })}\n${
-      status === InvoiceNodeStatus.New
-        ? t('messages.confirm-changing-from-new')
-        : ''
-    }`,
+    })}\n${status === InvoiceNodeStatus.New
+      ? t('messages.confirm-changing-from-new')
+      : ''
+      }`,
     onConfirm: onConfirmStatusChange,
   });
 
@@ -129,7 +129,8 @@ const StatusChangeButtonContent = ({
 
   const onStatusClick = () => {
     if (!hasMutatePermission) return permissionDeniedNotification();
-    if (!validateEmptyInvoice(lines)) return noLinesNotification();
+    const isTransfer = shipmentType === InboundShipmentType.Internal;
+    if (!validateEmptyInvoice(lines, isTransfer)) return noLinesNotification();
     if (onHold) return onHoldNotification();
     if (
       selectedOption?.value === InvoiceNodeStatus.Received ||
@@ -163,13 +164,15 @@ const validateNoPendingLines = (lines: {
   return true;
 };
 
-export const validateEmptyInvoice = (lines: {
-  totalCount: number;
-  nodes: InboundLineFragment[];
-}): boolean => {
-  // Should only proceed if there is at least one line
-  // If lines are from transfer, they can be 0
-  // Manually added lines must have either received or shipped packs defined
+export const validateEmptyInvoice = (
+  lines: {
+    totalCount: number;
+    nodes: InboundLineFragment[];
+  },
+  isTransfer = false
+): boolean => {
+  // Can validate an empty transfer shipment because the lines can be zero'd, but the shipment itself is still valid
+  if (isTransfer) return true;
   if (
     lines.totalCount === 0 ||
     lines.nodes.every(l => !l.linkedInvoiceId && isInboundPlaceholderRow(l))

@@ -36,6 +36,17 @@ describe('validateEmptyInvoice', () => {
     };
     expect(validateEmptyInvoice(lines)).toBe(true);
   });
+  it('should allow status change for a transfer with no lines', () => {
+    const lines = { totalCount: 0, nodes: [] };
+    expect(validateEmptyInvoice(lines, true)).toBe(true);
+  });
+  it('should allow status change for a transfer with only placeholder lines', () => {
+    const lines = {
+      totalCount: 1,
+      nodes: [makeLine({ numberOfPacks: 0 })],
+    };
+    expect(validateEmptyInvoice(lines, true)).toBe(true);
+  });
 });
 
 const makeLine = ({
