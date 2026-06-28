@@ -3,7 +3,7 @@ use async_graphql::*;
 use graphql_core::loader::PropertyOptionsV2ByPropertyIdLoader;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
-use repository::{PropertyOptionV2Row, PropertyV2Row};
+use repository::{PropertyDisplayModeV2, PropertyOptionV2Row, PropertyV2, PropertyV2Row};
 use serde::Serialize;
 use service::ListResult;
 
@@ -60,9 +60,40 @@ impl From<repository::PropertyKindV2> for PropertyNodeKindV2 {
     }
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum PropertyNodeDisplayModeV2 {
+    /// Not shown on this scope.
+    Hidden,
+    /// Shown wherever the scope lists its properties (e.g. the Properties tab).
+    Visible,
+    /// Visible, and additionally promoted to the scope's primary surface (e.g.
+    /// the invoice detail-view toolbar).
+    Prominent,
+    /// A mode configured on a newer central that this site doesn't yet recognise
+    /// (the repository enum's `Other(String)` catch-all). Mapped manually rather
+    /// than via `#[graphql(remote)]` because the GraphQL enum can't carry the
+    /// captured string payload. Treated as non-hidden (shown) on read.
+    Other,
+}
+
+impl From<PropertyDisplayModeV2> for PropertyNodeDisplayModeV2 {
+    fn from(value: PropertyDisplayModeV2) -> Self {
+        match value {
+            PropertyDisplayModeV2::Hidden => Self::Hidden,
+            PropertyDisplayModeV2::Visible => Self::Visible,
+            PropertyDisplayModeV2::Prominent => Self::Prominent,
+            PropertyDisplayModeV2::Other(_) => Self::Other,
+        }
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct PropertyV2Node {
     pub property: PropertyV2Row,
+    /// Per-scope display mode — only set when the property was queried with a
+    /// single `table_name` filter (otherwise `None`).
+    pub display_mode: Option<PropertyDisplayModeV2>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -99,6 +130,16 @@ impl PropertyV2Node {
         PropertyNodeKindV2::from(self.property.kind.clone())
     }
 
+    /// How prominently this property is shown on the queried table scope
+    /// (`null` when the query wasn't scoped to a single `tableName`). Clients
+    /// promote `PROMINENT` properties to the record's primary surface, e.g. the
+    /// invoice detail-view toolbar.
+    pub async fn display_mode(&self) -> Option<PropertyNodeDisplayModeV2> {
+        self.display_mode
+            .as_ref()
+            .map(|mode| PropertyNodeDisplayModeV2::from(mode.clone()))
+    }
+
     /// Options for OPTION-type properties. Empty list for any other value
     /// type. Resolved via dataloader so a list of N properties triggers a
     /// single batched lookup.
@@ -133,8 +174,11 @@ impl PropertyOptionV2Node {
 }
 
 impl PropertyV2Node {
-    pub fn from_domain(property: PropertyV2Row) -> PropertyV2Node {
-        PropertyV2Node { property }
+    pub fn from_domain(property: PropertyV2) -> PropertyV2Node {
+        PropertyV2Node {
+            property: property.property,
+            display_mode: property.display_mode,
+        }
     }
 }
 
@@ -145,7 +189,7 @@ impl PropertyOptionV2Node {
 }
 
 impl PropertyV2Connector {
-    pub fn from_domain(result: ListResult<PropertyV2Row>) -> PropertyV2Connector {
+    pub fn from_domain(result: ListResult<PropertyV2>) -> PropertyV2Connector {
         PropertyV2Connector {
             total_count: result.count,
             nodes: result.rows.into_iter().map(PropertyV2Node::from_domain).collect(),
@@ -155,7 +199,7 @@ impl PropertyV2Connector {
 
 /// Filters a raw `properties_v2` JSONB blob down to keys allowed for a given
 /// table. Stray keys (not defined in `property_v2`, soft-deleted, or with a
-/// `property_table_v2.is_visible = false`) are dropped. Non-object JSON is
+/// `property_table_v2.display_mode = HIDDEN`) are dropped. Non-object JSON is
 /// returned untouched — that shape isn't expected, but better than silently
 /// dropping data.
 pub fn filter_properties_v2(

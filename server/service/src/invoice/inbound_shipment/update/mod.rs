@@ -2383,8 +2383,8 @@ mod test {
     #[actix_rt::test]
     async fn update_inbound_shipment_properties_v2() {
         use repository::{
-            PropertyKindV2, PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row,
-            PropertyV2RowRepository, PropertyValueTypeV2,
+            PropertyDisplayModeV2, PropertyKindV2, PropertyTableV2Row, PropertyTableV2RowRepository,
+            PropertyV2Row, PropertyV2RowRepository, PropertyValueTypeV2,
         };
         use serde_json::json;
 
@@ -2407,7 +2407,7 @@ mod test {
                 id: "inbound_shipment_category__inbound_shipment".to_string(),
                 property_id: "inbound_shipment_category".to_string(),
                 table_name: "inbound_shipment".to_string(),
-                is_visible: true,
+                display_mode: PropertyDisplayModeV2::Visible,
             })
             .unwrap();
 

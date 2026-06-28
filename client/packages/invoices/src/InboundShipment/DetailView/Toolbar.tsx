@@ -6,6 +6,7 @@ import {
   Grid,
   useTranslation,
   InvoiceNodeStatus,
+  InvoiceNodeType,
   Alert,
   Tooltip,
   BufferedTextArea,
@@ -15,6 +16,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInboundShipment } from '../api';
+import { InvoiceToolbarProperties } from '../../common';
 import { ReceivedDateInput } from './ReceivedDateInput';
 
 const InboundInfoPanel = ({
@@ -131,6 +133,16 @@ export const Toolbar = () => {
         )}
         <Grid>
           <ReceivedDateInput />
+        </Grid>
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
+            <InvoiceToolbarProperties
+              invoiceType={InvoiceNodeType.InboundShipment}
+              propertiesV2={shipment?.propertiesV2}
+              onUpdate={patch => update({ propertiesV2: patch })}
+              disabled={isDisabled}
+            />
+          </Box>
         </Grid>
         <Grid size={12}>
           <InboundInfoPanel shipment={shipment} />

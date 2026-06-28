@@ -5,7 +5,8 @@ mod graphql {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
         mock::MockDataInserts, EqualFilter, PropertyKindV2, PropertyV2, PropertyV2Filter,
-        PropertyValueTypeV2, RepositoryError, StorageConnection, StorageConnectionManager,
+        PropertyV2Row, PropertyValueTypeV2, RepositoryError, StorageConnection,
+        StorageConnectionManager,
     };
     use serde_json::json;
 
@@ -52,16 +53,19 @@ mod graphql {
 
     fn row(id: &str, key: &str, is_legacy: bool) -> PropertyV2 {
         PropertyV2 {
-            id: id.to_string(),
-            key: key.to_string(),
-            name: key.to_string(),
-            value_type: PropertyValueTypeV2::Text,
-            kind: if is_legacy {
-                PropertyKindV2::Legacy
-            } else {
-                PropertyKindV2::Standard
+            property: PropertyV2Row {
+                id: id.to_string(),
+                key: key.to_string(),
+                name: key.to_string(),
+                value_type: PropertyValueTypeV2::Text,
+                kind: if is_legacy {
+                    PropertyKindV2::Legacy
+                } else {
+                    PropertyKindV2::Standard
+                },
+                deleted_datetime: None,
             },
-            deleted_datetime: None,
+            display_mode: None,
         }
     }
 

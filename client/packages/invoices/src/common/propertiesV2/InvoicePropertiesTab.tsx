@@ -3,20 +3,13 @@ import {
   DraftProperties,
   InvoiceNodeType,
   PropertiesEditTab,
-  UserPermission,
   useAuthContext,
 } from '@openmsupply-client/common';
-import { useInvoicePropertiesV2 } from './hooks';
+import {
+  INVOICE_PROPERTY_MUTATE_PERMISSION,
+  useInvoicePropertiesV2,
+} from './hooks';
 import { throwIfStructuredError } from './saveResult';
-
-/** The permission gating property edits for each invoice type's tab. */
-const MUTATE_PERMISSION: Partial<Record<InvoiceNodeType, UserPermission>> = {
-  [InvoiceNodeType.InboundShipment]: UserPermission.InboundShipmentMutate,
-  [InvoiceNodeType.OutboundShipment]: UserPermission.OutboundShipmentMutate,
-  [InvoiceNodeType.Prescription]: UserPermission.PrescriptionMutate,
-  [InvoiceNodeType.SupplierReturn]: UserPermission.SupplierReturnMutate,
-  [InvoiceNodeType.CustomerReturn]: UserPermission.CustomerReturnMutate,
-};
 
 interface InvoicePropertiesTabProps {
   invoiceType: InvoiceNodeType;
@@ -52,7 +45,7 @@ export const InvoicePropertiesTab = ({
   const { userHasPermission } = useAuthContext();
   const { data: definitions = [] } = useInvoicePropertiesV2(invoiceType);
 
-  const permission = MUTATE_PERMISSION[invoiceType];
+  const permission = INVOICE_PROPERTY_MUTATE_PERMISSION[invoiceType];
   const disabled =
     !!statusDisabled || !permission || !userHasPermission(permission);
 

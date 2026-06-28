@@ -1,15 +1,23 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use super::{
-    property_table_v2_row::property_table_v2, property_v2_row::property_v2, PropertyKindV2,
-    PropertyV2Row, PropertyValueTypeV2, StorageConnection,
+    property_table_v2_row::property_table_v2, property_v2_row::property_v2, PropertyDisplayModeV2,
+    PropertyKindV2, PropertyV2Row, PropertyValueTypeV2, StorageConnection,
 };
 
 use crate::{diesel_macros::apply_equal_filter, EqualFilter};
 use crate::{repository_error::RepositoryError, DBType};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-pub type PropertyV2 = PropertyV2Row;
+/// A property definition together with its per-scope display mode.
+/// `display_mode` is populated only when the query is scoped to a single
+/// `table_name` (the per-`(property, table)` mode lives on `property_table_v2`);
+/// it is `None` for unscoped or multi-table queries.
+#[derive(Clone, Default, PartialEq, Debug)]
+pub struct PropertyV2 {
+    pub property: PropertyV2Row,
+    pub display_mode: Option<PropertyDisplayModeV2>,
+}
 
 /// Whether a property is surfaced to read paths. The `Other` catch-all on
 /// either `value_type` or `kind` marks an unrecognised value from a newer
@@ -30,7 +38,7 @@ pub struct PropertyV2Filter {
     pub id: Option<EqualFilter<String>>,
     pub key: Option<EqualFilter<String>>,
     /// Restricts to properties that have a `property_table_v2` row for this
-    /// table_name with `is_visible = true`.
+    /// table_name whose `display_mode` is not `Hidden`.
     pub table_name: Option<EqualFilter<String>>,
 }
 
@@ -62,18 +70,51 @@ impl<'a> PropertyV2Repository<'a> {
         &self,
         filter: Option<PropertyV2Filter>,
     ) -> Result<Vec<PropertyV2>, RepositoryError> {
+        // Per-scope display mode is only well-defined for a single-table scope,
+        // so capture the requested table before `create_filtered_query` consumes
+        // the filter.
+        let scope_table = filter
+            .as_ref()
+            .and_then(|f| f.table_name.as_ref())
+            .and_then(|t| t.equal_to.clone());
+
         let query = Self::create_filtered_query(filter).order(property_v2::id.asc());
+        let rows = query.load::<PropertyV2Row>(self.connection.lock().connection())?;
 
-        let result = query.load::<PropertyV2>(self.connection.lock().connection())?;
+        // When scoped to one table, fetch each property's display_mode for that
+        // table so it can be surfaced per-scope (e.g. to drive toolbar promotion).
+        // Skip Hidden mappings to stay in lock-step with the main query (which
+        // already excludes them) — those rows could never be matched anyway.
+        let modes: HashMap<String, PropertyDisplayModeV2> = match &scope_table {
+            Some(table_name) => property_table_v2::table
+                .filter(property_table_v2::table_name.eq(table_name))
+                .filter(property_table_v2::display_mode.ne(PropertyDisplayModeV2::Hidden))
+                .select((
+                    property_table_v2::property_id,
+                    property_table_v2::display_mode,
+                ))
+                .load::<(String, PropertyDisplayModeV2)>(self.connection.lock().connection())?
+                .into_iter()
+                .collect(),
+            None => HashMap::new(),
+        };
 
-        Ok(result
+        // Unrecognised value_type/kind (`Other`) are hidden — see `is_displayable`.
+        Ok(rows
             .into_iter()
-            .filter(|row| is_displayable(&row.value_type, &row.kind))
+            .filter(|property| is_displayable(&property.value_type, &property.kind))
+            .map(|property| {
+                let display_mode = modes.get(&property.id).cloned();
+                PropertyV2 {
+                    property,
+                    display_mode,
+                }
+            })
             .collect())
     }
 
-    /// Returns the set of property keys that are visible on the given table
-    /// (`property_table_v2.is_visible = true`) and whose definition is not
+    /// Returns the set of property keys shown on the given table
+    /// (`property_table_v2.display_mode != Hidden`) whose definition is not
     /// soft-deleted. Used by the NameNode resolver to pre-filter the JSONB
     /// blob to keys the client should ever see.
     pub fn allowed_keys_for_table(
@@ -84,7 +125,7 @@ impl<'a> PropertyV2Repository<'a> {
             .inner_join(property_table_v2::table)
             .filter(property_v2::deleted_datetime.is_null())
             .filter(property_table_v2::table_name.eq(target_table_name))
-            .filter(property_table_v2::is_visible.eq(true))
+            .filter(property_table_v2::display_mode.ne(PropertyDisplayModeV2::Hidden))
             .select((property_v2::key, property_v2::value_type, property_v2::kind))
             .load(self.connection.lock().connection())?;
 
@@ -112,7 +153,7 @@ impl<'a> PropertyV2Repository<'a> {
 
             if let Some(table_name_filter) = filter.table_name {
                 // `table_name` lives on the joined `property_table_v2` table (behind
-                // `is_visible = true`), so it can't go through `apply_equal_filter!` —
+                // `display_mode != Hidden`), so it can't go through `apply_equal_filter!` —
                 // hence the hand-rolled subquery. See `PropertyV2Filter::table_name`
                 // for which `EqualFilter` modes are honoured.
                 let table_names = match (table_name_filter.equal_to, table_name_filter.equal_any) {
@@ -123,7 +164,7 @@ impl<'a> PropertyV2Repository<'a> {
 
                 if let Some(table_names) = table_names {
                     let allowed_ids = property_table_v2::table
-                        .filter(property_table_v2::is_visible.eq(true))
+                        .filter(property_table_v2::display_mode.ne(PropertyDisplayModeV2::Hidden))
                         .filter(property_table_v2::table_name.eq_any(table_names))
                         .into_boxed();
                     query = query.filter(
@@ -172,7 +213,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        mock::MockDataInserts, test_db, PropertyKindV2, PropertyTableV2Row,
+        mock::MockDataInserts, test_db, PropertyDisplayModeV2, PropertyKindV2, PropertyTableV2Row,
         PropertyTableV2RowRepository, PropertyV2RowRepository, PropertyValueTypeV2,
     };
 
@@ -196,12 +237,16 @@ mod tests {
         }
     }
 
-    fn property_table(property_id: &str, table_name: &str, is_visible: bool) -> PropertyTableV2Row {
+    fn property_table(
+        property_id: &str,
+        table_name: &str,
+        display_mode: PropertyDisplayModeV2,
+    ) -> PropertyTableV2Row {
         PropertyTableV2Row {
             id: format!("{property_id}__{table_name}"),
             property_id: property_id.to_string(),
             table_name: table_name.to_string(),
-            is_visible,
+            display_mode,
         }
     }
 
@@ -228,16 +273,32 @@ mod tests {
 
         let table_repo = PropertyTableV2RowRepository::new(&connection);
         table_repo
-            .upsert_one(&property_table("p_visible_name", "name", true))
+            .upsert_one(&property_table(
+                "p_visible_name",
+                "name",
+                PropertyDisplayModeV2::Visible,
+            ))
             .unwrap();
         table_repo
-            .upsert_one(&property_table("p_hidden_name", "name", false))
+            .upsert_one(&property_table(
+                "p_hidden_name",
+                "name",
+                PropertyDisplayModeV2::Hidden,
+            ))
             .unwrap();
         table_repo
-            .upsert_one(&property_table("p_other_table", "store", true))
+            .upsert_one(&property_table(
+                "p_other_table",
+                "store",
+                PropertyDisplayModeV2::Visible,
+            ))
             .unwrap();
         table_repo
-            .upsert_one(&property_table("p_deleted", "name", true))
+            .upsert_one(&property_table(
+                "p_deleted",
+                "name",
+                PropertyDisplayModeV2::Visible,
+            ))
             .unwrap();
 
         connection
@@ -249,7 +310,7 @@ mod tests {
         let repo = PropertyV2Repository::new(&connection);
 
         let rows = repo.query(None).unwrap();
-        let ids: Vec<_> = rows.iter().map(|r| r.id.clone()).collect();
+        let ids: Vec<_> = rows.iter().map(|r| r.property.id.clone()).collect();
 
         assert!(!ids.contains(&"p_deleted".to_string()));
         assert!(ids.contains(&"p_visible_name".to_string()));
@@ -267,7 +328,7 @@ mod tests {
                 PropertyV2Filter::new().table_name(EqualFilter::equal_to("name".to_string())),
             )
             .unwrap();
-        let ids: Vec<_> = rows.iter().map(|r| r.id.clone()).collect();
+        let ids: Vec<_> = rows.iter().map(|r| r.property.id.clone()).collect();
 
         assert!(ids.contains(&"p_visible_name".to_string()));
         assert!(!ids.contains(&"p_hidden_name".to_string()));
@@ -287,7 +348,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].id, "p_visible_name");
+        assert_eq!(rows[0].property.id, "p_visible_name");
     }
 
     #[actix_rt::test]
@@ -312,6 +373,55 @@ mod tests {
         let count = repo.count(None).unwrap();
         let rows = repo.query(None).unwrap();
         assert_eq!(count as usize, rows.len());
+    }
+
+    #[actix_rt::test]
+    async fn property_v2_query_populates_per_scope_display_mode() {
+        let connection = setup("display_mode_per_scope").await;
+
+        // A property promoted (Prominent) on the "name" scope.
+        PropertyV2RowRepository::new(&connection)
+            .upsert_one(&property("p_prominent_name", "prominent_name", false))
+            .unwrap();
+        PropertyTableV2RowRepository::new(&connection)
+            .upsert_one(&property_table(
+                "p_prominent_name",
+                "name",
+                PropertyDisplayModeV2::Prominent,
+            ))
+            .unwrap();
+
+        let repo = PropertyV2Repository::new(&connection);
+
+        // Scoped to a single table: each returned property carries its
+        // display_mode for that scope (this is what drives toolbar promotion on
+        // the client).
+        let scoped = repo
+            .query_by_filter(
+                PropertyV2Filter::new().table_name(EqualFilter::equal_to("name".to_string())),
+            )
+            .unwrap();
+        let mode_of = |id: &str| {
+            scoped
+                .iter()
+                .find(|r| r.property.id == id)
+                .unwrap_or_else(|| panic!("missing {} in scoped result", id))
+                .display_mode
+                .clone()
+        };
+        assert_eq!(
+            mode_of("p_prominent_name"),
+            Some(PropertyDisplayModeV2::Prominent)
+        );
+        assert_eq!(mode_of("p_visible_name"), Some(PropertyDisplayModeV2::Visible));
+
+        // An unscoped query has no single scope, so carries no per-scope mode.
+        let unscoped = repo.query(None).unwrap();
+        let prominent = unscoped
+            .iter()
+            .find(|r| r.property.id == "p_prominent_name")
+            .unwrap();
+        assert_eq!(prominent.display_mode, None);
     }
 
     #[actix_rt::test]
@@ -358,12 +468,19 @@ mod tests {
                     deleted_datetime: None,
                 })
                 .unwrap();
-            table_repo.upsert_one(&property_table(id, "name", true)).unwrap();
+            table_repo
+                .upsert_one(&property_table(id, "name", PropertyDisplayModeV2::Visible))
+                .unwrap();
         }
 
         let repo = PropertyV2Repository::new(&connection);
 
-        let ids: Vec<_> = repo.query(None).unwrap().into_iter().map(|r| r.id).collect();
+        let ids: Vec<_> = repo
+            .query(None)
+            .unwrap()
+            .into_iter()
+            .map(|r| r.property.id)
+            .collect();
         assert!(ids.contains(&"p_standard".to_string()));
         assert!(!ids.contains(&"p_other_kind".to_string()));
         assert!(!ids.contains(&"p_other_value_type".to_string()));

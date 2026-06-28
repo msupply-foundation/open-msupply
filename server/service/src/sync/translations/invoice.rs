@@ -1608,7 +1608,7 @@ mod tests {
             "prescription_category": "C_PI",
             "supplier_return_category": "C_SC",
             "customer_return_category": "C_CC",
-            "prescription_category2": "C_PI2",
+            "prescription_category_2": "C_PI2",
         }));
         for (invoice_type, expected) in [
             (InvoiceType::InboundShipment, Some("C_SI")),
@@ -1637,7 +1637,7 @@ mod tests {
             build_legacy_invoice_properties(&InvoiceType::Prescription, Some("C1"), Some("C2")),
             Some(serde_json::json!({
                 "prescription_category": "C1",
-                "prescription_category2": "C2",
+                "prescription_category_2": "C2",
             }))
         );
         assert_eq!(
