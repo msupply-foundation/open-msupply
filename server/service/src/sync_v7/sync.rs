@@ -255,10 +255,11 @@ async fn check_site_status<'a>(session: &SyncV7<'a>) -> Result<(), SyncError> {
         KeyType::SettingsSyncCentralServerSiteId,
         Some(status.central_site_id),
     )?;
-    // Only written once it's true and never cleared; single-device remotes never get the key, so it's read as `unwrap_or(false)`.
-    if status.is_multi_device_site {
-        kvs.set_bool(KeyType::SettingsSyncSiteIsMultiDevice, Some(true))?;
-    }
+
+    kvs.set_bool(
+        KeyType::SettingsSyncSiteIsMultiDevice,
+        Some(status.is_multi_device_site),
+    )?;
     Ok(())
 }
 
