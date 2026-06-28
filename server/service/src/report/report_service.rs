@@ -1090,7 +1090,7 @@ mod report_filter_test {
 
     use repository::{
         migrations::Version, mock::MockDataInserts, test_db::setup_all, EqualFilter, ReportFilter,
-        ReportRepository,
+        ReportRepository, StringFilter,
     };
 
     use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
@@ -1109,7 +1109,7 @@ mod report_filter_test {
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
-        let filter = ReportFilter::new().code(EqualFilter::equal_to("standard_report".to_string()));
+        let filter = ReportFilter::new().code(StringFilter::equal_to("standard_report"));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)
             .unwrap();
@@ -1177,9 +1177,8 @@ mod report_filter_test {
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
-        let filter = ReportFilter::new().code(EqualFilter::equal_to(
-            "report_with_custom_option".to_string(),
-        ));
+        let filter =
+            ReportFilter::new().code(StringFilter::equal_to("report_with_custom_option"));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)
             .unwrap();

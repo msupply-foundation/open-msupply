@@ -13,6 +13,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { useCentralReports } from '../api/hooks/useAllReportVersionsList';
 import { ReportUploadModal } from './ReportUploadModal';
 import { ReportEditModal } from './ReportEditModal';
+import { Toolbar } from './Toolbar';
 import { ReportWithVersionRowFragment } from '../api/operations.generated';
 
 export const ReportsList = () => {
@@ -23,6 +24,7 @@ export const ReportsList = () => {
     initialSort: { key: 'code', dir: 'asc' },
     filters: [
       { key: 'name' },
+      { key: 'code' },
       { key: 'isActive', condition: '=' },
     ],
   });
@@ -105,6 +107,7 @@ export const ReportsList = () => {
   return (
     <>
       <AppBarButtons onOpen={onOpen} />
+      <Toolbar />
       {isOpen && (
         <ReportUploadModal
           isOpen={isOpen}
