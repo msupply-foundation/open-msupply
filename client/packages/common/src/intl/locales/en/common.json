@@ -2581,6 +2581,7 @@
   "placeholder.filter-translations": "Filter translations",
   "placeholder.item-directions": "Item default directions",
   "placeholder.search-by": "Search by {{field}}",
+  "placeholder.search-by-code": "Search by code",
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-identifier": "Search by ID",
   "placeholder.search-by-invoice-number": "Search by invoice number",

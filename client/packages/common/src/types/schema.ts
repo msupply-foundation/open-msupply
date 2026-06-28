@@ -8991,6 +8991,7 @@ export enum ReportContext {
 }
 
 export type ReportFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
   context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
