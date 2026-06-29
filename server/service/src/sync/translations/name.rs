@@ -16,14 +16,14 @@ use crate::sync::{
 };
 
 use super::{
-    utils::{clear_invalid_fk, merge_legacy_properties, LegacyPropertiesBuilder},
+    utils::{clear_invalid_fk, merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 /// `custom_fields` keys the legacy OG→OMS name import owns (derived from
 /// `[name]custom1/2/3` and `[name]category1_ID..category6_ID`). On a v5 re-import
 /// these are refreshed from OG; every other key in the blob (e.g. OMS-authored
-/// patient custom-field edits) is preserved. See [`merge_legacy_properties`].
+/// patient custom-field edits) is preserved. See [`merge_legacy_custom_fields`].
 ///
 /// The category keys are editable on patients (the first editable OPTIONs); like
 /// `custom_1/2/3` they remain OG-owned, so a re-pull of a changed OG record
@@ -64,15 +64,15 @@ pub enum LegacyNameRowType {
 
 /// Build the `name.custom_fields` JSONB from legacy `[name]custom1/2/3` fields.
 ///
-/// All three are TEXT properties, so they go through the shared
-/// [`LegacyPropertiesBuilder`], which omits empty values and returns `None` when
+/// All three are TEXT custom fields, so they go through the shared
+/// [`LegacyCustomFieldsBuilder`], which omits empty values and returns `None` when
 /// every field is absent (untouched rows stay NULL rather than carrying `{}`).
 ///
-/// Keys match the central mapping-property seeder (`central_mapping_custom_fields`):
+/// Keys match the central mapping custom field seeder (`central_mapping_custom_fields`):
 /// snake_case `custom_1`/`custom_2`/`custom_3` on the OMS side, decoupled from
 /// the 4D column names (`custom1` etc.) via this mapping.
-fn build_legacy_properties(legacy: &LegacyNameRow) -> Option<serde_json::Value> {
-    LegacyPropertiesBuilder::new()
+fn build_legacy_custom_fields(legacy: &LegacyNameRow) -> Option<serde_json::Value> {
+    LegacyCustomFieldsBuilder::new()
         .text(keys::NAME_CUSTOM_1, legacy.custom_1.as_deref())
         .text(keys::NAME_CUSTOM_2, legacy.custom_2.as_deref())
         .text(keys::NAME_CUSTOM_3, legacy.custom_3.as_deref())
@@ -89,10 +89,10 @@ fn build_legacy_properties(legacy: &LegacyNameRow) -> Option<serde_json::Value> 
         .build()
 }
 
-/// Inverse of [`build_legacy_properties`]: read a single legacy custom-field
+/// Inverse of [`build_legacy_custom_fields`]: read a single legacy custom-field
 /// value out of `custom_fields` for the v5 push back to OG. custom1/2/3 are TEXT,
 /// so only string values are returned; an absent or non-string key yields `None`.
-fn legacy_custom_field_from_properties(
+fn legacy_value_from_custom_fields(
     custom_fields: &Option<serde_json::Value>,
     key: &str,
 ) -> Option<String> {
@@ -226,7 +226,7 @@ pub struct LegacyNameRow {
     // Legacy 4D `[name]custom1/2/3` columns. Field names use snake_case (Rust
     // convention) and serde rename pins the wire name to the 4D column name.
     // TODO: when we widen this beyond custom1/2/3, consider #[serde(flatten)]
-    // into a HashMap and filter by property table at translate time.
+    // into a HashMap and filter by custom field table at translate time.
     #[serde(default, rename = "custom1", deserialize_with = "empty_str_as_option_string")]
     pub custom_1: Option<String>,
     #[serde(default, rename = "custom2", deserialize_with = "empty_str_as_option_string")]
@@ -236,7 +236,7 @@ pub struct LegacyNameRow {
 
     // Legacy 4D `[name]category1_ID..category6_ID` columns — six independent
     // category dimensions, each storing a leaf id. Imported as OPTION props
-    // (`build_legacy_properties`); category1 is hierarchical, 2–6 flat.
+    // (`build_legacy_custom_fields`); category1 is hierarchical, 2–6 flat.
     #[serde(default, rename = "category1_ID", deserialize_with = "empty_str_as_option_string")]
     pub category1_id: Option<String>,
     #[serde(default, rename = "category2_ID", deserialize_with = "empty_str_as_option_string")]
@@ -337,21 +337,21 @@ impl SyncTranslation for NameTranslation {
         // blob: an OMS write path (patient custom-field edits) can author keys the
         // legacy importer doesn't own, and a v5 re-pull of an unchanged OG record
         // must not wipe them.
-        let existing_properties = NameRowRepository::new(connection)
+        let existing_custom_fields = NameRowRepository::new(connection)
             .find_one_by_id(&legacy.id)?
             .and_then(|row| row.custom_fields);
 
         // The OG→OMS legacy import runs on the central server only. On central we
         // refresh the owned keys (custom_1/2/3) from OG and keep the rest; off
         // central we leave `custom_fields` untouched — it arrives via v7 instead.
-        let properties = if CentralServerConfig::is_central_server() {
-            merge_legacy_properties(
-                existing_properties,
-                build_legacy_properties(&legacy),
+        let custom_fields = if CentralServerConfig::is_central_server() {
+            merge_legacy_custom_fields(
+                existing_custom_fields,
+                build_legacy_custom_fields(&legacy),
                 LEGACY_NAME_OWNED_KEYS,
             )
         } else {
-            existing_properties
+            existing_custom_fields
         };
 
         let LegacyNameRow {
@@ -469,7 +469,7 @@ impl SyncTranslation for NameTranslation {
             freight_factor,
             currency_id,
             deleted_datetime: None,
-            custom_fields: properties,
+            custom_fields,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -588,25 +588,25 @@ impl SyncTranslation for NameTranslation {
             freight_factor,
             currency_id,
             custom_data: None,
-            // Reverse of `build_legacy_properties`: carry the patient's
+            // Reverse of `build_legacy_custom_fields`: carry the patient's
             // `custom_fields` custom fields back into the legacy custom1/2/3 wire
             // columns. This wiring is currently INERT for OMS-originated names —
             // the `PushToLegacyCentral` guard (see `should_translate_to_sync_record`,
             // added by #9430 for the patient-DOB round-trip bug) blocks the push.
             // It's wired here so that if/when the general patient → OG sync path is
-            // re-enabled, patient property edits flow back to OG automatically.
-            custom_1: legacy_custom_field_from_properties(&custom_fields, keys::NAME_CUSTOM_1),
-            custom_2: legacy_custom_field_from_properties(&custom_fields, keys::NAME_CUSTOM_2),
-            custom_3: legacy_custom_field_from_properties(&custom_fields, keys::NAME_CUSTOM_3),
+            // re-enabled, patient custom field edits flow back to OG automatically.
+            custom_1: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CUSTOM_1),
+            custom_2: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CUSTOM_2),
+            custom_3: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CUSTOM_3),
             // Same inert reverse-mapping for the category dimensions: the stored
             // option id is the leaf `categoryN_ID`. Carried back behind the same
             // `PushToLegacyCentral` guard as the custom fields.
-            category1_id: legacy_custom_field_from_properties(&custom_fields, keys::NAME_CATEGORY_1),
-            category2_id: legacy_custom_field_from_properties(&custom_fields, keys::NAME_CATEGORY_2),
-            category3_id: legacy_custom_field_from_properties(&custom_fields, keys::NAME_CATEGORY_3),
-            category4_id: legacy_custom_field_from_properties(&custom_fields, keys::NAME_CATEGORY_4),
-            category5_id: legacy_custom_field_from_properties(&custom_fields, keys::NAME_CATEGORY_5),
-            category6_id: legacy_custom_field_from_properties(&custom_fields, keys::NAME_CATEGORY_6),
+            category1_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_1),
+            category2_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_2),
+            category3_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_3),
+            category4_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_4),
+            category5_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_5),
+            category6_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_6),
         };
 
         Ok(PushTranslateResult::upsert(
@@ -692,31 +692,31 @@ mod tests {
     }
 
     #[test]
-    fn build_legacy_properties_none_when_all_absent() {
+    fn build_legacy_custom_fields_none_when_all_absent() {
         let row = legacy_row_with_customs(None, None, None);
-        assert_eq!(build_legacy_properties(&row), None);
+        assert_eq!(build_legacy_custom_fields(&row), None);
     }
 
     #[test]
-    fn build_legacy_properties_skips_absent_fields() {
+    fn build_legacy_custom_fields_skips_absent_fields() {
         let row = legacy_row_with_customs(Some("Red"), None, Some("Blue"));
         assert_eq!(
-            build_legacy_properties(&row),
+            build_legacy_custom_fields(&row),
             Some(json!({"custom_1": "Red", "custom_3": "Blue"}))
         );
     }
 
     #[test]
-    fn build_legacy_properties_all_three() {
+    fn build_legacy_custom_fields_all_three() {
         let row = legacy_row_with_customs(Some("A"), Some("B"), Some("C"));
         assert_eq!(
-            build_legacy_properties(&row),
+            build_legacy_custom_fields(&row),
             Some(json!({"custom_1": "A", "custom_2": "B", "custom_3": "C"}))
         );
     }
 
     #[test]
-    fn build_legacy_properties_categories() {
+    fn build_legacy_custom_fields_categories() {
         // Categories are stored as OPTION ids alongside the custom fields; empty
         // / absent dimensions are omitted (untouched rows stay clean).
         let mut row = legacy_row_with_customs(None, None, None);
@@ -724,7 +724,7 @@ mod tests {
         row.category3_id = Some("CAT3".to_string());
         row.category6_id = Some("".to_string()); // empty → omitted
         assert_eq!(
-            build_legacy_properties(&row),
+            build_legacy_custom_fields(&row),
             Some(json!({ "name_category_1": "CAT1_LEAF", "name_category_3": "CAT3" }))
         );
     }
@@ -737,30 +737,30 @@ mod tests {
         row.category2_id = Some("OG_VALUE".to_string());
         let existing = Some(json!({ "name_category_2": "OMS_EDIT", "patient_note": "keep" }));
         assert_eq!(
-            merge_legacy_properties(existing, build_legacy_properties(&row), LEGACY_NAME_OWNED_KEYS),
+            merge_legacy_custom_fields(existing, build_legacy_custom_fields(&row), LEGACY_NAME_OWNED_KEYS),
             Some(json!({ "name_category_2": "OG_VALUE", "patient_note": "keep" }))
         );
     }
 
     #[test]
-    fn legacy_custom_field_from_properties_extracts_string_values() {
-        // Inverse of build_legacy_properties: present string keys map back to the
+    fn legacy_value_from_custom_fields_extracts_string_values() {
+        // Inverse of build_legacy_custom_fields: present string keys map back to the
         // legacy custom columns; absent/non-string keys and a NULL blob → None.
-        let properties = Some(json!({ "custom_1": "A", "custom_3": 42, "other": "x" }));
+        let custom_fields = Some(json!({ "custom_1": "A", "custom_3": 42, "other": "x" }));
         assert_eq!(
-            legacy_custom_field_from_properties(&properties, "custom_1"),
+            legacy_value_from_custom_fields(&custom_fields, "custom_1"),
             Some("A".to_string())
         );
         // absent key
-        assert_eq!(legacy_custom_field_from_properties(&properties, "custom_2"), None);
+        assert_eq!(legacy_value_from_custom_fields(&custom_fields, "custom_2"), None);
         // non-string value is not pushed to a TEXT column
-        assert_eq!(legacy_custom_field_from_properties(&properties, "custom_3"), None);
+        assert_eq!(legacy_value_from_custom_fields(&custom_fields, "custom_3"), None);
         // NULL blob
-        assert_eq!(legacy_custom_field_from_properties(&None, "custom_1"), None);
+        assert_eq!(legacy_value_from_custom_fields(&None, "custom_1"), None);
     }
 
     #[test]
-    fn legacy_properties_only_derived_on_central() {
+    fn legacy_custom_fields_only_derived_on_central() {
         use crate::sync::{test_util_set_is_central_server, CentralServerConfig};
         let row = legacy_row_with_customs(Some("Red"), None, Some("Blue"));
 
@@ -769,9 +769,9 @@ mod tests {
         // refreshed from OG and merged into whatever else the blob holds.
         let derive = |existing: Option<serde_json::Value>| {
             if CentralServerConfig::is_central_server() {
-                merge_legacy_properties(
+                merge_legacy_custom_fields(
                     existing,
-                    build_legacy_properties(&row),
+                    build_legacy_custom_fields(&row),
                     LEGACY_NAME_OWNED_KEYS,
                 )
             } else {
@@ -779,7 +779,7 @@ mod tests {
             }
         };
 
-        // A V5V6 remote must not derive properties locally, even when the legacy
+        // A V5V6 remote must not derive custom fields locally, even when the legacy
         // custom fields are present on the wire — the existing blob is preserved.
         test_util_set_is_central_server(false);
         assert_eq!(derive(None), None);
@@ -807,7 +807,7 @@ mod tests {
         use crate::sync::test_util_set_is_central_server;
         let translator = NameTranslation {};
 
-        // The properties-v2 import (name_7 fixture) only derives on central,
+        // The custom fields import (name_7 fixture) only derives on central,
         // mirroring where the OG→OMS import actually runs (COMS). Other name
         // fixtures carry no custom fields, so this doesn't affect them.
         test_util_set_is_central_server(true);
