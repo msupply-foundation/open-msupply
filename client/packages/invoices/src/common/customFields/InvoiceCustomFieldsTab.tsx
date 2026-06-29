@@ -3,6 +3,7 @@ import {
   DraftProperties,
   InvoiceNodeType,
   CustomFieldsEditTab,
+  CustomFieldNodeDisplayMode,
   useAuthContext,
 } from '@openmsupply-client/common';
 import {
@@ -51,11 +52,15 @@ export const InvoiceCustomFieldsTab = ({
 
   return (
     <CustomFieldsEditTab
-      // Alphabetical by label, as this tab has always rendered them — the shared
-      // renderer keeps whatever order it's handed.
-      definitions={[...definitions].sort((a, b) =>
-        (a.name || a.key).localeCompare(b.name || b.key)
-      )}
+      // Prominent fields are surfaced as quick-access controls in the toolbar
+      // (InvoiceToolbarCustomFields), so exclude them here to avoid duplication.
+      // Remaining fields are sorted alphabetically by label, as this tab has
+      // always rendered them — the shared renderer keeps the order it is handed.
+      definitions={definitions
+        .filter(
+          d => d.displayMode !== CustomFieldNodeDisplayMode.Prominent
+        )
+        .sort((a, b) => (a.name || a.key).localeCompare(b.name || b.key))}
       properties={customFields}
       disabled={disabled}
       onEdit={onEdit}
