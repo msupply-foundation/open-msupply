@@ -69,6 +69,7 @@ export const Toolbar = () => {
                       onChange={newOtherParty => {
                         update({ otherParty: newOtherParty ?? undefined });
                       }}
+                      width={250}
                     />
                   }
                 />
@@ -98,6 +99,7 @@ export const Toolbar = () => {
                       value={destinationCustomer ?? null}
                       onChange={() => {}}
                       clearable
+                      width={250}
                     />
                   }
                 />
