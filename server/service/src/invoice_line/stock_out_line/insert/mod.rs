@@ -52,6 +52,7 @@ pub enum InsertStockOutLineError {
     InvoiceTypeDoesNotMatch,
     NotThisStoreInvoice,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     StockLineNotFound,
     NumberOfPacksBelowZero,
     LocationIsOnHold,

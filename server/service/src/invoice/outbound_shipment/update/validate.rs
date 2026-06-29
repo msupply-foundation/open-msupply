@@ -6,7 +6,7 @@ use crate::invoice::{
     check_status_change, check_store, InvoiceRowStatusError,
 };
 use crate::preference::{preferences::Backdating, Preference};
-use crate::validate::get_other_party;
+use crate::validate::{check_other_party_store_is_disabled, get_other_party};
 use crate::NullableUpdate;
 use chrono::{Duration, Utc};
 use repository::{
@@ -22,8 +22,6 @@ pub fn validate(
     use UpdateOutboundShipmentError::*;
 
     let invoice = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
-    let other_party =
-        get_other_party(connection, store_id, &invoice.name_id)?.ok_or(OtherPartyDoesNotExist)?;
 
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
@@ -31,6 +29,13 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(InvoiceIsNotEditable);
     }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(InvoiceIsNotEditable);
+    }
+
+    let other_party =
+        get_other_party(connection, store_id, &invoice.name_id)?.ok_or(OtherPartyDoesNotExist)?;
+
     if !check_invoice_type(&invoice, InvoiceType::OutboundShipment) {
         return Err(NotAnOutboundShipment);
     }

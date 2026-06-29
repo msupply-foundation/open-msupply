@@ -43,6 +43,7 @@ pub enum UpdateStockOutLineError {
     NotThisStoreInvoice,
     NotThisInvoiceLine(String),
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     ItemNotFound,
     StockLineNotFound,
     NumberOfPacksBelowZero,

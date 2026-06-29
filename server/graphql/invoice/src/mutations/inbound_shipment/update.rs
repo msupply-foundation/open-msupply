@@ -184,7 +184,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 CannotReverseInvoiceStatus,
             ))
         }
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(CannotEditInvoice))
         }
         ServiceError::CannotReceiveWithPendingLines => {

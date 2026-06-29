@@ -61,5 +61,5 @@
 #   #  Can make this smaller for testing emails
 #   interval: 60 # in seconds
 # features:
-#   example_feature: true
+#   stock_movement: true
 

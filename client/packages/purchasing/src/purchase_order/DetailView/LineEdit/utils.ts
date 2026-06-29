@@ -39,7 +39,7 @@ export const createDraftPurchaseOrderLine = (
       restrictedLocationTypeId: item.restrictedLocationTypeId,
       stats: {
         __typename: 'ItemStatsNode',
-        stockOnHand: item.stats?.stockOnHand || 0,
+        stockOnHand: item.stockOnHand || 0,
       },
     },
     // This value not actually saved to DB

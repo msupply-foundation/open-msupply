@@ -10,10 +10,12 @@ import { useOutboundUpdate } from './useOutboundUpdate';
 import { useOutboundUpdateName } from './useOutboundUpdateName';
 import { useOutboundUpdateInvoiceTax } from './useOutboundUpdateInvoiceTax';
 import { useOutboundDelete } from './useOutboundDelete';
+import { useOutboundDuplicate } from './useOutboundDuplicate';
 
 export const Document = {
   useOutbound,
   useOutboundDelete,
+  useOutboundDuplicate,
   useOutboundDeleteRows,
   useOutboundFields,
   useOutbounds,

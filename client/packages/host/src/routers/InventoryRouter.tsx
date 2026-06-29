@@ -1,5 +1,10 @@
 import React, { FC } from 'react';
-import { RouteBuilder, Navigate, useMatch } from '@openmsupply-client/common';
+import {
+  RouteBuilder,
+  Navigate,
+  useMatch,
+  useFeatureFlags,
+} from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
 const StockService = React.lazy(
@@ -38,6 +43,7 @@ export const InventoryRouter: FC = () => {
   const gotoStocktakes = useMatch(fullStocktakePath);
   const gotoStockMovement = useMatch(fullStockMovementPath);
   const gotoLocations = useMatch(fullLocationPath);
+  const { stockMovement } = useFeatureFlags();
 
   if (gotoStock) {
     return <StockService />;
@@ -47,7 +53,7 @@ export const InventoryRouter: FC = () => {
     return <InventoryService />;
   }
 
-  if (gotoStockMovement) {
+  if (stockMovement && gotoStockMovement) {
     return <InventoryService />;
   }
 
