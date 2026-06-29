@@ -196,11 +196,13 @@ export const BatchTable = ({
       {
         accessorKey: 'snapshotNumberOfPacks',
         header: t('label.snapshot-num-of-packs'),
-        columnType: ColumnType.Number,
         size: 100,
         getIsError: rowData =>
           errors[rowData.id]?.__typename ===
           'SnapshotCountCurrentCountMismatchLine',
+        Cell: ({ cell }) => (
+          <NumberInputCell cell={cell} disabled updateFn={() => { }} />
+        ),
       },
       {
         accessorKey: 'countedNumberOfPacks',
