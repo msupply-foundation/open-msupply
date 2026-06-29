@@ -157,7 +157,7 @@ mod test_sync_v7_client_api {
     async fn site_status(req: HttpRequest) -> actix_web::HttpResponse {
         assert_auth_headers(&req);
         actix_web::HttpResponse::Ok().json(json!({
-            "Ok": { "siteId": 1, "centralSiteId": 1 }
+            "Ok": { "siteId": 1, "centralSiteId": 1, "isMultiDeviceSite": true }
         }))
     }
 
@@ -301,6 +301,7 @@ mod test_sync_v7_client_api {
         test_sync_v7_pull_and_integrate().await;
         test_sync_v7_integrates_records_out_of_fk_order().await;
         test_sync_v7_push().await;
+        test_sync_v7_writes_multi_device_kvs().await;
     }
 
     async fn test_sync_v7_pull_and_integrate() {
@@ -545,5 +546,20 @@ mod test_sync_v7_client_api {
                 ]}
             ])
         );
+    }
+
+    /// check_site_status persists central's isMultiDeviceSite into the KVS on each sync.
+    async fn test_sync_v7_writes_multi_device_kvs() {
+        let (connection, _) = run_sync_v7_test(Test {
+            db_name: "test_sync_v7_writes_multi_device_kvs",
+            is_initialising: false,
+            ..Default::default()
+        })
+        .await;
+
+        let stored = KeyValueStoreRepository::new(&connection)
+            .get_bool(KeyType::SettingsSyncSiteIsMultiDevice)
+            .unwrap();
+        assert_eq!(stored, Some(true));
     }
 }
