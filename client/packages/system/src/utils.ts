@@ -2,7 +2,7 @@ import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
 import { Formatter } from '@common/utils';
 import { AssetPropertyFragment, MasterListRowFragment } from '.';
 import { LocationRowFragment } from './Location/api';
-import { StockLineRowFragment } from './Stock/api';
+import { StockLineListRowFragment } from './Stock/api';
 import { InvoiceNodeType, PropertyNode } from '@common/types';
 
 export const locationsToCsv = (
@@ -50,7 +50,7 @@ export const masterListsToCsv = (
 };
 
 export const stockLinesToCsv = (
-  stockLines: StockLineRowFragment[],
+  stockLines: StockLineListRowFragment[],
   t: TypedTFunction<LocaleKey>,
   manageVvmStatusForStock: boolean
 ) => {

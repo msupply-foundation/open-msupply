@@ -20,6 +20,7 @@ use crate::{
 
 use super::{
     add_central_patient_visibility::AddPatientVisibilityForCentral,
+    assign_prescription_number::AssignPrescriptionNumber,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
@@ -51,6 +52,7 @@ pub enum ProcessorType {
     ContactFormEmail,
     LoadPlugin,
     AssignRequisitionNumber,
+    AssignPrescriptionNumber,
     AddPatientVisibilityForCentral,
     SupportUploadFiles,
     Plugins,
@@ -64,6 +66,7 @@ impl ProcessorType {
             ProcessorType::ContactFormEmail => vec![Box::new(QueueContactEmailProcessor)],
             ProcessorType::LoadPlugin => vec![Box::new(LoadPlugin)],
             ProcessorType::AssignRequisitionNumber => vec![Box::new(AssignRequisitionNumber)],
+            ProcessorType::AssignPrescriptionNumber => vec![Box::new(AssignPrescriptionNumber)],
             ProcessorType::AddPatientVisibilityForCentral => {
                 vec![Box::new(AddPatientVisibilityForCentral)]
             }
@@ -119,7 +122,7 @@ pub(crate) async fn process_records(
         let cursor_controller = CursorController::from_cursor_type(processor.cursor_type());
 
         // Only process the changelogs we care about
-        let filter = processor.changelogs_filter(&ctx)?;
+        let filter = processor.changelogs_filter(&ctx).await?;
 
         loop {
             let cursor = cursor_controller
@@ -142,7 +145,7 @@ pub(crate) async fn process_records(
                 if let Err(e) = result {
                     log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
 
-                    if !processor.skip_on_error() {
+                    if !processor.skip_on_error().await {
                         break;
                     }
                 }
@@ -160,8 +163,12 @@ pub(crate) async fn process_records(
 pub(super) trait Processor: Sync + Send {
     fn get_description(&self) -> String;
 
-    /// Default to using change_log_table_names
-    fn changelogs_filter(&self, _ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
+    /// Default to using change_log_table_names.
+    /// Async so plugin-backed processors can run the plugin off the runtime (see #11949).
+    async fn changelogs_filter(
+        &self,
+        _ctx: &ServiceContext,
+    ) -> Result<ChangelogFilter, ProcessorError> {
         Ok(ChangelogFilter::new().table_name(EqualFilter {
             equal_any: Some(self.change_log_table_names()),
             ..Default::default()
@@ -182,7 +189,8 @@ pub(super) trait Processor: Sync + Send {
     /// this is not desired behavior. When skip_on_error is false, the processor driver will not
     /// skip the error and will log to system log, this may create a lot of system logs, one every time
     /// the processors are triggered, we are ok with that for now.
-    fn skip_on_error(&self) -> bool {
+    /// Async so plugin-backed processors can run the plugin off the runtime (see #11949).
+    async fn skip_on_error(&self) -> bool {
         true
     }
 

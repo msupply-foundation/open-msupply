@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_assign_prescription_number_processor_cursor_key_value_store;
 mod add_in_progress_and_error_statuses_sync_message;
 mod add_invoice_received_qty_updated_activity_log_type;
 mod add_item_store_join_indexes;
@@ -40,6 +41,7 @@ impl Migration for V2_20_00 {
             Box::new(add_stock_relocation_table::Migrate),
             Box::new(add_stock_movement_report_context::Migrate),
             Box::new(add_item_store_join_indexes::Migrate),
+            Box::new(add_assign_prescription_number_processor_cursor_key_value_store::Migrate),
         ]
     }
 }
