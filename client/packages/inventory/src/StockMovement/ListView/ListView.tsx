@@ -4,6 +4,7 @@ import {
   NothingHere,
   useUrlQueryParams,
   usePaginatedMaterialTable,
+  useEditModal,
   ColumnDef,
   ColumnType,
   MaterialTable,
@@ -12,6 +13,9 @@ import { getStatusTranslation } from '../utils';
 import { StockMovementRowFragment } from '../api/operations.generated';
 import { useStockMovementList } from '../api';
 import { Toolbar } from './Toolbar';
+import { AppBarButtons } from './AppBarButtons';
+import { StockMovementModal } from './StockMovementModal';
+import { Footer } from './Footer';
 
 export const ListView = () => {
   const t = useTranslation();
@@ -32,6 +36,9 @@ export const ListView = () => {
     offset,
     filterBy,
   });
+
+  const { isOpen, entity, mode, onOpen, onClose } =
+    useEditModal<StockMovementRowFragment>();
 
   const columns = useMemo(
     (): ColumnDef<StockMovementRowFragment>[] => [
@@ -101,21 +108,35 @@ export const ListView = () => {
     []
   );
 
-  const { table } = usePaginatedMaterialTable<StockMovementRowFragment>({
-    tableId: 'stock-movement-list',
-    isLoading: isFetching,
-    isError,
-    columns,
-    data: data?.nodes,
-    totalCount: data?.totalCount ?? 0,
-    enableRowSelection: false,
-    noDataElement: <NothingHere body={t('messages.no-stock-movements')} />,
-  });
+  const { table, selectedRows } =
+    usePaginatedMaterialTable<StockMovementRowFragment>({
+      tableId: 'stock-movement-list',
+      isLoading: isFetching,
+      isError,
+      columns,
+      data: data?.nodes,
+      totalCount: data?.totalCount ?? 0,
+      onRowClick: row => onOpen(row),
+      noDataElement: <NothingHere body={t('messages.no-stock-movements')} />,
+    });
 
   return (
     <>
       <Toolbar />
+      <AppBarButtons />
       <MaterialTable table={table} />
+      <Footer
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
+      {isOpen && entity && (
+        <StockMovementModal
+          open={isOpen}
+          mode={mode}
+          movement={entity}
+          onClose={onClose}
+        />
+      )}
     </>
   );
 };

@@ -17,7 +17,7 @@ use crate::{
 pub struct UpdateStockRelocation {
     pub id: String,
     pub from_number_of_packs: Option<f64>,
-    pub to_location_id: Option<String>,
+    pub to_location_id: Option<NullableUpdate<String>>,
     pub to_pack_size: Option<f64>,
     pub status: Option<StockRelocationStatus>,
 }
@@ -33,6 +33,7 @@ pub enum UpdateStockRelocationError {
     LocationOnHold(String),
     ToLocationDoesNotExist,
     NotThisStoreLocation,
+    IncorrectLocationType,
     NotEnoughStock(String),
     InvalidNumberOfPacks,
     InvalidPackSize,
@@ -56,7 +57,7 @@ pub fn update_stock_relocation(
                 row.from_number_of_packs = from_number_of_packs;
             }
             if let Some(to_location_id) = input.to_location_id {
-                row.to_location_id = Some(to_location_id);
+                row.to_location_id = to_location_id.value;
             }
             if let Some(to_pack_size) = input.to_pack_size {
                 row.to_pack_size = Some(to_pack_size);
@@ -178,6 +179,7 @@ impl From<ValidateMovementError> for UpdateStockRelocationError {
             ValidateMovementError::LocationOnHold(id) => E::LocationOnHold(id),
             ValidateMovementError::ToLocationDoesNotExist => E::ToLocationDoesNotExist,
             ValidateMovementError::NotThisStoreLocation => E::NotThisStoreLocation,
+            ValidateMovementError::IncorrectLocationType => E::IncorrectLocationType,
             ValidateMovementError::NotEnoughStock(id) => E::NotEnoughStock(id),
             ValidateMovementError::InvalidNumberOfPacks => E::InvalidNumberOfPacks,
             ValidateMovementError::InvalidPackSize => E::InvalidPackSize,
@@ -274,7 +276,6 @@ mod test {
                 ctx,
                 "store_a",
                 InsertStockRelocation {
-                    from_location_id: None,
                     lines: vec![line],
                 },
             )
@@ -300,7 +301,9 @@ mod test {
                 UpdateStockRelocation {
                     id: id.clone(),
                     from_number_of_packs: Some(4.0),
-                    to_location_id: Some(mock_location_2().id),
+                    to_location_id: Some(NullableUpdate {
+                        value: Some(mock_location_2().id),
+                    }),
                     to_pack_size: Some(2.0),
                     status: None,
                 },
@@ -350,6 +353,43 @@ mod test {
         assert_eq!(new_line.pack_size, 2.0);
         assert_eq!(new_line.available_number_of_packs, 2.0);
         assert_eq!(new_line.location_id, Some(mock_location_2().id));
+    }
+
+    #[actix_rt::test]
+    async fn update_can_clear_to_location() {
+        let (service_provider, ctx) = setup("update_can_clear_to_location").await;
+        whole_line("clear_sl").upsert(&ctx.connection).unwrap();
+        let service = &service_provider.stock_relocation_service;
+
+        let id = insert_one(&service_provider, &ctx, insert_line("clear_sl", 1.0)).await;
+
+        // Omitting to_location_id leaves it unchanged.
+        let unchanged = service
+            .update_stock_relocation(
+                &ctx,
+                "store_a",
+                UpdateStockRelocation {
+                    id: id.clone(),
+                    to_location_id: None,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(unchanged.to_location_id, Some(mock_location_1().id));
+
+        // An explicit null clears it.
+        let cleared = service
+            .update_stock_relocation(
+                &ctx,
+                "store_a",
+                UpdateStockRelocation {
+                    id,
+                    to_location_id: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(cleared.to_location_id, None);
     }
 
     #[actix_rt::test]

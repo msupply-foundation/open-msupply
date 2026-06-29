@@ -1,3 +1,4 @@
+use self::delete::{delete_stock_relocation, DeleteStockRelocation, DeleteStockRelocationError};
 use self::insert::{insert_stock_relocation, InsertStockRelocation, InsertStockRelocationError};
 use self::query::{get_stock_relocation, get_stock_relocations};
 use self::update::{update_stock_relocation, UpdateStockRelocation, UpdateStockRelocationError};
@@ -7,6 +8,7 @@ use repository::{
     StockRelocationSort,
 };
 
+pub mod delete;
 pub mod insert;
 pub mod query;
 pub mod update;
@@ -49,6 +51,15 @@ pub trait StockRelocationServiceTrait: Sync + Send {
         input: UpdateStockRelocation,
     ) -> Result<StockRelocationRow, UpdateStockRelocationError> {
         update_stock_relocation(ctx, store_id, input)
+    }
+
+    fn delete_stock_relocation(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: DeleteStockRelocation,
+    ) -> Result<String, DeleteStockRelocationError> {
+        delete_stock_relocation(ctx, store_id, input)
     }
 }
 
