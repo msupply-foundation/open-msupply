@@ -405,6 +405,18 @@ create_condition!(
                 .select(patient_name_links.field(name_link::id).nullable())
         )
     )),
+    // Patients visible at a specific store (via name_store_join), rather than at a whole site.
+    // Used by `data_for_store` to re-sync a moved store's patient data without pulling every
+    // patient on the destination site. Mirrors `patient_site_id` but constrains on the
+    // name_store_join's store_id directly instead of the joined store's site_id.
+    (patient_store_id, subquery: String, |for_store| changelog_with_links::patient_link_id.is_not_null().and(
+        changelog_with_links::patient_link_id.eq_any(
+            name_store_join::table
+                .inner_join(patient_name_links.on(name_store_join::name_id.eq(patient_name_links.field(name_link::id))))
+                .filter(name_store_join::store_id.eq(for_store))
+                .select(patient_name_links.field(name_link::id).nullable())
+        )
+    )),
     // Resolve a patient by their (resolved) name_id: match changelog rows whose patient_link_id
     // points at any name_link row resolving to that name_id.
     //   changelog.patient_link_id IN (SELECT name_link.id FROM name_link WHERE name_link.name_id = $patient_id)
@@ -512,6 +524,7 @@ impl ChangelogFilter {
         let mut store_scoped_table_names = Remote.get_table_names_for_distribution(None);
         store_scoped_table_names.extend(RemoteOwned.get_table_names_for_distribution(None));
         let transfer_table_names = Transfer.get_table_names_for_distribution(None);
+        let patient_table_names = Patient.get_table_names_for_distribution(None);
 
         C::Or(vec![
             C::And(vec![
@@ -521,6 +534,14 @@ impl ChangelogFilter {
             C::And(vec![
                 C::table_name::any(transfer_table_names),
                 C::transfer_store_id::equal(store_id.to_string()),
+            ]),
+            // Patient-scoped data for patients visible at this store. Without this, a moved
+            // store would arrive on the destination site missing its patients' data (#12325).
+            // Scoped to the store (via name_store_join) rather than the whole site, so we only
+            // re-pull patients this store can actually see.
+            C::And(vec![
+                C::table_name::any(patient_table_names),
+                C::patient_store_id::matching(store_id.to_string()),
             ]),
         ])
     }
