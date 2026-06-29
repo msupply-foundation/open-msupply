@@ -146,11 +146,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
                 FkField::PurchaseOrder,
             )?,
             line_number,
-<<<<<<< HEAD
-            item_id: item_link_id,
-=======
-            item_link_id: check_fk(item_link_id, "item_link_id", FkField::ItemLink)?,
->>>>>>> 8c6410ebb5 (All fks checked)
+            item_id: check_fk(item_link_id, "item_link_id", FkField::ItemLink)?,
             item_name,
             requested_number_of_units,
             requested_pack_size,

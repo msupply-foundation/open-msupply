@@ -148,15 +148,9 @@ impl SyncTranslation for StockLineTranslation {
 
         let result = StockLineRow {
             id: ID,
-<<<<<<< HEAD
-            store_id: store_ID,
-            item_id: item_ID,
-            location_id,
-=======
             store_id: check_fk(store_ID, "store_id", FkField::Store)?,
-            item_link_id: check_fk(item_ID, "item_link_id", FkField::ItemLink)?,
+            item_id: check_fk(item_ID, "item_link_id", FkField::ItemLink)?,
             location_id: fk_check(location_ID, "location_id", FkField::Location)?,
->>>>>>> 8c6410ebb5 (All fks checked)
             batch,
             pack_size,
             cost_price_per_pack: cost_price,

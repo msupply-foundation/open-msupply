@@ -6,12 +6,8 @@ use crate::sync::translations::location_type::LocationTypeTranslation;
 use crate::sync::translations::name::NameTranslation;
 
 use super::{
-<<<<<<< HEAD
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-=======
     FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
->>>>>>> 8c6410ebb5 (All fks checked)
 };
 
 /// FK columns renamed during the entity-link abstraction. Central emits both the canonical
@@ -49,24 +45,20 @@ impl SyncTranslation for ItemVariantTranslation {
         fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-<<<<<<< HEAD
-        let row = from_renamed_keys_str::<ItemVariantRow>(
-            &sync_record.data.0.to_string(),
-            RENAMED_KEYS,
-        )?;
-        Ok(PullTranslateResult::upsert(row))
-=======
         let ItemVariantRow {
             id,
             name,
-            item_link_id,
+            item_id,
             location_type_id,
             deleted_datetime,
             vvm_type,
             created_datetime,
             created_by,
             manufacturer_id,
-        } = serde_json::from_value::<ItemVariantRow>(sync_record.data.0.clone())?;
+        } = from_renamed_keys_str::<ItemVariantRow>(
+            &sync_record.data.0.to_string(),
+            RENAMED_KEYS,
+        )?;
 
         let fk_check = fk_checker.with_table(connection, "item_variant", &id);
         let check_fk = fk_checker.with_table_required(connection, "item_variant", &id);
@@ -74,7 +66,7 @@ impl SyncTranslation for ItemVariantTranslation {
         let result = ItemVariantRow {
             id,
             name,
-            item_link_id: check_fk(item_link_id, "item_link_id", FkField::ItemLink)?,
+            item_id: check_fk(item_id, "item_link_id", FkField::ItemLink)?,
             location_type_id: fk_check(location_type_id, "location_type_id", FkField::LocationType)?,
             deleted_datetime,
             vvm_type,
@@ -86,7 +78,6 @@ impl SyncTranslation for ItemVariantTranslation {
         };
 
         Ok(PullTranslateResult::upsert(result))
->>>>>>> 8c6410ebb5 (All fks checked)
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

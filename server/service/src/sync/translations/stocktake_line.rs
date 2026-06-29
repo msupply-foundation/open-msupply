@@ -190,11 +190,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             comment,
             snapshot_number_of_packs: snapshot_qty,
             counted_number_of_packs,
-<<<<<<< HEAD
-            item_id: item_ID,
-=======
-            item_link_id: check_fk(item_ID, "item_link_id", FkField::ItemLink)?,
->>>>>>> 8c6410ebb5 (All fks checked)
+            item_id: check_fk(item_ID, "item_link_id", FkField::ItemLink)?,
             item_name,
             batch: Batch,
             expiry_date: expiry,

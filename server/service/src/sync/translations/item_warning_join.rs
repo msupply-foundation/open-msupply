@@ -53,13 +53,8 @@ impl SyncTranslation for ItemWarningJoinTranslation {
 
         let result = ItemWarningJoinRow {
             id,
-<<<<<<< HEAD
-            item_id: item_link_id,
-            warning_id,
-=======
-            item_link_id: check_fk(item_link_id, "item_link_id", FkField::ItemLink)?,
+            item_id: check_fk(item_link_id, "item_link_id", FkField::ItemLink)?,
             warning_id: check_fk(warning_id, "warning_id", FkField::Warning)?,
->>>>>>> 8c6410ebb5 (All fks checked)
             priority,
         };
         Ok(PullTranslateResult::upsert(result))
