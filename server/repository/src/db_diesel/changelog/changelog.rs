@@ -489,6 +489,24 @@ impl ChangelogFilter {
         C::And(outer_and_condition)
     }
 
+    // Pull from OMS central to multi device remote site
+    pub fn multi_device_all_data_for_site(
+        site_id: i32,
+        is_initialising: bool,
+        sync_style_options: Option<SyncVersions>,
+    ) -> ChangelogCondition::Inner {
+        use ChangelogCondition as C;
+
+        let table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
+            .filter(|table| table.sync_style().multi_device_site)
+            .collect();
+
+        C::And(vec![
+            Self::all_data_for_site(site_id, is_initialising, sync_style_options),
+            C::table_name::any(table_names),
+        ])
+    }
+
     pub fn patient_data_for_site(
         site_id: i32,
         sync_style_options: Option<SyncVersions>,
@@ -561,6 +579,22 @@ impl ChangelogFilter {
     // Push from OMS remote
     pub fn all_data_edited_on_site(site_id: i32) -> ChangelogCondition::Inner {
         ChangelogCondition::source_site_id::equal(site_id)
+    }
+}
+
+impl ChangelogFilter {
+    // Push from OMS multi device remote
+    pub fn all_data_edited_on_multi_device_site(site_id: i32) -> ChangelogCondition::Inner {
+        use ChangelogCondition as C;
+
+        let table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
+            .filter(|table| table.sync_style().multi_device_site)
+            .collect();
+
+        C::And(vec![
+            Self::all_data_edited_on_site(site_id),
+            C::table_name::any(table_names),
+        ])
     }
 }
 

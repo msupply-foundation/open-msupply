@@ -307,7 +307,11 @@ pub async fn pull(
     tokio::task::spawn_blocking(move || {
         let (site, ctx) = validate(&service_provider, &common)?;
 
-        let base = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
+        let base = if site.is_multi_device {
+            ChangelogFilter::multi_device_all_data_for_site(site.id, input.is_initialising, None)
+        } else {
+            ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None)
+        };
         let filter = match input.filter {
             Some(extra) => ChangelogCondition::And(vec![base, extra]),
             None => base,
@@ -522,6 +526,11 @@ fn integrate_for_site(
     let source_site_active_store_ids =
         ActiveStoresOnSite::store_ids_for_site(&ctx.connection, site_id)?;
 
+    let is_multi_device = SiteRowRepository::new(&ctx.connection)
+        .find_one_by_id(site_id)?
+        .map(|site| site.is_multi_device)
+        .unwrap_or(false);
+
     validate_translate_integrate(
         &ctx.connection,
         None,
@@ -529,6 +538,7 @@ fn integrate_for_site(
         None,
         SyncContext::Central {
             source_site_active_store_ids,
+            is_multi_device,
         },
         false,
     )?;
