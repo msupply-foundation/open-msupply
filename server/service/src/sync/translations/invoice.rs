@@ -1,5 +1,5 @@
 use super::{
-    utils::{clear_invalid_fk, merge_legacy_properties, LegacyPropertiesBuilder},
+    utils::{clear_invalid_fk, merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
     PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 use crate::sync::translations::{
@@ -315,16 +315,16 @@ pub struct LegacyTransactRow {
 /// `custom_fields` keys the legacy OG→OMS invoice import owns (derived from
 /// `transact.category_ID` / `category2_ID`). On a v5 re-import these are
 /// refreshed from OG; every other key in the blob (OMS-authored values) is
-/// preserved. See [`merge_legacy_properties`]. The keys match the per-type
-/// category mapping properties (keyed `<type>_category`) seeded by
-/// `central_mapping_custom_fields` — one OPTION property per transact type, since
+/// preserved. See [`merge_legacy_custom_fields`]. The keys match the per-type
+/// category mapping custom fields (keyed `<type>_category`) seeded by
+/// `central_mapping_custom_fields` — one OPTION custom field per transact type, since
 /// mSupply partitions its category pool by type, plus the second prescription
 /// dimension (`pi2`, the OG Patient Type dropdown → `transact.category2_ID`).
 ///
-/// Unlike name/item properties, the values are editable in OMS *and* pushed
+/// Unlike name/item custom fields, the values are editable in OMS *and* pushed
 /// back to OG (`category_ID`/`category2_ID` in the push below) — invoices are
 /// store data OMS actively authors, so the one-way rule is relaxed (see the
-/// properties dev doc).
+/// custom fields dev doc).
 /// NOTE: this list, [`category_key_for_invoice_type`], the category seeder
 /// entries (`central_mapping_custom_fields`)
 /// and `invoice_custom_field_table_name` must stay in lock-step — the
@@ -345,7 +345,7 @@ pub(crate) const LEGACY_INVOICE_OWNED_KEYS: &[&str] = &[
 ];
 
 /// The `custom_fields` key holding the transaction category for an invoice of
-/// this type — `None` for types without a mapped category property (repack,
+/// this type — `None` for types without a mapped category custom field (repack,
 /// inventory adjustments).
 pub(crate) fn category_key_for_invoice_type(invoice_type: &InvoiceType) -> Option<&'static str> {
     match invoice_type {
@@ -363,20 +363,20 @@ pub(crate) fn category_key_for_invoice_type(invoice_type: &InvoiceType) -> Optio
 /// Build the legacy-owned slice of `invoice.custom_fields` from
 /// `transact.category_ID` (keyed by the resolved invoice type) and, for
 /// prescriptions, `transact.category2_ID`.
-fn build_legacy_invoice_properties(
+fn build_legacy_invoice_custom_fields(
     invoice_type: &InvoiceType,
     category_id: Option<&str>,
     category2_id: Option<&str>,
 ) -> Option<serde_json::Value> {
     let key = category_key_for_invoice_type(invoice_type)?;
-    let mut builder = LegacyPropertiesBuilder::new().option(key, category_id);
+    let mut builder = LegacyCustomFieldsBuilder::new().option(key, category_id);
     if *invoice_type == InvoiceType::Prescription {
         builder = builder.option(keys::PRESCRIPTION_CATEGORY_2, category2_id);
     }
     builder.build()
 }
 
-fn property_string(custom_fields: &Option<serde_json::Value>, key: &str) -> Option<String> {
+fn custom_field_string(custom_fields: &Option<serde_json::Value>, key: &str) -> Option<String> {
     custom_fields
         .as_ref()?
         .as_object()?
@@ -385,25 +385,25 @@ fn property_string(custom_fields: &Option<serde_json::Value>, key: &str) -> Opti
         .map(str::to_string)
 }
 
-/// Inverse of [`build_legacy_invoice_properties`]: read the invoice type's
+/// Inverse of [`build_legacy_invoice_custom_fields`]: read the invoice type's
 /// category option id out of `custom_fields` for the v5 push back to OG.
-fn legacy_category_id_from_properties(
+fn legacy_category_id_from_custom_fields(
     custom_fields: &Option<serde_json::Value>,
     invoice_type: &InvoiceType,
 ) -> Option<String> {
-    property_string(custom_fields, category_key_for_invoice_type(invoice_type)?)
+    custom_field_string(custom_fields, category_key_for_invoice_type(invoice_type)?)
 }
 
 /// Second prescription dimension for the push: only prescriptions carry a
 /// `category2_ID` in OG.
-fn legacy_category2_id_from_properties(
+fn legacy_category2_id_from_custom_fields(
     custom_fields: &Option<serde_json::Value>,
     invoice_type: &InvoiceType,
 ) -> Option<String> {
     if *invoice_type != InvoiceType::Prescription {
         return None;
     }
-    property_string(custom_fields, keys::PRESCRIPTION_CATEGORY_2)
+    custom_field_string(custom_fields, keys::PRESCRIPTION_CATEGORY_2)
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -589,13 +589,13 @@ impl SyncTranslation for InvoiceTranslation {
         // record must not wipe them. On central we refresh the owned keys
         // (`category_ID`) from OG and keep the rest; off central we leave
         // `custom_fields` untouched — it arrives via v7 instead.
-        let existing_properties = InvoiceRowRepository::new(connection)
+        let existing_custom_fields = InvoiceRowRepository::new(connection)
             .find_one_by_id(&data.ID)?
             .and_then(|row| row.custom_fields);
         let custom_fields = if CentralServerConfig::is_central_server() {
-            merge_legacy_properties(
-                existing_properties,
-                build_legacy_invoice_properties(
+            merge_legacy_custom_fields(
+                existing_custom_fields,
+                build_legacy_invoice_custom_fields(
                     &resolved_type,
                     data.category_ID.as_deref(),
                     data.category2_ID.as_deref(),
@@ -603,7 +603,7 @@ impl SyncTranslation for InvoiceTranslation {
                 LEGACY_INVOICE_OWNED_KEYS,
             )
         } else {
-            existing_properties
+            existing_custom_fields
         };
 
         let oms_fields = data.oms_fields.unwrap_or_default();
@@ -783,11 +783,11 @@ impl SyncTranslation for InvoiceTranslation {
             }
         };
 
-        // First property values pushed back to OG: the invoice type's category
+        // First custom field values pushed back to OG: the invoice type's category
         // key round-trips as `transact.category_ID`, and the prescription
         // Patient Type as `category2_ID`.
-        let category_id = legacy_category_id_from_properties(&custom_fields, &r#type);
-        let category2_id = legacy_category2_id_from_properties(&custom_fields, &r#type);
+        let category_id = legacy_category_id_from_custom_fields(&custom_fields, &r#type);
+        let category2_id = legacy_category2_id_from_custom_fields(&custom_fields, &r#type);
 
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
@@ -1597,12 +1597,12 @@ mod tests {
         let debug = format!("{result:?}");
         assert!(
             debug.contains("custom_fields: None"),
-            "remote must not author legacy property values: {debug}"
+            "remote must not author legacy custom field values: {debug}"
         );
 
         // Push inverse: every supported type reads its own key; unsupported
         // types carry no category.
-        let properties = Some(serde_json::json!({
+        let custom_fields = Some(serde_json::json!({
             "inbound_shipment_category": "C_SI",
             "outbound_shipment_category": "C_CI",
             "prescription_category": "C_PI",
@@ -1620,13 +1620,13 @@ mod tests {
             (InvoiceType::InventoryAddition, None),
         ] {
             assert_eq!(
-                legacy_category_id_from_properties(&properties, &invoice_type),
+                legacy_category_id_from_custom_fields(&custom_fields, &invoice_type),
                 expected.map(str::to_string),
                 "type {invoice_type:?}"
             );
             // category2_ID only round-trips for prescriptions.
             assert_eq!(
-                legacy_category2_id_from_properties(&properties, &invoice_type),
+                legacy_category2_id_from_custom_fields(&custom_fields, &invoice_type),
                 (invoice_type == InvoiceType::Prescription).then(|| "C_PI2".to_string()),
                 "category2 for type {invoice_type:?}"
             );
@@ -1634,14 +1634,14 @@ mod tests {
 
         // Prescriptions build both dimensions; other types ignore category2_ID.
         assert_eq!(
-            build_legacy_invoice_properties(&InvoiceType::Prescription, Some("C1"), Some("C2")),
+            build_legacy_invoice_custom_fields(&InvoiceType::Prescription, Some("C1"), Some("C2")),
             Some(serde_json::json!({
                 "prescription_category": "C1",
                 "prescription_category_2": "C2",
             }))
         );
         assert_eq!(
-            build_legacy_invoice_properties(&InvoiceType::InboundShipment, Some("C1"), Some("C2")),
+            build_legacy_invoice_custom_fields(&InvoiceType::InboundShipment, Some("C1"), Some("C2")),
             Some(serde_json::json!({ "inbound_shipment_category": "C1" }))
         );
     }

@@ -355,7 +355,7 @@ impl<'a> NameRowRepository<'a> {
     /// the full current row is whole-row upserted at receiving sites, so
     /// `custom_fields` is overwritten wholesale on integration. Owned legacy keys
     /// (custom_1/2/3) clobbered by a stale remote push are healed by the central v5
-    /// merge-on-import (see `merge_legacy_properties`); non-owned (OMS-authored)
+    /// merge-on-import (see `merge_legacy_custom_fields`); non-owned (OMS-authored)
     /// keys are last-writer-wins like every other name column.
     ///
     /// Emits a `Name` changelog so the value rides the existing Name sync (Central +
@@ -561,27 +561,27 @@ mod test {
         assert_eq!(name.properties, properties);
     }
 
-    // Round-trip the new properties-v2 JSONB column through NameRow on both
+    // Round-trip the new custom fields JSONB column through NameRow on both
     // PG (native Jsonb) and SQLite (TEXT Json). Verifies the CustomFieldsJson
     // sql_type alias and serde_json::Value field wiring.
     #[actix_rt::test]
-    async fn name_row_properties_round_trip() {
+    async fn name_row_custom_fields_round_trip() {
         let (_, connection, _, _) =
-            setup_all("name_row_properties_round_trip", MockDataInserts::none()).await;
+            setup_all("name_row_custom_fields_round_trip", MockDataInserts::none()).await;
 
         let row_repo = NameRowRepository::new(&connection);
 
-        let properties = serde_json::json!({"foo": "bar", "n": 42, "nested": [1, 2, 3]});
+        let custom_fields = serde_json::json!({"foo": "bar", "n": 42, "nested": [1, 2, 3]});
         let row = NameRow {
             id: uuid(),
-            custom_fields: Some(properties.clone()),
+            custom_fields: Some(custom_fields.clone()),
             ..Default::default()
         };
 
         row_repo.upsert_one(&row).unwrap();
 
         let fetched = row_repo.find_one_by_id(&row.id).unwrap().unwrap();
-        assert_eq!(fetched.custom_fields, Some(properties));
+        assert_eq!(fetched.custom_fields, Some(custom_fields));
     }
 
     // `update_custom_fields` writes the JSONB column and emits a `Name`
@@ -610,14 +610,14 @@ mod test {
 
         let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
 
-        let properties = serde_json::json!({"custom_1": "edited"});
+        let custom_fields = serde_json::json!({"custom_1": "edited"});
         row_repo
-            .update_custom_fields(&row.id, &Some(properties.clone()))
+            .update_custom_fields(&row.id, &Some(custom_fields.clone()))
             .unwrap();
 
         // Value persisted.
         let fetched = row_repo.find_one_by_id(&row.id).unwrap().unwrap();
-        assert_eq!(fetched.custom_fields, Some(properties));
+        assert_eq!(fetched.custom_fields, Some(custom_fields));
 
         // A Name changelog was emitted for this record with a non-null source_site_id.
         let changelogs: Vec<_> = ChangelogRepository::new(&connection)

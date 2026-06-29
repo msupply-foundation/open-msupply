@@ -249,7 +249,7 @@ const ITEM_3_VACCINE: (&str, &str) = (
 // Item carrying non-default custom user fields, to exercise the
 // `item.custom_fields` import (typed JSONB: text strings, a real number, a
 // boolean). user_field_4 is left false to confirm `false` is omitted.
-const ITEM_4_WITH_PROPERTIES: (&str, &str) = (
+const ITEM_4_WITH_CUSTOM_FIELDS: (&str, &str) = (
     "A1B2C3D4E5F60718293A4B5C6D7E8F90",
     r#"{
     "ID": "A1B2C3D4E5F60718293A4B5C6D7E8F90",
@@ -281,16 +281,16 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             (
-                ITEM_4_WITH_PROPERTIES.0,
-                &ordered_simple_json(ITEM_4_WITH_PROPERTIES.1).unwrap(),
+                ITEM_4_WITH_CUSTOM_FIELDS.0,
+                &ordered_simple_json(ITEM_4_WITH_CUSTOM_FIELDS.1).unwrap(),
             ),
             ItemRow {
-                id: ITEM_4_WITH_PROPERTIES.0.to_owned(),
+                id: ITEM_4_WITH_CUSTOM_FIELDS.0.to_owned(),
                 name: "Item with custom fields".to_string(),
                 code: "CUSTOM".to_string(),
                 unit_id: None,
                 r#type: ItemType::Stock,
-                legacy_record: ordered_simple_json(ITEM_4_WITH_PROPERTIES.1).unwrap(),
+                legacy_record: ordered_simple_json(ITEM_4_WITH_CUSTOM_FIELDS.1).unwrap(),
                 default_pack_size: 1.0,
                 is_active: true,
                 is_vaccine: false,
