@@ -1,10 +1,6 @@
 use repository::{
-<<<<<<< HEAD
     ChangelogRow, ChangelogTableName, PluginDataRow, PluginDataRowDelete, Row, StorageConnection,
     SyncBufferRow,
-=======
-    ChangelogRow, ChangelogTableName, PluginDataRow, Row, StorageConnection, SyncBufferRow,
->>>>>>> 8c6410ebb5 (All fks checked)
 };
 
 use crate::sync::translations::store::StoreTranslation;

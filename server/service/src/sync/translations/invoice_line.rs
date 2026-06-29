@@ -345,13 +345,8 @@ impl SyncTranslation for InvoiceLineTranslation {
 
         let result = InvoiceLineRow {
             id,
-<<<<<<< HEAD
-            invoice_id,
-            item_id: item_id,
-=======
             invoice_id: check_fk(invoice_id, "invoice_id", FkField::Invoice)?,
-            item_link_id: check_fk(item_id, "item_link_id", FkField::ItemLink)?,
->>>>>>> 8c6410ebb5 (All fks checked)
+            item_id: check_fk(item_id, "item_link_id", FkField::ItemLink)?,
             item_name,
             item_code,
             stock_line_id,
@@ -371,14 +366,10 @@ impl SyncTranslation for InvoiceLineTranslation {
             foreign_currency_price_before_tax,
             item_variant_id,
             linked_invoice_id,
-<<<<<<< HEAD
             linked_invoice_line_id,
-            donor_id,
-=======
             // donor/manufacturer are name ids resolved to name_link on upsert; name_link.id ==
             // name.id by convention, so validating the name id against name_link is correct.
             donor_id: fk_check(donor_id, "donor_link_id", FkField::NameLink)?,
->>>>>>> 8c6410ebb5 (All fks checked)
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -393,18 +384,13 @@ impl SyncTranslation for InvoiceLineTranslation {
                 _ => None,
             },
             manufacture_date,
-<<<<<<< HEAD
-            purchase_order_line_id,
-            received_number_of_packs,
-            manufacturer_id,
-=======
             purchase_order_line_id: fk_check(
                 purchase_order_line_id,
                 "purchase_order_line_id",
                 FkField::PurchaseOrderLine,
             )?,
+            received_number_of_packs,
             manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
->>>>>>> 8c6410ebb5 (All fks checked)
             legacy_goods_received_line_id: goods_received_lines_ID,
         };
 

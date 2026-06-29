@@ -42,11 +42,7 @@ impl SyncTranslation for ItemDirectionTranslation {
 
         let result = ItemDirectionRow {
             id: data.ID,
-<<<<<<< HEAD
-            item_id: data.item_ID,
-=======
-            item_link_id: check_fk(data.item_ID, "item_link_id", FkField::ItemLink)?,
->>>>>>> 8c6410ebb5 (All fks checked)
+            item_id: check_fk(data.item_ID, "item_link_id", FkField::ItemLink)?,
             directions: data.directions,
             priority: data.priority,
         };

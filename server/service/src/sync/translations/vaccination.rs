@@ -9,9 +9,8 @@ use crate::sync::translations::{
 };
 
 use super::{
-<<<<<<< HEAD
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 /// FK columns renamed during the name_link / entity-link abstraction. Central emits both the
@@ -22,10 +21,6 @@ const RENAMED_KEYS: RenamedKeys = &[
     ("item_id", "item_link_id"),
     ("facility_name_id", "facility_name_link_id"),
 ];
-=======
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
->>>>>>> 8c6410ebb5 (All fks checked)
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -57,13 +52,10 @@ impl SyncTranslation for VaccinationTranslation {
         fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-<<<<<<< HEAD
-        let row = from_renamed_keys_str::<VaccinationRow>(
+        let mut row = from_renamed_keys_str::<VaccinationRow>(
             &sync_record.data.0.to_string(),
             RENAMED_KEYS,
         )?;
-=======
-        let mut row = serde_json::from_value::<VaccinationRow>(sync_record.data.0.clone())?;
 
         let check_fk = fk_checker.with_table_required(connection, "vaccination", &row.id);
 
@@ -73,7 +65,6 @@ impl SyncTranslation for VaccinationTranslation {
             FkField::VaccineCourseDose,
         )?;
 
->>>>>>> 8c6410ebb5 (All fks checked)
         Ok(PullTranslateResult::upsert(row))
     }
 
@@ -112,11 +103,7 @@ impl SyncTranslation for VaccinationTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-<<<<<<< HEAD
             to_renamed_keys_value(&row, RENAMED_KEYS)?,
-=======
-            serde_json::to_value(row)?,
->>>>>>> 8c6410ebb5 (All fks checked)
         ))
     }
 }

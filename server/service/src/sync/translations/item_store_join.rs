@@ -59,13 +59,8 @@ impl SyncTranslation for ItemStoreJoinTranslation {
 
         let result = ItemStoreJoinRow {
             id: data.id,
-<<<<<<< HEAD
-            item_id: data.item_id,
-            store_id: data.store_id,
-=======
-            item_link_id: check_fk(data.item_id, "item_link_id", FkField::ItemLink)?,
+            item_id: check_fk(data.item_id, "item_link_id", FkField::ItemLink)?,
             store_id: check_fk(data.store_id, "store_id", FkField::Store)?,
->>>>>>> 8c6410ebb5 (All fks checked)
             default_sell_price_per_pack: data.default_sell_price_per_pack,
             ignore_for_orders: data.ignore_for_orders,
             margin: data.margin,

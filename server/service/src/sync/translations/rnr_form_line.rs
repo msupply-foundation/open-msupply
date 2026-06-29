@@ -9,19 +9,14 @@ use crate::sync::translations::{
 };
 
 use super::{
-<<<<<<< HEAD
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 /// FK column renamed during the entity-link abstraction. Central emits both the canonical
 /// `item_id` and the legacy `item_link_id` alias and accepts either, for cross-version sync.
 /// See `RenamedKeys`. Each pair is `(canonical, legacy_alias)`.
 const RENAMED_KEYS: RenamedKeys = &[("item_id", "item_link_id")];
-=======
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
->>>>>>> 8c6410ebb5 (All fks checked)
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -50,25 +45,20 @@ impl SyncTranslation for RnRFormLineTranslation {
         fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-<<<<<<< HEAD
         let row = from_renamed_keys_str::<RnRFormLineRow>(
             &sync_record.data.0.to_string(),
             RENAMED_KEYS,
         )?;
-        Ok(PullTranslateResult::upsert(row))
-=======
-        let row = serde_json::from_value::<RnRFormLineRow>(sync_record.data.0.clone())?;
 
         let check_fk = fk_checker.with_table_required(connection, "rnr_form_line", &row.id);
 
         let result = RnRFormLineRow {
             rnr_form_id: check_fk(row.rnr_form_id, "rnr_form_id", FkField::RnrForm)?,
-            item_link_id: check_fk(row.item_link_id, "item_link_id", FkField::ItemLink)?,
+            item_id: check_fk(row.item_id, "item_link_id", FkField::ItemLink)?,
             ..row
         };
 
         Ok(PullTranslateResult::upsert(result))
->>>>>>> 8c6410ebb5 (All fks checked)
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -101,19 +91,10 @@ impl SyncTranslation for RnRFormLineTranslation {
             return Ok(PushTranslateResult::NotMatched);
         };
 
-<<<<<<< HEAD
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
             to_renamed_keys_value(&rnr_form_line_row, RENAMED_KEYS)?,
-=======
-        let row = rnr_form_line_row;
-
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
->>>>>>> 8c6410ebb5 (All fks checked)
         ))
     }
 

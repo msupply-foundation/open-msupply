@@ -151,13 +151,8 @@ impl SyncTranslation for RequisitionLineTranslation {
 
         let result = RequisitionLineRow {
             id: data.ID.to_string(),
-<<<<<<< HEAD
-            requisition_id: data.requisition_ID,
-            item_id: data.item_ID,
-=======
             requisition_id: check_fk(data.requisition_ID, "requisition_id", FkField::Requisition)?,
-            item_link_id: check_fk(data.item_ID, "item_link_id", FkField::ItemLink)?,
->>>>>>> 8c6410ebb5 (All fks checked)
+            item_id: check_fk(data.item_ID, "item_link_id", FkField::ItemLink)?,
             requested_quantity: data.Cust_stock_order,
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,

@@ -68,13 +68,8 @@ impl SyncTranslation for MasterListLineTranslation {
 
         let result = MasterListLineRow {
             id: data.ID,
-<<<<<<< HEAD
-            item_id: data.item_ID,
-            master_list_id: data.item_master_ID,
-=======
-            item_link_id: check_fk(data.item_ID, "item_link_id", FkField::ItemLink)?,
+            item_id: check_fk(data.item_ID, "item_link_id", FkField::ItemLink)?,
             master_list_id: check_fk(data.item_master_ID, "master_list_id", FkField::MasterList)?,
->>>>>>> 8c6410ebb5 (All fks checked)
             price_per_unit: data.price,
         };
 
