@@ -5068,6 +5068,13 @@ export type ItemNode = {
   restrictedLocationType?: Maybe<LocationTypeNode>;
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
+  /**
+   * Total stock on hand (all packs, not just available) for this item + store.
+   * Backed by the same batched `ItemsStockOnHandLoader` as `availableStockOnHand`,
+   * so unlike `stats { stockOnHand }` it does not trigger the item-stats / AMC
+   * backend-plugin path.
+   */
+  stockOnHand: Scalars['Int']['output'];
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
@@ -5104,6 +5111,10 @@ export type ItemNodeProgramsArgs = {
 export type ItemNodeStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
   periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
+  storeId: Scalars['String']['input'];
+};
+
+export type ItemNodeStockOnHandArgs = {
   storeId: Scalars['String']['input'];
 };
 

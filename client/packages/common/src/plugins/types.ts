@@ -5,6 +5,7 @@ import {
   MasterListRowFragment,
   RequestFragment,
   RequestLineFragment,
+  StockLineListRowFragment,
   StockLineRowFragment,
 } from '@openmsupply-client/system';
 import {
@@ -96,9 +97,9 @@ export type Plugins = {
   };
   stockLine?: {
     tableStateLoader: React.ComponentType<{
-      stockLines: StockLineRowFragment[];
+      stockLines: StockLineListRowFragment[];
     }>[];
-    tableColumn: ColumnDef<StockLineRowFragment>[];
+    tableColumn: ColumnDef<StockLineListRowFragment>[];
     editViewField: React.ComponentType<{
       stockLine: StockLineRowFragment;
       events: UsePluginEvents<{ isDirty: boolean }>;
