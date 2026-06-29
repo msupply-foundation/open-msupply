@@ -1,16 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowRightIcon,
   useTranslation,
   useInterval,
-  LoadingButton,
   useHostContext,
   useAuthContext,
   LocalStorage,
   useFormatDateTime,
   BoxedErrorWithDetails,
 } from '@openmsupply-client/common';
-import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
 import { LoginLayout } from './LoginLayout';
 import { LoginStoreSelectorPanel } from './LoginStoreSelectorPanel';
@@ -26,20 +23,16 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
   const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
-  const passwordRef = React.useRef<HTMLInputElement>(null);
   const {
-    isValid,
-    password,
-    setPassword,
-    username,
-    setUsername,
-    isLoggingIn,
     onLogin,
+    isLoggingIn,
     error,
     siteName,
     showStoreSelector,
     dismissStoreSelector,
-  } = useLoginForm(passwordRef, fullSize);
+    storeSelectorUsername,
+    mostRecentUsername,
+  } = useLoginForm(fullSize);
   const [timeoutRemaining, setTimeoutRemaining] = useState(
     error?.timeoutRemaining ?? 0
   );
@@ -160,53 +153,12 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
         <LoginStoreSelectorPanel
           open={showStoreSelector}
           onSelected={dismissStoreSelector}
-          username={username}
+          username={storeSelectorUsername}
         />
       }
-      UsernameInput={
-        <LoginTextInput
-          fullWidth
-          label={t('heading.username')}
-          value={username}
-          disabled={isLoggingIn}
-          onChange={e => setUsername(e.target.value)}
-          slotProps={{
-            htmlInput: {
-              autoComplete: 'username',
-              name: 'username',
-            },
-          }}
-          autoFocus
-        />
-      }
-      PasswordInput={
-        <LoginTextInput
-          fullWidth
-          label={t('heading.password')}
-          type="password"
-          value={password}
-          disabled={isLoggingIn}
-          onChange={e => setPassword(e.target.value)}
-          slotProps={{
-            htmlInput: {
-              autoComplete: 'current-password',
-              name: 'password',
-            },
-          }}
-          inputRef={passwordRef}
-        />
-      }
-      LoginButton={
-        <LoadingButton
-          shouldShrink={false}
-          isLoading={isLoggingIn}
-          onClick={onLogin}
-          variant="outlined"
-          endIcon={<ArrowRightIcon />}
-          disabled={!isValid}
-          label={t('button.login')}
-        />
-      }
+      onLogin={onLogin}
+      isLoggingIn={isLoggingIn}
+      mostRecentUsername={mostRecentUsername}
       ErrorMessage={
         error &&
         loginError.error !== '' && (
@@ -218,9 +170,6 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
           />
         )
       }
-      onLogin={async () => {
-        if (isValid) await onLogin();
-      }}
       SiteInfo={<SiteInfo siteName={siteName} />}
       fullSize={fullSize}
     />

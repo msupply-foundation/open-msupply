@@ -1,48 +1,53 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  ArrowRightIcon,
   Box,
+  LoadingButton,
   Stack,
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LoginIcon } from './LoginIcon';
+import { LoginTextInput } from './LoginTextInput';
 import { Theme } from '@common/styles';
 import { AppVersion } from '../AppVersion';
 import { LanguageButton } from '../LanguageButton';
 
-export type LoginLayoutProps = {
-  UsernameInput: React.ReactNode;
-  PasswordInput: React.ReactNode;
-  LoginButton: React.ReactNode;
+// LoginIcon runs media-query / theme / local-storage hooks; memoising it keeps
+// it from re-rendering while the user types into the form fields below it.
+const MemoLoginIcon = React.memo(LoginIcon);
+
+export type LoginFormProps = {
+  onLogin: (username: string, password: string) => Promise<void>;
+  isLoggingIn: boolean;
+  mostRecentUsername?: string;
   ErrorMessage: React.ReactNode;
-  SiteInfo: React.ReactNode;
-  onLogin: () => Promise<void>;
   fullSize: boolean;
+};
+
+export type LoginLayoutProps = LoginFormProps & {
+  SiteInfo: React.ReactNode;
   StoreSelector?: React.ReactNode;
   showStoreSelector?: boolean;
 };
 
 export const LoginLayout = ({
-  UsernameInput,
-  PasswordInput,
-  LoginButton,
+  onLogin,
+  isLoggingIn,
+  mostRecentUsername,
   ErrorMessage,
   SiteInfo,
-  onLogin,
   fullSize,
   StoreSelector,
   showStoreSelector = false,
 }: LoginLayoutProps) => {
   const t = useTranslation();
-
   const loginForm = (
     <LoginForm
-      UsernameInput={UsernameInput}
-      PasswordInput={PasswordInput}
-      LoginButton={LoginButton}
-      ErrorMessage={ErrorMessage}
-      SiteInfo={SiteInfo}
       onLogin={onLogin}
+      isLoggingIn={isLoggingIn}
+      mostRecentUsername={mostRecentUsername}
+      ErrorMessage={ErrorMessage}
       fullSize={fullSize}
     />
   );
@@ -153,32 +158,87 @@ export const LoginLayout = ({
 };
 
 const LoginForm = ({
-  UsernameInput,
-  PasswordInput,
-  LoginButton,
-  ErrorMessage,
   onLogin,
+  isLoggingIn,
+  mostRecentUsername,
+  ErrorMessage,
   fullSize,
-}: LoginLayoutProps) => {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter') {
-      onLogin();
-    }
+}: LoginFormProps) => {
+  const t = useTranslation();
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const isValid = !!username && !!password;
+
+  const submit = async () => {
+    if (!isValid) return;
+    await onLogin(username, password);
+    setPassword('');
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter') submit();
+  };
+
+  // Pre-fill the most recently used username (arrives asynchronously) and move
+  // focus to the password field.
+  useEffect(() => {
+    if (mostRecentUsername && !username) {
+      setUsername(mostRecentUsername);
+      setTimeout(() => passwordRef.current?.focus(), 100);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mostRecentUsername]);
+
   return (
-    <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
+    <form onSubmit={e => e.preventDefault()} onKeyDown={handleKeyDown}>
       <Stack spacing={fullSize ? 5 : 2}>
         {fullSize && (
           <Box display="flex" justifyContent="center">
-            <LoginIcon />
+            <MemoLoginIcon />
           </Box>
         )}
-        {UsernameInput}
-        {PasswordInput}
+        <LoginTextInput
+          fullWidth
+          label={t('heading.username')}
+          value={username}
+          disabled={isLoggingIn}
+          onChange={e => setUsername(e.target.value)}
+          slotProps={{
+            htmlInput: {
+              autoComplete: 'username',
+              name: 'username',
+            },
+          }}
+          autoFocus
+        />
+        <LoginTextInput
+          fullWidth
+          label={t('heading.password')}
+          type="password"
+          value={password}
+          disabled={isLoggingIn}
+          onChange={e => setPassword(e.target.value)}
+          slotProps={{
+            htmlInput: {
+              autoComplete: 'current-password',
+              name: 'password',
+            },
+          }}
+          inputRef={passwordRef}
+        />
         {ErrorMessage}
         <Box display="flex" justifyContent="flex-end">
-          {LoginButton}
+          <LoadingButton
+            shouldShrink={false}
+            isLoading={isLoggingIn}
+            onClick={submit}
+            variant="outlined"
+            endIcon={<ArrowRightIcon />}
+            disabled={!isValid}
+            label={t('button.login')}
+          />
         </Box>
       </Stack>
     </form>

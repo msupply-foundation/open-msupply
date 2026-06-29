@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { create } from 'zustand';
+import { useCallback, useEffect, useState } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import {
   AuthenticationError,
@@ -13,87 +12,63 @@ import {
   useQueryClient,
 } from '@openmsupply-client/common';
 
-interface LoginForm {
-  error?: AuthenticationError;
-  password: string;
-  username: string;
-  setError: (error?: AuthenticationError) => void;
-  setPassword: (password: string) => void;
-  setUsername: (username: string) => void;
-}
-
 interface State {
   from?: Location;
 }
 
-export const useLoginFormState = create<LoginForm>(set => ({
-  error: undefined,
-  password: '',
-  username: '',
-
-  setError: (error?: AuthenticationError) =>
-    set(state => ({ ...state, error })),
-  setPassword: (password: string) => set(state => ({ ...state, password })),
-  setUsername: (username: string) => set(state => ({ ...state, username })),
-}));
-
-export const useLoginForm = (
-  passwordRef: React.RefObject<HTMLInputElement | null>,
-  navigateOnSuccess = true
-) => {
-  const state = useLoginFormState();
+export const useLoginForm = (navigateOnSuccess = true) => {
   const { data: initStatus } = useInitialisationStatus();
   const navigate = useNavigate();
   const location = useLocation();
   const { mostRecentUsername, login, isLoggingIn } = useAuthContext();
   const queryClient = useQueryClient();
   const authApi = useAuthApi();
-  const { password, setPassword, setUsername, username, error, setError } =
-    state;
+
+  const [error, setError] = useState<AuthenticationError | undefined>();
   const [showStoreSelector, setShowStoreSelector] = useState(false);
+  const [storeSelectorUsername, setStoreSelectorUsername] = useState('');
   const [loginRedirectFrom, setLoginRedirectFrom] = useState('/');
 
-  const onLogin = async () => {
-    setError();
-    const { error, token } = await login(username.trim(), password);
-    setError(error);
-    setPassword('');
-    if (!token) return;
+  // Credentials are owned by the form fields (see LoginLayout). onLogin
+  // receives them as arguments so that typing never re-renders this hook's
+  // consumer (and therefore never re-renders the whole login page).
+  const onLogin = useCallback(
+    async (username: string, password: string) => {
+      setError(undefined);
+      const trimmedUsername = username.trim();
+      const { error, token } = await login(trimmedUsername, password);
+      setError(error);
+      if (!token) return;
 
-    if (!navigateOnSuccess) return;
+      if (!navigateOnSuccess) return;
 
-    const locationState = location.state as State | undefined;
-    const redirectTo = locationState?.from?.pathname || `/`;
-    setLoginRedirectFrom(redirectTo);
+      const locationState = location.state as State | undefined;
+      const redirectTo = locationState?.from?.pathname || `/`;
+      setLoginRedirectFrom(redirectTo);
 
-    const userDetails = queryClient.getQueryData<{
-      stores?: { nodes?: { id: string; isDisabled?: boolean }[] };
-    }>(authApi.keys.me(token));
-    const enabledStoreCount =
-      userDetails?.stores?.nodes?.filter(s => !s.isDisabled).length ?? 0;
-    const skipPrefs = LocalStorage.getItem('/login/skip-store-selector') ?? {};
-    const optedOut = !!skipPrefs[username.trim().toLowerCase()];
+      const userDetails = queryClient.getQueryData<{
+        stores?: { nodes?: { id: string; isDisabled?: boolean }[] };
+      }>(authApi.keys.me(token));
+      const enabledStoreCount =
+        userDetails?.stores?.nodes?.filter(s => !s.isDisabled).length ?? 0;
+      const skipPrefs =
+        LocalStorage.getItem('/login/skip-store-selector') ?? {};
+      const optedOut = !!skipPrefs[trimmedUsername.toLowerCase()];
 
-    if (enabledStoreCount > 1 && !optedOut) {
-      setShowStoreSelector(true);
-    } else {
-      navigate(redirectTo, { replace: true });
-    }
-  };
+      if (enabledStoreCount > 1 && !optedOut) {
+        setStoreSelectorUsername(trimmedUsername);
+        setShowStoreSelector(true);
+      } else {
+        navigate(redirectTo, { replace: true });
+      }
+    },
+    [authApi, location, login, navigate, navigateOnSuccess, queryClient]
+  );
 
   const dismissStoreSelector = useCallback(() => {
     setShowStoreSelector(false);
     navigate(loginRedirectFrom, { replace: true });
   }, [navigate, loginRedirectFrom]);
-
-  const isValid = !!username && !!password;
-
-  React.useEffect(() => {
-    if (mostRecentUsername && !username) {
-      setUsername(mostRecentUsername);
-      setTimeout(() => passwordRef.current?.focus(), 100);
-    }
-  }, [mostRecentUsername]);
 
   useEffect(() => {
     if (!initStatus) return;
@@ -103,13 +78,13 @@ export const useLoginForm = (
   }, [initStatus]);
 
   return {
-    isValid,
     onLogin,
     isLoggingIn,
-    ...state,
     error,
     siteName: initStatus?.siteName,
     showStoreSelector,
     dismissStoreSelector,
+    storeSelectorUsername,
+    mostRecentUsername,
   };
 };
