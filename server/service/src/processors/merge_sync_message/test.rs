@@ -130,6 +130,7 @@ async fn sync_message_changelog_carries_to_store_id() {
     let entries = changelog_repo
         .query(
             ChangelogCondition::table_name::equal(ChangelogTableName::SyncMessage),
+            None,
             CursorAndLimit {
                 cursor: 0,
                 limit: 1000,

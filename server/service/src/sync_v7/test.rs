@@ -399,6 +399,7 @@ mod test_sync_v7_client_api {
         let changelogs = ChangelogRepository::new(&connection)
             .query(
                 ChangelogCondition::source_site_id::equal(1),
+                None,
                 CursorAndLimit {
                     cursor: -1,
                     limit: 100,

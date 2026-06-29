@@ -301,9 +301,15 @@ pub async fn pull(
             None => base,
         };
 
+        // MasterList/MasterListLine are keyless central data, so `all_data_for_site` would send
+        // every master list to the site. Narrow that to master lists visible in the site's stores.
+        let site_store_ids = ActiveStoresOnSite::store_ids_for_site(&ctx.connection, site.id)?;
+        let application_filters = ChangelogFilter::master_list_visibility(site_store_ids);
+
         let batch = SyncBatchV7::generate(
             &ctx.connection,
             filter,
+            Some(application_filters),
             input.cursor,
             Some(input.batch_size),
         )?;
@@ -393,7 +399,7 @@ pub async fn patient_data_for_site(
             ChangelogCondition::patient_id::matching(patient_id),
         ]);
 
-        let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
+        let batch = SyncBatchV7::generate(&ctx.connection, filter, None, 0, None)?;
 
         Ok(patient_data_for_site::Output {
             batch,

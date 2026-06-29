@@ -169,6 +169,7 @@ impl<'a> ChangelogRepository<'a> {
     pub fn query_with_data(
         &self,
         filter: ChangelogCondition::Inner,
+        application_filters: Option<Vec<ApplicationFilter>>,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
     ) -> Result<QueryWithData, RepositoryError> {
         let mut output_by_key: HashMap<(ChangelogTableName, String), RowOrDelete> = HashMap::new();
@@ -182,6 +183,7 @@ impl<'a> ChangelogRepository<'a> {
                 last_cursor_in_batch,
             } = self.query(
                 filter.clone(),
+                application_filters.clone(),
                 CursorAndLimit {
                     cursor: current_cursor,
                     limit: need,
@@ -857,6 +859,7 @@ mod test {
         let result = ChangelogRepository::new(&connection)
             .query_with_data(
                 unit_filter(),
+                None,
                 CursorAndLimit {
                     cursor: 0,
                     limit: 10,
@@ -904,6 +907,7 @@ mod test {
         let result = ChangelogRepository::new(&connection)
             .query_with_data(
                 unit_filter(),
+                None,
                 CursorAndLimit {
                     cursor: 0,
                     limit: 3,
@@ -953,6 +957,7 @@ mod test {
         let result = ChangelogRepository::new(&connection)
             .query_with_data(
                 unit_filter(),
+                None,
                 CursorAndLimit {
                     cursor: 0,
                     limit: 2,
@@ -985,6 +990,7 @@ mod test {
         let result = ChangelogRepository::new(&connection)
             .query_with_data(
                 unit_filter(),
+                None,
                 CursorAndLimit {
                     cursor: 0,
                     limit: 100,
@@ -1033,6 +1039,7 @@ mod test {
         let result = ChangelogRepository::new(&connection)
             .query_with_data(
                 unit_filter(),
+                None,
                 CursorAndLimit {
                     cursor: 0,
                     limit: 2,
@@ -1094,6 +1101,7 @@ mod test {
         let result = ChangelogRepository::new(&connection)
             .query_with_data(
                 unit_filter(),
+                None,
                 CursorAndLimit {
                     cursor: 0,
                     limit: 2,

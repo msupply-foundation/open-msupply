@@ -5,10 +5,10 @@ use log::info;
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    AppVersion, ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogTableName,
-    CursorAndLimit, KeyType, KeyValueStoreRepository, QueryWithData, RowActionType,
-    StorageConnection, SyncAction, SyncBufferRepository, SyncBufferRowInsert, SyncRecordData,
-    SyncVersion,
+    AppVersion, ApplicationFilter, ChangelogCondition, ChangelogFilter, ChangelogRepository,
+    ChangelogTableName, CursorAndLimit, KeyType, KeyValueStoreRepository, QueryWithData,
+    RowActionType, StorageConnection, SyncAction, SyncBufferRepository, SyncBufferRowInsert,
+    SyncRecordData, SyncVersion,
 };
 use serde::{Deserialize, Serialize};
 use util::format_error;
@@ -63,6 +63,7 @@ impl SyncBatchV7 {
     pub fn generate(
         connection: &StorageConnection,
         filter: ChangelogCondition::Inner,
+        application_filters: Option<Vec<ApplicationFilter>>,
         cursor: i64,
         batch_size: Option<u32>,
     ) -> Result<SyncBatchV7, SyncError> {
@@ -76,6 +77,7 @@ impl SyncBatchV7 {
             remaining,
         } = repo.query_with_data(
             filter,
+            application_filters,
             CursorAndLimit {
                 cursor,
                 limit: batch_size.map_or(i64::MAX, |n| n as i64),
@@ -289,6 +291,9 @@ impl<'a> SyncV7<'a> {
             let batch = SyncBatchV7::generate(
                 self.connection,
                 filter.clone(),
+                // Push relays records this site authored; no central-distribution visibility
+                // narrowing applies.
+                None,
                 cursor,
                 Some(self.batch_size.remote_push),
             )?;

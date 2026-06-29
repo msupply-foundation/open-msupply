@@ -124,6 +124,7 @@ impl ProcessorFilter {
             ProcessorFilter::Normal(f) => changelog_repo
                 .query(
                     f.clone(),
+                    None,
                     CursorAndLimit {
                         cursor: cursor as i64,
                         limit: CHANGELOG_BATCH_SIZE as i64,

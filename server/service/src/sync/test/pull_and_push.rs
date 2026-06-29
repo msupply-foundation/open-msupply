@@ -94,6 +94,7 @@ async fn test_sync_pull_and_push() {
     let rows = ChangelogRepository::new(&connection)
         .query_with_data(
             repository::ChangelogCondition::True(),
+            None,
             repository::CursorAndLimit {
                 cursor: push_cursor as i64,
                 limit: 100000,

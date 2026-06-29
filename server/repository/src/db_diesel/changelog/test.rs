@@ -10,12 +10,16 @@ use crate::{
         MockDataInserts,
     },
     test_db::{self, setup_all, setup_all_with_data},
-    ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType,
-    ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType, KeyValueStoreRepository,
-    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow,
-    StoreRowRepository, Upsert, VaccinationRow, VaccinationRowRepository,
+    ApplicationFilter, ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow,
+    ChangelogSyncType, ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, ItemRow,
+    ItemRowRepository, KeyType, KeyValueStoreRepository, LocationRowRepository,
+    MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRow,
+    MasterListNameJoinRepository, MasterListRow, MasterListRowRepository, NameRow,
+    NameRowRepository, NameStoreJoinRow, NameStoreJoinRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RowActionType,
+    StorageConnection, StoreRow, StoreRowRepository, Upsert, VaccinationRow,
+    VaccinationRowRepository,
 };
 
 fn delete_all_changelog(connection: &StorageConnection) {
@@ -28,7 +32,7 @@ fn delete_all_changelog(connection: &StorageConnection) {
 
 fn query_all(connection: &StorageConnection, cursor: i64, limit: i64) -> Vec<ChangelogRow> {
     ChangelogRepository::new(connection)
-        .query(ChangelogCondition::True(), CursorAndLimit { cursor, limit })
+        .query(ChangelogCondition::True(), None, CursorAndLimit { cursor, limit })
         .unwrap()
         .rows
 }
@@ -254,6 +258,7 @@ async fn test_changelog_filter() {
         ChangelogRepository::new(&connection)
             .query(
                 ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
+                None,
                 CursorAndLimit {
                     cursor: 0,
                     limit: 20
@@ -272,6 +277,7 @@ async fn test_changelog_filter() {
                     ChangelogTableName::Invoice,
                     ChangelogTableName::StocktakeLine
                 ]),
+                None,
                 CursorAndLimit {
                     cursor: 0,
                     limit: 20
@@ -287,6 +293,7 @@ async fn test_changelog_filter() {
         ChangelogRepository::new(&connection)
             .query(
                 ChangelogCondition::store_id::any(vec!["store1".to_string(), "store2".to_string()]),
+                None,
                 CursorAndLimit {
                     cursor: 0,
                     limit: 20
@@ -328,6 +335,7 @@ fn test_changelog_name_and_store_id<T, F>(
     let change_logs = ChangelogRepository::new(connection)
         .query(
             ChangelogCondition::True(),
+            None,
             CursorAndLimit {
                 cursor: -1,
                 limit: 1000,
@@ -672,6 +680,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(1, false, None),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 10,
@@ -694,6 +703,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(1, false, None),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 1000,
@@ -729,6 +739,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site1_id, true, None),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 1000,
@@ -744,6 +755,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site1_id, false, None),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 1000,
@@ -758,6 +770,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site2_id, false, None),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 1000,
@@ -786,6 +799,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site1_id, false, None),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 1000,
@@ -800,6 +814,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site1_id, true, None),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 1000,
@@ -814,6 +829,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site2_id, false, None),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 1000,
@@ -843,6 +859,7 @@ async fn test_changelog_outgoing_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site1_id, false, None),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 1000,
@@ -888,6 +905,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
     let outgoing_results = ChangelogRepository::new(&connection)
         .query(
             ChangelogFilter::all_data_for_site(site1_id, true, None),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 1000,
@@ -905,6 +923,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 ChangelogFilter::patient_data_for_site(site1_id, None),
                 ChangelogCondition::patient_id::matching("patient2".to_string()),
             ]),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 1000,
@@ -923,6 +942,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 ChangelogFilter::patient_data_for_site(5, None),
                 ChangelogCondition::patient_id::matching("patient2".to_string()),
             ]),
+            None,
             CursorAndLimit {
                 cursor: cursor + 500,
                 limit: 1000,
@@ -999,6 +1019,7 @@ async fn test_max_cursor_clamped_by_in_flight_tx() {
     let rows_during = ChangelogRepository::new(&observer)
         .query(
             ChangelogCondition::True(),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 100,
@@ -1026,6 +1047,7 @@ async fn test_max_cursor_clamped_by_in_flight_tx() {
     let rows_after = ChangelogRepository::new(&observer)
         .query(
             ChangelogCondition::True(),
+            None,
             CursorAndLimit {
                 cursor: cursor_before,
                 limit: 100,
@@ -1034,4 +1056,302 @@ async fn test_max_cursor_clamped_by_in_flight_tx() {
         .unwrap();
     assert_eq!(rows_after.rows.len(), 1);
     assert_eq!(rows_after.rows[0].record_id, "clinician_in_flight");
+}
+
+/// Helpers + tests for the application-layer master list visibility filters.
+///
+/// Scenario built once per test:
+///   - store_v (site stores) has name `name_store_v`.
+///   - `ml_own`   is joined to the store's OWN name  -> visible in store_v.
+///   - `ml_nsj`   is joined to `name_visible`, which is made visible in store_v via name_store_join
+///                -> visible in store_v.
+///   - `ml_hidden` is joined to `name_hidden`, not visible in store_v at all -> NOT visible.
+/// Each master list has one line.
+struct VisibilityFixture {
+    store_id: String,
+    ml_own: String,
+    ml_nsj: String,
+    ml_hidden: String,
+    line_own: String,
+    line_nsj: String,
+    line_hidden: String,
+}
+
+fn setup_visibility_fixture(connection: &StorageConnection) -> VisibilityFixture {
+    let name = |id: &str| NameRow {
+        id: id.to_string(),
+        name: id.to_string(),
+        code: id.to_string(),
+        ..Default::default()
+    };
+    // Names (upsert creates the matching name_link rows).
+    for n in ["name_store_v", "name_visible", "name_hidden"] {
+        NameRowRepository::new(connection)
+            .upsert_one(&name(n))
+            .unwrap();
+    }
+
+    StoreRowRepository::new(connection)
+        .upsert_one(&StoreRow {
+            id: "store_v".to_string(),
+            name_id: "name_store_v".to_string(),
+            code: "store_v".to_string(),
+            site_id: 999,
+            ..Default::default()
+        })
+        .unwrap();
+
+    // Make `name_visible` visible in store_v.
+    NameStoreJoinRepository::new(connection)
+        .upsert_one(&NameStoreJoinRow {
+            id: "nsj_visible".to_string(),
+            store_id: "store_v".to_string(),
+            name_id: "name_visible".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+
+    // An item to hang master_list_lines off (creates item_link `item_v`).
+    ItemRowRepository::new(connection)
+        .upsert_one(&ItemRow {
+            id: "item_v".to_string(),
+            name: "item_v".to_string(),
+            code: "item_v".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+
+    let master_list = |id: &str| MasterListRow {
+        id: id.to_string(),
+        name: id.to_string(),
+        code: id.to_string(),
+        is_active: true,
+        ..Default::default()
+    };
+    // master_list -> name join + a line per list.
+    let setup_ml = |ml_id: &str, name_id: &str, line_id: &str| {
+        MasterListRowRepository::new(connection)
+            .upsert_one(&master_list(ml_id))
+            .unwrap();
+        MasterListNameJoinRepository::new(connection)
+            .upsert_one(&MasterListNameJoinRow {
+                id: format!("mlnj_{ml_id}"),
+                master_list_id: ml_id.to_string(),
+                name_id: name_id.to_string(),
+            })
+            .unwrap();
+        MasterListLineRowRepository::new(connection)
+            .upsert_one(&MasterListLineRow {
+                id: line_id.to_string(),
+                item_link_id: "item_v".to_string(),
+                master_list_id: ml_id.to_string(),
+                price_per_unit: None,
+            })
+            .unwrap();
+    };
+    setup_ml("ml_own", "name_store_v", "line_own");
+    setup_ml("ml_nsj", "name_visible", "line_nsj");
+    setup_ml("ml_hidden", "name_hidden", "line_hidden");
+
+    VisibilityFixture {
+        store_id: "store_v".to_string(),
+        ml_own: "ml_own".to_string(),
+        ml_nsj: "ml_nsj".to_string(),
+        ml_hidden: "ml_hidden".to_string(),
+        line_own: "line_own".to_string(),
+        line_nsj: "line_nsj".to_string(),
+        line_hidden: "line_hidden".to_string(),
+    }
+}
+
+fn master_list_changelog(record_id: &str, action: RowActionType) -> ChangelogRow {
+    ChangelogRow {
+        cursor: 0,
+        table_name: ChangelogTableName::MasterList,
+        record_id: record_id.to_string(),
+        row_action: action,
+        ..Default::default()
+    }
+}
+
+fn master_list_line_changelog(record_id: &str, action: RowActionType) -> ChangelogRow {
+    ChangelogRow {
+        cursor: 0,
+        table_name: ChangelogTableName::MasterListLine,
+        record_id: record_id.to_string(),
+        row_action: action,
+        ..Default::default()
+    }
+}
+
+fn surviving_record_ids(rows: &[ChangelogRow]) -> Vec<String> {
+    let mut ids: Vec<String> = rows.iter().map(|r| r.record_id.clone()).collect();
+    ids.sort();
+    ids
+}
+
+#[actix_rt::test]
+async fn application_filter_master_list_by_visibility() {
+    let (_, connection, _, _) = setup_all(
+        "application_filter_master_list_by_visibility",
+        MockDataInserts::none(),
+    )
+    .await;
+    let f = setup_visibility_fixture(&connection);
+
+    let rows = vec![
+        master_list_changelog(&f.ml_own, RowActionType::Upsert),
+        master_list_changelog(&f.ml_nsj, RowActionType::Upsert),
+        master_list_changelog(&f.ml_hidden, RowActionType::Upsert),
+    ];
+
+    let filters = vec![ApplicationFilter::MasterListByVisibility {
+        visible_in_stores: vec![f.store_id.clone()],
+    }];
+
+    let result = ApplicationFilter::apply_all(&connection, &filters, rows).unwrap();
+
+    // Both the store's own list and the name-store-join visible list survive; the hidden one drops.
+    assert_eq!(surviving_record_ids(&result), vec![f.ml_nsj, f.ml_own]);
+}
+
+#[actix_rt::test]
+async fn application_filter_master_list_line_by_visibility() {
+    let (_, connection, _, _) = setup_all(
+        "application_filter_master_list_line_by_visibility",
+        MockDataInserts::none(),
+    )
+    .await;
+    let f = setup_visibility_fixture(&connection);
+
+    let rows = vec![
+        master_list_line_changelog(&f.line_own, RowActionType::Upsert),
+        master_list_line_changelog(&f.line_nsj, RowActionType::Upsert),
+        master_list_line_changelog(&f.line_hidden, RowActionType::Upsert),
+    ];
+
+    let filters = vec![ApplicationFilter::MasterListLineByVisibility {
+        visible_in_stores: vec![f.store_id.clone()],
+    }];
+
+    let result = ApplicationFilter::apply_all(&connection, &filters, rows).unwrap();
+
+    // Lines inherit their parent master list's visibility.
+    assert_eq!(surviving_record_ids(&result), vec![f.line_nsj, f.line_own]);
+}
+
+#[actix_rt::test]
+async fn application_filter_passes_through_other_tables_and_drops_deletes() {
+    let (_, connection, _, _) = setup_all(
+        "application_filter_passes_through_other_tables_and_drops_deletes",
+        MockDataInserts::none(),
+    )
+    .await;
+    let f = setup_visibility_fixture(&connection);
+
+    // A row for an unrelated table must pass through untouched, even though no master list governs it.
+    let unrelated = ChangelogRow {
+        cursor: 0,
+        table_name: ChangelogTableName::Location,
+        record_id: "some_location".to_string(),
+        row_action: RowActionType::Upsert,
+        ..Default::default()
+    };
+
+    let rows = vec![
+        unrelated.clone(),
+        master_list_changelog(&f.ml_hidden, RowActionType::Upsert),
+        // A line whose row no longer exists (delete) can't resolve its parent -> dropped.
+        master_list_line_changelog("missing_line", RowActionType::Delete),
+        master_list_line_changelog(&f.line_own, RowActionType::Upsert),
+    ];
+
+    let filters = ChangelogFilter::master_list_visibility(vec![f.store_id.clone()]);
+    let result = ApplicationFilter::apply_all(&connection, &filters, rows).unwrap();
+
+    // Unrelated row kept; hidden master list dropped; unresolvable line dropped; visible line kept.
+    assert_eq!(
+        surviving_record_ids(&result),
+        vec![f.line_own, "some_location".to_string()]
+    );
+}
+
+#[actix_rt::test]
+async fn application_filter_empty_stores_drops_all_governed_rows() {
+    let (_, connection, _, _) = setup_all(
+        "application_filter_empty_stores_drops_all_governed_rows",
+        MockDataInserts::none(),
+    )
+    .await;
+    let f = setup_visibility_fixture(&connection);
+
+    let rows = vec![
+        master_list_changelog(&f.ml_own, RowActionType::Upsert),
+        master_list_line_changelog(&f.line_own, RowActionType::Upsert),
+    ];
+
+    // No stores -> nothing is visible -> all governed rows drop.
+    let filters = ChangelogFilter::master_list_visibility(vec![]);
+    let result = ApplicationFilter::apply_all(&connection, &filters, rows).unwrap();
+    assert!(result.is_empty());
+}
+
+#[actix_rt::test]
+async fn application_filter_applied_through_query() {
+    let (_, connection, _, _) = setup_all(
+        "application_filter_applied_through_query",
+        MockDataInserts::none(),
+    )
+    .await;
+    let f = setup_visibility_fixture(&connection);
+
+    // Clear changelog rows generated by the fixture upserts so cursors are predictable.
+    delete_all_changelog(&connection);
+
+    #[derive(Insertable)]
+    #[diesel(table_name = changelog_with_links)]
+    struct TestChangelogInsert<'a> {
+        cursor: i64,
+        table_name: &'a ChangelogTableName,
+        record_id: &'a str,
+        row_action: &'a RowActionType,
+    }
+
+    let inserts = [
+        (1, ChangelogTableName::MasterList, f.ml_own.as_str()),
+        (2, ChangelogTableName::MasterList, f.ml_hidden.as_str()),
+        (3, ChangelogTableName::MasterListLine, f.line_nsj.as_str()),
+        (4, ChangelogTableName::MasterListLine, f.line_hidden.as_str()),
+    ];
+    for (cursor, table_name, record_id) in inserts {
+        diesel::insert_into(changelog_with_links::table)
+            .values(&TestChangelogInsert {
+                cursor,
+                table_name: &table_name,
+                record_id,
+                row_action: &RowActionType::Upsert,
+            })
+            .execute(connection.lock().connection())
+            .unwrap();
+    }
+
+    let result = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogCondition::table_name::any(vec![
+                ChangelogTableName::MasterList,
+                ChangelogTableName::MasterListLine,
+            ]),
+            Some(ChangelogFilter::master_list_visibility(vec![f.store_id.clone()])),
+            CursorAndLimit {
+                cursor: 0,
+                limit: 100,
+            },
+        )
+        .unwrap();
+
+    // ml_own (own name) and line_nsj (name-store-join visible) survive; the hidden ones drop.
+    assert_eq!(
+        surviving_record_ids(&result.rows),
+        vec![f.line_nsj, f.ml_own]
+    );
 }

@@ -91,6 +91,7 @@ pub async fn pull(
         ..
     } = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
+        None,
         CursorAndLimit {
             cursor: adjust_v6_cursor(cursor),
             limit: batch_size as i64,
@@ -246,6 +247,7 @@ pub async fn patient_pull(
         ..
     } = ChangelogRepository::new(&ctx.connection).query_with_data(
         filter,
+        None,
         CursorAndLimit {
             cursor: adjust_v6_cursor(cursor),
             limit: batch_size as i64,

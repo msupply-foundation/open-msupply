@@ -203,6 +203,7 @@ impl RemoteDataSynchroniser {
                 ..
             } = changelog_repo.query_with_data(
                 change_log_filter.clone(),
+                None,
                 CursorAndLimit {
                     cursor: cursor as i64,
                     limit: batch_size as i64,

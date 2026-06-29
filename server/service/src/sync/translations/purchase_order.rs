@@ -550,6 +550,7 @@ mod tests {
         let entries = ChangelogRepository::new(&connection)
             .query_with_data(
                 ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrder),
+                None,
                 CursorAndLimit {
                     cursor: -1,
                     limit: 1_000_000,

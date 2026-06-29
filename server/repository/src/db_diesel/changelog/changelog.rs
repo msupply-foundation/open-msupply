@@ -13,6 +13,7 @@ use strum::IntoEnumIterator;
 use thiserror::Error;
 use ts_rs::TS;
 
+use super::application_filter::ApplicationFilter;
 use super::sync_style::{Distribution, SyncVersions};
 
 table! {
@@ -233,6 +234,7 @@ impl<'a> ChangelogRepository<'a> {
     pub fn query(
         &self,
         filter: ChangelogCondition::Inner,
+        application_filters: Option<Vec<ApplicationFilter>>,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
     ) -> Result<ChangelogQuery, RepositoryError> {
         // Each sub-query scans at most this many cursor values. Bounding the cursor
@@ -241,6 +243,7 @@ impl<'a> ChangelogRepository<'a> {
         // TODO make this configurable
         const CURSOR_WINDOW: i64 = 250_000;
 
+        let application_filters = application_filters.unwrap_or_default();
         let max_cursor = self.max_cursor()? as i64;
         let mut results: Vec<ChangelogRow> = Vec::new();
         let mut current_cursor = cursor;
@@ -252,8 +255,28 @@ impl<'a> ChangelogRepository<'a> {
             let sub_results =
                 self.query_cursor_window(filter.clone(), current_cursor, window_end, remaining)?;
 
+            // Whether the SQL `limit` truncated this window: if it came back full there may be more
+            // matching rows between the last fetched cursor and `window_end` that we never loaded.
+            let window_truncated = sub_results.len() as i64 == remaining;
+            let last_fetched_cursor = sub_results.last().map(|r| r.cursor);
+
+            // Application-layer filtering happens here, per window: rows that don't pass are
+            // dropped, and because this sits inside the cursor-window top-up loop the next window
+            // refills toward `limit`. Filters that govern no row in this window are a no-op.
+            let sub_results =
+                ApplicationFilter::apply_all(self.connection, &application_filters, sub_results)?;
+
             results.extend(sub_results);
-            current_cursor = window_end;
+
+            // Advance the cursor. Normally jump to `window_end` — the whole window was exhausted.
+            // But if the window was truncated by the SQL `limit` AND application filtering then
+            // dropped rows (so we loop again instead of stopping at `limit`), jumping to
+            // `window_end` would skip the unfetched rows beyond `last_fetched_cursor`. Resume from
+            // `last_fetched_cursor` instead so those rows are picked up next iteration.
+            current_cursor = match (window_truncated, last_fetched_cursor) {
+                (true, Some(last_fetched)) => last_fetched,
+                _ => window_end,
+            };
         }
 
         let last_cursor_in_batch = results
@@ -522,6 +545,21 @@ impl ChangelogFilter {
                 C::transfer_store_id::equal(store_id.to_string()),
             ]),
         ])
+    }
+
+    /// Application-layer filters that pair with `all_data_for_site` / `data_for_store`.
+    ///
+    /// `MasterList`/`MasterListLine` are keyless central data, so the changelog query distributes
+    /// them to every site. These filters narrow that to only the master lists actually visible in
+    /// `visible_in_stores` (the active site's stores, or the single requested store). Pass the
+    /// result as the `application_filters` argument to `query` / `query_with_data`.
+    pub fn master_list_visibility(visible_in_stores: Vec<String>) -> Vec<ApplicationFilter> {
+        vec![
+            ApplicationFilter::MasterListByVisibility {
+                visible_in_stores: visible_in_stores.clone(),
+            },
+            ApplicationFilter::MasterListLineByVisibility { visible_in_stores },
+        ]
     }
 }
 

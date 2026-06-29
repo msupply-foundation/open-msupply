@@ -10,6 +10,9 @@ pub use self::sync_style::*;
 pub mod batch_query;
 pub use self::batch_query::*;
 
+pub mod application_filter;
+pub use self::application_filter::*;
+
 pub mod compatibility_changelog;
 pub use self::compatibility_changelog::*;
 

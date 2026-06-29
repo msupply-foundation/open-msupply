@@ -133,6 +133,7 @@ mod tests {
         let entry = ChangelogRepository::new(&connection)
             .query_with_data(
                 repository::ChangelogCondition::table_name::equal(ChangelogTableName::ContactForm),
+                None,
                 repository::CursorAndLimit {
                     cursor: -1,
                     limit: 1,

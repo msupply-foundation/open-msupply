@@ -127,6 +127,7 @@ pub(crate) fn process_requisition_transfers(
         let logs = ChangelogRepository::new(&ctx.connection)
             .query(
                 filter.clone(),
+                None,
                 CursorAndLimit {
                     cursor: cursor as i64,
                     limit: CHANGELOG_BATCH_SIZE as i64,
