@@ -1,8 +1,11 @@
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Utc};
-use graphql_core::{generic_filters::EqualFilterStringInput, ContextExt};
-use repository::{EqualFilter, HelpDocument, HelpDocumentFilter, SyncFileReference};
-use service::{usize_to_u32, ListResult};
+use graphql_core::{
+    generic_filters::EqualFilterStringInput, loader::SyncFileReferenceLoader, ContextExt,
+};
+use repository::{EqualFilter, HelpDocument, HelpDocumentFilter};
+use service::ListResult;
 
 use crate::types::SyncFileReferenceConnector;
 
@@ -49,22 +52,16 @@ impl HelpDocumentNode {
 
     /// Files attached to this help document via sync_file_reference. Typically one,
     /// but the field returns a connector so the schema doesn't force the contract.
+    /// Batched through the shared loader (keyed by record_id) to avoid an N+1 when
+    /// listing — same path as purchase order / requisition attachments.
     pub async fn files(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
-        let service_provider = ctx.service_provider();
-        let service_context = service_provider.basic_context()?;
-        let connection = &service_context.connection;
-        let id = &self.help_document.help_document_row.id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let files = loader
+            .load_one(self.help_document.help_document_row.id.clone())
+            .await?
+            .unwrap_or_default();
 
-        let result: Vec<SyncFileReference> =
-            repository::SyncFileReferenceRepository::new(connection)
-                .query_by_filter(
-                    repository::SyncFileReferenceFilter::new()
-                        .table_name(EqualFilter::equal_to("help_document".to_string()))
-                        .record_id(EqualFilter::equal_to(id.to_string()))
-                        .is_deleted(false),
-                )?;
-
-        Ok(SyncFileReferenceConnector::from_vec(result))
+        Ok(SyncFileReferenceConnector::from_vec(files))
     }
 }
 
@@ -85,16 +82,6 @@ impl HelpDocumentConnector {
             total_count: help_documents.count,
             nodes: help_documents
                 .rows
-                .into_iter()
-                .map(HelpDocumentNode::from_domain)
-                .collect(),
-        }
-    }
-
-    pub fn from_vec(help_documents: Vec<HelpDocument>) -> HelpDocumentConnector {
-        HelpDocumentConnector {
-            total_count: usize_to_u32(help_documents.len()),
-            nodes: help_documents
                 .into_iter()
                 .map(HelpDocumentNode::from_domain)
                 .collect(),

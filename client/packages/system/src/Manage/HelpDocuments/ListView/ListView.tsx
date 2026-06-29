@@ -6,7 +6,7 @@ import {
   NothingHere,
   useDeleteConfirmation,
   useEditModal,
-  usePaginatedMaterialTable,
+  useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
@@ -60,11 +60,10 @@ export const HelpDocumentsList = () => {
     [t]
   );
 
-  const { table, selectedRows } = usePaginatedMaterialTable({
+  const { table, selectedRows } = useNonPaginatedMaterialTable({
     tableId: 'help-document-list',
     columns,
     data: data?.nodes,
-    totalCount: data?.totalCount ?? 0,
     isLoading: isFetching,
     isError,
     noDataElement: (
