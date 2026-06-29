@@ -32,7 +32,6 @@ impl StockRelocationQueries {
         store_id: String,
         id: String,
     ) -> Result<StockRelocationResponse> {
-        check_stock_movement_enabled(ctx)?;
         get_stock_relocation(ctx, &store_id, &id)
     }
 
@@ -44,7 +43,6 @@ impl StockRelocationQueries {
         filter: Option<StockRelocationFilterInput>,
         sort: Option<Vec<StockRelocationSortInput>>,
     ) -> Result<StockRelocationsResponse> {
-        check_stock_movement_enabled(ctx)?;
         get_stock_relocations(ctx, &store_id, page, filter, sort)
     }
 
@@ -69,7 +67,6 @@ impl StockRelocationMutations {
         store_id: String,
         input: InsertInput,
     ) -> Result<InsertResponse> {
-        check_stock_movement_enabled(ctx)?;
         insert_stock_relocation(ctx, &store_id, input)
     }
 
@@ -79,7 +76,6 @@ impl StockRelocationMutations {
         store_id: String,
         input: UpdateInput,
     ) -> Result<UpdateResponse> {
-        check_stock_movement_enabled(ctx)?;
         update_stock_relocation(ctx, &store_id, input)
     }
 
@@ -98,7 +94,6 @@ impl StockRelocationMutations {
         store_id: String,
         input: DeleteInput,
     ) -> Result<DeleteStockRelocationResponse> {
-        check_stock_movement_enabled(ctx)?;
         delete_stock_relocation(ctx, &store_id, input)
     }
 
