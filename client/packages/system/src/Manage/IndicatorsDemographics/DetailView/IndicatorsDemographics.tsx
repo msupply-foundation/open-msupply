@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AppBarButtons } from './AppBarButtons';
 import {
   Box,
@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { useIndicatorsDemographicsColumns } from './columns';
 import { Footer } from './Footer';
-import { useDemographicData } from '../api';
+import { GENERAL_POPULATION_ID, useDemographicData } from '../api';
 import {
   mapHeaderData,
   mapProjection,
@@ -135,11 +135,21 @@ export const IndicatorsDemographics = () => {
     draft, setter, handlePopulationChange, handleGrowthChange, headerDraft
   });
 
+  // Always have General Demographics at the top of the table
+  const rows = useMemo(() => {
+    const all = Object.values(draft);
+    return all.sort((a, b) => {
+      if (a.id === GENERAL_POPULATION_ID) return -1;
+      if (b.id === GENERAL_POPULATION_ID) return 1;
+      return 0;
+    });
+  }, [draft]);
+
   const table = useSimpleMaterialTable<Row>({
     tableId: 'indicators-demographics-table',
     columns,
     isLoading: isLoadingProjection,
-    data: Object.values(draft),
+    data: rows,
     enableRowSelection: false,
   });
 
