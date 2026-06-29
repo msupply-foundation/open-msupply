@@ -3267,6 +3267,8 @@ export type HelpDocumentNode = {
   /**
    * Files attached to this help document via sync_file_reference. Typically one,
    * but the field returns a connector so the schema doesn't force the contract.
+   * Batched through the shared loader (keyed by record_id) to avoid an N+1 when
+   * listing — same path as purchase order / requisition attachments.
    */
   files: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
