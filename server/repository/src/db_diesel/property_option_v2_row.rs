@@ -86,13 +86,6 @@ impl<'a> PropertyOptionV2RowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(property_option_v2)
-            .filter(id.eq(row_id))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
     pub fn find_many_by_id(
         &self,
         ids: &[String],
