@@ -5,11 +5,11 @@ import { useBreadcrumbs, useParams } from '@openmsupply-client/common';
 import { useName } from '../api';
 import { PurchaseOrder } from './PurchaseOrder';
 import { Contacts } from './Contacts';
-import { PropertiesTab } from './Properties';
+import { CustomFieldsTab } from './CustomFields';
 
 enum SuppliersTabValue {
   Details = 'details',
-  Properties = 'properties',
+  CustomFields = 'custom-fields',
   PurchaseOrders = 'purchase-orders',
   Contacts = 'contacts',
 }
@@ -29,8 +29,8 @@ export const SupplierDetailView = (): ReactElement => {
       value: SuppliersTabValue.Details,
     },
     {
-      Component: <PropertiesTab properties={data?.propertiesV2} />,
-      value: SuppliersTabValue.Properties,
+      Component: <CustomFieldsTab properties={data?.customFields} />,
+      value: SuppliersTabValue.CustomFields,
     },
     // TODO: Hide Purchase Orders and Conctacts tabs for non store suppliers
     {

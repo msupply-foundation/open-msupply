@@ -1,2 +1,2 @@
 export * from './PropertyInput';
-export * from './PropertyV2Input';
+export * from './CustomFieldInput';

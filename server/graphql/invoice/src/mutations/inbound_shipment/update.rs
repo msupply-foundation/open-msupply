@@ -52,10 +52,10 @@ pub struct UpdateInput {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
     pub received_datetime: Option<DateTime<Utc>>,
-    /// Patch of propertiesV2 key -> value (JSON object) merged into the
+    /// Patch of customFields key -> value (JSON object) merged into the
     /// invoice's custom properties; a `null` value clears that key, keys absent
     /// from the patch are left unchanged.
-    pub properties_v2: Option<Json<serde_json::Map<String, serde_json::Value>>>,
+    pub custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -137,7 +137,7 @@ impl UpdateInput {
             charges_foreign_currency,
             default_donor,
             received_datetime,
-            properties_v2,
+            custom_fields,
         } = self;
 
         ServiceInput {
@@ -160,7 +160,7 @@ impl UpdateInput {
                 apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
             received_datetime,
-            properties_v2: properties_v2.map(|json| json.0),
+            custom_fields: custom_fields.map(|json| json.0),
         }
     }
 }
@@ -606,7 +606,7 @@ mod test {
                     charges_foreign_currency: None,
                     default_donor: None,
                     received_datetime: None,
-                    properties_v2: None,
+                    custom_fields: None,
                 }
             );
             Ok(Invoice {

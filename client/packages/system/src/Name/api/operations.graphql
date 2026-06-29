@@ -5,7 +5,7 @@ fragment NameRow on NameNode {
   isSupplier
   isOnHold
   name
-  propertiesV2
+  customFields
   store {
     id
     code
@@ -51,7 +51,7 @@ fragment Name on NameNode {
     code
   }
   properties
-  propertiesV2
+  customFields
   hshCode
   hshName
   margin
@@ -70,7 +70,7 @@ fragment Property on PropertyNode {
   valueType
 }
 
-fragment PropertyV2 on PropertyV2Node {
+fragment CustomField on CustomFieldNode {
   id
   key
   name
@@ -160,13 +160,13 @@ query nameProperties {
   }
 }
 
-query namePropertiesV2 {
-  propertiesV2(filter: { tableName: { equalTo: "name" } }) {
-    ... on PropertyV2Connector {
+query nameCustomFields {
+  customFields(filter: { tableName: { equalTo: "name" } }) {
+    ... on CustomFieldConnector {
       __typename
       totalCount
       nodes {
-        ...PropertyV2
+        ...CustomField
       }
     }
   }

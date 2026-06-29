@@ -20,7 +20,7 @@ import {
 import { getStatusTranslator, isPrescriptionDisabled } from '../../utils';
 import { getStatusSequence } from '../../statuses';
 import { usePrescriptionList, usePrescription } from '../api';
-import { useInvoicePropertiesV2 } from '../../common';
+import { useInvoiceCustomFields } from '../../common';
 import { PrescriptionRowFragment } from '../api/operations.generated';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
@@ -32,7 +32,7 @@ export const PrescriptionListView = () => {
   } = usePrescription();
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
-  const { data: properties } = useInvoicePropertiesV2(
+  const { data: properties } = useInvoiceCustomFields(
     InvoiceNodeType.Prescription
   );
   const {

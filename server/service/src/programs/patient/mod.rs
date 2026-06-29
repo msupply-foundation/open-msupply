@@ -12,7 +12,7 @@ mod query;
 mod search;
 mod search_central;
 mod update_patient;
-mod update_properties_v2;
+mod update_custom_fields;
 mod upsert_program_patient;
 
 pub use self::insert_patient::*;
@@ -20,7 +20,7 @@ pub use self::query::*;
 pub use self::search::*;
 pub use self::search_central::*;
 pub use self::update_patient::*;
-pub use self::update_properties_v2::*;
+pub use self::update_custom_fields::*;
 pub use self::upsert_program_patient::*;
 
 pub fn main_patient_doc_name(patient_id: &str) -> String {
@@ -89,13 +89,13 @@ pub trait PatientServiceTrait: Sync + Send {
         update_patient(ctx, service_provider, input)
     }
 
-    fn update_patient_properties_v2(
+    fn update_patient_custom_fields(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
-        input: UpdatePatientPropertiesV2,
-    ) -> Result<Patient, UpdatePatientPropertiesV2Error> {
-        update_patient_properties_v2(ctx, service_provider, input)
+        input: UpdatePatientCustomFields,
+    ) -> Result<Patient, UpdatePatientCustomFieldsError> {
+        update_patient_custom_fields(ctx, service_provider, input)
     }
 }
 

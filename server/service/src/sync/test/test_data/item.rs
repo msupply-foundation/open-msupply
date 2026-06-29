@@ -247,7 +247,7 @@ const ITEM_3_VACCINE: (&str, &str) = (
 );
 
 // Item carrying non-default custom user fields, to exercise the
-// `item.properties_v2` import (typed JSONB: text strings, a real number, a
+// `item.custom_fields` import (typed JSONB: text strings, a real number, a
 // boolean). user_field_4 is left false to confirm `false` is omitted.
 const ITEM_4_WITH_PROPERTIES: (&str, &str) = (
     "A1B2C3D4E5F60718293A4B5C6D7E8F90",
@@ -296,7 +296,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 is_vaccine: false,
                 vaccine_doses: 0,
                 // user_field_2/4/6 omitted (empty/false); user_field_5 12.5 kept.
-                properties_v2: Some(serde_json::json!({
+                custom_fields: Some(serde_json::json!({
                     "user_field_1": "Cold chain",
                     "user_field_3": "Batch ABC",
                     "user_field_5": 12.5,
@@ -356,9 +356,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                         "84AA2B7A18694A2AB1E84DCABAD19617".to_string(),
                     ),
                     universal_code: Some("3fd9b240c".to_string()),
-                    // The leaf category_ID is also imported as a propertiesV2
+                    // The leaf category_ID is also imported as a customFields
                     // OPTION value (central-only), parallel to the join row below.
-                    properties_v2: Some(serde_json::json!({
+                    custom_fields: Some(serde_json::json!({
                         "item_category_1": "FA6FC67251CC4560AC7FED0C0B23E5A0",
                     })),
                     ..Default::default()

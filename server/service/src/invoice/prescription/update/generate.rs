@@ -35,7 +35,7 @@ pub(crate) fn generate(
         name_insurance_join_id: input_name_insurance_join_id,
         insurance_discount_amount: input_insurance_discount_amount,
         insurance_discount_percentage: input_insurance_discount_percentage,
-        properties_v2: input_properties_v2,
+        custom_fields: input_custom_fields,
     }: UpdatePrescription,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdatePrescriptionError> {
@@ -91,9 +91,9 @@ pub(crate) fn generate(
     update_invoice.insurance_discount_percentage =
         input_insurance_discount_percentage.or(update_invoice.insurance_discount_percentage);
 
-    update_invoice.properties_v2 = crate::invoice::properties::apply_properties_v2_patch(
-        update_invoice.properties_v2,
-        input_properties_v2,
+    update_invoice.custom_fields = crate::invoice::custom_fields::apply_custom_fields_patch(
+        update_invoice.custom_fields,
+        input_custom_fields,
     );
 
     let batches_to_update = if should_update_batches_total_number_of_packs {

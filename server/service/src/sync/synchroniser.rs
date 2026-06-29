@@ -186,7 +186,7 @@ impl SynchroniserV5V6 {
         // mapping property added in a later version is picked up on the next sync.
         if CentralServerConfig::is_central_server() && !CentralServerConfig::is_standalone_central()
         {
-            crate::sync::central_mapping_properties::seed_central_mapping_properties(
+            crate::sync::central_mapping_custom_fields::seed_central_mapping_custom_fields(
                 &ctx.connection,
             )?;
         }

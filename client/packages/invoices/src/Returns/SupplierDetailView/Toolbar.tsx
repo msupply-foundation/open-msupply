@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { SupplierReturnFragment, useReturns } from '../api';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { InvoiceToolbarProperties } from '../../common';
+import { InvoiceToolbarCustomFields } from '../../common';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const Toolbar: FC = () => {
@@ -22,7 +22,7 @@ export const Toolbar: FC = () => {
 
   const { bufferedState, setBufferedState } =
     useReturns.document.supplierReturn();
-  const { otherParty, theirReference, propertiesV2, id, originalShipment } =
+  const { otherParty, theirReference, customFields, id, originalShipment } =
     bufferedState ?? { id: '' };
   const { mutateAsync: updateOtherParty } =
     useReturns.document.updateOtherParty();
@@ -85,10 +85,10 @@ export const Toolbar: FC = () => {
         </Grid>
         <Grid>
           <Box display="flex" flexDirection="column" gap={1}>
-            <InvoiceToolbarProperties
+            <InvoiceToolbarCustomFields
               invoiceType={InvoiceNodeType.SupplierReturn}
-              propertiesV2={propertiesV2}
-              onUpdate={patch => update({ propertiesV2: patch })}
+              customFields={customFields}
+              onUpdate={patch => update({ customFields: patch })}
               disabled={isDisabled}
             />
           </Box>

@@ -2,24 +2,24 @@ use anyhow::{bail, ensure};
 use base64::{prelude::BASE64_STANDARD, Engine};
 use log::warn;
 use repository::{
-    PropertyV2Row, PropertyV2RowRepository, RepositoryError, StorageConnection, SyncBufferRow,
+    CustomFieldRow, CustomFieldRowRepository, RepositoryError, StorageConnection, SyncBufferRow,
 };
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::convert::TryInto;
 
-use crate::sync::central_mapping_properties::keys;
+use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
 
 use super::{PullTranslateResult, SyncTranslation};
 
 /// mSupply's configurable labels for the legacy mapping fields, synced onto the
-/// matching `property_v2.name` — a **central-only** path. When an admin renames
+/// matching `custom_field.name` — a **central-only** path. When an admin renames
 /// e.g. item "user field 1" in the mSupply preferences window, OG queues the
 /// label pref record to syncing sites; central applies it to the seeded mapping
-/// property (see `central_mapping_properties`, which deliberately leaves `name`
+/// custom_field (see `central_mapping_custom_fields`, which deliberately leaves `name`
 /// alone once a row exists) and the rename fans out to v7 remotes through the
-/// regular `property_v2` sync path.
+/// regular `custom_field` sync path.
 ///
 /// Two sources, one translator (dispatching on table):
 ///  * item `user_field_1..7` labels — a `pref` record (`item = "user_fields"`)
@@ -37,7 +37,7 @@ use super::{PullTranslateResult, SyncTranslation};
 
 /// `pref_blob` "name_cat_custom_values" element order, as authored by OG's
 /// `startup_create_prefs_records` (1-based 4D indices 1..9): categories 1–3,
-/// customs 1–3, categories 4–6. The ids are the shared `central_mapping_properties`
+/// customs 1–3, categories 4–6. The ids are the shared `central_mapping_custom_fields`
 /// key constants, so only the element *order* is maintained by hand here.
 const NAME_LABEL_PROPERTY_IDS: [&str; 9] = [
     keys::NAME_CATEGORY_1,
@@ -51,9 +51,9 @@ const NAME_LABEL_PROPERTY_IDS: [&str; 9] = [
     keys::NAME_CATEGORY_6,
 ];
 
-/// Item `user_field_1..7` keys, in 4D field-number order. The property id is the
+/// Item `user_field_1..7` keys, in 4D field-number order. The custom_field id is the
 /// wire field name 1:1, so each const is both the JSON lookup key and the
-/// `property_v2` id. Ids are the shared `central_mapping_properties` constants.
+/// `custom_field` id. Ids are the shared `central_mapping_custom_fields` constants.
 const ITEM_USER_FIELD_IDS: [&str; 7] = [
     keys::ITEM_USER_FIELD_1,
     keys::ITEM_USER_FIELD_2,
@@ -64,29 +64,29 @@ const ITEM_USER_FIELD_IDS: [&str; 7] = [
     keys::ITEM_USER_FIELD_7,
 ];
 
-/// Load the mapping property and return it with the new display name, or None
+/// Load the mapping custom_field and return it with the new display name, or None
 /// when there's nothing to do: blank label, definition not present (seeding
 /// runs before integration, so this only means an unknown id), or unchanged
 /// name (no changelog churn on a re-sent pref).
-fn updated_property_name(
+fn updated_custom_field_name(
     connection: &StorageConnection,
-    property_id: &str,
+    custom_field_id: &str,
     label: &str,
-) -> Result<Option<PropertyV2Row>, RepositoryError> {
+) -> Result<Option<CustomFieldRow>, RepositoryError> {
     let label = label.trim();
     if label.is_empty() {
         return Ok(None);
     }
-    let Some(property) = PropertyV2RowRepository::new(connection).find_one_by_id(property_id)?
+    let Some(custom_field) = CustomFieldRowRepository::new(connection).find_one_by_id(custom_field_id)?
     else {
         return Ok(None);
     };
-    if property.name == label {
+    if custom_field.name == label {
         return Ok(None);
     }
-    Ok(Some(PropertyV2Row {
+    Ok(Some(CustomFieldRow {
         name: label.to_string(),
-        ..property
+        ..custom_field
     }))
 }
 
@@ -153,11 +153,11 @@ fn translate_user_field_labels(
         return Ok(PullTranslateResult::NotMatched);
     }
 
-    // Central-only: remotes receive the renamed property_v2 over v7 and
+    // Central-only: remotes receive the renamed custom_field over v7 and
     // must not author it locally.
     if !CentralServerConfig::is_central_server() {
         return Ok(PullTranslateResult::Ignored(
-            "Mapping property labels are central-authored".to_string(),
+            "Mapping custom_field labels are central-authored".to_string(),
         ));
     }
 
@@ -186,14 +186,14 @@ fn translate_user_field_labels(
         if label == key {
             continue;
         }
-        if let Some(property) = updated_property_name(connection, key, label)? {
-            upserts.push(property);
+        if let Some(custom_field) = updated_custom_field_name(connection, key, label)? {
+            upserts.push(custom_field);
         }
     }
 
     if upserts.is_empty() {
         return Ok(PullTranslateResult::Ignored(
-            "No mapping property label changes".to_string(),
+            "No mapping custom_field label changes".to_string(),
         ));
     }
     Ok(PullTranslateResult::upserts(upserts))
@@ -313,7 +313,7 @@ fn translate_name_field_labels(
     // Central-only, mirroring the user-fields path.
     if !CentralServerConfig::is_central_server() {
         return Ok(PullTranslateResult::Ignored(
-            "Mapping property labels are central-authored".to_string(),
+            "Mapping custom_field labels are central-authored".to_string(),
         ));
     }
 
@@ -347,15 +347,15 @@ fn translate_name_field_labels(
     };
 
     let mut upserts = Vec::new();
-    for (property_id, label) in NAME_LABEL_PROPERTY_IDS.iter().zip(&labels) {
-        if let Some(property) = updated_property_name(connection, property_id, label)? {
-            upserts.push(property);
+    for (custom_field_id, label) in NAME_LABEL_PROPERTY_IDS.iter().zip(&labels) {
+        if let Some(custom_field) = updated_custom_field_name(connection, custom_field_id, label)? {
+            upserts.push(custom_field);
         }
     }
 
     if upserts.is_empty() {
         return Ok(PullTranslateResult::Ignored(
-            "No mapping property label changes".to_string(),
+            "No mapping custom_field label changes".to_string(),
         ));
     }
     Ok(PullTranslateResult::upserts(upserts))
@@ -365,7 +365,7 @@ fn translate_name_field_labels(
 mod tests {
     use super::*;
     use crate::sync::{
-        central_mapping_properties::seed_central_mapping_properties,
+        central_mapping_custom_fields::seed_central_mapping_custom_fields,
         test_util_set_is_central_server,
     };
     use repository::{mock::MockDataInserts, test_db::setup_all, SyncAction, SyncRecordData};
@@ -469,18 +469,18 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn user_field_labels_update_property_names_on_central() {
+    async fn user_field_labels_update_custom_field_names_on_central() {
         let translator = LegacyFieldLabelsTranslation {};
 
         let (_, connection, _, _) = setup_all(
-            "user_field_labels_update_property_names_on_central",
+            "user_field_labels_update_custom_field_names_on_central",
             MockDataInserts::none(),
         )
         .await;
-        seed_central_mapping_properties(&connection).unwrap();
+        seed_central_mapping_custom_fields(&connection).unwrap();
         test_util_set_is_central_server(true);
 
-        // A customised label renames the property; an untouched factory
+        // A customised label renames the custom_field; an untouched factory
         // default ("user_field_2") keeps the friendlier seeded name.
         let record = user_fields_pref(serde_json::json!({
             "user_field_1": "ABC classification",
@@ -503,13 +503,13 @@ mod tests {
 
         // Apply the rename (as integration would), then re-translate the same
         // pref: no change, no churn.
-        let repo = PropertyV2RowRepository::new(&connection);
-        let mut property = repo
+        let repo = CustomFieldRowRepository::new(&connection);
+        let mut custom_field = repo
             .find_one_by_id("user_field_1")
             .unwrap()
             .unwrap();
-        property.name = "ABC classification".to_string();
-        repo.upsert_one(&property).unwrap();
+        custom_field.name = "ABC classification".to_string();
+        repo.upsert_one(&custom_field).unwrap();
         let result = translator
             .try_translate_from_upsert_sync_record(
                 &connection,
@@ -565,20 +565,20 @@ mod tests {
             .unwrap();
         assert!(
             matches!(result, PullTranslateResult::Ignored(_)),
-            "remote must not author mapping property renames: {result:?}"
+            "remote must not author mapping custom_field renames: {result:?}"
         );
     }
 
     #[actix_rt::test]
-    async fn name_field_labels_update_property_names_on_central() {
+    async fn name_field_labels_update_custom_field_names_on_central() {
         let translator = LegacyFieldLabelsTranslation {};
 
         let (_, connection, _, _) = setup_all(
-            "name_field_labels_update_property_names_on_central",
+            "name_field_labels_update_custom_field_names_on_central",
             MockDataInserts::none(),
         )
         .await;
-        seed_central_mapping_properties(&connection).unwrap();
+        seed_central_mapping_custom_fields(&connection).unwrap();
         test_util_set_is_central_server(true);
 
         let record = |blob: &str| SyncBufferRow {
@@ -602,7 +602,7 @@ mod tests {
         assert!(matches!(result, PullTranslateResult::Ignored(_)));
 
         // Customise element 4 ("Custom 1" → "Donor code") and element 7
-        // ("Category 4" → "Region"): the matching properties are renamed.
+        // ("Category 4" → "Region"): the matching custom_fields are renamed.
         let mut labels = parse_4d_text_array(DEFAULT_NAME_LABELS_BLOB).unwrap();
         labels[3] = "Donor code".to_string();
         labels[6] = "Region".to_string();
@@ -661,7 +661,7 @@ mod tests {
             MockDataInserts::none(),
         )
         .await;
-        seed_central_mapping_properties(&connection).unwrap();
+        seed_central_mapping_custom_fields(&connection).unwrap();
         test_util_set_is_central_server(true);
 
         // A store_preferences pref (StorePreferenceTranslation's record — the
@@ -696,9 +696,9 @@ mod tests {
             store_preference.pack_to_one,
             "store_preferences upsert must not be dropped by the labels translator"
         );
-        // ...and the mapping property is renamed.
+        // ...and the mapping custom_field is renamed.
         assert_eq!(
-            PropertyV2RowRepository::new(&connection)
+            CustomFieldRowRepository::new(&connection)
                 .find_one_by_id("user_field_1")
                 .unwrap()
                 .unwrap()

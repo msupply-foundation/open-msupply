@@ -43,7 +43,7 @@ use crate::{
     pricing::{PricingService, PricingServiceTrait},
     printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,
-    property_v2::{PropertyV2Service, PropertyV2ServiceTrait},
+    custom_field::{CustomFieldService, CustomFieldServiceTrait},
     program::ProgramServiceTrait,
     programs::{
         contact_trace::{ContactTraceService, ContactTraceServiceTrait},
@@ -207,7 +207,7 @@ pub struct ServiceProvider {
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Properties v2
-    pub property_v2_service: Box<dyn PropertyV2ServiceTrait>,
+    pub custom_field_service: Box<dyn CustomFieldServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
     // Subscription trigger handle — used by SyncLogger and changelog callbacks
@@ -336,7 +336,7 @@ impl ServiceProvider {
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
             contact_service: Box::new(ContactService {}),
-            property_v2_service: Box::new(PropertyV2Service {}),
+            custom_field_service: Box::new(CustomFieldService {}),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
             subscription_trigger,

@@ -1,1 +1,1 @@
-export * from './propertiesV2';
+export * from './customFields';

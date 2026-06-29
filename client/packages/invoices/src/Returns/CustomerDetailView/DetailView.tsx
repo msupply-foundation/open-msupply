@@ -22,7 +22,7 @@ import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { CustomerReturnEditModal } from '../modals';
 import { getNextItemId } from '../../utils';
-import { InvoicePropertiesTab } from '../../common';
+import { InvoiceCustomFieldsTab } from '../../common';
 import { useCustomerReturnColumns } from './columns';
 
 export const CustomerReturnDetailView = () => {
@@ -74,20 +74,20 @@ export const CustomerReturnDetailView = () => {
     },
     {
       Component: (
-        <InvoicePropertiesTab
+        <InvoiceCustomFieldsTab
           invoiceType={InvoiceNodeType.CustomerReturn}
-          propertiesV2={data?.propertiesV2}
+          customFields={data?.customFields}
           onSave={async patch => {
             // id is only undefined before the return exists; the tab isn't
             // rendered until then
             if (!data?.id) return;
-            return update({ id: data.id, propertiesV2: patch });
+            return update({ id: data.id, customFields: patch });
           }}
           disabled={isDisabled}
           onEdit={setIsDirtyProperties}
         />
       ),
-      value: 'Properties',
+      value: 'custom-fields',
       confirmOnLeaving: isDirtyProperties,
     },
     {

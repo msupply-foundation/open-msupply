@@ -51,7 +51,7 @@ pub(crate) fn generate(
         expected_delivery_date: input_expected_delivery_date,
         shipping_method_id,
         backdated_datetime: input_backdated_datetime,
-        properties_v2: input_properties_v2,
+        custom_fields: input_custom_fields,
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
@@ -82,9 +82,9 @@ pub(crate) fn generate(
     update_invoice.shipping_method_id = shipping_method_id
         .map(|s| s.value)
         .unwrap_or(update_invoice.shipping_method_id);
-    update_invoice.properties_v2 = crate::invoice::properties::apply_properties_v2_patch(
-        update_invoice.properties_v2,
-        input_properties_v2,
+    update_invoice.custom_fields = crate::invoice::custom_fields::apply_custom_fields_patch(
+        update_invoice.custom_fields,
+        input_custom_fields,
     );
 
     if let Some(status) = input_status.clone() {

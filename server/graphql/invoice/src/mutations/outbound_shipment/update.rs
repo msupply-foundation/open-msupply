@@ -40,10 +40,10 @@ pub struct UpdateInput {
     expected_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
     shipping_method_id: Option<NullableUpdateInput<String>>,
     backdated_datetime: Option<DateTime<Utc>>,
-    /// Patch of propertiesV2 key -> value (JSON object) merged into the
+    /// Patch of customFields key -> value (JSON object) merged into the
     /// invoice's custom properties; a `null` value clears that key, keys absent
     /// from the patch are left unchanged.
-    properties_v2: Option<Json<serde_json::Map<String, serde_json::Value>>>,
+    custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -129,7 +129,7 @@ impl UpdateInput {
             expected_delivery_date,
             shipping_method_id,
             backdated_datetime,
-            properties_v2,
+            custom_fields,
         } = self;
 
         ServiceInput {
@@ -149,7 +149,7 @@ impl UpdateInput {
                 .map(|d| NullableUpdate { value: d.value }),
             shipping_method_id: shipping_method_id.map(|d| NullableUpdate { value: d.value }),
             backdated_datetime,
-            properties_v2: properties_v2.map(|json| json.0),
+            custom_fields: custom_fields.map(|json| json.0),
         }
     }
 }

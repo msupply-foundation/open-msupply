@@ -17,7 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   useVisibleOrOnHandItems,
-  useItemPropertiesV2,
+  useItemCustomFields,
   ItemsWithStatsFragment,
 } from '../api';
 import { Toolbar } from './Toolbar';
@@ -26,7 +26,7 @@ export const ItemListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { localisedDate } = useFormatDateTime();
-  const { data: properties } = useItemPropertiesV2();
+  const { data: properties } = useItemCustomFields();
 
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },

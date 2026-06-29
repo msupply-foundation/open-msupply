@@ -1,22 +1,22 @@
 use chrono::Utc;
 use repository::{
     category_row::{CategoryRow, CategoryRowDelete},
-    PropertyOptionV2Row, PropertyOptionV2RowRepository, StorageConnection, SyncBufferRow,
+    CustomFieldOptionRow, CustomFieldOptionRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
 
-use crate::sync::central_mapping_properties::keys;
+use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
 
 use super::{IntegrationOperation, PullTranslateResult, SyncTranslation};
 
-/// Map an `item_category*` sync table to `(property_v2.id, is_relational)`.
+/// Map an `item_category*` sync table to `(custom_field.id, is_relational)`.
 ///
 /// The main hierarchy (`item_category` / `_level1` / `_level2`) feeds both the
 /// relational `category` tree **and** the [`keys::ITEM_CATEGORY_1`] OPTION. The two
 /// extra flat dimensions (`item_category2`/`3`, no level tables) are
-/// propertiesV2-only — they have no relational counterpart, so `is_relational`
+/// customFields-only — they have no relational counterpart, so `is_relational`
 /// is false and no `CategoryRow` is emitted.
 fn item_category_mapping(table_name: &str) -> (&'static str, bool) {
     match table_name {
@@ -65,7 +65,7 @@ impl SyncTranslation for CategoryTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyItemCategoryRow>()?;
-        let (property_id, is_relational) = item_category_mapping(&sync_record.table_name);
+        let (custom_field_id, is_relational) = item_category_mapping(&sync_record.table_name);
 
         let mut operations = Vec::new();
 
@@ -82,16 +82,16 @@ impl SyncTranslation for CategoryTranslation {
             }));
         }
 
-        // Parallel propertiesV2 path — central-only. Each category record becomes
-        // a `property_option_v2` row under its mapped property, with the 4D
+        // Parallel customFields path — central-only. Each category record becomes
+        // a `custom_field_option` row under its mapped custom_field, with the 4D
         // `parent_ID` hierarchy preserved via `parent_option_id` (None for the
         // flat dimensions). The option `id` equals the category id so the item's
         // stored value resolves. Remotes receive these over v7; they must not
         // author them locally.
         if CentralServerConfig::is_central_server() {
-            operations.push(IntegrationOperation::upsert(PropertyOptionV2Row {
+            operations.push(IntegrationOperation::upsert(CustomFieldOptionRow {
                 id: data.ID.clone(),
-                property_id: property_id.to_string(),
+                custom_field_id: custom_field_id.to_string(),
                 key: data.ID,
                 name: data.Description,
                 parent_option_id: data.parent_ID,
@@ -108,7 +108,7 @@ impl SyncTranslation for CategoryTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let record_id = sync_record.record_id.clone();
-        let (_property_id, is_relational) = item_category_mapping(&sync_record.table_name);
+        let (_custom_field_id, is_relational) = item_category_mapping(&sync_record.table_name);
 
         let mut operations = Vec::new();
 
@@ -120,14 +120,14 @@ impl SyncTranslation for CategoryTranslation {
             )));
         }
 
-        // Parallel propertiesV2 path — central-only. Soft-delete the matching
+        // Parallel customFields path — central-only. Soft-delete the matching
         // option (by re-upserting it with `deleted_datetime` set) so the option
         // set tracks 4D category removals and the read dataloader filters it out.
         if CentralServerConfig::is_central_server() {
             if let Some(option) =
-                PropertyOptionV2RowRepository::new(connection).find_one_by_id(&record_id)?
+                CustomFieldOptionRowRepository::new(connection).find_one_by_id(&record_id)?
             {
-                operations.push(IntegrationOperation::upsert(PropertyOptionV2Row {
+                operations.push(IntegrationOperation::upsert(CustomFieldOptionRow {
                     deleted_datetime: Some(Utc::now().naive_utc()),
                     ..option
                 }));
@@ -150,7 +150,7 @@ mod tests {
         let translator = CategoryTranslation {};
 
         // Non-central path: only the existing relational CategoryRow is emitted,
-        // matching the test_data fixtures (the propertiesV2 option is central-only).
+        // matching the test_data fixtures (the customFields option is central-only).
         test_util_set_is_central_server(false);
 
         let (_, connection, _, _) =
@@ -176,12 +176,12 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn test_item_category_emits_property_option_on_central() {
+    async fn test_item_category_emits_custom_field_option_on_central() {
         use crate::sync::test_util_set_is_central_server;
         let translator = CategoryTranslation {};
 
         let (_, connection, _, _) = setup_all(
-            "test_item_category_emits_property_option_on_central",
+            "test_item_category_emits_custom_field_option_on_central",
             MockDataInserts::none(),
         )
         .await;
@@ -199,7 +199,7 @@ mod tests {
             ..Default::default()
         };
 
-        // On central, the relational category row AND the propertiesV2 option are
+        // On central, the relational category row AND the customFields option are
         // emitted (parent_ID -> parent_option_id; option id == category id).
         test_util_set_is_central_server(true);
         let result = translator
@@ -207,12 +207,12 @@ mod tests {
             .unwrap();
         let debug = format!("{result:?}");
         assert!(debug.contains("CategoryRow"), "{}", debug);
-        assert!(debug.contains("PropertyOptionV2Row"), "{}", debug);
+        assert!(debug.contains("CustomFieldOptionRow"), "{}", debug);
         // Hardcoded, not `keys::ITEM_CATEGORY_1`: this key is a frozen contract
         // once released, so the test must fail if the const is ever changed.
         assert!(
             debug.contains("item_category_1"),
-            "option must reference the mapping property: {}",
+            "option must reference the mapping custom_field: {}",
             debug
         );
         assert!(
@@ -229,7 +229,7 @@ mod tests {
         let debug = format!("{result:?}");
         assert!(debug.contains("CategoryRow"), "{}", debug);
         assert!(
-            !debug.contains("PropertyOptionV2Row"),
+            !debug.contains("CustomFieldOptionRow"),
             "remote must not author options: {}",
             debug
         );
@@ -247,10 +247,10 @@ mod tests {
         .await;
 
         // Flat dimensions (no level tables, no parent): central emits the option
-        // under the matching property but NO relational CategoryRow.
-        // (sync table name -> property key). Keys hardcoded, not `keys::*`: they
+        // under the matching custom_field but NO relational CategoryRow.
+        // (sync table name -> custom_field key). Keys hardcoded, not `keys::*`: they
         // are a frozen contract, so a const rename must fail the test.
-        for (table_name, property_id) in [
+        for (table_name, custom_field_id) in [
             ("item_category2", "item_category_2"),
             ("item_category3", "item_category_3"),
         ] {
@@ -271,8 +271,8 @@ mod tests {
                 .try_translate_from_upsert_sync_record(&connection, &sync_record)
                 .unwrap();
             let debug = format!("{result:?}");
-            assert!(debug.contains("PropertyOptionV2Row"), "{}", debug);
-            assert!(debug.contains(property_id), "{}", debug);
+            assert!(debug.contains("CustomFieldOptionRow"), "{}", debug);
+            assert!(debug.contains(custom_field_id), "{}", debug);
             assert!(
                 !debug.contains("CategoryRow"),
                 "flat dimensions have no relational category row: {}",
@@ -286,7 +286,7 @@ mod tests {
                 .unwrap();
             let debug = format!("{result:?}");
             assert!(
-                !debug.contains("PropertyOptionV2Row") && !debug.contains("CategoryRow"),
+                !debug.contains("CustomFieldOptionRow") && !debug.contains("CategoryRow"),
                 "remote authors nothing for flat dimensions: {}",
                 debug
             );

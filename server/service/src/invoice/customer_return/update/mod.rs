@@ -29,10 +29,10 @@ pub struct UpdateCustomerReturn {
     pub colour: Option<String>,
     pub their_reference: Option<String>,
     pub other_party_id: Option<String>,
-    /// Patch of propertiesV2 key -> value merged into `invoice.properties_v2`
+    /// Patch of customFields key -> value merged into `invoice.custom_fields`
     /// (a JSON `null` deletes that key; keys absent from the patch are left
     /// as-is). Keys must be visible for the "customer_return" scope.
-    pub properties_v2: Option<serde_json::Map<String, serde_json::Value>>,
+    pub custom_fields: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 type OutError = UpdateCustomerReturnError;

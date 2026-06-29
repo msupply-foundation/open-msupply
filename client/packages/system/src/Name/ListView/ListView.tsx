@@ -29,7 +29,7 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
   const [selectedId, setSelectedId] = useState<string>('');
 
   const { data, isError, isFetching } = useName.document.list(type);
-  const { data: properties } = useName.document.propertiesV2();
+  const { data: properties } = useName.document.customFields();
 
   const columns = useMemo(
     (): ColumnDef<NameRowFragment>[] => [

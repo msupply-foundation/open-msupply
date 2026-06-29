@@ -19,7 +19,7 @@ export type SupplierReturnRowFragment = {
   verifiedDatetime?: string | null;
   comment?: string | null;
   theirReference?: string | null;
-  propertiesV2?: any | null;
+  customFields?: any | null;
 };
 
 export type CustomerReturnRowFragment = {
@@ -34,7 +34,7 @@ export type CustomerReturnRowFragment = {
   receivedDatetime?: string | null;
   comment?: string | null;
   theirReference?: string | null;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
 };
 
@@ -55,7 +55,7 @@ export type SupplierReturnFragment = {
   otherPartyId: string;
   theirReference?: string | null;
   transportReference?: string | null;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   otherParty: {
     __typename: 'NameNode';
     id: string;
@@ -99,7 +99,7 @@ export type CustomerReturnFragment = {
   otherPartyName: string;
   theirReference?: string | null;
   transportReference?: string | null;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   user?: {
     __typename: 'UserNode';
     username: string;
@@ -198,7 +198,7 @@ export type SupplierReturnsQuery = {
       verifiedDatetime?: string | null;
       comment?: string | null;
       theirReference?: string | null;
-      propertiesV2?: any | null;
+      customFields?: any | null;
     }>;
   };
 };
@@ -229,7 +229,7 @@ export type CustomerReturnsQuery = {
       receivedDatetime?: string | null;
       comment?: string | null;
       theirReference?: string | null;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
     }>;
   };
@@ -412,7 +412,7 @@ export type SupplierReturnByNumberQuery = {
         otherPartyId: string;
         theirReference?: string | null;
         transportReference?: string | null;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         lines: {
           __typename: 'InvoiceLineConnector';
           nodes: Array<{
@@ -488,7 +488,7 @@ export type SupplierReturnByIdQuery = {
         otherPartyId: string;
         theirReference?: string | null;
         transportReference?: string | null;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         lines: {
           __typename: 'InvoiceLineConnector';
           nodes: Array<{
@@ -565,7 +565,7 @@ export type CustomerReturnByNumberQuery = {
         otherPartyName: string;
         theirReference?: string | null;
         transportReference?: string | null;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         lines: {
           __typename: 'InvoiceLineConnector';
           totalCount: number;
@@ -644,7 +644,7 @@ export type CustomerReturnByIdQuery = {
         otherPartyName: string;
         theirReference?: string | null;
         transportReference?: string | null;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         lines: {
           __typename: 'InvoiceLineConnector';
           totalCount: number;
@@ -851,7 +851,7 @@ export const SupplierReturnRowFragmentDoc = gql`
     verifiedDatetime
     comment
     theirReference
-    propertiesV2
+    customFields
   }
 `;
 export const CustomerReturnRowFragmentDoc = gql`
@@ -867,7 +867,7 @@ export const CustomerReturnRowFragmentDoc = gql`
     receivedDatetime
     comment
     theirReference
-    propertiesV2
+    customFields
     linkedShipment {
       __typename
       id
@@ -910,7 +910,7 @@ export const SupplierReturnFragmentDoc = gql`
     }
     theirReference
     transportReference
-    propertiesV2
+    customFields
     originalShipment {
       id
       invoiceNumber
@@ -950,7 +950,7 @@ export const CustomerReturnFragmentDoc = gql`
     }
     theirReference
     transportReference
-    propertiesV2
+    customFields
     originalShipment {
       __typename
       id

@@ -154,7 +154,7 @@ fn name_1() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(0.0),
             currency_id: None,
-            properties_v2: None,
+            custom_fields: None,
         },
     )
 }
@@ -299,7 +299,7 @@ fn name_2() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(1.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
-            properties_v2: None,
+            custom_fields: None,
         },
     )
 }
@@ -444,7 +444,7 @@ fn name_3() -> TestSyncIncomingRecord {
             margin: Some(0.0),
             freight_factor: Some(1.0),
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
-            properties_v2: None,
+            custom_fields: None,
         },
     )
 }
@@ -597,7 +597,7 @@ fn name_4() -> TestSyncIncomingRecord {
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             // The raw record carries `category1_ID`, imported as the
             // `name_category_1` OPTION value (option id = category id).
-            properties_v2: Some(json!({
+            custom_fields: Some(json!({
                 "name_category_1": "8C4DDF227AFB4FD6A09445C949079597"
             })),
         },
@@ -804,7 +804,7 @@ fn name_5_dob_t_format_pull() -> TestSyncIncomingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
-            properties_v2: None,
+            custom_fields: None,
         },
     )
 }
@@ -950,7 +950,7 @@ fn name_6_dob_no_t_format_pull() -> TestSyncIncomingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
-            properties_v2: None,
+            custom_fields: None,
         },
     )
 }
@@ -1092,7 +1092,7 @@ fn name_7_legacy_properties() -> TestSyncIncomingRecord {
             margin: None,
             freight_factor: None,
             currency_id: None,
-            properties_v2: Some(json!({"custom_1": "Red", "custom_3": "Blue"})),
+            custom_fields: Some(json!({"custom_1": "Red", "custom_3": "Blue"})),
         },
     )
 }

@@ -13,17 +13,17 @@ import {
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
-import { InvoiceToolbarProperties } from '../../common';
+import { InvoiceToolbarCustomFields } from '../../common';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const Toolbar = () => {
   const t = useTranslation();
-  const { id, otherParty, theirReference, propertiesV2, update, requisition } =
+  const { id, otherParty, theirReference, customFields, update, requisition } =
     useOutbound.document.fields([
       'id',
       'otherParty',
       'theirReference',
-      'propertiesV2',
+      'customFields',
       'requisition',
     ]);
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
@@ -89,10 +89,10 @@ export const Toolbar = () => {
         }
       />
       <Box display="flex" flexDirection="column" gap={1}>
-        <InvoiceToolbarProperties
+        <InvoiceToolbarCustomFields
           invoiceType={InvoiceNodeType.OutboundShipment}
-          propertiesV2={propertiesV2}
-          onUpdate={patch => update({ propertiesV2: patch })}
+          customFields={customFields}
+          onUpdate={patch => update({ customFields: patch })}
           disabled={isDisabled}
         />
       </Box>

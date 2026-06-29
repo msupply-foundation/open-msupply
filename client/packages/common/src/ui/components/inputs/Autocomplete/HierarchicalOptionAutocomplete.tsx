@@ -26,8 +26,8 @@ interface HierarchicalOptionAutocompleteProps {
  * parent levels render as indented, bold group levels. By default only leaves
  * can be picked; `parentsSelectable` opens up the parent levels too (used by
  * filters, where a parent selection means "anything under it"). Flat
- * dimensions are a plain list. Shared by the propertiesV2 edit control
- * (PropertyV2Input) and the property filter dropdowns (HierarchicalEnumFilter)
+ * dimensions are a plain list. Shared by the customFields edit control
+ * (CustomFieldInput) and the property filter dropdowns (HierarchicalEnumFilter)
  * so selection and filtering stay in sync.
  */
 export const HierarchicalOptionAutocomplete = ({

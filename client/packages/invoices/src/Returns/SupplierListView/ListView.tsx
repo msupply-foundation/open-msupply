@@ -26,14 +26,14 @@ import {
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
 import { SupplierReturnRowFragment, useReturns } from '../api';
-import { useInvoicePropertiesV2 } from '../../common';
+import { useInvoiceCustomFields } from '../../common';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 
 export const SupplierReturnListView = () => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
-  const { data: properties } = useInvoicePropertiesV2(
+  const { data: properties } = useInvoiceCustomFields(
     InvoiceNodeType.SupplierReturn
   );
   const {

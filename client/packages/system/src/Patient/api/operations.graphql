@@ -17,7 +17,7 @@ fragment PatientRow on PatientNode {
   }
   isDeceased
   dateOfDeath
-  propertiesV2
+  customFields
   programEnrolments {
     ... on ProgramEnrolmentConnector {
       __typename
@@ -57,7 +57,7 @@ fragment ProgramPatientRow on PatientNode {
   dateOfDeath
   nextOfKinId
   nextOfKinName
-  propertiesV2
+  customFields
   programEnrolments {
     ... on ProgramEnrolmentConnector {
       __typename
@@ -74,7 +74,7 @@ fragment ProgramPatientRow on PatientNode {
   }
 }
 
-fragment PropertyV2 on PropertyV2Node {
+fragment CustomField on CustomFieldNode {
   id
   key
   name
@@ -88,23 +88,23 @@ fragment PropertyV2 on PropertyV2Node {
   }
 }
 
-query patientPropertiesV2 {
-  propertiesV2(filter: { tableName: { equalTo: "patient" } }) {
-    ... on PropertyV2Connector {
+query patientCustomFields {
+  customFields(filter: { tableName: { equalTo: "patient" } }) {
+    ... on CustomFieldConnector {
       __typename
       totalCount
       nodes {
-        ...PropertyV2
+        ...CustomField
       }
     }
   }
 }
 
-mutation updatePatientPropertiesV2(
+mutation updatePatientCustomFields(
   $storeId: String!
-  $input: UpdatePatientPropertiesV2Input!
+  $input: UpdatePatientCustomFieldsInput!
 ) {
-  updatePatientPropertiesV2(storeId: $storeId, input: $input) {
+  updatePatientCustomFields(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
       ...ProgramPatientRow

@@ -20,7 +20,7 @@ export type PatientRowFragment = {
   createdDatetime?: string | null;
   isDeceased: boolean;
   dateOfDeath?: string | null;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   document?: { __typename: 'DocumentNode'; name: string } | null;
   programEnrolments: {
     __typename: 'ProgramEnrolmentConnector';
@@ -58,7 +58,7 @@ export type ProgramPatientRowFragment = {
   dateOfDeath?: string | null;
   nextOfKinId?: string | null;
   nextOfKinName?: string | null;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   document?: {
     __typename: 'DocumentNode';
     id: string;
@@ -82,15 +82,15 @@ export type ProgramPatientRowFragment = {
   };
 };
 
-export type PropertyV2Fragment = {
-  __typename: 'PropertyV2Node';
+export type CustomFieldFragment = {
+  __typename: 'CustomFieldNode';
   id: string;
   key: string;
   name: string;
-  valueType: Types.PropertyNodeValueTypeV2;
-  kind: Types.PropertyNodeKindV2;
+  valueType: Types.CustomFieldNodeValueType;
+  kind: Types.CustomFieldNodeKind;
   options: Array<{
-    __typename: 'PropertyOptionV2Node';
+    __typename: 'CustomFieldOptionNode';
     id: string;
     key: string;
     name: string;
@@ -98,24 +98,24 @@ export type PropertyV2Fragment = {
   }>;
 };
 
-export type PatientPropertiesV2QueryVariables = Types.Exact<{
+export type PatientCustomFieldsQueryVariables = Types.Exact<{
   [key: string]: never;
 }>;
 
-export type PatientPropertiesV2Query = {
+export type PatientCustomFieldsQuery = {
   __typename: 'Queries';
-  propertiesV2: {
-    __typename: 'PropertyV2Connector';
+  customFields: {
+    __typename: 'CustomFieldConnector';
     totalCount: number;
     nodes: Array<{
-      __typename: 'PropertyV2Node';
+      __typename: 'CustomFieldNode';
       id: string;
       key: string;
       name: string;
-      valueType: Types.PropertyNodeValueTypeV2;
-      kind: Types.PropertyNodeKindV2;
+      valueType: Types.CustomFieldNodeValueType;
+      kind: Types.CustomFieldNodeKind;
       options: Array<{
-        __typename: 'PropertyOptionV2Node';
+        __typename: 'CustomFieldOptionNode';
         id: string;
         key: string;
         name: string;
@@ -125,14 +125,14 @@ export type PatientPropertiesV2Query = {
   };
 };
 
-export type UpdatePatientPropertiesV2MutationVariables = Types.Exact<{
+export type UpdatePatientCustomFieldsMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Types.UpdatePatientPropertiesV2Input;
+  input: Types.UpdatePatientCustomFieldsInput;
 }>;
 
-export type UpdatePatientPropertiesV2Mutation = {
+export type UpdatePatientCustomFieldsMutation = {
   __typename: 'Mutations';
-  updatePatientPropertiesV2: {
+  updatePatientCustomFields: {
     __typename: 'PatientNode';
     id: string;
     code: string;
@@ -151,7 +151,7 @@ export type UpdatePatientPropertiesV2Mutation = {
     dateOfDeath?: string | null;
     nextOfKinId?: string | null;
     nextOfKinName?: string | null;
-    propertiesV2?: any | null;
+    customFields?: any | null;
     document?: {
       __typename: 'DocumentNode';
       id: string;
@@ -207,7 +207,7 @@ export type PatientsQuery = {
       createdDatetime?: string | null;
       isDeceased: boolean;
       dateOfDeath?: string | null;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       document?: { __typename: 'DocumentNode'; name: string } | null;
       programEnrolments: {
         __typename: 'ProgramEnrolmentConnector';
@@ -257,7 +257,7 @@ export type PatientByIdQuery = {
       dateOfDeath?: string | null;
       nextOfKinId?: string | null;
       nextOfKinName?: string | null;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       document?: {
         __typename: 'DocumentNode';
         id: string;
@@ -315,7 +315,7 @@ export type PatientSearchQuery = {
         dateOfDeath?: string | null;
         nextOfKinId?: string | null;
         nextOfKinName?: string | null;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         document?: {
           __typename: 'DocumentNode';
           id: string;
@@ -414,7 +414,7 @@ export type InsertProgramPatientMutation = {
     dateOfDeath?: string | null;
     nextOfKinId?: string | null;
     nextOfKinName?: string | null;
-    propertiesV2?: any | null;
+    customFields?: any | null;
     document?: {
       __typename: 'DocumentNode';
       id: string;
@@ -465,7 +465,7 @@ export type UpdateProgramPatientMutation = {
     dateOfDeath?: string | null;
     nextOfKinId?: string | null;
     nextOfKinName?: string | null;
-    propertiesV2?: any | null;
+    customFields?: any | null;
     document?: {
       __typename: 'DocumentNode';
       id: string;
@@ -516,7 +516,7 @@ export type InsertPatientMutation = {
     dateOfDeath?: string | null;
     nextOfKinId?: string | null;
     nextOfKinName?: string | null;
-    propertiesV2?: any | null;
+    customFields?: any | null;
     document?: {
       __typename: 'DocumentNode';
       id: string;
@@ -567,7 +567,7 @@ export type UpdatePatientMutation = {
     dateOfDeath?: string | null;
     nextOfKinId?: string | null;
     nextOfKinName?: string | null;
-    propertiesV2?: any | null;
+    customFields?: any | null;
     document?: {
       __typename: 'DocumentNode';
       id: string;
@@ -637,7 +637,7 @@ export const PatientRowFragmentDoc = gql`
     }
     isDeceased
     dateOfDeath
-    propertiesV2
+    customFields
     programEnrolments {
       ... on ProgramEnrolmentConnector {
         __typename
@@ -678,7 +678,7 @@ export const ProgramPatientRowFragmentDoc = gql`
     dateOfDeath
     nextOfKinId
     nextOfKinName
-    propertiesV2
+    customFields
     programEnrolments {
       ... on ProgramEnrolmentConnector {
         __typename
@@ -695,8 +695,8 @@ export const ProgramPatientRowFragmentDoc = gql`
     }
   }
 `;
-export const PropertyV2FragmentDoc = gql`
-  fragment PropertyV2 on PropertyV2Node {
+export const CustomFieldFragmentDoc = gql`
+  fragment CustomField on CustomFieldNode {
     id
     key
     name
@@ -710,26 +710,26 @@ export const PropertyV2FragmentDoc = gql`
     }
   }
 `;
-export const PatientPropertiesV2Document = gql`
-  query patientPropertiesV2 {
-    propertiesV2(filter: { tableName: { equalTo: "patient" } }) {
-      ... on PropertyV2Connector {
+export const PatientCustomFieldsDocument = gql`
+  query patientCustomFields {
+    customFields(filter: { tableName: { equalTo: "patient" } }) {
+      ... on CustomFieldConnector {
         __typename
         totalCount
         nodes {
-          ...PropertyV2
+          ...CustomField
         }
       }
     }
   }
-  ${PropertyV2FragmentDoc}
+  ${CustomFieldFragmentDoc}
 `;
-export const UpdatePatientPropertiesV2Document = gql`
-  mutation updatePatientPropertiesV2(
+export const UpdatePatientCustomFieldsDocument = gql`
+  mutation updatePatientCustomFields(
     $storeId: String!
-    $input: UpdatePatientPropertiesV2Input!
+    $input: UpdatePatientCustomFieldsInput!
   ) {
-    updatePatientPropertiesV2(storeId: $storeId, input: $input) {
+    updatePatientCustomFields(storeId: $storeId, input: $input) {
       ... on PatientNode {
         __typename
         ...ProgramPatientRow
@@ -937,38 +937,38 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    patientPropertiesV2(
-      variables?: PatientPropertiesV2QueryVariables,
+    patientCustomFields(
+      variables?: PatientCustomFieldsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<PatientPropertiesV2Query> {
+    ): Promise<PatientCustomFieldsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PatientPropertiesV2Query>({
-            document: PatientPropertiesV2Document,
+          client.request<PatientCustomFieldsQuery>({
+            document: PatientCustomFieldsDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'patientPropertiesV2',
+        'patientCustomFields',
         'query',
         variables
       );
     },
-    updatePatientPropertiesV2(
-      variables: UpdatePatientPropertiesV2MutationVariables,
+    updatePatientCustomFields(
+      variables: UpdatePatientCustomFieldsMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<UpdatePatientPropertiesV2Mutation> {
+    ): Promise<UpdatePatientCustomFieldsMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<UpdatePatientPropertiesV2Mutation>({
-            document: UpdatePatientPropertiesV2Document,
+          client.request<UpdatePatientCustomFieldsMutation>({
+            document: UpdatePatientCustomFieldsDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'updatePatientPropertiesV2',
+        'updatePatientCustomFields',
         'mutation',
         variables
       );

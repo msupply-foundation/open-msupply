@@ -1,20 +1,20 @@
 use chrono::Utc;
 use repository::{
-    PropertyOptionV2Row, PropertyOptionV2RowRepository, StorageConnection, SyncBufferRow,
+    CustomFieldOptionRow, CustomFieldOptionRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::empty_str_as_option_string;
 
-use crate::sync::central_mapping_properties::keys;
+use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
 
 use super::{PullTranslateResult, SyncTranslation};
 
-/// mSupply name categories modelled as propertiesV2 OPTIONs — a **central-only**
+/// mSupply name categories modelled as customFields OPTIONs — a **central-only**
 /// path with no relational counterpart (unlike item categories, names have no
 /// relational `category` table in OMS). Each `name_category*` record becomes a
-/// `property_option_v2` row under the matching `name_category*` property
-/// (seeded by `central_mapping_properties`); the name stores the chosen leaf id
+/// `custom_field_option` row under the matching `name_category*` custom_field
+/// (seeded by `central_mapping_custom_fields`); the name stores the chosen leaf id
 /// under its `name_categoryN` key (see `translations/name.rs`).
 ///
 /// 4D has six independent dimensions. `category1` is hierarchical
@@ -25,11 +25,11 @@ use super::{PullTranslateResult, SyncTranslation};
 /// Mirrors `translations/category.rs` (item categories); remotes receive these
 /// over v7 and must not author them locally.
 
-/// Map a `name_category*` sync table name to the `property_v2.id` its options
+/// Map a `name_category*` sync table name to the `custom_field.id` its options
 /// belong to. The three category1 levels share [`keys::NAME_CATEGORY_1`]; the
-/// flat dimensions map 1:1. The property ids are the shared [`keys`] constants
+/// flat dimensions map 1:1. The custom_field ids are the shared [`keys`] constants
 /// (the key *is* the id).
-fn property_id_for_table(table_name: &str) -> Option<&'static str> {
+fn custom_field_id_for_table(table_name: &str) -> Option<&'static str> {
     match table_name {
         "name_category1" | "name_category1_level1" | "name_category1_level2" => {
             Some(keys::NAME_CATEGORY_1)
@@ -94,15 +94,15 @@ impl SyncTranslation for NameCategoryTranslation {
             ));
         }
 
-        let Some(property_id) = property_id_for_table(&sync_record.table_name) else {
+        let Some(custom_field_id) = custom_field_id_for_table(&sync_record.table_name) else {
             return Ok(PullTranslateResult::NotMatched);
         };
 
         let data = sync_record.deserialize::<LegacyNameCategoryRow>()?;
 
-        Ok(PullTranslateResult::upsert(PropertyOptionV2Row {
+        Ok(PullTranslateResult::upsert(CustomFieldOptionRow {
             id: data.ID.clone(),
-            property_id: property_id.to_string(),
+            custom_field_id: custom_field_id.to_string(),
             key: data.ID,
             name: data.description,
             parent_option_id: data.parent_ID,
@@ -127,14 +127,14 @@ impl SyncTranslation for NameCategoryTranslation {
         // and the read dataloader filters it out.
         let record_id = sync_record.record_id.clone();
         let Some(option) =
-            PropertyOptionV2RowRepository::new(connection).find_one_by_id(&record_id)?
+            CustomFieldOptionRowRepository::new(connection).find_one_by_id(&record_id)?
         else {
             return Ok(PullTranslateResult::Ignored(
                 "No matching name category option to soft-delete".to_string(),
             ));
         };
 
-        Ok(PullTranslateResult::upsert(PropertyOptionV2Row {
+        Ok(PullTranslateResult::upsert(CustomFieldOptionRow {
             deleted_datetime: Some(Utc::now().naive_utc()),
             ..option
         }))
@@ -148,11 +148,11 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all, SyncAction, SyncRecordData};
 
     #[actix_rt::test]
-    async fn name_category_emits_property_option_on_central() {
+    async fn name_category_emits_custom_field_option_on_central() {
         let translator = NameCategoryTranslation {};
 
         let (_, connection, _, _) = setup_all(
-            "name_category_emits_property_option_on_central",
+            "name_category_emits_custom_field_option_on_central",
             MockDataInserts::none(),
         )
         .await;
@@ -181,7 +181,7 @@ mod tests {
             ..Default::default()
         };
 
-        // On central, both author a PropertyOptionV2Row under the right property,
+        // On central, both author a CustomFieldOptionRow under the right custom_field,
         // mapping parent_ID -> parent_option_id (None for the flat dimension).
         test_util_set_is_central_server(true);
 
@@ -189,7 +189,7 @@ mod tests {
             .try_translate_from_upsert_sync_record(&connection, &cat1)
             .unwrap();
         let debug = format!("{result:?}");
-        assert!(debug.contains("PropertyOptionV2Row"), "{}", debug);
+        assert!(debug.contains("CustomFieldOptionRow"), "{}", debug);
         // Hardcoded, not `keys::*`: these keys are a frozen contract once released,
         // so a const rename must fail the test rather than silently pass.
         assert!(debug.contains("name_category_1"), "{}", debug);

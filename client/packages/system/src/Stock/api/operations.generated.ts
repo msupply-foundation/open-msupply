@@ -96,7 +96,7 @@ export type StockLineRowFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    propertiesV2?: any | null;
+    customFields?: any | null;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
@@ -347,7 +347,7 @@ export type StockLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
@@ -474,7 +474,7 @@ export type StockLineQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
@@ -639,7 +639,7 @@ export type UpdateStockLineMutation = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          propertiesV2?: any | null;
+          customFields?: any | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         program?: {
@@ -978,7 +978,7 @@ export type InsertStockLineMutation = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          propertiesV2?: any | null;
+          customFields?: any | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         program?: {
@@ -1172,7 +1172,7 @@ export type ItemsByStockLineFilterQuery = {
             isSupplier: boolean;
             isOnHold: boolean;
             name: string;
-            propertiesV2?: any | null;
+            customFields?: any | null;
             store?: {
               __typename: 'StoreNode';
               id: string;

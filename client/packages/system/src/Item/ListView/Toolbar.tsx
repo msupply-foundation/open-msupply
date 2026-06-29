@@ -5,9 +5,9 @@ import {
   FilterMenu,
   Box,
   usePreferences,
-  buildPropertyFilterDefinitions,
+  buildCustomFieldFilterDefinitions,
 } from '@openmsupply-client/common';
-import { useItemPropertiesV2 } from '../api';
+import { useItemCustomFields } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
@@ -15,7 +15,7 @@ export const Toolbar: FC = () => {
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
       numMonthsConsumption,
   } = usePreferences();
-  const { data: properties } = useItemPropertiesV2();
+  const { data: properties } = useItemCustomFields();
 
   return (
     <AppBarContentPortal
@@ -92,7 +92,7 @@ export const Toolbar: FC = () => {
                   },
                 ]
               : []),
-            ...buildPropertyFilterDefinitions(properties ?? [], {
+            ...buildCustomFieldFilterDefinitions(properties ?? [], {
               min: t('label.min'),
               max: t('label.max'),
               fromDate: t('label.from-date'),

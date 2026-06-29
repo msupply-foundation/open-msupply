@@ -155,7 +155,7 @@ pub(crate) fn patient_to_name_row(
         margin: None,
         freight_factor: None,
         currency_id: None,
-        properties_v2: existing_name.and_then(|n| n.properties_v2.clone()),
+        custom_fields: existing_name.and_then(|n| n.custom_fields.clone()),
     })
 }
 
@@ -490,7 +490,7 @@ mod test {
             margin: None,
             freight_factor: None,
             currency_id: None,
-            properties_v2: None,
+            custom_fields: None,
         };
         let updated_patient = patient_draft_document(&name_row_update, patient.clone());
         // Check that 2nd contact_details entry is not affected by the name_row change

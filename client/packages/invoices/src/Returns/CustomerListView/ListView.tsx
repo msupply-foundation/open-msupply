@@ -28,12 +28,12 @@ import { CustomerReturnRowFragment, useReturns } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { getStatusSequence } from '../../statuses';
-import { useInvoicePropertiesV2 } from '../../common';
+import { useInvoiceCustomFields } from '../../common';
 
 export const CustomerReturnListView = () => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
-  const { data: properties } = useInvoicePropertiesV2(
+  const { data: properties } = useInvoiceCustomFields(
     InvoiceNodeType.CustomerReturn
   );
   const {

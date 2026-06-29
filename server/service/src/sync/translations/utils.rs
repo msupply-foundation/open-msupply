@@ -8,7 +8,7 @@ use util::uuid::uuid;
 /// Properties-v2 is a v7-era feature: the OG→OMS legacy import runs on the
 /// central server only. A V5V6 remote (which still syncs v5 directly to OG
 /// during transition) must not derive properties locally — it would surface
-/// properties without the v7 infrastructure. Remotes receive `properties_v2`
+/// properties without the v7 infrastructure. Remotes receive `custom_fields`
 /// from central via v7 instead. `build` is only invoked on the central server.
 pub(crate) fn legacy_properties_if_central(
     build: impl FnOnce() -> Option<serde_json::Value>,
@@ -20,7 +20,7 @@ pub(crate) fn legacy_properties_if_central(
     }
 }
 
-/// Accumulates legacy mSupply custom-field values into a `<table>.properties_v2`
+/// Accumulates legacy mSupply custom-field values into a `<table>.custom_fields`
 /// JSONB blob. This is the shared abstraction behind every record kind's legacy
 /// property import (name's `custom1/2/3`, item's `user_field_1..7`, …) so the
 /// "untouched rows stay clean" rule lives in one place.
@@ -35,9 +35,9 @@ pub(crate) fn legacy_properties_if_central(
 /// a record never configured), so storing defaults verbatim would attach noise
 /// rows to *every* record. Omitting them keeps the read view sparse and lets
 /// [`build`](Self::build) return `None` when nothing meaningful is set, so an
-/// untouched row's `properties_v2` stays NULL rather than carrying an empty `{}`.
+/// untouched row's `custom_fields` stays NULL rather than carrying an empty `{}`.
 ///
-/// Each `key` must match a `property_v2.key` seeded by `central_mapping_properties`,
+/// Each `key` must match a `custom_field.key` seeded by `central_mapping_custom_fields`,
 /// and the setter's JSON type must match that property's `value_type`.
 #[derive(Default)]
 pub(crate) struct LegacyPropertiesBuilder {
@@ -69,7 +69,7 @@ impl LegacyPropertiesBuilder {
     }
 
     /// Insert an OPTION-typed value, omitting empty/absent. The stored value is
-    /// the option's id string (matching a `property_option_v2.id`); the client
+    /// the option's id string (matching a `custom_field_option.id`); the client
     /// resolves it to a display name. Behaves like [`text`](Self::text) on the
     /// wire — the distinct method documents intent at the call site.
     pub(crate) fn option(mut self, key: &str, value: Option<&str>) -> Self {
@@ -91,7 +91,7 @@ impl LegacyPropertiesBuilder {
     }
 
     /// `Some(object)` when at least one non-default value was set, `None` when
-    /// empty so the row's `properties_v2` stays NULL.
+    /// empty so the row's `custom_fields` stays NULL.
     pub(crate) fn build(self) -> Option<serde_json::Value> {
         if self.map.is_empty() {
             None
@@ -101,7 +101,7 @@ impl LegacyPropertiesBuilder {
     }
 }
 
-/// Merge freshly legacy-derived properties into an existing `properties_v2` blob
+/// Merge freshly legacy-derived properties into an existing `custom_fields` blob
 /// without clobbering keys the legacy importer does not own.
 ///
 /// The legacy OG→OMS import owns a fixed set of keys (`owned_keys`, e.g. name's
@@ -114,7 +114,7 @@ impl LegacyPropertiesBuilder {
 ///  - start from `existing` (treated as empty when `None`/not an object),
 ///  - drop every `owned_key` (so a value cleared on OG is removed, not kept stale),
 ///  - overlay `legacy_derived` (the fresh owned-key values; absent ones stay dropped),
-///  - return `None` when the result is empty so an untouched row's `properties_v2`
+///  - return `None` when the result is empty so an untouched row's `custom_fields`
 ///    stays NULL rather than carrying an empty `{}`.
 pub(crate) fn merge_legacy_properties(
     existing: Option<serde_json::Value>,
@@ -214,7 +214,7 @@ mod tests {
     #[test]
     fn legacy_properties_builder_none_when_all_default() {
         // Empty/absent strings, 0.0, false and None all match the 4D default and
-        // are omitted — an all-default record builds to None (NULL properties_v2).
+        // are omitted — an all-default record builds to None (NULL custom_fields).
         let result = LegacyPropertiesBuilder::new()
             .text("a", None)
             .text("b", Some(""))

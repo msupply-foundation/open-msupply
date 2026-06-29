@@ -23,7 +23,7 @@ pub fn generate(
         their_reference,
         colour,
         transport_reference,
-        properties_v2,
+        custom_fields,
     }: UpdateSupplierReturn,
     existing_return: InvoiceRow,
 ) -> Result<GenerateResult, UpdateSupplierReturnError> {
@@ -35,9 +35,9 @@ pub fn generate(
     updated_return.colour = colour.or(existing_return.colour);
     updated_return.transport_reference =
         transport_reference.or(existing_return.transport_reference);
-    updated_return.properties_v2 = crate::invoice::properties::apply_properties_v2_patch(
-        updated_return.properties_v2,
-        properties_v2,
+    updated_return.custom_fields = crate::invoice::custom_fields::apply_custom_fields_patch(
+        updated_return.custom_fields,
+        custom_fields,
     );
 
     set_new_status_datetime(&mut updated_return, &status);

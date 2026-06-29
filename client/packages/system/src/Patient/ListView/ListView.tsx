@@ -32,7 +32,7 @@ export const PatientListView = () => {
   const { genderOptions } = usePreferences();
   const { localisedDate } = useFormatDateTime();
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const { data: properties } = usePatient.document.propertiesV2();
+  const { data: properties } = usePatient.document.customFields();
   const {
     queryParams: { sortBy, filterBy, first, offset },
   } = useUrlQueryParams({

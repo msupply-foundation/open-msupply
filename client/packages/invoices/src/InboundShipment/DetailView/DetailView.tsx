@@ -43,7 +43,7 @@ import { SidePanel } from './SidePanel';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem, ScannedBarcode } from '../../types';
 import { InboundLineFragment, useInboundShipment } from '../api';
-import { InvoicePropertiesTab } from '../../common';
+import { InvoiceCustomFieldsTab } from '../../common';
 import { SupplierReturnEditModal } from '../../Returns';
 import {
   canReturnInboundLines,
@@ -304,15 +304,15 @@ const DetailViewInner = () => {
     },
     {
       Component: (
-        <InvoicePropertiesTab
+        <InvoiceCustomFieldsTab
           invoiceType={InvoiceNodeType.InboundShipment}
-          propertiesV2={data?.propertiesV2}
-          onSave={patch => update({ propertiesV2: patch })}
+          customFields={data?.customFields}
+          onSave={patch => update({ customFields: patch })}
           disabled={isDisabled}
           onEdit={setIsDirtyProperties}
         />
       ),
-      value: InboundShipmentDetailTabs.Properties,
+      value: InboundShipmentDetailTabs.CustomFields,
       confirmOnLeaving: isDirtyProperties,
     },
     {
@@ -338,7 +338,7 @@ const DetailViewInner = () => {
           <DetailTabs
             tabs={tabs}
             requiresConfirmation={tab =>
-              tab === InboundShipmentDetailTabs.Properties && isDirtyProperties
+              tab === InboundShipmentDetailTabs.CustomFields && isDirtyProperties
             }
           />
 

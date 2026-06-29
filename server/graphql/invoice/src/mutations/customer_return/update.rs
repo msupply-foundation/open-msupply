@@ -24,10 +24,10 @@ pub struct UpdateInput {
     comment: Option<String>,
     colour: Option<String>,
     their_reference: Option<String>,
-    /// Patch of propertiesV2 key -> value (JSON object) merged into the
+    /// Patch of customFields key -> value (JSON object) merged into the
     /// invoice's custom properties; a `null` value clears that key, keys absent
     /// from the patch are left unchanged.
-    properties_v2: Option<Json<serde_json::Map<String, serde_json::Value>>>,
+    custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -127,7 +127,7 @@ impl UpdateInput {
             colour,
             their_reference,
             other_party_id,
-            properties_v2,
+            custom_fields,
         }: UpdateInput = self;
 
         ServiceInput {
@@ -138,7 +138,7 @@ impl UpdateInput {
             colour,
             their_reference,
             other_party_id,
-            properties_v2: properties_v2.map(|json| json.0),
+            custom_fields: custom_fields.map(|json| json.0),
         }
     }
 }

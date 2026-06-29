@@ -38,7 +38,7 @@ export type InboundLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    propertiesV2?: any | null;
+    customFields?: any | null;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
@@ -138,7 +138,7 @@ export type InboundFragment = {
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   currencyRate: number;
   chargesLocalCurrency: number;
   chargesForeignCurrency: number;
@@ -198,7 +198,7 @@ export type InboundFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
@@ -363,7 +363,7 @@ export type InboundRowFragment = {
   onHold: boolean;
   currencyRate: number;
   inboundType: Types.InboundNodeType;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   pricing: {
     __typename: 'PricingNode';
     totalAfterTax: number;
@@ -423,7 +423,7 @@ export type InvoicesQuery = {
       onHold: boolean;
       currencyRate: number;
       inboundType: Types.InboundNodeType;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       pricing: {
         __typename: 'PricingNode';
         totalAfterTax: number;
@@ -483,7 +483,7 @@ export type InvoiceQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         currencyRate: number;
         chargesLocalCurrency: number;
         chargesForeignCurrency: number;
@@ -547,7 +547,7 @@ export type InvoiceQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
-              propertiesV2?: any | null;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -745,7 +745,7 @@ export type InboundByNumberQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         currencyRate: number;
         chargesLocalCurrency: number;
         chargesForeignCurrency: number;
@@ -809,7 +809,7 @@ export type InboundByNumberQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
-              propertiesV2?: any | null;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -1894,7 +1894,7 @@ export const InboundFragmentDoc = gql`
     type
     taxPercentage
     expectedDeliveryDate
-    propertiesV2
+    customFields
     defaultDonor(storeId: $storeId) {
       id
       name
@@ -2035,7 +2035,7 @@ export const InboundRowFragmentDoc = gql`
       number
     }
     inboundType
-    propertiesV2
+    customFields
   }
 `;
 export const LineLinkedToTransferredInvoiceErrorFragmentDoc = gql`

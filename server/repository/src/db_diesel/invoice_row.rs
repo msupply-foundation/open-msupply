@@ -1,6 +1,6 @@
 use super::{
     clinician_link_row::clinician_link, currency_row::currency, item_link_row::item_link,
-    name_row::name, properties_json::JsonValue, purchase_order_row::purchase_order,
+    name_row::name, custom_fields_json::JsonValue, purchase_order_row::purchase_order,
     shipping_method_row::shipping_method, store_row::store, user_row::user_account,
     StorageConnection,
 };
@@ -62,7 +62,7 @@ define_linked_tables! {
         charges_local_currency -> Double,
         charges_foreign_currency -> Double,
         legacy_goods_received_id -> Nullable<Text>,
-        properties_v2 -> Nullable<crate::db_diesel::properties_json::PropertiesJson>,
+        custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
     },
     links:{
          name_link_id -> name_id,
@@ -168,10 +168,10 @@ pub struct InvoiceRow {
     /// translator can find the invoice spawned by a finalised GR without scanning
     /// sync_buffer. Internal only — never synced.
     pub legacy_goods_received_id: Option<String>,
-    /// Properties-v2 values keyed by `property_v2.key` (see the properties dev
+    /// Properties-v2 values keyed by `custom_field.key` (see the properties dev
     /// doc). Rides this row over v7; the v5 translator maps the type's category
     /// key to/from legacy `transact.category_ID`.
-    pub properties_v2: Option<JsonValue>,
+    pub custom_fields: Option<JsonValue>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
     pub default_donor_id: Option<String>,

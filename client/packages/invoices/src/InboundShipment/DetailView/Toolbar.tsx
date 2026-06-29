@@ -16,7 +16,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInboundShipment } from '../api';
-import { InvoiceToolbarProperties } from '../../common';
+import { InvoiceToolbarCustomFields } from '../../common';
 import { ReceivedDateInput } from './ReceivedDateInput';
 
 const InboundInfoPanel = ({
@@ -136,10 +136,10 @@ export const Toolbar = () => {
         </Grid>
         <Grid>
           <Box display="flex" flexDirection="column" gap={1}>
-            <InvoiceToolbarProperties
+            <InvoiceToolbarCustomFields
               invoiceType={InvoiceNodeType.InboundShipment}
-              propertiesV2={shipment?.propertiesV2}
-              onUpdate={patch => update({ propertiesV2: patch })}
+              customFields={shipment?.customFields}
+              onUpdate={patch => update({ customFields: patch })}
               disabled={isDisabled}
             />
           </Box>

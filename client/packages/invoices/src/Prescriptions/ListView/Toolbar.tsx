@@ -7,11 +7,11 @@ import {
   usePreferences,
   InvoiceNodeType,
   InvoiceNodeStatus,
-  buildPropertyFilterDefinitions,
+  buildCustomFieldFilterDefinitions,
 } from '@openmsupply-client/common';
 import { getStatusSequence } from '../../statuses';
 import { getStatusTranslator } from '../../utils';
-import { useInvoicePropertiesV2 } from '../../common';
+import { useInvoiceCustomFields } from '../../common';
 
 export const Toolbar = () => {
   const t = useTranslation();
@@ -21,7 +21,7 @@ export const Toolbar = () => {
       status === InvoiceNodeStatus.Cancelled ||
       invoiceStatusOptions?.includes(status)
   );
-  const { data: properties } = useInvoicePropertiesV2(
+  const { data: properties } = useInvoiceCustomFields(
     InvoiceNodeType.Prescription
   );
 
@@ -85,7 +85,7 @@ export const Toolbar = () => {
                 },
               ],
             },
-            ...buildPropertyFilterDefinitions(properties ?? [], {
+            ...buildCustomFieldFilterDefinitions(properties ?? [], {
               min: t('label.min'),
               max: t('label.max'),
               fromDate: t('label.from-date'),

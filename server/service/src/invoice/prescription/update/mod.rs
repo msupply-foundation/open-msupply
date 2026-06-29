@@ -41,10 +41,10 @@ pub struct UpdatePrescription {
     pub name_insurance_join_id: Option<NullableUpdate<String>>,
     pub insurance_discount_amount: Option<f64>,
     pub insurance_discount_percentage: Option<f64>,
-    /// Patch of propertiesV2 key -> value merged into `invoice.properties_v2`
+    /// Patch of customFields key -> value merged into `invoice.custom_fields`
     /// (a JSON `null` deletes that key; keys absent from the patch are left
     /// as-is). Keys must be visible for the "prescription" scope.
-    pub properties_v2: Option<serde_json::Map<String, serde_json::Value>>,
+    pub custom_fields: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -418,7 +418,7 @@ mod test {
                 name_insurance_join_id: None,
                 insurance_discount_amount: None,
                 insurance_discount_percentage: None,
-                properties_v2: None,
+                custom_fields: None,
             }
         }
 
@@ -446,7 +446,7 @@ mod test {
                 name_insurance_join_id: _,
                 insurance_discount_amount: _,
                 insurance_discount_percentage: _,
-                properties_v2: _,
+                custom_fields: _,
             } = get_update();
             InvoiceRow {
                 name_id: patient_id.unwrap(),
