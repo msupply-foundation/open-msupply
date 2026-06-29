@@ -63,8 +63,7 @@ export type InstallUploadedReportsMutation = {
 };
 
 export type UpdateReportMutationVariables = Types.Exact<{
-  id: Types.Scalars['String']['input'];
-  isActive: Types.Scalars['Boolean']['input'];
+  input: Types.UpdateReportInput;
 }>;
 
 export type UpdateReportMutation = {
@@ -141,10 +140,10 @@ export const InstallUploadedReportsDocument = gql`
   }
 `;
 export const UpdateReportDocument = gql`
-  mutation updateReport($id: String!, $isActive: Boolean!) {
+  mutation updateReport($input: UpdateReportInput!) {
     centralServer {
       reports {
-        updateReport(id: $id, isActive: $isActive) {
+        updateReport(input: $input) {
           id
           isActive
         }

@@ -9,6 +9,12 @@ use service::{
 };
 use util::format_error;
 
+#[derive(InputObject)]
+pub struct UpdateReportInput {
+    pub id: String,
+    pub is_active: bool,
+}
+
 #[derive(SimpleObject)]
 pub struct UpdateReportNode {
     pub id: String,
@@ -17,9 +23,10 @@ pub struct UpdateReportNode {
 
 pub fn update_report(
     ctx: &Context<'_>,
-    id: String,
-    is_active: bool,
+    input: UpdateReportInput,
 ) -> Result<UpdateReportNode> {
+    let UpdateReportInput { id, is_active } = input;
+
     validate_auth(
         ctx,
         &ResourceAccessRequest {
