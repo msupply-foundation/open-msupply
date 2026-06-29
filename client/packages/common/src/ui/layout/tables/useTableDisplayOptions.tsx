@@ -55,22 +55,47 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
   const { focusedRowId, containerRef, rowVirtualizerRef, handleKeyDown } =
     useTableKeyboardNavigation<T>(onRowClick);
 
-  // shared between the table body and head to ensure consistent padding
-  const padding = (
-    density: 'compact' | 'comfortable' | 'spacious',
-    columnSize?: number
-  ) =>
-    density === 'compact'
-      ? '0.2rem 0.5rem'
-      : density === 'comfortable'
-        ? columnSize && columnSize < 100
-          ? '0.35rem 0.25rem' // Reduce the padding when column is narrow
-          : '0.35rem 0.5rem'
-        : columnSize && columnSize < 100
-          ? '0.8rem 0.6rem'
-          : '0.8rem';
+  // The options object below is memoised so MaterialReactTable receives stable
+  // callback identities across data/state re-renders (e.g. pagination) instead
+  // of ~20 freshly-allocated inline callbacks every render. Inputs whose
+  // identity changes every render (caller callbacks, the per-render
+  // settings-menu / grouping closures from useBaseMaterialTable, the keyboard
+  // handler) are read through a "latest value" ref, so the memoised callbacks
+  // stay stable while still invoking the current closure. Values that genuinely
+  // affect render output but change rarely (focus, grouping, mobile, language)
+  // are memo dependencies instead.
+  const latestRef = React.useRef<{
+    renderSettingsMenu: (table: MRT_TableInstance<T>) => React.ReactNode;
+    onRowClick?: (row: T, isCtrlClick: boolean) => void;
+    toggleGrouped?: () => void;
+    getIsPlaceholderRow: (row: MRT_Row<T>) => boolean;
+    getIsRestrictedRow: (row: MRT_Row<T>) => boolean;
+    muiTableBodyRowProps: MRT_TableOptions<T>['muiTableBodyRowProps'];
+    handleKeyDown: (e: React.KeyboardEvent, table: MRT_TableInstance<T>) => void;
+  }>({
+    renderSettingsMenu,
+    onRowClick,
+    toggleGrouped,
+    getIsPlaceholderRow,
+    getIsRestrictedRow,
+    muiTableBodyRowProps,
+    handleKeyDown,
+  });
+  latestRef.current = {
+    renderSettingsMenu,
+    onRowClick,
+    toggleGrouped,
+    getIsPlaceholderRow,
+    getIsRestrictedRow,
+    muiTableBodyRowProps,
+    handleKeyDown,
+  };
 
-  return {
+  const hasOnRowClick = !!onRowClick;
+  const hasToggleGrouped = !!toggleGrouped;
+
+  return React.useMemo<Partial<MRT_TableOptions<T>>>(
+    () => ({
     rowVirtualizerInstanceRef: rowVirtualizerRef,
     // Add description to column menu
     renderColumnActionsMenuItems: ({ internalColumnMenuItems, column }) => {
@@ -105,10 +130,10 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     // Add grouping toggle and settings menu to toolbar
     renderToolbarInternalActions: ({ table }) => (
       <>
-        {toggleGrouped && !isMobile && (
+        {hasToggleGrouped && !isMobile && (
           <IconButton
             icon={isGrouped ? <ExpandIcon /> : <CollapseIcon />}
-            onClick={toggleGrouped}
+            onClick={() => latestRef.current.toggleGrouped?.()}
             label={groupByLabel ?? t('label.group-by-item')}
             sx={iconButtonProps}
           />
@@ -117,7 +142,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         {hasColumnFilters && <MRT_ToggleFiltersButton table={table} />}
         <MRT_ShowHideColumnsButton table={table} />
         {!isMobile && <MRT_ToggleFullScreenButton table={table} />}
-        {renderSettingsMenu(table)}
+        {latestRef.current.renderSettingsMenu(table)}
       </>
     ),
 
@@ -141,7 +166,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     muiTableContainerProps: ({ table }) => ({
       ref: containerRef,
       tabIndex: 0,
-      onKeyDown: (e: React.KeyboardEvent) => handleKeyDown(e, table),
+      onKeyDown: (e: React.KeyboardEvent) =>
+        latestRef.current.handleKeyDown(e, table),
       sx: {
         flex: 1,
         display: 'flex',
@@ -245,21 +271,22 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
 
     muiTableBodyRowProps: params => {
       const { row, table } = params;
+      const rowPropsInput = latestRef.current.muiTableBodyRowProps;
       const customProps =
-        typeof muiTableBodyRowProps === 'function'
-          ? muiTableBodyRowProps(params)
-          : muiTableBodyRowProps;
+        typeof rowPropsInput === 'function'
+          ? rowPropsInput(params)
+          : rowPropsInput;
 
       const isFocused = row.id === focusedRowId;
 
       const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
-        ...(onRowClick
+        ...(hasOnRowClick
           ? {
               onClick: (e: React.MouseEvent<HTMLTableRowElement>) => {
                 const isCtrlClick = e.getModifierState(
                   EnvUtils.os === 'Mac OS' ? 'Meta' : 'Control'
                 );
-                onRowClick(row.original, isCtrlClick);
+                latestRef.current.onRowClick?.(row.original, isCtrlClick);
               },
             }
           : {}),
@@ -276,7 +303,7 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
             backgroundColor: theme => alpha(theme.palette.gray.pale, 0.4),
           },
           fontStyle: row.getCanExpand() ? 'italic' : 'normal',
-          cursor: onRowClick ? 'pointer' : 'default',
+          cursor: hasOnRowClick ? 'pointer' : 'default',
           ...(isFocused
             ? {
                 backgroundColor: theme =>
@@ -301,9 +328,9 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         fontWeight: 400,
         opacity: 1,
         alignItems: 'flex-end',
-        color: getIsPlaceholderRow(row)
+        color: latestRef.current.getIsPlaceholderRow(row)
           ? 'secondary.light'
-          : getIsRestrictedRow(row)
+          : latestRef.current.getIsRestrictedRow(row)
             ? 'gray.main'
             : undefined,
 
@@ -394,8 +421,39 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
         },
       },
     },
-  };
+    }),
+    [
+      t,
+      collapsedRotation,
+      focusedRowId,
+      isGrouped,
+      hasToggleGrouped,
+      hasOnRowClick,
+      groupByLabel,
+      isMobile,
+      hasColumnFilters,
+      containerRef,
+      rowVirtualizerRef,
+    ]
+  );
 };
+
+// shared between the table body and head to ensure consistent padding.
+// Pure (depends only on its arguments), so it lives at module scope and can be
+// referenced from the memoised options object without being a dependency.
+const padding = (
+  density: 'compact' | 'comfortable' | 'spacious',
+  columnSize?: number
+) =>
+  density === 'compact'
+    ? '0.2rem 0.5rem'
+    : density === 'comfortable'
+      ? columnSize && columnSize < 100
+        ? '0.35rem 0.25rem' // Reduce the padding when column is narrow
+        : '0.35rem 0.5rem'
+      : columnSize && columnSize < 100
+        ? '0.8rem 0.6rem'
+        : '0.8rem';
 
 const iconButtonProps = {
   width: '40px',

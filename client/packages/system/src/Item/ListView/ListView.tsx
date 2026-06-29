@@ -33,14 +33,21 @@ export const ItemListView = () => {
   });
   const { data, isError, isLoading } = useVisibleOrOnHandItems(queryParams);
 
-  // required to have correct type for UnitsAndDosesCell
-  const rows = (data?.nodes ?? []).map(row => ({
-    ...row,
-    item: {
-      doses: row.doses,
-      isVaccine: row.isVaccine,
-    },
-  }));
+  // required to have correct type for UnitsAndDosesCell.
+  // Memoised on the query result so we don't hand MaterialReactTable a brand
+  // new `data` array on every unrelated re-render (which makes it recompute its
+  // row models and rebuild rows).
+  const rows = useMemo(
+    () =>
+      (data?.nodes ?? []).map(row => ({
+        ...row,
+        item: {
+          doses: row.doses,
+          isVaccine: row.isVaccine,
+        },
+      })),
+    [data?.nodes]
+  );
 
   const columns = useMemo(
     (): ColumnDef<

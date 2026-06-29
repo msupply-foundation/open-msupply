@@ -69,8 +69,18 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
             : physicalAlignment === 'center'
               ? 'center'
               : 'right'; // text: the start edge is on the right in RTL
+        // Build the body-cell-props chain into a LOCAL variable rather than
+        // mutating `col`. Mutating the caller's column object leaks the wrapped
+        // function back into the (often memoised) source `omsColumns`, so a
+        // re-run would double-wrap it, and it gives every render a fresh
+        // function identity on shared objects. The final value is spread into
+        // the returned column below (after `...col`) so it still wins.
+        let bodyCellProps = col.muiTableBodyCellProps;
         if (alignment) {
-          col.muiTableBodyCellProps = params => {
+          // Alignment styling replaces any inherited cell props (this matches
+          // the prior behaviour, where the assignment overwrote
+          // col.muiTableBodyCellProps before the merge step below).
+          bodyCellProps = params => {
             return mergeCellProps(
               {
                 sx: {
@@ -98,10 +108,10 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
         }
 
         // Merge any custom cell props with defaults
-        const cellProps = col.muiTableBodyCellProps;
-        if (cellProps) {
-          col.muiTableBodyCellProps = params => {
-            return mergeCellProps(cellProps, params);
+        if (bodyCellProps) {
+          const inner = bodyCellProps;
+          bodyCellProps = params => {
+            return mergeCellProps(inner, params);
           };
         }
 
@@ -148,6 +158,10 @@ export const useMaterialTableColumns = <T extends MRT_RowData>(
           enableSorting: col.enableSorting ?? false,
           enableColumnFilter: col.enableColumnFilter ?? false,
           ...col,
+          // Spread the locally-built cell-props chain last so it overrides the
+          // raw `col.muiTableBodyCellProps` (which we intentionally did not
+          // mutate above).
+          ...(bodyCellProps ? { muiTableBodyCellProps: bodyCellProps } : {}),
         };
       });
 

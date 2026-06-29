@@ -6,7 +6,7 @@ import {
   MRT_TableOptions,
   useMaterialReactTable,
 } from 'material-react-table';
-import { Row } from '@tanstack/table-core';
+import { Row, RowModel, Table } from '@tanstack/table-core';
 import { useIntlUtils, useTranslation } from '@common/intl';
 import { ColumnDef } from './types';
 import { useMaterialTableColumns } from './useMaterialTableColumns';
@@ -195,6 +195,53 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     />
   );
 
+  // Stable identities for the row-model factories. These are pure (they only
+  // read their `table`/`row` argument), so an empty dep list is safe — and it
+  // stops MaterialReactTable seeing a brand-new factory on every render, which
+  // can make it recompute the expanded row model unnecessarily.
+  const getRowCanExpand = React.useCallback(
+    (row: Row<T>) => row.getLeafRows().length > 1,
+    []
+  );
+
+  const getExpandedRowModel = React.useCallback(
+    (table: Table<T>) => (): RowModel<T> => {
+      const rowModel = table.getPreExpandedRowModel();
+
+      // Rows should contain all visible rows, including group rows and their children (if expanded)
+      const rows: Row<T>[] = [];
+
+      const handleRow = (row: Row<T>) => {
+        rows.push(row);
+
+        if (row.subRows?.length > 1 && row.getIsExpanded()) {
+          row.subRows.forEach(handleRow);
+        }
+      };
+
+      rowModel.rows.forEach(handleRow);
+
+      // We can't pass rowModel.flatRows directly as for some reason rows come in duplicated when there's grouping and no sorting applied
+      // I think this is a bug in tanstack table
+      const flatRows: Row<T>[] = [];
+
+      const seenRowIds = new Set<string>();
+      rowModel.flatRows.forEach(row => {
+        if (!seenRowIds.has(row.id)) {
+          flatRows.push(row);
+          seenRowIds.add(row.id);
+        }
+      });
+
+      return {
+        rows,
+        flatRows,
+        rowsById: rowModel.rowsById,
+      };
+    },
+    []
+  );
+
   const displayOptions = useTableDisplayOptions({
     renderSettingsMenu,
     hasColumnFilters,
@@ -254,41 +301,8 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     groupedColumnMode: false,
 
     // These options are needed to stop groups with only 1 child being expandable - we only want groups to be expandable if they have multiple children
-    getRowCanExpand: row => row.getLeafRows().length > 1,
-    getExpandedRowModel: table => () => {
-      const rowModel = table.getPreExpandedRowModel();
-
-      // Rows should contain all visible rows, including group rows and their children (if expanded)
-      const rows: Row<T>[] = [];
-
-      const handleRow = (row: Row<T>) => {
-        rows.push(row);
-
-        if (row.subRows?.length > 1 && row.getIsExpanded()) {
-          row.subRows.forEach(handleRow);
-        }
-      };
-
-      rowModel.rows.forEach(handleRow);
-
-      // We can't pass rowModel.flatRows directly as for some reason rows come in duplicated when there's grouping and no sorting applied
-      // I think this is a bug in tanstack table
-      const flatRows: Row<T>[] = [];
-
-      const seenRowIds = new Set<string>();
-      rowModel.flatRows.forEach(row => {
-        if (!seenRowIds.has(row.id)) {
-          flatRows.push(row);
-          seenRowIds.add(row.id);
-        }
-      });
-
-      return {
-        rows,
-        flatRows,
-        rowsById: rowModel.rowsById,
-      };
-    },
+    getRowCanExpand,
+    getExpandedRowModel,
 
     // Disable selection Toolbar, we use our own custom footer for this
     positionToolbarAlertBanner: 'none',

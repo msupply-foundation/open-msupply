@@ -40,3 +40,6 @@ server/target-postgres/
 
 # Playwright MCP scratch logs / page dumps
 .playwright-mcp/
+
+# Local performance/profiling scratch
+.scratch/
