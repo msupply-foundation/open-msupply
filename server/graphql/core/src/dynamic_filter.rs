@@ -4,10 +4,10 @@
 // then attached to the domain filter.
 //
 // Example wire shape:
-// `{ "And": [ { "Property": { "key": "k", "filter": { "Number": { "GreaterThanOrEqual": 10.0 } } } } ] }`
+// `{ "And": [ { "CustomField": { "key": "k", "filter": { "Number": { "GreaterThanOrEqual": 10.0 } } } } ] }`
 
 use async_graphql::ErrorExtensions;
-use repository::{PropertyCondition, PropertyV2Repository, StorageConnection};
+use repository::{CustomFieldCondition, CustomFieldRepository, StorageConnection};
 
 use crate::standard_graphql_error::StandardGraphqlError;
 
@@ -27,10 +27,10 @@ pub fn parse_dynamic_filter<T: serde::de::DeserializeOwned>(
 /// Property keys a client may filter on are exactly those visible for the
 /// table scope ("name", "patient" or "item") — unknown or hidden keys are an
 /// explicit error rather than a silent no-match.
-pub fn validate_property_filter_keys(
+pub fn validate_custom_field_filter_keys(
     connection: &StorageConnection,
     table_scope: &str,
-    conditions: &[&PropertyCondition],
+    conditions: &[&CustomFieldCondition],
 ) -> async_graphql::Result<()> {
     if conditions.is_empty() {
         return Ok(());
@@ -46,7 +46,7 @@ pub fn validate_property_filter_keys(
         .extend());
     }
 
-    let allowed_keys = PropertyV2Repository::new(connection)
+    let allowed_keys = CustomFieldRepository::new(connection)
         .allowed_keys_for_table(table_scope)
         .map_err(|error| StandardGraphqlError::from_repository_error(error))?;
 

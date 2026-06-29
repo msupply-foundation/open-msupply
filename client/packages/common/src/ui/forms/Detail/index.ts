@@ -4,5 +4,5 @@ export * from './Section';
 export * from './NumericTextDisplay';
 export * from './CurrencyTextDisplay';
 export * from './TextWithLabelRow';
-export * from './PropertyV2DetailRows';
-export * from './PropertiesEditTab';
+export * from './CustomFieldDetailRows';
+export * from './CustomFieldsEditTab';

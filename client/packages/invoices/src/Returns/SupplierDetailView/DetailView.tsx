@@ -22,7 +22,7 @@ import { SupplierReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierReturnEditModal } from '../modals';
 import { getNextItemId } from '../../utils';
-import { InvoicePropertiesTab } from '../../common';
+import { InvoiceCustomFieldsTab } from '../../common';
 import { useSupplierReturnColumns } from './columns';
 
 export const SupplierReturnsDetailView = () => {
@@ -75,18 +75,18 @@ export const SupplierReturnsDetailView = () => {
     },
     {
       Component: (
-        <InvoicePropertiesTab
+        <InvoiceCustomFieldsTab
           invoiceType={InvoiceNodeType.SupplierReturn}
-          propertiesV2={data?.propertiesV2}
+          customFields={data?.customFields}
           onSave={async patch => {
             if (!data?.id) return;
-            return update({ id: data.id, propertiesV2: patch });
+            return update({ id: data.id, customFields: patch });
           }}
           disabled={isDisabled}
           onEdit={setIsDirtyProperties}
         />
       ),
-      value: 'Properties',
+      value: 'custom-fields',
       confirmOnLeaving: isDirtyProperties,
     },
     {

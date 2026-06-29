@@ -144,7 +144,7 @@ impl ChangelogTableName {
             // is excluded by both the v5 and v6 changelog filters and only
             // included by the v7 pull (which passes no SyncVersions filter).
             // ----------------------------------------------------------
-            PropertyV2 | PropertyOptionV2 | PropertyTableV2 => (
+            CustomField | CustomFieldOption | CustomFieldTable => (
                 vec![Central],
                 SyncVersions {
                     is_v6: false,

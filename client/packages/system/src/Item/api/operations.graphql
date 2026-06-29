@@ -268,7 +268,7 @@ fragment Item on ItemNode {
     defaultSellPricePerPack
     ignoreForOrders
   }
-  propertiesV2
+  customFields
 }
 
 query itemsWithStockLines(
@@ -352,7 +352,7 @@ fragment ItemsWithStats on ItemNode {
   defaultPackSize
   isVaccine
   doses
-  propertiesV2
+  customFields
   availableStockOnHand(storeId: $storeId)
   stats(storeId: $storeId) {
     __typename
@@ -622,7 +622,7 @@ query itemLedger(
   }
 }
 
-fragment PropertyV2 on PropertyV2Node {
+fragment CustomField on CustomFieldNode {
   id
   key
   name
@@ -636,13 +636,13 @@ fragment PropertyV2 on PropertyV2Node {
   }
 }
 
-query itemPropertiesV2 {
-  propertiesV2(filter: { tableName: { equalTo: "item" } }) {
-    ... on PropertyV2Connector {
+query itemCustomFields {
+  customFields(filter: { tableName: { equalTo: "item" } }) {
+    ... on CustomFieldConnector {
       __typename
       totalCount
       nodes {
-        ...PropertyV2
+        ...CustomField
       }
     }
   }

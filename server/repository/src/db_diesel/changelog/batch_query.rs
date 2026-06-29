@@ -60,9 +60,9 @@ pub enum Row {
     NameProperty(NamePropertyRow),
     PackagingVariant(PackagingVariantRow),
     Property(PropertyRow),
-    PropertyV2(PropertyV2Row),
-    PropertyOptionV2(PropertyOptionV2Row),
-    PropertyTableV2(PropertyTableV2Row),
+    CustomField(CustomFieldRow),
+    CustomFieldOption(CustomFieldOptionRow),
+    CustomFieldTable(CustomFieldTableRow),
     Report(ReportRow),
     VaccineCourse(VaccineCourseRow),
     VaccineCourseDose(VaccineCourseDoseRow),
@@ -484,19 +484,19 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::Property(r));
                 }
             }
-            ChangelogTableName::PropertyV2 => {
-                for r in PropertyV2RowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::PropertyV2(r));
+            ChangelogTableName::CustomField => {
+                for r in CustomFieldRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomField(r));
                 }
             }
-            ChangelogTableName::PropertyOptionV2 => {
-                for r in PropertyOptionV2RowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::PropertyOptionV2(r));
+            ChangelogTableName::CustomFieldOption => {
+                for r in CustomFieldOptionRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomFieldOption(r));
                 }
             }
-            ChangelogTableName::PropertyTableV2 => {
-                for r in PropertyTableV2RowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::PropertyTableV2(r));
+            ChangelogTableName::CustomFieldTable => {
+                for r in CustomFieldTableRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomFieldTable(r));
                 }
             }
             ChangelogTableName::Report => {

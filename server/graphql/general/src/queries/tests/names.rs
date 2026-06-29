@@ -10,9 +10,9 @@ mod graphql {
             mock_store_linked_to_name, MockDataInserts,
         },
         EqualFilter, GeneralFilter, Name, NameCondition, NameFilter, NameSort, NameSortField,
-        NameType, PaginationOption, PropertyDisplayModeV2, PropertyKindV2, PropertyTableV2Row,
-        PropertyTableV2RowRepository, PropertyV2Row, PropertyV2RowRepository, PropertyValueFilter,
-        PropertyValueTypeV2, StorageConnectionManager, StringFilter,
+        NameType, PaginationOption, CustomFieldDisplayMode, CustomFieldKind, CustomFieldTableRow,
+        CustomFieldTableRowRepository, CustomFieldRow, CustomFieldRowRepository, CustomFieldValueFilter,
+        CustomFieldValueType, StorageConnectionManager, StringFilter,
     };
     use serde_json::json;
     use service::{
@@ -248,22 +248,22 @@ mod graphql {
         .await;
 
         // A property visible on the "name" table scope
-        PropertyV2RowRepository::new(&connection)
-            .upsert_one(&PropertyV2Row {
+        CustomFieldRowRepository::new(&connection)
+            .upsert_one(&CustomFieldRow {
                 id: "prop1".to_string(),
                 key: "category".to_string(),
                 name: "Category".to_string(),
-                value_type: PropertyValueTypeV2::Text,
-                kind: PropertyKindV2::Standard,
+                value_type: CustomFieldValueType::Text,
+                kind: CustomFieldKind::Standard,
                 deleted_datetime: None,
             })
             .unwrap();
-        PropertyTableV2RowRepository::new(&connection)
-            .upsert_one(&PropertyTableV2Row {
+        CustomFieldTableRowRepository::new(&connection)
+            .upsert_one(&CustomFieldTableRow {
                 id: "prop1_name".to_string(),
-                property_id: "prop1".to_string(),
+                custom_field_id: "prop1".to_string(),
                 table_name: "name".to_string(),
-                display_mode: PropertyDisplayModeV2::Visible,
+                display_mode: CustomFieldDisplayMode::Visible,
             })
             .unwrap();
 
@@ -283,7 +283,7 @@ mod graphql {
           "filter": {
             "dynamicFilter": {
                 "And": [
-                    { "Property": { "key": "category", "filter": { "Text": { "Like": "abc" } } } }
+                    { "CustomField": { "key": "category", "filter": { "Text": { "Like": "abc" } } } }
                 ]
             }
           }
@@ -293,9 +293,9 @@ mod graphql {
             assert_eq!(
                 filter.unwrap().dynamic_filter,
                 Some(NameCondition::And(vec![
-                    NameCondition::Property::condition(
+                    NameCondition::CustomField::condition(
                         "category",
-                        PropertyValueFilter::Text(GeneralFilter::Like("abc".to_string()))
+                        CustomFieldValueFilter::Text(GeneralFilter::Like("abc".to_string()))
                     )
                 ]))
             );
@@ -316,7 +316,7 @@ mod graphql {
           "storeId": "store_a",
           "filter": {
             "dynamicFilter": {
-                "Property": { "key": "not_a_key", "filter": { "Text": { "Like": "abc" } } }
+                "CustomField": { "key": "not_a_key", "filter": { "Text": { "Like": "abc" } } }
             }
           }
         });

@@ -7,10 +7,10 @@ mod test {
     use repository::EqualFilter;
     use repository::{
         mock::{mock_inbound_shipment_a, MockDataInserts},
-        InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowRepository, PropertyDisplayModeV2,
-        PropertyKindV2, PropertyTableV2Row, PropertyTableV2RowRepository, PropertyV2Row,
-        PropertyV2RowRepository,
-        PropertyValueTypeV2,
+        InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowRepository, CustomFieldDisplayMode,
+        CustomFieldKind, CustomFieldTableRow, CustomFieldTableRowRepository, CustomFieldRow,
+        CustomFieldRowRepository,
+        CustomFieldValueType,
     };
     use serde_json::json;
 
@@ -149,28 +149,28 @@ mod test {
         .await;
 
         // A property visible on the "inbound_shipment" table scope
-        PropertyV2RowRepository::new(&connection)
-            .upsert_one(&PropertyV2Row {
+        CustomFieldRowRepository::new(&connection)
+            .upsert_one(&CustomFieldRow {
                 id: "inbound_shipment_category".to_string(),
                 key: "inbound_shipment_category".to_string(),
                 name: "Category".to_string(),
-                value_type: PropertyValueTypeV2::Option,
-                kind: PropertyKindV2::Legacy,
+                value_type: CustomFieldValueType::Option,
+                kind: CustomFieldKind::Legacy,
                 deleted_datetime: None,
             })
             .unwrap();
-        PropertyTableV2RowRepository::new(&connection)
-            .upsert_one(&PropertyTableV2Row {
+        CustomFieldTableRowRepository::new(&connection)
+            .upsert_one(&CustomFieldTableRow {
                 id: "inbound_shipment_category__inbound_shipment".to_string(),
-                property_id: "inbound_shipment_category".to_string(),
+                custom_field_id: "inbound_shipment_category".to_string(),
                 table_name: "inbound_shipment".to_string(),
-                display_mode: PropertyDisplayModeV2::Visible,
+                display_mode: CustomFieldDisplayMode::Visible,
             })
             .unwrap();
 
         // Tag one inbound shipment with a property value for the success cases
         let tagged_invoice = InvoiceRow {
-            properties_v2: Some(json!({ "inbound_shipment_category": "CAT_1" })),
+            custom_fields: Some(json!({ "inbound_shipment_category": "CAT_1" })),
             ..mock_inbound_shipment_a()
         };
         InvoiceRowRepository::new(&connection)
@@ -190,15 +190,15 @@ mod test {
 
         let category_condition = json!({
             "And": [
-                { "Property": { "key": "inbound_shipment_category", "filter": { "Option": { "Equal": "CAT_1" } } } }
+                { "CustomField": { "key": "inbound_shipment_category", "filter": { "Option": { "Equal": "CAT_1" } } } }
             ]
         });
         let single_scope_error = json!({
-            "details": "dynamicFilter requires the invoice type (argument or filter) to specify a single invoice type with property support"
+            "details": "dynamicFilter requires the invoice type (argument or filter) to specify a single invoice type with custom field support"
         });
 
         // dynamicFilter without a type (argument or filter) can't resolve a
-        // single properties scope
+        // single custom fields scope
         let variables = Some(json!({
           "filter": { "dynamicFilter": category_condition.clone() }
         }));
@@ -230,7 +230,7 @@ mod test {
           "type": ["INBOUND_SHIPMENT"],
           "filter": {
             "dynamicFilter": {
-                "Property": { "key": "not_a_key", "filter": { "Text": { "Like": "abc" } } }
+                "CustomField": { "key": "not_a_key", "filter": { "Text": { "Like": "abc" } } }
             }
           }
         }));

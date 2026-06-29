@@ -3,7 +3,7 @@ import {
   AppBarContentPortal,
   FilterMenu,
   Box,
-  buildPropertyFilterDefinitions,
+  buildCustomFieldFilterDefinitions,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useName } from '../api';
@@ -12,9 +12,9 @@ import { useName } from '../api';
  * filters only (regular fields can join as they become filterable). */
 export const Toolbar = (): ReactElement | null => {
   const t = useTranslation();
-  const { data: properties } = useName.document.propertiesV2();
+  const { data: properties } = useName.document.customFields();
 
-  const filters = buildPropertyFilterDefinitions(properties ?? [], {
+  const filters = buildCustomFieldFilterDefinitions(properties ?? [], {
     min: t('label.min'),
     max: t('label.max'),
     fromDate: t('label.from-date'),

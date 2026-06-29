@@ -1,6 +1,6 @@
 use crate::invoice::{
     can_cancel_invoice, check_invoice_exists, check_invoice_is_editable, check_invoice_type,
-    check_status_change, check_store, properties::check_unknown_properties_v2_key,
+    check_status_change, check_store, custom_fields::check_unknown_custom_fields_key,
     UpdatePrescriptionStatus,
 };
 use crate::validate::check_patient_exists;
@@ -40,9 +40,9 @@ pub fn validate(
         return Err(NotAPrescriptionInvoice);
     }
 
-    if let Some(properties) = &patch.properties_v2 {
+    if let Some(properties) = &patch.custom_fields {
         if let Some(unknown) =
-            check_unknown_properties_v2_key(connection, &invoice.r#type, properties)?
+            check_unknown_custom_fields_key(connection, &invoice.r#type, properties)?
         {
             return Err(UnknownPropertyKey(unknown));
         }

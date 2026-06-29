@@ -826,7 +826,7 @@ export type SupplierProgramSettingsFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    propertiesV2?: any | null;
+    customFields?: any | null;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   }>;
   orderTypes: Array<{
@@ -861,7 +861,7 @@ export type SupplierProgramSettingsQuery = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
     }>;
     orderTypes: Array<{

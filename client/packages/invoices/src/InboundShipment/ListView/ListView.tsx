@@ -31,7 +31,7 @@ import { InboundRowFragment, useInboundList, useInboundShipment } from '../api';
 import { Footer } from './Footer';
 import { LinkedCell } from './LinkedCell';
 import { SupplierCell } from './SupplierCell';
-import { useInvoicePropertiesV2 } from '../../common';
+import { useInvoiceCustomFields } from '../../common';
 
 const TABLE_ID = 'inbound-shipment-list-view';
 
@@ -50,7 +50,7 @@ export const InboundListView = () => {
   const { invoiceStatusOptions } = usePreferences();
   const { userHasPermission } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
-  const { data: properties } = useInvoicePropertiesV2(
+  const { data: properties } = useInvoiceCustomFields(
     InvoiceNodeType.InboundShipment
   );
 

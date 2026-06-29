@@ -39,10 +39,10 @@ pub struct UpdateOutboundShipment {
     pub expected_delivery_date: Option<NullableUpdate<NaiveDate>>,
     pub shipping_method_id: Option<NullableUpdate<String>>,
     pub backdated_datetime: Option<DateTime<Utc>>,
-    /// Patch of propertiesV2 key -> value merged into `invoice.properties_v2`
+    /// Patch of customFields key -> value merged into `invoice.custom_fields`
     /// (a JSON `null` deletes that key; keys absent from the patch are left
     /// as-is). Keys must be visible for the "outbound_shipment" scope.
-    pub properties_v2: Option<serde_json::Map<String, serde_json::Value>>,
+    pub custom_fields: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -56,7 +56,7 @@ pub enum UpdateOutboundShipmentError {
     CannotIssueInForeignCurrency,
     OtherPartyDoesNotExist,
     ShippingMethodDoesNotExist,
-    /// A propertiesV2 patch key is not a visible outbound shipment property.
+    /// A customFields patch key is not a visible outbound shipment property.
     UnknownPropertyKey(String),
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
@@ -513,7 +513,7 @@ mod test {
                 expected_delivery_date,
                 shipping_method_id: _,
                 backdated_datetime: _,
-                properties_v2: _,
+                custom_fields: _,
             } = get_update();
             InvoiceRow {
                 on_hold: on_hold.unwrap(),

@@ -6,10 +6,10 @@ import {
   mapPropertyFilters,
 } from '@openmsupply-client/common';
 import { useNameApi } from '../utils/useNameApi';
-import { useNamePropertiesV2 } from './useNamePropertiesV2';
+import { useNameCustomFields } from './useNameCustomFields';
 
 export const useNames = (type: 'customer' | 'supplier') => {
-  const { data: properties } = useNamePropertiesV2();
+  const { data: properties } = useNameCustomFields();
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
     filters: buildPropertyUrlFilterConfigs(properties ?? []),

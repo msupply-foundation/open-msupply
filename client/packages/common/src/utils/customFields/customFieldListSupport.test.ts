@@ -1,0 +1,280 @@
+import { CustomFieldNodeValueType } from '@common/types';
+import {
+  buildPropertyColumns,
+  buildCustomFieldFilterDefinitions,
+  buildPropertyUrlFilterConfigs,
+  mapPropertyFilters,
+  propertyUrlParam,
+  CustomFieldListDefinition,
+} from './customFieldListSupport';
+
+const def = (
+  overrides: Partial<CustomFieldListDefinition>
+): CustomFieldListDefinition => ({
+  key: 'key',
+  name: 'Name',
+  valueType: CustomFieldNodeValueType.Text,
+  options: [],
+  ...overrides,
+});
+
+const text = def({ key: 'note', name: 'Note' });
+const option = def({
+  key: 'category',
+  name: 'Category',
+  valueType: CustomFieldNodeValueType.Option,
+  options: [
+    { id: 'parent', name: 'Parent' },
+    { id: 'leaf_1', name: 'Leaf 1', parentOptionId: 'parent' },
+    { id: 'leaf_2', name: 'Leaf 2', parentOptionId: 'parent' },
+  ],
+});
+const number = def({
+  key: 'population',
+  name: 'Population',
+  valueType: CustomFieldNodeValueType.Integer,
+});
+const date = def({
+  key: 'opened',
+  name: 'Opened',
+  valueType: CustomFieldNodeValueType.Date,
+});
+const boolean = def({
+  key: 'active',
+  name: 'Active',
+  valueType: CustomFieldNodeValueType.Boolean,
+});
+
+const rangeLabels = {
+  min: 'Min',
+  max: 'Max',
+  fromDate: 'From date',
+  toDate: 'To date',
+};
+
+describe('buildCustomFieldFilterDefinitions', () => {
+  it('builds one definition per property by value type', () => {
+    const definitions = buildCustomFieldFilterDefinitions(
+      [text, option, number, date, boolean],
+      rangeLabels
+    );
+
+    expect(definitions).toEqual([
+      { type: 'text', name: 'Note', urlParameter: 'prop-note' },
+      {
+        type: 'hierarchicalEnum',
+        name: 'Category',
+        urlParameter: 'prop-category',
+        // whole hierarchy in display order — any level can be picked as a filter
+        options: [
+          { id: 'parent', name: 'Parent', depth: 0, isLeaf: false },
+          {
+            id: 'leaf_1',
+            name: 'Leaf 1',
+            parentOptionId: 'parent',
+            depth: 1,
+            isLeaf: true,
+          },
+          {
+            id: 'leaf_2',
+            name: 'Leaf 2',
+            parentOptionId: 'parent',
+            depth: 1,
+            isLeaf: true,
+          },
+        ],
+      },
+      {
+        type: 'group',
+        name: 'Population',
+        elements: [
+          {
+            type: 'number',
+            name: 'Population (Min)',
+            urlParameter: 'prop-population',
+            range: 'from',
+          },
+          {
+            type: 'number',
+            name: 'Population (Max)',
+            urlParameter: 'prop-population',
+            range: 'to',
+          },
+        ],
+      },
+      {
+        type: 'group',
+        name: 'Opened',
+        elements: [
+          {
+            type: 'date',
+            name: 'Opened (From date)',
+            urlParameter: 'prop-opened',
+            range: 'from',
+          },
+          {
+            type: 'date',
+            name: 'Opened (To date)',
+            urlParameter: 'prop-opened',
+            range: 'to',
+          },
+        ],
+      },
+      { type: 'boolean', name: 'Active', urlParameter: 'prop-active' },
+    ]);
+  });
+});
+
+describe('buildPropertyUrlFilterConfigs', () => {
+  it('maps value types to url filter conditions', () => {
+    expect(
+      buildPropertyUrlFilterConfigs([text, option, number, date, boolean])
+    ).toEqual([
+      { key: 'prop-note' },
+      { key: 'prop-category', condition: 'equalTo' },
+      { key: 'prop-population', condition: 'between' },
+      { key: 'prop-opened', condition: 'between' },
+      { key: 'prop-active', condition: '=' },
+    ]);
+  });
+});
+
+describe('mapPropertyFilters', () => {
+  const properties = [text, option, number, date, boolean];
+
+  it('passes through when there are no property entries', () => {
+    const filterBy = { firstName: { like: 'jo' } };
+    expect(mapPropertyFilters(filterBy, properties)).toEqual(filterBy);
+  });
+
+  it('strips property entries and builds the condition AST', () => {
+    const result = mapPropertyFilters(
+      {
+        firstName: { like: 'jo' },
+        [propertyUrlParam('note')]: { like: 'abc' },
+        [propertyUrlParam('category')]: { equalTo: 'leaf_1' },
+        // between entries arrive as strings (the url params skip parsing)
+        [propertyUrlParam('population')]: {
+          afterOrEqualTo: '100',
+          beforeOrEqualTo: '500',
+        },
+        [propertyUrlParam('opened')]: {
+          afterOrEqualTo: '2024-01-01',
+          beforeOrEqualTo: null,
+        },
+        [propertyUrlParam('active')]: true,
+      },
+      properties
+    );
+
+    expect(result).toEqual({
+      firstName: { like: 'jo' },
+      dynamicFilter: {
+        And: [
+          { Property: { key: 'note', filter: { Text: { Like: 'abc' } } } },
+          {
+            Property: {
+              key: 'category',
+              filter: { Option: { Equal: 'leaf_1' } },
+            },
+          },
+          {
+            Property: {
+              key: 'population',
+              filter: { Number: { GreaterThanOrEqual: 100 } },
+            },
+          },
+          {
+            Property: {
+              key: 'population',
+              filter: { Number: { LowerThanOrEqual: 500 } },
+            },
+          },
+          {
+            Property: {
+              key: 'opened',
+              filter: { Date: { GreaterThanOrEqual: '2024-01-01' } },
+            },
+          },
+          { Property: { key: 'active', filter: { Boolean: { Equal: true } } } },
+        ],
+      },
+    });
+  });
+
+  it('expands a parent option selection to itself plus all descendants', () => {
+    expect(
+      mapPropertyFilters(
+        { [propertyUrlParam('category')]: { equalTo: 'parent' } },
+        properties
+      )
+    ).toEqual({
+      dynamicFilter: {
+        Property: {
+          key: 'category',
+          filter: { Option: { In: ['parent', 'leaf_1', 'leaf_2'] } },
+        },
+      },
+    });
+  });
+
+  it('keeps an exact match for an option id not in the definition', () => {
+    expect(
+      mapPropertyFilters(
+        { [propertyUrlParam('category')]: { equalTo: 'not_synced_yet' } },
+        properties
+      )
+    ).toEqual({
+      dynamicFilter: {
+        Property: {
+          key: 'category',
+          filter: { Option: { Equal: 'not_synced_yet' } },
+        },
+      },
+    });
+  });
+
+  it('sends a single condition without an And wrapper', () => {
+    expect(
+      mapPropertyFilters(
+        { [propertyUrlParam('note')]: { like: 'abc' } },
+        properties
+      )
+    ).toEqual({
+      dynamicFilter: {
+        Property: { key: 'note', filter: { Text: { Like: 'abc' } } },
+      },
+    });
+  });
+
+  it('ignores property entries without a matching definition', () => {
+    expect(
+      mapPropertyFilters({ 'prop-unknown': { like: 'x' } }, properties)
+    ).toEqual(null);
+  });
+});
+
+describe('buildPropertyColumns', () => {
+  const localisedDate = (d: Date) => d.toISOString().slice(0, 10);
+
+  it('builds non-sortable columns that read and format customFields values', () => {
+    const columns = buildPropertyColumns([option, boolean], localisedDate);
+
+    expect(columns.map(c => ({ id: c.id, header: c.header }))).toEqual([
+      { id: 'prop-category', header: 'Category' },
+      { id: 'prop-active', header: 'Active' },
+    ]);
+    expect(columns.every(c => c.enableSorting === false)).toBe(true);
+
+    const row = { customFields: { category: 'leaf_1', active: true } };
+    // OPTION ids resolve to option names
+    expect(columns[0]?.accessorFn?.(row)).toBe('Leaf 1');
+    // BOOLEAN passes the raw value to the boolean column renderer
+    expect(columns[1]?.accessorFn?.(row)).toBe(true);
+  });
+
+  it('renders empty for rows without properties', () => {
+    const columns = buildPropertyColumns([text], localisedDate);
+    expect(columns[0]?.accessorFn?.({ customFields: null })).toBe('');
+  });
+});

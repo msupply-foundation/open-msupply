@@ -1006,7 +1006,6 @@
   "label.current-status": "Current status",
   "label.custom": "Custom",
   "label.custom-age-label": "Custom age label",
-  "label.custom-properties": "Custom properties",
   "label.customer": "Customer",
   "label.customer-amc/amd": "Customer AMC/AMD",
   "label.customer-months-of-stock": "Customer MOS",
@@ -2859,7 +2858,6 @@
   "title.confirm-delete-encounter": "Delete encounter",
   "title.create-campaign": "Create campaign",
   "title.create-site": "Create site",
-  "title.custom-fields": "Custom fields",
   "title.details": "Details",
   "title.edit-campaign": "Edit campaign",
   "title.edit-insurance": "Edit insurance policy",
@@ -2903,5 +2901,7 @@
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "error.failed-to-save-properties": "Failed to save properties"
+  "label.custom-fields": "Custom fields",
+  "messages.no-custom-fields": "No custom fields defined",
+  "error.failed-to-save-custom-fields": "Failed to save custom fields"
 }

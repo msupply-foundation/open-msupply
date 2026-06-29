@@ -121,9 +121,9 @@ Authored on OMS central, fans out to every v6 site. A few of these (notably `Nam
 
 ### v7-only, Central
 
-`PropertyV2`, `PropertyOptionV2`, `PropertyTableV2`
+`CustomField`, `CustomFieldOption`, `CustomFieldTable`
 
-The properties-v2 system: property definitions, their option values, and per-table visibility. Central data authored on OMS central, but tagged for **neither** legacy nor v6 — so it is served only over v7. Properties-v2 is a v7-era feature; a site still running v5/v6 during the transition never receives these tables (it would otherwise surface properties without the rest of the v7 infrastructure, and a v5/v6 remote must not author its own copy). The property *values* themselves are not here — they ride their host record (`Name`, `Item`) as an ordinary column.
+The custom-fields system: custom field definitions, their option values, and per-table visibility. Central data authored on OMS central, but tagged for **neither** legacy nor v6 — so it is served only over v7. Custom fields is a v7-era feature; a site still running v5/v6 during the transition never receives these tables (it would otherwise surface custom fields without the rest of the v7 infrastructure, and a v5/v6 remote must not author its own copy). The custom field *values* themselves are not here — they ride their host record (`Name`, `Item`) as an ordinary column.
 
 ### OMS-native, Remote
 

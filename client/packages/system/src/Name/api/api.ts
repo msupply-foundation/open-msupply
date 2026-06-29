@@ -206,11 +206,11 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       }
       throw new Error('Unable to fetch properties');
     },
-    propertiesV2: async () => {
-      const result = await sdk.namePropertiesV2();
+    customFields: async () => {
+      const result = await sdk.nameCustomFields();
 
-      if (result?.propertiesV2?.__typename === 'PropertyV2Connector') {
-        return result?.propertiesV2?.nodes;
+      if (result?.customFields?.__typename === 'CustomFieldConnector') {
+        return result?.customFields?.nodes;
       }
       throw new Error('Unable to fetch properties');
     },

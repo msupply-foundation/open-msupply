@@ -218,13 +218,13 @@ fn query() -> _ {
 
 type BoxedInvoiceQuery = IntoBoxed<'static, query, DBType>;
 
-// Dynamic query filter for the invoice table (propertiesV2 list filters).
+// Dynamic query filter for the invoice table (customFields list filters).
 // Compiles against the bare invoice table, applied to the joined query via a
 // `invoice::id.eq_any(subquery)` sub-select — same pattern as `NameCondition`.
 create_condition!(
     InvoiceCondition,
     invoice::table,
-    (Property, properties, invoice::properties_v2),
+    (CustomField, custom_fields, invoice::custom_fields),
 );
 
 fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {

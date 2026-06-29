@@ -20,7 +20,7 @@ import { ItemVariantsTab } from './Tabs/ItemVariants';
 import { ItemLedgerTab } from './Tabs/ItemLedger';
 import { StoreTab } from './Tabs/Store';
 import { AncillarySupplies } from './Tabs/AncillarySupplies';
-import { PropertiesTab } from './Tabs/Properties';
+import { CustomFieldsTab } from './Tabs/CustomFields';
 
 export const ItemDetailView = () => {
   const t = useTranslation();
@@ -114,8 +114,8 @@ export const ItemDetailView = () => {
   ];
 
   tabs.push({
-    Component: <PropertiesTab item={data} />,
-    value: t('label.properties'),
+    Component: <CustomFieldsTab item={data} />,
+    value: t('label.custom-fields'),
   });
 
   isCentralServer &&

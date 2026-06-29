@@ -9,7 +9,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        AllowedPropertyV2KeysByTableLoader, AncillaryItemsByAncillaryIdLoader,
+        AllowedCustomFieldKeysByTableLoader, AncillaryItemsByAncillaryIdLoader,
         AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDirectionsByItemIdLoader,
         ItemStatsLoaderInput, ItemStoreJoinLoader, ItemStoreJoinLoaderInput,
         ItemVariantsByItemIdLoader, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
@@ -82,23 +82,23 @@ impl ItemNode {
         &self.row().restricted_location_type_id
     }
 
-    /// Properties v2 values for this item. The raw `item.properties_v2` JSONB
+    /// Properties v2 values for this item. The raw `item.custom_fields` JSONB
     /// blob is filtered server-side to keys that are (a) defined in
-    /// `property_v2` and not soft-deleted, (b) marked visible for the `item`
-    /// table via `property_table_v2`. Stray keys never reach the client.
+    /// `custom_field` and not soft-deleted, (b) marked visible for the `item`
+    /// table via `custom_field_table`. Stray keys never reach the client.
     /// Imported from legacy mSupply `[item]user_field_1..7`; read-only.
-    pub async fn properties_v2(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
-        let Some(raw) = self.row().properties_v2.clone() else {
+    pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.row().custom_fields.clone() else {
             return Ok(None);
         };
 
-        let loader = ctx.get_loader::<DataLoader<AllowedPropertyV2KeysByTableLoader>>();
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByTableLoader>>();
         let allowed_keys = loader
             .load_one("item".to_string())
             .await?
             .unwrap_or_default();
 
-        Ok(Some(crate::types::filter_properties_v2(raw, &allowed_keys)))
+        Ok(Some(crate::types::filter_custom_fields(raw, &allowed_keys)))
     }
 
     pub async fn restricted_location_type(

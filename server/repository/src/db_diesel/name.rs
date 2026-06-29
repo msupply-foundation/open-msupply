@@ -320,7 +320,7 @@ type BoxedNameQuery = IntoBoxed<'static, query, DBType>;
 create_condition!(
     NameCondition,
     name::table,
-    (Property, properties, name::properties_v2),
+    (CustomField, custom_fields, name::custom_fields),
 );
 
 impl NameFilter {

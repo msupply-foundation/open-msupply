@@ -31,10 +31,10 @@ pub struct UpdateSupplierReturn {
     pub on_hold: Option<bool>,
     pub their_reference: Option<String>,
     pub transport_reference: Option<String>,
-    /// Patch of propertiesV2 key -> value merged into `invoice.properties_v2`
+    /// Patch of customFields key -> value merged into `invoice.custom_fields`
     /// (a JSON `null` deletes that key; keys absent from the patch are left
     /// as-is). Keys must be visible for the "supplier_return" scope.
-    pub properties_v2: Option<serde_json::Map<String, serde_json::Value>>,
+    pub custom_fields: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 #[derive(PartialEq, Debug, Clone)]

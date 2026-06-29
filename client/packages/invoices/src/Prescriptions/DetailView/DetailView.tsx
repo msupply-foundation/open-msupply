@@ -17,7 +17,7 @@ import {
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PrescriptionLineFragment, usePrescription } from '../api';
-import { InvoicePropertiesTab } from '../../common';
+import { InvoiceCustomFieldsTab } from '../../common';
 import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
@@ -107,15 +107,15 @@ export const PrescriptionDetailView = () => {
     },
     {
       Component: (
-        <InvoicePropertiesTab
+        <InvoiceCustomFieldsTab
           invoiceType={InvoiceNodeType.Prescription}
-          propertiesV2={data?.propertiesV2}
-          onSave={patch => update({ propertiesV2: patch })}
+          customFields={data?.customFields}
+          onSave={patch => update({ customFields: patch })}
           disabled={isDisabled}
           onEdit={setIsDirtyProperties}
         />
       ),
-      value: 'Properties',
+      value: 'custom-fields',
       confirmOnLeaving: isDirtyProperties,
     },
     {
