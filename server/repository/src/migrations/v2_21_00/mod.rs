@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_stock_relocation_header_fields;
 mod add_stock_relocation_line_table;
 
 pub(crate) struct V2_21_00;
@@ -14,7 +15,10 @@ impl Migration for V2_21_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_stock_relocation_line_table::Migrate)]
+        vec![
+            Box::new(add_stock_relocation_line_table::Migrate),
+            Box::new(add_stock_relocation_header_fields::Migrate),
+        ]
     }
 }
 
