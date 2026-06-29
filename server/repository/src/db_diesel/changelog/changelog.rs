@@ -433,7 +433,9 @@ pub struct ChangelogFilter;
 
 // Pull from OMS central
 impl ChangelogFilter {
-    pub fn all_data_for_site(
+    // Which changelog rows belong to this site, by distribution. Shared by
+    // `all_data_for_site` and `multi_device_all_data_for_site` so they can't drift.
+    fn site_distribution_conditions(
         site_id: i32,
         is_initialising: bool,
         sync_style_options: Option<SyncVersions>,
@@ -478,7 +480,21 @@ impl ChangelogFilter {
             inner_or_conditions.push(C::And(vec![pre_condition, condition]));
         }
 
-        let mut outer_and_condition = vec![C::Or(inner_or_conditions)];
+        C::Or(inner_or_conditions)
+    }
+
+    pub fn all_data_for_site(
+        site_id: i32,
+        is_initialising: bool,
+        sync_style_options: Option<SyncVersions>,
+    ) -> ChangelogCondition::Inner {
+        use ChangelogCondition as C;
+
+        let mut outer_and_condition = vec![Self::site_distribution_conditions(
+            site_id,
+            is_initialising,
+            sync_style_options,
+        )];
         // We want to avoid circular sync, when record arrive on central server from remote site
         // it is marked with the source_site_id = site that sent it, so when the site pulls data
         // in next iteration we exclude those record. But during initialisation we want to sync all records for the site
@@ -502,7 +518,9 @@ impl ChangelogFilter {
             .collect();
 
         C::And(vec![
-            Self::all_data_for_site(site_id, is_initialising, sync_style_options),
+            // No anti-circular exclusion: devices on a multi-device site share one site_id,
+            // so records the site sourced must still relay to its other devices.
+            Self::site_distribution_conditions(site_id, is_initialising, sync_style_options),
             C::table_name::any(table_names),
         ])
     }

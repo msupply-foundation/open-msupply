@@ -104,7 +104,7 @@ impl ChangelogTableName {
             },
 
             ActivityLog => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Remote],
                 distribution: vec![D::Remote],
                 transport: V5,
                 multi_device_site: true,
@@ -116,8 +116,8 @@ impl ChangelogTableName {
                 multi_device_site: false,
             },
             Location => SyncStyle {
-                authoring: vec![RemoteOwned],
-                distribution: vec![D::RemoteOwned],
+                authoring: vec![Remote],
+                distribution: vec![D::Remote],
                 transport: V5,
                 multi_device_site: true,
             },
@@ -140,7 +140,7 @@ impl ChangelogTableName {
                 multi_device_site: false,
             },
             Sensor => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Remote],
                 distribution: vec![D::Remote],
                 transport: V5,
                 multi_device_site: true,
@@ -170,13 +170,13 @@ impl ChangelogTableName {
                 multi_device_site: false,
             },
             TemperatureBreach => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Remote],
                 distribution: vec![D::Remote],
                 transport: V5,
                 multi_device_site: true,
             },
             TemperatureLog => SyncStyle {
-                authoring: vec![RemoteOwned],
+                authoring: vec![Remote],
                 distribution: vec![D::Remote],
                 transport: V5,
                 multi_device_site: true,
@@ -387,13 +387,13 @@ impl ChangelogTableName {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
                 transport: V5,
-                multi_device_site: false,
+                multi_device_site: true,
             },
             Currency => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
                 transport: V5,
-                multi_device_site: false,
+                multi_device_site: true,
             },
             DemographicIndicator => SyncStyle {
                 authoring: vec![Central],
