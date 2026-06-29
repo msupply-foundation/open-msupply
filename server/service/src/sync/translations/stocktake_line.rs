@@ -377,7 +377,7 @@ mod tests {
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_row::VVMStatusRow,
         ChangelogCondition, ChangelogRepository, ContextRow, ProgramRow, SyncAction, SyncRecordData,
-        CursorAndLimit, FilterBuilder, RowOrDelete,
+        CursorAndLimit, CursorWindow, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
 
@@ -567,6 +567,7 @@ mod tests {
                     cursor: -1,
                     limit: 1_000_000,
                 },
+                CursorWindow::default(),
             )
             .unwrap();
 

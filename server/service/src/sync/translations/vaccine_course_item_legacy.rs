@@ -137,6 +137,7 @@ mod tests {
                     cursor: cursor as i64,
                     limit: 100,
                 },
+                repository::CursorWindow::default(),
             )
             .unwrap()
             .rows

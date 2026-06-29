@@ -170,6 +170,7 @@ impl<'a> ChangelogRepository<'a> {
         &self,
         filter: ChangelogCondition::Inner,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
+        cursor_window: CursorWindow,
     ) -> Result<QueryWithData, RepositoryError> {
         let mut output_by_key: HashMap<(ChangelogTableName, String), RowOrDelete> = HashMap::new();
         let mut current_cursor = cursor;
@@ -186,6 +187,7 @@ impl<'a> ChangelogRepository<'a> {
                     cursor: current_cursor,
                     limit: need,
                 },
+                cursor_window,
             )?;
 
             if changelogs.is_empty() {
@@ -861,6 +863,7 @@ mod test {
                     cursor: 0,
                     limit: 10,
                 },
+                CursorWindow::default(),
             )
             .unwrap()
             .rows;
@@ -908,6 +911,7 @@ mod test {
                     cursor: 0,
                     limit: 3,
                 },
+                CursorWindow::default(),
             )
             .unwrap()
             .rows;
@@ -957,6 +961,7 @@ mod test {
                     cursor: 0,
                     limit: 2,
                 },
+                CursorWindow::default(),
             )
             .unwrap()
             .rows;
@@ -989,6 +994,7 @@ mod test {
                     cursor: 0,
                     limit: 100,
                 },
+                CursorWindow::default(),
             )
             .unwrap()
             .rows;
@@ -1037,6 +1043,7 @@ mod test {
                     cursor: 0,
                     limit: 2,
                 },
+                CursorWindow::default(),
             )
             .unwrap()
             .rows;
@@ -1098,6 +1105,7 @@ mod test {
                     cursor: 0,
                     limit: 2,
                 },
+                CursorWindow::default(),
             )
             .unwrap()
             .rows;

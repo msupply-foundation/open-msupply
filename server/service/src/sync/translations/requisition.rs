@@ -640,7 +640,7 @@ mod tests {
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
-        CursorAndLimit, FilterBuilder, RowOrDelete, SyncAction, SyncBufferRow, SyncRecordData,
+        CursorAndLimit, CursorWindow, FilterBuilder, RowOrDelete, SyncAction, SyncBufferRow, SyncRecordData,
     };
     use serde_json::json;
     use util::assert_variant;
@@ -754,6 +754,7 @@ mod tests {
                     cursor: -1,
                     limit: 1_000_000,
                 },
+                CursorWindow::default(),
             )
             .unwrap();
 

@@ -19,7 +19,7 @@ use super::{
 };
 
 use repository::{
-    ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, KeyType,
+    ChangelogCondition, ChangelogRepository, CursorAndLimit, CursorWindow, FilterBuilder, KeyType,
     KeyValueStoreRepository, QueryWithData, RepositoryError, StorageConnection,
     SyncBufferRepository,
 };
@@ -144,6 +144,7 @@ impl SynchroniserV6 {
         &self,
         connection: &StorageConnection,
         batch_size: u32,
+        cursor_window: CursorWindow,
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePushErrorV6> {
         let changelog_repo = ChangelogRepository::new(connection);
@@ -164,6 +165,7 @@ impl SynchroniserV6 {
                     cursor: cursor as i64,
                     limit: batch_size as i64,
                 },
+                cursor_window,
             )?;
 
             logger.progress(SyncStepProgress::PushCentralV6, remaining)?;

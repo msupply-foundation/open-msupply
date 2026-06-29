@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use repository::{
     ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    CompatibilityChangelogFilter, CursorAndLimit, FilterBuilder, PluginType, RepositoryError,
+    CompatibilityChangelogFilter, CursorAndLimit, CursorWindow, FilterBuilder, PluginType, RepositoryError,
     TransactionError,
 };
 use strum::Display;
@@ -133,6 +133,7 @@ impl ProcessorFilter {
                         cursor: cursor as i64,
                         limit: CHANGELOG_BATCH_SIZE as i64,
                     },
+                    CursorWindow::default(),
                 )
                 .map(|q| q.rows),
         }

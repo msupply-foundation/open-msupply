@@ -234,19 +234,19 @@ impl<'a> ChangelogRepository<'a> {
         &self,
         filter: ChangelogCondition::Inner,
         CursorAndLimit { cursor, limit }: CursorAndLimit,
+        cursor_window: CursorWindow,
     ) -> Result<ChangelogQuery, RepositoryError> {
         // Each sub-query scans at most this many cursor values. Bounding the cursor
         // range gives the planner a tight window to drive an index scan on
         // changelog_pkey, instead of a full bitmap scan + sort across the whole table.
-        // TODO make this configurable
-        const CURSOR_WINDOW: i64 = 250_000;
+        let cursor_window = cursor_window.get();
 
         let max_cursor = self.max_cursor()? as i64;
         let mut results: Vec<ChangelogRow> = Vec::new();
         let mut current_cursor = cursor;
 
         while (results.len() as i64) < limit && current_cursor < max_cursor {
-            let window_end = current_cursor.saturating_add(CURSOR_WINDOW).min(max_cursor);
+            let window_end = current_cursor.saturating_add(cursor_window).min(max_cursor);
             let remaining = limit - results.len() as i64;
 
             let sub_results =
@@ -312,7 +312,7 @@ impl<'a> ChangelogRepository<'a> {
 
         // Uncomment to print the generated SQL (e.g. from the ignored
         // `print_all_data_for_site_query_for_site_300` test):
-        // println!("{}", diesel::debug_query::<crate::DBType, _>(&query));
+        println!("{}", diesel::debug_query::<crate::DBType, _>(&query));
 
         Ok(query.load(self.connection.lock().connection())?)
     }
@@ -420,6 +420,35 @@ use crate::dynamic_query_filter::*;
 pub struct CursorAndLimit {
     pub cursor: i64,
     pub limit: i64,
+}
+
+/// Number of cursor values each changelog sub-query scans, passed to
+/// `ChangelogRepository::query`/`query_with_data`. Configurable per query type:
+/// normal sync pulls use the default, patient pulls use a larger window (patient
+/// records are sparse across the cursor space, so a wider window avoids many
+/// empty sub-queries). Set from yaml `sync.changelog_query_window`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CursorWindow(i64);
+
+impl CursorWindow {
+    /// Default window for normal (non-patient) queries.
+    pub const DEFAULT: i64 = 250_000;
+
+    /// Build from a configured value, clamped to at least 1 (defensive against
+    /// a misconfigured 0/negative yaml value causing no forward progress).
+    pub fn new(window: i64) -> Self {
+        CursorWindow(window.max(1))
+    }
+
+    pub fn get(self) -> i64 {
+        self.0
+    }
+}
+
+impl Default for CursorWindow {
+    fn default() -> Self {
+        CursorWindow(Self::DEFAULT)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -597,6 +626,31 @@ mod print_query_tests {
         // Mirrors a single cursor window of `ChangelogRepository::query`.
         // Values are illustrative (cursor window 0..=250_000, limit 100).
         let filter = ChangelogFilter::all_data_for_site(300, false, None);
+
+        ChangelogRepository::new(&connection)
+            .query_cursor_window(filter, 0, 250_000, 100)
+            .unwrap();
+    }
+
+    // Patient pull: changelog rows for the patient-synced tables whose patient resolves to a given
+    // name_id (the `patient_id::matching` subquery). Mirrors the filter built in
+    // `sync_v7::sync_on_central::patient_data_for_site`.
+    //
+    // To see the SQL: remove `#[ignore]`, uncomment the `debug_query` line inside
+    // `ChangelogRepository::query_cursor_window`, and run this test with --nocapture.
+    #[ignore]
+    #[actix_rt::test]
+    async fn print_patient_query_for_patient() {
+        let (_, connection, _, _) = crate::test_db::setup_all(
+            "print_patient_query_for_patient",
+            crate::mock::MockDataInserts::none(),
+        )
+        .await;
+
+        let filter = ChangelogCondition::And(vec![
+            ChangelogFilter::patient_data_for_site(300, None),
+            ChangelogCondition::patient_id::matching("some-patient-name-id".to_string()),
+        ]);
 
         ChangelogRepository::new(&connection)
             .query_cursor_window(filter, 0, 250_000, 100)

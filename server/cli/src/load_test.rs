@@ -590,6 +590,7 @@ impl LoadTest {
                         remote_push: 512,
                         central_pull: 512,
                     },
+                    changelog_query_window: Default::default(),
                     disable_integration_transaction: false,
                 }),
                 logging: None,

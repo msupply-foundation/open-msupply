@@ -40,6 +40,7 @@ pub trait SettingsServiceTrait: Sync + Send {
         let interval_seconds = key_value_store.get_i64(KeyType::SettingsSyncIntervalSeconds)?;
 
         let batch_size = ctx.batch_size.clone();
+        let changelog_query_window = ctx.changelog_query_window.clone();
         let disable_integration_transaction = ctx.disable_integration_transaction;
 
         // `?` inside this closure would result in closure returning `None`
@@ -50,6 +51,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 password_sha256: password_sha256?,
                 interval_seconds: interval_seconds? as u64,
                 batch_size,
+                changelog_query_window,
                 disable_integration_transaction,
             })
         };

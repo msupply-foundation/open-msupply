@@ -6,8 +6,9 @@ use std::{
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
-    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
-    RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
+    ChangelogCondition, ChangelogFilter, CursorWindow, EqualFilter, KeyType,
+    KeyValueStoreRepository, Pagination, RepositoryError, SiteFilter, SiteRepository, SiteRow,
+    SiteRowRepository, SourceSiteId,
     StorageConnection, SyncBufferRepository, SyncVersion,
 };
 use thiserror::Error;
@@ -300,6 +301,7 @@ pub async fn pull(
             filter,
             input.cursor,
             Some(input.batch_size),
+            CursorWindow::new(ctx.changelog_query_window.normal),
         )?;
 
         // Load test analyses these logs
@@ -384,7 +386,13 @@ pub async fn patient_data_for_site(
             ChangelogCondition::patient_id::matching(patient_id),
         ]);
 
-        let batch = SyncBatchV7::generate(&ctx.connection, filter, 0, None)?;
+        let batch = SyncBatchV7::generate(
+            &ctx.connection,
+            filter,
+            0,
+            None,
+            CursorWindow::new(ctx.changelog_query_window.patient),
+        )?;
 
         Ok(patient_data_for_site::Output {
             batch,

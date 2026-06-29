@@ -30,6 +30,13 @@
 #     remote_push: 1024
 #     remote_pull: 500
 #     central_pull: 500
+#   # Cursor window (in cursor values) each changelog sub-query scans. Bounds the
+#   # scan so the planner can drive an index scan rather than a full-table scan/sort.
+#   # Patient pulls use a larger window because patient records are sparse across the
+#   # cursor space. Values below 1 are clamped to 1.
+#   changelog_query_window:
+#     normal: 250000     # normal (non-patient) pulls and pushes
+#     patient: 5000000   # patient data pulls
 #   # Set to true to disable the outer transaction during integration. This can prevent PostgreSQL
 #   # from exhausting max_locks_per_transaction during large store migrations. Use with caution.
 #   disable_integration_transaction: false

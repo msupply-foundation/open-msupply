@@ -11,7 +11,7 @@ use crate::{
     },
     test_db::{self, setup_all, setup_all_with_data},
     ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType,
-    ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, InvoiceLineRow,
+    ChangelogTableName, CurrencyRow, CursorAndLimit, CursorWindow, FilterBuilder, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType, KeyValueStoreRepository,
     LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
     RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow,
@@ -28,7 +28,11 @@ fn delete_all_changelog(connection: &StorageConnection) {
 
 fn query_all(connection: &StorageConnection, cursor: i64, limit: i64) -> Vec<ChangelogRow> {
     ChangelogRepository::new(connection)
-        .query(ChangelogCondition::True(), CursorAndLimit { cursor, limit })
+        .query(
+            ChangelogCondition::True(),
+            CursorAndLimit { cursor, limit },
+            CursorWindow::default(),
+        )
         .unwrap()
         .rows
 }
@@ -258,6 +262,7 @@ async fn test_changelog_filter() {
                     cursor: 0,
                     limit: 20
                 },
+                CursorWindow::default(),
             )
             .unwrap()
             .rows,
@@ -276,6 +281,7 @@ async fn test_changelog_filter() {
                     cursor: 0,
                     limit: 20
                 },
+                CursorWindow::default(),
             )
             .unwrap()
             .rows,
@@ -291,6 +297,7 @@ async fn test_changelog_filter() {
                     cursor: 0,
                     limit: 20
                 },
+                CursorWindow::default(),
             )
             .unwrap()
             .rows,
@@ -332,6 +339,7 @@ fn test_changelog_name_and_store_id<T, F>(
                 cursor: -1,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows
@@ -676,6 +684,7 @@ async fn test_changelog_outgoing_sync_records() {
                 cursor: cursor_before,
                 limit: 10,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -698,6 +707,7 @@ async fn test_changelog_outgoing_sync_records() {
                 cursor: cursor_before,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -733,6 +743,7 @@ async fn test_changelog_outgoing_sync_records() {
                 cursor: cursor_before,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -748,6 +759,7 @@ async fn test_changelog_outgoing_sync_records() {
                 cursor: cursor_before,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -762,6 +774,7 @@ async fn test_changelog_outgoing_sync_records() {
                 cursor: cursor_before,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -790,6 +803,7 @@ async fn test_changelog_outgoing_sync_records() {
                 cursor: cursor_before,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -804,6 +818,7 @@ async fn test_changelog_outgoing_sync_records() {
                 cursor: cursor_before,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -818,6 +833,7 @@ async fn test_changelog_outgoing_sync_records() {
                 cursor: cursor_before,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -847,6 +863,7 @@ async fn test_changelog_outgoing_sync_records() {
                 cursor: cursor_before,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -892,6 +909,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 cursor: cursor_before,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -909,6 +927,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 cursor: cursor_before,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -927,6 +946,7 @@ async fn test_changelog_outgoing_patient_sync_records() {
                 cursor: cursor + 500,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap()
         .rows;
@@ -1003,6 +1023,7 @@ async fn test_max_cursor_clamped_by_in_flight_tx() {
                 cursor: cursor_before,
                 limit: 100,
             },
+            CursorWindow::default(),
         )
         .unwrap();
     assert!(
@@ -1030,6 +1051,7 @@ async fn test_max_cursor_clamped_by_in_flight_tx() {
                 cursor: cursor_before,
                 limit: 100,
             },
+            CursorWindow::default(),
         )
         .unwrap();
     assert_eq!(rows_after.rows.len(), 1);

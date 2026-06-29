@@ -344,7 +344,7 @@ mod tests {
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, ContextRow, ProgramRow, SyncAction, SyncRecordData,
-        CursorAndLimit, FilterBuilder, RowOrDelete,
+        CursorAndLimit, CursorWindow, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
 
@@ -519,6 +519,7 @@ mod tests {
                     cursor: -1,
                     limit: 1_000_000,
                 },
+                CursorWindow::default(),
             )
             .unwrap();
 

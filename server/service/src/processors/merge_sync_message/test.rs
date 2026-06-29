@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
     mock::{MockData, MockDataInserts},
-    ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, FilterBuilder,
+    ChangelogCondition, ChangelogRepository, ChangelogTableName, CursorAndLimit, CursorWindow, FilterBuilder,
     NameLinkRow, NameLinkRowRepository, SyncMessageRow, SyncMessageRowRepository,
     SyncMessageRowStatus, SyncMessageRowType,
 };
@@ -134,6 +134,7 @@ async fn sync_message_changelog_carries_to_store_id() {
                 cursor: 0,
                 limit: 1000,
             },
+            CursorWindow::default(),
         )
         .unwrap();
 

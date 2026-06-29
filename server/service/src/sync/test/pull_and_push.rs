@@ -98,6 +98,7 @@ async fn test_sync_pull_and_push() {
                 cursor: push_cursor as i64,
                 limit: 100000,
             },
+            repository::CursorWindow::default(),
         )
         .unwrap()
         .rows;

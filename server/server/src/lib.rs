@@ -157,6 +157,11 @@ pub async fn start_server(
         .as_ref()
         .map(|s| s.batch_size.clone())
         .unwrap_or_default();
+    let changelog_query_window = settings
+        .sync
+        .as_ref()
+        .map(|s| s.changelog_query_window.clone())
+        .unwrap_or_default();
     let disable_integration_transaction = settings
         .sync
         .as_ref()
@@ -171,6 +176,7 @@ pub async fn start_server(
         settings.mail.clone(),
         subscription_trigger,
         batch_size,
+        changelog_query_window,
         disable_integration_transaction,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;

@@ -18,7 +18,7 @@ use crate::{
     sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
 };
 use repository::{
-    ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CursorAndLimit,
+    ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CursorAndLimit, CursorWindow,
     EqualFilter, FilterBuilder, Invoice, InvoiceFilter, InvoiceRepository, InvoiceStatus,
     InvoiceType, KeyType, RepositoryError, Requisition, RowActionType, StorageConnection,
 };
@@ -173,6 +173,7 @@ pub(crate) fn process_invoice_transfers(
                     cursor: cursor as i64,
                     limit: CHANGELOG_BATCH_SIZE as i64,
                 },
+                CursorWindow::default(),
             )
             .map_err(Error::DatabaseError)?
             .rows;

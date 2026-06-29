@@ -5,7 +5,7 @@ mod test_sync_v7_client_api {
     use repository::mock::MockData;
     use repository::{
         migrations::Version, mock::MockDataInserts, ChangelogCondition, ChangelogRepository,
-        ChangelogRow, ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, ItemRow,
+        ChangelogRow, ChangelogTableName, CurrencyRow, CursorAndLimit, CursorWindow, FilterBuilder, ItemRow,
         KeyType, KeyValueStoreRepository, NameRow, RowActionType, StockLineRow, StorageConnection,
         StoreRow, SyncBufferRepository, UnitRow, Upsert,
     };
@@ -403,6 +403,7 @@ mod test_sync_v7_client_api {
                     cursor: -1,
                     limit: 100,
                 },
+                CursorWindow::default(),
             )
             .unwrap()
             .rows;

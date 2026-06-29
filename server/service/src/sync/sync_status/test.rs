@@ -570,6 +570,7 @@ async fn run_server_and_sync(
             remote_push: 1,
             central_pull: 1,
         },
+        changelog_query_window: Default::default(),
         disable_integration_transaction: false,
     };
 

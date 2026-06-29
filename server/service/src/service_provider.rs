@@ -74,7 +74,7 @@ use crate::{
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
     sync::{
-        settings::BatchSize,
+        settings::{BatchSize, ChangelogQueryWindow},
         site_auth::{SiteAuthService, SiteAuthTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
@@ -212,6 +212,7 @@ pub struct ServiceProvider {
     pub subscription_trigger: SubscriptionTriggerHandle,
     // Yaml only fields ----- Not stored in KV store
     pub(crate) batch_size: BatchSize,
+    pub(crate) changelog_query_window: ChangelogQueryWindow,
     pub(crate) disable_integration_transaction: bool,
 }
 
@@ -222,6 +223,7 @@ pub struct ServiceContext {
     pub user_id: String,
     pub store_id: String,
     pub batch_size: BatchSize,
+    pub changelog_query_window: ChangelogQueryWindow,
     pub disable_integration_transaction: bool,
 }
 
@@ -241,6 +243,7 @@ impl ServiceProvider {
             None, // Mail not required for test/CLI setups
             SubscriptionTriggerHandle::new_void(),
             BatchSize::default(),
+            ChangelogQueryWindow::default(),
             false,
         )
     }
@@ -254,6 +257,7 @@ impl ServiceProvider {
         mail_settings: Option<MailSettings>,
         subscription_trigger: SubscriptionTriggerHandle,
         batch_size: BatchSize,
+        changelog_query_window: ChangelogQueryWindow,
         disable_integration_transaction: bool,
     ) -> Self {
         ServiceProvider {
@@ -280,6 +284,7 @@ impl ServiceProvider {
             report_service: Box::new(ReportService {}),
             settings: Box::new(SettingsService),
             batch_size,
+            changelog_query_window,
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
             form_schema_service: Box::new(FormSchemaService {}),
@@ -349,6 +354,7 @@ impl ServiceProvider {
             store_id: "".to_string(),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
+            changelog_query_window: self.changelog_query_window.clone(),
             disable_integration_transaction: self.disable_integration_transaction,
         })
     }
@@ -364,6 +370,7 @@ impl ServiceProvider {
             store_id: store_id.unwrap_or("".to_string()),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
+            changelog_query_window: self.changelog_query_window.clone(),
             disable_integration_transaction: self.disable_integration_transaction,
         })
     }
@@ -380,6 +387,7 @@ impl ServiceProvider {
             store_id,
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
+            changelog_query_window: self.changelog_query_window.clone(),
             disable_integration_transaction: self.disable_integration_transaction,
         })
     }
@@ -400,6 +408,7 @@ impl ServiceContext {
             store_id: "".to_string(),
             frontend_plugins_cache: FrontendPluginCache::new(),
             batch_size: BatchSize::default(),
+            changelog_query_window: ChangelogQueryWindow::default(),
             disable_integration_transaction: false,
         }
     }

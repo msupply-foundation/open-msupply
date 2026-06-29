@@ -6,7 +6,7 @@ use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
     AppVersion, ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogTableName,
-    CursorAndLimit, KeyType, KeyValueStoreRepository, QueryWithData, RowActionType,
+    CursorAndLimit, CursorWindow, KeyType, KeyValueStoreRepository, QueryWithData, RowActionType,
     StorageConnection, SyncAction, SyncBufferRepository, SyncBufferRowInsert, SyncRecordData,
     SyncVersion,
 };
@@ -17,7 +17,7 @@ use crate::{
     cursor_controller::CursorController,
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
-        settings::{BatchSize, SyncSettings},
+        settings::{BatchSize, ChangelogQueryWindow, SyncSettings},
         site_auth::{RequestAndSetSiteAuthError, SiteAuthService, SiteAuthTrait},
         synchroniser::run_post_sync_triggers,
         ActiveStoresOnSite,
@@ -65,6 +65,7 @@ impl SyncBatchV7 {
         filter: ChangelogCondition::Inner,
         cursor: i64,
         batch_size: Option<u32>,
+        cursor_window: CursorWindow,
     ) -> Result<SyncBatchV7, SyncError> {
         let site_id = get_current_site_id(connection)?;
         let repo = ChangelogRepository::new(connection);
@@ -80,6 +81,7 @@ impl SyncBatchV7 {
                 cursor,
                 limit: batch_size.map_or(i64::MAX, |n| n as i64),
             },
+            cursor_window,
         )?;
 
         let records = rows
@@ -226,6 +228,7 @@ async fn load_or_request_auth<'a>(
             auth_headers: common.to_auth_headers()?,
         },
         batch_size: settings.batch_size.clone(),
+        changelog_query_window: settings.changelog_query_window.clone(),
     })
 }
 
@@ -261,6 +264,7 @@ pub(crate) struct SyncV7<'a> {
     pub(crate) connection: &'a StorageConnection,
     pub(crate) sync_api_v7: SyncApiV7,
     pub(crate) batch_size: BatchSize,
+    pub(crate) changelog_query_window: ChangelogQueryWindow,
 }
 
 impl<'a> SyncV7<'a> {
@@ -291,6 +295,7 @@ impl<'a> SyncV7<'a> {
                 filter.clone(),
                 cursor,
                 Some(self.batch_size.remote_push),
+                CursorWindow::new(self.changelog_query_window.normal),
             )?;
 
             let remaining = batch.remaining;

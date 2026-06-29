@@ -227,6 +227,8 @@ mod email_test {
     use crate::processors::ProcessorsTrigger;
     use crate::service_provider::ServiceProvider;
     use crate::settings::MailSettings;
+    use crate::sync::settings::{BatchSize, ChangelogQueryWindow};
+    use crate::subscription::SubscriptionTriggerHandle;
     use crate::sync::synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger};
     use repository::mock::MockDataInserts;
     use repository::test_db::setup_all;
@@ -251,6 +253,10 @@ mod email_test {
                 from: "no-reply@msupply.foundation".to_string(),
                 interval: 1,
             }),
+            SubscriptionTriggerHandle::new_void(),
+            BatchSize::default(),
+            ChangelogQueryWindow::default(),
+            false,
         );
         let email_service = service_provider.email_service;
         let test = email_service.test_connection().unwrap();

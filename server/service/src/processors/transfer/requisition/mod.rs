@@ -7,7 +7,7 @@ pub(crate) mod update_request_requisition_status;
 pub(crate) mod test;
 
 use repository::{
-    ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CursorAndLimit,
+    ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CursorAndLimit, CursorWindow,
     FilterBuilder, KeyType, RepositoryError, Requisition, RowActionType, StorageConnection,
 };
 use thiserror::Error;
@@ -131,6 +131,7 @@ pub(crate) fn process_requisition_transfers(
                     cursor: cursor as i64,
                     limit: CHANGELOG_BATCH_SIZE as i64,
                 },
+                CursorWindow::default(),
             )
             .map_err(Error::DatabaseError)?
             .rows;

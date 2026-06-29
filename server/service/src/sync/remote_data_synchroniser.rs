@@ -16,7 +16,8 @@ use super::{
 
 use log::info;
 use repository::{
-    ChangelogFilter, ChangelogRepository, CursorAndLimit, KeyType, KeyValueStoreRepository,
+    ChangelogFilter, ChangelogRepository, CursorAndLimit, CursorWindow, KeyType,
+    KeyValueStoreRepository,
     LegacyDataFilterError, QueryWithData, RepositoryError, StorageConnection, SyncBufferRepository,
 };
 
@@ -187,6 +188,7 @@ impl RemoteDataSynchroniser {
         &self,
         connection: &StorageConnection,
         batch_size: u32,
+        cursor_window: CursorWindow,
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePushError> {
         let changelog_repo = ChangelogRepository::new(connection);
@@ -207,6 +209,7 @@ impl RemoteDataSynchroniser {
                     cursor: cursor as i64,
                     limit: batch_size as i64,
                 },
+                cursor_window,
             )?;
 
             logger.progress(SyncStepProgress::Push, remaining)?;

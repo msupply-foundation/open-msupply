@@ -1093,7 +1093,7 @@ mod tests {
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository,
-        CursorAndLimit, DiagnosisRow, FilterBuilder, InsuranceProviderRow, KeyType,
+        CursorAndLimit, CursorWindow, DiagnosisRow, FilterBuilder, InsuranceProviderRow, KeyType,
         KeyValueStoreRow, RowOrDelete, ShippingMethodRow, SyncAction, SyncRecordData,
     };
     use serde_json::json;
@@ -1226,6 +1226,7 @@ mod tests {
                     cursor: -1,
                     limit: 1_000_000,
                 },
+                CursorWindow::default(),
             )
             .unwrap();
 

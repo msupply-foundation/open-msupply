@@ -5,7 +5,7 @@ use std::{
 
 use actix_multipart::form::tempfile::TempFile;
 use repository::{
-    ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit, FilterBuilder,
+    ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit, CursorWindow, FilterBuilder,
     QueryWithData, SyncBufferRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository,
     SyncVersions,
 };
@@ -96,6 +96,7 @@ pub async fn pull(
             cursor: adjust_v6_cursor(cursor),
             limit: batch_size as i64,
         },
+        CursorWindow::default(),
     )?;
 
     let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
@@ -251,6 +252,7 @@ pub async fn patient_pull(
             cursor: adjust_v6_cursor(cursor),
             limit: batch_size as i64,
         },
+        CursorWindow::default(),
     )?;
 
     let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(

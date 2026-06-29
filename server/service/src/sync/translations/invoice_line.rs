@@ -606,7 +606,7 @@ mod tests {
         mock::{mock_item_a, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder, KeyType,
+        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, CursorWindow, FilterBuilder, KeyType,
         KeyValueStoreRow, ProgramRow,
         SyncAction, SyncRecordData, RowOrDelete,
     };
@@ -705,6 +705,7 @@ mod tests {
                     cursor: -1,
                     limit: 1_000_000,
                 },
+                CursorWindow::default(),
             )
             .unwrap();
 

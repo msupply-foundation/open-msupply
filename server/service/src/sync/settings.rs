@@ -14,6 +14,9 @@ pub struct SyncSettings {
     // Number of records to pull or push in one API call
     #[serde(default)]
     pub batch_size: BatchSize,
+    /// Cursor window sizes for changelog queries (see `ChangelogRepository`).
+    #[serde(default)]
+    pub changelog_query_window: ChangelogQueryWindow,
     /// Disable the outer transaction wrapping integration. Set to true if PostgreSQL runs out of
     /// shared memory (max_locks_per_transaction) during large initial syncs.
     #[serde(default)]
@@ -33,6 +36,28 @@ impl Default for BatchSize {
             remote_pull: 500,
             remote_push: 1024,
             central_pull: 500,
+        }
+    }
+}
+
+/// Cursor window sizes (in cursor values) for changelog queries. The window
+/// bounds each changelog sub-query so the planner can drive an index scan
+/// rather than scanning the whole table; see `ChangelogRepository::query_with_window`.
+/// Patient pulls use a larger window because patient records are sparse across
+/// the cursor space, so a narrow window wastes iterations on empty sub-queries.
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+pub struct ChangelogQueryWindow {
+    /// Window for normal (non-patient) changelog pulls.
+    pub normal: i64,
+    /// Window for patient data pulls.
+    pub patient: i64,
+}
+
+impl Default for ChangelogQueryWindow {
+    fn default() -> Self {
+        Self {
+            normal: 250_000,
+            patient: 5_000_000,
         }
     }
 }

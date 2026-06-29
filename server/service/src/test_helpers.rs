@@ -14,7 +14,7 @@ use crate::{
     settings::{DiscoveryMode, MailSettings, ServerSettings, Settings},
     subscription::SubscriptionTriggerHandle,
     sync::{
-        settings::BatchSize,
+        settings::{BatchSize, ChangelogQueryWindow},
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
     },
 };
@@ -82,6 +82,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         settings.mail.clone(),
         SubscriptionTriggerHandle::new_void(),
         BatchSize::default(),
+        ChangelogQueryWindow::default(),
         false,
     ));
 

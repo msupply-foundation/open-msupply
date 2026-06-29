@@ -7,7 +7,7 @@ use crate::{
 };
 use log::warn;
 use repository::{
-    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncAction,
+    CursorWindow, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncAction,
     SyncBufferRepository, SyncVersion,
 };
 
@@ -167,6 +167,8 @@ impl SynchroniserV5V6 {
         ctx: &'a ServiceContext,
     ) -> Result<(), SyncError> {
         let batch_size = &self.settings.batch_size;
+        // Push queries are normal (non-patient) changelog queries.
+        let push_cursor_window = CursorWindow::new(self.settings.changelog_query_window.normal);
         let sync_status_service = &self.service_provider.sync_status_service;
 
         if self.service_provider.settings.is_sync_disabled(ctx)? {
@@ -227,7 +229,12 @@ impl SynchroniserV5V6 {
         logger.start_step(SyncStep::PushCentralV6)?;
         if let (true, Some(v6_sync)) = (is_initialised, &v6_sync) {
             v6_sync
-                .push(&ctx.connection, batch_size.remote_push, logger)
+                .push(
+                    &ctx.connection,
+                    batch_size.remote_push,
+                    push_cursor_window,
+                    logger,
+                )
                 .await?;
 
             v6_sync
@@ -244,7 +251,12 @@ impl SynchroniserV5V6 {
         logger.start_step(SyncStep::Push)?;
         if is_initialised {
             self.remote
-                .push(&ctx.connection, batch_size.remote_push, logger)
+                .push(
+                    &ctx.connection,
+                    batch_size.remote_push,
+                    push_cursor_window,
+                    logger,
+                )
                 .await?;
             self.remote
                 .wait_for_sync_operation(

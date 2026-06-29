@@ -505,7 +505,7 @@ mod tests {
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
-        CursorAndLimit, FilterBuilder, RowOrDelete,
+        CursorAndLimit, CursorWindow, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
 
@@ -554,6 +554,7 @@ mod tests {
                     cursor: -1,
                     limit: 1_000_000,
                 },
+                CursorWindow::default(),
             )
             .unwrap();
 
