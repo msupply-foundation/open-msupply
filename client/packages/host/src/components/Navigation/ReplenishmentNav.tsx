@@ -39,7 +39,7 @@ export const ReplenishmentNav = ({
         text={t('replenishment')}
         isParent
       />
-      <Collapse in={isActive}>
+      <Collapse in={isActive} timeout={0}>
         <List>
           <AppNavLink
             visible={useProcurement && !isExtraSmallScreen}

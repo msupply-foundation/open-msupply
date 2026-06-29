@@ -25,7 +25,7 @@ export const DistributionNav: FC = () => {
         icon={<TruckIcon color="primary" fontSize="small" />}
         text={t('distribution')}
       />
-      <Collapse in={isActive}>
+      <Collapse in={isActive} timeout={0}>
         <List>
           <AppNavLink
             to={RouteBuilder.create(AppRoute.Distribution)

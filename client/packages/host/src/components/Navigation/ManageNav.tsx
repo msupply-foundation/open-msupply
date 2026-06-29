@@ -34,7 +34,7 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
         icon={<SlidersIcon color="primary" fontSize="small" />}
         text={t('manage')}
       />
-      <Collapse in={isActive}>
+      <Collapse in={isActive} timeout={0}>
         <List>
           <AppNavLink
             visible={isCentralServer}

@@ -8,14 +8,14 @@ import {
 } from '@openmsupply-client/common';
 
 export const AppDrawerIcon: React.FC = () => {
-  const drawer = useDrawer();
+  const isOpen = useDrawer(s => s.isOpen);
   const theme = useTheme();
   const [customLogo] = useLocalStorage('/theme/logo');
 
   if (!customLogo)
-    return <AnimatedMSupplyGuy size={drawer.isOpen ? 'large' : 'medium'} />;
+    return <AnimatedMSupplyGuy size={isOpen ? 'large' : 'medium'} />;
 
-  const style = drawer.isOpen
+  const style = isOpen
     ? { paddingTop: 20, width: 64, fill: theme.mixins.drawer?.iconColor }
     : { width: 30, fill: theme.mixins.drawer?.iconColor };
 

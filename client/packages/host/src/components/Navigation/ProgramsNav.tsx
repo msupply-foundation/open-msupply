@@ -31,7 +31,7 @@ export const ProgramsNav = ({ store }: { store?: UserStoreNodeFragment }) => {
         icon={<InvoiceIcon color="primary" fontSize="small" />}
         text={t('programs')}
       />
-      <Collapse in={isActive}>
+      <Collapse in={isActive} timeout={0}>
         <List>
           <AppNavLink
             visible={immunisationsVisible}

@@ -1,17 +1,6 @@
 import React, { FC } from 'react';
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 import { styled } from '@mui/material/styles';
-import { keyframes } from '@mui/styled-engine';
-
-const spin = keyframes`
-  from {transform:rotate(0deg);}
-  to {transform:rotate(360deg);}
-}`;
-
-const otherSpin = keyframes`
-  from {transform:rotate(360deg);}
-  to {transform:rotate(0deg);}
-}`;
 
 const sizes = {
   large: { height: 60, width: 45 },
@@ -65,17 +54,4 @@ export const MSupplyGuy: FC<MSupplyGuyProps> = (svgProps): JSX.Element => (
   <SvgGuy {...svgProps} />
 );
 
-export const AnimatedMSupplyGuy = styled(SvgGuy)(({ theme, size }) => {
-  const animationStyle = {
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    '&:hover': {
-      animation:
-        size === 'large' ? `${spin} 1s  ease` : `${otherSpin} 1s 1 ease`,
-    },
-  };
-
-  return { ...animationStyle };
-});
+export const AnimatedMSupplyGuy = styled(SvgGuy)(() => ({}));

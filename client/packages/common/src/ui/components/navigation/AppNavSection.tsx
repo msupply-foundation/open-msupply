@@ -5,7 +5,7 @@ import { useDrawer } from '@common/hooks';
 export const AppNavSection: FC<
   PropsWithChildren<{ isActive: boolean; to: string }>
 > = ({ children, isActive }) => {
-  const { isOpen } = useDrawer();
+  const isOpen = useDrawer(s => s.isOpen);
 
   // the div is picking up styles from parent objects and ends up wider than it should be
   return isOpen ? (

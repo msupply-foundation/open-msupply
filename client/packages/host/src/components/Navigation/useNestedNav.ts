@@ -7,7 +7,8 @@ const matchPath = (path: string, clickedNavPath?: string) =>
   `/${clickedNavPath?.replace(/^\//, '')}/`.startsWith(path.replace(/\*$/, ''));
 
 export const useNestedNav = (path: string): NestedNavState => {
-  const { clickedNavPath, isOpen } = useDrawer();
+  const clickedNavPath = useDrawer(s => s.clickedNavPath);
+  const isOpen = useDrawer(s => s.isOpen);
   const match = useMatch(path);
 
   const isActive =

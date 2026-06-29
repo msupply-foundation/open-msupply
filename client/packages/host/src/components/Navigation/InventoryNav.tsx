@@ -25,7 +25,7 @@ export const InventoryNav: FC = () => {
         icon={<StockIcon color="primary" fontSize="small" />}
         text={t('inventory')}
       />
-      <Collapse in={isActive}>
+      <Collapse in={isActive} timeout={0}>
         <List>
           <AppNavLink
             to={RouteBuilder.create(AppRoute.Inventory)

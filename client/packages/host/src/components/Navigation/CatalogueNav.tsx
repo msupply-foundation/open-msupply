@@ -25,7 +25,7 @@ export const CatalogueNav = () => {
         icon={<ListIcon color="primary" style={{ width: 20 }} />}
         text={t('catalogue')}
       />
-      <Collapse in={isActive}>
+      <Collapse in={isActive} timeout={0}>
         <List>
           <AppNavLink
             to={RouteBuilder.create(AppRoute.Catalogue)

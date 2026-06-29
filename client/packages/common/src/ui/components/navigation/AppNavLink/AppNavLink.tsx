@@ -84,16 +84,17 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
     visible = true,
     onClick,
   } = props;
-  const drawer = useDrawer();
+  const isDrawerOpen = useDrawer(s => s.isOpen);
 
-  const selected = useSelectedNavMenuItem(to, isParent, drawer.isOpen);
+  const selected = useSelectedNavMenuItem(to, isParent, isDrawerOpen);
   const match = useMatch({ path: `${to}/*` });
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const isSelectedParentItem = isParent && !!match;
-  const showMenuSectionIcon = isParent && drawer.isOpen;
+  const showMenuSectionIcon = isParent && isDrawerOpen;
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     // reset the clicked nav path when navigating
     // otherwise the child menu remains open
+    const drawer = useDrawer.getState();
     drawer.setClickedNavPath(undefined);
     if (isExtraSmallScreen) drawer.close();
     if (onClick) onClick(e);
@@ -106,7 +107,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
         isParent ? (
           <span
             {...linkProps}
-            onClick={() => drawer.onExpand(to)}
+            onClick={() => useDrawer.getState().onExpand(to)}
             data-testid={`${to}_hover`}
           />
         ) : (
@@ -129,7 +130,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
       <ListItemButton
         sx={{
           ...getListItemCommonStyles(),
-          justifyContent: drawer.isOpen ? 'flex-start' : 'center',
+          justifyContent: isDrawerOpen ? 'flex-start' : 'center',
           '&.MuiListItemButton-root:hover': {
             backgroundColor: 'transparent',
           },
@@ -171,7 +172,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
                     }
                   : undefined,
 
-              '& .MuiBadge-badge:not(.MuiBadge-invisible)': drawer.isOpen
+              '& .MuiBadge-badge:not(.MuiBadge-invisible)': isDrawerOpen
                 ? {
                     transform: 'scale(0.75) translate(100%, 0)',
                   }
@@ -197,7 +198,7 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
           <ListItemIcon
             sx={{
               minWidth: 20,
-              display: selected && drawer.isOpen ? 'flex' : 'none',
+              display: selected && isDrawerOpen ? 'flex' : 'none',
               alignItems: 'center',
             }}
             className="chevron"

@@ -34,7 +34,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
         icon={<CustomersIcon color="primary" fontSize="small" />}
         text={t('dispensary')}
       />
-      <Collapse in={isActive}>
+      <Collapse in={isActive} timeout={0}>
         <List>
           <AppNavLink
             visible={visible}

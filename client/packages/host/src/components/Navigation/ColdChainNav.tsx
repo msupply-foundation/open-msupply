@@ -37,7 +37,10 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
         icon={<ThermometerIcon color="primary" fontSize="small" />}
         text={t('cold-chain')}
       />
-      <Collapse in={isExtraSmallScreen ? isExtraSmallScreen : isActive}>
+      <Collapse
+        in={isExtraSmallScreen ? isExtraSmallScreen : isActive}
+        timeout={0}
+      >
         <List>
           <AppNavLink
             visible={visible}
