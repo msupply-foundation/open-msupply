@@ -151,7 +151,7 @@ const useUpdateReport = () => {
     id: string;
     isActive: boolean;
   }) => {
-    const result = await reportApi.updateReport({ id, isActive });
+    const result = await reportApi.updateReport({ input: { id, isActive } });
     return result?.centralServer?.reports.updateReport;
   };
 

@@ -1426,8 +1426,7 @@ export type CentralReportMutationsInstallUploadedReportsArgs = {
 };
 
 export type CentralReportMutationsUpdateReportArgs = {
-  id: Scalars['String']['input'];
-  isActive: Scalars['Boolean']['input'];
+  input: UpdateReportInput;
 };
 
 export type CentralServerMutationNode = {
@@ -11324,6 +11323,11 @@ export type UpdatePurchaseOrderLineResponse =
   | UpdatePurchaseOrderLineError;
 
 export type UpdatePurchaseOrderResponse = IdResponse | UpdatePurchaseOrderError;
+
+export type UpdateReportInput = {
+  id: Scalars['String']['input'];
+  isActive: Scalars['Boolean']['input'];
+};
 
 export type UpdateReportNode = {
   __typename: 'UpdateReportNode';

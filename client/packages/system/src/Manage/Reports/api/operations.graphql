@@ -52,10 +52,10 @@ mutation installUploadedReports($fileId: String!) {
   }
 }
 
-mutation updateReport($id: String!, $isActive: Boolean!) {
+mutation updateReport($input: UpdateReportInput!) {
   centralServer {
     reports {
-      updateReport(id: $id, isActive: $isActive) {
+      updateReport(input: $input) {
         id
         isActive
       }
