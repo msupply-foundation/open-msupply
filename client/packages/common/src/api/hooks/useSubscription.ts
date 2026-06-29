@@ -119,6 +119,8 @@ export const useSubscription = <TSubscription, TData>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, document, token]);
 
+  // Active only when the socket is connected, the caller has enabled it, and
+  // a token is present.
   const isSubscribed = isConnected && enabled && (!requireAuth || !!token);
 
   return { isSubscribed, data };
