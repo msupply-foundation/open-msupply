@@ -195,7 +195,6 @@ mod test {
 
     use crate::service_provider::{ServiceContext, ServiceProvider};
     use crate::stock_relocation::insert::InsertStockRelocation;
-    use crate::stock_relocation_line::UpsertStockRelocationLine;
 
     use super::*;
 
@@ -236,28 +235,30 @@ mod test {
         id
     }
 
-    async fn add_line(
-        service_provider: &ServiceProvider,
+    fn add_line(
         ctx: &ServiceContext,
         movement_id: &str,
         stock_line_id: &str,
         number_of_packs: f64,
     ) -> String {
-        let line = service_provider
-            .stock_relocation_service
-            .upsert_stock_relocation_line(
-                ctx,
-                "store_a",
-                UpsertStockRelocationLine {
-                    id: uuid(),
-                    stock_relocation_id: movement_id.to_string(),
-                    stock_line_id: stock_line_id.to_string(),
-                    number_of_packs,
-                    destination_location_id: Some(mock_location_1().id),
-                },
-            )
+        let stock_line = StockLineRowRepository::new(&ctx.connection)
+            .find_one_by_id(stock_line_id)
+            .unwrap()
             .unwrap();
-        line.id
+        let id = uuid();
+        StockRelocationLineRow {
+            id: id.clone(),
+            stock_relocation_id: movement_id.to_string(),
+            stock_line_id: stock_line_id.to_string(),
+            item_id: stock_line.item_id,
+            pack_size: stock_line.pack_size,
+            number_of_packs,
+            destination_location_id: Some(mock_location_1().id),
+            ..Default::default()
+        }
+        .upsert(&ctx.connection)
+        .unwrap();
+        id
     }
 
     fn set_status(id: &str, status: StockRelocationStatus) -> UpdateStockRelocation {
@@ -280,14 +281,7 @@ mod test {
 
         // stock is untouched
         let confirm_movement = new_movement(&service_provider, &ctx).await;
-        add_line(
-            &service_provider,
-            &ctx,
-            &confirm_movement,
-            "confirm_sl",
-            4.0,
-        )
-        .await;
+        add_line(&ctx, &confirm_movement, "confirm_sl", 4.0);
         let confirmed = service
             .update_stock_relocation(
                 &ctx,
@@ -306,7 +300,7 @@ mod test {
 
         // Finalise a full move
         let full_movement = new_movement(&service_provider, &ctx).await;
-        add_line(&service_provider, &ctx, &full_movement, "full_sl", 10.0).await;
+        add_line(&ctx, &full_movement, "full_sl", 10.0);
         let finalised = service
             .update_stock_relocation(
                 &ctx,
@@ -322,14 +316,7 @@ mod test {
 
         // partial move
         let partial_movement = new_movement(&service_provider, &ctx).await;
-        let line_id = add_line(
-            &service_provider,
-            &ctx,
-            &partial_movement,
-            "partial_sl",
-            4.0,
-        )
-        .await;
+        let line_id = add_line(&ctx, &partial_movement, "partial_sl", 4.0);
         service
             .update_stock_relocation(
                 &ctx,
@@ -393,14 +380,7 @@ mod test {
 
         stock_line("changed_sl").upsert(&ctx.connection).unwrap();
         let changed_movement = new_movement(&service_provider, &ctx).await;
-        let line_id = add_line(
-            &service_provider,
-            &ctx,
-            &changed_movement,
-            "changed_sl",
-            10.0,
-        )
-        .await;
+        let line_id = add_line(&ctx, &changed_movement, "changed_sl", 10.0);
         StockLineRow {
             available_number_of_packs: 2.0,
             ..stock_line("changed_sl")
@@ -420,7 +400,7 @@ mod test {
         );
 
         let movement_id = new_movement(&service_provider, &ctx).await;
-        add_line(&service_provider, &ctx, &movement_id, "status_sl", 10.0).await;
+        add_line(&ctx, &movement_id, "status_sl", 10.0);
         service
             .update_stock_relocation(
                 &ctx,
