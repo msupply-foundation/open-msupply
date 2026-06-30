@@ -329,11 +329,11 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts,
+        mock::{mock_request_draft_requisition, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::setup_all,
-        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RowOrDelete,
-        SyncAction, SyncRecordData,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, RequisitionRow,
+        RequisitionRowRepository, RowOrDelete, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -418,9 +418,18 @@ mod tests {
         let translator = RequisitionLineTranslation {};
         let (_, connection, _, _) = setup_all(
             "test_requisition_line_clears_invalid_optional_fks_and_writes_system_log",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the required requisition parent (req_a); the bogus optional FKs
+        // (does_not_exist_*) stay unseeded so they clear + log.
+        RequisitionRowRepository::new(&connection)
+            .upsert_one(&RequisitionRow {
+                id: "req_a".to_string(),
+                ..mock_request_draft_requisition()
+            })
+            .unwrap();
 
         let sync_record = SyncBufferRow {
             table_name: "requisition_line".to_string(),

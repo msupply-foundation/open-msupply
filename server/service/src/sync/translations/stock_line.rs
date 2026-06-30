@@ -351,9 +351,11 @@ mod tests {
     #[actix_rt::test]
     async fn test_stock_line_clears_invalid_optional_fks_and_writes_system_log() {
         let translator = StockLineTranslation {};
+        // `all()` seeds the required store_a + item_a; the bogus optional FKs
+        // (missing_*/does_not_exist_*) stay unseeded so they clear + log.
         let (_, connection, _, _) = setup_all(
             "test_stock_line_clears_invalid_optional_fks_and_writes_system_log",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
 

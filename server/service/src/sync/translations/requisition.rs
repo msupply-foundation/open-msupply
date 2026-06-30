@@ -647,10 +647,11 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::{mock_period, MockDataInserts},
+        mock::{mock_period, mock_store_a, MockDataInserts},
         test_db::setup_all,
-        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, PeriodRow,
-        PeriodRowRepository, RowOrDelete, SyncAction, SyncBufferRow, SyncRecordData,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, NameLinkRow,
+        NameLinkRowRepository, PeriodRow, PeriodRowRepository, RowOrDelete, StoreRow,
+        StoreRowRepository, SyncAction, SyncBufferRow, SyncRecordData,
     };
     use serde_json::json;
     use util::assert_variant;
@@ -818,7 +819,23 @@ mod tests {
     async fn test_sanitise() {
         let translator = RequisitionTranslation {};
 
-        let (_, connection, _, _) = setup_all("test_sanitise", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all("test_sanitise", MockDataInserts::all()).await;
+
+        // Seed the required name_link + store the requisition points at.
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "947274E3A24D4900996CA516379A1FFD".to_string(),
+                name_id: "name_a".to_string(),
+            })
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                id: "8659A64D2CF245A1B1BCC7C8F7CDC577".to_string(),
+                name_id: "name_a".to_string(),
+                code: "sanitise_test".to_string(),
+                ..mock_store_a()
+            })
+            .unwrap();
 
         let sync_record = SyncBufferRow {
             data: SyncRecordData(json!({
