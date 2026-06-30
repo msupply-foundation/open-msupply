@@ -269,7 +269,7 @@ impl ChangelogTableName {
                 transport: V6,
             },
             NameOmsFields => SyncStyle {
-                authoring: vec![Central],
+                authoring: vec![Anyone],
                 distribution: vec![D::Central],
                 transport: V6,
             },
