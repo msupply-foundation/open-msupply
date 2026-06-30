@@ -33,26 +33,8 @@ export const ItemListView = () => {
   });
   const { data, isError, isLoading } = useVisibleOrOnHandItems(queryParams);
 
-  // required to have correct type for UnitsAndDosesCell.
-  // Memoised on the query result so we don't hand MaterialReactTable a brand
-  // new `data` array on every unrelated re-render (which makes it recompute its
-  // row models and rebuild rows).
-  const rows = useMemo(
-    () =>
-      (data?.nodes ?? []).map(row => ({
-        ...row,
-        item: {
-          doses: row.doses,
-          isVaccine: row.isVaccine,
-        },
-      })),
-    [data?.nodes]
-  );
-
   const columns = useMemo(
-    (): ColumnDef<
-      ItemsWithStatsFragment & { item: { doses: number; isVaccine: boolean } }
-    >[] => [
+    (): ColumnDef<ItemsWithStatsFragment>[] => [
       {
         accessorKey: 'code',
         header: t('label.code'),
@@ -86,7 +68,14 @@ export const ItemListView = () => {
         accessorFn: row => row.stats.stockOnHand,
         header: t('label.stock-on-hand'),
         description: t('description.stock-on-hand'),
-        Cell: UnitsAndDosesCell,
+        Cell: ({ cell, row }) => (
+          <UnitsAndDosesCell
+            cell={cell}
+            row={row}
+            doses={row.original.doses}
+            isVaccine={row.original.isVaccine}
+          />
+        ),
         columnType: ColumnType.Number,
         size: 180,
       },
@@ -94,7 +83,14 @@ export const ItemListView = () => {
         accessorKey: 'stats.averageMonthlyConsumption',
         header: t('label.amc'),
         description: t('description.average-monthly-consumption'),
-        Cell: UnitsAndDosesCell,
+        Cell: ({ cell, row }) => (
+          <UnitsAndDosesCell
+            cell={cell}
+            row={row}
+            doses={row.original.doses}
+            isVaccine={row.original.isVaccine}
+          />
+        ),
         columnType: ColumnType.Number,
         size: 180,
       },
@@ -109,14 +105,12 @@ export const ItemListView = () => {
     []
   );
 
-  const { table } = usePaginatedMaterialTable<
-    ItemsWithStatsFragment & { item: { doses: number; isVaccine: boolean } }
-  >({
+  const { table } = usePaginatedMaterialTable<ItemsWithStatsFragment>({
     tableId: 'item-list-view',
     isLoading,
     isError,
     columns,
-    data: rows,
+    data: data?.nodes,
     enableRowSelection: false,
     onRowClick: row => navigate(row.id),
     totalCount: data?.totalCount ?? 0,
