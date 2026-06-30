@@ -9,8 +9,9 @@ use self::query::{
 };
 use self::update::{update_stock_relocation, UpdateStockRelocation, UpdateStockRelocationError};
 use crate::stock_relocation_line::{
-    batch_stock_relocation_line, upsert_stock_relocation_line, BatchStockRelocationLine,
-    BatchStockRelocationLineResult, UpsertStockRelocationLine, UpsertStockRelocationLineError,
+    batch_stock_relocation_line, delete_stock_relocation_line, upsert_stock_relocation_line,
+    BatchStockRelocationLine, BatchStockRelocationLineResult, DeleteStockRelocationLineError,
+    UpsertStockRelocationLine, UpsertStockRelocationLineError,
 };
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{
@@ -96,6 +97,15 @@ pub trait StockRelocationServiceTrait: Sync + Send {
         input: BatchStockRelocationLine,
     ) -> Result<BatchStockRelocationLineResult, RepositoryError> {
         batch_stock_relocation_line(ctx, store_id, input)
+    }
+
+    fn delete_stock_relocation_line(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        line_id: String,
+    ) -> Result<String, DeleteStockRelocationLineError> {
+        delete_stock_relocation_line(ctx, store_id, line_id)
     }
 
     fn delete_stock_relocation(
