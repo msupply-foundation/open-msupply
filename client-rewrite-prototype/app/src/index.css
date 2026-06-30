@@ -1,0 +1,26 @@
+/*
+ * Minimal, neutral, easily-replaceable base styles.
+ * Styling approach is a deliberately deferred decision (see ../DECISIONS.md):
+ * nothing here commits us to a styling method.
+ */
+
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  color: #1a1a1a;
+  background: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}

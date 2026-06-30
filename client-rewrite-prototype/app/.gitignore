@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+
+# Vite / TS
+.vite
+*.tsbuildinfo
+
+# Yarn (node-modules linker; releases/plugins are not vendored here)
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+.pnp.*
