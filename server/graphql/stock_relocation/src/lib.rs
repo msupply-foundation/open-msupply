@@ -10,8 +10,8 @@ use graphql_types::types::DraftStockRelocationLineNode;
 use mutations::{
     batch_stock_relocation_line, delete_stock_relocation, delete_stock_relocations,
     insert_stock_relocation, update_stock_relocation, BatchLineInput, BatchLineResponse,
-    DeleteInput, DeleteLineResponse, DeleteLinesResponse, DeleteResponses,
-    DeleteStockRelocationResponse, InsertInput, InsertResponse, UpdateInput, UpdateResponse,
+    DeleteInput, DeleteResponses, DeleteStockRelocationResponse, InsertInput, InsertResponse,
+    UpdateInput, UpdateResponse,
 };
 use queries::{
     get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
