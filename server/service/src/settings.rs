@@ -95,6 +95,7 @@ pub fn test_settings(
         mail: None,
         features,
         changelog_partition: None,
+        changelog_dedup: None,
     }
 }
 
