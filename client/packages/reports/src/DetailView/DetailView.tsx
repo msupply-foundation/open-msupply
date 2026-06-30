@@ -61,7 +61,9 @@ const DetailViewInner = ({
     | { s: 'error'; errorMessage: string }
     | { s: 'loaded'; fileId: string }
   >({ s: 'loading' });
-  const { mutateAsync, isLoading } = useGenerateReport();
+  const { mutateAsync } = useGenerateReport();
+  const { mutateAsync: exportMutation, isLoading: isExporting } =
+    useGenerateReport();
 
   const { print, isPrinting } = usePrintReport();
   const { updateQuery } = useUrlQuery();
@@ -158,7 +160,7 @@ const DetailViewInner = ({
 
   const exportExcelReport = useCallback(async () => {
     try {
-      const result = await mutateAsync({
+      const result = await exportMutation({
         reportId: report.id,
         args: reportArgs,
         dataId: '',
@@ -206,7 +208,8 @@ const DetailViewInner = ({
         onFilterOpen={openReportArgumentsModal}
         printReport={printReport}
         exportReport={exportExcelReport}
-        isPrinting={isPrinting || isLoading}
+        isPrinting={isPrinting}
+        isExporting={isExporting}
       />
       <ReportArgumentsModal
         key={report.id}

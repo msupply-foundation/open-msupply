@@ -11,7 +11,7 @@ import {
   useNavigate,
   RouteBuilder,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../../api';
+import { useOutbound, useDuplicateOutbound } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
@@ -24,6 +24,7 @@ export const SidePanelComponent = () => {
   const { success } = useNotification();
   const { data } = useOutbound.document.get();
   const { mutateAsync } = useOutbound.document.delete();
+  const { duplicateOutbound, hasMutatePermission } = useDuplicateOutbound();
   const canDelete = data ? canDeleteInvoice(data) : false;
 
   const deleteAction = async () => {
@@ -64,6 +65,12 @@ export const SidePanelComponent = () => {
             title={t('label.delete')}
             onClick={onDelete}
             disabled={!canDelete}
+          />
+          <DetailPanelAction
+            icon={<CopyIcon />}
+            title={t('button.make-a-copy')}
+            onClick={() => data && duplicateOutbound(data)}
+            disabled={!hasMutatePermission}
           />
           <DetailPanelAction
             icon={<CopyIcon />}

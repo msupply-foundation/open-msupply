@@ -75,11 +75,11 @@ pub fn insert(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .invoice_line_service
-            .insert_stock_in_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
-    )
+    map_response(service_provider.invoice_line_service.insert_stock_in_line(
+        &service_context,
+        input.to_domain(),
+        Some(r#type.to_domain()),
+    ))
 }
 
 #[derive(Interface)]
@@ -178,7 +178,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             )))
         }
 
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditFinalised
+        | ServiceError::OtherPartyStoreDisabled
+        | ServiceError::CannotAddLinesToAuthorisedReceivedInvoice => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))

@@ -105,8 +105,11 @@ export const ConfirmationModal = ({
                 const result = onConfirm && onConfirm();
                 if (result instanceof Promise) {
                   setLoading(true);
-                  await result;
-                  setLoading(false);
+                  try {
+                    await result;
+                  } finally {
+                    setLoading(false);
+                  }
                 }
               }}
               label={buttonLabel ? buttonLabel : t('button.ok')}

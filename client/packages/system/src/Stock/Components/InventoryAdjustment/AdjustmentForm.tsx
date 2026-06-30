@@ -35,6 +35,19 @@ export const AdjustmentForm = ({
   const isInventoryReduction =
     draft.adjustmentType === AdjustmentTypeInput.Reduction;
 
+  // Reductions are stamped at end of day, additions at start of day, so the
+  // ledger entry sorts correctly within the backdated day. Today's date is not
+  // backdated, so it yields null.
+  const toBackdatedDatetime = (
+    date: Date | null | undefined,
+    isReduction: boolean
+  ) =>
+    date && !DateUtils.isToday(date)
+      ? Formatter.toIsoString(
+          isReduction ? DateUtils.endOfDayOrNull(date) : DateUtils.startOfDay(date)
+        )
+      : null;
+
   // +1 day buffer so the boundary date isn't rejected by server UTC check
   const minDate =
     backdating?.maxDays && backdating?.maxDays > 0
@@ -66,10 +79,19 @@ export const AdjustmentForm = ({
           <InventoryAdjustmentDirectionInput
             value={draft.adjustmentType}
             onChange={adjustmentType => {
+              const type = adjustmentType ?? AdjustmentTypeInput.Addition;
               setDraft(state => ({
                 ...state,
-                adjustmentType: adjustmentType ?? AdjustmentTypeInput.Addition,
+                adjustmentType: type,
                 reason: null,
+                // Recompute the time component so it matches the new direction,
+                // rather than keeping whatever was set when the date was picked.
+                backdatedDatetime: state.backdatedDatetime
+                  ? toBackdatedDatetime(
+                      new Date(state.backdatedDatetime),
+                      type === AdjustmentTypeInput.Reduction
+                    )
+                  : null,
               }));
             }}
           />
@@ -103,14 +125,10 @@ export const AdjustmentForm = ({
               onChange={date =>
                 setDraft(state => ({
                   ...state,
-                  backdatedDatetime:
-                    date && !DateUtils.isToday(date)
-                      ? Formatter.toIsoString(
-                          isInventoryReduction
-                            ? DateUtils.endOfDayOrNull(date)
-                            : DateUtils.startOfDay(date)
-                        )
-                      : null,
+                  backdatedDatetime: toBackdatedDatetime(
+                    date,
+                    isInventoryReduction
+                  ),
                 }))
               }
               maxDate={new Date()}

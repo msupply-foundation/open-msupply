@@ -79,7 +79,7 @@ mod test {
             InvoiceLineRow {
                 id: "invoice1line".to_string(),
                 invoice_id: invoice1().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 number_of_packs: 1000.0,
                 pack_size: 10.0,
                 r#type: InvoiceLineType::StockIn,
@@ -104,7 +104,7 @@ mod test {
             InvoiceLineRow {
                 id: "invoice2line".to_string(),
                 invoice_id: invoice2().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 number_of_packs: 20.0,
                 pack_size: 10.0,
                 r#type: InvoiceLineType::StockOut,
@@ -115,7 +115,7 @@ mod test {
         fn stock_line() -> StockLineRow {
             StockLineRow {
                 id: "stock_line".to_string(),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 store_id: mock_store_a().id,
                 batch: Some("batch1".to_string()),
                 pack_size: 10.0,
@@ -142,7 +142,7 @@ mod test {
             InvoiceLineRow {
                 id: "prescription1line".to_string(),
                 invoice_id: prescription1().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 number_of_packs: 5.0,
                 pack_size: 10.0,
                 r#type: InvoiceLineType::StockOut,

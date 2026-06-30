@@ -5,6 +5,7 @@ import {
   useBufferState,
   useFormatNumber,
   usePreferences,
+  useShallow,
   useTranslation,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../api';
@@ -47,11 +48,11 @@ export const PrescriptionLineEdit = ({
   const { isDisabled, rows: lines } = usePrescription(); // TODO: how much can we strip now?
 
   const { clear, initialise, item } = useAllocationContext(
-    ({ initialise, item, clear }) => ({
+    useShallow(({ initialise, item, clear }) => ({
       initialise,
       item,
       clear,
-    })
+    }))
   );
 
   const { refetch: queryData, isFetching } = useOutboundLineEditData(

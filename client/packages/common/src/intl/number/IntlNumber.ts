@@ -6,6 +6,15 @@ import { MAX_FRACTION_DIGITS, SupportedLocales, useIntlUtils } from '../utils';
 const localeNumberOverrides: { [locale: string]: /* Override */ string } = {
   tet: 'en-US',
   ar: 'ar-u-nu-arab',
+  // Dari (prs) & Pashto (ps), Afghanistan — both should render Eastern /
+  // extended-Arabic digits (۰-۹). We can't just tag the numbering system: ICU
+  // pins `ps` to Latin digits and *silently ignores* a `-u-nu-arabext`
+  // override on it (it resolves straight back to `latn`), so Pashto kept
+  // rendering Western numerals. Afghan Persian (`fa-AF`) natively uses the same
+  // digits and separators, so we format both languages through it. (`prs`
+  // already defaults to extended-Arabic; routed the same way for consistency.)
+  prs: 'fa-AF',
+  ps: 'fa-AF',
 };
 
 // This method needs to be used instead of Intl.NumberFormat directly
@@ -13,7 +22,14 @@ export const intlNumberFormat = (
   locale: string,
   params?: Intl.NumberFormatOptions
 ) => {
-  return new Intl.NumberFormat(localeNumberOverrides[locale] ?? locale, params);
+  // Fall back to the base language so regional tags (e.g. `ps-AF`, `ar-SA`)
+  // still pick up the override; otherwise their digits revert to the browser
+  // default (Latin for Pashto).
+  const override =
+    localeNumberOverrides[locale] ??
+    localeNumberOverrides[locale.split('-')[0] ?? locale] ??
+    locale;
+  return new Intl.NumberFormat(override, params);
 };
 
 export const useFormatNumber = () => {

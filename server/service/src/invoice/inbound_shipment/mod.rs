@@ -27,6 +27,9 @@ pub use self::update::*;
 pub mod delete;
 pub use self::delete::*;
 
+pub mod duplicate;
+pub use self::duplicate::*;
+
 pub mod batch;
 pub use self::batch::*;
 

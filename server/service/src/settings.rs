@@ -66,6 +66,38 @@ fn default_base_dir() -> String {
     "app_data".to_string()
 }
 
+/// Builds a `Settings` value suitable for tests, given the `DatabaseSettings`
+/// produced by the test setup. `features` enables feature flags that gate
+/// functionality under test (e.g. `stock_movement`).
+pub fn test_settings(
+    database: DatabaseSettings,
+    features: Option<HashMap<String, bool>>,
+) -> Settings {
+    Settings {
+        server: ServerSettings {
+            port: 0,
+            danger_allow_http: false,
+            debug_no_access_control: true,
+            discovery: DiscoveryMode::Disabled,
+            cors_origins: vec![],
+            base_dir: "test_output".to_string(),
+            machine_uid: None,
+            override_is_central_server: false,
+            standalone_store_name: None,
+            standalone_admin_username: None,
+            standalone_admin_password: None,
+            workers: None,
+        },
+        database,
+        sync: None,
+        logging: None,
+        backup: None,
+        mail: None,
+        features,
+        changelog_partition: None,
+    }
+}
+
 impl ServerSettings {
     pub fn address(&self) -> String {
         format!("0.0.0.0:{}", self.port)

@@ -6,6 +6,6 @@ export const useDonors = () => {
 
   return useQuery({
     queryKey: api.keys.donors(),
-    queryFn: () => api.get.donors()
+    queryFn: () => api.get.donors({ first: 1000 }),
   });
 };

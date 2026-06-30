@@ -51,6 +51,15 @@ th {
   padding: 2px;
 }
 
+table.center td,
+table.center th {
+  border: 1px solid black;
+}
+
+table.center td.no-border {
+  border: none;
+}
+
 tr.borderline {
   border-bottom: 1px solid black;
 }

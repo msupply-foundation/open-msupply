@@ -41,6 +41,7 @@ pub enum ReasonOptionType {
     ClosedVialWastage,
     ReturnReason,
     RequisitionLineVariance,
+    ShipmentVariance,
 }
 
 #[derive(

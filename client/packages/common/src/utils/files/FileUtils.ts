@@ -78,12 +78,23 @@ export const useDownloadFile = () => {
 export const useExportCSV = () => {
   const exportFile = useExportFile();
 
-  const exportCsv = async (data: string, title: string) => {
-    const filename = getFilename('text/csv', title);
+  const exportCsv = async (data: string, title: string, storeCode?: string) => {
+    const filename = getFilename('text/csv', title, storeCode);
     exportFile(data, 'text/csv', filename);
   };
 
   return exportCsv;
+};
+
+export const useExportJSON = () => {
+  const exportFile = useExportFile();
+
+  const exportJson = async (data: string, title: string) => {
+    const filename = getFilename('application/json', title);
+    exportFile(data, 'application/json', filename);
+  };
+
+  return exportJson;
 };
 
 export const useExportLog = () => {
@@ -169,16 +180,20 @@ const openAndroidFile = async (file: {
   }
 };
 
-const getFilename = (type?: string, title?: string) => {
+const getFilename = (type?: string, title?: string, storeCode?: string) => {
   let extension = 'txt';
   switch (type) {
     case 'text/csv':
       extension = 'csv';
       break;
+    case 'application/json':
+      extension = 'json';
+      break;
   }
 
   const today = Formatter.toIsoString(new Date()); // to match backend datetime
-  const filename = `${today}_${title || 'export'}.${extension}`;
+  const parts = [today, storeCode, title || 'export'].filter(Boolean);
+  const filename = `${parts.join('_')}.${extension}`;
 
   return filename;
 };

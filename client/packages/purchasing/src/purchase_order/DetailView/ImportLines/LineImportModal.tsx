@@ -159,7 +159,6 @@ export const LineImportModal = ({ isOpen, onClose }: LineImportModalProps) => {
         pricePerPackAfterDiscount: input.pricePerPackAfterDiscount,
         manufacturerId: input.manufacturer?.id,
         note: input.note,
-        unit: input.unit,
         supplierItemCode: input.supplierItemCode,
         comment: input.comment,
       };
