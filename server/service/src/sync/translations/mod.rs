@@ -62,9 +62,6 @@ pub(crate) mod preference;
 pub(crate) mod program_indicator;
 pub(crate) mod program_requisition_settings;
 pub(crate) mod property;
-pub(crate) mod custom_field_option;
-pub(crate) mod custom_field_scope;
-pub(crate) mod custom_field;
 pub(crate) mod purchase_order;
 pub(crate) mod purchase_order_line;
 pub(crate) mod reason;
@@ -151,9 +148,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         document_registry::boxed(),
         property::boxed(),
         name_property::boxed(),
-        custom_field::boxed(),
-        custom_field_option::boxed(),
-        custom_field_scope::boxed(),
         legacy_field_labels::boxed(),
         location_type::boxed(),
         campaign::boxed(),
