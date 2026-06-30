@@ -56,7 +56,7 @@ export type PropertyValueFilter =
   | { Option: GeneralFilterValue<string> };
 
 export type DynamicFilterCondition =
-  | { Property: { key: string; filter: PropertyValueFilter } }
+  | { CustomField: { key: string; filter: PropertyValueFilter } }
   | { And: DynamicFilterCondition[] }
   | { Or: DynamicFilterCondition[] };
 
@@ -260,7 +260,7 @@ export const mapPropertyFilters = (
 
     conditions.push(
       ...propertyValueFilters(property, entry).map(filter => ({
-        Property: { key: property.key, filter },
+        CustomField: { key: property.key, filter },
       }))
     );
   }
