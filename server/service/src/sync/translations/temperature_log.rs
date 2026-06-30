@@ -195,9 +195,18 @@ mod tests {
         let translator = TemperatureLogTranslation {};
         let (_, connection, _, _) = setup_all(
             "test_temperature_log_clears_invalid_optional_fks_and_writes_system_log",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the required sensor parent (sensor_a); the bogus optional FKs
+        // (does_not_exist_*) stay unseeded so they clear + log.
+        SensorRowRepository::new(&connection)
+            .upsert_one(&SensorRow {
+                id: "sensor_a".to_string(),
+                ..mock_sensor_1()
+            })
+            .unwrap();
 
         let sync_record = SyncBufferRow {
             table_name: "temperature_log".to_string(),
