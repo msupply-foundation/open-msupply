@@ -26,13 +26,7 @@ pub enum StockRelocationSortFieldInput {
     CreatedDatetime,
     FinalisedDatetime,
     Status,
-    NumberOfPacks,
-    ItemCode,
-    ItemName,
-    Batch,
-    ExpiryDate,
-    FromLocation,
-    ToLocation,
+    ReferenceNumber,
 }
 
 #[derive(InputObject)]
@@ -55,9 +49,7 @@ pub struct StockRelocationFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterStockRelocationStatusInput>,
-    pub item_code_or_name: Option<StringFilterInput>,
-    pub from_location_code: Option<StringFilterInput>,
-    pub to_location_code: Option<StringFilterInput>,
+    pub reference_number: Option<StringFilterInput>,
 }
 
 #[derive(Union)]
@@ -139,7 +131,7 @@ pub fn get_stock_relocations(
 pub struct StockRelocationDraftLinesInput {
     pub from_location_id: Option<String>,
     pub item_id: Option<String>,
-    pub stock_relocation_id: Option<String>,
+    pub stock_relocation_line_id: Option<String>,
 }
 
 pub fn get_stock_relocation_draft_lines(
@@ -166,7 +158,7 @@ pub fn get_stock_relocation_draft_lines(
             StockRelocationDraftFilter {
                 from_location_id: input.from_location_id,
                 item_id: input.item_id,
-                stock_relocation_id: input.stock_relocation_id,
+                stock_relocation_line_id: input.stock_relocation_line_id,
             },
         )
         .map_err(StandardGraphqlError::from_list_error)?;
@@ -182,9 +174,7 @@ impl StockRelocationFilterInput {
             status: self
                 .status
                 .map(|t| map_filter!(t, StockRelocationStatus::from)),
-            item_code_or_name: self.item_code_or_name.map(StringFilter::from),
-            from_location_code: self.from_location_code.map(StringFilter::from),
-            to_location_code: self.to_location_code.map(StringFilter::from),
+            reference_number: self.reference_number.map(StringFilter::from),
         }
     }
 }

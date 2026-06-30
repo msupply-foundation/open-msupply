@@ -30,8 +30,8 @@ impl DraftStockRelocationLineNode {
         &self.draft_line.id
     }
 
-    pub async fn from_stock_line_id(&self) -> &str {
-        &self.draft_line.from_stock_line_id
+    pub async fn stock_line_id(&self) -> &str {
+        &self.draft_line.stock_line_id
     }
 
     pub async fn item_id(&self) -> &str {
@@ -58,8 +58,8 @@ impl DraftStockRelocationLineNode {
         &self.draft_line.expiry_date
     }
 
-    pub async fn from_pack_size(&self) -> f64 {
-        self.draft_line.from_pack_size
+    pub async fn pack_size(&self) -> f64 {
+        self.draft_line.pack_size
     }
 
     pub async fn available_number_of_packs(&self) -> f64 {
@@ -74,24 +74,16 @@ impl DraftStockRelocationLineNode {
         self.draft_line.on_hold
     }
 
-    pub async fn from_number_of_packs(&self) -> Option<f64> {
-        self.draft_line.from_number_of_packs
+    pub async fn number_of_packs(&self) -> Option<f64> {
+        self.draft_line.number_of_packs
     }
 
-    pub async fn to_pack_size(&self) -> Option<f64> {
-        self.draft_line.to_pack_size
+    pub async fn source_location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
+        location_node(ctx, &self.draft_line.source_location_id).await
     }
 
-    pub async fn to_number_of_packs(&self) -> Option<f64> {
-        self.draft_line.to_number_of_packs
-    }
-
-    pub async fn from_location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
-        location_node(ctx, &self.draft_line.from_location_id).await
-    }
-
-    pub async fn to_location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
-        location_node(ctx, &self.draft_line.to_location_id).await
+    pub async fn destination_location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
+        location_node(ctx, &self.draft_line.destination_location_id).await
     }
 }
 
