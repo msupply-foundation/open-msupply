@@ -712,7 +712,7 @@ export const CustomFieldFragmentDoc = gql`
 `;
 export const PatientCustomFieldsDocument = gql`
   query patientCustomFields {
-    customFields(filter: { tableName: { equalTo: "patient" } }) {
+    customFields(filter: { scope: { equalTo: "patient" } }) {
       ... on CustomFieldConnector {
         __typename
         totalCount

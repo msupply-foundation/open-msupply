@@ -9,13 +9,13 @@ use repository::{EqualFilter, CustomFieldFilter};
 pub struct CustomFieldFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub key: Option<EqualFilterStringInput>,
-    /// Restricts to custom_fields shown on this table_name
-    /// (`custom_field_table.display_mode != HIDDEN`). Use e.g.
+    /// Restricts to custom_fields shown on this scope
+    /// (`custom_field_scope.display_mode != HIDDEN`). Use e.g.
     /// `{ equalTo: "customer" }` or `{ equalTo: "supplier" }` to fetch the
     /// definitions that drive the matching name list views / modal. When a
-    /// single `equalTo` table is given, each returned node carries its
+    /// single `equalTo` scope is given, each returned node carries its
     /// `displayMode` for that scope.
-    pub table_name: Option<EqualFilterStringInput>,
+    pub scope: Option<EqualFilterStringInput>,
 }
 
 impl From<CustomFieldFilterInput> for CustomFieldFilter {
@@ -23,7 +23,7 @@ impl From<CustomFieldFilterInput> for CustomFieldFilter {
         CustomFieldFilter {
             id: f.id.map(EqualFilter::from),
             key: f.key.map(EqualFilter::from),
-            table_name: f.table_name.map(EqualFilter::from),
+            scope: f.scope.map(EqualFilter::from),
         }
     }
 }

@@ -63,7 +63,7 @@ pub fn validate_custom_field_filter_keys_multi(
     for table_scope in table_scopes {
         allowed_keys.extend(
             repository
-                .allowed_keys_for_table(table_scope)
+                .allowed_keys_for_scope(table_scope)
                 .map_err(|error| StandardGraphqlError::from_repository_error(error))?,
         );
     }

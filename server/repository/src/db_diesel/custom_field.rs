@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use super::{
-    custom_field_table_row::custom_field_table, custom_field_row::custom_field, CustomFieldDisplayMode,
+    custom_field_scope_row::custom_field_scope, custom_field_row::custom_field, CustomFieldDisplayMode,
     CustomFieldKind, CustomFieldRow, CustomFieldValueType, StorageConnection,
 };
 
@@ -11,7 +11,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 
 /// A custom_field definition together with its per-scope display mode.
 /// `display_mode` is populated only when the query is scoped to a single
-/// `table_name` (the per-`(custom_field, table)` mode lives on `custom_field_table`);
+/// `scope` (the per-`(custom_field, table)` mode lives on `custom_field_scope`);
 /// it is `None` for unscoped or multi-table queries.
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct CustomField {
@@ -37,9 +37,9 @@ fn is_displayable(value_type: &CustomFieldValueType, kind: &CustomFieldKind) -> 
 pub struct CustomFieldFilter {
     pub id: Option<EqualFilter<String>>,
     pub key: Option<EqualFilter<String>>,
-    /// Restricts to custom_fields that have a `custom_field_table` row for this
-    /// table_name whose `display_mode` is not `Hidden`.
-    pub table_name: Option<EqualFilter<String>>,
+    /// Restricts to custom_fields that have a `custom_field_scope` row for this
+    /// scope whose `display_mode` is not `Hidden`.
+    pub scope: Option<EqualFilter<String>>,
 }
 
 pub struct CustomFieldRepository<'a> {
@@ -75,7 +75,7 @@ impl<'a> CustomFieldRepository<'a> {
         // the filter.
         let scope_table = filter
             .as_ref()
-            .and_then(|f| f.table_name.as_ref())
+            .and_then(|f| f.scope.as_ref())
             .and_then(|t| t.equal_to.clone());
 
         let query = Self::create_filtered_query(filter).order(custom_field::id.asc());
@@ -86,12 +86,12 @@ impl<'a> CustomFieldRepository<'a> {
         // Skip Hidden mappings to stay in lock-step with the main query (which
         // already excludes them) — those rows could never be matched anyway.
         let modes: HashMap<String, CustomFieldDisplayMode> = match &scope_table {
-            Some(table_name) => custom_field_table::table
-                .filter(custom_field_table::table_name.eq(table_name))
-                .filter(custom_field_table::display_mode.ne(CustomFieldDisplayMode::Hidden))
+            Some(scope) => custom_field_scope::table
+                .filter(custom_field_scope::scope.eq(scope))
+                .filter(custom_field_scope::display_mode.ne(CustomFieldDisplayMode::Hidden))
                 .select((
-                    custom_field_table::custom_field_id,
-                    custom_field_table::display_mode,
+                    custom_field_scope::custom_field_id,
+                    custom_field_scope::display_mode,
                 ))
                 .load::<(String, CustomFieldDisplayMode)>(self.connection.lock().connection())?
                 .into_iter()
@@ -114,18 +114,18 @@ impl<'a> CustomFieldRepository<'a> {
     }
 
     /// Returns the set of custom_field keys shown on the given table
-    /// (`custom_field_table.display_mode != Hidden`) whose definition is not
+    /// (`custom_field_scope.display_mode != Hidden`) whose definition is not
     /// soft-deleted. Used by the NameNode resolver to pre-filter the JSONB
     /// blob to keys the client should ever see.
-    pub fn allowed_keys_for_table(
+    pub fn allowed_keys_for_scope(
         &self,
-        target_table_name: &str,
+        target_scope: &str,
     ) -> Result<HashSet<String>, RepositoryError> {
         let rows: Vec<(String, CustomFieldValueType, CustomFieldKind)> = custom_field::table
-            .inner_join(custom_field_table::table)
+            .inner_join(custom_field_scope::table)
             .filter(custom_field::deleted_datetime.is_null())
-            .filter(custom_field_table::table_name.eq(target_table_name))
-            .filter(custom_field_table::display_mode.ne(CustomFieldDisplayMode::Hidden))
+            .filter(custom_field_scope::scope.eq(target_scope))
+            .filter(custom_field_scope::display_mode.ne(CustomFieldDisplayMode::Hidden))
             .select((custom_field::key, custom_field::value_type, custom_field::kind))
             .load(self.connection.lock().connection())?;
 
@@ -151,24 +151,24 @@ impl<'a> CustomFieldRepository<'a> {
             apply_equal_filter!(query, filter.id, custom_field::id);
             apply_equal_filter!(query, filter.key, custom_field::key);
 
-            if let Some(table_name_filter) = filter.table_name {
-                // `table_name` lives on the joined `custom_field_table` table (behind
+            if let Some(scope_filter) = filter.scope {
+                // `scope` lives on the joined `custom_field_scope` table (behind
                 // `display_mode != Hidden`), so it can't go through `apply_equal_filter!` —
-                // hence the hand-rolled subquery. See `CustomFieldFilter::table_name`
+                // hence the hand-rolled subquery. See `CustomFieldFilter::scope`
                 // for which `EqualFilter` modes are honoured.
-                let table_names = match (table_name_filter.equal_to, table_name_filter.equal_any) {
+                let scopes = match (scope_filter.equal_to, scope_filter.equal_any) {
                     (Some(value), _) => Some(vec![value]),
                     (None, Some(values)) => Some(values),
                     (None, None) => None,
                 };
 
-                if let Some(table_names) = table_names {
-                    let allowed_ids = custom_field_table::table
-                        .filter(custom_field_table::display_mode.ne(CustomFieldDisplayMode::Hidden))
-                        .filter(custom_field_table::table_name.eq_any(table_names))
+                if let Some(scopes) = scopes {
+                    let allowed_ids = custom_field_scope::table
+                        .filter(custom_field_scope::display_mode.ne(CustomFieldDisplayMode::Hidden))
+                        .filter(custom_field_scope::scope.eq_any(scopes))
                         .into_boxed();
                     query = query.filter(
-                        custom_field::id.eq_any(allowed_ids.select(custom_field_table::custom_field_id)),
+                        custom_field::id.eq_any(allowed_ids.select(custom_field_scope::custom_field_id)),
                     );
                 }
             }
@@ -199,10 +199,10 @@ impl CustomFieldFilter {
     ///
     /// Only `equal_to` and `equal_any` are honoured — the negative/null
     /// `EqualFilter` modes have no well-defined meaning against the
-    /// `custom_field_table` visibility join and are silently ignored (no
-    /// `table_name` restriction is applied).
-    pub fn table_name(mut self, filter: EqualFilter<String>) -> Self {
-        self.table_name = Some(filter);
+    /// `custom_field_scope` visibility join and are silently ignored (no
+    /// `scope` restriction is applied).
+    pub fn scope(mut self, filter: EqualFilter<String>) -> Self {
+        self.scope = Some(filter);
         self
     }
 }
@@ -213,8 +213,8 @@ mod tests {
 
     use super::*;
     use crate::{
-        mock::MockDataInserts, test_db, CustomFieldDisplayMode, CustomFieldKind, CustomFieldTableRow,
-        CustomFieldTableRowRepository, CustomFieldRowRepository, CustomFieldValueType,
+        mock::MockDataInserts, test_db, CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow,
+        CustomFieldScopeRowRepository, CustomFieldRowRepository, CustomFieldValueType,
     };
 
     fn custom_field(id: &str, key: &str, deleted: bool) -> CustomFieldRow {
@@ -237,15 +237,15 @@ mod tests {
         }
     }
 
-    fn custom_field_table(
+    fn custom_field_scope(
         custom_field_id: &str,
-        table_name: &str,
+        scope: &str,
         display_mode: CustomFieldDisplayMode,
-    ) -> CustomFieldTableRow {
-        CustomFieldTableRow {
-            id: format!("{custom_field_id}__{table_name}"),
+    ) -> CustomFieldScopeRow {
+        CustomFieldScopeRow {
+            id: format!("{custom_field_id}__{scope}"),
             custom_field_id: custom_field_id.to_string(),
-            table_name: table_name.to_string(),
+            scope: scope.to_string(),
             display_mode,
         }
     }
@@ -271,30 +271,30 @@ mod tests {
             .upsert_one(&custom_field("p_deleted", "deleted", true))
             .unwrap();
 
-        let table_repo = CustomFieldTableRowRepository::new(&connection);
+        let table_repo = CustomFieldScopeRowRepository::new(&connection);
         table_repo
-            .upsert_one(&custom_field_table(
+            .upsert_one(&custom_field_scope(
                 "p_visible_name",
                 "name",
                 CustomFieldDisplayMode::Visible,
             ))
             .unwrap();
         table_repo
-            .upsert_one(&custom_field_table(
+            .upsert_one(&custom_field_scope(
                 "p_hidden_name",
                 "name",
                 CustomFieldDisplayMode::Hidden,
             ))
             .unwrap();
         table_repo
-            .upsert_one(&custom_field_table(
+            .upsert_one(&custom_field_scope(
                 "p_other_table",
                 "store",
                 CustomFieldDisplayMode::Visible,
             ))
             .unwrap();
         table_repo
-            .upsert_one(&custom_field_table(
+            .upsert_one(&custom_field_scope(
                 "p_deleted",
                 "name",
                 CustomFieldDisplayMode::Visible,
@@ -317,15 +317,15 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn custom_field_query_by_table_name_returns_only_visible() {
+    async fn custom_field_query_by_scope_returns_only_visible() {
         // Assert membership rather than exact equality, in case other `name`
         // table custom_fields are present.
-        let connection = setup("query_by_table_name").await;
+        let connection = setup("query_by_scope").await;
         let repo = CustomFieldRepository::new(&connection);
 
         let rows = repo
             .query_by_filter(
-                CustomFieldFilter::new().table_name(EqualFilter::equal_to("name".to_string())),
+                CustomFieldFilter::new().scope(EqualFilter::equal_to("name".to_string())),
             )
             .unwrap();
         let ids: Vec<_> = rows.iter().map(|r| r.custom_field.id.clone()).collect();
@@ -352,11 +352,11 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn custom_field_allowed_keys_for_table() {
-        let connection = setup("allowed_keys_for_table").await;
+    async fn custom_field_allowed_keys_for_scope() {
+        let connection = setup("allowed_keys_for_scope").await;
         let repo = CustomFieldRepository::new(&connection);
 
-        let keys = repo.allowed_keys_for_table("name").unwrap();
+        let keys = repo.allowed_keys_for_scope("name").unwrap();
 
         assert!(keys.contains("visible_name"));
         // Hidden, soft-deleted, and other-table-scoped custom_fields excluded.
@@ -383,8 +383,8 @@ mod tests {
         CustomFieldRowRepository::new(&connection)
             .upsert_one(&custom_field("p_prominent_name", "prominent_name", false))
             .unwrap();
-        CustomFieldTableRowRepository::new(&connection)
-            .upsert_one(&custom_field_table(
+        CustomFieldScopeRowRepository::new(&connection)
+            .upsert_one(&custom_field_scope(
                 "p_prominent_name",
                 "name",
                 CustomFieldDisplayMode::Prominent,
@@ -398,7 +398,7 @@ mod tests {
         // the client).
         let scoped = repo
             .query_by_filter(
-                CustomFieldFilter::new().table_name(EqualFilter::equal_to("name".to_string())),
+                CustomFieldFilter::new().scope(EqualFilter::equal_to("name".to_string())),
             )
             .unwrap();
         let mode_of = |id: &str| {
@@ -456,7 +456,7 @@ mod tests {
                 CustomFieldKind::Standard,
             ),
         ];
-        let table_repo = CustomFieldTableRowRepository::new(&connection);
+        let table_repo = CustomFieldScopeRowRepository::new(&connection);
         for (id, key, value_type, kind) in rows {
             prop_repo
                 .upsert_one(&CustomFieldRow {
@@ -469,7 +469,7 @@ mod tests {
                 })
                 .unwrap();
             table_repo
-                .upsert_one(&custom_field_table(id, "name", CustomFieldDisplayMode::Visible))
+                .upsert_one(&custom_field_scope(id, "name", CustomFieldDisplayMode::Visible))
                 .unwrap();
         }
 
@@ -488,8 +488,8 @@ mod tests {
         // count() delegates to query(), so it excludes them too.
         assert_eq!(repo.count(None).unwrap() as usize, ids.len());
 
-        // allowed_keys_for_table applies the same exclusion.
-        let keys = repo.allowed_keys_for_table("name").unwrap();
+        // allowed_keys_for_scope applies the same exclusion.
+        let keys = repo.allowed_keys_for_scope("name").unwrap();
         assert!(keys.contains("standard_key"));
         assert!(!keys.contains("other_kind_key"));
         assert!(!keys.contains("other_value_type_key"));

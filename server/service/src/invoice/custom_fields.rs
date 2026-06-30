@@ -3,12 +3,12 @@ use repository::{InvoiceType, RepositoryError, StorageConnection};
 use crate::custom_field::check_unknown_custom_field_key;
 pub(crate) use crate::custom_field::apply_custom_fields_patch;
 
-/// `custom_field_table.table_name` scope an invoice type's custom_fields are
+/// `custom_field_scope.scope` scope an invoice type's custom_fields are
 /// configured under — the UI record kind the type renders as. `None` for types
 /// with no custom_fields surface (repack, inventory adjustments). The canonical
 /// type→scope map, shared by the per-type update services' patch validation and
 /// the GraphQL read/filter paths.
-pub fn invoice_custom_field_table_name(invoice_type: &InvoiceType) -> Option<&'static str> {
+pub fn invoice_custom_field_scope(invoice_type: &InvoiceType) -> Option<&'static str> {
     match invoice_type {
         InvoiceType::InboundShipment => Some("inbound_shipment"),
         InvoiceType::OutboundShipment => Some("outbound_shipment"),
@@ -22,17 +22,17 @@ pub fn invoice_custom_field_table_name(invoice_type: &InvoiceType) -> Option<&'s
 }
 
 /// Validate a `custom_fields` patch against the invoice type's visible scope:
-/// resolves the type's `table_name` and delegates to the generic
+/// resolves the type's `scope` and delegates to the generic
 /// [`check_unknown_custom_field_key`]. A type with no scope allows no keys.
 pub fn check_unknown_custom_fields_key(
     connection: &StorageConnection,
     invoice_type: &InvoiceType,
     patch: &serde_json::Map<String, serde_json::Value>,
 ) -> Result<Option<String>, RepositoryError> {
-    let Some(table_name) = invoice_custom_field_table_name(invoice_type) else {
+    let Some(scope) = invoice_custom_field_scope(invoice_type) else {
         return Ok(patch.keys().next().cloned());
     };
-    check_unknown_custom_field_key(connection, table_name, patch)
+    check_unknown_custom_field_key(connection, scope, patch)
 }
 
 #[cfg(test)]
@@ -40,8 +40,8 @@ mod test {
     use repository::mock::MockDataInserts;
     use repository::test_db::setup_all;
     use repository::{
-        InvoiceType, CustomFieldDisplayMode, CustomFieldKind, CustomFieldTableRow,
-        CustomFieldTableRowRepository, CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType,
+        InvoiceType, CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow,
+        CustomFieldScopeRowRepository, CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType,
     };
     use serde_json::json;
 
@@ -72,11 +72,11 @@ mod test {
                 deleted_datetime: None,
             })
             .unwrap();
-        CustomFieldTableRowRepository::new(&connection)
-            .upsert_one(&CustomFieldTableRow {
+        CustomFieldScopeRowRepository::new(&connection)
+            .upsert_one(&CustomFieldScopeRow {
                 id: "inbound_shipment_category__inbound_shipment".to_string(),
                 custom_field_id: "inbound_shipment_category".to_string(),
-                table_name: "inbound_shipment".to_string(),
+                scope: "inbound_shipment".to_string(),
                 display_mode: CustomFieldDisplayMode::Visible,
             })
             .unwrap();

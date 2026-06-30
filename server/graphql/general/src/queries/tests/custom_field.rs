@@ -33,7 +33,7 @@ mod graphql {
             (self.0)(filter)
         }
 
-        fn allowed_custom_field_keys_for_table(
+        fn allowed_custom_field_keys_for_scope(
             &self,
             _: &StorageConnection,
             _: &str,
@@ -157,14 +157,14 @@ mod graphql {
                 filter,
                 Some(
                     CustomFieldFilter::new()
-                        .table_name(EqualFilter::equal_to("customer".to_string()))
+                        .scope(EqualFilter::equal_to("customer".to_string()))
                 )
             );
             Ok(ListResult::empty())
         }));
 
         let variables = json!({
-            "filter": { "tableName": { "equalTo": "customer" } }
+            "filter": { "scope": { "equalTo": "customer" } }
         });
 
         let expected = json!({ "customFields": { "__typename": "CustomFieldConnector" } });

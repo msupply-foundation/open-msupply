@@ -2383,7 +2383,7 @@ mod test {
     #[actix_rt::test]
     async fn update_inbound_shipment_custom_fields() {
         use repository::{
-            CustomFieldDisplayMode, CustomFieldKind, CustomFieldTableRow, CustomFieldTableRowRepository,
+            CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow, CustomFieldScopeRowRepository,
             CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType,
         };
         use serde_json::json;
@@ -2402,11 +2402,11 @@ mod test {
                 deleted_datetime: None,
             })
             .unwrap();
-        CustomFieldTableRowRepository::new(&connection)
-            .upsert_one(&CustomFieldTableRow {
+        CustomFieldScopeRowRepository::new(&connection)
+            .upsert_one(&CustomFieldScopeRow {
                 id: "inbound_shipment_category__inbound_shipment".to_string(),
                 custom_field_id: "inbound_shipment_category".to_string(),
-                table_name: "inbound_shipment".to_string(),
+                scope: "inbound_shipment".to_string(),
                 display_mode: CustomFieldDisplayMode::Visible,
             })
             .unwrap();

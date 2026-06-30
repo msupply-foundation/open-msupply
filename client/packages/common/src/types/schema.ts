@@ -1817,21 +1817,21 @@ export type CustomFieldFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   key?: InputMaybe<EqualFilterStringInput>;
   /**
-   * Restricts to custom_fields shown on this table_name
-   * (`custom_field_table.display_mode != HIDDEN`). Use e.g.
+   * Restricts to custom_fields shown on this scope
+   * (`custom_field_scope.display_mode != HIDDEN`). Use e.g.
    * `{ equalTo: "customer" }` or `{ equalTo: "supplier" }` to fetch the
    * definitions that drive the matching name list views / modal. When a
-   * single `equalTo` table is given, each returned node carries its
+   * single `equalTo` scope is given, each returned node carries its
    * `displayMode` for that scope.
    */
-  tableName?: InputMaybe<EqualFilterStringInput>;
+  scope?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type CustomFieldNode = {
   __typename: 'CustomFieldNode';
   /**
-   * How prominently this custom_field is shown on the queried table scope
-   * (`null` when the query wasn't scoped to a single `tableName`). Clients
+   * How prominently this custom_field is shown on the queried scope
+   * (`null` when the query wasn't scoped to a single `scope`). Clients
    * promote `PROMINENT` custom_fields to the record's primary surface, e.g. the
    * invoice detail-view toolbar.
    */
@@ -4838,7 +4838,7 @@ export type InvoiceNode = {
    * Properties v2 values for this invoice. The raw `invoice.custom_fields`
    * JSONB blob is filtered server-side to keys that are (a) defined in
    * `custom_field` and not soft-deleted, (b) marked visible for this invoice
-   * type's scope (e.g. `"inbound_shipment"`) via `custom_field_table`. Stray
+   * type's scope (e.g. `"inbound_shipment"`) via `custom_field_scope`. Stray
    * keys never reach the client. `None` for types with no custom fields scope
    * (repack, inventory adjustments).
    */
@@ -5165,7 +5165,7 @@ export type ItemNode = {
    * Properties v2 values for this item. The raw `item.custom_fields` JSONB
    * blob is filtered server-side to keys that are (a) defined in
    * `custom_field` and not soft-deleted, (b) marked visible for the `item`
-   * table via `custom_field_table`. Stray keys never reach the client.
+   * table via `custom_field_scope`. Stray keys never reach the client.
    * Imported from legacy mSupply `[item]user_field_1..7`; read-only.
    */
   customFields?: Maybe<Scalars['JSON']['output']>;
@@ -6672,7 +6672,7 @@ export type NameNode = {
    * Properties v2 values for this name. The raw `name.custom_fields` JSONB
    * blob is filtered server-side to keys that are (a) defined in
    * `custom_field` and not soft-deleted, (b) marked visible for one of this
-   * name's table scopes via `custom_field_table`. Stray keys never reach the
+   * name's table scopes via `custom_field_scope`. Stray keys never reach the
    * client.
    *
    * A name has no single scope: "customer"/"supplier" are independent role
@@ -7916,8 +7916,8 @@ export type Queries = {
   currencies: CurrenciesResponse;
   /**
    * Properties v2 definitions. Used by list views, detail views and modals
-   * to learn what columns/fields to render. Filter by `tableName` to scope
-   * to a record kind (`{ equalTo: "name" }`).
+   * to learn what columns/fields to render. Filter by `scope` to restrict
+   * to a record kind (`{ equalTo: "customer" }`).
    */
   customFields: CustomFieldsResponse;
   databaseSettings: DatabaseSettingsNode;

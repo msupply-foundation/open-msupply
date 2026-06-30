@@ -21,7 +21,7 @@ export type InvoiceCustomFieldFragment = {
 };
 
 export type InvoiceCustomFieldsQueryVariables = Types.Exact<{
-  tableName: Types.Scalars['String']['input'];
+  scope: Types.Scalars['String']['input'];
 }>;
 
 export type InvoiceCustomFieldsQuery = {
@@ -65,8 +65,8 @@ export const InvoiceCustomFieldFragmentDoc = gql`
   }
 `;
 export const InvoiceCustomFieldsDocument = gql`
-  query invoiceCustomFields($tableName: String!) {
-    customFields(filter: { tableName: { equalTo: $tableName } }) {
+  query invoiceCustomFields($scope: String!) {
+    customFields(filter: { scope: { equalTo: $scope } }) {
       ... on CustomFieldConnector {
         __typename
         totalCount

@@ -1,19 +1,19 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, CustomFieldTableRow, Row, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, CustomFieldScopeRow, Row, StorageConnection, SyncBufferRow,
 };
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(CustomFieldTableTranslation)
+    Box::new(CustomFieldScopeTranslation)
 }
 
-pub(crate) struct CustomFieldTableTranslation;
+pub(crate) struct CustomFieldScopeTranslation;
 
-impl SyncTranslation for CustomFieldTableTranslation {
+impl SyncTranslation for CustomFieldScopeTranslation {
     fn table_name(&self) -> &str {
-        "custom_field_table"
+        "custom_field_scope"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
@@ -26,14 +26,14 @@ impl SyncTranslation for CustomFieldTableTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            CustomFieldTableRow,
+            CustomFieldScopeRow,
         >(
             sync_record.data.0.clone()
         )?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::CustomFieldTable)
+        Some(ChangelogTableName::CustomFieldScope)
     }
 
     fn should_translate_to_sync_record(
@@ -55,7 +55,7 @@ impl SyncTranslation for CustomFieldTableTranslation {
         changelog: &ChangelogRow,
         row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let Row::CustomFieldTable(table_row) = row else {
+        let Row::CustomFieldScope(table_row) = row else {
             return Ok(PushTranslateResult::NotMatched);
         };
 

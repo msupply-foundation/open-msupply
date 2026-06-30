@@ -10,8 +10,8 @@ mod graphql {
             mock_store_linked_to_name, MockDataInserts,
         },
         EqualFilter, GeneralFilter, Name, NameCondition, NameFilter, NameSort, NameSortField,
-        NameType, PaginationOption, CustomFieldDisplayMode, CustomFieldKind, CustomFieldTableRow,
-        CustomFieldTableRowRepository, CustomFieldRow, CustomFieldRowRepository, CustomFieldValueFilter,
+        NameType, PaginationOption, CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow,
+        CustomFieldScopeRowRepository, CustomFieldRow, CustomFieldRowRepository, CustomFieldValueFilter,
         CustomFieldValueType, StorageConnectionManager, StringFilter,
     };
     use serde_json::json;
@@ -260,11 +260,11 @@ mod graphql {
                 deleted_datetime: None,
             })
             .unwrap();
-        CustomFieldTableRowRepository::new(&connection)
-            .upsert_one(&CustomFieldTableRow {
+        CustomFieldScopeRowRepository::new(&connection)
+            .upsert_one(&CustomFieldScopeRow {
                 id: "prop1_supplier".to_string(),
                 custom_field_id: "prop1".to_string(),
-                table_name: "supplier".to_string(),
+                scope: "supplier".to_string(),
                 display_mode: CustomFieldDisplayMode::Visible,
             })
             .unwrap();

@@ -41,17 +41,17 @@ impl MigrationFragment for Migrate {
                 UNIQUE (custom_field_id, key)
             );
 
-            CREATE TABLE custom_field_table (
+            CREATE TABLE custom_field_scope (
                 id TEXT NOT NULL PRIMARY KEY,
                 custom_field_id TEXT NOT NULL REFERENCES custom_field(id),
-                table_name TEXT NOT NULL,
+                scope TEXT NOT NULL,
                 -- Per-scope display mode (HIDDEN / VISIBLE / PROMINENT). Plain
                 -- TEXT, not a native enum, for the same v7 forwards-compatibility
                 -- reason as `value_type` above: an unrecognised mode parses into
                 -- the `CustomFieldDisplayMode::Other` catch-all rather than the DB
                 -- rejecting it.
                 display_mode TEXT NOT NULL DEFAULT 'VISIBLE',
-                UNIQUE (custom_field_id, table_name)
+                UNIQUE (custom_field_id, scope)
             );
             "#
         )?;

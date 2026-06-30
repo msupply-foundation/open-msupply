@@ -55,7 +55,7 @@ pub(crate) mod invoice_date_utils;
 pub mod stock_effect;
 pub mod update_picked_date;
 pub mod custom_fields;
-pub use self::custom_fields::invoice_custom_field_table_name;
+pub use self::custom_fields::invoice_custom_field_scope;
 
 pub trait InvoiceServiceTrait: Sync + Send {
     fn get_invoices(

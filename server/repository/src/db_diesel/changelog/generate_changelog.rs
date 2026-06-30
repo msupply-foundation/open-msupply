@@ -1104,7 +1104,7 @@ impl CustomFieldOptionRow {
     }
 }
 
-impl CustomFieldTableRow {
+impl CustomFieldScopeRow {
     pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
@@ -1112,7 +1112,7 @@ impl CustomFieldTableRow {
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::CustomFieldTable,
+            table_name: ChangelogTableName::CustomFieldScope,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,

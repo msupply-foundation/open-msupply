@@ -14,8 +14,8 @@ export const useNameApi = () => {
       [...keys.base(), 'stores-list', params] as const,
     donors: () => [...keys.base(), storeId, 'donors'] as const,
     properties: () => [NAME_PROPERTIES_KEY] as const,
-    customFields: (tableName: string) =>
-      [NAME_PROPERTIES_V2_KEY, tableName] as const,
+    customFields: (scope: string) =>
+      [NAME_PROPERTIES_V2_KEY, scope] as const,
   };
   const { client } = useGql();
   const queries = getNameQueries(getSdk(client), storeId);

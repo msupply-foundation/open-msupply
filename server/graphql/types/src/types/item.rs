@@ -9,7 +9,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        AllowedCustomFieldKeysByTableLoader, AncillaryItemsByAncillaryIdLoader,
+        AllowedCustomFieldKeysByScopeLoader, AncillaryItemsByAncillaryIdLoader,
         AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDirectionsByItemIdLoader,
         ItemStatsLoaderInput, ItemStoreJoinLoader, ItemStoreJoinLoaderInput,
         ItemVariantsByItemIdLoader, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
@@ -85,14 +85,14 @@ impl ItemNode {
     /// Properties v2 values for this item. The raw `item.custom_fields` JSONB
     /// blob is filtered server-side to keys that are (a) defined in
     /// `custom_field` and not soft-deleted, (b) marked visible for the `item`
-    /// table via `custom_field_table`. Stray keys never reach the client.
+    /// table via `custom_field_scope`. Stray keys never reach the client.
     /// Imported from legacy mSupply `[item]user_field_1..7`; read-only.
     pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
         let Some(raw) = self.row().custom_fields.clone() else {
             return Ok(None);
         };
 
-        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByTableLoader>>();
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
         let allowed_keys = loader
             .load_one("item".to_string())
             .await?

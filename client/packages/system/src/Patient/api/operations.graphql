@@ -89,7 +89,7 @@ fragment CustomField on CustomFieldNode {
 }
 
 query patientCustomFields {
-  customFields(filter: { tableName: { equalTo: "patient" } }) {
+  customFields(filter: { scope: { equalTo: "patient" } }) {
     ... on CustomFieldConnector {
       __typename
       totalCount

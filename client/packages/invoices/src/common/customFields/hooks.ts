@@ -7,9 +7,9 @@ import {
 import { getSdk } from './operations.generated';
 
 /**
- * `property_table_v2.table_name` scope for each invoice type that supports
- * properties (matches `invoice_property_table_name` on the server). Repack and
- * inventory adjustments have no scope, hence no entry.
+ * `custom_field_scope.scope` for each invoice type that supports custom fields
+ * (matches `invoice_custom_field_scope` on the server). Repack and inventory
+ * adjustments have no scope, hence no entry.
  */
 export const INVOICE_PROPERTIES_SCOPE: Partial<Record<InvoiceNodeType, string>> =
   {
@@ -53,14 +53,14 @@ const useCustomFieldsGraphQL = () => {
  */
 export const useInvoiceCustomFields = (invoiceType: InvoiceNodeType) => {
   const { api } = useCustomFieldsGraphQL();
-  const tableName = INVOICE_PROPERTIES_SCOPE[invoiceType];
+  const scope = INVOICE_PROPERTIES_SCOPE[invoiceType];
 
   return useQuery({
-    queryKey: [INVOICE_PROPERTIES_V2, tableName],
-    enabled: !!tableName,
+    queryKey: [INVOICE_PROPERTIES_V2, scope],
+    enabled: !!scope,
     queryFn: async () => {
-      if (!tableName) return [];
-      const result = await api.invoiceCustomFields({ tableName });
+      if (!scope) return [];
+      const result = await api.invoiceCustomFields({ scope });
       if (result?.customFields?.__typename === 'CustomFieldConnector') {
         return result.customFields.nodes;
       }

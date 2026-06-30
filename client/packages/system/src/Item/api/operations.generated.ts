@@ -2452,7 +2452,7 @@ export const ItemLedgerDocument = gql`
 `;
 export const ItemCustomFieldsDocument = gql`
   query itemCustomFields {
-    customFields(filter: { tableName: { equalTo: "item" } }) {
+    customFields(filter: { scope: { equalTo: "item" } }) {
       ... on CustomFieldConnector {
         __typename
         totalCount

@@ -11,31 +11,31 @@ use service::service_provider::ServiceProvider;
 use crate::standard_graphql_error::StandardGraphqlError;
 
 /// Returns the set of custom_field keys visible on a given table — used to
-/// pre-filter `NameNode.customFields`. Keyed by `table_name`; one fetch per
+/// pre-filter `NameNode.customFields`. Keyed by `scope`; one fetch per
 /// unique table name per request (typically just `"name"`). Routed through
 /// `custom_field_service` so tests can stub the lookup without seeding the DB.
-pub struct AllowedCustomFieldKeysByTableLoader {
+pub struct AllowedCustomFieldKeysByScopeLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-impl Loader<String> for AllowedCustomFieldKeysByTableLoader {
+impl Loader<String> for AllowedCustomFieldKeysByScopeLoader {
     type Value = HashSet<String>;
     type Error = async_graphql::Error;
 
     async fn load(
         &self,
-        table_names: &[String],
+        scopes: &[String],
     ) -> Result<HashMap<String, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
         let mut result = HashMap::new();
-        for table_name in table_names {
+        for scope in scopes {
             let keys = self
                 .service_provider
                 .custom_field_service
-                .allowed_custom_field_keys_for_table(&service_context.connection, table_name)
+                .allowed_custom_field_keys_for_scope(&service_context.connection, scope)
                 .map_err(StandardGraphqlError::from_repository_error)?;
-            result.insert(table_name.clone(), keys);
+            result.insert(scope.clone(), keys);
         }
         Ok(result)
     }

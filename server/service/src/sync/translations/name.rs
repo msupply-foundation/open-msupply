@@ -226,7 +226,7 @@ pub struct LegacyNameRow {
     // Legacy 4D `[name]custom1/2/3` columns. Field names use snake_case (Rust
     // convention) and serde rename pins the wire name to the 4D column name.
     // TODO: when we widen this beyond custom1/2/3, consider #[serde(flatten)]
-    // into a HashMap and filter by custom field table at translate time.
+    // into a HashMap and filter by custom field scope at translate time.
     #[serde(default, rename = "custom1", deserialize_with = "empty_str_as_option_string")]
     pub custom_1: Option<String>,
     #[serde(default, rename = "custom2", deserialize_with = "empty_str_as_option_string")]

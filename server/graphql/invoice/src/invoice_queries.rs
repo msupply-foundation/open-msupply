@@ -18,7 +18,7 @@ use repository::{
     InvoiceStatus, InvoiceType, PaginationOption, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::invoice_custom_field_table_name;
+use service::invoice::invoice_custom_field_scope;
 
 #[derive(Union)]
 pub enum InvoiceResponse {
@@ -264,7 +264,7 @@ pub fn get_invoices(
             .collect();
         let mut scopes: Vec<&str> = requested_types
             .iter()
-            .filter_map(invoice_custom_field_table_name)
+            .filter_map(invoice_custom_field_scope)
             .collect();
         scopes.sort_unstable();
         scopes.dedup();

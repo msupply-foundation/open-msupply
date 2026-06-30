@@ -92,7 +92,7 @@ impl From<CustomFieldDisplayMode> for CustomFieldNodeDisplayMode {
 pub struct CustomFieldNode {
     pub custom_field: CustomFieldRow,
     /// Per-scope display mode — only set when the custom_field was queried with a
-    /// single `table_name` filter (otherwise `None`).
+    /// single `scope` filter (otherwise `None`).
     pub display_mode: Option<CustomFieldDisplayMode>,
 }
 
@@ -130,8 +130,8 @@ impl CustomFieldNode {
         CustomFieldNodeKind::from(self.custom_field.kind.clone())
     }
 
-    /// How prominently this custom_field is shown on the queried table scope
-    /// (`null` when the query wasn't scoped to a single `tableName`). Clients
+    /// How prominently this custom_field is shown on the queried scope
+    /// (`null` when the query wasn't scoped to a single `scope`). Clients
     /// promote `PROMINENT` custom_fields to the record's primary surface, e.g. the
     /// invoice detail-view toolbar.
     pub async fn display_mode(&self) -> Option<CustomFieldNodeDisplayMode> {
@@ -199,7 +199,7 @@ impl CustomFieldConnector {
 
 /// Filters a raw `custom_fields` JSONB blob down to keys allowed for a given
 /// table. Stray keys (not defined in `custom_field`, soft-deleted, or with a
-/// `custom_field_table.display_mode = HIDDEN`) are dropped. Non-object JSON is
+/// `custom_field_scope.display_mode = HIDDEN`) are dropped. Non-object JSON is
 /// returned untouched — that shape isn't expected, but better than silently
 /// dropping data.
 pub fn filter_custom_fields(

@@ -206,8 +206,8 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       }
       throw new Error('Unable to fetch properties');
     },
-    customFields: async (tableName: string) => {
-      const result = await sdk.nameCustomFields({ tableName });
+    customFields: async (scope: string) => {
+      const result = await sdk.nameCustomFields({ scope });
 
       if (result?.customFields?.__typename === 'CustomFieldConnector') {
         return result?.customFields?.nodes;

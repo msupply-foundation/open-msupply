@@ -11,7 +11,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    AllowedCustomFieldKeysByTableLoader, CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader,
+    AllowedCustomFieldKeysByScopeLoader, CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader,
     InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
     ProgramByIdLoader, PurchaseOrderByIdLoader, ShippingMethodByIdLoader, SyncFileReferenceLoader,
     UserLoader,
@@ -236,7 +236,7 @@ impl InvoiceNode {
     /// Properties v2 values for this invoice. The raw `invoice.custom_fields`
     /// JSONB blob is filtered server-side to keys that are (a) defined in
     /// `custom_field` and not soft-deleted, (b) marked visible for this invoice
-    /// type's scope (e.g. `"inbound_shipment"`) via `custom_field_table`. Stray
+    /// type's scope (e.g. `"inbound_shipment"`) via `custom_field_scope`. Stray
     /// keys never reach the client. `None` for types with no custom fields scope
     /// (repack, inventory adjustments).
     pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
@@ -244,14 +244,14 @@ impl InvoiceNode {
             return Ok(None);
         };
 
-        let Some(table_name) = service::invoice::invoice_custom_field_table_name(&self.row().r#type)
+        let Some(scope) = service::invoice::invoice_custom_field_scope(&self.row().r#type)
         else {
             return Ok(None);
         };
 
-        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByTableLoader>>();
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
         let allowed_keys = loader
-            .load_one(table_name.to_string())
+            .load_one(scope.to_string())
             .await?
             .unwrap_or_default();
 

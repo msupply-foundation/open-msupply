@@ -327,7 +327,7 @@ pub struct LegacyTransactRow {
 /// custom fields dev doc).
 /// NOTE: this list, [`category_key_for_invoice_type`], the category seeder
 /// entries (`central_mapping_custom_fields`)
-/// and `invoice_custom_field_table_name` must stay in lock-step — the
+/// and `invoice_custom_field_scope` must stay in lock-step — the
 /// `transaction_category_mappings_stay_in_lock_step` test in
 /// `central_mapping_custom_fields` asserts it (the migration SQL backfill is the
 /// one copy a test can't reach; a future category-bearing type needs a NEW
