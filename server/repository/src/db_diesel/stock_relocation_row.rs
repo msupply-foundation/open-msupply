@@ -32,6 +32,16 @@ pub enum StockRelocationStatus {
     Finalised,
 }
 
+impl StockRelocationStatus {
+    pub fn index(&self) -> u8 {
+        match self {
+            StockRelocationStatus::New => 1,
+            StockRelocationStatus::Confirmed => 2,
+            StockRelocationStatus::Finalised => 3,
+        }
+    }
+}
+
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
 )]
