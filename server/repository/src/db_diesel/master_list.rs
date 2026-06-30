@@ -172,8 +172,6 @@ impl<'a> MasterListRepository<'a> {
                     apply_sort!(query, sort, master_list::discount_percentage);
                 }
             }
-        } else {
-            query = query.order(master_list::id.asc())
         }
 
         // Debug diesel query

@@ -175,8 +175,6 @@ impl<'a> InvoiceRepository<'a> {
                     apply_sort_no_case!(query, sort, invoice::transport_reference);
                 }
             }
-        } else {
-            query = query.order(invoice::id.asc())
         }
 
         // Debug diesel query

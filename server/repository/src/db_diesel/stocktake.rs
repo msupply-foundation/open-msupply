@@ -234,8 +234,6 @@ impl<'a> StocktakeRepository<'a> {
                     apply_sort!(query, sort, stocktake::stocktake_date)
                 }
             }
-        } else {
-            query = query.order(stocktake::id.asc())
         }
 
         // Stable tiebreaker so paginated results don't shuffle or drop rows

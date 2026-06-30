@@ -113,8 +113,6 @@ impl<'a> ClinicianRepository<'a> {
                 }
                 ClinicianSortField::Email => apply_sort_no_case!(query, sort, clinician::email),
             }
-        } else {
-            query = query.order(clinician::id.asc())
         }
 
         // Stable tiebreaker so paginated results don't shuffle or drop rows

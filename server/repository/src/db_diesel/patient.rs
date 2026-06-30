@@ -141,8 +141,6 @@ impl<'a> PatientRepository<'a> {
                     apply_sort!(query, sort, name::created_datetime)
                 }
             }
-        } else {
-            query = query.order(name::id.asc())
         }
 
         // Stable tiebreaker so paginated results don't shuffle or drop rows
