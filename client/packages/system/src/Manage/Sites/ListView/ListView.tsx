@@ -9,6 +9,7 @@ import {
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
+  ColumnType,
   useIsCentralStandalone,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButtons';
@@ -96,6 +97,24 @@ export const SitesList = () => {
         accessorKey: 'hardwareId',
         header: t('label.hardware-id'),
       },
+      {
+        accessorKey: 'syncVersion',
+        header: t('label.sync-version'),
+      },
+      {
+        accessorKey: 'appVersion',
+        header: t('label.version'),
+      },
+      {
+        accessorKey: 'lastConnectionDatetime',
+        header: t('label.last-connection'),
+        columnType: ColumnType.DateTime,
+      },
+      {
+        accessorKey: 'lastSyncDatetime',
+        header: t('label.last-sync'),
+        columnType: ColumnType.DateTime,
+      },
     ],
     [failedDeleteIds]
   );
@@ -111,6 +130,7 @@ export const SitesList = () => {
         name: selected.name,
         password: '',
         hardwareId: selected.hardwareId,
+        syncVersion: selected.syncVersion,
         isNew: false,
       } as DraftSite);
       onOpen();

@@ -9,6 +9,12 @@ export type SiteRowFragment = {
   code: string;
   name: string;
   hardwareId?: string | null;
+  syncVersion: Types.SyncVersionNode;
+  appName?: string | null;
+  appVersion?: string | null;
+  lastConnectionDatetime?: string | null;
+  lastSyncDatetime?: string | null;
+  firstSyncDatetime?: string | null;
 };
 
 export type SiteStoreRowFragment = {
@@ -41,6 +47,12 @@ export type SitesQuery = {
           code: string;
           name: string;
           hardwareId?: string | null;
+          syncVersion: Types.SyncVersionNode;
+          appName?: string | null;
+          appVersion?: string | null;
+          lastConnectionDatetime?: string | null;
+          lastSyncDatetime?: string | null;
+          firstSyncDatetime?: string | null;
         }>;
       };
     };
@@ -64,6 +76,12 @@ export type UpsertSiteMutation = {
             code: string;
             name: string;
             hardwareId?: string | null;
+            syncVersion: Types.SyncVersionNode;
+            appName?: string | null;
+            appVersion?: string | null;
+            lastConnectionDatetime?: string | null;
+            lastSyncDatetime?: string | null;
+            firstSyncDatetime?: string | null;
           }
         | {
             __typename: 'UpsertSiteError';
@@ -177,6 +195,12 @@ export const SiteRowFragmentDoc = gql`
     code
     name
     hardwareId
+    syncVersion
+    appName
+    appVersion
+    lastConnectionDatetime
+    lastSyncDatetime
+    firstSyncDatetime
   }
 `;
 export const SiteStoreRowFragmentDoc = gql`

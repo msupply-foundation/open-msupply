@@ -11,6 +11,7 @@ import {
   LIST_KEY,
   SiteFilterInput,
   SiteSortFieldInput,
+  SyncVersionNode,
 } from '@openmsupply-client/common';
 
 type ListParams = {
@@ -26,6 +27,7 @@ export type DraftSite = {
   name: string;
   password: string;
   hardwareId?: string | null;
+  syncVersion?: SyncVersionNode | null;
   isNew: boolean;
 };
 
@@ -35,6 +37,7 @@ export const defaultDraftSite: DraftSite = {
   name: '',
   password: '',
   hardwareId: undefined,
+  syncVersion: undefined,
   isNew: true,
 };
 

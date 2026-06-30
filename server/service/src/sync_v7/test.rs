@@ -15,7 +15,7 @@ mod test_sync_v7_client_api {
 
     use crate::cursor_controller::CursorType;
     use crate::sync::settings::{BatchSize, SyncSettings};
-    use crate::sync_v7::api::{APP_VERSION_HEADER, HARDWARE_ID_HEADER};
+    use crate::sync_v7::api::{APP_NAME_HEADER, APP_VERSION_HEADER, HARDWARE_ID_HEADER};
     use crate::sync_v7::sync::sync_v7;
     use crate::sync_v7::sync_request::{SyncRequest, SyncRequestStep};
     use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
@@ -150,6 +150,11 @@ mod test_sync_v7_client_api {
                 .get(APP_VERSION_HEADER)
                 .and_then(|v| v.to_str().ok()),
             Some(Version::from_package_json().to_string().as_str()),
+        );
+        // The remote reports its app name on every request, like its version (#11784).
+        assert_eq!(
+            headers.get(APP_NAME_HEADER).and_then(|v| v.to_str().ok()),
+            Some(crate::sync::api::APP_NAME),
         );
         assert!(headers.get(HARDWARE_ID_HEADER).is_some());
     }

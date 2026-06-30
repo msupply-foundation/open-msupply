@@ -9,7 +9,10 @@ use repository::syncv7::SyncError;
 use service::{
     service_provider::ServiceProvider,
     sync_v7::{
-        api::{self, get_token::GetTokenInput, Common, APP_VERSION_HEADER, HARDWARE_ID_HEADER},
+        api::{
+            self, get_token::GetTokenInput, Common, APP_NAME_HEADER, APP_VERSION_HEADER,
+            HARDWARE_ID_HEADER,
+        },
         sync_on_central as handlers,
     },
 };
@@ -30,6 +33,7 @@ fn extract_common(req: &HttpRequest) -> Result<Common, SyncError> {
         header.get(AUTHORIZATION).and_then(|v| v.to_str().ok()),
         header.get(HARDWARE_ID_HEADER).and_then(|v| v.to_str().ok()),
         header.get(APP_VERSION_HEADER).and_then(|v| v.to_str().ok()),
+        header.get(APP_NAME_HEADER).and_then(|v| v.to_str().ok()),
     )
 }
 
@@ -155,6 +159,7 @@ mod test_sync_v7_server_api {
                 hardware_id: hardware_id.map(str::to_string),
                 token: token.map(str::to_string),
                 sync_version: SyncVersion::V7,
+                ..Default::default()
             })
             .unwrap();
         let kv = KeyValueStoreRepository::new(&connection);
