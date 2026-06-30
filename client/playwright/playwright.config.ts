@@ -8,7 +8,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
-  reporter: 'html',
+  // `html` for humans; `json` so the coverage-map generator can read each
+  // test's `covers` annotations alongside its pass/skip/fail status.
+  reporter: [
+    ['html'],
+    ['json', { outputFile: 'playwright-report/results.json' }],
+  ],
   use: {
     baseURL: process.env.BASE_URL ?? 'http://localhost:3003',
     trace: 'on-first-retry',
