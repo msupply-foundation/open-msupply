@@ -114,7 +114,7 @@ mod test {
         }
     }
 
-    async fn add_line(
+    fn add_line(
         service_provider: &ServiceProvider,
         ctx: &ServiceContext,
         movement_id: &str,
@@ -147,7 +147,7 @@ mod test {
         (service_provider, context)
     }
 
-    async fn new_movement(service_provider: &ServiceProvider, ctx: &ServiceContext) -> String {
+    fn new_movement(service_provider: &ServiceProvider, ctx: &ServiceContext) -> String {
         let id = uuid();
         service_provider
             .stock_relocation_service
@@ -179,7 +179,7 @@ mod test {
         assert!(repo.find_one_by_id(&id).unwrap().is_none());
 
         let delete_id = new_movement(&service_provider, &ctx).await;
-        let line_id = add_line(&service_provider, &ctx, &delete_id, "delete_sl", 4.0).await;
+        let line_id = add_line(&service_provider, &ctx, &delete_id, "delete_sl", 4.0);
         assert!(line_repo.find_one_by_id(&line_id).unwrap().is_some());
         service
             .delete_stock_relocation(
@@ -194,8 +194,8 @@ mod test {
         assert!(line_repo.find_one_by_id(&line_id).unwrap().is_none());
 
         // Batch delete is all-or-nothing.
-        let id1 = new_movement(&service_provider, &ctx).await;
-        let id2 = new_movement(&service_provider, &ctx).await;
+        let id1 = new_movement(&service_provider, &ctx);
+        let id2 = new_movement(&service_provider, &ctx);
         let batch_deleted = service
             .delete_stock_relocations(&ctx, "store_a", vec![id1.clone(), id2.clone()])
             .unwrap();
@@ -204,7 +204,7 @@ mod test {
         assert!(repo.find_one_by_id(&id2).unwrap().is_none());
 
         // roll-back
-        let id3 = new_movement(&service_provider, &ctx).await;
+        let id3 = new_movement(&service_provider, &ctx);
         assert!(service
             .delete_stock_relocations(&ctx, "store_a", vec![id3.clone(), uuid()])
             .is_err());
@@ -222,7 +222,7 @@ mod test {
             Err(DeleteStockRelocationError::RelocationDoesNotExist)
         );
 
-        let id = new_movement(&service_provider, &ctx).await;
+        let id = new_movement(&service_provider, &ctx);
         assert_eq!(
             service.delete_stock_relocation(
                 &ctx,
@@ -232,8 +232,8 @@ mod test {
             Err(DeleteStockRelocationError::NotThisStoreRelocation)
         );
 
-        let finalised_id = new_movement(&service_provider, &ctx).await;
-        add_line(&service_provider, &ctx, &finalised_id, "fin_sl", 10.0).await;
+        let finalised_id = new_movement(&service_provider, &ctx);
+        add_line(&service_provider, &ctx, &finalised_id, "fin_sl", 10.0);
         service
             .update_stock_relocation(
                 &ctx,
