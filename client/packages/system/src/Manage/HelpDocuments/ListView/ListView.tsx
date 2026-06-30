@@ -9,11 +9,11 @@ import {
   useNonPaginatedMaterialTable,
   useTranslation,
 } from '@openmsupply-client/common';
-import { Environment } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButtons';
 import { Footer } from './Footer';
 import { UploadModal } from './UploadModal';
 import { HelpDocumentRowFragment, useHelpDocuments } from '../api';
+import { HelpDocumentLink } from '../HelpDocumentLink';
 
 export const HelpDocumentsList = () => {
   const t = useTranslation();
@@ -28,9 +28,9 @@ export const HelpDocumentsList = () => {
     (): ColumnDef<HelpDocumentRowFragment>[] => [
       { accessorKey: 'title', header: t('label.title'), enableSorting: true },
       {
-        // Render the file name as a link to the inline-view URL — same one
-        // the Help page uses, so PDFs preview in a new tab. Rows whose file
-        // blob hasn't synced yet just show plain text.
+        // Render the file name as a link to the document — same as the Help
+        // page, so PDFs preview in a new tab (web) or open in the OS viewer
+        // (Android). Rows whose file blob hasn't synced yet show plain text.
         id: 'fileName',
         header: t('label.filename'),
         accessorFn: row => row.files.nodes[0]?.fileName ?? '',
@@ -38,16 +38,14 @@ export const HelpDocumentsList = () => {
         Cell: ({ row }) => {
           const file = row.original.files.nodes[0];
           if (!file) return null;
-          const url = `${Environment.SYNC_FILES_URL}/help_document/${row.original.id}/${file.id}`;
           return (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
+            <HelpDocumentLink
+              docId={row.original.id}
+              file={file}
               onClick={e => e.stopPropagation()}
             >
               {file.fileName}
-            </a>
+            </HelpDocumentLink>
           );
         },
       },
