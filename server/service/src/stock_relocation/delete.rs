@@ -234,7 +234,7 @@ mod test {
             Err(DeleteStockRelocationError::NotThisStoreRelocation)
         );
 
-        let finalised_id = new_movement(&service_provider, &ctx).await;
+        let finalised_id = new_movement(&service_provider, &ctx);
         add_line(&ctx, &finalised_id, "fin_sl", 10.0);
         service
             .update_stock_relocation(
