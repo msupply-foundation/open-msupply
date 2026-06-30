@@ -26,7 +26,7 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::Printer,
     ChangelogTableName::Property,
     // custom_field must precede its children (custom_field_option / custom_field_scope
-    // both FK custom_field.property_id).
+    // both FK custom_field.id via custom_field_id).
     ChangelogTableName::CustomField,
     ChangelogTableName::CustomFieldOption,
     ChangelogTableName::CustomFieldScope,
