@@ -7,10 +7,7 @@ use self::query::{
     get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
     DraftStockRelocationLine, StockRelocationDraftFilter,
 };
-use self::update::{
-    update_stock_relocation, update_stock_relocations, UpdateStockRelocation,
-    UpdateStockRelocationError,
-};
+use self::update::{update_stock_relocation, UpdateStockRelocation, UpdateStockRelocationError};
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{
     PaginationOption, RepositoryError, StockRelocation, StockRelocationFilter, StockRelocationRow,
@@ -58,7 +55,7 @@ pub trait StockRelocationServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         input: InsertStockRelocation,
-    ) -> Result<Vec<StockRelocationRow>, InsertStockRelocationError> {
+    ) -> Result<StockRelocationRow, InsertStockRelocationError> {
         insert_stock_relocation(ctx, store_id, input)
     }
 
@@ -69,15 +66,6 @@ pub trait StockRelocationServiceTrait: Sync + Send {
         input: UpdateStockRelocation,
     ) -> Result<StockRelocationRow, UpdateStockRelocationError> {
         update_stock_relocation(ctx, store_id, input)
-    }
-
-    fn update_stock_relocations(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-        inputs: Vec<UpdateStockRelocation>,
-    ) -> Result<Vec<StockRelocationRow>, UpdateStockRelocationError> {
-        update_stock_relocations(ctx, store_id, inputs)
     }
 
     fn delete_stock_relocation(
