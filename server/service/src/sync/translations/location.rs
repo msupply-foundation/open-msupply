@@ -145,7 +145,7 @@ mod tests {
         // FK validation requires the referenced location_type to exist
         let (_, connection, _, _) = setup_all_with_data(
             "test_location_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
             MockData {
                 location_types: vec![LocationTypeRow {
                     id: "84AA2B7A18694A2AB1E84DCABAD19617".to_string(),

@@ -344,7 +344,7 @@ mod tests {
         // validation in the translator would null them out.
         let (_, connection, _, _) = setup_all_with_data(
             "test_stock_take_line_translation",
-            MockDataInserts::none()
+            MockDataInserts::all()
                 .stock_lines()
                 .units()
                 .items()

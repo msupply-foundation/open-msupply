@@ -72,7 +72,9 @@ impl SyncTranslation for NameTagJoinTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, NameTagRow, NameTagRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_name_tag_join_translation() {
@@ -80,7 +82,20 @@ mod tests {
         let translator = NameTagJoinTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_name_tag_join_translation", MockDataInserts::none()).await;
+            setup_all("test_name_tag_join_translation", MockDataInserts::all()).await;
+
+        // Seed the name_tag parents the join's required FKs point at.
+        for name_tag_id in [
+            "1A3B380E37F741729DAC4761AF3549F9",
+            "59F2635D22B346ADA0088D6261926465",
+        ] {
+            NameTagRowRepository::new(&connection)
+                .upsert_one(&NameTagRow {
+                    id: name_tag_id.to_string(),
+                    name: "test".to_string(),
+                })
+                .unwrap();
+        }
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

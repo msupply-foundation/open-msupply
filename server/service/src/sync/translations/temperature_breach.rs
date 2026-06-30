@@ -228,7 +228,11 @@ pub fn to_legacy_breach_type(t: &TemperatureBreachType) -> LegacyTemperatureBrea
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_sensor_1, MockDataInserts},
+        test_db::setup_all,
+        SensorRow, SensorRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_temperature_breach_translation() {
@@ -237,9 +241,17 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_temperature_breach_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the sensor parent the breach's required FK points at.
+        SensorRowRepository::new(&connection)
+            .upsert_one(&SensorRow {
+                id: "cf5812e0c33911eb9757779d39ae2dbd".to_string(),
+                ..mock_sensor_1()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

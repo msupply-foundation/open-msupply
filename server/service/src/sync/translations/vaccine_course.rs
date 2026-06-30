@@ -96,7 +96,11 @@ impl SyncTranslation for VaccineCourseTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_program_a, MockDataInserts},
+        test_db::setup_all,
+        ProgramRow, ProgramRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_vaccine_course_translation() {
@@ -104,7 +108,15 @@ mod tests {
         let translator = VaccineCourseTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_vaccine_course_translation", MockDataInserts::none()).await;
+            setup_all("test_vaccine_course_translation", MockDataInserts::all()).await;
+
+        // Seed the program parent the course's required FK points at.
+        ProgramRowRepository::new(&connection)
+            .upsert_one(&ProgramRow {
+                id: "program_test".to_string(),
+                ..mock_program_a()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

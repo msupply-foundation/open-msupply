@@ -202,7 +202,10 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, InsuranceProviderRow,
+        InsuranceProviderRowRepository, NameLinkRow, NameLinkRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_name_insurance_join_translation() {
@@ -211,9 +214,26 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_name_insurance_join_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the name_link + insurance_provider parents the join's required FKs point at.
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                name_id: "name_a".to_string(),
+            })
+            .unwrap();
+        InsuranceProviderRowRepository::new(&connection)
+            .upsert_one(&InsuranceProviderRow {
+                id: "INSURANCE_PROVIDER_1_ID".to_string(),
+                provider_name: "test".to_string(),
+                is_active: true,
+                prescription_validity_days: None,
+                comment: None,
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

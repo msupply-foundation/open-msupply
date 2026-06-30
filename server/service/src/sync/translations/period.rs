@@ -70,7 +70,9 @@ impl SyncTranslation for PeriodTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, PeriodScheduleRow, PeriodScheduleRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_period_translation() {
@@ -78,7 +80,21 @@ mod tests {
         let translator = PeriodTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_period_translation", MockDataInserts::none()).await;
+            setup_all("test_period_translation", MockDataInserts::all()).await;
+
+        // Seed the period_schedule parents the periods' required FKs point at.
+        for schedule_id in [
+            "period_schedule_1",
+            "period_schedule_2",
+            "597074CBCCC24166B8C1F82553DACC2F",
+        ] {
+            PeriodScheduleRowRepository::new(&connection)
+                .upsert_one(&PeriodScheduleRow {
+                    id: schedule_id.to_string(),
+                    name: "test".to_string(),
+                })
+                .unwrap();
+        }
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

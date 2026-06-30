@@ -91,13 +91,27 @@ impl SyncTranslation for PreferenceTranslator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_store_a, MockDataInserts},
+        test_db::setup_all,
+        StoreRow, StoreRowRepository,
+    };
     #[actix_rt::test]
     async fn test_preference_translation() {
         use crate::sync::test::test_data::preference as test_data;
         let translator = PreferenceTranslator;
         let (_, connection, _, _) =
-            setup_all("test_preference_translation", MockDataInserts::none()).await;
+            setup_all("test_preference_translation", MockDataInserts::all()).await;
+
+        // Seed the store the preference's (optional) store_id points at, so it isn't cleared.
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                id: "4E27CEB263354EB7B1B33CEA8F7884D8".to_string(),
+                name_id: "name_a".to_string(),
+                code: "pref_test".to_string(),
+                ..mock_store_a()
+            })
+            .unwrap();
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator

@@ -151,7 +151,11 @@ impl SyncTranslation for VVMStatusLogTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_outbound_shipment_line_a, mock_stock_line_a, MockDataInserts},
+        test_db::setup_all,
+        InvoiceLineRow, InvoiceLineRowRepository, StockLineRow, StockLineRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_vvm_status_log_translation() {
@@ -159,7 +163,22 @@ mod tests {
         let translator = VVMStatusLogTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_vvm_status_log_translation", MockDataInserts::none()).await;
+            setup_all("test_vvm_status_log_translation", MockDataInserts::all()).await;
+
+        // Seed the stock_line parent the vvm status log's required FK points at.
+        StockLineRowRepository::new(&connection)
+            .upsert_one(&StockLineRow {
+                id: "0a3b02d0f0d211eb8dddb54df6d741bc".to_string(),
+                ..mock_stock_line_a()
+            })
+            .unwrap();
+        // Seed the invoice_line the (optional) invoice_line_id points at, so it isn't cleared.
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&InvoiceLineRow {
+                id: "12ee2f10f0d211eb8dddb54df6d741bc".to_string(),
+                ..mock_outbound_shipment_line_a()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

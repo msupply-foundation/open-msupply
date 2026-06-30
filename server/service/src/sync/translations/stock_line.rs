@@ -305,7 +305,7 @@ mod tests {
         // so that FK validation in the translator doesn't null them out.
         let (_, connection, _, _) = setup_all_with_data(
             "test_stock_line_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
             MockData {
                 contexts: vec![ContextRow {
                     id: "test_ctx".to_string(),

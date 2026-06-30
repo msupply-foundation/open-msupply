@@ -124,7 +124,7 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_clinician_store_join_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
 

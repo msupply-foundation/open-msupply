@@ -265,8 +265,10 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
-        CursorAndLimit, FilterBuilder, RowOrDelete,
+        mock::{mock_purchase_order_a, MockDataInserts},
+        test_db::setup_all,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, PurchaseOrderRow,
+        PurchaseOrderRowRepository, RowOrDelete,
     };
     use serde_json::json;
 
@@ -277,9 +279,26 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_purchase_order_line_translation",
-            MockDataInserts::none().purchase_order_line(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the purchase_order parents the lines' required FKs point at.
+        for (i, po_id) in [
+            "sync_test_purchase_order_1",
+            "12e889c0f0d211eb8dddb54df6d7fsadsa",
+        ]
+        .iter()
+        .enumerate()
+        {
+            PurchaseOrderRowRepository::new(&connection)
+                .upsert_one(&PurchaseOrderRow {
+                    id: po_id.to_string(),
+                    purchase_order_number: 9990 + i as i64,
+                    ..mock_purchase_order_a()
+                })
+                .unwrap();
+        }
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

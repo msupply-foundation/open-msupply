@@ -103,7 +103,7 @@ mod tests {
         let translator = UserPermissionTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_user_permission_translation", MockDataInserts::none()).await;
+            setup_all("test_user_permission_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

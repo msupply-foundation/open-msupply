@@ -111,7 +111,11 @@ impl SyncTranslation for AssetLogTranslation {
 mod tests {
     use super::*;
 
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        asset_row::{AssetRow, AssetRowRepository},
+        mock::{mock_asset_a, MockDataInserts},
+        test_db::setup_all,
+    };
 
     #[actix_rt::test]
     async fn test_asset_log_translation() {
@@ -119,7 +123,15 @@ mod tests {
         let translator = AssetLogTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_asset_log_translation", MockDataInserts::none()).await;
+            setup_all("test_asset_log_translation", MockDataInserts::all()).await;
+
+        // Seed the asset parent the log's required FK points at (reason_id is null in test data).
+        AssetRowRepository::new(&connection)
+            .upsert_one(&AssetRow {
+                id: "3de161ed-93ef-4210-aa31-3ae9e53748e8".to_string(),
+                ..mock_asset_a()
+            }, None)
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

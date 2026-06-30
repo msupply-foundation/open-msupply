@@ -154,10 +154,10 @@ impl SyncTranslation for TemperatureLogTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts,
+        mock::{mock_sensor_1, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::setup_all,
-        SyncAction, SyncRecordData,
+        SensorRow, SensorRowRepository, SyncAction, SyncRecordData,
     };
 
     #[actix_rt::test]
@@ -166,7 +166,15 @@ mod tests {
         let translator = TemperatureLogTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_temperature_log_translation", MockDataInserts::none()).await;
+            setup_all("test_temperature_log_translation", MockDataInserts::all()).await;
+
+        // Seed the sensor parent the log's required FK points at.
+        SensorRowRepository::new(&connection)
+            .upsert_one(&SensorRow {
+                id: "cf5812e0c33911eb9757779d39ae2dbd".to_string(),
+                ..mock_sensor_1()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

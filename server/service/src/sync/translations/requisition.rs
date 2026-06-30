@@ -647,8 +647,10 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
-        CursorAndLimit, FilterBuilder, RowOrDelete, SyncAction, SyncBufferRow, SyncRecordData,
+        mock::{mock_period, MockDataInserts},
+        test_db::setup_all,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, PeriodRow,
+        PeriodRowRepository, RowOrDelete, SyncAction, SyncBufferRow, SyncRecordData,
     };
     use serde_json::json;
     use util::assert_variant;
@@ -659,7 +661,24 @@ mod tests {
         let translator = RequisitionTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_requisition_translation", MockDataInserts::none()).await;
+            setup_all("test_requisition_translation", MockDataInserts::all()).await;
+
+        // Seed the periods the requisition records' optional period_id points at, so they aren't cleared.
+        for (i, period_id) in [
+            "641A3560C84A44BC9E6DDC01F3D75923",
+            "772B3984DBA14A5F941ED0EF857FDB31",
+        ]
+        .iter()
+        .enumerate()
+        {
+            PeriodRowRepository::new(&connection)
+                .upsert_one(&PeriodRow {
+                    id: period_id.to_string(),
+                    name: format!("test_period_{i}"),
+                    ..mock_period()
+                })
+                .unwrap();
+        }
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

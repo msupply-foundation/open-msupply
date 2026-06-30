@@ -90,7 +90,11 @@ impl SyncTranslation for AssetCategoryTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        asset_class_row::{AssetClassRow, AssetClassRowRepository},
+        mock::MockDataInserts,
+        test_db::setup_all,
+    };
 
     #[actix_rt::test]
     async fn test_asset_category_translation() {
@@ -98,7 +102,15 @@ mod tests {
         let translator = AssetCategoryTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_asset_category_translation", MockDataInserts::none()).await;
+            setup_all("test_asset_category_translation", MockDataInserts::all()).await;
+
+        // Seed the asset_class parent that the test record's required FK points at.
+        AssetClassRowRepository::new(&connection)
+            .upsert_one(&AssetClassRow {
+                id: "32608ef9-dce5-41a7-b3e9-92b0fe086c7e".to_string(),
+                name: "test".to_string(),
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

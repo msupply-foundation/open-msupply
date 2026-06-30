@@ -600,7 +600,7 @@ mod tests {
 
         let (_, connection, _, _) = setup_all_with_data(
             "test_invoice_line_translation",
-            MockDataInserts::none()
+            MockDataInserts::all()
                 .units()
                 .items()
                 .names()

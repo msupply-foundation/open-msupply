@@ -71,7 +71,9 @@ impl SyncTranslation for MasterListNameJoinTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, MasterListRow, MasterListRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_master_list_name_join_translation() {
@@ -80,9 +82,17 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_master_list_name_join_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the master_list parent the join's required FK points at.
+        MasterListRowRepository::new(&connection)
+            .upsert_one(&MasterListRow {
+                id: "87027C44835B48E6989376F42A58F7E3".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

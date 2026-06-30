@@ -75,7 +75,7 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_program_indicator_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
 

@@ -121,7 +121,10 @@ impl SyncTranslation for ItemVariantTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ItemLinkRow, ItemLinkRowRepository, NameLinkRow,
+        NameLinkRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_item_variant_translation() {
@@ -129,7 +132,22 @@ mod tests {
         let translator = ItemVariantTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_item_variant_translation", MockDataInserts::none()).await;
+            setup_all("test_item_variant_translation", MockDataInserts::all()).await;
+
+        // Seed the item_link parent the variant's required FK points at,
+        // plus the name_link used as the (optional) manufacturer so it isn't cleared.
+        ItemLinkRowRepository::new(&connection)
+            .upsert_one(&ItemLinkRow {
+                id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+                item_id: "item_a".to_string(),
+            })
+            .unwrap();
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                name_id: "name_a".to_string(),
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

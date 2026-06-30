@@ -64,7 +64,10 @@ impl SyncTranslation for ItemWarningJoinTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ItemLinkRow, ItemLinkRowRepository, WarningRow,
+        WarningRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_item_warning_join_translation() {
@@ -73,9 +76,26 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_item_warning_join_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the item_link + warning parents the join's required FKs point at.
+        ItemLinkRowRepository::new(&connection)
+            .upsert_one(&ItemLinkRow {
+                id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+                item_id: "item_a".to_string(),
+            })
+            .unwrap();
+        for warning_id in ["WARNING_1", "WARNING_2", "WARNING_3"] {
+            WarningRowRepository::new(&connection)
+                .upsert_one(&WarningRow {
+                    id: warning_id.to_string(),
+                    warning_text: "test".to_string(),
+                    code: "test".to_string(),
+                })
+                .unwrap();
+        }
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
