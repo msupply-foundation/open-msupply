@@ -113,8 +113,7 @@ pub async fn get_token(
                     _ => input.hardware_id.clone(),
                 };
 
-                // A multi device site shares one token across its devices, so an
-                // existing token is reused (relax instead mints a fresh one).
+                // Multi device sites share a token: reuse the existing one, otherwise mint a new one.
                 let token = match (site.is_multi_device, site.token.clone()) {
                     (true, Some(existing)) => existing,
                     _ => util::uuid::uuid(),

@@ -4,7 +4,7 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_site_is_multi_device_key_value"
+        "add_site_is_multi_device_pg_enum"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
