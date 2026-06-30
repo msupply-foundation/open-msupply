@@ -155,13 +155,16 @@ mod graphql {
         let test_service = TestService(Box::new(|filter| {
             assert_eq!(
                 filter,
-                Some(CustomFieldFilter::new().table_name(EqualFilter::equal_to("name".to_string())))
+                Some(
+                    CustomFieldFilter::new()
+                        .table_name(EqualFilter::equal_to("customer".to_string()))
+                )
             );
             Ok(ListResult::empty())
         }));
 
         let variables = json!({
-            "filter": { "tableName": { "equalTo": "name" } }
+            "filter": { "tableName": { "equalTo": "customer" } }
         });
 
         let expected = json!({ "customFields": { "__typename": "CustomFieldConnector" } });

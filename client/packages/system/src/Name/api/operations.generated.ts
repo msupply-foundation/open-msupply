@@ -211,7 +211,7 @@ export type NamePropertiesQuery = {
 };
 
 export type NameCustomFieldsQueryVariables = Types.Exact<{
-  [key: string]: never;
+  tableName: Types.Scalars['String']['input'];
 }>;
 
 export type NameCustomFieldsQuery = {
@@ -460,8 +460,8 @@ export const NamePropertiesDocument = gql`
   ${PropertyFragmentDoc}
 `;
 export const NameCustomFieldsDocument = gql`
-  query nameCustomFields {
-    customFields(filter: { tableName: { equalTo: "name" } }) {
+  query nameCustomFields($tableName: String!) {
+    customFields(filter: { tableName: { equalTo: $tableName } }) {
       ... on CustomFieldConnector {
         __typename
         totalCount
@@ -586,7 +586,7 @@ export function getSdk(
       );
     },
     nameCustomFields(
-      variables?: NameCustomFieldsQueryVariables,
+      variables: NameCustomFieldsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
     ): Promise<NameCustomFieldsQuery> {

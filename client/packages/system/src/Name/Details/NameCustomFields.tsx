@@ -9,17 +9,22 @@ interface NameCustomFieldsProps {
    * its keys. JSON scalar arrives as a parsed object (no JSON.parse needed).
    */
   properties?: Record<string, unknown> | null;
+  /** Name custom-field scope ("customer" | "supplier") to fetch definitions for. */
+  scope: 'customer' | 'supplier';
 }
 
 /**
  * Read-only display of a name's `customFields`. Rendering is delegated to the
  * shared {@link CustomFieldDetailRows} (consistent with item/patient): all
- * configured `name`-table definitions show as labelled rows — including ones
- * the name hasn't set, which render blank. No edit controls — editing is a
- * later stage.
+ * configured definitions for the given `scope` show as labelled rows —
+ * including ones the name hasn't set, which render blank. No edit controls —
+ * editing is a later stage.
  */
-export const NameCustomFields = ({ properties }: NameCustomFieldsProps) => {
-  const { data: definitions } = useName.document.customFields();
+export const NameCustomFields = ({
+  properties,
+  scope,
+}: NameCustomFieldsProps) => {
+  const { data: definitions } = useName.document.customFields(scope);
 
   if (!definitions?.length) return null;
 

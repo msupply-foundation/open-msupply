@@ -22,7 +22,7 @@ interface CustomFieldsTabProps {
  */
 export const CustomFieldsTab = ({ properties }: CustomFieldsTabProps) => {
   const t = useTranslation();
-  const { data: definitions } = useName.document.customFields();
+  const { data: definitions } = useName.document.customFields('supplier');
 
   if (!definitions?.length) {
     return <NothingHere body={t('messages.no-custom-fields')} />;
@@ -37,7 +37,7 @@ export const CustomFieldsTab = ({ properties }: CustomFieldsTabProps) => {
         style={{ maxWidth: 500 }}
         gap={4}
       >
-        <NameCustomFields properties={properties} />
+        <NameCustomFields properties={properties} scope="supplier" />
       </Grid>
     </DetailContainer>
   );

@@ -9,7 +9,8 @@ import { useNameApi } from '../utils/useNameApi';
 import { useNameCustomFields } from './useNameCustomFields';
 
 export const useNames = (type: 'customer' | 'supplier') => {
-  const { data: properties } = useNameCustomFields();
+  // `type` is also the name custom-field scope ("customer" | "supplier").
+  const { data: properties } = useNameCustomFields(type);
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
     filters: buildPropertyUrlFilterConfigs(properties ?? []),

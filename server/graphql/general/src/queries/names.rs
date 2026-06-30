@@ -1,6 +1,6 @@
 use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 use graphql_core::{
-    dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys},
+    dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys_multi},
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
@@ -72,7 +72,8 @@ pub struct NameFilterInput {
     pub supplying_store_id: Option<EqualFilterStringInput>,
 
     /// Dynamic filter condition AST, currently supporting property conditions
-    /// on keys visible for the "name" table scope, e.g.
+    /// on keys visible for the "customer" or "supplier" table scope (the union,
+    /// since names lists mix both), e.g.
     /// `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
     pub dynamic_filter: Option<serde_json::Value>,
 }
@@ -120,9 +121,9 @@ pub fn get_names(
             let dynamic_filter: Option<NameCondition::Inner> =
                 parse_dynamic_filter(filter.dynamic_filter.clone())?;
             if let Some(condition) = &dynamic_filter {
-                validate_custom_field_filter_keys(
+                validate_custom_field_filter_keys_multi(
                     &service_context.connection,
-                    "name",
+                    &["customer", "supplier"],
                     &condition.custom_field_conditions(),
                 )?;
             }
