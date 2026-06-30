@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 // See README.md for description of when this API version needs to be updated
-pub(crate) static SYNC_V5_VERSION: u32 = 15; // bumped for 2.20.0 OG v9.0.X?
+pub(crate) static SYNC_V5_VERSION: u32 = 16; // bumped for 2.21.0 OG v9.01.X: client handles the non-blocking (202) initialise + /sync/v5/site polling
 pub(crate) static SYNC_V6_VERSION: u32 = 5; // bumped for 2.9.02 (adding new types to system log)
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Default)]
