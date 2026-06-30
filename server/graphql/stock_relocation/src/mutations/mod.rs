@@ -11,7 +11,7 @@ pub use delete::{
 };
 pub use insert::{insert_stock_relocation, InsertInput, InsertResponse};
 pub use line::{
-    delete_stock_relocation_line, delete_stock_relocation_lines, upsert_stock_relocation_line,
+    batch_stock_relocation_line, upsert_stock_relocation_line, BatchLineInput, BatchLineResponse,
     DeleteLineResponse, DeleteLinesResponse, UpsertLineInput, UpsertLineResponse,
 };
 pub use update::{update_stock_relocation, UpdateInput, UpdateResponse};
