@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   DetailViewSkeleton,
   AlertModal,
@@ -38,7 +38,6 @@ export const PrescriptionDetailView = () => {
     update: { update },
   } = usePrescription();
   const columns = usePrescriptionColumn();
-  const [isDirtyProperties, setIsDirtyProperties] = useState(false);
 
   const {
     entity: historyEntity,
@@ -112,11 +111,9 @@ export const PrescriptionDetailView = () => {
           customFields={data?.customFields}
           onSave={patch => update({ customFields: patch })}
           disabled={isDisabled}
-          onEdit={setIsDirtyProperties}
         />
       ),
       value: 'custom-fields',
-      confirmOnLeaving: isDirtyProperties,
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
@@ -140,12 +137,7 @@ export const PrescriptionDetailView = () => {
             invoiceId={data.id}
           />
           <Toolbar />
-          <DetailTabs
-            tabs={tabs}
-            requiresConfirmation={tab =>
-              tab === 'Properties' && isDirtyProperties
-            }
-          />
+          <DetailTabs tabs={tabs} />
           <Footer
             selectedRows={selectedRows}
             resetRowSelection={table.resetRowSelection}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   DetailViewSkeleton,
   AlertModal,
@@ -31,7 +31,6 @@ export const CustomerReturnDetailView = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { urlQuery, updateQuery } = useUrlQuery();
-  const [isDirtyProperties, setIsDirtyProperties] = useState(false);
 
   const lineEditModal = useEditModal<string>();
 
@@ -71,11 +70,9 @@ export const CustomerReturnDetailView = () => {
             return update({ id: data.id, customFields: patch });
           }}
           disabled={isDisabled}
-          onEdit={setIsDirtyProperties}
         />
       ),
       value: 'custom-fields',
-      confirmOnLeaving: isDirtyProperties,
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
@@ -91,12 +88,7 @@ export const CustomerReturnDetailView = () => {
         <>
           <AppBarButtons onAddItem={onAddItem} />
           <Toolbar />
-          <DetailTabs
-            tabs={tabs}
-            requiresConfirmation={tab =>
-              tab === 'Properties' && isDirtyProperties
-            }
-          />
+          <DetailTabs tabs={tabs} />
           {/* Fallback status footer for tabs that don't own the lines table.
             The Details tab's `Footer` mounts an `AppFooterPortal` only when
             rows are selected; otherwise this portal shows the status crumbs. */}
