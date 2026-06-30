@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use repository::{Description, SyncLogV5V6Row, SyncLogV7Row};
+use repository::{Description, RepositoryError, SyncLogV5V6Row, SyncLogV7Row};
 use tokio::sync::{broadcast, mpsc, watch};
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
@@ -30,20 +30,6 @@ pub enum SyncLogRow {
 }
 
 impl SyncLogRow {
-    fn push_progress_total(&self) -> i32 {
-        match self {
-            SyncLogRow::V5V6(row) => row.push_progress_total.unwrap_or(0),
-            SyncLogRow::V7 { row, .. } => row.push_progress_total.unwrap_or(0),
-        }
-    }
-
-    fn push_progress_done(&self) -> i32 {
-        match self {
-            SyncLogRow::V5V6(row) => row.push_progress_done.unwrap_or(0),
-            SyncLogRow::V7 { row, .. } => row.push_progress_done.unwrap_or(0),
-        }
-    }
-
     fn full_sync_status(self) -> FullSyncStatus {
         match self {
             SyncLogRow::V5V6(row) => {
@@ -188,6 +174,7 @@ async fn subscription_worker_loop(
                 .flatten()
         })
         .is_some();
+    let mut push_queue_count = get_push_queue_count(&service_provider).unwrap_or(0);
     let mut last_push_query = Instant::now() - PUSH_QUEUE_DEBOUNCE;
     let mut push_queue_queued = false;
     let trigger_handle = service_provider.subscription_trigger.clone();
@@ -202,14 +189,23 @@ async fn subscription_worker_loop(
                     None => continue,
                 };
 
-                let push_queue_count =
-                    (row.push_progress_total() - row.push_progress_done()) as u64;
                 let status = row.full_sync_status();
+                let summary = status.summary();
 
                 let just_finished_successfully = status.is_finished_successfully();
+                let is_finished = summary.finished.is_some();
+
                 if just_finished_successfully {
-                    last_successful = Some(status.summary());
+                    last_successful = Some(summary);
                 }
+
+                if is_finished {
+                    // Once the sync has finished, requery to get the accurate push
+                    // queue count, falling back to the existing count if the query fails.
+                    push_queue_count =
+                        get_push_queue_count(&service_provider).unwrap_or(push_queue_count);
+                }
+
                 last_status = Some(status.clone());
 
                 let _ = tx.send(ResolvedSubscription::SyncInfo {
@@ -248,16 +244,14 @@ async fn subscription_worker_loop(
                 if last_push_query.elapsed() >= PUSH_QUEUE_DEBOUNCE {
                     // Outside debounce window — query immediately
                     push_queue_queued = false;
-                    let count = match service_provider.basic_context() {
-                        Ok(ctx) => service_provider
-                            .sync_status_service
-                            .number_of_records_in_push_queue(&ctx)
-                            .unwrap_or(0),
+                    let count = match get_push_queue_count(&service_provider) {
+                        Ok(count) => count,
                         Err(_) => {
                             log::error!("Failed to get DB connection for push queue count");
                             continue;
                         }
                     };
+                    push_queue_count = count;
                     last_push_query = Instant::now();
 
                     if let Some(status) = &last_status {
@@ -280,4 +274,13 @@ async fn subscription_worker_loop(
             }
         }
     }
+}
+
+fn get_push_queue_count(service_provider: &Arc<ServiceProvider>) -> Result<u64, RepositoryError> {
+    let ctx = service_provider.basic_context()?;
+
+    Ok(service_provider
+        .sync_status_service
+        .number_of_records_in_push_queue(&ctx)
+        .unwrap_or(0))
 }
