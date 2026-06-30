@@ -171,32 +171,32 @@ describe('mapPropertyFilters', () => {
       firstName: { like: 'jo' },
       dynamicFilter: {
         And: [
-          { Property: { key: 'note', filter: { Text: { Like: 'abc' } } } },
+          { CustomField: { key: 'note', filter: { Text: { Like: 'abc' } } } },
           {
-            Property: {
+            CustomField: {
               key: 'category',
               filter: { Option: { Equal: 'leaf_1' } },
             },
           },
           {
-            Property: {
+            CustomField: {
               key: 'population',
               filter: { Number: { GreaterThanOrEqual: 100 } },
             },
           },
           {
-            Property: {
+            CustomField: {
               key: 'population',
               filter: { Number: { LowerThanOrEqual: 500 } },
             },
           },
           {
-            Property: {
+            CustomField: {
               key: 'opened',
               filter: { Date: { GreaterThanOrEqual: '2024-01-01' } },
             },
           },
-          { Property: { key: 'active', filter: { Boolean: { Equal: true } } } },
+          { CustomField: { key: 'active', filter: { Boolean: { Equal: true } } } },
         ],
       },
     });
@@ -210,7 +210,7 @@ describe('mapPropertyFilters', () => {
       )
     ).toEqual({
       dynamicFilter: {
-        Property: {
+        CustomField: {
           key: 'category',
           filter: { Option: { In: ['parent', 'leaf_1', 'leaf_2'] } },
         },
@@ -226,7 +226,7 @@ describe('mapPropertyFilters', () => {
       )
     ).toEqual({
       dynamicFilter: {
-        Property: {
+        CustomField: {
           key: 'category',
           filter: { Option: { Equal: 'not_synced_yet' } },
         },
@@ -242,7 +242,7 @@ describe('mapPropertyFilters', () => {
       )
     ).toEqual({
       dynamicFilter: {
-        Property: { key: 'note', filter: { Text: { Like: 'abc' } } },
+        CustomField: { key: 'note', filter: { Text: { Like: 'abc' } } },
       },
     });
   });
