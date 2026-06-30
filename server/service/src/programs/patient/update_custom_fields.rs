@@ -6,7 +6,7 @@ use repository::{
 use crate::custom_field::{check_unknown_custom_field_key, merge_patch};
 use crate::service_provider::{ServiceContext, ServiceProvider};
 
-/// `custom_field_table.table_name` scope for patient custom custom_fields. Patients
+/// `custom_field_scope.table_name` scope for patient custom custom_fields. Patients
 /// share the underlying mSupply name custom fields with suppliers, but their
 /// visible set is controlled independently via this scope (see
 /// `central_mapping_custom_fields`).
@@ -90,7 +90,7 @@ impl From<RepositoryError> for UpdatePatientCustomFieldsError {
 mod test {
     use repository::{
         NameRow, NameRowRepository, NameRowType, CustomFieldDisplayMode, CustomFieldKind,
-        CustomFieldTableRow, CustomFieldTableRowRepository, CustomFieldRow, CustomFieldRowRepository,
+        CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldRow, CustomFieldRowRepository,
         CustomFieldValueType,
     };
     use serde_json::json;
@@ -112,11 +112,11 @@ mod test {
                 deleted_datetime: None,
             })
             .unwrap();
-        CustomFieldTableRowRepository::new(connection)
-            .upsert_one(&CustomFieldTableRow {
+        CustomFieldScopeRowRepository::new(connection)
+            .upsert_one(&CustomFieldScopeRow {
                 id: "custom_1__patient".to_string(),
                 custom_field_id: "custom_1".to_string(),
-                table_name: "patient".to_string(),
+                scope: "patient".to_string(),
                 display_mode: CustomFieldDisplayMode::Visible,
             })
             .unwrap();

@@ -8,7 +8,7 @@ mod test {
     use repository::{
         mock::{mock_inbound_shipment_a, MockDataInserts},
         InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowRepository, CustomFieldDisplayMode,
-        CustomFieldKind, CustomFieldTableRow, CustomFieldTableRowRepository, CustomFieldRow,
+        CustomFieldKind, CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldRow,
         CustomFieldRowRepository,
         CustomFieldValueType,
     };
@@ -159,11 +159,11 @@ mod test {
                 deleted_datetime: None,
             })
             .unwrap();
-        CustomFieldTableRowRepository::new(&connection)
-            .upsert_one(&CustomFieldTableRow {
+        CustomFieldScopeRowRepository::new(&connection)
+            .upsert_one(&CustomFieldScopeRow {
                 id: "inbound_shipment_category__inbound_shipment".to_string(),
                 custom_field_id: "inbound_shipment_category".to_string(),
-                table_name: "inbound_shipment".to_string(),
+                scope: "inbound_shipment".to_string(),
                 display_mode: CustomFieldDisplayMode::Visible,
             })
             .unwrap();

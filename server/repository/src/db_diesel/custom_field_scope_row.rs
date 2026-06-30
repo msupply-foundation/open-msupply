@@ -1,4 +1,4 @@
-use super::custom_field_table_row::custom_field_table::dsl::*;
+use super::custom_field_scope_row::custom_field_scope::dsl::*;
 
 use diesel::prelude::*;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -56,41 +56,41 @@ impl<'de> Deserialize<'de> for CustomFieldDisplayMode {
 }
 
 table! {
-    custom_field_table (id) {
+    custom_field_scope (id) {
         id -> Text,
         custom_field_id -> Text,
-        table_name -> Text,
+        scope -> Text,
         display_mode -> diesel::sql_types::Text,
     }
 }
 
 use super::custom_field_row::custom_field;
-joinable!(custom_field_table -> custom_field (custom_field_id));
-allow_tables_to_appear_in_same_query!(custom_field_table, custom_field);
+joinable!(custom_field_scope -> custom_field (custom_field_id));
+allow_tables_to_appear_in_same_query!(custom_field_scope, custom_field);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
 )]
-#[diesel(table_name = custom_field_table)]
+#[diesel(table_name = custom_field_scope)]
 #[diesel(treat_none_as_null = true)]
-pub struct CustomFieldTableRow {
+pub struct CustomFieldScopeRow {
     pub id: String,
     pub custom_field_id: String,
-    pub table_name: String,
+    pub scope: String,
     pub display_mode: CustomFieldDisplayMode,
 }
 
-pub struct CustomFieldTableRowRepository<'a> {
+pub struct CustomFieldScopeRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> CustomFieldTableRowRepository<'a> {
+impl<'a> CustomFieldScopeRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        CustomFieldTableRowRepository { connection }
+        CustomFieldScopeRowRepository { connection }
     }
 
-    pub fn _upsert_one(&self, row: &CustomFieldTableRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(custom_field_table)
+    pub fn _upsert_one(&self, row: &CustomFieldScopeRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(custom_field_scope)
             .values(row)
             .on_conflict(id)
             .do_update()
@@ -99,9 +99,9 @@ impl<'a> CustomFieldTableRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &CustomFieldTableRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &CustomFieldScopeRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        let changelog = CustomFieldTableRow::generate_changelog(
+        let changelog = CustomFieldScopeRow::generate_changelog(
             row.id.clone(),
             self.connection,
             RowActionType::Upsert,
@@ -110,16 +110,16 @@ impl<'a> CustomFieldTableRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn find_all(&self) -> Result<Vec<CustomFieldTableRow>, RepositoryError> {
-        let result = custom_field_table.load(self.connection.lock().connection())?;
+    pub fn find_all(&self) -> Result<Vec<CustomFieldScopeRow>, RepositoryError> {
+        let result = custom_field_scope.load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn find_one_by_id(
         &self,
         row_id: &str,
-    ) -> Result<Option<CustomFieldTableRow>, RepositoryError> {
-        let result = custom_field_table
+    ) -> Result<Option<CustomFieldScopeRow>, RepositoryError> {
+        let result = custom_field_scope
             .filter(id.eq(row_id))
             .first(self.connection.lock().connection())
             .optional()?;
@@ -127,7 +127,7 @@ impl<'a> CustomFieldTableRowRepository<'a> {
     }
 
     pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(custom_field_table)
+        diesel::delete(custom_field_scope)
             .filter(id.eq(row_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
@@ -136,20 +136,20 @@ impl<'a> CustomFieldTableRowRepository<'a> {
     pub fn find_many_by_id(
         &self,
         ids: &[String],
-    ) -> Result<Vec<CustomFieldTableRow>, RepositoryError> {
-        Ok(custom_field_table::table
-            .filter(custom_field_table::id.eq_any(ids))
+    ) -> Result<Vec<CustomFieldScopeRow>, RepositoryError> {
+        Ok(custom_field_scope::table
+            .filter(custom_field_scope::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
 }
 
-impl Upsert for CustomFieldTableRow {
+impl Upsert for CustomFieldScopeRow {
     fn upsert_sync(
         &self,
         con: &StorageConnection,
         sync_type: ChangelogSyncType,
     ) -> Result<(), RepositoryError> {
-        CustomFieldTableRowRepository::new(con)._upsert_one(self)?;
+        CustomFieldScopeRowRepository::new(con)._upsert_one(self)?;
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
@@ -167,7 +167,7 @@ impl Upsert for CustomFieldTableRow {
 
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            CustomFieldTableRowRepository::new(con).find_one_by_id(&self.id),
+            CustomFieldScopeRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }
@@ -177,8 +177,8 @@ impl Upsert for CustomFieldTableRow {
 mod tests {
     use super::*;
 
-    // The whole `custom_field_table` row is the sync wire format (see
-    // service/src/sync/translations/custom_field_table.rs), so serde IS the wire
+    // The whole `custom_field_scope` row is the sync wire format (see
+    // service/src/sync/translations/custom_field_scope.rs), so serde IS the wire
     // form for `display_mode`. Mirrors the CustomFieldValueType/CustomFieldKind
     // round-trip tests: pins the flat-string form and verifies a mode unknown to
     // this build (added on a newer central) survives losslessly.

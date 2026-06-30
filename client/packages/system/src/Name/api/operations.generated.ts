@@ -211,7 +211,7 @@ export type NamePropertiesQuery = {
 };
 
 export type NameCustomFieldsQueryVariables = Types.Exact<{
-  tableName: Types.Scalars['String']['input'];
+  scope: Types.Scalars['String']['input'];
 }>;
 
 export type NameCustomFieldsQuery = {
@@ -460,8 +460,8 @@ export const NamePropertiesDocument = gql`
   ${PropertyFragmentDoc}
 `;
 export const NameCustomFieldsDocument = gql`
-  query nameCustomFields($tableName: String!) {
-    customFields(filter: { tableName: { equalTo: $tableName } }) {
+  query nameCustomFields($scope: String!) {
+    customFields(filter: { scope: { equalTo: $scope } }) {
       ... on CustomFieldConnector {
         __typename
         totalCount

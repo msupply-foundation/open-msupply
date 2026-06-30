@@ -12,7 +12,7 @@ source = "docs"
 
 > **Status: living document.** This is internal developer documentation for the new custom fields system, written to inform future work — not customer-facing. It will be expanded as the implementation progresses.
 
-The custom fields system gives record kinds a binary-JSON `custom_fields` column holding key/value pairs, with definitions, options and per-table visibility configured via central tables (`custom_field`, `custom_field_option`, `custom_field_table`).
+The custom fields system gives record kinds a binary-JSON `custom_fields` column holding key/value pairs, with definitions, options and per-scope visibility configured via central tables (`custom_field`, `custom_field_option`, `custom_field_scope`).
 
 Terminology used below (see the [Sync docs](../sync) and the v7 transition notes for detail):
 - **OG**: original mSupply (4D)
@@ -63,7 +63,7 @@ So a V5V6 remote performs no local import and surfaces no custom fields; COMS is
 
 This is **central only** (for now) and syncs through v7, but **not** through v5 back to OG. It must be designed with **forwards compatibility** in mind. For example, the custom field value type needs to be able to parse into `OTHER` for when a remote is sent a new custom field type it doesn't recognise (stored as `TEXT` with a `#[strum(default)] Other(String)` catch-all via the `diesel_string_enum!` helper, rather than a native DB enum that would reject the value).
 
-The three definition tables (`custom_field`, `custom_field_option`, `custom_field_table`) are v7-only central data — they are not served over v6.
+The three definition tables (`custom_field`, `custom_field_option`, `custom_field_scope`) are v7-only central data — they are not served over v6.
 
 > **Why / Alternatives** \
 > It doesn't make sense to sync configuration back to mSupply, as mSupply doesn't have generic enough custom fields.

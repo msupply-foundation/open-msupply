@@ -2,7 +2,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Local, NaiveDate, Utc};
 use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::{AllowedCustomFieldKeysByTableLoader, DocumentLoader, PatientLoader};
+use graphql_core::loader::{AllowedCustomFieldKeysByScopeLoader, DocumentLoader, PatientLoader};
 use graphql_core::{map_filter, ContextExt};
 
 use graphql_core::pagination::PaginationInput;
@@ -192,7 +192,7 @@ impl PatientNode {
             return Ok(None);
         };
 
-        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByTableLoader>>();
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
         let allowed_keys = loader
             .load_one("patient".to_string())
             .await?

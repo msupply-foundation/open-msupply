@@ -15,12 +15,12 @@ pub trait CustomFieldServiceTrait: Sync + Send {
         get_custom_fields(&ctx.connection, filter)
     }
 
-    fn allowed_custom_field_keys_for_table(
+    fn allowed_custom_field_keys_for_scope(
         &self,
         connection: &StorageConnection,
-        table_name: &str,
+        scope: &str,
     ) -> Result<HashSet<String>, RepositoryError> {
-        CustomFieldRepository::new(connection).allowed_keys_for_table(table_name)
+        CustomFieldRepository::new(connection).allowed_keys_for_scope(scope)
     }
 }
 
@@ -39,16 +39,16 @@ fn get_custom_fields(
 }
 
 /// Validate a `custom_fields` patch against a table scope: returns the first
-/// key that is not a defined-and-visible custom_field for `table_name` (callers
+/// key that is not a defined-and-visible custom_field for `scope` (callers
 /// map it to their `UnknownCustomFieldKey` error — rejected rather than written,
 /// since the read path would silently filter it out). Shared by the
 /// custom_fields-v2 write paths (patient, invoice).
 pub(crate) fn check_unknown_custom_field_key(
     connection: &StorageConnection,
-    table_name: &str,
+    scope: &str,
     patch: &serde_json::Map<String, serde_json::Value>,
 ) -> Result<Option<String>, RepositoryError> {
-    let allowed = CustomFieldRepository::new(connection).allowed_keys_for_table(table_name)?;
+    let allowed = CustomFieldRepository::new(connection).allowed_keys_for_scope(scope)?;
     Ok(patch
         .keys()
         .find(|key| !allowed.contains(*key))

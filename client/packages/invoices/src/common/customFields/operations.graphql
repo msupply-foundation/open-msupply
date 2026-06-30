@@ -14,10 +14,10 @@ fragment InvoiceCustomField on CustomFieldNode {
 }
 
 # Properties configured for one invoice type's scope (e.g. "inbound_shipment").
-# Each invoice type has its own table scope and so its own visible set — see
+# Each invoice type has its own scope and so its own visible set — see
 # the properties dev doc (transaction categories).
-query invoiceCustomFields($tableName: String!) {
-  customFields(filter: { tableName: { equalTo: $tableName } }) {
+query invoiceCustomFields($scope: String!) {
+  customFields(filter: { scope: { equalTo: $scope } }) {
     ... on CustomFieldConnector {
       __typename
       totalCount

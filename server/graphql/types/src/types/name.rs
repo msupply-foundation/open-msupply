@@ -3,7 +3,7 @@ use crate::types::CurrencyNode;
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
-    loader::{AllowedCustomFieldKeysByTableLoader, CurrencyByIdLoader},
+    loader::{AllowedCustomFieldKeysByScopeLoader, CurrencyByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -149,7 +149,7 @@ impl NameNode {
     /// Properties v2 values for this name. The raw `name.custom_fields` JSONB
     /// blob is filtered server-side to keys that are (a) defined in
     /// `custom_field` and not soft-deleted, (b) marked visible for one of this
-    /// name's table scopes via `custom_field_table`. Stray keys never reach the
+    /// name's table scopes via `custom_field_scope`. Stray keys never reach the
     /// client.
     ///
     /// A name has no single scope: "customer"/"supplier" are independent role
@@ -179,7 +179,7 @@ impl NameNode {
             scopes.push("supplier".to_string());
         }
 
-        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByTableLoader>>();
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
         let allowed_keys: std::collections::HashSet<String> = loader
             .load_many(scopes)
             .await?

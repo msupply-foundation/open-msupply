@@ -193,7 +193,7 @@ diesel_string_enum! {
         Property,
         CustomField,
         CustomFieldOption,
-        CustomFieldTable,
+        CustomFieldScope,
         PurchaseOrder,
         PurchaseOrderLine,
         ReasonOption,

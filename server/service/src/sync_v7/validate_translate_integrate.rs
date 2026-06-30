@@ -183,7 +183,7 @@ fn translate_delete(
         | ChangelogTableName::Property
         | ChangelogTableName::CustomField
         | ChangelogTableName::CustomFieldOption
-        | ChangelogTableName::CustomFieldTable
+        | ChangelogTableName::CustomFieldScope
         | ChangelogTableName::ReasonOption
         | ChangelogTableName::ShippingMethod
         | ChangelogTableName::Store

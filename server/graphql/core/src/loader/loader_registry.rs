@@ -605,7 +605,7 @@ pub async fn get_loaders(
     ));
 
     loaders.insert(DataLoader::new(
-        AllowedCustomFieldKeysByTableLoader {
+        AllowedCustomFieldKeysByScopeLoader {
             service_provider: service_provider.clone(),
         },
         tokio::spawn,

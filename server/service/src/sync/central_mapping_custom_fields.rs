@@ -1,5 +1,5 @@
 use repository::{
-    CustomFieldDisplayMode, CustomFieldKind, CustomFieldTableRow, CustomFieldTableRowRepository,
+    CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow, CustomFieldScopeRowRepository,
     CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType, RepositoryError, StorageConnection,
 };
 
@@ -78,17 +78,17 @@ struct MappingCustomField {
     /// never overwrites it.
     name: &'static str,
     value_type: CustomFieldValueType,
-    /// Per-scope display mode applied to each `custom_field_table` row this
+    /// Per-scope display mode applied to each `custom_field_scope` row this
     /// definition seeds. `Prominent` promotes the custom_field to the scope's
     /// primary surface (e.g. the invoice detail-view toolbar); most mappings are
     /// plain `Visible`. Only applied on create — a later admin edit is preserved.
     display_mode: CustomFieldDisplayMode,
-    /// Record tables the custom_field applies to (one `custom_field_table` row per
-    /// entry). A definition can be visible on more than one table — names'
+    /// Scopes the custom_field applies to (one `custom_field_scope` row per
+    /// entry). A definition can be visible on more than one scope — names'
     /// `custom1/2/3` are shared by every name role, so they map to `"customer"`,
     /// `"supplier"` and `"patient"` (the three name scopes a `NameNode` resolves
     /// against — see the resolver in `graphql/types/.../name.rs`).
-    table_names: &'static [&'static str],
+    scopes: &'static [&'static str],
 }
 
 /// The full set of legacy mSupply mapping custom_fields. Add new ones here; the
@@ -108,21 +108,21 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             name: "Custom 1",
             value_type: Text,
             display_mode: Visible,
-            table_names: &["customer", "supplier", "patient"],
+            scopes: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CUSTOM_2,
             name: "Custom 2",
             value_type: Text,
             display_mode: Visible,
-            table_names: &["customer", "supplier", "patient"],
+            scopes: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CUSTOM_3,
             name: "Custom 3",
             value_type: Text,
             display_mode: Visible,
-            table_names: &["customer", "supplier", "patient"],
+            scopes: &["customer", "supplier", "patient"],
         },
         // item `[item]user_field_1..7` — 4D names are already snake_case, so the
         // key matches the wire field 1:1. Value types come from the 4D catalog.
@@ -131,49 +131,49 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             name: "User field 1",
             value_type: Text,
             display_mode: Visible,
-            table_names: &["item"],
+            scopes: &["item"],
         },
         MappingCustomField {
             key: ITEM_USER_FIELD_2,
             name: "User field 2",
             value_type: Text,
             display_mode: Visible,
-            table_names: &["item"],
+            scopes: &["item"],
         },
         MappingCustomField {
             key: ITEM_USER_FIELD_3,
             name: "User field 3",
             value_type: Text,
             display_mode: Visible,
-            table_names: &["item"],
+            scopes: &["item"],
         },
         MappingCustomField {
             key: ITEM_USER_FIELD_4,
             name: "User field 4",
             value_type: Boolean,
             display_mode: Visible,
-            table_names: &["item"],
+            scopes: &["item"],
         },
         MappingCustomField {
             key: ITEM_USER_FIELD_5,
             name: "User field 5",
             value_type: Real,
             display_mode: Visible,
-            table_names: &["item"],
+            scopes: &["item"],
         },
         MappingCustomField {
             key: ITEM_USER_FIELD_6,
             name: "User field 6",
             value_type: Text,
             display_mode: Visible,
-            table_names: &["item"],
+            scopes: &["item"],
         },
         MappingCustomField {
             key: ITEM_USER_FIELD_7,
             name: "User field 7",
             value_type: Boolean,
             display_mode: Visible,
-            table_names: &["item"],
+            scopes: &["item"],
         },
         // item categories — a single OPTION custom_field whose options are the
         // mSupply `item_category*` levels. Unlike the fields above, its *options*
@@ -186,7 +186,7 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             name: "Category",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["item"],
+            scopes: &["item"],
         },
         // item categories 2 & 3 — two additional *flat* OPTION dimensions
         // (`[item]category2_ID`/`category3_ID` → `item_category2`/`item_category3`,
@@ -199,14 +199,14 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             name: "Category 2",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["item"],
+            scopes: &["item"],
         },
         MappingCustomField {
             key: ITEM_CATEGORY_3,
             name: "Category 3",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["item"],
+            scopes: &["item"],
         },
         // name categories 1–6 — six independent OPTION dimensions
         // (`[name]category1_ID..category6_ID`). category1 is hierarchical (its
@@ -224,42 +224,42 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             name: "Category 1",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["customer", "supplier", "patient"],
+            scopes: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CATEGORY_2,
             name: "Category 2",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["customer", "supplier", "patient"],
+            scopes: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CATEGORY_3,
             name: "Category 3",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["customer", "supplier", "patient"],
+            scopes: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CATEGORY_4,
             name: "Category 4",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["customer", "supplier", "patient"],
+            scopes: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CATEGORY_5,
             name: "Category 5",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["customer", "supplier", "patient"],
+            scopes: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CATEGORY_6,
             name: "Category 6",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["customer", "supplier", "patient"],
+            scopes: &["customer", "supplier", "patient"],
         },
         // transaction categories — mSupply's `transaction_category` table holds
         // one flat pool of categories partitioned by a 3-char `type` matching the
@@ -277,35 +277,35 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             name: "Category",
             value_type: Option,
             display_mode: Prominent,
-            table_names: &["inbound_shipment"],
+            scopes: &["inbound_shipment"],
         },
         MappingCustomField {
             key: OUTBOUND_SHIPMENT_CATEGORY,
             name: "Category",
             value_type: Option,
             display_mode: Prominent,
-            table_names: &["outbound_shipment"],
+            scopes: &["outbound_shipment"],
         },
         MappingCustomField {
             key: PRESCRIPTION_CATEGORY,
             name: "Category",
             value_type: Option,
             display_mode: Prominent,
-            table_names: &["prescription"],
+            scopes: &["prescription"],
         },
         MappingCustomField {
             key: SUPPLIER_RETURN_CATEGORY,
             name: "Category",
             value_type: Option,
             display_mode: Prominent,
-            table_names: &["supplier_return"],
+            scopes: &["supplier_return"],
         },
         MappingCustomField {
             key: CUSTOMER_RETURN_CATEGORY,
             name: "Category",
             value_type: Option,
             display_mode: Prominent,
-            table_names: &["customer_return"],
+            scopes: &["customer_return"],
         },
         // OG's second prescription dimension — the "Prescriptions (2)" category
         // pool ("pi2"), shown on the OG prescription form as the Patient Type
@@ -315,7 +315,7 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             name: "Patient type",
             value_type: Option,
             display_mode: Prominent,
-            table_names: &["prescription"],
+            scopes: &["prescription"],
         },
     ]
 }
@@ -331,14 +331,14 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
 /// Idempotent and change-aware: a row is only upserted when missing or when its
 /// code-authoritative content differs, so steady-state runs add no changelog
 /// churn. An existing row's `name` is preserved (it's owned by the mSupply
-/// field-label sync once created), and the `custom_field_table` mapping is only
+/// field-label sync once created), and the `custom_field_scope` mapping is only
 /// created when **absent**, so a later display-mode edit (`display_mode`) is
 /// preserved rather than reset here.
 pub(crate) fn seed_central_mapping_custom_fields(
     connection: &StorageConnection,
 ) -> Result<(), RepositoryError> {
     let custom_field_repo = CustomFieldRowRepository::new(connection);
-    let table_repo = CustomFieldTableRowRepository::new(connection);
+    let table_repo = CustomFieldScopeRowRepository::new(connection);
 
     for def in mapping_custom_fields() {
         let existing = custom_field_repo.find_one_by_id(def.key)?;
@@ -362,13 +362,13 @@ pub(crate) fn seed_central_mapping_custom_fields(
 
         // Only create each table mapping if it doesn't exist — never overwrite,
         // so an admin's future display-mode change isn't reset on the next sync.
-        for table_name in def.table_names {
-            let table_id = format!("{}__{}", def.key, table_name);
+        for scope in def.scopes {
+            let table_id = format!("{}__{}", def.key, scope);
             if table_repo.find_one_by_id(&table_id)?.is_none() {
-                table_repo.upsert_one(&CustomFieldTableRow {
+                table_repo.upsert_one(&CustomFieldScopeRow {
                     id: table_id,
                     custom_field_id: def.key.to_string(),
-                    table_name: table_name.to_string(),
+                    scope: scope.to_string(),
                     display_mode: def.display_mode.clone(),
                 })?;
             }
@@ -389,7 +389,7 @@ mod tests {
             setup_all("seed_central_mapping_custom_fields", MockDataInserts::none()).await;
 
         let custom_field_repo = CustomFieldRowRepository::new(&connection);
-        let table_repo = CustomFieldTableRowRepository::new(&connection);
+        let table_repo = CustomFieldScopeRowRepository::new(&connection);
         let changelog_repo = ChangelogRepository::new(&connection);
 
         // First run creates all definitions + table mappings.
@@ -436,7 +436,7 @@ mod tests {
             .unwrap()
             .expect("missing custom_1__patient mapping");
         assert_eq!(patient_mapping.custom_field_id, "custom_1");
-        assert_eq!(patient_mapping.table_name, "patient");
+        assert_eq!(patient_mapping.scope, "patient");
         assert_eq!(patient_mapping.display_mode, CustomFieldDisplayMode::Visible);
 
         // A second run is a no-op: change-aware seeding must not write (and so
@@ -465,10 +465,10 @@ mod tests {
 
         // A display-mode edit on a table mapping must be preserved across re-seeds.
         table_repo
-            .upsert_one(&CustomFieldTableRow {
+            .upsert_one(&CustomFieldScopeRow {
                 id: "custom_1__customer".to_string(),
                 custom_field_id: "custom_1".to_string(),
-                table_name: "customer".to_string(),
+                scope: "customer".to_string(),
                 display_mode: CustomFieldDisplayMode::Hidden,
             })
             .unwrap();
@@ -487,14 +487,14 @@ mod tests {
     /// A category-bearing invoice type is wired up across four places the
     /// compiler can't tie together: the seeder entries here,
     /// `category_key_for_invoice_type`, `LEGACY_INVOICE_OWNED_KEYS`, and
-    /// `invoice_custom_field_table_name`. Shared `keys::` constants keep the key
+    /// `invoice_custom_field_scope`. Shared `keys::` constants keep the key
     /// strings in step; this guards the rest — that every type appears in all
-    /// four, and that the seeder's scope matches `invoice_custom_field_table_name`.
+    /// four, and that the seeder's scope matches `invoice_custom_field_scope`.
     /// (The migration SQL backfill can't be reached, but shipped migrations are
     /// frozen so a new category-bearing type needs a new migration anyway.)
     #[test]
     fn transaction_category_mappings_stay_in_lock_step() {
-        use crate::invoice::invoice_custom_field_table_name;
+        use crate::invoice::invoice_custom_field_scope;
         use crate::sync::translations::invoice::{
             category_key_for_invoice_type, LEGACY_INVOICE_OWNED_KEYS,
         };
@@ -530,7 +530,7 @@ mod tests {
         for invoice_type in &all_types {
             let (key, scope) = (
                 category_key_for_invoice_type(invoice_type),
-                invoice_custom_field_table_name(invoice_type),
+                invoice_custom_field_scope(invoice_type),
             );
             assert_eq!(
                 key.is_some(),
@@ -546,9 +546,9 @@ mod tests {
                 .find(|def| def.key == key)
                 .unwrap_or_else(|| panic!("no seeded custom_field for key {:?}", key));
             assert_eq!(
-                def.table_names,
+                def.scopes,
                 &[scope],
-                "seeded scope for {key:?} must match invoice_custom_field_table_name"
+                "seeded scope for {key:?} must match invoice_custom_field_scope"
             );
         }
 
