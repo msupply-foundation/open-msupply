@@ -3,7 +3,7 @@ use repository::{
     syncv7::SyncError, ChangelogRepository, DatetimeFilter, EqualFilter, FilterBuilder, KeyType,
     KeyValueStoreRepository, Pagination, RepositoryError, SiteRowRepository, Sort,
     SyncLogV5V6Filter, SyncLogV5V6Repository, SyncLogV5V6Row, SyncLogV5V6SortField,
-    SyncLogV7Condition, SyncLogV7Repository, SyncLogV7SortField,
+    SyncLogV7Condition, SyncLogV7Repository, SyncLogV7SortField, SyncVersion,
 };
 
 use crate::{
@@ -12,6 +12,7 @@ use crate::{
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
     standalone_central::STANDALONE_CENTRAL_SITE_ID,
+    sync::CentralServerConfig,
     sync_v7::sync_status::status::FullSyncStatusV7,
 };
 
@@ -294,7 +295,12 @@ fn get_initialisation_status(
     let v5_has_any = v5_latest.is_some();
 
     if v7_has_success || v5_has_success {
-        let site_name = SettingsService.sync_settings(ctx)?.unwrap().username;
+        // Get sync site name
+        // Safe to unwrap since sync settings will be available after initialisation
+        let site_name = SettingsService::new(None)
+            .sync_settings(ctx)?
+            .unwrap()
+            .username;
         return Ok(InitialisationStatus::Initialised(site_name));
     }
     if v7_has_any || v5_has_any {
@@ -422,8 +428,13 @@ pub fn get_first_initialisation_finished_datetime(
 fn number_of_records_in_push_queue(ctx: &ServiceContext) -> Result<u64, RepositoryError> {
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
-    let cursor = CursorController::new(KeyType::RemoteSyncPushCursor).get(&ctx.connection)?;
+    let push_cursor_key =
+        match SyncVersion::get(&ctx.connection, CentralServerConfig::is_central_server())? {
+            SyncVersion::V7 => KeyType::SyncPushCursorV7,
+            SyncVersion::V5V6 => KeyType::RemoteSyncPushCursor,
+        };
 
+    let cursor = CursorController::new(push_cursor_key).get(&ctx.connection)?;
     let max_cursor = changelog_repo.max_cursor()?;
 
     Ok(max_cursor.saturating_sub(cursor))

@@ -191,6 +191,7 @@ export const inboundParsers = {
     volumePerPack: line.volumePerPack ?? null,
     shippedPackSize: line.shippedPackSize ?? null,
     status: line.status ?? null,
+    reasonOptionId: setNullableInput('id', line.reasonOption ?? null),
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };

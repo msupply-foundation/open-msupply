@@ -1,5 +1,6 @@
 use super::{store_row::store, user_row::user_account, StorageConnection};
 
+use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert};
 
@@ -62,7 +63,7 @@ impl<'a> UserStoreJoinRowRepository<'a> {
     pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         let changelog = UserStoreJoinRow::generate_changelog(
-            row.id.clone(),
+            RowOrId::Row(row),
             self.connection,
             RowActionType::Upsert,
             SourceSiteId::CurrentSiteId,
@@ -110,7 +111,7 @@ impl Upsert for UserStoreJoinRow {
 
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
-                self.id.clone(),
+                RowOrId::Row(self),
                 con,
                 RowActionType::Upsert,
                 SourceSiteId::SourceSiteId(source_site_id),
@@ -142,7 +143,7 @@ impl Delete for UserStoreJoinRowDelete {
         let changelog = match sync_type {
             ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
                 UserStoreJoinRow::generate_changelog(
-                    self.0.clone(),
+                    RowOrId::Id(&self.0),
                     con,
                     RowActionType::Delete,
                     SourceSiteId::SourceSiteId(source_site_id),

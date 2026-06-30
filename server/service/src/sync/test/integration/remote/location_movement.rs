@@ -26,7 +26,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
         };
         let stock_line_row = StockLineRow {
             id: uuid(),
-            item_link_id: uuid(),
+            item_id: uuid(),
             store_id: store_id.clone(),
             location_id: Some(location_row.id.clone()),
             batch: Some("some remote sync test batch".to_string()),
@@ -56,7 +56,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
 
         result.push(TestStepData {
             central_upsert: json!({"item": [{
-                "ID": stock_line_row.item_link_id,
+                "ID": stock_line_row.item_id,
                 "type_of": "general"
             }]}),
             integration_records: vec![

@@ -31,9 +31,9 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
     InvoiceNodeType.OutboundShipment
   );
 
-  const key = 'invoiceNumber';
   const filterString =
-    ((filter.filterBy?.[key] as FilterRule)?.equalTo as string) || '';
+    ((filter.filterBy?.['invoiceNumberOrStatus'] as FilterRule)
+      ?.like as string) || '';
 
   return (
     <AppBarContentPortal
@@ -120,12 +120,16 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
           />
         ) : (
           <SearchBar
-            placeholder={t('placeholder.search-by-invoice-number')}
+            placeholder={t('placeholder.search-by-invoice-number-or-status')}
+            width="320px"
             value={filterString}
             onChange={newValue => {
-              filter.onChangeStringFilterRule(
-                'invoiceNumber',
-                'equalTo',
+              if (!newValue) {
+                return filter.onClearFilterRule('invoiceNumberOrStatus');
+              }
+              return filter.onChangeStringFilterRule(
+                'invoiceNumberOrStatus',
+                'like',
                 newValue
               );
             }}

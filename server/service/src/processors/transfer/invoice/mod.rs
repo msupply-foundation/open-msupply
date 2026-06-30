@@ -11,6 +11,7 @@ use crate::{
                 link_outbound_invoice::LinkOutboundInvoiceProcessor,
                 update_inbound_invoice::UpdateInboundInvoiceProcessor,
                 update_outbound_invoice_status::UpdateOutboundInvoiceStatusProcessor,
+                update_outbound_received_quantity::UpdateOutboundReceivedQuantityProcessor,
             },
         },
     },
@@ -33,6 +34,7 @@ pub(crate) mod delete_inbound_invoice;
 pub(crate) mod link_outbound_invoice;
 pub(crate) mod update_inbound_invoice;
 pub(crate) mod update_outbound_invoice_status;
+pub(crate) mod update_outbound_received_quantity;
 
 #[cfg(test)]
 pub(crate) mod test;
@@ -142,6 +144,7 @@ pub(crate) fn process_invoice_transfers(
         Box::new(LinkOutboundInvoiceProcessor),
         Box::new(UpdateInboundInvoiceProcessor),
         Box::new(UpdateOutboundInvoiceStatusProcessor),
+        Box::new(UpdateOutboundReceivedQuantityProcessor),
         Box::new(DeleteInboundInvoiceProcessor),
         Box::new(AssignInvoiceNumberProcessor),
     ];
@@ -188,7 +191,7 @@ pub(crate) fn process_invoice_transfers(
             }
 
             cursor_controller
-                .update(&ctx.connection, (log.cursor + 1) as u64)
+                .update(&ctx.connection, log.cursor as u64)
                 .map_err(Error::DatabaseError)?;
         }
     }

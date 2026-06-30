@@ -64,12 +64,13 @@ use crate::{
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
-    settings::MailSettings,
+    settings::{MailSettings, Settings},
     settings_service::{SettingsService, SettingsServiceTrait},
     shipping_method::{ShippingMethodService, ShippingMethodServiceTrait},
     site::{SiteService, SiteServiceTrait},
     standalone_central::{StandaloneCentralService, StandaloneCentralServiceTrait},
     standard_reports::StandardReports,
+    stock_relocation::{StockRelocationService, StockRelocationServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
@@ -80,6 +81,7 @@ use crate::{
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
+    sync_message::{SyncMessageService, SyncMessageTrait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
@@ -210,12 +212,17 @@ pub struct ServiceProvider {
     pub custom_field_service: Box<dyn CustomFieldServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
+    // Stock Relocation (Replenishments)
+    pub stock_relocation_service: Box<dyn StockRelocationServiceTrait>,
+    // Sync Message
+    pub sync_message_service: Box<dyn SyncMessageTrait>,
     // Subscription trigger handle — used by SyncLogger and changelog callbacks
     // to send events to the shared subscription worker.
     pub subscription_trigger: SubscriptionTriggerHandle,
     // Yaml only fields ----- Not stored in KV store
     pub(crate) batch_size: BatchSize,
     pub(crate) disable_integration_transaction: bool,
+    pub(crate) relax_hardware_id_token_checks: bool,
 }
 
 pub struct ServiceContext {
@@ -226,6 +233,7 @@ pub struct ServiceContext {
     pub store_id: String,
     pub batch_size: BatchSize,
     pub disable_integration_transaction: bool,
+    pub relax_hardware_id_token_checks: bool,
 }
 
 impl ServiceProvider {
@@ -242,8 +250,10 @@ impl ServiceProvider {
             LedgerFixTrigger::new_void(),
             SiteIsInitialisedTrigger::new_void(),
             None, // Mail not required for test/CLI setups
+            None,
             SubscriptionTriggerHandle::new_void(),
             BatchSize::default(),
+            false,
             false,
         )
     }
@@ -255,9 +265,11 @@ impl ServiceProvider {
         ledger_fix_trigger: LedgerFixTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
         mail_settings: Option<MailSettings>,
+        settings: Option<Settings>,
         subscription_trigger: SubscriptionTriggerHandle,
         batch_size: BatchSize,
         disable_integration_transaction: bool,
+        relax_hardware_id_token_checks: bool,
     ) -> Self {
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -281,7 +293,7 @@ impl ServiceProvider {
             clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
-            settings: Box::new(SettingsService),
+            settings: Box::new(SettingsService::new(settings.clone())),
             batch_size,
             document_service: Box::new(DocumentService {}),
             document_registry_service: Box::new(DocumentRegistryService {}),
@@ -337,10 +349,13 @@ impl ServiceProvider {
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
             contact_service: Box::new(ContactService {}),
             custom_field_service: Box::new(CustomFieldService {}),
+            sync_message_service: Box::new(SyncMessageService),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
+            stock_relocation_service: Box::new(StockRelocationService),
             subscription_trigger,
             disable_integration_transaction,
+            relax_hardware_id_token_checks,
         }
     }
 
@@ -354,6 +369,7 @@ impl ServiceProvider {
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
             disable_integration_transaction: self.disable_integration_transaction,
+            relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
 
@@ -369,6 +385,7 @@ impl ServiceProvider {
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
             disable_integration_transaction: self.disable_integration_transaction,
+            relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
 
@@ -385,6 +402,7 @@ impl ServiceProvider {
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
             disable_integration_transaction: self.disable_integration_transaction,
+            relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
 
@@ -405,6 +423,7 @@ impl ServiceContext {
             frontend_plugins_cache: FrontendPluginCache::new(),
             batch_size: BatchSize::default(),
             disable_integration_transaction: false,
+            relax_hardware_id_token_checks: false,
         }
     }
 }

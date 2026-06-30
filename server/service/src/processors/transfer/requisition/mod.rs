@@ -147,7 +147,7 @@ pub(crate) fn process_requisition_transfers(
 
             // Always update cursor and move on to the next log, even if there's an error
             cursor_controller
-                .update(&ctx.connection, (log.cursor + 1) as u64)
+                .update(&ctx.connection, log.cursor as u64)
                 .map_err(Error::DatabaseError)?;
         }
     }

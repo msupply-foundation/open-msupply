@@ -155,7 +155,7 @@ mod test {
             invoice_id: mock_prescription_picked().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             r#type: InvoiceLineType::UnallocatedStock,
             prescribed_quantity: Some(10.0),
             stock_line_id: None,
@@ -169,7 +169,7 @@ mod test {
             invoice_id: mock_prescription_picked().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             r#type: InvoiceLineType::StockOut,
             prescribed_quantity: Some(10.0),
             stock_line_id: Some(mock_stock_line_a().id),
@@ -183,7 +183,7 @@ mod test {
             invoice_id: mock_prescription_picked().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             r#type: InvoiceLineType::StockOut,
             stock_line_id: Some(mock_stock_line_b().id),
             ..Default::default()
@@ -196,7 +196,7 @@ mod test {
             invoice_id: mock_prescription_picked().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             r#type: InvoiceLineType::StockOut,
             stock_line_id: Some(mock_stock_line_b().id), // TODO: should be different stock line ideally
             ..Default::default()
@@ -227,7 +227,7 @@ mod test {
             &context,
             SetPrescribedQuantity {
                 invoice_id: mock_prescription_unallocated_invoice_line().invoice_id,
-                item_id: mock_prescription_unallocated_invoice_line().item_link_id,
+                item_id: mock_prescription_unallocated_invoice_line().item_id,
                 prescribed_quantity: new_prescribed_quantity,
             },
         );
@@ -246,8 +246,8 @@ mod test {
             mock_prescription_unallocated_invoice_line().invoice_id
         );
         assert_eq!(
-            invoice_line.item_link_id,
-            mock_prescription_unallocated_invoice_line().item_link_id
+            invoice_line.item_id,
+            mock_prescription_unallocated_invoice_line().item_id
         );
         assert_eq!(
             invoice_line.item_code,
@@ -322,7 +322,7 @@ mod test {
             &context,
             SetPrescribedQuantity {
                 invoice_id: mock_prescription_invoice_line_a().invoice_id,
-                item_id: mock_prescription_invoice_line_a().item_link_id,
+                item_id: mock_prescription_invoice_line_a().item_id,
                 prescribed_quantity: new_prescribed_quantity,
             },
         );
@@ -388,7 +388,7 @@ mod test {
             &context,
             SetPrescribedQuantity {
                 invoice_id: mock_prescription_unallocated_invoice_line().invoice_id,
-                item_id: mock_prescription_unallocated_invoice_line().item_link_id,
+                item_id: mock_prescription_unallocated_invoice_line().item_id,
                 prescribed_quantity: new_prescribed_quantity,
             },
         );

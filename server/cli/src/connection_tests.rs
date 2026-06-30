@@ -273,7 +273,7 @@ pub fn get_sync_settings(config: &service::settings::Settings) -> Result<SyncSet
         .unwrap();
     let service_context = service_provider.basic_context().unwrap();
 
-    let yaml_sync_settings = config.sync.clone();
+    let yaml_sync_settings = config.sync.clone().filter(|s| s.has_core_sync_settings());
     let database_sync_settings = service_provider.settings.sync_settings(&service_context);
 
     let settings = match (yaml_sync_settings, database_sync_settings) {

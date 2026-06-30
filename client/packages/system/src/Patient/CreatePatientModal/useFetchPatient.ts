@@ -22,10 +22,8 @@ export const useFetchPatient = () => {
   const [error, setError] = useState<string | undefined>(undefined);
 
   const { mutateAsync: linkPatientToStore } = useMutation({
-    mutationFn: (nameId: string) =>
-      api.linkPatientToStore(nameId)
-  }
-  );
+    mutationFn: (nameId: string) => api.linkPatientToStore(nameId),
+  });
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { mutateAsync: getSyncStatus } = useSync.utils.mutateSyncStatus();
 
@@ -66,19 +64,15 @@ export const useFetchPatient = () => {
         return;
       }
 
-      // V7 sync has no per-patient fetch endpoint yet — see follow-up in
-      // sync v7 plan. Surface a clear message and exit early.
       const currentStatus = await getSyncStatus();
-      if (isSyncStatusV7(currentStatus)) {
-        setError(t('error.fetch-patient-not-supported-on-v7'));
-        return;
+      if (!isSyncStatusV7(currentStatus)) {
+        setStep('Syncing');
+        await manualSync(patientId);
+        await pollTillSynced();
       }
 
-      setStep('Syncing');
-      await manualSync(patientId);
-      await pollTillSynced();
       await queryClient.invalidateQueries({
-        queryKey: api.keys.list()
+        queryKey: api.keys.list(),
       });
       if (!hasErroredDuringSync.current) setStep('Synced');
     },

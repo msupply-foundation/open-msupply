@@ -234,25 +234,25 @@ mod test {
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_link_id: mock_item_a().id,
+                        item_id: mock_item_a().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_link_id: mock_item_b().id,
+                        item_id: mock_item_b().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_link_id: mock_item_c().id,
+                        item_id: mock_item_c().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
                     MasterListLineRow {
                         id: line4.clone(),
-                        item_link_id: mock_item_d().id,
+                        item_id: mock_item_d().id,
                         master_list_id: id.clone(),
                         ..Default::default()
                     },
@@ -292,7 +292,7 @@ mod test {
         let mut item_ids: Vec<String> = result
             .clone()
             .into_iter()
-            .map(|invoice_line| invoice_line.item_link_id)
+            .map(|invoice_line| invoice_line.item_id)
             .collect();
         item_ids.sort();
 
@@ -307,7 +307,7 @@ mod test {
         assert_eq!(item_ids, test_item_ids);
         let line = result
             .iter()
-            .find(|line| line.item_link_id == mock_item_a().id)
+            .find(|line| line.item_id == mock_item_a().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);
@@ -316,7 +316,7 @@ mod test {
 
         let line = result
             .iter()
-            .find(|line| line.item_link_id == mock_item_b().id)
+            .find(|line| line.item_id == mock_item_b().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);

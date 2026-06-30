@@ -10,6 +10,7 @@ import {
   Tooltip,
   useNavigate,
   RouteBuilder,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
@@ -96,6 +97,7 @@ export const Toolbar = () => {
           disabled={isDisabled}
         />
       </Box>
+      <DisabledStoreNotice otherParty={otherParty} />
     </AppBarContentPortal>
   );
 };

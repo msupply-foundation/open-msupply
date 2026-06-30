@@ -18,12 +18,12 @@ export const useColumnVisibility = <T extends MRT_RowData>(
   const simplifiedMobileView = useSimplifiedTabletUI();
 
   const initial = useMemo(() => {
-    const defaultHiddenColumns =
-      simplifiedMobileView || isMobile
-        ? columns
-            .filter(col => col.defaultHideOnMobile)
-            .map(c => c.id ?? c.accessorKey ?? '')
-        : [];
+    const hideOnMobile = simplifiedMobileView || isMobile;
+    const defaultHiddenColumns = columns
+      .filter(
+        col => col.defaultHidden || (hideOnMobile && col.defaultHideOnMobile)
+      )
+      .map(c => c.id ?? c.accessorKey ?? '');
 
     return Object.fromEntries(
       defaultHiddenColumns.map((columnId: string) => [columnId, false])

@@ -45,7 +45,7 @@ pub fn generate_empty_purchase_order_lines(
                 &NumberRowType::PurchaseOrderLine(purchase_order_row.id.clone()),
                 &purchase_order_row.store_id,
             )?,
-            item_link_id: item_row.id,
+            item_id: item_row.id,
             item_name: item_row.name,
             store_id: purchase_order_row.store_id.clone(),
             status: PurchaseOrderLineStatus::New,

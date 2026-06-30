@@ -11,6 +11,7 @@ import {
   usePreferences,
   InvoiceNodeType,
   buildCustomFieldFilterDefinitions,
+  InvoiceTypeInput,
 } from '@openmsupply-client/common';
 import { getStatusSequence } from '../../statuses';
 import { getStatusTranslator } from '../../utils';
@@ -32,8 +33,8 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
   );
 
   const filterString =
-    ((filter.filterBy?.['invoiceNumber'] as FilterRule)?.equalTo as string) ||
-    '';
+    ((filter.filterBy?.['invoiceNumberOrStatus'] as FilterRule)
+      ?.like as string) || '';
 
   return (
     <AppBarContentPortal
@@ -47,17 +48,16 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
       <Box display="flex" gap={1}>
         {simplifiedTabletView ? (
           <SearchBar
-            placeholder={t('placeholder.search-by', {
-              field: 'invoice number',
-            })}
+            placeholder={t('placeholder.search-by-invoice-number-or-status')}
+            width="320px"
             value={filterString}
             onChange={newValue => {
               if (!newValue) {
-                return filter.onClearFilterRule('invoiceNumber');
+                return filter.onClearFilterRule('invoiceNumberOrStatus');
               }
               return filter.onChangeStringFilterRule(
-                'invoiceNumber',
-                'equalTo',
+                'invoiceNumberOrStatus',
+                'like',
                 newValue
               );
             }}
@@ -85,6 +85,21 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                   value: status,
                   label: getStatusTranslator(t)(status),
                 })),
+              },
+              {
+                type: 'enum',
+                name: t('label.type'),
+                urlParameter: 'type',
+                options: [
+                  {
+                    value: InvoiceTypeInput.InboundShipment,
+                    label: t('label.internal'),
+                  },
+                  {
+                    value: InvoiceTypeInput.InboundShipmentExternal,
+                    label: t('label.external'),
+                  },
+                ],
               },
               {
                 type: 'text',

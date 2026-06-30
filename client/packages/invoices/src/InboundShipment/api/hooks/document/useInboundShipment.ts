@@ -1,6 +1,7 @@
 import {
   RecordPatch,
   UpdateInboundShipmentInput,
+  InvoiceNodeStatus,
   InvoiceTypeInput,
   useMutation,
   useQuery,
@@ -41,7 +42,11 @@ export const useInboundShipment = (id?: string) => {
     ? InvoiceTypeInput.InboundShipmentExternal
     : InvoiceTypeInput.InboundShipment;
 
-  const { data, isLoading: loading, error } = useGetById(invoiceId, invoiceType);
+  const {
+    data,
+    isLoading: loading,
+    error,
+  } = useGetById(invoiceId, invoiceType);
   const { queryClient } = useInboundGraphQL();
   const { userHasPermission } = useAuthContext();
   const isHoldable = isInboundHoldable(data);
@@ -54,8 +59,23 @@ export const useInboundShipment = (id?: string) => {
   const hasVerifyPermission = isExternal
     ? userHasPermission(UserPermission.InboundShipmentExternalVerify)
     : userHasPermission(UserPermission.InboundShipmentVerify);
-  const isDisabled = isInboundDisabled(data) || !hasMutatePermission;
+  const isOtherPartyDisabled = !!data?.otherParty?.store?.isDisabled;
+  const isDisabled =
+    isInboundDisabled(data) || isOtherPartyDisabled || !hasMutatePermission;
   const isStatusChangeDisabled = isInboundStatusChangeDisabled(data);
+  // A shipment that went through line authorisation (any line has an auth
+  // status) can only be received once every line is approved or rejected, so
+  // its set of lines is locked from then on — lines/batches cannot be added
+  // or deleted, though other line details remain editable. The server
+  // enforces the same lock via the externalInboundShipmentLinesMustBeAuthorised
+  // preference (check_lines_locked_by_authorisation).
+  const requiresLineAuthorisation =
+    data?.lines.nodes.some(line => line.status != null) ?? false;
+  const isAddOrDeleteLinesDisabled =
+    isDisabled ||
+    (requiresLineAuthorisation &&
+      (data?.status === InvoiceNodeStatus.Received ||
+        data?.status === InvoiceNodeStatus.Verified));
 
   const rows = useMemo(() => {
     const lines = data?.lines?.nodes ?? [];
@@ -152,7 +172,7 @@ export const useInboundShipment = (id?: string) => {
 
   const invalidateQuery = () => {
     queryClient.invalidateQueries({
-      queryKey: [INBOUND, INBOUND_LINE, invoiceId]
+      queryKey: [INBOUND, INBOUND_LINE, invoiceId],
     });
   };
 
@@ -161,6 +181,7 @@ export const useInboundShipment = (id?: string) => {
     draft,
     isExternal,
     isDisabled,
+    isAddOrDeleteLinesDisabled,
     hasMutatePermission,
     isHoldable,
     isStatusChangeDisabled,
@@ -176,10 +197,7 @@ export const useInboundShipment = (id?: string) => {
   };
 };
 
-const useGetById = (
-  invoiceId: string | undefined,
-  type?: InvoiceTypeInput
-) => {
+const useGetById = (invoiceId: string | undefined, type?: InvoiceTypeInput) => {
   const { inboundApi, storeId } = useInboundGraphQL();
 
   const queryFn = async (): Promise<InboundFragment> => {
@@ -238,7 +256,7 @@ const useUpdate = (isExternal: boolean) => {
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: [INBOUND]
+        queryKey: [INBOUND],
       });
     },
   });
@@ -270,8 +288,9 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries({
-      queryKey: [INBOUND]
-    }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [INBOUND],
+      }),
   });
 };

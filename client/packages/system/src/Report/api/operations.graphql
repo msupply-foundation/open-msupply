@@ -100,8 +100,18 @@ query generateReport(
   }
 }
 
-query csvToExcel($storeId: String!, $csvData: String!, $filename: String!) {
-  csvToExcel(storeId: $storeId, csvData: $csvData, filename: $filename) {
+query csvToExcel(
+  $storeId: String!
+  $csvData: String!
+  $filename: String!
+  $sheetName: String
+) {
+  csvToExcel(
+    storeId: $storeId
+    csvData: $csvData
+    filename: $filename
+    sheetName: $sheetName
+  ) {
     ... on PrintReportNode {
       __typename
       fileId

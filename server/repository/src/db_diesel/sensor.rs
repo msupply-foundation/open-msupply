@@ -2,8 +2,13 @@ use super::{sensor_row::sensor, DBType, SensorRow, StorageConnection};
 use diesel::prelude::*;
 
 use crate::{
+    db_diesel::{
+        location_row::location,
+        location::{LocationFilter, LocationRepository},
+    },
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
+    sensor_row::SensorType,
     StringFilter,
 };
 
@@ -18,9 +23,11 @@ pub struct Sensor {
 pub struct SensorFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
-    pub serial: Option<EqualFilter<String>>,
+    pub serial: Option<StringFilter>,
     pub is_active: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
+    pub r#type: Option<EqualFilter<SensorType>>,
+    pub location: Option<LocationFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -85,13 +92,19 @@ impl<'a> SensorRepository<'a> {
         if let Some(filter) = filter {
             apply_equal_filter!(query, filter.id, sensor::id);
             apply_string_filter!(query, filter.name, sensor::name);
-            apply_equal_filter!(query, filter.serial, sensor::serial);
+            apply_string_filter!(query, filter.serial, sensor::serial);
+            apply_equal_filter!(query, filter.store_id, sensor::store_id);
+            apply_equal_filter!(query, filter.r#type, sensor::type_);
 
             if let Some(value) = filter.is_active {
                 query = query.filter(sensor::is_active.eq(value));
             }
 
-            apply_equal_filter!(query, filter.store_id, sensor::store_id);
+            if filter.location.is_some() {
+                let location_ids = LocationRepository::create_filtered_query(filter.location)
+                    .select(location::id.nullable());
+                query = query.filter(sensor::location_id.eq_any(location_ids));
+            }
         }
 
         query
@@ -119,7 +132,7 @@ impl SensorFilter {
         self
     }
 
-    pub fn serial(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn serial(mut self, filter: StringFilter) -> Self {
         self.serial = Some(filter);
         self
     }
@@ -131,6 +144,16 @@ impl SensorFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<SensorType>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
+
+    pub fn location(mut self, filter: LocationFilter) -> Self {
+        self.location = Some(filter);
         self
     }
 }

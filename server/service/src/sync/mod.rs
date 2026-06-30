@@ -66,21 +66,6 @@ impl ActiveStoresOnSite {
         Ok(ActiveStoresOnSite { site_id, stores })
     }
 
-    pub(crate) fn site_id(&self) -> i32 {
-        self.site_id
-    }
-
-    pub(crate) fn name_ids(&self) -> Vec<String> {
-        self.stores.iter().map(|r| r.name_row.id.clone()).collect()
-    }
-
-    pub(crate) fn get_store_id_for_name_id(&self, name_id: &str) -> Option<String> {
-        self.stores
-            .iter()
-            .find(|r| r.name_row.id == name_id)
-            .map(|r| r.store_row.id.clone())
-    }
-
     pub(crate) fn store_ids(&self) -> Vec<String> {
         self.stores.iter().map(|r| r.store_row.id.clone()).collect()
     }
@@ -218,4 +203,12 @@ pub fn test_util_set_is_central_server(is_central: bool) {
                 CentralServerConfig::CentralServerUrl("".to_string());
         }
     }
+}
+
+// TEST ONLY — override the central server URL the FileSyncDriver reads on
+// each iteration. Used by integration tests that need to route file uploads
+// through toxiproxy after the initial sync has populated the config with the
+// real central URL.
+pub fn test_util_set_central_server_url(url: String) {
+    *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::CentralServerUrl(url);
 }

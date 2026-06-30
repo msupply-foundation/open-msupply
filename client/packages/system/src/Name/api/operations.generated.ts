@@ -12,7 +12,12 @@ export type NameRowFragment = {
   isOnHold: boolean;
   name: string;
   customFields?: any | null;
-  store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  store?: {
+    __typename: 'StoreNode';
+    id: string;
+    code: string;
+    isDisabled: boolean;
+  } | null;
 };
 
 export type FacilityNameRowFragment = {
@@ -25,7 +30,12 @@ export type FacilityNameRowFragment = {
   isOnHold: boolean;
   name: string;
   properties: string;
-  store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  store?: {
+    __typename: 'StoreNode';
+    id: string;
+    code: string;
+    isDisabled: boolean;
+  } | null;
 };
 
 export type NameFragment = {
@@ -54,7 +64,12 @@ export type NameFragment = {
   hshName?: string | null;
   margin?: number | null;
   freightFactor?: number | null;
-  store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+  store?: {
+    __typename: 'StoreNode';
+    id: string;
+    code: string;
+    isDisabled: boolean;
+  } | null;
   currency?: { __typename: 'CurrencyNode'; id: string; code: string } | null;
 };
 
@@ -106,7 +121,12 @@ export type NamesQuery = {
       isOnHold: boolean;
       name: string;
       customFields?: any | null;
-      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      store?: {
+        __typename: 'StoreNode';
+        id: string;
+        code: string;
+        isDisabled: boolean;
+      } | null;
     }>;
   };
 };
@@ -135,7 +155,12 @@ export type FacilitiesQuery = {
       isOnHold: boolean;
       name: string;
       properties: string;
-      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      store?: {
+        __typename: 'StoreNode';
+        id: string;
+        code: string;
+        isDisabled: boolean;
+      } | null;
     }>;
   };
 };
@@ -176,7 +201,12 @@ export type NameByIdQuery = {
       hshName?: string | null;
       margin?: number | null;
       freightFactor?: number | null;
-      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      store?: {
+        __typename: 'StoreNode';
+        id: string;
+        code: string;
+        isDisabled: boolean;
+      } | null;
       currency?: {
         __typename: 'CurrencyNode';
         id: string;
@@ -271,7 +301,12 @@ export type UpdateNamePropertiesMutation = {
         hshName?: string | null;
         margin?: number | null;
         freightFactor?: number | null;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
         currency?: {
           __typename: 'CurrencyNode';
           id: string;
@@ -296,6 +331,7 @@ export const NameRowFragmentDoc = gql`
     store {
       id
       code
+      isDisabled
     }
   }
 `;
@@ -311,6 +347,7 @@ export const FacilityNameRowFragmentDoc = gql`
     store {
       id
       code
+      isDisabled
     }
     properties
   }
@@ -338,6 +375,7 @@ export const NameFragmentDoc = gql`
     store {
       id
       code
+      isDisabled
     }
     properties
     customFields

@@ -51,6 +51,7 @@ export type OutboundFragment = {
       batch?: string | null;
       expiryDate?: string | null;
       numberOfPacks: number;
+      receivedNumberOfPacks?: number | null;
       prescribedQuantity?: number | null;
       packSize: number;
       invoiceId: string;
@@ -63,6 +64,13 @@ export type OutboundFragment = {
       itemName: string;
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+      } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
@@ -115,7 +123,12 @@ export type OutboundFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
   pricing: {
     __typename: 'PricingNode';
@@ -305,6 +318,7 @@ export type InvoiceQuery = {
             batch?: string | null;
             expiryDate?: string | null;
             numberOfPacks: number;
+            receivedNumberOfPacks?: number | null;
             prescribedQuantity?: number | null;
             packSize: number;
             invoiceId: string;
@@ -317,6 +331,13 @@ export type InvoiceQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
@@ -369,7 +390,12 @@ export type InvoiceQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         pricing: {
           __typename: 'PricingNode';
@@ -462,6 +488,7 @@ export type OutboundByNumberQuery = {
             batch?: string | null;
             expiryDate?: string | null;
             numberOfPacks: number;
+            receivedNumberOfPacks?: number | null;
             prescribedQuantity?: number | null;
             packSize: number;
             invoiceId: string;
@@ -474,6 +501,13 @@ export type OutboundByNumberQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
@@ -526,7 +560,12 @@ export type OutboundByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         pricing: {
           __typename: 'PricingNode';
@@ -723,6 +762,29 @@ export type DeleteOutboundShipmentsMutation = {
         | { __typename: 'DeleteResponse'; id: string };
     }> | null;
   };
+};
+
+export type DuplicateOutboundShipmentMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DuplicateOutboundShipmentMutation = {
+  __typename: 'Mutations';
+  duplicateOutboundShipment:
+    | {
+        __typename: 'DuplicateOutboundShipmentError';
+        error: { __typename: 'CustomerIsInactive'; description: string };
+      }
+    | {
+        __typename: 'DuplicateOutboundShipmentNode';
+        skippedItemCount: number;
+        invoice: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        };
+      };
 };
 
 export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
@@ -1160,6 +1222,7 @@ export const OutboundFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     pricing {
@@ -1536,6 +1599,27 @@ export const DeleteOutboundShipmentsDocument = gql`
           ... on DeleteResponse {
             id
           }
+        }
+      }
+    }
+  }
+`;
+export const DuplicateOutboundShipmentDocument = gql`
+  mutation duplicateOutboundShipment($id: String!, $storeId: String!) {
+    duplicateOutboundShipment(storeId: $storeId, id: $id) {
+      __typename
+      ... on DuplicateOutboundShipmentNode {
+        invoice {
+          __typename
+          id
+          invoiceNumber
+        }
+        skippedItemCount
+      }
+      ... on DuplicateOutboundShipmentError {
+        error {
+          __typename
+          description
         }
       }
     }
@@ -2153,6 +2237,24 @@ export function getSdk(
             signal,
           }),
         'deleteOutboundShipments',
+        'mutation',
+        variables
+      );
+    },
+    duplicateOutboundShipment(
+      variables: DuplicateOutboundShipmentMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DuplicateOutboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DuplicateOutboundShipmentMutation>({
+            document: DuplicateOutboundShipmentDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'duplicateOutboundShipment',
         'mutation',
         variables
       );

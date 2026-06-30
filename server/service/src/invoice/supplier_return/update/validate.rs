@@ -1,10 +1,11 @@
-use repository::{InvoiceRow, InvoiceType, StorageConnection};
+use repository::{InvoiceLineRowRepository, InvoiceRow, InvoiceType, StorageConnection};
 
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, custom_fields::check_unknown_custom_fields_key,
     InvoiceRowStatusError,
 };
+use crate::validate::check_other_party_store_is_disabled;
 
 use super::{UpdateSupplierReturn, UpdateSupplierReturnError};
 
@@ -22,6 +23,9 @@ pub fn validate(
         return Err(ReturnDoesNotBelongToCurrentStore);
     }
     if !check_invoice_is_editable(&return_row) {
+        return Err(ReturnIsNotEditable);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &return_row.name_id)? {
         return Err(ReturnIsNotEditable);
     }
     if !check_invoice_type(&return_row, InvoiceType::SupplierReturn) {
@@ -47,6 +51,12 @@ pub fn validate(
                 InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
             },
         )?;
+
+        let lines = InvoiceLineRowRepository::new(connection)
+            .find_many_by_invoice_id(&input.supplier_return_id)?;
+        if lines.is_empty() {
+            return Err(CannotIssueSupplierReturnWithNoLines);
+        }
     }
     Ok((return_row, status_changed))
 }

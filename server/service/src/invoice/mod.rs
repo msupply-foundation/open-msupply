@@ -38,7 +38,9 @@ pub mod customer_return;
 use self::customer_return::*;
 
 pub mod outbound_shipment;
-use self::outbound_shipment::{delete::*, insert::*, update::*, update_outbound_shipment_name};
+use self::outbound_shipment::{
+    delete::*, duplicate::*, insert::*, update::*, update_outbound_shipment_name,
+};
 pub mod inbound_shipment;
 use self::inbound_shipment::*;
 
@@ -116,12 +118,28 @@ pub trait InvoiceServiceTrait: Sync + Send {
         delete_inbound_shipment(ctx, input, expected_type)
     }
 
+    fn duplicate_inbound_shipment(
+        &self,
+        ctx: &ServiceContext,
+        source_id: String,
+    ) -> Result<DuplicateInboundShipment, DuplicateInboundShipmentError> {
+        duplicate_inbound_shipment(ctx, source_id)
+    }
+
     fn insert_outbound_shipment(
         &self,
         ctx: &ServiceContext,
         input: InsertOutboundShipment,
     ) -> Result<Invoice, InsertOutboundShipmentError> {
         insert_outbound_shipment(ctx, input)
+    }
+
+    fn duplicate_outbound_shipment(
+        &self,
+        ctx: &ServiceContext,
+        source_id: String,
+    ) -> Result<DuplicateOutboundShipment, DuplicateOutboundShipmentError> {
+        duplicate_outbound_shipment(ctx, source_id)
     }
 
     fn update_outbound_shipment(

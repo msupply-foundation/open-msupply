@@ -101,6 +101,7 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::RnrFormLine,
     ChangelogTableName::Sensor,
     ChangelogTableName::StockLine,
+    ChangelogTableName::StockRelocation,
     ChangelogTableName::Vaccination,
     ChangelogTableName::AssetInternalLocation,
     ChangelogTableName::AssetLog,
