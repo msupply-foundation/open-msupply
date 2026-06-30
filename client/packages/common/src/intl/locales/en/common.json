@@ -2198,6 +2198,7 @@
   "messages.confirm-zero-shipment-lines_other": "This will set the quantity of {{count}} lines to 0",
   "messages.connected-to-printer": "Connected successfully to printer!",
   "messages.could-not-save": "Could not save",
+  "messages.manufacturer-not-visible-dropped": "Manufacturer \"{{name}}\" is not visible in this store, so it was not added to the stock line",
   "messages.create-new-asset-confirmation": "The asset you scanned is not currently in the system, but has provided appropriate GS1 data. Would you like to create a new asset with this data?",
   "messages.create-outbound-from-requisition": "Are you sure you want to create an outbound shipment from this customer requisition?",
   "messages.created-clinician": "Successfully created clinician",
