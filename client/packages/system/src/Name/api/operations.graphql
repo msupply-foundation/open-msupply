@@ -160,8 +160,8 @@ query nameProperties {
   }
 }
 
-query nameCustomFields {
-  customFields(filter: { tableName: { equalTo: "name" } }) {
+query nameCustomFields($tableName: String!) {
+  customFields(filter: { tableName: { equalTo: $tableName } }) {
     ... on CustomFieldConnector {
       __typename
       totalCount

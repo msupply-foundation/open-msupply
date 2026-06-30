@@ -10,8 +10,9 @@ pub struct CustomFieldFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub key: Option<EqualFilterStringInput>,
     /// Restricts to custom_fields shown on this table_name
-    /// (`custom_field_table.display_mode != HIDDEN`). Use `{ equalTo: "name" }`
-    /// to fetch the definitions that drive name list views / modal. When a
+    /// (`custom_field_table.display_mode != HIDDEN`). Use e.g.
+    /// `{ equalTo: "customer" }` or `{ equalTo: "supplier" }` to fetch the
+    /// definitions that drive the matching name list views / modal. When a
     /// single `equalTo` table is given, each returned node carries its
     /// `displayMode` for that scope.
     pub table_name: Option<EqualFilterStringInput>,

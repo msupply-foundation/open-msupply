@@ -85,8 +85,9 @@ struct MappingCustomField {
     display_mode: CustomFieldDisplayMode,
     /// Record tables the custom_field applies to (one `custom_field_table` row per
     /// entry). A definition can be visible on more than one table — names'
-    /// `custom1/2/3` are shared by every name type, so they map to both `"name"`
-    /// (customers/suppliers/facilities) and `"patient"`.
+    /// `custom1/2/3` are shared by every name role, so they map to `"customer"`,
+    /// `"supplier"` and `"patient"` (the three name scopes a `NameNode` resolves
+    /// against — see the resolver in `graphql/types/.../name.rs`).
     table_names: &'static [&'static str],
 }
 
@@ -107,21 +108,21 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             name: "Custom 1",
             value_type: Text,
             display_mode: Visible,
-            table_names: &["name", "patient"],
+            table_names: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CUSTOM_2,
             name: "Custom 2",
             value_type: Text,
             display_mode: Visible,
-            table_names: &["name", "patient"],
+            table_names: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CUSTOM_3,
             name: "Custom 3",
             value_type: Text,
             display_mode: Visible,
-            table_names: &["name", "patient"],
+            table_names: &["customer", "supplier", "patient"],
         },
         // item `[item]user_field_1..7` — 4D names are already snake_case, so the
         // key matches the wire field 1:1. Value types come from the 4D catalog.
@@ -212,8 +213,8 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
         // `name_category1*` level tables map via `parent_option_id`); 2–6 are flat.
         // Options are authored by `translations/name_category.rs` (central-only);
         // the name stores the chosen leaf id under each key. Shared by every name
-        // type, so visible on both "name" (customers/suppliers/facilities) and
-        // "patient" — where they are editable (the first editable OPTION).
+        // role, so visible on all three name scopes — "customer", "supplier" and
+        // "patient" — where patients are editable (the first editable OPTION).
         //
         // NOTE: `custom_field.key` is globally unique, so the name dimensions can't
         // reuse item's `category2`/`category3` keys — they are prefixed
@@ -223,42 +224,42 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             name: "Category 1",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["name", "patient"],
+            table_names: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CATEGORY_2,
             name: "Category 2",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["name", "patient"],
+            table_names: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CATEGORY_3,
             name: "Category 3",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["name", "patient"],
+            table_names: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CATEGORY_4,
             name: "Category 4",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["name", "patient"],
+            table_names: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CATEGORY_5,
             name: "Category 5",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["name", "patient"],
+            table_names: &["customer", "supplier", "patient"],
         },
         MappingCustomField {
             key: NAME_CATEGORY_6,
             name: "Category 6",
             value_type: Option,
             display_mode: Visible,
-            table_names: &["name", "patient"],
+            table_names: &["customer", "supplier", "patient"],
         },
         // transaction categories — mSupply's `transaction_category` table holds
         // one flat pool of categories partitioned by a 3-char `type` matching the
@@ -423,11 +424,11 @@ mod tests {
         // + 3 item categories (main + 2 & 3) + 6 transaction categories (5 typed
         // + the pi2 prescription "Patient type" dimension).
         assert_eq!(custom_field_repo.find_all().unwrap().len(), 25);
-        // 34 table mappings: the 3 name customs + 6 name categories map to both
-        // "name" and "patient" (9×2 = 18), the 7 item fields + 3 item categories
-        // to "item" (10×1 = 10), the 6 transaction categories to one invoice
-        // scope each (6×1 = 6).
-        assert_eq!(table_repo.find_all().unwrap().len(), 34);
+        // 43 table mappings: the 3 name customs + 6 name categories map to all
+        // three name scopes "customer", "supplier" and "patient" (9×3 = 27), the
+        // 7 item fields + 3 item categories to "item" (10×1 = 10), the 6
+        // transaction categories to one invoice scope each (6×1 = 6).
+        assert_eq!(table_repo.find_all().unwrap().len(), 43);
 
         // The name customs are shared by patients (same definition, extra mapping).
         let patient_mapping = table_repo
@@ -465,15 +466,15 @@ mod tests {
         // A display-mode edit on a table mapping must be preserved across re-seeds.
         table_repo
             .upsert_one(&CustomFieldTableRow {
-                id: "custom_1__name".to_string(),
+                id: "custom_1__customer".to_string(),
                 custom_field_id: "custom_1".to_string(),
-                table_name: "name".to_string(),
+                table_name: "customer".to_string(),
                 display_mode: CustomFieldDisplayMode::Hidden,
             })
             .unwrap();
         seed_central_mapping_custom_fields(&connection).unwrap();
         let table_row = table_repo
-            .find_one_by_id("custom_1__name")
+            .find_one_by_id("custom_1__customer")
             .unwrap()
             .unwrap();
         assert_eq!(

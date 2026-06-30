@@ -1818,8 +1818,9 @@ export type CustomFieldFilterInput = {
   key?: InputMaybe<EqualFilterStringInput>;
   /**
    * Restricts to custom_fields shown on this table_name
-   * (`custom_field_table.display_mode != HIDDEN`). Use `{ equalTo: "name" }`
-   * to fetch the definitions that drive name list views / modal. When a
+   * (`custom_field_table.display_mode != HIDDEN`). Use e.g.
+   * `{ equalTo: "customer" }` or `{ equalTo: "supplier" }` to fetch the
+   * definitions that drive the matching name list views / modal. When a
    * single `equalTo` table is given, each returned node carries its
    * `displayMode` for that scope.
    */
@@ -6621,7 +6622,8 @@ export type NameFilterInput = {
   country?: InputMaybe<StringFilterInput>;
   /**
    * Dynamic filter condition AST, currently supporting property conditions
-   * on keys visible for the "name" table scope, e.g.
+   * on keys visible for the "customer" or "supplier" table scope (the union,
+   * since names lists mix both), e.g.
    * `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
    */
   dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
@@ -6669,11 +6671,16 @@ export type NameNode = {
   /**
    * Properties v2 values for this name. The raw `name.custom_fields` JSONB
    * blob is filtered server-side to keys that are (a) defined in
-   * `custom_field` and not soft-deleted, (b) marked visible for this name's
-   * table scope via `custom_field_table`. Stray keys never reach the client.
+   * `custom_field` and not soft-deleted, (b) marked visible for one of this
+   * name's table scopes via `custom_field_table`. Stray keys never reach the
+   * client.
    *
-   * Patients have their own visible set (`table_name = "patient"`); every
-   * other name type uses the generic `"name"` scope.
+   * A name has no single scope: "customer"/"supplier" are independent role
+   * flags (not mutually exclusive) and "patient" is a type, so the visible
+   * set is the **union** over every scope the name qualifies for —
+   * `"patient"` if it's a patient, `"customer"` if `is_customer`,
+   * `"supplier"` if `is_supplier`. A name that matches none of these (e.g. a
+   * manufacturer/donor/store-only name) has no scope and surfaces nothing.
    */
   customFields?: Maybe<Scalars['JSON']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;

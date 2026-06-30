@@ -464,7 +464,7 @@ impl GeneralQueries {
 
     /// Properties v2 definitions. Used by list views, detail views and modals
     /// to learn what columns/fields to render. Filter by `tableName` to scope
-    /// to a record kind (`{ equalTo: "name" }`).
+    /// to a record kind (`{ equalTo: "customer" }`).
     pub async fn custom_fields(
         &self,
         ctx: &Context<'_>,

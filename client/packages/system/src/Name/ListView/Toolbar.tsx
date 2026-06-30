@@ -8,11 +8,16 @@ import {
 } from '@openmsupply-client/common';
 import { useName } from '../api';
 
-/** Customer/supplier list filters — currently the name-scoped property
- * filters only (regular fields can join as they become filterable). */
-export const Toolbar = (): ReactElement | null => {
+/** Customer/supplier list filters — currently the custom-field filters only
+ * (regular fields can join as they become filterable). `scope` is the name
+ * custom-field scope ("customer" | "supplier") matching the list. */
+export const Toolbar = ({
+  scope,
+}: {
+  scope: 'customer' | 'supplier';
+}): ReactElement | null => {
   const t = useTranslation();
-  const { data: properties } = useName.document.customFields();
+  const { data: properties } = useName.document.customFields(scope);
 
   const filters = buildCustomFieldFilterDefinitions(properties ?? [], {
     min: t('label.min'),

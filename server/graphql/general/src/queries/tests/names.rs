@@ -247,7 +247,9 @@ mod graphql {
         )
         .await;
 
-        // A property visible on the "name" table scope
+        // A property visible only on the "supplier" table scope: the names query
+        // validates a dynamic filter against the union of "customer" + "supplier",
+        // so a supplier-only key must still be accepted.
         CustomFieldRowRepository::new(&connection)
             .upsert_one(&CustomFieldRow {
                 id: "prop1".to_string(),
@@ -260,9 +262,9 @@ mod graphql {
             .unwrap();
         CustomFieldTableRowRepository::new(&connection)
             .upsert_one(&CustomFieldTableRow {
-                id: "prop1_name".to_string(),
+                id: "prop1_supplier".to_string(),
                 custom_field_id: "prop1".to_string(),
-                table_name: "name".to_string(),
+                table_name: "supplier".to_string(),
                 display_mode: CustomFieldDisplayMode::Visible,
             })
             .unwrap();
@@ -311,7 +313,7 @@ mod graphql {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // A key that is not visible for the "name" scope is a BadUserInput
+        // A key that is not visible for the customer/supplier scopes is a BadUserInput
         let variables = json!({
           "storeId": "store_a",
           "filter": {

@@ -29,7 +29,8 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
   const [selectedId, setSelectedId] = useState<string>('');
 
   const { data, isError, isFetching } = useName.document.list(type);
-  const { data: properties } = useName.document.customFields();
+  // `type` ("customer" | "supplier") is also the custom-field scope.
+  const { data: properties } = useName.document.customFields(type);
 
   const columns = useMemo(
     (): ColumnDef<NameRowFragment>[] => [
@@ -82,7 +83,7 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
 
   return (
     <>
-      <Toolbar />
+      <Toolbar scope={type} />
       <MaterialTable table={table} />
       {type === 'customer' && (
         <Modal
