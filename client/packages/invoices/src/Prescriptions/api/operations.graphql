@@ -1,5 +1,19 @@
 fragment PrescriptionRow on InvoiceNode {
   __typename
+  id
+  invoiceNumber
+  type
+  status
+  colour
+  comment
+  createdDatetime
+  prescriptionDate: backdatedDatetime
+  otherPartyName
+  theirReference
+}
+
+fragment Prescription on InvoiceNode {
+  __typename
   comment
   createdDatetime
   prescriptionDate: backdatedDatetime
@@ -243,7 +257,57 @@ query prescriptions(
       __typename
       nodes {
         ...PrescriptionRow
-        theirReference
+      }
+      totalCount
+    }
+  }
+}
+
+fragment PrescriptionWithLines on InvoiceNode {
+  __typename
+  id
+  invoiceNumber
+  createdDatetime
+  pickedDatetime
+  clinician {
+    firstName
+    lastName
+  }
+  lines {
+    __typename
+    nodes {
+      __typename
+      id
+      itemName
+      numberOfPacks
+      packSize
+      note
+      item {
+        id
+      }
+    }
+    totalCount
+  }
+}
+
+query prescriptionsWithLines(
+  $first: Int
+  $offset: Int
+  $key: InvoiceSortFieldInput!
+  $desc: Boolean
+  $filter: InvoiceFilterInput
+  $storeId: String!
+) {
+  invoices(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      nodes {
+        ...PrescriptionWithLines
       }
       totalCount
     }
@@ -273,7 +337,7 @@ query prescriptionByNumber($invoiceNumber: Int!, $storeId: String!) {
       }
     }
     ... on InvoiceNode {
-      ...PrescriptionRow
+      ...Prescription
     }
   }
 }
@@ -297,7 +361,7 @@ query prescriptionById($invoiceId: String!, $storeId: String!) {
       }
     }
     ... on InvoiceNode {
-      ...PrescriptionRow
+      ...Prescription
     }
   }
 }

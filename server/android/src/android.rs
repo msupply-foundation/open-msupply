@@ -44,6 +44,9 @@ pub mod android {
         let files_dir = PathBuf::from(&files_dir);
         let db_path = files_dir.join("omsupply-database");
 
+        let log_path = files_dir.join("logs");
+        std::fs::create_dir_all(&log_path).unwrap();
+
         let settings = Settings {
             server: ServerSettings {
                 port,
@@ -57,6 +60,7 @@ pub mod android {
                 standalone_store_name: None,
                 standalone_admin_username: None,
                 standalone_admin_password: None,
+                workers: None,
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),
@@ -75,7 +79,7 @@ pub mod android {
             sync: None,
             logging: Some(
                 LoggingSettings::new(LogMode::File, service::settings::Level::Info)
-                    .with_directory(files_dir.to_string_lossy().to_string()),
+                    .with_directory(log_path.to_string_lossy().to_string()),
             ),
             backup: None,
             // Not supporting mail sending on Android - so cannot be Central Server (does it need to be?)
@@ -102,7 +106,10 @@ pub mod android {
     }
 
     #[no_mangle]
-    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(_: EnvUnowned, _: JClass) {
+    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(
+        _: EnvUnowned,
+        _: JClass,
+    ) {
         let ServerBucket { off_switch, thread } = SERVER_BUCKET.lock().unwrap().take().unwrap();
         futures::executor::block_on(off_switch.send(())).unwrap();
         thread.join().unwrap();

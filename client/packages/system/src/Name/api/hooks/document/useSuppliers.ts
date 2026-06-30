@@ -11,6 +11,7 @@ export const useSuppliers = (external?: boolean) => {
     queryFn: () =>
       api.get.suppliers({
         ...params,
+        first: 1000,
         external,
       }),
   });

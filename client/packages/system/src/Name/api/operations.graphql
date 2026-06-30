@@ -9,6 +9,7 @@ fragment NameRow on NameNode {
   store {
     id
     code
+    isDisabled
   }
 }
 
@@ -23,6 +24,7 @@ fragment FacilityNameRow on NameNode {
   store {
     id
     code
+    isDisabled
   }
   properties
 }
@@ -49,6 +51,7 @@ fragment Name on NameNode {
   store {
     id
     code
+    isDisabled
   }
   properties
   customFields

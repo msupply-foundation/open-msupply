@@ -8,6 +8,6 @@ export const useManufacturers = () => {
 
   return useQuery({
     queryKey: [...api.keys.paramList(params), 'manufacturers'],
-    queryFn: () => api.get.manufacturers(params),
+    queryFn: () => api.get.manufacturers({ ...params, first: 1000 }),
   });
 };

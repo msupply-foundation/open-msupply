@@ -9,10 +9,8 @@
   ```yaml
     # Add any other settings you need here, e.g. database connection, sync settings etc
 
-    feature_flags:
-      table_usability_improvements: true
-      load_remote_plugins_in_dev: true
-      create_stocktake_modal_usability_improvements: true
+    features:
+      stock_movement: true
   ```
 */
 
@@ -34,5 +32,8 @@ export const useFeatureFlags = () => {
 
   return {
     ...featureFlags,
+    // Stock movement (stock relocation) feature - hidden by default while in
+    // development, can be enabled per-server via local.yaml
+    stockMovement: !!featureFlags['stock_movement'],
   };
 };

@@ -95,6 +95,7 @@ export const Initialise = () => {
               paddingTop: '1.5em',
             },
             flex: 1,
+            marginTop: 2,
             alignItems: 'center',
             justifyContent: 'center',
           })}
@@ -261,7 +262,7 @@ const RemoteForm: React.FC<RemoteFormProps> = ({
           />
         )}
       </Box>
-      <Box pt={4} justifyItems="center" px={isExtraSmallScreen ? 4 : 20}>
+      <Box pt={4} width="100%">
         {syncError && <BoxedErrorWithDetails {...syncError} width="100%" />}
       </Box>
     </>

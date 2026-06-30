@@ -166,9 +166,12 @@ query centralPatientSearch(
       nodes {
         id
         code
+        code2
         dateOfBirth
         firstName
         lastName
+        gender
+        isDeceased
       }
       totalCount
     }

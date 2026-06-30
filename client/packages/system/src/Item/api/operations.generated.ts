@@ -275,7 +275,12 @@ export type ItemVariantFragment = {
     isOnHold: boolean;
     name: string;
     customFields?: any | null;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   locationType?: {
     __typename: 'LocationTypeNode';
@@ -468,7 +473,12 @@ export type ItemFragment = {
       isOnHold: boolean;
       name: string;
       customFields?: any | null;
-      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      store?: {
+        __typename: 'StoreNode';
+        id: string;
+        code: string;
+        isDisabled: boolean;
+      } | null;
     } | null;
     locationType?: {
       __typename: 'LocationTypeNode';
@@ -714,7 +724,12 @@ export type ItemsWithStockLinesQuery = {
           isOnHold: boolean;
           name: string;
           customFields?: any | null;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -881,6 +896,11 @@ export type ItemsWithStatsFragment = {
   doses: number;
   customFields?: any | null;
   availableStockOnHand: number;
+  masterLists?: Array<{
+    __typename: 'MasterListNode';
+    id: string;
+    name: string;
+  }> | null;
   stats: {
     __typename: 'ItemStatsNode';
     averageMonthlyConsumption: number;
@@ -917,6 +937,11 @@ export type ItemsWithStatsQuery = {
       doses: number;
       customFields?: any | null;
       availableStockOnHand: number;
+      masterLists?: Array<{
+        __typename: 'MasterListNode';
+        id: string;
+        name: string;
+      }> | null;
       stats: {
         __typename: 'ItemStatsNode';
         averageMonthlyConsumption: number;
@@ -1080,7 +1105,12 @@ export type ItemByIdQuery = {
           isOnHold: boolean;
           name: string;
           customFields?: any | null;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -1220,7 +1250,12 @@ export type ItemVariantsQuery = {
           isOnHold: boolean;
           name: string;
           customFields?: any | null;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         locationType?: {
           __typename: 'LocationTypeNode';
@@ -1402,6 +1437,7 @@ export type UpsertItemVariantMutation = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             locationType?: {
@@ -2050,6 +2086,10 @@ export const ItemsWithStatsFragmentDoc = gql`
     doses
     customFields
     availableStockOnHand(storeId: $storeId)
+    masterLists(storeId: $storeId) {
+      id
+      name
+    }
     stats(storeId: $storeId) {
       __typename
       averageMonthlyConsumption

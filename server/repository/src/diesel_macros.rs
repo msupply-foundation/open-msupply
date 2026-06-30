@@ -51,6 +51,48 @@ macro_rules! apply_equal_filter {
     }};
 }
 
+/// OR variant of [`apply_equal_filter`], applying the equal filter with
+/// `or_filter` instead of `filter`. Used to combine an equal filter with other
+/// (OR'd) filters of a potentially different data type, e.g. matching an
+/// `invoice_number` (i64) OR a `status` (enum) from a single search term.
+///
+/// Warning: All OR filters need to be called before AND filters to work correctly.
+macro_rules! apply_equal_or_filter {
+    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
+        if let Some(equal_filter) = $filter_field {
+            if let Some(value) = equal_filter.equal_to {
+                $query = $query.or_filter($dsl_field.eq(value));
+            }
+
+            if let Some(value) = equal_filter.not_equal_to {
+                $query = $query.or_filter($dsl_field.ne(value));
+            }
+
+            if let Some(value) = equal_filter.not_equal_to_or_null {
+                $query = $query.or_filter($dsl_field.ne(value).or($dsl_field.is_null()));
+            }
+
+            if let Some(value) = equal_filter.equal_any {
+                $query = $query.or_filter($dsl_field.eq_any(value));
+            }
+
+            if let Some(value) = equal_filter.equal_any_or_null {
+                $query = $query.or_filter($dsl_field.eq_any(value).or($dsl_field.is_null()));
+            }
+
+            if let Some(value) = equal_filter.not_equal_all {
+                $query = $query.or_filter($dsl_field.ne_all(value));
+            }
+
+            $query = match equal_filter.is_null {
+                Some(true) => $query.or_filter($dsl_field.is_null()),
+                Some(false) => $query.or_filter($dsl_field.is_not_null()),
+                None => $query,
+            }
+        }
+    }};
+}
+
 #[cfg(not(feature = "postgres"))]
 macro_rules! apply_string_filter_method {
     ($query:ident, $filter_method:ident, $filter_field:expr, $dsl_field:expr ) => {{
@@ -727,6 +769,7 @@ macro_rules! diesel_json_type {
 pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
+pub(crate) use apply_equal_or_filter;
 pub(crate) use apply_number_filter;
 pub(crate) use apply_sort;
 pub(crate) use apply_sort_asc_nulls_first;

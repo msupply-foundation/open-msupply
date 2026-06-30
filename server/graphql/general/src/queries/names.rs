@@ -200,6 +200,7 @@ impl NameFilterInput {
             // serde error there must surface as BadUserInput, so the infallible
             // to_domain can't do it)
             dynamic_filter: None,
+            include_disabled: None,
         }
     }
 }

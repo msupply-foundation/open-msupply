@@ -1,8 +1,14 @@
-use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
+use repository::{
+    database_settings::DatabaseSettings, KeyType, KeyValueStoreRepository, RepositoryError,
+};
 use reqwest::Url;
 use thiserror::Error;
 
-use crate::{service_provider::ServiceContext, sync::settings::SyncSettings};
+use crate::{
+    service_provider::ServiceContext,
+    settings::{ServerSettings, Settings},
+    sync::settings::SyncSettings,
+};
 
 #[derive(Debug, Error)]
 pub enum UpdateSettingsError {
@@ -41,6 +47,7 @@ pub trait SettingsServiceTrait: Sync + Send {
 
         let batch_size = ctx.batch_size.clone();
         let disable_integration_transaction = ctx.disable_integration_transaction;
+        let relax_hardware_id_token_checks = ctx.relax_hardware_id_token_checks;
 
         // `?` inside this closure would result in closure returning `None`
         let make_settings = || {
@@ -51,6 +58,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 interval_seconds: interval_seconds? as u64,
                 batch_size,
                 disable_integration_transaction,
+                relax_hardware_id_token_checks,
             })
         };
 
@@ -96,8 +104,38 @@ pub trait SettingsServiceTrait: Sync + Send {
         KeyValueStoreRepository::new(&ctx.connection)
             .set_bool(KeyType::SettingsSyncIsDisabled, Some(true))
     }
+
+    fn get_database_info(&self) -> Result<DatabaseSettings, UpdateSettingsError>;
+
+    fn get_server_settings_info(&self) -> Result<ServerSettings, UpdateSettingsError>;
 }
 
-pub struct SettingsService;
+pub struct SettingsService {
+    pub service: Option<Settings>,
+}
 
-impl SettingsServiceTrait for SettingsService {}
+impl SettingsService {
+    pub fn new(settings: Option<Settings>) -> Self {
+        SettingsService { service: settings }
+    }
+}
+
+impl SettingsServiceTrait for SettingsService {
+    fn get_database_info(&self) -> Result<DatabaseSettings, UpdateSettingsError> {
+        match &self.service {
+            None => Err(UpdateSettingsError::InvalidSettings(
+                "Settings not initialized".to_string(),
+            )),
+            Some(settings) => Ok(settings.database.clone()),
+        }
+    }
+
+    fn get_server_settings_info(&self) -> Result<ServerSettings, UpdateSettingsError> {
+        match &self.service {
+            None => Err(UpdateSettingsError::InvalidSettings(
+                "Settings not initialized".to_string(),
+            )),
+            Some(settings) => Ok(settings.server.clone()),
+        }
+    }
+}

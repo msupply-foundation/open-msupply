@@ -21,6 +21,7 @@ import { ItemLedgerTab } from './Tabs/ItemLedger';
 import { StoreTab } from './Tabs/Store';
 import { AncillarySupplies } from './Tabs/AncillarySupplies';
 import { CustomFieldsTab } from './Tabs/CustomFields';
+import { ActivityLogList } from '../../ActivityLog';
 
 export const ItemDetailView = () => {
   const t = useTranslation();
@@ -123,6 +124,11 @@ export const ItemDetailView = () => {
       Component: <ItemVariantsTab item={data} itemVariants={data.variants} />,
       value: t('label.variants'),
     });
+
+  tabs.push({
+    Component: <ActivityLogList recordId={data.id} />,
+    value: t('label.log'),
+  });
 
   return !!data ? (
     <Box style={{ width: '100%' }}>

@@ -2,7 +2,7 @@ use super::NameNode;
 use async_graphql::{dataloader::DataLoader, Context, ErrorExtensions, Object, Result};
 use chrono::NaiveDate;
 use graphql_core::{
-    loader::{NameByIdLoader, NameByIdLoaderInput},
+    loader::{NameByIdLoader, NameByIdLoaderInput, StoreLogoLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -47,10 +47,18 @@ impl StoreNode {
     pub async fn site_id(&self) -> i32 {
         self.row().site_id
     }
+
+    /// Whether the store has been disabled, either by a user or as a result of a store merge.
+    pub async fn is_disabled(&self) -> bool {
+        self.row().is_disabled
+    }
     /// Returns the associated store logo.
     /// The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
-    pub async fn logo(&self) -> &Option<String> {
-        &self.row().logo
+    /// Lazy-loaded — the logo is not pulled with the default store row.
+    pub async fn logo(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+        let loader = ctx.get_loader::<DataLoader<StoreLogoLoader>>();
+        let row = loader.load_one(self.row().id.clone()).await?;
+        Ok(row.and_then(|r| r.logo))
     }
 
     pub async fn created_date(&self) -> Option<NaiveDate> {

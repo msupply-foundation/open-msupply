@@ -26,7 +26,7 @@ pub(crate) enum SyncContext {
     },
     /// Records arrived via a patient-lookup pull. They belong to other sites'
     /// stores.
-    PatientLookup,
+    PatientLookup { active_stores: ActiveStoresOnSite },
 }
 
 #[derive(Error, Debug)]
@@ -124,6 +124,7 @@ fn translate_delete(
         ChangelogTableName::RnrFormLine => Box::new(RnRFormLineDelete(id)),
         ChangelogTableName::Site => Box::new(SiteRowDelete(id)),
         ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
+        ChangelogTableName::StockRelocation => Box::new(StockRelocationRowDelete(id)),
         ChangelogTableName::Stocktake => Box::new(StocktakeRowDelete(id)),
         ChangelogTableName::StocktakeLine => Box::new(StocktakeLineRowDelete(id)),
         ChangelogTableName::UserAccount => Box::new(UserAccountRowDelete(id)),
@@ -235,7 +236,7 @@ fn validate_translate_integrate_one(
             is_initialising,
             active_stores,
         } => validate_on_remote(row, &table_name, active_stores, *is_initialising)?,
-        SyncContext::PatientLookup => {} // Patient records belong to another store
+        SyncContext::PatientLookup { .. } => {}
     };
 
     match row.action {
@@ -308,7 +309,13 @@ fn validate_translate_integrate_inner<'a>(
 
     let repo = SyncBufferRepository::new(connection);
 
-    let mut total = repo.count_pending(source_site_id, SyncVersion::V7, reference_id)?;
+    let integration_tables: Vec<&str> = INTEGRATION_ORDER.iter().map(|t| t.as_ref()).collect();
+    let mut total = repo.count_pending(
+        source_site_id,
+        SyncVersion::V7,
+        reference_id,
+        Some(&integration_tables),
+    )?;
     let mut last_progress = total / PROGRESS_INTERVAL;
 
     if let Some(logger) = logger.as_mut() {
@@ -320,7 +327,7 @@ fn validate_translate_integrate_inner<'a>(
                                action: SyncAction,
                                direction: CursorDirection|
      -> Result<(), RepositoryError> {
-        log::info!("Integrating table {table} with action {action}");
+        log::debug!("Integrating table {table} with action {action}");
 
         let rows = repo.pending_ordered_by_cursor(PendingQuery {
             source_site_id,
@@ -332,7 +339,7 @@ fn validate_translate_integrate_inner<'a>(
             limit: i64::MAX,
         })?;
 
-        log::info!("Number of records to integrate  {}", rows.len());
+        log::debug!("Number of records to integrate  {}", rows.len());
 
         let had_store_records = *table == ChangelogTableName::Store && !rows.is_empty();
 

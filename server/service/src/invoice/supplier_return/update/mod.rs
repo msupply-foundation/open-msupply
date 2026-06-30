@@ -45,6 +45,7 @@ pub enum UpdateSupplierReturnError {
     NotAnSupplierReturn,
     CannotChangeStatusOfInvoiceOnHold,
     CannotReverseInvoiceStatus,
+    CannotIssueSupplierReturnWithNoLines,
     InvoiceLineHasNoStockLine(String), // holds the id of the invalid invoice line
     UnknownPropertyKey(String),
     UpdatedReturnDoesNotExist,
@@ -181,11 +182,18 @@ mod test {
             }
         }
 
+        fn empty_return() -> InvoiceRow {
+            InvoiceRow {
+                id: "empty_return".to_string(),
+                ..base_test_return()
+            }
+        }
+
         fn new_return_line_no_stock_line() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "new_return_line_no_stock_line".to_string(),
                 invoice_id: new_return().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
@@ -195,7 +203,12 @@ mod test {
             "test_update_supplier_return_errors",
             MockDataInserts::all(),
             MockData {
-                invoices: vec![wrong_store(), shipped_return(), new_return()],
+                invoices: vec![
+                    wrong_store(),
+                    shipped_return(),
+                    new_return(),
+                    empty_return(),
+                ],
                 invoice_lines: vec![new_return_line_no_stock_line()],
                 ..Default::default()
             },
@@ -253,6 +266,19 @@ mod test {
                 }
             ),
             Err(ServiceError::ReturnIsNotEditable)
+        );
+
+        // CannotIssueSupplierReturnWithNoLines
+        assert_eq!(
+            service_provider.invoice_service.update_supplier_return(
+                &context,
+                UpdateSupplierReturn {
+                    supplier_return_id: empty_return().id,
+                    status: Some(UpdateSupplierReturnStatus::Shipped),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CannotIssueSupplierReturnWithNoLines)
         );
 
         // InvoiceLineHasNoStockLine
