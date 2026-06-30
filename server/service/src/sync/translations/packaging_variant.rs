@@ -84,7 +84,11 @@ impl SyncTranslation for PackagingVariantTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_item_variants, MockDataInserts},
+        test_db::setup_all,
+        ItemVariantRow, ItemVariantRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_packaging_variant_translation() {
@@ -93,9 +97,17 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_packaging_variant_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the item_variant parent the packaging variant's required FK points at.
+        ItemVariantRowRepository::new(&connection)
+            .upsert_one(&ItemVariantRow {
+                id: "5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string(),
+                ..mock_item_variants().into_iter().next().unwrap()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

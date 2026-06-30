@@ -84,7 +84,12 @@ impl SyncTranslation for AssetCatalogueTypeTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        asset_category_row::{AssetCategoryRow, AssetCategoryRowRepository},
+        asset_class_row::{AssetClassRow, AssetClassRowRepository},
+        mock::MockDataInserts,
+        test_db::setup_all,
+    };
 
     #[actix_rt::test]
     async fn test_asset_type_translation() {
@@ -92,7 +97,22 @@ mod tests {
         let translator = AssetCatalogueTypeTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_asset_type_translation", MockDataInserts::none()).await;
+            setup_all("test_asset_type_translation", MockDataInserts::all()).await;
+
+        // Seed the asset_category (and its asset_class parent) the type's required FK points at.
+        AssetClassRowRepository::new(&connection)
+            .upsert_one(&AssetClassRow {
+                id: "32608ef9-dce5-41a7-b3e9-92b0fe086c7e".to_string(),
+                name: "test".to_string(),
+            })
+            .unwrap();
+        AssetCategoryRowRepository::new(&connection)
+            .upsert_one(&AssetCategoryRow {
+                id: "035d2847-1eec-4595-a161-b7cfefc17381".to_string(),
+                name: "test".to_string(),
+                class_id: "32608ef9-dce5-41a7-b3e9-92b0fe086c7e".to_string(),
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

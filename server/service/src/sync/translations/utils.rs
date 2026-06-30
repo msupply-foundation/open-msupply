@@ -12,7 +12,8 @@ use repository::{
     InvoiceRowRepository, ItemLinkRowRepository, ItemRowRepository, ItemVariantRowRepository,
     LocationRowRepository, LocationTypeRowRepository, MasterListRowRepository,
     NameInsuranceJoinRowRepository, NameLinkRowRepository, NameTagRowRepository, PeriodRowRepository,
-    PeriodScheduleRowRepository, ProgramRowRepository, PropertyRowRepository,
+    PeriodScheduleRowRepository, ProgramIndicatorRowRepository, ProgramRowRepository,
+    PropertyRowRepository,
     PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, ReasonOptionRowRepository,
     RepositoryError, RequisitionRowRepository, RnRFormRowRepository, SensorRowRepository,
     ShippingMethodRowRepository, StockLineRowRepository, StocktakeRowRepository, StorageConnection,
@@ -57,6 +58,7 @@ pub(crate) enum FkField {
     Period,
     PeriodSchedule,
     Program,
+    ProgramIndicator,
     Property,
     PurchaseOrder,
     PurchaseOrderLine,
@@ -131,6 +133,9 @@ impl FkField {
                 PeriodScheduleRowRepository::new(connection).check_exists_by_id(id)
             }
             FkField::Program => ProgramRowRepository::new(connection).check_exists_by_id(id),
+            FkField::ProgramIndicator => {
+                ProgramIndicatorRowRepository::new(connection).check_exists_by_id(id)
+            }
             FkField::Property => PropertyRowRepository::new(connection).check_exists_by_id(id),
             FkField::PurchaseOrder => {
                 PurchaseOrderRowRepository::new(connection).check_exists_by_id(id)

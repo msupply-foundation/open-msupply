@@ -119,7 +119,11 @@ impl SyncTranslation for RnRFormTranslation {
 mod tests {
     use super::*;
 
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_program_a, MockDataInserts},
+        test_db::setup_all,
+        NameLinkRow, NameLinkRowRepository, ProgramRow, ProgramRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_rnr_form_translation() {
@@ -128,6 +132,20 @@ mod tests {
 
         let (_, connection, _, _) =
             setup_all("test_rnr_form_translation", MockDataInserts::all()).await;
+
+        // Seed the name_link + program parents the form's required FKs point at.
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                name_id: "name_a".to_string(),
+            })
+            .unwrap();
+        ProgramRowRepository::new(&connection)
+            .upsert_one(&ProgramRow {
+                id: "program_test".to_string(),
+                ..mock_program_a()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
