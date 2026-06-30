@@ -4,13 +4,17 @@ use crate::{
     service_provider::ServiceContext, BatchMutationsProcessor, InputWithResult, WithDBError,
 };
 
-use super::upsert::{
-    upsert_stock_relocation_line, UpsertStockRelocationLine, UpsertStockRelocationLineError,
+use super::{
+    delete::{delete_stock_relocation_line, DeleteStockRelocationLineError},
+    upsert::{
+        upsert_stock_relocation_line, UpsertStockRelocationLine, UpsertStockRelocationLineError,
+    },
 };
 
 #[derive(Clone, Debug, Default)]
 pub struct BatchStockRelocationLine {
     pub upsert: Option<Vec<UpsertStockRelocationLine>>,
+    pub delete: Option<Vec<String>>,
     pub continue_on_error: Option<bool>,
 }
 
@@ -20,10 +24,13 @@ pub type UpsertLinesResult = Vec<
         Result<StockRelocationLineRow, UpsertStockRelocationLineError>,
     >,
 >;
+pub type DeleteLinesResult =
+    Vec<InputWithResult<String, Result<String, DeleteStockRelocationLineError>>>;
 
 #[derive(Debug, Default)]
 pub struct BatchStockRelocationLineResult {
     pub upsert: UpsertLinesResult,
+    pub delete: DeleteLinesResult,
 }
 
 pub fn batch_stock_relocation_line(
@@ -38,6 +45,14 @@ pub fn batch_stock_relocation_line(
             let mut results = BatchStockRelocationLineResult::default();
 
             let processor = BatchMutationsProcessor::new(ctx);
+
+            let (has_errors, result) = processor.do_mutations(input.delete, |ctx, id| {
+                delete_stock_relocation_line(ctx, store_id, id)
+            });
+            results.delete = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
 
             let (has_errors, result) = processor.do_mutations(input.upsert, |ctx, line| {
                 upsert_stock_relocation_line(ctx, store_id, line)
@@ -73,6 +88,7 @@ mod test {
 
     use crate::service_provider::{ServiceContext, ServiceProvider};
     use crate::stock_relocation::insert::InsertStockRelocation;
+    use crate::stock_relocation::validate::ValidateMovementError;
 
     use super::*;
 
@@ -163,10 +179,12 @@ mod test {
                 "store_a",
                 BatchStockRelocationLine {
                     upsert: Some(vec![upsert(&movement_id, "a_sl", 6.0)]),
+                    delete: Some(vec![line_b.id.clone()]),
                     ..Default::default()
                 },
             )
             .unwrap();
+        assert!(result.delete.iter().all(|r| r.result.is_ok()));
         assert!(result.upsert.iter().all(|r| r.result.is_ok()));
         assert!(line_repo.find_one_by_id(&line_b.id).unwrap().is_none());
     }
