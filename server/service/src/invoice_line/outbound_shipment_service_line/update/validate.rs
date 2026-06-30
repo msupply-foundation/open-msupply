@@ -3,6 +3,7 @@ use repository::{InvoiceLine, InvoiceRow, InvoiceType, ItemRow, ItemType, Storag
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::validate::{check_item_exists, check_line_belongs_to_invoice, check_line_exists},
+    validate::check_other_party_store_is_disabled,
 };
 
 use super::{UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError};
@@ -34,6 +35,9 @@ pub fn validate(
         return Err(NotAnOutboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditInvoice);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(CannotEditInvoice);
     }
     if !check_line_belongs_to_invoice(&line.invoice_line_row, &invoice) {

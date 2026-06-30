@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLabelPrinterSettings } from '../../api/hooks/useLabelPrinterSettings';
 import { Environment } from '@openmsupply-client/config/src';
 import { useAuthContext, usePrinter } from '@openmsupply-client/common';
-import { PrescriptionLineFragment, PrescriptionRowFragment } from '../../api';
+import { PrescriptionLineFragment, PrescriptionFragment } from '../../api';
 import { groupItems, generateLabel } from './utils';
 
 export const usePrintLabels = () => {
@@ -18,7 +18,7 @@ export const usePrintLabels = () => {
   } = usePrinter(settings);
 
   const printLabels = (
-    prescription: PrescriptionRowFragment,
+    prescription: PrescriptionFragment,
     lines: PrescriptionLineFragment[],
     e?: React.MouseEvent<HTMLButtonElement>
   ) => {

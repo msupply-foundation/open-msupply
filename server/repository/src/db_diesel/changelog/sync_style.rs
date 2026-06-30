@@ -139,6 +139,11 @@ impl ChangelogTableName {
                 distribution: vec![D::RemoteOwned],
                 transport: V5,
             },
+            StockRelocation => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
             Stocktake => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],
@@ -264,7 +269,7 @@ impl ChangelogTableName {
                 transport: V6,
             },
             NameOmsFields => SyncStyle {
-                authoring: vec![Central],
+                authoring: vec![Anyone],
                 distribution: vec![D::Central],
                 transport: V6,
             },

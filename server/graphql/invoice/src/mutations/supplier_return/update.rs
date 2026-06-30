@@ -73,6 +73,7 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         | ServiceError::ReturnIsNotEditable
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
+        | ServiceError::CannotIssueSupplierReturnWithNoLines
         | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
 
         ServiceError::InvoiceLineHasNoStockLine(_)

@@ -441,7 +441,7 @@ mod test {
             StockLineRow {
                 id: "backdate_ledger_stock".to_string(),
                 store_id: mock_store_a().id,
-                item_link_id: repository::mock::mock_item_a().id,
+                item_id: repository::mock::mock_item_a().id,
                 available_number_of_packs: 2.0,
                 total_number_of_packs: 2.0,
                 pack_size: 1.0,
@@ -465,7 +465,7 @@ mod test {
             InvoiceLineRow {
                 id: "backdate_ledger_outbound_line".to_string(),
                 invoice_id: "backdate_ledger_outbound".to_string(),
-                item_link_id: repository::mock::mock_item_a().id,
+                item_id: repository::mock::mock_item_a().id,
                 stock_line_id: Some("backdate_ledger_stock".to_string()),
                 r#type: InvoiceLineType::StockOut,
                 number_of_packs: 8.0,

@@ -177,7 +177,7 @@ export const Toolbar = ({ isDisabled }: ToolbarProps) => {
             />
           )}
           <InputWithLabelRow
-            label={t('label.supplier-ref')}
+            label={t('label.supplier-reference')}
             Input={
               <Tooltip title={data?.reference} placement="bottom-start">
                 <Box>

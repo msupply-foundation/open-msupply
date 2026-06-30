@@ -71,6 +71,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist
         | ServiceError::CannotEditFinalised
+        | ServiceError::OtherPartyStoreDisabled
         | ServiceError::NotAnSupplierReturn
         | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
 

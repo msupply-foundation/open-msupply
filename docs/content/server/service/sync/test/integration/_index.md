@@ -67,9 +67,97 @@ APP__SERVER__PORT=2055 APP__DATABASE__DATABASE_NAME="central_test" APP__SYNC__UR
 
 In this case d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 = pass
 
-## 5 `run tests`
+## 5 `toxiproxy` (only for file-sync pause tests)
 
-Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test  integration_sync  --features integration_test --package service`
+The tests in `file_sync_pause.rs` exercise tus chunked upload behaviour under
+bandwidth contention with the `FileSyncDriver` and `SynchroniserDriver`
+running in the test process — the same wiring as production (see
+`server/server/src/lib.rs:144`). The shared scaffolding lives in
+`driver_harness.rs` (`RemoteDrivers`, `UploadTrace`).
+
+Four tests:
+
+1. **`integration_file_sync_baseline_no_contention`** — driver picks up a
+   queued file and completes the throttled upload when no sync trigger fires.
+2. **`integration_file_sync_pause_mid_upload_via_real_sync`** — fires a real
+   `sync_trigger.trigger(None)` mid-upload; asserts the file reaches `Done`
+   and a chunk-aligned partial `uploaded_bytes` was observed (proving the
+   chunk loop returned `Paused` and the offset persisted at a chunk boundary).
+3. **`integration_file_sync_unpause_wakeup_latency`** — measures time from
+   `unpause()` to first observable driver activity (only `FileSyncDriver`
+   spawned, so the measurement isn't blurred by sync overhead).
+4. **`integration_file_sync_bad_internet_scenario`** — queues three files,
+   a background task fires `sync_trigger.trigger(None)` every 750 ms for the
+   duration; asserts every file reaches `Done` and at least one was observed
+   mid-pause.
+
+They route their HTTP traffic to the central OMS through a toxiproxy daemon
+to throttle the link. All other integration tests run without it.
+
+Bring up toxiproxy before running this subset:
+
+```bash
+docker run --rm -p 8474:8474 -p 22220-22230:22220-22230 ghcr.io/shopify/toxiproxy:2.12.0
+```
+
+The test harness rewrites proxy bind addresses to `0.0.0.0` (so the port
+mapping reaches the listener) and `localhost`/`127.0.0.1` upstreams to
+`host.docker.internal` (so the container can reach the OMS central server
+on the host). Both Docker Desktop and Podman expose `host.docker.internal`
+to containers by default on macOS/Windows.
+
+The tests connect to the admin API on `localhost:8474` by default — override
+with `TOXIPROXY_ADMIN_URL` if the daemon lives elsewhere. Proxies listen on
+ports in the `22220-22230` range, which is why the launch publishes that
+whole range.
+
+Run just these tests:
+
+```bash
+SYNC_URL=... SYNC_SITE_NAME=... SYNC_SITE_PASSWORD=... \
+  cargo nextest run -p service --features integration_test file_sync_pause
+```
+
+### Running file-upload tests without legacy mSupply
+
+The file-upload tests (`file_sync_pause.rs`) don't depend on mSupply-specific
+behaviour — only on *something* answering the V5 endpoints that both the
+central OMS and the test bootstrap call. The in-repo `mock_msupply` binary
+covers that surface. Operator workflow (replaces step 3 above):
+
+1. In its own terminal: `cargo run -p mock_msupply` — listens on
+   `MOCK_MSUPPLY_PORT` (default `2048`).
+2. Start the central OMS with `APP__SYNC__URL=http://localhost:2048` (same
+   port the README's legacy mSupply example uses, so existing central
+   configs keep working — central just sees a different process answering
+   on that port). Central calls the mock during first-startup
+   `request_and_set_site_info` and persists the result; subsequent restarts
+   skip that step.
+3. Start toxiproxy as in step 5.
+4. Run the tests with `SYNC_URL` pointing at the mock:
+
+```bash
+SYNC_URL=http://localhost:2048 SYNC_SITE_NAME=mock SYNC_SITE_PASSWORD=mock \
+  cargo nextest run -p service --features integration_test file_sync_pause
+```
+
+The mock accepts any credentials, so `SYNC_SITE_NAME` and `SYNC_SITE_PASSWORD`
+just need to be set to non-empty strings.
+
+Other integration tests still expect real legacy mSupply and should be run
+against it (not against the mock).
+
+See [server/mock_msupply/README.md](../../../../mock_msupply/README.md) for
+the endpoints the mock implements and the env vars it accepts (including
+`OMS_CENTRAL_URL` and `OMS_CENTRAL_USERNAME`, which let the mock report the
+right `omSupplyCentralServerUrl` / `isOmSupplyCentralServer` values back to
+each caller).
+
+## 6 `run tests`
+
+Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo nextest run integration_sync --features integration_test --package service`
+
+These tests share a single 4D mSupply server and several process-global statics, so they must run serially. The `sync-integration` test-group in `server/.config/nextest.toml` enforces this — no `--test-threads=1` flag needed.
 
 If you've set configurations in rust analyzer, can use inlay hint play and debug buttons in:
 
@@ -165,5 +253,5 @@ Transfer integration test follow this pattern:
 Full test including integration can be run with:
 
 ```bash
-SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test  --features integration_test && SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test --features integration_test,postgres
+SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo nextest run --features integration_test && SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo nextest run --features integration_test,postgres
 ```

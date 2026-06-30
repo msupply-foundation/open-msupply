@@ -1,8 +1,10 @@
 import React from 'react';
+import { PaginationItem } from '@mui/material';
 import {
   Box,
   Typography,
   useTranslation,
+  useFormatNumber,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import {
@@ -27,6 +29,9 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
   ...tableOptions
 }: PaginatedTableConfig<T>) => {
   const t = useTranslation();
+  const { format } = useFormatNumber();
+  const formatInt = (value: number) =>
+    format(value, { maximumFractionDigits: 0 });
   const {
     updatePaginationQuery,
     queryParams: { page, first, offset },
@@ -93,12 +98,24 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
           fontSize: '0.9em',
         },
       },
+      // Localise the page-number digits (e.g. Eastern Arabic numerals for RTL
+      // languages). Overrides MRT's default renderItem, which renders raw digits
+      renderItem: item => (
+        <PaginationItem
+          {...item}
+          page={
+            typeof item.page === 'number' ? formatInt(item.page) : item.page
+          }
+        />
+      ),
     },
     // Summary display in toolbar, e.g. "Showing 1-20 of 45"
     renderBottomToolbarCustomActions: () => {
       if (totalCount === 0) return <Box />; // empty box to kep toolbar layout consistent
 
-      const xToY = `${offset + 1}-${Math.min(first + offset, totalCount)}`;
+      const xToY = `${formatInt(offset + 1)}-${formatInt(
+        Math.min(first + offset, totalCount)
+      )}`;
       return (
         <Box
           display="flex"
@@ -115,7 +132,7 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
           </Typography>
           <Typography sx={{ marginRight: '4px' }}>{t('label.of')}</Typography>
           <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
-            {totalCount}
+            {formatInt(totalCount)}
           </Typography>
         </Box>
       );
