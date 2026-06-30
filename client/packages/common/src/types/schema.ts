@@ -10540,6 +10540,7 @@ export enum SyncErrorVariantV7 {
   SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
   TokenAlreadyAllocated = 'TOKEN_ALREADY_ALLOCATED',
   TokenNotFound = 'TOKEN_NOT_FOUND',
+  WaitingForCentralV7Upgrade = 'WAITING_FOR_CENTRAL_V7_UPGRADE',
 }
 
 export type SyncFileReferenceConnector = {
