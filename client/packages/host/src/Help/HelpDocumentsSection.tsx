@@ -1,8 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import { Environment } from '@openmsupply-client/config';
-import { useHelpDocuments } from '@openmsupply-client/system';
+import { HelpDocumentLink, useHelpDocuments } from '@openmsupply-client/system';
 
 export const HelpDocumentsSection = () => {
   const t = useTranslation();
@@ -25,16 +24,10 @@ export const HelpDocumentsSection = () => {
           // pick the first and skip rows whose file hasn't arrived on this site yet.
           const file = doc.files.nodes[0];
           if (!file) return null;
-          const url = `${Environment.SYNC_FILES_URL}/help_document/${doc.id}/${file.id}`;
           return (
-            <a
-              key={doc.id}
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <HelpDocumentLink key={doc.id} docId={doc.id} file={file}>
               {doc.title}
-            </a>
+            </HelpDocumentLink>
           );
         })}
       </Box>
