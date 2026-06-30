@@ -224,8 +224,6 @@ impl<'a> ItemRepository<'a> {
                     apply_sort!(query, sort, item::type_);
                 }
             }
-        } else {
-            query = query.order(item::id.asc())
         }
 
         // Stable tiebreaker so paginated results don't shuffle or drop rows

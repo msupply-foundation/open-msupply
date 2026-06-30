@@ -119,8 +119,6 @@ impl<'a> RequisitionRepository<'a> {
                     apply_sort_no_case!(query, sort, program::name);
                 }
             }
-        } else {
-            query = query.order(requisition::id.asc())
         }
 
         // Stable tiebreaker so paginated results don't shuffle or drop rows

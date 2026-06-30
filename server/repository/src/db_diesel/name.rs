@@ -141,8 +141,6 @@ impl<'a> NameRepository<'a> {
                 NameSortField::Country => apply_sort_no_case!(query, sort, name::country),
                 NameSortField::Email => apply_sort_no_case!(query, sort, name::email),
             }
-        } else {
-            query = query.order(name::id.asc())
         }
 
         // Stable tiebreaker so paginated results don't shuffle or drop rows
