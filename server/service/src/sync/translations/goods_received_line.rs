@@ -1,7 +1,7 @@
 use super::{
     goods_received::GoodsReceivedTranslation, invoice_line::InvoiceLineTranslation,
-    item::ItemTranslation, purchase_order_line::PurchaseOrderLineTranslation, PullTranslateResult,
-    SyncTranslation,
+    item::ItemTranslation, purchase_order_line::PurchaseOrderLineTranslation, FkField,
+    PullTranslateResult, SyncTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -61,7 +61,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
-        _fk_checker: &crate::sync::translations::FkChecker,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyGoodsReceivedLineRow>()?;
@@ -88,6 +88,10 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
         let parent_invoice =
             InvoiceRowRepository::new(connection).find_one_by_id(&data.goods_received_ID)?;
 
+        let check_required_fks =
+            fk_checker.with_table_required(connection, "invoice_line", &data.id);
+        let check_fks = fk_checker.with_table(connection, "invoice_line", &data.id);
+
         // Finalised GR line: find the invoice_line that was spawned from this GR line
         // via the `legacy_goods_received_line_id` column the invoice_line translator
         // populated from `trans_line.goods_received_lines_ID`, and stamp the PO line link.
@@ -107,7 +111,12 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 
             return match linked_line {
                 Some(mut line) => {
-                    line.purchase_order_line_id = Some(po_line_id);
+                    // The PO line link is unconfirmed legacy data — clear it if the line is missing.
+                    line.purchase_order_line_id = check_fks(
+                        Some(po_line_id),
+                        "purchase_order_line_id",
+                        FkField::PurchaseOrderLine,
+                    )?;
                     Ok(PullTranslateResult::upsert(line))
                 }
                 None => Ok(PullTranslateResult::Ignored(format!(
@@ -125,14 +134,24 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 
         let total = data.cost_price * data.quantity_received;
 
+        // Validate the FKs sourced from the goods_received_line record itself.
+        // (invoice_id == goods_received_ID was confirmed present above as parent_invoice.)
+        let item_id = check_required_fks(data.item_ID, "item_link_id", FkField::ItemLink)?;
+        let location_id = check_fks(data.location_ID, "location_id", FkField::Location)?;
+        let purchase_order_line_id = check_fks(
+            data.order_line_ID,
+            "purchase_order_line_id",
+            FkField::PurchaseOrderLine,
+        )?;
+
         let line = InvoiceLineRow {
             id: data.id,
             invoice_id: data.goods_received_ID,
-            item_id: data.item_ID,
+            item_id,
             item_name: data.item_name,
             item_code,
             stock_line_id: None,
-            location_id: data.location_ID,
+            location_id,
             batch: data.batch_received,
             expiry_date: data.expiry_date,
             pack_size: data.pack_received,
@@ -157,7 +176,7 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
             shipped_pack_size: None,
             status: None,
             manufacture_date: None,
-            purchase_order_line_id: data.order_line_ID,
+            purchase_order_line_id,
             donor_id: None,
             manufacturer_id: None,
             received_number_of_packs: None,
@@ -172,7 +191,11 @@ impl SyncTranslation for GoodsReceivedLineTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_purchase_order_a_line_1, MockDataInserts},
+        test_db::setup_all,
+        PurchaseOrderLineRow, PurchaseOrderLineRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_goods_received_line_translation() {
@@ -184,6 +207,15 @@ mod tests {
             MockDataInserts::all(),
         )
         .await;
+
+        // The records link to purchase_order_line "po_line_1" (not part of the mock set);
+        // seed it so the now-validated purchase_order_line_id FK isn't cleared.
+        PurchaseOrderLineRowRepository::new(&connection)
+            .upsert_one(&PurchaseOrderLineRow {
+                id: "po_line_1".to_string(),
+                ..mock_purchase_order_a_line_1()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             record.insert_extra_data(&connection).await;
