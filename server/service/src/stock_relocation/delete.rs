@@ -171,14 +171,14 @@ mod test {
         let repo = StockRelocationRowRepository::new(&ctx.connection);
         let line_repo = StockRelocationLineRowRepository::new(&ctx.connection);
 
-        let id = new_movement(&service_provider, &ctx).await;
+        let id = new_movement(&service_provider, &ctx);
         let deleted = service
             .delete_stock_relocation(&ctx, "store_a", DeleteStockRelocation { id: id.clone() })
             .unwrap();
         assert_eq!(deleted, id);
         assert!(repo.find_one_by_id(&id).unwrap().is_none());
 
-        let delete_id = new_movement(&service_provider, &ctx).await;
+        let delete_id = new_movement(&service_provider, &ctx);
         let line_id = add_line(&service_provider, &ctx, &delete_id, "delete_sl", 4.0);
         assert!(line_repo.find_one_by_id(&line_id).unwrap().is_some());
         service
