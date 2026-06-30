@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -90,7 +90,6 @@ const DetailViewInner = () => {
 
   const simplifiedTabletView = useSimplifiedTabletUI();
   const isExtraSmallScreen = useIsExtraSmallScreen();
-  const [isDirtyProperties, setIsDirtyProperties] = useState(false);
 
   const onAddItem = useCallback(
     (openWith?: ScannedBarcode) => {
@@ -191,11 +190,9 @@ const DetailViewInner = () => {
           customFields={data?.customFields}
           onSave={patch => update({ customFields: patch })}
           disabled={isDisabled}
-          onEdit={setIsDirtyProperties}
         />
       ),
       value: InboundShipmentDetailTabs.CustomFields,
-      confirmOnLeaving: isDirtyProperties,
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
@@ -217,12 +214,7 @@ const DetailViewInner = () => {
 
           {isExtraSmallScreen ? <MobileToolbar /> : <Toolbar />}
 
-          <DetailTabs
-            tabs={tabs}
-            requiresConfirmation={tab =>
-              tab === InboundShipmentDetailTabs.CustomFields && isDirtyProperties
-            }
-          />
+          <DetailTabs tabs={tabs} />
 
           {/* Fallback status footer for tabs that don't own the lines table.
             The Details tab's `Footer` mounts an `AppFooterPortal` only when
