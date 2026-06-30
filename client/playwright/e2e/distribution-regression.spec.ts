@@ -1,16 +1,13 @@
 /**
  * Distribution regression suite.
  *
- * Source of truth: distribution-regression.md at repo root,
- * mirrored from https://github.com/msupply-foundation/open-msupply/wiki/Test:-Distribution
+ * Source of truth: the OMS-REG-DIST-* regression cases in the (private)
+ * tmf-testing repo. Each test is tagged `// Covers: OMS-REG-DIST-NN.M` with the
+ * behaviour ID(s) it exercises; a coverage report is generated from those tags.
+ * (Replaces the previous wiki mirror — the wiki Test: pages are being retired.)
  *
  * This spec is intentionally independent of smoke-all-sections.spec.ts.
- * Goal: full coverage of every bullet in the md, even if duplicated elsewhere.
- *
- * v1 scope: Outbound Shipments — happy-path end-to-end
- * (create → add item → Confirm Allocated → Confirm Picked → Confirm Shipped).
- * Future passes layer on filters, exports, deletes, master lists, edits,
- * placeholders, returns, requisitions, etc.
+ * Goal: cover the behaviours listed in the DIST cases, even if duplicated elsewhere.
  *
  * Run:
  *   cd client
@@ -24,8 +21,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── List view tests (run first so they aren't affected by created data) ──
 
   test('list view renders core controls', async ({ page }) => {
-    // Wiki: Outbound Shipments (list overview) — New Shipment button,
-    // Status column header, rows-per-page footer.
+    // Covers: OMS-REG-DIST-01.1 — list view renders core controls
+    // (New Shipment button, Status column header, rows-per-page footer).
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
     await expect(page.getByRole('button', { name: /New Shipment/i })).toBeVisible();
     await expect(page.getByRole('columnheader', { name: /Status/i }).first()).toBeVisible();
@@ -33,7 +30,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('search by customer name filters results', async ({ page }) => {
-    // Wiki: Search by Customer Name
+    // Covers: OMS-REG-DIST-01.4 — search by customer name filters the list
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     const firstRow = page.locator('tbody tr').first();
@@ -88,7 +85,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('delete a New-status shipment via bulk action', async ({ page }) => {
-    // Wiki: Delete an Outbound Shipment
+    // Covers: OMS-REG-DIST-01.7 — New/Allocated/Picked shipments can be deleted
     // Create a fresh shipment so we know exactly which row to delete.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: /New Shipment/i }).click();
@@ -145,7 +142,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('export to CSV triggers a download', async ({ page }) => {
-    // Wiki: Exporting Outbound Shipments
+    // Covers: OMS-REG-DIST-01.6 — export downloads a CSV of all shipments
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     const exportButton = page.getByRole('button', { name: /Export/i }).first();
@@ -166,7 +163,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── Detail-view sidebar panels ──────────────────────────────────────────
 
   test('sidebar panels render and respond to edits on a new shipment', async ({ page }) => {
-    // Wiki: Additional Info / Related Documents / Invoice Details / Transport Details
+    // Covers: OMS-REG-DIST-02.1, OMS-REG-DIST-02.5 — shipment auto-created on customer select; comment persists
+    // (smoke-checks the sidebar panels: Additional Info / Related Documents / Invoice Details / Transport Details)
     // Spin up a fresh shipment so we can inspect its detail view.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
     await page.getByRole('button', { name: /New Shipment/i }).click();
@@ -230,8 +228,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('colour picker updates the shipment colour', async ({ page }) => {
-    // Wiki: Additional Info — "When clicking on More, you will be able to
-    // change the colour…".
+    // Covers: OMS-REG-DIST-02.4 — a selected colour is saved.
     // At the default 1280×720 viewport, isLargeScreen flips the responsive
     // sidebar shut, so openSidebar widens before clicking.
     await createNewShipment(page);
@@ -260,8 +257,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('Edit service charges modal: add charge then save', async ({ page }) => {
-    // Wiki: Invoice Details — Edit Service Charges modal supports Add /
-    // Cancel / Delete. This test covers add + save persistence on reload.
+    // Covers: OMS-REG-DIST-02.8 — service charges can be added (and deleted);
+    // this test covers add + save persistence on reload.
     await createNewShipment(page);
     await openSidebar(page);
 
@@ -304,8 +301,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('Hold prevents status from advancing on a Picked shipment', async ({ page }) => {
-    // Wiki: Hold Checkbox — "Checking the Hold checkbox prevents the Outbound
-    // Shipment from being updated to the next status."
+    // Covers: OMS-REG-DIST-02.10 — Hold prevents status advancement (Picked → Shipped).
     // Build a Picked-status shipment, then enable Hold, then try to advance
     // to Shipped. This is where the polite "Cannot change status … on hold"
     // info toast appears.
@@ -391,8 +387,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── List view: pagination & filters ─────────────────────────────────────
 
   test('rows-per-page selector changes page size', async ({ page }) => {
-    // Wiki: Outbound Shipments (list overview) — "You can also select a
-    // different number of rows to show per page".
+    // Covers: OMS-REG-DIST-01.3 — the rows-per-page selector changes page size.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     const rowsCombobox = page.getByRole('combobox', { name: /Rows per page/i });
@@ -413,8 +408,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('filter by Invoice number narrows the list', async ({ page }) => {
-    // Wiki: Search by Customer Name (covers the Filters dropdown's other
-    // criteria — Invoice number is a free-text filter, distinct from Status).
+    // Covers: OMS-REG-DIST-01.10 — filter by Invoice number narrows the list.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     // Grab a real invoice number from the first row to search for.
@@ -452,9 +446,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('pagination next-page button changes the visible rows', async ({ page }) => {
-    // Wiki: Outbound Shipments (list overview) — "you can navigate to the
-    // other pages by tapping on the page number or using the right or left
-    // arrows".
+    // Covers: OMS-REG-DIST-01.2 — page navigation moves between pages (next-page arrow).
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     // Need >20 shipments for page 2 to exist. The footer shows "Showing 1-20 of N".
@@ -489,9 +481,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('filter by Reference narrows the list', async ({ page }) => {
-    // Wiki: Search by Customer Name (Filters dropdown — Reference is the
-    // free-text customer-reference filter, distinct from Name/Invoice number
-    // even though they share the same UI shape).
+    // Covers: OMS-REG-DIST-01.11 — filter by Reference narrows the list.
     // Use the customer reference saved by an earlier test (cust-ref-…) if
     // present; otherwise pick the first row's reference cell.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
@@ -530,8 +520,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('filter by Status narrows the list to the chosen status', async ({ page }) => {
-    // Wiki: Search by Customer Name (Filters dropdown — Status is the only
-    // select-type filter; filterVariant: 'select' in the column config).
+    // Covers: OMS-REG-DIST-01.12 — filter by Status narrows the list to the chosen status.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     await page.getByRole('combobox', { name: /Filters/i }).click();
@@ -574,8 +563,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('pagination page-number click jumps directly to that page', async ({ page }) => {
-    // Wiki: Outbound Shipments (list overview) — "you can navigate to the
-    // other pages by tapping on the page number".
+    // Covers: OMS-REG-DIST-01.13 — clicking a page number jumps directly to that page.
     // Sister test to 'pagination next-page' which uses the arrow. The control
     // is MUI Pagination — each page renders its own "Go to page N" button.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
@@ -612,8 +600,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('multi-select master checkbox deletes multiple shipments', async ({ page }) => {
-    // Wiki: Delete an Outbound Shipment — "You can select more than one
-    // shipment to be deleted … using the master checkbox in the list headers."
+    // Covers: OMS-REG-DIST-01.9 — bulk delete (master checkbox) deletes the selected shipments.
     // Create two fresh New shipments so we have two known rows to delete.
     await createNewShipment(page);
     await createNewShipment(page);
@@ -642,8 +629,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('cannot delete a Shipped shipment via bulk action', async ({ page }) => {
-    // Wiki: Delete an Outbound Shipment — "You can only delete outbound
-    // shipments with statuses New, Allocated or Picked".
+    // Covers: OMS-REG-DIST-01.8 — Shipped/Delivered/Verified shipments cannot be deleted.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     // Find a row whose Status cell is "Shipped".
@@ -688,8 +674,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── Detail-view: simple edits, Log tab, Close button ────────────────────
 
   test('customer ref, transport ref, log tab and close button', async ({ page }) => {
-    // Wiki: Creating an Outbound Shipment + Transport Details + Cancel and
-    // Confirm button (Close = Cancel in the wiki's naming).
+    // Covers: OMS-REG-DIST-02.3, OMS-REG-DIST-02.6 — Customer Ref and Transport Ref persist
+    // (also smoke-checks the Log tab and Close button).
     const shipmentUrl = await createNewShipment(page);
 
     await test.step('customer reference persists across reload', async () => {
@@ -721,8 +707,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── Detail-view: line operations ────────────────────────────────────────
 
   test('Add Item: typing in the item field filters the options', async ({ page }) => {
-    // Wiki: Select an Item — "look up an item by typing some or all of the
-    // item name".
+    // Covers: OMS-REG-DIST-03.1 — items can be found by typing in the Add Item field.
     await createNewShipment(page);
 
     await page.getByRole('button', { name: /Add Item/i }).first().click();
@@ -757,8 +742,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('Edit shipment line: click row opens edit modal with item locked', async ({ page }) => {
-    // Wiki: Edit a Shipment Line — "Tap on the line you want to edit … you
-    // cannot change the item".
+    // Covers: OMS-REG-DIST-03.13 — the item is locked on an existing line.
     await createNewShipment(page);
     await addLineToShipment(page);
 
@@ -778,8 +762,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('Add Item: OK & Next saves then resets the dialog for the next line', async ({ page }) => {
-    // Wiki: Confirm Item and Quantity — "When you are happy with the
-    // quantity, you can either press on OK, OK & Next and Cancel button."
+    // Covers: OMS-REG-DIST-03.1 — add-item flow via OK & Next
+    // (approx — no dedicated 'line added' behaviour; nearest is Add Item).
     await createNewShipment(page);
 
     await page.getByRole('button', { name: /Add Item/i }).first().click();
@@ -817,8 +801,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('Delete shipment line via row selection', async ({ page }) => {
-    // Wiki: Delete a shipment line — "Select the line(s) you want to delete
-    // by checking the box(es) … Select the action 'Delete selected lines'".
+    // Covers: OMS-REG-DIST-03.14 — lines can be deleted via checkbox + Actions menu.
     //
     // The lines table groups by item.code (Details.tsx: `grouping: { field:
     // 'item.code' }`), so when there's one batch the only tbody <tr> is the
@@ -859,9 +842,8 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── Detail-view: locked-shipped enforcement ─────────────────────────────
 
   test('Shipped: clicking a line does not open the edit modal', async ({ page }) => {
-    // Wiki: Confirming the Outbound Shipment shipping — "Once the shipping
-    // has been confirmed … You can no longer edit shipment lines". Find an
-    // existing Shipped shipment and verify clicking its line is a no-op.
+    // Covers: OMS-REG-DIST-04.8 — shipment is read-only at Shipped (lines not editable).
+    // Find an existing Shipped shipment and verify clicking its line is a no-op.
     await page.goto('/distribution/outbound-shipment', { waitUntil: 'networkidle' });
 
     const statusColumn = await getColumnIndex(page, 'Status');
@@ -896,9 +878,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── Status flow gaps ─────────────────────────────────────────────────────
 
   test('skip statuses: New → directly to Shipped via split-button', async ({ page }) => {
-    // Wiki: Cancel and Confirm button — "You don't have to update a shipment
-    // to the next status in the sequence. You can choose to skip some of them
-    // to go directly to Confirm Shipped for example."
+    // Covers: OMS-REG-DIST-04.12 — statuses can be skipped (New → Shipped) via the split button.
     // The Confirm button is a split-button (main action + dropdown arrow);
     // the arrow opens a menu of all later statuses to skip to.
     await createNewShipment(page);
@@ -940,8 +920,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('Hold prevents status from advancing on an Allocated shipment', async ({ page }) => {
-    // Wiki: Hold Checkbox — verifies the same rejection toast at the
-    // Allocated → Picked boundary (sister to the Picked → Shipped variant).
+    // Covers: OMS-REG-DIST-02.10 — Hold prevents status advancement (Allocated → Picked).
     await createNewShipment(page);
     await addLineToShipment(page);
     await clickConfirmAndWait(page, /Confirm Allocated/i);
@@ -987,8 +966,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('un-holding allows status to advance again', async ({ page }) => {
-    // Wiki: Hold Checkbox — toggling Hold off releases the constraint and
-    // the status flow continues.
+    // Covers: OMS-REG-DIST-02.11 — unchecking Hold restores the ability to advance status.
     await createNewShipment(page);
     await addLineToShipment(page);
     await clickConfirmAndWait(page, /Confirm Allocated/i);
@@ -1019,8 +997,7 @@ test.describe('Distribution: Outbound Shipments', () => {
   });
 
   test('hovering the status sequence shows the status-history popover', async ({ page }) => {
-    // Wiki: Outbound Shipment Status Sequence — "If you hover over the
-    // status sequence, a shipment history window appears."
+    // Covers: OMS-REG-DIST-02.13 — hovering the status sequence reveals the status-change history.
     await createNewShipment(page);
 
     // The footer status sequence (StatusCrumbs) — hover reveals the popover.
@@ -1036,9 +1013,9 @@ test.describe('Distribution: Outbound Shipments', () => {
   // ─── End-to-end create flow ──────────────────────────────────────────────
 
   test('happy path: create → allocate → pick → ship', async ({ page }) => {
-    // Wiki: Creating an Outbound Shipment + Processing an Outbound Shipment
-    // (Confirming Allocated → Picked → Shipped). End-to-end through every
-    // step of the wiki's status flow.
+    // Covers: OMS-REG-DIST-02.1, OMS-REG-DIST-04.1, OMS-REG-DIST-04.2, OMS-REG-DIST-04.7 — create shipment;
+    // Confirm Allocated reserves stock; Confirm Picked becomes available; Confirm
+    // Shipped removes stock. End-to-end through the full status flow.
     // ─── Navigate to the list ────────────────────────────────────────────────
     await page.goto('/distribution/outbound-shipment', {
       waitUntil: 'networkidle',
@@ -1134,9 +1111,8 @@ test.describe('Distribution: Customer Returns', () => {
   test.describe.configure({ mode: 'serial' });
 
   test('New return: pick customer creates a return and lands on detail', async ({ page }) => {
-    // Wiki: Create new Customer Return — "Go to 'Outbound shipments' >
-    // 'Customer Return' create a new customer return". Verifies the
-    // manually-created path: pick customer → return created → detail view.
+    // Covers: OMS-REG-DIST-07.4 — a manually-created return shows the "created
+    // manually" banner (approx — creation smoke: pick customer → return → detail).
     await page.goto('/distribution/customer-return', { waitUntil: 'networkidle' });
 
     await page.getByRole('button', { name: /New return/i }).click();
@@ -1162,8 +1138,7 @@ test.describe('Distribution: Customer Returns', () => {
   });
 
   test('list view renders core controls', async ({ page }) => {
-    // Wiki: Customer Returns (list overview) — verify the list page mounts
-    // with the New return button, Status column header, and rows-per-page.
+    // Covers: OMS-REG-DIST-07.1 — Customer Returns list renders core controls.
     // The "Return lines" bulk-action test (from an outbound) needs a
     // Shipped-or-later shipment for the footer button to appear; left as
     // future work alongside the DELIVERED / VERIFIED gaps.
@@ -1179,9 +1154,7 @@ test.describe('Distribution: Customer Requisitions', () => {
   test.describe.configure({ mode: 'serial' });
 
   test('list view renders core controls', async ({ page }) => {
-    // Wiki: Receiving Customer Requisitions / General UX/UI — "In the top
-    // right corner, you will see an Export button [and] the button New
-    // Requisition."
+    // Covers: OMS-REG-DIST-05.1 — Customer Requisitions list renders core controls.
     await page.goto('/distribution/customer-requisition', { waitUntil: 'networkidle' });
 
     await expect(page.getByRole('button', { name: /New requisition/i })).toBeVisible();
@@ -1190,9 +1163,8 @@ test.describe('Distribution: Customer Requisitions', () => {
   });
 
   test('New requisition: pick customer creates a manual requisition', async ({ page }) => {
-    // Wiki: Creating a new (Manual) Requisition — "when you create a manual
-    // requisition, you are able to add items to it" — Add Item is enabled
-    // (unlike for auto-generated requisitions where it stays disabled).
+    // Covers: OMS-REG-DIST-06.2 — Add Item is enabled on a manual requisition
+    // (auto-generated requisitions keep it disabled).
     await page.goto('/distribution/customer-requisition', { waitUntil: 'networkidle' });
 
     await page.getByRole('button', { name: /New requisition/i }).click();
