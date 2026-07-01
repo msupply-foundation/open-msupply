@@ -80,6 +80,7 @@ A living ledger of every UI element built in the prototype and **what went into 
 - **RTL flip** — `intl/LocaleProvider` (React Context) sets `dir`/`lang` on `<html>`; formatting is browser `Intl`. It also wraps the app in Radix's **`DirectionProvider`** (one line, driven by the same locale) so every Radix widget (Select, Tabs, DropdownMenu…) gets direction-aware keyboard nav + popup placement — Radix reads `dir` from that context, not from `<html>`. Our own widgets (native select, Combobox, MultiSelect) need nothing extra: they mirror via logical properties alone.
 - **Responsive** — intrinsic CSS + one `useMediaQuery` hook for the nav dock↔overlay switch. No lib.
 - **Icons** — real SVG paths ported from the current app into plain React components (`components/icons`). No icon library.
+- **Filter state (URL-backed)** — the header FilterBar writes filter values to the **URL query params** (source of truth), and the table reads them back as `columnFilters`; filtered views are shareable/bookmarkable. Bridged by a temporary `hooks/useUrlState` (History API + `useSyncExternalStore`, referentially stable) that swaps for router search hooks at #9. No routing lib. See `DECISIONS.md` (2026-07-01, filter state in the URL).
 
 ## Dependencies
 

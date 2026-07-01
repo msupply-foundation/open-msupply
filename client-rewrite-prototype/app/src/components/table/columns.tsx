@@ -26,6 +26,7 @@ export const outboundColumns: ColumnDef<OutboundShipmentRow>[] = [
     header: 'Name',
     size: 320,
     minSize: 140,
+    filterFn: 'includesString',
     cell: ({ row }) => (
       <NameColourCell
         name={row.original.otherPartyName}
@@ -39,6 +40,10 @@ export const outboundColumns: ColumnDef<OutboundShipmentRow>[] = [
     accessorKey: 'status',
     header: 'Status',
     size: 150,
+    // Multi-select: the filter value is an array of status enums; keep the row
+    // when its status is one of them (empty array = no filter).
+    filterFn: (row, columnId, filterValue: string[]) =>
+      !filterValue?.length || filterValue.includes(row.getValue<string>(columnId)),
     cell: ({ row }) => <StatusCell status={row.original.status} />,
     meta: { align: 'start', label: 'Status' },
   },
@@ -47,6 +52,7 @@ export const outboundColumns: ColumnDef<OutboundShipmentRow>[] = [
     accessorKey: 'invoiceNumber',
     header: 'Number',
     size: 120,
+    filterFn: 'includesString',
     cell: ({ getValue }) => (
       <NumericCell value={getValue<number>()} decimalLimit={0} />
     ),
@@ -66,6 +72,7 @@ export const outboundColumns: ColumnDef<OutboundShipmentRow>[] = [
     header: 'Reference',
     size: 170,
     enableSorting: false,
+    filterFn: 'includesString',
     cell: ({ getValue }) => (
       <TextWithTooltipCell value={getValue<string | null>()} />
     ),

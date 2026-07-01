@@ -7,15 +7,24 @@ import {
   CheckIcon,
 } from '@/components/icons';
 import { cx } from '@/utils/classNames';
+import {
+  useSearchString,
+  setUrlParam,
+  clearUrlParams,
+} from '@/hooks/useUrlState';
 import menu from '@/components/ui/Menu.module.css';
 import styles from './FilterBar.module.css';
 
 /*
  * Filter bar — mirrors the current app's FilterMenu: a "Filters" dropdown lists
- * available fields; picking one adds an inline editor beside it. The only
- * headless dependency is Radix DropdownMenu (already loaded): it powers the
- * Filters menu AND the Status multi-select (via CheckboxItem). Text inputs are
- * plain HTML. Date-range filters are deferred to the date-picker element.
+ * available fields; picking one adds an inline editor beside it.
+ *
+ * Filter VALUES live in the URL query params (the source of truth), so a filtered
+ * view is shareable/bookmarkable and the table reads it back from there. Which
+ * chips are *shown* is local UI state, seeded from the URL on load. Field keys
+ * are the table column ids; status is a repeated param of status enums.
+ * URL access goes through the temporary `useUrlState` hook — see its header note;
+ * it swaps for the router's search hooks once #9 lands.
  */
 
 type FieldKey = 'otherPartyName' | 'invoiceNumber' | 'theirReference' | 'status';
@@ -35,18 +44,28 @@ const FIELDS: Field[] = [
 ];
 
 const STATUS_OPTIONS = [
-  'New',
-  'Allocated',
-  'Picked',
-  'Shipped',
-  'Delivered',
-  'Verified',
+  { label: 'New', value: 'NEW' },
+  { label: 'Allocated', value: 'ALLOCATED' },
+  { label: 'Picked', value: 'PICKED' },
+  { label: 'Shipped', value: 'SHIPPED' },
+  { label: 'Delivered', value: 'DELIVERED' },
+  { label: 'Verified', value: 'VERIFIED' },
 ];
 
+const activeFromUrl = () => {
+  const params = new URLSearchParams(window.location.search);
+  return FIELDS.filter(f => params.has(f.key)).map(f => f.key);
+};
+
 export const FilterBar = () => {
-  const [active, setActive] = useState<FieldKey[]>([]);
-  const [text, setText] = useState<Record<string, string>>({});
-  const [statuses, setStatuses] = useState<string[]>([]);
+  // Which filter chips are shown (local UI); seeded from the URL so a shared
+  // link opens with its filters visible.
+  const [active, setActive] = useState<FieldKey[]>(activeFromUrl);
+
+  // Values are read straight from the URL, kept in sync by useSearchString.
+  const search = useSearchString();
+  const params = new URLSearchParams(search);
+  const statuses = params.getAll('status');
 
   const available = FIELDS.filter(f => !active.includes(f.key));
 
@@ -54,15 +73,21 @@ export const FilterBar = () => {
 
   const removeFilter = (key: FieldKey) => {
     setActive(prev => prev.filter(k => k !== key));
-    if (key === 'status') setStatuses([]);
-    else setText(prev => ({ ...prev, [key]: '' }));
+    setUrlParam(key, null);
   };
 
   const resetAll = () => {
     setActive([]);
-    setText({});
-    setStatuses([]);
+    clearUrlParams(FIELDS.map(f => f.key));
   };
+
+  const toggleStatus = (value: string) =>
+    setUrlParam(
+      'status',
+      statuses.includes(value)
+        ? statuses.filter(s => s !== value)
+        : [...statuses, value]
+    );
 
   return (
     <div className={styles.bar}>
@@ -79,8 +104,8 @@ export const FilterBar = () => {
             <TextFilter
               key={key}
               field={field}
-              value={text[key] ?? ''}
-              onChange={v => setText(prev => ({ ...prev, [key]: v }))}
+              value={params.get(key) ?? ''}
+              onChange={v => setUrlParam(key, v)}
               onRemove={() => removeFilter(key)}
             />
           );
@@ -89,13 +114,7 @@ export const FilterBar = () => {
           <StatusFilter
             key={key}
             selected={statuses}
-            onToggle={value =>
-              setStatuses(prev =>
-                prev.includes(value)
-                  ? prev.filter(s => s !== value)
-                  : [...prev, value]
-              )
-            }
+            onToggle={toggleStatus}
             onRemove={() => removeFilter('status')}
           />
         );
@@ -206,10 +225,10 @@ const StatusFilter = ({
         >
           {STATUS_OPTIONS.map(option => (
             <DropdownMenu.CheckboxItem
-              key={option}
+              key={option.value}
               className={cx(menu.item, menu.checkboxItem)}
-              checked={selected.includes(option)}
-              onCheckedChange={() => onToggle(option)}
+              checked={selected.includes(option.value)}
+              onCheckedChange={() => onToggle(option.value)}
               onSelect={e => e.preventDefault()}
             >
               <span className={menu.checkbox}>
@@ -217,7 +236,7 @@ const StatusFilter = ({
                   <CheckIcon />
                 </DropdownMenu.ItemIndicator>
               </span>
-              <span className={menu.label}>{option}</span>
+              <span className={menu.label}>{option.label}</span>
             </DropdownMenu.CheckboxItem>
           ))}
         </DropdownMenu.Content>

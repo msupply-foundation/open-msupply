@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { ColumnFiltersState } from '@tanstack/react-table';
 import { DataTable } from '@/components/table/DataTable';
 import { outboundColumns } from '@/components/table/columns';
 import {
@@ -6,11 +7,16 @@ import {
   makeOutboundShipments,
   type OutboundShipmentRow,
 } from '@/mocks/outboundShipments';
+import { useSearchString } from '@/hooks/useUrlState';
 import { cx } from '@/utils/classNames';
 import styles from './TableShowcase.module.css';
 
 type Mode = 'demo' | 'benchmark';
 const ROW_COUNT: Record<Mode, number> = { demo: 400, benchmark: 10_000 };
+
+// Text filters share their column id with the URL param name; status is a
+// repeated param of status enums.
+const TEXT_FILTER_IDS = ['otherPartyName', 'invoiceNumber', 'theirReference'] as const;
 
 /*
  * Table showcase — the storybook centrepiece and the TanStack validation gate.
@@ -21,6 +27,22 @@ const ROW_COUNT: Record<Mode, number> = { demo: 400, benchmark: 10_000 };
 export const TableShowcase = () => {
   const [mode, setMode] = useState<Mode>('demo');
   const data = useMemo(() => makeOutboundShipments(ROW_COUNT[mode]), [mode]);
+
+  // Filters are read from the URL (written by the header FilterBar). Parsing in
+  // a memo keyed on the search string keeps columnFilters referentially stable,
+  // so the filtered row model only recomputes when the URL actually changes.
+  const search = useSearchString();
+  const columnFilters = useMemo<ColumnFiltersState>(() => {
+    const params = new URLSearchParams(search);
+    const filters: ColumnFiltersState = [];
+    for (const id of TEXT_FILTER_IDS) {
+      const value = params.get(id);
+      if (value) filters.push({ id, value });
+    }
+    const statuses = params.getAll('status');
+    if (statuses.length) filters.push({ id: 'status', value: statuses });
+    return filters;
+  }, [search]);
 
   return (
     <div className={styles.stack}>
@@ -56,10 +78,15 @@ export const TableShowcase = () => {
 
       <div className={styles.tableWrap}>
         <DataTable<OutboundShipmentRow>
+          // Paginated vs virtualised are distinct table configurations (the
+          // scroll model differs); remount on switch so the virtualizer inits
+          // cleanly instead of reconfiguring a live instance.
+          key={mode}
           data={data}
           columns={outboundColumns}
           getRowId={row => row.id}
           stickyColumnId="otherPartyName"
+          columnFilters={columnFilters}
           isRestricted={isRestricted}
           virtualise={mode === 'benchmark'}
         />

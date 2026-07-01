@@ -14,6 +14,7 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type ColumnFiltersState,
   type ColumnOrderState,
   type Row,
   type RowSelectionState,
@@ -49,6 +50,7 @@ import type { Density } from './tableTypes';
 import styles from './DataTable.module.css';
 
 const CARD_BREAKPOINT = 640; // px — below this the table becomes a card list
+const NO_FILTERS: ColumnFiltersState = []; // stable default reference
 const ROW_HEIGHT: Record<Density, number> = {
   compact: 32,
   comfortable: 40,
@@ -61,6 +63,8 @@ export interface DataTableProps<T> {
   getRowId: (row: T) => string;
   /** Column pinned sticky to the inline-start edge (in addition to selection). */
   stickyColumnId: string;
+  /** Filter state, controlled from outside (the header filter bar → URL). */
+  columnFilters?: ColumnFiltersState;
   enableSelection?: boolean;
   /** Window rows instead of paginating — the large-list / benchmark path. */
   virtualise?: boolean;
@@ -72,6 +76,7 @@ export function DataTable<T>({
   columns,
   getRowId,
   stickyColumnId,
+  columnFilters = NO_FILTERS,
   enableSelection = true,
   virtualise = false,
   isRestricted,
@@ -132,6 +137,7 @@ export function DataTable<T>({
     getRowId,
     state: {
       sorting,
+      columnFilters,
       columnOrder,
       columnVisibility,
       columnSizing,
