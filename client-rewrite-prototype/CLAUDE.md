@@ -26,6 +26,8 @@ Full reasoning: [`2026-06-29_frontend_architecture_direction.md`](./2026-06-29_f
 - **Keep the typed contract.** Preserve end-to-end GraphQL types from the server schema.
 - **Lightweight, traceable state.** The original app's pain was hard-to-trace state and runaway re-renders — avoid recreating it. Prefer simple, explicit state with clear render boundaries.
 - **Incremental mindset.** Even though this is a fresh prototype, favour patterns that could later be adopted screen-by-screen in the real app.
+- **Intrinsic layout; breakpoints only for "which element."** Default to elements that flow and wrap on their own (flex/grid, `flex-wrap`, `min()/clamp()`, logical properties). Use a breakpoint *only* to decide which whole element to render (e.g. docked sidebar vs. hamburger overlay) — never to tweak spacing/sizes at arbitrary widths. Breakpoints live in `app/src/styles/breakpoints.ts`. See `DECISIONS.md` (2026-07-01, responsive layout).
+- **Size in rem/em, never px** (except hairline borders and shadow offsets). Everything scales from a single root font-size (`html` in `index.css`) — e.g. the phone view drops root to 85% to shrink the whole UI uniformly. Design tokens carry the rem values; icons use `1em` so they scale with local text.
 
 ## Stack as decided
 

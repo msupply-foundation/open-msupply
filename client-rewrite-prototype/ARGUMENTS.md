@@ -99,3 +99,18 @@ A curated arsenal of arguments for defending the rewrite-approach decisions to t
 - Only two narrow things actually want library help: **directional component *behaviour*** (dropdown placement / arrow-keys flipping in RTL — Radix's `DirectionProvider` covers its widgets) and **locale-aware input *parsing*** for number/date fields (small for OMS: simple decimals + month/year expiry, so we own it).
 
 **Rebuttal to "but i18n is critical, so we need the heavy i18n-first library (React Aria)":** Critical, yes — but it's mostly delivered by `Intl` + i18next + CSS, not by the widget kit. React Aria's `@internationalized/*` machinery only pays off in locale-aware *input parsing*, a narrow slice of OMS. So i18n importance is real **and** it doesn't force the heavyweight library.
+
+## 10. Responsive: intrinsic layout beats breakpoint soup — and fixes a real current-app weakness
+
+**Claim:** The current app is weak on responsiveness because it drives *layout* with JavaScript and maintains a *separate mobile nav*. The rebuild does responsive with CSS: elements flow and wrap intrinsically, and a breakpoint only ever decides *which element to render*.
+
+**Why:**
+- **Layout is intrinsic by default** — flex/grid wrapping, `min()/clamp()`, `auto-fit`, logical properties. No breakpoint is spent nudging spacing or font sizes; the header and footer just wrap when space runs out.
+- **Breakpoints do exactly one job:** "docked sidebar vs. hamburger overlay." One value (`1024`), one conditional render, one small matchMedia hook. Everything else is CSS.
+- **One nav component, two modes** — the item list is shared verbatim; only the wrapper differs. The current app has a whole separate `MobileNavBar` that re-implements the nav and drifts out of sync. We delete that class of bug.
+- **Content responds to its container, not the viewport** — the table's card-view uses container queries, so it reacts to the space it actually has (which changes as the nav docks/undocks), not the raw screen width.
+- **RTL stays correct at every size for free**, because the layout is logical-property-based, not hard-coded left/right with breakpoint exceptions.
+
+**The measured kicker:** the entire responsive layer — hamburger overlay, scrim, intrinsic wrapping, touch-target sizing — added **~0.6 KB gzipped**. Responsiveness done in CSS is nearly free; done in JS (the current app) it's re-renders and a second nav to maintain.
+
+**Rebuttal to "you still need breakpoints everywhere for tablet/phone":** No — you need *intrinsic* layout everywhere and a breakpoint in the *one* place the DOM genuinely differs (nav). Reaching for a media query to resize a gap is a smell that the layout isn't intrinsic yet.

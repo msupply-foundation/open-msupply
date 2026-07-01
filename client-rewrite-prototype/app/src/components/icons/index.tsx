@@ -169,6 +169,58 @@ export const ChevronDownIcon = (props: IconProps) => (
   </Fill>
 );
 
+/* --- Header / action icons -------------------------------------------- */
+
+export const PlusCircleIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="8" x2="12" y2="16" />
+    <line x1="8" y1="12" x2="16" y2="12" />
+  </Stroke>
+);
+
+export const DownloadIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </Stroke>
+);
+
+export const CloseIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 21 20" {...props}>
+    <path d="M14.41 4.41a.833.833 0 0 1 1.18 1.18L11.177 10l4.411 4.41a.834.834 0 0 1 .075 1.094l-.075.085a.833.833 0 0 1-1.178 0L10 11.178l-4.41 4.411a.834.834 0 0 1-1.094.075l-.085-.075a.833.833 0 0 1 0-1.178L8.82 10l-4.41-4.41a.834.834 0 0 1-.075-1.094l.075-.085a.833.833 0 0 1 1.178 0L10 8.82z" />
+  </Fill>
+);
+
+export const SearchIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 16 16" {...props}>
+    <path d="M7 1.333a5.667 5.667 0 0 1 4.45 9.175l3.021 3.02a.667.667 0 0 1-.942.943l-3.02-3.02A5.667 5.667 0 1 1 7 1.333zm0 1.334a4.333 4.333 0 1 0 3.044 7.417l.018-.022A4.306 4.306 0 0 0 11.333 7 4.333 4.333 0 0 0 7 2.667z" />
+  </Fill>
+);
+
+export const CheckIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <polyline points="20 6 9 17 4 12" />
+  </Stroke>
+);
+
+export const MenuIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <line x1="3" y1="12" x2="21" y2="12" />
+    <line x1="3" y1="18" x2="21" y2="18" />
+  </Stroke>
+);
+
+export const AlertTriangleIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+  </Stroke>
+);
+
 /* --- Footer icons ----------------------------------------------------- */
 
 /* Store / home */

@@ -14,6 +14,22 @@
   box-sizing: border-box;
 }
 
+/*
+ * Single root sizing knob. Everything is sized in rem, so changing this one
+ * value rescales the entire UI. The phone view (< compact breakpoint, 600px —
+ * see styles/breakpoints.ts) drops it to 85% so the whole interface shrinks
+ * uniformly — this is the only place root size is touched.
+ */
+html {
+  font-size: 100%; /* = 16px default */
+}
+
+@media (max-width: 599px) {
+  html {
+    font-size: 85%;
+  }
+}
+
 html,
 body,
 #root {

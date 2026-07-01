@@ -7,6 +7,20 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-01 · Responsive layout — intrinsic-first; breakpoints only for "which element"
+
+- **Decision:** Layout is **intrinsic by default**. Elements flow and wrap on their own with flexbox/grid, `flex-wrap`, `min()/max()/clamp()`, `auto-fit`/`minmax`, and logical properties. **Breakpoints are reserved for one job only: "which element do I render?"** (e.g. docked sidebar vs. hamburger overlay). They are *not* used to nudge spacing, font sizes, paddings, or column counts at arbitrary widths — that's what intrinsic sizing is for. (Carl's principle, 2026-07-01.)
+- **Mechanism, by layer:**
+  - **Shell chrome** (nav / header / footer): intrinsic flex-wrap. The header top-row and filter bar wrap; the footer wraps; nothing is breakpoint-driven except the nav.
+  - **The one breakpoint in play:** `navOverlay` (1024px). Below it the sidebar renders as a **hamburger overlay** (off-canvas panel + scrim, opened from a hamburger in the header); at/above it the sidebar is **docked** (logo toggles an optional 80px rail). This is a *conditional render* driven by `useIsNavOverlay()`, not a pile of CSS media queries.
+  - **Content** (the data table, later): **container queries** — the card-view responds to the table's own available width (which changes as the nav docks/undocks), not the viewport. Zero runtime, no lib.
+  - **Touch targets:** `@media (pointer: coarse)` bumps interactive elements to the 48px `--touch-target` on touch devices only — satisfies the spec without oversizing on desktop.
+- **One nav component, two modes — never a duplicate mobile nav.** `NavLists` (the item lists) is shared verbatim; docked vs. overlay differ only in their wrapper. This deliberately fixes the current app's weakness (a separate `MobileNavBar` that re-implements the nav and drifts).
+- **JS footprint:** a single `useMediaQuery`/`useIsNavOverlay` (matchMedia) hook, used only for the render switch + auto-closing the overlay when returning to docked. Layout itself never touches JS. Measured cost of the whole responsive layer: **~0.6 KB gzip**.
+- **Breakpoints live in one file** — [`app/src/styles/breakpoints.ts`](./app/src/styles/breakpoints.ts) — consumed by the hook, so they're trivially tweakable and can't drift (CSS barely needs them under this principle).
+- **Why (vs. the current app):** the current app drives layout with `useMediaQuery` everywhere, maintains a separate mobile nav, and forces an icon-rail below 1441 (so laptops get a cramped rail). Ours is CSS/container-query-first, one nav component, laptops get the full nav, and it stays RTL-correct at every size for free (logical properties). Less code, fewer re-renders, one source of truth.
+- **Status:** Adopted and implemented across sidebar/header/footer. Container-query card-view lands with the table element.
+
 ## 2026-07-01 · Decision #3 ratified — UI library & styling: hybrid headless + CSS Modules with design tokens
 
 - **Decision:** No single component kit. A **per-widget hybrid**, chosen by how hard the accessibility is:

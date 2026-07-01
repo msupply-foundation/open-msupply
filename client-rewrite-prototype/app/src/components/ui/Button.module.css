@@ -1,0 +1,82 @@
+/*
+ * Faithful to the current app's BaseButton (outlined, primary):
+ *  - NO border; a shadow[2] drop-shadow does the lifting
+ *  - borderRadius 24, white bg, text #373740, orange start-icon
+ *  - hover fills primary orange (text + icon go white)
+ */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--nav-item-height);
+  min-width: 7.1875rem;
+  padding-inline: 1.25rem;
+  border: none;
+  border-radius: 1.5rem;
+  background: var(--bg-white);
+  color: var(--button-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--shadow-2);
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.button:hover {
+  background: var(--primary-main);
+  color: #fff;
+}
+
+.button:hover .icon {
+  color: #fff;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.25rem;
+  color: var(--primary-main);
+  flex-shrink: 0;
+}
+
+@media (pointer: coarse) {
+  .button {
+    min-height: var(--touch-target);
+  }
+}
+
+/* Filled/contained variant — inverts on hover, like the app's contained button */
+.primary {
+  background: var(--primary-main);
+  border: none;
+  color: #fff;
+  font-weight: var(--weight-bold);
+}
+
+.primary .icon {
+  color: #fff;
+}
+
+.primary:hover {
+  background: var(--bg-white);
+  color: var(--primary-main);
+}
+
+.primary:hover .icon {
+  color: var(--primary-main);
+}

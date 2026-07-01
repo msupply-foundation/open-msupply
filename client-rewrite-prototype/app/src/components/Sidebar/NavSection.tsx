@@ -12,6 +12,7 @@ interface NavSectionProps {
   /** id of the currently-selected child, if any. */
   selectedChildId?: string;
   defaultOpen?: boolean;
+  onNavigate?: () => void;
 }
 
 /*
@@ -25,6 +26,7 @@ export const NavSection = ({
   active = false,
   selectedChildId,
   defaultOpen = false,
+  onNavigate,
 }: NavSectionProps) => {
   const [open, setOpen] = useState(defaultOpen);
   const { icon: Icon } = item;
@@ -64,6 +66,7 @@ export const NavSection = ({
                 to={child.to}
                 variant="child"
                 selected={child.id === selectedChildId}
+                onNavigate={onNavigate}
               />
             ))}
           </ul>

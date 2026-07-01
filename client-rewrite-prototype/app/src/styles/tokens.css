@@ -1,18 +1,19 @@
 /*
  * Design tokens — the styling foundation (see ../../../DECISIONS.md #3).
  *
- * This is a faithful 1:1 port of the CURRENT app's MUI theme
+ * Faithful 1:1 port of the current app's MUI theme
  *   client/packages/common/src/styles/theme.ts
- * into plain CSS custom properties. Values are copied from there — NOT invented.
- * The "primitive" layer is the raw palette/scale; the "semantic" layer is the
- * roles components actually reference. Re-theming = change this file; theme
- * switching / per-subtree scoping is a CSS variable change with NO React
- * re-render and NO runtime style computation.
+ * into plain CSS custom properties (colours copied, not invented), PLUS the
+ * company input design spec.
+ *
+ * SIZING IS IN rem (base 16px = 1rem), never px, so the whole UI scales from a
+ * single root font-size (see index.css — the phone view scales root to 85%).
+ * Exceptions kept in px on purpose: hairline borders (1px) and shadow offsets.
  */
 
 :root {
   /* --- Primitive palette (theme.ts → palette) -------------------------- */
-  --primary-main: #e95c30; /* brand orange */
+  --primary-main: #e95c30; /* brand orange (TMF Orange) */
   --primary-light: #ed7d59;
   --primary-dark: #c43c11;
   --primary-contrast: #fff;
@@ -23,6 +24,7 @@
 
   --error-main: #e63535;
   --error-bg: #ffcdce;
+  --color-warning: #f2a001; /* theme.ts cceStatus/invoiceLineStatus amber */
 
   --gray-main: #8f90a6;
   --gray-light: #c7c9d9;
@@ -58,20 +60,22 @@
   --drawer-selected-bg: #fff;
   --drawer-hover-bg: #fafafc;
 
-  /* --- Spacing (4px base, mirrors MUI theme.spacing) ------------------- */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
+  /* --- Spacing (4px base → rem) --------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
 
   /* --- Radius --------------------------------------------------------- */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-pill: 20px; /* nav items: borderRadius 20 */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-pill: 1.25rem;
+  --radius-button: 1.5rem; /* 24px pill buttons */
 
   /* --- Elevation (theme.ts → createTheme shadow overrides) ------------ */
+  /* Shadow offsets stay in px (sub-pixel blur/spread) — intentional. */
   --shadow-1: 0 0.5px 2px 0 rgba(96, 97, 112, 0.16),
     0 0 1px 0 rgba(40, 41, 61, 0.08);
   --shadow-2: 0 4px 8px 0 rgba(96, 97, 112, 0.16),
@@ -85,22 +89,36 @@
   /* --- Typography (theme.ts → typography) ----------------------------- */
   --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
     sans-serif;
-  --text-xs: 12px; /* body2 */
-  --text-sm: 14px; /* body1 / th */
-  --text-md: 16px; /* h6 */
-  --text-lg: 20px;
+  --text-xs: 0.75rem; /* 12px — body2 */
+  --text-sm: 0.875rem; /* 14px — body1 / th / input */
+  --text-md: 1rem; /* 16px — h6 */
+  --text-lg: 1.25rem; /* 20px */
   --line-body: 1.71; /* body1 */
   --weight-medium: 500;
   --weight-bold: 700;
 
   /* --- Layout dimensions (theme.ts → mixins / AppDrawer) -------------- */
-  --drawer-width: 260px;
-  --drawer-closed-width: 80px;
-  --logo-area-height: 90px;
-  --nav-item-height: 40px;
-  --nav-child-height: 30px;
-  --table-data-row: 40px;
-  --table-header-row: 60px;
-  --footer-height: 32px;
-  --touch-target: 48px; /* spec target — available where we want it */
+  --drawer-width: 16.25rem; /* 260px */
+  --drawer-closed-width: 5rem; /* 80px */
+  --logo-area-height: 5.625rem; /* 90px */
+  --nav-item-height: 2.5rem; /* 40px */
+  --nav-child-height: 1.875rem; /* 30px */
+  --table-data-row: 2.5rem; /* 40px */
+  --table-header-row: 3.75rem; /* 60px */
+  --footer-height: 2rem; /* 32px */
+  --touch-target: 3rem; /* 48px — spec target */
+
+  /* --- Inputs (company design spec) ----------------------------------- */
+  --input-height: 2.5rem; /* 40px default */
+  --input-height-sm: 2.25rem; /* 36px small */
+  --input-padding-x: 0.75rem; /* 12px horizontal */
+  --input-radius: 0.375rem; /* 6px */
+  --input-border: #e4e4e7; /* spec default border */
+  --input-max-short: 25rem; /* 400px — codes, quantities */
+  --input-max-long: 37.5rem; /* 600px — names, descriptions */
+  /* 3px orange glow focus ring */
+  --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.25);
+
+  /* Scrim behind the mobile nav overlay / modals */
+  --overlay-scrim: rgba(28, 28, 40, 0.45);
 }

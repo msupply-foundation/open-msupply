@@ -4,8 +4,8 @@
  */
 
 .content {
-  min-width: 220px;
-  max-height: 320px;
+  min-width: 13.75rem;
+  max-height: 20rem;
   overflow-y: auto;
   padding: var(--space-2);
   background: var(--bg-white);
@@ -55,7 +55,7 @@
   border: 1px solid var(--gray-light);
   border-radius: var(--radius-sm);
   color: var(--gray-dark);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: var(--weight-medium);
   letter-spacing: 0.03em;
 }

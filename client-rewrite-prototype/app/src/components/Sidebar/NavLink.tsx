@@ -10,6 +10,7 @@ interface NavLinkProps {
   /** Top-level links show an icon + chevron slot; children are text-only. */
   icon?: ComponentType<IconProps>;
   variant?: 'top' | 'child';
+  onNavigate?: () => void;
 }
 
 export const NavLink = ({
@@ -18,6 +19,7 @@ export const NavLink = ({
   selected = false,
   icon: Icon,
   variant = 'top',
+  onNavigate,
 }: NavLinkProps) => (
   <li className={styles.item}>
     <a
@@ -26,6 +28,7 @@ export const NavLink = ({
       data-selected={selected}
       aria-current={selected ? 'page' : undefined}
       title={label}
+      onClick={onNavigate}
     >
       {variant === 'top' &&
         (Icon ? (

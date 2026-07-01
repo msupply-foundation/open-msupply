@@ -1,0 +1,125 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* "Filters" trigger + Status trigger — a light bordered box (a select-style
+   control, distinct from the pill action buttons). */
+.trigger,
+.enumTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 8.125rem;
+  height: var(--nav-item-height);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.trigger:hover,
+.enumTrigger:hover,
+.trigger[data-state='open'],
+.enumTrigger[data-state='open'] {
+  background: var(--bg-group-light);
+}
+
+.trigger:focus-visible,
+.enumTrigger:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+}
+
+.triggerChevron {
+  font-size: 1.125rem;
+  color: var(--gray-main);
+  flex-shrink: 0;
+}
+
+/* Count badge on the Status trigger */
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  margin-inline-start: var(--space-2);
+  padding: 0 0.3125rem;
+  border-radius: 0.5625rem;
+  background: var(--primary-main);
+  color: #fff;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+/* Inline text filter */
+.textFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--nav-item-height);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+}
+
+.textFilter:focus-within {
+  border-color: var(--primary-main);
+}
+
+.textFilterIcon {
+  display: inline-flex;
+  font-size: 1rem;
+  color: var(--gray-main);
+  flex-shrink: 0;
+}
+
+.input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  min-width: 10rem;
+}
+
+.enumFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gray-main);
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.remove:hover {
+  background: var(--bg-group-main);
+  color: var(--text-body);
+}
+
+.remove:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+}

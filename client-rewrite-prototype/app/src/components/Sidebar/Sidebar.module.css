@@ -1,7 +1,7 @@
 /*
  * Sidebar styling — plain CSS Modules, all colours/dims from design tokens
  * (the theme.ts port). Mirrors the current AppDrawer / AppNavLink:
- *  - 260px open, 80px closed (icons only)
+ *  - 16.25rem open, 5rem closed (icons only)
  *  - pill nav items (height 40, radius 20); selected = white + shadow + bold
  *  - orange icons; active parent label orange
  *  - children indented under a left "tree" line
@@ -20,6 +20,10 @@
   box-shadow: var(--shadow-drawer);
   overflow: hidden;
   transition: width 200ms ease;
+  /* Sit above <main> so the right-cast shadow lands ON the content/header,
+     instead of being painted over by main's background. */
+  position: relative;
+  z-index: 2;
 }
 
 .sidebar[data-open='false'] {
@@ -50,7 +54,7 @@
 }
 
 .logo {
-  height: 56px;
+  height: 3.5rem;
   width: auto;
 }
 
@@ -76,7 +80,7 @@
   padding-inline: var(--space-2);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0.3125rem;
 }
 
 .item {
@@ -135,20 +139,20 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 20px;
-  font-size: 20px;
+  width: 1.25rem;
+  font-size: 1.25rem;
   color: var(--primary-main); /* brand orange, like color="primary" */
 }
 
 /* Empty slot keeps leaf labels aligned with section (chevron'd) labels */
 .chevronSlot {
-  width: 16px;
+  width: 1rem;
   flex-shrink: 0;
 }
 
 .sectionChevron {
-  width: 16px;
-  font-size: 16px;
+  width: 1rem;
+  font-size: 1rem;
   flex-shrink: 0;
   color: var(--gray-main);
   transition: transform 150ms ease;
@@ -170,8 +174,8 @@
 
 /* Selected-item indicator at the inline-end edge */
 .endChevron {
-  width: 16px;
-  font-size: 16px;
+  width: 1rem;
+  font-size: 1rem;
   flex-shrink: 0;
   margin-inline-start: auto;
   color: var(--primary-main);
@@ -215,7 +219,7 @@
 .childList {
   list-style: none;
   margin: var(--space-1) 0 0;
-  margin-inline-start: 28px;
+  margin-inline-start: 1.75rem;
   padding-inline-start: var(--space-3);
   border-inline-start: 1px solid var(--gray-light);
   display: flex;
@@ -242,4 +246,55 @@
 
 .sidebar[data-open='false'] .sectionContent {
   display: none;
+}
+
+/* --- Overlay mode (< navOverlay breakpoint) --------------------------- */
+.overlayPanel {
+  --hide-x: -100%; /* slides in from the inline-start; flipped for RTL below */
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  width: var(--drawer-width);
+  max-width: 85vw;
+  background: var(--bg-drawer);
+  box-shadow: var(--shadow-4);
+  overflow: hidden;
+  transform: translateX(var(--hide-x));
+  transition: transform 220ms ease;
+}
+
+:dir(rtl) .overlayPanel {
+  --hide-x: 100%;
+}
+
+.overlayPanel[data-open='true'] {
+  transform: none;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: var(--overlay-scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.scrimOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* --- Touch: larger tap targets on coarse pointers (spec: 3rem) -------- */
+@media (pointer: coarse) {
+  .navButton {
+    min-height: var(--touch-target);
+  }
+  .childList .navButton {
+    min-height: 2.5rem;
+  }
 }

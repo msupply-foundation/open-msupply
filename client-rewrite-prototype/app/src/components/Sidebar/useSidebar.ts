@@ -1,17 +1,24 @@
 import { useCallback, useState } from 'react';
 
 /*
- * Sidebar open/closed state. Deliberately a tiny local-state hook: STATE
- * MANAGEMENT IS DECISION #4 (still open), so this is the single seam to swap
- * when that's decided. Nothing else in the Sidebar reads React state directly.
+ * Nav state. Two independent, dead-simple booleans — only one is live per layout
+ * mode, so there's no "one flag, two defaults" ambiguity:
+ *   - railCollapsed: docked mode (>= navOverlay) — full labelled nav vs 80px rail.
+ *   - overlayOpen:   overlay mode (<  navOverlay) — hamburger drawer open/closed.
  *
- * The real app's useDrawer also carries hover-open + responsive auto-collapse;
- * those are layered on later (see STATUS.md) once the look is locked in.
+ * STATE MANAGEMENT IS DECISION #4 (still open) — this local hook is the single
+ * seam to swap when that's decided. Lifted to App so the Header's hamburger and
+ * the Sidebar overlay share `overlayOpen`.
  */
-export const useSidebar = (initialOpen = true) => {
-  const [isOpen, setIsOpen] = useState(initialOpen);
-  const toggle = useCallback(() => setIsOpen(o => !o), []);
-  const open = useCallback(() => setIsOpen(true), []);
-  const close = useCallback(() => setIsOpen(false), []);
-  return { isOpen, toggle, open, close };
+export const useSidebar = () => {
+  const [railCollapsed, setRailCollapsed] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);
+
+  const toggleRail = useCallback(() => setRailCollapsed(c => !c), []);
+  const openOverlay = useCallback(() => setOverlayOpen(true), []);
+  const closeOverlay = useCallback(() => setOverlayOpen(false), []);
+
+  return { railCollapsed, toggleRail, overlayOpen, openOverlay, closeOverlay };
 };
+
+export type SidebarState = ReturnType<typeof useSidebar>;

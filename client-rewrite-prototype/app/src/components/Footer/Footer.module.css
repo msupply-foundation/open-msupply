@@ -8,13 +8,17 @@
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  min-height: 40px;
+  row-gap: var(--space-1);
+  min-height: 2.25rem;
   padding-block: var(--space-1);
   padding-inline: var(--space-4);
   background: var(--primary-main);
   color: #fff;
   font-size: var(--text-xs);
+  line-height: 1.2; /* the 1.71 body line-height makes this dense bar too tall */
   flex-shrink: 0;
+  /* Items wrap onto new rows when they don't fit — no breakpoint needed. */
+  flex-wrap: wrap;
 }
 
 /* Push the last cell ("Central server") to the inline-end edge */
@@ -57,16 +61,21 @@ button.cell:focus-visible {
 }
 
 .icon {
-  width: 16px;
-  height: 16px;
-  font-size: 16px;
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
   flex-shrink: 0;
   color: inherit;
 }
 
 .divider {
   width: 1px;
-  height: 24px;
+  height: 1.5rem;
   background: #fff;
   flex-shrink: 0;
 }
+
+/* NB: deliberately NO pointer:coarse min-height here. The footer is a dense
+   status bar (like the current app's ~32px footer); forcing 3rem targets made
+   it grow tall in touch/mobile-emulation mode regardless of width. Primary
+   3rem touch targets live on the nav, buttons and menus, not this bar. */

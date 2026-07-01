@@ -12,27 +12,9 @@
   overflow: hidden;
 }
 
-/* Temporary placeholder where the component "storybook" will be built,
-   element by element. The Sidebar is the first real element. */
-.placeholder {
+/* Scrollable body between the fixed header and footer. */
+.body {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  color: var(--text-secondary);
+  overflow: auto;
   padding: var(--space-6);
-  text-align: center;
-}
-
-.placeholder h1 {
-  margin: 0;
-  font-size: var(--text-lg);
-  color: var(--text-body);
-}
-
-.placeholder p {
-  margin: 0;
-  max-width: 32rem;
 }

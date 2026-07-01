@@ -1,0 +1,66 @@
+.header {
+  flex-shrink: 0;
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
+}
+
+/* Wraps intrinsically: actions drop below the breadcrumb when space is tight,
+   no breakpoint needed. */
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.lead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.contentRow {
+  margin-top: var(--space-5);
+}
+
+/* Hamburger (overlay mode only) */
+.hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-body);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.hamburger:hover {
+  background: var(--bg-group-main);
+}
+
+.hamburger:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+}
+
+@media (pointer: coarse) {
+  .hamburger {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+}

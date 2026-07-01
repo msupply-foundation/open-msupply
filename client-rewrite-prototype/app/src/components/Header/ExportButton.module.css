@@ -1,0 +1,78 @@
+/*
+ * Split button — mirrors the app's SplitButton (MUI ButtonGroup): NO outer
+ * border, a shadow[2] drop-shadow, radius 24, and a 1px divider (theme divider
+ * colour) between the main action and the caret. Each half fills orange on hover
+ * independently, like the outlined ButtonGroup. Logical borders → mirrors in RTL.
+ */
+.split {
+  display: inline-flex;
+  align-items: stretch;
+  height: var(--nav-item-height);
+  border-radius: 1.5rem;
+  background: var(--bg-white);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+
+.main,
+.caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--button-text);
+  font: inherit;
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.main {
+  gap: var(--space-2);
+  padding-inline: 1.25rem;
+  white-space: nowrap;
+}
+
+.caret {
+  padding-inline: var(--space-2);
+  border-inline-start: 1px solid var(--color-divider);
+}
+
+.main:hover {
+  background: var(--primary-main);
+  color: #fff;
+}
+
+.main:hover .icon {
+  color: #fff;
+}
+
+.caret:hover,
+.caret[data-state='open'] {
+  background: var(--primary-main);
+}
+
+.caret:hover .caretIcon,
+.caret[data-state='open'] .caretIcon {
+  color: #fff;
+}
+
+.main:focus-visible,
+.caret:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+}
+
+.icon {
+  display: inline-flex;
+  font-size: 1.25rem;
+  color: var(--primary-main);
+}
+
+.caretIcon {
+  font-size: 1.125rem;
+  color: var(--gray-dark);
+}

@@ -8,9 +8,15 @@ Project setup / first vertical slice. Working through the "To decide" list one i
 
 ## ▶ Next action (resume here)
 
-**Building the first vertical slice** — the outbound-shipment detail page as a styled mockup on the Decision #3 stack (Radix + Downshift + own widgets, CSS Modules + design tokens). This is the page that converts the UI-library/styling estimates into measured bundle/INP numbers. Decisions #1 (**React**), #2 (**Vite**), #3 (**UI library & styling**) are ratified — see `DECISIONS.md`.
+**Building the Outbound Shipments page as a component storybook**, element by element, in [`app/`](./app/) (runs on **:3010** alongside the current app on :3003). Built so far, all matched to the real app + faithful `theme.ts` token port: **sidebar** (Radix Collapsible sections), **footer** (Radix DropdownMenu language selector with a working **LTR↔RTL flip**), **header** (breadcrumb, buttons, Export split-button, Filters + Status multi-select). Now **responsive** (intrinsic layout; nav → hamburger overlay below 1024). Bundle so far: **~100 KB gzip JS / ~4 KB gzip CSS**.
+
+**Next element:** the **data table** (storybook centrepiece — headless table + container-query card-view), or the **month/year date picker** (lights up the deferred date-range filters).
 
 **Carried (still open):** validate the Vite plugin-load path (Module Federation on Vite) — decision #2's validation gate.
+
+**Queued to build (spec ready):** the **state-management benchmark harness** — full implementation brief in [`BENCHMARK.md`](./BENCHMARK.md). One app / swappable state adapter (naive context vs Zustand granular), controlled form with reactive readers, a combined floating HUD + provider toggle, render-flash highlighting, side-by-side mode, and a scaling curve. Informs the open **state management** decision (#4). Two things for Carl to confirm before/while building: which tiers to ship (naive-vs-Zustand only, or incl. context-memo + React Compiler) and where final numbers run (throttled desktop vs real Lenovo M10).
+
+**RTL is a standing requirement:** show the RTL version of every element as it's built (Carl, 2026-07-01).
 
 **Carried task (prototype soon):** validate the Vite plugin-load path — build a hello-world **remote** plugin via the chosen Vite federation route (lead candidate `@module-federation/vite`) and load it at runtime into the new host sharing a single React. This is decision #2's validation gate; it's the one piece coupled to webpack today (Module Federation), so de-risk it early. See `DECISIONS.md` decision #2 for the full mechanism.
 
@@ -58,7 +64,12 @@ The external bar now lives in [`SPEC.md`](./SPEC.md) (the dev lead's brief — d
 6. **Query library (if any)** — e.g. TanStack Query, or none. NOT decided.
 7. ★ **GraphQL transport + typed codegen** — distinct from the cache/query lib; the mechanism that delivers end-to-end types from the schema (central to the TypeScript thesis). Pairs with the query lib. NOT decided.
 8. **Table library** — e.g. TanStack Table (headless). NOT decided. _(Spec: must meet WCAG 2.2 — keyboard row nav + sort-state screen-reader announcements that MRT gives out of the box — without too much manual work; plus tablet card-view, frozen columns, and the Lenovo M10 gen2 row-count benchmark. Validate before ratifying.)_
-9. ★ **Routing** — list → detail navigation. NOT decided.
+9. ★ **Routing** — list → detail navigation. NOT decided — **recommendation: TanStack Router** (Carl leaning this way, 2026-07-01).
+   - **Why it's the lead rec, not a bigger-lib reflex:** the test isn't big-vs-small, it's whether the weight buys something *this* project needs. Carl's stated priority is **URL query params as the primary source of truth**, in a filter-heavy app (status multiselect, date ranges, sort, pagination) — and TanStack Router is built around **typed, validated, serialized search params** (`validateSearch` per route; `useSearch()` returns a typed object; invalid `to`/search is a *compile error*). That's directly on the TypeScript thesis, and its **fine-grained search subscriptions + structural sharing** (a component reading one search key re-renders only when that key changes) make the router part of the **state-management** answer (#4) — URL-backed state that doesn't re-render the world. Route-based code-splitting built in; pairs cleanly with a query lib (#6) instead of competing with it. Coherent with the TanStack Query/Table/Virtual direction (nice-to-have, not the reason).
+   - **Cost (to measure, not assume):** meaningfully bigger than Wouter (order ~10 KB+ gz, tree-shakeable) and a route-tree codegen step (Vite plugin; code-based routing avoids codegen). Settle the same way as the UI-library decision — **measure the real gzipped delta on the tablet profile** in the slice.
+   - **Lean fallback: Wouter (~2 KB) + `nuqs`** for typed URL-state — a third of the size if TanStack Router's bytes don't justify themselves. Caveat: verify the `nuqs` ↔ Wouter wiring (its first-class adapters target Next/React-Router/Remix + a generic SPA adapter).
+   - **React Router rejected for this project:** its growth (v6→v7 Remix merge) is toward **loaders/actions** (overlap/compete with the planned query lib #6), **SSR/framework mode** (forbidden by `SPEC.md`), and its search params are **untyped** — so most of its added mass is capability we can't use or don't want. That's the "got unnecessarily massive" feeling, correctly diagnosed.
+   - The nav components already use router-agnostic `href`/`to` props + `aria-current`, so whichever router wins slots in behind them without rewrites.
 10. ★ **Testing strategy** — on-brand with the types/verification thesis (e.g. Vitest + Testing Library). NOT decided.
 
 ### Known requirements — consciously deferred (out of prototype scope, not forgotten)
