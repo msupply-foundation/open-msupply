@@ -1,0 +1,75 @@
+.panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3);
+  margin-block-end: var(--space-5);
+}
+
+.reader,
+.jsonReader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-toolbar);
+  outline: 2px solid transparent;
+  outline-offset: -1px;
+  transition: outline-color 120ms ease, background-color 120ms ease;
+}
+
+.jsonReader {
+  grid-column: 1 / -1;
+}
+
+/* Render-flash — readers flash blue so they read distinctly from the orange fields. */
+.reader[data-flash='on'],
+.jsonReader[data-flash='on'] {
+  outline-color: var(--secondary-main);
+  background: var(--bg-icon);
+}
+
+.label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.value,
+.valueError {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.value {
+  color: var(--text-body);
+}
+
+.valueError {
+  color: var(--error-main);
+}
+
+.progressTrack {
+  display: block;
+  block-size: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--bg-group-main);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  block-size: 100%;
+  background: var(--primary-main);
+  transition: inline-size 120ms ease;
+}
+
+.json {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  word-break: break-all;
+}

@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer/Footer';
 import { ContentFooter } from '@/components/ContentFooter/ContentFooter';
 import { InputsShowcase } from '@/components/showcase/InputsShowcase';
 import { SelectorsShowcase } from '@/components/showcase/SelectorsShowcase';
+import { BenchmarkPage } from '@/benchmark/BenchmarkPage';
 import { Tabs, TabPanel } from '@/components/ui/Tabs';
 import type { TabDef } from '@/components/ui/Tabs';
 import styles from './App.module.css';
@@ -16,6 +17,7 @@ const TABS: TabDef[] = [
   { value: 'selectors', label: 'Selectors' },
   { value: 'table', label: 'Table' },
   { value: 'feedback', label: 'Feedback' },
+  { value: 'performance', label: 'Performance' },
 ];
 
 export const App = () => {
@@ -64,6 +66,9 @@ export const App = () => {
                 Feedback — alerts, toasts &amp; the month/year date picker.
                 Coming soon.
               </p>
+            </TabPanel>
+            <TabPanel value="performance">
+              <BenchmarkPage />
             </TabPanel>
           </div>
         </Tabs>

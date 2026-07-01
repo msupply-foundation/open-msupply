@@ -1,0 +1,45 @@
+.field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--input-radius);
+  background: var(--bg-white);
+  outline: 2px solid transparent;
+  outline-offset: -1px;
+  transition: outline-color 120ms ease, background-color 120ms ease;
+}
+
+/* Render-flash: set by useRenderTracker on every commit while flash is on. */
+.field[data-flash='on'] {
+  outline-color: var(--primary-main);
+  background: rgba(233, 92, 48, 0.1);
+}
+
+.index {
+  flex: none;
+  inline-size: 2.25rem;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.input {
+  inline-size: 100%;
+  min-inline-size: 0;
+  block-size: var(--input-height-sm);
+  padding-inline: var(--input-padding-x);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary-main);
+  box-shadow: var(--focus-ring);
+}

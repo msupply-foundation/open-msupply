@@ -30,6 +30,11 @@ A living ledger of every UI element built in the prototype and **what went into 
 | Selectors — **Autocomplete / combobox** (item picker) | Our markup + CSS (`ui/Combobox`) | **Downshift `useCombobox`** — the flagged hard widget: the one selector genuinely dangerous to hand-roll (WAI-ARIA combobox = virtual focus via `aria-activedescendant`, result/active announcements, typeahead). ~3 KB, imposes no markup/style/filter — we supply the locale-aware, code-or-name filter. |
 | Selectors — **Multi-select autocomplete** (tags) | Our markup + CSS (`ui/MultiSelect`) | **Downshift `useMultipleSelection` + `useCombobox`** — layers a focusable, arrow-navigable tag group + Backspace-to-remove + removal announcements onto the combobox contract. Removable chips; selection stays controlled by the parent. |
 | **Confirm dialog** ("Are you sure?" modal) | Our markup + CSS | **Radix Dialog** — a modal *looks* like plain HTML, but the hard part is the a11y contract WCAG grades: focus **trap** while open, focus **restore** to the trigger on close, Escape/scrim dismiss, `role="dialog"`+`aria-modal`, label/description wiring, scroll lock, and `aria-hidden` on the background. The native `<dialog>` covers only some of this (focus-restore / trap / background-inert vary by browser) and is imperative to drive from React. Radix gives it all declaratively for ~1 KB; no Floating UI. |
+| **Perf HUD** — floating benchmark window (Performance tab) | Hand-rolled (`benchmark/hud/PerfHud.tsx` + `useDraggable`) | — Dev tooling, not app chrome: a `position: fixed`, always-on-top panel dragged with plain Pointer Events + pointer capture. No a11y-widget lib needed. |
+| Perf HUD — **provider segmented control** + page **mode switch** | Hand-rolled (`<button>` group, token-styled active state) | — Simple radio-like button group. |
+| Perf HUD — **live metrics** | Hand-rolled; values read from a per-pane **Zustand** metrics store | — Manual render registry + `PerformanceObserver` (event-timing INP, long tasks) + rAF FPS; all production-build-safe. See `DECISIONS.md`. |
+| **Render-flash** highlight (benchmark) | Hand-rolled (`useRenderTracker` layout-effect toggles a `data-flash` attr; CSS outline) | — Built-in equivalent of DevTools "highlight updates". |
+| **Controlled field + readers** (benchmark form) | Hand-rolled (`<input>` / `<span>` progress bar, written once against the `StateAdapter`) | — Identical in every tier; the swappable state lives behind the adapter, not the markup. |
 
 ## Reusable primitives (`app/src/components/ui/`)
 
@@ -58,7 +63,7 @@ A living ledger of every UI element built in the prototype and **what went into 
 
 ## Dependencies
 
-- **In use:** `@radix-ui/react-collapsible` (sidebar sections), `@radix-ui/react-dropdown-menu` (footer language, export caret, filters, status), `@radix-ui/react-tabs` (tab bar), `@radix-ui/react-dialog` (confirm modal, wired to Save), `@radix-ui/react-select` (styled drop-down), `@radix-ui/react-direction` (app-wide RTL for Radix widgets), **`downshift`** (item combobox + multi-select); `@fontsource-variable/inter` (font).
+- **In use:** `@radix-ui/react-collapsible` (sidebar sections), `@radix-ui/react-dropdown-menu` (footer language, export caret, filters, status), `@radix-ui/react-tabs` (tab bar), `@radix-ui/react-dialog` (confirm modal, wired to Save), `@radix-ui/react-select` (styled drop-down), `@radix-ui/react-direction` (app-wide RTL for Radix widgets), **`downshift`** (item combobox + multi-select), **`zustand`** (v5 — benchmark tier 3 + per-pane metrics stores; consumed headlessly via vanilla `createStore`/`useStore`/`useShallow`); `@fontsource-variable/inter` (font).
 - **Installed, not yet used:** `@radix-ui/react-popover` (for upcoming popovers — e.g. moving the combobox menu to a collision-aware, portaled popup).
 
 _Keep this table in sync as elements are built or change (see `CLAUDE.md`)._

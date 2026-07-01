@@ -7,6 +7,17 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-01 · State-management benchmark harness — scope & mechanism (informs the open decision #4)
+
+- **What:** A self-contained, demoable benchmark on the new **Performance** tab (`app/src/benchmark/`), built to the `BENCHMARK.md` brief. One controlled form tree written against a single `StateAdapter` interface, with the state mechanism swapped at runtime — the provably-only difference between conditions. It exists to turn the open **state-management** decision (#4) into measured numbers, not assertions.
+- **Tiers built (1–3):** `naive` (single context object, no memo — today's pain), `context-memo` (the honest ceiling of the incremental fix), `zustand` (the proposal). **React Compiler (tier 4) deferred:** it's a build-time transform that can't compile-and-not-compile the same components in one bundle, so an honest 4th tier needs scoped build config or a separate build — out of scope for the first cut. (Carl, 2026-07-01.)
+- **Real `zustand` dependency (v5, ~1.2 KB gz), not a hand-rolled `useSyncExternalStore` shim.** Zustand *is* the named proposal for decision #4, so benchmarking the actual library keeps the "we evaluated Zustand" claim honest. It's consumed headlessly (vanilla `createStore` + `useStore` + `useShallow`), so it doesn't pull in any styling/runtime weight — consistent with the bundle thesis.
+- **`context-memo` is implemented as sharded contexts** (React.memo inputs + a stable dispatch context + values split into fixed-size regions, one context per ~25 fields), *not* `use-context-selector`. Rationale: sharding produces a genuine middle curve (renders ≈ region size) with zero added deps, and pre-empts the "just split your context" rebuttal by showing you can improve it but can't reach per-field granularity without a selector store. Verified live: **naive 205 → context-memo 30 → zustand 3** renders per keystroke at 200 fields.
+- **Instrumentation is production-build safe:** a manual render registry (a layout-effect tick, StrictMode-robust — counts commits, not render-invocations) for the live count; `PerformanceObserver` event-timing for INP and long tasks; a rAF loop for FPS. No reliance on `<Profiler>`/dev internals. The HUD's own cost is applied equally to every tier, so it doesn't bias the comparison.
+- **Metrics are scoped per pane** (a per-pane controller + Zustand store) so the side-by-side demo shows two independent stories at once. Caveat: `event`/`longtask`/FPS observers are page-global, so in side-by-side those three are best read one-tier-at-a-time in single mode; the per-pane **render count** is the honest simultaneous signal.
+- **Deferred to a follow-up (phase C):** the automated scripted run, the scaling-curve chart, and CSV/JSON export. Also open (a run-time choice, not code): whether final numbers run on a throttled desktop or the real Lenovo M10.
+- **Status:** Built and verified (typecheck/lint/build clean; runtime render contrast confirmed via headless Chrome). Feeds decision #4 — **not itself a ratification of Zustand**; it's the measuring instrument.
+
 ## 2026-07-01 · Selectors — one spectrum, chosen by "own the simple, buy the hard"
 
 - **Decision:** The Selectors tab builds out the family of "pick from a list" widgets as a single spectrum, each choice made by how much accessibility the browser gives us for free vs. how much we'd have to (dangerously) re-implement:

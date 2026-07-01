@@ -1,6 +1,6 @@
 # Benchmark harness — state-management comparison
 
-_Implementation brief for the agent building this. Status: spec, not yet built._
+_Implementation brief for the agent building this. Status: **core live demo built** (2026-07-01) — tiers 1–3, controlled form + readers, floating HUD with live metrics, render-flash, single + side-by-side modes, URL params. Lives in `app/src/benchmark/` on the **Performance** tab. **Deferred (phase C):** automated scripted run, scaling-curve chart, CSV/JSON export. See `DECISIONS.md` (2026-07-01, benchmark harness)._
 
 ## Purpose
 
@@ -39,7 +39,7 @@ Run more than two conditions so the baseline is honest and common rebuttals are 
 3. **`zustand`** — external store, per-field selector subscriptions. The proposal.
 4. **`naive-compiler`** _(optional, recommended)_ — tier 1 built with **React Compiler** on. A colleague *will* raise "React Compiler auto-memoises that." Better to have the number before the meeting than during it.
 
-> **Open decision (Carl):** ship all 4 tiers, or just `naive` vs `zustand` for the first cut? Default to at least tiers 1–3.
+> **✓ Resolved (Carl, 2026-07-01):** ship **tiers 1–3** (`naive` / `context-memo` / `zustand`), with the real `zustand` package (it's the named proposal). **Tier 4 (React Compiler) deferred** — it's a build-time transform that can't compile-and-not-compile the same components in one bundle, so it needs scoped build config or a separate build.
 
 Each tier is a provider (`NaiveStateProvider`, `ContextMemoStateProvider`, `ZustandStateProvider`) implementing `StateAdapter`.
 
