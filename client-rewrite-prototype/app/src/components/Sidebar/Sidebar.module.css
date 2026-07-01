@@ -1,0 +1,245 @@
+/*
+ * Sidebar styling — plain CSS Modules, all colours/dims from design tokens
+ * (the theme.ts port). Mirrors the current AppDrawer / AppNavLink:
+ *  - 260px open, 80px closed (icons only)
+ *  - pill nav items (height 40, radius 20); selected = white + shadow + bold
+ *  - orange icons; active parent label orange
+ *  - children indented under a left "tree" line
+ * RTL is handled with logical properties (no JS flipping).
+ */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: var(--drawer-width);
+  flex-shrink: 0;
+  background: var(--bg-drawer);
+  border-start-end-radius: var(--radius-md);
+  border-end-end-radius: var(--radius-md);
+  box-shadow: var(--shadow-drawer);
+  overflow: hidden;
+  transition: width 200ms ease;
+}
+
+.sidebar[data-open='false'] {
+  width: var(--drawer-closed-width);
+}
+
+/* --- Logo ------------------------------------------------------------- */
+.logoArea {
+  height: var(--logo-area-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logoButton {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.logoButton:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 2px;
+}
+
+.logo {
+  height: 56px;
+  width: auto;
+}
+
+/* --- Scroll regions --------------------------------------------------- */
+.upper {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.upper::-webkit-scrollbar {
+  display: none;
+}
+
+.lower {
+  flex-shrink: 0;
+  padding-bottom: var(--space-3);
+}
+
+.navList {
+  list-style: none;
+  margin: 0;
+  padding-inline: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.item {
+  display: block;
+}
+
+/* --- Nav button (links + section triggers share this) ---------------- */
+.navButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: var(--nav-item-height);
+  padding-inline: var(--space-3);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-align: start;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.navButton:hover {
+  background: var(--drawer-hover-bg);
+  box-shadow: var(--shadow-3);
+}
+
+.navButton:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+}
+
+.navButton[data-selected='true'] {
+  background: var(--drawer-selected-bg);
+  box-shadow: var(--shadow-3);
+  color: var(--text-body);
+  font-weight: var(--weight-bold);
+}
+
+/* Active parent section: orange label + icon */
+.navButton[data-active='true'] {
+  color: var(--primary-main);
+  font-weight: var(--weight-bold);
+}
+
+.navButton[data-active='true'] .icon {
+  color: var(--primary-main);
+}
+
+/* --- Icon + chevrons -------------------------------------------------- */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  font-size: 20px;
+  color: var(--primary-main); /* brand orange, like color="primary" */
+}
+
+/* Empty slot keeps leaf labels aligned with section (chevron'd) labels */
+.chevronSlot {
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.sectionChevron {
+  width: 16px;
+  font-size: 16px;
+  flex-shrink: 0;
+  color: var(--gray-main);
+  transition: transform 150ms ease;
+}
+
+/* Collapsed parent: chevron points to the inline-start edge */
+.sectionChevron[data-open='false'] {
+  transform: rotate(-90deg);
+}
+:dir(rtl) .sectionChevron[data-open='false'] {
+  transform: rotate(90deg);
+}
+
+.label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Selected-item indicator at the inline-end edge */
+.endChevron {
+  width: 16px;
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  color: var(--primary-main);
+  transform: rotate(-90deg);
+}
+:dir(rtl) .endChevron {
+  transform: rotate(90deg);
+}
+
+/* --- Section children (the indented tree) ----------------------------- */
+.sectionContent {
+  overflow: hidden;
+}
+
+.sectionContent[data-state='open'] {
+  animation: slide-down 160ms ease-out;
+}
+
+.sectionContent[data-state='closed'] {
+  animation: slide-up 160ms ease-out;
+}
+
+@keyframes slide-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    height: var(--radix-collapsible-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+.childList {
+  list-style: none;
+  margin: var(--space-1) 0 0;
+  margin-inline-start: 28px;
+  padding-inline-start: var(--space-3);
+  border-inline-start: 1px solid var(--gray-light);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.childList .navButton {
+  height: var(--nav-child-height);
+}
+
+/* --- Collapsed (icon-only) state -------------------------------------- */
+.sidebar[data-open='false'] .label,
+.sidebar[data-open='false'] .sectionChevron,
+.sidebar[data-open='false'] .chevronSlot,
+.sidebar[data-open='false'] .endChevron {
+  display: none;
+}
+
+.sidebar[data-open='false'] .navButton {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.sidebar[data-open='false'] .sectionContent {
+  display: none;
+}

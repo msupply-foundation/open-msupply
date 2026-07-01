@@ -7,6 +7,35 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-01 · Decision #3 ratified — UI library & styling: hybrid headless + CSS Modules with design tokens
+
+- **Decision:** No single component kit. A **per-widget hybrid**, chosen by how hard the accessibility is:
+  - **Radix Primitives, à la carte** for the hard-but-covered behavioural widgets — Dialog/AlertDialog (keep modals), Popover, DropdownMenu/ContextMenu, Select, Tooltip, Tabs. Install per-primitive; tree-shakes cleanly (one component ≈ one small package + deduped internals).
+  - **Downshift** (~3 KB, headless) for the **combobox / item-autocomplete** — the genuinely hard widget Radix doesn't cover. We own all markup + CSS; we supply the (locale-aware) filter function. Pair with virtualisation (TanStack Virtual) for large item lists.
+  - **Roll our own (with Claude)** for the low-a11y-risk widgets — month/year date picker (a 12-cell grid + year stepper, no calendar-grid complexity), Command-K (or tiny `cmdk`), and anything else simple. Plain HTML for everything that's just a button/input/layout/table.
+  - **Styling: plain CSS via CSS Modules + CSS custom properties for the design tokens.** Build-time scoping, **zero runtime JS** style computation. The TMF token set becomes CSS variables (`:root` / `[data-theme]`), so theme switching and scoped overrides cost no React re-render. RTL via **logical properties** (`margin-inline-start`, `inset-inline-end`) + `:dir()`, not left/right.
+
+- **Why:**
+  - The decision is **per-widget, not global** — the easy widgets (modal, dropdown, tabs) are safe to own; the **combobox is the one genuinely dangerous widget** to hand-roll (WAI-ARIA `aria-activedescendant`, result-count announcements, virtual focus, typeahead — easy to ship 90% right and break the 10% invisibly). So we buy exactly the hard part and own the rest.
+  - **Radix is the lightest/most styleable of the credible headless options** and the one Carl is drawn to in principle: minimal real DOM, `data-state`/`data-side`/`data-highlighted` attributes styled by plain CSS, and `asChild` so we own the rendered element. No styling engine, no runtime CSS-in-JS, no i18n bloat. Tree-shakeable per primitive → "use one, pay for one".
+  - **CSS Modules + custom properties** is the lowest-JS styling that exists and is *plain CSS designers already know* — directly satisfies the spec's "no runtime CSS-in-JS" hard constraint and "theming simple enough for designers / full TMF token set / scoped where needed".
+
+- **i18n is mostly NOT a UI-library concern** (this is what de-risks dropping React Aria's heavy `@internationalized/*` machinery):
+  - **Formatting** (numbers/dates/currency/plurals/translations) is **app-level** — browser `Intl` (zero bundle) + i18next; we pass finished strings to components. Library-independent.
+  - **RTL layout** is **our CSS** (logical properties + `dir="rtl"` on `<html>`). Library-independent.
+  - Only two narrow things favour a library: **directional component *behaviour*** (placement / arrow-key flip) — Radix's `DirectionProvider` handles this for its widgets; and **locale-aware input *parsing*** for number/date fields — small for OMS (simple decimals, month/year expiry), so we own it. Conclusion: **i18n does not force React Aria.**
+
+- **Alternatives rejected:**
+  - **React Aria** (Adobe) — broadest + gold-standard a11y/i18n, but **heaviest** (higher tree-shake floor; `@internationalized/date` carries multi-calendar machinery we don't need) and a chunkier API. Its headline edge (a11y + i18n *without manual work*) is real, but i18n turned out to be mostly app-level for us (above), so we'd be paying for capability we won't use. Keep as the fallback if rolling our own a11y proves too costly to verify.
+  - **Ark UI (Zag.js)** — comprehensive one-vendor headless set, but runs state machines internally (more JS per widget) and a smaller ecosystem/AI-training footprint. Backup if Radix's gaps bite.
+  - **React-Select** for the combobox — not headless; ships **emotion (runtime CSS-in-JS)** → violates the hard constraint and re-imports the weight we're escaping (~27 KB+, slow on large lists without manual virtualisation). Downshift instead.
+  - **vanilla-extract** styling — good, zero-runtime, *typed* tokens, but a TS DSL rather than plain CSS (more build machinery, steeper for designers). Fallback only if typed tokens become a must-have.
+  - **Tailwind** — passes the hard constraint (build-time), but a large shift away from plain CSS and weaker on "simple for designers" theming. Not the fit given the plain-CSS bias.
+  - **A monolithic component kit** (MUI etc.) — the weight we're rebuilding away from.
+
+- **Validation gates (to measure in the slice, not assume):** real gzipped bundle for the actual set (Radix dialog/popover/dropdown/select + Downshift combobox) vs. estimates; INP on the throttled-tablet profile; that `react-aria-components` isn't needed (so we avoid its floor); the item-autocomplete a11y + large-list virtualisation; and that the custom month/year picker + our own widgets hit WCAG 2.2 without heavy manual work. The MUI-bound JSONForms renderers (61) reuse these same primitives, so the slice doubles as a credibility check on that migration.
+- **Status:** Adopted. Build the first slice on this stack to convert estimates into measured numbers.
+
 ## 2026-07-01 · Decision #2 ratified — Build engine: Vite (plugin-load path to be prototyped soon)
 
 - **Decision:** Build the new front end with **Vite**. Adopted; the single open risk — runtime plugin loading (below) — is to be **prototyped soon** as the validating spike rather than discovered late.
@@ -66,7 +95,7 @@ Append-only record of architectural decisions and **why**, including alternative
 ## 2026-07-01 · Styling approach — deliberately deferred
 
 - **Why:** Carl wants styling chosen as its own decision with a proper argument, not defaulted into. Until then the slice will use minimal, neutral, easily-replaceable styling so it doesn't pre-empt the choice (CSS Modules vs vanilla-extract vs Tailwind, or another option).
-- **Status:** Pending — to be decided once the slice renders and styling matters.
+- **Status:** ~~Pending~~ — **Superseded by Decision #3 (2026-07-01, above): CSS Modules + CSS custom properties.**
 
 ## 2026-07-01 · Track context across sessions via CLAUDE.md + DECISIONS.md + STATUS.md
 

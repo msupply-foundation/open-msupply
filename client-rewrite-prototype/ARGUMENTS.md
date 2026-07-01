@@ -62,3 +62,40 @@ A curated arsenal of arguments for defending the rewrite-approach decisions to t
 **Claim:** Moving to plain HTML + CSS with a few headless components is current best practice and directly attacks the perf complaints.
 
 **Why:** Headless libs (React Aria / Ark / Radix / Downshift, TanStack Table) hand us accessibility, keyboard nav, and focus management for the hard widgets while we own lightweight markup and styling — escaping runtime CSS-in-JS and heavyweight kits without giving up the hard, accessibility-critical work.
+
+## 7. UI library: the choice is per-widget, not a single kit
+
+**Claim:** "Which UI library?" is the wrong framing. The right unit is the **widget**, sorted by how hard its accessibility is — so we buy exactly the hard parts and own the rest.
+
+**Why:**
+- Most widgets (modal, dropdown, tabs, tooltip, accordion) are *medium* difficulty — safe to build ourselves on plain HTML + CSS, or take cheaply from a light headless primitive.
+- **The combobox/autocomplete is the one genuinely hard widget.** The WAI-ARIA combobox pattern (`aria-activedescendant`, result-count announcements, virtual focus, typeahead, mobile screen readers) is famous for being shipped 90%-right with a broken, untestable 10%. That's the piece worth a dependency.
+- So the stack is a **hybrid**: **Radix** à la carte for the hard-but-covered behavioural widgets (Dialog, Popover, DropdownMenu, Select, Tooltip), **Downshift** (~3 KB) for the combobox, and **roll-our-own** for the low-risk widgets (month/year picker, Command-K). Plain HTML for everything else.
+- This is *more* on-thesis than picking one kit: we pay only for what's hard, every dependency is tree-shakeable per component ("use one, pay for one"), and we keep full control of markup + CSS.
+
+**Rebuttal to "just use React-Select for the dropdown":** React-Select isn't headless — it ships **emotion (runtime CSS-in-JS)**, which violates the spec's hard constraint and re-imports the exact weight we're escaping (~27 KB+, slow on large lists). Downshift gives the same behaviour headless at ~3 KB.
+
+**Rebuttal to "why not the all-in-one accessible kit (React Aria)?":** It's the gold standard for a11y/i18n, but the heaviest, with a chunkier API and multi-calendar machinery we don't need — and its headline edge (i18n *for free*) mostly doesn't apply to us because our i18n is app-level (see #9). We keep it as the fallback if owning a11y proves too costly to verify, not the default.
+
+## 8. Styling: plain CSS (Modules) + custom properties — the lowest-JS option that exists
+
+**Claim:** CSS Modules + CSS custom properties is the styling method that best fits *both* the perf bar and the "no runtime CSS-in-JS" constraint — and it's the friendliest to designers.
+
+**Why:**
+- **Zero runtime style computation.** CSS Modules is plain CSS with build-time class scoping; the only runtime artefact is a tiny class-name map. Nothing computes styles in JS — the opposite of the emotion runtime that made the current app feel heavy.
+- **Design tokens are just CSS variables.** The full TMF token set becomes `--color-*`, `--space-*` on `:root`/`[data-theme]`. Theme switching and scoped overrides happen in the browser with **no React re-render** — directly answers "support the full TMF token set, scoped, simple for designers".
+- **It's plain CSS designers already know** — no DSL, no utility-class dialect.
+- **RTL falls out of logical properties** (`margin-inline-start`, `inset-inline-end`) + `dir="rtl"` — no JS flip step.
+
+**Rebuttal to "vanilla-extract gives typed tokens":** True and tempting, but it's a TS DSL, not plain CSS — more build machinery and a steeper path for designers. Hold it as a fallback only if typed tokens become a must-have. **Rebuttal to "Tailwind is faster to write":** it passes the no-runtime constraint, but it's a big shift away from plain CSS and weaker on the "simple for designers" theming criterion.
+
+## 9. Internationalisation is mostly an app-level concern, not a UI-library one
+
+**Claim:** Worry about i18n shouldn't drive the component-library choice. Most of it lives above the components.
+
+**Why:**
+- **Formatting** (numbers, dates, currency, plurals, translated strings) is done with the browser's built-in `Intl` API (zero bundle) + i18next, then we **pass finished strings** to components. The component never needs the locale. This is the bulk of i18n and it's library-independent.
+- **RTL layout** is *our CSS* — logical properties + `dir="rtl"` on `<html>`. Also library-independent.
+- Only two narrow things actually want library help: **directional component *behaviour*** (dropdown placement / arrow-keys flipping in RTL — Radix's `DirectionProvider` covers its widgets) and **locale-aware input *parsing*** for number/date fields (small for OMS: simple decimals + month/year expiry, so we own it).
+
+**Rebuttal to "but i18n is critical, so we need the heavy i18n-first library (React Aria)":** Critical, yes — but it's mostly delivered by `Intl` + i18next + CSS, not by the widget kit. React Aria's `@internationalized/*` machinery only pays off in locale-aware *input parsing*, a narrow slice of OMS. So i18n importance is real **and** it doesn't force the heavyweight library.

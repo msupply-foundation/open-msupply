@@ -17,8 +17,9 @@ export default defineConfig({
     },
   },
   server: {
-    // Matches the existing host dev-server port so backend CORS / discovery
-    // expectations carry over unchanged.
-    port: 3003,
+    // Deliberately NOT :3003 — that's the current front-end's dev/serve port
+    // (packages/host). Using :3010 lets the existing app and this rewrite run
+    // side by side for comparison.
+    port: 3010,
   },
 });

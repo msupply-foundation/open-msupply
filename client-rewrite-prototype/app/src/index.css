@@ -1,26 +1,36 @@
 /*
- * Minimal, neutral, easily-replaceable base styles.
- * Styling approach is a deliberately deferred decision (see ../DECISIONS.md):
- * nothing here commits us to a styling method.
+ * Base styles. The design tokens live in ./styles/tokens.css (a faithful port
+ * of the current app's theme.ts). This file is just the reset + global defaults
+ * that reference those tokens. No styling engine — plain CSS.
  */
 
-:root {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
-  color: #1a1a1a;
-  background: #ffffff;
+/* Inter Variable — the current app's font (theme.ts: fontFamily 'Inter Variable') */
+@import '@fontsource-variable/inter';
+@import './styles/tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-* {
-  box-sizing: border-box;
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
   margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--line-body);
+  color: var(--text-body);
+  background: var(--bg-white);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-.app {
-  max-width: 48rem;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
+button {
+  font: inherit;
 }

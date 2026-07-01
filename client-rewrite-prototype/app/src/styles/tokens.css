@@ -1,0 +1,106 @@
+/*
+ * Design tokens — the styling foundation (see ../../../DECISIONS.md #3).
+ *
+ * This is a faithful 1:1 port of the CURRENT app's MUI theme
+ *   client/packages/common/src/styles/theme.ts
+ * into plain CSS custom properties. Values are copied from there — NOT invented.
+ * The "primitive" layer is the raw palette/scale; the "semantic" layer is the
+ * roles components actually reference. Re-theming = change this file; theme
+ * switching / per-subtree scoping is a CSS variable change with NO React
+ * re-render and NO runtime style computation.
+ */
+
+:root {
+  /* --- Primitive palette (theme.ts → palette) -------------------------- */
+  --primary-main: #e95c30; /* brand orange */
+  --primary-light: #ed7d59;
+  --primary-dark: #c43c11;
+  --primary-contrast: #fff;
+
+  --secondary-main: #3e7bfa; /* action blue (dialog primary button, info) */
+  --secondary-light: #5b8def;
+  --secondary-dark: #3568d4;
+
+  --error-main: #e63535;
+  --error-bg: #ffcdce;
+
+  --gray-main: #8f90a6;
+  --gray-light: #c7c9d9;
+  --gray-dark: #555770;
+  --gray-pale: #ccddff;
+
+  --color-border-value: #e4e4eb;
+  --color-divider: #eaeaea;
+  --outline-main: #555770;
+
+  /* backgrounds (theme.ts → palette.background) */
+  --bg-white: #fff;
+  --bg-drawer: #f2f2f5;
+  --bg-menu: #f2f2f5;
+  --bg-toolbar: #fafafc;
+  --bg-row: #fafafc;
+  --bg-group-light: #fafafc;
+  --bg-group-main: #f2f2f5;
+  --bg-group-dark: #e2e2e9;
+  --bg-icon: #e5eeff;
+  --bg-input: #f2f2f5;
+  --bg-input-disabled: #fafafc;
+
+  /* text (theme.ts → typography + palette.form) */
+  --text-body: #1c1c28; /* body1 / th */
+  --text-secondary: #555770; /* body2 / h6 / form.field */
+  --text-label: #28293d; /* form.label */
+  --button-text: #373740;
+
+  /* header / drawer mixins (theme.ts → mixins) */
+  --header-bg: #fafafc;
+  --header-border: #cbced4;
+  --drawer-selected-bg: #fff;
+  --drawer-hover-bg: #fafafc;
+
+  /* --- Spacing (4px base, mirrors MUI theme.spacing) ------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* --- Radius --------------------------------------------------------- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-pill: 20px; /* nav items: borderRadius 20 */
+
+  /* --- Elevation (theme.ts → createTheme shadow overrides) ------------ */
+  --shadow-1: 0 0.5px 2px 0 rgba(96, 97, 112, 0.16),
+    0 0 1px 0 rgba(40, 41, 61, 0.08);
+  --shadow-2: 0 4px 8px 0 rgba(96, 97, 112, 0.16),
+    0 0 2px 0 rgba(40, 41, 61, 0.04);
+  --shadow-3: 0 8px 16px 0 rgba(96, 97, 112, 0.16),
+    0 2px 4px 0 rgba(40, 41, 61, 0.04);
+  --shadow-4: 0 12px 24px 0 rgba(96, 97, 112, 0.16),
+    0 4px 8px 0 rgba(40, 41, 61, 0.3);
+  --shadow-drawer: 4px 0 16px 0 rgba(96, 97, 112, 0.18);
+
+  /* --- Typography (theme.ts → typography) ----------------------------- */
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+  --text-xs: 12px; /* body2 */
+  --text-sm: 14px; /* body1 / th */
+  --text-md: 16px; /* h6 */
+  --text-lg: 20px;
+  --line-body: 1.71; /* body1 */
+  --weight-medium: 500;
+  --weight-bold: 700;
+
+  /* --- Layout dimensions (theme.ts → mixins / AppDrawer) -------------- */
+  --drawer-width: 260px;
+  --drawer-closed-width: 80px;
+  --logo-area-height: 90px;
+  --nav-item-height: 40px;
+  --nav-child-height: 30px;
+  --table-data-row: 40px;
+  --table-header-row: 60px;
+  --footer-height: 32px;
+  --touch-target: 48px; /* spec target — available where we want it */
+}
