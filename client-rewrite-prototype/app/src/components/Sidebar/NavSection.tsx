@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import * as Collapsible from '@radix-ui/react-collapsible';
-import { ChevronDownIcon } from '@/components/icons';
-import type { NavItem } from './navModel';
-import { NavLink } from './NavLink';
-import styles from './Sidebar.module.css';
+import { useState } from "react";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { ChevronDownIcon } from "@/components/icons";
+import type { NavItem } from "./navModel";
+import { NavLink } from "./NavLink";
+import styles from "./Sidebar.module.css";
 
 interface NavSectionProps {
   item: NavItem;
@@ -18,8 +18,8 @@ interface NavSectionProps {
 /*
  * An expandable parent section. Radix Collapsible owns the disclosure: it wires
  * aria-expanded / aria-controls onto the trigger and exposes
- * --radix-collapsible-content-height for the smooth open/close animation. We own
- * all the markup and CSS; the Icon is the brand-orange (currentColor) icon.
+ * --radix-collapsible-content-height for the smooth open/close animation. We
+ * own all the markup and CSS; the Icon is the brand-orange (currentColor) icon.
  */
 export const NavSection = ({
   item,
@@ -32,34 +32,20 @@ export const NavSection = ({
   const { icon: Icon } = item;
 
   return (
-    <Collapsible.Root
-      open={open}
-      onOpenChange={setOpen}
-      className={styles.section}
-      asChild
-    >
+    <Collapsible.Root open={open} onOpenChange={setOpen} className={styles.section} asChild>
       <li className={styles.item}>
         <Collapsible.Trigger asChild>
-          <button
-            type="button"
-            className={styles.navButton}
-            data-active={active}
-            title={item.label}
-          >
+          <button type="button" className={styles.navButton} data-active={active} title={item.label}>
             <span className={styles.icon}>
               <Icon />
             </span>
-            <ChevronDownIcon
-              className={styles.sectionChevron}
-              data-open={open}
-              aria-hidden
-            />
+            <ChevronDownIcon className={styles.sectionChevron} data-open={open} aria-hidden />
             <span className={styles.label}>{item.label}</span>
           </button>
         </Collapsible.Trigger>
         <Collapsible.Content className={styles.sectionContent}>
           <ul className={styles.childList}>
-            {item.children?.map(child => (
+            {item.children?.map((child) => (
               <NavLink
                 key={child.id}
                 label={child.label}

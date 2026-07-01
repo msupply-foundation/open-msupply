@@ -1,4 +1,4 @@
-/*
+/* 
  * Radix Select — styled drop-down. Trigger matches the input spec; the popup
  * (portaled to <body>, inherits `dir` from <html>) is styled like the shared
  * menu. rem/em + logical properties throughout.

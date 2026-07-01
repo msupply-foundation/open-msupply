@@ -1,9 +1,18 @@
 import type { ReactNode } from 'react';
 import { TextField } from '@/components/ui/TextField';
+import { cx } from '@/utils/classNames';
 import styles from './InputsShowcase.module.css';
 
-const Field = ({ caption, children }: { caption: string; children: ReactNode }) => (
-  <div className={styles.cell}>
+const Field = ({
+  caption,
+  className,
+  children,
+}: {
+  caption: string;
+  className?: string;
+  children: ReactNode;
+}) => (
+  <div className={cx(styles.cell, className)}>
     <span className={styles.caption}>{caption}</span>
     {children}
   </div>
@@ -53,12 +62,13 @@ export const InputsShowcase = () => (
             helperText="Grey fill, muted border — not interactive"
           />
         </Field>
-        <Field caption="Small · long">
+        <Field caption="Small · long" className={styles.fullRow}>
           <TextField
             label="Description"
             size="small"
             width="long"
-            placeholder="Longer free-text field (max 37.5rem)"
+            placeholder="Longer free-text field"
+            helperText="Small height + the 'long' max-width cap (37.5rem / 600px) — wider than the 25rem 'short' default; spans the row so the cap is visible."
           />
         </Field>
       </div>

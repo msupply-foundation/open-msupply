@@ -39,6 +39,12 @@
   min-width: 0;
 }
 
+/* Spans both columns so a field's max-width cap (e.g. the 37.5rem "long"
+   variant) has room to show instead of being capped by a ~20rem column. */
+.fullRow {
+  grid-column: 1 / -1;
+}
+
 .caption {
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
