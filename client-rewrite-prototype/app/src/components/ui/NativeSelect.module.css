@@ -1,0 +1,85 @@
+/*
+ * NativeSelect — plain <select> styled to the input design spec. rem/em
+ * throughout; logical properties so it mirrors in RTL for free.
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: var(--input-max-short);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1.3;
+  color: var(--text-body);
+}
+
+.control {
+  position: relative;
+  display: flex;
+}
+
+.select {
+  width: 100%;
+  height: var(--input-height);
+  /* Room for the chevron on the inline-end side (flips in RTL). */
+  padding-inline: var(--input-padding-x) 2rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-white);
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.3;
+  /* Drop the OS arrow — we draw our own so it matches the other inputs. */
+  appearance: none;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--primary-main);
+  box-shadow: var(--focus-ring);
+}
+
+.select:disabled {
+  background: var(--bg-input);
+  border-color: var(--color-divider);
+  color: var(--gray-main);
+  cursor: not-allowed;
+}
+
+/* Placeholder option (empty value) reads as muted, like an input placeholder. */
+.select:has(option[value='']:checked) {
+  color: var(--gray-main);
+}
+
+.chevron {
+  position: absolute;
+  inset-inline-end: var(--input-padding-x);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.25rem;
+  color: var(--gray-dark);
+  pointer-events: none;
+}
+
+.helper {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--text-secondary);
+}
+
+@media (pointer: coarse) {
+  .select {
+    min-height: var(--touch-target);
+  }
+}

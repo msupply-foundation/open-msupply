@@ -6,6 +6,7 @@ import { Header } from '@/components/Header/Header';
 import { Footer } from '@/components/Footer/Footer';
 import { ContentFooter } from '@/components/ContentFooter/ContentFooter';
 import { InputsShowcase } from '@/components/showcase/InputsShowcase';
+import { SelectorsShowcase } from '@/components/showcase/SelectorsShowcase';
 import { Tabs, TabPanel } from '@/components/ui/Tabs';
 import type { TabDef } from '@/components/ui/Tabs';
 import styles from './App.module.css';
@@ -50,9 +51,7 @@ export const App = () => {
               <InputsShowcase />
             </TabPanel>
             <TabPanel value="selectors">
-              <p className={styles.comingSoon}>
-                Selectors — dropdowns &amp; the item combobox. Coming soon.
-              </p>
+              <SelectorsShowcase />
             </TabPanel>
             <TabPanel value="table">
               <p className={styles.comingSoon}>

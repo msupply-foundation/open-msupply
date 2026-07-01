@@ -1,0 +1,91 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 60rem;
+}
+
+.card,
+.rtlCard {
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  box-shadow: var(--shadow-1);
+  overflow: visible;
+}
+
+.rtlCard {
+  border-style: dashed;
+  background: var(--bg-group-light);
+}
+
+.cardHeader {
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-group-light);
+  border-bottom: 1px solid var(--color-border-value);
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
+.rtlCard .cardHeader {
+  background: transparent;
+}
+
+.cardBody {
+  padding: var(--space-5);
+}
+
+.lead {
+  margin: 0 0 var(--space-4);
+  max-width: 44rem;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.lead code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+}
+
+/* Coloured status dot for the Radix Select options. */
+.dot {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+}
+
+/* Two-line item option. */
+.itemRow {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.itemName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemMeta {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.outOfStock {
+  color: var(--error-main);
+}
+
+/* RTL preview: intrinsic 2-up grid, stacks when narrow (no breakpoint). */
+.rtlGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--space-5);
+}

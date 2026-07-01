@@ -19,7 +19,8 @@ export default defineConfig({
   server: {
     // Deliberately NOT :3003 — that's the current front-end's dev/serve port
     // (packages/host). Using :3010 lets the existing app and this rewrite run
-    // side by side for comparison.
-    port: 3010,
+    // side by side for comparison. PORT can override (e.g. preview tooling that
+    // assigns its own port); default stays :3010.
+    port: Number(process.env.PORT) || 3010,
   },
 });

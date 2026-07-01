@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "rewrite-app",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd client-rewrite-prototype/app && yarn dev"],
+      "port": 3010,
+      "autoPort": true
+    }
+  ]
+}
