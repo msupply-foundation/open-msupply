@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 use anyhow::anyhow;
 use async_graphql::EmptySubscription;
 use chrono::Utc;
@@ -43,6 +44,9 @@ use tokio::task::spawn_blocking;
 
 mod backup;
 use backup::*;
+
+#[cfg(feature = "sqlite-to-postgres")]
+mod migrate_sqlite_to_postgres;
 
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
@@ -223,6 +227,26 @@ enum Action {
     },
     #[cfg(feature = "integration_test")]
     LoadTest(LoadTest),
+    /// Copy ALL data from an existing SQLite omSupply database file into the configured Postgres
+    /// database, preserving OMS-only tables that would be lost by a sync re-initialisation.
+    /// The Postgres database must already be created and migrated (run `initialise-database` first,
+    /// from a build at the SAME version as the SQLite file). Existing Postgres data is truncated.
+    #[cfg(feature = "sqlite-to-postgres")]
+    MigrateSqliteToPostgres {
+        /// Path to the source .sqlite database file
+        #[clap(short, long)]
+        sqlite_path: String,
+        /// Only print the copy plan (tables and row counts), do not write anything
+        #[clap(long, action = ArgAction::SetTrue)]
+        dry_run: bool,
+        /// Do not copy; instead compare SQLite vs Postgres row counts per table and report any
+        /// mismatches (exit non-zero if any differ). Use after a copy to validate it.
+        #[clap(long, action = ArgAction::SetTrue)]
+        verify: bool,
+        /// Number of rows per INSERT batch
+        #[clap(long, default_value = "500")]
+        batch_size: usize,
+    },
     GeneratePluginTypescriptTypes {
         /// Optional path to save typescript types, if not provided will save to `../client/packages/plugins/backendCommon/generated`
         #[clap(
@@ -798,6 +822,15 @@ async fn main() -> anyhow::Result<()> {
                 duration,
             );
             load_test.run().await?;
+        }
+        #[cfg(feature = "sqlite-to-postgres")]
+        Action::MigrateSqliteToPostgres {
+            sqlite_path,
+            dry_run,
+            verify,
+            batch_size,
+        } => {
+            migrate_sqlite_to_postgres::run(&settings, &sqlite_path, dry_run, verify, batch_size)?;
         }
     }
 

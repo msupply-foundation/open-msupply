@@ -36,8 +36,18 @@ cd ../
 rm -rf $DESTINATION
 mkdir $DESTINATION
 mkdir $DESTINATION/bin
-cp "server/target/${TARGET}/release/remote_server" $DESTINATION/bin 
-cp "server/target/${TARGET}/release/remote_server_cli" $DESTINATION/bin 
+cp "server/target/${TARGET}/release/remote_server" $DESTINATION/bin
+cp "server/target/${TARGET}/release/remote_server_cli" $DESTINATION/bin
+
+# Opt-in: extra Postgres CLI with the `migrate-sqlite-to-postgres` driver, as a separate binary so it
+# doesn't replace this package's SQLite `remote_server_cli`. Needs libpq (`brew install libpq`).
+if [ "$INCLUDE_MIGRATION_DRIVER" == "true" ]; then
+    echo "##### Building Postgres migration CLI (migrate-sqlite-to-postgres) #####"
+    export PQ_LIB_DIR="${PQ_LIB_DIR:-$(brew --prefix libpq 2>/dev/null)/lib}"
+    ( cd server && cargo build --release --bin remote_server_cli \
+        --no-default-features --features "postgres,sqlite-to-postgres" --target $TARGET )
+    cp "server/target/${TARGET}/release/remote_server_cli" "$DESTINATION/bin/remote_server_cli-postgres"
+fi
 
 # Copy configurations
 mkdir $DESTINATION/configuration

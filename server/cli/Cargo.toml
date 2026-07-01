@@ -48,6 +48,8 @@ machine-uid = { version = "0.5.1" }
 copy_dir = "0.1.3"
 shellexpand = "3.1.0"
 serde_yml = "0.0.12"
+# For the `sqlite-to-postgres` feature: `bundled` lets the Postgres binary read a .sqlite source
+rusqlite = { version = "0.37.0", features = ["bundled"], optional = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }
@@ -55,5 +57,12 @@ actix-rt = { workspace = true }
 [features]
 default = ["sqlite"]
 sqlite = ["server/sqlite"]
-postgres = ["server/postgres"]
+postgres = [
+    "server/postgres",
+    "service/postgres",
+    "graphql/postgres",
+    "repository/postgres",
+    "diesel/postgres",
+]
 integration_test = []
+sqlite-to-postgres = ["rusqlite", "postgres"]

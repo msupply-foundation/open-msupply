@@ -1940,6 +1940,7 @@ dependencies = [
  "report_builder",
  "repository",
  "reqwest",
+ "rusqlite",
  "serde",
  "serde_json",
  "serde_yml",

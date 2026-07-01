@@ -40,8 +40,9 @@ cargo build --release --bin omsupply_service --features postgres && copy "target
 )
 
 @ECHO ##### Building omSupply cli #####
+@REM postgres cli adds `sqlite-to-postgres` feature = the migrate-sqlite-to-postgres driver
 cargo build --release --bin remote_server_cli && copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-sqlite.exe"
-cargo build --release --bin remote_server_cli --features postgres && copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-postgres.exe"
+cargo build --release --bin remote_server_cli --features "postgres,sqlite-to-postgres" && copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-postgres.exe"
 @if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )

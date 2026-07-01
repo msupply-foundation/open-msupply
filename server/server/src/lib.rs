@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 #[cfg(not(target_os = "android"))]
 extern crate machine_uid;
 
