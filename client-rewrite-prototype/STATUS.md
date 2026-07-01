@@ -10,7 +10,9 @@ Project setup / first vertical slice. Working through the "To decide" list one i
 
 Building the **Outbound Shipments page as a component storybook** in [`app/`](./app/) (runs on **:3010**, alongside the current app on :3003). See "Done → Built in the slice" below for the full inventory.
 
-**▶ Next element: Selectors** (tab 2 — currently a placeholder) — dropdowns + the item **combobox/autocomplete** (the flagged hard widget). Per Decision #3: use **Downshift** for the combobox (locale-aware filter; virtualise large lists later) and Radix where it fits. Show the RTL version.
+**▶ Next element: the Table** (tab 3 — currently a placeholder) — the storybook centrepiece and the TanStack Table validation gate (see decision-queue #8): headless `<table>` + container-query card view, sort/`aria-sort` announcements, keyboard row nav, frozen columns, and the Lenovo M10 row-count benchmark.
+
+**✓ Done — Selectors** (tab 2): the full "pick from a list" spectrum, each justified by "own the simple, buy the hard" — **native `<select>`** (plain drop-down), **Radix Select** (styled drop-down, colour-dot options), **Downshift combobox** (the flagged item autocomplete, filters on code *or* name, two-line options, clearable), and **Downshift multi-select** (removable tags, controlled). RTL verified inline + via the app language flip; a root Radix **`DirectionProvider`** was added to `LocaleProvider` so all Radix widgets are direction-aware. New deps: `@radix-ui/react-select`, `@radix-ui/react-direction`; Downshift now in use. Full rationale + deferred items (virtualisation, server-paginated search, portaled/collision-aware menu) in `DECISIONS.md`.
 
 **Carried (open):** validate the Vite plugin-load path (Module Federation on Vite) — decision #2's gate. Build a hello-world **remote** plugin via the chosen Vite route (lead: `@module-federation/vite`) and load it at runtime into the host sharing one React. See `DECISIONS.md` decision #2.
 
@@ -45,9 +47,10 @@ The external bar now lives in [`SPEC.md`](./SPEC.md) (the dev lead's brief — d
 - **Content footer** — pinned (non-scrolling) action bar; **blue** (secondary) buttons: History / Cancel / Save. **Save opens a confirm modal** (`ConfirmDialog`).
 - **Modals** — reusable `Dialog` (Radix **Dialog**) + `ConfirmDialog` preset ("Are you sure?" / Cancel / OK); the modal usage pattern (local `open` state, declarative render). Wired to Save.
 - **Inputs** (tab 1) — `TextField` to the **company input design spec** (default / filled / required / error / disabled / small; orange focus glow), in an intrinsic ≤2-column grid.
+- **Selectors** (tab 2) — the "pick from a list" spectrum: **native `<select>`** (plain drop-down), **Radix Select** (styled, colour-dot options), **Downshift combobox** (item autocomplete — filters on code *or* name, two-line options, clearable), **Downshift multi-select** (removable tags, controlled). Sample data shaped like real outbound-shipment items. Inline `dir="rtl"` preview + app-wide `DirectionProvider` (in `LocaleProvider`) for Radix RTL. See `DECISIONS.md` (2026-07-01, Selectors).
 - **Responsive** — intrinsic layout; the *only* breakpoint is nav dock↔overlay (`app/src/styles/breakpoints.ts`). **rem/em everywhere**; phone view scales root to 85%.
-- **Bundle now:** **~103 KB gzip JS / ~5 KB gzip CSS**. Radix primitives in use: **Collapsible, DropdownMenu, Tabs, Dialog** (Popover installed, unused). **Downshift** installed, not yet used (→ Selectors).
-- **Reusable UI:** `components/ui/` = `Button` (orange/blue tones), `TextField`, `Tabs`, shared `Menu.module.css`; `hooks/useMediaQuery`; `utils/classNames` (`cx`).
+- **Bundle now:** **~124 KB gzip JS / ~6.75 KB gzip CSS** (+~21 KB gz from the selectors: Radix Select + Downshift ×2 hooks + direction). Radix primitives in use: **Collapsible, DropdownMenu, Tabs, Dialog, Select, Direction** (Popover installed, unused). **Downshift** in use (combobox + multi-select).
+- **Reusable UI:** `components/ui/` = `Button` (orange/blue tones), `TextField`, `NativeSelect`, `Select`, `Combobox<T>`, `MultiSelect<T>`, `Tabs`, `Dialog`/`ConfirmDialog`, shared `Menu.module.css`; `hooks/useMediaQuery`; `utils/classNames` (`cx`).
 - **Touch targets (state to know):** the 48px `@media (pointer: coarse)` bump is ON for nav items, menu items, and text inputs; deliberately OFF for action buttons + tabs (Carl wanted the compact 40px). That's the knob if revisited.
 
 ## In progress
