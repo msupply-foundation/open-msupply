@@ -4,8 +4,8 @@ use crate::sync::translations::{
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, StockRelocationRow, StockRelocationRowDelete,
-    StockRelocationRowRepository, StockRelocationStatus, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StockRelocationRow, StockRelocationRowDelete,
+    StockRelocationStatus, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -137,7 +137,7 @@ impl SyncTranslation for StockRelocationTranslation {
             date_finalised,
             status,
             oms_fields,
-        } = serde_json::from_str::<LegacyReplenishmentRow>(&sync_record.data)?;
+        } = serde_json::from_value::<LegacyReplenishmentRow>(sync_record.data.0.clone())?;
 
         let oms_fields = oms_fields.unwrap_or_default();
         let created_datetime = oms_fields
@@ -177,9 +177,14 @@ impl SyncTranslation for StockRelocationTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::StockRelocation(stock_relocation_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let StockRelocationRow {
             id,
             created_datetime,
@@ -193,9 +198,7 @@ impl SyncTranslation for StockRelocationTranslation {
             status,
             store_id,
             user_id,
-        } = StockRelocationRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or_else(|| anyhow::anyhow!("Stock relocation row not found"))?;
+        } = stock_relocation_row;
 
         let legacy_row = LegacyReplenishmentRow {
             id,

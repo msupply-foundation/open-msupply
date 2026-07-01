@@ -52,6 +52,7 @@ pub fn insert_contact_form(
         &ResourceAccessRequest {
             resource: Resource::MutateContactForm,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

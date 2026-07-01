@@ -225,7 +225,7 @@ mod test {
     use repository::{
         mock::{mock_location_1, mock_location_2, MockDataInserts},
         test_db::setup_all,
-        StockLineRow, StockLineRowRepository, StockRelocationStatus, Upsert,
+        StockLineRow, StockLineRowRepository, StockRelocationStatus,
     };
     use util::uuid::uuid;
 
@@ -287,7 +287,9 @@ mod test {
     #[actix_rt::test]
     async fn update_stock_relocation_success() {
         let (service_provider, ctx) = setup("update_stock_relocation_success").await;
-        whole_line("repack_sl").upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&whole_line("repack_sl"))
+            .unwrap();
         let service = &service_provider.stock_relocation_service;
         let stock_line_repo = StockLineRowRepository::new(&ctx.connection);
 
@@ -358,7 +360,9 @@ mod test {
     #[actix_rt::test]
     async fn update_can_clear_to_location() {
         let (service_provider, ctx) = setup("update_can_clear_to_location").await;
-        whole_line("clear_sl").upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&whole_line("clear_sl"))
+            .unwrap();
         let service = &service_provider.stock_relocation_service;
 
         let id = insert_one(&service_provider, &ctx, insert_line("clear_sl", 1.0)).await;
@@ -395,7 +399,9 @@ mod test {
     #[actix_rt::test]
     async fn update_validation_errors() {
         let (service_provider, ctx) = setup("update_validation_errors").await;
-        whole_line("ok_sl").upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&whole_line("ok_sl"))
+            .unwrap();
         let service = &service_provider.stock_relocation_service;
 
         assert_eq!(

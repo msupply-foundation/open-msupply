@@ -63,6 +63,7 @@ pub fn chart(
         &ResourceAccessRequest {
             resource: Resource::RequisitionChart,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

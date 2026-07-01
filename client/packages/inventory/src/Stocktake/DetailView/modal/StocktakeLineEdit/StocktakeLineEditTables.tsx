@@ -96,6 +96,7 @@ export const BatchTable = ({
           <CheckBoxCell
             isError={!!errors[row.original.id]}
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -147,6 +148,7 @@ export const BatchTable = ({
             <DateTimePickerInput
               value={value}
               disabled={disabled || !row.original.countThisLine}
+              disableFuture
               onChange={date =>
                 update({
                   id: row.original.id,
@@ -194,11 +196,13 @@ export const BatchTable = ({
       {
         accessorKey: 'snapshotNumberOfPacks',
         header: t('label.snapshot-num-of-packs'),
-        columnType: ColumnType.Number,
         size: 100,
         getIsError: rowData =>
           errors[rowData.id]?.__typename ===
           'SnapshotCountCurrentCountMismatchLine',
+        Cell: ({ cell }) => (
+          <NumberInputCell cell={cell} disabled updateFn={() => { }} />
+        ),
       },
       {
         accessorKey: 'countedNumberOfPacks',
@@ -310,6 +314,7 @@ export const PricingTable = ({
         Cell: ({ cell, row }) => (
           <CheckBoxCell
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -407,6 +412,7 @@ export const LocationTable = ({
         Cell: ({ cell, row }) => (
           <CheckBoxCell
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -549,7 +555,7 @@ const getPackSizeChangePatch = (
   const shouldClearSellPrice =
     row.item.defaultPackSize !== newPackSize &&
     row.item.itemStoreProperties?.defaultSellPricePerPack ===
-      row.sellPricePerPack;
+    row.sellPricePerPack;
 
   return {
     id: row.id,
@@ -571,7 +577,7 @@ const getCountedPacksChangePatch = (
   const keepReason =
     typeof row.countedNumberOfPacks === 'number' &&
     countedPacks > row.snapshotNumberOfPacks ===
-      row.countedNumberOfPacks > row.snapshotNumberOfPacks;
+    row.countedNumberOfPacks > row.snapshotNumberOfPacks;
 
   return {
     id: row.id,

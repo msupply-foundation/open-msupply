@@ -16,14 +16,29 @@ import {
   mapKeys,
   mapValues,
   AncillaryStateNode,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import {
   getNextRequisitionStatus,
   getStatusTranslation,
   requestStatuses,
 } from '../../../utils';
-import { useRequest } from '../../api';
+import { ProgramIndicatorFragment, useRequest } from '../../api';
 import { useRequestRequisitionLineErrorContext } from '../../context';
+
+const indicatorsArePopulated = (
+  indicators: ProgramIndicatorFragment[] | undefined
+): boolean =>
+  (indicators ?? []).some(indicator =>
+    indicator.lineAndColumns.some(({ columns }) =>
+      columns.some(column => {
+        const value = column.value?.value?.trim();
+        if (!value) return false;
+        const numeric = Number(value);
+        return Number.isNaN(numeric) ? true : numeric !== 0;
+      })
+    )
+  );
 
 const getStatusOptions = (
   currentStatus: RequisitionNodeStatus,
@@ -77,7 +92,9 @@ const getButtonLabel =
       });
     };
 
-const useStatusChangeButton = () => {
+const useStatusChangeButton = (
+  indicators: ProgramIndicatorFragment[] | undefined
+) => {
   const { id, status, comment, lines, ancillaryState } =
     useRequest.document.fields([
       'id',
@@ -87,6 +104,7 @@ const useStatusChangeButton = () => {
       'ancillaryState',
     ]);
   const t = useTranslation();
+  const { updateQuery } = useUrlQuery();
   const { mutateAsync: update } = useRequest.document.update();
   const { success, error } = useNotification();
   const { user, store } = useAuthContext();
@@ -201,17 +219,32 @@ const useStatusChangeButton = () => {
           : undefined
       : undefined;
 
-  const getConfirmation = useConfirmationModal({
-    title: t('heading.are-you-sure'),
-    message: t('messages.confirm-status-as', {
-      status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
-        : '',
-    }),
-    info: ancillaryWarning,
-    iconType: ancillaryWarning ? 'alert' : 'help',
-    onConfirm: onConfirmStatusChange,
-  });
+  const indicatorsNotEntered =
+    isSending && !!indicators?.length && !indicatorsArePopulated(indicators);
+
+  const getConfirmation = useConfirmationModal(
+    indicatorsNotEntered
+      ? {
+        title: t('heading.are-you-sure'),
+        message: t('messages.confirm-send-indicators-empty'),
+        buttonLabel: t('button.confirm-send-order'),
+        cancelButtonLabel: t('button.go-back-to-indicators'),
+        iconType: 'alert',
+        onConfirm: onConfirmStatusChange,
+        onCancel: () => updateQuery({ tab: t('label.indicators') }),
+      }
+      : {
+        title: t('heading.are-you-sure'),
+        message: t('messages.confirm-status-as', {
+          status: selectedOption?.value
+            ? getStatusTranslation(selectedOption?.value)
+            : '',
+        }),
+        info: ancillaryWarning,
+        iconType: ancillaryWarning ? 'alert' : 'help',
+        onConfirm: onConfirmStatusChange,
+      }
+  );
 
   // When the status changes (after an update), set the selected option to the next status.
   // Otherwise, it would be set to the current status, which is now a disabled option.
@@ -222,9 +255,14 @@ const useStatusChangeButton = () => {
   return { options, selectedOption, setSelectedOption, getConfirmation, lines };
 };
 
-export const StatusChangeButton = () => {
+export const StatusChangeButton = ({
+  indicators,
+}: {
+  indicators: ProgramIndicatorFragment[] | undefined;
+}) => {
   const t = useTranslation();
-  const { selectedOption, getConfirmation, lines } = useStatusChangeButton();
+  const { selectedOption, getConfirmation, lines } =
+    useStatusChangeButton(indicators);
   const isDisabled = useRequest.utils.isDisabled();
   const { userHasPermission, store } = useAuthContext();
   const keepZeroRequested =

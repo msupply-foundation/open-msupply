@@ -7,7 +7,10 @@ use crate::{
     stocktake_line::validate::{
         check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
     },
-    validate::{check_other_party, check_store_id_matches, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_date_is_not_in_future, check_other_party, check_store_id_matches,
+        CheckOtherPartyType, OtherPartyErrors,
+    },
     NullableUpdate,
 };
 use repository::{
@@ -44,6 +47,12 @@ pub fn validate(
 
     if stocktake.is_locked {
         return Err(StocktakeIsLocked);
+    }
+
+    if let Some(manufacture_date) = &input.manufacture_date {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
     }
 
     if let Some(vvm_status_id) = &input.vvm_status_id {

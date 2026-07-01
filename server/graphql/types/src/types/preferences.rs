@@ -230,6 +230,10 @@ impl PreferencesNode {
             .collect();
         Ok(statuses)
     }
+
+    pub async fn do_not_print_placeholder_line_labels(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.do_not_print_placeholder_line_labels)
+    }
 }
 
 impl PreferencesNode {
@@ -320,6 +324,7 @@ pub enum PreferenceKey {
     WarnWhenMissingRecentStocktake,
     InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
+    DoNotPrintPlaceholderLineLabels,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]

@@ -43,7 +43,7 @@ mod test {
     use repository::{
         mock::{mock_stock_line_a, MockDataInserts},
         test_db::setup_all,
-        StockRelocationRow, StockRelocationStatus, Upsert,
+        StockRelocationRow, StockRelocationRowRepository, StockRelocationStatus,
     };
 
     use crate::service_provider::ServiceProvider;
@@ -53,21 +53,21 @@ mod test {
         let (_, connection, connection_manager, _) =
             setup_all("stock_relocation_service_queries", MockDataInserts::all()).await;
 
-        StockRelocationRow {
-            id: "relocation_1".to_string(),
-            created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
-                .unwrap()
-                .and_hms_opt(0, 0, 0)
-                .unwrap(),
-            from_stock_line_id: mock_stock_line_a().id,
-            from_number_of_packs: 5.0,
-            status: StockRelocationStatus::Finalised,
-            store_id: "store_a".to_string(),
-            user_id: "user_account_a".to_string(),
-            ..Default::default()
-        }
-        .upsert(&connection)
-        .unwrap();
+        StockRelocationRowRepository::new(&connection)
+            .upsert_one(&StockRelocationRow {
+                id: "relocation_1".to_string(),
+                created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                from_stock_line_id: mock_stock_line_a().id,
+                from_number_of_packs: 5.0,
+                status: StockRelocationStatus::Finalised,
+                store_id: "store_a".to_string(),
+                user_id: "user_account_a".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider.basic_context().unwrap();
