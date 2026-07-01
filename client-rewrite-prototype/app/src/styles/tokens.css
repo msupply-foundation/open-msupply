@@ -122,3 +122,71 @@
   /* Scrim behind the mobile nav overlay / modals */
   --overlay-scrim: rgba(28, 28, 40, 0.45);
 }
+
+/*
+ * Dark theme. Activated by `data-theme='dark'` on <html> (set by ThemeProvider,
+ * and pre-paint by the inline script in index.html). Only token VALUES change
+ * here — every component reads tokens, so nothing else needs to know dark mode
+ * exists. Navy-tinted to match the palette's existing navy greys, with an
+ * INVERTED surface scale (elevated surfaces get lighter) and the "-dark"
+ * emphasis variants flipped to lighter shades, since brighter reads as more
+ * emphasis on a dark ground. See DECISIONS.md.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark; /* native scrollbars, form controls, autofill go dark */
+
+  /* Brand / primary — orange kept for brand integrity; -dark flips lighter */
+  --primary-main: #e95c30;
+  --primary-light: #f2916f;
+  --primary-dark: #f0805a;
+  --primary-contrast: #fff;
+
+  /* Secondary / action blue — lifted for contrast on dark */
+  --secondary-main: #5b8def;
+  --secondary-light: #7ba5f5;
+  --secondary-dark: #4a7ce8;
+
+  /* Feedback */
+  --error-main: #ff5f5f;
+  --error-bg: #4a1f22;
+  --color-warning: #ffb020;
+
+  /* Greys — light = subtle (near surface), dark = high-contrast (readable text) */
+  --gray-main: #9a9bb0;
+  --gray-light: #4a4b5c;
+  --gray-dark: #b8b9cc;
+  --gray-pale: #2a3550;
+
+  --color-border-value: #33333f;
+  --color-divider: #2c2c38;
+  --outline-main: #b8b9cc;
+
+  /* Backgrounds — inverted scale: content is the LIGHTEST dark surface */
+  --bg-white: #21212b;
+  --bg-drawer: #191921;
+  --bg-menu: #191921;
+  --bg-toolbar: #1e1e27;
+  --bg-row: #1e1e27;
+  --bg-group-light: #1e1e27;
+  --bg-group-main: #262631;
+  --bg-group-dark: #33333f;
+  --bg-icon: #24304a;
+  --bg-input: #2a2a36;
+  --bg-input-disabled: #1c1c24;
+
+  /* Text — soft near-white, not pure white */
+  --text-body: #ececf2;
+  --text-secondary: #a8a9bd;
+  --text-label: #d6d6e0;
+  --button-text: #d0d0da;
+
+  /* Header / drawer */
+  --header-bg: #1a1a22;
+  --header-border: #33333f;
+  --drawer-selected-bg: #2a2a38;
+  --drawer-hover-bg: #21212b;
+
+  /* Stronger focus glow + darker scrim read better on dark */
+  --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.45);
+  --overlay-scrim: rgba(0, 0, 0, 0.6);
+}

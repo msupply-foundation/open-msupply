@@ -6,6 +6,7 @@ import {
   CentralIcon,
 } from '@/components/icons';
 import { LanguageSelector } from './LanguageSelector';
+import { ThemeToggle } from './ThemeToggle';
 import styles from './Footer.module.css';
 
 interface CellProps {
@@ -43,6 +44,8 @@ export const Footer = () => (
     />
     <span className={styles.divider} />
     <Cell icon={<UserIcon className={styles.icon} />} text="demo" />
+    <span className={styles.divider} />
+    <ThemeToggle />
     <span className={styles.divider} />
     <LanguageSelector />
     <Cell

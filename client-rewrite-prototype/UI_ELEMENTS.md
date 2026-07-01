@@ -15,6 +15,7 @@ A living ledger of every UI element built in the prototype and **what went into 
 | Sidebar — **mobile overlay + hamburger** | Hand-rolled (fixed panel + scrim, CSS transform) | — (rendered via the `useIsNavOverlay` breakpoint; same `NavLists`, no duplicate mobile nav) |
 | **Footer** — orange bar, cells, dividers | Hand-rolled | — |
 | Footer — **language selector** | Our markup + CSS | **Radix DropdownMenu** — popup menu a11y (focus, type-ahead, keyboard) + collision-aware positioning. *First primitive to pull in Floating UI (~10 KB) — shared by every menu after.* |
+| Footer — **theme toggle** (sun/moon) | Hand-rolled (`Footer/ThemeToggle`, reuses `.cell`/`.icon`) | — Just a `<button>` that flips `data-theme` on `<html>` via `theme/ThemeProvider`; the cascade recolours everything (see the theming cross-cutting note). No a11y-widget lib needed. |
 | **Header** — breadcrumb | Hand-rolled (`<nav>`/`<ol>`/`<a>`) | — (just links + separators; no a11y contract needing a lib) |
 | Header — **New shipment** button | Hand-rolled (`ui/Button`) | — |
 | Header — **Export split-button** | Hand-rolled split shell + Radix menu for the caret | **Radix DropdownMenu** — there's no "split button" primitive; we compose a plain `<button>` (main action) + a DropdownMenu (caret → CSV/Excel). |
@@ -57,6 +58,7 @@ A living ledger of every UI element built in the prototype and **what went into 
 ## Cross-cutting (not a single element)
 
 - **Design tokens** — `styles/tokens.css`, a faithful port of the current app's `theme.ts`. Hand-rolled CSS custom properties (no lib).
+- **Theming (light/dark)** — `theme/ThemeProvider` (React Context, mirrors `LocaleProvider`) sets `data-theme` on `<html>` and persists to `localStorage`; the footer `ThemeToggle` flips it; a pre-paint inline script in `index.html` applies the stored theme before React mounts (no flash). Each theme is a token-override block in `tokens.css` (`:root[data-theme='dark']`) — components read tokens, so nothing else knows dark mode exists. Default is light; `prefers-color-scheme` is not consulted. See `DECISIONS.md` (2026-07-01, theming).
 - **RTL flip** — `intl/LocaleProvider` (React Context) sets `dir`/`lang` on `<html>`; formatting is browser `Intl`. It also wraps the app in Radix's **`DirectionProvider`** (one line, driven by the same locale) so every Radix widget (Select, Tabs, DropdownMenu…) gets direction-aware keyboard nav + popup placement — Radix reads `dir` from that context, not from `<html>`. Our own widgets (native select, Combobox, MultiSelect) need nothing extra: they mirror via logical properties alone.
 - **Responsive** — intrinsic CSS + one `useMediaQuery` hook for the nav dock↔overlay switch. No lib.
 - **Icons** — real SVG paths ported from the current app into plain React components (`components/icons`). No icon library.
