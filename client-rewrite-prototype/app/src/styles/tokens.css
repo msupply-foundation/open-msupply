@@ -165,6 +165,7 @@
   --color-border-value: #33333f;
   --color-divider: #2c2c38;
   --outline-main: #b8b9cc;
+  --input-border: #3d3e4c; /* field edge — a touch above border-value so inputs read */
 
   /* Backgrounds — inverted scale: content is the LIGHTEST dark surface */
   --bg-white: #21212b;
