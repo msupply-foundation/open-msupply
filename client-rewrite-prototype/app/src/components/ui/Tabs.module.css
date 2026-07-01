@@ -1,0 +1,66 @@
+/*
+ * Tab strip — centred, with a single sliding underline. The list spans the full
+ * header width (border-bottom edge to edge); the indicator is absolutely
+ * positioned and animates between labels. Logical/measured geometry → mirrors
+ * in RTL.
+ */
+.list {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+  padding-inline: var(--space-5);
+  border-bottom: 1px solid var(--header-border);
+}
+
+.trigger {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: var(--space-2) var(--space-1) 0.125rem; /* tight bottom → label sits low */
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-xs); /* smaller than body */
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.trigger:hover {
+  color: var(--text-body);
+}
+
+.trigger[data-state='active'] {
+  color: var(--primary-main);
+  font-weight: var(--weight-bold);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+/* The sliding underline (position/width set inline from measured geometry).
+   Anchored to physical `left` because offsetLeft is a physical measurement —
+   translateX(offsetLeft) then lands correctly in both LTR and RTL. */
+.indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 0.125rem;
+  background: var(--primary-main);
+  transition:
+    transform 200ms ease,
+    width 200ms ease;
+  pointer-events: none;
+}
+
+.panel:focus-visible {
+  outline: none;
+}
+
+/* NB: no pointer:coarse min-height bump on tabs — it inflated the trigger to
+   48px in touch mode, floating the label away from the underline. */

@@ -7,6 +7,14 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-01 · Sizing in rem/em, scaled from one root font-size
+
+- **Decision:** All sizing is in **rem/em**, never px — the only exceptions are hairline `1px` borders and shadow offsets. Design tokens (`app/src/styles/tokens.css`) carry the rem values; icons use `1em` (scale with local text). So the whole UI scales from a single `html` font-size.
+- **Demonstrated:** the phone view (< 600px `compact` breakpoint) drops the root font-size to **85%** — one `@media` rule on `html` in `index.css`, the only place root size is touched — uniformly shrinking the entire interface. Change that one value (or the base `100%`) to rescale everything.
+- **Why:** a single predictable scaling knob, respects user font-size preferences, avoids px drift. (Carl's principle, 2026-07-01.)
+- **Also in** `CLAUDE.md` founding principles so every new element follows it.
+- **Status:** Adopted; all tokens + component CSS converted from px to rem.
+
 ## 2026-07-01 · Responsive layout — intrinsic-first; breakpoints only for "which element"
 
 - **Decision:** Layout is **intrinsic by default**. Elements flow and wrap on their own with flexbox/grid, `flex-wrap`, `min()/max()/clamp()`, `auto-fit`/`minmax`, and logical properties. **Breakpoints are reserved for one job only: "which element do I render?"** (e.g. docked sidebar vs. hamburger overlay). They are *not* used to nudge spacing, font sizes, paddings, or column counts at arbitrary widths — that's what intrinsic sizing is for. (Carl's principle, 2026-07-01.)

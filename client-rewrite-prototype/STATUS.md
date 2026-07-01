@@ -8,17 +8,15 @@ Project setup / first vertical slice. Working through the "To decide" list one i
 
 ## ▶ Next action (resume here)
 
-**Building the Outbound Shipments page as a component storybook**, element by element, in [`app/`](./app/) (runs on **:3010** alongside the current app on :3003). Built so far, all matched to the real app + faithful `theme.ts` token port: **sidebar** (Radix Collapsible sections), **footer** (Radix DropdownMenu language selector with a working **LTR↔RTL flip**), **header** (breadcrumb, buttons, Export split-button, Filters + Status multi-select). Now **responsive** (intrinsic layout; nav → hamburger overlay below 1024). Bundle so far: **~100 KB gzip JS / ~4 KB gzip CSS**.
+Building the **Outbound Shipments page as a component storybook** in [`app/`](./app/) (runs on **:3010**, alongside the current app on :3003). See "Done → Built in the slice" below for the full inventory.
 
-**Next element:** the **data table** (storybook centrepiece — headless table + container-query card-view), or the **month/year date picker** (lights up the deferred date-range filters).
+**▶ Next element: Selectors** (tab 2 — currently a placeholder) — dropdowns + the item **combobox/autocomplete** (the flagged hard widget). Per Decision #3: use **Downshift** for the combobox (locale-aware filter; virtualise large lists later) and Radix where it fits. Show the RTL version.
 
-**Carried (still open):** validate the Vite plugin-load path (Module Federation on Vite) — decision #2's validation gate.
+**Carried (open):** validate the Vite plugin-load path (Module Federation on Vite) — decision #2's gate. Build a hello-world **remote** plugin via the chosen Vite route (lead: `@module-federation/vite`) and load it at runtime into the host sharing one React. See `DECISIONS.md` decision #2.
 
-**Queued to build (spec ready):** the **state-management benchmark harness** — full implementation brief in [`BENCHMARK.md`](./BENCHMARK.md). One app / swappable state adapter (naive context vs Zustand granular), controlled form with reactive readers, a combined floating HUD + provider toggle, render-flash highlighting, side-by-side mode, and a scaling curve. Informs the open **state management** decision (#4). Two things for Carl to confirm before/while building: which tiers to ship (naive-vs-Zustand only, or incl. context-memo + React Compiler) and where final numbers run (throttled desktop vs real Lenovo M10).
+**Queued (spec ready):** the **state-management benchmark harness** — full brief in [`BENCHMARK.md`](./BENCHMARK.md) (swappable state adapter naive-context vs Zustand, controlled form + reactive readers, render-flash HUD, side-by-side, scaling curve). Informs the open **state management** decision (#4). Before building, Carl to confirm: which tiers (naive-vs-Zustand only, or incl. context-memo + React Compiler) and where final numbers run (throttled desktop vs real Lenovo M10).
 
 **RTL is a standing requirement:** show the RTL version of every element as it's built (Carl, 2026-07-01).
-
-**Carried task (prototype soon):** validate the Vite plugin-load path — build a hello-world **remote** plugin via the chosen Vite federation route (lead candidate `@module-federation/vite`) and load it at runtime into the new host sharing a single React. This is decision #2's validation gate; it's the one piece coupled to webpack today (Module Federation), so de-risk it early. See `DECISIONS.md` decision #2 for the full mechanism.
 
 ## Goal
 
@@ -37,11 +35,23 @@ The external bar now lives in [`SPEC.md`](./SPEC.md) (the dev lead's brief — d
 - Founding architecture doc written and agreed in principle (`2026-06-29_frontend_architecture_direction.md`).
 - Context-tracking system set up (`CLAUDE.md` + `DECISIONS.md` + `STATUS.md` + `ARGUMENTS.md`).
 - Decided & recorded in `DECISIONS.md`: first slice = **outbound shipment / invoice**; data = **real GraphQL backend + codegen**; framework = **React** (decision #1; Preact as a deferred bundle lever); build engine = **Vite** (decision #2; plugin-load path to be prototyped soon). Table lib (**TanStack Table**) remains a *standing recommendation* in the decision queue, not yet ratified.
-- **Scaffolded the new app at [`app/`](./app/)** — Vite 8 + React 19 + TS skeleton. Verified end to end: `yarn build` (clean `tsc --noEmit` + 190 KB / 60 KB-gzip production bundle), `yarn lint` (clean), `yarn dev` (HMR dev server on :3003). No features yet — renders a placeholder page.
+- **Scaffolded the new app at [`app/`](./app/)** — Vite 8 + React 19 + TS skeleton (later moved to port **:3010**). `yarn build` (clean `tsc --noEmit`) / `yarn lint` (clean) / `yarn dev` are the verification commands.
+
+### Built in the slice (component storybook — all matched to the real app + faithful `theme.ts` token port; **rem-based** and **RTL-correct** throughout)
+
+- **Sidebar** — docked (Radix **Collapsible** sections, logo toggles an 80px rail) ↔ **hamburger overlay** below 1024 (+ scrim). One component, two modes — no duplicate mobile nav. Real ported SVG icons + logo.
+- **Footer** — orange bar; **language selector** (Radix **DropdownMenu**) that flips the whole app **LTR↔RTL** by setting `dir`/`lang` on `<html>` (via `intl/LocaleProvider`).
+- **Header** — breadcrumb (+ section icon), **New shipment** button, **Export split-button** (Radix DropdownMenu), **Filters** menu + inline text / **Status multi-select** filters, and a **centred tab bar with a sliding underline** (Radix **Tabs**, controlled).
+- **Content footer** — pinned (non-scrolling) action bar; **blue** (secondary) buttons: History / Cancel / Save.
+- **Inputs** (tab 1) — `TextField` to the **company input design spec** (default / filled / required / error / disabled / small; orange focus glow), in an intrinsic ≤2-column grid.
+- **Responsive** — intrinsic layout; the *only* breakpoint is nav dock↔overlay (`app/src/styles/breakpoints.ts`). **rem/em everywhere**; phone view scales root to 85%.
+- **Bundle now:** **~102 KB gzip JS / ~5 KB gzip CSS**. Radix primitives in use: **Collapsible, DropdownMenu, Tabs** (Dialog + Popover installed, unused). **Downshift** installed, not yet used (→ Selectors).
+- **Reusable UI:** `components/ui/` = `Button` (orange/blue tones), `TextField`, `Tabs`, shared `Menu.module.css`; `hooks/useMediaQuery`; `utils/classNames` (`cx`).
+- **Touch targets (state to know):** the 48px `@media (pointer: coarse)` bump is ON for nav items, menu items, and text inputs; deliberately OFF for action buttons + tabs (Carl wanted the compact 40px). That's the knob if revisited.
 
 ## In progress
 
-- Working through the scaffold-stack decisions **one at a time** — nothing below is decided yet.
+- Building the storybook element by element (see "Next element" above). Decisions #1–3 ratified; responsive + rem/em recorded in `DECISIONS.md`. Remaining queue items below are **not** decided.
 
 ## Groundwork established (facts, not decisions)
 

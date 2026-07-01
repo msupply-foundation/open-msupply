@@ -1,8 +1,9 @@
 .header {
   flex-shrink: 0;
-  padding: var(--space-5) var(--space-5) var(--space-4);
+  padding-block-start: var(--space-3);
   background: var(--header-bg);
-  border-bottom: 1px solid var(--header-border);
+  /* No horizontal padding / bottom border here: the rows pad themselves and the
+     tab strip provides the header's bottom edge (its border spans full width). */
 }
 
 /* Wraps intrinsically: actions drop below the breadcrumb when space is tight,
@@ -13,6 +14,7 @@
   justify-content: space-between;
   gap: var(--space-4);
   flex-wrap: wrap;
+  padding-inline: var(--space-5);
 }
 
 .lead {
@@ -30,7 +32,8 @@
 }
 
 .contentRow {
-  margin-top: var(--space-5);
+  margin-top: var(--space-3);
+  padding-inline: var(--space-5);
 }
 
 /* Hamburger (overlay mode only) */

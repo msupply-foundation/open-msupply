@@ -1,8 +1,8 @@
 /*
- * Faithful to the current app's BaseButton (outlined, primary):
- *  - NO border; a shadow[2] drop-shadow does the lifting
- *  - borderRadius 24, white bg, text #373740, orange start-icon
- *  - hover fills primary orange (text + icon go white)
+ * Faithful to the current app's BaseButton (outlined): NO border; a shadow[2]
+ * drop-shadow does the lifting; borderRadius 24; white bg; coloured icon; fills
+ * with its colour on hover. `data-color` picks the tone: orange (brand) or
+ * blue (secondary — footer actions).
  */
 .button {
   display: inline-flex;
@@ -26,15 +26,6 @@
     color 120ms ease;
 }
 
-.button:hover {
-  background: var(--primary-main);
-  color: #fff;
-}
-
-.button:hover .icon {
-  color: #fff;
-}
-
 .button:focus-visible {
   outline: 2px solid var(--primary-main);
   outline-offset: 2px;
@@ -50,33 +41,39 @@
   display: inline-flex;
   align-items: center;
   font-size: 1.25rem;
-  color: var(--primary-main);
   flex-shrink: 0;
 }
 
-@media (pointer: coarse) {
-  .button {
-    min-height: var(--touch-target);
-  }
+/* Orange (brand) — dark label, orange icon, fills orange on hover */
+.button[data-color='orange'] .icon {
+  color: var(--primary-main);
 }
-
-/* Filled/contained variant — inverts on hover, like the app's contained button */
-.primary {
+.button[data-color='orange']:hover:not(:disabled) {
   background: var(--primary-main);
-  border: none;
   color: #fff;
-  font-weight: var(--weight-bold);
 }
-
-.primary .icon {
+.button[data-color='orange']:hover:not(:disabled) .icon {
   color: #fff;
 }
 
-.primary:hover {
-  background: var(--bg-white);
-  color: var(--primary-main);
+/* Blue (secondary) — blue label + icon, fills blue on hover */
+.button[data-color='blue'] {
+  color: var(--secondary-main);
+}
+.button[data-color='blue'] .icon {
+  color: var(--secondary-main);
+}
+.button[data-color='blue']:focus-visible {
+  outline-color: var(--secondary-main);
+}
+.button[data-color='blue']:hover:not(:disabled) {
+  background: var(--secondary-main);
+  color: #fff;
+}
+.button[data-color='blue']:hover:not(:disabled) .icon {
+  color: #fff;
 }
 
-.primary:hover .icon {
-  color: var(--primary-main);
-}
+/* NB: no pointer:coarse min-height bump. It inflated buttons to 48px in touch /
+   device-emulation mode (taller than the split button, which never had it). We
+   keep the consistent 40px height instead. */

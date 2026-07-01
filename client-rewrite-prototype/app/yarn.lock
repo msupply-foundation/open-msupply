@@ -245,6 +245,7 @@ __metadata:
     "@radix-ui/react-dialog": "npm:^1.1.17"
     "@radix-ui/react-dropdown-menu": "npm:^2.1.18"
     "@radix-ui/react-popover": "npm:^1.1.17"
+    "@radix-ui/react-tabs": "npm:^1.1.15"
     "@types/node": "npm:^20.14.9"
     "@types/react": "npm:^19.2.0"
     "@types/react-dom": "npm:^19.2.0"
@@ -705,6 +706,32 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/7353520950dcbc5c331f79aeac5bc8efa5130014e8121f85b337996ec5a2cef89f1375ff879b72ba05182de93c1126b22ec328f171edd7a2888c1532d10f74b5
+  languageName: node
+  linkType: hard
+
+"@radix-ui/react-tabs@npm:^1.1.15":
+  version: 1.1.15
+  resolution: "@radix-ui/react-tabs@npm:1.1.15"
+  dependencies:
+    "@radix-ui/primitive": "npm:1.1.4"
+    "@radix-ui/react-context": "npm:1.1.4"
+    "@radix-ui/react-direction": "npm:1.1.2"
+    "@radix-ui/react-id": "npm:1.1.2"
+    "@radix-ui/react-presence": "npm:1.1.6"
+    "@radix-ui/react-primitive": "npm:2.1.6"
+    "@radix-ui/react-roving-focus": "npm:1.1.13"
+    "@radix-ui/react-use-controllable-state": "npm:1.2.3"
+  peerDependencies:
+    "@types/react": "*"
+    "@types/react-dom": "*"
+    react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    "@types/react-dom":
+      optional: true
+  checksum: 10c0/b95e3b4474affe4dce363f88a4baf1abd9075f80833678d2a9b731b4ab8909686132941dead7f5168e8b65a88341a4394f42c71a91685e7740a7410d8537f76c
   languageName: node
   linkType: hard
 

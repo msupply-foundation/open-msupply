@@ -1,16 +1,27 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { useSidebar } from '@/components/Sidebar/useSidebar';
 import { useIsNavOverlay } from '@/hooks/useMediaQuery';
 import { Header } from '@/components/Header/Header';
 import { Footer } from '@/components/Footer/Footer';
+import { ContentFooter } from '@/components/ContentFooter/ContentFooter';
 import { InputsShowcase } from '@/components/showcase/InputsShowcase';
+import { Tabs, TabPanel } from '@/components/ui/Tabs';
+import type { TabDef } from '@/components/ui/Tabs';
 import styles from './App.module.css';
+
+const TABS: TabDef[] = [
+  { value: 'inputs', label: 'Inputs' },
+  { value: 'selectors', label: 'Selectors' },
+  { value: 'table', label: 'Table' },
+  { value: 'feedback', label: 'Feedback' },
+];
 
 export const App = () => {
   const nav = useSidebar();
   const { closeOverlay } = nav;
   const isNavOverlay = useIsNavOverlay();
+  const [tab, setTab] = useState('inputs');
 
   // Leaving overlay mode (e.g. rotating to landscape) shouldn't strand an open
   // overlay — close it so the docked nav shows cleanly.
@@ -27,10 +38,37 @@ export const App = () => {
         selectedId="outbound"
       />
       <main className={styles.main}>
-        <Header isNavOverlay={isNavOverlay} onOpenNav={nav.openOverlay} />
-        <div className={styles.body}>
-          <InputsShowcase />
-        </div>
+        <Tabs value={tab} onValueChange={setTab} className={styles.tabs}>
+          <Header
+            isNavOverlay={isNavOverlay}
+            onOpenNav={nav.openOverlay}
+            tabs={TABS}
+            activeTab={tab}
+          />
+          <div className={styles.body}>
+            <TabPanel value="inputs">
+              <InputsShowcase />
+            </TabPanel>
+            <TabPanel value="selectors">
+              <p className={styles.comingSoon}>
+                Selectors — dropdowns &amp; the item combobox. Coming soon.
+              </p>
+            </TabPanel>
+            <TabPanel value="table">
+              <p className={styles.comingSoon}>
+                Data table — headless table with a container-query card view.
+                Coming soon.
+              </p>
+            </TabPanel>
+            <TabPanel value="feedback">
+              <p className={styles.comingSoon}>
+                Feedback — alerts, toasts &amp; the month/year date picker.
+                Coming soon.
+              </p>
+            </TabPanel>
+          </div>
+        </Tabs>
+        <ContentFooter />
         <Footer />
       </main>
     </div>

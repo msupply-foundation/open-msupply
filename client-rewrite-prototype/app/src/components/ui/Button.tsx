@@ -4,18 +4,18 @@ import styles from './Button.module.css';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: ReactNode;
-  /** 'default' = white pill (current app's toolbar style); 'primary' = filled orange. */
-  variant?: 'default' | 'primary';
+  /** Icon/label tone: brand orange (default) or action blue (footer actions). */
+  color?: 'orange' | 'blue';
 }
 
 /*
  * Reusable action button — plain <button> + CSS, no headless lib needed. Mirrors
- * the current app's ButtonWithIcon (white pill, orange icon) with a `variant`
- * seam for a filled/primary style later.
+ * the current app's outlined ButtonWithIcon: white pill, no border, shadow[2],
+ * coloured icon; fills with its colour on hover (text + icon go white).
  */
 export const Button = ({
   icon,
-  variant = 'default',
+  color = 'orange',
   children,
   className,
   type = 'button',
@@ -23,7 +23,8 @@ export const Button = ({
 }: ButtonProps) => (
   <button
     type={type}
-    className={cx(styles.button, styles[variant], className)}
+    className={cx(styles.button, className)}
+    data-color={color}
     {...rest}
   >
     {icon && <span className={styles.icon}>{icon}</span>}
