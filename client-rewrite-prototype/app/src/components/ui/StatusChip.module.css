@@ -1,0 +1,21 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-sm); /* 4px, like the app's StatusChip */
+  /* Pale pill tint derived from the one colour — mirrors the app's opacity 0.2 background. */
+  background: color-mix(in srgb, var(--chip-colour) 16%, transparent);
+  font-size: 0.9em;
+  line-height: 1.4;
+  color: var(--text-body);
+  white-space: nowrap;
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--chip-colour);
+}

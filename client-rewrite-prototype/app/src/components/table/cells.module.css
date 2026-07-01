@@ -1,0 +1,76 @@
+/* Right-aligned figures (numbers, currency, dates). Tabular figures line up. */
+.numeric {
+  display: block;
+  width: 100%;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* 1px sides so the ellipsis/last glyph isn't clipped (matches the app). */
+  padding-inline: 1px;
+}
+
+/* Truncating text with a tooltip on hover. */
+.ellipsis {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.colourDot {
+  width: 0.6rem;
+  height: 0.6rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--dot-colour);
+}
+
+/* Comment trigger — a bare icon button, primary-tinted like the app. */
+.commentButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border: none;
+  background: none;
+  color: var(--primary-main);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+}
+
+.commentButton:hover {
+  background: var(--bg-group-main);
+}
+
+.commentButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.commentPopover {
+  max-width: 25rem;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-4);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  z-index: 50;
+}
+
+.commentArrow {
+  fill: var(--surface-raised);
+}

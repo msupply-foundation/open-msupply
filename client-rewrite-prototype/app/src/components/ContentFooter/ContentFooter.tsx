@@ -1,20 +1,49 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { ClockIcon, XCircleIcon, SaveIcon } from '@/components/icons';
+import {
+  ClockIcon,
+  CopyIcon,
+  MinusCircleIcon,
+  SaveIcon,
+  TrashIcon,
+  XCircleIcon,
+} from '@/components/icons';
+import { useSelectionFooter } from '@/stores/selectionFooter';
 import styles from './ContentFooter.module.css';
 
 /*
- * Content footer — the page's action bar (see the current app's detail-view
- * footers). Pinned at the bottom of the content area, ABOVE the orange app
- * footer, and does NOT scroll with the body. Blue (secondary) action buttons:
- * one on the inline-start, Cancel + Save on the inline-end.
- *
- * Save demonstrates the modal usage pattern: local `open` state drives a
- * <ConfirmDialog> rendered right here.
+ * Content footer — one pinned action bar, whose CONTENT is contextual (Carl,
+ * 2026-07-01). With no selection it's the detail-view bar (History / Cancel /
+ * Save). When a table publishes a selection (via the selectionFooter store), the
+ * same bar becomes the selection-action bar (N selected · Delete · Copy · Clear)
+ * — so we never stack two rows of blue buttons. Pinned above the orange app
+ * footer; does not scroll with the body.
  */
 export const ContentFooter = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const { count, onDelete, onCopy, onClear } = useSelectionFooter();
+
+  if (count > 0) {
+    return (
+      <div className={styles.footer}>
+        <div className={styles.side}>
+          <span className={styles.count}>{count} selected</span>
+        </div>
+        <div className={styles.side}>
+          <Button color="blue" icon={<TrashIcon />} onClick={onDelete}>
+            Delete
+          </Button>
+          <Button color="blue" icon={<CopyIcon />} onClick={onCopy}>
+            Make a copy
+          </Button>
+          <Button color="blue" icon={<MinusCircleIcon />} onClick={onClear}>
+            Clear selection
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.footer}>

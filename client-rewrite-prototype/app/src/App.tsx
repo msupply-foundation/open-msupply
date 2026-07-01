@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer/Footer';
 import { ContentFooter } from '@/components/ContentFooter/ContentFooter';
 import { InputsShowcase } from '@/components/showcase/InputsShowcase';
 import { SelectorsShowcase } from '@/components/showcase/SelectorsShowcase';
+import { TableShowcase } from '@/components/showcase/TableShowcase';
 import { BenchmarkPage } from '@/benchmark/BenchmarkPage';
 import { Tabs, TabPanel } from '@/components/ui/Tabs';
 import type { TabDef } from '@/components/ui/Tabs';
@@ -56,10 +57,7 @@ export const App = () => {
               <SelectorsShowcase />
             </TabPanel>
             <TabPanel value="table">
-              <p className={styles.comingSoon}>
-                Data table — headless table with a container-query card view.
-                Coming soon.
-              </p>
+              <TableShowcase />
             </TabPanel>
             <TabPanel value="feedback">
               <p className={styles.comingSoon}>

@@ -31,6 +31,21 @@ A living ledger of every UI element built in the prototype and **what went into 
 | Selectors — **Autocomplete / combobox** (item picker) | Our markup + CSS (`ui/Combobox`) | **Downshift `useCombobox`** — the flagged hard widget: the one selector genuinely dangerous to hand-roll (WAI-ARIA combobox = virtual focus via `aria-activedescendant`, result/active announcements, typeahead). ~3 KB, imposes no markup/style/filter — we supply the locale-aware, code-or-name filter. |
 | Selectors — **Multi-select autocomplete** (tags) | Our markup + CSS (`ui/MultiSelect`) | **Downshift `useMultipleSelection` + `useCombobox`** — layers a focusable, arrow-navigable tag group + Backspace-to-remove + removal announcements onto the combobox contract. Removable chips; selection stays controlled by the parent. |
 | **Confirm dialog** ("Are you sure?" modal) | Our markup + CSS | **Radix Dialog** — a modal *looks* like plain HTML, but the hard part is the a11y contract WCAG grades: focus **trap** while open, focus **restore** to the trigger on close, Escape/scrim dismiss, `role="dialog"`+`aria-modal`, label/description wiring, scroll lock, and `aria-hidden` on the background. The native `<dialog>` covers only some of this (focus-restore / trap / background-inert vary by browser) and is imperative to drive from React. Radix gives it all declaratively for ~1 KB; no Floating UI. |
+| **Data table** — shell (`<table>`/`<thead>`/`<tbody>`) | Hand-rolled semantic `<table>` + CSS Modules | **TanStack Table** (headless) — row models + sorting/filter/pagination/visibility/order/sizing/pinning **state** + `flexRender`. Renders no DOM/CSS; all markup + style are ours. |
+| Table — **sortable header** (`table/HeaderCell`) | Our `<th>` + `<button>` + `aria-sort` + arrow SVG | TanStack sort state (`getToggleSortingHandler`/`getIsSorted`); announcement via our live region. |
+| Table — **column resize** handle | Hand-rolled focusable `role="separator"` | TanStack `getResizeHandler()` + sizing state (pointer); **arrow-key** resize is ours. Widths as CSS vars + memoised body during resize (no re-render). |
+| Table — **column reorder** grip | Our grip button + `setColumnOrder` | **dnd-kit** (`@dnd-kit/core`+`sortable`+`modifiers`) — drag **and keyboard** reorder with built-in SR announcements. The one bought interaction+a11y widget. |
+| Table — **frozen first column** | Our sticky CSS (`position: sticky` + offset) | TanStack pinning state (`getIsPinned`/`getStart`). |
+| Table — **row states** (hover/selected/focused/restricted) | Hand-rolled CSS (`--row-bg` per state, `data-*`) | — Selected (blue) via TanStack row selection; focused (grey) via row click; restricted greying for read-only shipments. |
+| Table — **cells** (`table/cells.tsx`) | Hand-rolled — numeric (…+full-precision tooltip), currency, date, text+tooltip, name+colour-dot | — Ports of the app's column types. Tooltips use native `title`. |
+| Table — **comment cell** (icon → popover) | Our icon button + content | **Radix Popover** (finally in use) — opens on **click/focus** (keyboard-reachable), unlike the app's hover-only popover. |
+| Table — **status cell** | **Hand-rolled `ui/StatusChip`** | — Coloured dot + `color-mix` pale pill; no a11y contract to buy. |
+| Table — **selection checkbox** (`table/Checkbox`) | Hand-rolled native `<input type=checkbox>` (accent-color) | — Platform gives keyboard + SR for free; `indeterminate` set via ref. |
+| Table — **columns menu** (show/hide) | Our markup | **Radix DropdownMenu `CheckboxItem`** (reuses `Menu.module.css`) driving TanStack visibility. |
+| Table — **density menu** | Our markup | **Radix DropdownMenu `RadioGroup`** — compact/comfortable/spacious. |
+| Table — **pagination** (`table/Pagination`) | Hand-rolled (`<select>` + prev/next buttons + aria-live count) | TanStack pagination model. |
+| Table — **card view** (`table/CardList`) | Hand-rolled `<ul>` of cards from the same row model | — Markup swap at a container width (ResizeObserver), not CSS reflow; own sort control in the toolbar. |
+| **Content footer — contextual** | Hand-rolled; swaps detail ↔ selection actions | — Reads the `selectionFooter` **zustand** store; one bar, two contexts (see cross-cutting note). |
 | **Perf HUD** — floating benchmark window (Performance tab) | Hand-rolled (`benchmark/hud/PerfHud.tsx` + `useDraggable`) | — Dev tooling, not app chrome: a `position: fixed`, always-on-top panel dragged with plain Pointer Events + pointer capture. No a11y-widget lib needed. |
 | Perf HUD — **provider segmented control** + page **mode switch** | Hand-rolled (`<button>` group, token-styled active state) | — Simple radio-like button group. |
 | Perf HUD — **live metrics** | Hand-rolled; values read from a per-pane **Zustand** metrics store | — Manual render registry + `PerformanceObserver` (event-timing INP, long tasks) + rAF FPS; all production-build-safe. See `DECISIONS.md`. |
@@ -50,6 +65,8 @@ A living ledger of every UI element built in the prototype and **what went into 
 | `Tabs` (`Tabs`/`TabList`/`TabPanel`) | Radix Tabs wrapper (+ our sliding-underline logic) |
 | `Dialog` | Radix Dialog wrapper (base modal — focus trap/restore, Escape, scroll lock, ARIA) |
 | `ConfirmDialog` | Built on `Dialog` — the standard "Are you sure?" Cancel/OK pattern |
+| `StatusChip` | Hand-rolled — coloured dot + `color-mix` pale pill; used by the table status cell |
+| `DataTable<T>` | `components/table/` — TanStack-driven semantic table (sort/filter/pagination/pinning/resize/reorder/card view) |
 | `useRipple` | Hand-rolled hook — subtle MUI-style click ripple (see JS note below) |
 | `Menu.module.css` | Shared CSS for all Radix DropdownMenu popups |
 
@@ -66,7 +83,7 @@ A living ledger of every UI element built in the prototype and **what went into 
 
 ## Dependencies
 
-- **In use:** `@radix-ui/react-collapsible` (sidebar sections), `@radix-ui/react-dropdown-menu` (footer language, export caret, filters, status), `@radix-ui/react-tabs` (tab bar), `@radix-ui/react-dialog` (confirm modal, wired to Save), `@radix-ui/react-select` (styled drop-down), `@radix-ui/react-direction` (app-wide RTL for Radix widgets), **`downshift`** (item combobox + multi-select), **`zustand`** (v5 — benchmark tier 3 + per-pane metrics stores; consumed headlessly via vanilla `createStore`/`useStore`/`useShallow`); `@fontsource-variable/inter` (font).
-- **Installed, not yet used:** `@radix-ui/react-popover` (for upcoming popovers — e.g. moving the combobox menu to a collision-aware, portaled popup).
+- **In use:** `@radix-ui/react-collapsible` (sidebar sections), `@radix-ui/react-dropdown-menu` (footer language, export caret, filters, status, table columns + density menus), `@radix-ui/react-tabs` (tab bar), `@radix-ui/react-dialog` (confirm modal, wired to Save), `@radix-ui/react-select` (styled drop-down), `@radix-ui/react-popover` (table comment cell), `@radix-ui/react-direction` (app-wide RTL for Radix widgets), **`downshift`** (item combobox + multi-select), **`@tanstack/react-table`** (data table engine), **`@tanstack/react-virtual`** (table virtualisation / benchmark mode), **`@dnd-kit/core`+`sortable`+`modifiers`+`utilities`** (accessible column reorder), **`zustand`** (v5 — benchmark tiers + per-pane metrics + the selection-footer bridge; consumed headlessly); `@fontsource-variable/inter` (font).
+- **Installed, not yet used:** —
 
 _Keep this table in sync as elements are built or change (see `CLAUDE.md`)._

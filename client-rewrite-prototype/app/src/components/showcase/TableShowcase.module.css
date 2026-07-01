@@ -1,0 +1,70 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+  height: 100%;
+}
+
+.intro {
+  max-width: 60rem;
+}
+
+.lead {
+  margin: 0 0 var(--space-3);
+  max-width: 48rem;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.lead code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+}
+
+.modes {
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--bg-group-main);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+
+.mode {
+  padding: 0.4rem 0.75rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.mode:hover {
+  color: var(--text-body);
+}
+
+.modeActive {
+  background: var(--bg-white);
+  color: var(--text-body);
+  box-shadow: var(--shadow-1);
+}
+
+/* Bounds the table so its scroll area (sticky header/columns, virtualisation)
+   has a height to work within. */
+.tableWrap {
+  display: flex;
+  flex-direction: column;
+  height: min(68vh, 40rem);
+  min-height: 20rem;
+}
+
+.tableWrap > div {
+  flex: 1;
+  min-height: 0;
+}

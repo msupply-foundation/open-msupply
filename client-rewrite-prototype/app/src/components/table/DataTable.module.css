@@ -1,0 +1,453 @@
+/*
+ * Data table styling — a faithful, rem-based port of the current app's Material
+ * React Table look (client/.../useTableDisplayOptions.tsx + theme.ts), rendered
+ * over a real semantic <table>. Values (row heights, paddings, borders, tints)
+ * mirror the originals; colours come from tokens, so light/dark follow for free.
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  overflow: hidden;
+}
+
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  border-radius: 0;
+}
+
+/* --- toolbar ---------------------------------------------------------- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border-value);
+  background: var(--bg-toolbar);
+  flex-wrap: wrap;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--gray-dark);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--bg-group-main);
+  color: var(--text-body);
+}
+
+.iconButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.iconButton:disabled {
+  color: var(--gray-light);
+  cursor: default;
+  background: none;
+}
+
+.iconButtonActive {
+  color: var(--primary-main);
+  background: var(--bg-icon);
+}
+
+.cardSort {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-end: auto; /* push it to the start; icons stay at the end */
+}
+
+.cardSortLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.cardSortLabel select {
+  font: inherit;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-input);
+  color: var(--text-body);
+}
+
+/* --- scroll + table --------------------------------------------------- */
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}
+
+/* Density → row height + cell padding (compact / comfortable / spacious). */
+.table[data-density='compact'] {
+  --row-h: 2rem; /* 32px */
+  --cell-pad-y: 0.2rem;
+}
+.table[data-density='comfortable'] {
+  --row-h: 2.5rem; /* 40px */
+  --cell-pad-y: 0.35rem;
+}
+.table[data-density='spacious'] {
+  --row-h: 3.25rem; /* 52px */
+  --cell-pad-y: 0.6rem;
+}
+
+/* --- header ----------------------------------------------------------- */
+.thead {
+  z-index: 3;
+}
+
+.th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  height: var(--table-header-row);
+  padding: var(--cell-pad-y) var(--space-2);
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
+  font-weight: 600;
+  font-size: 0.9em;
+  line-height: 1.2;
+  color: var(--text-body);
+  text-align: start;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.th.pinned {
+  z-index: 4;
+  inset-inline-start: 0; /* overridden inline with the computed offset */
+}
+
+.th.dragging {
+  z-index: 5;
+  opacity: 0.9;
+}
+
+.thInner {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.th[data-align='end'] .thInner {
+  justify-content: flex-end;
+}
+.th[data-align='center'] .thInner {
+  justify-content: center;
+}
+
+.thLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.1rem 0.15rem;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.sortButton:hover {
+  color: var(--primary-main);
+}
+
+.sortButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.sortIcon {
+  flex-shrink: 0;
+  font-size: 0.85em;
+  color: var(--primary-main);
+}
+
+.grip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--gray-light);
+  cursor: grab;
+  opacity: 0;
+  font-size: 0.95em;
+  touch-action: none;
+}
+
+.th:hover .grip,
+.grip:focus-visible {
+  opacity: 1;
+}
+
+.grip:focus-visible {
+  outline: none;
+  color: var(--primary-main);
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+.resizer {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  height: 100%;
+  width: 5px;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  background: transparent;
+}
+
+.resizer:hover,
+.resizer.resizing {
+  background: var(--primary-main);
+}
+
+.resizer:focus-visible {
+  outline: none;
+  background: var(--primary-main);
+}
+
+/* --- body ------------------------------------------------------------- */
+.tr {
+  --row-bg: var(--bg-white);
+  height: var(--row-h);
+  background: var(--row-bg);
+  cursor: pointer;
+}
+
+.tr[data-odd] {
+  --row-bg: var(--bg-row);
+}
+
+.tr:hover {
+  --row-bg: color-mix(in srgb, var(--gray-pale) 22%, var(--bg-white));
+}
+
+.tr[data-active] {
+  --row-bg: color-mix(in srgb, var(--gray-main) 18%, var(--bg-white));
+}
+
+.tr[data-selected] {
+  --row-bg: color-mix(in srgb, var(--gray-pale) 45%, var(--bg-white));
+}
+
+/* Shipped/verified shipments are read-only in the app — greyed, like there. */
+.tr[data-restricted] {
+  color: var(--gray-main);
+}
+
+.td {
+  box-sizing: border-box;
+  padding: var(--cell-pad-y) var(--space-2);
+  border-bottom: 1px solid var(--color-border-value);
+  vertical-align: middle;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.td[data-align='end'] {
+  text-align: end;
+}
+.td[data-align='center'] {
+  text-align: center;
+}
+
+.td.pinned {
+  position: sticky;
+  z-index: 1;
+  inset-inline-start: 0; /* overridden inline */
+  background: var(--row-bg);
+}
+
+.checkbox {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--primary-main);
+  cursor: pointer;
+}
+
+/* --- pagination ------------------------------------------------------- */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--color-border-value);
+  background: var(--bg-toolbar);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.pageSize {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pageSize select {
+  font: inherit;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-input);
+  color: var(--text-body);
+}
+
+.pageButtons {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.pageButtons button {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  color: var(--text-body);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pageButtons button:hover:not(:disabled) {
+  border-color: var(--primary-main);
+  color: var(--primary-main);
+}
+
+.pageButtons button:disabled {
+  color: var(--gray-light);
+  cursor: default;
+}
+
+/* --- card view -------------------------------------------------------- */
+.cardList {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow: auto;
+  min-height: 0;
+}
+
+.card {
+  --row-bg: var(--bg-white);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--row-bg);
+  cursor: pointer;
+}
+
+.card[data-selected] {
+  --row-bg: color-mix(in srgb, var(--gray-pale) 45%, var(--bg-white));
+  border-color: var(--gray-pale);
+}
+.card[data-active] {
+  --row-bg: color-mix(in srgb, var(--gray-main) 14%, var(--bg-white));
+}
+.card[data-restricted] {
+  color: var(--gray-main);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.cardTitle {
+  font-weight: var(--weight-medium);
+  min-width: 0;
+}
+
+.cardFields {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2) var(--space-4);
+}
+
+.cardField {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cardLabel {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.cardValue {
+  margin: 0;
+  min-width: 0;
+}
+
+/* --- utility ---------------------------------------------------------- */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

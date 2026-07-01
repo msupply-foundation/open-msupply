@@ -114,3 +114,15 @@ A curated arsenal of arguments for defending the rewrite-approach decisions to t
 **The measured kicker:** the entire responsive layer — hamburger overlay, scrim, intrinsic wrapping, touch-target sizing — added **~0.6 KB gzipped**. Responsiveness done in CSS is nearly free; done in JS (the current app) it's re-renders and a second nav to maintain.
 
 **Rebuttal to "you still need breakpoints everywhere for tablet/phone":** No — you need *intrinsic* layout everywhere and a breakpoint in the *one* place the DOM genuinely differs (nav). Reaching for a media query to resize a gap is a smell that the layout isn't intrinsic yet.
+
+## 11. The data table: headless isn't an accessibility *risk* — it's an accessibility *upgrade*
+
+**Claim:** Rebuilding the table on a headless engine (TanStack) over a real semantic `<table>` doesn't gamble accessibility versus the current app — it *improves* on it, while shedding the runtime CSS-in-JS weight.
+
+**Why:**
+- **The current table isn't even a real table.** Material React Table runs in `layoutMode: 'grid'` — flexbox over `<div>`s, not `<table>/<th>/<td>` — and ships with `enableKeyboardShortcuts: false`. So a screen reader today doesn't get proper table semantics (row/column headers, cell-by-cell navigation), and there's no keyboard grid nav. We're not starting from a gold standard and risking it; we're starting below the baseline.
+- **Native markup buys the hard part for free.** A real `<table>` gives correct screen-reader structure automatically — the exact thing MRT's grid layout throws away. We add the *dynamic* behaviours the platform doesn't: `aria-sort` + a live-region announcement on sort, and keyboard-operable resize/reorder.
+- **We buy exactly one hard widget, like we did for the combobox.** Column reorder is the one feature that's dangerous to hand-roll (drag *and* keyboard *and* screen-reader announcements), so we take dnd-kit for it and own everything else. Same "own the simple, buy the hard" rule that governs the whole rebuild.
+- **The weight we're escaping is real and measured.** MRT is MUI + emotion (runtime CSS-in-JS) — the single biggest source of the "heavy" feel. The headless replacement renders our own markup with plain CSS; the whole table stack (engine + virtualisation + accessible reorder) is ~42 KB gzipped, and the reorder library is most of that — a line item we can drop if a given deployment doesn't need it.
+
+**Rebuttal to "but MRT gives accessibility out of the box, so rolling our own is the risky move":** MRT gives *widget* affordances out of the box, but configured as it is in our app it forfeits the *structural* accessibility a plain `<table>` has for free — and turns keyboard shortcuts off. The honest comparison isn't "gold-standard MRT vs. our DIY," it's "div-grid with keyboard off vs. a semantic table with sort announcements and keyboard resize/reorder." The rebuild is the more accessible option, not the riskier one.

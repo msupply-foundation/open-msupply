@@ -16,3 +16,8 @@
   align-items: center;
   gap: var(--space-3);
 }
+
+.count {
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
