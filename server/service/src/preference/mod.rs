@@ -46,6 +46,9 @@ pub trait PreferenceServiceTrait: Sync + Send {
             display_population_based_forecasting,
             global_table_configs: _, // Not included in preference descriptions UI
             backdating,
+            // Hidden from the preferences edit UI until prescription payment
+            // functionality is implemented (#6179)
+            receive_payments_from_prescriptions: _,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -101,6 +104,8 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(is_gaps, &mut prefs, &input)?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(backdating, &mut prefs, &input)?;
+        // TODO: receive_payments_from_prescriptions intentionally omitted, hidden from
+        // the edit UI until prescription payment functionality exists
 
         // Store preferences
         append_if_type(order_in_packs, &mut prefs, &input)?;

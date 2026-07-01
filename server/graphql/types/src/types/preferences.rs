@@ -107,6 +107,10 @@ impl PreferencesNode {
         ))
     }
 
+    pub async fn receive_payments_from_prescriptions(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.receive_payments_from_prescriptions)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -295,6 +299,7 @@ pub enum PreferenceKey {
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
     Backdating,
+    ReceivePaymentsFromPrescriptions,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
