@@ -13,7 +13,12 @@ export function useItemVariants(itemId: string) {
         storeId,
       });
 
-      return result.items.nodes?.[0];
+      // TanStack Query forbids a queryFn resolving to `undefined`, so coalesce
+      // to null when no item matches (e.g. empty/inactive item id).
+      return result.items.nodes?.[0] ?? null;
     },
+    // Skip the query when there's no item selected (e.g. the InboundLineEdit
+    // "Add item" create flow before an item is chosen).
+    enabled: !!itemId,
   });
 }

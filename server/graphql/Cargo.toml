@@ -36,6 +36,7 @@ graphql_stocktake_line = { path = "stocktake_line" }
 graphql_types = { path = "types" }
 graphql_batch_mutations = { path = "batch_mutations" }
 graphql_stock_line = { path = "stock_line" }
+graphql_stock_relocation = { path = "stock_relocation" }
 graphql_repack = { path = "repack" }
 graphql_printer = { path = "printer" }
 graphql_form_schema = { path = "form_schema" }
@@ -47,6 +48,7 @@ graphql_vvm = { path = "vvm" }
 graphql_purchase_order = { path = "purchase_order" }
 graphql_purchase_order_line = { path = "purchase_order_line" }
 graphql_contact = { path = "contact" }
+graphql_sync_message = { path = "sync_message" }
 graphql_site = { path = "site" }
 
 actix-web = { workspace = true }

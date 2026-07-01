@@ -64,7 +64,12 @@ export type SupplierReturnFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
   user?: {
     __typename: 'UserNode';
@@ -121,7 +126,12 @@ export type CustomerReturnFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
 };
 
@@ -444,7 +454,12 @@ export type SupplierReturnByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         user?: {
           __typename: 'UserNode';
@@ -491,6 +506,7 @@ export type SupplierReturnByIdQuery = {
         customFields?: any | null;
         lines: {
           __typename: 'InvoiceLineConnector';
+          totalCount: number;
           nodes: Array<{
             __typename: 'InvoiceLineNode';
             id: string;
@@ -520,7 +536,12 @@ export type SupplierReturnByIdQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         user?: {
           __typename: 'UserNode';
@@ -612,7 +633,12 @@ export type CustomerReturnByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
       }
     | { __typename: 'NodeError' };
@@ -691,7 +717,12 @@ export type CustomerReturnByIdQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
       }
     | { __typename: 'NodeError' };
@@ -901,6 +932,7 @@ export const SupplierReturnFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     user {
@@ -971,6 +1003,7 @@ export const CustomerReturnFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
   }
@@ -1196,6 +1229,7 @@ export const SupplierReturnByIdDocument = gql`
           nodes {
             ...SupplierReturnLine
           }
+          totalCount
         }
       }
     }

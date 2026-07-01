@@ -192,6 +192,7 @@ mod graphql {
                 supplying_store_id: _,
                 store: _,
                 dynamic_filter: _,
+                include_disabled: _,
             } = filter.unwrap();
 
             assert_eq!(

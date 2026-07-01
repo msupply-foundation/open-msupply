@@ -4,9 +4,12 @@ use crate::{
         check_status_change, check_store, custom_fields::check_unknown_custom_fields_key,
         InvoiceRowStatusError,
     },
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
+        OtherPartyErrors,
+    },
 };
-use repository::{InvoiceRow, InvoiceType, Name, StorageConnection};
+use repository::{InvoiceLineRowRepository, InvoiceRow, InvoiceType, Name, StorageConnection};
 
 use super::{UpdateCustomerReturn, UpdateCustomerReturnError};
 
@@ -23,6 +26,9 @@ pub fn validate(
         return Err(NotThisStoreInvoice);
     }
     if !check_invoice_is_editable(&return_row) {
+        return Err(ReturnIsNotEditable);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &return_row.name_id)? {
         return Err(ReturnIsNotEditable);
     }
     if !check_invoice_type(&return_row, InvoiceType::CustomerReturn) {
@@ -51,6 +57,12 @@ pub fn validate(
             }
             InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         })?;
+
+        let lines =
+            InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(&patch.id)?;
+        if lines.is_empty() {
+            return Err(CannotIssueCustomerReturnWithNoLines);
+        }
     }
     // Other party check
     let other_party_id = match &patch.other_party_id {

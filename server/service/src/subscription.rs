@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use repository::{Description, SyncLogV5V6Row, SyncLogV7Row};
-use tokio::sync::{broadcast, mpsc};
+use repository::{Description, RepositoryError, SyncLogV5V6Row, SyncLogV7Row};
+use tokio::sync::{broadcast, mpsc, watch};
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
@@ -30,20 +30,6 @@ pub enum SyncLogRow {
 }
 
 impl SyncLogRow {
-    fn push_progress_total(&self) -> i32 {
-        match self {
-            SyncLogRow::V5V6(row) => row.push_progress_total.unwrap_or(0),
-            SyncLogRow::V7 { row, .. } => row.push_progress_total.unwrap_or(0),
-        }
-    }
-
-    fn push_progress_done(&self) -> i32 {
-        match self {
-            SyncLogRow::V5V6(row) => row.push_progress_done.unwrap_or(0),
-            SyncLogRow::V7 { row, .. } => row.push_progress_done.unwrap_or(0),
-        }
-    }
-
     fn full_sync_status(self) -> FullSyncStatus {
         match self {
             SyncLogRow::V5V6(row) => {
@@ -82,22 +68,41 @@ pub enum ResolvedSubscription {
     InitialisationStatus(InitialisationStatus),
 }
 
+// SyncStatus triggers use a watch channel so rapid progress updates coalesce:
+// the worker always processes the latest row rather than queuing every update.
+// PushQueueChanged uses a small mpsc channel; the worker's debounce logic
+// already ensures at most one is in flight at a time.
 #[derive(Clone)]
 pub struct SubscriptionTriggerHandle {
-    sender: mpsc::Sender<SubscriptionTrigger>,
+    sync_status_sender: Arc<watch::Sender<Option<SyncLogRow>>>,
+    push_queue_sender: mpsc::Sender<()>,
 }
 
 impl SubscriptionTriggerHandle {
     pub fn send(&self, trigger: SubscriptionTrigger) {
-        if let Err(error) = self.sender.try_send(trigger) {
-            log::error!("Problem sending subscription trigger: {error:#?}");
+        match trigger {
+            SubscriptionTrigger::SyncStatus(row) => {
+                // watch::send only fails if all receivers are dropped — safe to ignore
+                let _ = self.sync_status_sender.send(Some(row));
+            }
+            SubscriptionTrigger::PushQueueChanged => {
+                if let Err(e) = self.push_queue_sender.try_send(()) {
+                    // Full is expected — the debounce means at most one is queued at a time
+                    if matches!(e, mpsc::error::TrySendError::Closed(_)) {
+                        log::error!("Subscription push queue channel closed: {e:#?}");
+                    }
+                }
+            }
         }
     }
 
     /// Empty handle for tests/CLI that don't use subscriptions
     pub fn new_void() -> Self {
+        let (sync_status_sender, _) = watch::channel(None);
+        let (push_queue_sender, _) = mpsc::channel(1);
         Self {
-            sender: mpsc::channel(1).0,
+            sync_status_sender: Arc::new(sync_status_sender),
+            push_queue_sender,
         }
     }
 }
@@ -105,15 +110,23 @@ impl SubscriptionTriggerHandle {
 // ── Worker (receives triggers, resolves, broadcasts) ──
 
 pub struct SubscriptionWorker {
-    receiver: mpsc::Receiver<SubscriptionTrigger>,
+    sync_status_receiver: watch::Receiver<Option<SyncLogRow>>,
+    push_queue_receiver: mpsc::Receiver<()>,
 }
 
 impl SubscriptionWorker {
     pub fn init() -> (SubscriptionTriggerHandle, SubscriptionWorker) {
-        let (sender, receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
+        let (sync_status_sender, sync_status_receiver) = watch::channel(None);
+        let (push_queue_sender, push_queue_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
         (
-            SubscriptionTriggerHandle { sender },
-            SubscriptionWorker { receiver },
+            SubscriptionTriggerHandle {
+                sync_status_sender: Arc::new(sync_status_sender),
+                push_queue_sender,
+            },
+            SubscriptionWorker {
+                sync_status_receiver,
+                push_queue_receiver,
+            },
         )
     }
 
@@ -125,7 +138,13 @@ impl SubscriptionWorker {
         let tx = broadcast_tx.clone();
 
         let handle = tokio::spawn(async move {
-            subscription_worker_loop(self.receiver, tx, service_provider).await;
+            subscription_worker_loop(
+                self.sync_status_receiver,
+                self.push_queue_receiver,
+                tx,
+                service_provider,
+            )
+            .await;
         });
 
         (handle, broadcast_tx)
@@ -133,7 +152,8 @@ impl SubscriptionWorker {
 }
 
 async fn subscription_worker_loop(
-    mut rx: mpsc::Receiver<SubscriptionTrigger>,
+    mut sync_status_receiver: watch::Receiver<Option<SyncLogRow>>,
+    mut push_queue_receiver: mpsc::Receiver<()>,
     tx: broadcast::Sender<ResolvedSubscription>,
     service_provider: Arc<ServiceProvider>,
 ) {
@@ -154,25 +174,38 @@ async fn subscription_worker_loop(
                 .flatten()
         })
         .is_some();
+    let mut push_queue_count = get_push_queue_count(&service_provider).unwrap_or(0);
     let mut last_push_query = Instant::now() - PUSH_QUEUE_DEBOUNCE;
     let mut push_queue_queued = false;
     let trigger_handle = service_provider.subscription_trigger.clone();
 
     loop {
-        let Some(trigger) = rx.recv().await else {
-            break;
-        };
+        tokio::select! {
+            result = sync_status_receiver.changed() => {
+                if result.is_err() { break; } // all senders dropped
 
-        match trigger {
-            SubscriptionTrigger::SyncStatus(row) => {
-                let push_queue_count =
-                    (row.push_progress_total() - row.push_progress_done()) as u64;
+                let row = match sync_status_receiver.borrow_and_update().clone() {
+                    Some(row) => row,
+                    None => continue,
+                };
+
                 let status = row.full_sync_status();
+                let summary = status.summary();
 
                 let just_finished_successfully = status.is_finished_successfully();
+                let is_finished = summary.finished.is_some();
+
                 if just_finished_successfully {
-                    last_successful = Some(status.summary());
+                    last_successful = Some(summary);
                 }
+
+                if is_finished {
+                    // Once the sync has finished, requery to get the accurate push
+                    // queue count, falling back to the existing count if the query fails.
+                    push_queue_count =
+                        get_push_queue_count(&service_provider).unwrap_or(push_queue_count);
+                }
+
                 last_status = Some(status.clone());
 
                 let _ = tx.send(ResolvedSubscription::SyncInfo {
@@ -205,20 +238,20 @@ async fn subscription_worker_loop(
                 }
             }
 
-            SubscriptionTrigger::PushQueueChanged => {
+            result = push_queue_receiver.recv() => {
+                if result.is_none() { break; } // all senders dropped
+
                 if last_push_query.elapsed() >= PUSH_QUEUE_DEBOUNCE {
                     // Outside debounce window — query immediately
                     push_queue_queued = false;
-                    let count = match service_provider.basic_context() {
-                        Ok(ctx) => service_provider
-                            .sync_status_service
-                            .number_of_records_in_push_queue(&ctx)
-                            .unwrap_or(0),
+                    let count = match get_push_queue_count(&service_provider) {
+                        Ok(count) => count,
                         Err(_) => {
                             log::error!("Failed to get DB connection for push queue count");
                             continue;
                         }
                     };
+                    push_queue_count = count;
                     last_push_query = Instant::now();
 
                     if let Some(status) = &last_status {
@@ -241,4 +274,13 @@ async fn subscription_worker_loop(
             }
         }
     }
+}
+
+fn get_push_queue_count(service_provider: &Arc<ServiceProvider>) -> Result<u64, RepositoryError> {
+    let ctx = service_provider.basic_context()?;
+
+    Ok(service_provider
+        .sync_status_service
+        .number_of_records_in_push_queue(&ctx)
+        .unwrap_or(0))
 }

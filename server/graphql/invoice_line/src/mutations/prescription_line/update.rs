@@ -105,6 +105,8 @@ impl UpdateInput {
             campaign_id: None,
             program_id: None,
             vvm_status_id: None,
+            received_number_of_packs: None,
+            reason_option_id: None,
         }
     }
 }
@@ -121,7 +123,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 ForeignKey::InvoiceId,
             )))
         }
-        CannotEditFinalised => {
+        CannotEditFinalised | OtherPartyStoreDisabled => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
@@ -172,6 +174,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ItemDoesNotMatchStockLine
         | NotThisInvoiceLine(_)
         | VVMStatusDoesNotExist
+        | ReasonOptionDoesNotExist
+        | ReasonOptionIsNotActive
+        | ReasonOptionTypeInvalid
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
         AutoPickFailed(_) | DatabaseError(_) | UpdatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)

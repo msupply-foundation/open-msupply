@@ -232,8 +232,9 @@ pub trait ReportServiceTrait: Sync + Send {
         base_dir: &str,
         csv_data: &str,
         filename: &str,
+        sheet_name: Option<&str>,
     ) -> Result<String, ReportError> {
-        csv_to_excel(base_dir, csv_data, filename)
+        csv_to_excel(base_dir, csv_data, filename, sheet_name)
     }
 }
 

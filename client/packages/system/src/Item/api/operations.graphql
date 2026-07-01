@@ -354,6 +354,10 @@ fragment ItemsWithStats on ItemNode {
   doses
   customFields
   availableStockOnHand(storeId: $storeId)
+  masterLists(storeId: $storeId) {
+    id
+    name
+  }
   stats(storeId: $storeId) {
     __typename
     averageMonthlyConsumption

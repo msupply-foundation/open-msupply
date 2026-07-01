@@ -1,5 +1,6 @@
 use crate::{
     service_provider::ServiceProvider,
+    sync::ActiveStoresOnSite,
     sync_v7::{
         api::{patient_data_for_site, SyncApiV7},
         validate_translate_integrate::{validate_translate_integrate_in_memory, SyncContext},
@@ -62,7 +63,14 @@ pub async fn pull_and_integrate_patient_data(
         })
         .collect();
 
-    validate_translate_integrate_in_memory(connection, &buffer_rows, SyncContext::PatientLookup)?;
+    let active_stores =
+        ActiveStoresOnSite::get(connection).map_err(|e| SyncError::Other(e.to_string()))?;
+
+    validate_translate_integrate_in_memory(
+        connection,
+        &buffer_rows,
+        SyncContext::PatientLookup { active_stores },
+    )?;
 
     Ok(nsj_id)
 }

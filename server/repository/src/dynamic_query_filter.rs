@@ -136,9 +136,121 @@ pub trait FilterBuilder<T: Clone + serde::Serialize + serde::de::DeserializeOwne
 }
 
 // Generates a filter module for a given query Source.
-// create_condition!(ModuleName, Source, (field_name, kind, dsl_expression), ...);
+//
+// Two field shapes can be freely mixed in one list:
+//   Scalar:    (field_name, kind, dsl_expression)
+//              kind is `number`, `string`, or a custom `T: Clone + Serialize + DeserializeOwned`.
+//              Exposes GeneralFilter operators: equal/not_equal/greater_than/lower_than/any/is_null.
+//   Subquery:  (field_name, subquery: ValueType, |value| <select expression>)
+//              The variant carries a plain `ValueType` (so it serializes trivially). The closure
+//              maps that value to a Diesel subquery expression — typically
+//              `outer_col.eq_any(other_table::table.filter(...).select(other_col))` — replacing a
+//              JOIN with an `IN (...)`. Built at the call site with `FieldName::matching(value)`.
+//              NB: the closure parameter must not be named after another field in this condition
+//              (each field generates a unit struct of that name, which would shadow the binding).
+//
+// create_condition!(ModuleName, Source, <field>, <field>, ...);
+//
+// Because a `macro_rules!` call can't expand in enum-variant position, the field list is consumed
+// by an internal accumulator (@build): it munches one field at a time, classifying scalar vs
+// subquery, and appends generated tokens to three accumulators (enum variants, field structs/impls,
+// match arms). The terminal @build arm emits the whole module at once.
 macro_rules! create_condition {
-    ($mod_name:ident, $source:ty, $(($variant:ident, $filter_kind:ident, $dsl_expr:expr)),+ $(,)?) => {
+    ($mod_name:ident, $source:ty, $($field:tt),+ $(,)?) => {
+        create_condition!(@build
+            mod_name: $mod_name,
+            source: $source,
+            fields: [ $($field),+ ],
+            variants: [],
+            items: [],
+            arms: [],
+            cf_arms: [],
+        );
+    };
+
+    // ===== Accumulator: classify and consume the next field =====
+
+    // Subquery field. Variant carries the value type; the closure builds the subquery expression.
+    (@build
+        mod_name: $mod_name:ident, source: $source:ty,
+        fields: [ ($variant:ident, subquery: $value_ty:ty, |$v:ident| $body:expr) $(, $rest:tt)* ],
+        variants: [ $($variants:tt)* ],
+        items: [ $($items:tt)* ],
+        arms: [ $($arms:tt)* ],
+        cf_arms: [ $($cf_arms:tt)* ],
+    ) => {
+        create_condition!(@build
+            mod_name: $mod_name, source: $source,
+            fields: [ $($rest),* ],
+            variants: [ $($variants)* $variant($value_ty), ],
+            items: [
+                $($items)*
+                #[allow(non_snake_case)]
+                pub struct $variant;
+                impl $variant {
+                    pub fn matching(value: $value_ty) -> Inner {
+                        Inner::$variant(value)
+                    }
+                }
+            ],
+            arms: [
+                $($arms)*
+                // Bind to a fixed internal name (not `$v`) so the pattern can't collide with a
+                // same-named unit struct generated for another field; then expose it as `$v`.
+                Inner::$variant(__subquery_value) => {
+                    let $v: $value_ty = __subquery_value;
+                    Some(Box::new(($body).nullable()))
+                },
+            ],
+            cf_arms: [
+                $($cf_arms)*
+                // Subquery variants carry a value, not a filter — never a custom field.
+                Inner::$variant(_) => vec![],
+            ],
+        );
+    };
+
+    // Scalar field. Variant carries a GeneralFilter; operators come from the FilterBuilder trait.
+    (@build
+        mod_name: $mod_name:ident, source: $source:ty,
+        fields: [ ($variant:ident, $filter_kind:ident, $dsl_expr:expr) $(, $rest:tt)* ],
+        variants: [ $($variants:tt)* ],
+        items: [ $($items:tt)* ],
+        arms: [ $($arms:tt)* ],
+        cf_arms: [ $($cf_arms:tt)* ],
+    ) => {
+        create_condition!(@build
+            mod_name: $mod_name, source: $source,
+            fields: [ $($rest),* ],
+            variants: [ $($variants)* $variant(create_condition!(@filter_type $filter_kind)), ],
+            items: [
+                $($items)*
+                #[allow(non_snake_case)]
+                pub struct $variant;
+                create_condition!(@impl_trait $variant, $filter_kind);
+            ],
+            arms: [
+                $($arms)*
+                Inner::$variant(f) => {
+                    Some(create_condition!(@filter_macro $filter_kind, f, $dsl_expr))
+                },
+            ],
+            cf_arms: [
+                $($cf_arms)*
+                Inner::$variant(f) => create_condition!(@collect $filter_kind, f),
+            ],
+        );
+    };
+
+    // ===== Terminal: all fields consumed, emit the module =====
+    (@build
+        mod_name: $mod_name:ident, source: $source:ty,
+        fields: [],
+        variants: [ $($variants:tt)* ],
+        items: [ $($items:tt)* ],
+        arms: [ $($arms:tt)* ],
+        cf_arms: [ $($cf_arms:tt)* ],
+    ) => {
         #[allow(non_snake_case, non_camel_case_types)]
         pub mod $mod_name {
             use super::*;
@@ -146,9 +258,7 @@ macro_rules! create_condition {
             #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
             #[allow(non_snake_case)]
             pub enum Inner {
-                $(
-                    $variant(create_condition!(@filter_type $filter_kind)),
-                )+
+                $($variants)*
                 And(Vec<Inner>),
                 Or(Vec<Inner>),
                 True,
@@ -165,9 +275,7 @@ macro_rules! create_condition {
                 /// against the table scope's allowed keys.
                 pub fn custom_field_conditions(&self) -> Vec<&crate::db_diesel::json_custom_field_filter::CustomFieldCondition> {
                     match self {
-                        $(
-                            Inner::$variant(f) => create_condition!(@collect $filter_kind, f),
-                        )+
+                        $($cf_arms)*
                         Inner::And(conditions) | Inner::Or(conditions) => conditions
                             .iter()
                             .flat_map(|condition| condition.custom_field_conditions())
@@ -180,12 +288,7 @@ macro_rules! create_condition {
             pub const TRUE: Inner = Inner::True;
             pub const FALSE: Inner = Inner::False;
 
-            $(
-                #[allow(non_snake_case)]
-                pub struct $variant;
-
-                create_condition!(@impl_trait $variant, $filter_kind);
-            )+
+            $($items)*
 
             pub fn And(conditions: Vec<Inner>) -> Inner {
                 Inner::And(conditions)
@@ -210,11 +313,7 @@ macro_rules! create_condition {
             impl Inner {
                  fn to_boxed_condition(self) -> Option<BoxedCondition> {
                    match self {
-                        $(
-                            Inner::$variant(f) => {
-                                Some(create_condition!(@filter_macro $filter_kind, f, $dsl_expr))
-                            },
-                        )+
+                        $($arms)*
                         Inner::And(conditions) => create_filter(conditions, crate::dynamic_query_filter::AndOr::And),
                         Inner::Or(conditions) => create_filter(conditions, crate::dynamic_query_filter::AndOr::Or),
                         Inner::True => Some(Box::new(true.into_sql::<diesel::sql_types::Bool>().nullable())),

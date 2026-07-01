@@ -4,7 +4,7 @@ use crate::mutations::{
 };
 use async_graphql::*;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, FixedOffset};
 use graphql_core::generic_inputs::{InboundShipmentType, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
@@ -51,7 +51,7 @@ pub struct UpdateInput {
     pub charges_local_currency: Option<f64>,
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
-    pub received_datetime: Option<DateTime<Utc>>,
+    pub received_datetime: Option<DateTime<FixedOffset>>,
     /// Patch of customFields key -> value (JSON object) merged into the
     /// invoice's custom properties; a `null` value clears that key, keys absent
     /// from the patch are left unchanged.
@@ -191,7 +191,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 CannotReverseInvoiceStatus,
             ))
         }
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(CannotEditInvoice))
         }
         ServiceError::CannotReceiveWithPendingLines => {
@@ -234,9 +234,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::ExceedsMaximumBackdatingDays
         | ServiceError::CannotSetShippedStatusOnManualInboundShipment
         | ServiceError::CurrencyRateMustBePositive
-        | ServiceError::UnknownPropertyKey(_) => {
-            BadUserInput(formatted_error)
-        }
+        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
         ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),

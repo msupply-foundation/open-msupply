@@ -106,6 +106,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::ReturnIsNotEditable
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
+        | ServiceError::CannotIssueCustomerReturnWithNoLines
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
 

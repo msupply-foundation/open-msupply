@@ -51,6 +51,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             standalone_store_name: None,
             standalone_admin_username: None,
             standalone_admin_password: None,
+            workers: None,
         },
         database: db_settings,
         sync: None,
@@ -79,8 +80,10 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        Some(settings.clone()),
         SubscriptionTriggerHandle::new_void(),
         BatchSize::default(),
+        false,
         false,
     ));
 

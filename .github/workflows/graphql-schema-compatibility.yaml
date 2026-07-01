@@ -1,0 +1,62 @@
+name: GraphQL Schema Compatibility
+
+on:
+  pull_request:
+    paths:
+      - 'server/graphql/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  schema-diff:
+    name: Detect breaking GraphQL schema changes
+    runs-on: self-hosted
+    timeout-minutes: 30
+    # Add the `Breaking API change` label to a PR to acknowledge an intentional
+    # breaking change and skip this check.
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'Breaking API change') }}
+    env:
+      CARGO_TARGET_DIR: /tmp/target/schema-diff
+      PR_SCHEMA: /tmp/schema-diff/pr-schema.graphql
+      BASE_SCHEMA: /tmp/schema-diff/base-schema.graphql
+    steps:
+      - name: Update PATH
+        run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
+
+      - name: Prepare schema output directory
+        run: mkdir -p /tmp/schema-diff
+
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Read .nvmrc
+        id: nvm
+        run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+
+      - name: Export schema from PR
+        working-directory: server
+        run: cargo run --bin remote_server_cli -- export-graphql-schema --path "$PR_SCHEMA"
+
+      - name: Check out base ref
+        run: git checkout ${{ github.event.pull_request.base.sha }}
+
+      - name: Export schema from base
+        working-directory: server
+        run: cargo run --bin remote_server_cli -- export-graphql-schema --path "$BASE_SCHEMA"
+
+      - name: Diff schemas with graphql-inspector
+        run: |
+          npx --yes \
+            -p @graphql-inspector/cli@^4 \
+            -p @graphql-inspector/graphql-loader@^4 \
+            -p @graphql-inspector/diff-command@^4 \
+            graphql-inspector diff "$BASE_SCHEMA" "$PR_SCHEMA"

@@ -98,6 +98,7 @@ pub enum UpdateCustomerReturnError {
     CannotReverseInvoiceStatus,
     ReturnIsNotEditable,
     CannotChangeStatusOfInvoiceOnHold,
+    CannotIssueCustomerReturnWithNoLines,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -215,6 +216,17 @@ mod test {
                 ..Default::default()
             }
         }
+        fn empty_return() -> InvoiceRow {
+            InvoiceRow {
+                id: "empty_customer_return".to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_a().id,
+                currency_id: Some(currency_a().id),
+                r#type: InvoiceType::CustomerReturn,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_customer_return_errors",
@@ -222,7 +234,7 @@ mod test {
             MockData {
                 names: vec![not_visible(), not_a_supplier()],
                 name_store_joins: vec![not_a_supplier_join()],
-                invoices: vec![verified_return(), on_hold_return()],
+                invoices: vec![verified_return(), on_hold_return(), empty_return()],
                 ..Default::default()
             },
         )
@@ -293,6 +305,19 @@ mod test {
                 }
             ),
             Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
+        );
+
+        //CannotIssueCustomerReturnWithNoLines
+        assert_eq!(
+            service.update_customer_return(
+                &context,
+                UpdateCustomerReturn {
+                    id: empty_return().id,
+                    status: Some(UpdateCustomerReturnStatus::Received),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CannotIssueCustomerReturnWithNoLines)
         );
     }
 

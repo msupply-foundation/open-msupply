@@ -14,6 +14,7 @@ import {
   buildPropertyUrlFilterConfigs,
   mapPropertyFilters,
   useFormatDateTime,
+  ChipTableCell,
 } from '@openmsupply-client/common';
 import {
   useVisibleOrOnHandItems,
@@ -37,6 +38,7 @@ export const ItemListView = () => {
       { key: 'maxMonthsOfStock', condition: 'isNumber' },
       { key: 'stockStatus' },
       { key: 'productsAtRiskOfBeingOutOfStock', condition: '=' },
+      { key: 'masterListId', condition: 'equalTo' },
       ...buildPropertyUrlFilterConfigs(properties ?? []),
     ],
   });
@@ -73,6 +75,13 @@ export const ItemListView = () => {
         size: 350,
         enableSorting: true,
         enableColumnFilter: true,
+      },
+      {
+        id: 'masterLists',
+        header: t('label.master-lists'),
+        accessorFn: row => row.masterLists?.map(m => m.name) ?? [],
+        Cell: ChipTableCell,
+        size: 200,
       },
       {
         id: 'unitName',

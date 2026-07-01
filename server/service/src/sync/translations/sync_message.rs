@@ -41,7 +41,9 @@ pub struct LegacyMessageRow {
 pub enum LegacySyncMessageStatus {
     #[default]
     New,
+    InProgress,
     Processed,
+    Error,
 }
 
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -77,7 +79,9 @@ impl SyncTranslation for MessageTranslation {
 
         let status = match status {
             LegacySyncMessageStatus::New => SyncMessageRowStatus::New,
+            LegacySyncMessageStatus::InProgress => SyncMessageRowStatus::InProgress,
             LegacySyncMessageStatus::Processed => SyncMessageRowStatus::Processed,
+            LegacySyncMessageStatus::Error => SyncMessageRowStatus::Error,
         };
 
         let body = serde_json::to_string(&body).context("Failed to serialize message body")?;
@@ -116,6 +120,15 @@ impl SyncTranslation for MessageTranslation {
             return Err(anyhow::anyhow!("Message not found"));
         };
 
+        // SupportUpload messages are an open-mSupply-only flow (processed by
+        // SupportUploadFilesProcessor on the receiving site, files uploaded
+        // to OMS central via TUS) — legacy mSupply has no handler for them.
+        // OmSyncMessageTranslation owns that path; we skip here so we don't
+        // double-sync the same row to both centrals.
+        if matches!(message.r#type, SyncMessageRowType::SupportUpload) {
+            return Ok(PushTranslateResult::NotMatched);
+        }
+
         let SyncMessageRow {
             id,
             to_store_id,
@@ -142,7 +155,9 @@ impl SyncTranslation for MessageTranslation {
             created_time,
             status: match status {
                 SyncMessageRowStatus::New => LegacySyncMessageStatus::New,
+                SyncMessageRowStatus::InProgress => LegacySyncMessageStatus::InProgress,
                 SyncMessageRowStatus::Processed => LegacySyncMessageStatus::Processed,
+                SyncMessageRowStatus::Error => LegacySyncMessageStatus::Error,
             },
             r#type,
             error_message,

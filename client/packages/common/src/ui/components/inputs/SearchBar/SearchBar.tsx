@@ -18,6 +18,7 @@ interface SearchBarProps {
   debounceTime?: number;
   expandOnFocus?: boolean;
   autoFocus?: boolean;
+  width?: string;
 }
 
 const EndAdornment = ({
@@ -57,6 +58,7 @@ export const SearchBar = ({
   expandOnFocus = false,
   searchIconButtonLabel = '',
   autoFocus = false,
+  width = '220px',
 }: SearchBarProps) => {
   const [buffer, setBuffer] = useState(value);
   const [loading, setLoading] = useState(false);
@@ -118,17 +120,17 @@ export const SearchBar = ({
             sx: {
               paddingLeft: '6px',
               alignItems: 'center',
-              width: '220px',
+              width,
               ...(expandOnFocus
                 ? {
-                    transition: theme =>
-                      theme.transitions.create('width', {
-                        delay: 100,
-                      }),
-                    '&.Mui-focused': {
-                      width: '360px',
-                    },
-                  }
+                  transition: theme =>
+                    theme.transitions.create('width', {
+                      delay: 100,
+                    }),
+                  '&.Mui-focused': {
+                    width: '360px',
+                  },
+                }
                 : {}),
               backgroundColor: theme => theme.palette.background.input.main,
             },

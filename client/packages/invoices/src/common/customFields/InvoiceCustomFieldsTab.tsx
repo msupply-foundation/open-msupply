@@ -1,16 +1,21 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   DraftProperties,
   InvoiceNodeType,
   CustomFieldsEditTab,
   CustomFieldNodeDisplayMode,
   useAuthContext,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import {
   INVOICE_PROPERTY_MUTATE_PERMISSION,
   useInvoiceCustomFields,
 } from './hooks';
 import { throwIfStructuredError } from './saveResult';
+
+// The URL `?tab=` value of the custom-fields tab, shared by every invoice
+// detail view.
+const CUSTOM_FIELDS_TAB = 'custom-fields';
 
 interface InvoiceCustomFieldsTabProps {
   invoiceType: InvoiceNodeType;
@@ -28,20 +33,22 @@ interface InvoiceCustomFieldsTabProps {
    * once an invoice is finalised).
    */
   disabled?: boolean;
-  /** Reports draft dirtiness so the view can gate tab navigation. */
-  onEdit: (isDirty: boolean) => void;
 }
 
 /**
  * "Properties" tab for every invoice detail view — wires the type's definitions,
  * permission and status-gated save into the shared {@link CustomFieldsEditTab}.
+ *
+ * Owns the unsaved-changes guard itself (via {@link useConfirmOnLeaving}) so all
+ * detail views get the same coverage for free: the router blocker handles page
+ * navigation and refresh, and the `customCheck` also catches the same-route
+ * `?tab=` switch to another tab (which the default pathname-only blocker skips).
  */
 export const InvoiceCustomFieldsTab = ({
   invoiceType,
   customFields,
   onSave,
   disabled: statusDisabled,
-  onEdit,
 }: InvoiceCustomFieldsTabProps) => {
   const { userHasPermission } = useAuthContext();
   const { data: definitions = [] } = useInvoiceCustomFields(invoiceType);
@@ -49,6 +56,30 @@ export const InvoiceCustomFieldsTab = ({
   const permission = INVOICE_PROPERTY_MUTATE_PERMISSION[invoiceType];
   const disabled =
     !!statusDisabled || !permission || !userHasPermission(permission);
+
+  // Dirtiness is read inside the (mount-time) customCheck closure, so keep it in
+  // a ref rather than state to always see the live value.
+  const isDirty = useRef(false);
+  const { setIsDirty } = useConfirmOnLeaving('invoice-custom-fields', {
+    customCheck: {
+      navigate: (current, next) => {
+        if (!isDirty.current) return false;
+        const leavingPage = current.pathname !== next.pathname;
+        const nextTab = new URLSearchParams(next.search).get('tab');
+        const leavingTab = nextTab !== CUSTOM_FIELDS_TAB;
+        return leavingPage || leavingTab;
+      },
+      refresh: () => isDirty.current,
+    },
+  });
+
+  const onEdit = useCallback(
+    (dirty: boolean) => {
+      isDirty.current = dirty;
+      setIsDirty(dirty);
+    },
+    [setIsDirty]
+  );
 
   return (
     <CustomFieldsEditTab
