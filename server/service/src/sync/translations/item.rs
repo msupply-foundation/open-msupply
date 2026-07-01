@@ -19,7 +19,7 @@ use crate::sync::{
 use util::sync_serde::empty_str_as_option_string;
 
 use super::{
-    utils::{legacy_properties_if_central, LegacyPropertiesBuilder},
+    utils::{legacy_custom_fields_if_central, LegacyCustomFieldsBuilder},
     IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 
@@ -63,7 +63,7 @@ pub struct LegacyItemRow {
     universal_code: Option<String>,
     // Legacy 4D `[item]user_field_1..7` custom fields. Unlike name's
     // `custom1/2/3`, the 4D column names are already snake_case so the wire key
-    // matches the OMS-side `property_v2.key` 1:1 — no rename needed. Types come
+    // matches the OMS-side `custom_field.key` 1:1 — no rename needed. Types come
     // from the 4D catalog: 1/2/3/6 Text, 5 Real, 4/7 Boolean. All `default` so
     // payloads from older central versions that omit them still deserialize.
     #[serde(default, deserialize_with = "empty_str_as_option_string")]
@@ -82,18 +82,18 @@ pub struct LegacyItemRow {
     user_field_7: Option<bool>,
 }
 
-/// Build the `item.properties_v2` JSONB from legacy `[item]user_field_1..7`.
+/// Build the `item.custom_fields` JSONB from legacy `[item]user_field_1..7`.
 ///
 /// Each field is stored under its wire key (`user_field_N`, matching the central
-/// mapping-property seeder `central_mapping_properties`) as its native JSON type
+/// mapping custom field seeder `central_mapping_custom_fields`) as its native JSON type
 /// — text for `1/2/3/6`, real for `5`, boolean for `4/7` — via the shared
-/// [`LegacyPropertiesBuilder`]. The builder applies the per-type
+/// [`LegacyCustomFieldsBuilder`]. The builder applies the per-type
 /// "untouched rows stay clean" rule (empty text, `0.0` and `false` are omitted),
-/// so default-only items keep `properties_v2` NULL rather than carrying noise
+/// so default-only items keep `custom_fields` NULL rather than carrying noise
 /// rows that 4D would otherwise emit for every item.
-fn build_legacy_item_properties(legacy: &LegacyItemRow) -> Option<serde_json::Value> {
-    use crate::sync::central_mapping_properties::keys;
-    LegacyPropertiesBuilder::new()
+fn build_legacy_item_custom_fields(legacy: &LegacyItemRow) -> Option<serde_json::Value> {
+    use crate::sync::central_mapping_custom_fields::keys;
+    LegacyCustomFieldsBuilder::new()
         .text(keys::ITEM_USER_FIELD_1, legacy.user_field_1.as_deref())
         .text(keys::ITEM_USER_FIELD_2, legacy.user_field_2.as_deref())
         .text(keys::ITEM_USER_FIELD_3, legacy.user_field_3.as_deref())
@@ -101,11 +101,11 @@ fn build_legacy_item_properties(legacy: &LegacyItemRow) -> Option<serde_json::Va
         .real(keys::ITEM_USER_FIELD_5, legacy.user_field_5)
         .boolean(keys::ITEM_USER_FIELD_4, legacy.user_field_4)
         .boolean(keys::ITEM_USER_FIELD_7, legacy.user_field_7)
-        // Item category as a propertiesV2 OPTION (parallel to the existing
+        // Item category as a customFields OPTION (parallel to the existing
         // relational `item_category_join` path, which is left untouched). 4D
         // gives an item one leaf `category_ID`; stored as the option id so the
-        // client resolves it against the `property_option_v2` rows authored by
-        // the category import. See central_mapping_properties (`ITEM_CATEGORY_1`).
+        // client resolves it against the `custom_field_option` rows authored by
+        // the category import. See central_mapping_custom_fields (`ITEM_CATEGORY_1`).
         .option(keys::ITEM_CATEGORY_1, legacy.category_ID.as_deref())
         // Flat category dimensions 2 & 3 (`item_category2`/`3`).
         .option(keys::ITEM_CATEGORY_2, legacy.category2_ID.as_deref())
@@ -183,9 +183,9 @@ impl SyncTranslation for ItemTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyItemRow>()?;
 
-        // Properties-v2 import is central-only (see `legacy_properties_if_central`).
+        // Custom fields import is central-only (see `legacy_custom_fields_if_central`).
         // Computed before `data`'s fields are moved into `item_row` below.
-        let properties_v2 = legacy_properties_if_central(|| build_legacy_item_properties(&data));
+        let custom_fields = legacy_custom_fields_if_central(|| build_legacy_item_custom_fields(&data));
 
         let mut integration_operations = Vec::new();
 
@@ -228,7 +228,7 @@ impl SyncTranslation for ItemTranslation {
             restricted_location_type_id,
             volume_per_pack: data.volume_per_pack,
             universal_code: data.universal_code,
-            properties_v2,
+            custom_fields,
         };
 
         integration_operations.push(IntegrationOperation::upsert(item_row));
@@ -286,8 +286,8 @@ impl SyncTranslation for ItemTranslation {
             volume_per_pack,
             universal_code,
             // Push is one-way: legacy mSupply remains source of truth for the
-            // `user_field_*` columns, so we never emit `properties_v2` back.
-            properties_v2: _,
+            // `user_field_*` columns, so we never emit `custom_fields` back.
+            custom_fields: _,
         } = item;
 
         let legacy_row = LegacyItemRow {
@@ -385,7 +385,7 @@ mod tests {
         use crate::sync::test_util_set_is_central_server;
         let translator = ItemTranslation {};
 
-        // The properties-v2 import (ITEM_4_WITH_PROPERTIES fixture) only derives
+        // The custom fields import (ITEM_4_WITH_CUSTOM_FIELDS fixture) only derives
         // on central, mirroring where the OG→OMS import runs (COMS). Other item
         // fixtures carry no user fields, so this doesn't affect them.
         test_util_set_is_central_server(true);
@@ -527,16 +527,16 @@ mod tests {
     }
 
     #[test]
-    fn build_legacy_item_properties_empty_and_defaults() {
+    fn build_legacy_item_custom_fields_empty_and_defaults() {
         // Nothing set.
         assert_eq!(
-            build_legacy_item_properties(&legacy_with(None, None, None, None)),
+            build_legacy_item_custom_fields(&legacy_with(None, None, None, None)),
             None
         );
         // 4D defaults (empty text, false, 0.0) are omitted — untouched item
         // stays NULL rather than carrying default rows.
         assert_eq!(
-            build_legacy_item_properties(&legacy_with(
+            build_legacy_item_custom_fields(&legacy_with(
                 Some(""),
                 Some(false),
                 Some(0.0),
@@ -547,8 +547,8 @@ mod tests {
     }
 
     #[test]
-    fn build_legacy_item_properties_typed_values() {
-        let result = build_legacy_item_properties(&legacy_with(
+    fn build_legacy_item_custom_fields_typed_values() {
+        let result = build_legacy_item_custom_fields(&legacy_with(
             Some("Cold chain"),
             Some(false), // omitted
             Some(12.5),
@@ -565,47 +565,47 @@ mod tests {
     }
 
     #[test]
-    fn build_legacy_item_properties_category_option() {
+    fn build_legacy_item_custom_fields_category_option() {
         // The leaf `category_ID` is stored under the `item_category_1` key as the
         // option id (parallel to the relational item_category_join path).
         let mut legacy = legacy_with(None, None, None, None);
         legacy.category_ID = Some("CAT_LEAF_ID".to_string());
         assert_eq!(
-            build_legacy_item_properties(&legacy),
+            build_legacy_item_custom_fields(&legacy),
             Some(serde_json::json!({ "item_category_1": "CAT_LEAF_ID" }))
         );
 
         // Empty/absent category is omitted, like every other default field.
         legacy.category_ID = Some("".to_string());
-        assert_eq!(build_legacy_item_properties(&legacy), None);
+        assert_eq!(build_legacy_item_custom_fields(&legacy), None);
         legacy.category_ID = None;
-        assert_eq!(build_legacy_item_properties(&legacy), None);
+        assert_eq!(build_legacy_item_custom_fields(&legacy), None);
 
         // The two flat dimensions store their ids under `item_category_2`/`_3`.
         legacy.category2_ID = Some("CAT2_ID".to_string());
         legacy.category3_ID = Some("CAT3_ID".to_string());
         assert_eq!(
-            build_legacy_item_properties(&legacy),
+            build_legacy_item_custom_fields(&legacy),
             Some(serde_json::json!({ "item_category_2": "CAT2_ID", "item_category_3": "CAT3_ID" }))
         );
     }
 
     #[test]
-    fn legacy_item_properties_only_derived_on_central() {
+    fn legacy_item_custom_fields_only_derived_on_central() {
         use crate::sync::test_util_set_is_central_server;
         let legacy = legacy_with(Some("Cold chain"), None, Some(12.5), Some(true));
 
-        // A V5V6 remote must not derive item properties locally.
+        // A V5V6 remote must not derive item custom fields locally.
         test_util_set_is_central_server(false);
         assert_eq!(
-            legacy_properties_if_central(|| build_legacy_item_properties(&legacy)),
+            legacy_custom_fields_if_central(|| build_legacy_item_custom_fields(&legacy)),
             None
         );
 
-        // The central server derives properties (and fans them out over v7).
+        // The central server derives custom fields (and fans them out over v7).
         test_util_set_is_central_server(true);
         assert_eq!(
-            legacy_properties_if_central(|| build_legacy_item_properties(&legacy)),
+            legacy_custom_fields_if_central(|| build_legacy_item_custom_fields(&legacy)),
             Some(serde_json::json!({
                 "user_field_1": "Cold chain",
                 "user_field_5": 12.5,

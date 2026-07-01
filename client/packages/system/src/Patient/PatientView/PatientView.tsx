@@ -28,7 +28,7 @@ import { InsuranceListView, InsuranceModal } from '../Insurance';
 import { PatientDetailView } from './PatientDetailView';
 import { useInsuranceProviders } from '../apiModern';
 import { ActivityLogList } from '../../ActivityLog';
-import { CustomPropertiesTab } from './CustomProperties/CustomPropertiesTab';
+import { CustomFieldsTab } from './CustomFields/CustomFieldsTab';
 
 export enum PatientTabValue {
   Details = 'details',
@@ -37,7 +37,7 @@ export enum PatientTabValue {
   ContactTracing = 'contact-tracing',
   Vaccinations = 'vaccinations',
   Insurance = 'insurance',
-  CustomProperties = 'properties',
+  CustomFields = 'custom-fields',
   ActivityLog = 'log',
 }
 
@@ -50,7 +50,7 @@ export const PatientView = () => {
   const { setCurrentPatient, createNewPatient } = usePatientStore();
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
-  const [isDirtyProperties, setIsDirtyProperties] = useState(false);
+  const [isDirtyCustomFields, setIsDirtyCustomFields] = useState(false);
   const { store, storeId } = useAuthContext();
   const { showContactTracing } = usePreferences();
   const {
@@ -59,7 +59,7 @@ export const PatientView = () => {
 
   const requiresConfirmation = (tab: string) => {
     if (tab === PatientTabValue.Details) return isDirtyPatient;
-    if (tab === PatientTabValue.CustomProperties) return isDirtyProperties;
+    if (tab === PatientTabValue.CustomFields) return isDirtyCustomFields;
     return false;
   };
 
@@ -129,14 +129,14 @@ export const PatientView = () => {
       value: PatientTabValue.Insurance,
     });
 
-  // Show the custom-properties tab; it renders an empty state when no
-  // patient property definitions exist.
+  // Show the custom-fields tab; it renders an empty state when no
+  // patient custom field definitions exist.
   tabs.push({
     Component: (
-      <CustomPropertiesTab patientId={patientId} onEdit={setIsDirtyProperties} />
+      <CustomFieldsTab patientId={patientId} onEdit={setIsDirtyCustomFields} />
     ),
-    value: PatientTabValue.CustomProperties,
-    confirmOnLeaving: isDirtyProperties,
+    value: PatientTabValue.CustomFields,
+    confirmOnLeaving: isDirtyCustomFields,
   });
 
   // Add activity log tab

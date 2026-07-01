@@ -102,7 +102,7 @@ export type PurchaseOrderFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       purchaseOrder?: {
@@ -189,7 +189,7 @@ export type PurchaseOrderLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    propertiesV2?: any | null;
+    customFields?: any | null;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
   purchaseOrder?: {
@@ -333,7 +333,7 @@ export type PurchaseOrderByIdQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
-              propertiesV2?: any | null;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -508,7 +508,7 @@ export type PurchaseOrderLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       purchaseOrder?: {
@@ -587,7 +587,7 @@ export type PurchaseOrderLineQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         store?: { __typename: 'StoreNode'; id: string; code: string } | null;
       } | null;
       purchaseOrder?: {

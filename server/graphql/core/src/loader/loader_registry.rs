@@ -605,14 +605,14 @@ pub async fn get_loaders(
     ));
 
     loaders.insert(DataLoader::new(
-        AllowedPropertyV2KeysByTableLoader {
+        AllowedCustomFieldKeysByScopeLoader {
             service_provider: service_provider.clone(),
         },
         tokio::spawn,
     ));
 
     loaders.insert(DataLoader::new(
-        PropertyOptionsV2ByPropertyIdLoader {
+        CustomFieldOptionsByCustomFieldIdLoader {
             connection_manager: connection_manager.clone(),
         },
         tokio::spawn,

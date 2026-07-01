@@ -274,7 +274,7 @@ export type ItemVariantFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    propertiesV2?: any | null;
+    customFields?: any | null;
     store?: { __typename: 'StoreNode'; id: string; code: string } | null;
   } | null;
   locationType?: {
@@ -354,7 +354,7 @@ export type ItemFragment = {
   weight: number;
   restrictedLocationTypeId?: string | null;
   availableStockOnHand: number;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   restrictedLocationType?: {
     __typename: 'LocationTypeNode';
     id: string;
@@ -467,7 +467,7 @@ export type ItemFragment = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
     } | null;
     locationType?: {
@@ -596,7 +596,7 @@ export type ItemsWithStockLinesQuery = {
       weight: number;
       restrictedLocationTypeId?: string | null;
       availableStockOnHand: number;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       restrictedLocationType?: {
         __typename: 'LocationTypeNode';
         id: string;
@@ -713,7 +713,7 @@ export type ItemsWithStockLinesQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          propertiesV2?: any | null;
+          customFields?: any | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         locationType?: {
@@ -879,7 +879,7 @@ export type ItemsWithStatsFragment = {
   defaultPackSize: number;
   isVaccine: boolean;
   doses: number;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   availableStockOnHand: number;
   stats: {
     __typename: 'ItemStatsNode';
@@ -915,7 +915,7 @@ export type ItemsWithStatsQuery = {
       defaultPackSize: number;
       isVaccine: boolean;
       doses: number;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       availableStockOnHand: number;
       stats: {
         __typename: 'ItemStatsNode';
@@ -962,7 +962,7 @@ export type ItemByIdQuery = {
       weight: number;
       restrictedLocationTypeId?: string | null;
       availableStockOnHand: number;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       stats: {
         __typename: 'ItemStatsNode';
         averageMonthlyConsumption: number;
@@ -1079,7 +1079,7 @@ export type ItemByIdQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          propertiesV2?: any | null;
+          customFields?: any | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         locationType?: {
@@ -1219,7 +1219,7 @@ export type ItemVariantsQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          propertiesV2?: any | null;
+          customFields?: any | null;
           store?: { __typename: 'StoreNode'; id: string; code: string } | null;
         } | null;
         locationType?: {
@@ -1397,7 +1397,7 @@ export type UpsertItemVariantMutation = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
-              propertiesV2?: any | null;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -1687,15 +1687,15 @@ export type ItemLedgerQuery = {
   };
 };
 
-export type PropertyV2Fragment = {
-  __typename: 'PropertyV2Node';
+export type CustomFieldFragment = {
+  __typename: 'CustomFieldNode';
   id: string;
   key: string;
   name: string;
-  valueType: Types.PropertyNodeValueTypeV2;
-  kind: Types.PropertyNodeKindV2;
+  valueType: Types.CustomFieldNodeValueType;
+  kind: Types.CustomFieldNodeKind;
   options: Array<{
-    __typename: 'PropertyOptionV2Node';
+    __typename: 'CustomFieldOptionNode';
     id: string;
     key: string;
     name: string;
@@ -1703,24 +1703,24 @@ export type PropertyV2Fragment = {
   }>;
 };
 
-export type ItemPropertiesV2QueryVariables = Types.Exact<{
+export type ItemCustomFieldsQueryVariables = Types.Exact<{
   [key: string]: never;
 }>;
 
-export type ItemPropertiesV2Query = {
+export type ItemCustomFieldsQuery = {
   __typename: 'Queries';
-  propertiesV2: {
-    __typename: 'PropertyV2Connector';
+  customFields: {
+    __typename: 'CustomFieldConnector';
     totalCount: number;
     nodes: Array<{
-      __typename: 'PropertyV2Node';
+      __typename: 'CustomFieldNode';
       id: string;
       key: string;
       name: string;
-      valueType: Types.PropertyNodeValueTypeV2;
-      kind: Types.PropertyNodeKindV2;
+      valueType: Types.CustomFieldNodeValueType;
+      kind: Types.CustomFieldNodeKind;
       options: Array<{
-        __typename: 'PropertyOptionV2Node';
+        __typename: 'CustomFieldOptionNode';
         id: string;
         key: string;
         name: string;
@@ -2030,7 +2030,7 @@ export const ItemFragmentDoc = gql`
       defaultSellPricePerPack
       ignoreForOrders
     }
-    propertiesV2
+    customFields
   }
   ${LocationTypeFragmentDoc}
   ${StockLineFragmentDoc}
@@ -2048,7 +2048,7 @@ export const ItemsWithStatsFragmentDoc = gql`
     defaultPackSize
     isVaccine
     doses
-    propertiesV2
+    customFields
     availableStockOnHand(storeId: $storeId)
     stats(storeId: $storeId) {
       __typename
@@ -2086,8 +2086,8 @@ export const ItemLedgerFragmentDoc = gql`
     }
   }
 `;
-export const PropertyV2FragmentDoc = gql`
-  fragment PropertyV2 on PropertyV2Node {
+export const CustomFieldFragmentDoc = gql`
+  fragment CustomField on CustomFieldNode {
     id
     key
     name
@@ -2450,19 +2450,19 @@ export const ItemLedgerDocument = gql`
   }
   ${ItemLedgerFragmentDoc}
 `;
-export const ItemPropertiesV2Document = gql`
-  query itemPropertiesV2 {
-    propertiesV2(filter: { tableName: { equalTo: "item" } }) {
-      ... on PropertyV2Connector {
+export const ItemCustomFieldsDocument = gql`
+  query itemCustomFields {
+    customFields(filter: { scope: { equalTo: "item" } }) {
+      ... on CustomFieldConnector {
         __typename
         totalCount
         nodes {
-          ...PropertyV2
+          ...CustomField
         }
       }
     }
   }
-  ${PropertyV2FragmentDoc}
+  ${CustomFieldFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -2772,20 +2772,20 @@ export function getSdk(
         variables
       );
     },
-    itemPropertiesV2(
-      variables?: ItemPropertiesV2QueryVariables,
+    itemCustomFields(
+      variables?: ItemCustomFieldsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<ItemPropertiesV2Query> {
+    ): Promise<ItemCustomFieldsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<ItemPropertiesV2Query>({
-            document: ItemPropertiesV2Document,
+          client.request<ItemCustomFieldsQuery>({
+            document: ItemCustomFieldsDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'itemPropertiesV2',
+        'itemCustomFields',
         'query',
         variables
       );

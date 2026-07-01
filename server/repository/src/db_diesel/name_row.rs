@@ -1,7 +1,7 @@
 use super::{
     currency_row::currency, location_type_row::location_type,
     master_list_name_join::master_list_name_join, master_list_row::master_list,
-    name_store_join::name_store_join, program_row::program, properties_json::JsonValue,
+    name_store_join::name_store_join, program_row::program, custom_fields_json::JsonValue,
     store_row::store, NameType, StorageConnection,
 };
 use crate::{
@@ -55,7 +55,7 @@ table! {
         margin -> Nullable<Double>,
         freight_factor -> Nullable<Double>,
         currency_id -> Nullable<Text>,
-        properties_v2 -> Nullable<crate::db_diesel::properties_json::PropertiesJson>,
+        custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
     }
 }
 
@@ -203,7 +203,7 @@ pub struct NameRow {
     pub freight_factor: Option<f64>,
     pub currency_id: Option<String>,
     #[ts(skip)]
-    pub properties_v2: Option<JsonValue>,
+    pub custom_fields: Option<JsonValue>,
 }
 #[derive(
     Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
@@ -345,30 +345,30 @@ impl<'a> NameRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    /// Update the new-system `name.properties_v2` JSONB blob.
+    /// Update the new-system `name.custom_fields` JSONB blob.
     ///
-    /// Column-scoped (`UPDATE ... SET properties_v2`) rather than a whole-row
+    /// Column-scoped (`UPDATE ... SET custom_fields`) rather than a whole-row
     /// `_upsert_one`. This is a property of the *local* write only: it avoids a
     /// read-modify-write race (writing the whole row back would revert any sibling
     /// column a concurrent sync integrated meanwhile) and touches only this column.
     /// It is NOT a sync-time guarantee — the `Name` changelog carries record_id and
     /// the full current row is whole-row upserted at receiving sites, so
-    /// `properties_v2` is overwritten wholesale on integration. Owned legacy keys
+    /// `custom_fields` is overwritten wholesale on integration. Owned legacy keys
     /// (custom_1/2/3) clobbered by a stale remote push are healed by the central v5
-    /// merge-on-import (see `merge_legacy_properties`); non-owned (OMS-authored)
+    /// merge-on-import (see `merge_legacy_custom_fields`); non-owned (OMS-authored)
     /// keys are last-writer-wins like every other name column.
     ///
     /// Emits a `Name` changelog so the value rides the existing Name sync (Central +
     /// Patient). Unlike the legacy [`update_properties`], this targets the
-    /// `name.properties_v2` column and the `Name` table rather than
+    /// `name.custom_fields` column and the `Name` table rather than
     /// `name_oms_fields.properties` / `NameOmsFields`.
-    pub fn update_properties_v2(
+    pub fn update_custom_fields(
         &self,
         name_id: &str,
-        properties_v2: &Option<JsonValue>,
+        custom_fields: &Option<JsonValue>,
     ) -> Result<(), RepositoryError> {
         diesel::update(name::table.find(name_id))
-            .set(name::properties_v2.eq(properties_v2))
+            .set(name::custom_fields.eq(custom_fields))
             .execute(self.connection.lock().connection())?;
 
         let changelog = NameRow::generate_changelog(
@@ -561,35 +561,35 @@ mod test {
         assert_eq!(name.properties, properties);
     }
 
-    // Round-trip the new properties-v2 JSONB column through NameRow on both
-    // PG (native Jsonb) and SQLite (TEXT Json). Verifies the PropertiesJson
+    // Round-trip the new custom fields JSONB column through NameRow on both
+    // PG (native Jsonb) and SQLite (TEXT Json). Verifies the CustomFieldsJson
     // sql_type alias and serde_json::Value field wiring.
     #[actix_rt::test]
-    async fn name_row_properties_round_trip() {
+    async fn name_row_custom_fields_round_trip() {
         let (_, connection, _, _) =
-            setup_all("name_row_properties_round_trip", MockDataInserts::none()).await;
+            setup_all("name_row_custom_fields_round_trip", MockDataInserts::none()).await;
 
         let row_repo = NameRowRepository::new(&connection);
 
-        let properties = serde_json::json!({"foo": "bar", "n": 42, "nested": [1, 2, 3]});
+        let custom_fields = serde_json::json!({"foo": "bar", "n": 42, "nested": [1, 2, 3]});
         let row = NameRow {
             id: uuid(),
-            properties_v2: Some(properties.clone()),
+            custom_fields: Some(custom_fields.clone()),
             ..Default::default()
         };
 
         row_repo.upsert_one(&row).unwrap();
 
         let fetched = row_repo.find_one_by_id(&row.id).unwrap().unwrap();
-        assert_eq!(fetched.properties_v2, Some(properties));
+        assert_eq!(fetched.custom_fields, Some(custom_fields));
     }
 
-    // `update_properties_v2` writes the JSONB column and emits a `Name`
+    // `update_custom_fields` writes the JSONB column and emits a `Name`
     // changelog (so the value rides Name sync) stamped with this site's id.
     #[actix_rt::test]
-    async fn name_properties_v2_update_generates_name_changelog() {
+    async fn name_custom_fields_update_generates_name_changelog() {
         let (_, connection, _, _) = setup_all(
-            "name_properties_v2_update_generates_name_changelog",
+            "name_custom_fields_update_generates_name_changelog",
             MockDataInserts::none(),
         )
         .await;
@@ -610,14 +610,14 @@ mod test {
 
         let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
 
-        let properties = serde_json::json!({"custom_1": "edited"});
+        let custom_fields = serde_json::json!({"custom_1": "edited"});
         row_repo
-            .update_properties_v2(&row.id, &Some(properties.clone()))
+            .update_custom_fields(&row.id, &Some(custom_fields.clone()))
             .unwrap();
 
         // Value persisted.
         let fetched = row_repo.find_one_by_id(&row.id).unwrap().unwrap();
-        assert_eq!(fetched.properties_v2, Some(properties));
+        assert_eq!(fetched.custom_fields, Some(custom_fields));
 
         // A Name changelog was emitted for this record with a non-null source_site_id.
         let changelogs: Vec<_> = ChangelogRepository::new(&connection)

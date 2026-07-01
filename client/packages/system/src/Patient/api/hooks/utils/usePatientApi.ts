@@ -18,7 +18,7 @@ export const usePatientApi = () => {
   const keys = {
     base: () => ['patient'] as const,
     detail: (id: string) => [...keys.base(), id] as const,
-    propertiesV2: () => [PATIENT_PROPERTIES_V2_KEY] as const,
+    customFields: () => [PATIENT_PROPERTIES_V2_KEY] as const,
     history: (id: string) => [...keys.base(), 'history', id] as const,
     list: () => [...keys.base(), 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,

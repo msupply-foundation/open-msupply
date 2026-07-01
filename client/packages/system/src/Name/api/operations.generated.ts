@@ -11,7 +11,7 @@ export type NameRowFragment = {
   isSupplier: boolean;
   isOnHold: boolean;
   name: string;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   store?: { __typename: 'StoreNode'; id: string; code: string } | null;
 };
 
@@ -49,7 +49,7 @@ export type NameFragment = {
   phone?: string | null;
   website?: string | null;
   properties: string;
-  propertiesV2?: any | null;
+  customFields?: any | null;
   hshCode?: string | null;
   hshName?: string | null;
   margin?: number | null;
@@ -67,15 +67,15 @@ export type PropertyFragment = {
   valueType: Types.PropertyNodeValueType;
 };
 
-export type PropertyV2Fragment = {
-  __typename: 'PropertyV2Node';
+export type CustomFieldFragment = {
+  __typename: 'CustomFieldNode';
   id: string;
   key: string;
   name: string;
-  valueType: Types.PropertyNodeValueTypeV2;
-  kind: Types.PropertyNodeKindV2;
+  valueType: Types.CustomFieldNodeValueType;
+  kind: Types.CustomFieldNodeKind;
   options: Array<{
-    __typename: 'PropertyOptionV2Node';
+    __typename: 'CustomFieldOptionNode';
     id: string;
     key: string;
     name: string;
@@ -105,7 +105,7 @@ export type NamesQuery = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       store?: { __typename: 'StoreNode'; id: string; code: string } | null;
     }>;
   };
@@ -171,7 +171,7 @@ export type NameByIdQuery = {
       phone?: string | null;
       website?: string | null;
       properties: string;
-      propertiesV2?: any | null;
+      customFields?: any | null;
       hshCode?: string | null;
       hshName?: string | null;
       margin?: number | null;
@@ -210,24 +210,24 @@ export type NamePropertiesQuery = {
   };
 };
 
-export type NamePropertiesV2QueryVariables = Types.Exact<{
-  [key: string]: never;
+export type NameCustomFieldsQueryVariables = Types.Exact<{
+  scope: Types.Scalars['String']['input'];
 }>;
 
-export type NamePropertiesV2Query = {
+export type NameCustomFieldsQuery = {
   __typename: 'Queries';
-  propertiesV2: {
-    __typename: 'PropertyV2Connector';
+  customFields: {
+    __typename: 'CustomFieldConnector';
     totalCount: number;
     nodes: Array<{
-      __typename: 'PropertyV2Node';
+      __typename: 'CustomFieldNode';
       id: string;
       key: string;
       name: string;
-      valueType: Types.PropertyNodeValueTypeV2;
-      kind: Types.PropertyNodeKindV2;
+      valueType: Types.CustomFieldNodeValueType;
+      kind: Types.CustomFieldNodeKind;
       options: Array<{
-        __typename: 'PropertyOptionV2Node';
+        __typename: 'CustomFieldOptionNode';
         id: string;
         key: string;
         name: string;
@@ -266,7 +266,7 @@ export type UpdateNamePropertiesMutation = {
         phone?: string | null;
         website?: string | null;
         properties: string;
-        propertiesV2?: any | null;
+        customFields?: any | null;
         hshCode?: string | null;
         hshName?: string | null;
         margin?: number | null;
@@ -292,7 +292,7 @@ export const NameRowFragmentDoc = gql`
     isSupplier
     isOnHold
     name
-    propertiesV2
+    customFields
     store {
       id
       code
@@ -340,7 +340,7 @@ export const NameFragmentDoc = gql`
       code
     }
     properties
-    propertiesV2
+    customFields
     hshCode
     hshName
     margin
@@ -360,8 +360,8 @@ export const PropertyFragmentDoc = gql`
     valueType
   }
 `;
-export const PropertyV2FragmentDoc = gql`
-  fragment PropertyV2 on PropertyV2Node {
+export const CustomFieldFragmentDoc = gql`
+  fragment CustomField on CustomFieldNode {
     id
     key
     name
@@ -459,19 +459,19 @@ export const NamePropertiesDocument = gql`
   }
   ${PropertyFragmentDoc}
 `;
-export const NamePropertiesV2Document = gql`
-  query namePropertiesV2 {
-    propertiesV2(filter: { tableName: { equalTo: "name" } }) {
-      ... on PropertyV2Connector {
+export const NameCustomFieldsDocument = gql`
+  query nameCustomFields($scope: String!) {
+    customFields(filter: { scope: { equalTo: $scope } }) {
+      ... on CustomFieldConnector {
         __typename
         totalCount
         nodes {
-          ...PropertyV2
+          ...CustomField
         }
       }
     }
   }
-  ${PropertyV2FragmentDoc}
+  ${CustomFieldFragmentDoc}
 `;
 export const UpdateNamePropertiesDocument = gql`
   mutation updateNameProperties(
@@ -585,20 +585,20 @@ export function getSdk(
         variables
       );
     },
-    namePropertiesV2(
-      variables?: NamePropertiesV2QueryVariables,
+    nameCustomFields(
+      variables: NameCustomFieldsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<NamePropertiesV2Query> {
+    ): Promise<NameCustomFieldsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<NamePropertiesV2Query>({
-            document: NamePropertiesV2Document,
+          client.request<NameCustomFieldsQuery>({
+            document: NameCustomFieldsDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'namePropertiesV2',
+        'nameCustomFields',
         'query',
         variables
       );

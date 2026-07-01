@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { CustomerReturnFragment, useReturns } from '../api';
 import { CustomerSearchInput } from '@openmsupply-client/system';
-import { InvoiceToolbarProperties } from '../../common';
+import { InvoiceToolbarCustomFields } from '../../common';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
@@ -22,7 +22,7 @@ export const Toolbar: FC = () => {
   const {
     otherParty,
     theirReference,
-    propertiesV2,
+    customFields,
     id,
     linkedShipment = '',
   } = draft ?? { id: '' };
@@ -72,10 +72,10 @@ export const Toolbar: FC = () => {
         </Grid>
         <Grid>
           <Box display="flex" flexDirection="column" gap={1}>
-            <InvoiceToolbarProperties
+            <InvoiceToolbarCustomFields
               invoiceType={InvoiceNodeType.CustomerReturn}
-              propertiesV2={propertiesV2}
-              onUpdate={patch => update({ propertiesV2: patch })}
+              customFields={customFields}
+              onUpdate={patch => update({ customFields: patch })}
               disabled={isDisabled}
             />
           </Box>

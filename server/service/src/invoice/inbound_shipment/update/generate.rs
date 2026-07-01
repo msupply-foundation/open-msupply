@@ -79,9 +79,9 @@ pub(crate) fn generate(
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax_percentage);
     update_invoice.default_donor_id = input_donor_id.clone();
-    update_invoice.properties_v2 = crate::invoice::properties::apply_properties_v2_patch(
-        update_invoice.properties_v2,
-        patch.properties_v2.clone(),
+    update_invoice.custom_fields = crate::invoice::custom_fields::apply_custom_fields_patch(
+        update_invoice.custom_fields,
+        patch.custom_fields.clone(),
     );
 
     if let Some(status) = patch.status.clone() {

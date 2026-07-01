@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    dynamic_filter::{parse_dynamic_filter, validate_property_filter_keys},
+    dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys},
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
@@ -69,7 +69,7 @@ pub struct ItemFilterInput {
 
     /// Dynamic filter condition AST, currently supporting property conditions
     /// on keys visible for the "item" table scope, e.g.
-    /// `{"And": [{"Property": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+    /// `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
     pub dynamic_filter: Option<serde_json::Value>,
 }
 
@@ -104,10 +104,10 @@ pub fn items(
                 let connection = connection_manager
                     .connection()
                     .map_err(StandardGraphqlError::from_repository_error)?;
-                validate_property_filter_keys(
+                validate_custom_field_filter_keys(
                     &connection,
                     "item",
-                    &condition.property_conditions(),
+                    &condition.custom_field_conditions(),
                 )?;
             }
             let mut filter = filter.to_domain();

@@ -163,14 +163,14 @@ macro_rules! create_condition {
 
                 /// All property conditions in the tree, for key validation
                 /// against the table scope's allowed keys.
-                pub fn property_conditions(&self) -> Vec<&crate::db_diesel::json_property_filter::PropertyCondition> {
+                pub fn custom_field_conditions(&self) -> Vec<&crate::db_diesel::json_custom_field_filter::CustomFieldCondition> {
                     match self {
                         $(
                             Inner::$variant(f) => create_condition!(@collect $filter_kind, f),
                         )+
                         Inner::And(conditions) | Inner::Or(conditions) => conditions
                             .iter()
-                            .flat_map(|condition| condition.property_conditions())
+                            .flat_map(|condition| condition.custom_field_conditions())
                             .collect(),
                         Inner::True | Inner::False => vec![],
                     }
@@ -249,10 +249,10 @@ macro_rules! create_condition {
 
     // Map filter kind to filter type.
     // `properties` is special: the dsl expression is a JSON properties column and
-    // the variant holds key + typed filter (see json_property_filter.rs).
+    // the variant holds key + typed filter (see json_custom_field_filter.rs).
     (@filter_type number) => { crate::dynamic_query_filter::GeneralFilter<i32> };
     (@filter_type string) => { crate::dynamic_query_filter::GeneralFilter<String> };
-    (@filter_type properties) => { crate::db_diesel::json_property_filter::PropertyCondition };
+    (@filter_type custom_fields) => { crate::db_diesel::json_custom_field_filter::CustomFieldCondition };
     (@filter_type $custom_type:ty) => { crate::dynamic_query_filter::GeneralFilter<$custom_type> };
 
     // Implement FilterBuilder trait for number fields
@@ -277,14 +277,14 @@ macro_rules! create_condition {
 
     // Property fields don't fit FilterBuilder (a condition is key + typed
     // filter, not a single value) — generate an inherent constructor instead:
-    // `Module::Property::condition("key", PropertyValueFilter::Text(GeneralFilter::Like(..)))`
-    (@impl_trait $variant:ident, properties) => {
+    // `Module::CustomField::condition("key", CustomFieldValueFilter::Text(GeneralFilter::Like(..)))`
+    (@impl_trait $variant:ident, custom_fields) => {
         impl $variant {
             pub fn condition(
                 key: impl Into<String>,
-                filter: crate::db_diesel::json_property_filter::PropertyValueFilter,
+                filter: crate::db_diesel::json_custom_field_filter::CustomFieldValueFilter,
             ) -> Inner {
-                Inner::$variant(crate::db_diesel::json_property_filter::PropertyCondition {
+                Inner::$variant(crate::db_diesel::json_custom_field_filter::CustomFieldCondition {
                     key: key.into(),
                     filter,
                 })
@@ -306,15 +306,15 @@ macro_rules! create_condition {
     (@filter_macro string, $f:ident, $dsl_expr:expr) => {
         crate::dynamic_query_filter::general_filter!($f, $dsl_expr)
     };
-    (@filter_macro properties, $f:ident, $dsl_expr:expr) => {
-        crate::db_diesel::json_property_filter::property_condition_to_boxed($dsl_expr, $f)
+    (@filter_macro custom_fields, $f:ident, $dsl_expr:expr) => {
+        crate::db_diesel::json_custom_field_filter::custom_field_condition_to_boxed($dsl_expr, $f)
     };
     (@filter_macro $custom_type:ty, $f:ident, $dsl_expr:expr) => {
         crate::dynamic_query_filter::general_filter_no_like!($f, $dsl_expr)
     };
 
-    // property_conditions() collection: only `properties` variants contribute
-    (@collect properties, $f:ident) => { vec![$f] };
+    // custom_field_conditions() collection: only `properties` variants contribute
+    (@collect custom_fields, $f:ident) => { vec![$f] };
     (@collect $custom_type:ty, $f:ident) => {{
         let _ = $f;
         vec![]

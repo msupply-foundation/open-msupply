@@ -11,7 +11,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    AllowedPropertyV2KeysByTableLoader, CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader,
+    AllowedCustomFieldKeysByScopeLoader, CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader,
     InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
     ProgramByIdLoader, PurchaseOrderByIdLoader, ShippingMethodByIdLoader, SyncFileReferenceLoader,
     UserLoader,
@@ -233,29 +233,29 @@ impl InvoiceNode {
         &self.row().colour
     }
 
-    /// Properties v2 values for this invoice. The raw `invoice.properties_v2`
+    /// Properties v2 values for this invoice. The raw `invoice.custom_fields`
     /// JSONB blob is filtered server-side to keys that are (a) defined in
-    /// `property_v2` and not soft-deleted, (b) marked visible for this invoice
-    /// type's scope (e.g. `"inbound_shipment"`) via `property_table_v2`. Stray
-    /// keys never reach the client. `None` for types with no properties scope
+    /// `custom_field` and not soft-deleted, (b) marked visible for this invoice
+    /// type's scope (e.g. `"inbound_shipment"`) via `custom_field_scope`. Stray
+    /// keys never reach the client. `None` for types with no custom fields scope
     /// (repack, inventory adjustments).
-    pub async fn properties_v2(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
-        let Some(raw) = self.row().properties_v2.clone() else {
+    pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.row().custom_fields.clone() else {
             return Ok(None);
         };
 
-        let Some(table_name) = service::invoice::invoice_property_table_name(&self.row().r#type)
+        let Some(scope) = service::invoice::invoice_custom_field_scope(&self.row().r#type)
         else {
             return Ok(None);
         };
 
-        let loader = ctx.get_loader::<DataLoader<AllowedPropertyV2KeysByTableLoader>>();
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
         let allowed_keys = loader
-            .load_one(table_name.to_string())
+            .load_one(scope.to_string())
             .await?
             .unwrap_or_default();
 
-        Ok(Some(crate::types::filter_properties_v2(raw, &allowed_keys)))
+        Ok(Some(crate::types::filter_custom_fields(raw, &allowed_keys)))
     }
 
     /// Response Requisition that is the origin of this Outbound Shipment

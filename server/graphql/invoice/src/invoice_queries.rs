@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    dynamic_filter::{parse_dynamic_filter, validate_property_filter_keys},
+    dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys},
     generic_filters::{
         DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput,
     },
@@ -18,7 +18,7 @@ use repository::{
     InvoiceStatus, InvoiceType, PaginationOption, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::invoice_property_table_name;
+use service::invoice::invoice_custom_field_scope;
 
 #[derive(Union)]
 pub enum InvoiceResponse {
@@ -164,9 +164,9 @@ pub struct InvoiceFilterInput {
 
     /// Dynamic filter condition AST, currently supporting property conditions
     /// on keys visible for the requested invoice type's scope, e.g.
-    /// `{"And": [{"Property": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`.
+    /// `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`.
     /// Requires the query's `type` argument to pin a single supported invoice
-    /// type (the properties scope is per type).
+    /// type (the custom fields scope is per type).
     pub dynamic_filter: Option<serde_json::Value>,
 }
 
@@ -264,20 +264,20 @@ pub fn get_invoices(
             .collect();
         let mut scopes: Vec<&str> = requested_types
             .iter()
-            .filter_map(invoice_property_table_name)
+            .filter_map(invoice_custom_field_scope)
             .collect();
         scopes.sort_unstable();
         scopes.dedup();
         let [scope] = scopes[..] else {
             return Err(StandardGraphqlError::BadUserInput(
-                "dynamicFilter requires the invoice type (argument or filter) to specify a single invoice type with property support".to_string(),
+                "dynamicFilter requires the invoice type (argument or filter) to specify a single invoice type with custom field support".to_string(),
             )
             .extend());
         };
-        validate_property_filter_keys(
+        validate_custom_field_filter_keys(
             &service_context.connection,
             scope,
-            &condition.property_conditions(),
+            &condition.custom_field_conditions(),
         )?;
     }
     domain_filter.dynamic_filter = dynamic_filter;

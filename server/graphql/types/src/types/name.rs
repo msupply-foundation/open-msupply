@@ -3,7 +3,7 @@ use crate::types::CurrencyNode;
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
-    loader::{AllowedPropertyV2KeysByTableLoader, CurrencyByIdLoader},
+    loader::{AllowedCustomFieldKeysByScopeLoader, CurrencyByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -146,34 +146,48 @@ impl NameNode {
         }
     }
 
-    /// Properties v2 values for this name. The raw `name.properties_v2` JSONB
+    /// Properties v2 values for this name. The raw `name.custom_fields` JSONB
     /// blob is filtered server-side to keys that are (a) defined in
-    /// `property_v2` and not soft-deleted, (b) marked visible for this name's
-    /// table scope via `property_table_v2`. Stray keys never reach the client.
+    /// `custom_field` and not soft-deleted, (b) marked visible for one of this
+    /// name's table scopes via `custom_field_scope`. Stray keys never reach the
+    /// client.
     ///
-    /// Patients have their own visible set (`table_name = "patient"`); every
-    /// other name type uses the generic `"name"` scope.
-    pub async fn properties_v2(
+    /// A name has no single scope: "customer"/"supplier" are independent role
+    /// flags (not mutually exclusive) and "patient" is a type, so the visible
+    /// set is the **union** over every scope the name qualifies for —
+    /// `"patient"` if it's a patient, `"customer"` if `is_customer`,
+    /// `"supplier"` if `is_supplier`. A name that matches none of these (e.g. a
+    /// manufacturer/donor/store-only name) has no scope and surfaces nothing.
+    pub async fn custom_fields(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<serde_json::Value>> {
-        let Some(raw) = self.row().properties_v2.clone() else {
+        let Some(raw) = self.row().custom_fields.clone() else {
             return Ok(None);
         };
 
-        let table_name = if self.row().r#type == NameRowType::Patient {
-            "patient"
-        } else {
-            "name"
-        };
+        // Additive: a name can be several of these at once (a customer that is
+        // also a supplier, or — unusually — a patient with trading flags).
+        let mut scopes: Vec<String> = Vec::new();
+        if self.row().r#type == NameRowType::Patient {
+            scopes.push("patient".to_string());
+        }
+        if self.name.is_customer() {
+            scopes.push("customer".to_string());
+        }
+        if self.name.is_supplier() {
+            scopes.push("supplier".to_string());
+        }
 
-        let loader = ctx.get_loader::<DataLoader<AllowedPropertyV2KeysByTableLoader>>();
-        let allowed_keys = loader
-            .load_one(table_name.to_string())
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
+        let allowed_keys: std::collections::HashSet<String> = loader
+            .load_many(scopes)
             .await?
-            .unwrap_or_default();
+            .into_values()
+            .flatten()
+            .collect();
 
-        Ok(Some(crate::types::filter_properties_v2(raw, &allowed_keys)))
+        Ok(Some(crate::types::filter_custom_fields(raw, &allowed_keys)))
     }
 
     pub async fn hsh_code(&self) -> &Option<String> {

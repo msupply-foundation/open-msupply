@@ -12,7 +12,7 @@ import {
   CentralPatientSearchInput,
   InsertProgramPatientInput,
   UpdateProgramPatientInput,
-  UpdatePatientPropertiesV2Input,
+  UpdatePatientCustomFieldsInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -21,7 +21,7 @@ import {
   LinkPatientToStoreMutation,
   ProgramPatientRowFragment,
   LatestPatientEncounterQuery,
-  PropertyV2Fragment,
+  CustomFieldFragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -136,11 +136,11 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result.centralPatientSearch;
     },
-    // Patient-scoped propertyV2 definitions (what custom fields a patient has).
-    propertiesV2: async (): Promise<PropertyV2Fragment[]> => {
-      const result = await sdk.patientPropertiesV2();
-      if (result?.propertiesV2?.__typename === 'PropertyV2Connector') {
-        return result.propertiesV2.nodes;
+    // Patient-scoped customField definitions (what custom fields a patient has).
+    customFields: async (): Promise<CustomFieldFragment[]> => {
+      const result = await sdk.patientCustomFields();
+      if (result?.customFields?.__typename === 'CustomFieldConnector') {
+        return result.customFields.nodes;
       }
       return [];
     },
@@ -175,13 +175,13 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not update patient');
   },
 
-  updatePropertiesV2: async (
-    input: UpdatePatientPropertiesV2Input
+  updateCustomFields: async (
+    input: UpdatePatientCustomFieldsInput
   ): Promise<ProgramPatientRowFragment> => {
-    const result = await sdk.updatePatientPropertiesV2({ storeId, input });
+    const result = await sdk.updatePatientCustomFields({ storeId, input });
 
-    if (result.updatePatientPropertiesV2.__typename === 'PatientNode') {
-      return result.updatePatientPropertiesV2;
+    if (result.updatePatientCustomFields.__typename === 'PatientNode') {
+      return result.updatePatientCustomFields;
     }
 
     throw new Error('Could not update patient properties');

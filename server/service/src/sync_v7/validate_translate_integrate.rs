@@ -181,9 +181,9 @@ fn translate_delete(
         | ChangelogTableName::ProgramEvent
         | ChangelogTableName::ProgramIndicator
         | ChangelogTableName::Property
-        | ChangelogTableName::PropertyV2
-        | ChangelogTableName::PropertyOptionV2
-        | ChangelogTableName::PropertyTableV2
+        | ChangelogTableName::CustomField
+        | ChangelogTableName::CustomFieldOption
+        | ChangelogTableName::CustomFieldScope
         | ChangelogTableName::ReasonOption
         | ChangelogTableName::ShippingMethod
         | ChangelogTableName::Store

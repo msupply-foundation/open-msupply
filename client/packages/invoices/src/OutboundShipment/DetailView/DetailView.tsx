@@ -30,7 +30,7 @@ import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { StockOutLineFragment } from '../../StockOut';
 import { CustomerReturnEditModal } from '../../Returns';
-import { InvoicePropertiesTab } from '../../common';
+import { InvoiceCustomFieldsTab } from '../../common';
 import { canReturnOutboundLines } from '../../utils';
 import { OutboundLineEdit, OutboundOpenedWith } from './OutboundLineEdit';
 import { useOutboundLines } from '../api';
@@ -140,18 +140,18 @@ export const DetailView = () => {
     },
     {
       Component: (
-        <InvoicePropertiesTab
+        <InvoiceCustomFieldsTab
           invoiceType={InvoiceNodeType.OutboundShipment}
-          propertiesV2={data?.propertiesV2}
+          customFields={data?.customFields}
           onSave={async patch => {
             if (!data?.id) return;
-            return update({ id: data.id, propertiesV2: patch });
+            return update({ id: data.id, customFields: patch });
           }}
           disabled={isDisabled}
           onEdit={setIsDirtyProperties}
         />
       ),
-      value: 'Properties',
+      value: 'custom-fields',
       confirmOnLeaving: isDirtyProperties,
     },
     {

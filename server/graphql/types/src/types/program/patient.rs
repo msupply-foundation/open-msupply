@@ -2,7 +2,7 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Local, NaiveDate, Utc};
 use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::{AllowedPropertyV2KeysByTableLoader, DocumentLoader, PatientLoader};
+use graphql_core::loader::{AllowedCustomFieldKeysByScopeLoader, DocumentLoader, PatientLoader};
 use graphql_core::{map_filter, ContextExt};
 
 use graphql_core::pagination::PaginationInput;
@@ -49,7 +49,7 @@ pub struct PatientFilterInput {
 
     /// Dynamic filter condition AST, currently supporting property conditions
     /// on keys visible for the "patient" table scope, e.g.
-    /// `{"And": [{"Property": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+    /// `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
     pub dynamic_filter: Option<serde_json::Value>,
 }
 
@@ -184,21 +184,21 @@ impl PatientNode {
         self.patient.date_of_death
     }
 
-    /// Patient custom property values (`name.properties_v2`), filtered to keys
+    /// Patient custom property values (`name.custom_fields`), filtered to keys
     /// defined and visible for the `patient` table scope. Mirrors
-    /// `NameNode.properties_v2` but always uses the `"patient"` scope.
-    pub async fn properties_v2(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
-        let Some(raw) = self.patient.properties_v2.clone() else {
+    /// `NameNode.custom_fields` but always uses the `"patient"` scope.
+    pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.patient.custom_fields.clone() else {
             return Ok(None);
         };
 
-        let loader = ctx.get_loader::<DataLoader<AllowedPropertyV2KeysByTableLoader>>();
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
         let allowed_keys = loader
             .load_one("patient".to_string())
             .await?
             .unwrap_or_default();
 
-        Ok(Some(crate::types::filter_properties_v2(raw, &allowed_keys)))
+        Ok(Some(crate::types::filter_custom_fields(raw, &allowed_keys)))
     }
 
     pub async fn next_of_kin_id(&self) -> &Option<String> {

@@ -1,23 +1,23 @@
 use chrono::Utc;
 use repository::{
-    PropertyOptionV2Row, PropertyOptionV2RowRepository, StorageConnection, SyncBufferRow,
+    CustomFieldOptionRow, CustomFieldOptionRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::central_mapping_properties::keys;
+use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
 
 use super::{PullTranslateResult, SyncTranslation};
 
-/// Map a `transaction_category.type` to the `property_v2.id` of the OPTION
-/// mapping property its categories belong to. The key *is* the id (see
-/// `central_mapping_properties`), so these must match the category keys seeded
+/// Map a `transaction_category.type` to the `custom_field.id` of the OPTION
+/// mapping custom_field its categories belong to. The key *is* the id (see
+/// `central_mapping_custom_fields`), so these must match the category keys seeded
 /// there. "pi2" is the second prescription dimension (the OG Patient Type
 /// dropdown, stored in `transact.category2_ID`).
 ///
 /// OG types with no OMS UI surface are not mapped: "sr" (repack), "bu" (build),
 /// "in" (inventory adjustment), "te" (tender).
-fn transaction_category_property_id(category_type: &str) -> Option<&'static str> {
+fn transaction_category_custom_field_id(category_type: &str) -> Option<&'static str> {
     match category_type {
         "si" => Some(keys::INBOUND_SHIPMENT_CATEGORY),
         "ci" => Some(keys::OUTBOUND_SHIPMENT_CATEGORY),
@@ -61,18 +61,18 @@ impl SyncTranslation for TransactionCategoryTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyTransactionCategoryRow>()?;
 
-        let Some(property_id) = transaction_category_property_id(&data.r#type) else {
+        let Some(custom_field_id) = transaction_category_custom_field_id(&data.r#type) else {
             return Ok(PullTranslateResult::Ignored(format!(
                 "Unsupported transaction category type {:?}",
                 data.r#type
             )));
         };
 
-        // PropertiesV2-only, central-only: each category record becomes a
-        // `property_option_v2` row under its type's mapping property. There is
+        // CustomFields-only, central-only: each category record becomes a
+        // `custom_field_option` row under its type's mapping custom_field. There is
         // no relational counterpart. The option `id` equals the category id so
         // the invoice's stored `category_ID` resolves; `key` is also the id
-        // (`UNIQUE (property_id, key)` — OG doesn't enforce unique codes, so
+        // (`UNIQUE (custom_field_id, key)` — OG doesn't enforce unique codes, so
         // the `code` field can't be the key). Flat: `master_category_ID`
         // grouping is ignored. Remotes receive these over v7; they must not
         // author them locally.
@@ -82,9 +82,9 @@ impl SyncTranslation for TransactionCategoryTranslation {
             ));
         }
 
-        Ok(PullTranslateResult::upsert(PropertyOptionV2Row {
+        Ok(PullTranslateResult::upsert(CustomFieldOptionRow {
             id: data.ID.clone(),
-            property_id: property_id.to_string(),
+            custom_field_id: custom_field_id.to_string(),
             key: data.ID,
             name: data.category,
             parent_option_id: None,
@@ -106,7 +106,7 @@ impl SyncTranslation for TransactionCategoryTranslation {
             ));
         }
 
-        let Some(option) = PropertyOptionV2RowRepository::new(connection)
+        let Some(option) = CustomFieldOptionRowRepository::new(connection)
             .find_one_by_id(&sync_record.record_id)?
         else {
             return Ok(PullTranslateResult::Ignored(
@@ -114,7 +114,7 @@ impl SyncTranslation for TransactionCategoryTranslation {
             ));
         };
 
-        Ok(PullTranslateResult::upsert(PropertyOptionV2Row {
+        Ok(PullTranslateResult::upsert(CustomFieldOptionRow {
             deleted_datetime: Some(Utc::now().naive_utc()),
             ..option
         }))
@@ -125,8 +125,8 @@ impl SyncTranslation for TransactionCategoryTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, PropertyKindV2, PropertyOptionV2RowRepository,
-        PropertyV2Row, PropertyV2RowRepository, PropertyValueTypeV2, SyncAction, SyncRecordData,
+        mock::MockDataInserts, test_db::setup_all, CustomFieldKind, CustomFieldOptionRowRepository,
+        CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType, SyncAction, SyncRecordData,
     };
 
     fn sync_record(category_type: &str) -> SyncBufferRow {
@@ -156,10 +156,10 @@ mod tests {
         )
         .await;
 
-        // On central, each supported type maps to its own property; the option
+        // On central, each supported type maps to its own custom_field; the option
         // id/key equal the category id and the hierarchy stays flat.
         test_util_set_is_central_server(true);
-        for (category_type, property_id) in [
+        for (category_type, custom_field_id) in [
             ("si", "inbound_shipment_category"),
             ("ci", "outbound_shipment_category"),
             ("pi", "prescription_category"),
@@ -174,9 +174,9 @@ mod tests {
                 .unwrap();
             assert_eq!(
                 result,
-                PullTranslateResult::upsert(PropertyOptionV2Row {
+                PullTranslateResult::upsert(CustomFieldOptionRow {
                     id: "CAT_SI".to_string(),
-                    property_id: property_id.to_string(),
+                    custom_field_id: custom_field_id.to_string(),
                     key: "CAT_SI".to_string(),
                     name: "Donation".to_string(),
                     parent_option_id: None,
@@ -216,20 +216,20 @@ mod tests {
         .await;
 
         // FK target for the option row.
-        PropertyV2RowRepository::new(&connection)
-            .upsert_one(&PropertyV2Row {
+        CustomFieldRowRepository::new(&connection)
+            .upsert_one(&CustomFieldRow {
                 id: "inbound_shipment_category".to_string(),
                 key: "inbound_shipment_category".to_string(),
                 name: "Category".to_string(),
-                value_type: PropertyValueTypeV2::Option,
-                kind: PropertyKindV2::Legacy,
+                value_type: CustomFieldValueType::Option,
+                kind: CustomFieldKind::Legacy,
                 deleted_datetime: None,
             })
             .unwrap();
-        PropertyOptionV2RowRepository::new(&connection)
-            .upsert_one(&PropertyOptionV2Row {
+        CustomFieldOptionRowRepository::new(&connection)
+            .upsert_one(&CustomFieldOptionRow {
                 id: "CAT_SI".to_string(),
-                property_id: "inbound_shipment_category".to_string(),
+                custom_field_id: "inbound_shipment_category".to_string(),
                 key: "CAT_SI".to_string(),
                 name: "Donation".to_string(),
                 parent_option_id: None,

@@ -95,7 +95,7 @@ pub struct ItemFilter {
 create_condition!(
     ItemCondition,
     item::table,
-    (Property, properties, item::properties_v2),
+    (CustomField, custom_fields, item::custom_fields),
 );
 
 impl ItemFilter {

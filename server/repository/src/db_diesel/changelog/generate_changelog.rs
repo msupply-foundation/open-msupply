@@ -1070,7 +1070,7 @@ impl PropertyRow {
     }
 }
 
-impl PropertyV2Row {
+impl CustomFieldRow {
     pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
@@ -1078,7 +1078,7 @@ impl PropertyV2Row {
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::PropertyV2,
+            table_name: ChangelogTableName::CustomField,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,
@@ -1087,7 +1087,7 @@ impl PropertyV2Row {
     }
 }
 
-impl PropertyOptionV2Row {
+impl CustomFieldOptionRow {
     pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
@@ -1095,7 +1095,7 @@ impl PropertyOptionV2Row {
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::PropertyOptionV2,
+            table_name: ChangelogTableName::CustomFieldOption,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,
@@ -1104,7 +1104,7 @@ impl PropertyOptionV2Row {
     }
 }
 
-impl PropertyTableV2Row {
+impl CustomFieldScopeRow {
     pub(crate) fn generate_changelog(
         record_id: String,
         con: &StorageConnection,
@@ -1112,7 +1112,7 @@ impl PropertyTableV2Row {
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::PropertyTableV2,
+            table_name: ChangelogTableName::CustomFieldScope,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,

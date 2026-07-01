@@ -26,7 +26,7 @@ import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
-import { useInvoicePropertiesV2 } from '../../common';
+import { useInvoiceCustomFields } from '../../common';
 
 export const OutboundShipmentListView = () => {
   const t = useTranslation();
@@ -35,7 +35,7 @@ export const OutboundShipmentListView = () => {
   const modalController = useToggle();
   const simplifiedTabletView = useSimplifiedTabletUI();
   const { localisedDate } = useFormatDateTime();
-  const { data: properties } = useInvoicePropertiesV2(
+  const { data: properties } = useInvoiceCustomFields(
     InvoiceNodeType.OutboundShipment
   );
 

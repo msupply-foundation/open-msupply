@@ -9,7 +9,7 @@ import {
   useAuthContext,
   usePreferences,
   getGenderTranslationKey,
-  buildPropertyFilterDefinitions,
+  buildCustomFieldFilterDefinitions,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 
@@ -17,7 +17,7 @@ export const Toolbar = () => {
   const t = useTranslation();
   const { store } = useAuthContext();
   const { genderOptions = [] } = usePreferences();
-  const { data: properties } = usePatient.document.propertiesV2();
+  const { data: properties } = usePatient.document.customFields();
 
   const filters: (FilterDefinition | GroupFilterDefinition)[] = [
     {
@@ -72,7 +72,7 @@ export const Toolbar = () => {
   }
 
   filters.push(
-    ...buildPropertyFilterDefinitions(properties ?? [], {
+    ...buildCustomFieldFilterDefinitions(properties ?? [], {
       min: t('label.min'),
       max: t('label.max'),
       fromDate: t('label.from-date'),

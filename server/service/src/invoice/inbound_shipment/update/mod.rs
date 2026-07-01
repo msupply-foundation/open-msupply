@@ -57,10 +57,10 @@ pub struct UpdateInboundShipment {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDefaultDonor>,
     pub received_datetime: Option<DateTime<Utc>>,
-    /// Patch of propertiesV2 key -> value merged into `invoice.properties_v2`
+    /// Patch of customFields key -> value merged into `invoice.custom_fields`
     /// (a JSON `null` deletes that key; keys absent from the patch are left
     /// as-is). Keys must be visible for the "inbound_shipment" scope.
-    pub properties_v2: Option<serde_json::Map<String, serde_json::Value>>,
+    pub custom_fields: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -226,7 +226,7 @@ pub enum UpdateInboundShipmentError {
     CannotReceiveWithPendingLines,
     CannotSetShippedStatusOnManualInboundShipment,
     CurrencyRateMustBePositive,
-    /// A propertiesV2 patch key is not a visible inbound shipment property.
+    /// A customFields patch key is not a visible inbound shipment property.
     UnknownPropertyKey(String),
     // Name validation
     OtherPartyDoesNotExist,
@@ -2376,38 +2376,38 @@ mod test {
         assert!(logs[0].activity_log_row.changed_to.is_some());
     }
 
-    /// propertiesV2 patch through the regular update: unknown keys rejected,
+    /// customFields patch through the regular update: unknown keys rejected,
     /// known keys patch-merged over the existing blob (null deletes; keys
     /// absent from the patch — e.g. hidden properties — are preserved). Status
     /// gating is shared with every other field (see CannotEditFinalised above).
     #[actix_rt::test]
-    async fn update_inbound_shipment_properties_v2() {
+    async fn update_inbound_shipment_custom_fields() {
         use repository::{
-            PropertyDisplayModeV2, PropertyKindV2, PropertyTableV2Row, PropertyTableV2RowRepository,
-            PropertyV2Row, PropertyV2RowRepository, PropertyValueTypeV2,
+            CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow, CustomFieldScopeRowRepository,
+            CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType,
         };
         use serde_json::json;
 
         let (_, connection, connection_manager, _) =
-            setup_all("update_inbound_shipment_properties_v2", MockDataInserts::all()).await;
+            setup_all("update_inbound_shipment_custom_fields", MockDataInserts::all()).await;
 
         // Seed one visible inbound shipment property so key validation passes.
-        PropertyV2RowRepository::new(&connection)
-            .upsert_one(&PropertyV2Row {
+        CustomFieldRowRepository::new(&connection)
+            .upsert_one(&CustomFieldRow {
                 id: "inbound_shipment_category".to_string(),
                 key: "inbound_shipment_category".to_string(),
                 name: "Category".to_string(),
-                value_type: PropertyValueTypeV2::Option,
-                kind: PropertyKindV2::Legacy,
+                value_type: CustomFieldValueType::Option,
+                kind: CustomFieldKind::Legacy,
                 deleted_datetime: None,
             })
             .unwrap();
-        PropertyTableV2RowRepository::new(&connection)
-            .upsert_one(&PropertyTableV2Row {
+        CustomFieldScopeRowRepository::new(&connection)
+            .upsert_one(&CustomFieldScopeRow {
                 id: "inbound_shipment_category__inbound_shipment".to_string(),
-                property_id: "inbound_shipment_category".to_string(),
-                table_name: "inbound_shipment".to_string(),
-                display_mode: PropertyDisplayModeV2::Visible,
+                custom_field_id: "inbound_shipment_category".to_string(),
+                scope: "inbound_shipment".to_string(),
+                display_mode: CustomFieldDisplayMode::Visible,
             })
             .unwrap();
 
@@ -2420,7 +2420,7 @@ mod test {
         let invoice_id = mock_inbound_shipment_a().id;
         let patch = |pairs: &[(&str, serde_json::Value)]| UpdateInboundShipment {
             id: invoice_id.clone(),
-            properties_v2: Some(
+            custom_fields: Some(
                 pairs
                     .iter()
                     .map(|(k, v)| (k.to_string(), v.clone()))
@@ -2443,7 +2443,7 @@ mod test {
         // on the row, then patch the visible key — the other key must survive.
         let row_repo = InvoiceRowRepository::new(&connection);
         let mut row = row_repo.find_one_by_id(&invoice_id).unwrap().unwrap();
-        row.properties_v2 = Some(json!({ "hidden": "keep" }));
+        row.custom_fields = Some(json!({ "hidden": "keep" }));
         row_repo.upsert_one(&row).unwrap();
 
         service
@@ -2455,7 +2455,7 @@ mod test {
             .unwrap();
         let stored = row_repo.find_one_by_id(&invoice_id).unwrap().unwrap();
         assert_eq!(
-            stored.properties_v2,
+            stored.custom_fields,
             Some(json!({ "inbound_shipment_category": "CAT_1", "hidden": "keep" }))
         );
 
@@ -2468,6 +2468,6 @@ mod test {
             )
             .unwrap();
         let stored = row_repo.find_one_by_id(&invoice_id).unwrap().unwrap();
-        assert_eq!(stored.properties_v2, Some(json!({ "hidden": "keep" })));
+        assert_eq!(stored.custom_fields, Some(json!({ "hidden": "keep" })));
     }
 }
