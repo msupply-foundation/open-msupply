@@ -182,16 +182,27 @@ export const useAllocationContext = create<AllocationContext>((set, get) => ({
       allocateIn,
     });
 
-    // If no quantity has yet been allocated, attempt to allocate the placeholder on initialise
-    if (allocatedQuantity === 0) {
+    // If nothing has been allocated yet but there's a placeholder quantity,
+    // attempt to allocate it against available stock on initialise
+    if (allocatedQuantity === 0 && (get().placeholderUnits ?? 0) > 0) {
       reallocateLines(format, t);
-      set(state => ({
-        ...state,
-        alerts: [
-          ...state.alerts,
-          { message: t('messages.auto-allocated-lines'), severity: 'warning' },
-        ],
-      }));
+
+      const allocatedAfterReallocation = getAllocatedQuantity({
+        draftLines: get().draftLines,
+        allocateIn,
+      });
+      if (allocatedAfterReallocation > 0) {
+        set(state => ({
+          ...state,
+          alerts: [
+            ...state.alerts,
+            {
+              message: t('messages.auto-allocated-lines'),
+              severity: 'warning',
+            },
+          ],
+        }));
+      }
     }
   },
 

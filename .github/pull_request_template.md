@@ -39,18 +39,3 @@ Fixes #
 - [ ] **These areas should be updated or checked**: <!-- _(e.g.)_ New `issued` column in `Requisitions` indicates stock quantity already in shipments -->
   1.
   2.
-
-
-# 📃 Reviewer Checklist
-
-The PR Reviewer(s) should fill out this section before approving the PR
-
-**Issue Review**
-- [ ] All requirements in original issue have been covered
-- [ ] A follow up issue(s) have been created to cover additional requirements
-
-**Tests Pass**
-- [ ] Postgres
-- [ ] SQLite
-- [ ] Frontend
-

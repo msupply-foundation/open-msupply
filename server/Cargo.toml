@@ -101,9 +101,15 @@ members = [
   "graphql/stock_relocation",
   "graphql/stocktake",
   "graphql/stocktake_line",
+  "graphql/site",
   "graphql/types",
   "graphql/vaccine_course",
   "cli",
   "test_connection",
   "windows",
+]
+# Standalone benchmark/investigation crates kept for reference; not part of the build.
+exclude = [
+  "sync_v7_investigation/batch-upsert",
+  "sync_v7_investigation/changelog/bench",
 ]

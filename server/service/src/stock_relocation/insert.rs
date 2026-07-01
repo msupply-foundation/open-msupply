@@ -119,7 +119,7 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all,
-        StockLineRow, StockLineRowRepository, StockRelocationStatus, Upsert,
+        StockLineRow, StockLineRowRepository, StockRelocationStatus,
     };
     use util::uuid::uuid;
 
@@ -162,15 +162,19 @@ mod test {
     #[actix_rt::test]
     async fn stock_relocation_validation_errors() {
         let (service_provider, ctx) = setup("stock_relocation_validation_errors").await;
-        whole_line("ok_sl", false).upsert(&ctx.connection).unwrap();
-        whole_line("held_sl", true).upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&whole_line("ok_sl", false))
+            .unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&whole_line("held_sl", true))
+            .unwrap();
         // Stock of an item restricted to location_type_b.
-        StockLineRow {
-            item_id: "restricted_location_type_item".to_string(),
-            ..whole_line("restricted_sl", false)
-        }
-        .upsert(&ctx.connection)
-        .unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&StockLineRow {
+                item_id: "restricted_location_type_item".to_string(),
+                ..whole_line("restricted_sl", false)
+            })
+            .unwrap();
         let service = &service_provider.stock_relocation_service;
 
         let insert = |line: InsertStockRelocationLine| {
@@ -217,8 +221,8 @@ mod test {
     #[actix_rt::test]
     async fn stock_relocation_insert_does_not_move_stock() {
         let (service_provider, ctx) = setup("stock_relocation_insert_does_not_move_stock").await;
-        whole_line("relocate_sl", false)
-            .upsert(&ctx.connection)
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&whole_line("relocate_sl", false))
             .unwrap();
 
         let service = &service_provider.stock_relocation_service;

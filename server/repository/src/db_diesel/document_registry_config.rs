@@ -121,5 +121,23 @@ pub struct NextEncounterEvent {
 pub struct DocumentRegistryConfig {
     #[serde(rename = "nextEncounter")]
     pub next_encounter: Option<NextEncounterEnum>,
+    // A config without events is valid (e.g. `{}`), so default to an empty list
+    // rather than failing to deserialise on a missing field.
+    #[serde(default)]
     pub events: Vec<EventConfigEnum>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DocumentRegistryConfig;
+
+    #[test]
+    fn deserialises_empty_config() {
+        // An empty config object must deserialise (events defaults to empty) rather
+        // than erroring on a missing `events` field. See issue #8659.
+        let config: DocumentRegistryConfig =
+            serde_json::from_str("{}").expect("empty config should deserialise");
+        assert_eq!(config.next_encounter, None);
+        assert!(config.events.is_empty());
+    }
 }
