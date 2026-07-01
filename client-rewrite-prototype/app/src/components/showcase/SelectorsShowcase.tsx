@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { DirectionProvider } from '@radix-ui/react-direction';
 import { NativeSelect } from '@/components/ui/NativeSelect';
 import { Select } from '@/components/ui/Select';
 import { Combobox } from '@/components/ui/Combobox';
@@ -160,55 +159,6 @@ export const SelectorsShowcase = () => {
           helperText={`${multi.length} selected`}
         />
       </Card>
-
-      <section className={styles.rtlCard}>
-        <header className={styles.cardHeader}>
-          RTL preview (mirrored inline)
-        </header>
-        <div className={styles.cardBody}>
-          <p className={styles.lead}>
-            The same selectors rendered <code>dir="rtl"</code>: labels, chevrons,
-            search icon, tags and check indicators all flip via logical
-            properties — no direction-specific code. (The footer language
-            selector flips the whole app the same way.)
-          </p>
-          <DirectionProvider dir="rtl">
-            <div className={styles.rtlGrid} dir="rtl">
-              <NativeSelect
-                label="وحدة العبوة"
-                options={PACK_UNITS}
-                placeholder="اختر وحدة…"
-              />
-              <Select
-                label="حالة الفاتورة"
-                defaultValue="picked"
-                options={INVOICE_STATUSES.map(s => ({
-                  value: s.value,
-                  label: s.label,
-                  adornment: <Dot color={s.color} />,
-                }))}
-              />
-              <Combobox<DemoItem>
-                label="إضافة صنف"
-                items={ITEMS}
-                itemToString={itemLabel}
-                filter={itemFilter}
-                renderItem={renderItem}
-                placeholder="ابحث بالرمز أو الاسم…"
-              />
-              <MultiSelect<DemoItem>
-                label="الأصناف"
-                items={ITEMS}
-                itemToString={item => item.code}
-                selectedItems={[ITEMS[1], ITEMS[4]]}
-                onChange={() => {}}
-                renderItem={renderItem}
-                placeholder="ابحث للإضافة…"
-              />
-            </div>
-          </DirectionProvider>
-        </div>
-      </section>
     </div>
   );
 };
