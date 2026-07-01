@@ -2,8 +2,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  min-height: 0;
-  height: 100%;
 }
 
 .intro {
@@ -55,16 +53,10 @@
   box-shadow: var(--shadow-1);
 }
 
-/* Bounds the table so its scroll area (sticky header/columns, virtualisation)
-   has a height to work within. */
+/* No fixed height: the table grows to its content so the page is the single
+   vertical scroll (no nested scrollbar). The virtualised benchmark mode adds
+   its own bounded viewport, since windowing needs one. */
 .tableWrap {
   display: flex;
   flex-direction: column;
-  height: min(68vh, 40rem);
-  min-height: 20rem;
-}
-
-.tableWrap > div {
-  flex: 1;
-  min-height: 0;
 }

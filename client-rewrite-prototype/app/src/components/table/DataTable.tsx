@@ -269,11 +269,20 @@ export function DataTable<T>({
           modifiers={[restrictToHorizontalAxis]}
           onDragEnd={handleDragEnd}
         >
-          <div className={styles.scroll} ref={scrollRef}>
+          <div
+            className={cx(styles.scroll, virtualise && styles.scrollViewport)}
+            ref={scrollRef}
+          >
             <table
               className={styles.table}
               data-density={density}
-              style={{ ...columnSizeVars, width: table.getTotalSize() }}
+              // At least fill the container (fixed layout distributes the slack
+              // across columns, like the app's grid layout); overflow → scroll
+              // once the columns are wider than the container.
+              style={{
+                ...columnSizeVars,
+                width: `max(100%, ${table.getTotalSize()}px)`,
+              }}
               aria-rowcount={totalRows + 1}
             >
               <thead className={styles.thead}>

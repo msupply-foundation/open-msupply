@@ -22,6 +22,14 @@
   border-radius: 0;
 }
 
+/* Fullscreen is the one place the table scrolls internally (it fills the
+   viewport, there's no page behind it) — so give it back a bounded scroll. */
+.fullscreen .scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
 /* --- toolbar ---------------------------------------------------------- */
 .toolbar {
   display: flex;
@@ -95,11 +103,17 @@
 }
 
 /* --- scroll + table --------------------------------------------------- */
+/* Horizontal scroll only (wide tables + sticky columns); grows vertically so
+   the page — not the table — is the single vertical scroll. */
 .scroll {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
+  overflow-x: auto;
   position: relative;
+}
+
+/* Virtualised (benchmark) mode needs a real scroll viewport to window rows. */
+.scrollViewport {
+  height: 65vh;
+  overflow: auto;
 }
 
 .table {
