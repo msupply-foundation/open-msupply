@@ -2,19 +2,19 @@ use crate::{
     db_diesel::{changelog::changelog_cursor_tracker::ChangelogCursorTracker, store_row::store},
     diesel_macros::diesel_string_enum,
     dynamic_query_filter::create_condition,
+    name_link,
     name_store_join::name_store_join,
     vaccination_row::vaccination,
     KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, TransactionNotification,
 };
-use diesel::{dsl::LeftJoinQuerySource, prelude::*};
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use thiserror::Error;
 use ts_rs::TS;
 
-use super::sync_style::{ChangeLogSyncStyle, SyncVersions};
+use super::sync_style::{Distribution, SyncVersions};
 
-// Underlying table — INSERTs target this. Carries raw `*_link_id` columns.
 table! {
     #[sql_name = "changelog"]
     changelog_with_links (cursor) {
@@ -29,81 +29,18 @@ table! {
         patient_link_id -> Nullable<Text>,
     }
 }
-
-// View — SELECTs target this. Exposes resolved `patient_id`
-// (via LEFT JOIN name_link on the patient_link_id column).
-table! {
-    #[sql_name = "changelog_view"]
-    changelog (cursor) {
-        cursor -> BigInt,
-        table_name -> Text,
-        record_id -> Text,
-        row_action -> Text,
-        store_id -> Nullable<Text>,
-        is_sync_update -> Bool,
-        source_site_id -> Nullable<Integer>,
-        transfer_store_id -> Nullable<Text>,
-        patient_id -> Nullable<Text>,
-    }
-}
-
-allow_tables_to_appear_in_same_query!(changelog, vaccination);
-allow_tables_to_appear_in_same_query!(changelog, store);
-allow_tables_to_appear_in_same_query!(changelog, name_store_join);
+allow_tables_to_appear_in_same_query!(changelog_with_links, vaccination);
+allow_tables_to_appear_in_same_query!(changelog_with_links, store);
+allow_tables_to_appear_in_same_query!(changelog_with_links, name_store_join);
+allow_tables_to_appear_in_same_query!(changelog_with_links, name_link);
 
 diesel::alias!(
     store as transfer_stores: TransferStores,
     store as patient_stores: PatientStore,
+    // Used inside the patient_site_id subquery so it doesn't collide with the outer query's
+    // name_link join (Diesel rejects a table appearing more than once across the statement).
+    name_link as patient_name_links: PatientNameLink,
 );
-
-#[diesel::dsl::auto_type]
-fn query() -> _ {
-    changelog::table
-        .left_join(store::table.on(store::id.nullable().eq(changelog::store_id)))
-        .left_join(
-            transfer_stores.on(transfer_stores
-                .field(store::id)
-                .nullable()
-                .eq(changelog::transfer_store_id)),
-        )
-        .left_join(
-            name_store_join::table.on(name_store_join::name_id
-                .nullable()
-                .eq(changelog::patient_id)),
-        )
-        .left_join(
-            patient_stores.on(patient_stores
-                .field(store::id)
-                .nullable()
-                .eq(name_store_join::store_id.nullable())),
-        )
-}
-
-// Expand macro recurseively for auto_type, hen replace "diesel::dsl::LeftJoin" with "LeftJoinQuerySource"
-// And then remove diesel::dsl::On< keeping what's inside here >
-type Source = LeftJoinQuerySource<
-    LeftJoinQuerySource<
-        LeftJoinQuerySource<
-            LeftJoinQuerySource<
-                changelog::table,
-                store::table,
-                diesel::dsl::Eq<diesel::dsl::Nullable<store::id>, changelog::store_id>,
-            >,
-            transfer_stores,
-            diesel::dsl::Eq<
-                diesel::dsl::Nullable<diesel::dsl::Field<transfer_stores, store::id>>,
-                changelog::transfer_store_id,
-            >,
-        >,
-        name_store_join::table,
-        diesel::dsl::Eq<diesel::dsl::Nullable<name_store_join::name_id>, changelog::patient_id>,
-    >,
-    patient_stores,
-    diesel::dsl::Eq<
-        diesel::dsl::Nullable<diesel::dsl::Field<patient_stores, store::id>>,
-        diesel::dsl::Nullable<name_store_join::store_id>,
-    >,
->;
 
 diesel_string_enum! {
     #[derive(Clone, Eq, Serialize, Deserialize, TS)]
@@ -203,6 +140,7 @@ diesel_string_enum! {
         ShippingMethod,
         Site,
         StockLine,
+        StockRelocation,
         Stocktake,
         StocktakeLine,
         Store,
@@ -265,7 +203,6 @@ pub struct ChangeLogInsertRow {
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, TS, Default)]
-#[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
     pub table_name: ChangelogTableName,
@@ -313,28 +250,8 @@ impl<'a> ChangelogRepository<'a> {
             let window_end = current_cursor.saturating_add(CURSOR_WINDOW).min(max_cursor);
             let remaining = limit - results.len() as i64;
 
-            let sub_filter = ChangelogCondition::And(vec![
-                filter.clone(),
-                ChangelogCondition::cursor::greater_than(current_cursor),
-                // `lower_than(window_end + 1)` expresses `cursor <= window_end`;
-                // the macro does not generate a `lower_than_or_equal` helper.
-                ChangelogCondition::cursor::lower_than(window_end + 1),
-            ]);
-
-            let sub_query = query()
-                .filter(sub_filter.to_boxed())
-                .order(changelog::cursor.asc())
-                .limit(remaining)
-                .select(changelog::all_columns);
-
-            // Debug diesel query
-            // println!(
-            //     "{}",
-            //     diesel::debug_query::<crate::DBType, _>(&sub_query).to_string()
-            // );
-
-            let sub_results: Vec<ChangelogRow> =
-                sub_query.load(self.connection.lock().connection())?;
+            let sub_results =
+                self.query_cursor_window(filter.clone(), current_cursor, window_end, remaining)?;
 
             results.extend(sub_results);
             current_cursor = window_end;
@@ -350,6 +267,55 @@ impl<'a> ChangelogRepository<'a> {
             max_cursor: max_cursor as u64,
             last_cursor_in_batch,
         })
+    }
+
+    /// Loads one cursor window: changelog rows matching `filter` with
+    /// `current_cursor < cursor <= window_end`, ordered by cursor, capped at `limit`.
+    ///
+    /// The filter is applied directly to the `changelog_with_links LEFT JOIN name_link` query and
+    /// `name_link.name_id` is selected to resolve `patient_id` in one pass (no separate
+    /// `cursor IN (...)` subselect). The patient/store/transfer site filters use their own
+    /// (aliased) subqueries, so they don't collide with this outer name_link join.
+    fn query_cursor_window(
+        &self,
+        filter: ChangelogCondition::Inner,
+        current_cursor: i64,
+        window_end: i64,
+        limit: i64,
+    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+        let filter = ChangelogCondition::And(vec![
+            filter,
+            ChangelogCondition::cursor::greater_than(current_cursor),
+            // `lower_than(window_end + 1)` expresses `cursor <= window_end`;
+            // the macro does not generate a `lower_than_or_equal` helper.
+            ChangelogCondition::cursor::lower_than(window_end + 1),
+        ]);
+
+        let query = changelog_with_links::table
+            .left_join(
+                name_link::table
+                    .on(changelog_with_links::patient_link_id.eq(name_link::id.nullable())),
+            )
+            .filter(filter.to_boxed())
+            .order(changelog_with_links::cursor.asc())
+            .limit(limit)
+            .select((
+                changelog_with_links::cursor,
+                changelog_with_links::table_name,
+                changelog_with_links::record_id,
+                changelog_with_links::row_action,
+                changelog_with_links::store_id,
+                changelog_with_links::is_sync_update,
+                changelog_with_links::source_site_id,
+                changelog_with_links::transfer_store_id,
+                name_link::name_id.nullable(),
+            ));
+
+        // Uncomment to print the generated SQL (e.g. from the ignored
+        // `print_all_data_for_site_query_for_site_300` test):
+        // println!("{}", diesel::debug_query::<crate::DBType, _>(&query));
+
+        Ok(query.load(self.connection.lock().connection())?)
     }
 
     /// Returns latest/max change log cursor.
@@ -393,21 +359,61 @@ impl<'a> ChangelogRepository<'a> {
     }
 }
 
-// Dynamic query filter for changelog
-// Source type is the changelog table (for queries directly against the table)
+// Dynamic query filter for changelog.
+// The Source is `changelog_with_links LEFT JOIN name_link` (the shape the query runs against):
+// the filter only references changelog_with_links columns, but typing the boxed condition against
+// the joined source lets it be applied directly to the joined query in `query_cursor_window`.
+type ChangelogConditionSource = diesel::dsl::LeftJoinQuerySource<
+    changelog_with_links::table,
+    name_link::table,
+    diesel::dsl::Eq<changelog_with_links::patient_link_id, diesel::dsl::Nullable<name_link::id>>,
+>;
+
 create_condition!(
     ChangelogCondition,
-    Source,
-    (cursor, i64, changelog::cursor),
-    (site_id, i32, store::site_id),
-    (action, RowActionType, changelog::row_action),
-    (table_name, ChangelogTableName, changelog::table_name),
-    (store_id, string, changelog::store_id),
-    (source_site_id, i32, changelog::source_site_id),
-    (transfer_store_id, string, changelog::transfer_store_id),
-    (patient_id, string, changelog::patient_id),
-    (transfer_site_id, i32, transfer_stores.field(store::site_id)),
-    (patient_site_id, i32, patient_stores.field(store::site_id)),
+    ChangelogConditionSource,
+    (cursor, i64, changelog_with_links::cursor),
+    (action, RowActionType, changelog_with_links::row_action),
+    (table_name, ChangelogTableName, changelog_with_links::table_name),
+    (source_site_id, i32, changelog_with_links::source_site_id),
+    (store_id, string, changelog_with_links::store_id),
+    (transfer_store_id, string, changelog_with_links::transfer_store_id),
+    (patient_link_id, string, changelog_with_links::patient_link_id),
+    // Each site filter is gated by `<column> IS NOT NULL AND <column> IN (...)` so the IN subquery
+    // is only evaluated for rows that actually carry that column (most rows have a null transfer /
+    // patient link), letting the planner short-circuit.
+    (transfer_site_id, subquery: i32, |for_site| changelog_with_links::transfer_store_id.is_not_null().and(
+        changelog_with_links::transfer_store_id.eq_any(
+            store::table
+                .filter(store::site_id.eq(for_site))
+                .select(store::id.nullable())
+        )
+    )),
+     (store_site_id, subquery: i32, |for_site| changelog_with_links::store_id.is_not_null().and(
+        changelog_with_links::store_id.eq_any(
+            store::table
+                .filter(store::site_id.eq(for_site))
+                .select(store::id.nullable())
+        )
+    )),
+    (patient_site_id, subquery: i32, |for_site| changelog_with_links::patient_link_id.is_not_null().and(
+        changelog_with_links::patient_link_id.eq_any(
+            name_store_join::table
+                .inner_join(patient_name_links.on(name_store_join::name_id.eq(patient_name_links.field(name_link::id))))
+                .inner_join(patient_stores.on(patient_stores.field(store::id).eq(name_store_join::store_id)))
+                .filter(patient_stores.field(store::site_id).eq(for_site))
+                .select(patient_name_links.field(name_link::id).nullable())
+        )
+    )),
+    // Resolve a patient by their (resolved) name_id: match changelog rows whose patient_link_id
+    // points at any name_link row resolving to that name_id.
+    //   changelog.patient_link_id IN (SELECT name_link.id FROM name_link WHERE name_link.name_id = $patient_id)
+    // `patient_name_links` (a name_link alias) avoids colliding with the outer query's name_link join.
+    (patient_id, subquery: String, |for_patient| changelog_with_links::patient_link_id.eq_any(
+        patient_name_links
+            .filter(patient_name_links.field(name_link::name_id).eq(for_patient))
+            .select(patient_name_links.field(name_link::id).nullable())
+    )),
 );
 
 use crate::dynamic_query_filter::*;
@@ -433,11 +439,12 @@ impl ChangelogFilter {
         sync_style_options: Option<SyncVersions>,
     ) -> ChangelogCondition::Inner {
         // TODO can optimise, not filter at all by remote data when initialising
-        use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
+        use Distribution::*;
         let mut inner_or_conditions = vec![];
-        for sync_style in ChangeLogSyncStyle::iter() {
-            let table_names = sync_style.get_table_names_for_sync_style(sync_style_options.clone());
+        for distribution in Distribution::iter() {
+            let table_names =
+                distribution.get_table_names_for_distribution(sync_style_options.clone());
 
             if table_names.is_empty() {
                 continue;
@@ -445,27 +452,27 @@ impl ChangelogFilter {
 
             let pre_condition = C::table_name::any(table_names);
 
-            let condition = match sync_style {
-                Central | File => C::And(vec![
+            let condition = match distribution {
+                Central => C::And(vec![
                     // We have central and remote records with same table_name, so need to make sure to include only central ones (where store_id is null)
                     C::store_id::is_null(),
                     // We have patients that are also central data, therefore patient_id should be null
-                    C::patient_id::is_null(),
+                    C::patient_link_id::is_null(),
                 ]),
-                ToLegacyCentralOnly | RemoteToCentral => {
+                NotDistributed => {
                     // Don't sync
                     continue;
                 }
-                Remote => C::site_id::equal(site_id),
+                Remote => C::store_site_id::matching(site_id),
                 RemoteOwned => {
                     // Central never has edits to push back — relay only during initialisation.
                     if !is_initialising {
                         continue;
                     }
-                    C::site_id::equal(site_id)
+                    C::store_site_id::matching(site_id)
                 }
-                Transfer => C::transfer_site_id::equal(site_id),
-                Patient => C::patient_site_id::equal(site_id),
+                Transfer => C::transfer_site_id::matching(site_id),
+                Patient => C::patient_site_id::matching(site_id),
             };
 
             inner_or_conditions.push(C::And(vec![pre_condition, condition]));
@@ -487,24 +494,24 @@ impl ChangelogFilter {
         sync_style_options: Option<SyncVersions>,
     ) -> ChangelogCondition::Inner {
         // TODO do we need to sync name_store_join ?
-        use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
+        use Distribution::*;
 
-        let table_names = Patient.get_table_names_for_sync_style(sync_style_options);
+        let table_names = Patient.get_table_names_for_distribution(sync_style_options);
 
         C::And(vec![
             C::table_name::any(table_names),
-            C::patient_site_id::equal(site_id),
+            C::patient_site_id::matching(site_id),
         ])
     }
 
     pub fn data_for_store(store_id: &str) -> ChangelogCondition::Inner {
-        use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
+        use Distribution::*;
 
-        let mut store_scoped_table_names = Remote.get_table_names_for_sync_style(None);
-        store_scoped_table_names.extend(RemoteOwned.get_table_names_for_sync_style(None));
-        let transfer_table_names = Transfer.get_table_names_for_sync_style(None);
+        let mut store_scoped_table_names = Remote.get_table_names_for_distribution(None);
+        store_scoped_table_names.extend(RemoteOwned.get_table_names_for_distribution(None));
+        let transfer_table_names = Transfer.get_table_names_for_distribution(None);
 
         C::Or(vec![
             C::And(vec![
@@ -532,36 +539,19 @@ impl ChangelogFilter {
     pub fn all_data_for_legacy_central(
         connection: &StorageConnection,
     ) -> Result<ChangelogCondition::Inner, LegacyDataFilterError> {
-        use ChangeLogSyncStyle::*;
         use ChangelogCondition as C;
 
         let msupply_central_server_id = KeyValueStoreRepository::new(connection)
             .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
             .ok_or(LegacyDataFilterError::CentralSiteIdNotSet)?;
 
-        let mut inner_or_conditions = vec![];
-
-        let options = Some(SyncVersions {
-            is_v6: false,
-            is_v5: true,
-        });
-        for sync_style in ChangeLogSyncStyle::iter() {
-            let table_names = sync_style.get_table_names_for_sync_style(options.clone());
-
-            if table_names.is_empty() {
-                continue;
-            }
-
-            match sync_style {
-                ToLegacyCentralOnly | Remote | RemoteOwned | Transfer | Patient => {
-                    inner_or_conditions.push(C::table_name::any(table_names))
-                }
-                Central | RemoteToCentral | File => continue,
-            };
-        }
+        let table_names: Vec<_> = ChangelogTableName::iter()
+            // OG central takes all records that have a V5 transport tag
+            .filter(|table| table.sync_style().transport.is_v5)
+            .collect();
 
         Ok(C::And(vec![
-            C::Or(inner_or_conditions),
+            C::table_name::any(table_names),
             C::source_site_id::not_equal(msupply_central_server_id),
         ]))
     }
@@ -577,22 +567,25 @@ impl ChangelogFilter {
 #[cfg(test)]
 mod print_query_tests {
     use super::*;
-    use crate::DBType;
-    use diesel::debug_query;
 
-    // Remove ignore when you need to print the query
+    // To see the SQL: remove `#[ignore]`, uncomment the `debug_query` line inside
+    // `ChangelogRepository::query_cursor_window`, and run this test with --nocapture.
     #[ignore]
-    #[test]
-    fn print_all_data_for_site_query_for_site_300() {
+    #[actix_rt::test]
+    async fn print_all_data_for_site_query_for_site_300() {
+        let (_, connection, _, _) = crate::test_db::setup_all(
+            "print_all_data_for_site_query_for_site_300",
+            crate::mock::MockDataInserts::none(),
+        )
+        .await;
+
+        // Mirrors a single cursor window of `ChangelogRepository::query`.
+        // Values are illustrative (cursor window 0..=250_000, limit 100).
         let filter = ChangelogFilter::all_data_for_site(300, false, None);
 
-        let q = query()
-            .filter(filter.to_boxed())
-            .order(changelog::cursor.asc())
-            .limit(100)
-            .select(changelog::all_columns);
-
-        println!("{}", debug_query::<DBType, _>(&q));
+        ChangelogRepository::new(&connection)
+            .query_cursor_window(filter, 0, 250_000, 100)
+            .unwrap();
     }
 
     /// Locks the Rust↔DB contract for `row_action`: the column was the PG enum

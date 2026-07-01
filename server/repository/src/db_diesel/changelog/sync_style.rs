@@ -2,290 +2,616 @@ use strum::IntoEnumIterator;
 
 use super::changelog::ChangelogTableName;
 
-#[derive(strum::EnumIter, PartialEq, Eq, Debug, Clone, Copy)]
-pub enum ChangeLogSyncStyle {
-    Central,     // Data created on Open-mSupply central server
-    Remote,      // Store-scoped; editable by the owning store and by central stores
-    RemoteOwned, // Store-scoped; editable only by the owning store
-    File,
-    ToLegacyCentralOnly,
-    Transfer,
-    Patient,
-    RemoteToCentral, // These records won't sync back to the remote site on re-initalisation
-}
-
-impl ChangeLogSyncStyle {
-    pub(crate) fn get_table_names_for_sync_style(
-        &self,
-        sync_style_options: Option<SyncVersions>,
-    ) -> Vec<ChangelogTableName> {
-        ChangelogTableName::iter()
-            .filter(|table| {
-                let (styles, options) = table.sync_style();
-                if let Some(sync_style_options) = &sync_style_options {
-                    if sync_style_options != &options {
-                        return false;
-                    }
-                }
-                styles.iter().any(|style| style == self)
-            })
-            .collect()
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct SyncVersions {
     pub is_v6: bool,
     pub is_v5: bool,
 }
 
-// When adding a new change log record type, specify how it should be synced
-// If new requirements are needed a different ChangeLogSyncStyle can be added
+// Authoring axis — what central accepts when validating an incoming push; a sanity check, not routing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Authoring {
+    Central,     // reject any remote push — central manages it
+    Remote,      // store-scoped; owning store and central may edit
+    RemoteOwned, // accept if store_id is active on the source site
+    Transfer,    // cross-store; accept via the transfer-store id
+    Patient,     // accept if patient_id present (store_id, if set, active on source)
+    Anyone,      // accept as-is, no checks
+    LegacyOnly,  // not a v7 record; reject
+}
+
+// Distribution axis — which sites central sends each row to; drives the changelog filters.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, strum::EnumIter)]
+pub enum Distribution {
+    Central,        // sent everywhere when keyless (store_id/patient_id null)
+    Remote,         // owning store's site, every cycle
+    RemoteOwned,    // owning store's site, init only
+    Transfer,       // transfer store's site
+    Patient,        // sites where the patient is visible (via name_store_join)
+    NotDistributed, // never sent to a remote
+}
+
+// A table's sync style.
+pub struct SyncStyle {
+    pub authoring: Vec<Authoring>,
+    pub distribution: Vec<Distribution>,
+    pub transport: SyncVersions,
+}
+
+impl Distribution {
+    pub(crate) fn get_table_names_for_distribution(
+        &self,
+        sync_style_options: Option<SyncVersions>,
+    ) -> Vec<ChangelogTableName> {
+        ChangelogTableName::iter()
+            .filter(|table| {
+                let SyncStyle {
+                    distribution: distributions,
+                    transport,
+                    ..
+                } = table.sync_style();
+                if let Some(sync_style_options) = &sync_style_options {
+                    if sync_style_options != &transport {
+                        return false;
+                    }
+                }
+                distributions
+                    .iter()
+                    .any(|distribution| distribution == self)
+            })
+            .collect()
+    }
+}
+
 impl ChangelogTableName {
-    pub fn sync_style(&self) -> (Vec<ChangeLogSyncStyle>, SyncVersions) {
-        use ChangeLogSyncStyle::*;
+    pub fn sync_style(&self) -> SyncStyle {
+        use Authoring::*;
         use ChangelogTableName::*;
+        use Distribution as D;
+
+        const V5: SyncVersions = SyncVersions {
+            is_v6: false,
+            is_v5: true,
+        };
+        const V6: SyncVersions = SyncVersions {
+            is_v6: true,
+            is_v5: false,
+        };
+        const V5_V6: SyncVersions = SyncVersions {
+            is_v6: true,
+            is_v5: true,
+        };
+
         match self {
-            // ----------------------------------------------------------
-            // Legacy — Remote (not v6)
-            // ----------------------------------------------------------
-            NameStoreJoin | ItemStoreJoin | ClinicianStoreJoin => (
-                vec![Remote],
-                SyncVersions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
+            NameStoreJoin => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::Remote],
+                transport: V5,
+            },
+            ItemStoreJoin => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::Remote],
+                transport: V5,
+            },
+            ClinicianStoreJoin => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::Remote],
+                transport: V5,
+            },
 
-            // ----------------------------------------------------------
-            // Legacy — RemoteOwned (not v6)
-            // ----------------------------------------------------------
-            ActivityLog | IndicatorValue | Location | LocationMovement | PurchaseOrder
-            | PurchaseOrderLine | Sensor | StockLine | Stocktake | StocktakeLine
-            | TemperatureBreach | TemperatureLog | VVMStatusLog => (
-                vec![RemoteOwned],
-                SyncVersions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
+            ActivityLog => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::Remote],
+                transport: V5,
+            },
+            IndicatorValue => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
+            Location => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
+            LocationMovement => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
+            PurchaseOrder => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
+            PurchaseOrderLine => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
+            Sensor => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::Remote],
+                transport: V5,
+            },
+            StockLine => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
+            StockRelocation => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
+            Stocktake => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
+            StocktakeLine => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
+            TemperatureBreach => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::Remote],
+                transport: V5,
+            },
+            TemperatureLog => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::Remote],
+                transport: V5,
+            },
+            VVMStatusLog => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V5,
+            },
 
-            // ----------------------------------------------------------
-            // Legacy — Remote + Central (hybrid, not v6)
-            // Routes to a single owning site when the row carries a store_id,
-            // otherwise fans out to every site.
-            // ----------------------------------------------------------
-            SyncMessage => (
-                vec![Remote, Central],
-                SyncVersions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
+            SyncMessage => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::Central, D::Remote],
+                transport: V5,
+            },
 
-            // ----------------------------------------------------------
-            // Legacy — RemoteOwned + Transfer (not v6)
-            // ----------------------------------------------------------
-            Requisition | RequisitionLine => (
-                vec![RemoteOwned, Transfer],
-                SyncVersions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
+            Requisition => SyncStyle {
+                authoring: vec![RemoteOwned, Transfer],
+                distribution: vec![D::RemoteOwned, D::Transfer],
+                transport: V5,
+            },
+            RequisitionLine => SyncStyle {
+                authoring: vec![RemoteOwned, Transfer],
+                distribution: vec![D::RemoteOwned, D::Transfer],
+                transport: V5,
+            },
 
-            // ----------------------------------------------------------
-            // Legacy — RemoteOwned + Transfer + Patient (not v6)
-            // ----------------------------------------------------------
-            Invoice | InvoiceLine => (
-                vec![RemoteOwned, Transfer, Patient],
-                SyncVersions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
-            // ----------------------------------------------------------
-            // Central (v6) — created on the Open-mSupply central server
-            // ----------------------------------------------------------
-            AncillaryItem
-            | AssetCatalogueItem
-            | AssetCatalogueType
-            | AssetCategory
-            | AssetClass
-            | AssetLogReason
-            | AssetProperty
-            | BackendPlugin
-            | BundledItem
-            | Campaign
-            | Demographic
-            | FormSchema
-            | FrontendPlugin
-            | ItemVariant
-            | NameOmsFields
-            | NameProperty
-            | PackagingVariant
-            | Property
-            | Report
-            | VaccineCourse
-            | VaccineCourseDose
-            | VaccineCourseItem
-            | VaccineCourseStoreConfig => (
-                vec![Central],
-                SyncVersions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
+            Invoice => SyncStyle {
+                authoring: vec![RemoteOwned, Transfer, Patient],
+                distribution: vec![D::RemoteOwned, D::Transfer, D::Patient],
+                transport: V5,
+            },
+            InvoiceLine => SyncStyle {
+                authoring: vec![RemoteOwned, Transfer, Patient],
+                distribution: vec![D::RemoteOwned, D::Transfer, D::Patient],
+                transport: V5,
+            },
 
-            // ----------------------------------------------------------
-            // Central (not v6) — central data synced via legacy mSupply.
-            // Also a catch-all bucket for tables not yet classified into a
-            // more specific sync style.
-            // ----------------------------------------------------------
-            Abbreviation
-            | Barcode
-            | Category
-            | Clinician
-            | Contact
-            | Context
-            | Currency
-            | DemographicIndicator
-            | Diagnosis
-            | DocumentRegistry
-            | IndicatorColumn
-            | IndicatorLine
-            | InsuranceProvider
-            | Item
-            | ItemCategoryJoin
-            | ItemDirection
-            | ItemWarningJoin
-            | LocationType
-            | MasterList
-            | MasterListLine
-            | MasterListNameJoin
-            | NameTag
-            | NameTagJoin
-            | Period
-            | PeriodSchedule
-            | Printer
-            | Program
-            | ProgramIndicator
-            | ProgramRequisitionOrderType
-            | ProgramRequisitionSettings
-            | ReasonOption
-            | ShippingMethod
-            | Store
-            | StorePreference
-            | Unit
-            | UserAccount
-            | UserPermission
-            | UserStoreJoin
-            | VVMStatus => (
-                vec![Central],
-                SyncVersions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
+            AncillaryItem => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            AssetCatalogueItem => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            AssetCatalogueType => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            AssetCategory => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            AssetClass => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            AssetLogReason => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            AssetProperty => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            BackendPlugin => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            BundledItem => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            Campaign => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            Demographic => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            FormSchema => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            FrontendPlugin => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            ItemVariant => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            NameOmsFields => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            NameProperty => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            PackagingVariant => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            Property => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            Report => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            VaccineCourse => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            VaccineCourseDose => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            VaccineCourseItem => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            VaccineCourseStoreConfig => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
+            Abbreviation => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Barcode => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Category => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Contact => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Context => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Currency => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            DemographicIndicator => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Diagnosis => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            DocumentRegistry => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            IndicatorColumn => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            IndicatorLine => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            InsuranceProvider => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Item => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            ItemCategoryJoin => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            ItemDirection => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            ItemWarningJoin => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            LocationType => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            MasterList => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            MasterListLine => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            MasterListNameJoin => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            NameTag => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            NameTagJoin => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Period => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            PeriodSchedule => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Printer => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Program => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            ProgramIndicator => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            ProgramRequisitionOrderType => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            ProgramRequisitionSettings => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            ReasonOption => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            ShippingMethod => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Store => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            StorePreference => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            Unit => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            UserAccount => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
+            UserPermission => SyncStyle {
+                authoring: vec![Remote],
+                distribution: vec![D::Remote],
+                transport: V5,
+            },
+            UserStoreJoin => SyncStyle {
+                authoring: vec![Remote],
+                distribution: vec![D::Remote],
+                transport: V5,
+            },
+            VVMStatus => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
 
-            // ----------------------------------------------------------
-            // ToLegacyCentralOnly (not v6)
-            // ----------------------------------------------------------
-            Site => (
-                vec![ToLegacyCentralOnly],
-                SyncVersions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
+            Clinician => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::Central],
+                transport: V5,
+            },
 
-            // ----------------------------------------------------------
-            // Remote (v6)
-            // ----------------------------------------------------------
-            Asset | AssetInternalLocation => (
-                vec![Remote],
-                SyncVersions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
+            Site => SyncStyle {
+                authoring: vec![LegacyOnly],
+                distribution: vec![D::NotDistributed],
+                transport: V5,
+            },
 
-            // ----------------------------------------------------------
-            // RemoteOwned (v6)
-            // ----------------------------------------------------------
-            AssetLog | RnrForm | RnrFormLine => (
-                vec![RemoteOwned],
-                SyncVersions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
+            Asset => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::Remote],
+                transport: V6,
+            },
+            AssetInternalLocation => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::Remote],
+                transport: V6,
+            },
+            AssetLog => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::Remote],
+                transport: V6,
+            },
+            RnrForm => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V6,
+            },
+            RnrFormLine => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V6,
+            },
 
-            // ----------------------------------------------------------
-            // Central + Patient (not v6) — central rows, plus patient rows routed to visible sites
-            // ----------------------------------------------------------
-            Name => (
-                vec![Central, Patient],
-                SyncVersions {
-                    is_v6: true,
-                    is_v5: true,
-                },
-            ),
+            Name => SyncStyle {
+                authoring: vec![Central, Patient],
+                distribution: vec![D::Central, D::Patient],
+                transport: V5_V6,
+            },
 
-            // ----------------------------------------------------------
-            // Remote + Patient (v6) — store-scoped data also routed to sites where the patient is visible
-            // ----------------------------------------------------------
-            Encounter | Vaccination | ContactTrace => (
-                vec![Remote, Patient],
-                SyncVersions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
+            Encounter => SyncStyle {
+                authoring: vec![Remote, Patient],
+                distribution: vec![D::Remote, D::Patient],
+                transport: V6,
+            },
+            Vaccination => SyncStyle {
+                authoring: vec![Remote, Patient],
+                distribution: vec![D::Remote, D::Patient],
+                transport: V6,
+            },
+            ContactTrace => SyncStyle {
+                authoring: vec![Remote, Patient],
+                distribution: vec![D::Remote, D::Patient],
+                transport: V6,
+            },
 
-            // ----------------------------------------------------------
-            // Patient (v6) — routed only to sites where the patient is visible
-            // ----------------------------------------------------------
-            Document | NameInsuranceJoin | ProgramEnrolment | ProgramEvent => (
-                vec![Patient],
-                SyncVersions {
-                    is_v6: false,
-                    is_v5: true,
-                },
-            ),
+            Document => SyncStyle {
+                authoring: vec![Patient],
+                distribution: vec![D::Patient],
+                transport: V5,
+            },
+            NameInsuranceJoin => SyncStyle {
+                authoring: vec![Patient],
+                distribution: vec![D::Patient],
+                transport: V5,
+            },
+            ProgramEnrolment => SyncStyle {
+                authoring: vec![Patient],
+                distribution: vec![D::Patient],
+                transport: V5,
+            },
+            ProgramEvent => SyncStyle {
+                authoring: vec![Patient],
+                distribution: vec![D::Patient],
+                transport: V5,
+            },
 
-            // ----------------------------------------------------------
-            // File (v6) — file references (handled by the file-sync pipeline)
-            // ----------------------------------------------------------
-            SyncFileReference => (
-                vec![File],
-                SyncVersions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
+            SyncFileReference => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
 
-            // ----------------------------------------------------------
-            // Remote + Central (v6) — Remote when store_id is set, otherwise Central
-            // ----------------------------------------------------------
-            PluginData | Preference => (
-                vec![Remote, Central],
-                SyncVersions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
+            PluginData => SyncStyle {
+                authoring: vec![Central, Remote],
+                distribution: vec![D::Central, D::Remote],
+                transport: V6,
+            },
+            Preference => SyncStyle {
+                authoring: vec![Central, Remote],
+                distribution: vec![D::Central, D::Remote],
+                transport: V6,
+            },
 
-            // ----------------------------------------------------------
-            // RemoteToCentral (v6) — pushed to central but not synced back on re-init
-            // ----------------------------------------------------------
-            ContactForm | SystemLog => (
-                vec![RemoteToCentral],
-                SyncVersions {
-                    is_v6: true,
-                    is_v5: false,
-                },
-            ),
+            ContactForm => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::NotDistributed],
+                transport: V6,
+            },
+            SystemLog => SyncStyle {
+                authoring: vec![Anyone],
+                distribution: vec![D::NotDistributed],
+                transport: V6,
+            },
         }
     }
 }

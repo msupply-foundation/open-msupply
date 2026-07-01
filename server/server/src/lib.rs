@@ -60,6 +60,7 @@ use service::{
 
 use actix_web::{web, web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Instant;
 use util::format_error;
 
 mod authentication;
@@ -162,6 +163,14 @@ pub async fn start_server(
         .as_ref()
         .map(|s| s.disable_integration_transaction)
         .unwrap_or(false);
+    let relax_hardware_id_token_checks = settings
+        .sync
+        .as_ref()
+        .map(|s| s.relax_hardware_id_token_checks)
+        .unwrap_or(false);
+    if relax_hardware_id_token_checks {
+        log::warn!("relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED");
+    }
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
         processors_trigger,
@@ -169,12 +178,19 @@ pub async fn start_server(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        Some(settings.clone()),
         subscription_trigger,
         batch_size,
         disable_integration_transaction,
+        relax_hardware_id_token_checks,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
+    let cert_start = Instant::now();
     let certificates = Certificates::try_load(&settings.server).unwrap();
+    info!(
+        "Certificates loaded in {} ms",
+        cert_start.elapsed().as_millis()
+    );
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
     let token_secret_copy = token_secret.clone();
@@ -447,7 +463,11 @@ pub async fn start_server(
 
     // CHECK SYNC STATUS
     info!("Checking sync status..");
-    let yaml_sync_settings = settings.sync.clone();
+    // A flags-only `sync:` block (no credentials) counts as "no sync settings" here.
+    let yaml_sync_settings = settings
+        .sync
+        .clone()
+        .filter(|s| s.has_core_sync_settings());
     let database_sync_settings = service_provider
         .settings
         .sync_settings(&service_context)

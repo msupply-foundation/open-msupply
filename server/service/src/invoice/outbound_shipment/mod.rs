@@ -5,6 +5,9 @@ pub mod delete;
 pub mod insert;
 pub mod update;
 
+pub mod duplicate;
+pub use self::duplicate::*;
+
 pub mod batch;
 pub use self::batch::*;
 

@@ -9,7 +9,7 @@ pub fn mock_purchase_order_a_line_1() -> PurchaseOrderLineRow {
         purchase_order_id: mock_purchase_order_a().id,
         store_id: "store_a".to_string(),
         line_number: 1,
-        item_link_id: mock_item_a().id,
+        item_id: mock_item_a().id,
         ..Default::default()
     }
 }
@@ -20,7 +20,7 @@ pub fn mock_purchase_order_a_line_2() -> PurchaseOrderLineRow {
         store_id: "store_a".to_string(),
         purchase_order_id: mock_purchase_order_a().id,
         line_number: 1,
-        item_link_id: mock_item_b().id,
+        item_id: mock_item_b().id,
         ..Default::default()
     }
 }
@@ -31,7 +31,7 @@ pub fn mock_purchase_order_b_line_1() -> PurchaseOrderLineRow {
         store_id: "store_a".to_string(),
         purchase_order_id: mock_purchase_order_b_finalised().id,
         line_number: 1,
-        item_link_id: mock_item_a().id,
+        item_id: mock_item_a().id,
         ..Default::default()
     }
 }

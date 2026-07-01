@@ -53,9 +53,10 @@ use cli::LoadTest;
 use cli::{
     all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
     generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
-    install_plugin_bundle, GenerateAndInstallPluginBundle, GeneratePluginBundle,
-    InstallPluginBundle, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
-    TestData,
+    install_plugin_bundle, list_installed_plugins, uninstall_plugin,
+    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
+    ListInstalledPlugins, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
+    TestData, UninstallPlugin,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -185,6 +186,10 @@ enum Action {
     InstallPluginBundle(InstallPluginBundle),
     /// Will generate and then install  plugin bundle
     GenerateAndInstallPluginBundle(GenerateAndInstallPluginBundle),
+    /// Uninstall a single plugin row by id (use list-installed-plugins to discover ids)
+    UninstallPlugin(UninstallPlugin),
+    /// List installed plugins as JSON (stdout)
+    ListInstalledPlugins(ListInstalledPlugins),
     UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long, num_args=0..)]
@@ -275,6 +280,17 @@ enum Action {
         /// buffer as it already is (e.g. to only retry rows that are still pending).
         #[clap(long)]
         skip_buffer_reset: bool,
+        /// Only reintegrate records that previously errored: the buffer reset clears integration
+        /// state for rows with an integration_error (excluding deliberately-ignored rows) and
+        /// leaves successfully-integrated rows alone. Errored rows are integrated (not pending),
+        /// so this requires a reset — it conflicts with --skip-buffer-reset.
+        #[clap(short, long, conflicts_with = "skip_buffer_reset")]
+        errors_only: bool,
+        /// Restrict integration to these sync buffer tables (comma-separated, matched against
+        /// `sync_buffer.table_name`, e.g. `--tables item,name`). Defaults to all tables.
+        /// Diagnostic use only — scoping can skip rows the chosen tables depend on.
+        #[clap(long, value_delimiter = ',')]
+        tables: Vec<String>,
     },
 }
 
@@ -299,6 +315,7 @@ async fn initialise_from_central(
     let sync_settings = settings
         .clone()
         .sync
+        .filter(|s| s.has_core_sync_settings())
         .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
     let central_server_url = sync_settings.url.clone();
 
@@ -403,6 +420,8 @@ async fn main() -> anyhow::Result<()> {
             use_transaction,
             migrate: should_migrate,
             skip_buffer_reset,
+            errors_only,
+            tables,
         } => {
             reintegrate_buffer(
                 &settings,
@@ -410,6 +429,9 @@ async fn main() -> anyhow::Result<()> {
                 use_transaction,
                 should_migrate,
                 skip_buffer_reset,
+                errors_only,
+                // empty `--tables` means no scoping (integrate everything)
+                (!tables.is_empty()).then_some(tables),
             )?;
         }
         Action::InitialiseFromCentral { users } => {
@@ -423,6 +445,7 @@ async fn main() -> anyhow::Result<()> {
             let url = settings
                 .sync
                 .clone()
+                .filter(|s| s.has_core_sync_settings())
                 .ok_or(anyhow!("sync settings not set in yaml configurations"))?
                 .url;
             let (service_provider, ctx) = initialise_from_central(settings, &users).await?;
@@ -720,6 +743,12 @@ async fn main() -> anyhow::Result<()> {
         }
         Action::GenerateAndInstallPluginBundle(arguments) => {
             generate_and_install_plugin_bundle(arguments).await?;
+        }
+        Action::UninstallPlugin(arguments) => {
+            uninstall_plugin(arguments).await?;
+        }
+        Action::ListInstalledPlugins(arguments) => {
+            list_installed_plugins(arguments).await?;
         }
         Action::ShowReport {
             path,

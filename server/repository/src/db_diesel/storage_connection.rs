@@ -90,6 +90,16 @@ impl StorageConnection {
         &self.changelog_cursor_tracker
     }
 
+    /// Execute a raw SQL statement (or batch of statements) directly against the underlying
+    /// connection. Useful for backend-specific statements that diesel doesn't model — e.g. sqlite's
+    /// `VACUUM INTO 'path'`. Caller is responsible for any quoting/escaping in the SQL string.
+    pub fn batch_execute(&self, sql: &str) -> Result<(), RepositoryError> {
+        self.lock()
+            .connection()
+            .batch_execute(sql)
+            .map_err(RepositoryError::from)
+    }
+
     /// Queue a notification to be fired after the transaction commits.
     pub fn notify(&self, notification: TransactionNotification) {
         if self.on_commit.is_some() {
@@ -228,14 +238,12 @@ impl StorageConnection {
 
         let inner_result = f(self);
 
-        // Try commit or rollback based on inner_result
-        // Block is needed for guard to be dropped
-        let result = {
-            let mut guard = self.raw_connection.lock().unwrap();
-            let con: &mut DBBackendConnection = &mut guard;
-
-            match inner_result {
-                Ok(value) => match AnsiTransactionManager::commit_transaction(con) {
+        // Commit or rollback based on the inner result.
+        let result = match inner_result {
+            Ok(value) => {
+                let mut guard = self.raw_connection.lock().unwrap();
+                let con: &mut DBBackendConnection = &mut guard;
+                match AnsiTransactionManager::commit_transaction(con) {
                     Ok(_) => Ok(value),
                     Err(err) => {
                         error!("Failed to end tx: {err:?}");
@@ -244,8 +252,12 @@ impl StorageConnection {
                             level: current_level + 1,
                         })
                     }
-                },
-                Err(e) => match AnsiTransactionManager::rollback_transaction(con) {
+                }
+            }
+            Err(e) => {
+                let mut guard = self.raw_connection.lock().unwrap();
+                let con: &mut DBBackendConnection = &mut guard;
+                match AnsiTransactionManager::rollback_transaction(con) {
                     Ok(_) => Err(TransactionError::Inner(e)),
                     Err(err) => {
                         error!("Failed to rollback tx: {err:?}");
@@ -254,12 +266,14 @@ impl StorageConnection {
                             level: current_level + 1,
                         })
                     }
-                },
+                }
             }
         };
 
-        // If we are closing off the outermost transaction, flush notifications and untrack changelog cursor
-        // Untrack first in case notifications triggers something that uses changelog
+        // When closing off the outermost transaction, untrack this connection's in-flight
+        // changelog cursor and then fire pending notifications. Untrack runs first (on both
+        // commit and rollback) so a processor task woken by the on-commit hook sees the
+        // just-committed rows with an un-clamped tracker.
         if current_level == 0 {
             ChangelogCursorTracker::untrack(self);
             if result.is_ok() {

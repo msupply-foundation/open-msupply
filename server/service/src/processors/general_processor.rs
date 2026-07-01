@@ -20,11 +20,11 @@ use crate::{
 };
 
 use super::{
-    add_central_patient_visibility::AddPatientVisibilityForCentral,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
     plugin_processor::PluginProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
+    support_upload_files::SupportUploadFilesProcessor,
 };
 
 #[derive(Error, Debug)]
@@ -52,7 +52,7 @@ pub enum ProcessorType {
     ContactFormEmail,
     LoadPlugin,
     AssignRequisitionNumber,
-    AddPatientVisibilityForCentral,
+    SupportUploadFiles,
     Plugins,
     RequisitionAutoFinalise,
     MergeSyncMessage,
@@ -65,12 +65,12 @@ impl ProcessorType {
             ProcessorType::ContactFormEmail => vec![Box::new(QueueContactEmailProcessor)],
             ProcessorType::LoadPlugin => vec![Box::new(LoadPlugin)],
             ProcessorType::AssignRequisitionNumber => vec![Box::new(AssignRequisitionNumber)],
-            ProcessorType::AddPatientVisibilityForCentral => {
-                vec![Box::new(AddPatientVisibilityForCentral)]
-            }
             ProcessorType::Plugins => get_plugin_processors(),
             ProcessorType::RequisitionAutoFinalise => {
                 vec![Box::new(RequisitionAutoFinaliseProcessor)]
+            }
+            ProcessorType::SupportUploadFiles => {
+                vec![Box::new(SupportUploadFilesProcessor)]
             }
             ProcessorType::MergeSyncMessage => vec![Box::new(MergeSyncMessageProcessor)],
         }
@@ -106,14 +106,16 @@ enum ProcessorFilter {
 }
 
 impl ProcessorFilter {
-    fn from_processor(
+    async fn from_processor(
         processor: &dyn Processor,
         ctx: &ServiceContext,
     ) -> Result<Self, ProcessorError> {
         if let Some(compat) = processor.compatibility_filter(ctx)? {
             Ok(ProcessorFilter::Compatibility(compat))
         } else {
-            Ok(ProcessorFilter::Normal(processor.changelogs_filter(ctx)?))
+            Ok(ProcessorFilter::Normal(
+                processor.changelogs_filter(ctx).await?,
+            ))
         }
     }
 
@@ -157,7 +159,11 @@ pub(crate) async fn process_records(
             .map_err(Error::DatabaseError)?;
 
         let cursor_controller = CursorController::from_cursor_type(processor.cursor_type());
-        let filter = ProcessorFilter::from_processor(processor.as_ref(), &ctx)?;
+
+        // Only process the changelogs we care about.
+        // `from_processor` is async because `changelogs_filter` runs plugin-backed
+        // processors off the runtime (see #11949).
+        let filter = ProcessorFilter::from_processor(processor.as_ref(), &ctx).await?;
 
         loop {
             let cursor = cursor_controller
@@ -181,13 +187,13 @@ pub(crate) async fn process_records(
                 if let Err(e) = result {
                     log_system_error(&ctx.connection, &e).map_err(Error::DatabaseError)?;
 
-                    if !processor.skip_on_error() {
+                    if !processor.skip_on_error().await {
                         break;
                     }
                 }
 
                 cursor_controller
-                    .update(&ctx.connection, (log.cursor + 1) as u64)
+                    .update(&ctx.connection, log.cursor as u64)
                     .map_err(Error::DatabaseError)?;
             }
         }
@@ -199,8 +205,9 @@ pub(crate) async fn process_records(
 pub(super) trait Processor: Sync + Send {
     fn get_description(&self) -> String;
 
-    /// Default to using change_log_table_names
-    fn changelogs_filter(
+    /// Default to using change_log_table_names.
+    /// Async so plugin-backed processors can run the plugin off the runtime (see #11949).
+    async fn changelogs_filter(
         &self,
         _ctx: &ServiceContext,
     ) -> Result<ChangelogCondition::Inner, ProcessorError> {
@@ -233,7 +240,8 @@ pub(super) trait Processor: Sync + Send {
     /// this is not desired behavior. When skip_on_error is false, the processor driver will not
     /// skip the error and will log to system log, this may create a lot of system logs, one every time
     /// the processors are triggered, we are ok with that for now.
-    fn skip_on_error(&self) -> bool {
+    /// Async so plugin-backed processors can run the plugin off the runtime (see #11949).
+    async fn skip_on_error(&self) -> bool {
         true
     }
 

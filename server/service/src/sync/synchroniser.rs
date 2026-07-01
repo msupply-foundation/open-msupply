@@ -320,6 +320,9 @@ impl SynchroniserV5V6 {
             self.try_upgrade_to_v7(ctx).await?;
         }
 
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::SupportUploadFiles);
+
         Ok(())
     }
 
@@ -483,6 +486,7 @@ pub fn integrate_and_translate_sync_buffer(
             source_site_id,
             SyncVersion::V5V6,
             None,
+            Some(&table_order),
         )? as u64;
         if let Some(logger) = logger.as_mut() {
             logger

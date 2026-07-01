@@ -19,6 +19,7 @@ use async_graphql::{
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
 
+use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_asset::property::AssetPropertiesQueries;
 use graphql_asset::{
     logs::{AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries},
@@ -45,7 +46,6 @@ use graphql_general::{
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
-use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_item_bundle::BundledItemMutations;
 use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -63,8 +63,10 @@ use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
+use graphql_stock_relocation::{StockRelocationMutations, StockRelocationQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
+use graphql_sync_message::{SyncMessageMutations, SyncMessageQueries};
 use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use graphql_vvm::{VVMMutations, VVMQueries};
 
@@ -149,6 +151,10 @@ impl CentralServerQueryNode {
         CentralPluginQueries
     }
 
+    async fn sync_message(&self) -> SyncMessageQueries {
+        SyncMessageQueries
+    }
+
     async fn site(&self) -> CentralSiteQueries {
         CentralSiteQueries
     }
@@ -192,6 +198,7 @@ pub struct Queries(
     pub RequisitionQueries,
     pub ReportQueries,
     pub StockLineQueries,
+    pub StockRelocationQueries,
     pub RepackQueries,
     pub PrinterQueries,
     pub ProgramsQueries,
@@ -228,6 +235,7 @@ impl Queries {
             RequisitionQueries,
             ReportQueries,
             StockLineQueries,
+            StockRelocationQueries,
             RepackQueries,
             PrinterQueries,
             ProgramsQueries,
@@ -263,6 +271,7 @@ pub struct Mutations(
     pub RequisitionMutations,
     pub RequisitionLineMutations,
     pub StockLineMutations,
+    pub StockRelocationMutations,
     pub RepackMutations,
     pub PrinterMutations,
     pub GeneralMutations,
@@ -279,6 +288,7 @@ pub struct Mutations(
     pub ClinicianMutations,
     pub PurchaseOrderMutations,
     pub PurchaseOrderLineMutations,
+    pub SyncMessageMutations,
 );
 
 impl Mutations {
@@ -293,6 +303,7 @@ impl Mutations {
             RequisitionMutations,
             RequisitionLineMutations,
             StockLineMutations,
+            StockRelocationMutations,
             RepackMutations,
             PrinterMutations,
             GeneralMutations,
@@ -309,6 +320,7 @@ impl Mutations {
             ClinicianMutations,
             PurchaseOrderMutations,
             PurchaseOrderLineMutations,
+            SyncMessageMutations,
         )
     }
 }
