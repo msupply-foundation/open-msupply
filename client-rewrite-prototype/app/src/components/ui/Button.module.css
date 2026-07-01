@@ -20,7 +20,7 @@
   padding-inline: 1.25rem;
   border: none;
   border-radius: 1.5rem;
-  background: var(--bg-white);
+  background: var(--surface-raised);
   color: var(--button-text);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);

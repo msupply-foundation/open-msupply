@@ -26,7 +26,7 @@ export const MAX_FIELDS = 1000;
 export const GROUP_SIZE = 25;
 export const GROUP_COUNT = Math.ceil(MAX_FIELDS / GROUP_SIZE);
 
-export const DEFAULT_MODE: Mode = 'side';
+export const DEFAULT_MODE: Mode = 'single';
 export const DEFAULT_IMPL: Impl = 'naive';
 export const DEFAULT_FIELDS: FieldCount = 200;
 

@@ -7,7 +7,7 @@
   flex-direction: column;
   border: 1px solid var(--color-border-value);
   border-radius: var(--radius-md);
-  background: var(--bg-white);
+  background: var(--surface-raised);
   box-shadow: var(--shadow-4);
   color: var(--text-body);
   user-select: none;

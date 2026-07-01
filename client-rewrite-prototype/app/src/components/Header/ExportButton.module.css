@@ -9,7 +9,7 @@
   align-items: stretch;
   height: var(--nav-item-height);
   border-radius: 1.5rem;
-  background: var(--bg-white);
+  background: var(--surface-raised);
   box-shadow: var(--shadow-2);
   overflow: hidden;
 }

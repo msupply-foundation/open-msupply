@@ -48,6 +48,11 @@
   --bg-input: #f2f2f5;
   --bg-input-disabled: #fafafc;
 
+  /* Floating/elevated surfaces (buttons, menus, dialogs, popups). Same as the
+     content surface in light — the shadow does the lifting — but overridden
+     LIGHTER than content in dark, where lightness carries elevation. */
+  --surface-raised: var(--bg-white);
+
   /* text (theme.ts → typography + palette.form) */
   --text-body: #1c1c28; /* body1 / th */
   --text-secondary: #555770; /* body2 / h6 / form.field */
@@ -185,6 +190,20 @@
   --header-border: #33333f;
   --drawer-selected-bg: #2a2a38;
   --drawer-hover-bg: #21212b;
+
+  /* Raised surfaces sit LIGHTER than the #21212b content — on dark, lightness
+     (not shadow) carries elevation, so buttons/menus/dialogs stand out. */
+  --surface-raised: #2b2b3a;
+
+  /* Elevation via near-BLACK shadows. The light theme's grey shadows are
+     lighter than a dark surface, so they read as a glow — black reads as depth.
+     Paired with the lighter raised surface above (surface separates, shadow
+     reinforces), mirroring how dark UIs convey elevation. */
+  --shadow-1: 0 0.5px 2px 0 rgba(0, 0, 0, 0.45), 0 0 1px 0 rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 4px 8px 0 rgba(0, 0, 0, 0.5), 0 0 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-3: 0 8px 16px 0 rgba(0, 0, 0, 0.55), 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  --shadow-4: 0 16px 28px 0 rgba(0, 0, 0, 0.6), 0 4px 10px 0 rgba(0, 0, 0, 0.45);
+  --shadow-drawer: 4px 0 20px 0 rgba(0, 0, 0, 0.55);
 
   /* Stronger focus glow + darker scrim read better on dark */
   --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.45);
