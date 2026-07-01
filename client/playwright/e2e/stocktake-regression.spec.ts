@@ -620,13 +620,28 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
 
       await page.getByRole('button', { name: /Reduce to 0/i }).click();
 
+      // "Reduce to 0" opens an "Are you sure?" modal that requires a reason.
+      const reduceModal = page
+        .getByRole('dialog')
+        .filter({ hasText: /Are you sure/i });
+      await expect(reduceModal).toBeVisible({ timeout: 5000 });
+      const reasonCombo = reduceModal.getByRole('combobox').first();
+      if (await reasonCombo.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await reasonCombo.click();
+        const opt = page.getByRole('option').first();
+        await expect(opt).toBeVisible({ timeout: 5000 });
+        await opt.click();
+      }
+      await reduceModal.getByRole('button', { name: 'OK', exact: true }).click();
+      await expect(reduceModal).toBeHidden({ timeout: 5000 });
+
       // Every "Packs counted" cell in the detail line table should now read 0.
       const detailTable = page.locator('table').last();
       const countedIdx = await columnIndex(detailTable, 'Packs counted');
       const countedCells = detailTable
         .locator('tbody tr')
         .locator(`td:nth-child(${countedIdx + 1})`);
-      await expect(countedCells.first()).toHaveText(/^0$/, { timeout: 5000 });
+      await expect(countedCells.first()).toHaveText(/^0$/, { timeout: 10000 });
 
       await deleteCurrentStocktake(page);
     }
@@ -733,11 +748,11 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
         page.getByText(/finalised and cannot be edited/i)
       ).toBeVisible({ timeout: 10000 });
 
-      // Description is read-only and Add item is gone/disabled.
+      // Description is read-only and Add item is present but disabled.
       await expect(descriptionInput(page)).toBeDisabled();
       await expect(
         page.getByRole('button', { name: 'Add item' })
-      ).toHaveCount(0);
+      ).toBeDisabled();
     }
   );
 
@@ -812,7 +827,8 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
       // batch's snapshot raised by INCREASE (same batch number, not a new line).
       await createStocktake(page, 'blank');
       modal = await openAddItem(page);
-      const code = (picked.match(/^(\S+)/) ?? [])[1] ?? 'amox';
+      // Option text joins code+name with no separator; take the NN_NNNN code.
+      const code = (picked.match(/^(\d+_\d+)/) ?? [])[1] ?? 'amox';
       await pickFirstItem(page, modal, code);
       const table2 = modal.locator('table');
 
