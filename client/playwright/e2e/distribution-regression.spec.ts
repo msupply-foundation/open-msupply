@@ -11,6 +11,14 @@
  * This spec is intentionally independent of smoke-all-sections.spec.ts.
  * Goal: cover the behaviours listed in the DIST cases, even if duplicated elsewhere.
  *
+ * KNOWN LIMITATION — large datasets: the tests that add a shipment line
+ * (DIST-03.* line management and DIST-04.* processing workflow, via
+ * addLineToShipment/pickItemWithStock) drive the Add Item picker, which is
+ * backed by the itemStockOnHand query. On a large catalogue that query is very
+ * slow (~23s observed on a real-client datafile), so these tests time out and
+ * will NOT pass. They pass on a small/optimised dataset. A perf fix is in
+ * flight (branch perf-item-search-stock-on-hand-index); revisit once it lands.
+ *
  * Run:
  *   cd client
  *   BASE_URL=http://localhost:3005 yarn e2e distribution-regression --headed --workers 1
@@ -1694,6 +1702,10 @@ async function addLineToShipment(page: Page) {
 /**
  * Open the item autocomplete and walk through options until one reports
  * "Available: N" with N > 0. Throws if none found within MAX_TRIES.
+ *
+ * NOTE: backed by the itemStockOnHand query, which is very slow on large
+ * catalogues (~23s observed) — callers time out and fail on big datasets.
+ * See the "KNOWN LIMITATION" note at the top of this file.
  */
 async function pickItemWithStock(
   page: Page,
