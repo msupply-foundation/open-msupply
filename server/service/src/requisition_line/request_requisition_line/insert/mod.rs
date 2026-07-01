@@ -157,7 +157,7 @@ mod test {
                         .clone(),
                     id: "new requisition line id".to_string(),
                     item_id: mock_request_draft_requisition_calculation_test().lines[0]
-                        .item_link_id
+                        .item_id
                         .clone(),
                 },
             ),

@@ -5,7 +5,10 @@ use crate::{
         OrderTypeNotFoundError,
     },
     store_preference::get_store_preferences,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
+        OtherPartyErrors,
+    },
     NullableUpdate,
 };
 use repository::{
@@ -48,24 +51,35 @@ pub fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
+        return Err(OutError::CannotEditRequisition);
+    }
+
     if let (Some(program_id), Some(order_type)) =
         (&requisition_row.program_id, &requisition_row.order_type)
     {
-        let (within_limit, max_items) = check_emergency_order_within_max_items_limit(
+        match check_emergency_order_within_max_items_limit(
             connection,
             program_id,
             order_type,
             requisition_lines.clone(),
-        )
-        .map_err(|e| match e {
-            OrderTypeNotFoundError::OrderTypeNotFound => OutError::OrderTypeNotFound,
-            OrderTypeNotFoundError::DatabaseError(repository_error) => {
-                OutError::DatabaseError(repository_error)
+        ) {
+            Ok((within_limit, max_items)) => {
+                if !within_limit {
+                    return Err(OutError::OrderingTooManyItems(max_items));
+                }
             }
-        })?;
-
-        if !within_limit {
-            return Err(OutError::OrderingTooManyItems(max_items));
+            Err(OrderTypeNotFoundError::OrderTypeNotFound) => {
+                // If order types are edited in mSupply this check will fail.
+                // We don't want to block the operation, just log it.
+                log::warn!(
+                    "Order type not found when checking emergency order item limit (requisition_id={}, program_id={}, order_type={})",
+                    requisition_row.id,
+                    program_id,
+                    order_type,
+                );
+            }
+            Err(OrderTypeNotFoundError::DatabaseError(e)) => return Err(e.into()),
         }
     }
 

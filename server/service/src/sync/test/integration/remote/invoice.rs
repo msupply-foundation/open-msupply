@@ -83,7 +83,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             id: uuid(),
             invoice_id: base_invoice_row.id.clone(),
             r#type: InvoiceLineType::StockIn,
-            item_link_id: uuid(),
+            item_id: uuid(),
             item_name: uuid(),
             item_code: uuid(),
             stock_line_id: None,
@@ -101,7 +101,10 @@ impl SyncRecordTester for InvoiceRecordTester {
             reason_option_id: None, // TODO: Add test to update this with update_inventory_adjustment_reason_id
             note: None,
             item_variant_id: None,
-            prescribed_quantity: None,
+            // 4D defaults these float columns to 0 when the upsert omits them.
+            prescribed_quantity: Some(0.0),
+            shipped_number_of_packs: Some(0.0),
+            shipped_pack_size: Some(0.0),
             linked_invoice_id: None,
             donor_id: None,
             ..Default::default()
@@ -178,7 +181,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         result.push(TestStepData {
             central_upsert: json!({
                 "item": [{
-                    "ID": base_invoice_line_row.item_link_id,
+                    "ID": base_invoice_line_row.item_id,
                     "name": base_invoice_line_row.item_name,
                     "code": base_invoice_line_row.item_code,
                     "type_of": "general"
@@ -225,7 +228,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         // STEP 2 - mutate
         let stock_line_row = StockLineRow {
             id: uuid(),
-            item_link_id: base_invoice_line_row.item_link_id,
+            item_id: base_invoice_line_row.item_id,
             store_id: new_site_properties.store_id.clone(),
             batch: Some("some batch".to_string()),
             pack_size: 20.0,
@@ -260,6 +263,8 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.delivered_datetime = NaiveDate::from_ymd_opt(2022, 03, 27)
                 .unwrap()
                 .and_hms_opt(11, 35, 15);
+            // 4D mirrors delivered_datetime into received_datetime for inbound shipments.
+            d.received_datetime = d.delivered_datetime;
             d.verified_datetime = NaiveDate::from_ymd_opt(2022, 03, 28)
                 .unwrap()
                 .and_hms_opt(11, 35, 15);

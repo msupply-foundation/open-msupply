@@ -103,7 +103,9 @@ struct SyncInfo {
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct LatestSyncStatus {
-    latest_sync_status: FullSyncStatus,
+    // Null until the site's first-ever sync run inserts a sync log row — `wait_for_sync` treats
+    // `None` as "initial sync hasn't started yet" and keeps polling.
+    latest_sync_status: Option<FullSyncStatus>,
 }
 // The remote's `latestSyncStatus` returns the V7 node. We need `isSyncing` (to know a sync cycle
 // has settled), `error` (to know whether that cycle failed — e.g. central is unreachable; without
@@ -223,18 +225,31 @@ impl LoadTest {
                     "Site {} started, waiting for initial sync to complete",
                     test_site.site.site_id
                 );
-                if let Err(e) = test_site.wait_for_sync().await {
-                    report_site_failure(&mut child, &dir, test_site.site.site_id, "initial sync")
+                // The watermark (the last settled sync's `finished` timestamp) lets each later
+                // sync wait for a strictly newer cycle, instead of mistaking the previous cycle's
+                // still-reported status for the freshly-triggered one.
+                let mut last_finished = match test_site.wait_for_initial_sync().await {
+                    Ok(finished) => finished,
+                    Err(e) => {
+                        report_site_failure(
+                            &mut child,
+                            &dir,
+                            test_site.site.site_id,
+                            "initial sync",
+                        )
                         .await;
-                    return Err(e);
-                }
+                        return Err(e);
+                    }
+                };
 
                 println!("Beginning load test for site: {}", test_site.site.site_id);
 
-                // Drive load: create a requisition and sync until it has integrated, repeatedly,
-                // until the duration elapses. The records this generates flow to OMS central as
-                // pushes (and come back to other sites as pulls); the counts are recorded on OMS
-                // central and parsed from its log after the test, not measured here.
+                // Drive load: create a requisition and sync it, repeatedly, until the duration
+                // elapses. The records this generates flow to OMS central as pushes (and come back
+                // to other sites as pulls); the counts are recorded on OMS central and parsed from
+                // its log after the test, not measured here. This loop owns the per-site duration
+                // bound (checked after each cycle); the timeout in `run` is only a coarse backstop
+                // for sites that hang during initialisation, before this timer starts.
                 let start = std::time::Instant::now();
                 let mut cycles = 0u64;
                 loop {
@@ -252,15 +267,21 @@ impl LoadTest {
                     };
 
                     let cycle_start = std::time::Instant::now();
-                    if let Err(e) = test_site.do_sync_until_integrated().await {
-                        report_site_failure(
-                            &mut child,
-                            &dir,
-                            test_site.site.site_id,
-                            "syncing requisition",
-                        )
-                        .await;
-                        return Err(e.into());
+                    // A failed sync cycle (e.g. central returns a 502 under load) is logged but NOT
+                    // fatal: the remote stays alive, so we just drive the next cycle. Only an
+                    // unresponsive/dead remote ends the site, surfaced here as an Err.
+                    match test_site.do_sync_cycle(last_finished).await {
+                        Ok(finished) => last_finished = finished,
+                        Err(e) => {
+                            report_site_failure(
+                                &mut child,
+                                &dir,
+                                test_site.site.site_id,
+                                "syncing requisition",
+                            )
+                            .await;
+                            return Err(e.into());
+                        }
                     }
                     cycles += 1;
                     println!(
@@ -468,7 +489,7 @@ impl LoadTest {
                 standalone_store_name: None,
                 standalone_admin_username: None,
                 standalone_admin_password: None,
-                workers: None,
+                workers: Some(2),
             },
             database: DatabaseSettings {
                 username: "postgres".to_string(),
@@ -591,6 +612,7 @@ impl LoadTest {
                         central_pull: 512,
                     },
                     disable_integration_transaction: false,
+                    relax_hardware_id_token_checks: false,
                 }),
                 logging: None,
                 backup: None,
@@ -754,7 +776,7 @@ async fn report_site_failure(child: &mut Child, output_dir: &Path, site_id: usiz
     }
 
     let log_path = output_dir.join(format!("site_{}_output.log", site_id));
-    match read_log_tail(&log_path, 40) {
+    match read_log_tail(&log_path, 100) {
         Ok(tail) if !tail.trim().is_empty() => {
             eprintln!(
                 "Site {} remote log tail ({}):\n{}",
@@ -803,7 +825,38 @@ fn format_reqwest_error(e: &reqwest::Error) -> String {
     out
 }
 
+/// Run `create_and_send_requisition_once`, retrying transient failures. Creating a requisition is a
+/// set of local GraphQL mutations against the site's *own* server (independent of central), but
+/// under heavy load those can briefly fail (e.g. the local server is momentarily saturated). Give it
+/// a few spaced-out attempts before declaring the site dead, so a transient blip doesn't drop a site
+/// mid-test. Each attempt builds a fresh requisition, so a partially-created one is just harmless
+/// orphaned local data.
 async fn create_and_send_requisition(
+    test_site: &TestSite,
+    num_lines: usize,
+    item_ids: &Vec<String>,
+) -> anyhow::Result<()> {
+    const MAX_ATTEMPTS: u32 = 5;
+    const RETRY_DELAY: Duration = Duration::from_secs(30);
+
+    let mut attempt = 1;
+    loop {
+        match create_and_send_requisition_once(test_site, num_lines, item_ids).await {
+            Ok(()) => return Ok(()),
+            Err(e) if attempt < MAX_ATTEMPTS => {
+                eprintln!(
+                    "Site {}: failed to create requisition (attempt {}/{}): {} — retrying in {:?}",
+                    test_site.site.site_id, attempt, MAX_ATTEMPTS, e, RETRY_DELAY
+                );
+                attempt += 1;
+                sleep(RETRY_DELAY).await;
+            }
+            Err(e) => return Err(e),
+        }
+    }
+}
+
+async fn create_and_send_requisition_once(
     test_site: &TestSite,
     num_lines: usize,
     item_ids: &Vec<String>,
@@ -965,16 +1018,58 @@ impl TestSite {
             .await?)
     }
 
-    // Repeatedly starts sync until local db sync info confirms that integration of sync buffer finished
-    // Consider consolidating with similar `sync_omsupply_central` in `server/service/src/sync/test/integration/omsupply_central/mod.rs`
-    async fn do_sync_until_integrated(&self) -> Result<SyncInfo> {
+    /// Wait for the automatic initialisation sync to complete, tolerating transient recorded sync
+    /// errors. Under load central can momentarily return a 502/EOF; the remote records the failed
+    /// cycle but its sync driver stays alive, so we log it and re-trigger rather than declaring the
+    /// site dead. Errs only when the remote itself is unresponsive (crashed/hung) or its sync never
+    /// starts — see `wait_for_sync`.
+    async fn wait_for_initial_sync(&self) -> Result<Option<DateTime<Utc>>> {
+        // No sync has run yet, so anchor the watermark at None — the first settled cycle is the
+        // initialisation sync.
+        let mut previous_finished = None;
         loop {
-            self.do_sync().await?;
-            let sync_info = self.wait_for_sync().await?;
-            if sync_info.data.latest_sync_status.summary.finished.is_some() {
-                return Ok(sync_info);
+            let status = self.wait_for_sync(previous_finished).await?;
+            match &status.error {
+                Some(error) => {
+                    eprintln!(
+                        "Site {}: initial sync attempt failed [{}]: {} — remote is still alive, retrying",
+                        self.site.site_id, error.variant, error.full_error
+                    );
+                    previous_finished = status.summary.finished;
+                    sleep(Duration::from_secs(15)).await;
+                    self.do_sync().await?;
+                }
+                // Settled without a recorded error: initialisation succeeded. Hand the watermark to
+                // the caller so the first load cycle waits for a sync newer than this one.
+                None => return Ok(status.summary.finished),
             }
         }
+    }
+
+    /// Trigger one sync and wait for that cycle to settle, returning its `finished` watermark (so
+    /// the next call can wait for a strictly newer sync — see `wait_for_sync`).
+    ///
+    /// A cycle that settles with a recorded error (e.g. central returned a 502 while we waited for
+    /// integration) is logged to stderr but is NOT fatal: the remote keeps running, and the caller
+    /// simply drives the next cycle (its own loop's duration check decides when to stop). Killing
+    /// the site on such errors — as this previously did — sheds load mid-test and is exactly why
+    /// sites died before the end of a run. Errs only when `wait_for_sync` reports the remote
+    /// unresponsive (crashed/hung), the one genuinely fatal condition.
+    ///
+    // Consider consolidating with similar `sync_omsupply_central` in `server/service/src/sync/test/integration/omsupply_central/mod.rs`
+    async fn do_sync_cycle(
+        &self,
+        previous_finished: Option<DateTime<Utc>>,
+    ) -> Result<Option<DateTime<Utc>>> {
+        self.do_sync().await?;
+        let status = self.wait_for_sync(previous_finished).await?;
+        if let Some(error) = &status.error {
+            eprintln!(
+                "Site {}: sync attempt failed [{}]: {} — remote is still alive, continuing",
+                self.site.site_id, error.variant, error.full_error
+            );
+        }
+        Ok(status.summary.finished)
     }
 
     async fn do_sync(&self) -> Result<Response> {
@@ -994,11 +1089,32 @@ mutation ManualSync {
         };
     }
 
-    async fn wait_for_sync(&self) -> Result<SyncInfo> {
-        // Give up if the remote produces nothing but errors for this long. A successful response
-        // (even one reporting `isSyncing: true`) resets the clock, so a legitimately long sync
-        // doesn't trip it — only a remote that has actually crashed or hung does.
-        const UNRESPONSIVE_TIMEOUT: Duration = Duration::from_secs(60);
+    /// Poll the remote's `latestSyncStatus` until a sync cycle *newer* than `previous_finished` has
+    /// settled, then return it — whether it finished cleanly or recorded an error. A failed cycle
+    /// is not fatal to the remote (its driver stays alive and retries), so the caller, not this
+    /// poll, decides what to do with an error.
+    ///
+    /// `previous_finished` is the `summary.finished` timestamp captured *before* the sync was
+    /// triggered. `manualSync` only signals the driver and returns immediately, so until the new
+    /// cycle starts `latestSyncStatus` still reports the previous cycle's already-settled status.
+    /// Returning on "any settled status" would mistake that stale row for the new cycle and report
+    /// completion without a real sync having run. Holding out for a *different* `finished` skips it
+    /// regardless of timing, which is what lets us poll immediately and back off afterwards.
+    ///
+    /// Errs only when the remote answers nothing but transport errors for `UNRESPONSIVE_TIMEOUT`
+    /// (crashed/hung), or when its sync never starts within `SYNC_START_TIMEOUT` (`latestSyncStatus`
+    /// stays null). A successful response — even `isSyncing: true` — resets the unresponsive clock,
+    /// so a legitimately long sync doesn't trip it.
+    async fn wait_for_sync(
+        &self,
+        previous_finished: Option<DateTime<Utc>>,
+    ) -> Result<FullSyncStatus> {
+        const UNRESPONSIVE_TIMEOUT: Duration = Duration::from_secs(300);
+        // A fresh site reports `latestSyncStatus: null` until its first sync run inserts a log
+        // row, and that window stretches when many sites initialise concurrently on one machine —
+        // so this is deliberately generous. It only exists so a site whose sync never starts
+        // (e.g. bad sync settings) fails with a clear message instead of polling forever.
+        const SYNC_START_TIMEOUT: Duration = Duration::from_secs(60 * 30);
         const SYNC_INFO_QUERY: &str = r#"
 query SyncInfo {
   latestSyncStatus {
@@ -1023,17 +1139,67 @@ query SyncInfo {
         let mut first_error_at: Option<Instant> = None;
         let mut consecutive_errors: u32 = 0;
         let mut last_logged_at: Option<Instant> = None;
+        let mut null_status_since: Option<Instant> = None;
 
         loop {
-            sleep(Duration::from_millis(1000)).await;
-
-            let response = match self.do_post(&sync_gql).await {
+            match self.do_post(&sync_gql).await {
                 Ok(response) => {
                     // The remote answered — it's alive. Reset the unresponsive tracker.
                     first_error_at = None;
                     consecutive_errors = 0;
                     last_logged_at = None;
-                    response
+
+                    let status = response.status();
+                    if status.is_success() {
+                        let response_text = response.text().await?;
+                        match serde_json::from_str::<SyncInfo>(&response_text) {
+                            Ok(sync_info) => match sync_info.data.latest_sync_status {
+                                Some(sync_status) => {
+                                    // A cycle has settled once the remote reports `isSyncing: false`
+                                    // with a `finished` timestamp (set for both clean and errored
+                                    // cycles). It's the *new* cycle — not the stale previous one —
+                                    // once that timestamp differs from the pre-trigger watermark.
+                                    let is_new_settle = !sync_status.is_syncing
+                                        && sync_status.summary.finished.is_some()
+                                        && sync_status.summary.finished != previous_finished;
+                                    if is_new_settle {
+                                        return Ok(sync_status);
+                                    }
+                                }
+                                // Null until the site's first-ever sync run inserts a log row —
+                                // expected right after startup while the db is created/migrated and
+                                // initialisation kicks off. Keep polling, but fail if it never
+                                // starts.
+                                None => {
+                                    if null_status_since.is_none() {
+                                        println!(
+                                            "Site {}: waiting for initial sync to start",
+                                            self.site.site_id
+                                        );
+                                    }
+                                    let since = *null_status_since.get_or_insert_with(Instant::now);
+                                    if since.elapsed() >= SYNC_START_TIMEOUT {
+                                        return Err(anyhow!(
+                                            "Site {}: sync has not started after {:?} \
+                                             (latestSyncStatus is still null)",
+                                            self.site.site_id,
+                                            since.elapsed(),
+                                        ));
+                                    }
+                                }
+                            },
+                            Err(e) => eprintln!(
+                                "Site {}: failed to parse sync info: {}\nResponse body: {}",
+                                self.site.site_id, e, response_text
+                            ),
+                        };
+                    } else {
+                        let body = response.text().await.unwrap_or_default();
+                        eprintln!(
+                            "Site {}: sync info query returned HTTP {}: {}",
+                            self.site.site_id, status, body
+                        );
+                    }
                 }
                 Err(e) => {
                     consecutive_errors += 1;
@@ -1070,40 +1236,13 @@ query SyncInfo {
                             format_reqwest_error(&e),
                         ));
                     }
-                    continue;
                 }
             };
 
-            let status = response.status();
-            if status.is_success() {
-                let response_text = response.text().await?;
-                match serde_json::from_str::<SyncInfo>(&response_text) {
-                    Ok(sync_info) => {
-                        let status = &sync_info.data.latest_sync_status;
-                        if !status.is_syncing {
-                            if let Some(error) = &status.error {
-                                return Err(anyhow!(
-                                    "Site {}: sync finished with error [{}]: {}",
-                                    self.site.site_id,
-                                    error.variant,
-                                    error.full_error,
-                                ));
-                            }
-                            return Ok(sync_info);
-                        }
-                    }
-                    Err(e) => eprintln!(
-                        "Site {}: failed to parse sync info: {}\nResponse body: {}",
-                        self.site.site_id, e, response_text
-                    ),
-                };
-            } else {
-                let body = response.text().await.unwrap_or_default();
-                eprintln!(
-                    "Site {}: sync info query returned HTTP {}: {}",
-                    self.site.site_id, status, body
-                );
-            }
+            // Poll-then-wait: we just checked the status, so back off before checking again. The
+            // sleep is at the end (not the start) so a cycle that has already settled on entry is
+            // returned without an upfront delay.
+            sleep(Duration::from_millis(1000)).await;
         }
     }
 }

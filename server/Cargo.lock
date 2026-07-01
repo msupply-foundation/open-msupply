@@ -2090,7 +2090,7 @@ dependencies = [
  "machine-uid",
  "report_builder",
  "repository",
- "reqwest 0.12.28",
+ "reqwest",
  "serde",
  "serde_json",
  "serde_yml",
@@ -4437,8 +4437,10 @@ dependencies = [
  "graphql_requisition_line",
  "graphql_site",
  "graphql_stock_line",
+ "graphql_stock_relocation",
  "graphql_stocktake",
  "graphql_stocktake_line",
+ "graphql_sync_message",
  "graphql_types",
  "graphql_vaccine_course",
  "graphql_vvm",
@@ -4629,7 +4631,7 @@ dependencies = [
  "log",
  "ordered-float 5.1.0",
  "repository",
- "reqwest 0.12.28",
+ "reqwest",
  "serde",
  "serde_json",
  "service",
@@ -4696,7 +4698,7 @@ dependencies = [
  "graphql_types",
  "http 1.4.0",
  "repository",
- "reqwest 0.12.28",
+ "reqwest",
  "serde",
  "serde_json",
  "service",
@@ -4839,10 +4841,12 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "graphql_types",
  "repository",
  "serde",
  "serde_json",
  "service",
+ "tokio",
  "util",
 ]
 
@@ -5002,6 +5006,7 @@ dependencies = [
  "serde",
  "serde_json",
  "service",
+ "tokio",
  "util",
 ]
 
@@ -5022,6 +5027,7 @@ dependencies = [
  "serde",
  "serde_json",
  "service",
+ "tokio",
  "util",
 ]
 
@@ -5057,6 +5063,26 @@ dependencies = [
  "chrono",
  "graphql_core",
  "graphql_general",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_stock_relocation"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
  "graphql_types",
  "repository",
  "serde",
@@ -5103,6 +5129,26 @@ dependencies = [
  "serde_json",
  "service",
  "strum 0.28.0",
+ "util",
+]
+
+[[package]]
+name = "graphql_sync_message"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
  "util",
 ]
 
@@ -5584,7 +5630,6 @@ dependencies = [
  "tokio",
  "tokio-rustls 0.26.4",
  "tower-service",
- "webpki-roots 1.0.2",
 ]
 
 [[package]]
@@ -6385,7 +6430,7 @@ dependencies = [
  "referencing",
  "regex",
  "regex-syntax",
- "reqwest 0.13.2",
+ "reqwest",
  "rustls 0.23.37",
  "serde",
  "serde_json",
@@ -6938,6 +6983,22 @@ name = "mock_instant"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dce6dd36094cac388f119d2e9dc82dc730ef91c32a6222170d630e5414b956e6"
+
+[[package]]
+name = "mock_msupply"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "base64",
+ "clap",
+ "log",
+ "serde",
+ "serde_json",
+ "sha2",
+ "simple-log",
+ "uuid",
+]
 
 [[package]]
 name = "moxcms"
@@ -8420,6 +8481,7 @@ version = "0.11.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1906b49b0c3bc04b5fe5d86a77925ae6524a19b816ae38ce1e426255f1d8a31"
 dependencies = [
+ "aws-lc-rs",
  "bytes",
  "getrandom 0.3.4",
  "lru-slab",
@@ -8806,7 +8868,7 @@ dependencies = [
  "clap",
  "log",
  "regex",
- "reqwest 0.12.28",
+ "reqwest",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -8845,50 +8907,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.28"
+version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
-dependencies = [
- "base64",
- "bytes",
- "futures-channel",
- "futures-core",
- "futures-util",
- "http 1.4.0",
- "http-body",
- "http-body-util",
- "hyper",
- "hyper-rustls",
- "hyper-util",
- "js-sys",
- "log",
- "mime_guess",
- "percent-encoding",
- "pin-project-lite",
- "quinn",
- "rustls 0.23.37",
- "rustls-pki-types",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "sync_wrapper",
- "tokio",
- "tokio-rustls 0.26.4",
- "tower",
- "tower-http",
- "tower-service",
- "url",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "webpki-roots 1.0.2",
-]
-
-[[package]]
-name = "reqwest"
-version = "0.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab3f43e3283ab1488b624b44b0e988d0acea0b3214e694730a055cb6b2efa801"
+checksum = "62e0021ea2c22aed41653bc7e1419abb2c97e038ff2c33d0e1309e49a97deec0"
 dependencies = [
  "base64",
  "bytes",
@@ -8904,13 +8925,16 @@ dependencies = [
  "hyper-util",
  "js-sys",
  "log",
+ "mime_guess",
  "percent-encoding",
  "pin-project-lite",
+ "quinn",
  "rustls 0.23.37",
  "rustls-pki-types",
  "rustls-platform-verifier",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "sync_wrapper",
  "tokio",
  "tokio-rustls 0.26.4",
@@ -9785,7 +9809,7 @@ dependencies = [
  "rand 0.10.0",
  "regex",
  "repository",
- "reqwest 0.12.28",
+ "reqwest",
  "rsa",
  "rust-embed",
  "schemafy",
@@ -11512,7 +11536,8 @@ dependencies = [
  "env_logger",
  "fs-lock",
  "log",
- "reqwest 0.12.28",
+ "reqwest",
+ "rustls 0.23.37",
  "sanitize-filename",
  "serde",
  "serde_json",
@@ -11520,6 +11545,7 @@ dependencies = [
  "sha2",
  "thiserror 2.0.18",
  "uuid",
+ "webpki-roots 1.0.2",
 ]
 
 [[package]]

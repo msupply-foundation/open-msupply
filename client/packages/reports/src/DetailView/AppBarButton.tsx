@@ -20,6 +20,7 @@ interface AppBarButtonsProps {
   printReport: () => void;
   exportReport: () => void;
   isPrinting: boolean;
+  isExporting: boolean;
 }
 
 export const AppBarButtonsComponent = ({
@@ -28,6 +29,7 @@ export const AppBarButtonsComponent = ({
   printReport,
   exportReport,
   isPrinting,
+  isExporting,
 }: AppBarButtonsProps) => {
   const t = useTranslation();
 
@@ -63,8 +65,8 @@ export const AppBarButtonsComponent = ({
           onClick={() => printReport()}
         />
         <LoadingButton
-          isLoading={isPrinting}
-          disabled={isPrinting}
+          isLoading={isExporting}
+          disabled={isExporting}
           label={t('button.export')}
           startIcon={<DownloadIcon />}
           onClick={() => exportReport()}
