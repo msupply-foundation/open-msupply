@@ -3,8 +3,14 @@
  * drop-shadow does the lifting; borderRadius 24; white bg; coloured icon; fills
  * with its colour on hover. `data-color` picks the tone: orange (brand) or
  * blue (secondary — footer actions).
+ *
+ * Hover: inverts (coloured bg, white text/icon) with a short transition.
+ * Click: a subtle ripple (useRipple) in --ripple-color — coloured at rest,
+ * white while hover-filled — clipped to the pill.
  */
 .button {
+  position: relative;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -22,8 +28,8 @@
   cursor: pointer;
   box-shadow: var(--shadow-2);
   transition:
-    background 120ms ease,
-    color 120ms ease;
+    background 140ms ease,
+    color 140ms ease;
 }
 
 .button:focus-visible {
@@ -37,20 +43,33 @@
   box-shadow: none;
 }
 
+/* Content sits above the ripple layer */
 .icon {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   font-size: 1.25rem;
   flex-shrink: 0;
+  transition: color 140ms ease;
+}
+
+.label {
+  position: relative;
+  z-index: 1;
 }
 
 /* Orange (brand) — dark label, orange icon, fills orange on hover */
+.button[data-color='orange'] {
+  --ripple-color: rgba(233, 92, 48, 0.22);
+}
 .button[data-color='orange'] .icon {
   color: var(--primary-main);
 }
 .button[data-color='orange']:hover:not(:disabled) {
   background: var(--primary-main);
   color: #fff;
+  --ripple-color: rgba(255, 255, 255, 0.35);
 }
 .button[data-color='orange']:hover:not(:disabled) .icon {
   color: #fff;
@@ -59,6 +78,7 @@
 /* Blue (secondary) — blue label + icon, fills blue on hover */
 .button[data-color='blue'] {
   color: var(--secondary-main);
+  --ripple-color: rgba(62, 123, 250, 0.22);
 }
 .button[data-color='blue'] .icon {
   color: var(--secondary-main);
@@ -69,9 +89,17 @@
 .button[data-color='blue']:hover:not(:disabled) {
   background: var(--secondary-main);
   color: #fff;
+  --ripple-color: rgba(255, 255, 255, 0.35);
 }
 .button[data-color='blue']:hover:not(:disabled) .icon {
   color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .icon {
+    transition: none;
+  }
 }
 
 /* NB: no pointer:coarse min-height bump. It inflated buttons to 48px in touch /

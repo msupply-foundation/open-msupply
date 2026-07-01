@@ -16,6 +16,8 @@
 
 .main,
 .caret {
+  position: relative; /* hosts its own ripple layer */
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -26,8 +28,16 @@
   font-weight: var(--weight-medium);
   cursor: pointer;
   transition:
-    background 120ms ease,
-    color 120ms ease;
+    background 140ms ease,
+    color 140ms ease;
+  /* Ripple: orange at rest, white when this half is filled */
+  --ripple-color: rgba(233, 92, 48, 0.22);
+}
+
+.main:hover,
+.caret:hover,
+.caret[data-state='open'] {
+  --ripple-color: rgba(255, 255, 255, 0.35);
 }
 
 .main {
@@ -66,6 +76,14 @@
   outline-offset: -2px;
 }
 
+/* Content sits above the ripple layer */
+.icon,
+.label,
+.caretIcon {
+  position: relative;
+  z-index: 1;
+}
+
 .icon {
   display: inline-flex;
   font-size: 1.25rem;
@@ -75,4 +93,12 @@
 .caretIcon {
   font-size: 1.125rem;
   color: var(--gray-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .split,
+  .main,
+  .caret {
+    transition: none;
+  }
 }

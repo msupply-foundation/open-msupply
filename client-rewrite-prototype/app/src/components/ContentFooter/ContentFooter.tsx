@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { ClockIcon, XCircleIcon, SaveIcon } from '@/components/icons';
 import styles from './ContentFooter.module.css';
 
@@ -7,21 +9,41 @@ import styles from './ContentFooter.module.css';
  * footers). Pinned at the bottom of the content area, ABOVE the orange app
  * footer, and does NOT scroll with the body. Blue (secondary) action buttons:
  * one on the inline-start, Cancel + Save on the inline-end.
+ *
+ * Save demonstrates the modal usage pattern: local `open` state drives a
+ * <ConfirmDialog> rendered right here.
  */
-export const ContentFooter = () => (
-  <div className={styles.footer}>
-    <div className={styles.side}>
-      <Button color="blue" icon={<ClockIcon />}>
-        History
-      </Button>
+export const ContentFooter = () => {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  return (
+    <div className={styles.footer}>
+      <div className={styles.side}>
+        <Button color="blue" icon={<ClockIcon />}>
+          History
+        </Button>
+      </div>
+      <div className={styles.side}>
+        <Button color="blue" icon={<XCircleIcon />}>
+          Cancel
+        </Button>
+        <Button
+          color="blue"
+          icon={<SaveIcon />}
+          onClick={() => setConfirmOpen(true)}
+        >
+          Save
+        </Button>
+      </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        message="Save your changes to this shipment?"
+        onConfirm={() => {
+          // Mockup: this is where the save would fire.
+        }}
+      />
     </div>
-    <div className={styles.side}>
-      <Button color="blue" icon={<XCircleIcon />}>
-        Cancel
-      </Button>
-      <Button color="blue" icon={<SaveIcon />}>
-        Save
-      </Button>
-    </div>
-  </div>
-);
+  );
+};
