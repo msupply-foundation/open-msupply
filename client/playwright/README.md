@@ -57,9 +57,35 @@ BASE_URL=http://localhost:9000 yarn e2e --headed smoke
 npx playwright show-report playwright/playwright-report
 ```
 
+## Configuration (environment variables)
+
+All optional — sensible defaults are baked in, so `yarn e2e` works out of the box against a stock local instance. Override them for a different port, login, or run mode.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `BASE_URL` | `http://localhost:3003` | URL of the running Open mSupply front end |
+| `PW_USERNAME` | `admin` | Login user (used by `auth.setup.ts` and the "Entered by" check in the distribution suite) |
+| `PW_PASSWORD` | `pass` | Login password |
+| `PW_MODE` | `serial` | Describe-block mode for `distribution-regression.spec.ts`: `serial`, `parallel`, or `default`. **Serial is recommended** — parallel currently produces false failures because these tests share the shipment list. |
+
+Three ways to pass them (nothing auto-loads a file — the config just reads `process.env`):
+
+```bash
+# 1. Inline, for a single run (from client/)
+PW_USERNAME=check BASE_URL=http://localhost:3006 yarn e2e distribution-regression
+
+# 2. export once per shell session
+export PW_USERNAME=check PW_PASSWORD=pass BASE_URL=http://localhost:3006
+yarn e2e distribution-regression
+
+# 3. Keep your values in a gitignored playwright/.env and source it (from client/)
+set -a && source playwright/.env && set +a
+yarn e2e distribution-regression
+```
+
 ## Auth
 
-Tests log in once at the start of each run using `admin` / `pass` and share the session across all workers via a stored auth state file (`.auth/state.json`, gitignored). Individual tests don't need to log in.
+Tests log in once at the start of each run (default `admin` / `pass`, override with `PW_USERNAME` / `PW_PASSWORD`) and share the session across all workers via a stored auth state file (`.auth/state.json`, gitignored). Individual tests don't need to log in.
 
 ## Smoke Tests
 

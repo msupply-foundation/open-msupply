@@ -17,8 +17,22 @@
  */
 import { test, expect, Page } from '@playwright/test';
 
+// The Number column formats invoice numbers with a locale thousands separator
+// (e.g. 2186 -> "2,186"), but the breadcrumb shows the raw digits. Build a
+// matcher that tolerates an optional separator between any digits so a
+// breadcrumb-derived number still matches its formatted table cell.
+const numberCell = (raw: string) =>
+  new RegExp(`^${raw.split('').join('[,\\s]?')}$`);
+
+// Describe blocks default to serial: these tests share the shipment list and
+// some assert on row counts / ordering, so a failure mid-block should stop the
+// rest rather than run against dirtied state. Set PW_MODE=parallel (or default)
+// for faster local runs where you want every test to run independently.
+const DESCRIBE_MODE =
+  (process.env['PW_MODE'] as 'default' | 'serial' | 'parallel') || 'serial';
+
 test.describe('Distribution: Outbound Shipments', () => {
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: DESCRIBE_MODE });
 
   // ─── List view tests (run first so they aren't affected by created data) ──
 
@@ -131,7 +145,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         .first();
       await expect(breadcrumb).toContainText(/\d+/, { timeout: 10000 });
       const breadcrumbText = (await breadcrumb.textContent()) ?? '';
-      const invoiceNumber = breadcrumbText.match(/(\d+)\s*$/)?.[1];
+      const invoiceNumber = breadcrumbText.match(/(\d+)\s*$/)?.[1] ?? '';
       expect(invoiceNumber).toBeTruthy();
 
       // Back to the list — sorted by Number descending by default, so ours is first.
@@ -142,7 +156,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         .locator('tbody tr')
         .filter({
           has: page.locator('td', {
-            hasText: new RegExp(`^${invoiceNumber}$`),
+            hasText: numberCell(invoiceNumber),
           }),
         })
         .first();
@@ -174,7 +188,7 @@ test.describe('Distribution: Outbound Shipments', () => {
           .locator('tbody tr')
           .filter({
             has: page.locator('td', {
-              hasText: new RegExp(`^${invoiceNumber}$`),
+              hasText: numberCell(invoiceNumber),
             }),
           })
       ).toHaveCount(0, { timeout: 5000 });
@@ -242,7 +256,9 @@ test.describe('Distribution: Outbound Shipments', () => {
           sidebar.getByRole('heading', { name: 'Additional info' })
         ).toBeVisible();
         await expect(sidebar.getByText('Entered by')).toBeVisible();
-        await expect(sidebar.getByText('admin')).toBeVisible();
+        // "Entered by" shows the logged-in operator (see auth.setup.ts).
+        const operator = process.env['PW_USERNAME'] ?? 'admin';
+        await expect(sidebar.getByText(operator)).toBeVisible();
         await expect(sidebar.getByText('Created')).toBeVisible();
         await expect(
           sidebar.getByRole('button', { name: /Select a colour/i })
@@ -550,7 +566,10 @@ test.describe('Distribution: Outbound Shipments', () => {
           .nth(numberColumn)
           .textContent()) ?? ''
       ).trim();
-      expect(firstNumber).toMatch(/^\d+$/);
+      // The cell is formatted with a thousands separator (e.g. "2,210"); the
+      // filter matches on the raw digits, so strip separators for the search.
+      const searchNumber = firstNumber.replace(/\D/g, '');
+      expect(searchNumber).toMatch(/^\d+$/);
 
       // Open Filters → pick Invoice number → enter the number.
       await page.getByRole('combobox', { name: /Filters/i }).click();
@@ -572,7 +591,7 @@ test.describe('Distribution: Outbound Shipments', () => {
           (req.postData() ?? '').includes(`"invoiceNumber"`),
         { timeout: 5000 }
       );
-      await numberInput.fill(firstNumber);
+      await numberInput.fill(searchNumber);
       await filterRequest;
 
       // Invoice numbers are unique — filter should leave exactly one row.
@@ -786,7 +805,8 @@ test.describe('Distribution: Outbound Shipments', () => {
       expect(firstNumberOnPage2).not.toBe(firstNumberOnPage1);
 
       // Page-1 button takes us back; previous-page disables again.
-      await page.getByRole('button', { name: 'Go to page 1' }).click();
+      // (MUI can render the page-1 control more than once — take the first.)
+      await page.getByRole('button', { name: 'Go to page 1' }).first().click();
       await page.waitForLoadState('networkidle');
       await expect(
         page.getByRole('button', { name: 'Go to previous page' })
@@ -1465,7 +1485,7 @@ test.describe('Distribution: Outbound Shipments', () => {
 });
 
 test.describe('Distribution: Customer Returns', () => {
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: DESCRIBE_MODE });
 
   test(
     'New return: pick customer creates a return and lands on detail',
@@ -1528,7 +1548,7 @@ test.describe('Distribution: Customer Returns', () => {
 });
 
 test.describe('Distribution: Customer Requisitions', () => {
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: DESCRIBE_MODE });
 
   test(
     'list view renders core controls',
