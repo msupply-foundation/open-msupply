@@ -257,9 +257,15 @@ pub async fn is_central_token_cleared(
 /// extra round-trip.
 async fn check_site_status<'a>(session: &SyncV7<'a>) -> Result<(), SyncError> {
     let status = session.sync_api_v7.site_status(()).await?;
-    KeyValueStoreRepository::new(session.connection).set_i32(
+    let kvs = KeyValueStoreRepository::new(session.connection);
+    kvs.set_i32(
         KeyType::SettingsSyncCentralServerSiteId,
         Some(status.central_site_id),
+    )?;
+
+    kvs.set_bool(
+        KeyType::SettingsSyncSiteIsMultiDevice,
+        Some(status.is_multi_device_site),
     )?;
     Ok(())
 }
@@ -280,10 +286,19 @@ impl<'a> SyncV7<'a> {
         // TODO use SourceSiteId, and remove from other uses
         let site_id = get_current_site_id(self.connection)?;
 
-        let filter = ChangelogCondition::And(vec![
-            ChangelogFilter::all_data_edited_on_site(site_id),
-            step.filter.clone(),
-        ]);
+        // A multi-device site pushes only select tables
+        let is_multi_device = KeyValueStoreRepository::new(self.connection)
+            .get_bool(KeyType::SettingsSyncSiteIsMultiDevice)
+            .map_err(SyncError::DatabaseError)?
+            .unwrap_or(false);
+
+        let edited_on_site = if is_multi_device {
+            ChangelogFilter::all_data_edited_on_multi_device_site(site_id)
+        } else {
+            ChangelogFilter::all_data_edited_on_site(site_id)
+        };
+
+        let filter = ChangelogCondition::And(vec![edited_on_site, step.filter.clone()]);
 
         info!(
             "Pushing v7 data with batch size {}",
@@ -424,6 +439,13 @@ impl<'a> SyncV7<'a> {
         let active_stores = ActiveStoresOnSite::get(self.connection)
             .map_err(|e| SyncError::Other(e.to_string()))?;
 
+        // Multi-device sites integrate only their own multi-device tables + central data;
+        // enforced in `validate_on_remote`.
+        let is_multi_device = KeyValueStoreRepository::new(self.connection)
+            .get_bool(KeyType::SettingsSyncSiteIsMultiDevice)
+            .map_err(SyncError::DatabaseError)?
+            .unwrap_or(false);
+
         // V7 records pulled from central are stamped with the central server's site id
         // (see `sync_record_to_buffer_row` callsite in `pull`). Filter by that id here.
         let central_site_id = KeyValueStoreRepository::new(self.connection)
@@ -446,6 +468,7 @@ impl<'a> SyncV7<'a> {
                     SyncContext::Remote {
                         active_stores,
                         is_initialising,
+                        is_multi_device,
                     },
                     is_initialising,
                 )?;
