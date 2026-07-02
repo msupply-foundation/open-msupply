@@ -334,6 +334,89 @@ mod tests {
         panic!("{}", msg);
     }
 
+    /// The multi-device-tagged set must be FK-closed: every changelog table
+    /// reachable via a tagged table's FKs (through non-changelog intermediates
+    /// like `*_link`) must also be tagged, else a child syncs without its parent.
+    #[actix_rt::test]
+    async fn multi_device_set_is_fk_closed() {
+        let (_, connection, _, _) =
+            setup_all("test_sync_v7_multi_device_fk_closure", MockDataInserts::none()).await;
+
+        let multi_device: HashSet<String> = ChangelogTableName::iter()
+            .filter(|t| t.sync_style().multi_device_site)
+            .map(|t| t.to_string())
+            .collect();
+        let changelog_tables: HashSet<String> =
+            ChangelogTableName::iter().map(|t| t.to_string()).collect();
+
+        // Same FK source as check_integration_order: child -> parent across `public`.
+        let fk_query = r#"
+            SELECT DISTINCT
+                tc.table_name   AS child_table,
+                ccu.table_name  AS parent_table
+            FROM information_schema.table_constraints  tc
+            JOIN information_schema.constraint_column_usage ccu
+              ON tc.constraint_name = ccu.constraint_name
+             AND tc.table_schema    = ccu.table_schema
+            WHERE tc.constraint_type = 'FOREIGN KEY'
+              AND tc.table_schema    = 'public'
+              AND tc.table_name     <> ccu.table_name
+        "#;
+        let all_fks: Vec<FkRow> = diesel::sql_query(fk_query)
+            .load(connection.lock().connection())
+            .expect("failed to query information_schema for FK constraints");
+
+        let mut parents_of: HashMap<String, Vec<String>> = HashMap::new();
+        for fk in &all_fks {
+            parents_of
+                .entry(fk.child_table.clone())
+                .or_default()
+                .push(fk.parent_table.clone());
+        }
+
+        // BFS each tagged table's FK parents. A changelog-table parent is a
+        // boundary (it's integrated as its own unit and must be tagged); a
+        // non-changelog parent is a pass-through we keep traversing.
+        let mut violations: Vec<(String, String)> = Vec::new();
+        for root in &multi_device {
+            let mut queue: VecDeque<String> = VecDeque::new();
+            let mut visited: HashSet<String> = HashSet::new();
+            queue.push_back(root.clone());
+            visited.insert(root.clone());
+
+            while let Some(current) = queue.pop_front() {
+                let Some(parents) = parents_of.get(&current) else {
+                    continue;
+                };
+                for parent in parents {
+                    if !visited.insert(parent.clone()) {
+                        continue;
+                    }
+                    if changelog_tables.contains(parent) {
+                        if !multi_device.contains(parent) {
+                            violations.push((root.clone(), parent.clone()));
+                        }
+                    } else {
+                        queue.push_back(parent.clone());
+                    }
+                }
+            }
+        }
+        violations.sort();
+        violations.dedup();
+
+        assert!(
+            violations.is_empty(),
+            "multi-device table set is not FK-closed — these tagged tables depend on \
+             untagged changelog tables that would never sync to a multi-device site:\n{}",
+            violations
+                .iter()
+                .map(|(c, p)| format!("  - {c} -> {p}"))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        );
+    }
+
     // ---- Shared meta-test setup ----
 
     /// Creates a fresh test DB and builds the FK chain used by every
