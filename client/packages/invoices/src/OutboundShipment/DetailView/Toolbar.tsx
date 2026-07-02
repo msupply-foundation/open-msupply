@@ -8,6 +8,7 @@ import {
   Tooltip,
   useNavigate,
   RouteBuilder,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
@@ -62,6 +63,7 @@ export const Toolbar = () => {
                   { replace: true }
                 );
               }}
+              width={250}
             />
           }
         />
@@ -83,6 +85,7 @@ export const Toolbar = () => {
           </Tooltip>
         }
       />
+      <DisabledStoreNotice otherParty={otherParty} />
     </AppBarContentPortal>
   );
 };

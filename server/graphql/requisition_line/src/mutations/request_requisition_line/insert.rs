@@ -1,8 +1,8 @@
+use actix_web::web::Data;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{CannotEditRequisition, ForeignKey, ForeignKeyError},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
 };
 use graphql_types::types::RequisitionLineNode;
 use repository::RequisitionLine;
@@ -12,6 +12,7 @@ use service::{
         InsertRequestRequisitionLine as ServiceInput,
         InsertRequestRequisitionLineError as ServiceError,
     },
+    service_provider::ServiceProvider,
 };
 
 use crate::mutations::errors::RequisitionLineWithItemIdExists;
@@ -45,23 +46,38 @@ pub enum InsertResponse {
     Error(InsertError),
     Response(RequisitionLineNode),
 }
-pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+pub async fn insert(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: InsertInput,
+) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let store_id = store_id.to_string();
+    let input = input.to_domain();
 
-    map_response(
-        service_provider
-            .requisition_line_service
-            .insert_request_requisition_line(&service_context, input.to_domain()),
+    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949). The
+    // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<RequisitionLine, ServiceError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            Ok(service_provider
+                .requisition_line_service
+                .insert_request_requisition_line(&service_context, input))
+        },
     )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<RequisitionLine, ServiceError>) -> Result<InsertResponse> {

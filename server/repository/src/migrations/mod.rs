@@ -45,6 +45,7 @@ mod v2_17_05;
 mod v2_18_00;
 mod v2_19_00;
 mod v2_20_00;
+mod v3_00_00;
 mod version;
 mod views;
 
@@ -64,11 +65,60 @@ use chrono::{NaiveDateTime, Utc};
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
 
+/// Default partition size used by both the migration and the yaml-bound
+/// `ChangelogPartitionSettings` in `service::settings`. Also acts as minimum size
+pub const DEFAULT_CHANGELOG_PARTITION_SIZE: i64 = 5_000_000;
+
+/// Default empty-cursor headroom kept above max(cursor), in cursor records.
+/// Also acts as the lower-bound clamp — yaml values below this are clamped up.
+/// The migration derives the partition count via
+/// `(max_cursor + lookahead) / partition_size + 1`; the runtime top-up tops up
+/// partitions iteratively until the same headroom is satisfied.
+pub const DEFAULT_CHANGELOG_LOOKAHEAD: i64 = 30_000_000;
+
+/// Migration-internal partition config — primitive values only, no serde. The
+/// yaml-bound counterpart (`ChangelogPartitionSettings`) lives in `service::settings`
+/// alongside the rest of the yaml settings; the server converts service → repository
+/// before calling `migrate()` because `repository` cannot depend on `service`.
+#[derive(Clone, Debug)]
+pub struct ChangelogPartitionConfig {
+    pub partition_size: i64,
+    /// Cursor records of empty headroom to keep above max(cursor).
+    pub lookahead: i64,
+}
+
+impl Default for ChangelogPartitionConfig {
+    fn default() -> Self {
+        Self {
+            partition_size: DEFAULT_CHANGELOG_PARTITION_SIZE,
+            lookahead: DEFAULT_CHANGELOG_LOOKAHEAD,
+        }
+    }
+}
+
+/// Slice of config that migrations may need at run-time. Constructed in the server
+/// layer from the full `Settings` struct and threaded through the migration runner
+/// so a fragment captures the values used at migrate-time rather than re-reading
+/// them from a code constant later.
+#[derive(Clone, Debug, Default)]
+pub struct MigrationConfig {
+    pub changelog_partition: ChangelogPartitionConfig,
+}
+
 pub(crate) trait Migration {
     fn version(&self) -> Version;
     // Will only run when database version < version
     fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+    // Override this if the one-time migration needs MigrationConfig. Default forwards
+    // to `migrate(conn)` so existing migrations are unchanged.
+    fn migrate_with_config(
+        &self,
+        connection: &StorageConnection,
+        _config: &MigrationConfig,
+    ) -> anyhow::Result<()> {
+        self.migrate(connection)
     }
     // Will run when database version <= migrate_fragments. And each fragment will run if it hasn't
     // yet run based on fragment identifiers (identifier can be changed to re-run migration, see README.md)
@@ -81,6 +131,15 @@ pub(crate) trait MigrationFragment {
     fn identifier(&self) -> &'static str;
     fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+    // Override this if the fragment needs MigrationConfig. Default forwards to
+    // `migrate(conn)` so existing fragments are unchanged.
+    fn migrate_with_config(
+        &self,
+        connection: &StorageConnection,
+        _config: &MigrationConfig,
+    ) -> anyhow::Result<()> {
+        self.migrate(connection)
     }
 }
 
@@ -112,6 +171,7 @@ pub enum MigrationError {
 pub fn migrate(
     connection: &StorageConnection,
     to_version: Option<Version>,
+    config: MigrationConfig,
 ) -> Result<(Version, Vec<(String, NaiveDateTime)>), MigrationError> {
     let migrations: Vec<Box<dyn Migration>> = vec![
         Box::new(v1_03_00::V1_03_00),
@@ -158,6 +218,7 @@ pub fn migrate(
         Box::new(v2_18_00::V2_18_00),
         Box::new(v2_19_00::V2_19_00),
         Box::new(v2_20_00::V2_20_00),
+        Box::new(v3_00_00::V3_00_00),
     ];
 
     // Check if the database has been initialised, if not run the base sql to kick start the process
@@ -239,7 +300,7 @@ pub fn migrate(
         if migration_version > database_version {
             log::info!("Running one time database migration {migration_version}");
             migration
-                .migrate(connection)
+                .migrate_with_config(connection, &config)
                 .map_err(|source| MigrationError::MigrationError {
                     source,
                     version: migration_version.clone(),
@@ -266,7 +327,9 @@ pub fn migrate(
                 );
 
                 connection
-                    .transaction_sync(|connection| fragment.migrate(connection))
+                    .transaction_sync(|connection| {
+                        fragment.migrate_with_config(connection, &config)
+                    })
                     .map_err(|source| MigrationError::FragmentMigrationError {
                         source: source.to_inner_error(),
                         version: migration_version.clone(),
@@ -343,7 +406,7 @@ fn set_database_version(
 }
 
 #[derive(Error, Debug)]
-#[error("Sql error {0}")]
+#[error("Sql error: {1}\n{0}")]
 pub(crate) struct SqlError(String, #[source] RepositoryError);
 
 /// Will try and execute diesel query return SQL error which contains debug version of SQL statements

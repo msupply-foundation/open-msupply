@@ -1,11 +1,12 @@
+use actix_web::web::Data;
 use async_graphql::*;
-use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    service_provider::ServiceProvider,
 };
-use service::auth::{Resource, ResourceAccessRequest};
 
-pub fn plugin_graphql_query(
+pub async fn plugin_graphql_query(
     ctx: &Context<'_>,
     store_id: &str,
     plugin_code: &str,
@@ -16,15 +17,25 @@ pub fn plugin_graphql_query(
         &ResourceAccessRequest {
             resource: Resource::PluginGraphql,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
-    let service_provider = ctx.service_provider();
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let store_id = store_id.to_string();
+    let plugin_code = plugin_code.to_string();
 
-    let result = service_provider
-        .plugin_service
-        .plugin_graphql_query(store_id.to_string(), plugin_code, input)
-        .map_err(|e| StandardGraphqlError::from_error(&e))?;
+    // Calling a plugin runs the whole boajs interpreter synchronously, including any
+    // `fetch`/`use_graphql` http calls the plugin makes. The plugin service method is sync, so
+    // run it on the blocking threadpool rather than the request worker's runtime thread (#11949).
+    let result = tokio::task::spawn_blocking(move || {
+        service_provider
+            .plugin_service
+            .plugin_graphql_query(store_id, &plugin_code, input)
+    })
+    .await
+    .map_err(|e| StandardGraphqlError::InternalError(format!("Plugin task error: {e}")).extend())?
+    .map_err(|e| StandardGraphqlError::from_error(&e))?;
 
     Ok(result)
 }

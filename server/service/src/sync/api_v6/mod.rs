@@ -7,8 +7,6 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 use util::format_error;
 
-use crate::i64_to_u64;
-
 pub use self::core::*;
 
 use super::{
@@ -18,6 +16,7 @@ use super::{
     },
     translations::PushSyncRecord,
 };
+use crate::i64_to_u64;
 use crate::sync::api::ParsingSyncRecordError;
 
 #[derive(Deserialize, Debug, Error, Serialize)]
@@ -132,6 +131,15 @@ pub(crate) struct SyncRecordV6 {
     pub(crate) cursor: u64,
     pub(crate) record: CommonSyncRecord,
 }
+impl From<PushSyncRecord> for SyncRecordV6 {
+    fn from(PushSyncRecord { cursor, record }: PushSyncRecord) -> Self {
+        SyncRecordV6 {
+            cursor: i64_to_u64(cursor),
+            record,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Default, Serialize)]
 pub struct SyncBatchV6 {
     // Latest changelog cursor in the 'records'
@@ -142,15 +150,6 @@ pub struct SyncBatchV6 {
     pub(crate) total_records: u64,
     pub(crate) records: Vec<SyncRecordV6>,
     pub(crate) is_last_batch: bool,
-}
-
-impl From<PushSyncRecord> for SyncRecordV6 {
-    fn from(PushSyncRecord { cursor, record }: PushSyncRecord) -> Self {
-        SyncRecordV6 {
-            cursor: i64_to_u64(cursor),
-            record,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize)]

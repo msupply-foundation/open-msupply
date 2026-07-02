@@ -86,6 +86,7 @@ pub fn update(
         &ResourceAccessRequest {
             resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -184,7 +185,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 CannotReverseInvoiceStatus,
             ))
         }
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(CannotEditInvoice))
         }
         ServiceError::CannotReceiveWithPendingLines => {

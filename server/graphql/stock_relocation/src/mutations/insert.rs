@@ -82,6 +82,7 @@ pub fn insert_stock_relocation(
         &ResourceAccessRequest {
             resource: Resource::MutateStockLine,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -364,6 +365,44 @@ mod test {
             mutation,
             &Some(variables),
             &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_stock_relocation_feature_disabled() {
+        let (_, _, connection_manager, mut settings) = setup_graphql_test(
+            EmptyMutation,
+            StockRelocationMutations,
+            "test_graphql_stock_relocation_feature_disabled",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // Disable the stock movement feature: the resolver should refuse the
+        // request regardless of the underlying service.
+        settings.settings.features =
+            Some(std::collections::HashMap::from([(
+                "stock_movement".to_string(),
+                false,
+            )]));
+
+        let mutation = r#"
+        mutation ($input: InsertStockRelocationInput!, $storeId: String!) {
+            insertStockRelocation(storeId: $storeId, input: $input) {
+              ... on InsertStockRelocationNode { ids }
+            }
+          }
+        "#;
+
+        let test_service = TestService(Box::new(|_| Ok(vec![])));
+        let expected_message = "Forbidden";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
             Some(service_provider(test_service, &connection_manager))
         );
     }

@@ -19,13 +19,21 @@ export enum Tabs {
 }
 
 export const StyledTabPanel = styled(TabPanel)({
-  height: '100%',
-  padding: '16px 0 0 0',
+  flex: 1,
+  minHeight: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  padding: '8px 0 0 0',
+  // display:flex overrides the UA-stylesheet's [hidden]{display:none}.
+  // Re-apply display:none for inactive panels so they don't share flex space
+  // with the active panel and shrink it to 1/3 of the available height.
+  '&[hidden]': { display: 'none' },
 });
 
 export const StyledTabContainer = styled(Box)(() => ({
-  height: 325,
-  flexDirection: 'row',
+  flex: 1,
+  minHeight: 0,
+  flexDirection: 'column',
   display: 'flex',
 }));
 
@@ -39,48 +47,56 @@ export const StocktakeLineEditTabs: FC<
   const [currentTab, setCurrentTab] = useState(Tabs.Batch);
 
   return (
-    <TabContext value={currentTab}>
-      <TabKeybindings
-        tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Other]}
-        onAdd={onAddLine}
-        setCurrentTab={setCurrentTab}
-      />
-      <Box flex={1} display="flex" justifyContent="space-between">
-        <Box flex={1} />
-
-        <TabList
-          value={currentTab}
-          centered
-          onChange={(_, v) => setCurrentTab(v)}
+    <Box
+      sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+    >
+      <TabContext value={currentTab}>
+        <TabKeybindings
+          tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Other]}
+          onAdd={isDisabled ? undefined : onAddLine}
+          setCurrentTab={setCurrentTab}
+        />
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          sx={{ flexShrink: 0, pt: 0.5, pb: 0.5 }}
         >
-          <Tab
-            aria-keyshortcuts="Control+1"
-            value={Tabs.Batch}
-            label={t('label.batch')}
-          />
-          <Tab
-            aria-keyshortcuts="Control+2"
-            value={Tabs.Pricing}
-            label={t('label.pricing')}
-          />
-          <Tab
-            aria-keyshortcuts="Control+3"
-            value={Tabs.Other}
-            label={t('heading.other')}
-          />
-        </TabList>
-        <Box flex={1} justifyContent="flex-end" display="flex">
-          <ButtonWithIcon
-            disabled={isDisabled}
-            color="primary"
-            variant="outlined"
-            onClick={onAddLine}
-            label={`${t('label.add-batch')} (+)`}
-            Icon={<PlusCircleIcon />}
-          />
+          <Box flex={1} />
+
+          <TabList
+            value={currentTab}
+            centered
+            onChange={(_, v) => setCurrentTab(v)}
+          >
+            <Tab
+              aria-keyshortcuts="Control+1"
+              value={Tabs.Batch}
+              label={t('label.batch')}
+            />
+            <Tab
+              aria-keyshortcuts="Control+2"
+              value={Tabs.Pricing}
+              label={t('label.pricing')}
+            />
+            <Tab
+              aria-keyshortcuts="Control+3"
+              value={Tabs.Other}
+              label={t('heading.other')}
+            />
+          </TabList>
+          <Box flex={1} justifyContent="flex-end" display="flex">
+            <ButtonWithIcon
+              disabled={isDisabled}
+              color="primary"
+              variant="outlined"
+              onClick={onAddLine}
+              label={`${t('label.add-batch')} (+)`}
+              Icon={<PlusCircleIcon />}
+            />
+          </Box>
         </Box>
-      </Box>
-      {children}
-    </TabContext>
+        {children}
+      </TabContext>
+    </Box>
   );
 };

@@ -1,7 +1,10 @@
 use super::{item_link_row::item_link, name_row::name, StorageConnection};
 
 use crate::{
-    diesel_macros::define_linked_tables, repository_error::RepositoryError, Delete, Upsert,
+    db_diesel::changelog::ChangelogRepository,
+    diesel_macros::define_linked_tables,
+    repository_error::RepositoryError,
+    ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -20,6 +23,7 @@ table! {
         logo -> Nullable<Text>,
     }
 }
+
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -29,6 +33,10 @@ pub enum StoreMode {
     Dispensary,
 }
 
+// Default `store` mapping: everything except `logo`. Used by all joins and
+// generic reads. The logo column is large (base64-encoded image) and is
+// almost never needed alongside other store columns — fetch it via
+// `store_logo_row` instead.
 define_linked_tables! {
     view: store = "store_view",
     core: store_with_links = "store",
@@ -88,6 +96,15 @@ pub struct StoreLogoRow {
     pub logo: Option<String>,
 }
 
+impl StoreRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Store
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
+}
+
 pub struct StoreRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -112,7 +129,13 @@ impl<'a> StoreRowRepository<'a> {
     /// logo data in the DB is preserved across this call.
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        Ok(())
+        let changelog = StoreRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
@@ -137,6 +160,14 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result.is_some())
     }
 
+    pub fn find_one_by_name_id(&self, name_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        let result = store::table
+            .filter(store::name_id.eq(name_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store::table
             .filter(store::id.eq_any(ids))
@@ -149,10 +180,7 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_logo_by_id(
-        &self,
-        store_id: &str,
-    ) -> Result<Option<StoreLogoRow>, RepositoryError> {
+    pub fn find_logo_by_id(&self, store_id: &str) -> Result<Option<StoreLogoRow>, RepositoryError> {
         let result = store_logo_row::table
             .filter(store_logo_row::id.eq(store_id))
             .first(self.connection.lock().connection())
@@ -160,10 +188,7 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_logos_by_ids(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<StoreLogoRow>, RepositoryError> {
+    pub fn find_logos_by_ids(&self, ids: &[String]) -> Result<Vec<StoreLogoRow>, RepositoryError> {
         let result = store_logo_row::table
             .filter(store_logo_row::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
@@ -175,48 +200,30 @@ impl<'a> StoreRowRepository<'a> {
     /// lean upsert first, then the logo upsert second). A `None` logo value
     /// is a no-op — matching the old AsChangeset semantics, where sync data
     /// without a logo never cleared an existing one.
-    pub fn update_logo(
-        &self,
-        store_id: &str,
-        logo: Option<&str>,
-    ) -> Result<(), RepositoryError> {
+    pub fn update_logo(&self, store_id: &str, logo: Option<&str>) -> Result<(), RepositoryError> {
         let Some(logo) = logo else { return Ok(()) };
         diesel::update(store_logo_row::table.filter(store_logo_row::id.eq(store_id)))
             .set(store_logo_row::logo.eq(logo))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(store_with_links::table.filter(store_with_links::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct StoreRowDelete(pub String);
-// TODO soft delete
-impl Delete for StoreRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StoreRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
-    }
-    // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StoreRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        )
-    }
 }
 
 impl Upsert for StoreRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StoreRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        StoreRowRepository::new(con)._upsert(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StoreRow::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
-
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
@@ -227,9 +234,14 @@ impl Upsert for StoreRow {
 }
 
 impl Upsert for StoreLogoRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        _sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         StoreRowRepository::new(con).update_logo(&self.id, self.logo.as_deref())?;
-        Ok(None) // Table not in Changelog
+        Ok(()) // Table not in Changelog (logo lives on the store row, whose
+               // changelog is emitted via the lean StoreRow upsert)
     }
 
     // Test only — verify the logo round-trip by reading the (id, logo)

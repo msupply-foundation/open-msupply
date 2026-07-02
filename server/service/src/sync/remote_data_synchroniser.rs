@@ -2,25 +2,22 @@ use std::time::{Duration, SystemTime};
 
 use crate::{
     cursor_controller::CursorController,
-    sync::{
-        get_sync_push_changelogs_filter, sync_status::logger::SyncStepProgress,
-        GetActiveStoresOnSiteError, SyncChangelogError,
-    },
+    sync::{sync_status::logger::SyncStepProgress, GetActiveStoresOnSiteError},
 };
 
 use super::{
     api::*,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
-        translate_changelogs_to_sync_records, PushSyncRecord, PushTranslationError,
+        translate_rows_to_sync_records, PushSyncRecord, PushTranslationError,
         ToSyncRecordTranslationType,
     },
 };
 
 use log::info;
 use repository::{
-    ChangelogRepository, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection,
-    SyncBufferRowRepository,
+    ChangelogFilter, ChangelogRepository, CursorAndLimit, KeyType, KeyValueStoreRepository,
+    LegacyDataFilterError, QueryWithData, RepositoryError, StorageConnection, SyncBufferRepository,
 };
 
 use thiserror::Error;
@@ -47,6 +44,8 @@ pub(crate) enum RemotePullError {
     ParsingRecordError(#[from] ParsingSyncRecordError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
+    #[error("Central server site id not configured (SettingsSyncCentralServerSiteId)")]
+    CentralServerSiteIdNotSet,
 }
 
 #[derive(Error, Debug)]
@@ -62,7 +61,7 @@ pub(crate) enum RemotePushError {
     #[error("Problem getting active stores on site during remote push")]
     GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
     #[error("Problem getting changelog during remote push")]
-    SyncChangelogError(#[from] SyncChangelogError),
+    LegacyDataFilterError(#[from] LegacyDataFilterError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
 }
@@ -119,7 +118,7 @@ impl RemoteDataSynchroniser {
         &self,
         connection: &StorageConnection,
     ) -> Result<(), RepositoryError> {
-        let cursor = ChangelogRepository::new(connection).latest_cursor()?;
+        let cursor = ChangelogRepository::new(connection).max_cursor()?;
 
         CursorController::new(KeyType::RemoteSyncPushCursor).update(connection, cursor + 1)?;
         Ok(())
@@ -135,12 +134,13 @@ impl RemoteDataSynchroniser {
         let step_progress = SyncStepProgress::PullRemote;
 
         let msupply_central_server_id = KeyValueStoreRepository::new(connection)
-            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+            .ok_or(RemotePullError::CentralServerSiteIdNotSet)?;
 
         log::info!(
             "Pulling remote data with batch size {} and msupply_central_server_id {}",
             batch_size,
-            msupply_central_server_id.unwrap_or_default()
+            msupply_central_server_id
         );
 
         loop {
@@ -167,7 +167,7 @@ impl RemoteDataSynchroniser {
             if number_of_pulled_records > 0 {
                 connection
                     .transaction_sync(|t_con| {
-                        SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)
+                        SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)
                     })
                     .map_err(|e| e.to_inner_error())?;
 
@@ -190,23 +190,30 @@ impl RemoteDataSynchroniser {
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePushError> {
         let changelog_repo = ChangelogRepository::new(connection);
-        let change_log_filter = get_sync_push_changelogs_filter(connection)?;
+        let change_log_filter = ChangelogFilter::all_data_for_legacy_central(connection)?;
         let cursor_controller = CursorController::new(KeyType::RemoteSyncPushCursor);
 
         loop {
             // TODO inside transaction
             let cursor = cursor_controller.get(connection)?;
-            let changelogs =
-                changelog_repo.changelogs(cursor, batch_size, change_log_filter.clone())?;
-            let change_logs_total = changelog_repo.count(cursor, change_log_filter.clone())?;
+            let QueryWithData {
+                rows,
+                last_cursor_in_batch,
+                remaining,
+                ..
+            } = changelog_repo.query_with_data(
+                change_log_filter.clone(),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: batch_size as i64,
+                },
+            )?;
 
-            logger.progress(SyncStepProgress::Push, change_logs_total)?;
+            logger.progress(SyncStepProgress::Push, remaining)?;
 
-            let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
-
-            let records = translate_changelogs_to_sync_records(
+            let records = translate_rows_to_sync_records(
                 connection,
-                changelogs,
+                rows,
                 vec![ToSyncRecordTranslationType::PushToLegacyCentral],
             )?
             .into_iter()
@@ -215,15 +222,12 @@ impl RemoteDataSynchroniser {
 
             let response = self
                 .sync_api_v5
-                .post_queued_records(change_logs_total, records)
+                .post_queued_records(remaining, records)
                 .await?;
 
-            // Update cursor only if record for that cursor has been pushed/processed
-            if let Some(last_pushed_cursor_id) = last_pushed_cursor {
-                cursor_controller.update(connection, last_pushed_cursor_id as u64 + 1)?;
-            };
+            cursor_controller.update(connection, last_cursor_in_batch)?;
 
-            match (response.integration_started, change_logs_total) {
+            match (response.integration_started, remaining) {
                 (true, 0) => break,
                 (false, 0) => return Err(RemotePushError::IntegrationNotStarted),
                 _ => continue,
@@ -243,8 +247,13 @@ impl RemoteDataSynchroniser {
         let poll_period = Duration::from_secs(poll_period_seconds);
         let timeout = Duration::from_secs(timeout_seconds);
         info!("Awaiting central server operation...");
+        let mut first_check = true;
+
         loop {
-            tokio::time::sleep(poll_period).await;
+            if !first_check {
+                tokio::time::sleep(poll_period).await;
+            }
+            first_check = false;
 
             let response = self.sync_api_v5.get_site_status().await?;
 
