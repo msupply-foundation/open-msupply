@@ -72,7 +72,11 @@ export const Toolbar = () => {
         flexDirection: 'column',
       }}
     >
-      <Grid container flexWrap="nowrap">
+      <Grid
+        container
+        flexWrap="nowrap"
+        sx={{ flexDirection: { xs: 'column', md: 'row' } }}
+      >
         <Grid display="flex" flex={1} flexDirection="column" gap={1}>
           {otherParty && (
             <InputWithLabelRow
@@ -122,6 +126,7 @@ export const Toolbar = () => {
                   filterBy={{
                     type: { equalTo: NameNodeType.Store },
                   }}
+                  width={250}
                 />
               }
             />
@@ -139,12 +144,14 @@ export const Toolbar = () => {
           flex={1}
           flexDirection="column"
           gap={1}
-          justifyContent="flex-end"
-          alignItems="flex-end"
+          sx={{
+            justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            alignItems: { xs: 'flex-start', md: 'flex-end' },
+          }}
         >
           <InputWithLabelRow
             label={t('label.min-months-of-stock')}
-            labelWidth={'350px'}
+            labelProps={{ sx: { width: { xs: '120px', md: '250px' } } }}
             Input={
               <Autocomplete
                 disabled={isDisabled || isProgram}
@@ -188,7 +195,7 @@ export const Toolbar = () => {
           />
           <InputWithLabelRow
             label={t('label.max-months-of-stock')}
-            labelWidth={'350px'}
+            labelProps={{ sx: { width: { xs: '120px', md: '250px' } } }}
             Input={
               <Autocomplete
                 disabled={isDisabled || isProgram}

@@ -16,8 +16,8 @@ use repository::{
         asset_row::{AssetRow, AssetRowRepository},
     },
     migrations::constants::COLD_CHAIN_EQUIPMENT_UUID,
-    ActivityLogType, LocationRow, LocationTypeFilter, LocationTypeRepository, RepositoryError,
-    StorageConnection, StringFilter, Upsert,
+    ActivityLogType, LocationRow, LocationRowRepository, LocationTypeFilter,
+    LocationTypeRepository, RepositoryError, StorageConnection, StringFilter, Upsert,
 };
 use util::uuid::uuid;
 

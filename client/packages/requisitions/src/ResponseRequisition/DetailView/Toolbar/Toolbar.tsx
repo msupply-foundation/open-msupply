@@ -42,14 +42,22 @@ export const Toolbar = () => {
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
         container
-        flexDirection="row"
         display="flex"
         flex={1}
-        alignItems="flex-end"
         gap={1}
+        sx={{
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'flex-start', md: 'flex-end' },
+        }}
       >
         <Grid display="flex" flex={1}>
-          <Box display="flex" flexDirection="row" gap={4}>
+          <Box
+            display="flex"
+            sx={{
+              flexDirection: { xs: 'column', md: 'row' },
+              gap: { xs: 1, md: 4 },
+            }}
+          >
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
               {otherParty && (
                 <InputWithLabelRow
@@ -61,6 +69,7 @@ export const Toolbar = () => {
                       onChange={newOtherParty => {
                         update({ otherParty: newOtherParty ?? undefined });
                       }}
+                      width={250}
                     />
                   }
                 />
@@ -90,6 +99,7 @@ export const Toolbar = () => {
                       value={destinationCustomer ?? null}
                       onChange={() => {}}
                       clearable
+                      width={250}
                     />
                   }
                 />

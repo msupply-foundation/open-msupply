@@ -19,6 +19,7 @@ pub fn delete_asset_catalogue_item(
         &ResourceAccessRequest {
             resource: Resource::MutateAssetCatalogueItem,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 
