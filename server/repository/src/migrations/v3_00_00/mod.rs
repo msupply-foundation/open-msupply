@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_changelog_dedup_cursor_key_type;
 mod add_is_standalone_central_pg_enum;
 mod add_legacy_goods_received_link_fields;
 mod add_merge_sync_message_processor_cursor_pg_enum;
@@ -69,6 +70,7 @@ impl Migration for V3_00_00 {
             Box::new(add_legacy_goods_received_link_fields::Migrate),
             Box::new(remove_add_central_patient_visibility_processor_cursor::Migrate),
             Box::new(populate_routed_changelog_for_sync_v7_tables::Migrate),
+            Box::new(add_changelog_dedup_cursor_key_type::Migrate),
             Box::new(add_site_sync_metadata::Migrate),
         ]
     }
