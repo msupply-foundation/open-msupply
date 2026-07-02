@@ -306,7 +306,7 @@ impl ChangelogTableName {
                 multi_device_site: false,
             },
             NameOmsFields => SyncStyle {
-                authoring: vec![Central],
+                authoring: vec![Anyone],
                 distribution: vec![D::Central],
                 transport: V6,
                 multi_device_site: true,
