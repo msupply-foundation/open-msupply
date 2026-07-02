@@ -1,11 +1,10 @@
-import { useId } from 'react';
-import type { InputHTMLAttributes } from 'react';
-import { AlertTriangleIcon } from '@/components/icons';
-import { cx } from '@/utils/classNames';
-import styles from './TextField.module.css';
+import { useId } from "react";
+import type { InputHTMLAttributes } from "react";
+import { AlertTriangleIcon } from "@/components/icons";
+import { cx } from "@/utils/classNames";
+import styles from "./TextField.module.css";
 
-interface TextFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
+interface TextFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
   label: string;
   /** Shown below the field when there's no error. */
   helperText?: string;
@@ -13,9 +12,9 @@ interface TextFieldProps
   error?: string;
   required?: boolean;
   /** Spec: 40px default, 36px small. */
-  size?: 'default' | 'small';
+  size?: "default" | "small";
   /** Spec max-widths: short 400px (codes/quantities), long 600px (names), full = fill. */
-  width?: 'short' | 'long' | 'full';
+  width?: "short" | "long" | "full";
 }
 
 /*
@@ -30,8 +29,8 @@ export const TextField = ({
   helperText,
   error,
   required = false,
-  size = 'default',
-  width = 'short',
+  size = "default",
+  width = "short",
   id,
   className,
   ...inputProps
