@@ -3,6 +3,7 @@ use self::{
     clear_token::{clear_site_token, ClearSiteTokenError},
     delete::{delete_site, DeleteSiteError},
     query::get_sites,
+    set_multi_device::{set_site_multi_device, SetSiteMultiDeviceError},
     upsert::{upsert_site, UpsertSite, UpsertSiteError},
 };
 use crate::{
@@ -17,6 +18,7 @@ pub mod clear_hardware_id;
 pub mod clear_token;
 pub mod delete;
 pub mod query;
+pub mod set_multi_device;
 pub mod sync_metadata;
 pub mod upsert;
 
@@ -57,6 +59,15 @@ pub trait SiteServiceTrait: Sync + Send {
         site_id: i32,
     ) -> Result<i32, ClearSiteTokenError> {
         clear_site_token(ctx, site_id)
+    }
+
+    fn set_site_multi_device(
+        &self,
+        ctx: &ServiceContext,
+        site_id: i32,
+        is_multi_device: bool,
+    ) -> Result<i32, SetSiteMultiDeviceError> {
+        set_site_multi_device(ctx, site_id, is_multi_device)
     }
 
     /// Clears the `hardware_id` for a `Site` whose id is `site_id`.

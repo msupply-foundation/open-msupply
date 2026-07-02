@@ -1499,6 +1499,7 @@ export type CentralSiteMutations = {
   clearSiteHardwareId: ClearSiteHardwareIdNode;
   clearSiteToken: ClearSiteTokenNode;
   deleteSite: DeleteSiteResponse;
+  setSiteMultiDevice: SetSiteMultiDeviceNode;
   upsertSite: UpsertSiteResponse;
 };
 
@@ -1515,6 +1516,11 @@ export type CentralSiteMutationsClearSiteTokenArgs = {
 };
 
 export type CentralSiteMutationsDeleteSiteArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsSetSiteMultiDeviceArgs = {
+  isMultiDevice: Scalars['Boolean']['input'];
   siteId: Scalars['Int']['input'];
 };
 
@@ -9807,6 +9813,11 @@ export type SetPrescribedQuantityWithId = {
   response: SetPrescribedQuantityResponse;
 };
 
+export type SetSiteMultiDeviceNode = {
+  __typename: 'SetSiteMultiDeviceNode';
+  id: Scalars['Int']['output'];
+};
+
 export type ShippingMethodConnector = {
   __typename: 'ShippingMethodConnector';
   nodes: Array<ShippingMethodNode>;
@@ -9862,6 +9873,7 @@ export type SiteNode = {
   lastConnectionDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   /** Last time the remote fully pulled from this central server. */
   lastSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  isMultiDevice: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   /**
    * Which sync flow the site runs. Hardware-id / token clearing is only

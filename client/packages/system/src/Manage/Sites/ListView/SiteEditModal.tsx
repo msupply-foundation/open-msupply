@@ -13,6 +13,7 @@ import {
   LoadingButton,
   useConfirmationModal,
   SyncVersionNode,
+  Switch,
 } from '@openmsupply-client/common';
 import { DraftSite, useSiteStoresDraft } from '../api';
 import { SiteStoresSection } from './SiteStoresSection';
@@ -27,6 +28,7 @@ interface SiteEditModalProps {
   isClearingSyncToken: boolean;
   clearHardwareId: (siteId: number) => Promise<unknown>;
   isClearingHardwareId: boolean;
+  setMultiDevice: (siteId: number, isMultiDevice: boolean) => Promise<unknown>;
   upsert: (afterUpsert: () => Promise<void>) => Promise<void>;
   onDelete: () => void;
   isEditable: boolean;
@@ -41,6 +43,7 @@ export const SiteEditModal = ({
   isClearingSyncToken,
   clearHardwareId,
   isClearingHardwareId,
+  setMultiDevice,
   upsert,
   onDelete,
   isEditable,
@@ -48,14 +51,24 @@ export const SiteEditModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { id, code, name, password, hardwareId, syncVersion, isNew } = site;
+  const {
+    id,
+    code,
+    name,
+    password,
+    hardwareId,
+    syncVersion,
+    isMultiDevice,
+    isNew,
+  } = site;
   const isExisting = !isNew;
   const { data: syncSettings } = useSync.settings.syncSettings();
   const currentSiteId = syncSettings?.syncSiteId;
   // Hardware id / token are only safe to clear once the site has transitioned to
   // v7 (legacy v5/v6 sites still manage these via 4D). See issue #11784.
   const isV7 = syncVersion === SyncVersionNode.V7;
-  const showClearButtons = currentSiteId != null && currentSiteId !== id && isV7;
+  const showClearButtons =
+    currentSiteId != null && currentSiteId !== id && isV7;
 
   const isValidCode = code.trim().length > 0 || (isExisting && code === '');
   const isValidName = name.trim().length > 0;
@@ -80,6 +93,14 @@ export const SiteEditModal = ({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-clear-hardware-id'),
     onConfirm: () => clearHardwareId(id),
+  });
+
+  const confirmSetMultiDevice = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: isMultiDevice
+      ? t('messages.confirm-unset-multi-device')
+      : t('messages.confirm-set-multi-device'),
+    onConfirm: () => setMultiDevice(id, !isMultiDevice),
   });
 
   const handleOk = async () => {
@@ -207,6 +228,22 @@ export const SiteEditModal = ({
                     isLoading={isClearingSyncToken}
                     label={t('label.clear-sync-token')}
                     onClick={() => confirmClearSyncToken()}
+                  />
+                </Box>
+              }
+            />
+          )}
+          {/* Multi device, like the token, is managed by COMS */}
+          {isExisting && showClearButtons && (
+            <InputWithLabelRow
+              key="multi-device"
+              label={t('label.multi-device')}
+              labelWidth="130px"
+              Input={
+                <Box display="flex" justifyContent="flex-end" flex={1}>
+                  <Switch
+                    checked={isMultiDevice}
+                    onChange={() => confirmSetMultiDevice()}
                   />
                 </Box>
               }

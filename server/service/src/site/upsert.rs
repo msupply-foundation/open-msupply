@@ -81,6 +81,7 @@ fn generate(
     let existing_og_id = existing_site.as_ref().and_then(|s| s.og_id.clone());
     let existing_code = existing_site.as_ref().map(|s| s.code.clone());
     let existing_hardware_id = existing_site.as_ref().and_then(|s| s.hardware_id.clone());
+    let existing_is_multi_device = existing_site.as_ref().map(|s| s.is_multi_device).unwrap_or(false);
     let existing_token = existing_site.as_ref().and_then(|s| s.token.clone());
     let existing_sync_version = existing_site.as_ref().map(|s| s.sync_version);
     // Sync metadata is authored from v7 sync activity, not from this admin upsert;
@@ -106,6 +107,7 @@ fn generate(
         name: name.trim().to_string(),
         hashed_password,
         hardware_id: existing_hardware_id,
+        is_multi_device: existing_is_multi_device,
         token: existing_token,
         sync_version: existing_sync_version.unwrap_or_default(),
         app_name: existing_app_name,
