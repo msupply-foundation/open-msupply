@@ -4,14 +4,18 @@ import { AppRoute } from '@openmsupply-client/config';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
 import { addMinutes } from 'date-fns/addMinutes';
-import { useLogin, useGetUserPermissions, useRefreshToken } from './api/hooks';
+import {
+  useLogin,
+  useGetUserPermissions,
+  useRefreshToken,
+  useRefreshUserCookie,
+} from './api/hooks';
 import { AuthenticationResponse } from './api';
 import { UserStoreNodeFragment } from './api/operations.generated';
 import { PropsWithChildrenOnly, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 import { createRegisteredContext } from 'react-singleton-context';
-import { useUpdateUserInfo } from './hooks/useUpdateUserInfo';
 import { useUserActivity } from './hooks/useUserActivity';
 
 const AUTH_TOKEN_LIFETIME_MINUTES = 60;
@@ -20,7 +24,6 @@ const TOKEN_CHECK_INTERVAL = 60 * 1000;
 export enum AuthError {
   NoStoreAssigned = 'NoStoreAssigned',
   PermissionDenied = 'Forbidden',
-  ServerError = 'ServerError',
   Unauthenticated = 'Unauthenticated',
   Timeout = 'Timeout',
 }
@@ -59,10 +62,7 @@ interface AuthControl {
   token: string;
   user?: User;
   userHasPermission: (permission: UserPermission) => boolean;
-  updateUserIsLoading: boolean;
-  lastSuccessfulSync?: string | null;
-  updateUserError?: string | null;
-  updateUser: () => Promise<void>;
+  refreshUserCookie: () => Promise<void>;
 }
 
 export const getAuthCookie = (): AuthCookie => {
@@ -95,8 +95,7 @@ const authControl = {
   storeId: 'store-id',
   token: '',
   userHasPermission: (_permission: UserPermission) => false,
-  updateUserIsLoading: false,
-  updateUser: () => new Promise<void>(() => { }),
+  refreshUserCookie: () => Promise.resolve(),
 };
 
 const AuthContext = createRegisteredContext<AuthControl>(
@@ -146,12 +145,11 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     setCookie(newCookie);
   };
 
-  const {
-    isLoading: updateUserIsLoading,
-    lastSuccessfulSync,
-    updateUser,
-    error: updateUserError,
-  } = useUpdateUserInfo(setCookie, cookie, mostRecentCredentials);
+  const { refreshUserCookie } = useRefreshUserCookie(
+    setCookie,
+    cookie,
+    mostRecentCredentials
+  );
 
   const logout = () => {
     Cookies.remove('auth');
@@ -176,10 +174,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       setStore,
       setError,
       userHasPermission,
-      updateUserIsLoading,
-      lastSuccessfulSync,
-      updateUserError,
-      updateUser,
+      refreshUserCookie,
     }),
     [
       login,
@@ -190,6 +185,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       setStore,
       setError,
       userHasPermission,
+      refreshUserCookie,
     ]
   );
 

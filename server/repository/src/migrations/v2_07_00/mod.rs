@@ -73,7 +73,7 @@ mod test {
         insert_2_6_2_vaccinations(&connection, "some_store_id").unwrap();
 
         // Run this migration
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
 
         assert_eq!(get_database_version(&connection), version);
     }

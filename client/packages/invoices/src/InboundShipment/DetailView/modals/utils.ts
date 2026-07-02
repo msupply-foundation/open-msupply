@@ -23,6 +23,8 @@ const createDraftInboundLine = ({
   expiryDate,
 }: CreateDraftInboundLineParams): DraftInboundLine => {
   const { defaultPackSize = 1, itemStoreProperties } = item || {};
+  const volumePerPack =
+    'volumePerPack' in item ? (item.volumePerPack ?? 0.0) : 0.0;
   const draftLine: DraftInboundLine = {
     __typename: 'InvoiceLineNode',
     totalAfterTax: 0,
@@ -42,7 +44,7 @@ const createDraftInboundLine = ({
     type,
     item,
     itemName: item.name,
-    volumePerPack: 0.0,
+    volumePerPack,
     shippedPackSize: defaultPackSize,
     ...seed,
   };

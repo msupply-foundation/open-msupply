@@ -1,13 +1,16 @@
 use repository::{
     item_variant::{
         bundled_item::{BundledItemFilter, BundledItemRepository},
-        bundled_item_row::BundledItemRowRepository,
         item_variant_row::ItemVariantRowRepository,
     },
-    ActivityLogType, RepositoryError,
+    ActivityLogType, RepositoryError, TransactionError,
 };
 
-use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
+use crate::{
+    activity_log::activity_log_entry,
+    item::bundled_item::{delete_bundled_item, DeleteBundledItem, DeleteBundledItemError},
+    service_provider::ServiceContext,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum DeleteItemVariantError {
@@ -27,39 +30,53 @@ pub fn delete_item_variant(
             // No validation needed for delete, since we have a soft delete
             // If it's already deleted, it's fine to delete again...
             let repo = ItemVariantRowRepository::new(connection);
+
+            let item_id = repo
+                .find_one_by_id(&input.id)?
+                .map(|item_variant| item_variant.item_id);
+
             repo.mark_deleted(&input.id)?;
 
-            let bundled_item_row_repo = BundledItemRowRepository::new(connection);
             let bundled_item_repo = BundledItemRepository::new(connection);
-
             let bundled_items = bundled_item_repo.query_by_filter(
                 BundledItemFilter::new().principal_or_bundled_variant_id(input.id.clone()),
             )?;
 
-            bundled_items
-                .into_iter()
-                .map(|bundled_item| {
-                    bundled_item_row_repo.mark_deleted(&bundled_item.id)?;
-                    Ok(())
-                })
-                .collect::<Result<Vec<_>, RepositoryError>>()?;
+            for bundled_item in bundled_items {
+                delete_bundled_item(
+                    ctx,
+                    DeleteBundledItem {
+                        id: bundled_item.id,
+                    },
+                )?;
+            }
 
             activity_log_entry(
                 ctx,
                 ActivityLogType::ItemVariantDeleted,
-                Some(input.id.clone()),
+                item_id,
                 None,
                 None,
             )?;
 
-            repo.mark_deleted(&input.id)
+            Ok(())
         })
-        .map_err(|error| error.to_inner_error())?;
+        .map_err(|error: TransactionError<DeleteItemVariantError>| error.to_inner_error())?;
     Ok(input.id)
 }
 
 impl From<RepositoryError> for DeleteItemVariantError {
     fn from(error: RepositoryError) -> Self {
         DeleteItemVariantError::DatabaseError(error)
+    }
+}
+
+impl From<DeleteBundledItemError> for DeleteItemVariantError {
+    fn from(error: DeleteBundledItemError) -> Self {
+        match error {
+            DeleteBundledItemError::DatabaseError(error) => {
+                DeleteItemVariantError::DatabaseError(error)
+            }
+        }
     }
 }

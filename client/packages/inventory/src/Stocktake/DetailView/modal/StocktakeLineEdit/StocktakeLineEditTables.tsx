@@ -47,6 +47,27 @@ interface StocktakeLineEditTableProps {
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
 }
 
+const compactTableContainerSx = {
+  flex: 1,
+  minHeight: 0,
+  overflowX: 'auto',
+  overflowY: 'auto',
+  maxHeight: 'unset',
+  '& .MuiTableBody-root .MuiTableRow-root': {
+    minHeight: '30px',
+  },
+  '& .MuiTableBody-root .MuiTableCell-root': {
+    paddingTop: '0.1rem',
+    paddingBottom: '0.1rem',
+  },
+  '& .MuiInputBase-root.MuiInput-root': {
+    minHeight: '32px',
+  },
+  '& .MuiPickersOutlinedInput-root': {
+    height: '32px',
+  },
+} as const;
+
 export const BatchTable = ({
   batches,
   update,
@@ -75,6 +96,7 @@ export const BatchTable = ({
           <CheckBoxCell
             isError={!!errors[row.original.id]}
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -126,6 +148,7 @@ export const BatchTable = ({
             <DateTimePickerInput
               value={value}
               disabled={disabled || !row.original.countThisLine}
+              disableFuture
               onChange={date =>
                 update({
                   id: row.original.id,
@@ -173,11 +196,13 @@ export const BatchTable = ({
       {
         accessorKey: 'snapshotNumberOfPacks',
         header: t('label.snapshot-num-of-packs'),
-        columnType: ColumnType.Number,
         size: 100,
         getIsError: rowData =>
           errors[rowData.id]?.__typename ===
           'SnapshotCountCurrentCountMismatchLine',
+        Cell: ({ cell }) => (
+          <NumberInputCell cell={cell} disabled updateFn={() => { }} />
+        ),
       },
       {
         accessorKey: 'countedNumberOfPacks',
@@ -202,7 +227,11 @@ export const BatchTable = ({
         accessorFn: row => {
           const counted = row.countedNumberOfPacks;
           if (counted === null || counted === undefined) return null;
-          return counted * (row.packSize ?? 1) * (row.item.doses ?? 1);
+          return (
+            counted *
+            (row.packSize || row.item.defaultPackSize || 1) *
+            (row.item.doses ?? 1)
+          );
         },
       },
       {
@@ -244,11 +273,26 @@ export const BatchTable = ({
     tableId: 'stocktake-batches',
     columns,
     data: batches,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     noDataElement: (
       <Typography sx={{ color: 'gray.dark', padding: 2 }}>
         {t('label.add-new-line')}
       </Typography>
     ),
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: compactTableContainerSx,
+    },
   });
 
   return <MaterialTable table={table} />;
@@ -270,6 +314,7 @@ export const PricingTable = ({
         Cell: ({ cell, row }) => (
           <CheckBoxCell
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -322,11 +367,26 @@ export const PricingTable = ({
     tableId: 'stocktake-pricing',
     columns,
     data: batches,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     noDataElement: (
       <Typography sx={{ color: 'gray.dark', padding: 2 }}>
         {t('label.add-new-line')}
       </Typography>
     ),
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: compactTableContainerSx,
+    },
   });
 
   return <MaterialTable table={table} />;
@@ -352,6 +412,7 @@ export const LocationTable = ({
         Cell: ({ cell, row }) => (
           <CheckBoxCell
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -462,11 +523,26 @@ export const LocationTable = ({
     tableId: 'stocktake-location',
     columns,
     data: batches,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     noDataElement: (
       <Typography sx={{ color: 'gray.dark', padding: 2 }}>
         {t('label.add-new-line')}
       </Typography>
     ),
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: compactTableContainerSx,
+    },
   });
 
   return <MaterialTable table={table} />;

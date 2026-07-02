@@ -102,6 +102,7 @@ pub fn get_names(
         &ResourceAccessRequest {
             resource: Resource::QueryName,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -169,6 +170,7 @@ impl NameFilterInput {
             email: email.map(StringFilter::from),
             supplying_store_id: supplying_store_id.map(EqualFilter::from),
             store: None,
+            include_disabled: None,
         }
     }
 }

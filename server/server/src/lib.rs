@@ -29,7 +29,9 @@ use graphql::{
 };
 use log::info;
 use repository::{
-    get_storage_connection_manager, migrations::migrate, system_log_row::SystemLogType,
+    get_storage_connection_manager,
+    migrations::{migrate, MigrationConfig},
+    system_log_row::SystemLogType,
     StorageConnection,
 };
 
@@ -45,10 +47,11 @@ use service::{
     processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
+    standalone_central::InitialiseAsCentralServerInput,
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
     sync::{
-        file_sync_driver::FileSyncDriver,
+        sync_status::status::InitialisationStatus,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
         CentralServerConfig,
     },
@@ -57,10 +60,12 @@ use service::{
 
 use actix_web::{web, web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Instant;
 use util::format_error;
 
 mod authentication;
 pub mod certs;
+mod changelog_partitions;
 pub mod cold_chain;
 pub mod configuration;
 pub mod cors;
@@ -134,19 +139,38 @@ pub async fn start_server(
     // Wire transaction notifications to the subscription worker.
     // Fired after outermost transaction commits.
     let commit_trigger = subscription_trigger.clone();
-    connection_manager.set_on_commit(std::sync::Arc::new(move |notification| {
-        match notification {
+    connection_manager.set_on_commit(std::sync::Arc::new(
+        move |notification| match notification {
             repository::TransactionNotification::ChangelogInsert => {
                 commit_trigger.send(SubscriptionTrigger::PushQueueChanged);
             }
-        }
-    }));
-    let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
-    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
+        },
+    ));
+    // let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
+    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init();
+
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
     let (site_is_initialise_trigger, site_is_initialised_callback) =
         SiteIsInitialisedCallback::init();
 
+    let batch_size = settings
+        .sync
+        .as_ref()
+        .map(|s| s.batch_size.clone())
+        .unwrap_or_default();
+    let disable_integration_transaction = settings
+        .sync
+        .as_ref()
+        .map(|s| s.disable_integration_transaction)
+        .unwrap_or(false);
+    let relax_hardware_id_token_checks = settings
+        .sync
+        .as_ref()
+        .map(|s| s.relax_hardware_id_token_checks)
+        .unwrap_or(false);
+    if relax_hardware_id_token_checks {
+        log::warn!("relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED");
+    }
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
         processors_trigger,
@@ -154,10 +178,19 @@ pub async fn start_server(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        Some(settings.clone()),
         subscription_trigger,
+        batch_size,
+        disable_integration_transaction,
+        relax_hardware_id_token_checks,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
+    let cert_start = Instant::now();
     let certificates = Certificates::try_load(&settings.server).unwrap();
+    info!(
+        "Certificates loaded in {} ms",
+        cert_start.elapsed().as_millis()
+    );
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
     let token_secret_copy = token_secret.clone();
@@ -280,7 +313,6 @@ pub async fn start_server(
     info!("Initialising http server..",);
     let processors_task = processors.spawn(service_provider.clone().into_inner());
     let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
-    let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
@@ -315,6 +347,10 @@ pub async fn start_server(
     })
     .disable_signals();
 
+    if let Some(workers) = settings.server.workers {
+        http_server = http_server.workers(workers);
+    }
+
     http_server = match certificates.config() {
         Some(config) => http_server
             .bind_rustls_0_23(settings.server.address(), config)
@@ -335,7 +371,11 @@ pub async fn start_server(
 
     info!("Run DB migrations...");
     // start database migrations
-    let (version, messages) = match migrate(&connection, None) {
+    let changelog_partition_settings = settings.changelog_partition.clone().unwrap_or_default();
+    let migration_config = MigrationConfig {
+        changelog_partition: changelog_partition_settings.to_migration_config(),
+    };
+    let (version, messages) = match migrate(&connection, None, migration_config) {
         Ok(result) => result,
         Err(e) => {
             log::error!("Failed to run DB migrations: {}", format_error(&e));
@@ -345,6 +385,53 @@ pub async fn start_server(
 
     add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
+
+    if let Err(e) = CentralServerConfig::restore_central_standalone(&connection) {
+        log::error!(
+            "Failed to restore standalone central state: {}",
+            format_error(&e)
+        );
+    }
+
+    if settings.server.override_is_central_server {
+        let non_empty =
+            |s: &Option<String>| s.as_deref().filter(|s| !s.is_empty()).map(str::to_owned);
+        if let (Some(store_name), Some(admin_username), Some(admin_password)) = (
+            non_empty(&settings.server.standalone_store_name),
+            non_empty(&settings.server.standalone_admin_username),
+            non_empty(&settings.server.standalone_admin_password),
+        ) {
+            match service_provider
+                .sync_status_service
+                .get_initialisation_status(&service_context)
+            {
+                Ok(InitialisationStatus::PreInitialisation) => {
+                    match service_provider.standalone_central_service.initialise(
+                        &service_provider,
+                        InitialiseAsCentralServerInput {
+                            store_name,
+                            admin_username,
+                            admin_password,
+                        },
+                    ) {
+                        Ok(()) => {
+                            info!("Standalone central initialised from YAML configuration");
+                        }
+                        Err(e) => {
+                            log::error!("Failed to auto-initialise standalone central: {:?}", e)
+                        }
+                    }
+                }
+                Ok(_) => {
+                    // DB already initialised — YAML creds are ignored.
+                }
+                Err(e) => log::error!(
+                    "Could not check initialisation status for standalone central bootstrap: {}",
+                    format_error(&e)
+                ),
+            }
+        }
+    }
 
     // Persist token secret now that the key_value_store table is guaranteed to exist
     save_token_secret(&connection, &token_secret_copy);
@@ -376,7 +463,11 @@ pub async fn start_server(
 
     // CHECK SYNC STATUS
     info!("Checking sync status..");
-    let yaml_sync_settings = settings.sync.clone();
+    // A flags-only `sync:` block (no credentials) counts as "no sync settings" here.
+    let yaml_sync_settings = settings
+        .sync
+        .clone()
+        .filter(|s| s.has_core_sync_settings());
     let database_sync_settings = service_provider
         .settings
         .sync_settings(&service_context)
@@ -385,14 +476,14 @@ pub async fn start_server(
     // Need to set sync settings in database if they are provided via yaml configurations
     let force_trigger_sync_on_startup = match (database_sync_settings, yaml_sync_settings) {
         // If we are changing sync setting via yaml configurations, need to check against central server
-        // to confirm that site is still the same (request_and_set_site_info checks site UUID)
+        // to confirm that site is still the same (request_and_set_site_auth checks site UUID)
         (Some(database_sync_settings), Some(yaml_sync_settings)) => {
             if database_sync_settings.core_site_details_changed(&yaml_sync_settings) {
                 info!("Sync settings in configurations don't match database");
                 info!("Checking sync credentials are for the same site..");
                 service_provider
-                    .site_info_service
-                    .request_and_set_site_info(&service_provider, &yaml_sync_settings)
+                    .site_auth_service
+                    .request_and_set_site_auth(&service_provider, &yaml_sync_settings)
                     .await
                     .unwrap();
                 info!("Checking sync credentials are for the same site..done");
@@ -409,8 +500,8 @@ pub async fn start_server(
             info!("Checking sync credentials..");
             // If fresh sync settings provided in yaml, check credentials against central server and save them in database
             service_provider
-                .site_info_service
-                .request_and_set_site_info(&service_provider, &yaml_sync_settings)
+                .site_auth_service
+                .request_and_set_site_auth(&service_provider, &yaml_sync_settings)
                 .await
                 .unwrap();
             info!("Checking sync credentials..done");
@@ -427,11 +518,14 @@ pub async fn start_server(
         (None, None) => false,
     };
 
-    if service_provider
-        .sync_status_service
-        .is_initialised(&service_context)
-        .unwrap()
-    {
+    let is_initialised = matches!(
+        service_provider
+            .sync_status_service
+            .get_initialisation_status(&service_context),
+        Ok(InitialisationStatus::Initialised(_))
+    );
+
+    if is_initialised {
         graphql_schema
             .set_operational_status(OperationalStatus::Operational)
             .await;
@@ -450,6 +544,10 @@ pub async fn start_server(
 
     // Scheduled tasks
     let schedule_plugin_task = schedule_plugin::spawn();
+    let changelog_partitions_task = changelog_partitions::spawn(
+        service_provider.clone().into_inner(),
+        changelog_partition_settings,
+    );
     let scheduled_task_handle = spawn_scheduled_task_runner(
         service_provider.clone().into_inner(),
         settings.mail.clone().map(|m| m.interval).unwrap_or(60),
@@ -464,10 +562,10 @@ pub async fn start_server(
             status_log.log("Server received request to stop with off switch");
         },
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
-        _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
         result = schedule_plugin_task => unreachable!("Schedule plugin runner terminated ({:?})", result),
+        result = changelog_partitions_task => unreachable!("Changelog partition top-up terminated ({:?})", result),
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
         subscription_error = subscription_task_handle => unreachable!("Subscription task stopped unexpectedly: {:?}", subscription_error),
     };

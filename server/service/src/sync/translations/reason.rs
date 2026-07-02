@@ -20,6 +20,8 @@ pub enum LegacyOptionsType {
     RequisitionLineVariance,
     #[serde(rename = "closedVialWastage")]
     ClosedVialWastage,
+    #[serde(rename = "shipmentVariance")]
+    ShipmentVariance,
 }
 
 #[allow(non_snake_case)]
@@ -56,7 +58,7 @@ impl SyncTranslation for ReasonTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyOptionsRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyOptionsRow>()?;
 
         let reason_option_type = match data.r#type {
             LegacyOptionsType::NegativeInventoryAdjustment => {
@@ -69,6 +71,7 @@ impl SyncTranslation for ReasonTranslation {
             LegacyOptionsType::ReturnReason => ReasonOptionType::ReturnReason,
             LegacyOptionsType::OpenVialWastage => ReasonOptionType::OpenVialWastage,
             LegacyOptionsType::ClosedVialWastage => ReasonOptionType::ClosedVialWastage,
+            LegacyOptionsType::ShipmentVariance => ReasonOptionType::ShipmentVariance,
         };
 
         let result = PullTranslateResult::upsert(ReasonOptionRow {

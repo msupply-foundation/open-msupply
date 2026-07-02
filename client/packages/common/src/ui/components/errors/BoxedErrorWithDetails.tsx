@@ -4,6 +4,7 @@ import {
   AlertIcon,
   Typography,
   useTranslation,
+  useIntlUtils,
   ChevronDownIcon,
 } from '@openmsupply-client/common';
 
@@ -21,6 +22,7 @@ export const BoxedErrorWithDetails = ({
   width = 300,
 }: BoxedErrorWithDetailsProps) => {
   const t = useTranslation();
+  const { isRtl } = useIntlUtils();
   const [expand, setExpand] = useState(false);
   const hasMoreInformation = !!(details || hint);
   const chevronCommonStyles = {
@@ -81,7 +83,7 @@ export const BoxedErrorWithDetails = ({
               ) : (
                 <ChevronDownIcon
                   sx={{
-                    transform: 'rotate(-90deg)',
+                    transform: isRtl ? 'rotate(90deg)' : 'rotate(-90deg)',
                     ...chevronCommonStyles,
                   }}
                 />
@@ -89,7 +91,10 @@ export const BoxedErrorWithDetails = ({
             </Typography>
             {expand && (
               <Box>
-                <Typography sx={{ textWrap: 'wrap' }} variant="body2">
+                <Typography
+                  sx={{ textWrap: 'wrap', overflowWrap: 'break-word' }}
+                  variant="body2"
+                >
                   {!!hint && hint}
                   {!!hint && !!details && <br />}
                   {!!details && details}

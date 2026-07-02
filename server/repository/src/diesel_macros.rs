@@ -51,6 +51,48 @@ macro_rules! apply_equal_filter {
     }};
 }
 
+/// OR variant of [`apply_equal_filter`], applying the equal filter with
+/// `or_filter` instead of `filter`. Used to combine an equal filter with other
+/// (OR'd) filters of a potentially different data type, e.g. matching an
+/// `invoice_number` (i64) OR a `status` (enum) from a single search term.
+///
+/// Warning: All OR filters need to be called before AND filters to work correctly.
+macro_rules! apply_equal_or_filter {
+    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
+        if let Some(equal_filter) = $filter_field {
+            if let Some(value) = equal_filter.equal_to {
+                $query = $query.or_filter($dsl_field.eq(value));
+            }
+
+            if let Some(value) = equal_filter.not_equal_to {
+                $query = $query.or_filter($dsl_field.ne(value));
+            }
+
+            if let Some(value) = equal_filter.not_equal_to_or_null {
+                $query = $query.or_filter($dsl_field.ne(value).or($dsl_field.is_null()));
+            }
+
+            if let Some(value) = equal_filter.equal_any {
+                $query = $query.or_filter($dsl_field.eq_any(value));
+            }
+
+            if let Some(value) = equal_filter.equal_any_or_null {
+                $query = $query.or_filter($dsl_field.eq_any(value).or($dsl_field.is_null()));
+            }
+
+            if let Some(value) = equal_filter.not_equal_all {
+                $query = $query.or_filter($dsl_field.ne_all(value));
+            }
+
+            $query = match equal_filter.is_null {
+                Some(true) => $query.or_filter($dsl_field.is_null()),
+                Some(false) => $query.or_filter($dsl_field.is_not_null()),
+                None => $query,
+            }
+        }
+    }};
+}
+
 #[cfg(not(feature = "postgres"))]
 macro_rules! apply_string_filter_method {
     ($query:ident, $filter_method:ident, $filter_field:expr, $dsl_field:expr ) => {{
@@ -600,9 +642,134 @@ macro_rules! define_linked_tables {
     };
 }
 
+/// Defines an enum that is stored as plain `TEXT` in the database via `strum` serialization
+/// (`snake_case` by default). No database migration is needed when adding new variants.
+///
+/// Variants may optionally include a single-field payload (e.g.
+/// `Unknown(String)`). The fallback variant should carry `#[strum(default)]`
+///
+/// Usage:
+/// ```
+/// diesel_string_enum! {
+///     #[derive(Clone, Serialize, Deserialize)]
+///     pub enum MyEnum {
+///         #[default]
+///         VariantA,
+///         VariantB,
+///         #[strum(default)]
+///         Unknown(String),
+///     }
+/// }
+/// ```
+macro_rules! diesel_string_enum {
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident {
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident $(( $($variant_payload:tt)* ))?
+            ),* $(,)?
+        }
+    ) => {
+        #[derive(
+            strum::AsRefStr,
+            strum::EnumString,
+            strum::Display,
+            Debug,
+            Default,
+            PartialEq,
+            diesel::expression::AsExpression,
+            diesel::deserialize::FromSqlRow,
+        )]
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        $(#[$meta])*
+        $vis enum $name {
+            $(
+                $(#[$variant_meta])*
+                $variant $(( $($variant_payload)* ))?
+            ),*
+        }
+
+        impl From<String> for $name {
+            fn from(value: String) -> Self {
+                use std::str::FromStr;
+                Self::from_str(&value).unwrap()
+            }
+        }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType> for $name
+        where
+            str: diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType>,
+        {
+            fn to_sql<'b>(
+                &'b self,
+                out: &mut diesel::serialize::Output<'b, '_, crate::DBType>,
+            ) -> diesel::serialize::Result {
+                <str as
+                 diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType>>::to_sql(
+                    self.as_ref(),
+                    out,
+                )
+            }
+        }
+
+        impl diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType> for $name
+        where
+            String: diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType>,
+        {
+            fn from_sql(
+                bytes: <crate::DBType as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                use std::str::FromStr;
+                let s = <String as diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType>>::from_sql(bytes)?;
+                Self::from_str(&s).map_err(|e| e.into())
+            }
+        }
+    };
+}
+
+macro_rules! diesel_json_type {
+    (
+        $(#[$meta:meta])*
+        $vis:vis $kind:ident $name:ident $($body:tt)*
+    ) => {
+        #[derive(serde::Serialize, serde::Deserialize, diesel::expression::AsExpression, diesel::deserialize::FromSqlRow)]
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        $(#[$meta])*
+        $vis $kind $name $($body)*
+
+        impl diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType> for $name {
+            fn from_sql(bytes: <crate::DBType as diesel::backend::Backend>::RawValue<'_>) -> diesel::deserialize::Result<Self> {
+                let string_value = <String as diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType>>::from_sql(bytes)?;
+                let deserialized: $name = serde_json::from_str(&string_value)?;
+                Ok(deserialized)
+            }
+        }
+
+        impl diesel::serialize::ToSql<diesel::sql_types::Text, crate::DBType> for $name {
+            fn to_sql<'b>(
+                &self,
+                out: &mut diesel::serialize::Output<'b, '_, crate::DBType>,
+            ) -> diesel::serialize::Result {
+               #[cfg(not(feature = "postgres"))]
+                {
+                    out.set_value(serde_json::to_string(self)?);
+                    Ok(diesel::serialize::IsNull::No)
+                }
+                #[cfg(feature = "postgres")]
+                <String as diesel::serialize::ToSql<
+                    diesel::sql_types::Text,
+                    crate::DBType,
+                >>::to_sql(&serde_json::to_string(self)?, &mut out.reborrow())
+            }
+        }
+    };
+}
+
 pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
+pub(crate) use apply_equal_or_filter;
 pub(crate) use apply_number_filter;
 pub(crate) use apply_sort;
 pub(crate) use apply_sort_asc_nulls_first;
@@ -612,3 +779,5 @@ pub(crate) use apply_string_filter;
 pub(crate) use apply_string_filter_method;
 pub(crate) use apply_string_or_filter;
 pub(crate) use define_linked_tables;
+pub(crate) use diesel_json_type;
+pub(crate) use diesel_string_enum;

@@ -97,7 +97,7 @@ impl TryFrom<String> for NumberRowType {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = number)]
 pub struct NumberRow {
     pub id: String,
@@ -235,6 +235,12 @@ impl<'a> NumberRowRepository<'a> {
             .filter(number::store_id.eq_any(store_ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NumberRow>, RepositoryError> {
+        Ok(number::table
+            .filter(number::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 

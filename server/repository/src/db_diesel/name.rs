@@ -56,6 +56,9 @@ pub struct NameFilter {
 
     pub code_or_name: Option<StringFilter>,
     pub store: Option<StoreFilter>,
+    /// Store can be disabled due to merge or due to it actually being disabled
+    /// by user.
+    pub include_disabled: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -164,12 +167,19 @@ impl<'a> NameRepository<'a> {
     pub fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
         let mut query = query(store_id)
             .into_boxed()
-            .filter(name::type_.ne(NameRowType::Patient))
-            .filter(
+            .filter(name::type_.ne(NameRowType::Patient));
+
+        let include_disabled = filter
+            .as_ref()
+            .and_then(|f| f.include_disabled)
+            .unwrap_or(false);
+        if !include_disabled {
+            query = query.filter(
                 store::is_disabled
                     .is_null()
                     .or(store::is_disabled.eq(false)),
-            ); // Filter out disabled stores, these are usually due to store merge, and should not be visible
+            );
+        }
 
         if let Some(f) = filter {
             let NameFilter {
@@ -193,6 +203,7 @@ impl<'a> NameRepository<'a> {
                 code_or_name,
                 supplying_store_id,
                 store,
+                include_disabled: _,
             } = f;
 
             // or filter need to be applied before and filters
@@ -366,6 +377,11 @@ impl NameFilter {
         self.store = Some(filter);
         self
     }
+
+    pub fn include_disabled(mut self, value: bool) -> Self {
+        self.include_disabled = Some(value);
+        self
+    }
 }
 
 impl Name {
@@ -393,6 +409,14 @@ impl Name {
 
     pub fn is_visible(&self) -> bool {
         self.name_store_join_row.is_some()
+    }
+
+    /// Name store's disabled based on merge or user action
+    pub fn is_disabled(&self) -> bool {
+        self.store_row
+            .as_ref()
+            .map(|store_row| store_row.is_disabled)
+            .unwrap_or(false)
     }
 
     pub fn is_system_name(&self) -> bool {

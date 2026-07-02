@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 
 use super::{UpdateStockOutLine, UpdateStockOutLineError};
+use crate::NullableUpdate;
 use crate::{
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_store},
@@ -13,8 +14,12 @@ use crate::{
     },
     service_provider::ServiceContext,
     stock_line::historical_stock::get_historical_stock_line_available_quantity,
+    validate::check_other_party_store_is_disabled,
 };
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StorageConnection};
+use repository::{
+    InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, ReasonOptionRowRepository,
+    ReasonOptionType, StorageConnection,
+};
 
 pub fn validate(
     ctx: &ServiceContext,
@@ -50,11 +55,14 @@ pub fn validate(
         return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
     }
 
-    let stock_out_type = StockOutType::try_from(&invoice.r#type)
-        .map_err(|_| InvoiceTypeDoesNotMatch)?;
+    let stock_out_type =
+        StockOutType::try_from(&invoice.r#type).map_err(|_| InvoiceTypeDoesNotMatch)?;
 
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(OtherPartyStoreDisabled);
     }
     if !check_line_belongs_to_invoice(line_row, &invoice) {
         return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
@@ -70,15 +78,30 @@ pub fn validate(
     if !check_batch_on_hold(&batch_pair.main_batch, &stock_out_type) {
         return Err(BatchIsOnHold);
     }
-    check_location_on_hold(&batch_pair.main_batch.location_row, &stock_out_type).map_err(
-        |e| match e {
+    check_location_on_hold(&batch_pair.main_batch.location_row, &stock_out_type).map_err(|e| {
+        match e {
             LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
-        },
-    )?;
+        }
+    })?;
 
     if let Some(vvm_status_id) = &input.vvm_status_id {
         if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
             return Err(VVMStatusDoesNotExist);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(reason_option_id),
+    }) = &input.reason_option_id
+    {
+        let reason = ReasonOptionRowRepository::new(connection)
+            .find_one_by_id(reason_option_id)?
+            .ok_or(ReasonOptionDoesNotExist)?;
+        if !reason.is_active {
+            return Err(ReasonOptionIsNotActive);
+        }
+        if reason.r#type != ReasonOptionType::ShipmentVariance {
+            return Err(ReasonOptionTypeInvalid);
         }
     }
 

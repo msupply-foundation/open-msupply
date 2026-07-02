@@ -1,9 +1,10 @@
 use super::StorageConnection;
 
 use crate::{
-    db_diesel::store_row::store, repository_error::RepositoryError, user_account, Delete, Upsert,
+    db_diesel::store_row::store, repository_error::RepositoryError, user_account,
+    ChangelogSyncType, Delete, SourceSiteId, Upsert,
 };
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -46,6 +47,7 @@ pub enum ActivityLogType {
     StocktakeCreated,
     StocktakeDeleted,
     StocktakeStatusFinalised,
+    StocktakeEdited,
     RequisitionCreated,
     RequisitionDeleted,
     RequisitionNumberAllocated,
@@ -93,6 +95,7 @@ pub enum ActivityLogType {
     DemographicProjectionCreated,
     DemographicProjectionUpdated,
     ItemVariantCreated,
+    ItemVariantUpdated,
     ItemVariantDeleted,
     ItemVariantUpdatedName,
     // Renamed in 2.10.0 - keeping name in DB/sync for backwards compatibility
@@ -120,9 +123,16 @@ pub enum ActivityLogType {
     PatientUpdated,
     PatientCreated,
     InvoiceDateBackdated,
+    InvoiceReceivedQtyUpdated,
+    PackagingVariantCreated,
+    PackagingVariantUpdated,
+    PackagingVariantDeleted,
+    BundledItemCreated,
+    BundledItemUpdated,
+    BundledItemDeleted,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = activity_log)]
 pub struct ActivityLogRow {
@@ -136,7 +146,6 @@ pub struct ActivityLogRow {
     pub changed_to: Option<String>,
     pub changed_from: Option<String>,
 }
-
 pub struct ActivityLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -146,27 +155,21 @@ impl<'a> ActivityLogRowRepository<'a> {
         ActivityLogRowRepository { connection }
     }
 
-    pub fn insert_one(&self, row: &ActivityLogRow) -> Result<i64, RepositoryError> {
+    pub fn _insert_one(&self, row: &ActivityLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(activity_log::table)
             .values(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        Ok(())
     }
 
-    fn insert_changelog(
-        &self,
-        row: &ActivityLogRow,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::ActivityLog,
-            record_id: row.id.clone(),
-            row_action: action,
-            store_id: row.store_id.clone(),
-            name_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn insert_one(&self, row: &ActivityLogRow) -> Result<(), RepositoryError> {
+        self._insert_one(row)?;
+        let changelog = row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, log_id: &str) -> Result<Option<ActivityLogRow>, RepositoryError> {
@@ -183,12 +186,33 @@ impl<'a> ActivityLogRowRepository<'a> {
             .get_results(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ActivityLogRow>, RepositoryError> {
+        Ok(activity_log::table
+            .filter(activity_log::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
 
 impl Upsert for ActivityLogRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = ActivityLogRowRepository::new(con).insert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ActivityLogRowRepository::new(con)._insert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -204,9 +228,13 @@ impl Upsert for ActivityLogRow {
 // Only used in tests
 pub struct ActivityLogRowDelete(pub String);
 impl Delete for ActivityLogRowDelete {
-    fn delete(&self, _: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn delete_sync(
+        &self,
+        _con: &StorageConnection,
+        _sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
         // Not deleting in tests, just want to check asserted_deleted
-        Ok(None)
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

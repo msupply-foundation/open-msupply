@@ -45,6 +45,7 @@ pub fn update_vvm_status_log(
         &ResourceAccessRequest {
             resource: Resource::MutateVvmStatus,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

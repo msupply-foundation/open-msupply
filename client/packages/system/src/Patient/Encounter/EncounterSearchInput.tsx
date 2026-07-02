@@ -1,10 +1,12 @@
 import React, { FC, useEffect, useState } from 'react';
 import {
+  AlertIcon,
   Autocomplete,
   AutocompleteOptionRenderer,
   Box,
   DefaultAutocompleteItemOption,
   Typography,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import {
@@ -23,17 +25,17 @@ interface EncounterSearchInputProps {
 
 export const getEncounterOptionRenderer =
   (): AutocompleteOptionRenderer<EncounterRegistryByProgram> =>
-  (props, node) => {
-    const name = node.encounter.name ?? '';
+    (props, node) => {
+      const name = node.encounter.name ?? '';
 
-    return (
-      <DefaultAutocompleteItemOption {...props} key={props.id}>
-        <Box display="flex" alignItems="flex-end" gap={1} height={25}>
-          <Typography>{name}</Typography>
-        </Box>
-      </DefaultAutocompleteItemOption>
-    );
-  };
+      return (
+        <DefaultAutocompleteItemOption {...props} key={props.id}>
+          <Box display="flex" alignItems="flex-end" gap={1} height={25}>
+            <Typography>{name}</Typography>
+          </Box>
+        </DefaultAutocompleteItemOption>
+      );
+    };
 
 export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
   onChange,
@@ -66,6 +68,17 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
   }, [buffer, encounterData, encounterType, setBuffer, onChange]);
 
   const EncounterOptionRenderer = getEncounterOptionRenderer();
+  const t = useTranslation();
+  const isLoading = isEnrolmentDataLoading || isEncounterLoading;
+  if (!isLoading && !encounterData?.length) {
+    return (
+      <Box display="flex" gap={1} alignItems="center">
+        <AlertIcon color="warning" />
+        <Typography>{t('messages.no-encounters-configured')}</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Autocomplete
       disabled={disabled}
@@ -76,7 +89,7 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
           label: buffer.encounter.name ?? '',
         }
       }
-      loading={isEnrolmentDataLoading || isEncounterLoading}
+      loading={isLoading}
       onChange={(_, registry) => {
         setBuffer(registry ?? null);
         registry && onChange(registry);

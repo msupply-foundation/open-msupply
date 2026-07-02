@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import { MRT_ShowHideColumnsButton } from 'material-react-table';
 import {
   Divider,
   Box,
@@ -21,16 +22,41 @@ import {
   getAllocatedQuantity,
   DraftStockOutLineFragment,
 } from '../../../StockOut';
-import { min } from 'lodash';
+import {
+  UsePluginEvents,
+  ShipmentLinePluginState,
+} from '@openmsupply-client/common';
 
 export interface OutboundLineEditTableProps {
   currency?: CurrencyRowFragment | null;
   isExternalSupplier: boolean;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }
+
+const compactTableContainerSx = {
+  flex: 1,
+  minHeight: 0,
+  overflowX: 'auto',
+  overflowY: 'auto',
+  '& .MuiTableBody-root .MuiTableRow-root': {
+    minHeight: '30px',
+  },
+  '& .MuiTableBody-root .MuiTableCell-root': {
+    paddingTop: '0.1rem',
+    paddingBottom: '0.1rem',
+  },
+  '& .MuiInputBase-root.MuiInput-root': {
+    minHeight: '32px',
+  },
+  '& .MuiPickersOutlinedInput-root': {
+    height: '32px',
+  },
+} as const;
 
 export const OutboundLineEditTable = ({
   currency,
   isExternalSupplier,
+  pluginEvents,
 }: OutboundLineEditTableProps) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -45,6 +71,7 @@ export const OutboundLineEditTable = ({
     item,
     manualAllocate,
     setVvmStatus,
+    setReceivedNumberOfPacks,
   } = useAllocationContext(
     useShallow(state => {
       const { placeholderUnits, item, allocateIn } = state;
@@ -57,6 +84,7 @@ export const OutboundLineEditTable = ({
         item,
         manualAllocate: state.manualAllocate,
         setVvmStatus: state.setVvmStatus,
+        setReceivedNumberOfPacks: state.setReceivedNumberOfPacks,
         // In packs & units: we show totals in units
         // In doses: we show totals in doses
         allocatedQuantity: getAllocatedQuantity({
@@ -118,6 +146,8 @@ export const OutboundLineEditTable = ({
     isExternalSupplier,
     allocateIn: allocateIn,
     setVvmStatus,
+    setReceivedNumberOfPacks,
+    pluginEvents,
     getIsDisabled,
   });
 
@@ -131,19 +161,26 @@ export const OutboundLineEditTable = ({
     tableId: 'outbound-line-edit',
     columns,
     data: lines,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
     getIsRestrictedRow: row => getIsDisabled(row.original),
-    bottomToolbarContent: (
-      <PlaceholderAndTotal
-        allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
-        inDoses={allocateIn.type === AllocateInType.Doses}
-        placeholderQuantity={
-          // If no stock lines, show placeholder: 0. Otherwise don't show placeholder unless >0
-          placeholderQuantity === 0 && lines.length
-            ? null
-            : placeholderQuantity
-        }
-      />
-    ),
+    enableBottomToolbar: false,
+    muiTablePaperProps: {
+      sx: {
+        width: '100%',
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        '& > .MuiBox-root': { minHeight: '2.5rem', height: 'unset' },
+        '& > .MuiBox-root > .MuiBox-root': { paddingY: 0 },
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: compactTableContainerSx,
+    },
     renderEmptyRowsFallback: () => (
       <Box sx={{ margin: 'auto' }}>
         <Typography>{t('messages.no-stock-available')}</Typography>
@@ -152,18 +189,52 @@ export const OutboundLineEditTable = ({
   });
 
   return (
-    <Box style={{ width: '100%' }}>
-      <Divider margin={10} />
+    <Box
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
+      <Divider margin={2} />
+      {/* Table takes remaining space; rows scroll inside the MRT TableContainer */}
       <Box
         style={{
-          maxHeight: min([screen.height - 570, 325]),
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          overflowX: 'hidden',
-          overflowY: 'auto',
+          minHeight: 0,
+          overflow: 'hidden',
         }}
       >
         <MaterialTable table={table} />
+      </Box>
+      {/* Bottom bar is a flex sibling — always visible below the table */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          justifyContent: 'space-between',
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          flexShrink: 0,
+          minHeight: '32px',
+        }}
+      >
+        <MRT_ShowHideColumnsButton table={table} />
+        <PlaceholderAndTotal
+          allocatedQuantity={allocatedQuantity + (placeholderQuantity ?? 0)}
+          inDoses={allocateIn.type === AllocateInType.Doses}
+          placeholderQuantity={
+            // If no stock lines, show placeholder: 0. Otherwise don't show placeholder unless >0
+            placeholderQuantity === 0 && lines.length
+              ? null
+              : placeholderQuantity
+          }
+        />
       </Box>
     </Box>
   );

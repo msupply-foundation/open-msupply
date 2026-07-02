@@ -123,9 +123,8 @@ pub fn get_items_ids_for_months_of_stock(
 
             let mos = v.total_stock_on_hand / v.average_monthly_consumption;
 
-            // Check if item meets the min/max bounds
-            let within_range = min_months_of_stock.is_none_or(|min| mos >= min)
-                && max_months_of_stock.is_none_or(|max| mos <= max);
+            let within_range = min_months_of_stock.is_none_or(|min| mos > min)
+                && max_months_of_stock.is_none_or(|max| mos < max);
 
             within_range.then_some(k)
         })
@@ -345,7 +344,6 @@ mod test {
             item_stats.insert(
                 "item_2".to_string(),
                 ItemStats {
-                    // This item has 6 MOS on hand, which is less than the maximum
                     average_monthly_consumption: 1.0,
                     total_stock_on_hand: 6.0,
                     ..Default::default()
@@ -371,7 +369,7 @@ mod test {
             // It is necessary to sort result as it is made from a hashmap, and hashmaps are processed in a different order each time.
             result.sort();
 
-            assert_eq!(result, ["item_1".to_string(), "item_2".to_string()]);
+            assert_eq!(result, ["item_1".to_string()]);
         }
 
         #[test]

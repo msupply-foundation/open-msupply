@@ -121,6 +121,9 @@ export enum ActivityLogNodeType {
   AssetLogReasonDeleted = 'ASSET_LOG_REASON_DELETED',
   AssetPropertyCreated = 'ASSET_PROPERTY_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
+  BundledItemCreated = 'BUNDLED_ITEM_CREATED',
+  BundledItemDeleted = 'BUNDLED_ITEM_DELETED',
+  BundledItemUpdated = 'BUNDLED_ITEM_UPDATED',
   DemographicIndicatorCreated = 'DEMOGRAPHIC_INDICATOR_CREATED',
   DemographicIndicatorUpdated = 'DEMOGRAPHIC_INDICATOR_UPDATED',
   DemographicProjectionCreated = 'DEMOGRAPHIC_PROJECTION_CREATED',
@@ -130,6 +133,7 @@ export enum ActivityLogNodeType {
   InvoiceDateBackdated = 'INVOICE_DATE_BACKDATED',
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
+  InvoiceReceivedQtyUpdated = 'INVOICE_RECEIVED_QTY_UPDATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
   InvoiceStatusCancelled = 'INVOICE_STATUS_CANCELLED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
@@ -139,11 +143,15 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   ItemVariantCreated = 'ITEM_VARIANT_CREATED',
   ItemVariantDeleted = 'ITEM_VARIANT_DELETED',
+  ItemVariantUpdated = 'ITEM_VARIANT_UPDATED',
   ItemVariantUpdatedName = 'ITEM_VARIANT_UPDATED_NAME',
   ItemVariantUpdateDosePerUnit = 'ITEM_VARIANT_UPDATE_DOSE_PER_UNIT',
   ItemVariantUpdateLocationType = 'ITEM_VARIANT_UPDATE_LOCATION_TYPE',
   ItemVariantUpdateManufacturer = 'ITEM_VARIANT_UPDATE_MANUFACTURER',
   ItemVariantUpdateVvmType = 'ITEM_VARIANT_UPDATE_VVM_TYPE',
+  PackagingVariantCreated = 'PACKAGING_VARIANT_CREATED',
+  PackagingVariantDeleted = 'PACKAGING_VARIANT_DELETED',
+  PackagingVariantUpdated = 'PACKAGING_VARIANT_UPDATED',
   PatientCreated = 'PATIENT_CREATED',
   PatientUpdated = 'PATIENT_UPDATED',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
@@ -181,6 +189,7 @@ export enum ActivityLogNodeType {
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
+  StocktakeEdited = 'STOCKTAKE_EDITED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
   StockBatchChange = 'STOCK_BATCH_CHANGE',
   StockCostPriceChange = 'STOCK_COST_PRICE_CHANGE',
@@ -306,6 +315,27 @@ export enum AdjustmentTypeInput {
   Reduction = 'REDUCTION',
 }
 
+export type AdminPasswordRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AdminPasswordRequired';
+  description: Scalars['String']['output'];
+};
+
+export type AdminUserCreationFailed =
+  InitialiseAsCentralServerErrorInterface & {
+    __typename: 'AdminUserCreationFailed';
+    description: Scalars['String']['output'];
+  };
+
+export type AdminUsernameRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AdminUsernameRequired';
+  description: Scalars['String']['output'];
+};
+
+export type AllStoreDataDescription = {
+  __typename: 'AllStoreDataDescription';
+  storeName: Scalars['String']['output'];
+};
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -341,6 +371,11 @@ export type AllocateProgramNumberInput = {
 };
 
 export type AllocateProgramNumberResponse = NumberNode;
+
+export type AlreadyInitialised = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AlreadyInitialised';
+  description: Scalars['String']['output'];
+};
 
 export type AncillaryCycleDetected = UpsertAncillaryItemErrorInterface & {
   __typename: 'AncillaryCycleDetected';
@@ -815,6 +850,17 @@ export type AssetTypesResponse = AssetTypeConnector;
 
 export type AssetsResponse = AssetConnector;
 
+export type AssignStoresToSiteInput = {
+  siteId: Scalars['Int']['input'];
+  storeIds: Array<Scalars['String']['input']>;
+};
+
+export type AssignStoresToSiteNode = {
+  __typename: 'AssignStoresToSiteNode';
+  siteId: Scalars['Int']['output'];
+  storeIds: Array<Scalars['String']['output']>;
+};
+
 export type AuthToken = {
   __typename: 'AuthToken';
   /** Bearer token */
@@ -1202,6 +1248,11 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotDeleteCentralSite = DeleteSiteErrorInterface & {
+  __typename: 'CannotDeleteCentralSite';
+  description: Scalars['String']['output'];
+};
+
 export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
   DeleteInboundShipmentErrorInterface &
@@ -1349,9 +1400,12 @@ export type CentralGeneralMutationsConfigureNamePropertiesArgs = {
 export type CentralPatientNode = {
   __typename: 'CentralPatientNode';
   code: Scalars['String']['output'];
+  code2?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   firstName: Scalars['String']['output'];
+  gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
+  isDeceased: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
 };
 
@@ -1385,14 +1439,20 @@ export type CentralPatientSearchResponse =
 export type CentralPluginMutations = {
   __typename: 'CentralPluginMutations';
   installUploadedPlugin: PluginInfoNode;
+  uninstallPlugin: UninstallPluginNode;
 };
 
 export type CentralPluginMutationsInstallUploadedPluginArgs = {
   fileId: Scalars['String']['input'];
 };
 
+export type CentralPluginMutationsUninstallPluginArgs = {
+  id: Scalars['String']['input'];
+};
+
 export type CentralPluginQueries = {
   __typename: 'CentralPluginQueries';
+  installedPlugins: InstalledPluginConnector;
   uploadedPluginInfo: UploadedPluginInfoResponse;
 };
 
@@ -1422,17 +1482,70 @@ export type CentralServerMutationNode = {
   plugins: CentralPluginMutations;
   preferences: PreferenceMutations;
   reports: CentralReportMutations;
+  site: CentralSiteMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
   plugin: CentralPluginQueries;
+  site: CentralSiteQueries;
+  syncMessage: SyncMessageQueries;
+};
+
+export type CentralSiteMutations = {
+  __typename: 'CentralSiteMutations';
+  assignStoresToSite: AssignStoresToSiteNode;
+  clearSiteHardwareId: ClearSiteHardwareIdNode;
+  clearSiteToken: ClearSiteTokenNode;
+  deleteSite: DeleteSiteResponse;
+  upsertSite: UpsertSiteResponse;
+};
+
+export type CentralSiteMutationsAssignStoresToSiteArgs = {
+  input: AssignStoresToSiteInput;
+};
+
+export type CentralSiteMutationsClearSiteHardwareIdArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsClearSiteTokenArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsDeleteSiteArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsUpsertSiteArgs = {
+  input: UpsertSiteInput;
+};
+
+export type CentralSiteQueries = {
+  __typename: 'CentralSiteQueries';
+  sites: SitesResponse;
+};
+
+export type CentralSiteQueriesSitesArgs = {
+  filter?: InputMaybe<SiteFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<SiteSortInput>>;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
   __typename: 'CentralSyncRequired';
   description: Scalars['String']['output'];
+};
+
+export type ClearSiteHardwareIdNode = {
+  __typename: 'ClearSiteHardwareIdNode';
+  id: Scalars['Int']['output'];
+};
+
+export type ClearSiteTokenNode = {
+  __typename: 'ClearSiteTokenNode';
+  id: Scalars['Int']['output'];
 };
 
 export type ClinicianConnector = {
@@ -1494,6 +1607,11 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
+export type CodeRequired = UpsertSiteErrorInterface & {
+  __typename: 'CodeRequired';
+  description: Scalars['String']['output'];
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -1507,8 +1625,7 @@ export type ConfigureNamePropertyInput = {
 };
 
 export type ConnectionError = CentralPatientSearchErrorInterface &
-  LinkPatientPatientToStoreErrorInterface &
-  UpdateUserErrorInterface & {
+  LinkPatientPatientToStoreErrorInterface & {
     __typename: 'ConnectionError';
     description: Scalars['String']['output'];
   };
@@ -1720,6 +1837,11 @@ export type CustomerIndicatorInformationNode = {
 
 export type CustomerIndicatorInformationNodeCustomerArgs = {
   storeId: Scalars['String']['input'];
+};
+
+export type CustomerIsInactive = DuplicateOutboundShipmentErrorInterface & {
+  __typename: 'CustomerIsInactive';
+  description: Scalars['String']['output'];
 };
 
 export type CustomerProgramRequisitionSettingNode = {
@@ -2083,6 +2205,8 @@ export type DeleteOutboundShipmentUnallocatedLineResponseWithId = {
   response: DeleteOutboundShipmentUnallocatedLineResponse;
 };
 
+export type DeletePluginDataResponse = DeleteResponse;
+
 export type DeletePrescriptionError = {
   __typename: 'DeletePrescriptionError';
   error: DeletePrescriptionErrorInterface;
@@ -2260,6 +2384,28 @@ export type DeleteRnRFormInput = {
 
 export type DeleteRnRFormResponse = DeleteResponse;
 
+export type DeleteSiteError = {
+  __typename: 'DeleteSiteError';
+  error: DeleteSiteErrorInterface;
+};
+
+export type DeleteSiteErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteSiteNode = {
+  __typename: 'DeleteSiteNode';
+  id: Scalars['Int']['output'];
+};
+
+export type DeleteSiteResponse = DeleteSiteError | DeleteSiteNode;
+
+export type DeleteStockRelocationInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteStockRelocationResponse = DeleteResponse;
+
 export type DeleteStocktakeError = {
   __typename: 'DeleteStocktakeError';
   error: DeleteStocktakeErrorInterface;
@@ -2407,6 +2553,11 @@ export type DemographicNode = {
   __typename: 'DemographicNode';
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  /**
+   * Percentage of the store's served population this demographic represents
+   * (e.g. 3.5 for under-1s). Used by population-based vaccine forecasting.
+   */
+  populationPercentage: Scalars['Float']['output'];
 };
 
 export type DemographicProjectionConnector = {
@@ -2614,9 +2765,12 @@ export type DraftStockOutLineNode = {
   itemVariant?: Maybe<ItemVariantNode>;
   itemVariantId?: Maybe<Scalars['String']['output']>;
   location?: Maybe<LocationNode>;
+  manufacturer?: Maybe<NameNode>;
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   program?: Maybe<ProgramNode>;
+  reasonOption?: Maybe<ReasonOptionNode>;
+  receivedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
@@ -2629,10 +2783,52 @@ export type DraftStockOutLineNodeDonorArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type DraftStockOutLineNodeManufacturerArgs = {
+  storeId: Scalars['String']['input'];
+};
+
 export type DuplicateAncillaryItem = UpsertAncillaryItemErrorInterface & {
   __typename: 'DuplicateAncillaryItem';
   description: Scalars['String']['output'];
 };
+
+export type DuplicateInboundShipmentError = {
+  __typename: 'DuplicateInboundShipmentError';
+  error: DuplicateInboundShipmentErrorInterface;
+};
+
+export type DuplicateInboundShipmentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DuplicateInboundShipmentNode = {
+  __typename: 'DuplicateInboundShipmentNode';
+  invoice: InvoiceNode;
+  skippedItemCount: Scalars['Int']['output'];
+};
+
+export type DuplicateInboundShipmentResponse =
+  | DuplicateInboundShipmentError
+  | DuplicateInboundShipmentNode;
+
+export type DuplicateOutboundShipmentError = {
+  __typename: 'DuplicateOutboundShipmentError';
+  error: DuplicateOutboundShipmentErrorInterface;
+};
+
+export type DuplicateOutboundShipmentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DuplicateOutboundShipmentNode = {
+  __typename: 'DuplicateOutboundShipmentNode';
+  invoice: InvoiceNode;
+  skippedItemCount: Scalars['Int']['output'];
+};
+
+export type DuplicateOutboundShipmentResponse =
+  | DuplicateOutboundShipmentError
+  | DuplicateOutboundShipmentNode;
 
 export type EmergencyResponseRequisitionCounts = {
   __typename: 'EmergencyResponseRequisitionCounts';
@@ -2898,11 +3094,25 @@ export type EqualFilterRequisitionTypeInput = {
   notEqualTo?: InputMaybe<RequisitionNodeType>;
 };
 
+export type EqualFilterSensorTypeInput = {
+  equalAny?: InputMaybe<Array<SensorNodeType>>;
+  equalTo?: InputMaybe<SensorNodeType>;
+  notEqualAll?: InputMaybe<Array<SensorNodeType>>;
+  notEqualTo?: InputMaybe<SensorNodeType>;
+};
+
 export type EqualFilterStatusInput = {
   equalAny?: InputMaybe<Array<AssetLogStatusNodeType>>;
   equalTo?: InputMaybe<AssetLogStatusNodeType>;
   notEqualAll?: InputMaybe<Array<AssetLogStatusNodeType>>;
   notEqualTo?: InputMaybe<AssetLogStatusNodeType>;
+};
+
+export type EqualFilterStockRelocationStatusInput = {
+  equalAny?: InputMaybe<Array<StockRelocationNodeStatus>>;
+  equalTo?: InputMaybe<StockRelocationNodeStatus>;
+  notEqualAll?: InputMaybe<Array<StockRelocationNodeStatus>>;
+  notEqualTo?: InputMaybe<StockRelocationNodeStatus>;
 };
 
 export type EqualFilterStocktakeStatusInput = {
@@ -2918,6 +3128,12 @@ export type EqualFilterStringInput = {
   equalTo?: InputMaybe<Scalars['String']['input']>;
   notEqualAll?: InputMaybe<Array<Scalars['String']['input']>>;
   notEqualTo?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type EqualFilterSyncMessageStatusInput = {
+  equalAny?: InputMaybe<Array<SyncMessageNodeStatus>>;
+  equalTo?: InputMaybe<SyncMessageNodeStatus>;
+  notEqualTo?: InputMaybe<SyncMessageNodeStatus>;
 };
 
 export type EqualFilterTemperatureBreachRowTypeInput = {
@@ -3055,8 +3271,14 @@ export type FrontendPluginMetadataNode = {
   path: Scalars['String']['output'];
 };
 
-export type FullSyncStatusNode = {
-  __typename: 'FullSyncStatusNode';
+/**
+ * Discriminated union covering both v5_v6 and v7 sync statuses.
+ * The frontend dispatches on `__typename`.
+ */
+export type FullSyncStatusNode = FullSyncStatusV5V6Node | FullSyncStatusV7Node;
+
+export type FullSyncStatusV5V6Node = {
+  __typename: 'FullSyncStatusV5V6Node';
   error?: Maybe<SyncErrorNode>;
   errorThreshold: Scalars['Int']['output'];
   integration?: Maybe<SyncStatusWithProgressNode>;
@@ -3069,6 +3291,28 @@ export type FullSyncStatusNode = {
   push?: Maybe<SyncStatusWithProgressNode>;
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
+  warningThreshold: Scalars['Int']['output'];
+};
+
+export type FullSyncStatusV7Node = {
+  __typename: 'FullSyncStatusV7Node';
+  error?: Maybe<SyncErrorV7Node>;
+  errorThreshold: Scalars['Int']['output'];
+  integration?: Maybe<SyncStatusWithProgressV7Node>;
+  isSyncing: Scalars['Boolean']['output'];
+  lastSuccessfulSync?: Maybe<SyncStatusNode>;
+  /**
+   * Localisable description payloads for every sync_request linked to
+   * this run via `reference_id`. Empty for the main sync (no
+   * reference_id) and for runs whose reference_id no longer matches any
+   * sync_request row. Each variant carries the parameters the front-end
+   * needs to render a localised string.
+   */
+  linkedDescriptions: Array<SyncRequestDescriptionNode>;
+  pull?: Maybe<SyncStatusWithProgressV7Node>;
+  push?: Maybe<SyncStatusWithProgressV7Node>;
+  summary: SyncStatusV7Node;
+  waitingForIntegration?: Maybe<SyncStatusV7Node>;
   warningThreshold: Scalars['Int']['output'];
 };
 
@@ -3205,7 +3449,29 @@ export enum InitialisationStatusType {
   PreInitialisation = 'PRE_INITIALISATION',
 }
 
-export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
+export type InitialiseAsCentralServerError = {
+  __typename: 'InitialiseAsCentralServerError';
+  error: InitialiseAsCentralServerErrorInterface;
+};
+
+export type InitialiseAsCentralServerErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InitialiseAsCentralServerInputNode = {
+  adminPassword: Scalars['String']['input'];
+  adminUsername: Scalars['String']['input'];
+  storeName: Scalars['String']['input'];
+};
+
+export type InitialiseAsCentralServerResponse =
+  | InitialiseAsCentralServerError
+  | StandaloneCentralInitialisedNode;
+
+export type InitialiseSiteResponse =
+  | SyncErrorNode
+  | SyncErrorV7Node
+  | SyncSettingsNode;
 
 export type InsertAssetCatalogueItemError = {
   __typename: 'InsertAssetCatalogueItemError';
@@ -3757,6 +4023,8 @@ export type InsertPatientResponse = PatientNode;
 export type InsertPluginDataInput = {
   data: Scalars['String']['input'];
   dataIdentifier: Scalars['String']['input'];
+  /** Optional plugin-controlled timestamp. */
+  datetime?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['String']['input'];
   pluginCode: Scalars['String']['input'];
   relatedRecordId?: InputMaybe<Scalars['String']['input']>;
@@ -4088,6 +4356,37 @@ export type InsertStockLineInput = {
 
 export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 
+export type InsertStockRelocationError = {
+  __typename: 'InsertStockRelocationError';
+  error: InsertStockRelocationErrorInterface;
+};
+
+export type InsertStockRelocationErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertStockRelocationInput = {
+  lines: Array<InsertStockRelocationLineInput>;
+};
+
+export type InsertStockRelocationLineInput = {
+  fromNumberOfPacks: Scalars['Float']['input'];
+  fromStockLineId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  toLocationId?: InputMaybe<Scalars['String']['input']>;
+  toPackSize: Scalars['Float']['input'];
+};
+
+export type InsertStockRelocationNode = {
+  __typename: 'InsertStockRelocationNode';
+  /** Ids of the created stock_relocation records. */
+  ids: Array<Scalars['String']['output']>;
+};
+
+export type InsertStockRelocationResponse =
+  | InsertStockRelocationError
+  | InsertStockRelocationNode;
+
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   createBlankStocktake?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4169,6 +4468,15 @@ export type InsertSupplierReturnResponse =
   | InsertSupplierReturnError
   | InvoiceNode;
 
+export type InsertSyncMessageInput = {
+  body?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  toStoreId?: InputMaybe<Scalars['String']['input']>;
+  type: SyncMessageRowTypeInput;
+};
+
+export type InsertSyncMessageResponse = IdResponse;
+
 export type InsertVvmStatusLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
@@ -4221,6 +4529,26 @@ export type InsertVaccineCourseInput = {
 export type InsertVaccineCourseResponse =
   | InsertVaccineCourseError
   | VaccineCourseNode;
+
+export type InstalledPluginConnector = {
+  __typename: 'InstalledPluginConnector';
+  nodes: Array<InstalledPluginNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export enum InstalledPluginKindType {
+  Backend = 'BACKEND',
+  Frontend = 'FRONTEND',
+}
+
+export type InstalledPluginNode = {
+  __typename: 'InstalledPluginNode';
+  code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  kind: InstalledPluginKindType;
+  types: Array<Scalars['String']['output']>;
+  version: Scalars['String']['output'];
+};
 
 export type InsuranceConnector = {
   __typename: 'InsuranceConnector';
@@ -4318,11 +4646,10 @@ export type InternalError = InsertAssetCatalogueItemErrorInterface &
     fullError: Scalars['String']['output'];
   };
 
-export type InvalidCredentials = AuthTokenErrorInterface &
-  UpdateUserErrorInterface & {
-    __typename: 'InvalidCredentials';
-    description: Scalars['String']['output'];
-  };
+export type InvalidCredentials = AuthTokenErrorInterface & {
+  __typename: 'InvalidCredentials';
+  description: Scalars['String']['output'];
+};
 
 export type InvalidStockSelection = UpdatePrescriptionErrorInterface & {
   __typename: 'InvalidStockSelection';
@@ -4408,8 +4735,10 @@ export type InvoiceFilterInput = {
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  invoiceNumberOrStatus?: InputMaybe<StringFilterInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
+  linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
   nameId?: InputMaybe<EqualFilterStringInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
@@ -4496,6 +4825,7 @@ export type InvoiceLineNode = {
   program?: Maybe<ProgramNode>;
   purchaseOrderLine?: Maybe<PurchaseOrderLineNode>;
   reasonOption?: Maybe<ReasonOptionNode>;
+  receivedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReturnReasonNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
@@ -5173,6 +5503,7 @@ export type LocationConnector = {
 export type LocationFilterInput = {
   assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
+  codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   locationTypeId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
@@ -5213,6 +5544,13 @@ export type LocationNotFound = InsertOutboundShipmentLineErrorInterface &
   UpdatePrescriptionLineErrorInterface & {
     __typename: 'LocationNotFound';
     description: Scalars['String']['output'];
+  };
+
+export type LocationOnHold = InsertStockRelocationErrorInterface &
+  UpdateStockRelocationErrorInterface & {
+    __typename: 'LocationOnHold';
+    description: Scalars['String']['output'];
+    locationId: Scalars['String']['output'];
   };
 
 export enum LocationSortFieldInput {
@@ -5422,11 +5760,6 @@ export type MigrationStatusNode = {
   version?: Maybe<Scalars['String']['output']>;
 };
 
-export type MissingCredentials = UpdateUserErrorInterface & {
-  __typename: 'MissingCredentials';
-  description: Scalars['String']['output'];
-};
-
 export type Mutations = {
   __typename: 'Mutations';
   /** Add requisition lines from master item master list */
@@ -5466,6 +5799,7 @@ export type Mutations = {
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
+  deletePluginData: DeletePluginDataResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deletePurchaseOrder: DeletePurchaseOrderResponse;
@@ -5475,10 +5809,14 @@ export type Mutations = {
   deleteResponseRequisition: DeleteResponseRequisitionResponse;
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
   deleteRnrForm: DeleteRnRFormResponse;
+  deleteStockRelocation: DeleteStockRelocationResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
+  duplicateInboundShipment: DuplicateInboundShipmentResponse;
+  duplicateOutboundShipment: DuplicateOutboundShipmentResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
+  initialiseAsCentralServer: InitialiseAsCentralServerResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
@@ -5530,9 +5868,11 @@ export type Mutations = {
   insertResponseRequisitionLine: InsertResponseRequisitionLineResponse;
   insertRnrForm: InsertRnRFormResponse;
   insertStockLine: InsertStockLineLineResponse;
+  insertStockRelocation: InsertStockRelocationResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
   insertSupplierReturn: InsertSupplierReturnResponse;
+  insertSyncMessage: InsertSyncMessageResponse;
   insertVaccination: InsertVaccinationResponse;
   insertVvmStatusLog: InsertVvmStatusLogResponse;
   /** Links a patient to a store and thus effectively to a site */
@@ -5589,6 +5929,7 @@ export type Mutations = {
   updateRnrForm: UpdateRnRFormResponse;
   updateSensor: UpdateSensorResponse;
   updateStockLine: UpdateStockLineLineResponse;
+  updateStockRelocation: UpdateStockRelocationResponse;
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSupplierReturn: UpdateSupplierReturnResponse;
@@ -5596,7 +5937,6 @@ export type Mutations = {
   updateSupplierReturnOtherParty: UpdateSupplierReturnOtherPartyResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
-  updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
   updateVvmStatusLog: UpdateVvmStatusResponse;
   /** Set requested for each line in request requisition to calculated */
@@ -5743,6 +6083,11 @@ export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsDeletePluginDataArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsDeletePrescriptionArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -5788,6 +6133,11 @@ export type MutationsDeleteRnrFormArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsDeleteStockRelocationArgs = {
+  input: DeleteStockRelocationInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsDeleteStocktakeArgs = {
   input: DeleteStocktakeInput;
   storeId: Scalars['String']['input'];
@@ -5803,9 +6153,23 @@ export type MutationsDeleteSupplierReturnArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsDuplicateInboundShipmentArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDuplicateOutboundShipmentArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsFinaliseRnrFormArgs = {
   input: FinaliseRnRFormInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsInitialiseAsCentralServerArgs = {
+  input: InitialiseAsCentralServerInputNode;
 };
 
 export type MutationsInitialiseSiteArgs = {
@@ -6014,6 +6378,11 @@ export type MutationsInsertStockLineArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsInsertStockRelocationArgs = {
+  input: InsertStockRelocationInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsInsertStocktakeArgs = {
   input: InsertStocktakeInput;
   storeId: Scalars['String']['input'];
@@ -6026,6 +6395,11 @@ export type MutationsInsertStocktakeLineArgs = {
 
 export type MutationsInsertSupplierReturnArgs = {
   input: SupplierReturnInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertSyncMessageArgs = {
+  input: InsertSyncMessageInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6265,6 +6639,11 @@ export type MutationsUpdateStockLineArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdateStockRelocationArgs = {
+  input: UpdateStockRelocationInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUpdateStocktakeArgs = {
   input: UpdateStocktakeInput;
   storeId: Scalars['String']['input'];
@@ -6417,6 +6796,11 @@ export type NamePropertyNode = {
 
 export type NamePropertyResponse = NamePropertyConnector;
 
+export type NameRequired = UpsertSiteErrorInterface & {
+  __typename: 'NameRequired';
+  description: Scalars['String']['output'];
+};
+
 export enum NameSortFieldInput {
   Code = 'code',
   Name = 'name',
@@ -6486,6 +6870,13 @@ export type NotAnOutboundShipmentError = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type NotEnoughStock = InsertStockRelocationErrorInterface &
+  UpdateStockRelocationErrorInterface & {
+    __typename: 'NotEnoughStock';
+    description: Scalars['String']['output'];
+    stockLineId: Scalars['String']['output'];
+  };
+
 export type NotEnoughStockForReduction =
   InsertOutboundShipmentLineErrorInterface &
     InsertPrescriptionLineErrorInterface &
@@ -6499,6 +6890,11 @@ export type NotEnoughStockForReduction =
 
 export type NotMostRecentGivenDose = UpdateVaccinationErrorInterface & {
   __typename: 'NotMostRecentGivenDose';
+  description: Scalars['String']['output'];
+};
+
+export type NotSupportedOnAndroid = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'NotSupportedOnAndroid';
   description: Scalars['String']['output'];
 };
 
@@ -6635,6 +7031,8 @@ export type OutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   programId?: InputMaybe<Scalars['String']['input']>;
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
+  receivedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   stockLineId: Scalars['String']['input'];
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
@@ -6674,6 +7072,11 @@ export type PaginationInput = {
   first?: InputMaybe<Scalars['Int']['input']>;
   /** First returned item is at the `offset` position in the full list */
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type PasswordRequired = UpsertSiteErrorInterface & {
+  __typename: 'PasswordRequired';
+  description: Scalars['String']['output'];
 };
 
 export type PatientConnector = {
@@ -6856,6 +7259,7 @@ export type PluginDataConnector = {
 
 export type PluginDataFilterInput = {
   dataIdentifier?: InputMaybe<EqualFilterStringInput>;
+  datetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   relatedRecordId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -6865,6 +7269,8 @@ export type PluginDataNode = {
   __typename: 'PluginDataNode';
   data: Scalars['String']['output'];
   dataIdentifier: Scalars['String']['output'];
+  /** Optional, plugin-controlled timestamp (e.g. an "update time"). */
+  datetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   pluginCode: Scalars['String']['output'];
   relatedRecordId?: Maybe<Scalars['String']['output']>;
@@ -6874,6 +7280,7 @@ export type PluginDataNode = {
 export type PluginDataResponse = PluginDataConnector;
 
 export enum PluginDataSortFieldInput {
+  Datetime = 'datetime',
   Id = 'id',
   PluginCode = 'pluginCode',
 }
@@ -6916,9 +7323,11 @@ export enum PreferenceKey {
   Backdating = 'backdating',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
   CustomTranslations = 'customTranslations',
+  CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
+  DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
   ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
   ExpiredStockPreventIssue = 'expiredStockPreventIssue',
   ExternalInboundShipmentLinesMustBeAuthorised = 'externalInboundShipmentLinesMustBeAuthorised',
@@ -6936,6 +7345,7 @@ export enum PreferenceKey {
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
+  ReceivePaymentsFromPrescriptions = 'receivePaymentsFromPrescriptions',
   RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
@@ -6971,6 +7381,7 @@ export enum PreferenceValueNodeType {
   Boolean = 'BOOLEAN',
   Colour = 'COLOUR',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
+  CustomTranslationsV2 = 'CUSTOM_TRANSLATIONS_V2',
   Float = 'FLOAT',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
@@ -6986,9 +7397,11 @@ export type PreferencesNode = {
   backdating: BackdatingNode;
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
+  customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
+  doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
   expiredStockPreventIssue: Scalars['Boolean']['output'];
   externalInboundShipmentLinesMustBeAuthorised: Scalars['Boolean']['output'];
@@ -7006,6 +7419,7 @@ export type PreferencesNode = {
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
+  receivePaymentsFromPrescriptions: Scalars['Boolean']['output'];
   requisitionAutoFinalise: Scalars['Boolean']['output'];
   secondThresholdForExpiringItems: Scalars['Int']['output'];
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
@@ -7635,6 +8049,7 @@ export type Queries = {
   invoiceLines: InvoiceLinesResponse;
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
+  isCentralStandalone: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
   itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
@@ -7651,7 +8066,6 @@ export type Queries = {
    */
   itemsByStockLineFilter: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
-  lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   ledger: LedgerResponse;
   /** Query omSupply "location_type" entries */
@@ -7721,6 +8135,8 @@ export type Queries = {
   stockCounts: StockCounts;
   /** Query for "stock_line" entries */
   stockLines: StockLinesResponse;
+  stockRelocation: StockRelocationResponse;
+  stockRelocations: StockRelocationsResponse;
   stocktake: StocktakeResponse;
   stocktakeByNumber: StocktakeResponse;
   stocktakeLines: StocktakesLinesResponse;
@@ -7889,6 +8305,7 @@ export type QueriesContactsArgs = {
 export type QueriesCsvToExcelArgs = {
   csvData: Scalars['String']['input'];
   filename: Scalars['String']['input'];
+  sheetName?: InputMaybe<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -8198,6 +8615,7 @@ export type QueriesPeriodsArgs = {
 
 export type QueriesPluginDataArgs = {
   filter?: InputMaybe<PluginDataFilterInput>;
+  page?: InputMaybe<PaginationInput>;
   pluginCode: Scalars['String']['input'];
   sort?: InputMaybe<Array<PluginDataSortInput>>;
   storeId: Scalars['String']['input'];
@@ -8389,6 +8807,18 @@ export type QueriesStockLinesArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesStockRelocationArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesStockRelocationsArgs = {
+  filter?: InputMaybe<StockRelocationFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<StockRelocationSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesStocktakeArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -8527,6 +8957,7 @@ export enum ReasonOptionNodeType {
   PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
   RequisitionLineVariance = 'REQUISITION_LINE_VARIANCE',
   ReturnReason = 'RETURN_REASON',
+  ShipmentVariance = 'SHIPMENT_VARIANCE',
 }
 
 export type ReasonOptionResponse = ReasonOptionConnector;
@@ -9309,8 +9740,10 @@ export type SensorConnector = {
 export type SensorFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  locationCode?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
-  serial?: InputMaybe<EqualFilterStringInput>;
+  serial?: InputMaybe<StringFilterInput>;
+  type?: InputMaybe<EqualFilterSensorTypeInput>;
 };
 
 export type SensorNode = {
@@ -9398,6 +9831,44 @@ export type ShippingMethodNode = {
 
 export type ShippingMethodsResponse = ShippingMethodConnector;
 
+export type SiteConnector = {
+  __typename: 'SiteConnector';
+  nodes: Array<SiteNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SiteFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterNumberInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type SiteHasStores = DeleteSiteErrorInterface & {
+  __typename: 'SiteHasStores';
+  description: Scalars['String']['output'];
+};
+
+export type SiteNode = {
+  __typename: 'SiteNode';
+  code: Scalars['String']['output'];
+  hardwareId?: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+};
+
+export enum SiteSortFieldInput {
+  Code = 'code',
+  Id = 'id',
+  Name = 'name',
+}
+
+export type SiteSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: SiteSortFieldInput;
+};
+
+export type SitesResponse = SiteConnector;
+
 export type SnapshotCountCurrentCountMismatch =
   UpdateStocktakeErrorInterface & {
     __typename: 'SnapshotCountCurrentCountMismatch';
@@ -9411,6 +9882,11 @@ export type SnapshotCountCurrentCountMismatchLine =
     description: Scalars['String']['output'];
     stocktakeLine: StocktakeLineNode;
   };
+
+export type StandaloneCentralInitialisedNode = {
+  __typename: 'StandaloneCentralInitialisedNode';
+  success: Scalars['Boolean']['output'];
+};
 
 export type StockCounts = {
   __typename: 'StockCounts';
@@ -9535,6 +10011,13 @@ export type StockLineNodeProgramOrderTypeArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type StockLineOnHold = InsertStockRelocationErrorInterface &
+  UpdateStockRelocationErrorInterface & {
+    __typename: 'StockLineOnHold';
+    description: Scalars['String']['output'];
+    stockLineId: Scalars['String']['output'];
+  };
+
 export type StockLineReducedBelowZero =
   InsertInventoryAdjustmentErrorInterface &
     InsertRepackErrorInterface &
@@ -9557,6 +10040,7 @@ export enum StockLineSortFieldInput {
   ManufactureDate = 'manufactureDate',
   NumberOfPacks = 'numberOfPacks',
   PackSize = 'packSize',
+  SellPricePerPack = 'sellPricePerPack',
   SupplierName = 'supplierName',
   VvmStatusThenExpiry = 'vvmStatusThenExpiry',
 }
@@ -9578,6 +10062,71 @@ export type StockLinesReducedBelowZero = UpdateStocktakeErrorInterface & {
 };
 
 export type StockLinesResponse = StockLineConnector;
+
+export type StockRelocationConnector = {
+  __typename: 'StockRelocationConnector';
+  nodes: Array<StockRelocationNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type StockRelocationFilterInput = {
+  fromLocationCode?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
+  status?: InputMaybe<EqualFilterStockRelocationStatusInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+  toLocationCode?: InputMaybe<StringFilterInput>;
+};
+
+export type StockRelocationNode = {
+  __typename: 'StockRelocationNode';
+  availableNumberOfPacks: Scalars['Float']['output'];
+  batch?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  fromLocation?: Maybe<LocationNode>;
+  fromPackSize: Scalars['Float']['output'];
+  fromStockLineId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemCode: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  numberOfPacks: Scalars['Float']['output'];
+  onHold: Scalars['Boolean']['output'];
+  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
+  status: StockRelocationNodeStatus;
+  toLocation?: Maybe<LocationNode>;
+  toPackSize?: Maybe<Scalars['Float']['output']>;
+  toStockLineId?: Maybe<Scalars['String']['output']>;
+};
+
+export enum StockRelocationNodeStatus {
+  Finalised = 'FINALISED',
+  New = 'NEW',
+}
+
+export type StockRelocationResponse = RecordNotFound | StockRelocationNode;
+
+export enum StockRelocationSortFieldInput {
+  Batch = 'batch',
+  CreatedDatetime = 'createdDatetime',
+  ExpiryDate = 'expiryDate',
+  FinalisedDatetime = 'finalisedDatetime',
+  FromLocation = 'fromLocation',
+  ItemCode = 'itemCode',
+  ItemName = 'itemName',
+  NumberOfPacks = 'numberOfPacks',
+  Status = 'status',
+  ToLocation = 'toLocation',
+}
+
+export type StockRelocationSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: StockRelocationSortFieldInput;
+};
+
+export type StockRelocationsResponse = StockRelocationConnector;
 
 export type StocktakeConnector = {
   __typename: 'StocktakeConnector';
@@ -9756,14 +10305,22 @@ export enum StoreModeNodeType {
   Store = 'STORE',
 }
 
+export type StoreNameRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'StoreNameRequired';
+  description: Scalars['String']['output'];
+};
+
 export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String']['output'];
   createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  /** Whether the store has been disabled, either by a user or as a result of a store merge. */
+  isDisabled: Scalars['Boolean']['output'];
   /**
    * Returns the associated store logo.
    * The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
+   * Lazy-loaded — the logo is not pulled with the default store row.
    */
   logo?: Maybe<Scalars['String']['output']>;
   name: NameNode;
@@ -9857,6 +10414,11 @@ export type SuggestedQuantityCalculationNode = {
   suggestedQuantity: Scalars['Int']['output'];
 };
 
+export type SupplierIsInactive = DuplicateInboundShipmentErrorInterface & {
+  __typename: 'SupplierIsInactive';
+  description: Scalars['String']['output'];
+};
+
 export type SupplierNotValid = InsertProgramRequestRequisitionErrorInterface & {
   __typename: 'SupplierNotValid';
   description: Scalars['String']['output'];
@@ -9935,6 +10497,12 @@ export type SyncErrorNode = {
   variant: SyncErrorVariant;
 };
 
+export type SyncErrorV7Node = {
+  __typename: 'SyncErrorV7Node';
+  fullError: Scalars['String']['output'];
+  variant: SyncErrorVariantV7;
+};
+
 export enum SyncErrorVariant {
   ApiVersionIncompatible = 'API_VERSION_INCOMPATIBLE',
   CentralV6NotConfigured = 'CENTRAL_V6_NOT_CONFIGURED',
@@ -9950,6 +10518,32 @@ export enum SyncErrorVariant {
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
   Unknown = 'UNKNOWN',
   V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE',
+  V7UpgradeFailed = 'V7_UPGRADE_FAILED',
+}
+
+export enum SyncErrorVariantV7 {
+  Authentication = 'AUTHENTICATION',
+  ConnectionError = 'CONNECTION_ERROR',
+  DatabaseError = 'DATABASE_ERROR',
+  FailedToGetHardwareId = 'FAILED_TO_GET_HARDWARE_ID',
+  GetCurrentSiteIdError = 'GET_CURRENT_SITE_ID_ERROR',
+  HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
+  IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
+  InvalidSiteNameOrPassword = 'INVALID_SITE_NAME_OR_PASSWORD',
+  MissingAuthHeader = 'MISSING_AUTH_HEADER',
+  NotACentralServer = 'NOT_A_CENTRAL_SERVER',
+  Other = 'OTHER',
+  ParsingError = 'PARSING_ERROR',
+  RecordNotFound = 'RECORD_NOT_FOUND',
+  RequestSiteAuthError = 'REQUEST_SITE_AUTH_ERROR',
+  SiteIdMismatch = 'SITE_ID_MISMATCH',
+  SiteIdNotSet = 'SITE_ID_NOT_SET',
+  SiteIsNotV7 = 'SITE_IS_NOT_V7',
+  SiteLockError = 'SITE_LOCK_ERROR',
+  SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
+  SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
+  TokenAlreadyAllocated = 'TOKEN_ALREADY_ALLOCATED',
+  TokenNotFound = 'TOKEN_NOT_FOUND',
 }
 
 export type SyncFileReferenceConnector = {
@@ -9961,18 +10555,109 @@ export type SyncFileReferenceConnector = {
 export type SyncFileReferenceNode = {
   __typename: 'SyncFileReferenceNode';
   createdDatetime: Scalars['DateTime']['output'];
+  error?: Maybe<Scalars['String']['output']>;
   fileName: Scalars['String']['output'];
   id: Scalars['String']['output'];
   mimeType?: Maybe<Scalars['String']['output']>;
   recordId: Scalars['String']['output'];
+  status: SyncFileReferenceNodeStatus;
   tableName: Scalars['String']['output'];
 };
+
+export enum SyncFileReferenceNodeStatus {
+  Done = 'DONE',
+  Error = 'ERROR',
+  InProgress = 'IN_PROGRESS',
+  New = 'NEW',
+  PermanentFailure = 'PERMANENT_FAILURE',
+}
 
 export type SyncInfoUpdatedNode = {
   __typename: 'SyncInfoUpdatedNode';
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
   syncStatus?: Maybe<FullSyncStatusNode>;
 };
+
+export type SyncMessageConnector = {
+  __typename: 'SyncMessageConnector';
+  nodes: Array<SyncMessageNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SyncMessageFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  fromStoreId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterSyncMessageStatusInput>;
+  toStoreId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type SyncMessageListResponse = SyncMessageConnector;
+
+export type SyncMessageNode = {
+  __typename: 'SyncMessageNode';
+  body: Scalars['String']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  files?: Maybe<SyncFileReferenceConnector>;
+  fromStore?: Maybe<StoreNode>;
+  id: Scalars['String']['output'];
+  status: SyncMessageNodeStatus;
+  toStore?: Maybe<StoreNode>;
+  type: SyncMessageNodeType;
+};
+
+export enum SyncMessageNodeStatus {
+  Error = 'error',
+  InProgress = 'inProgress',
+  New = 'new',
+  Processed = 'processed',
+}
+
+export enum SyncMessageNodeType {
+  Other = 'other',
+  RequestFieldChange = 'requestFieldChange',
+  SupportUpload = 'supportUpload',
+}
+
+export type SyncMessageQueries = {
+  __typename: 'SyncMessageQueries';
+  syncMessage: SyncMessageResponse;
+  syncMessages: SyncMessageListResponse;
+};
+
+export type SyncMessageQueriesSyncMessageArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type SyncMessageQueriesSyncMessagesArgs = {
+  filter?: InputMaybe<SyncMessageFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<SyncMessageSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type SyncMessageResponse = RecordNotFound | SyncMessageNode;
+
+export enum SyncMessageRowTypeInput {
+  SupportUpload = 'SUPPORT_UPLOAD',
+}
+
+export enum SyncMessageSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  Id = 'id',
+  Status = 'status',
+}
+
+export type SyncMessageSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: SyncMessageSortFieldInput;
+};
+
+export type SyncRequestDescriptionNode =
+  | AllStoreDataDescription
+  | TableNameDescription;
 
 export type SyncSettingsInput = {
   /** Sync interval */
@@ -9985,8 +10670,10 @@ export type SyncSettingsInput = {
 
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
+  centralServerSiteId: Scalars['Int']['output'];
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
+  syncSiteId?: Maybe<Scalars['Int']['output']>;
   /** Central server url */
   url: Scalars['String']['output'];
   /** Central server username */
@@ -9995,7 +10682,12 @@ export type SyncSettingsNode = {
 
 export type SyncStatusNode = {
   __typename: 'SyncStatusNode';
-  durationInSeconds: Scalars['Int']['output'];
+  finished?: Maybe<Scalars['DateTime']['output']>;
+  started: Scalars['DateTime']['output'];
+};
+
+export type SyncStatusV7Node = {
+  __typename: 'SyncStatusV7Node';
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
 };
@@ -10006,6 +10698,19 @@ export type SyncStatusWithProgressNode = {
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
   total?: Maybe<Scalars['Int']['output']>;
+};
+
+export type SyncStatusWithProgressV7Node = {
+  __typename: 'SyncStatusWithProgressV7Node';
+  done?: Maybe<Scalars['Int']['output']>;
+  finished?: Maybe<Scalars['DateTime']['output']>;
+  started: Scalars['DateTime']['output'];
+  total?: Maybe<Scalars['Int']['output']>;
+};
+
+export type TableNameDescription = {
+  __typename: 'TableNameDescription';
+  tableName: Scalars['String']['output'];
 };
 
 export type TaxInput = {
@@ -10157,6 +10862,13 @@ export type UnallocatedLinesOnlyEditableInNewInvoice =
     description: Scalars['String']['output'];
   };
 
+export type UninstallPluginNode = {
+  __typename: 'UninstallPluginNode';
+  code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  kind: InstalledPluginKindType;
+};
+
 export enum UniqueCombinationKey {
   Manufacturer = 'manufacturer',
   Model = 'model',
@@ -10188,7 +10900,8 @@ export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
   UpsertCampaignErrorInterface &
-  UpsertItemVariantErrorInterface & {
+  UpsertItemVariantErrorInterface &
+  UpsertSiteErrorInterface & {
     __typename: 'UniqueValueViolation';
     description: Scalars['String']['output'];
     field: UniqueValueKey;
@@ -10403,6 +11116,7 @@ export type UpdateInboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Float']['input']>;
   programId?: InputMaybe<NullableStringUpdate>;
+  reasonOptionId?: InputMaybe<NullableStringUpdate>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
@@ -10587,6 +11301,7 @@ export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   prescribedQuantity?: InputMaybe<Scalars['Float']['input']>;
+  reasonOptionId?: InputMaybe<NullableStringUpdate>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   tax?: InputMaybe<TaxInput>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
@@ -10711,6 +11426,8 @@ export type UpdatePatientResponse = PatientNode;
 export type UpdatePluginDataInput = {
   data: Scalars['String']['input'];
   dataIdentifier: Scalars['String']['input'];
+  /** Optional plugin-controlled timestamp. */
+  datetime?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['String']['input'];
   pluginCode: Scalars['String']['input'];
   relatedRecordId?: InputMaybe<Scalars['String']['input']>;
@@ -11098,6 +11815,32 @@ export type UpdateStockLineInput = {
 
 export type UpdateStockLineLineResponse = StockLineNode | UpdateStockLineError;
 
+export type UpdateStockRelocationError = {
+  __typename: 'UpdateStockRelocationError';
+  error: UpdateStockRelocationErrorInterface;
+};
+
+export type UpdateStockRelocationErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdateStockRelocationInput = {
+  fromNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  id: Scalars['String']['input'];
+  status?: InputMaybe<StockRelocationNodeStatus>;
+  toLocationId?: InputMaybe<NullableStringUpdate>;
+  toPackSize?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type UpdateStockRelocationNode = {
+  __typename: 'UpdateStockRelocationNode';
+  id: Scalars['String']['output'];
+};
+
+export type UpdateStockRelocationResponse =
+  | UpdateStockRelocationError
+  | UpdateStockRelocationNode;
+
 export type UpdateStocktakeError = {
   __typename: 'UpdateStocktakeError';
   error: UpdateStocktakeErrorInterface;
@@ -11212,7 +11955,10 @@ export enum UpdateSupplierReturnStatusInput {
   Shipped = 'SHIPPED',
 }
 
-export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
+export type UpdateSyncSettingsResponse =
+  | SyncErrorNode
+  | SyncErrorV7Node
+  | SyncSettingsNode;
 
 export type UpdateTemperatureBreachInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -11221,22 +11967,6 @@ export type UpdateTemperatureBreachInput = {
 };
 
 export type UpdateTemperatureBreachResponse = TemperatureBreachNode;
-
-export type UpdateUserError = {
-  __typename: 'UpdateUserError';
-  error: UpdateUserErrorInterface;
-};
-
-export type UpdateUserErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type UpdateUserNode = {
-  __typename: 'UpdateUserNode';
-  lastSuccessfulSync?: Maybe<Scalars['DateTime']['output']>;
-};
-
-export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
 export type UpdateVvmStatusLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -11416,9 +12146,15 @@ export type UpsertPreferencesInput = {
     Array<BoolStorePrefInput>
   >;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
+  /**
+   * v2 custom translations, shape: `language -> namespace -> key -> value`.
+   * Passed as a JSON value to avoid nested-map InputObject friction.
+   */
+  customTranslationsV2?: InputMaybe<Scalars['JSON']['input']>;
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
+  doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
   expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
   expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   externalInboundShipmentLinesMustBeAuthorised?: InputMaybe<
@@ -11446,6 +12182,7 @@ export type UpsertPreferencesInput = {
   preventTransfersMonthsBeforeInitialisation?: InputMaybe<
     Scalars['Int']['input']
   >;
+  receivePaymentsFromPrescriptions?: InputMaybe<Scalars['Boolean']['input']>;
   requisitionAutoFinalise?: InputMaybe<Array<BoolStorePrefInput>>;
   secondThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   selectDestinationStoreForAnInternalOrder?: InputMaybe<
@@ -11463,6 +12200,24 @@ export type UpsertPreferencesInput = {
   >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
+
+export type UpsertSiteError = {
+  __typename: 'UpsertSiteError';
+  error: UpsertSiteErrorInterface;
+};
+
+export type UpsertSiteErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertSiteInput = {
+  code?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  password?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpsertSiteResponse = SiteNode | UpsertSiteError;
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;

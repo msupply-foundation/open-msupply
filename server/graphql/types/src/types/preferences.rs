@@ -40,6 +40,11 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.custom_translations)
     }
 
+    pub async fn custom_translations_v2(&self) -> Result<serde_json::Value> {
+        let value = self.load_preference(&self.preferences.custom_translations_v2)?;
+        Ok(serde_json::to_value(value)?)
+    }
+
     pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {
         self.load_preference(
             &self
@@ -100,6 +105,10 @@ impl PreferencesNode {
         Ok(BackdatingNode::from_domain(
             self.load_preference(&self.preferences.backdating)?,
         ))
+    }
+
+    pub async fn receive_payments_from_prescriptions(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.receive_payments_from_prescriptions)
     }
 
     // Store preferences
@@ -221,6 +230,10 @@ impl PreferencesNode {
             .collect();
         Ok(statuses)
     }
+
+    pub async fn do_not_print_placeholder_line_labels(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.do_not_print_placeholder_line_labels)
+    }
 }
 
 impl PreferencesNode {
@@ -272,6 +285,7 @@ pub enum PreferenceKey {
     AllowTrackingOfStockByDonor,
     AuthorisePurchaseOrder,
     CustomTranslations,
+    CustomTranslationsV2,
     GenderOptions,
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
@@ -285,6 +299,7 @@ pub enum PreferenceKey {
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
     Backdating,
+    ReceivePaymentsFromPrescriptions,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -309,6 +324,7 @@ pub enum PreferenceKey {
     WarnWhenMissingRecentStocktake,
     InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
+    DoNotPrintPlaceholderLineLabels,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
@@ -326,6 +342,7 @@ pub enum PreferenceValueNodeType {
     Float,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
+    CustomTranslationsV2, // Specific type for v2 CustomTranslations preference
     WarnWhenMissingRecentStocktakeData,
     BackdatingData,
     String,

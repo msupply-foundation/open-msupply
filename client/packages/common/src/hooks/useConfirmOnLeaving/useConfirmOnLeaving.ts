@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBeforeUnload, useBlocker } from 'react-router-dom';
 import { create } from 'zustand';
 import { useTranslation } from '@common/intl';
@@ -52,6 +52,11 @@ export const useBlockNavigation = () => {
   const blockers: BlockingState[] = Array.from(blocking.values());
 
   const blocker = useBlocker(({ currentLocation, nextLocation }) => {
+    // Same-pathname "navigations" are re-render artifacts, not real navigations.
+    // React Router fires them on the destination after a proceed() completes, which
+    // would re-block before the destination component has reset its dirty state.
+    if (currentLocation.pathname === nextLocation.pathname) return false;
+
     for (const b of blockers) {
       if (b.options?.disabled) {
         return false;
@@ -62,7 +67,7 @@ export const useBlockNavigation = () => {
         return b.options.customCheck.navigate(currentLocation, nextLocation);
       }
 
-      if (b.shouldBlock && currentLocation.pathname !== nextLocation.pathname) {
+      if (b.shouldBlock) {
         // Set the blocker that is blocking navigation, so we can show the correct modal content
         setActiveBlocker(b);
         return true;
@@ -87,14 +92,28 @@ export const useBlockNavigation = () => {
     { capture: true }
   );
 
+  // Track the latest blocker via ref so the confirmation modal can re-check
+  // state at click time. `blocker.proceed` is only defined while state is
+  // 'blocked'; once consumed (proceeding -> unblocked) the captured reference
+  // is stale and re-invoking it throws an invariant. This can happen if the
+  // modal is re-opened with a stale callback, or if the user double-clicks OK.
+  const blockerRef = useRef(blocker);
+  blockerRef.current = blocker;
+
+  const safeProceed = useCallback(() => {
+    if (blockerRef.current.state === 'blocked') {
+      blockerRef.current.proceed?.();
+    }
+  }, []);
+
   useEffect(() => {
     if (blocker.state === 'blocked') {
       const customConfirmation = activeBlocker?.options?.customConfirmation;
 
       customConfirmation
-        ? customConfirmation(blocker.proceed)
+        ? customConfirmation(safeProceed)
         : showConfirmation({
-            onConfirm: blocker.proceed,
+            onConfirm: safeProceed,
           });
     }
   }, [blocker]);

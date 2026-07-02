@@ -141,6 +141,8 @@ fn generate_line(
         shipped_number_of_packs,
         shipped_pack_size,
         manufacturer_id,
+        reason_option_id: existing_reason_option_id,
+        received_number_of_packs: existing_received_number_of_packs,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -171,7 +173,7 @@ fn generate_line(
     let mut update_line: InvoiceLineRow = InvoiceLineRow {
         id,
         invoice_id,
-        item_link_id: item_id,
+        item_id,
         location_id,
         pack_size,
         batch,
@@ -200,9 +202,20 @@ fn generate_line(
         shipped_number_of_packs,
         volume_per_pack,
         shipped_pack_size,
-        reason_option_id: None,
+        reason_option_id: input
+            .reason_option_id
+            .as_ref()
+            .map(|u| u.value.clone())
+            .unwrap_or(existing_reason_option_id),
         linked_invoice_id: None,
         status: None,
+        received_number_of_packs: input
+            .received_number_of_packs
+            .as_ref()
+            .map(|u| u.value)
+            .unwrap_or(existing_received_number_of_packs),
+        linked_invoice_line_id: None,
+        legacy_goods_received_line_id: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {
