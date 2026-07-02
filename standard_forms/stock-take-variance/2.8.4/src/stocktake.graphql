@@ -1,4 +1,4 @@
-query StocktakeDetailQuery(
+query StocktakeQuery(
   $storeId: String!
   $dataId: String!
   $sort: PrintReportSortInput
@@ -6,11 +6,13 @@ query StocktakeDetailQuery(
   stocktake(storeId: $storeId, id: $dataId) {
     ... on StocktakeNode {
       id
+      storeId
       stocktakeDate
       stocktakeNumber
       status
       createdDatetime
       description
+      comment
     }
     ... on NodeError {
       __typename
@@ -19,7 +21,15 @@ query StocktakeDetailQuery(
       }
     }
   }
-  stocktakeLines(storeId: $storeId, stocktakeId: $dataId, reportSort: $sort) {
+  stocktakeLines(
+    storeId: $storeId
+    stocktakeId: $dataId
+    reportSort: $sort
+    # Current limit for stocktake lines in one request is 1000
+    # Very possible for larger stocktakes to exist, meaning not all pages available in report
+    # https://github.com/msupply-foundation/open-msupply/issues/8574
+    page: { first: 1000 }
+  ) {
     ... on StocktakeLineConnector {
       nodes {
         id
@@ -28,24 +38,21 @@ query StocktakeDetailQuery(
           ... on ItemNode {
             code
             name
-            unitName
           }
         }
         packSize
-        location {
-          code
-        }
         expiryDate
         countedNumberOfPacks
         batch
         snapshotNumberOfPacks
         costPricePerPack
+        comment
         reasonOption {
           ... on ReasonOptionNode {
             reason
+            id
           }
         }
-        comment
       }
     }
   }
@@ -54,17 +61,16 @@ query StocktakeDetailQuery(
       code
       storeName
       logo
-      id
       name(storeId: $storeId) {
-        address1
-        address2
-        code
-        email
-        phone
+        ... on NameNode {
+          address1
+          address2
+          code
+          email
+          name
+          phone
+        }
       }
     }
-  }
-  preferences(storeId: $storeId) {
-    blindStocktake
   }
 }

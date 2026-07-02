@@ -61,6 +61,8 @@ interface StocktakeLineEditProps {
   onClose: () => void;
   isOpen: boolean;
   isInitialStocktake: boolean;
+  hideSnapshotStock: boolean;
+  hideReason: boolean;
   getSortedItems: () => StocktakeLineFragment['item'][];
 }
 
@@ -70,6 +72,8 @@ export const StocktakeLineEdit = ({
   onClose,
   isOpen,
   isInitialStocktake,
+  hideSnapshotStock,
+  hideReason,
   getSortedItems,
 }: StocktakeLineEditProps) => {
   const theme = useAppTheme();
@@ -230,6 +234,8 @@ export const StocktakeLineEdit = ({
         update={update}
         isInitialStocktake={isInitialStocktake}
         isVaccineItem={currentItem?.isVaccine ?? false}
+        hideSnapshotStock={hideSnapshotStock}
+        hideReason={hideReason}
       />
       <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
         <ButtonWithIcon
@@ -253,6 +259,8 @@ export const StocktakeLineEdit = ({
               update={update}
               isInitialStocktake={isInitialStocktake}
               isVaccineItem={currentItem?.isVaccine ?? false}
+              hideSnapshotStock={hideSnapshotStock}
+              hideReason={hideReason}
             />
           </StyledTabContainer>
         </StyledTabPanel>
