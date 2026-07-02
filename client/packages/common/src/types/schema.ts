@@ -1089,6 +1089,18 @@ export type BatchResponseRequisitionResponse = {
   >;
 };
 
+export type BatchStockRelocationLineInput = {
+  continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
+  delete?: InputMaybe<Array<Scalars['String']['input']>>;
+  upsert?: InputMaybe<Array<UpsertStockRelocationLineInput>>;
+};
+
+export type BatchStockRelocationLineResponse = {
+  __typename: 'BatchStockRelocationLineResponse';
+  delete?: Maybe<Array<DeleteStockRelocationLineResponseWithId>>;
+  upsert?: Maybe<Array<UpsertStockRelocationLineResponseWithId>>;
+};
+
 export type BatchStocktakeInput = {
   continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
   deleteStocktakeLines?: InputMaybe<Array<DeleteStocktakeLineInput>>;
@@ -2287,6 +2299,14 @@ export type DeleteStockRelocationInput = {
   id: Scalars['String']['input'];
 };
 
+export type DeleteStockRelocationLineResponse = DeleteResponse;
+
+export type DeleteStockRelocationLineResponseWithId = {
+  __typename: 'DeleteStockRelocationLineResponseWithId';
+  id: Scalars['String']['output'];
+  response: DeleteStockRelocationLineResponse;
+};
+
 export type DeleteStockRelocationResponse = DeleteResponse;
 
 export type DeleteStockRelocationsNode = {
@@ -2681,20 +2701,18 @@ export type DraftStockRelocationLineNode = {
   __typename: 'DraftStockRelocationLineNode';
   availableNumberOfPacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
+  destinationLocation?: Maybe<LocationNode>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  fromLocation?: Maybe<LocationNode>;
-  fromNumberOfPacks?: Maybe<Scalars['Float']['output']>;
-  fromPackSize: Scalars['Float']['output'];
-  fromStockLineId: Scalars['String']['output'];
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  numberOfPacks?: Maybe<Scalars['Float']['output']>;
   onHold: Scalars['Boolean']['output'];
+  packSize: Scalars['Float']['output'];
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
-  toLocation?: Maybe<LocationNode>;
-  toNumberOfPacks?: Maybe<Scalars['Float']['output']>;
-  toPackSize?: Maybe<Scalars['Float']['output']>;
+  sourceLocation?: Maybe<LocationNode>;
+  stockLineId: Scalars['String']['output'];
   totalNumberOfPacks: Scalars['Float']['output'];
 };
 
@@ -4217,36 +4235,12 @@ export type InsertStockLineInput = {
 
 export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 
-export type InsertStockRelocationError = {
-  __typename: 'InsertStockRelocationError';
-  error: InsertStockRelocationErrorInterface;
-};
-
-export type InsertStockRelocationErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type InsertStockRelocationInput = {
-  lines: Array<InsertStockRelocationLineInput>;
-};
-
-export type InsertStockRelocationLineInput = {
-  fromNumberOfPacks: Scalars['Float']['input'];
-  fromStockLineId: Scalars['String']['input'];
+  comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  toLocationId?: InputMaybe<Scalars['String']['input']>;
-  toPackSize: Scalars['Float']['input'];
 };
 
-export type InsertStockRelocationNode = {
-  __typename: 'InsertStockRelocationNode';
-  /** Ids of the created stock_relocation records. */
-  ids: Array<Scalars['String']['output']>;
-};
-
-export type InsertStockRelocationResponse =
-  | InsertStockRelocationError
-  | InsertStockRelocationNode;
+export type InsertStockRelocationResponse = StockRelocationNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -5419,8 +5413,8 @@ export type LocationNotFound = InsertOutboundShipmentLineErrorInterface &
     description: Scalars['String']['output'];
   };
 
-export type LocationOnHold = InsertStockRelocationErrorInterface &
-  UpdateStockRelocationErrorInterface & {
+export type LocationOnHold = UpdateStockRelocationErrorInterface &
+  UpsertStockRelocationLineErrorInterface & {
     __typename: 'LocationOnHold';
     description: Scalars['String']['output'];
     locationId: Scalars['String']['output'];
@@ -5654,6 +5648,7 @@ export type Mutations = {
   batchPrescription: BatchPrescriptionResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
   batchResponseRequisition: BatchResponseRequisitionResponse;
+  batchStockRelocationLine: BatchStockRelocationLineResponse;
   batchStocktake: BatchStocktakeResponse;
   centralServer: CentralServerMutationNode;
   createInventoryAdjustment: CreateInventoryAdjustmentResponse;
@@ -5688,6 +5683,7 @@ export type Mutations = {
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
   deleteRnrForm: DeleteRnRFormResponse;
   deleteStockRelocation: DeleteStockRelocationResponse;
+  deleteStockRelocationLine: DeleteStockRelocationLineResponse;
   deleteStockRelocations: DeleteStockRelocationsResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
@@ -5808,7 +5804,6 @@ export type Mutations = {
   updateSensor: UpdateSensorResponse;
   updateStockLine: UpdateStockLineLineResponse;
   updateStockRelocation: UpdateStockRelocationResponse;
-  updateStockRelocations: UpdateStockRelocationsResponse;
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSupplierReturn: UpdateSupplierReturnResponse;
@@ -5880,6 +5875,11 @@ export type MutationsBatchRequestRequisitionArgs = {
 
 export type MutationsBatchResponseRequisitionArgs = {
   input: BatchResponseRequisitionInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsBatchStockRelocationLineArgs = {
+  input: BatchStockRelocationLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6015,6 +6015,11 @@ export type MutationsDeleteRnrFormArgs = {
 
 export type MutationsDeleteStockRelocationArgs = {
   input: DeleteStockRelocationInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeleteStockRelocationLineArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -6525,11 +6530,6 @@ export type MutationsUpdateStockRelocationArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type MutationsUpdateStockRelocationsArgs = {
-  input: Array<UpdateStockRelocationInput>;
-  storeId: Scalars['String']['input'];
-};
-
 export type MutationsUpdateStocktakeArgs = {
   input: UpdateStocktakeInput;
   storeId: Scalars['String']['input'];
@@ -6751,8 +6751,8 @@ export type NotAnOutboundShipmentError = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
-export type NotEnoughStock = InsertStockRelocationErrorInterface &
-  UpdateStockRelocationErrorInterface & {
+export type NotEnoughStock = UpdateStockRelocationErrorInterface &
+  UpsertStockRelocationLineErrorInterface & {
     __typename: 'NotEnoughStock';
     description: Scalars['String']['output'];
     stockLineId: Scalars['String']['output'];
@@ -9037,8 +9037,8 @@ export enum ReportContext {
   Report = 'REPORT',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
-  StockMovement = 'STOCK_MOVEMENT',
   Stocktake = 'STOCKTAKE',
+  StockMovement = 'STOCK_MOVEMENT',
   SupplierReturn = 'SUPPLIER_RETURN',
 }
 
@@ -9842,13 +9842,6 @@ export type StockLineNodeProgramOrderTypeArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type StockLineOnHold = InsertStockRelocationErrorInterface &
-  UpdateStockRelocationErrorInterface & {
-    __typename: 'StockLineOnHold';
-    description: Scalars['String']['output'];
-    stockLineId: Scalars['String']['output'];
-  };
-
 export type StockLineReducedBelowZero =
   InsertInventoryAdjustmentErrorInterface &
     InsertRepackErrorInterface &
@@ -9903,41 +9896,57 @@ export type StockRelocationConnector = {
 export type StockRelocationDraftLinesInput = {
   fromLocationId?: InputMaybe<Scalars['String']['input']>;
   itemId?: InputMaybe<Scalars['String']['input']>;
-  stockRelocationId?: InputMaybe<Scalars['String']['input']>;
+  stockRelocationLineId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type StockRelocationFilterInput = {
-  fromLocationCode?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  itemCodeOrName?: InputMaybe<StringFilterInput>;
+  referenceNumber?: InputMaybe<StringFilterInput>;
   status?: InputMaybe<EqualFilterStockRelocationStatusInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
-  toLocationCode?: InputMaybe<StringFilterInput>;
+};
+
+export type StockRelocationLineConnector = {
+  __typename: 'StockRelocationLineConnector';
+  nodes: Array<StockRelocationLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type StockRelocationLineNode = {
+  __typename: 'StockRelocationLineNode';
+  batch?: Maybe<Scalars['String']['output']>;
+  destinationLocation?: Maybe<LocationNode>;
+  destinationStockLineId?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  /** The item being moved (item code/name for display). */
+  item?: Maybe<ItemNode>;
+  itemId: Scalars['String']['output'];
+  numberOfPacks: Scalars['Float']['output'];
+  packSize: Scalars['Float']['output'];
+  sourceLocation?: Maybe<LocationNode>;
+  /** The source stock line (e.g. for packs currently in stock). */
+  stockLine?: Maybe<StockLineNode>;
+  stockLineId: Scalars['String']['output'];
+  stockRelocationId: Scalars['String']['output'];
 };
 
 export type StockRelocationNode = {
   __typename: 'StockRelocationNode';
-  availableNumberOfPacks: Scalars['Float']['output'];
-  batch?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
+  createdBy: Scalars['String']['output'];
   createdDatetime: Scalars['DateTime']['output'];
-  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
-  fromLocation?: Maybe<LocationNode>;
-  fromPackSize: Scalars['Float']['output'];
-  fromStockLineId: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  itemCode: Scalars['String']['output'];
-  itemName: Scalars['String']['output'];
-  numberOfPacks: Scalars['Float']['output'];
-  onHold: Scalars['Boolean']['output'];
-  restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
+  lineCount: Scalars['Int']['output'];
+  lines: StockRelocationLineConnector;
+  referenceNumber: Scalars['String']['output'];
   status: StockRelocationNodeStatus;
-  toLocation?: Maybe<LocationNode>;
-  toPackSize?: Maybe<Scalars['Float']['output']>;
-  toStockLineId?: Maybe<Scalars['String']['output']>;
+  storeId: Scalars['String']['output'];
 };
 
 export enum StockRelocationNodeStatus {
+  Confirmed = 'CONFIRMED',
   Finalised = 'FINALISED',
   New = 'NEW',
 }
@@ -9945,16 +9954,10 @@ export enum StockRelocationNodeStatus {
 export type StockRelocationResponse = RecordNotFound | StockRelocationNode;
 
 export enum StockRelocationSortFieldInput {
-  Batch = 'batch',
   CreatedDatetime = 'createdDatetime',
-  ExpiryDate = 'expiryDate',
   FinalisedDatetime = 'finalisedDatetime',
-  FromLocation = 'fromLocation',
-  ItemCode = 'itemCode',
-  ItemName = 'itemName',
-  NumberOfPacks = 'numberOfPacks',
+  ReferenceNumber = 'referenceNumber',
   Status = 'status',
-  ToLocation = 'toLocation',
 }
 
 export type StockRelocationSortInput = {
@@ -11600,30 +11603,14 @@ export type UpdateStockRelocationErrorInterface = {
 };
 
 export type UpdateStockRelocationInput = {
-  fromNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   status?: InputMaybe<StockRelocationNodeStatus>;
-  toLocationId?: InputMaybe<NullableStringUpdate>;
-  toPackSize?: InputMaybe<Scalars['Float']['input']>;
-};
-
-export type UpdateStockRelocationNode = {
-  __typename: 'UpdateStockRelocationNode';
-  id: Scalars['String']['output'];
 };
 
 export type UpdateStockRelocationResponse =
-  | UpdateStockRelocationError
-  | UpdateStockRelocationNode;
-
-export type UpdateStockRelocationsNode = {
-  __typename: 'UpdateStockRelocationsNode';
-  ids: Array<Scalars['String']['output']>;
-};
-
-export type UpdateStockRelocationsResponse =
-  | UpdateStockRelocationError
-  | UpdateStockRelocationsNode;
+  | StockRelocationNode
+  | UpdateStockRelocationError;
 
 export type UpdateStocktakeError = {
   __typename: 'UpdateStocktakeError';
@@ -11994,6 +11981,33 @@ export type UpsertPreferencesInput = {
     Array<WarnWhenMissingRecentStocktakeInput>
   >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type UpsertStockRelocationLineError = {
+  __typename: 'UpsertStockRelocationLineError';
+  error: UpsertStockRelocationLineErrorInterface;
+};
+
+export type UpsertStockRelocationLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertStockRelocationLineInput = {
+  destinationLocationId?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  numberOfPacks: Scalars['Float']['input'];
+  stockLineId: Scalars['String']['input'];
+  stockRelocationId: Scalars['String']['input'];
+};
+
+export type UpsertStockRelocationLineResponse =
+  | StockRelocationLineNode
+  | UpsertStockRelocationLineError;
+
+export type UpsertStockRelocationLineResponseWithId = {
+  __typename: 'UpsertStockRelocationLineResponseWithId';
+  id: Scalars['String']['output'];
+  response: UpsertStockRelocationLineResponse;
 };
 
 export type UpsertVaccineCourseDoseInput = {
