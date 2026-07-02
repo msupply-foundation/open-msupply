@@ -1,4 +1,5 @@
 pub mod campaign;
+pub mod custom_field;
 mod mutations;
 mod queries;
 mod subscriptions;

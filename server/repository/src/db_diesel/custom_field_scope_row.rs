@@ -141,6 +141,22 @@ impl<'a> CustomFieldScopeRowRepository<'a> {
             .filter(custom_field_scope::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    /// Look up the single scope row for a `(custom_field, scope)` pair — the
+    /// table's unique key. Used by the config UI's update path, where the
+    /// client sends `custom_field_id` + `scope` rather than the row id.
+    pub fn find_one_by_field_id_and_scope(
+        &self,
+        field_id: &str,
+        scope_str: &str,
+    ) -> Result<Option<CustomFieldScopeRow>, RepositoryError> {
+        let result = custom_field_scope
+            .filter(custom_field_id.eq(field_id))
+            .filter(scope.eq(scope_str))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
 }
 
 impl Upsert for CustomFieldScopeRow {
