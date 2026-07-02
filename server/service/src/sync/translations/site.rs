@@ -402,6 +402,7 @@ mod tests {
             last_connection_datetime: Some(metadata_dt),
             last_sync_datetime: Some(metadata_dt),
             first_sync_datetime: Some(metadata_dt),
+            ..Default::default()
         };
         assert_eq!(result, PullTranslateResult::upsert(expected));
     }

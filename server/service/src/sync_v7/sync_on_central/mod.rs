@@ -973,6 +973,7 @@ mod tests {
                 token: "shared-token".to_string(),
                 hardware_id: "any-device".to_string(),
                 version: Version::from_package_json(),
+                app_name: "Open mSupply Desktop".to_string(),
             },
         )
         .unwrap();
@@ -985,6 +986,7 @@ mod tests {
                 token: "wrong-token".to_string(),
                 hardware_id: "any-device".to_string(),
                 version: Version::from_package_json(),
+                app_name: "Open mSupply Desktop".to_string(),
             },
         )
         .err()
