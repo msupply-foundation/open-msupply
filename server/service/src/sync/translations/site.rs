@@ -395,6 +395,7 @@ mod tests {
             hashed_password: "hash_a".to_string(),
             hardware_id: Some("hw-uuid-aaa".to_string()),
             code: "code1".to_string(),
+            is_multi_device: false,
             token: Some("local-token".to_string()),
             sync_version: SyncVersion::V5V6,
             app_name: Some("Open mSupply Desktop".to_string()),
