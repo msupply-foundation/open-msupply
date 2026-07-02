@@ -65,6 +65,10 @@ impl SiteNode {
     pub async fn hardware_id(&self) -> Option<&str> {
         self.site.hardware_id.as_deref()
     }
+
+    pub async fn is_multi_device(&self) -> bool {
+        self.site.is_multi_device
+    }
 }
 
 #[derive(InputObject, Clone)]
