@@ -1499,6 +1499,7 @@ export type CentralSiteMutations = {
   clearSiteHardwareId: ClearSiteHardwareIdNode;
   clearSiteToken: ClearSiteTokenNode;
   deleteSite: DeleteSiteResponse;
+  setSiteMultiDevice: SetSiteMultiDeviceNode;
   upsertSite: UpsertSiteResponse;
 };
 
@@ -1515,6 +1516,11 @@ export type CentralSiteMutationsClearSiteTokenArgs = {
 };
 
 export type CentralSiteMutationsDeleteSiteArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsSetSiteMultiDeviceArgs = {
+  isMultiDevice: Scalars['Boolean']['input'];
   siteId: Scalars['Int']['input'];
 };
 
@@ -9807,6 +9813,11 @@ export type SetPrescribedQuantityWithId = {
   response: SetPrescribedQuantityResponse;
 };
 
+export type SetSiteMultiDeviceNode = {
+  __typename: 'SetSiteMultiDeviceNode';
+  id: Scalars['Int']['output'];
+};
+
 export type ShippingMethodConnector = {
   __typename: 'ShippingMethodConnector';
   nodes: Array<ShippingMethodNode>;
@@ -9849,6 +9860,7 @@ export type SiteNode = {
   code: Scalars['String']['output'];
   hardwareId?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  isMultiDevice: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
 };
 

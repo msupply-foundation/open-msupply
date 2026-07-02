@@ -80,3 +80,12 @@
 #     hours: 0
 #     mins: 1
 #     secs: 0
+# changelog_dedup: # central + postgres only; periodically deletes superseded (duplicate) changelog rows
+#   interval:                    # how often the task wakes to consider a dedup run
+#     hours: 24
+#     mins: 0
+#     secs: 0
+#   time_window:                 # optional; if set, dedup only runs between these local times and stops at 'to'
+#     from: "02:00"
+#     to: "05:00"
+#   batch_size: 50000            # changelog rows deleted per committed batch

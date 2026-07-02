@@ -154,10 +154,13 @@ mod test_sync_v7_client_api {
         assert!(headers.get(HARDWARE_ID_HEADER).is_some());
     }
 
-    async fn site_status(req: HttpRequest) -> actix_web::HttpResponse {
+    async fn site_status(
+        is_multi_device: web::Data<bool>,
+        req: HttpRequest,
+    ) -> actix_web::HttpResponse {
         assert_auth_headers(&req);
         actix_web::HttpResponse::Ok().json(json!({
-            "Ok": { "siteId": 1, "centralSiteId": 1 }
+            "Ok": { "siteId": 1, "centralSiteId": 1, "isMultiDeviceSite": *is_multi_device.get_ref() }
         }))
     }
 
@@ -195,6 +198,7 @@ mod test_sync_v7_client_api {
         mock_data: Option<MockData>,
         batch_size: BatchSize,
         is_initialising: bool,
+        is_multi_device: bool,
     }
 
     /// Runs sync_v7 against a mock central with the given pull response.
@@ -206,6 +210,7 @@ mod test_sync_v7_client_api {
             mock_data,
             batch_size,
             is_initialising,
+            is_multi_device,
         }: Test,
     ) -> (
         StorageConnection,
@@ -256,6 +261,7 @@ mod test_sync_v7_client_api {
             .await;
 
         let pull_data = web::Data::new(pull_response);
+        let is_multi_device_data = web::Data::new(is_multi_device);
 
         let captured_requests = web::Data::new(Mutex::new(Vec::<serde_json::Value>::new()));
         let server_captured_requests = captured_requests.clone();
@@ -263,6 +269,7 @@ mod test_sync_v7_client_api {
             App::new()
                 .app_data(server_captured_requests.clone())
                 .app_data(pull_data.clone())
+                .app_data(is_multi_device_data.clone())
                 .route("/central/sync_v7/site_status", web::post().to(site_status))
                 .route("/central/sync_v7/push", web::post().to(push))
                 .route("/central/sync_v7/pull", web::post().to(pull))
@@ -315,6 +322,7 @@ mod test_sync_v7_client_api {
         test_sync_v7_pull_and_integrate().await;
         test_sync_v7_integrates_records_out_of_fk_order().await;
         test_sync_v7_push().await;
+        test_sync_v7_writes_multi_device_kvs().await;
     }
 
     async fn test_sync_v7_pull_and_integrate() {
@@ -559,5 +567,21 @@ mod test_sync_v7_client_api {
                 ]}
             ])
         );
+    }
+
+    /// check_site_status persists central's isMultiDeviceSite into the KVS on each sync.
+    async fn test_sync_v7_writes_multi_device_kvs() {
+        let (connection, _) = run_sync_v7_test(Test {
+            db_name: "test_sync_v7_writes_multi_device_kvs",
+            is_initialising: false,
+            is_multi_device: true,
+            ..Default::default()
+        })
+        .await;
+
+        let stored = KeyValueStoreRepository::new(&connection)
+            .get_bool(KeyType::SettingsSyncSiteIsMultiDevice)
+            .unwrap();
+        assert_eq!(stored, Some(true));
     }
 }

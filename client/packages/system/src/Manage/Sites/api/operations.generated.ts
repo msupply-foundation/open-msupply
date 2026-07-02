@@ -9,6 +9,7 @@ export type SiteRowFragment = {
   code: string;
   name: string;
   hardwareId?: string | null;
+  isMultiDevice: boolean;
 };
 
 export type SiteStoreRowFragment = {
@@ -41,6 +42,7 @@ export type SitesQuery = {
           code: string;
           name: string;
           hardwareId?: string | null;
+          isMultiDevice: boolean;
         }>;
       };
     };
@@ -64,6 +66,7 @@ export type UpsertSiteMutation = {
             code: string;
             name: string;
             hardwareId?: string | null;
+            isMultiDevice: boolean;
           }
         | {
             __typename: 'UpsertSiteError';
@@ -151,6 +154,22 @@ export type ClearSiteHardwareIdMutation = {
   };
 };
 
+export type SetSiteMultiDeviceMutationVariables = Types.Exact<{
+  siteId: Types.Scalars['Int']['input'];
+  isMultiDevice: Types.Scalars['Boolean']['input'];
+}>;
+
+export type SetSiteMultiDeviceMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    site: {
+      __typename: 'CentralSiteMutations';
+      setSiteMultiDevice: { __typename: 'SetSiteMultiDeviceNode'; id: number };
+    };
+  };
+};
+
 export type StoresBySiteQueryVariables = Types.Exact<{
   siteId: Types.Scalars['Int']['input'];
 }>;
@@ -177,6 +196,7 @@ export const SiteRowFragmentDoc = gql`
     code
     name
     hardwareId
+    isMultiDevice
   }
 `;
 export const SiteStoreRowFragmentDoc = gql`
@@ -305,6 +325,17 @@ export const ClearSiteHardwareIdDocument = gql`
     centralServer {
       site {
         clearSiteHardwareId(siteId: $siteId) {
+          id
+        }
+      }
+    }
+  }
+`;
+export const SetSiteMultiDeviceDocument = gql`
+  mutation setSiteMultiDevice($siteId: Int!, $isMultiDevice: Boolean!) {
+    centralServer {
+      site {
+        setSiteMultiDevice(siteId: $siteId, isMultiDevice: $isMultiDevice) {
           id
         }
       }
@@ -449,6 +480,24 @@ export function getSdk(
             signal,
           }),
         'clearSiteHardwareId',
+        'mutation',
+        variables
+      );
+    },
+    setSiteMultiDevice(
+      variables: SetSiteMultiDeviceMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<SetSiteMultiDeviceMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SetSiteMultiDeviceMutation>({
+            document: SetSiteMultiDeviceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'setSiteMultiDevice',
         'mutation',
         variables
       );
