@@ -333,12 +333,35 @@ pub struct ChangelogDedupSettings {
     batch_size: i64,
 }
 
-/// A local-clock time-of-day window, `"HH:MM"` strings. Same-day only
-/// (midnight-crossing windows are not yet supported).
+/// A local-clock time-of-day window. `from`/`to` are `"HH:MM"` in yaml, parsed to
+/// `NaiveTime` at deserialize time — a malformed value fails config loading at
+/// startup rather than silently disabling the task. Same-day only (midnight-
+/// crossing windows are not yet supported).
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct TimeWindow {
-    pub from: String,
-    pub to: String,
+    #[serde(with = "hh_mm")]
+    pub from: chrono::NaiveTime,
+    #[serde(with = "hh_mm")]
+    pub to: chrono::NaiveTime,
+}
+
+/// serde (de)serialiser for `NaiveTime` <-> `"HH:MM"` yaml strings.
+mod hh_mm {
+    use chrono::NaiveTime;
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    const FORMAT: &str = "%H:%M";
+
+    pub fn serialize<S: Serializer>(time: &NaiveTime, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(&time.format(FORMAT).to_string())
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error> {
+        let raw = String::deserialize(d)?;
+        NaiveTime::parse_from_str(raw.trim(), FORMAT).map_err(|_| {
+            serde::de::Error::custom(format!("time_window time must be \"HH:MM\", got {raw:?}"))
+        })
+    }
 }
 
 fn default_dedup_batch() -> i64 {
@@ -371,26 +394,34 @@ impl ChangelogDedupSettings {
 }
 
 impl TimeWindow {
-    /// Parse `"HH:MM"` into a `NaiveTime`. Returns `None` on malformed input so
-    /// the caller can log and skip rather than panic.
-    fn parse(raw: &str) -> Option<chrono::NaiveTime> {
-        chrono::NaiveTime::parse_from_str(raw.trim(), "%H:%M").ok()
-    }
-
-    pub fn from_time(&self) -> Option<chrono::NaiveTime> {
-        Self::parse(&self.from)
-    }
-
-    pub fn to_time(&self) -> Option<chrono::NaiveTime> {
-        Self::parse(&self.to)
-    }
-
-    /// True when `now` is within [from, to] (same-day). Malformed bounds → false
-    /// (fail closed: don't run dedup if the window can't be parsed).
+    /// True when `now` is within the [from, to] window (same-day).
     pub fn contains(&self, now: chrono::NaiveTime) -> bool {
-        match (self.from_time(), self.to_time()) {
-            (Some(from), Some(to)) => now >= from && now <= to,
-            _ => false,
-        }
+        now >= self.from && now <= self.to
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::ChangelogDedupSettings;
+    use chrono::NaiveTime;
+
+    #[test]
+    fn time_window_parses_hh_mm() {
+        let s: ChangelogDedupSettings =
+            serde_yaml::from_str("time_window:\n  from: \"02:00\"\n  to: \"05:30\"").unwrap();
+        let window = s.time_window.unwrap();
+        assert_eq!(window.from, NaiveTime::from_hms_opt(2, 0, 0).unwrap());
+        assert_eq!(window.to, NaiveTime::from_hms_opt(5, 30, 0).unwrap());
+        assert!(window.contains(NaiveTime::from_hms_opt(3, 0, 0).unwrap()));
+        assert!(!window.contains(NaiveTime::from_hms_opt(6, 0, 0).unwrap()));
+    }
+
+    #[test]
+    fn time_window_rejects_bad_format() {
+        // A malformed HH:MM must fail deserialization (config load) rather than
+        // silently disabling the task.
+        let result: Result<ChangelogDedupSettings, _> =
+            serde_yaml::from_str("time_window:\n  from: \"2pm\"\n  to: \"05:00\"");
+        assert!(result.is_err());
     }
 }

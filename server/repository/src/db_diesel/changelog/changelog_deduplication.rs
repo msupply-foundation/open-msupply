@@ -115,6 +115,8 @@ impl<'a> ChangelogRepository<'a> {
         .execute(self.connection.lock().connection())? as i64;
 
         // Pop the same cursors from the dead-set (index-driven via index_changelog_dead_cursor).
+        // A crash between the two deletes self-heals because `prepare_dead_set` rebuilds
+        // `changelog_dead` from scratch each run.
         diesel::sql_query(
             "DELETE FROM changelog_dead \
              WHERE cursor IN (SELECT cursor FROM changelog_dead ORDER BY cursor LIMIT $1)",
