@@ -1,59 +1,38 @@
 fragment StockMovementRow on StockRelocationNode {
   __typename
   id
+  referenceNumber
+  status
+  comment
   createdDatetime
   finalisedDatetime
-  status
-  numberOfPacks
-  fromPackSize
-  toPackSize
-  onHold
-  restrictedLocationTypeId
-  itemCode
-  itemName
-  batch
-  expiryDate
-  fromStockLineId
-  toStockLineId
-  fromLocation {
-    __typename
-    id
-    code
-    name
-    onHold
-  }
-  toLocation {
-    __typename
-    id
-    code
-    name
-  }
+  lineCount
 }
 
-fragment StockMovementDraftLine on DraftStockRelocationLineNode {
+fragment StockMovementLine on StockRelocationLineNode {
   __typename
   id
-  fromStockLineId
+  stockRelocationId
+  stockLineId
   itemId
-  itemCode
-  itemName
-  restrictedLocationTypeId
   batch
   expiryDate
-  fromPackSize
-  availableNumberOfPacks
-  totalNumberOfPacks
-  onHold
-  fromNumberOfPacks
-  toPackSize
-  toNumberOfPacks
-  fromLocation {
+  packSize
+  numberOfPacks
+  item {
+    __typename
+    id
+    code
+    name
+    unitName
+  }
+  sourceLocation {
     __typename
     id
     code
     name
   }
-  toLocation {
+  destinationLocation {
     __typename
     id
     code
@@ -61,12 +40,22 @@ fragment StockMovementDraftLine on DraftStockRelocationLineNode {
   }
 }
 
-query stockRelocationDraftLines(
-  $storeId: String!
-  $input: StockRelocationDraftLinesInput!
-) {
-  stockRelocationDraftLines(storeId: $storeId, input: $input) {
-    ...StockMovementDraftLine
+fragment StockMovement on StockRelocationNode {
+  __typename
+  id
+  referenceNumber
+  status
+  comment
+  createdDatetime
+  createdBy
+  finalisedDatetime
+  lineCount
+  lines {
+    __typename
+    totalCount
+    nodes {
+      ...StockMovementLine
+    }
   }
 }
 
@@ -93,31 +82,27 @@ query stockRelocations(
   }
 }
 
+query stockRelocation($storeId: String!, $id: String!) {
+  stockRelocation(storeId: $storeId, id: $id) {
+    __typename
+    ... on StockRelocationNode {
+      ...StockMovement
+    }
+    ... on RecordNotFound {
+      __typename
+      description
+    }
+  }
+}
+
 mutation insertStockRelocation(
   $input: InsertStockRelocationInput!
   $storeId: String!
 ) {
   insertStockRelocation(input: $input, storeId: $storeId) {
     __typename
-    ... on InsertStockRelocationNode {
-      __typename
-      ids
-    }
-    ... on InsertStockRelocationError {
-      __typename
-      error {
-        __typename
-        description
-        ... on StockLineOnHold {
-          stockLineId
-        }
-        ... on LocationOnHold {
-          locationId
-        }
-        ... on NotEnoughStock {
-          stockLineId
-        }
-      }
+    ... on StockRelocationNode {
+      id
     }
   }
 }
@@ -128,55 +113,21 @@ mutation updateStockRelocation(
 ) {
   updateStockRelocation(input: $input, storeId: $storeId) {
     __typename
-    ... on UpdateStockRelocationNode {
-      __typename
-      id
+    ... on StockRelocationNode {
+      ...StockMovement
     }
     ... on UpdateStockRelocationError {
       __typename
       error {
         __typename
         description
-      }
-    }
-  }
-}
-
-mutation updateStockRelocations(
-  $input: [UpdateStockRelocationInput!]!
-  $storeId: String!
-) {
-  updateStockRelocations(input: $input, storeId: $storeId) {
-    __typename
-    ... on UpdateStockRelocationsNode {
-      __typename
-      ids
-    }
-    ... on UpdateStockRelocationError {
-      __typename
-      error {
-        __typename
-        description
-        ... on StockLineOnHold {
+        ... on NotEnoughStock {
           stockLineId
         }
         ... on LocationOnHold {
           locationId
         }
-        ... on NotEnoughStock {
-          stockLineId
-        }
       }
-    }
-  }
-}
-
-mutation deleteStockRelocations($ids: [String!]!, $storeId: String!) {
-  deleteStockRelocations(ids: $ids, storeId: $storeId) {
-    __typename
-    ... on DeleteStockRelocationsNode {
-      __typename
-      ids
     }
   }
 }
@@ -193,3 +144,14 @@ mutation deleteStockRelocation(
     }
   }
 }
+
+mutation deleteStockRelocations($ids: [String!]!, $storeId: String!) {
+  deleteStockRelocations(ids: $ids, storeId: $storeId) {
+    __typename
+    ... on DeleteStockRelocationsNode {
+      __typename
+      ids
+    }
+  }
+}
+
