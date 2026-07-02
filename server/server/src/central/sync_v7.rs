@@ -188,6 +188,7 @@ mod test_sync_v7_server_api {
             .insert_header((AUTHORIZATION, "Bearer test_token"))
             .insert_header((HARDWARE_ID_HEADER, "hw-1"))
             .insert_header((APP_VERSION_HEADER, Version::from_package_json().to_string()))
+            .insert_header((APP_NAME_HEADER, "Open mSupply Desktop"))
     }
 
     #[actix_rt::test]
@@ -198,6 +199,7 @@ mod test_sync_v7_server_api {
             .uri("/sync_v7/get_token")
             .set_json(json!({
                 "version": Version::from_package_json(),
+                "appName": "Open mSupply Desktop",
                 "name": "test_site",
                 "passwordSha256": "hashed_password_value",
                 "hardwareId": "hw-1",
