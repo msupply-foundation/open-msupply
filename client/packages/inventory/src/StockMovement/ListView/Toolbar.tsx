@@ -24,9 +24,9 @@ export const Toolbar = () => {
           filters={[
             {
               type: 'text',
-              name: t('label.code-or-name'),
-              urlParameter: 'itemCodeOrName',
-              placeholder: t('placeholder.enter-an-item-code-or-name'),
+              name: t('label.reference'),
+              urlParameter: 'referenceNumber',
+              placeholder: t('placeholder.search-by-reference'),
               isDefault: true,
             },
             {
@@ -38,18 +38,6 @@ export const Toolbar = () => {
                 value: status,
               })),
             },
-            {
-              type: 'text',
-              name: t('label.from-location'),
-              urlParameter: 'fromLocationCode',
-              placeholder: t('placeholder.search-by-location-code'),
-            },
-            {
-              type: 'text',
-              name: t('label.to-location'),
-              urlParameter: 'toLocationCode',
-              placeholder: t('placeholder.search-by-location-code'),
-            }
           ]}
         />
       </Box>
