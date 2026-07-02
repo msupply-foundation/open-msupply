@@ -17,7 +17,7 @@ use repository::{
     },
     migrations::constants::COLD_CHAIN_EQUIPMENT_UUID,
     ActivityLogType, LocationRow, LocationRowRepository, LocationTypeFilter,
-    LocationTypeRepository, RepositoryError, StorageConnection, StringFilter, Upsert,
+    LocationTypeRepository, RepositoryError, StorageConnection, StringFilter,
 };
 use util::uuid::uuid;
 
@@ -181,7 +181,7 @@ fn create_asset_locations(
             location_type_id: None,
             volume: 0.0,
         };
-        location.upsert(connection)?;
+        LocationRowRepository::new(connection).upsert_one(&location)?;
         return set_asset_location(connection, &asset.id, vec![location.id]);
     }
 
@@ -211,7 +211,7 @@ fn create_asset_locations(
             location_type_id,
             volume,
         };
-        location.upsert(connection)?;
+        LocationRowRepository::new(connection).upsert_one(&location)?;
         location_ids.push(location.id);
     }
 
