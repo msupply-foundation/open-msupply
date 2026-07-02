@@ -98,18 +98,26 @@ pub async fn get_token(
 
         ctx.connection
             .transaction_sync(|connection| {
-                if !relax_checks && site.token.is_some() {
+                // Multi device is the per-site equivalent of the relax flag — both
+                // bypass the single-device guards.
+                let skip_guards = relax_checks || site.is_multi_device;
+
+                if !skip_guards && site.token.is_some() {
                     return Err(SyncError::TokenAlreadyAllocated);
                 }
 
                 let hardware_id = match &site.hardware_id {
-                    Some(existing) if !relax_checks && existing != &input.hardware_id => {
+                    Some(existing) if !skip_guards && existing != &input.hardware_id => {
                         return Err(SyncError::HardwareIdMismatch);
                     }
                     _ => input.hardware_id.clone(),
                 };
 
-                let token = util::uuid::uuid();
+                // Multi device sites share a token: reuse the existing one, otherwise mint a new one.
+                let token = match (site.is_multi_device, site.token.clone()) {
+                    (true, Some(existing)) => existing,
+                    _ => util::uuid::uuid(),
+                };
 
                 SiteRowRepository::new(connection).upsert(&SiteRow {
                     hardware_id: Some(hardware_id),
@@ -246,8 +254,10 @@ fn validate(
     let site =
         get_site_by_token(&ctx.connection, &common.token)?.ok_or(SyncError::TokenNotFound)?;
 
-    // The token above already identified the site; the hardware-id match is the relaxable part.
-    if !ctx.relax_hardware_id_token_checks {
+    // The token above already identified the site; the hardware-id match is the
+    // relaxable part — bypassed by the relax flag or a multi device site.
+    let skip_hardware_id_check = ctx.relax_hardware_id_token_checks || site.is_multi_device;
+    if !skip_hardware_id_check {
         match site.hardware_id.as_deref() {
             Some(id) if id == common.hardware_id => {}
             _ => return Err(SyncError::HardwareIdMismatch),
@@ -280,6 +290,7 @@ pub async fn site_status(
         Ok(status::Output {
             site_id: site.id,
             central_site_id,
+            is_multi_device_site: site.is_multi_device,
         })
     })
     .await
@@ -295,7 +306,11 @@ pub async fn pull(
     tokio::task::spawn_blocking(move || {
         let (site, ctx) = validate(&service_provider, &common)?;
 
-        let base = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
+        let base = if site.is_multi_device {
+            ChangelogFilter::multi_device_all_data_for_site(site.id, input.is_initialising, None)
+        } else {
+            ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None)
+        };
         let filter = match input.filter {
             Some(extra) => ChangelogCondition::And(vec![base, extra]),
             None => base,
@@ -510,6 +525,11 @@ fn integrate_for_site(
     let source_site_active_store_ids =
         ActiveStoresOnSite::store_ids_for_site(&ctx.connection, site_id)?;
 
+    let is_multi_device = SiteRowRepository::new(&ctx.connection)
+        .find_one_by_id(site_id)?
+        .map(|site| site.is_multi_device)
+        .unwrap_or(false);
+
     validate_translate_integrate(
         &ctx.connection,
         None,
@@ -517,6 +537,7 @@ fn integrate_for_site(
         None,
         SyncContext::Central {
             source_site_active_store_ids,
+            is_multi_device,
         },
         false,
     )?;
@@ -569,6 +590,7 @@ mod tests {
             name: SITE_NAME.to_string(),
             hashed_password: bcrypt::hash(PASSWORD_SHA256, bcrypt::DEFAULT_COST).unwrap(),
             hardware_id: None,
+            is_multi_device: false,
             token,
             sync_version: repository::SyncVersion::V7,
         };
@@ -838,6 +860,88 @@ mod tests {
             &Common {
                 token: "wrong_token".to_string(),
                 ..wrong_hw
+            },
+        )
+        .err()
+        .unwrap();
+        assert!(matches!(err, SyncError::TokenNotFound));
+    }
+
+    /// Upserts the `test_site` then flips it to multi device with the given token.
+    fn multi_device_site(connection: &StorageConnection, token: Option<String>) -> SiteRow {
+        let site = test_site(connection, None);
+        let site = SiteRow {
+            is_multi_device: true,
+            token,
+            ..site
+        };
+        SiteRowRepository::new(connection).upsert(&site).unwrap();
+        site
+    }
+
+    #[actix_rt::test]
+    async fn get_token_multi_device_reuses_shared_token() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "get_token_multi_device_reuses_shared_token",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
+
+        // A shared token is already allocated; a multi device site reuses it
+        // rather than rejecting with TokenAlreadyAllocated.
+        multi_device_site(&connection, Some("shared-token".to_string()));
+        let sp = Arc::new(ServiceProvider::new(connection_manager));
+
+        let output = get_token(sp.clone(), input()).await.unwrap();
+        assert_eq!(output.token, "shared-token");
+
+        // A second device (different hardware id, same credentials) gets the same
+        // token — no TokenAlreadyAllocated, no HardwareIdMismatch.
+        let mut second_device = input();
+        second_device.hardware_id = "hw-id-second".to_string();
+        let output_2 = get_token(sp, second_device).await.unwrap();
+        assert_eq!(output_2.token, "shared-token");
+    }
+
+    #[actix_rt::test]
+    async fn validate_multi_device_skips_hardware_id_check() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "validate_multi_device_skips_hardware_id_check",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
+
+        multi_device_site(&connection, Some("shared-token".to_string()));
+        let sp = Arc::new(ServiceProvider::new(connection_manager));
+
+        // Any hardware id is accepted for a multi device site, as long as the
+        // token identifies the site.
+        let (site, _) = validate(
+            &sp,
+            &Common {
+                token: "shared-token".to_string(),
+                hardware_id: "any-device".to_string(),
+                version: Version::from_package_json(),
+            },
+        )
+        .unwrap();
+        assert_eq!(site.id, 1);
+
+        // The token still identifies the site, so an unknown token is rejected.
+        let err = validate(
+            &sp,
+            &Common {
+                token: "wrong-token".to_string(),
+                hardware_id: "any-device".to_string(),
+                version: Version::from_package_json(),
             },
         )
         .err()

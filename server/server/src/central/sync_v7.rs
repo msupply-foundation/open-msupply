@@ -153,6 +153,7 @@ mod test_sync_v7_server_api {
                 name: "test_site".into(),
                 hashed_password: HASHED_PASSWORD.into(),
                 hardware_id: hardware_id.map(str::to_string),
+                is_multi_device: false,
                 token: token.map(str::to_string),
                 sync_version: SyncVersion::V7,
             })
