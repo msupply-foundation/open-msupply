@@ -160,11 +160,12 @@ impl<'a> StocktakeLineRepository<'a> {
                     apply_sort_no_case!(query, sort, reason_option::reason);
                 }
             };
-        } else {
-            query = query.order_by(stocktake_line::id.asc());
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let result = query
+            .then_order_by(stocktake_line::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<StocktakeLineJoin>(self.connection.lock().connection())?;
