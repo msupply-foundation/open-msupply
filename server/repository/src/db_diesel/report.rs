@@ -145,7 +145,11 @@ impl<'a> ReportRepository<'a> {
             }
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties (e.g. multiple versions sharing
+        // the same `code`).
         let final_query = query
+            .then_order_by(report::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
