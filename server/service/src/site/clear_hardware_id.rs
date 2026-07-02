@@ -72,6 +72,7 @@ mod tests {
             name: "Site A".to_string(),
             hashed_password: "hash".to_string(),
             hardware_id,
+            is_multi_device: false,
             token: Some("token".to_string()),
             sync_version: SyncVersion::V7,
             ..Default::default()

@@ -1,11 +1,11 @@
 use async_graphql::*;
+use chrono::NaiveDateTime;
 use graphql_core::{
     generic_filters::{EqualFilterNumberInput, StringFilterInput},
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use chrono::NaiveDateTime;
 use repository::{
     EqualFilter, PaginationOption, SiteFilter, SiteRow, SiteSort, SiteSortField, StringFilter,
     SyncVersion,
@@ -98,6 +98,10 @@ impl SiteNode {
     /// First time the remote completed an initialising pull.
     pub async fn first_sync_datetime(&self) -> Option<NaiveDateTime> {
         self.site.first_sync_datetime
+    }
+
+    pub async fn is_multi_device(&self) -> bool {
+        self.site.is_multi_device
     }
 }
 

@@ -28,6 +28,7 @@ export type DraftSite = {
   password: string;
   hardwareId?: string | null;
   syncVersion?: SyncVersionNode | null;
+  isMultiDevice: boolean;
   isNew: boolean;
 };
 
@@ -38,6 +39,7 @@ export const defaultDraftSite: DraftSite = {
   password: '',
   hardwareId: undefined,
   syncVersion: undefined,
+  isMultiDevice: false,
   isNew: true,
 };
 
@@ -74,6 +76,8 @@ export const useSites = (queryParams?: ListParams) => {
     error: clearHardwareIdError,
   } = useClearHardwareId();
 
+  const { mutateAsync: setMultiDeviceMutation } = useSetMultiDevice();
+
   const upsert = async () => {
     return await upsertMutation(draft);
   };
@@ -94,6 +98,13 @@ export const useSites = (queryParams?: ListParams) => {
     return result;
   };
 
+  // Wrap so the draft reflects the new flag immediately.
+  const setMultiDevice = async (siteId: number, isMultiDevice: boolean) => {
+    const result = await setMultiDeviceMutation({ siteId, isMultiDevice });
+    updateDraft({ isMultiDevice });
+    return result;
+  };
+
   return {
     query: { data, isFetching, isError },
     upsert: { upsert, isUpserting, upsertError },
@@ -108,6 +119,7 @@ export const useSites = (queryParams?: ListParams) => {
       isClearingHardwareId,
       clearHardwareIdError,
     },
+    setMultiDevice: { setMultiDevice },
     draft,
     updateDraft,
   };
@@ -157,7 +169,6 @@ const useUpsertSite = () => {
         code: draft.code || undefined,
         name: draft.name,
         password: draft.password || undefined,
-
       },
     });
     const upsertResult = result?.centralServer?.site?.upsertSite;
@@ -272,6 +283,31 @@ const useClearHardwareId = () => {
   const mutationFn = async (siteId: number) => {
     const result = await siteApi.clearSiteHardwareId({ siteId });
     return result?.centralServer?.site?.clearSiteHardwareId;
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [SITE] });
+    },
+    onError: (e: unknown) => {
+      console.error(e);
+    },
+  });
+};
+
+const useSetMultiDevice = () => {
+  const { siteApi, queryClient } = useSiteGraphQL();
+
+  const mutationFn = async ({
+    siteId,
+    isMultiDevice,
+  }: {
+    siteId: number;
+    isMultiDevice: boolean;
+  }) => {
+    const result = await siteApi.setSiteMultiDevice({ siteId, isMultiDevice });
+    return result?.centralServer?.site?.setSiteMultiDevice;
   };
 
   return useMutation({

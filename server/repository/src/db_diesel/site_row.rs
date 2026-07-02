@@ -14,6 +14,7 @@ table! {
         name -> Text,
         hashed_password -> Text,
         hardware_id -> Nullable<Text>,
+        is_multi_device -> Bool,
         token -> Nullable<Text>,
         sync_version -> Text,
         app_name -> Nullable<Text>,
@@ -36,6 +37,9 @@ pub struct SiteRow {
     pub name: String,
     pub hashed_password: String,
     pub hardware_id: Option<String>,
+    /// When true, multiple devices may sync against this site sharing a single
+    /// `token`, and the per-request hardware id check is bypassed.
+    pub is_multi_device: bool,
     pub token: Option<String>,
     pub sync_version: SyncVersion,
     /// Identifies the client application of the remote site (e.g. "open mSupply").
@@ -211,6 +215,7 @@ mod tests {
             name: "site_a".to_string(),
             hashed_password: "hash_a".to_string(),
             hardware_id: Some("hw-id-a".to_string()),
+            is_multi_device: false,
             token: None,
             sync_version: SyncVersion::V5V6,
             ..Default::default()
@@ -225,6 +230,7 @@ mod tests {
             name: "site_b".to_string(),
             hashed_password: "hash_b".to_string(),
             hardware_id: None,
+            is_multi_device: false,
             token: Some("token_b".to_string()),
             sync_version: SyncVersion::V5V6,
             ..Default::default()

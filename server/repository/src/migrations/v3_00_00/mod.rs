@@ -5,6 +5,8 @@ mod add_changelog_dedup_cursor_key_type;
 mod add_is_standalone_central_pg_enum;
 mod add_legacy_goods_received_link_fields;
 mod add_merge_sync_message_processor_cursor_pg_enum;
+mod add_site_is_multi_device_pg_enum;
+mod add_site_multi_device;
 mod add_site_sync_metadata;
 mod add_site_sync_version;
 mod add_sync_log_v7;
@@ -71,6 +73,8 @@ impl Migration for V3_00_00 {
             Box::new(remove_add_central_patient_visibility_processor_cursor::Migrate),
             Box::new(populate_routed_changelog_for_sync_v7_tables::Migrate),
             Box::new(add_changelog_dedup_cursor_key_type::Migrate),
+            Box::new(add_site_multi_device::Migrate),
+            Box::new(add_site_is_multi_device_pg_enum::Migrate),
             Box::new(add_site_sync_metadata::Migrate),
         ]
     }

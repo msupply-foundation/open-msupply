@@ -92,6 +92,10 @@ impl SyncTranslation for SiteTranslation {
         // 4D. Preserve any existing local values so a routine site push-down (e.g. a
         // name/code change) doesn't wipe them.
         let existing = SiteRowRepository::new(con).find_one_by_id(data.site_id)?;
+        let is_multi_device = existing
+            .as_ref()
+            .map(|row| row.is_multi_device)
+            .unwrap_or(false);
 
         let result = SiteRow {
             id: data.site_id,
@@ -99,6 +103,7 @@ impl SyncTranslation for SiteTranslation {
             name: data.name,
             hashed_password: data.hashed_password,
             hardware_id: data.hardware_id,
+            is_multi_device,
             code: data.code.unwrap_or_default(),
             token: existing.as_ref().and_then(|row| row.token.clone()),
             sync_version: data.sync_version,
@@ -234,6 +239,7 @@ mod tests {
             code: "code2".to_string(),
             hashed_password: "hash".to_string(),
             hardware_id,
+            is_multi_device: false,
             token: None,
             sync_version: SyncVersion::V5V6,
             ..Default::default()
