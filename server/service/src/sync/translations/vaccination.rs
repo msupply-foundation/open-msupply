@@ -5,7 +5,7 @@ use repository::{
 use crate::sync::translations::{
     clinician::ClinicianTranslation, document::DocumentTranslation,
     invoice_line::InvoiceLineTranslation, name::NameTranslation, store::StoreTranslation,
-    user::UserTranslation,
+    user::UserTranslation, vaccine_course_dose::VaccineCourseDoseTranslation,
 };
 
 use super::{
@@ -43,6 +43,7 @@ impl SyncTranslation for VaccinationTranslation {
             StoreTranslation.table_name(),
             InvoiceLineTranslation.table_name(),
             NameTranslation.table_name(),
+            VaccineCourseDoseTranslation.table_name(),
         ]
     }
 

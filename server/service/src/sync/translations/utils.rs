@@ -5,20 +5,20 @@ use chrono::Utc;
 use repository::{
     system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
     AssetCatalogueItemRowRepository, AssetCategoryRowRepository, AssetClassRowRepository,
-    AssetLogReasonRowRepository, AssetRowRepository, BarcodeRowRepository, CampaignRowRepository,
-    ClinicianLinkRowRepository, ContextRowRepository, CurrencyRowRepository, DemographicRowRepository,
-    DiagnosisRowRepository, FormSchemaRowRepository, IndicatorColumnRowRepository,
-    IndicatorLineRowRepository, InsuranceProviderRowRepository, InvoiceLineRowRepository,
-    InvoiceRowRepository, ItemLinkRowRepository, ItemRowRepository, ItemVariantRowRepository,
-    LocationRowRepository, LocationTypeRowRepository, MasterListRowRepository,
-    NameInsuranceJoinRowRepository, NameLinkRowRepository, NameTagRowRepository, PeriodRowRepository,
-    PeriodScheduleRowRepository, ProgramIndicatorRowRepository, ProgramRowRepository,
-    PropertyRowRepository,
+    AssetLogReasonRowRepository, AssetRowRepository, AssetTypeRowRepository, BarcodeRowRepository,
+    CampaignRowRepository, ClinicianLinkRowRepository, ContextRowRepository, CurrencyRowRepository,
+    DemographicRowRepository, DiagnosisRowRepository, FormSchemaRowRepository,
+    IndicatorColumnRowRepository, IndicatorLineRowRepository, InsuranceProviderRowRepository,
+    InvoiceLineRowRepository, InvoiceRowRepository, ItemLinkRowRepository, ItemRowRepository,
+    ItemVariantRowRepository, LocationRowRepository, LocationTypeRowRepository,
+    MasterListRowRepository, NameInsuranceJoinRowRepository, NameLinkRowRepository,
+    NameTagRowRepository, PeriodRowRepository, PeriodScheduleRowRepository,
+    ProgramIndicatorRowRepository, ProgramRowRepository, PropertyRowRepository,
     PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, ReasonOptionRowRepository,
     RepositoryError, RequisitionRowRepository, RnRFormRowRepository, SensorRowRepository,
     ShippingMethodRowRepository, StockLineRowRepository, StocktakeRowRepository, StorageConnection,
-    StoreRowRepository, TemperatureBreachRowRepository, UnitRowRepository, VaccineCourseDoseRowRepository,
-    VaccineCourseRowRepository, VVMStatusRowRepository, WarningRowRepository,
+    StoreRowRepository, TemperatureBreachRowRepository, UnitRowRepository, VVMStatusRowRepository,
+    VaccineCourseDoseRowRepository, VaccineCourseRowRepository, WarningRowRepository,
 };
 use util::uuid::uuid;
 
@@ -30,6 +30,7 @@ use util::uuid::uuid;
 pub(crate) enum FkField {
     Asset,
     AssetCatalogueItem,
+    AssetCatalogueType,
     AssetCategory,
     AssetClass,
     AssetLogReason,
@@ -85,6 +86,9 @@ impl FkField {
             FkField::AssetCatalogueItem => {
                 AssetCatalogueItemRowRepository::new(connection).check_exists_by_id(id)
             }
+            FkField::AssetCatalogueType => {
+                AssetTypeRowRepository::new(connection).check_exists_by_id(id)
+            }
             FkField::AssetCategory => {
                 AssetCategoryRowRepository::new(connection).check_exists_by_id(id)
             }
@@ -99,7 +103,9 @@ impl FkField {
             }
             FkField::Context => ContextRowRepository::new(connection).check_exists_by_id(id),
             FkField::Currency => CurrencyRowRepository::new(connection).check_exists_by_id(id),
-            FkField::Demographic => DemographicRowRepository::new(connection).check_exists_by_id(id),
+            FkField::Demographic => {
+                DemographicRowRepository::new(connection).check_exists_by_id(id)
+            }
             FkField::Diagnosis => DiagnosisRowRepository::new(connection).check_exists_by_id(id),
             FkField::FormSchema => FormSchemaRowRepository::new(connection).check_exists_by_id(id),
             FkField::IndicatorColumn => {
@@ -112,7 +118,9 @@ impl FkField {
                 InsuranceProviderRowRepository::new(connection).check_exists_by_id(id)
             }
             FkField::Invoice => InvoiceRowRepository::new(connection).check_exists_by_id(id),
-            FkField::InvoiceLine => InvoiceLineRowRepository::new(connection).check_exists_by_id(id),
+            FkField::InvoiceLine => {
+                InvoiceLineRowRepository::new(connection).check_exists_by_id(id)
+            }
             FkField::Item => ItemRowRepository::new(connection).check_exists_by_id(id),
             FkField::ItemLink => ItemLinkRowRepository::new(connection).check_exists_by_id(id),
             FkField::ItemVariant => {
@@ -146,7 +154,9 @@ impl FkField {
             FkField::ReasonOption => {
                 ReasonOptionRowRepository::new(connection).check_exists_by_id(id)
             }
-            FkField::Requisition => RequisitionRowRepository::new(connection).check_exists_by_id(id),
+            FkField::Requisition => {
+                RequisitionRowRepository::new(connection).check_exists_by_id(id)
+            }
             FkField::RnrForm => RnRFormRowRepository::new(connection).check_exists_by_id(id),
             FkField::Sensor => SensorRowRepository::new(connection).check_exists_by_id(id),
             FkField::ShippingMethod => {

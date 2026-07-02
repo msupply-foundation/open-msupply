@@ -1,6 +1,6 @@
 use crate::sync::translations::{
-    item::ItemTranslation, purchase_order::PurchaseOrderTranslation, FkField, PullTranslateResult,
-    PushTranslateResult, SyncTranslation,
+    item::ItemTranslation, purchase_order::PurchaseOrderTranslation, store::StoreTranslation,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -97,6 +97,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
         vec![
             PurchaseOrderTranslation.table_name(),
             ItemTranslation.table_name(),
+            StoreTranslation.table_name(),
         ]
     }
 

@@ -79,8 +79,12 @@ impl SyncTranslation for LocationMovementTranslation {
         } = sync_record.deserialize()?;
 
         let fk_check = fk_checker.with_table(connection, "location_movement", &id);
+        let check_fk = fk_checker.with_table_required(connection, "location_movement", &id);
 
         let location_id = fk_check(location_id, "location_id", FkField::Location)?;
+        // store_id / stock_line_id are non-optional in the row, so validate as required.
+        let store_id = check_fk(store_id, "store_id", FkField::Store)?;
+        let stock_line_id = check_fk(stock_line_id, "stock_line_id", FkField::StockLine)?;
 
         let result = LocationMovementRow {
             id,
@@ -146,11 +150,10 @@ mod tests {
         use crate::sync::test::test_data::location_movement as test_data;
         let translator = LocationMovementTranslation {};
 
-        let (_, connection, _, _) = setup_all(
-            "test_location_movement_translation",
-            MockDataInserts::none(),
-        )
-        .await;
+        // `all()` seeds mock store_a + the item_c_line_a stock line the record references,
+        // so the now-required store_id / stock_line_id FK checks pass.
+        let (_, connection, _, _) =
+            setup_all("test_location_movement_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

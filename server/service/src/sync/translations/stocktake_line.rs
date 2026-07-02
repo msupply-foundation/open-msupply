@@ -201,7 +201,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             note,
             item_variant_id,
             donor_id,
-            manufacturer_id,
+            manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
             reason_option_id,
             vvm_status_id,
             volume_per_pack,

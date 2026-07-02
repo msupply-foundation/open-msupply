@@ -6,7 +6,10 @@ use repository::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::translations::indicator_attribute::IndicatorAttribute;
+use crate::sync::translations::{
+    indicator_attribute::IndicatorAttribute, name::NameTranslation, period::PeriodTranslation,
+    store::StoreTranslation,
+};
 
 use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
@@ -38,7 +41,13 @@ impl SyncTranslation for IndicatorValue {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![IndicatorAttribute.table_name()]
+        vec![
+            // IndicatorAttribute yields indicator_line + indicator_column
+            IndicatorAttribute.table_name(),
+            NameTranslation.table_name(),
+            StoreTranslation.table_name(),
+            PeriodTranslation.table_name(),
+        ]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

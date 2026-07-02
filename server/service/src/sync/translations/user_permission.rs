@@ -70,6 +70,13 @@ impl SyncTranslation for UserPermissionTranslation {
         };
 
         let fk_check = fk_checker.with_table(connection, "om_user_permission", &id);
+        let check_fk = fk_checker.with_table_required(connection, "om_user_permission", &id);
+
+        // store_id is a NOT NULL FK to store: require the referenced store when present.
+        // (Never clear to None — that would break the NOT NULL constraint at integrate.)
+        let store_id = store_id
+            .map(|store_id| check_fk(store_id, "store_id", FkField::Store))
+            .transpose()?;
 
         let result = UserPermissionRow {
             id,
