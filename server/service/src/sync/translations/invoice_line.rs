@@ -248,7 +248,11 @@ impl SyncTranslation for InvoiceLineTranslation {
                 )
             }
             true => {
-                let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
+                // Use find_one_by_id (not find_active_by_id) here: this lookup only derives the
+                // item code for the legacy path, and an invoice line can legitimately reference an
+                // inactive item (e.g. an item deactivated by a merge). Gating on is_active caused
+                // integration to fail for lines linked to inactive items. See issue #12328.
+                let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
                     Some(item) => item,
                     None => {
                         return Err(anyhow::Error::msg(format!(
@@ -588,7 +592,7 @@ mod tests {
         mock::{mock_item_a, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder,
+        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder, ItemRow,
         KeyType, KeyValueStoreRow, ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
     };
     use serde_json::json;
@@ -849,5 +853,101 @@ mod tests {
                 "expected message to mention the record id"
             );
         }
+    }
+
+    /// An invoice line can legitimately reference an inactive item (e.g. an item deactivated by a
+    /// merge). On the legacy path (empty `om_item_code`) the translator looks the item up to derive
+    /// its code; that lookup must NOT gate on is_active, otherwise integration fails. Regression
+    /// test for issue #12328.
+    #[actix_rt::test]
+    async fn test_invoice_line_integrates_inactive_item() {
+        let translator = InvoiceLineTranslation {};
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_invoice_line_integrates_inactive_item",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .currencies(),
+            MockData {
+                invoices: vec![mock_outbound_shipment_a()],
+                // Inactive item the invoice line will reference.
+                items: vec![ItemRow {
+                    id: "inactive_item".to_string(),
+                    name: "Inactive Item".to_string(),
+                    code: "INACTIVE_CODE".to_string(),
+                    is_active: false,
+                    ..Default::default()
+                }],
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_b().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // No `om_item_code` -> legacy path -> item is looked up to derive the code.
+        let sync_record = SyncBufferRow {
+            table_name: "trans_line".to_string(),
+            record_id: "TRANS_LINE_INACTIVE_ITEM".to_string(),
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
+                "ID": "TRANS_LINE_INACTIVE_ITEM",
+                "transaction_ID": "outbound_shipment_a",
+                "item_ID": "inactive_item",
+                "item_name": "Inactive Item",
+                "item_line_ID": "",
+                "batch": "",
+                "expiry_date": "0000-00-00",
+                "pack_size": 1,
+                "cost_price": 10,
+                "sell_price": 20,
+                "quantity": 1,
+                "type": "stock_out",
+                "location_ID": "",
+                "note": "",
+                "optionID": "0",
+                "vaccine_vial_monitor_status_ID": "",
+                "donor_id": "",
+                "linked_trans_line_ID": "",
+                "linked_transact_id": "",
+                "volume_per_pack": 0,
+                "foreign_currency_price": 0
+            }"#,
+                )
+                .unwrap(),
+            ),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
+            .unwrap();
+
+        let PullTranslateResult::IntegrationOperations(ops) = result else {
+            panic!("{}", format!("expected IntegrationOperations, got {result:?}"));
+        };
+        let debug = format!("{ops:?}");
+        // Code is derived from the inactive item, and the line still references it.
+        assert!(
+            debug.contains("INACTIVE_CODE"),
+            "{}",
+            format!("expected item code to be derived from inactive item; got:\n{debug}")
+        );
+        assert!(
+            debug.contains("inactive_item"),
+            "{}",
+            format!("expected line to reference inactive item; got:\n{debug}")
+        );
     }
 }
