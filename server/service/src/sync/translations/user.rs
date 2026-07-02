@@ -28,11 +28,14 @@ pub struct LegacyUserTable {
     #[serde(rename = "active")]
     #[serde(default = "default_true")]
     pub is_active: bool,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub password_hash: Option<String>,
 }
 
 fn default_true() -> bool {
     true
 }
+
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -64,7 +67,8 @@ impl SyncTranslation for UserTranslation {
             phone_number,
             job_title,
             is_active,
-        } = serde_json::from_str::<LegacyUserTable>(&sync_record.data)?;
+            password_hash,
+        } = sync_record.deserialize()?;
 
         let user_account = UserAccountRowRepository::new(connection).find_one_by_id(&id)?;
 
@@ -75,6 +79,8 @@ impl SyncTranslation for UserTranslation {
             ),
             None => ("".to_string(), None),
         };
+
+        let hashed_password = password_hash.map_or(hashed_password, |p| p);
 
         let result = UserAccountRow {
             id,

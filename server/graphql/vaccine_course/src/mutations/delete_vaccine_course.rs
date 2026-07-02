@@ -18,6 +18,7 @@ pub fn delete_vaccine_course(
         &ResourceAccessRequest {
             resource: Resource::MutateVaccineCourse,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

@@ -1,7 +1,7 @@
 use repository::{
-    Document, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
-    DocumentRepository, EncounterFilter, EncounterRepository, EqualFilter, ProgramFilter,
-    ProgramRepository, RepositoryError, StorageConnection, Upsert,
+    ChangelogSyncType, Document, DocumentRegistryCategory, DocumentRegistryFilter,
+    DocumentRegistryRepository, DocumentRepository, EncounterFilter, EncounterRepository,
+    EqualFilter, ProgramFilter, ProgramRepository, RepositoryError, StorageConnection, Upsert,
 };
 
 use crate::{
@@ -20,9 +20,9 @@ use crate::{
 pub(crate) struct DocumentUpsert(pub(crate) Document);
 
 impl Upsert for DocumentUpsert {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = sync_upsert_document(con, &self.0)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        sync_upsert_document(con, &self.0)?;
+        Ok(())
     }
 
     fn assert_upserted(&self, con: &StorageConnection) {
@@ -36,17 +36,17 @@ impl Upsert for DocumentUpsert {
 fn sync_upsert_document(
     con: &StorageConnection,
     document: &Document,
-) -> Result<i64, RepositoryError> {
+) -> Result<(), RepositoryError> {
     // Fetch current document by name to check if the new document is the latest in the DB
     let new_doc_is_latest = is_latest_doc(con, &document.name, document.datetime)?;
 
     // Insert the new document
     // Note, every document is immutable for which reason an insert (instead of an upsert) is used.
-    let change_log_id = DocumentRepository::new(con).insert(document)?;
+    DocumentRepository::new(con).insert(document)?;
 
     // Only if the new document is the latest, update the aux tables
     if !new_doc_is_latest {
-        return Ok(change_log_id);
+        return Ok(());
     }
     let Some(registry) = DocumentRegistryRepository::new(con)
         .query_by_filter(
@@ -56,7 +56,7 @@ fn sync_upsert_document(
         .pop()
     else {
         log::warn!("Received unknown document type: {}", document.r#type);
-        return Ok(change_log_id);
+        return Ok(());
     };
     match registry.category {
         DocumentRegistryCategory::Patient => {
@@ -67,7 +67,7 @@ fn sync_upsert_document(
         DocumentRegistryCategory::ContactTrace => update_contact_trace(con, document)?,
         DocumentRegistryCategory::Custom => {}
     };
-    Ok(change_log_id)
+    Ok(())
 }
 
 fn update_program_enrolment(

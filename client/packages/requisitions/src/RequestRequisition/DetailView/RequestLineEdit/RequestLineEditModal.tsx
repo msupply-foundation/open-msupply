@@ -77,7 +77,8 @@ export const RequestLineEditModal = ({
   const nextDisabled =
     (!hasNext && mode === ModalMode.Update) ||
     !currentItem ||
-    isEditingRequested;
+    isEditingRequested ||
+    isLoading;
 
   const deletePreviousLine = () => {
     const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
@@ -152,7 +153,7 @@ export const RequestLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem || isEditingRequested}
+          disabled={!currentItem || isEditingRequested || isLoading}
           onClick={async () => {
             if (requisition.status === RequisitionNodeStatus.Sent) {
               onClose();

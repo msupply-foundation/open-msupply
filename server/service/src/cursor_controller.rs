@@ -1,5 +1,6 @@
 use repository::{KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection};
 
+#[derive(Clone)]
 pub enum CursorType {
     Standard(KeyType),
     Dynamic(String),
@@ -101,6 +102,43 @@ impl CursorController {
 
         let cursor = json_value[cursor_id].as_u64().unwrap_or(0);
         Ok(cursor)
+    }
+
+    /// Delete this cursor's entry. Standard cursors clear their KV value;
+    /// dynamic cursors remove their field from the `DynamicCursor` JSON blob.
+    /// Idempotent — does nothing if the entry isn't present. Use after a
+    /// sync run finishes successfully so disposable cursors don't bloat KV.
+    pub fn delete(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+        connection
+            .transaction_sync(|connection| match &self.0 {
+                CursorType::Standard(key_type) => {
+                    KeyValueStoreRepository::new(connection).set_i32(key_type.clone(), None)
+                }
+                CursorType::Dynamic(cursor_id) => self.delete_dynamic(connection, cursor_id),
+            })
+            .map_err(|e| e.to_inner_error())
+    }
+
+    fn delete_dynamic(
+        &self,
+        connection: &StorageConnection,
+        cursor_id: &str,
+    ) -> Result<(), RepositoryError> {
+        let mut json_value = self.get_dynamic_json(connection)?;
+
+        let removed = json_value
+            .as_object_mut()
+            .map(|obj| obj.remove(cursor_id).is_some())
+            .unwrap_or(false);
+
+        if !removed {
+            return Ok(());
+        }
+
+        let json_text = serde_json::to_string(&json_value).unwrap_or_default();
+        KeyValueStoreRepository::new(connection)
+            .set_string(KeyType::DynamicCursor, Some(json_text))?;
+        Ok(())
     }
 }
 

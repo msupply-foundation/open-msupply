@@ -56,7 +56,8 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
         <Typography
           sx={{
             fontSize: 'small',
-            color: 'text.secondary',
+            color: 'inherit',
+            opacity: 0.6,
             marginLeft: '4px',
           }}
         >

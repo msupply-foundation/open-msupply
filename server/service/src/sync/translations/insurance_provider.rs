@@ -45,7 +45,7 @@ impl SyncTranslation for InsuranceProviderTranslator {
             is_active,
             provider_name,
             prescription_validity_days,
-        } = serde_json::from_str(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         // Translate the record directly here, don't need to look up the old record first
         let result = InsuranceProviderRow {

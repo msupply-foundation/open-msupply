@@ -20,7 +20,14 @@ start /b /wait build\windows\omsupply-prepare.bat
     exit /b %errorlevel%
 )
 
+@ECHO ##### update cargo binary version #####
+@FOR /F "delims=*" %%i in ('more omSupply\version.txt') do SET versionTag=%%i
+@FOR /F "delims=*" %%i in ('node getVersion.js') do set version=%%i
+
 @cd server 
+
+cargo install cargo-edit
+cargo set-version %version%
 
 @ECHO ##### Building all sqlite binaries #####
 cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection

@@ -469,6 +469,7 @@ export const ScanInputModal = ({
             <DatePicker
               value={draftState.manufactureDate}
               disabled={isLoading}
+              disableFuture
               onChange={value =>
                 setDraftState(current => ({
                   ...current,

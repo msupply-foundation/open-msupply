@@ -84,6 +84,7 @@ pub fn stocktakes(
         &ResourceAccessRequest {
             resource: Resource::QueryStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -124,6 +125,7 @@ pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Stocktak
         &ResourceAccessRequest {
             resource: Resource::QueryStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -162,6 +164,7 @@ pub fn stocktake_by_number(
         &ResourceAccessRequest {
             resource: Resource::QueryStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
