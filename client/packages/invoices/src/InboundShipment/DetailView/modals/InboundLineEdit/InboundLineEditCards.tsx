@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   useAuthContext,
   useTranslation,
@@ -153,6 +153,24 @@ export const InboundLineEditCards = ({
     }
   }
   prevLineIdsRef.current = currentLineIds;
+
+  const scrollToLatestCard = useCallback(() => {
+    const scroll = () => {
+      lastCardRef?.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest',
+      });
+    };
+
+    // Wait for duplicate line render/layout before trying to scroll.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scroll);
+    });
+
+    // Fallback for slower render paths.
+    setTimeout(scroll, 80);
+  }, [lastCardRef]);
 
   const columns = useMemo(() => {
     const cols: ColumnDef<DraftInboundLine>[] = [
@@ -659,6 +677,7 @@ export const InboundLineEditCards = ({
             <DateTimePickerInput
               value={value}
               disabled={isDisabled}
+              disableFuture
               onChange={date =>
                 updateDraftLine({
                   id: row.original.id,
@@ -756,12 +775,7 @@ export const InboundLineEditCards = ({
             showLabel={!simplified}
             onClick={() => {
               duplicateDraftLine(row.original.id);
-              setTimeout(() => {
-                lastCardRef?.current?.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'nearest',
-                });
-              }, 0);
+              scrollToLatestCard();
             }}
             icon={<CopyIcon fontSize="small" />}
           />
@@ -807,6 +821,7 @@ export const InboundLineEditCards = ({
     store?.preferences.issueInForeignCurrency,
     unitName,
     updateDraftLine,
+    scrollToLatestCard,
     plugins.inboundShipmentLine?.editViewField,
   ]);
 

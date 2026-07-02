@@ -1,11 +1,13 @@
-use service::backend_plugin::{plugin_provider::PluginInstance, types::schedule};
 use chrono::{Duration, NaiveDateTime, Utc};
-use repository::{PluginType, RepositoryError};
+use repository::PluginType;
+use service::backend_plugin::{plugin_provider::PluginInstance, types::schedule};
 use std::collections::HashMap;
 use tokio::task::JoinHandle;
 use util::format_error;
 
 const SCHEDULE_PLUGIN_POLL_SECS: u64 = 60;
+/// How long to wait before retrying a plugin that errored or panicked.
+const SCHEDULE_PLUGIN_ERROR_RETRY_SECS: i64 = 60;
 
 #[derive(Default)]
 struct SchedulePluginRunner {
@@ -17,9 +19,10 @@ impl SchedulePluginRunner {
         Default::default()
     }
 
-    fn run(&mut self) -> Result<(), RepositoryError> {
+    async fn run(&mut self) -> usize {
         let plugins = PluginInstance::get_all(PluginType::Schedule);
         let now = Utc::now().naive_utc();
+        let mut ran = 0;
 
         for plugin in plugins {
             let due = self
@@ -32,22 +35,23 @@ impl SchedulePluginRunner {
                 continue;
             }
 
-            let input = schedule::Input {};
+            ran += 1;
 
-            match schedule::Trait::call(&(*plugin), input) {
-                Ok(output) => {
-                    let next = now + Duration::seconds(output.next_poll_seconds as i64);
-                    self.next_run.insert(plugin.code.clone(), next);
-                }
+            // `call_async` runs the plugin (the whole boajs interpreter, plus any
+            // `fetch`/`use_graphql` http calls it makes) on the blocking pool, so it doesn't
+            // block the runtime. See runtime-blocking-demo and issue #11949.
+            let next = match schedule::call_async(plugin.clone(), schedule::Input {}).await {
+                Ok(output) => now + Duration::seconds(output.next_poll_seconds as i64),
                 Err(e) => {
                     log::error!("Schedule plugin '{}': {}", plugin.code, format_error(&e));
-                    self.next_run
-                        .insert(plugin.code.clone(), now + Duration::seconds(60));
+                    now + Duration::seconds(SCHEDULE_PLUGIN_ERROR_RETRY_SECS)
                 }
-            }
+            };
+
+            self.next_run.insert(plugin.code.clone(), next);
         }
 
-        Ok(())
+        ran
     }
 }
 
@@ -58,14 +62,9 @@ pub fn spawn() -> JoinHandle<()> {
             tokio::time::interval(std::time::Duration::from_secs(SCHEDULE_PLUGIN_POLL_SECS));
         loop {
             interval.tick().await;
-            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| runner.run())) {
-                Ok(Ok(())) => log::info!("Schedule plugin runner complete"),
-                Ok(Err(error)) => {
-                    log::error!("Error running schedule plugins: {error:?}");
-                }
-                Err(panic) => {
-                    log::error!("Schedule plugin runner panicked: {panic:?}");
-                }
+            let ran = runner.run().await;
+            if ran > 0 {
+                log::debug!("Schedule plugin runner ran {ran} plugin(s)");
             }
         }
     })

@@ -33,6 +33,7 @@ pub fn update_printer(
         &ResourceAccessRequest {
             resource: Resource::NoPermissionRequired,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

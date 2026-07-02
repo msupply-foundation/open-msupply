@@ -105,7 +105,7 @@ async fn wait_for_sync_of_patient_records(
         // Potential race condition, sync is triggered in separate process so may not
         // have started syncing yet in first loop
         // More robust to check patient record has been received
-        if !sync_status.is_syncing {
+        if !sync_status.is_syncing() {
             // If sync finished but integration of patient failed, will break after timeout
             if check_patient_exists(&ctx.connection, name_id)?.is_some() {
                 info!("Patient data received");

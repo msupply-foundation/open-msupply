@@ -33,7 +33,7 @@ impl PluginQueries {
         plugin_code: String,
         input: serde_json::Value,
     ) -> Result<serde_json::Value> {
-        plugin_graphql::query::plugin_graphql_query(ctx, &store_id, &plugin_code, input)
+        plugin_graphql::query::plugin_graphql_query(ctx, &store_id, &plugin_code, input).await
     }
 }
 

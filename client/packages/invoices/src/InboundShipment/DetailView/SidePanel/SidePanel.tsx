@@ -11,7 +11,7 @@ import {
   RouteBuilder,
   useNavigate,
 } from '@openmsupply-client/common';
-import { useInboundShipment } from '../../api';
+import { useInboundShipment, useDuplicateInbound } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
@@ -26,10 +26,12 @@ export const SidePanel = () => {
   const {
     query: { data },
     delete: { deleteInbound },
+    hasMutatePermission,
   } = useInboundShipment();
+  const { duplicateInbound } = useDuplicateInbound();
 
   const isTransfer = !!data?.linkedShipment?.id;
-  const canDelete = data?.status === InvoiceNodeStatus.New;
+  const canDelete = data?.status === InvoiceNodeStatus.New && hasMutatePermission;
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -69,6 +71,12 @@ export const SidePanel = () => {
             title={t('label.delete')}
             onClick={onDelete}
             disabled={!canDelete}
+          />
+          <DetailPanelAction
+            icon={<CopyIcon />}
+            title={t('button.make-a-copy')}
+            onClick={() => data && duplicateInbound(data)}
+            disabled={!hasMutatePermission}
           />
           <DetailPanelAction
             icon={<CopyIcon />}

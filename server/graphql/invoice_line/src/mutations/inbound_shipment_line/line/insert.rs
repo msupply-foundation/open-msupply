@@ -68,6 +68,7 @@ pub fn insert(
         &ResourceAccessRequest {
             resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -178,6 +179,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
 
         ServiceError::CannotEditFinalised
+        | ServiceError::OtherPartyStoreDisabled
         | ServiceError::CannotAddLinesToAuthorisedReceivedInvoice => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
@@ -208,6 +210,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
         ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
+        ServiceError::CannotSetManufactureDateInFuture => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

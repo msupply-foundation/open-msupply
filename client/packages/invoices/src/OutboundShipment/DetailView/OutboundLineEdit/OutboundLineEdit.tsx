@@ -184,10 +184,36 @@ export const OutboundLineEdit = ({
           onClick={() => handleSave(onClose)}
         />
       }
-      height={700}
+      height={650}
       width={1200}
+      sx={{
+        '& .MuiDialogTitle-root': { py: 1.25 },
+        '& .MuiDialogActions-root': {
+          marginTop: '4px',
+          marginBottom: '4px',
+        },
+      }}
+      contentProps={{
+        sx: {
+          overflowY: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          paddingTop: '2px',
+          paddingBottom: 0,
+        },
+      }}
     >
-      <Grid container gap={0.5}>
+      <Grid
+        container
+        gap={0.5}
+        sx={{
+          flex: 1,
+          flexDirection: 'column',
+          flexWrap: 'nowrap',
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
         <SelectItem
           itemId={itemId}
           onChangeItem={setItemId}

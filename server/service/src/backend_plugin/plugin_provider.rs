@@ -78,6 +78,32 @@ where
     })
 }
 
+/// Async sibling of [`call_plugin`] for callers running on the async runtime. Runs the
+/// synchronous boajs interpreter on the blocking pool so it doesn't block the runtime.
+/// See issue #11949.
+///
+/// Takes an owned `Arc<PluginInstance>` (rather than a borrow) so it can move onto the
+/// blocking thread; the `Arc` makes that move cheap.
+pub(crate) async fn call_plugin_async<I, O>(
+    input: I,
+    r#type: PluginType,
+    plugin: Arc<PluginInstance>,
+) -> PluginResult<O>
+where
+    I: Serialize + Send + 'static,
+    O: DeserializeOwned + Send + 'static,
+{
+    // Clone the code up front for the join-error branch, since `plugin` moves into the closure.
+    let code = plugin.code.clone();
+
+    tokio::task::spawn_blocking(move || call_plugin(input, r#type, &plugin))
+        .await
+        .map_err(|join_error| PluginError {
+            code,
+            variant: PluginErrorVariant::BoaJs(BoaJsError::TaskJoin(join_error.to_string())),
+        })?
+}
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct PluginBundle {
     pub backend_plugins: Vec<BackendPluginRow>,
@@ -170,13 +196,5 @@ impl PluginInstance {
         (*plugins).retain(|p| p.instance.code != code);
 
         (*plugins).push(Plugin { types, instance });
-    }
-
-    /// Drop any cached backend plugin whose row id matches. Used when a plugin
-    /// row is deleted (via the uninstall mutation or a sync delete record) so
-    /// the in-memory cache doesn't outlive the database row.
-    pub fn unbind_by_id(id: &str) {
-        let mut plugins = PLUGINS.write().unwrap();
-        plugins.retain(|p| p.instance.id != id);
     }
 }

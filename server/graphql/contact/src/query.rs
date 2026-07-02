@@ -13,6 +13,7 @@ pub fn contacts(ctx: &Context<'_>, store_id: String, name_id: &str) -> Result<Co
         &ResourceAccessRequest {
             resource: Resource::QueryContact,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

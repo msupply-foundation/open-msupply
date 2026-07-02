@@ -435,10 +435,7 @@ pub async fn uninstall_plugin(
         )
         .await?;
 
-    info!(
-        "Result:{}",
-        serde_json::to_string_pretty(&result).unwrap()
-    );
+    info!("Result:{}", serde_json::to_string_pretty(&result).unwrap());
 
     Ok(())
 }

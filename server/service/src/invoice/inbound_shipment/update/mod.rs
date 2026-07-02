@@ -217,6 +217,7 @@ pub enum UpdateInboundShipmentError {
     NotThisStoreInvoice,
     CannotReverseInvoiceStatus,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     CannotChangeStatusOfInvoiceOnHold,
     CannotIssueForeignCurrencyForInternalSuppliers,
     CannotUpdateStatusAndDonorAtTheSameTime,

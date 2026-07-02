@@ -43,6 +43,7 @@ pub fn delete(
         &ResourceAccessRequest {
             resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -98,6 +99,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         ServiceError::CannotEditFinalised
+        | ServiceError::OtherPartyStoreDisabled
         | ServiceError::CannotDeleteLinesOfAuthorisedReceivedInvoice => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},

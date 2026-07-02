@@ -98,9 +98,16 @@ export const PluginsList = () => {
         Cell: ({ row }) =>
           isCentralServer &&
           cachedPluginBundles[row.original.code]?.configuration ? (
-            <SettingsIcon
-              fontSize="small"
-              titleAccess={t('title.configure-plugin')}
+            <IconButton
+              icon={<SettingsIcon fontSize="small" />}
+              label={t('title.configure-plugin')}
+              onClick={e => {
+                // Stop propagation so the row's onRowClick doesn't also fire
+                // (both open the same modal); wrapping in IconButton also keeps
+                // this icon vertically aligned with the delete button.
+                e.stopPropagation();
+                setConfiguringPluginCode(row.original.code);
+              }}
             />
           ) : null,
       },
@@ -115,7 +122,12 @@ export const PluginsList = () => {
             icon={<DeleteIcon />}
             label={t('button.delete')}
             disabled={uninstallLoading}
-            onClick={() => onDelete(row.original)}
+            onClick={e => {
+              // Stop the click bubbling up to the row's onRowClick, which would
+              // otherwise also open the plugin's configuration modal.
+              e.stopPropagation();
+              onDelete(row.original);
+            }}
           />
         ),
       },
