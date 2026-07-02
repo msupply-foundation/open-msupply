@@ -186,6 +186,13 @@ async fn sync_inner<'a>(
                 request.is_initialising,
             )
             .await?;
+
+        // After initialisation we need to move the push cursor to max cursor - all the records integrated are already on central
+        // This is only for the initial sync and not auxilary syncs (auxilary syncs have is_initialising = true and reference_id)
+        if request.is_initialising && request.reference_id.is_none() {
+            let max_cursor = ChangelogRepository::new(&ctx.connection).max_cursor()?;
+            CursorController::new(KeyType::SyncPushCursorV7).update(&ctx.connection, max_cursor)?;
+        }
     }
 
     logger.finish()?;
@@ -297,6 +304,11 @@ impl<'a> SyncV7<'a> {
             "Pushing v7 data with batch size {}",
             self.batch_size.remote_push
         );
+
+        // Start the progress with remaining = push queue count
+        let initial_cursor = cursor_controller.get(self.connection)? as i64;
+        let max_cursor = ChangelogRepository::new(self.connection).max_cursor()? as i64;
+        logger.progress((max_cursor - initial_cursor).max(0))?;
 
         loop {
             let cursor = cursor_controller.get(self.connection)? as i64;
