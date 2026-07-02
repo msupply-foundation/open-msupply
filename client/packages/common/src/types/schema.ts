@@ -9869,11 +9869,11 @@ export type SiteNode = {
   firstSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   hardwareId?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  isMultiDevice: Scalars['Boolean']['output'];
   /** Last time the remote made any authenticated v7 request. */
   lastConnectionDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   /** Last time the remote fully pulled from this central server. */
   lastSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
-  isMultiDevice: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   /**
    * Which sync flow the site runs. Hardware-id / token clearing is only
