@@ -20,7 +20,13 @@ export default defineConfig(({ mode }) => {
     plugins: [
       // Must run before the React plugin so generated routes get HMR/code-splitting.
       tanstackRouter({ target: 'react', autoCodeSplitting: true }),
-      react(),
+      // React Compiler auto-memoizes components/hooks (no runtime dep needed on
+      // React 19). Removes most manual memoization churn — see the stocktake grid.
+      react({
+        babel: {
+          plugins: [['babel-plugin-react-compiler', { target: '19' }]],
+        },
+      }),
       tailwindcss(),
     ],
     resolve: {

@@ -13,9 +13,12 @@ import {
   useWatch,
   type Control,
   type UseFormRegister,
+  type UseFormSetValue,
 } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getRouteApi } from '@tanstack/react-router';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { PencilIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   ReasonOptionNodeType,
@@ -24,16 +27,26 @@ import {
 import { numericField } from '@/components/detail/inputs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/detail/useConfirm';
 import { useIsPhone } from '@/hooks/useMediaQuery';
-import { useTranslation, type TxKey } from '@/intl';
+import { useTranslation } from '@/intl';
 import type { TFunction } from 'i18next';
 import { stocktakeSdk } from './api';
 import { reasonOptionsQueryOptions, stocktakeKeys } from './queries';
+import {
+  adjustmentDirection,
+  errorField,
+  errorMessage,
+  type ErrorField,
+} from './errors';
+import { StocktakeLineEditModal, type RowReasons } from './StocktakeLineEditModal';
 import type {
   ReasonOptionRowFragment,
   StocktakeLineRowFragment,
   StocktakeRowFragment,
 } from './stocktake.generated';
+
+const route = getRouteApi('/_authenticated/$storeId/stocktake/$stocktakeId');
 
 interface Props {
   storeId: string;
@@ -57,15 +70,10 @@ interface FormValues {
   lines: Record<string, LineForm>;
 }
 
-interface RowReasons {
-  positive: ReasonOptionRowFragment[];
-  negative: ReasonOptionRowFragment[];
-}
-
-// Code | Item | Batch | Expiry | Pack | Snapshot | Counted | Cost | Sell | Reason | Comment
+// Code | Item | Batch | Expiry | Pack | Snapshot | Counted | Cost | Sell | Reason | Comment | Edit
 const COLS =
-  '90px minmax(160px, 1.4fr) 110px 140px 70px 90px 95px 90px 90px 170px 150px';
-const GRID_MIN_WIDTH = 1240;
+  '90px minmax(160px, 1.4fr) 110px 140px 70px 90px 95px 90px 90px 170px 150px 48px';
+const GRID_MIN_WIDTH = 1288;
 // Fixed row heights — both layouts are uniform, so fixed-size virtualization is
 // smoother than per-row measurement. CARD_HEIGHT comfortably fits the card's
 // content (~344px); keep it ahead of the content if fields are added.
@@ -92,31 +100,6 @@ function inputStyle(invalid: boolean): CSSProperties {
   return invalid ? { ...inputBase, borderColor: '#d32f2f' } : inputBase;
 }
 
-// Server error __typename -> message key. Translated at the point of display.
-const ERROR_KEYS: Record<string, TxKey> = {
-  AdjustmentReasonNotProvided: 'error.adjustment-reason-not-provided',
-  AdjustmentReasonNotValid: 'error.adjustment-reason-not-valid',
-  StockLineReducedBelowZero: 'error.stock-below-zero',
-  SnapshotCountCurrentCountMismatchLine: 'error.snapshot-mismatch',
-  CannotEditStocktake: 'error.cannot-edit-stocktake',
-};
-
-type ErrorField = 'reason' | 'counted' | 'snapshot' | 'row';
-
-function errorField(typename: string): ErrorField {
-  switch (typename) {
-    case 'AdjustmentReasonNotProvided':
-    case 'AdjustmentReasonNotValid':
-      return 'reason';
-    case 'StockLineReducedBelowZero':
-      return 'counted';
-    case 'SnapshotCountCurrentCountMismatchLine':
-      return 'snapshot';
-    default:
-      return 'row';
-  }
-}
-
 // Numbers must be empty (not entered) or a non-negative finite value. Returns a
 // translated message (RHF stores it; the grid surfaces invalid lines visually).
 function makeValidateNonNeg(t: TFunction) {
@@ -129,16 +112,6 @@ function makeValidateNonNeg(t: TFunction) {
   };
 }
 
-function adjustmentDirection(
-  countedRaw: string,
-  snapshot: number,
-): 'positive' | 'negative' | null {
-  if (countedRaw === '') return null;
-  const n = Number(countedRaw);
-  if (Number.isNaN(n) || n === snapshot) return null;
-  return n > snapshot ? 'positive' : 'negative';
-}
-
 interface RowProps {
   line: StocktakeLineRowFragment;
   index: number;
@@ -147,6 +120,8 @@ interface RowProps {
   reasons: RowReasons;
   errorField: ErrorField | undefined;
   onCountedKeyDown: (e: KeyboardEvent<HTMLInputElement>, index: number) => void;
+  onEdit: (itemId: string) => void;
+  setValue: UseFormSetValue<FormValues>;
 }
 
 // A reason is only relevant (and only required by the server) when the count
@@ -154,20 +129,33 @@ interface RowProps {
 // the row keeps a constant height for virtualization.
 function useRowReasons(
   control: Control<FormValues>,
+  setValue: UseFormSetValue<FormValues>,
   line: StocktakeLineRowFragment,
   reasons: RowReasons,
 ) {
   const counted = useWatch({ control, name: `lines.${line.id}.counted` });
+  const reasonId = useWatch({ control, name: `lines.${line.id}.reasonId` });
   const direction = adjustmentDirection(
     counted ?? '',
     line.snapshotNumberOfPacks,
   );
-  const list =
-    direction === 'positive'
-      ? reasons.positive
-      : direction === 'negative'
-        ? reasons.negative
-        : [];
+  const list = useMemo(
+    () =>
+      direction === 'positive'
+        ? reasons.positive
+        : direction === 'negative'
+          ? reasons.negative
+          : [],
+    [direction, reasons],
+  );
+  // Clear a reason that no longer matches the adjustment direction (e.g. the
+  // count crossed the snapshot): a wrong-sign reason would be rejected by the
+  // server, and the select must reflect the now-empty value.
+  useEffect(() => {
+    if (reasonId && !list.some(r => r.id === reasonId)) {
+      setValue(`lines.${line.id}.reasonId`, '', { shouldDirty: false });
+    }
+  }, [reasonId, list, setValue, line.id]);
   return { active: direction !== null, list };
 }
 
@@ -213,10 +201,12 @@ function DesktopRow({
   reasons,
   errorField: errField,
   onCountedKeyDown,
+  onEdit,
+  setValue,
 }: RowProps) {
   const { t } = useTranslation();
   const numericReg = useMemo(() => ({ validate: makeValidateNonNeg(t) }), [t]);
-  const reason = useRowReasons(control, line, reasons);
+  const reason = useRowReasons(control, setValue, line, reasons);
   return (
     <>
       <span style={cell}>{line.item.code}</span>
@@ -268,6 +258,15 @@ function DesktopRow({
         invalid={errField === 'reason'}
       />
       <input style={inputBase} {...register(`lines.${line.id}.comment`)} />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label={t('button.edit')}
+        onClick={() => onEdit(line.item.id)}
+      >
+        <PencilIcon className="size-4" />
+      </Button>
     </>
   );
 }
@@ -295,10 +294,12 @@ function MobileCard({
   reasons,
   errorField: errField,
   onCountedKeyDown,
+  onEdit,
+  setValue,
 }: RowProps) {
   const { t } = useTranslation();
   const numericReg = useMemo(() => ({ validate: makeValidateNonNeg(t) }), [t]);
-  const reason = useRowReasons(control, line, reasons);
+  const reason = useRowReasons(control, setValue, line, reasons);
   return (
     <div className="flex h-full flex-col gap-2">
       <div className="flex items-baseline gap-2">
@@ -306,6 +307,15 @@ function MobileCard({
           {line.item.name}
         </span>
         <span className="text-xs text-muted-foreground">{line.item.code}</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t('button.edit')}
+          onClick={() => onEdit(line.item.id)}
+        >
+          <PencilIcon className="size-4" />
+        </Button>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <CardField
@@ -377,6 +387,9 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
   const isPhone = useIsPhone();
+  const { editItemId } = route.useSearch();
+  const navigate = route.useNavigate();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { data: reasonOptions = [] } = useQuery(reasonOptionsQueryOptions());
   const reasons = useMemo<RowReasons>(
@@ -419,11 +432,60 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
     control,
     handleSubmit,
     reset,
+    resetField,
+    setValue,
     formState: { dirtyFields, isDirty, errors },
   } = useForm<FormValues>({ defaultValues, mode: 'onChange' });
 
   // lineId -> server error __typename from the last save.
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
+
+  // Re-baseline the inline form when the lines query changes (e.g. after the
+  // per-item modal saves and invalidates): apply the new server values but keep
+  // any unsaved inline edits. Skip the first run (useForm already seeded it).
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!seeded.current) {
+      seeded.current = true;
+      return;
+    }
+    reset(defaultValues, { keepDirtyValues: true });
+  }, [defaultValues, reset]);
+
+  const editItemLines = useMemo(
+    () => (editItemId ? lines.filter(l => l.item.id === editItemId) : []),
+    [editItemId, lines],
+  );
+  const editItem = editItemLines[0]?.item;
+
+  // Open the per-item editor. If the item has unsaved inline edits they won't
+  // appear in the modal (it reads server values), so confirm — and on confirm
+  // actually drop them, otherwise the resync effect's keepDirtyValues would
+  // revive them and clobber whatever the modal saves.
+  const openEditor = async (itemId: string) => {
+    const dirtyLineIds = lines
+      .filter(l => l.item.id === itemId && dirtyFields.lines?.[l.id])
+      .map(l => l.id);
+    if (dirtyLineIds.length) {
+      const ok = await confirm({ message: t('messages.discard-inline-edits') });
+      if (!ok) return;
+      dirtyLineIds.forEach(id => resetField(`lines.${id}`));
+    }
+    navigate({ search: prev => ({ ...prev, editItemId: itemId }) });
+  };
+  const closeEditor = () =>
+    navigate({ search: prev => ({ ...prev, editItemId: undefined }) });
+
+  // Self-heal a stale/invalid editItemId (deep link, or the item's lines were
+  // removed) so it doesn't linger in the URL doing nothing.
+  useEffect(() => {
+    if (editItemId && !editItem) {
+      navigate({
+        search: prev => ({ ...prev, editItemId: undefined }),
+        replace: true,
+      });
+    }
+  }, [editItemId, editItem, navigate]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const rowHeight = isPhone ? CARD_HEIGHT : ROW_HEIGHT;
@@ -500,7 +562,16 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
           f.counted,
           line.snapshotNumberOfPacks,
         );
-        if (direction !== null && f.reasonId) input.reasonOptionId = f.reasonId;
+        // Only send a reason that matches the adjustment direction — a stale
+        // wrong-sign reason would be rejected by the server.
+        const validReasons =
+          direction === 'positive'
+            ? reasons.positive
+            : direction === 'negative'
+              ? reasons.negative
+              : [];
+        if (f.reasonId && validReasons.some(r => r.id === f.reasonId))
+          input.reasonOptionId = f.reasonId;
       }
 
       if (Object.keys(input).length > 1) updates.push(input);
@@ -517,8 +588,7 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
       if (r.response.__typename === 'UpdateStocktakeLineError') {
         const typename = r.response.error.__typename;
         failed[r.id] = typename;
-        const key = ERROR_KEYS[typename];
-        messages.add(key ? t(key) : r.response.error.description);
+        messages.add(errorMessage(t, typename, r.response.error.description));
       }
     }
 
@@ -555,6 +625,8 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
       reasons,
       errorField: serverError ? errorField(serverError) : undefined,
       onCountedKeyDown,
+      onEdit: openEditor,
+      setValue,
     };
     return isPhone ? <MobileCard {...props} /> : <DesktopRow {...props} />;
   };
@@ -609,6 +681,7 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
                 <span>{t('label.sell')}</span>
                 <span>{t('label.reason')}</span>
                 <span>{t('label.comment')}</span>
+                <span />
               </div>
             )}
 
@@ -642,6 +715,21 @@ export function StocktakeGrid({ storeId, stocktakeId, header, lines }: Props) {
           </div>
         </div>
       </div>
+
+      {confirmDialog}
+      {editItemId && editItem ? (
+        <StocktakeLineEditModal
+          key={editItemId}
+          storeId={storeId}
+          stocktakeId={stocktakeId}
+          itemId={editItemId}
+          itemName={editItem.name}
+          itemCode={editItem.code}
+          itemLines={editItemLines}
+          reasons={reasons}
+          onClose={closeEditor}
+        />
+      ) : null}
     </div>
   );
 }

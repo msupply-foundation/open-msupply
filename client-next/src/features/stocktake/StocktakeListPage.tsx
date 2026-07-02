@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
@@ -6,9 +6,12 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { PlusIcon } from 'lucide-react';
 import { useTranslation } from '@/intl';
 import { DataTable } from '@/components/DataTable';
+import { Button } from '@/components/ui/button';
 import { stocktakesQueryOptions } from './queries';
+import { NewStocktakeDialog } from './NewStocktakeDialog';
 import type { StocktakeRowFragment } from './stocktake.generated';
 
 const route = getRouteApi('/_authenticated/$storeId/stocktake/');
@@ -18,6 +21,7 @@ export function StocktakeListPage() {
   const navigate = route.useNavigate();
   const { t } = useTranslation();
   const { storeId } = route.useParams();
+  const [createOpen, setCreateOpen] = useState(false);
   const { data } = useQuery({
     ...stocktakesQueryOptions(storeId),
     enabled: Boolean(storeId),
@@ -47,7 +51,20 @@ export function StocktakeListPage() {
 
   return (
     <div className="flex h-full flex-col gap-2">
-      <h1 className="text-xl font-semibold">{t('app.stocktakes')}</h1>
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="grow text-xl font-semibold">{t('app.stocktakes')}</h1>
+        <Button onClick={() => setCreateOpen(true)}>
+          <PlusIcon />
+          {t('button.new-stocktake')}
+        </Button>
+      </div>
+
+      <NewStocktakeDialog
+        open={createOpen}
+        storeId={storeId}
+        onClose={() => setCreateOpen(false)}
+      />
+
       <DataTable
         table={table}
         onRowClick={row =>

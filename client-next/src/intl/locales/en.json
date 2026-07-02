@@ -59,7 +59,10 @@
     "close": "Close",
     "delete-lines": "Delete lines",
     "new": "New",
-    "create": "Create"
+    "create": "Create",
+    "new-stocktake": "New stocktake",
+    "add-batch": "Add batch",
+    "edit": "Edit"
   },
 
   "heading": {
@@ -79,7 +82,8 @@
     "new-inbound-shipment": "New inbound shipment",
     "new-outbound-shipment": "New outbound shipment",
     "new-internal-order": "New internal order",
-    "new-customer-requisition": "New customer requisition"
+    "new-customer-requisition": "New customer requisition",
+    "new-stocktake": "New stocktake"
   },
 
   "label": {
@@ -175,7 +179,19 @@
     "details": "Details",
     "purchase-orders": "Purchase orders",
     "contacts": "Contacts",
-    "total-quantity": "Total quantity"
+    "total-quantity": "Total quantity",
+    "pricing": "Pricing",
+    "stocktake-type": "Stocktake type",
+    "full-stocktake": "Full stocktake",
+    "blank-stocktake": "Blank stocktake",
+    "filtered-stocktake": "Filtered stocktake",
+    "all-items": "All items",
+    "items-with-stock": "Items with stock on hand",
+    "all-master-list-items": "All master list items",
+    "master-list": "Master list",
+    "vvm-status": "VVM status",
+    "expires-before": "Items expiring before",
+    "unknown-user": "unknown user"
   },
 
   "placeholder": {
@@ -227,7 +243,14 @@
     "confirm-use-suggested": "Set every line's requested quantity to its suggested quantity?",
     "confirm-supply-requested": "Set every line's supply quantity to its requested quantity?",
     "no-purchase-orders": "No purchase orders.",
-    "no-contacts": "No contacts."
+    "no-contacts": "No contacts.",
+    "created-by": "Created by {{user}} on {{date}}",
+    "discard-inline-edits": "You have unsaved inline edits for this item that won't appear in the editor. Continue?",
+    "estimated-lines": "Estimated lines: {{value}}",
+    "no-lines-for-item": "No lines for this item yet.",
+    "full-stocktake-hint": "Counts every item with stock on hand, or all items.",
+    "blank-stocktake-hint": "Creates an empty stocktake with no lines.",
+    "filtered-stocktake-hint": "Only includes items matching the filters below."
   },
 
   "error": {

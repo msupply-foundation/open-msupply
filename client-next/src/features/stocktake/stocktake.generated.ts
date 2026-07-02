@@ -21,7 +21,13 @@ export type StocktakeLineRowFragment = {
     type: Types.ReasonOptionNodeType;
     reason: string;
   } | null;
-  item: { __typename: 'ItemNode'; id: string; code: string; name: string };
+  item: {
+    __typename: 'ItemNode';
+    id: string;
+    code: string;
+    name: string;
+    defaultPackSize: number;
+  };
 };
 
 export type ReasonOptionRowFragment = {
@@ -127,7 +133,13 @@ export type StocktakeLinesQuery = {
         type: Types.ReasonOptionNodeType;
         reason: string;
       } | null;
-      item: { __typename: 'ItemNode'; id: string; code: string; name: string };
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        code: string;
+        name: string;
+        defaultPackSize: number;
+      };
     }>;
   };
 };
@@ -170,6 +182,151 @@ export type UpsertStocktakeLinesMutation = {
   };
 };
 
+export type SaveStocktakeLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  insertStocktakeLines?: Types.InputMaybe<
+    Array<Types.InsertStocktakeLineInput> | Types.InsertStocktakeLineInput
+  >;
+  updateStocktakeLines?: Types.InputMaybe<
+    Array<Types.UpdateStocktakeLineInput> | Types.UpdateStocktakeLineInput
+  >;
+}>;
+
+export type SaveStocktakeLinesMutation = {
+  __typename: 'Mutations';
+  batchStocktake: {
+    __typename: 'BatchStocktakeResponse';
+    insertStocktakeLines?: Array<{
+      __typename: 'InsertStocktakeLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'InsertStocktakeLineError';
+            error:
+              | {
+                  __typename: 'AdjustmentReasonNotProvided';
+                  description: string;
+                }
+              | { __typename: 'AdjustmentReasonNotValid'; description: string }
+              | { __typename: 'CannotEditStocktake'; description: string }
+              | {
+                  __typename: 'StockLineReducedBelowZero';
+                  description: string;
+                };
+          }
+        | { __typename: 'StocktakeLineNode' };
+    }> | null;
+    updateStocktakeLines?: Array<{
+      __typename: 'UpdateStocktakeLineResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'StocktakeLineNode' }
+        | {
+            __typename: 'UpdateStocktakeLineError';
+            error:
+              | {
+                  __typename: 'AdjustmentReasonNotProvided';
+                  description: string;
+                }
+              | { __typename: 'AdjustmentReasonNotValid'; description: string }
+              | { __typename: 'CannotEditStocktake'; description: string }
+              | {
+                  __typename: 'SnapshotCountCurrentCountMismatchLine';
+                  description: string;
+                }
+              | {
+                  __typename: 'StockLineReducedBelowZero';
+                  description: string;
+                };
+          };
+    }> | null;
+  };
+};
+
+export type InsertStocktakeMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertStocktakeInput;
+}>;
+
+export type InsertStocktakeMutation = {
+  __typename: 'Mutations';
+  insertStocktake: { __typename: 'StocktakeNode'; id: string };
+};
+
+export type LocationOptionFragment = {
+  __typename: 'LocationNode';
+  id: string;
+  code: string;
+  name: string;
+};
+
+export type StocktakeLocationsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.LocationFilterInput>;
+}>;
+
+export type StocktakeLocationsQuery = {
+  __typename: 'Queries';
+  locations: {
+    __typename: 'LocationConnector';
+    nodes: Array<{
+      __typename: 'LocationNode';
+      id: string;
+      code: string;
+      name: string;
+    }>;
+  };
+};
+
+export type MasterListOptionFragment = {
+  __typename: 'MasterListNode';
+  id: string;
+  code: string;
+  name: string;
+};
+
+export type StocktakeMasterListsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.MasterListFilterInput>;
+}>;
+
+export type StocktakeMasterListsQuery = {
+  __typename: 'Queries';
+  masterLists: {
+    __typename: 'MasterListConnector';
+    nodes: Array<{
+      __typename: 'MasterListNode';
+      id: string;
+      code: string;
+      name: string;
+    }>;
+  };
+};
+
+export type VvmStatusOptionFragment = {
+  __typename: 'VvmstatusNode';
+  id: string;
+  code: string;
+  description: string;
+};
+
+export type StocktakeVvmStatusesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type StocktakeVvmStatusesQuery = {
+  __typename: 'Queries';
+  activeVvmStatuses: {
+    __typename: 'VvmstatusConnector';
+    nodes: Array<{
+      __typename: 'VvmstatusNode';
+      id: string;
+      code: string;
+      description: string;
+    }>;
+  };
+};
+
 export const StocktakeLineRowFragmentDoc = gql`
   fragment StocktakeLineRow on StocktakeLineNode {
     __typename
@@ -194,6 +351,7 @@ export const StocktakeLineRowFragmentDoc = gql`
       id
       code
       name
+      defaultPackSize
     }
   }
 `;
@@ -214,6 +372,30 @@ export const StocktakeRowFragmentDoc = gql`
     description
     comment
     isLocked
+  }
+`;
+export const LocationOptionFragmentDoc = gql`
+  fragment LocationOption on LocationNode {
+    __typename
+    id
+    code
+    name
+  }
+`;
+export const MasterListOptionFragmentDoc = gql`
+  fragment MasterListOption on MasterListNode {
+    __typename
+    id
+    code
+    name
+  }
+`;
+export const VvmStatusOptionFragmentDoc = gql`
+  fragment VvmStatusOption on VvmstatusNode {
+    __typename
+    id
+    code
+    description
   }
 `;
 export const ReasonOptionsDocument = gql`
@@ -298,6 +480,101 @@ export const UpsertStocktakeLinesDocument = gql`
       }
     }
   }
+`;
+export const SaveStocktakeLinesDocument = gql`
+  mutation saveStocktakeLines(
+    $storeId: String!
+    $insertStocktakeLines: [InsertStocktakeLineInput!]
+    $updateStocktakeLines: [UpdateStocktakeLineInput!]
+  ) {
+    batchStocktake(
+      storeId: $storeId
+      input: {
+        insertStocktakeLines: $insertStocktakeLines
+        updateStocktakeLines: $updateStocktakeLines
+      }
+    ) {
+      ... on BatchStocktakeResponse {
+        __typename
+        insertStocktakeLines {
+          id
+          response {
+            __typename
+            ... on InsertStocktakeLineError {
+              error {
+                __typename
+                description
+              }
+            }
+          }
+        }
+        updateStocktakeLines {
+          id
+          response {
+            __typename
+            ... on UpdateStocktakeLineError {
+              error {
+                __typename
+                description
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+export const InsertStocktakeDocument = gql`
+  mutation insertStocktake($storeId: String!, $input: InsertStocktakeInput!) {
+    insertStocktake(storeId: $storeId, input: $input) {
+      ... on StocktakeNode {
+        __typename
+        id
+      }
+    }
+  }
+`;
+export const StocktakeLocationsDocument = gql`
+  query stocktakeLocations($storeId: String!, $filter: LocationFilterInput) {
+    locations(storeId: $storeId, filter: $filter, page: { first: 100 }) {
+      ... on LocationConnector {
+        __typename
+        nodes {
+          ...LocationOption
+        }
+      }
+    }
+  }
+  ${LocationOptionFragmentDoc}
+`;
+export const StocktakeMasterListsDocument = gql`
+  query stocktakeMasterLists(
+    $storeId: String!
+    $filter: MasterListFilterInput
+  ) {
+    masterLists(storeId: $storeId, filter: $filter, page: { first: 100 }) {
+      ... on MasterListConnector {
+        __typename
+        nodes {
+          ...MasterListOption
+        }
+      }
+    }
+  }
+  ${MasterListOptionFragmentDoc}
+`;
+export const StocktakeVvmStatusesDocument = gql`
+  query stocktakeVvmStatuses($storeId: String!) {
+    activeVvmStatuses(storeId: $storeId) {
+      ... on VvmstatusConnector {
+        __typename
+        nodes {
+          ...VvmStatusOption
+        }
+      }
+    }
+  }
+  ${VvmStatusOptionFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -406,6 +683,96 @@ export function getSdk(
           }),
         'upsertStocktakeLines',
         'mutation',
+        variables,
+      );
+    },
+    saveStocktakeLines(
+      variables: SaveStocktakeLinesMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<SaveStocktakeLinesMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SaveStocktakeLinesMutation>({
+            document: SaveStocktakeLinesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'saveStocktakeLines',
+        'mutation',
+        variables,
+      );
+    },
+    insertStocktake(
+      variables: InsertStocktakeMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<InsertStocktakeMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertStocktakeMutation>({
+            document: InsertStocktakeDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertStocktake',
+        'mutation',
+        variables,
+      );
+    },
+    stocktakeLocations(
+      variables: StocktakeLocationsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<StocktakeLocationsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StocktakeLocationsQuery>({
+            document: StocktakeLocationsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'stocktakeLocations',
+        'query',
+        variables,
+      );
+    },
+    stocktakeMasterLists(
+      variables: StocktakeMasterListsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<StocktakeMasterListsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StocktakeMasterListsQuery>({
+            document: StocktakeMasterListsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'stocktakeMasterLists',
+        'query',
+        variables,
+      );
+    },
+    stocktakeVvmStatuses(
+      variables: StocktakeVvmStatusesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal'],
+    ): Promise<StocktakeVvmStatusesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StocktakeVvmStatusesQuery>({
+            document: StocktakeVvmStatusesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'stocktakeVvmStatuses',
+        'query',
         variables,
       );
     },

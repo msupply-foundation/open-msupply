@@ -21,6 +21,7 @@ fragment StocktakeLineRow on StocktakeLineNode {
     id
     code
     name
+    defaultPackSize
   }
 }
 
@@ -110,6 +111,117 @@ mutation upsertStocktakeLines(
             }
           }
         }
+      }
+    }
+  }
+}
+
+# Used by the per-item line-edit modal, which can both edit existing lines and
+# add new batch rows (inserts) for the item in a single batch call.
+mutation saveStocktakeLines(
+  $storeId: String!
+  $insertStocktakeLines: [InsertStocktakeLineInput!]
+  $updateStocktakeLines: [UpdateStocktakeLineInput!]
+) {
+  batchStocktake(
+    storeId: $storeId
+    input: {
+      insertStocktakeLines: $insertStocktakeLines
+      updateStocktakeLines: $updateStocktakeLines
+    }
+  ) {
+    ... on BatchStocktakeResponse {
+      __typename
+      insertStocktakeLines {
+        id
+        response {
+          __typename
+          ... on InsertStocktakeLineError {
+            error {
+              __typename
+              description
+            }
+          }
+        }
+      }
+      updateStocktakeLines {
+        id
+        response {
+          __typename
+          ... on UpdateStocktakeLineError {
+            error {
+              __typename
+              description
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# Insert response is a single-member union (StocktakeNode); failures surface as
+# GraphQL errors, not as an error member.
+mutation insertStocktake($storeId: String!, $input: InsertStocktakeInput!) {
+  insertStocktake(storeId: $storeId, input: $input) {
+    ... on StocktakeNode {
+      __typename
+      id
+    }
+  }
+}
+
+# --- Pickers for the "New stocktake > Filtered" dialog ---
+
+fragment LocationOption on LocationNode {
+  __typename
+  id
+  code
+  name
+}
+
+query stocktakeLocations($storeId: String!, $filter: LocationFilterInput) {
+  locations(storeId: $storeId, filter: $filter, page: { first: 100 }) {
+    ... on LocationConnector {
+      __typename
+      nodes {
+        ...LocationOption
+      }
+    }
+  }
+}
+
+fragment MasterListOption on MasterListNode {
+  __typename
+  id
+  code
+  name
+}
+
+query stocktakeMasterLists($storeId: String!, $filter: MasterListFilterInput) {
+  masterLists(storeId: $storeId, filter: $filter, page: { first: 100 }) {
+    ... on MasterListConnector {
+      __typename
+      nodes {
+        ...MasterListOption
+      }
+    }
+  }
+}
+
+fragment VvmStatusOption on VvmstatusNode {
+  __typename
+  id
+  code
+  description
+}
+
+query stocktakeVvmStatuses($storeId: String!) {
+  activeVvmStatuses(storeId: $storeId) {
+    ... on VvmstatusConnector {
+      __typename
+      nodes {
+        ...VvmStatusOption
       }
     }
   }

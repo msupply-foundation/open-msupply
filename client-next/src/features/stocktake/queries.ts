@@ -49,6 +49,62 @@ export const stocktakeQueryOptions = (storeId: string, id: string) =>
     },
   });
 
+// --- Pickers for the "New stocktake > Filtered" dialog ---
+
+export const stocktakeLocationsQueryOptions = (
+  storeId: string,
+  search: string,
+) =>
+  queryOptions({
+    queryKey: [...stocktakeKeys.all(storeId), 'locations', search] as const,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { locations } = await stocktakeSdk.stocktakeLocations({
+        storeId,
+        filter: search ? { codeOrName: { like: search } } : undefined,
+      });
+      return locations.__typename === 'LocationConnector'
+        ? locations.nodes
+        : [];
+    },
+  });
+
+export const stocktakeMasterListsQueryOptions = (
+  storeId: string,
+  search: string,
+) =>
+  queryOptions({
+    queryKey: [...stocktakeKeys.all(storeId), 'masterLists', search] as const,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { masterLists } = await stocktakeSdk.stocktakeMasterLists({
+        storeId,
+        filter: {
+          existsForStoreId: { equalTo: storeId },
+          ...(search ? { name: { like: search } } : {}),
+        },
+      });
+      return masterLists.__typename === 'MasterListConnector'
+        ? masterLists.nodes
+        : [];
+    },
+  });
+
+// Active VVM statuses are a short, unfiltered list — long staleTime, no search.
+export const stocktakeVvmStatusesQueryOptions = (storeId: string) =>
+  queryOptions({
+    queryKey: [...stocktakeKeys.all(storeId), 'vvmStatuses'] as const,
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { activeVvmStatuses } = await stocktakeSdk.stocktakeVvmStatuses({
+        storeId,
+      });
+      return activeVvmStatuses.__typename === 'VvmstatusConnector'
+        ? activeVvmStatuses.nodes
+        : [];
+    },
+  });
+
 // Pulls every line in one request — deliberately, to stress the grid (~5,000 rows).
 export const stocktakeLinesQueryOptions = (storeId: string, id: string) =>
   queryOptions({
