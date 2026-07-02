@@ -48,7 +48,7 @@ pub struct ReportFilter {
     pub name: Option<StringFilter>,
     pub context: Option<EqualFilter<ContextType>>,
     pub sub_context: Option<EqualFilter<String>>,
-    pub code: Option<EqualFilter<String>>,
+    pub code: Option<StringFilter>,
     pub is_custom: Option<bool>,
     pub is_active: Option<bool>,
 }
@@ -83,7 +83,7 @@ impl ReportFilter {
         self
     }
 
-    pub fn code(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn code(mut self, filter: StringFilter) -> Self {
         self.code = Some(filter);
         self
     }
@@ -215,7 +215,7 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
         apply_string_filter!(query, name, report::name);
         apply_equal_filter!(query, context, report::context);
         apply_equal_filter!(query, sub_context, report::sub_context);
-        apply_equal_filter!(query, code, report::code);
+        apply_string_filter!(query, code, report::code);
         if let Some(is_custom) = is_custom {
             query = query.filter(report::is_custom.eq(is_custom));
         }
