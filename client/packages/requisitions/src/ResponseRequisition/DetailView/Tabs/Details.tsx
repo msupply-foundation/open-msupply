@@ -63,6 +63,21 @@ export const DetailsTab = ({ lineEdit }: DetailsTabProps) => {
     ),
   });
 
+  // Items in the order they're currently displayed in the table (respecting the
+  // user's sort), so the line-edit modal's "OK & Next" steps through items in
+  // the same order the user sees them.
+  const getSortedItems = useCallback(
+    () =>
+      table
+        .getSortedRowModel()
+        .rows.reduce<ResponseLineFragment['item'][]>((acc, row) => {
+          const item = row.original?.item;
+          if (item && !acc.some(i => i?.id === item.id)) acc.push(item);
+          return acc;
+        }, []),
+    [table]
+  );
+
   return (
     <>
       <MaterialTable table={table} />
@@ -78,6 +93,7 @@ export const DetailsTab = ({ lineEdit }: DetailsTabProps) => {
           mode={lineEdit.mode}
           isOpen={lineEdit.isOpen}
           onClose={lineEdit.onClose}
+          getSortedItems={getSortedItems}
         />
       )}
     </>
