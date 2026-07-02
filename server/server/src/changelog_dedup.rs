@@ -30,7 +30,8 @@ pub fn spawn(
                 continue;
             }
 
-            // Only start a run inside the configured window (if any).
+            // Only start a run inside the configured window (if any). Bad `HH:MM`
+            // config is rejected at yaml deserialize time, so the window is valid here.
             if let Some(window) = &settings.time_window {
                 if !window.contains(Local::now().time()) {
                     continue;
