@@ -4,30 +4,30 @@ import {
   NothingHere,
   useUrlQueryParams,
   usePaginatedMaterialTable,
-  useEditModal,
   ColumnDef,
   ColumnType,
   MaterialTable,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { getStatusTranslation } from '../utils';
 import { StockMovementRowFragment } from '../api/operations.generated';
 import { useStockMovementList } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { StockMovementModal } from './StockMovementModal';
 import { Footer } from './Footer';
 
 export const ListView = () => {
   const t = useTranslation();
+  const navigate = useNavigate();
   const {
     queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
+      { key: 'referenceNumber' },
       { key: 'status', condition: 'equalTo' },
-      { key: 'itemCodeOrName' },
-      { key: 'fromLocationCode' },
-      { key: 'toLocationCode' },
     ],
   });
 
@@ -38,49 +38,11 @@ export const ListView = () => {
     filterBy,
   });
 
-  const { isOpen, entity, mode, onOpen, onClose } =
-    useEditModal<StockMovementRowFragment>();
-
   const columns = useMemo(
     (): ColumnDef<StockMovementRowFragment>[] => [
       {
-        accessorKey: 'itemCode',
-        header: t('label.code'),
-        enableSorting: true,
-      },
-      {
-        accessorKey: 'itemName',
-        header: t('label.name'),
-        enableSorting: true,
-      },
-      {
-        accessorKey: 'batch',
-        header: t('label.batch'),
-        enableSorting: true,
-      },
-      {
-        id: 'expiryDate',
-        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
-        header: t('label.expiry'),
-        columnType: ColumnType.Date,
-        enableSorting: true,
-      },
-      {
-        accessorKey: 'numberOfPacks',
-        header: t('label.num-packs'),
-        columnType: ColumnType.Number,
-        enableSorting: true,
-      },
-      {
-        id: 'fromLocation',
-        accessorFn: row => row.fromLocation?.code ?? '',
-        header: t('label.from-location'),
-        enableSorting: true,
-      },
-      {
-        id: 'toLocation',
-        accessorFn: row => row.toLocation?.code ?? '',
-        header: t('label.to-location'),
+        accessorKey: 'referenceNumber',
+        header: t('label.reference'),
         enableSorting: true,
       },
       {
@@ -88,6 +50,16 @@ export const ListView = () => {
         accessorFn: row => getStatusTranslation(row.status, t),
         header: t('label.status'),
         enableSorting: true,
+      },
+      {
+        accessorKey: 'lineCount',
+        header: t('label.lines'),
+        columnType: ColumnType.Number,
+      },
+      {
+        accessorKey: 'comment',
+        header: t('label.comment'),
+        columnType: ColumnType.Comment,
       },
       {
         id: 'createdDatetime',
@@ -105,8 +77,7 @@ export const ListView = () => {
         enableSorting: true,
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [t]
   );
 
   const { table, selectedRows } =
@@ -117,7 +88,13 @@ export const ListView = () => {
       columns,
       data: data?.nodes,
       totalCount: data?.totalCount ?? 0,
-      onRowClick: row => onOpen(row),
+      onRowClick: row =>
+        navigate(
+          RouteBuilder.create(AppRoute.Inventory)
+            .addPart(AppRoute.StockMovement)
+            .addPart(row.id)
+            .build()
+        ),
       noDataElement: <NothingHere body={t('messages.no-stock-movements')} />,
     });
 
@@ -130,14 +107,6 @@ export const ListView = () => {
         selectedRows={selectedRows}
         resetRowSelection={table.resetRowSelection}
       />
-      {isOpen && entity && (
-        <StockMovementModal
-          open={isOpen}
-          mode={mode}
-          movement={entity}
-          onClose={onClose}
-        />
-      )}
     </>
   );
 };
