@@ -845,6 +845,59 @@
       "excel_template_buffer": null
     },
     {
+      "id": "stock-take-detail-view_2_13_3_false",
+      "name": "Stocktake",
+      "description": null,
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": null,
+          "query": [
+            "StocktakeDetailQuery.graphql"
+          ],
+          "convert_data": null,
+          "convert_data_type": "Extism"
+        },
+        "entries": {
+          "StocktakeDetailQuery.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query StocktakeDetailQuery(\n  $storeId: String!\n  $dataId: String!\n  $sort: PrintReportSortInput\n) {\n  stocktake(storeId: $storeId, id: $dataId) {\n    ... on StocktakeNode {\n      id\n      stocktakeDate\n      stocktakeNumber\n      status\n      createdDatetime\n      description\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  stocktakeLines(storeId: $storeId, stocktakeId: $dataId, reportSort: $sort) {\n    ... on StocktakeLineConnector {\n      nodes {\n        id\n        itemId\n        item {\n          ... on ItemNode {\n            code\n            name\n            unitName\n          }\n        }\n        packSize\n        location {\n          code\n        }\n        expiryDate\n        countedNumberOfPacks\n        batch\n        snapshotNumberOfPacks\n        costPricePerPack\n        reasonOption {\n          ... on ReasonOptionNode {\n            reason\n          }\n        }\n        comment\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      id\n      name(storeId: $storeId) {\n        address1\n        address2\n        code\n        email\n        phone\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<table class=\"header_image_section\" style=\"width: 100%;height: 98%;\">\n    <tr>\n        {% if data.store.logo %}\n        <th style=\"text-align:start;width:10%;height:70%;\">\n            <img class=\"logo\" src=\"{{ data.store.logo }}\" />\n        </th>\n        {% endif %}\n        <th style=\"text-align:start;width:20%;\">\n            <span style=\"font-weight:bold;\">{{ data.store.storeName }}</span><br>\n            <span style=\"font-size:6pt;\">{{ data.store.name.address1 }}</span><br>\n            <span style=\"font-size:6pt;\">{{ data.store.name.address2 }}</span><br>\n            <span style=\"font-size:6pt;\">\n                {{t(k=\"label.phone\",f=\"Telephone\")}}: {{ data.store.name.phone }}\n            </span><br>\n            <span style=\"font-size:6pt;\">\n                {{t(k=\"label.email\",f=\"Email\")}}: {{ data.store.name.email }}\n            </span>\n            <br>\n            <br>\n        </th>\n        <th style=\"text-align:end;width:70%;font-size:28pt;\">\n            {{ t(k=\"label.stocktake\", f=\"Stocktake\") }}<br>\n        </th>\n    </tr>\n</table>\n\n<div class=\"header_supplied_section\" style=\"display: flex; flex-direction: column;\">\n    <div style=\"display: flex; justify-content: flex-end;\">\n        <span>{{ t(k=\"label.number\", f=\"Number\") }}: {{ data.stocktake.stocktakeNumber }}</span>\n    </div>\n    <div style=\"display: flex; justify-content: flex-end; padding-bottom: 10px;\">\n        <span>{{ t(k=\"label.comment\", f=\"Comment\") }}: {{ data.stocktake.description }}</span>\n    </div>\n</div>\n"
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@media print {\n  @page {\n    @bottom-right {\n      font-family: Tahoma;\n      font-size: 8pt;\n      /* do not allow formatter to add a line break in the content */\n      /* prettier-ignore*/\n      content: '{{t(k=\"report.page\",f=\"Page\")}} ' counter(page) ' {{t(k=\"report.of\",f=\"of\")}} ' counter(pages);\n    }\n  }\n}\nheader_image_section,\n.header_supplied_section {\n  margin-inline-start: 8px;\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.body_section {\n  border-collapse: collapse;\n  width: 100%;\n}\n\n.body_column_label th,\n.body_value td {\n  border: 1px solid black;\n  padding: 3px 4px;\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n\n.body_column_label th {\n  text-align: start;\n}\n\n.batch {\n  word-break: break-word;\n}\n"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n<table class=\"body_section\">\n    <thead>\n        <tr class=\"body_column_label\">\n            <th>{{t(k=\"label.code\", f=\"Code\")}}</th>\n            <th>{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n            <th>{{t(k=\"label.batch\", f=\"batch\")}}</th>\n            <th>{{t(k=\"label.expiry\", f=\"Expiry\")}}</th>\n            <th>{{t(k=\"label.location\", f=\"Location\")}}</th>\n            <th>{{t(k=\"label.unit\", f=\"Unit\")}}</th>\n            <th>{{t(k=\"label.pack-size\",f=\"Pack size\")}}</th>\n            <th>{{t(k=\"label.snapshot-num-of-packs\",f=\"Snapshot Packs\")}}</th>\n            <th>{{t(k=\"label.counted-num-of-packs\",f=\"Counted Packs\")}}</th>\n            <th>{{t(k=\"label.difference\",f=\"Difference\")}}</th>\n            <th>{{t(k=\"label.reason-adjustment\",f=\"Adjustment Reason\")}}</th>\n            <th>{{t(k=\"label.comment\",f=\"Comment\")}}</th>\n        </tr>\n    </thead>\n    {% for line in data.stocktakeLines.nodes -%}\n    <tr class=\"body_value\">\n        <td>{{ line.item.code }}</td>\n        <td>{{ line.item.name }}</td>\n        <td class=\"batch\">{{ line.batch }}</td>\n        <td>\n            {% if line.expiryDate %}\n            {{ line.expiryDate | date(format=\"%d/%m/%Y\") }}\n            {% endif %}\n        </td>\n        <td>\n            {% if line.location.code %}\n            {{ line.location.code }}\n            {% endif %}\n        </td>\n        <td>{{ line.item.unitName }}</td>\n        <td>{{ line.packSize}}</td>\n        <td>{{ line.snapshotNumberOfPacks }}</td>\n        <td>\n            {% if line.countedNumberOfPacks is number %}\n            {{ line.countedNumberOfPacks }}\n            {% else %}\n            -\n            {% endif %}\n        </td>\n        <td>\n            {% if line.countedNumberOfPacks is number %}\n            {{ line.countedNumberOfPacks - line.snapshotNumberOfPacks }}\n            {% else %}\n            -\n            {% endif %}\n        </td>\n        <td>{{ line.reasonOption.reason | default(value='') }}</td>\n        <td style=\"white-space: pre-line; word-break: break-word;\">{{ line.comment | default(value='') }}</td>\n    </tr>\n    {%- endfor %}\n</table>"
+            }
+          }
+        }
+      },
+      "context": "STOCKTAKE",
+      "sub_context": null,
+      "argument_schema_id": null,
+      "comment": null,
+      "is_custom": false,
+      "version": "2.13.3",
+      "code": "stock-take-detail-view",
+      "form_schema": null,
+      "excel_template_buffer": null
+    },
+    {
       "id": "stock-take-detail-view_2_6_4_false",
       "name": "Stocktake",
       "description": null,
@@ -1124,6 +1177,59 @@
       "excel_template_buffer": null
     },
     {
+      "id": "stock-take-variance_2_8_4_false",
+      "name": "Stocktake Variance",
+      "description": null,
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": null,
+          "query": [
+            "stocktake.graphql"
+          ],
+          "convert_data": null,
+          "convert_data_type": "Extism"
+        },
+        "entries": {
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<table class=\"header_image_section\" style=\"width: 100%; height: 98%\">\n  <tr>\n    {% if data.store.logo %}\n    <th style=\"text-align: start; width: 10%; height: 70%\">\n      <img class=\"logo\" src=\"{{ data.store.logo }}\" />\n    </th>\n    {% endif %}\n    <th style=\"text-align: start; width: 20%\">\n      <span style=\"font-weight: bold\">{{ data.store.storeName }}</span><br />\n      <span style=\"font-size: 6pt\">{{ data.store.name.address1 }}</span><br />\n      <span style=\"font-size: 6pt\">{{ data.store.name.address2 }}</span><br />\n      <span style=\"font-size: 6pt\">\n        {{t(k=\"label.phone\",f=\"Telephone\")}}: {{ data.store.name.phone }} </span\n      ><br />\n      <span style=\"font-size: 6pt\">\n        {{t(k=\"label.email\",f=\"Email\")}}: {{ data.store.name.email }}\n      </span>\n      <br/>\n      <br/>\n    </th>\n    <th style=\"text-align: end; width: 70%; font-size: 28pt\">\n      {{t(k=\"report.stock-take-variance-report\", f=\"Stocktake Variance\")}}\n    </th>\n  </tr>\n</table>\n\n<div class=\"header_supplied_section\" style=\"display: flex; padding: 4px 0\">\n  <div style=\"display: flex; flex: 1\">\n    {{ data.stocktake.description }}{% if data.stocktake.comment and data.stocktake.description %} -\n    {% else %}{% endif %}{{ data.stocktake.comment }}\n  </div>\n  <div style=\"display: flex\">\n    <span>{{ t(k=\"label.number\", f=\"Number\") }}: {{ data.stocktake.stocktakeNumber }}</span>\n  </div>\n</div>\n"
+            }
+          },
+          "stocktake.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query StocktakeQuery(\n  $storeId: String!\n  $dataId: String!\n  $sort: PrintReportSortInput\n) {\n  stocktake(storeId: $storeId, id: $dataId) {\n    ... on StocktakeNode {\n      id\n      storeId\n      stocktakeDate\n      stocktakeNumber\n      status\n      createdDatetime\n      description\n      comment\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  stocktakeLines(\n    storeId: $storeId\n    stocktakeId: $dataId\n    reportSort: $sort\n    # Current limit for stocktake lines in one request is 1000\n    # Very possible for larger stocktakes to exist, meaning not all pages available in report\n    # https://github.com/msupply-foundation/open-msupply/issues/8574\n    page: { first: 1000 }\n  ) {\n    ... on StocktakeLineConnector {\n      nodes {\n        id\n        itemId\n        item {\n          ... on ItemNode {\n            code\n            name\n          }\n        }\n        packSize\n        expiryDate\n        countedNumberOfPacks\n        batch\n        snapshotNumberOfPacks\n        costPricePerPack\n        comment\n        reasonOption {\n          ... on ReasonOptionNode {\n            reason\n            id\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          code\n          email\n          name\n          phone\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@media print {\n  @page {\n    @bottom-right {\n      font-family: Tahoma;\n      font-size: 8pt;\n      /* do not allow formatter to add a line break in the content */\n      /* prettier-ignore*/\n      content: '{{t(k=\"report.page\",f=\"Page\")}} ' counter(page) ' {{t(k=\"report.of\",f=\"of\")}} ' counter(pages);\n    }\n  }\n}\n\n.header_image_section,\n.header_supplied_section {\n  margin-inline-start: 8px;\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\nbody {\n  margin: 10px 5% 10px 5%;\n  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n}\n\ntable.center {\n  margin-left: auto;\n  margin-right: auto;\n  width: 98%;\n  border-collapse: collapse;\n  font-size: 12px;\n}\n\ntd.borderline {\n  border-bottom: 1px solid black;\n}\n\ntd {\n  vertical-align: top;\n  padding: 2px;\n}\n\nth {\n  padding: 2px;\n}\n\ntable.center td,\ntable.center th {\n  border: 1px solid black;\n}\n\ntable.center td.no-border {\n  border: none;\n}\n\ntr.borderline {\n  border-bottom: 1px solid black;\n}\n\ntd.borderlineTopBottom {\n  border-bottom: 1px solid black;\n  border-top: 1px solid black;\n}\n\n.Report_title {\n  text-align: center;\n  padding-top: 8px;\n  font-weight: bold;\n  font-size: 12pt;\n}\n\n.name_centre {\n  text-align: center;\n  font-weight: bold;\n  font-size: 14pt;\n}\n.name_address {\n  text-align: center;\n  font-weight: normal;\n  font-size: 10pt;\n}\n\n.name_right {\n  text-align: end;\n  font-weight: normal;\n  font-size: 10pt;\n}\n\n.col-item-code {\n  width: 6%;\n  text-align: start;\n}\n\n.col-item-name {\n  text-align: start;\n}\n\n.col-batch {\n  width: 5%;\n  text-align: start;\n}\n\n.col-expiry-date {\n  width: 7.5%;\n  text-align: end;\n}\n\n.col-packsize {\n  width: 5%;\n  text-align: right;\n}\n\n.col-cost-price {\n  width: 8%;\n  text-align: right;\n}\n\n.col-snapshot-packs {\n  width: 6%;\n  text-align: right;\n}\n\n.col-counted-packs {\n  width: 6%;\n  text-align: right;\n}\n\n.col-variance-packs {\n  width: 6%;\n  text-align: right;\n}\n\n.col-variance-values {\n  width: 6%;\n  text-align: right;\n}\n\n.col-reason {\n  width: 10%;\n  text-align: end;\n}\n\n.col-comment {\n  width: 12%;\n  text-align: end;\n}\n\n.batch-wrap {\n  word-break: break-word;\n}\n\n@media print {\n  @page {\n    size: landscape;\n  }\n}\n"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "\n<style>\n  {% include \"style.css\" %}\n</style>\n\n<body>\n  {% set_global VvalueIncrease=0 %}\n  {% set_global VvalueDecrease=0 %}\n  {% set_global VnetVarience=0 %}\n  {% set_global Vnumofpackscounted=0 %} \n\n<table class=\"center\">\n  <thead>\n    <tr>\n      <td width=\"60\" class=\"borderline\"> <span class=\"table_header\">{{t(k=\"report.item-code\",f=\"Item code\")}}</span></td>\n      <td class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.item-name\",f=\"Item name\")}}</span></td>\n      <td class=\"borderline\"><span class=\"table_header\">{{t(k=\"label.batch\",f=\"Batch\")}}</span></td>\n      <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"label.expiry\",f=\"Expiry\")}}</span></td>\n      <td width=\"50\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.pack-size\",f=\"Pack size\")}}</span></td>\n      <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.cost-price-per-pack\",f=\"Cost price (per pack)\")}}</span></td>\n      <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.snapshot-packs\",f=\"Snapshot Packs\")}}</span></td>\n      <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"label.counted-num-of-packs\",f=\"Counted Packs\")}}</span></td>\n      <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.variance-packs\",f=\"Variance (packs)\")}}</span></td>\n      <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.variance-value\",f=\"Variance (Value)\")}}</span></td>\n      <td width=\"100\"class=\"borderline\"><span class=\"table_header\">{{t(k=\"label.reason\",f=\"Reason\")}}</span></td>\n      <td width=\"100\"class=\"borderline\"><span class=\"table_header\">{{t(k=\"label.comment\",f=\"Comment\")}}</span></td>\n    </tr>\n  </thead>\n\n  {% for line in data.stocktakeLines.nodes -%}\n  {%set costPricePerPack=line.costPricePerPack | default(value=0) %}\n  <tr>\n    <td class=\"table_text\">{{line.item.code}}</td>\n    <td class=\"table_text\">{{line.item.name}}</td>\n    <td class=\"table_text batch-wrap\">{{line.batch}}</td>\n    <td class=\"table_number\">{{line.expiryDate}}</td>\n    <td class=\"table_number\">{{line.packSize}}</td>\n    <td class=\"table_number\">{{costPricePerPack}}</td>\n    <td class=\"table_number\">{{line.snapshotNumberOfPacks | round( precision=2)}}</td>\n\n\n    <!-- Counted packs and potential variance should only show if stock line has been counted -->\n    {% if line.countedNumberOfPacks is number %}\n\n      {% set_global Vnumofpackscounted=line.countedNumberOfPacks %}\n      {% set Vvariance=Vnumofpackscounted - line.snapshotNumberOfPacks %}\n      {% set VvarianceValue=Vvariance * costPricePerPack %}\n\n      <!-- Handle -0 -->\n      {% if VvarianceValue == -0 %}  {% set VvarianceValue=0 %}  {% endif %}\n\n      <td class=\"table_number\">{{line.countedNumberOfPacks}}</td>\n      <td class=\"table_number\">{{Vvariance | round(precision=2)}}</td>\n      <td class=\"table_number\">{{VvarianceValue | round(precision=2)}}</td>\n    {% else %}\n      {% set VvarianceValue=0 %}\n\n      <td class=\"table_number\">-</td>\n      <td class=\"table_number\">-</td>\n      <td class=\"table_number\">-</td>\n    {% endif %}\n\n    {% if line.reasonOption.id %}\n    <td  class=\"table_text\">{{line.reasonOption.reason}}</td>\n    {% else %}\n    <td  class=\"table_text\">N/A</td>\n    {% endif %}\n    <td  class=\"table_text\">{{line.comment}}</td>\n\n    {% if VvarianceValue > 0 %}\n    {% set_global VvalueIncrease=VvalueIncrease + VvarianceValue  %}\n    {% else %}\n    {% set_global VvalueDecrease=VvalueDecrease + VvarianceValue  %}\n    {% endif %}\n\n  </tr>\n  {%- endfor %}\n  {% set_global VnetVarience=VvalueIncrease + VvalueDecrease %}\n\n  <tr>\n    <td colspan=\"12\"  class=\"borderline\" />\n  </tr>\n\n\n\n\n  <tr>\n    <td colspan=\"10\" class=\"no-border\" />\n    <td  class=\"borderline\"><span class=\"table_text\">{{t(k=\"report.net-increase\",f=\"Net Increase\")}}</span></td>\n    <td class=\"borderline\"><span class=\"table_text\">{{VvalueIncrease | round( precision=2)}}</span></td>\n  </tr>\n\n\n\n  <tr>\n    <td colspan=\"10\" class=\"no-border\" />\n    <td class=\"borderline\"><span class=\"table_text\">{{t(k=\"report.net-decrease\",f=\"Net Decrease\")}}</span></td>\n    <td class=\"borderline\"><span class=\"table_text\">{{VvalueDecrease | round( precision=2)}}</span></td>\n  </tr>\n\n  <tr>\n    <td colspan=\"10\"  class=\"no-border\" />\n    <td  class=\"borderline\"><span class=\"table_text\">{{t(k=\"report.net-variance\",f=\"Net Variance\")}}</span></td>\n    <td  class=\"borderline\"><span class=\"table_text\">{{VnetVarience | round( precision=2)}}</span></td>\n  </tr>\n</table>\n\n</body>\n"
+            }
+          }
+        }
+      },
+      "context": "STOCKTAKE",
+      "sub_context": "",
+      "argument_schema_id": null,
+      "comment": null,
+      "is_custom": false,
+      "version": "2.8.4",
+      "code": "stock-take-variance",
+      "form_schema": null,
+      "excel_template_buffer": null
+    },
+    {
       "id": "stock-take-variance_2_21_0_false",
       "name": "Stocktake Variance",
       "description": null,
@@ -1234,7 +1340,7 @@
       "excel_template_buffer": null
     },
     {
-      "id": "stock-take-with-quantity_2_6_5_false",
+      "id": "stock-take-with-quantity_2_6_6_false",
       "name": "Stocktake with snapshot quantity",
       "description": null,
       "template": {
@@ -1278,7 +1384,7 @@
       "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "2.6.5",
+      "version": "2.6.6",
       "code": "stock-take-with-quantity",
       "form_schema": null,
       "excel_template_buffer": null
