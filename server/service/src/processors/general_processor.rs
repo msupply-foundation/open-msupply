@@ -20,6 +20,7 @@ use crate::{
 
 use super::{
     add_central_patient_visibility::AddPatientVisibilityForCentral,
+    assign_prescription_number::AssignPrescriptionNumber,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, plugin_processor::PluginProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
@@ -51,6 +52,7 @@ pub enum ProcessorType {
     ContactFormEmail,
     LoadPlugin,
     AssignRequisitionNumber,
+    AssignPrescriptionNumber,
     AddPatientVisibilityForCentral,
     SupportUploadFiles,
     Plugins,
@@ -64,6 +66,7 @@ impl ProcessorType {
             ProcessorType::ContactFormEmail => vec![Box::new(QueueContactEmailProcessor)],
             ProcessorType::LoadPlugin => vec![Box::new(LoadPlugin)],
             ProcessorType::AssignRequisitionNumber => vec![Box::new(AssignRequisitionNumber)],
+            ProcessorType::AssignPrescriptionNumber => vec![Box::new(AssignPrescriptionNumber)],
             ProcessorType::AddPatientVisibilityForCentral => {
                 vec![Box::new(AddPatientVisibilityForCentral)]
             }

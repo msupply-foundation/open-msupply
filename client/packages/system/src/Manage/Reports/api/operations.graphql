@@ -51,3 +51,14 @@ mutation installUploadedReports($fileId: String!) {
     }
   }
 }
+
+mutation updateReport($input: UpdateReportInput!) {
+  centralServer {
+    reports {
+      updateReport(input: $input) {
+        id
+        isActive
+      }
+    }
+  }
+}
