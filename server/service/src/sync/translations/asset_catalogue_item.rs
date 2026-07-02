@@ -62,8 +62,11 @@ impl SyncTranslation for AssetCatalogueItemTranslation {
             code,
             manufacturer,
             model,
-            // asset_catalogue_type_id (type_id): SKIPPED, no repository for asset_catalogue_type
-            type_id,
+            type_id: check_fk(
+                type_id,
+                "asset_catalogue_type_id",
+                FkField::AssetCatalogueType,
+            )?,
             properties,
             deleted_datetime,
         };
@@ -115,6 +118,7 @@ mod tests {
     use repository::{
         asset_category_row::{AssetCategoryRow, AssetCategoryRowRepository},
         asset_class_row::{AssetClassRow, AssetClassRowRepository},
+        asset_type_row::{AssetTypeRow, AssetTypeRowRepository},
         mock::MockDataInserts,
         test_db::setup_all,
     };
@@ -142,6 +146,13 @@ mod tests {
                 id: "035d2847-1eec-4595-a161-b7cfefc17381".to_string(),
                 name: "test".to_string(),
                 class_id: "32608ef9-dce5-41a7-b3e9-92b0fe086c7e".to_string(),
+            })
+            .unwrap();
+        AssetTypeRowRepository::new(&connection)
+            .upsert_one(&AssetTypeRow {
+                id: "a6625bba-052b-4cf8-9e0f-b96ebba0a31f".to_string(),
+                name: "test".to_string(),
+                category_id: "035d2847-1eec-4595-a161-b7cfefc17381".to_string(),
             })
             .unwrap();
 

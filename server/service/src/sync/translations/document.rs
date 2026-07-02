@@ -11,7 +11,7 @@ use crate::sync::{
     integrate_document::DocumentUpsert,
     translations::{
         document_registry::DocumentRegistryTranslation, form_schema::FormSchemaTranslation,
-        name::NameTranslation,
+        master_list::MasterListTranslation, name::NameTranslation,
     },
 };
 
@@ -67,6 +67,8 @@ impl SyncTranslation for DocumentTranslation {
             NameTranslation.table_name(),
             FormSchemaTranslation.table_name(),
             DocumentRegistryTranslation.table_name(),
+            // context_id (FkField::Context) is synced via the program master list
+            MasterListTranslation.table_name(),
         ]
     }
 

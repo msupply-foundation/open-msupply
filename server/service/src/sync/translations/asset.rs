@@ -77,8 +77,11 @@ impl SyncTranslation for AssetTranslation {
                 FkField::AssetCategory,
             )?,
             asset_class_id: fk_check(asset_class_id, "asset_class_id", FkField::AssetClass)?,
-            // asset_catalogue_type_id (asset_type_id): SKIPPED, no repository for asset_catalogue_type
-            asset_type_id,
+            asset_type_id: fk_check(
+                asset_type_id,
+                "asset_catalogue_type_id",
+                FkField::AssetCatalogueType,
+            )?,
             store_id: fk_check(store_id, "store_id", FkField::Store)?,
             serial_number,
             catalogue_item_id: fk_check(
