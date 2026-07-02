@@ -1437,6 +1437,7 @@ export type CentralServerMutationNode = {
   campaign: CampaignMutations;
   demographic: DemographicMutations;
   general: CentralGeneralMutations;
+  helpDocument: HelpDocumentMutations;
   itemVariant: ItemVariantMutations;
   logReason: AssetLogReasonMutations;
   plugins: CentralPluginMutations;
@@ -1800,6 +1801,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   DeleteAssetErrorInterface &
   DeleteAssetLogReasonErrorInterface &
   DeleteCampaignErrorInterface &
+  DeleteHelpDocumentErrorInterface &
   DeleteLocationErrorInterface &
   InsertAssetCatalogueItemErrorInterface &
   InsertAssetErrorInterface &
@@ -1807,6 +1809,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   InsertAssetLogReasonErrorInterface &
   InsertDemographicIndicatorErrorInterface &
   InsertDemographicProjectionErrorInterface &
+  InsertHelpDocumentErrorInterface &
   InsertLocationErrorInterface &
   NodeErrorInterface &
   RefreshTokenErrorInterface &
@@ -1934,6 +1937,23 @@ export type DeleteCustomerReturnResponse =
 export type DeleteErrorInterface = {
   description: Scalars['String']['output'];
 };
+
+export type DeleteHelpDocumentError = {
+  __typename: 'DeleteHelpDocumentError';
+  error: DeleteHelpDocumentErrorInterface;
+};
+
+export type DeleteHelpDocumentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteHelpDocumentInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteHelpDocumentResponse =
+  | DeleteHelpDocumentError
+  | DeleteResponse;
 
 export type DeleteInboundShipmentError = {
   __typename: 'DeleteInboundShipmentError';
@@ -3222,6 +3242,46 @@ export type Gs1DataElement = {
   data: Scalars['String']['input'];
 };
 
+export type HelpDocumentConnector = {
+  __typename: 'HelpDocumentConnector';
+  nodes: Array<HelpDocumentNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type HelpDocumentFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type HelpDocumentMutations = {
+  __typename: 'HelpDocumentMutations';
+  deleteHelpDocument: DeleteHelpDocumentResponse;
+  insertHelpDocument: InsertHelpDocumentResponse;
+};
+
+export type HelpDocumentMutationsDeleteHelpDocumentArgs = {
+  input: DeleteHelpDocumentInput;
+};
+
+export type HelpDocumentMutationsInsertHelpDocumentArgs = {
+  input: InsertHelpDocumentInput;
+};
+
+export type HelpDocumentNode = {
+  __typename: 'HelpDocumentNode';
+  createdDatetime: Scalars['DateTime']['output'];
+  /**
+   * Files attached to this help document via sync_file_reference. Typically one,
+   * but the field returns a connector so the schema doesn't force the contract.
+   * Batched through the shared loader (keyed by record_id) to avoid an N+1 when
+   * listing — same path as purchase order / requisition attachments.
+   */
+  files: SyncFileReferenceConnector;
+  id: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
+
+export type HelpDocumentsResponse = HelpDocumentConnector;
+
 export type IdResponse = {
   __typename: 'IdResponse';
   id: Scalars['String']['output'];
@@ -3573,6 +3633,24 @@ export enum InsertFromResponseStatusInput {
   Draft = 'DRAFT',
   Sent = 'SENT',
 }
+
+export type InsertHelpDocumentError = {
+  __typename: 'InsertHelpDocumentError';
+  error: InsertHelpDocumentErrorInterface;
+};
+
+export type InsertHelpDocumentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertHelpDocumentInput = {
+  id: Scalars['String']['input'];
+  title: Scalars['String']['input'];
+};
+
+export type InsertHelpDocumentResponse =
+  | HelpDocumentNode
+  | InsertHelpDocumentError;
 
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
@@ -4461,12 +4539,14 @@ export type IntegerStorePrefInput = {
   value: Scalars['Int']['input'];
 };
 
-export type InternalError = InsertAssetCatalogueItemErrorInterface &
+export type InternalError = DeleteHelpDocumentErrorInterface &
+  InsertAssetCatalogueItemErrorInterface &
   InsertAssetErrorInterface &
   InsertAssetLogErrorInterface &
   InsertAssetLogReasonErrorInterface &
   InsertDemographicIndicatorErrorInterface &
   InsertDemographicProjectionErrorInterface &
+  InsertHelpDocumentErrorInterface &
   InsertLocationErrorInterface &
   RefreshTokenErrorInterface &
   ScannedDataParseErrorInterface &
@@ -7863,6 +7943,7 @@ export type Queries = {
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
   getVvmStatusLogByStockLine: VvmstatusLogResponse;
   hasCustomerProgramRequisitionSettings: Scalars['Boolean']['output'];
+  helpDocuments: HelpDocumentsResponse;
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   inboundShipmentCounts: InboundInvoiceCounts;
@@ -8263,6 +8344,11 @@ export type QueriesGetVvmStatusLogByStockLineArgs = {
 export type QueriesHasCustomerProgramRequisitionSettingsArgs = {
   customerNameIds: Array<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
+};
+
+export type QueriesHelpDocumentsArgs = {
+  filter?: InputMaybe<HelpDocumentFilterInput>;
+  page?: InputMaybe<PaginationInput>;
 };
 
 export type QueriesHistoricalStockLinesArgs = {
@@ -8815,6 +8901,7 @@ export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface &
   InsertAssetLogReasonErrorInterface &
   InsertDemographicIndicatorErrorInterface &
   InsertDemographicProjectionErrorInterface &
+  InsertHelpDocumentErrorInterface &
   InsertLocationErrorInterface &
   InsertVaccineCourseErrorInterface &
   UpdateDemographicIndicatorErrorInterface &
@@ -8845,6 +8932,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteCampaignErrorInterface &
   DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
+  DeleteHelpDocumentErrorInterface &
   DeleteInboundShipmentErrorInterface &
   DeleteInboundShipmentLineErrorInterface &
   DeleteInboundShipmentServiceLineErrorInterface &
