@@ -66,6 +66,7 @@ mod tests {
             is_multi_device: false,
             token: Some("token".to_string()),
             sync_version: SyncVersion::V7,
+            ..Default::default()
         };
         SiteRowRepository::new(connection).upsert(&row).unwrap();
         row
