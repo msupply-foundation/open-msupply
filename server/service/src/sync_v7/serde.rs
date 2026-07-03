@@ -257,6 +257,15 @@ pub(crate) fn deserialize(
         ChangelogTableName::Preference => from_value::<PreferenceRow>(data),
         ChangelogTableName::ContactForm => from_value::<ContactFormRow>(data),
         ChangelogTableName::SystemLog => from_value::<SystemLogRow>(data),
+        // A table this site doesn't recognise (e.g. added on a newer central). There is
+        // no row type to deserialize into. In practice such records never reach here —
+        // they aren't part of `INTEGRATION_ORDER`, so they stay unintegrated in the sync
+        // buffer — but return an error rather than silently succeeding if one does.
+        ChangelogTableName::Other(unknown) => {
+            return Err(SyncRecordSerializeError::SerdeError(format!(
+                "No translator for unrecognised table `{unknown}`"
+            )))
+        }
     }?;
 
     Ok(vec![(upsert, changelog_insert)])
