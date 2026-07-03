@@ -90,9 +90,8 @@ mod test {
     use repository::{
         mock::{mock_location_1, MockDataInserts},
         test_db::setup_all,
-        StockLineRow, StockLineRowRepository, StockRelocationLineRow,
-        StockRelocationLineRowRepository, StockRelocationRowRepository, StockRelocationStatus,
-        Upsert,
+        StockLineRow, StockRelocationLineRow, StockRelocationLineRowRepository,
+        StockRelocationRowRepository, StockRelocationStatus, Upsert,
     };
     use util::uuid::uuid;
 
@@ -120,17 +119,11 @@ mod test {
         stock_line_id: &str,
         number_of_packs: f64,
     ) -> String {
-        let stock_line = StockLineRowRepository::new(&ctx.connection)
-            .find_one_by_id(stock_line_id)
-            .unwrap()
-            .unwrap();
         let id = uuid();
         StockRelocationLineRow {
             id: id.clone(),
             stock_relocation_id: movement_id.to_string(),
             stock_line_id: stock_line_id.to_string(),
-            item_id: stock_line.item_id,
-            pack_size: stock_line.pack_size,
             number_of_packs,
             destination_location_id: Some(mock_location_1().id),
             ..Default::default()
