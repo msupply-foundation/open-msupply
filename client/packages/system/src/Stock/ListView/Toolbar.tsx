@@ -57,7 +57,7 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
       ? [
         {
           type: 'enum',
-          name: t('label.campaign'),
+          name: t('label.campaign-only'),
           urlParameter: 'campaignId',
           options: campaigns.nodes.map(c => ({
             label: c.name,
