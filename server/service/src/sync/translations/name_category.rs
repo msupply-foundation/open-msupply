@@ -54,6 +54,11 @@ pub struct LegacyNameCategoryRow {
     // `name_category1_level2`); absent/empty on level1 and the flat dimensions.
     #[serde(default, deserialize_with = "empty_str_as_option_string")]
     parent_ID: Option<String>,
+    // OG display order (same `sort_order` column item categories use). Defaulted
+    // so any table/record that omits it falls back to `id` order rather than
+    // failing the record.
+    #[serde(default)]
+    sort_order: i32,
 }
 
 // Needs to be added to all_translators()
@@ -107,6 +112,9 @@ impl SyncTranslation for NameCategoryTranslation {
             name: data.description,
             parent_option_id: data.parent_ID,
             deleted_datetime: None,
+            // OG `sort_order` as a fixed-width zero-padded string so lexical order
+            // matches the numeric order (see custom_field_option_row.rs).
+            sort_order: format!("{:06}", data.sort_order),
         }))
     }
 
@@ -169,13 +177,14 @@ mod tests {
             action: SyncAction::Upsert,
             ..Default::default()
         };
-        // A flat dimension has no parent.
+        // A flat dimension has no parent; `sort_order` carries the OG order.
         let cat4 = SyncBufferRow {
             table_name: "name_category4".to_string(),
             record_id: "N_CAT4".to_string(),
             data: SyncRecordData(serde_json::json!({
                 "ID": "N_CAT4",
                 "description": "Region A",
+                "sort_order": 5,
             })),
             action: SyncAction::Upsert,
             ..Default::default()
@@ -204,6 +213,12 @@ mod tests {
             .unwrap();
         let debug = format!("{result:?}");
         assert!(debug.contains("name_category_4"), "{}", debug);
+        // OG `sort_order` (5) persisted as the zero-padded lexical rank.
+        assert!(
+            debug.contains("000005"),
+            "OG sort_order must map to the option rank: {}",
+            debug
+        );
 
         // On a remote, nothing is authored (options arrive via v7).
         test_util_set_is_central_server(false);

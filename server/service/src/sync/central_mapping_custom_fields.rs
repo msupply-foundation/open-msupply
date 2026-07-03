@@ -94,6 +94,13 @@ struct MappingCustomField {
 /// The full set of legacy mSupply mapping custom_fields. Add new ones here; the
 /// central server seeds them on its next sync and they fan out to v7 remotes
 /// from there.
+///
+/// The **order of entries defines the per-scope display order**: each entry's
+/// index becomes its `sort_order` rank in `seed_central_mapping_custom_fields`,
+/// and fields render in that order within each scope they map to. Fields on
+/// different scopes never interact, so the item and name groups below can be
+/// interleaved freely — the order that matters is the relative order *within* a
+/// scope. Reordering entries here changes display order on the next central sync.
 fn mapping_custom_fields() -> Vec<MappingCustomField> {
     use keys::*;
     // Import value-type/display-mode variants explicitly rather than glob-importing
@@ -101,86 +108,15 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
     use CustomFieldDisplayMode::{Prominent, Visible};
     use CustomFieldValueType::{Boolean, Option, Real, Text};
     vec![
-        // name `[name]custom1/2/3` — 4D column names are mapped onto snake_case
-        // slugs by the v5 name translator.
-        MappingCustomField {
-            key: NAME_CUSTOM_1,
-            name: "Custom 1",
-            value_type: Text,
-            display_mode: Visible,
-            scopes: &["customer", "supplier", "patient"],
-        },
-        MappingCustomField {
-            key: NAME_CUSTOM_2,
-            name: "Custom 2",
-            value_type: Text,
-            display_mode: Visible,
-            scopes: &["customer", "supplier", "patient"],
-        },
-        MappingCustomField {
-            key: NAME_CUSTOM_3,
-            name: "Custom 3",
-            value_type: Text,
-            display_mode: Visible,
-            scopes: &["customer", "supplier", "patient"],
-        },
-        // item `[item]user_field_1..7` — 4D names are already snake_case, so the
-        // key matches the wire field 1:1. Value types come from the 4D catalog.
-        MappingCustomField {
-            key: ITEM_USER_FIELD_1,
-            name: "User field 1",
-            value_type: Text,
-            display_mode: Visible,
-            scopes: &["item"],
-        },
-        MappingCustomField {
-            key: ITEM_USER_FIELD_2,
-            name: "User field 2",
-            value_type: Text,
-            display_mode: Visible,
-            scopes: &["item"],
-        },
-        MappingCustomField {
-            key: ITEM_USER_FIELD_3,
-            name: "User field 3",
-            value_type: Text,
-            display_mode: Visible,
-            scopes: &["item"],
-        },
-        MappingCustomField {
-            key: ITEM_USER_FIELD_4,
-            name: "User field 4",
-            value_type: Boolean,
-            display_mode: Visible,
-            scopes: &["item"],
-        },
-        MappingCustomField {
-            key: ITEM_USER_FIELD_5,
-            name: "User field 5",
-            value_type: Real,
-            display_mode: Visible,
-            scopes: &["item"],
-        },
-        MappingCustomField {
-            key: ITEM_USER_FIELD_6,
-            name: "User field 6",
-            value_type: Text,
-            display_mode: Visible,
-            scopes: &["item"],
-        },
-        MappingCustomField {
-            key: ITEM_USER_FIELD_7,
-            name: "User field 7",
-            value_type: Boolean,
-            display_mode: Visible,
-            scopes: &["item"],
-        },
+        // ===== item scope: categories first, then user fields =====
+
         // item categories — a single OPTION custom_field whose options are the
-        // mSupply `item_category*` levels. Unlike the fields above, its *options*
-        // are not seeded here: they are authored dynamically by the v5 category
-        // import (`translations/category.rs`, central-only) as `custom_field_option`
-        // rows. The item stores the leaf `category_ID` under this key. See the
-        // custom_fields dev doc — this is the deliberate "hard" mapping test.
+        // mSupply `item_category*` levels. Unlike the plain user fields below, its
+        // *options* are not seeded here: they are authored dynamically by the v5
+        // category import (`translations/category.rs`, central-only) as
+        // `custom_field_option` rows. The item stores the leaf `category_ID` under
+        // this key. See the custom_fields dev doc — this is the deliberate "hard"
+        // mapping test.
         MappingCustomField {
             key: ITEM_CATEGORY_1,
             name: "Category",
@@ -208,6 +144,61 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             display_mode: Visible,
             scopes: &["item"],
         },
+        // item `[item]user_field_1..7` — 4D names are already snake_case, so the
+        // key matches the wire field 1:1. Value types come from the 4D catalog.
+        // Deliberate display order (not strictly ascending): 1, 2, 3, 5, 6, 4, 7.
+        MappingCustomField {
+            key: ITEM_USER_FIELD_1,
+            name: "User field 1",
+            value_type: Text,
+            display_mode: Visible,
+            scopes: &["item"],
+        },
+        MappingCustomField {
+            key: ITEM_USER_FIELD_2,
+            name: "User field 2",
+            value_type: Text,
+            display_mode: Visible,
+            scopes: &["item"],
+        },
+        MappingCustomField {
+            key: ITEM_USER_FIELD_3,
+            name: "User field 3",
+            value_type: Text,
+            display_mode: Visible,
+            scopes: &["item"],
+        },
+        MappingCustomField {
+            key: ITEM_USER_FIELD_5,
+            name: "User field 5",
+            value_type: Real,
+            display_mode: Visible,
+            scopes: &["item"],
+        },
+        MappingCustomField {
+            key: ITEM_USER_FIELD_6,
+            name: "User field 6",
+            value_type: Text,
+            display_mode: Visible,
+            scopes: &["item"],
+        },
+        MappingCustomField {
+            key: ITEM_USER_FIELD_4,
+            name: "User field 4",
+            value_type: Boolean,
+            display_mode: Visible,
+            scopes: &["item"],
+        },
+        MappingCustomField {
+            key: ITEM_USER_FIELD_7,
+            name: "User field 7",
+            value_type: Boolean,
+            display_mode: Visible,
+            scopes: &["item"],
+        },
+        // ===== name scopes (customer / supplier / patient): categories first,
+        // then the name customs =====
+
         // name categories 1–6 — six independent OPTION dimensions
         // (`[name]category1_ID..category6_ID`). category1 is hierarchical (its
         // `name_category1*` level tables map via `parent_option_id`); 2–6 are flat.
@@ -258,6 +249,29 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
             key: NAME_CATEGORY_6,
             name: "Category 6",
             value_type: Option,
+            display_mode: Visible,
+            scopes: &["customer", "supplier", "patient"],
+        },
+        // name `[name]custom1/2/3` — 4D column names are mapped onto snake_case
+        // slugs by the v5 name translator.
+        MappingCustomField {
+            key: NAME_CUSTOM_1,
+            name: "Custom 1",
+            value_type: Text,
+            display_mode: Visible,
+            scopes: &["customer", "supplier", "patient"],
+        },
+        MappingCustomField {
+            key: NAME_CUSTOM_2,
+            name: "Custom 2",
+            value_type: Text,
+            display_mode: Visible,
+            scopes: &["customer", "supplier", "patient"],
+        },
+        MappingCustomField {
+            key: NAME_CUSTOM_3,
+            name: "Custom 3",
+            value_type: Text,
             display_mode: Visible,
             scopes: &["customer", "supplier", "patient"],
         },
@@ -340,7 +354,7 @@ pub(crate) fn seed_central_mapping_custom_fields(
     let custom_field_repo = CustomFieldRowRepository::new(connection);
     let table_repo = CustomFieldScopeRowRepository::new(connection);
 
-    for def in mapping_custom_fields() {
+    for (index, def) in mapping_custom_fields().into_iter().enumerate() {
         let existing = custom_field_repo.find_one_by_id(def.key)?;
         let custom_field = CustomFieldRow {
             id: def.key.to_string(),
@@ -360,17 +374,33 @@ pub(crate) fn seed_central_mapping_custom_fields(
             custom_field_repo.upsert_one(&custom_field)?;
         }
 
-        // Only create each table mapping if it doesn't exist — never overwrite,
-        // so an admin's future display-mode change isn't reset on the next sync.
+        // Fixed, evenly-spaced lexical rank from the list index: `"0100"`,
+        // `"0200"`, … Zero-padded fixed width so the plain string compare matches
+        // list order, and gapped so a future reorder UI can mint a key between two
+        // neighbours (see `CustomFieldScopeRow::sort_order`). Reordering the list
+        // above changes display order on the next central sync.
+        let sort_order = format!("{:04}", (index + 1) * 100);
+
         for scope in def.scopes {
             let table_id = format!("{}__{}", def.key, scope);
-            if table_repo.find_one_by_id(&table_id)?.is_none() {
-                table_repo.upsert_one(&CustomFieldScopeRow {
-                    id: table_id,
-                    custom_field_id: def.key.to_string(),
-                    scope: scope.to_string(),
-                    display_mode: def.display_mode.clone(),
-                })?;
+            let existing_scope = table_repo.find_one_by_id(&table_id)?;
+            let scope_row = CustomFieldScopeRow {
+                id: table_id,
+                custom_field_id: def.key.to_string(),
+                scope: scope.to_string(),
+                // `display_mode` is admin-owned once the row exists (a config
+                // edit must survive re-seeds), so only default it on create.
+                // `sort_order` is code-authoritative for legacy fields, so it is
+                // (re)set here — this also backfills already-seeded centrals.
+                display_mode: existing_scope
+                    .as_ref()
+                    .map_or_else(|| def.display_mode.clone(), |row| row.display_mode.clone()),
+                sort_order: sort_order.clone(),
+            };
+            // Change-aware: only write when the row differs, so steady-state
+            // re-seeds add no changelog churn.
+            if existing_scope.as_ref() != Some(&scope_row) {
+                table_repo.upsert_one(&scope_row)?;
             }
         }
     }
@@ -439,6 +469,54 @@ mod tests {
         assert_eq!(patient_mapping.scope, "patient");
         assert_eq!(patient_mapping.display_mode, CustomFieldDisplayMode::Visible);
 
+        // sort_order ranks fields by their position in `mapping_custom_fields()`;
+        // assert the resulting per-scope display order matches the intended order
+        // (this is what changes when the list above is reordered).
+        let order_for = |scope: &str| {
+            let mut rows: Vec<_> = table_repo
+                .find_all()
+                .unwrap()
+                .into_iter()
+                .filter(|r| r.scope == scope)
+                .collect();
+            rows.sort_by(|a, b| a.sort_order.cmp(&b.sort_order));
+            rows.into_iter()
+                .map(|r| r.custom_field_id)
+                .collect::<Vec<_>>()
+        };
+
+        // item scope: categories, then user fields in order 1, 2, 3, 5, 6, 4, 7.
+        assert_eq!(
+            order_for("item"),
+            vec![
+                "item_category_1",
+                "item_category_2",
+                "item_category_3",
+                "user_field_1",
+                "user_field_2",
+                "user_field_3",
+                "user_field_5",
+                "user_field_6",
+                "user_field_4",
+                "user_field_7",
+            ]
+        );
+        // name scopes: categories 1–6, then customs 1–3 (same on every name scope).
+        assert_eq!(
+            order_for("patient"),
+            vec![
+                "name_category_1",
+                "name_category_2",
+                "name_category_3",
+                "name_category_4",
+                "name_category_5",
+                "name_category_6",
+                "custom_1",
+                "custom_2",
+                "custom_3",
+            ]
+        );
+
         // A second run is a no-op: change-aware seeding must not write (and so
         // must not add changelog rows) when nothing has changed.
         let cursor_before = changelog_repo.max_cursor().unwrap();
@@ -470,6 +548,7 @@ mod tests {
                 custom_field_id: "custom_1".to_string(),
                 scope: "customer".to_string(),
                 display_mode: CustomFieldDisplayMode::Hidden,
+                ..Default::default()
             })
             .unwrap();
         seed_central_mapping_custom_fields(&connection).unwrap();

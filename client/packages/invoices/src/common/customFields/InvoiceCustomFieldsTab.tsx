@@ -85,13 +85,12 @@ export const InvoiceCustomFieldsTab = ({
     <CustomFieldsEditTab
       // Prominent fields are surfaced as quick-access controls in the toolbar
       // (InvoiceToolbarCustomFields), so exclude them here to avoid duplication.
-      // Remaining fields are sorted alphabetically by label, as this tab has
-      // always rendered them — the shared renderer keeps the order it is handed.
-      definitions={definitions
-        .filter(
-          d => d.displayMode !== CustomFieldNodeDisplayMode.Prominent
-        )
-        .sort((a, b) => (a.name || a.key).localeCompare(b.name || b.key))}
+      // Remaining fields render in backend (definition) order — the server
+      // returns them ordered by the per-scope sort_order rank, consistent with
+      // every other custom-fields tab — so no client-side sort here.
+      definitions={definitions.filter(
+        d => d.displayMode !== CustomFieldNodeDisplayMode.Prominent
+      )}
       properties={customFields}
       disabled={disabled}
       onEdit={onEdit}

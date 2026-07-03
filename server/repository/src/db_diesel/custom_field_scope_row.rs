@@ -61,6 +61,7 @@ table! {
         custom_field_id -> Text,
         scope -> Text,
         display_mode -> diesel::sql_types::Text,
+        sort_order -> Text,
     }
 }
 
@@ -78,6 +79,7 @@ pub struct CustomFieldScopeRow {
     pub custom_field_id: String,
     pub scope: String,
     pub display_mode: CustomFieldDisplayMode,
+    pub sort_order: String,
 }
 
 pub struct CustomFieldScopeRowRepository<'a> {

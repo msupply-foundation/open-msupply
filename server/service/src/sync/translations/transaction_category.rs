@@ -89,6 +89,9 @@ impl SyncTranslation for TransactionCategoryTranslation {
             name: data.category,
             parent_option_id: None,
             deleted_datetime: None,
+            // The `transaction_category` sync table doesn't carry an order field,
+            // so these options fall back to `id` order (empty rank).
+            sort_order: String::new(),
         }))
     }
 
@@ -181,6 +184,7 @@ mod tests {
                     name: "Donation".to_string(),
                     parent_option_id: None,
                     deleted_datetime: None,
+                    ..Default::default()
                 }),
             );
         }
@@ -234,6 +238,7 @@ mod tests {
                 name: "Donation".to_string(),
                 parent_option_id: None,
                 deleted_datetime: None,
+                ..Default::default()
             })
             .unwrap();
 

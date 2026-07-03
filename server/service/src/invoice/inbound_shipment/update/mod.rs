@@ -2417,6 +2417,7 @@ mod test {
                 custom_field_id: "inbound_shipment_category".to_string(),
                 scope: "inbound_shipment".to_string(),
                 display_mode: CustomFieldDisplayMode::Visible,
+                ..Default::default()
             })
             .unwrap();
 

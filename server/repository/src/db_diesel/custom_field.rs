@@ -9,14 +9,17 @@ use crate::{diesel_macros::apply_equal_filter, EqualFilter};
 use crate::{repository_error::RepositoryError, DBType};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-/// A custom_field definition together with its per-scope display mode.
-/// `display_mode` is populated only when the query is scoped to a single
-/// `scope` (the per-`(custom_field, table)` mode lives on `custom_field_scope`);
-/// it is `None` for unscoped or multi-table queries.
+/// A custom_field definition together with its per-scope display mode and order.
+/// `display_mode`/`sort_order` are populated only when the query is scoped to a
+/// single `scope` (they live on `custom_field_scope`, per-`(custom_field, table)`);
+/// both are `None` for unscoped or multi-table queries. `sort_order` being an
+/// `Option` reflects "not known without a single scope", not column nullability —
+/// the column is `NOT NULL DEFAULT ''`.
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct CustomField {
     pub custom_field: CustomFieldRow,
     pub display_mode: Option<CustomFieldDisplayMode>,
+    pub sort_order: Option<String>,
 }
 
 /// Whether a custom_field is surfaced to read paths. The `Other` catch-all on
@@ -81,36 +84,59 @@ impl<'a> CustomFieldRepository<'a> {
         let query = Self::create_filtered_query(filter).order(custom_field::id.asc());
         let rows = query.load::<CustomFieldRow>(self.connection.lock().connection())?;
 
-        // When scoped to one table, fetch each custom_field's display_mode for that
-        // table so it can be surfaced per-scope (e.g. to drive toolbar promotion).
-        // Skip Hidden mappings to stay in lock-step with the main query (which
-        // already excludes them) — those rows could never be matched anyway.
-        let modes: HashMap<String, CustomFieldDisplayMode> = match &scope_table {
+        // When scoped to one table, fetch each custom_field's display_mode and
+        // sort_order for that table so they can be surfaced per-scope (display_mode
+        // drives toolbar promotion; sort_order drives display order below). Skip
+        // Hidden mappings to stay in lock-step with the main query (which already
+        // excludes them) — those rows could never be matched anyway.
+        let scope_meta: HashMap<String, (CustomFieldDisplayMode, String)> = match &scope_table {
             Some(scope) => custom_field_scope::table
                 .filter(custom_field_scope::scope.eq(scope))
                 .filter(custom_field_scope::display_mode.ne(CustomFieldDisplayMode::Hidden))
                 .select((
                     custom_field_scope::custom_field_id,
                     custom_field_scope::display_mode,
+                    custom_field_scope::sort_order,
                 ))
-                .load::<(String, CustomFieldDisplayMode)>(self.connection.lock().connection())?
+                .load::<(String, CustomFieldDisplayMode, String)>(
+                    self.connection.lock().connection(),
+                )?
                 .into_iter()
+                .map(|(id, mode, order)| (id, (mode, order)))
                 .collect(),
             None => HashMap::new(),
         };
 
         // Unrecognised value_type/kind (`Other`) are hidden — see `is_displayable`.
-        Ok(rows
+        let mut result: Vec<CustomField> = rows
             .into_iter()
             .filter(|custom_field| is_displayable(&custom_field.value_type, &custom_field.kind))
             .map(|custom_field| {
-                let display_mode = modes.get(&custom_field.id).cloned();
+                let meta = scope_meta.get(&custom_field.id).cloned();
+                let (display_mode, sort_order) = match meta {
+                    Some((mode, order)) => (Some(mode), Some(order)),
+                    None => (None, None),
+                };
                 CustomField {
                     custom_field,
                     display_mode,
+                    sort_order,
                 }
             })
-            .collect())
+            .collect();
+
+        // Order by the per-scope lexical rank then `id` (unranked `''`/None falls
+        // back to `id` order). Sorting in Rust keeps null-handling identical across
+        // SQLite/Postgres; the custom_field table is small (config definitions).
+        result.sort_by(|a, b| {
+            a.sort_order
+                .as_deref()
+                .unwrap_or_default()
+                .cmp(b.sort_order.as_deref().unwrap_or_default())
+                .then_with(|| a.custom_field.id.cmp(&b.custom_field.id))
+        });
+
+        Ok(result)
     }
 
     /// Returns the set of custom_field keys shown on the given table
@@ -148,25 +174,29 @@ impl<'a> CustomFieldRepository<'a> {
         &self,
         target_scope: &str,
     ) -> Result<Vec<CustomField>, RepositoryError> {
-        let rows: Vec<(CustomFieldRow, CustomFieldDisplayMode)> = custom_field::table
+        let rows: Vec<(CustomFieldRow, CustomFieldDisplayMode, String)> = custom_field::table
             .inner_join(custom_field_scope::table)
             .filter(custom_field::deleted_datetime.is_null())
             .filter(custom_field_scope::scope.eq(target_scope))
             .select((
                 custom_field::all_columns,
                 custom_field_scope::display_mode,
+                custom_field_scope::sort_order,
             ))
-            .order(custom_field::id.asc())
+            // Order by the per-scope lexical rank then `id` (unranked `''` falls
+            // back to `id` order).
+            .order((custom_field_scope::sort_order.asc(), custom_field::id.asc()))
             .load(self.connection.lock().connection())?;
 
         Ok(rows
             .into_iter()
-            .filter(|(custom_field, _)| {
+            .filter(|(custom_field, _, _)| {
                 is_displayable(&custom_field.value_type, &custom_field.kind)
             })
-            .map(|(custom_field, display_mode)| CustomField {
+            .map(|(custom_field, display_mode, sort_order)| CustomField {
                 custom_field,
                 display_mode: Some(display_mode),
+                sort_order: Some(sort_order),
             })
             .collect())
     }
@@ -281,6 +311,7 @@ mod tests {
             custom_field_id: custom_field_id.to_string(),
             scope: scope.to_string(),
             display_mode,
+            ..Default::default()
         }
     }
 
@@ -456,6 +487,57 @@ mod tests {
             .find(|r| r.custom_field.id == "p_prominent_name")
             .unwrap();
         assert_eq!(prominent.display_mode, None);
+    }
+
+    #[actix_rt::test]
+    async fn custom_field_query_orders_by_sort_order() {
+        // A scoped query returns fields in per-scope `sort_order` (lexical) order,
+        // not `id` order; unranked (`''`) fields fall back after ranked ones, then
+        // by `id`.
+        let (_, connection, _, _) = test_db::setup_all(
+            "custom_field_repository_orders_by_sort_order",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let field_repo = CustomFieldRowRepository::new(&connection);
+        let scope_repo = CustomFieldScopeRowRepository::new(&connection);
+
+        // id order is a/b/c/d; the ranks below reorder them to c, a, b, with the
+        // unranked `d` falling to the end (`''` < any rank, but there are no other
+        // unranked rows here, so it lands last only because ranked ones sort first
+        // — assert the explicit expected order instead of reasoning about it).
+        for id in ["a_field", "b_field", "c_field", "d_field"] {
+            field_repo.upsert_one(&custom_field(id, id, false)).unwrap();
+        }
+        for (id, rank) in [
+            ("a_field", "0200"),
+            ("b_field", "0300"),
+            ("c_field", "0100"),
+            ("d_field", ""),
+        ] {
+            scope_repo
+                .upsert_one(&CustomFieldScopeRow {
+                    id: format!("{id}__name"),
+                    custom_field_id: id.to_string(),
+                    scope: "name".to_string(),
+                    display_mode: CustomFieldDisplayMode::Visible,
+                    sort_order: rank.to_string(),
+                })
+                .unwrap();
+        }
+
+        let repo = CustomFieldRepository::new(&connection);
+        let ordered: Vec<_> = repo
+            .query_by_filter(CustomFieldFilter::new().scope(EqualFilter::equal_to("name".to_string())))
+            .unwrap()
+            .into_iter()
+            .map(|r| r.custom_field.id)
+            .collect();
+
+        // Unranked `d_field` (`''`) sorts before the ranked ones (empty string is
+        // less than any digit string), then c/a/b by their ranks.
+        assert_eq!(ordered, vec!["d_field", "c_field", "a_field", "b_field"]);
     }
 
     #[actix_rt::test]

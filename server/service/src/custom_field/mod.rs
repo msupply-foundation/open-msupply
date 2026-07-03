@@ -211,6 +211,7 @@ mod tests {
             custom_field_id: field_id.to_string(),
             scope: scope.to_string(),
             display_mode: mode,
+            ..Default::default()
         }
     }
 

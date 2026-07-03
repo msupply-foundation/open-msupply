@@ -96,6 +96,10 @@ impl SyncTranslation for CategoryTranslation {
                 name: data.Description,
                 parent_option_id: data.parent_ID,
                 deleted_datetime: None,
+                // OG `sort_order` (an integer) as a fixed-width zero-padded string
+                // so lexical order matches the numeric order and stays comparable
+                // with the field-rank scheme (see custom_field_option_row.rs).
+                sort_order: format!("{:06}", data.sort_order),
             }));
         }
 
