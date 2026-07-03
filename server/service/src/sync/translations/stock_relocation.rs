@@ -101,7 +101,7 @@ mod tests {
         let row = StockRelocationRow {
             id: "stock_relocation_1".to_string(),
             store_id: "store_a".to_string(),
-            reference_number: "SM-000001".to_string(),
+            stock_movement_number: 1,
             status: StockRelocationStatus::Confirmed,
             created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
                 .unwrap()

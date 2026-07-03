@@ -18,11 +18,7 @@ impl MigrationFragment for Migrate {
                     destination_stock_line_id TEXT REFERENCES stock_line(id),
                     source_location_id TEXT REFERENCES location(id),
                     destination_location_id TEXT REFERENCES location(id),
-                    pack_size {DOUBLE} NOT NULL DEFAULT 0,
-                    number_of_packs {DOUBLE} NOT NULL DEFAULT 0,
-                    item_id TEXT NOT NULL REFERENCES item(id),
-                    batch TEXT,
-                    expiry_date {DATE}
+                    number_of_packs {DOUBLE} NOT NULL DEFAULT 0
                 );
             "#
         )?;
