@@ -45,7 +45,7 @@ export const Toolbar = () => {
   if (campaignOptions.length > 0) {
     filters.push({
       type: 'enum',
-      name: t('label.campaign'),
+      name: t('label.campaign-only'),
       urlParameter: 'campaign',
       options: campaignOptions,
     });
