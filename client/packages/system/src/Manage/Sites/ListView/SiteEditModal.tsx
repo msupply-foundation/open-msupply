@@ -12,6 +12,7 @@ import {
   XCircleIcon,
   LoadingButton,
   useConfirmationModal,
+  SyncVersionNode,
   Switch,
 } from '@openmsupply-client/common';
 import { DraftSite, useSiteStoresDraft } from '../api';
@@ -50,11 +51,24 @@ export const SiteEditModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { id, code, name, password, hardwareId, isMultiDevice, isNew } = site;
+  const {
+    id,
+    code,
+    name,
+    password,
+    hardwareId,
+    syncVersion,
+    isMultiDevice,
+    isNew,
+  } = site;
   const isExisting = !isNew;
   const { data: syncSettings } = useSync.settings.syncSettings();
   const currentSiteId = syncSettings?.syncSiteId;
-  const showClearButtons = currentSiteId != null && currentSiteId !== id;
+  // Hardware id / token are only safe to clear once the site has transitioned to
+  // v7 (legacy v5/v6 sites still manage these via 4D). See issue #11784.
+  const isV7 = syncVersion === SyncVersionNode.V7;
+  const showClearButtons =
+    currentSiteId != null && currentSiteId !== id && isV7;
 
   const isValidCode = code.trim().length > 0 || (isExisting && code === '');
   const isValidName = name.trim().length > 0;
@@ -156,6 +170,16 @@ export const SiteEditModal = ({
                   autoComplete="new-password"
                   onChange={e => updateDraft({ password: e.target.value })}
                 />
+              }
+            />
+          )}
+          {isExisting && (
+            <InputWithLabelRow
+              key="sync-version"
+              label={t('label.sync-version')}
+              labelWidth="130px"
+              Input={
+                <BasicTextInput fullWidth value={syncVersion ?? ''} disabled />
               }
             />
           )}

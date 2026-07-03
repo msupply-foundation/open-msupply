@@ -1,10 +1,15 @@
 use crate::service_provider::ServiceContext;
-use repository::{KeyType, KeyValueStoreRepository, RepositoryError, SiteRow, SiteRowRepository};
+use repository::{
+    KeyType, KeyValueStoreRepository, RepositoryError, SiteRow, SiteRowRepository, SyncVersion,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum ClearSiteHardwareIdError {
     SiteDoesNotExist,
     SameSite,
+    /// Clearing is only safe for v7 sites; legacy (v5/v6) sites still have their
+    /// hardware id managed by 4D. See issue #11784.
+    SiteIsNotV7,
     DatabaseError(RepositoryError),
 }
 
@@ -28,6 +33,10 @@ pub fn clear_site_hardware_id(
             let site = repo
                 .find_one_by_id(site_id)?
                 .ok_or(ClearSiteHardwareIdError::SiteDoesNotExist)?;
+
+            if site.sync_version != SyncVersion::V7 {
+                return Err(ClearSiteHardwareIdError::SiteIsNotV7);
+            }
 
             repo.upsert(&SiteRow {
                 hardware_id: None,
@@ -66,6 +75,7 @@ mod tests {
             is_multi_device: false,
             token: Some("token".to_string()),
             sync_version: SyncVersion::V7,
+            ..Default::default()
         };
         SiteRowRepository::new(connection).upsert(&row).unwrap();
         row
@@ -124,5 +134,38 @@ mod tests {
         assert!(stored.hardware_id.is_none());
         assert_eq!(stored.token, Some("token".to_string()));
         assert_eq!(stored.name, "Site A");
+    }
+
+    #[actix_rt::test]
+    async fn clear_site_hardware_id_rejects_non_v7() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "clear_site_hardware_id_rejects_non_v7",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+
+        SiteRowRepository::new(&connection)
+            .upsert(&SiteRow {
+                id: 5,
+                name: "Legacy Site".to_string(),
+                hardware_id: Some("hw-legacy".to_string()),
+                sync_version: SyncVersion::V5V6,
+                ..Default::default()
+            })
+            .unwrap();
+
+        assert_eq!(
+            clear_site_hardware_id(&context, 5),
+            Err(ClearSiteHardwareIdError::SiteIsNotV7)
+        );
+        // The hardware id must be left untouched for non-v7 sites.
+        let stored = SiteRowRepository::new(&connection)
+            .find_one_by_id(5)
+            .unwrap()
+            .unwrap();
+        assert_eq!(stored.hardware_id.as_deref(), Some("hw-legacy"));
     }
 }

@@ -3,6 +3,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+use chrono::Utc;
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
@@ -119,9 +120,15 @@ pub async fn get_token(
                     _ => util::uuid::uuid(),
                 };
 
+                // Capture site metadata at token allocation (the start of a sync
+                // session). app_name/app_version are reported by the remote and
+                // identify it; last_connection is its most recent request. #11784
                 SiteRowRepository::new(connection).upsert(&SiteRow {
                     hardware_id: Some(hardware_id),
                     token: Some(token.clone()),
+                    app_name: Some(input.app_name.clone()),
+                    app_version: Some(input.version.to_string()),
+                    last_connection_datetime: Some(Utc::now().naive_utc()),
                     ..site.clone()
                 })?;
 
@@ -275,6 +282,23 @@ fn validate(
         return Err(SyncError::SiteLockError(lock));
     }
 
+    // Record that the remote made an authenticated request (throttled to once a
+    // minute). Runs here so it covers every v7 endpoint. Best-effort: never fail
+    // a sync request because metadata bookkeeping failed. #11784
+    if let Err(e) = crate::site::sync_metadata::record_site_connection(
+        &ctx.connection,
+        &site,
+        Some(common.app_name.clone()),
+        Some(common.version.to_string()),
+        Utc::now().naive_utc(),
+    ) {
+        log::warn!(
+            "Failed to record last_connection for site {}: {:?}",
+            site.id,
+            e
+        );
+    }
+
     Ok((site, ctx))
 }
 
@@ -330,6 +354,20 @@ pub async fn pull(
             batch.records.len(),
             batch.remaining
         );
+
+        // A pull batch with nothing remaining means the remote has fully caught
+        // up: record last_sync (and first_sync on the initial sync). Best-effort.
+        // #11784
+        if batch.remaining == 0 {
+            if let Err(e) = crate::site::sync_metadata::record_site_full_pull(
+                &ctx.connection,
+                site.id,
+                input.is_initialising,
+                Utc::now().naive_utc(),
+            ) {
+                log::warn!("Failed to record last_sync for site {}: {:?}", site.id, e);
+            }
+        }
 
         Ok(batch)
     })
@@ -593,6 +631,7 @@ mod tests {
             is_multi_device: false,
             token,
             sync_version: repository::SyncVersion::V7,
+            ..Default::default()
         };
         SiteRowRepository::new(connection).upsert(&site).unwrap();
         KeyValueStoreRepository::new(connection)
@@ -607,6 +646,7 @@ mod tests {
     fn input() -> GetTokenInput {
         GetTokenInput {
             version: Version::from_package_json(),
+            app_name: "Open mSupply Desktop".to_string(),
             name: SITE_NAME.to_string(),
             password_sha256: PASSWORD_SHA256.to_string(),
             hardware_id: HARDWARE_ID.to_string(),
@@ -627,6 +667,7 @@ mod tests {
             token: site_info.token,
             hardware_id: HARDWARE_ID.to_string(),
             version: Version::from_package_json(),
+            app_name: "Open mSupply Desktop".to_string(),
         };
         (context, common)
     }
@@ -745,6 +786,7 @@ mod tests {
             token: allocated.token.clone(),
             hardware_id: HARDWARE_ID.to_string(),
             version: Version::from_package_json(),
+            app_name: "Open mSupply Desktop".to_string(),
         };
 
         let (site, _) = validate(&sp, &common).unwrap();
@@ -840,6 +882,7 @@ mod tests {
             token: allocated.token.clone(),
             hardware_id: "wrong_hw".to_string(),
             version: Version::from_package_json(),
+            app_name: "Open mSupply Desktop".to_string(),
         };
 
         // A mismatched hardware id is normally rejected.
@@ -930,6 +973,7 @@ mod tests {
                 token: "shared-token".to_string(),
                 hardware_id: "any-device".to_string(),
                 version: Version::from_package_json(),
+                app_name: "Open mSupply Desktop".to_string(),
             },
         )
         .unwrap();
@@ -942,6 +986,7 @@ mod tests {
                 token: "wrong-token".to_string(),
                 hardware_id: "any-device".to_string(),
                 version: Version::from_package_json(),
+                app_name: "Open mSupply Desktop".to_string(),
             },
         )
         .err()
