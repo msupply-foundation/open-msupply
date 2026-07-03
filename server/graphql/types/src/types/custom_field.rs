@@ -88,6 +88,20 @@ impl From<CustomFieldDisplayMode> for CustomFieldNodeDisplayMode {
     }
 }
 
+impl CustomFieldNodeDisplayMode {
+    /// Map an inbound display mode (config UI mutation input) to the domain
+    /// enum. `Other` carries no string payload here and the config UI never
+    /// sends it, so it falls back to `Visible` rather than inventing a value.
+    pub fn to_domain(self) -> CustomFieldDisplayMode {
+        match self {
+            Self::Hidden => CustomFieldDisplayMode::Hidden,
+            Self::Visible => CustomFieldDisplayMode::Visible,
+            Self::Prominent => CustomFieldDisplayMode::Prominent,
+            Self::Other => CustomFieldDisplayMode::Visible,
+        }
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct CustomFieldNode {
     pub custom_field: CustomFieldRow,

@@ -137,6 +137,40 @@ impl<'a> CustomFieldRepository<'a> {
             .collect())
     }
 
+    /// Admin/config read path: every non-soft-deleted custom_field that has a
+    /// `custom_field_scope` row for `target_scope`, together with its
+    /// `display_mode` — **including `Hidden`**. Unlike [`query`] /
+    /// [`allowed_keys_for_scope`] (the normal display paths, which drop `Hidden`
+    /// so hidden fields never reach a record surface), the config UI must list
+    /// hidden fields so an admin can un-hide them. Still excludes soft-deleted
+    /// definitions and unrecognised `Other` value_type/kind (see `is_displayable`).
+    pub fn query_scope_config(
+        &self,
+        target_scope: &str,
+    ) -> Result<Vec<CustomField>, RepositoryError> {
+        let rows: Vec<(CustomFieldRow, CustomFieldDisplayMode)> = custom_field::table
+            .inner_join(custom_field_scope::table)
+            .filter(custom_field::deleted_datetime.is_null())
+            .filter(custom_field_scope::scope.eq(target_scope))
+            .select((
+                custom_field::all_columns,
+                custom_field_scope::display_mode,
+            ))
+            .order(custom_field::id.asc())
+            .load(self.connection.lock().connection())?;
+
+        Ok(rows
+            .into_iter()
+            .filter(|(custom_field, _)| {
+                is_displayable(&custom_field.value_type, &custom_field.kind)
+            })
+            .map(|(custom_field, display_mode)| CustomField {
+                custom_field,
+                display_mode: Some(display_mode),
+            })
+            .collect())
+    }
+
     pub fn create_filtered_query(filter: Option<CustomFieldFilter>) -> BoxedCustomFieldQuery {
         // Soft-deleted custom_field definitions are never surfaced via Stage 4
         // read paths. Reconsider if/when a config UI needs to manage them.
