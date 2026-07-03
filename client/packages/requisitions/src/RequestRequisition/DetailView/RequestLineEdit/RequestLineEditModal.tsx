@@ -15,7 +15,7 @@ import {
   ItemWithAvailableStockFragment,
   ItemWithStatsFragment,
 } from '@openmsupply-client/system';
-import { RequestFragment, useRequest } from '../../api';
+import { RequestFragment, RequestLineFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
 import { shouldDeleteLine } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
@@ -27,6 +27,7 @@ interface RequestLineEditModalProps {
   itemId: string | null;
   isOpen: boolean;
   onClose: () => void;
+  getSortedItems: () => RequestLineFragment['item'][];
 }
 
 export const RequestLineEditModal = ({
@@ -36,6 +37,7 @@ export const RequestLineEditModal = ({
   itemId,
   isOpen,
   onClose,
+  getSortedItems,
 }: RequestLineEditModalProps) => {
   const { error } = useNotification();
   const deleteLine = useRequest.line.deleteLine();
@@ -69,7 +71,7 @@ export const RequestLineEditModal = ({
   const { draft, save, update, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);
   const draftIdRef = useRef<string | undefined>(draft?.id);
-  const { hasNext, next } = useNextRequestLine(lines, currentItem);
+  const { hasNext, next } = useNextRequestLine(getSortedItems, currentItem);
   const [isEditingRequested, setIsEditingRequested] = useState(false);
 
   const useConsumptionData =
