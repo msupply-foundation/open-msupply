@@ -11,6 +11,7 @@ import {
   LIST_KEY,
   SiteFilterInput,
   SiteSortFieldInput,
+  SyncVersionNode,
 } from '@openmsupply-client/common';
 
 type ListParams = {
@@ -26,6 +27,7 @@ export type DraftSite = {
   name: string;
   password: string;
   hardwareId?: string | null;
+  syncVersion?: SyncVersionNode | null;
   isMultiDevice: boolean;
   isNew: boolean;
 };
@@ -36,6 +38,7 @@ export const defaultDraftSite: DraftSite = {
   name: '',
   password: '',
   hardwareId: undefined,
+  syncVersion: undefined,
   isMultiDevice: false,
   isNew: true,
 };
@@ -166,7 +169,6 @@ const useUpsertSite = () => {
         code: draft.code || undefined,
         name: draft.name,
         password: draft.password || undefined,
-
       },
     });
     const upsertResult = result?.centralServer?.site?.upsertSite;

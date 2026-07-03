@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::NaiveDateTime;
 use graphql_core::{
     generic_filters::{EqualFilterNumberInput, StringFilterInput},
     pagination::PaginationInput,
@@ -7,6 +8,7 @@ use graphql_core::{
 };
 use repository::{
     EqualFilter, PaginationOption, SiteFilter, SiteRow, SiteSort, SiteSortField, StringFilter,
+    SyncVersion,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -66,8 +68,55 @@ impl SiteNode {
         self.site.hardware_id.as_deref()
     }
 
+    /// Which sync flow the site runs. Hardware-id / token clearing is only
+    /// permitted for v7 sites. See issue #11784.
+    pub async fn sync_version(&self) -> SyncVersionNode {
+        self.site.sync_version.into()
+    }
+
+    /// Client application of the remote site (e.g. "open mSupply"). Tracked from
+    /// v7 sync activity; null for sites that have not synced over v7.
+    pub async fn app_name(&self) -> Option<&str> {
+        self.site.app_name.as_deref()
+    }
+
+    /// Remote site's application version, as last reported during v7 sync.
+    pub async fn app_version(&self) -> Option<&str> {
+        self.site.app_version.as_deref()
+    }
+
+    /// Last time the remote made any authenticated v7 request.
+    pub async fn last_connection_datetime(&self) -> Option<NaiveDateTime> {
+        self.site.last_connection_datetime
+    }
+
+    /// Last time the remote fully pulled from this central server.
+    pub async fn last_sync_datetime(&self) -> Option<NaiveDateTime> {
+        self.site.last_sync_datetime
+    }
+
+    /// First time the remote completed an initialising pull.
+    pub async fn first_sync_datetime(&self) -> Option<NaiveDateTime> {
+        self.site.first_sync_datetime
+    }
+
     pub async fn is_multi_device(&self) -> bool {
         self.site.is_multi_device
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum SyncVersionNode {
+    V5V6,
+    V7,
+}
+
+impl From<SyncVersion> for SyncVersionNode {
+    fn from(version: SyncVersion) -> Self {
+        match version {
+            SyncVersion::V5V6 => SyncVersionNode::V5V6,
+            SyncVersion::V7 => SyncVersionNode::V7,
+        }
     }
 }
 
