@@ -2,10 +2,10 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::loader::{
-    LocationByIdLoader, StockLineByIdLoader, StockRelocationLinesByRelocationIdLoader,
+    LocationByIdLoader, StockLineByIdLoader, StockRelocationLinesByRelocationIdLoader, UserLoader,
 };
 use graphql_core::ContextExt;
-use graphql_types::types::{LocationNode, StockLineNode};
+use graphql_types::types::{LocationNode, StockLineNode, UserNode};
 use repository::{StockRelocation, StockRelocationLineRow, StockRelocationRow};
 use service::ListResult;
 
@@ -46,6 +46,13 @@ impl StockRelocationNode {
     }
     pub async fn created_by(&self) -> &str {
         &self.row().created_by
+    }
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+        Ok(loader
+            .load_one(self.row().created_by.clone())
+            .await?
+            .map(UserNode::from_domain))
     }
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()

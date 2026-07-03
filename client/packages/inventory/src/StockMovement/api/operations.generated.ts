@@ -57,9 +57,13 @@ export type StockMovementFragment = {
   status: Types.StockRelocationNodeStatus;
   comment?: string | null;
   createdDatetime: string;
-  createdBy: string;
   finalisedDatetime?: string | null;
   lineCount: number;
+  user?: {
+    __typename: 'UserNode';
+    username: string;
+    email?: string | null;
+  } | null;
   lines: {
     __typename: 'StockRelocationLineConnector';
     totalCount: number;
@@ -144,9 +148,13 @@ export type StockRelocationQuery = {
         status: Types.StockRelocationNodeStatus;
         comment?: string | null;
         createdDatetime: string;
-        createdBy: string;
         finalisedDatetime?: string | null;
         lineCount: number;
+        user?: {
+          __typename: 'UserNode';
+          username: string;
+          email?: string | null;
+        } | null;
         lines: {
           __typename: 'StockRelocationLineConnector';
           totalCount: number;
@@ -214,9 +222,13 @@ export type UpdateStockRelocationMutation = {
         status: Types.StockRelocationNodeStatus;
         comment?: string | null;
         createdDatetime: string;
-        createdBy: string;
         finalisedDatetime?: string | null;
         lineCount: number;
+        user?: {
+          __typename: 'UserNode';
+          username: string;
+          email?: string | null;
+        } | null;
         lines: {
           __typename: 'StockRelocationLineConnector';
           totalCount: number;
@@ -355,7 +367,11 @@ export const StockMovementFragmentDoc = gql`
     status
     comment
     createdDatetime
-    createdBy
+    user {
+      __typename
+      username
+      email
+    }
     finalisedDatetime
     lineCount
     lines {

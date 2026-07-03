@@ -52,7 +52,11 @@ fragment StockMovement on StockRelocationNode {
   status
   comment
   createdDatetime
-  createdBy
+  user {
+    __typename
+    username
+    email
+  }
   finalisedDatetime
   lineCount
   lines {
