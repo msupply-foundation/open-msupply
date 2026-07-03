@@ -94,9 +94,11 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 name: "Site A".to_string(),
                 hashed_password: "hash_a".to_string(),
                 hardware_id: Some("hw-uuid-aaa".to_string()),
+                is_multi_device: false,
                 code: "code1".to_string(),
                 token: None,
                 sync_version: SyncVersion::V5V6,
+                ..Default::default()
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -108,9 +110,11 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 name: "Site B".to_string(),
                 hashed_password: "hash_b".to_string(),
                 hardware_id: None,
+                is_multi_device: false,
                 code: "code2".to_string(),
                 token: None,
                 sync_version: SyncVersion::V5V6,
+                ..Default::default()
             },
         ),
     ]

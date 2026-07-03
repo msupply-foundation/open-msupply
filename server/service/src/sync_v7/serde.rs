@@ -5,7 +5,10 @@ use repository::{
 use serde::de::DeserializeOwned;
 
 use crate::sync_v7::{
-    translations::{invoice_line::translate_invoice_line, store::translate_store},
+    translations::{
+        invoice_line::translate_invoice_line, store::translate_store,
+        temperature_log::translate_temperature_log,
+    },
     validate_translate_integrate::{create_changelog, SyncContext},
 };
 
@@ -149,6 +152,9 @@ pub(crate) fn deserialize(
                 sync_context,
             )
         }
+        ChangelogTableName::TemperatureLog => {
+            return translate_temperature_log(connection, changelog_insert, data)
+        }
         // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),
         ChangelogTableName::Currency => from_value::<CurrencyRow>(data),
@@ -175,7 +181,6 @@ pub(crate) fn deserialize(
         ChangelogTableName::Stocktake => from_value::<StocktakeRow>(data),
         ChangelogTableName::StocktakeLine => from_value::<StocktakeLineRow>(data),
         ChangelogTableName::TemperatureBreach => from_value::<TemperatureBreachRow>(data),
-        ChangelogTableName::TemperatureLog => from_value::<TemperatureLogRow>(data),
         ChangelogTableName::VVMStatusLog => from_value::<VVMStatusLogRow>(data),
         ChangelogTableName::Requisition => from_value::<RequisitionRow>(data),
         ChangelogTableName::RequisitionLine => from_value::<RequisitionLineRow>(data),

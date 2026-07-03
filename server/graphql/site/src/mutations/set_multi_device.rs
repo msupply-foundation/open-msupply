@@ -5,21 +5,25 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    site::clear_token::ClearSiteTokenError as ServiceError,
+    site::set_multi_device::SetSiteMultiDeviceError as ServiceError,
 };
 
-pub struct ClearSiteTokenNode {
+pub struct SetSiteMultiDeviceNode {
     pub id: i32,
 }
 
 #[Object]
-impl ClearSiteTokenNode {
+impl SetSiteMultiDeviceNode {
     pub async fn id(&self) -> i32 {
         self.id
     }
 }
 
-pub fn clear_site_token(ctx: &Context<'_>, site_id: i32) -> Result<ClearSiteTokenNode> {
+pub fn set_site_multi_device(
+    ctx: &Context<'_>,
+    site_id: i32,
+    is_multi_device: bool,
+) -> Result<SetSiteMultiDeviceNode> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -34,10 +38,10 @@ pub fn clear_site_token(ctx: &Context<'_>, site_id: i32) -> Result<ClearSiteToke
 
     let id = service_provider
         .site_service
-        .clear_site_token(&service_context, site_id)
+        .set_site_multi_device(&service_context, site_id, is_multi_device)
         .map_err(map_error)?;
 
-    Ok(ClearSiteTokenNode { id })
+    Ok(SetSiteMultiDeviceNode { id })
 }
 
 fn map_error(error: ServiceError) -> async_graphql::Error {
@@ -47,7 +51,6 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
     let graphql_error = match error {
         ServiceError::SiteDoesNotExist => BadUserInput(formatted_error),
         ServiceError::SameSite => BadUserInput(formatted_error),
-        ServiceError::SiteIsNotV7 => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

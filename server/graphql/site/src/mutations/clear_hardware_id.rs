@@ -47,6 +47,7 @@ fn map_error(error: ClearSiteHardwareIdError) -> async_graphql::Error {
     let graphql_error = match error {
         ClearSiteHardwareIdError::SiteDoesNotExist => BadUserInput(formatted_error),
         ClearSiteHardwareIdError::SameSite => BadUserInput(formatted_error),
+        ClearSiteHardwareIdError::SiteIsNotV7 => BadUserInput(formatted_error),
         ClearSiteHardwareIdError::DatabaseError(_) => InternalError(formatted_error),
     };
 

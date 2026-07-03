@@ -1499,6 +1499,7 @@ export type CentralSiteMutations = {
   clearSiteHardwareId: ClearSiteHardwareIdNode;
   clearSiteToken: ClearSiteTokenNode;
   deleteSite: DeleteSiteResponse;
+  setSiteMultiDevice: SetSiteMultiDeviceNode;
   upsertSite: UpsertSiteResponse;
 };
 
@@ -1515,6 +1516,11 @@ export type CentralSiteMutationsClearSiteTokenArgs = {
 };
 
 export type CentralSiteMutationsDeleteSiteArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsSetSiteMultiDeviceArgs = {
+  isMultiDevice: Scalars['Boolean']['input'];
   siteId: Scalars['Int']['input'];
 };
 
@@ -9807,6 +9813,11 @@ export type SetPrescribedQuantityWithId = {
   response: SetPrescribedQuantityResponse;
 };
 
+export type SetSiteMultiDeviceNode = {
+  __typename: 'SetSiteMultiDeviceNode';
+  id: Scalars['Int']['output'];
+};
+
 export type ShippingMethodConnector = {
   __typename: 'ShippingMethodConnector';
   nodes: Array<ShippingMethodNode>;
@@ -9846,10 +9857,29 @@ export type SiteHasStores = DeleteSiteErrorInterface & {
 
 export type SiteNode = {
   __typename: 'SiteNode';
+  /**
+   * Client application of the remote site (e.g. "open mSupply"). Tracked from
+   * v7 sync activity; null for sites that have not synced over v7.
+   */
+  appName?: Maybe<Scalars['String']['output']>;
+  /** Remote site's application version, as last reported during v7 sync. */
+  appVersion?: Maybe<Scalars['String']['output']>;
   code: Scalars['String']['output'];
+  /** First time the remote completed an initialising pull. */
+  firstSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   hardwareId?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  isMultiDevice: Scalars['Boolean']['output'];
+  /** Last time the remote made any authenticated v7 request. */
+  lastConnectionDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  /** Last time the remote fully pulled from this central server. */
+  lastSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   name: Scalars['String']['output'];
+  /**
+   * Which sync flow the site runs. Hardware-id / token clearing is only
+   * permitted for v7 sites. See issue #11784.
+   */
+  syncVersion: SyncVersionNode;
 };
 
 export enum SiteSortFieldInput {
@@ -10704,6 +10734,11 @@ export type SyncStatusWithProgressV7Node = {
   started: Scalars['DateTime']['output'];
   total?: Maybe<Scalars['Int']['output']>;
 };
+
+export enum SyncVersionNode {
+  V5V6 = 'V5V6',
+  V7 = 'V7',
+}
 
 export type TableNameDescription = {
   __typename: 'TableNameDescription';
