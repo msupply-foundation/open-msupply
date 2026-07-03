@@ -26,7 +26,7 @@ export const useStocktakeRows = (itemId?: string) => {
     itemId
   );
 
-  const { itemFilter, setItemFilter, matchItem } = useItemUtils();
+  const { itemFilter, matchItem } = useItemUtils();
   const { urlQuery } = useUrlQuery();
   const campaignFilter = (urlQuery['campaign'] as string) ?? '';
   const lines = lineData?.nodes;
@@ -66,8 +66,6 @@ export const useStocktakeRows = (itemId?: string) => {
     items,
     lines: filteredLines ?? [],
     totalLineCount,
-    itemFilter,
-    setItemFilter,
     campaignOptions,
   };
 };
