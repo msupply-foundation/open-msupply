@@ -9928,6 +9928,7 @@ export type StockRelocationLineNode = {
 export type StockRelocationNode = {
   __typename: 'StockRelocationNode';
   comment?: Maybe<Scalars['String']['output']>;
+  confirmedDatetime?: Maybe<Scalars['DateTime']['output']>;
   createdBy: Scalars['String']['output'];
   createdDatetime: Scalars['DateTime']['output'];
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;

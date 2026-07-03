@@ -108,6 +108,9 @@ mod tests {
                 .and_hms_opt(9, 0, 0)
                 .unwrap(),
             created_by: "user_account_a".to_string(),
+            confirmed_datetime: NaiveDate::from_ymd_opt(2024, 1, 2)
+                .unwrap()
+                .and_hms_opt(9, 0, 0),
             finalised_datetime: None,
             comment: Some("relocate to cold room".to_string()),
         };

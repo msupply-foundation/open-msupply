@@ -10,6 +10,7 @@ export type StockMovementRowFragment = {
   status: Types.StockRelocationNodeStatus;
   comment?: string | null;
   createdDatetime: string;
+  confirmedDatetime?: string | null;
   finalisedDatetime?: string | null;
   lineCount: number;
 };
@@ -57,6 +58,7 @@ export type StockMovementFragment = {
   status: Types.StockRelocationNodeStatus;
   comment?: string | null;
   createdDatetime: string;
+  confirmedDatetime?: string | null;
   finalisedDatetime?: string | null;
   lineCount: number;
   user?: {
@@ -126,6 +128,7 @@ export type StockRelocationsQuery = {
       status: Types.StockRelocationNodeStatus;
       comment?: string | null;
       createdDatetime: string;
+      confirmedDatetime?: string | null;
       finalisedDatetime?: string | null;
       lineCount: number;
     }>;
@@ -148,6 +151,7 @@ export type StockRelocationQuery = {
         status: Types.StockRelocationNodeStatus;
         comment?: string | null;
         createdDatetime: string;
+        confirmedDatetime?: string | null;
         finalisedDatetime?: string | null;
         lineCount: number;
         user?: {
@@ -222,6 +226,7 @@ export type UpdateStockRelocationMutation = {
         status: Types.StockRelocationNodeStatus;
         comment?: string | null;
         createdDatetime: string;
+        confirmedDatetime?: string | null;
         finalisedDatetime?: string | null;
         lineCount: number;
         user?: {
@@ -318,6 +323,7 @@ export const StockMovementRowFragmentDoc = gql`
     status
     comment
     createdDatetime
+    confirmedDatetime
     finalisedDatetime
     lineCount
   }
@@ -367,6 +373,7 @@ export const StockMovementFragmentDoc = gql`
     status
     comment
     createdDatetime
+    confirmedDatetime
     user {
       __typename
       username

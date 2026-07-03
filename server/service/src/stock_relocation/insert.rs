@@ -40,6 +40,7 @@ pub fn insert_stock_relocation(
                 status: StockRelocationStatus::New,
                 created_datetime: Utc::now().naive_utc(),
                 created_by: ctx.user_id.clone(),
+                confirmed_datetime: None,
                 finalised_datetime: None,
                 comment: input.comment,
             };
