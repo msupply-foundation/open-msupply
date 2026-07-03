@@ -126,25 +126,25 @@ export const useDraftRequisitionLine = (
 };
 
 export const useNextResponseLine = (
-  lines: ResponseLineFragment[],
+  // Returns the items in the order they're currently displayed in the table,
+  // so "OK & Next" follows the user's sort instead of a fixed item-name order.
+  getSortedItems: () => ResponseLineFragment['item'][],
   currentItem?: ItemWithAvailableStockFragment | null
 ) => {
-  if (!lines || !currentItem) {
+  // Capture the display order once, when the modal opens, so navigation stays
+  // stable while the user steps through it.
+  const [items] = useState(getSortedItems);
+
+  if (!items || !currentItem) {
     return { hasNext: false, next: null };
   }
-  const nextState: {
-    hasNext: boolean;
-    next: ItemWithAvailableStockFragment | null;
-  } = { hasNext: true, next: null };
-  const idx = lines.findIndex(l => l.item.id === currentItem?.id);
-  const next = lines[idx + 1];
 
-  if (!next) {
-    nextState.hasNext = false;
-    return nextState;
+  const idx = items.findIndex(item => item?.id === currentItem?.id);
+  const next = items[idx + 1];
+
+  if (idx === -1 || !next) {
+    return { hasNext: false, next: null };
   }
 
-  nextState.next = next.item;
-
-  return nextState;
+  return { hasNext: true, next };
 };

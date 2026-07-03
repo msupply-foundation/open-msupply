@@ -174,6 +174,9 @@ pub enum Resource {
     QueryInboundShipmentExternal,
     AuthoriseInboundShipmentExternal,
     VerifyInboundShipmentExternal,
+    // Help documents
+    QueryHelpDocuments,
+    MutateHelpDocuments,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -826,6 +829,17 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
 
     map.insert(Resource::QueryCampaigns, PermissionDSL::HasStoreAccess);
+
+    // Help documents (uploaded centrally, listed on the Help page on every site).
+    // Read is open to any authenticated user; write is ServerAdmin only.
+    map.insert(
+        Resource::QueryHelpDocuments,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateHelpDocuments,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
 
     map.insert(
         Resource::QueryPurchaseOrder,

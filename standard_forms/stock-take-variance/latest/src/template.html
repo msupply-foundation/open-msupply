@@ -4,6 +4,13 @@
 </style>
 
 <body>
+  {# Blind stock take: the variance reveals theoretical stock, so it is hidden
+  while counting (status NEW) and becomes available once finalised. #}
+  {% set is_blind = data.preferences.blindStocktake | default(value=false) %}
+  {% set is_new = data.stocktake.status == "NEW" %}
+  {% if is_blind and is_new %}
+  <p class="blind-notice">{{t(k="report.variance-hidden-blind", f="Variance is hidden during a blind stock take. It will be available once the stock take is finalised.")}}</p>
+  {% else %}
   {% set_global VvalueIncrease=0 %}
   {% set_global VvalueDecrease=0 %}
   {% set_global VnetVarience=0 %}
@@ -104,5 +111,6 @@
     <td  class="borderline"><span class="table_text">{{VnetVarience | round( precision=2)}}</span></td>
   </tr>
 </table>
+  {% endif %}
 
 </body>

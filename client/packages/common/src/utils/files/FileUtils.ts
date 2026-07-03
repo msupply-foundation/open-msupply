@@ -78,8 +78,8 @@ export const useDownloadFile = () => {
 export const useExportCSV = () => {
   const exportFile = useExportFile();
 
-  const exportCsv = async (data: string, title: string) => {
-    const filename = getFilename('text/csv', title);
+  const exportCsv = async (data: string, title: string, storeCode?: string) => {
+    const filename = getFilename('text/csv', title, storeCode);
     exportFile(data, 'text/csv', filename);
   };
 
@@ -180,7 +180,7 @@ const openAndroidFile = async (file: {
   }
 };
 
-const getFilename = (type?: string, title?: string) => {
+const getFilename = (type?: string, title?: string, storeCode?: string) => {
   let extension = 'txt';
   switch (type) {
     case 'text/csv':
@@ -192,10 +192,19 @@ const getFilename = (type?: string, title?: string) => {
   }
 
   const today = Formatter.toIsoString(new Date()); // to match backend datetime
-  const filename = `${today}_${title || 'export'}.${extension}`;
+  const safeStoreCode = storeCode ? sanitizeForFilename(storeCode) : undefined;
+  const parts = [today, safeStoreCode, title || 'export'].filter(Boolean);
+  const filename = `${parts.join('_')}.${extension}`;
 
   return filename;
 };
+
+// mSupply doesn't restrict the characters allowed in a store code, so anything
+// the user gives us has to be neutralised before it becomes part of a path or
+// download attribute. Mirrors the server's `sanitize_filename` helper.
+export const sanitizeForFilename = (value: string): string =>
+  // eslint-disable-next-line no-control-regex
+  value.replace(/[<>:"/\\|?*\x00-\x1F]/g, '');
 
 const asBase64 = async (blob: Blob): Promise<string> => {
   const reader = new FileReader();
