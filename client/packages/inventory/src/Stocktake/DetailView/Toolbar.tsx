@@ -11,8 +11,8 @@ import {
   TypedTFunction,
   LocaleKey,
   FieldUpdateMutation,
-  SearchBar,
   FilterMenu,
+  FilterDefinition,
 } from '@openmsupply-client/common';
 import { StocktakeFragment, useStocktakeOld } from '../api';
 import { useStocktakeRows } from '../api/hooks/line/useStocktakeRows';
@@ -31,7 +31,25 @@ export const Toolbar = () => {
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
 
-  const { itemFilter, setItemFilter, campaignOptions } = useStocktakeRows();
+  const { campaignOptions } = useStocktakeRows();
+
+  const filters: FilterDefinition[] = [
+    {
+      type: 'text',
+      name: t('label.code-or-name'),
+      urlParameter: 'codeOrName',
+      placeholder: t('placeholder.enter-an-item-code-or-name'),
+      isDefault: true,
+    },
+  ];
+  if (campaignOptions.length > 0) {
+    filters.push({
+      type: 'enum',
+      name: t('label.campaign'),
+      urlParameter: 'campaign',
+      options: campaignOptions,
+    });
+  }
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -71,25 +89,7 @@ export const Toolbar = () => {
               justifyContent="flex-end"
               alignItems="center"
             >
-              {campaignOptions.length > 0 && (
-                <FilterMenu
-                  filters={[
-                    {
-                      type: 'enum',
-                      name: t('label.campaign'),
-                      urlParameter: 'campaign',
-                      options: campaignOptions,
-                    },
-                  ]}
-                />
-              )}
-              <SearchBar
-                placeholder={t('placeholder.filter-items')}
-                value={itemFilter}
-                onChange={newValue => {
-                  setItemFilter(newValue);
-                }}
-              />
+              <FilterMenu filters={filters} />
             </Grid>
           </>
         )}
