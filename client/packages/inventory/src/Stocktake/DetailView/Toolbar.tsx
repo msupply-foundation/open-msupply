@@ -46,7 +46,7 @@ export const Toolbar = () => {
     filters.push({
       type: 'enum',
       name: t('label.campaign-only'),
-      urlParameter: 'campaign',
+      urlParameter: 'campaignId',
       options: campaignOptions,
     });
   }
