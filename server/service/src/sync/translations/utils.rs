@@ -6,13 +6,13 @@ use repository::{
     system_log_row::{SystemLogRow, SystemLogRowRepository, SystemLogType},
     AssetCatalogueItemRowRepository, AssetCategoryRowRepository, AssetClassRowRepository,
     AssetLogReasonRowRepository, AssetRowRepository, AssetTypeRowRepository, BarcodeRowRepository,
-    CampaignRowRepository, ClinicianLinkRowRepository, ContextRowRepository, CurrencyRowRepository,
-    DemographicRowRepository, DiagnosisRowRepository, FormSchemaRowRepository,
-    IndicatorColumnRowRepository, IndicatorLineRowRepository, InsuranceProviderRowRepository,
-    InvoiceLineRowRepository, InvoiceRowRepository, ItemLinkRowRepository, ItemRowRepository,
-    ItemVariantRowRepository, LocationRowRepository, LocationTypeRowRepository,
-    MasterListRowRepository, NameInsuranceJoinRowRepository, NameLinkRowRepository,
-    NameTagRowRepository, PeriodRowRepository, PeriodScheduleRowRepository,
+    CampaignRowRepository, CategoryRowRepository, ClinicianLinkRowRepository, ContextRowRepository,
+    CurrencyRowRepository, DemographicRowRepository, DiagnosisRowRepository,
+    FormSchemaRowRepository, IndicatorColumnRowRepository, IndicatorLineRowRepository,
+    InsuranceProviderRowRepository, InvoiceLineRowRepository, InvoiceRowRepository,
+    ItemLinkRowRepository, ItemRowRepository, ItemVariantRowRepository, LocationRowRepository,
+    LocationTypeRowRepository, MasterListRowRepository, NameInsuranceJoinRowRepository,
+    NameLinkRowRepository, NameTagRowRepository, PeriodRowRepository, PeriodScheduleRowRepository,
     ProgramIndicatorRowRepository, ProgramRowRepository, PropertyRowRepository,
     PurchaseOrderLineRowRepository, PurchaseOrderRowRepository, ReasonOptionRowRepository,
     RepositoryError, RequisitionRowRepository, RnRFormRowRepository, SensorRowRepository,
@@ -36,6 +36,7 @@ pub(crate) enum FkField {
     AssetLogReason,
     Barcode,
     Campaign,
+    Category,
     ClinicianLink,
     Context,
     Currency,
@@ -98,6 +99,7 @@ impl FkField {
             }
             FkField::Barcode => BarcodeRowRepository::new(connection).check_exists_by_id(id),
             FkField::Campaign => CampaignRowRepository::new(connection).check_exists_by_id(id),
+            FkField::Category => CategoryRowRepository::new(connection).check_exists_by_id(id),
             FkField::ClinicianLink => {
                 ClinicianLinkRowRepository::new(connection).check_exists_by_id(id)
             }
