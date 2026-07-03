@@ -117,6 +117,16 @@ impl<'a> StockRelocationLineRowRepository<'a> {
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn find_many_by_stock_relocation_ids(
+        &self,
+        stock_relocation_ids: &[String],
+    ) -> Result<Vec<StockRelocationLineRow>, RepositoryError> {
+        let result = stock_relocation_line::table
+            .filter(stock_relocation_line::stock_relocation_id.eq_any(stock_relocation_ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
 }
 
 #[derive(Debug, Clone)]
