@@ -9937,6 +9937,7 @@ export type StockRelocationNode = {
   status: StockRelocationNodeStatus;
   stockMovementNumber: Scalars['Int']['output'];
   storeId: Scalars['String']['output'];
+  user?: Maybe<UserNode>;
 };
 
 export enum StockRelocationNodeStatus {
