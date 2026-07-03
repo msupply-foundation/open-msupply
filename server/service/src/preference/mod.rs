@@ -60,6 +60,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
             external_inbound_shipment_lines_must_be_authorised,
+            require_reason_when_receiving_expired_stock,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
             number_of_months_threshold_to_show_over_stock_alerts_for_products,
@@ -123,6 +124,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(
             external_inbound_shipment_lines_must_be_authorised,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(
+            require_reason_when_receiving_expired_stock,
             &mut prefs,
             &input,
         )?;

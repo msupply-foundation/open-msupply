@@ -50,6 +50,7 @@ pub struct UpsertPreferences {
     pub can_create_internal_order_from_a_requisition: Option<Vec<StorePrefUpdate<bool>>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<StorePrefUpdate<bool>>>,
     pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<StorePrefUpdate<bool>>>,
+    pub require_reason_when_receiving_expired_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<StorePrefUpdate<i32>>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -104,6 +105,7 @@ pub fn upsert_preferences(
         select_destination_store_for_an_internal_order:
             select_destination_store_for_an_internal_order_input,
         external_inbound_shipment_lines_must_be_authorised: external_inbound_shipment_lines_must_be_authorised_input,
+        require_reason_when_receiving_expired_stock: require_reason_when_receiving_expired_stock_input,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -160,6 +162,7 @@ pub fn upsert_preferences(
         store_custom_colour,
         invoice_status_options,
         external_inbound_shipment_lines_must_be_authorised,
+        require_reason_when_receiving_expired_stock,
         show_indicative_price_in_requisitions,
     }: PreferenceProvider = get_preference_provider();
 
@@ -295,6 +298,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = external_inbound_shipment_lines_must_be_authorised_input {
                 upsert_store_input(connection, external_inbound_shipment_lines_must_be_authorised, input)?;
+            }
+
+            if let Some(input) = require_reason_when_receiving_expired_stock_input {
+                upsert_store_input(connection, require_reason_when_receiving_expired_stock, input)?;
             }
 
             if let Some(input) = number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input {

@@ -3,14 +3,17 @@ use crate::invoice::{
     check_status_change, check_store, common::check_can_issue_in_foreign_currency,
     inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
-use crate::preference::{preferences::Backdating, Preference};
+use crate::preference::{
+    preferences::{Backdating, RequireReasonWhenReceivingExpiredStock},
+    Preference,
+};
 use crate::validate::{
     check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType, OtherPartyErrors,
 };
 use chrono::{Duration, Utc};
 use repository::{
-    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceStatus, InvoiceType, Name,
-    StorageConnection,
+    InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow, InvoiceStatus,
+    InvoiceType, Name, StorageConnection,
 };
 
 use super::{super::InboundShipmentType, UpdateInboundShipment, UpdateInboundShipmentError};
@@ -67,6 +70,14 @@ pub fn validate(
         use UpdateInboundShipmentStatus::*;
         if matches!(patch.status, Some(Received | Verified)) {
             check_no_pending_lines(&invoice.id, connection)?;
+            // When the store preference is enabled, expired stock must be
+            // received against a reason (why it's being accepted despite being
+            // past its expiry).
+            if RequireReasonWhenReceivingExpiredStock
+                .load(connection, Some(store_id.to_string()))?
+            {
+                check_no_expired_lines_without_reason(&invoice.id, connection)?;
+            }
         }
     }
 
@@ -150,6 +161,29 @@ fn check_no_pending_lines(
     for invoice_line in invoice_lines {
         if invoice_line.status == Some(InvoiceLineStatus::Pending) {
             return Err(UpdateInboundShipmentError::CannotReceiveWithPendingLines);
+        }
+    }
+
+    Ok(())
+}
+
+fn check_no_expired_lines_without_reason(
+    invoice_id: &str,
+    connection: &StorageConnection,
+) -> Result<(), UpdateInboundShipmentError> {
+    let today = Utc::now().naive_utc().date();
+    let invoice_lines =
+        InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(invoice_id)?;
+
+    for line in invoice_lines {
+        // Only stock-in lines that actually bring in stock.
+        if line.r#type != InvoiceLineType::StockIn || line.number_of_packs <= 0.0 {
+            continue;
+        }
+
+        let is_expired = line.expiry_date.is_some_and(|expiry| expiry < today);
+        if is_expired && line.reason_option_id.is_none() {
+            return Err(UpdateInboundShipmentError::CannotReceiveExpiredLinesWithoutReason);
         }
     }
 

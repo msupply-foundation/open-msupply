@@ -226,6 +226,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotMoveReceivedDateForward
         | ServiceError::ExceedsMaximumBackdatingDays
         | ServiceError::CannotSetShippedStatusOnManualInboundShipment
+        | ServiceError::CannotReceiveExpiredLinesWithoutReason
         | ServiceError::CurrencyRateMustBePositive => BadUserInput(formatted_error),
         ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),

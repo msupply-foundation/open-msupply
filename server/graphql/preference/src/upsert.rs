@@ -99,6 +99,7 @@ pub struct UpsertPreferencesInput {
     pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
     pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<BoolStorePrefInput>>,
+    pub require_reason_when_receiving_expired_stock: Option<Vec<BoolStorePrefInput>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<IntegerStorePrefInput>>,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -178,6 +179,7 @@ impl UpsertPreferencesInput {
             store_custom_colour,
             invoice_status_options,
             external_inbound_shipment_lines_must_be_authorised,
+            require_reason_when_receiving_expired_stock,
             show_indicative_price_in_requisitions,
         } = self;
 
@@ -276,6 +278,10 @@ impl UpsertPreferencesInput {
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             external_inbound_shipment_lines_must_be_authorised:
                 external_inbound_shipment_lines_must_be_authorised
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            require_reason_when_receiving_expired_stock:
+                require_reason_when_receiving_expired_stock
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             show_indicative_price_in_requisitions: show_indicative_price_in_requisitions

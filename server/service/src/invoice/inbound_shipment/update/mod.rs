@@ -226,6 +226,7 @@ pub enum UpdateInboundShipmentError {
     CannotMoveReceivedDateForward,
     ExceedsMaximumBackdatingDays,
     CannotReceiveWithPendingLines,
+    CannotReceiveExpiredLinesWithoutReason,
     CannotSetShippedStatusOnManualInboundShipment,
     CurrencyRateMustBePositive,
     // Name validation
@@ -288,16 +289,16 @@ mod test {
             mock_inbound_shipment_a_invoice_lines, mock_inbound_shipment_b,
             mock_inbound_shipment_c, mock_inbound_shipment_e, mock_inbound_shipment_f, mock_item_a,
             mock_name_a, mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
-            mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
-            mock_store_linked_to_name, mock_user_account_a, mock_vaccine_item_a, mock_vvm_status_a,
-            MockData, MockDataInserts,
+            mock_outbound_shipment_e, mock_shipment_variance_reason_option, mock_stock_line_a,
+            mock_store_a, mock_store_b, mock_store_linked_to_name, mock_user_account_a,
+            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
         InvoiceLineRowRepository, InvoiceLineStatus, InvoiceLineType, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
-        StockLineRowRepository,
+        PreferenceRow, PreferenceRowRepository, StockLineRowRepository,
     };
 
     use crate::{
@@ -310,6 +311,7 @@ mod test {
             stock_in_line::{insert_stock_in_line, InsertStockInLine, StockInType},
             ShipmentTaxUpdate,
         },
+        preference::{preferences::RequireReasonWhenReceivingExpiredStock, Preference},
         service_provider::ServiceProvider,
     };
 
@@ -465,6 +467,130 @@ mod test {
             Err(ServiceError::NotThisStoreInvoice)
         );
         // TODO CannotReverseInvoiceStatus,UpdateInvoiceDoesNotExist
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_shipment_expired_stock_requires_reason() {
+        fn supplier() -> NameRow {
+            NameRow {
+                id: "expired_test_supplier".to_string(),
+                ..Default::default()
+            }
+        }
+        fn supplier_join() -> NameStoreJoinRow {
+            NameStoreJoinRow {
+                id: "expired_test_supplier_join".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                name_is_supplier: true,
+                ..Default::default()
+            }
+        }
+        // Fresh inbound shipment with no pre-existing lines, so the only
+        // expired line is the one we control below.
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "expired_test_invoice".to_string(),
+                name_id: supplier().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_inbound_shipment_expired_stock_requires_reason",
+            MockDataInserts::all(),
+            MockData {
+                names: vec![supplier()],
+                name_store_joins: vec![supplier_join()],
+                invoices: vec![invoice()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // Add an expired stock-in line (no reason).
+        let expired = Utc::now().naive_utc().date() - Duration::days(1);
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "expired_line".to_string(),
+                invoice_id: invoice().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                expiry_date: Some(expired),
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        // With the preference OFF, receiving expired stock without a reason is allowed.
+        assert!(service
+            .update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice().id,
+                    status: Some(UpdateInboundShipmentStatus::Received),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            )
+            .is_ok());
+
+        // Enable the preference for this store (insert directly; the upsert
+        // service is central-server only).
+        let key = RequireReasonWhenReceivingExpiredStock.key_str();
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: format!("{key}_{}", mock_store_a().id),
+                key,
+                value: "true".to_string(),
+                store_id: Some(mock_store_a().id),
+            })
+            .unwrap();
+
+        // Now verifying is blocked because the expired line has no reason.
+        assert_eq!(
+            service.update_inbound_shipment(
+                &context,
+                UpdateInboundShipment {
+                    id: invoice().id,
+                    status: Some(UpdateInboundShipmentStatus::Verified),
+                    ..Default::default()
+                },
+                InboundShipmentType::InboundShipment,
+            ),
+            Err(ServiceError::CannotReceiveExpiredLinesWithoutReason)
+        );
+
+        // Set a shipment-variance reason on the expired line.
+        let line_repo = InvoiceLineRowRepository::new(&connection);
+        let mut line = line_repo.find_one_by_id("expired_line").unwrap().unwrap();
+        line.reason_option_id = Some(mock_shipment_variance_reason_option().id);
+        line_repo.upsert_one(&line).unwrap();
+
+        // With a reason set, the shipment can now be verified.
+        let result = service.update_inbound_shipment(
+            &context,
+            UpdateInboundShipment {
+                id: invoice().id,
+                status: Some(UpdateInboundShipmentStatus::Verified),
+                ..Default::default()
+            },
+            InboundShipmentType::InboundShipment,
+        );
+        assert!(result.is_ok(), "expected Ok, got {:?}", result.err());
     }
 
     #[actix_rt::test]
