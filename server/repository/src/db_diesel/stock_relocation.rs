@@ -2,10 +2,8 @@ use super::{
     stock_relocation_row::{stock_relocation, StockRelocationRow, StockRelocationStatus},
     DBType, RepositoryError, StorageConnection,
 };
-use crate::diesel_macros::{
-    apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
-};
-use crate::{EqualFilter, Pagination, Sort, StringFilter};
+use crate::diesel_macros::{apply_equal_filter, apply_sort};
+use crate::{EqualFilter, Pagination, Sort};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -18,7 +16,7 @@ pub struct StockRelocationFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<StockRelocationStatus>>,
-    pub reference_number: Option<StringFilter>,
+    pub stock_movement_number: Option<EqualFilter<i64>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -26,7 +24,7 @@ pub enum StockRelocationSortField {
     CreatedDatetime,
     FinalisedDatetime,
     Status,
-    ReferenceNumber,
+    StockMovementNumber,
 }
 
 pub type StockRelocationSort = Sort<StockRelocationSortField>;
@@ -80,8 +78,8 @@ impl<'a> StockRelocationRepository<'a> {
                 StockRelocationSortField::Status => {
                     apply_sort!(query, sort, stock_relocation::status)
                 }
-                StockRelocationSortField::ReferenceNumber => {
-                    apply_sort_no_case!(query, sort, stock_relocation::reference_number)
+                StockRelocationSortField::StockMovementNumber => {
+                    apply_sort!(query, sort, stock_relocation::stock_movement_number)
                 }
             }
         } else {
@@ -106,13 +104,17 @@ impl<'a> StockRelocationRepository<'a> {
                 id,
                 store_id,
                 status,
-                reference_number,
+                stock_movement_number,
             } = f;
 
             apply_equal_filter!(query, id, stock_relocation::id);
             apply_equal_filter!(query, store_id, stock_relocation::store_id);
             apply_equal_filter!(query, status, stock_relocation::status);
-            apply_string_filter!(query, reference_number, stock_relocation::reference_number);
+            apply_equal_filter!(
+                query,
+                stock_movement_number,
+                stock_relocation::stock_movement_number
+            );
         }
 
         query
@@ -144,8 +146,8 @@ impl StockRelocationFilter {
         self.status = Some(filter);
         self
     }
-    pub fn reference_number(mut self, filter: StringFilter) -> Self {
-        self.reference_number = Some(filter);
+    pub fn stock_movement_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.stock_movement_number = Some(filter);
         self
     }
 }
@@ -166,14 +168,14 @@ mod test {
     use crate::{
         mock::MockDataInserts, test_db::setup_all, EqualFilter, StockRelocationFilter,
         StockRelocationRepository, StockRelocationRow, StockRelocationSort, StockRelocationSortField,
-        StockRelocationStatus, StringFilter, Upsert,
+        StockRelocationStatus, Upsert,
     };
 
     fn relocation(id: &str) -> StockRelocationRow {
         StockRelocationRow {
             id: id.to_string(),
             store_id: "store_a".to_string(),
-            reference_number: format!("SM-{id}"),
+            stock_movement_number: 1,
             status: StockRelocationStatus::Finalised,
             created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
                 .unwrap()
@@ -215,7 +217,7 @@ mod test {
         assert_eq!(
             repo.query_by_filter(
                 StockRelocationFilter::new()
-                    .reference_number(StringFilter::like("SM-stock_relocation_1"))
+                    .stock_movement_number(EqualFilter::equal_to(1))
             )
             .unwrap()
             .len(),

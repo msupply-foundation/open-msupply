@@ -13,7 +13,7 @@ table! {
     stock_relocation (id) {
         id -> Text,
         store_id -> Text,
-        reference_number -> Text,
+        stock_movement_number -> BigInt,
         status -> crate::db_diesel::stock_relocation_row::StockRelocationStatusMapping,
         created_datetime -> Timestamp,
         created_by -> Text,
@@ -49,7 +49,7 @@ impl StockRelocationStatus {
 pub struct StockRelocationRow {
     pub id: String,
     pub store_id: String,
-    pub reference_number: String,
+    pub stock_movement_number: i64,
     pub status: StockRelocationStatus,
     pub created_datetime: NaiveDateTime,
     pub created_by: String,

@@ -152,7 +152,7 @@ impl<'a> StockRelocationLineRepository<'a> {
                     apply_sort!(query, sort, stock_relocation_line::number_of_packs)
                 }
                 StockRelocationLineSortField::PackSize => {
-                    apply_sort!(query, sort, stock_relocation_line::pack_size)
+                    apply_sort!(query, sort, stock_line::pack_size)
                 }
             }
         } else {
