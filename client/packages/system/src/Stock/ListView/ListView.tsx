@@ -277,8 +277,8 @@ export const StockListView = () => {
       },
       {
         id: 'campaign',
-        header: t('label.campaign'),
-        accessorFn: row => row.campaign?.name ?? row.program?.name ?? '',
+        header: t('label.campaign-only'),
+        accessorFn: row => row.campaign?.name ?? '',
         Cell: TextWithTooltipCell,
         size: 150,
         defaultHideOnMobile: true,

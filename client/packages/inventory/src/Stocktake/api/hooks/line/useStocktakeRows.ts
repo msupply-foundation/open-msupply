@@ -16,8 +16,8 @@ const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
     } as StocktakeSummaryItem;
   });
 
-const getCampaignOrProgramName = (line: StocktakeLineFragment) =>
-  line.campaign?.name ?? line.program?.name ?? '';
+const getCampaignName = (line: StocktakeLineFragment) =>
+  line.campaign?.name ?? '';
 
 export const useStocktakeRows = (itemId?: string) => {
   const { data: stocktake } = useStocktakeOld.document.get();
@@ -35,7 +35,7 @@ export const useStocktakeRows = (itemId?: string) => {
     if (!lines) return [];
     const names = new Set<string>();
     lines.forEach(line => {
-      const name = getCampaignOrProgramName(line);
+      const name = getCampaignName(line);
       if (name) names.add(name);
     });
     return Array.from(names)
@@ -47,8 +47,7 @@ export const useStocktakeRows = (itemId?: string) => {
     return lines
       ?.filter(item => matchItem(itemFilter, item.item))
       .filter(
-        line =>
-          !campaignFilter || getCampaignOrProgramName(line) === campaignFilter
+        line => !campaignFilter || getCampaignName(line) === campaignFilter
       );
   }, [lines, itemFilter, campaignFilter]);
 

@@ -189,8 +189,8 @@ export const useStocktakeColumns = () => {
       },
       {
         id: 'campaign',
-        header: t('label.campaign'),
-        accessorFn: row => row.campaign?.name ?? row.program?.name ?? '',
+        header: t('label.campaign-only'),
+        accessorFn: row => row.campaign?.name ?? '',
         enableSorting: true,
         enableColumnFilter: true,
         filterVariant: 'select',
