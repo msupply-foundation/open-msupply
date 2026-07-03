@@ -294,7 +294,12 @@ mod tests {
             setup_all("test_sync_v7_integration_order", MockDataInserts::none()).await;
 
         let in_order: Vec<String> = INTEGRATION_ORDER.iter().map(|t| t.to_string()).collect();
-        let all_tables: Vec<String> = ChangelogTableName::iter().map(|t| t.to_string()).collect();
+        // `Other(..)` is a fallback for unrecognised table names, not a real schema table,
+        // so it has no integration slot and is excluded from the coverage check.
+        let all_tables: Vec<String> = ChangelogTableName::iter()
+            .filter(|t| !matches!(t, ChangelogTableName::Other(_)))
+            .map(|t| t.to_string())
+            .collect();
         let skipped: Vec<String> = NOT_YET_IN_V7.iter().map(|t| t.to_string()).collect();
 
         let in_order_refs: Vec<&str> = in_order.iter().map(String::as_str).collect();
