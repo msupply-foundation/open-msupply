@@ -66,6 +66,7 @@ mod graphql {
                 deleted_datetime: None,
             },
             display_mode: None,
+            sort_order: None,
         }
     }
 

@@ -118,6 +118,7 @@ mod test {
                 custom_field_id: "custom_1".to_string(),
                 scope: "patient".to_string(),
                 display_mode: CustomFieldDisplayMode::Visible,
+                ..Default::default()
             })
             .unwrap();
     }
