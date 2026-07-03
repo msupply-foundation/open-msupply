@@ -9901,8 +9901,8 @@ export type StockRelocationDraftLinesInput = {
 
 export type StockRelocationFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
-  referenceNumber?: InputMaybe<StringFilterInput>;
   status?: InputMaybe<EqualFilterStockRelocationStatusInput>;
+  stockMovementNumber?: InputMaybe<EqualFilterBigNumberInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -9914,18 +9914,12 @@ export type StockRelocationLineConnector = {
 
 export type StockRelocationLineNode = {
   __typename: 'StockRelocationLineNode';
-  batch?: Maybe<Scalars['String']['output']>;
   destinationLocation?: Maybe<LocationNode>;
   destinationStockLineId?: Maybe<Scalars['String']['output']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
-  /** The item being moved (item code/name for display). */
-  item?: Maybe<ItemNode>;
-  itemId: Scalars['String']['output'];
   numberOfPacks: Scalars['Float']['output'];
-  packSize: Scalars['Float']['output'];
   sourceLocation?: Maybe<LocationNode>;
-  /** The source stock line (e.g. for packs currently in stock). */
+  /** The source stock line */
   stockLine?: Maybe<StockLineNode>;
   stockLineId: Scalars['String']['output'];
   stockRelocationId: Scalars['String']['output'];
@@ -9940,8 +9934,8 @@ export type StockRelocationNode = {
   id: Scalars['String']['output'];
   lineCount: Scalars['Int']['output'];
   lines: StockRelocationLineConnector;
-  referenceNumber: Scalars['String']['output'];
   status: StockRelocationNodeStatus;
+  stockMovementNumber: Scalars['Int']['output'];
   storeId: Scalars['String']['output'];
 };
 
@@ -9956,8 +9950,8 @@ export type StockRelocationResponse = RecordNotFound | StockRelocationNode;
 export enum StockRelocationSortFieldInput {
   CreatedDatetime = 'createdDatetime',
   FinalisedDatetime = 'finalisedDatetime',
-  ReferenceNumber = 'referenceNumber',
   Status = 'status',
+  StockMovementNumber = 'stockMovementNumber',
 }
 
 export type StockRelocationSortInput = {

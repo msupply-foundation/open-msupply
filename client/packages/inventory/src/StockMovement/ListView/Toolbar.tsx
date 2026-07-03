@@ -23,10 +23,9 @@ export const Toolbar = () => {
         <FilterMenu
           filters={[
             {
-              type: 'text',
-              name: t('label.reference'),
-              urlParameter: 'referenceNumber',
-              placeholder: t('placeholder.search-by-reference'),
+              type: 'number',
+              name: t('label.number'),
+              urlParameter: 'stockMovementNumber',
               isDefault: true,
             },
             {

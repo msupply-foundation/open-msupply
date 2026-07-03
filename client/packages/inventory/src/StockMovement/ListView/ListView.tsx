@@ -26,7 +26,7 @@ export const ListView = () => {
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
-      { key: 'referenceNumber' },
+      { key: 'stockMovementNumber', condition: 'equalTo', isNumber: true },
       { key: 'status', condition: 'equalTo' },
     ],
   });
@@ -41,8 +41,8 @@ export const ListView = () => {
   const columns = useMemo(
     (): ColumnDef<StockMovementRowFragment>[] => [
       {
-        accessorKey: 'referenceNumber',
-        header: t('label.reference'),
+        accessorKey: 'stockMovementNumber',
+        header: t('label.number'),
         enableSorting: true,
       },
       {

@@ -1,7 +1,7 @@
 fragment StockMovementRow on StockRelocationNode {
   __typename
   id
-  referenceNumber
+  stockMovementNumber
   status
   comment
   createdDatetime
@@ -14,22 +14,22 @@ fragment StockMovementLine on StockRelocationLineNode {
   id
   stockRelocationId
   stockLineId
-  itemId
-  batch
-  expiryDate
-  packSize
   numberOfPacks
   stockLine {
     __typename
     id
+    itemId
+    batch
+    expiryDate
+    packSize
     availableNumberOfPacks
-  }
-  item {
-    __typename
-    id
-    code
-    name
-    unitName
+    item {
+      __typename
+      id
+      code
+      name
+      unitName
+    }
   }
   sourceLocation {
     __typename
@@ -48,7 +48,7 @@ fragment StockMovementLine on StockRelocationLineNode {
 fragment StockMovement on StockRelocationNode {
   __typename
   id
-  referenceNumber
+  stockMovementNumber
   status
   comment
   createdDatetime
