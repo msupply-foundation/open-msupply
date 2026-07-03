@@ -8,7 +8,10 @@ use crate::{
         stock_in_line::{check_lines_locked_by_authorisation, check_pack_size},
         validate::{check_item_exists, check_line_exists, check_number_of_packs},
     },
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
+        CheckOtherPartyType, OtherPartyErrors,
+    },
     NullableUpdate,
 };
 use repository::{InvoiceRow, ItemRow, PurchaseOrderLineRowRepository, StorageConnection};
@@ -30,6 +33,12 @@ pub fn validate(
     }
     if !check_number_of_packs(Some(input.number_of_packs)) {
         return Err(NumberOfPacksBelowZero);
+    }
+
+    if let Some(manufacture_date) = &input.manufacture_date {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
     }
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
@@ -77,6 +86,9 @@ pub fn validate(
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(OtherPartyStoreDisabled);
     }
     if check_lines_locked_by_authorisation(connection, &invoice) {
         return Err(CannotAddLinesToAuthorisedReceivedInvoice);

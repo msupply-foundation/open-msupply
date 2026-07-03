@@ -109,6 +109,7 @@ pub enum InsertStockInLineError {
     DonorNotVisible,
     SelectedDonorPartyIsNotADonor,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     CannotAddLinesToAuthorisedReceivedInvoice,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,
@@ -125,6 +126,7 @@ pub enum InsertStockInLineError {
     PurchaseOrderLineIdRequired,
     PurchaseOrderLineDoesNotExist,
     WrongInboundShipmentType,
+    CannotSetManufactureDateInFuture,
 }
 
 impl From<RepositoryError> for InsertStockInLineError {

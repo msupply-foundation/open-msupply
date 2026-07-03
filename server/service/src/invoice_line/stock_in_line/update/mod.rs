@@ -116,6 +116,7 @@ pub enum UpdateStockInLineError {
     NotAStockIn,
     NotThisStoreInvoice,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     CannotChangeLineStatusOfReceivedInvoice,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,
@@ -136,6 +137,7 @@ pub enum UpdateStockInLineError {
     CannotEditCostPrice,
     ReasonOptionDoesNotExist,
     ReasonOptionTypeInvalid,
+    CannotSetManufactureDateInFuture,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {

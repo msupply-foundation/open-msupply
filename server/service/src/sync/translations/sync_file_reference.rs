@@ -1,13 +1,11 @@
 use repository::{
     sync_file_reference_row::{SyncFileReferenceRowRepository, SyncFileReferenceWire},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::asset::AssetTranslation;
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -31,9 +29,8 @@ impl SyncTranslation for SyncFileReferenceTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let wire: SyncFileReferenceWire = serde_json::from_str(&sync_record.data)?;
-        let existing =
-            SyncFileReferenceRowRepository::new(connection).find_one_by_id(&wire.id)?;
+        let wire: SyncFileReferenceWire = serde_json::from_value(sync_record.data.0.clone())?;
+        let existing = SyncFileReferenceRowRepository::new(connection).find_one_by_id(&wire.id)?;
 
         Ok(PullTranslateResult::upsert(wire.into_row(existing)))
     }
@@ -60,20 +57,18 @@ impl SyncTranslation for SyncFileReferenceTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = SyncFileReferenceRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "SyncFileReference row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::SyncFileReference(sync_file_reference_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(SyncFileReferenceWire::from_row(&row))?,
+            serde_json::to_value(SyncFileReferenceWire::from_row(&sync_file_reference_row))?,
         ))
     }
 }

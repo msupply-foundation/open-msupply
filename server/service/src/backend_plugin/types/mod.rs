@@ -8,6 +8,8 @@ pub mod transform_request_requisition_lines;
 pub mod generate_typescript_types {
     use crate::{
         boajs::methods::{
+            enqueue_email::{EnqueueEmailInput, EnqueueEmailOutput},
+            fetch::{FetchInput, FetchOutput},
             use_graphql::UseGraphqlInput,
             use_repository::{UseRepositoryInput, UseRepositoryOutput},
         },
@@ -46,6 +48,8 @@ pub mod generate_typescript_types {
         use_repository: Function<UseRepositoryInput, UseRepositoryOutput>,
         use_graphql: Function<UseGraphqlInput, serde_json::Value>,
         get_active_stores_on_site: Function<(), ActiveStoresOnSite>,
+        fetch: Function<FetchInput, FetchOutput>,
+        enqueue_email: Function<EnqueueEmailInput, EnqueueEmailOutput>,
     }
     // Runs in CLI
     pub fn export_plugin_typescript(path: PathBuf) {

@@ -2,7 +2,7 @@ use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyRowRepository, GenderType, NameRow, NameRowDelete,
-    NameRowRepository, NameRowType, StorageConnection, SyncBufferRow,
+    NameRowType, Row, StorageConnection, SyncBufferRow,
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
@@ -273,7 +273,7 @@ impl SyncTranslation for NameTranslation {
             margin,
             freight_factor,
             currency_id,
-        } = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         // Custom data for facility or name only (for others, say patient, don't need to have extra overhead or push translation back to json)
         let r#type = legacy_type.to_name_type();
@@ -286,7 +286,7 @@ impl SyncTranslation for NameTranslation {
 
         // No DB-level FK constraint on supplying_store_id, because the store records also rely on name.
         // We don't want to blank out supplying_store_id if the store record just hasn't been synced yet
-        
+
         let currency_id = clear_invalid_fk(
             connection,
             "name",
@@ -359,9 +359,13 @@ impl SyncTranslation for NameTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Name(name_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
         let NameRow {
             id,
             name,
@@ -399,12 +403,7 @@ impl SyncTranslation for NameTranslation {
             currency_id,
             // See comment in pull translation
             custom_data_string: _,
-        } = NameRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Name row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = name_row;
         if deleted_datetime.is_some() {
             return Ok(PushTranslateResult::Ignored(
                 "Ignore pushing soft deleted name".to_string(),
@@ -486,7 +485,7 @@ mod tests {
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        CurrencyRow, SyncAction,
+        CurrencyRow, SyncAction, SyncRecordData,
     };
 
     #[actix_rt::test]
@@ -555,7 +554,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "name".to_string(),
             record_id: "NAME_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
                 "ID": "NAME_FK_INVALID",
                 "name": "Bad FK Name",
                 "code": "code",
@@ -586,8 +587,10 @@ mod tests {
                 "om_created_datetime": "",
                 "om_gender": "",
                 "currency_ID": "does_not_exist_currency"
-            }"#
-            .to_string(),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
@@ -609,9 +612,7 @@ mod tests {
             format!("expected currency_id None; got:\n{debug}")
         );
 
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)

@@ -360,6 +360,7 @@ export const StockLineForm = ({
                   Input={
                     <DateTimePickerInput
                       value={DateUtils.getNaiveDate(draft.manufactureDate)}
+                      disableFuture
                       onChange={date =>
                         onUpdate({
                           manufactureDate: date

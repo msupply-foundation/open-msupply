@@ -12,7 +12,10 @@ use crate::{
             check_number_of_packs,
         },
     },
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
+        CheckOtherPartyType, OtherPartyErrors,
+    },
     NullableUpdate,
 };
 use repository::{
@@ -42,6 +45,15 @@ pub fn validate(
         return Err(NumberOfPacksBelowZero);
     }
 
+    if let Some(NullableUpdate {
+        value: Some(manufacture_date),
+    }) = &input.manufacture_date
+    {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
+    }
+
     let item = check_item_option(&input.item_id, connection)?;
 
     let invoice =
@@ -57,6 +69,9 @@ pub fn validate(
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(OtherPartyStoreDisabled);
     }
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);

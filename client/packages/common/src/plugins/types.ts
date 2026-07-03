@@ -43,7 +43,7 @@ export type PluginPage = {
   route: string;
   Component: React.ComponentType;
   menu: PluginPageMenu;
-  // Stamped by the host in pluginProvider.ts#addPluginBundle. Plugins should
+  // Stamped by the host in pluginProvider.ts (stampAndValidatePages). Plugins should
   // not set this; it is optional on the type only so plugin bundles compile.
   pluginCode?: string;
 };

@@ -1,6 +1,7 @@
 use crate::invoice::common::check_master_list_for_name_id;
 use crate::invoice::common::get_lines_for_invoice;
 use crate::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
+use crate::validate::check_other_party_store_is_disabled;
 use crate::{invoice::check_invoice_exists, service_provider::ServiceContext};
 use repository::EqualFilter;
 use repository::ItemType;
@@ -74,6 +75,9 @@ fn validate(
         || invoice_row.status == InvoiceStatus::Received
         || invoice_row.status == InvoiceStatus::Verified
     {
+        return Err(OutError::CannotEditShipment);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice_row.name_id)? {
         return Err(OutError::CannotEditShipment);
     }
 

@@ -45,7 +45,12 @@ export type StocktakeLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   location?: {
     __typename: 'LocationNode';
@@ -152,7 +157,12 @@ export type StocktakeFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
       location?: {
         __typename: 'LocationNode';
@@ -307,6 +317,7 @@ export type StocktakeQuery = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             location?: {
@@ -438,6 +449,7 @@ export type StocktakeByNumberQuery = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             location?: {
@@ -550,7 +562,12 @@ export type StocktakeLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
       location?: {
         __typename: 'LocationNode';

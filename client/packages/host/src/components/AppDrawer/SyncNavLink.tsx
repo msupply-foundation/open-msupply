@@ -4,12 +4,11 @@ import {
   AppNavLink,
   DateUtils,
   RadioIcon,
-  SyncErrorVariant,
   usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
 import { BadgeProps } from '@mui/material';
-import { useSync } from '@openmsupply-client/system';
+import { isSyncConnectionError, useSync } from '@openmsupply-client/system';
 import { useSyncModal } from '../Sync';
 import { SyncInfoQuery } from '@openmsupply-client/system/src/Sync/api/operations.generated';
 
@@ -62,10 +61,10 @@ const getBadge = (
     syncStatus;
 
   const isSyncError =
-    error?.variant &&
+    !!error &&
     // We allow connection errors until a threshold is reached (see below)
     // all other errors should be flagged immediately
-    error.variant !== SyncErrorVariant.ConnectionError;
+    !isSyncConnectionError(error);
 
   const now = new Date();
   const daysSinceSuccessfulSync = DateUtils.differenceInDays(

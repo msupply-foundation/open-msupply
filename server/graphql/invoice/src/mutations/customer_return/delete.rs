@@ -29,6 +29,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
         &ResourceAccessRequest {
             resource: Resource::MutateCustomerReturn,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -70,6 +71,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist
         | ServiceError::CannotEditFinalised
+        | ServiceError::OtherPartyStoreDisabled
         | ServiceError::NotACustomerReturn
         | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
 

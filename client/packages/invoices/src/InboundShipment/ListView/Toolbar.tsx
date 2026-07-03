@@ -76,6 +76,7 @@ export const Toolbar = ({ filter }: ToolbarProps) => {
                 type: 'enum',
                 name: t('label.status'),
                 urlParameter: 'status',
+                isMultiSelect: true,
                 options: statuses.map(status => ({
                   value: status,
                   label: getStatusTranslator(t)(status),
