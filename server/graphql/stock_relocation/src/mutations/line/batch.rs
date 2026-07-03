@@ -6,12 +6,17 @@ use service::stock_relocation_line::{
     BatchStockRelocationLine as ServiceInput, BatchStockRelocationLineResult as ServiceResult,
 };
 
+use super::delete::{map_delete_response, DeleteLineResponse};
 use super::upsert::{map_upsert_response, UpsertLineInput, UpsertLineResponse};
 
 #[derive(SimpleObject)]
 #[graphql(concrete(
     name = "UpsertStockRelocationLineResponseWithId",
     params(UpsertLineResponse)
+))]
+#[graphql(concrete(
+    name = "DeleteStockRelocationLineResponseWithId",
+    params(DeleteLineResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
@@ -22,6 +27,7 @@ pub struct MutationWithId<T: OutputType> {
 #[graphql(name = "BatchStockRelocationLineInput")]
 pub struct BatchLineInput {
     pub upsert: Option<Vec<UpsertLineInput>>,
+    pub delete: Option<Vec<String>>,
     pub continue_on_error: Option<bool>,
 }
 
@@ -29,11 +35,13 @@ impl BatchLineInput {
     fn to_domain(self) -> ServiceInput {
         let BatchLineInput {
             upsert,
+            delete,
             continue_on_error,
         } = self;
         ServiceInput {
             upsert: upsert
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            delete,
             continue_on_error,
         }
     }
@@ -43,6 +51,7 @@ impl BatchLineInput {
 #[graphql(name = "BatchStockRelocationLineResponse")]
 pub struct BatchLineResponse {
     upsert: Option<Vec<MutationWithId<UpsertLineResponse>>>,
+    delete: Option<Vec<MutationWithId<DeleteLineResponse>>>,
 }
 
 pub fn batch_stock_relocation_line(
@@ -67,7 +76,7 @@ pub fn batch_stock_relocation_line(
     map_response(response)
 }
 
-fn map_response(ServiceResult { upsert }: ServiceResult) -> Result<BatchLineResponse> {
+fn map_response(ServiceResult { upsert, delete }: ServiceResult) -> Result<BatchLineResponse> {
     let mut upsert_result = Vec::new();
     for line in upsert {
         upsert_result.push(MutationWithId {
@@ -76,8 +85,17 @@ fn map_response(ServiceResult { upsert }: ServiceResult) -> Result<BatchLineResp
         });
     }
 
+    let mut delete_result = Vec::new();
+    for line in delete {
+        delete_result.push(MutationWithId {
+            id: line.input.clone(),
+            response: map_delete_response(line.result)?,
+        });
+    }
+
     Ok(BatchLineResponse {
         upsert: vec_or_none(upsert_result),
+        delete: vec_or_none(delete_result),
     })
 }
 
