@@ -15,11 +15,14 @@ use util::{format_error, with_retries, RetrySeconds};
 
 use super::*;
 
+// The site's client-application identity, reported to the central server (legacy
+// v5 here, and sync v7 via `Common`/`GetTokenInput`, see #11784). Re-exported from
+// `crate::sync::api` via `pub use self::core::*`.
 #[cfg(target_os = "android")]
-const APP_NAME: &str = "Open mSupply Android";
+pub const APP_NAME: &str = "Open mSupply Android";
 
 #[cfg(not(target_os = "android"))]
-const APP_NAME: &str = "Open mSupply Desktop";
+pub const APP_NAME: &str = "Open mSupply Desktop";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
