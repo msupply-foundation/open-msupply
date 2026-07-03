@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, StringFilterInput},
+    generic_filters::{EqualFilterBigNumberInput, EqualFilterStringInput},
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
@@ -10,7 +10,7 @@ use graphql_core::{
 use graphql_types::types::DraftStockRelocationLineNode;
 use repository::{
     EqualFilter, PaginationOption, StockRelocationFilter, StockRelocationSort,
-    StockRelocationSortField, StockRelocationStatus, StringFilter,
+    StockRelocationSortField, StockRelocationStatus,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -26,7 +26,7 @@ pub enum StockRelocationSortFieldInput {
     CreatedDatetime,
     FinalisedDatetime,
     Status,
-    ReferenceNumber,
+    StockMovementNumber,
 }
 
 #[derive(InputObject)]
@@ -49,7 +49,7 @@ pub struct StockRelocationFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterStockRelocationStatusInput>,
-    pub reference_number: Option<StringFilterInput>,
+    pub stock_movement_number: Option<EqualFilterBigNumberInput>,
 }
 
 #[derive(Union)]
@@ -174,7 +174,7 @@ impl StockRelocationFilterInput {
             status: self
                 .status
                 .map(|t| map_filter!(t, StockRelocationStatus::from)),
-            reference_number: self.reference_number.map(StringFilter::from),
+            stock_movement_number: self.stock_movement_number.map(EqualFilter::from),
         }
     }
 }
