@@ -5,6 +5,7 @@ fragment StockMovementRow on StockRelocationNode {
   status
   comment
   createdDatetime
+  confirmedDatetime
   finalisedDatetime
   lineCount
 }
@@ -52,6 +53,7 @@ fragment StockMovement on StockRelocationNode {
   status
   comment
   createdDatetime
+  confirmedDatetime
   user {
     __typename
     username

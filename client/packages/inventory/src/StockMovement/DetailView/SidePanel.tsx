@@ -61,6 +61,12 @@ const AdditionalInfoSection = ({ movement }: SidePanelProps) => {
           <PanelLabel>{t('label.created')}</PanelLabel>
           <PanelField>{localisedDate(movement.createdDatetime)}</PanelField>
         </PanelRow>
+        {movement.confirmedDatetime && (
+          <PanelRow>
+            <PanelLabel>{t('label.confirmed')}</PanelLabel>
+            <PanelField>{localisedDate(movement.confirmedDatetime)}</PanelField>
+          </PanelRow>
+        )}
         {movement.finalisedDatetime && (
           <PanelRow>
             <PanelLabel>{t('label.finalised')}</PanelLabel>

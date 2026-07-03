@@ -56,6 +56,9 @@ pub fn update_stock_relocation(
             }
 
             if let Some(status) = input.status {
+                if status != StockRelocationStatus::New && row.confirmed_datetime.is_none() {
+                    row.confirmed_datetime = Some(Utc::now().naive_utc());
+                }
                 if status == StockRelocationStatus::Finalised {
                     finalise(ctx, connection, store_id, &row.id)?;
                     row.finalised_datetime = Some(Utc::now().naive_utc());
@@ -272,6 +275,7 @@ mod test {
             )
             .unwrap();
         assert_eq!(confirmed.status, StockRelocationStatus::Confirmed);
+        assert!(confirmed.confirmed_datetime.is_some());
         assert_eq!(confirmed.finalised_datetime, None);
         let confirm_source = stock_line_repo
             .find_one_by_id("confirm_sl")

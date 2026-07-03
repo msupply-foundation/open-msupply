@@ -54,6 +54,11 @@ impl StockRelocationNode {
             .await?
             .map(UserNode::from_domain))
     }
+    pub async fn confirmed_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .confirmed_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .finalised_datetime
