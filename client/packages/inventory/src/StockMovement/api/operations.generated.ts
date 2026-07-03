@@ -6,7 +6,7 @@ type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StockMovementRowFragment = {
   __typename: 'StockRelocationNode';
   id: string;
-  referenceNumber: string;
+  stockMovementNumber: number;
   status: Types.StockRelocationNodeStatus;
   comment?: string | null;
   createdDatetime: string;
@@ -19,22 +19,22 @@ export type StockMovementLineFragment = {
   id: string;
   stockRelocationId: string;
   stockLineId: string;
-  itemId: string;
-  batch?: string | null;
-  expiryDate?: string | null;
-  packSize: number;
   numberOfPacks: number;
   stockLine?: {
     __typename: 'StockLineNode';
     id: string;
+    itemId: string;
+    batch?: string | null;
+    expiryDate?: string | null;
+    packSize: number;
     availableNumberOfPacks: number;
-  } | null;
-  item?: {
-    __typename: 'ItemNode';
-    id: string;
-    code: string;
-    name: string;
-    unitName?: string | null;
+    item: {
+      __typename: 'ItemNode';
+      id: string;
+      code: string;
+      name: string;
+      unitName?: string | null;
+    };
   } | null;
   sourceLocation?: {
     __typename: 'LocationNode';
@@ -53,7 +53,7 @@ export type StockMovementLineFragment = {
 export type StockMovementFragment = {
   __typename: 'StockRelocationNode';
   id: string;
-  referenceNumber: string;
+  stockMovementNumber: number;
   status: Types.StockRelocationNodeStatus;
   comment?: string | null;
   createdDatetime: string;
@@ -68,22 +68,22 @@ export type StockMovementFragment = {
       id: string;
       stockRelocationId: string;
       stockLineId: string;
-      itemId: string;
-      batch?: string | null;
-      expiryDate?: string | null;
-      packSize: number;
       numberOfPacks: number;
       stockLine?: {
         __typename: 'StockLineNode';
         id: string;
+        itemId: string;
+        batch?: string | null;
+        expiryDate?: string | null;
+        packSize: number;
         availableNumberOfPacks: number;
-      } | null;
-      item?: {
-        __typename: 'ItemNode';
-        id: string;
-        code: string;
-        name: string;
-        unitName?: string | null;
+        item: {
+          __typename: 'ItemNode';
+          id: string;
+          code: string;
+          name: string;
+          unitName?: string | null;
+        };
       } | null;
       sourceLocation?: {
         __typename: 'LocationNode';
@@ -118,7 +118,7 @@ export type StockRelocationsQuery = {
     nodes: Array<{
       __typename: 'StockRelocationNode';
       id: string;
-      referenceNumber: string;
+      stockMovementNumber: number;
       status: Types.StockRelocationNodeStatus;
       comment?: string | null;
       createdDatetime: string;
@@ -140,7 +140,7 @@ export type StockRelocationQuery = {
     | {
         __typename: 'StockRelocationNode';
         id: string;
-        referenceNumber: string;
+        stockMovementNumber: number;
         status: Types.StockRelocationNodeStatus;
         comment?: string | null;
         createdDatetime: string;
@@ -155,22 +155,22 @@ export type StockRelocationQuery = {
             id: string;
             stockRelocationId: string;
             stockLineId: string;
-            itemId: string;
-            batch?: string | null;
-            expiryDate?: string | null;
-            packSize: number;
             numberOfPacks: number;
             stockLine?: {
               __typename: 'StockLineNode';
               id: string;
+              itemId: string;
+              batch?: string | null;
+              expiryDate?: string | null;
+              packSize: number;
               availableNumberOfPacks: number;
-            } | null;
-            item?: {
-              __typename: 'ItemNode';
-              id: string;
-              code: string;
-              name: string;
-              unitName?: string | null;
+              item: {
+                __typename: 'ItemNode';
+                id: string;
+                code: string;
+                name: string;
+                unitName?: string | null;
+              };
             } | null;
             sourceLocation?: {
               __typename: 'LocationNode';
@@ -210,7 +210,7 @@ export type UpdateStockRelocationMutation = {
     | {
         __typename: 'StockRelocationNode';
         id: string;
-        referenceNumber: string;
+        stockMovementNumber: number;
         status: Types.StockRelocationNodeStatus;
         comment?: string | null;
         createdDatetime: string;
@@ -225,22 +225,22 @@ export type UpdateStockRelocationMutation = {
             id: string;
             stockRelocationId: string;
             stockLineId: string;
-            itemId: string;
-            batch?: string | null;
-            expiryDate?: string | null;
-            packSize: number;
             numberOfPacks: number;
             stockLine?: {
               __typename: 'StockLineNode';
               id: string;
+              itemId: string;
+              batch?: string | null;
+              expiryDate?: string | null;
+              packSize: number;
               availableNumberOfPacks: number;
-            } | null;
-            item?: {
-              __typename: 'ItemNode';
-              id: string;
-              code: string;
-              name: string;
-              unitName?: string | null;
+              item: {
+                __typename: 'ItemNode';
+                id: string;
+                code: string;
+                name: string;
+                unitName?: string | null;
+              };
             } | null;
             sourceLocation?: {
               __typename: 'LocationNode';
@@ -302,7 +302,7 @@ export const StockMovementRowFragmentDoc = gql`
   fragment StockMovementRow on StockRelocationNode {
     __typename
     id
-    referenceNumber
+    stockMovementNumber
     status
     comment
     createdDatetime
@@ -316,22 +316,22 @@ export const StockMovementLineFragmentDoc = gql`
     id
     stockRelocationId
     stockLineId
-    itemId
-    batch
-    expiryDate
-    packSize
     numberOfPacks
     stockLine {
       __typename
       id
+      itemId
+      batch
+      expiryDate
+      packSize
       availableNumberOfPacks
-    }
-    item {
-      __typename
-      id
-      code
-      name
-      unitName
+      item {
+        __typename
+        id
+        code
+        name
+        unitName
+      }
     }
     sourceLocation {
       __typename
@@ -351,7 +351,7 @@ export const StockMovementFragmentDoc = gql`
   fragment StockMovement on StockRelocationNode {
     __typename
     id
-    referenceNumber
+    stockMovementNumber
     status
     comment
     createdDatetime

@@ -61,8 +61,8 @@ const toSortField = (
   switch (key) {
     case 'status':
       return StockRelocationSortFieldInput.Status;
-    case 'referenceNumber':
-      return StockRelocationSortFieldInput.ReferenceNumber;
+    case 'stockMovementNumber':
+      return StockRelocationSortFieldInput.StockMovementNumber;
     case 'finalisedDatetime':
       return StockRelocationSortFieldInput.FinalisedDatetime;
     case 'createdDatetime':
