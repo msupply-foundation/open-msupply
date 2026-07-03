@@ -105,7 +105,7 @@ impl SyncTranslation for StockRelocationLineTranslation {
 mod tests {
     use super::*;
     use repository::{
-        mock::{mock_item_a, mock_location_1, mock_stock_line_a, mock_store_a, MockDataInserts},
+        mock::{mock_location_1, mock_stock_line_a, mock_store_a, MockDataInserts},
         test_db::setup_all,
         StockRelocationRow, StockRelocationRowRepository, Upsert,
     };
@@ -134,9 +134,7 @@ mod tests {
             stock_relocation_id: "stock_relocation_1".to_string(),
             stock_line_id: mock_stock_line_a().id,
             source_location_id: Some(mock_location_1().id),
-            pack_size: 1.0,
             number_of_packs: 5.0,
-            item_id: mock_item_a().id,
             ..Default::default()
         };
         line.upsert(&connection).unwrap();
