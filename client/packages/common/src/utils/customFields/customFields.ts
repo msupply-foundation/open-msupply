@@ -117,17 +117,26 @@ export const getOptionAndDescendantIds = (
 };
 
 /**
- * Resolve an OPTION value (an option id, or array of ids) to its display name,
- * falling back to the raw value when the id isn't a known option.
+ * Resolve an OPTION value (an option id, or array of ids) to its display name.
+ * An id with no matching option resolves to '' — we show nothing rather than
+ * leaking the raw internal id (#12366). This happens for legacy categories
+ * deleted in mSupply before the OG→OMS migration: the `transaction_category`
+ * record is gone, so no `custom_field_option` ever syncs and the invoice's
+ * stored id references nothing. Mirrors OG, which falls back to "None" for an
+ * orphaned `category_ID`. (OMS-authored options are only ever soft-deleted, so
+ * their row — and label — survives and keeps resolving here.) Array entries
+ * that don't resolve are dropped so a missing id doesn't leave a stray comma.
  */
 export const resolveOptionValue = (
   definition: CustomFieldDefinitionLike,
   value: unknown
 ): string => {
-  const lookup = (v: unknown) =>
-    definition.options.find(o => o.id === v)?.name ?? String(v);
+  const lookup = (v: unknown): string =>
+    definition.options.find(o => o.id === v)?.name ?? '';
 
-  return Array.isArray(value) ? value.map(lookup).join(', ') : lookup(value);
+  return Array.isArray(value)
+    ? value.map(lookup).filter(Boolean).join(', ')
+    : lookup(value);
 };
 
 /**
