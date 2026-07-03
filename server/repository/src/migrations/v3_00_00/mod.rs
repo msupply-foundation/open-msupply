@@ -29,6 +29,7 @@ mod populate_routed_changelog_for_sync_v7_tables;
 mod populate_sync_version;
 mod rebuild_sync_buffer;
 mod reintegrate_categories_for_custom_field_options;
+mod reintegrate_items_for_custom_field_options;
 mod reintegrate_label_prefs_for_custom_field_names;
 mod reintegrate_transaction_categories_for_custom_field_options;
 mod remove_add_central_patient_visibility_processor_cursor;
@@ -77,6 +78,7 @@ impl Migration for V3_00_00 {
             Box::new(add_name_custom_fields::Migrate),
             Box::new(add_item_custom_fields::Migrate),
             Box::new(reintegrate_categories_for_custom_field_options::Migrate),
+            Box::new(reintegrate_items_for_custom_field_options::Migrate),
             Box::new(reintegrate_label_prefs_for_custom_field_names::Migrate),
             Box::new(add_invoice_custom_fields::Migrate),
             Box::new(reintegrate_transaction_categories_for_custom_field_options::Migrate),
