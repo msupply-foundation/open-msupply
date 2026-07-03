@@ -58,4 +58,14 @@ impl<'a> DemographicProjectionRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<DemographicProjectionRow>, RepositoryError> {
+        Ok(demographic_projection::table
+            .filter(demographic_projection::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
 }
+

@@ -1,6 +1,6 @@
 use crate::backend_plugin::{plugin_provider::PluginInstance, *};
 use plugin_provider::{call_plugin, PluginResult};
-use repository::{ChangelogFilter, ChangelogRow, PluginType};
+use repository::{ChangelogRow, CompatibilityChangelogFilter, PluginType};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -22,7 +22,7 @@ pub enum Input {
 #[ts(rename = "ProcessorOutput")]
 pub enum Output {
     SkipOnError(bool),
-    Filter(ChangelogFilter),
+    Filter(CompatibilityChangelogFilter),
     Process(Option<String>),
 }
 

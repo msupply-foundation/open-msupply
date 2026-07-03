@@ -29,6 +29,7 @@ pub fn get_shipping_methods(
         &ResourceAccessRequest {
             resource: Resource::QueryStore,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

@@ -315,6 +315,27 @@ export enum AdjustmentTypeInput {
   Reduction = 'REDUCTION',
 }
 
+export type AdminPasswordRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AdminPasswordRequired';
+  description: Scalars['String']['output'];
+};
+
+export type AdminUserCreationFailed =
+  InitialiseAsCentralServerErrorInterface & {
+    __typename: 'AdminUserCreationFailed';
+    description: Scalars['String']['output'];
+  };
+
+export type AdminUsernameRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AdminUsernameRequired';
+  description: Scalars['String']['output'];
+};
+
+export type AllStoreDataDescription = {
+  __typename: 'AllStoreDataDescription';
+  storeName: Scalars['String']['output'];
+};
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -350,6 +371,11 @@ export type AllocateProgramNumberInput = {
 };
 
 export type AllocateProgramNumberResponse = NumberNode;
+
+export type AlreadyInitialised = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AlreadyInitialised';
+  description: Scalars['String']['output'];
+};
 
 export type AncillaryCycleDetected = UpsertAncillaryItemErrorInterface & {
   __typename: 'AncillaryCycleDetected';
@@ -824,6 +850,17 @@ export type AssetTypesResponse = AssetTypeConnector;
 
 export type AssetsResponse = AssetConnector;
 
+export type AssignStoresToSiteInput = {
+  siteId: Scalars['Int']['input'];
+  storeIds: Array<Scalars['String']['input']>;
+};
+
+export type AssignStoresToSiteNode = {
+  __typename: 'AssignStoresToSiteNode';
+  siteId: Scalars['Int']['output'];
+  storeIds: Array<Scalars['String']['output']>;
+};
+
 export type AuthToken = {
   __typename: 'AuthToken';
   /** Bearer token */
@@ -1211,6 +1248,11 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotDeleteCentralSite = DeleteSiteErrorInterface & {
+  __typename: 'CannotDeleteCentralSite';
+  description: Scalars['String']['output'];
+};
+
 export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
   DeleteInboundShipmentErrorInterface &
@@ -1358,9 +1400,12 @@ export type CentralGeneralMutationsConfigureNamePropertiesArgs = {
 export type CentralPatientNode = {
   __typename: 'CentralPatientNode';
   code: Scalars['String']['output'];
+  code2?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   firstName: Scalars['String']['output'];
+  gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
+  isDeceased: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
 };
 
@@ -1437,18 +1482,70 @@ export type CentralServerMutationNode = {
   plugins: CentralPluginMutations;
   preferences: PreferenceMutations;
   reports: CentralReportMutations;
+  site: CentralSiteMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
   plugin: CentralPluginQueries;
+  site: CentralSiteQueries;
   syncMessage: SyncMessageQueries;
+};
+
+export type CentralSiteMutations = {
+  __typename: 'CentralSiteMutations';
+  assignStoresToSite: AssignStoresToSiteNode;
+  clearSiteHardwareId: ClearSiteHardwareIdNode;
+  clearSiteToken: ClearSiteTokenNode;
+  deleteSite: DeleteSiteResponse;
+  upsertSite: UpsertSiteResponse;
+};
+
+export type CentralSiteMutationsAssignStoresToSiteArgs = {
+  input: AssignStoresToSiteInput;
+};
+
+export type CentralSiteMutationsClearSiteHardwareIdArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsClearSiteTokenArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsDeleteSiteArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsUpsertSiteArgs = {
+  input: UpsertSiteInput;
+};
+
+export type CentralSiteQueries = {
+  __typename: 'CentralSiteQueries';
+  sites: SitesResponse;
+};
+
+export type CentralSiteQueriesSitesArgs = {
+  filter?: InputMaybe<SiteFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<SiteSortInput>>;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
   __typename: 'CentralSyncRequired';
   description: Scalars['String']['output'];
+};
+
+export type ClearSiteHardwareIdNode = {
+  __typename: 'ClearSiteHardwareIdNode';
+  id: Scalars['Int']['output'];
+};
+
+export type ClearSiteTokenNode = {
+  __typename: 'ClearSiteTokenNode';
+  id: Scalars['Int']['output'];
 };
 
 export type ClinicianConnector = {
@@ -1510,6 +1607,11 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
+export type CodeRequired = UpsertSiteErrorInterface & {
+  __typename: 'CodeRequired';
+  description: Scalars['String']['output'];
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -1523,8 +1625,7 @@ export type ConfigureNamePropertyInput = {
 };
 
 export type ConnectionError = CentralPatientSearchErrorInterface &
-  LinkPatientPatientToStoreErrorInterface &
-  UpdateUserErrorInterface & {
+  LinkPatientPatientToStoreErrorInterface & {
     __typename: 'ConnectionError';
     description: Scalars['String']['output'];
   };
@@ -1736,6 +1837,11 @@ export type CustomerIndicatorInformationNode = {
 
 export type CustomerIndicatorInformationNodeCustomerArgs = {
   storeId: Scalars['String']['input'];
+};
+
+export type CustomerIsInactive = DuplicateOutboundShipmentErrorInterface & {
+  __typename: 'CustomerIsInactive';
+  description: Scalars['String']['output'];
 };
 
 export type CustomerProgramRequisitionSettingNode = {
@@ -2278,6 +2384,22 @@ export type DeleteRnRFormInput = {
 
 export type DeleteRnRFormResponse = DeleteResponse;
 
+export type DeleteSiteError = {
+  __typename: 'DeleteSiteError';
+  error: DeleteSiteErrorInterface;
+};
+
+export type DeleteSiteErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteSiteNode = {
+  __typename: 'DeleteSiteNode';
+  id: Scalars['Int']['output'];
+};
+
+export type DeleteSiteResponse = DeleteSiteError | DeleteSiteNode;
+
 export type DeleteStockRelocationInput = {
   id: Scalars['String']['input'];
 };
@@ -2669,6 +2791,44 @@ export type DuplicateAncillaryItem = UpsertAncillaryItemErrorInterface & {
   __typename: 'DuplicateAncillaryItem';
   description: Scalars['String']['output'];
 };
+
+export type DuplicateInboundShipmentError = {
+  __typename: 'DuplicateInboundShipmentError';
+  error: DuplicateInboundShipmentErrorInterface;
+};
+
+export type DuplicateInboundShipmentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DuplicateInboundShipmentNode = {
+  __typename: 'DuplicateInboundShipmentNode';
+  invoice: InvoiceNode;
+  skippedItemCount: Scalars['Int']['output'];
+};
+
+export type DuplicateInboundShipmentResponse =
+  | DuplicateInboundShipmentError
+  | DuplicateInboundShipmentNode;
+
+export type DuplicateOutboundShipmentError = {
+  __typename: 'DuplicateOutboundShipmentError';
+  error: DuplicateOutboundShipmentErrorInterface;
+};
+
+export type DuplicateOutboundShipmentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DuplicateOutboundShipmentNode = {
+  __typename: 'DuplicateOutboundShipmentNode';
+  invoice: InvoiceNode;
+  skippedItemCount: Scalars['Int']['output'];
+};
+
+export type DuplicateOutboundShipmentResponse =
+  | DuplicateOutboundShipmentError
+  | DuplicateOutboundShipmentNode;
 
 export type EmergencyResponseRequisitionCounts = {
   __typename: 'EmergencyResponseRequisitionCounts';
@@ -3111,8 +3271,14 @@ export type FrontendPluginMetadataNode = {
   path: Scalars['String']['output'];
 };
 
-export type FullSyncStatusNode = {
-  __typename: 'FullSyncStatusNode';
+/**
+ * Discriminated union covering both v5_v6 and v7 sync statuses.
+ * The frontend dispatches on `__typename`.
+ */
+export type FullSyncStatusNode = FullSyncStatusV5V6Node | FullSyncStatusV7Node;
+
+export type FullSyncStatusV5V6Node = {
+  __typename: 'FullSyncStatusV5V6Node';
   error?: Maybe<SyncErrorNode>;
   errorThreshold: Scalars['Int']['output'];
   integration?: Maybe<SyncStatusWithProgressNode>;
@@ -3125,6 +3291,28 @@ export type FullSyncStatusNode = {
   push?: Maybe<SyncStatusWithProgressNode>;
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
+  warningThreshold: Scalars['Int']['output'];
+};
+
+export type FullSyncStatusV7Node = {
+  __typename: 'FullSyncStatusV7Node';
+  error?: Maybe<SyncErrorV7Node>;
+  errorThreshold: Scalars['Int']['output'];
+  integration?: Maybe<SyncStatusWithProgressV7Node>;
+  isSyncing: Scalars['Boolean']['output'];
+  lastSuccessfulSync?: Maybe<SyncStatusNode>;
+  /**
+   * Localisable description payloads for every sync_request linked to
+   * this run via `reference_id`. Empty for the main sync (no
+   * reference_id) and for runs whose reference_id no longer matches any
+   * sync_request row. Each variant carries the parameters the front-end
+   * needs to render a localised string.
+   */
+  linkedDescriptions: Array<SyncRequestDescriptionNode>;
+  pull?: Maybe<SyncStatusWithProgressV7Node>;
+  push?: Maybe<SyncStatusWithProgressV7Node>;
+  summary: SyncStatusV7Node;
+  waitingForIntegration?: Maybe<SyncStatusV7Node>;
   warningThreshold: Scalars['Int']['output'];
 };
 
@@ -3261,7 +3449,29 @@ export enum InitialisationStatusType {
   PreInitialisation = 'PRE_INITIALISATION',
 }
 
-export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
+export type InitialiseAsCentralServerError = {
+  __typename: 'InitialiseAsCentralServerError';
+  error: InitialiseAsCentralServerErrorInterface;
+};
+
+export type InitialiseAsCentralServerErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InitialiseAsCentralServerInputNode = {
+  adminPassword: Scalars['String']['input'];
+  adminUsername: Scalars['String']['input'];
+  storeName: Scalars['String']['input'];
+};
+
+export type InitialiseAsCentralServerResponse =
+  | InitialiseAsCentralServerError
+  | StandaloneCentralInitialisedNode;
+
+export type InitialiseSiteResponse =
+  | SyncErrorNode
+  | SyncErrorV7Node
+  | SyncSettingsNode;
 
 export type InsertAssetCatalogueItemError = {
   __typename: 'InsertAssetCatalogueItemError';
@@ -4436,11 +4646,10 @@ export type InternalError = InsertAssetCatalogueItemErrorInterface &
     fullError: Scalars['String']['output'];
   };
 
-export type InvalidCredentials = AuthTokenErrorInterface &
-  UpdateUserErrorInterface & {
-    __typename: 'InvalidCredentials';
-    description: Scalars['String']['output'];
-  };
+export type InvalidCredentials = AuthTokenErrorInterface & {
+  __typename: 'InvalidCredentials';
+  description: Scalars['String']['output'];
+};
 
 export type InvalidStockSelection = UpdatePrescriptionErrorInterface & {
   __typename: 'InvalidStockSelection';
@@ -5551,11 +5760,6 @@ export type MigrationStatusNode = {
   version?: Maybe<Scalars['String']['output']>;
 };
 
-export type MissingCredentials = UpdateUserErrorInterface & {
-  __typename: 'MissingCredentials';
-  description: Scalars['String']['output'];
-};
-
 export type Mutations = {
   __typename: 'Mutations';
   /** Add requisition lines from master item master list */
@@ -5609,7 +5813,10 @@ export type Mutations = {
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   deleteSupplierReturn: DeleteSupplierReturnResponse;
+  duplicateInboundShipment: DuplicateInboundShipmentResponse;
+  duplicateOutboundShipment: DuplicateOutboundShipmentResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
+  initialiseAsCentralServer: InitialiseAsCentralServerResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
@@ -5730,7 +5937,6 @@ export type Mutations = {
   updateSupplierReturnOtherParty: UpdateSupplierReturnOtherPartyResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
-  updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
   updateVvmStatusLog: UpdateVvmStatusResponse;
   /** Set requested for each line in request requisition to calculated */
@@ -5947,9 +6153,23 @@ export type MutationsDeleteSupplierReturnArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsDuplicateInboundShipmentArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDuplicateOutboundShipmentArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsFinaliseRnrFormArgs = {
   input: FinaliseRnRFormInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsInitialiseAsCentralServerArgs = {
+  input: InitialiseAsCentralServerInputNode;
 };
 
 export type MutationsInitialiseSiteArgs = {
@@ -6576,6 +6796,11 @@ export type NamePropertyNode = {
 
 export type NamePropertyResponse = NamePropertyConnector;
 
+export type NameRequired = UpsertSiteErrorInterface & {
+  __typename: 'NameRequired';
+  description: Scalars['String']['output'];
+};
+
 export enum NameSortFieldInput {
   Code = 'code',
   Name = 'name',
@@ -6665,6 +6890,11 @@ export type NotEnoughStockForReduction =
 
 export type NotMostRecentGivenDose = UpdateVaccinationErrorInterface & {
   __typename: 'NotMostRecentGivenDose';
+  description: Scalars['String']['output'];
+};
+
+export type NotSupportedOnAndroid = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'NotSupportedOnAndroid';
   description: Scalars['String']['output'];
 };
 
@@ -6842,6 +7072,11 @@ export type PaginationInput = {
   first?: InputMaybe<Scalars['Int']['input']>;
   /** First returned item is at the `offset` position in the full list */
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type PasswordRequired = UpsertSiteErrorInterface & {
+  __typename: 'PasswordRequired';
+  description: Scalars['String']['output'];
 };
 
 export type PatientConnector = {
@@ -7092,6 +7327,7 @@ export enum PreferenceKey {
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
+  DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
   ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
   ExpiredStockPreventIssue = 'expiredStockPreventIssue',
   ExternalInboundShipmentLinesMustBeAuthorised = 'externalInboundShipmentLinesMustBeAuthorised',
@@ -7109,6 +7345,7 @@ export enum PreferenceKey {
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
+  ReceivePaymentsFromPrescriptions = 'receivePaymentsFromPrescriptions',
   RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
@@ -7164,6 +7401,7 @@ export type PreferencesNode = {
   daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
+  doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
   expiredStockPreventIssue: Scalars['Boolean']['output'];
   externalInboundShipmentLinesMustBeAuthorised: Scalars['Boolean']['output'];
@@ -7181,6 +7419,7 @@ export type PreferencesNode = {
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
+  receivePaymentsFromPrescriptions: Scalars['Boolean']['output'];
   requisitionAutoFinalise: Scalars['Boolean']['output'];
   secondThresholdForExpiringItems: Scalars['Int']['output'];
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
@@ -7810,6 +8049,7 @@ export type Queries = {
   invoiceLines: InvoiceLinesResponse;
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
+  isCentralStandalone: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
   itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
@@ -7826,7 +8066,6 @@ export type Queries = {
    */
   itemsByStockLineFilter: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
-  lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   ledger: LedgerResponse;
   /** Query omSupply "location_type" entries */
@@ -8066,6 +8305,7 @@ export type QueriesContactsArgs = {
 export type QueriesCsvToExcelArgs = {
   csvData: Scalars['String']['input'];
   filename: Scalars['String']['input'];
+  sheetName?: InputMaybe<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -9591,6 +9831,44 @@ export type ShippingMethodNode = {
 
 export type ShippingMethodsResponse = ShippingMethodConnector;
 
+export type SiteConnector = {
+  __typename: 'SiteConnector';
+  nodes: Array<SiteNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SiteFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterNumberInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type SiteHasStores = DeleteSiteErrorInterface & {
+  __typename: 'SiteHasStores';
+  description: Scalars['String']['output'];
+};
+
+export type SiteNode = {
+  __typename: 'SiteNode';
+  code: Scalars['String']['output'];
+  hardwareId?: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+};
+
+export enum SiteSortFieldInput {
+  Code = 'code',
+  Id = 'id',
+  Name = 'name',
+}
+
+export type SiteSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: SiteSortFieldInput;
+};
+
+export type SitesResponse = SiteConnector;
+
 export type SnapshotCountCurrentCountMismatch =
   UpdateStocktakeErrorInterface & {
     __typename: 'SnapshotCountCurrentCountMismatch';
@@ -9604,6 +9882,11 @@ export type SnapshotCountCurrentCountMismatchLine =
     description: Scalars['String']['output'];
     stocktakeLine: StocktakeLineNode;
   };
+
+export type StandaloneCentralInitialisedNode = {
+  __typename: 'StandaloneCentralInitialisedNode';
+  success: Scalars['Boolean']['output'];
+};
 
 export type StockCounts = {
   __typename: 'StockCounts';
@@ -10022,11 +10305,18 @@ export enum StoreModeNodeType {
   Store = 'STORE',
 }
 
+export type StoreNameRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'StoreNameRequired';
+  description: Scalars['String']['output'];
+};
+
 export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String']['output'];
   createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  /** Whether the store has been disabled, either by a user or as a result of a store merge. */
+  isDisabled: Scalars['Boolean']['output'];
   /**
    * Returns the associated store logo.
    * The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
@@ -10124,6 +10414,11 @@ export type SuggestedQuantityCalculationNode = {
   suggestedQuantity: Scalars['Int']['output'];
 };
 
+export type SupplierIsInactive = DuplicateInboundShipmentErrorInterface & {
+  __typename: 'SupplierIsInactive';
+  description: Scalars['String']['output'];
+};
+
 export type SupplierNotValid = InsertProgramRequestRequisitionErrorInterface & {
   __typename: 'SupplierNotValid';
   description: Scalars['String']['output'];
@@ -10202,6 +10497,12 @@ export type SyncErrorNode = {
   variant: SyncErrorVariant;
 };
 
+export type SyncErrorV7Node = {
+  __typename: 'SyncErrorV7Node';
+  fullError: Scalars['String']['output'];
+  variant: SyncErrorVariantV7;
+};
+
 export enum SyncErrorVariant {
   ApiVersionIncompatible = 'API_VERSION_INCOMPATIBLE',
   CentralV6NotConfigured = 'CENTRAL_V6_NOT_CONFIGURED',
@@ -10217,6 +10518,32 @@ export enum SyncErrorVariant {
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
   Unknown = 'UNKNOWN',
   V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE',
+  V7UpgradeFailed = 'V7_UPGRADE_FAILED',
+}
+
+export enum SyncErrorVariantV7 {
+  Authentication = 'AUTHENTICATION',
+  ConnectionError = 'CONNECTION_ERROR',
+  DatabaseError = 'DATABASE_ERROR',
+  FailedToGetHardwareId = 'FAILED_TO_GET_HARDWARE_ID',
+  GetCurrentSiteIdError = 'GET_CURRENT_SITE_ID_ERROR',
+  HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
+  IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
+  InvalidSiteNameOrPassword = 'INVALID_SITE_NAME_OR_PASSWORD',
+  MissingAuthHeader = 'MISSING_AUTH_HEADER',
+  NotACentralServer = 'NOT_A_CENTRAL_SERVER',
+  Other = 'OTHER',
+  ParsingError = 'PARSING_ERROR',
+  RecordNotFound = 'RECORD_NOT_FOUND',
+  RequestSiteAuthError = 'REQUEST_SITE_AUTH_ERROR',
+  SiteIdMismatch = 'SITE_ID_MISMATCH',
+  SiteIdNotSet = 'SITE_ID_NOT_SET',
+  SiteIsNotV7 = 'SITE_IS_NOT_V7',
+  SiteLockError = 'SITE_LOCK_ERROR',
+  SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
+  SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
+  TokenAlreadyAllocated = 'TOKEN_ALREADY_ALLOCATED',
+  TokenNotFound = 'TOKEN_NOT_FOUND',
 }
 
 export type SyncFileReferenceConnector = {
@@ -10328,6 +10655,10 @@ export type SyncMessageSortInput = {
   key: SyncMessageSortFieldInput;
 };
 
+export type SyncRequestDescriptionNode =
+  | AllStoreDataDescription
+  | TableNameDescription;
+
 export type SyncSettingsInput = {
   /** Sync interval */
   intervalSeconds: Scalars['Int']['input'];
@@ -10339,8 +10670,10 @@ export type SyncSettingsInput = {
 
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
+  centralServerSiteId: Scalars['Int']['output'];
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
+  syncSiteId?: Maybe<Scalars['Int']['output']>;
   /** Central server url */
   url: Scalars['String']['output'];
   /** Central server username */
@@ -10349,7 +10682,12 @@ export type SyncSettingsNode = {
 
 export type SyncStatusNode = {
   __typename: 'SyncStatusNode';
-  durationInSeconds: Scalars['Int']['output'];
+  finished?: Maybe<Scalars['DateTime']['output']>;
+  started: Scalars['DateTime']['output'];
+};
+
+export type SyncStatusV7Node = {
+  __typename: 'SyncStatusV7Node';
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
 };
@@ -10360,6 +10698,19 @@ export type SyncStatusWithProgressNode = {
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
   total?: Maybe<Scalars['Int']['output']>;
+};
+
+export type SyncStatusWithProgressV7Node = {
+  __typename: 'SyncStatusWithProgressV7Node';
+  done?: Maybe<Scalars['Int']['output']>;
+  finished?: Maybe<Scalars['DateTime']['output']>;
+  started: Scalars['DateTime']['output'];
+  total?: Maybe<Scalars['Int']['output']>;
+};
+
+export type TableNameDescription = {
+  __typename: 'TableNameDescription';
+  tableName: Scalars['String']['output'];
 };
 
 export type TaxInput = {
@@ -10549,7 +10900,8 @@ export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
   UpsertCampaignErrorInterface &
-  UpsertItemVariantErrorInterface & {
+  UpsertItemVariantErrorInterface &
+  UpsertSiteErrorInterface & {
     __typename: 'UniqueValueViolation';
     description: Scalars['String']['output'];
     field: UniqueValueKey;
@@ -11603,7 +11955,10 @@ export enum UpdateSupplierReturnStatusInput {
   Shipped = 'SHIPPED',
 }
 
-export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
+export type UpdateSyncSettingsResponse =
+  | SyncErrorNode
+  | SyncErrorV7Node
+  | SyncSettingsNode;
 
 export type UpdateTemperatureBreachInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -11612,22 +11967,6 @@ export type UpdateTemperatureBreachInput = {
 };
 
 export type UpdateTemperatureBreachResponse = TemperatureBreachNode;
-
-export type UpdateUserError = {
-  __typename: 'UpdateUserError';
-  error: UpdateUserErrorInterface;
-};
-
-export type UpdateUserErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type UpdateUserNode = {
-  __typename: 'UpdateUserNode';
-  lastSuccessfulSync?: Maybe<Scalars['DateTime']['output']>;
-};
-
-export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
 export type UpdateVvmStatusLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -11815,6 +12154,7 @@ export type UpsertPreferencesInput = {
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
+  doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
   expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
   expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   externalInboundShipmentLinesMustBeAuthorised?: InputMaybe<
@@ -11842,6 +12182,7 @@ export type UpsertPreferencesInput = {
   preventTransfersMonthsBeforeInitialisation?: InputMaybe<
     Scalars['Int']['input']
   >;
+  receivePaymentsFromPrescriptions?: InputMaybe<Scalars['Boolean']['input']>;
   requisitionAutoFinalise?: InputMaybe<Array<BoolStorePrefInput>>;
   secondThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   selectDestinationStoreForAnInternalOrder?: InputMaybe<
@@ -11859,6 +12200,24 @@ export type UpsertPreferencesInput = {
   >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
+
+export type UpsertSiteError = {
+  __typename: 'UpsertSiteError';
+  error: UpsertSiteErrorInterface;
+};
+
+export type UpsertSiteErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertSiteInput = {
+  code?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  password?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpsertSiteResponse = SiteNode | UpsertSiteError;
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;

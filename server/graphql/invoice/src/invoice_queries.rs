@@ -177,6 +177,7 @@ pub fn get_invoice(
         &ResourceAccessRequest {
             resource,
             store_id: store_id.clone(),
+            require_central_standalone: false,
         },
     )?;
 
@@ -225,6 +226,7 @@ pub fn get_invoices(
             &ResourceAccessRequest {
                 resource: resource.clone(),
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?);
     }
@@ -267,6 +269,7 @@ pub fn get_invoice_by_number(
         &ResourceAccessRequest {
             resource: r#type.resource(),
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

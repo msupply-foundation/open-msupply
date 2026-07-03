@@ -62,6 +62,7 @@ pub enum DeleteCustomerReturnError {
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     LineDeleteError {
         line_id: String,
         error: DeleteStockInLineError,

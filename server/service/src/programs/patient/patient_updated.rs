@@ -17,26 +17,27 @@ pub fn create_patient_name_store_join(
     store_id: &str,
     name_id: &str,
     name_store_join_id: Option<String>,
-) -> Result<(), RepositoryError> {
-    let name_store_join = NameStoreJoinRepository::new(con)
+) -> Result<String, RepositoryError> {
+    let existing = NameStoreJoinRepository::new(con)
         .query_by_filter(
             NameStoreJoinFilter::new()
                 .store_id(EqualFilter::equal_to(store_id.to_string()))
                 .name_id(EqualFilter::equal_to(name_id.to_string())),
         )?
         .pop();
-    if name_store_join.is_none() {
-        // add name store join
-        let name_store_join_repo = NameStoreJoinRepository::new(con);
-        name_store_join_repo.upsert_one(&NameStoreJoinRow {
-            id: name_store_join_id.unwrap_or(uuid()),
-            name_id: name_id.to_string(),
-            store_id: store_id.to_string(),
-            name_is_customer: true,
-            name_is_supplier: false,
-        })?;
+    if let Some(existing) = existing {
+        return Ok(existing.name_store_join.id);
     }
-    Ok(())
+
+    let id = name_store_join_id.unwrap_or_else(uuid);
+    NameStoreJoinRepository::new(con).upsert_one(&NameStoreJoinRow {
+        id: id.clone(),
+        name_id: name_id.to_string(),
+        store_id: store_id.to_string(),
+        name_is_customer: true,
+        name_is_supplier: false,
+    })?;
+    Ok(id)
 }
 
 /// Callback called when a patient document has been updated

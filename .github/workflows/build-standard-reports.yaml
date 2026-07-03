@@ -43,9 +43,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install standard_reports JS dependencies
-        working-directory: ./standard_reports
-        run: yarn install
+      - name: Install JS dependencies
+        run: yarn install --immutable
 
       - name: Build reports
         working-directory: ./server

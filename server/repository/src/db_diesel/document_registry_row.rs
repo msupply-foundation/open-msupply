@@ -1,11 +1,14 @@
 use super::StorageConnection;
 
-use crate::{db_diesel::form_schema_row::form_schema, RepositoryError, Upsert};
+use crate::{
+    db_diesel::form_schema_row::form_schema, ChangelogRepository, ChangelogSyncType,
+    RepositoryError, RowActionType, SourceSiteId, Upsert,
+};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum DocumentRegistryCategory {
     Patient,
@@ -27,7 +30,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = document_registry)]
 pub struct DocumentRegistryRow {
     pub id: String,
@@ -54,7 +57,7 @@ impl<'a> DocumentRegistryRowRepository<'a> {
         DocumentRegistryRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
         diesel::insert_into(document_registry::table)
             .values(row)
             .on_conflict(document_registry::id)
@@ -62,6 +65,17 @@ impl<'a> DocumentRegistryRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = DocumentRegistryRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<DocumentRegistryRow>, RepositoryError> {
@@ -90,9 +104,25 @@ impl<'a> DocumentRegistryRowRepository<'a> {
 }
 
 impl Upsert for DocumentRegistryRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        DocumentRegistryRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        DocumentRegistryRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
