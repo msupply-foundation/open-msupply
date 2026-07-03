@@ -24,6 +24,11 @@ export type StockMovementLineFragment = {
   expiryDate?: string | null;
   packSize: number;
   numberOfPacks: number;
+  stockLine?: {
+    __typename: 'StockLineNode';
+    id: string;
+    availableNumberOfPacks: number;
+  } | null;
   item?: {
     __typename: 'ItemNode';
     id: string;
@@ -68,6 +73,11 @@ export type StockMovementFragment = {
       expiryDate?: string | null;
       packSize: number;
       numberOfPacks: number;
+      stockLine?: {
+        __typename: 'StockLineNode';
+        id: string;
+        availableNumberOfPacks: number;
+      } | null;
       item?: {
         __typename: 'ItemNode';
         id: string;
@@ -150,6 +160,11 @@ export type StockRelocationQuery = {
             expiryDate?: string | null;
             packSize: number;
             numberOfPacks: number;
+            stockLine?: {
+              __typename: 'StockLineNode';
+              id: string;
+              availableNumberOfPacks: number;
+            } | null;
             item?: {
               __typename: 'ItemNode';
               id: string;
@@ -215,6 +230,11 @@ export type UpdateStockRelocationMutation = {
             expiryDate?: string | null;
             packSize: number;
             numberOfPacks: number;
+            stockLine?: {
+              __typename: 'StockLineNode';
+              id: string;
+              availableNumberOfPacks: number;
+            } | null;
             item?: {
               __typename: 'ItemNode';
               id: string;
@@ -301,6 +321,11 @@ export const StockMovementLineFragmentDoc = gql`
     expiryDate
     packSize
     numberOfPacks
+    stockLine {
+      __typename
+      id
+      availableNumberOfPacks
+    }
     item {
       __typename
       id

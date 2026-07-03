@@ -19,6 +19,11 @@ fragment StockMovementLine on StockRelocationLineNode {
   expiryDate
   packSize
   numberOfPacks
+  stockLine {
+    __typename
+    id
+    availableNumberOfPacks
+  }
   item {
     __typename
     id
