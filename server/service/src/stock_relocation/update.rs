@@ -153,15 +153,6 @@ fn apply_movement(
     let stock_line_repo = StockLineRowRepository::new(connection);
     stock_line_repo.upsert_one(&source)?;
     stock_line_repo.upsert_one(&new_line)?;
-
-    LocationMovementRowRepository::new(connection).upsert_one(&LocationMovementRow {
-        id: uuid(),
-        store_id: store_id.to_string(),
-        stock_line_id: new_line.id.clone(),
-        location_id: new_line.location_id.clone(),
-        enter_datetime: Some(Utc::now().naive_utc()),
-        exit_datetime: None,
-    })?;
     activity_log_entry(
         ctx,
         ActivityLogType::StockLineEdit,
