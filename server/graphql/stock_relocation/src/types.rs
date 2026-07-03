@@ -1,11 +1,11 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{DateTime, Utc};
 use graphql_core::loader::{
-    ItemLoader, LocationByIdLoader, StockLineByIdLoader, StockRelocationLinesByRelocationIdLoader,
+    LocationByIdLoader, StockLineByIdLoader, StockRelocationLinesByRelocationIdLoader,
 };
 use graphql_core::ContextExt;
-use graphql_types::types::{ItemNode, LocationNode, StockLineNode};
+use graphql_types::types::{LocationNode, StockLineNode};
 use repository::{StockRelocation, StockRelocationLineRow, StockRelocationRow};
 use service::ListResult;
 
@@ -35,8 +35,8 @@ impl StockRelocationNode {
     pub async fn store_id(&self) -> &str {
         &self.row().store_id
     }
-    pub async fn reference_number(&self) -> &str {
-        &self.row().reference_number
+    pub async fn stock_movement_number(&self) -> i64 {
+        self.row().stock_movement_number
     }
     pub async fn status(&self) -> StockRelocationNodeStatus {
         StockRelocationNodeStatus::from(self.row().status.clone())
@@ -120,18 +120,6 @@ impl StockRelocationLineNode {
     pub async fn destination_stock_line_id(&self) -> &Option<String> {
         &self.line.destination_stock_line_id
     }
-    pub async fn item_id(&self) -> &str {
-        &self.line.item_id
-    }
-    pub async fn batch(&self) -> &Option<String> {
-        &self.line.batch
-    }
-    pub async fn expiry_date(&self) -> &Option<NaiveDate> {
-        &self.line.expiry_date
-    }
-    pub async fn pack_size(&self) -> f64 {
-        self.line.pack_size
-    }
     pub async fn number_of_packs(&self) -> f64 {
         self.line.number_of_packs
     }
@@ -141,15 +129,7 @@ impl StockRelocationLineNode {
     pub async fn destination_location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
         location_node(ctx, &self.line.destination_location_id).await
     }
-    /// The item being moved (item code/name for display).
-    pub async fn item(&self, ctx: &Context<'_>) -> Result<Option<ItemNode>> {
-        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        Ok(loader
-            .load_one(self.line.item_id.clone())
-            .await?
-            .map(ItemNode::from_domain))
-    }
-    /// The source stock line (e.g. for packs currently in stock).
+    /// The source stock line
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
         let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
         Ok(loader
