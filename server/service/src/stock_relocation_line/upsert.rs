@@ -53,11 +53,7 @@ fn generate(
         destination_stock_line_id: None,
         source_location_id: stock_line.location_id,
         destination_location_id: input.destination_location_id,
-        pack_size: stock_line.pack_size,
         number_of_packs: input.number_of_packs,
-        item_id: stock_line.item_id,
-        batch: stock_line.batch,
-        expiry_date: stock_line.expiry_date,
     }
 }
 
@@ -173,9 +169,8 @@ mod test {
             )
             .unwrap();
 
-        assert_eq!(line.item_id, "item_a");
-        assert_eq!(line.batch.as_deref(), Some("batch1"));
-        assert_eq!(line.pack_size, 1.0);
+        assert_eq!(line.stock_line_id, "held_sl");
+        assert_eq!(line.source_location_id, None);
         assert_eq!(line.number_of_packs, 4.0);
         assert_eq!(line.destination_location_id, Some(mock_location_1().id));
         assert_eq!(line.destination_stock_line_id, None);
