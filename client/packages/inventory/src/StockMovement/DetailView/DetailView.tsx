@@ -1,0 +1,68 @@
+import React, { useEffect } from 'react';
+import {
+  DetailViewSkeleton,
+  AlertModal,
+  RouteBuilder,
+  useNavigate,
+  useTranslation,
+  useBreadcrumbs,
+  useParams,
+  useNonPaginatedMaterialTable,
+  NothingHere,
+  MaterialTable,
+} from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
+import { StockMovementLineFragment, useStockMovement } from '../api';
+import { useStockMovementColumns } from './columns';
+
+export const DetailView = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { id = '' } = useParams();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+
+  const { data, isLoading } = useStockMovement(id);
+  const lines = data?.lines.nodes ?? [];
+
+  useEffect(() => {
+    setCustomBreadcrumbs({
+      1: data ? String(data.stockMovementNumber) : '',
+    });
+  }, [setCustomBreadcrumbs, data]);
+
+  const columns = useStockMovementColumns();
+
+  const { table } = useNonPaginatedMaterialTable<StockMovementLineFragment>({
+    tableId: 'stock-movement-detail',
+    columns,
+    isLoading,
+    data: lines,
+    grouping: { field: 'stockLine.item.code' },
+    initialSort: { key: 'stockLine.item.name', dir: 'asc' },
+    noDataElement: <NothingHere body={t('messages.no-stock-movement-lines')} />,
+  });
+
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} />;
+
+  if (!data)
+    return (
+      <AlertModal
+        open={true}
+        onOk={() =>
+          navigate(
+            RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.StockMovement)
+              .build()
+          )
+        }
+        title={t('error.stock-movement-not-found')}
+        message={t('messages.click-to-return')}
+      />
+    );
+
+  return (
+    <>
+      <MaterialTable table={table} />
+    </>
+  );
+};
