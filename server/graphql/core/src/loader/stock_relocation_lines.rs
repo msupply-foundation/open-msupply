@@ -21,8 +21,11 @@ impl Loader<String> for StockRelocationLinesByRelocationIdLoader {
         let repo = StockRelocationLineRowRepository::new(&connection);
 
         let mut map: HashMap<String, Vec<StockRelocationLineRow>> = HashMap::new();
-        for id in stock_relocation_ids {
-            map.insert(id.clone(), repo.find_many_by_stock_relocation_id(id)?);
+        let all_lines = repo.find_many_by_stock_relocation_ids(stock_relocation_ids)?;
+        for line in all_lines {
+            map.entry(line.stock_relocation_id.clone())
+                .or_default()
+                .push(line);
         }
         Ok(map)
     }

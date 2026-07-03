@@ -36,7 +36,7 @@ pub fn insert_stock_relocation(
             let row = StockRelocationRow {
                 id: input.id,
                 store_id: store_id.to_string(),
-                reference_number: format!("SM-{number:06}"),
+                stock_movement_number: number,
                 status: StockRelocationStatus::New,
                 created_datetime: Utc::now().naive_utc(),
                 created_by: ctx.user_id.clone(),
@@ -94,7 +94,7 @@ mod test {
         assert_eq!(first.created_by, "user_account_a");
         assert_eq!(first.finalised_datetime, None);
         assert_eq!(first.comment.as_deref(), Some("relocate to cold room"));
-        assert_eq!(first.reference_number, "SM-000001");
+        assert_eq!(first.stock_movement_number, 1);
 
         let second = service
             .insert_stock_relocation(
@@ -106,7 +106,7 @@ mod test {
                 },
             )
             .unwrap();
-        assert_eq!(second.reference_number, "SM-000002");
+        assert_eq!(second.stock_movement_number, 2);
     }
 
     #[actix_rt::test]
