@@ -123,7 +123,7 @@ mod tests {
             .upsert_one(&StockRelocationRow {
                 id: "stock_relocation_1".to_string(),
                 store_id: mock_store_a().id,
-                reference_number: "SM-000001".to_string(),
+                stock_movement_number: 1,
                 created_by: "user_account_a".to_string(),
                 ..Default::default()
             })
