@@ -88,7 +88,6 @@ mod test {
 
     use crate::service_provider::{ServiceContext, ServiceProvider};
     use crate::stock_relocation::insert::InsertStockRelocation;
-    use crate::stock_relocation::validate::ValidateMovementError;
 
     use super::*;
 
