@@ -27,6 +27,7 @@ export const Toolbar = () => {
               name: t('label.number'),
               urlParameter: 'stockMovementNumber',
               isDefault: true,
+              wide: true,
             },
             {
               type: 'enum',
