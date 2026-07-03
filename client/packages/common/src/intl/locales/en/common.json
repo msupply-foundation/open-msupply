@@ -628,6 +628,7 @@
   "error.vaccine-course-update-failed": "Vaccine course failed to save",
   "error.vaccine-dose-in-use": "The vaccine dose is currently in use and cannot be deleted. Changes have been reverted.",
   "error.value-type-not-correct": "Value type not correct",
+  "error.waiting-for-central-v7-upgrade": "Waiting for the central server to finish integrating this site's data. Run a sync to complete the upgrade.",
   "filename.asset-categories": "asset-categories",
   "filename.asset-import-example": "Example asset item import",
   "filename.cce": "equipment upload template",
