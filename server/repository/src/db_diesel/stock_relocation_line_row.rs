@@ -10,7 +10,6 @@ use crate::{
     StockRelocationRowRepository,
 };
 
-use chrono::NaiveDate;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -22,16 +21,11 @@ table! {
         destination_stock_line_id -> Nullable<Text>,
         source_location_id -> Nullable<Text>,
         destination_location_id -> Nullable<Text>,
-        pack_size -> Double,
         number_of_packs -> Double,
-        item_id -> Text,
-        batch -> Nullable<Text>,
-        expiry_date -> Nullable<Date>,
     }
 }
 
 joinable!(stock_relocation_line -> stock_relocation (stock_relocation_id));
-joinable!(stock_relocation_line -> item (item_id));
 allow_tables_to_appear_in_same_query!(stock_relocation_line, stock_relocation);
 allow_tables_to_appear_in_same_query!(stock_relocation_line, stock_line);
 allow_tables_to_appear_in_same_query!(stock_relocation_line, item);
@@ -48,11 +42,7 @@ pub struct StockRelocationLineRow {
     pub destination_stock_line_id: Option<String>,
     pub source_location_id: Option<String>,
     pub destination_location_id: Option<String>,
-    pub pack_size: f64,
     pub number_of_packs: f64,
-    pub item_id: String,
-    pub batch: Option<String>,
-    pub expiry_date: Option<NaiveDate>,
 }
 
 pub struct StockRelocationLineRowRepository<'a> {
