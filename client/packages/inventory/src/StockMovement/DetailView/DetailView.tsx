@@ -17,6 +17,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { StockMovementLineFragment, useStockMovement } from '../api';
 import { useStockMovementColumns } from './columns';
+import { Footer } from './Footer';
 
 export const DetailView = () => {
   const t = useTranslation();
@@ -69,6 +70,7 @@ export const DetailView = () => {
       <SidePanel movement={data} />
       <Toolbar movement={data} />
       <MaterialTable table={table} />
+      <Footer movement={data} />
     </>
   );
 };
