@@ -1475,6 +1475,7 @@ export type CentralServerMutationNode = {
   assetCatalogue: AssetCatalogueMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
+  customField: CustomFieldMutations;
   demographic: DemographicMutations;
   general: CentralGeneralMutations;
   itemVariant: ItemVariantMutations;
@@ -1488,6 +1489,7 @@ export type CentralServerMutationNode = {
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
+  customField: CustomFieldConfigQueries;
   plugin: CentralPluginQueries;
   site: CentralSiteQueries;
   syncMessage: SyncMessageQueries;
@@ -1826,6 +1828,21 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
+export type CustomFieldConfigQueries = {
+  __typename: 'CustomFieldConfigQueries';
+  /**
+   * Admin/config read of a scope's custom fields, **including `HIDDEN`**
+   * ones — unlike the display `customFields` query, which filters hidden
+   * fields out. Drives the "Configure property visibility" admin page.
+   * Central-server only.
+   */
+  customFieldScopeConfig: CustomFieldsResponse;
+};
+
+export type CustomFieldConfigQueriesCustomFieldScopeConfigArgs = {
+  scope: Scalars['String']['input'];
+};
+
 export type CustomFieldConnector = {
   __typename: 'CustomFieldConnector';
   nodes: Array<CustomFieldNode>;
@@ -1844,6 +1861,20 @@ export type CustomFieldFilterInput = {
    * `displayMode` for that scope.
    */
   scope?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type CustomFieldMutations = {
+  __typename: 'CustomFieldMutations';
+  /**
+   * Update the display mode (HIDDEN / VISIBLE / PROMINENT) of custom fields
+   * on a single scope. Only updates existing scope mappings (every
+   * field/scope pair is seeded from sync). Central-server only.
+   */
+  updateScopes: CustomFieldsResponse;
+};
+
+export type CustomFieldMutationsUpdateScopesArgs = {
+  input: UpdateCustomFieldScopesInput;
 };
 
 export type CustomFieldNode = {
@@ -11118,6 +11149,17 @@ export type UpdateContactTraceInput = {
 };
 
 export type UpdateContactTraceResponse = ContactTraceNode;
+
+export type UpdateCustomFieldScopeInput = {
+  customFieldId: Scalars['String']['input'];
+  displayMode: CustomFieldNodeDisplayMode;
+};
+
+export type UpdateCustomFieldScopesInput = {
+  /** The scope being configured, e.g. `"item"` or `"inbound_shipment"`. */
+  scope: Scalars['String']['input'];
+  updates: Array<UpdateCustomFieldScopeInput>;
+};
 
 export type UpdateCustomerReturnError = {
   __typename: 'UpdateCustomerReturnError';
