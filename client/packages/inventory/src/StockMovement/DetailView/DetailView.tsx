@@ -12,6 +12,9 @@ import {
   MaterialTable,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
+import { Toolbar } from './Toolbar';
+import { AppBarButtons } from './AppBarButtons';
+import { SidePanel } from './SidePanel';
 import { StockMovementLineFragment, useStockMovement } from '../api';
 import { useStockMovementColumns } from './columns';
 
@@ -62,6 +65,9 @@ export const DetailView = () => {
 
   return (
     <>
+      <AppBarButtons movement={data} />
+      <SidePanel movement={data} />
+      <Toolbar movement={data} />
       <MaterialTable table={table} />
     </>
   );

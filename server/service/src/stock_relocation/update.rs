@@ -1,9 +1,8 @@
 use chrono::Utc;
 use repository::{
-    ActivityLogType, LocationMovementRow, LocationMovementRowRepository, RepositoryError,
-    StockLineRow, StockLineRowRepository, StockRelocationLineRow, StockRelocationLineRowRepository,
-    StockRelocationRow, StockRelocationRowRepository, StockRelocationStatus, StorageConnection,
-    TransactionError,
+    ActivityLogType, RepositoryError, StockLineRow, StockLineRowRepository, StockRelocationLineRow,
+    StockRelocationLineRowRepository, StockRelocationRow, StockRelocationRowRepository,
+    StockRelocationStatus, StorageConnection, TransactionError,
 };
 use util::uuid::uuid;
 use util::EPSILON;
@@ -102,8 +101,7 @@ fn finalise(
             error,
         })?;
 
-        line.destination_stock_line_id =
-            apply_movement(ctx, connection, store_id, &line, &stock_line)?;
+        line.destination_stock_line_id = apply_movement(ctx, connection, &line, &stock_line)?;
         line_repo.upsert_one(&line)?;
     }
 
@@ -113,7 +111,6 @@ fn finalise(
 fn apply_movement(
     ctx: &ServiceContext,
     connection: &StorageConnection,
-    store_id: &str,
     line: &StockRelocationLineRow,
     stock_line: &StockLineRow,
 ) -> Result<Option<String>, UpdateStockRelocationError> {
