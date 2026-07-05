@@ -334,15 +334,17 @@ mod tests {
         panic!("{}", msg);
     }
 
-    /// The multi-device-tagged set must be FK-closed: every changelog table
-    /// reachable via a tagged table's FKs (through non-changelog intermediates
-    /// like `*_link`) must also be tagged, else a child syncs without its parent.
+    /// Every table synced to multi-device sites must have all its FK parents
+    /// synced too. Check that no FK dependencies are violated.
     #[actix_rt::test]
-    async fn multi_device_set_is_fk_closed() {
-        let (_, connection, _, _) =
-            setup_all("test_sync_v7_multi_device_fk_closure", MockDataInserts::none()).await;
+    async fn multi_device_synced_tables_include_fk_parents() {
+        let (_, connection, _, _) = setup_all(
+            "test_sync_v7_multi_device_fk_dependencies",
+            MockDataInserts::none(),
+        )
+        .await;
 
-        let multi_device: HashSet<String> = ChangelogTableName::iter()
+        let multi_device_tables: HashSet<String> = ChangelogTableName::iter()
             .filter(|t| t.sync_style().multi_device_site)
             .map(|t| t.to_string())
             .collect();
@@ -374,15 +376,14 @@ mod tests {
                 .push(fk.parent_table.clone());
         }
 
-        // BFS each tagged table's FK parents. A changelog-table parent is a
-        // boundary (it's integrated as its own unit and must be tagged); a
-        // non-changelog parent is a pass-through we keep traversing.
+        // BFS from each listed table, hopping through non-listed intermediates
+        // to find transitive listed-table parents.
         let mut violations: Vec<(String, String)> = Vec::new();
-        for root in &multi_device {
+        for child in &multi_device_tables {
             let mut queue: VecDeque<String> = VecDeque::new();
             let mut visited: HashSet<String> = HashSet::new();
-            queue.push_back(root.clone());
-            visited.insert(root.clone());
+            queue.push_back(child.clone());
+            visited.insert(child.clone());
 
             while let Some(current) = queue.pop_front() {
                 let Some(parents) = parents_of.get(&current) else {
@@ -393,8 +394,8 @@ mod tests {
                         continue;
                     }
                     if changelog_tables.contains(parent) {
-                        if !multi_device.contains(parent) {
-                            violations.push((root.clone(), parent.clone()));
+                        if !multi_device_tables.contains(parent) {
+                            violations.push((child.clone(), parent.clone()));
                         }
                     } else {
                         queue.push_back(parent.clone());
@@ -407,11 +408,11 @@ mod tests {
 
         assert!(
             violations.is_empty(),
-            "multi-device table set is not FK-closed — these tagged tables depend on \
-             untagged changelog tables that would never sync to a multi-device site:\n{}",
+            "FK violation:  FK parent doesn't sync to multi-device sites, so the child \
+             fails to integrate. Set multi_device_site: true on each parent (or false on the child):\n{}",
             violations
                 .iter()
-                .map(|(c, p)| format!("  - {c} -> {p}"))
+                .map(|(c, p)| format!("  - {c} depends on {p}"))
                 .collect::<Vec<_>>()
                 .join("\n"),
         );
