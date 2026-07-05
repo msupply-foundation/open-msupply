@@ -56,6 +56,7 @@ export const useOutboundLineEditColumns = ({
   allocateIn,
   setVvmStatus,
   setReceivedNumberOfPacks,
+  setReasonOption,
   pluginEvents,
   getIsDisabled,
 }: {
@@ -67,6 +68,10 @@ export const useOutboundLineEditColumns = ({
   allocateIn: AllocateInOption;
   setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
   setReceivedNumberOfPacks: (id: string, value: number | null) => void;
+  setReasonOption: (
+    id: string,
+    reasonOption: DraftStockOutLineFragment['reasonOption']
+  ) => void;
   pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }) => {
   const { store } = useAuthContext();
@@ -290,8 +295,9 @@ export const useOutboundLineEditColumns = ({
       },
       {
         id: 'receivedNumberOfPacks',
-        // Pre-populate with issued packs; user can edit to record a variance.
-        accessorFn: row => row.receivedNumberOfPacks ?? row.numberOfPacks,
+        // Empty until the destination reports what it received; the user enters
+        // the received quantity to record a variance.
+        accessorFn: row => row.receivedNumberOfPacks,
         header: t('label.packs-received'),
         description: t('description.packs-received'),
         columnType: ColumnType.Number,
@@ -332,6 +338,9 @@ export const useOutboundLineEditColumns = ({
           Cell: ({ row }) => (
             <Component
               line={row.original as unknown as StockOutLineFragment}
+              update={patch =>
+                setReasonOption(row.original.id, patch.reasonOption ?? null)
+              }
               events={pluginEvents}
               isExternal={isExternalSupplier}
             />
