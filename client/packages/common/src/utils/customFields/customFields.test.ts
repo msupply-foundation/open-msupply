@@ -31,12 +31,18 @@ describe('resolveOptionValue', () => {
     expect(resolveOptionValue(definition, 'opt_1')).toBe('Red');
   });
 
-  it('falls back to the raw value for an unknown option id', () => {
-    expect(resolveOptionValue(definition, 'opt_missing')).toBe('opt_missing');
+  it('shows nothing for an unknown option id (e.g. a category deleted in OG before migration) rather than leaking the raw id', () => {
+    expect(resolveOptionValue(definition, 'opt_missing')).toBe('');
   });
 
   it('joins an array of option ids', () => {
     expect(resolveOptionValue(definition, ['opt_1', 'opt_2'])).toBe('Red, Blue');
+  });
+
+  it('drops unresolvable ids from an array so a missing id leaves no stray comma', () => {
+    expect(resolveOptionValue(definition, ['opt_1', 'opt_missing', 'opt_2'])).toBe(
+      'Red, Blue'
+    );
   });
 });
 
