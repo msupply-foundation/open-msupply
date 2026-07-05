@@ -1,19 +1,18 @@
-import { StocktakeSummaryItem } from '@openmsupply-client/inventory/src/types';
+import { useState } from 'react';
 import { StocktakeLineFragment } from 'packages/inventory/src/Stocktake/api';
 
 export const useNextItem = (
-  items: StocktakeSummaryItem[],
+  getSortedItems: () => StocktakeLineFragment['item'][],
   currentItemId?: string
 ): StocktakeLineFragment['item'] | null => {
+  const [items] = useState(getSortedItems);
+
   if (!items || !currentItemId) return null;
 
-  const numberOfItems = items.length;
-  const currentIdx = items.findIndex(({ item }) => item?.id === currentItemId);
-  const nextItem = items[(currentIdx + 1) % numberOfItems];
+  const currentIdx = items.findIndex(item => item?.id === currentItemId);
+  const nextItem = items[currentIdx + 1];
 
-  if (currentIdx === -1 || currentIdx === numberOfItems - 1 || !nextItem) {
-    return null;
-  }
+  if (currentIdx === -1 || !nextItem) return null;
 
-  return nextItem.item ?? null;
+  return nextItem ?? null;
 };

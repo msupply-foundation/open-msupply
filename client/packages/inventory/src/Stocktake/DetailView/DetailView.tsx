@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -15,6 +15,8 @@ import {
   MaterialTable,
   AppFooterStatusPortal,
   useQueryClient,
+  usePreferences,
+  StocktakeNodeStatus,
 } from '@openmsupply-client/common';
 import { ActivityLogList, DocumentsTab } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -61,7 +63,16 @@ const DetailViewInner = () => {
     setCustomBreadcrumbs({ 1: stocktake?.stocktakeNumber.toString() ?? '' });
   }, [setCustomBreadcrumbs, stocktake?.stocktakeNumber]);
 
-  const columns = useStocktakeColumns();
+  // Blind stocktake: hide theoretical stock so physical counts can't be
+  // reverse-engineered to match. While counting (status New) the snapshot and
+  // difference are hidden and reappear once finalised; the reason is hidden for
+  // the whole life of a blind stocktake (and not required - see backend).
+  const { blindStocktake } = usePreferences();
+  const isNewStocktake = stocktake?.status === StocktakeNodeStatus.New;
+  const hideSnapshotStock = !!blindStocktake && isNewStocktake;
+  const hideReason = !!blindStocktake;
+
+  const columns = useStocktakeColumns({ hideSnapshotStock, hideReason });
 
   const { table, selectedRows } =
     useNonPaginatedMaterialTable<StocktakeLineFragment>({
@@ -85,6 +96,22 @@ const DetailViewInner = () => {
         />
       ),
     });
+
+  const getSortedItems = useCallback(
+    () =>
+      table
+        .getSortedRowModel()
+        .rows.reduce<StocktakeLineFragment['item'][]>((acc, row) => {
+          const leafRows = row.getLeafRows();
+          const rows = leafRows.length ? leafRows : [row];
+          rows.forEach(leaf => {
+            const item = leaf.original?.item;
+            if (item && !acc.some(i => i?.id === item.id)) acc.push(item);
+          });
+          return acc;
+        }, []),
+    [table]
+  );
 
   const tabs = [
     {
@@ -163,6 +190,9 @@ const DetailViewInner = () => {
           mode={mode}
           item={entity}
           isInitialStocktake={stocktake.isInitialStocktake}
+          hideSnapshotStock={hideSnapshotStock}
+          hideReason={hideReason}
+          getSortedItems={getSortedItems}
         />
       )}
       <StocktakeErrorModal />

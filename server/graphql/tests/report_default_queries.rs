@@ -4,6 +4,7 @@ use graphql_general::GeneralQueries;
 use graphql_invoice::InvoiceQueries;
 use graphql_invoice_line::InvoiceLineQueries;
 use graphql_location::LocationQueries;
+use graphql_preference::PreferenceQueries;
 use graphql_requisition::RequisitionQueries;
 use graphql_stocktake::StocktakeQueries;
 use graphql_stocktake_line::StocktakeLineQueries;
@@ -24,6 +25,7 @@ struct FullQuery(
     pub StocktakeLineQueries,
     pub GeneralQueries,
     pub RequisitionQueries,
+    pub PreferenceQueries,
 );
 
 fn full_query() -> FullQuery {
@@ -35,6 +37,7 @@ fn full_query() -> FullQuery {
         StocktakeLineQueries,
         GeneralQueries,
         RequisitionQueries,
+        PreferenceQueries,
     )
 }
 
