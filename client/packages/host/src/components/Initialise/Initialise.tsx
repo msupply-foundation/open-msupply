@@ -44,6 +44,9 @@ export const Initialise = () => {
 
   const isCentralServer = useIsCentralServerApi();
   const isAndroid = EnvUtils.platform === Platform.Android;
+  // Only offer the standalone-central setup in dev (`yarn start`), not in
+  // production builds.
+  const showCentralTab = !isAndroid && isCentralServer && !EnvUtils.isProduction();
   const isInputDisabled = formState.isInitialising || formState.isLoading;
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const nativeClient = useNativeClient();
@@ -104,7 +107,7 @@ export const Initialise = () => {
             <Stack direction="row" sx={{ justifyContent: 'center' }}>
               <LoginIcon small />
             </Stack>
-            {!isAndroid && isCentralServer && (
+            {showCentralTab && (
               <TabList
                 value={mode}
                 onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
@@ -128,7 +131,7 @@ export const Initialise = () => {
                 isCentralServer={isCentralServer}
               />
             )}
-            {mode === 'central' && isCentralServer && <StandaloneCentralTab />}
+            {mode === 'central' && showCentralTab && <StandaloneCentralTab />}
           </Stack>
         </Stack>
         {isAndroid && (
