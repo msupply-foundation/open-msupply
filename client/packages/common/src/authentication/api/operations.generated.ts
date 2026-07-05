@@ -270,7 +270,6 @@ export type PreferencesQuery = {
     displayPopulationBasedForecasting: boolean;
     warningForExcessRequest: boolean;
     externalInboundShipmentLinesMustBeAuthorised: boolean;
-    requireReasonWhenReceivingExpiredStock: boolean;
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
@@ -544,7 +543,6 @@ export const PreferencesDocument = gql`
       }
       warningForExcessRequest
       externalInboundShipmentLinesMustBeAuthorised
-      requireReasonWhenReceivingExpiredStock
       invoiceStatusOptions
       itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions

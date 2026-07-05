@@ -223,7 +223,6 @@ query preferences($storeId: String!) {
     }
     warningForExcessRequest
     externalInboundShipmentLinesMustBeAuthorised
-    requireReasonWhenReceivingExpiredStock
     invoiceStatusOptions
     itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions

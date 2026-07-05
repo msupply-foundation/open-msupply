@@ -34,8 +34,6 @@ pub mod requisition_auto_finalise;
 pub use requisition_auto_finalise::*;
 pub mod external_inbound_shipment_lines_must_be_authorised;
 pub use external_inbound_shipment_lines_must_be_authorised::*;
-pub mod require_reason_when_receiving_expired_stock;
-pub use require_reason_when_receiving_expired_stock::*;
 pub mod inbound_shipment_auto_verify;
 pub use inbound_shipment_auto_verify::*;
 pub mod warning_for_excess_request;
@@ -112,7 +110,6 @@ pub struct PreferenceProvider {
     pub select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
     pub external_inbound_shipment_lines_must_be_authorised:
         ExternalInboundShipmentLinesMustBeAuthorised,
-    pub require_reason_when_receiving_expired_stock: RequireReasonWhenReceivingExpiredStock,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -163,7 +160,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
         external_inbound_shipment_lines_must_be_authorised:
             ExternalInboundShipmentLinesMustBeAuthorised,
-        require_reason_when_receiving_expired_stock: RequireReasonWhenReceivingExpiredStock,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
             NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:

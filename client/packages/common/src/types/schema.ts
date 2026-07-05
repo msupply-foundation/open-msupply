@@ -7260,7 +7260,6 @@ export enum PreferenceKey {
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
-  RequireReasonWhenReceivingExpiredStock = 'requireReasonWhenReceivingExpiredStock',
   RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
@@ -7333,7 +7332,6 @@ export type PreferencesNode = {
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
-  requireReasonWhenReceivingExpiredStock: Scalars['Boolean']['output'];
   requisitionAutoFinalise: Scalars['Boolean']['output'];
   secondThresholdForExpiringItems: Scalars['Int']['output'];
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
@@ -12022,9 +12020,6 @@ export type UpsertPreferencesInput = {
   orderInPacks?: InputMaybe<Array<BoolStorePrefInput>>;
   preventTransfersMonthsBeforeInitialisation?: InputMaybe<
     Scalars['Int']['input']
-  >;
-  requireReasonWhenReceivingExpiredStock?: InputMaybe<
-    Array<BoolStorePrefInput>
   >;
   requisitionAutoFinalise?: InputMaybe<Array<BoolStorePrefInput>>;
   secondThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;

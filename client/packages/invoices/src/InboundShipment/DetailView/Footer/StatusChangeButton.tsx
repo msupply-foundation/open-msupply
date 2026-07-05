@@ -36,8 +36,7 @@ const StatusChangeButtonContent = ({
   hasVerifyPermission: boolean;
 }) => {
   const t = useTranslation();
-  const { invoiceStatusOptions, requireReasonWhenReceivingExpiredStock } =
-    usePreferences();
+  const { invoiceStatusOptions } = usePreferences();
   const { success, error } = useNotification();
   const { status, onHold, lines } = data;
   const shipmentType = getInboundShipmentType(data);
@@ -75,27 +74,6 @@ const StatusChangeButtonContent = ({
 
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return;
-    // When the preference is enabled, expired stock must have a reason before
-    // the shipment can be received/verified. Surface a specific message here
-    // rather than the generic save error the server would otherwise return.
-    const isReceivingOrVerifying =
-      selectedOption.value === InvoiceNodeStatus.Received ||
-      selectedOption.value === InvoiceNodeStatus.Verified;
-    if (requireReasonWhenReceivingExpiredStock && isReceivingOrVerifying) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const hasExpiredWithoutReason = lines.nodes.some(
-        line =>
-          line.numberOfPacks > 0 &&
-          !!line.expiryDate &&
-          new Date(line.expiryDate) < today &&
-          !line.reasonOption
-      );
-      if (hasExpiredWithoutReason) {
-        error(t('error.cannot-receive-expired-without-reason'))();
-        return;
-      }
-    }
     try {
       await update({ status: selectedOption.value });
       success(t('messages.shipment-saved'))();

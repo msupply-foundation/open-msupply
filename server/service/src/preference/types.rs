@@ -45,7 +45,6 @@ pub enum PrefKey {
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
     ExternalInboundShipmentLinesMustBeAuthorised,
-    RequireReasonWhenReceivingExpiredStock,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
     NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
