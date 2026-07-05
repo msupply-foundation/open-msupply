@@ -472,6 +472,7 @@ mod tests {
             mail: None,
             features: None,
             changelog_partition: Default::default(),
+            changelog_dedup: None,
         };
         service_provider.settings = Box::new(SettingsService::new(Some(test_settings)));
 

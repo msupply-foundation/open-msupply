@@ -68,6 +68,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         }),
         features: None,
         changelog_partition: None,
+        changelog_dedup: None,
     };
     let (sync_trigger, _) = SynchroniserDriver::init();
     let (ledger_fix_trigger, _) = LedgerFixDriver::init();
