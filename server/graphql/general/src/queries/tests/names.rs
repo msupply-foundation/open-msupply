@@ -267,6 +267,7 @@ mod graphql {
                 custom_field_id: "prop1".to_string(),
                 scope: "supplier".to_string(),
                 display_mode: CustomFieldDisplayMode::Visible,
+                ..Default::default()
             })
             .unwrap();
 

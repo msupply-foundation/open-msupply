@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_custom_field_sort_order;
 mod add_invoice_custom_fields;
 mod add_is_standalone_central_pg_enum;
 mod add_item_custom_fields;
@@ -84,6 +85,8 @@ impl Migration for V3_00_00 {
             Box::new(reintegrate_transaction_categories_for_custom_field_options::Migrate),
             Box::new(remove_add_central_patient_visibility_processor_cursor::Migrate),
             Box::new(populate_routed_changelog_for_sync_v7_tables::Migrate),
+            // Must run after `create_custom_field` (adds columns to its tables).
+            Box::new(add_custom_field_sort_order::Migrate),
         ]
     }
 }
