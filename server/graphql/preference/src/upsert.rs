@@ -87,6 +87,7 @@ pub struct UpsertPreferencesInput {
     pub backdating: Option<BackdatingInput>,
 
     // Store preferences
+    pub blind_stocktake: Option<Vec<BoolStorePrefInput>>,
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
     pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
@@ -158,6 +159,7 @@ impl UpsertPreferencesInput {
             global_table_configs,
             backdating,
             // Store preferences
+            blind_stocktake,
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
@@ -212,6 +214,9 @@ impl UpsertPreferencesInput {
                 max_days: b.max_days,
             }),
             // Store preferences
+            blind_stocktake: blind_stocktake
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),

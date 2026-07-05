@@ -191,6 +191,7 @@ query preferences($storeId: String!) {
     adjustForNumberOfDaysOutOfStock
     allowTrackingOfStockByDonor
     authorisePurchaseOrder
+    blindStocktake
     canCreateInternalOrderFromARequisition
     customTranslations
     daysInMonth
