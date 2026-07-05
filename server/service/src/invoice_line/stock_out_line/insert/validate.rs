@@ -63,7 +63,7 @@ pub fn validate(
     if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(OtherPartyStoreDisabled);
     }
-    if !check_batch_on_hold(&batch, &input.r#type) {
+    if !check_batch_on_hold(&batch, &input.r#type.to_domain()) {
         return Err(BatchIsOnHold);
     }
 
@@ -78,9 +78,11 @@ pub fn validate(
             .find_one_by_id(&location_id)?
             .ok_or(LocationNotFound)?;
 
-        check_location_on_hold(&Some(location), &input.r#type).map_err(|e| match e {
-            LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
-        })?;
+        check_location_on_hold(&Some(location), &input.r#type.to_domain()).map_err(
+            |e| match e {
+                LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
+            },
+        )?;
     }
 
     let mut available_packs = batch.stock_line_row.available_number_of_packs;
