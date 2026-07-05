@@ -118,7 +118,15 @@ pub fn generate(
     let lines_to_update = lines
         .clone()
         .into_iter()
-        .filter(|line| line.number_of_packs > 0.0 && check_already_exists(&line.id))
+        .filter(|line| {
+            line.number_of_packs > 0.0
+                && (check_already_exists(&line.id)
+                    // A newly-allocated line carrying a received qty or a
+                    // discrepancy reason is inserted above, then also updated
+                    // here to persist those fields (the insert path drops them).
+                    || line.received_number_of_packs.is_some()
+                    || line.reason_option_id.is_some())
+        })
         .map(
             |SaveStockOutInvoiceLine {
                  id,
