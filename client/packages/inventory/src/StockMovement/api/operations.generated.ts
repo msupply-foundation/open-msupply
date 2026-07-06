@@ -438,6 +438,11 @@ export type BatchStockRelocationLineMutation = {
                 };
           };
     }> | null;
+    delete?: Array<{
+      __typename: 'DeleteStockRelocationLineResponseWithId';
+      id: string;
+      response: { __typename: 'DeleteResponse'; id: string };
+    }> | null;
   };
 };
 
@@ -704,6 +709,16 @@ export const BatchStockRelocationLineDocument = gql`
                 locationId
               }
             }
+          }
+        }
+      }
+      delete {
+        __typename
+        id
+        response {
+          __typename
+          ... on DeleteResponse {
+            id
           }
         }
       }

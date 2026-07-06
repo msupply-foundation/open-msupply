@@ -6,3 +6,4 @@ export * from './useInsertStockMovement';
 export * from './useUpdateStockMovement';
 export * from './useDeleteStockMovement';
 export * from './useUpsertStockMovementLine';
+export * from './useDeleteStockMovementLines';
