@@ -224,7 +224,7 @@ export const InboundLineEditCards = ({
                     const packToUnits = packSize * value;
                     setPackRoundingMessage?.('');
 
-                    const shipped =
+                    const shipped = isManualShipment &&
                       (line.shippedNumberOfPacks == null ||
                         line.shippedNumberOfPacks === line.numberOfPacks);
                     updateDraftLine({
