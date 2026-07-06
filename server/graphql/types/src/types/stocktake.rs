@@ -1,8 +1,14 @@
-use super::{program_node::ProgramNode, InvoiceNode, StocktakeLineConnector, UserNode};
+use super::{
+    program_node::ProgramNode, InvoiceNode, StocktakeLineConnector, SyncFileReferenceConnector,
+    UserNode,
+};
 use async_graphql::{dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::{
-    loader::{InvoiceByIdLoader, ProgramByIdLoader, StocktakeLineByStocktakeIdLoader, UserLoader},
+    loader::{
+        InvoiceByIdLoader, ProgramByIdLoader, StocktakeLineByStocktakeIdLoader,
+        SyncFileReferenceLoader, UserLoader,
+    },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -137,6 +143,15 @@ impl StocktakeNode {
         };
 
         Ok(result)
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(self.stocktake.id.clone()).await?;
+
+        Ok(SyncFileReferenceConnector::from_vec(
+            result_option.unwrap_or_default(),
+        ))
     }
 
     pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
