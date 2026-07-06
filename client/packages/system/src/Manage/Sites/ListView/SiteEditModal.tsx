@@ -97,9 +97,7 @@ export const SiteEditModal = ({
 
   const confirmSetMultiDevice = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: isMultiDevice
-      ? t('messages.confirm-unset-multi-device')
-      : t('messages.confirm-set-multi-device'),
+    message: t('messages.confirm-set-multi-device'),
     onConfirm: () => setMultiDevice(id, !isMultiDevice),
   });
 
@@ -244,6 +242,9 @@ export const SiteEditModal = ({
                   <Switch
                     checked={isMultiDevice}
                     onChange={() => confirmSetMultiDevice()}
+                    // Don't allow a multi device site to become a single device site again
+                    // TODO: Need to implement re-syncing of skipped changelog entries - #12401
+                    disabled={isMultiDevice}
                   />
                 </Box>
               }
