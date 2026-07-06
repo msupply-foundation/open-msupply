@@ -18,7 +18,7 @@
     "electron:start-local": "ELECTRON_HOST=http://localhost:3003 yarn workspace @openmsupply-client/electron start",
     "eslint": "yarn workspaces foreach -A --parallel --exclude open-msupply --exclude openmsupply-client --exclude @openmsupply-client/android --exclude standard_reports --exclude standard_forms run eslint",
     "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema && cd ../client && yarn gql-codegen",
-    "gql-codegen": "graphql-codegen --config codegen.yml",
+    "gql-codegen": "graphql-codegen --config codegen.yml && node ../scripts/load-testing/build/extract-operations.mjs",
     "i18n-missing": "i18n-unused display-missed",
     "i18n-unused-display": "i18n-unused display-unused",
     "i18n-unused-remove": "i18n-unused remove-unused",

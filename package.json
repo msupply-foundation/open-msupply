@@ -15,7 +15,8 @@
     "build": "cd ./client && yarn build && cd ../server && cargo build --release",
     "test": "cd ./server && ulimit -n 1000 && cargo test && cd ../client && yarn test",
     "dockerise": "bash docker/dockerise.sh",
-    "plugin": "node scripts/plugin-management/plugin.js"
+    "plugin": "node scripts/plugin-management/plugin.js",
+    "load-test": "cd scripts/load-testing && mkdir -p output && k6 run main.js"
   },
   "dependencies": {
     "typescript": "^5.9.2"
