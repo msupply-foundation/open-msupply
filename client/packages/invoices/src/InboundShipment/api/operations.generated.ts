@@ -60,6 +60,7 @@ export type InboundLineFragment = {
     itemStoreProperties?: {
       __typename: 'ItemStorePropertiesNode';
       defaultSellPricePerPack: number;
+      margin: number;
     } | null;
     programs?: Array<{
       __typename: 'ProgramNode';
@@ -234,6 +235,7 @@ export type InboundFragment = {
         itemStoreProperties?: {
           __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
+          margin: number;
         } | null;
         programs?: Array<{
           __typename: 'ProgramNode';
@@ -309,6 +311,7 @@ export type InboundFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
+    margin?: number | null;
     store?: {
       __typename: 'StoreNode';
       id: string;
@@ -602,6 +605,7 @@ export type InvoiceQuery = {
               itemStoreProperties?: {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
+                margin: number;
               } | null;
               programs?: Array<{
                 __typename: 'ProgramNode';
@@ -677,6 +681,7 @@ export type InvoiceQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
+          margin?: number | null;
           store?: {
             __typename: 'StoreNode';
             id: string;
@@ -877,6 +882,7 @@ export type InboundByNumberQuery = {
               itemStoreProperties?: {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
+                margin: number;
               } | null;
               programs?: Array<{
                 __typename: 'ProgramNode';
@@ -952,6 +958,7 @@ export type InboundByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
+          margin?: number | null;
           store?: {
             __typename: 'StoreNode';
             id: string;
@@ -1886,6 +1893,7 @@ export const InboundLineFragmentDoc = gql`
       restrictedLocationTypeId
       itemStoreProperties(storeId: $storeId) {
         defaultSellPricePerPack
+        margin
       }
       programs(storeId: $storeId) {
         id
@@ -2016,6 +2024,7 @@ export const InboundFragmentDoc = gql`
       isCustomer
       isSupplier
       isOnHold
+      margin
       store {
         id
         code

@@ -48,6 +48,7 @@ import {
 import { PatchDraftLineInput } from '../../../api';
 import { useInboundShipment } from '../../../api/hooks/document/useInboundShipment';
 import { isInboundPlaceholderRow } from '../../../../utils';
+import { getDefaultSellPricePerPack } from '../utils';
 import { useInvoiceLineStatusMap } from '../../..';
 
 interface CardProps {
@@ -104,6 +105,7 @@ export const InboundLineEditCards = ({
     manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
     externalInboundShipmentLinesMustBeAuthorised,
+    itemMarginOverridesSupplierMargin,
   } = usePreferences();
 
   const {
@@ -116,6 +118,22 @@ export const InboundLineEditCards = ({
     !inboundData?.purchaseOrder &&
     !inboundData?.linkedShipment &&
     !inboundData?.otherParty?.store;
+
+  const supplierMargin = inboundData?.otherParty?.margin ?? 0;
+  const getLineDefaultSellPrice = useCallback(
+    (line: DraftInboundLine, costPricePerPack: number, packSize: number) =>
+      getDefaultSellPricePerPack({
+        costPricePerPack,
+        packSize,
+        defaultPackSize: line.item?.defaultPackSize ?? 0,
+        defaultSellPricePerPack:
+          line.item?.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+        itemMargin: line.item?.itemStoreProperties?.margin ?? 0,
+        supplierMargin,
+        itemMarginOverridesSupplierMargin: !!itemMarginOverridesSupplierMargin,
+      }),
+    [supplierMargin, itemMarginOverridesSupplierMargin]
+  );
 
   const showLineStatus =
     lines.some(line => line.status != null) ||
@@ -205,10 +223,15 @@ export const InboundLineEditCards = ({
                   if (packSize !== undefined) {
                     const packToUnits = packSize * value;
                     setPackRoundingMessage?.('');
+
+                    const shipped =
+                      (line.shippedNumberOfPacks == null ||
+                        line.shippedNumberOfPacks === line.numberOfPacks);
                     updateDraftLine({
                       receivedNumberOfUnits: packToUnits,
                       id: row.original.id,
                       numberOfPacks: value,
+                      ...(shipped ? { shippedNumberOfPacks: value } : {}),
                     });
                   }
                 }}
@@ -254,11 +277,13 @@ export const InboundLineEditCards = ({
               <NumberInputCell
                 cell={cell}
                 updateFn={(value: number) => {
-                  const item = row.original.item;
-                  const shouldClearSellPrice =
-                    item?.defaultPackSize !== line.packSize &&
-                    item?.itemStoreProperties?.defaultSellPricePerPack ===
-                    line.sellPricePerPack;
+                  const isDefaultSellPrice =
+                    line.sellPricePerPack ===
+                    getLineDefaultSellPrice(
+                      line,
+                      line.costPricePerPack,
+                      line.packSize
+                    );
 
                   updateDraftLine({
                     volumePerPack:
@@ -266,8 +291,12 @@ export const InboundLineEditCards = ({
                         itemVariant: line.itemVariant,
                         packSize: value,
                       }) ?? 0,
-                    sellPricePerPack: shouldClearSellPrice
-                      ? 0
+                    sellPricePerPack: isDefaultSellPrice
+                      ? getLineDefaultSellPrice(
+                        line,
+                        line.costPricePerPack,
+                        value
+                      )
                       : line.sellPricePerPack,
                     packSize: value,
                     id: row.original.id,
@@ -439,10 +468,18 @@ export const InboundLineEditCards = ({
                     })
                   );
                 }
+                const line = row.original;
+                const shipped =
+                  isManualShipment &&
+                  (line.shippedNumberOfPacks == null ||
+                    line.shippedNumberOfPacks === line.numberOfPacks);
                 updateDraftLine({
                   receivedNumberOfUnits: actualUnits,
                   numberOfPacks: roundedPacks,
                   id: row.original.id,
+                  ...(shipped
+                    ? { shippedNumberOfPacks: roundedPacks }
+                    : {}),
                 });
                 return actualUnits;
               }
@@ -811,6 +848,7 @@ export const InboundLineEditCards = ({
     isAddOrDeleteLinesDisabled,
     isExternalSupplier,
     isManualShipment,
+    getLineDefaultSellPrice,
     item?.isVaccine,
     pluralisedUnitName,
     removeDraftLine,

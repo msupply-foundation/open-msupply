@@ -52,6 +52,36 @@ const createDraftInboundLine = ({
   return draftLine;
 };
 
+export const getDefaultSellPricePerPack = ({
+  costPricePerPack,
+  packSize,
+  defaultPackSize,
+  defaultSellPricePerPack,
+  itemMargin,
+  supplierMargin,
+  itemMarginOverridesSupplierMargin,
+}: {
+  costPricePerPack: number;
+  packSize: number;
+  defaultPackSize: number;
+  defaultSellPricePerPack: number;
+  itemMargin: number;
+  supplierMargin: number;
+  itemMarginOverridesSupplierMargin: boolean;
+}): number => {
+  const defaultPrice =
+    defaultPackSize === 0
+      ? 0
+      : (defaultSellPricePerPack / defaultPackSize) * packSize;
+  if (defaultPrice > 0) return defaultPrice;
+
+  const margin = itemMarginOverridesSupplierMargin
+    ? itemMargin || supplierMargin
+    : supplierMargin || itemMargin;
+
+  return costPricePerPack + (costPricePerPack * (margin || 0)) / 100;
+};
+
 export const CreateDraft = {
   stockInLine: createDraftInboundLine,
   serviceLine: (params: Omit<CreateDraftInboundLineParams, 'type'>) =>

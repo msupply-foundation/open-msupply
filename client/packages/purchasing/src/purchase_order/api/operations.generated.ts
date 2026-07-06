@@ -93,6 +93,11 @@ export type PurchaseOrderFragment = {
         doses: number;
         restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          margin: number;
+          defaultSellPricePerPack: number;
+        } | null;
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -186,6 +191,11 @@ export type PurchaseOrderLineFragment = {
     doses: number;
     restrictedLocationTypeId?: string | null;
     stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
+      margin: number;
+      defaultSellPricePerPack: number;
+    } | null;
   };
   manufacturer?: {
     __typename: 'NameNode';
@@ -334,6 +344,11 @@ export type PurchaseOrderByIdQuery = {
               doses: number;
               restrictedLocationTypeId?: string | null;
               stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                margin: number;
+                defaultSellPricePerPack: number;
+              } | null;
             };
             manufacturer?: {
               __typename: 'NameNode';
@@ -511,6 +526,11 @@ export type PurchaseOrderLinesQuery = {
         doses: number;
         restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          margin: number;
+          defaultSellPricePerPack: number;
+        } | null;
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -594,6 +614,11 @@ export type PurchaseOrderLineQuery = {
         doses: number;
         restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          margin: number;
+          defaultSellPricePerPack: number;
+        } | null;
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -799,6 +824,10 @@ export const PurchaseOrderLineFragmentDoc = gql`
       restrictedLocationTypeId
       stats(storeId: $storeId) {
         stockOnHand
+      }
+      itemStoreProperties(storeId: $storeId) {
+        margin
+        defaultSellPricePerPack
       }
     }
     requestedPackSize
