@@ -56,12 +56,14 @@ export const useStockMovementColumns = () => {
         accessorFn: row => row.sourceLocation?.code ?? '',
         header: t('label.source-location'),
         size: 120,
+        enableSorting: true,
       },
       {
         id: 'destinationLocation',
         accessorFn: row => row.destinationLocation?.code ?? '',
         header: t('label.destination-location'),
         size: 120,
+        enableSorting: true,
       },
       {
         accessorKey: 'numberOfPacks',
