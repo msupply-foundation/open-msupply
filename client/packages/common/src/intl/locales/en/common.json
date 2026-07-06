@@ -1988,6 +1988,7 @@
   "messages.active-policy-needs-coverage": "An active policy must have a non-zero coverage rate. Increase the rate or deactivate the policy.",
   "messages.ago": "{{time}} ago",
   "messages.alert-invalid-pack-size": "Pack size must be 1 or more for returned lines",
+  "messages.all-batches-added": "All batches of this item have already been added",
   "messages.alert-problem-with-form-input": "There is a problem with one or more inputs:",
   "messages.alert-zero-return-quantity": "Please add some quantities to return before proceeding to the next step",
   "messages.all-changes-must-be-confirmed": "You have some lines with unsaved changes. Mark these lines as confirmed to finalise.",

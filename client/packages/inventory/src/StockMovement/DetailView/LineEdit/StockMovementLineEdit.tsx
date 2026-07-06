@@ -82,10 +82,19 @@ export const StockMovementLineEdit = ({
   );
   const lineDraft = lineDrafts?.[0];
 
+  // Exclude batches already added to the movement (other than the line
+  // being edited)
+  const addedStockLineIds = movement.lines.nodes
+    .filter(l => l.id !== line?.id)
+    .map(l => l.stockLineId);
+  const batchOptions = (stockLines ?? []).filter(
+    sl => !addedStockLineIds.includes(sl.stockLineId)
+  );
+
   const defaultStockLine = isUpdate
     ? lineDraft
-    : stockLines?.length === 1
-      ? stockLines[0]
+    : batchOptions.length === 1
+      ? batchOptions[0]
       : undefined;
   const stockLine = draft.stockLine ?? defaultStockLine ?? null;
 
@@ -203,10 +212,11 @@ export const StockMovementLineEdit = ({
         {draft.itemId && (
           <Field label={t('label.batch')}>
             <Autocomplete
-              options={stockLines ?? []}
+              options={batchOptions}
               loading={isLoading}
               value={stockLine}
               width="100%"
+              disabled={isUpdate}
               clearable={false}
               getOptionLabel={getStockLineLabel}
               getOptionDisabled={option => !!option.sourceLocation?.onHold}
@@ -214,7 +224,11 @@ export const StockMovementLineEdit = ({
                 option.stockLineId === value.stockLineId
               }
               onChange={(_, option) => onChangeStockLine(option)}
-              noOptionsText={t('messages.no-stock-available')}
+              noOptionsText={
+                stockLines?.length
+                  ? t('messages.all-batches-added')
+                  : t('messages.no-stock-available')
+              }
             />
           </Field>
         )}
