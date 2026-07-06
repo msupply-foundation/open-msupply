@@ -74,6 +74,14 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, clinician_link_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            clinician_link::table.filter(clinician_link::id.eq(clinician_link_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_many_by_id(
         &self,
         clinician_link_ids: &[String],

@@ -1,8 +1,6 @@
 use repository::{
-    campaign::campaign_row::CampaignRow,
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    campaign::campaign_row::CampaignRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
 };
 
 use crate::sync::translations::{
@@ -27,11 +25,14 @@ impl SyncTranslation for CampaignTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_value::<
             CampaignRow,
-        >(sync_record.data.0.clone())?))
+        >(
+            sync_record.data.0.clone()
+        )?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -64,7 +65,11 @@ impl SyncTranslation for CampaignTranslation {
 
         let row = campaign_row;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
     }
 }
 
@@ -96,7 +101,11 @@ mod tests {
 
         assert!(translator.should_translate_from_sync_record(&sync_buffer_row));
         let translation_result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_buffer_row)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_buffer_row,
+            )
             .unwrap();
 
         match translation_result {
