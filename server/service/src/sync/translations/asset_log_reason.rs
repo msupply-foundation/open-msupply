@@ -1,11 +1,11 @@
 use repository::{
-    asset_log_reason_row::AssetLogReasonRow,
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    asset_log_reason_row::AssetLogReasonRow, ChangelogRow, ChangelogTableName, Row,
+    StorageConnection, SyncBufferRow,
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -27,11 +27,14 @@ impl SyncTranslation for AssetLogReasonTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_value::<
             AssetLogReasonRow,
-        >(sync_record.data.0.clone())?))
+        >(
+            sync_record.data.0.clone()
+        )?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -64,7 +67,11 @@ impl SyncTranslation for AssetLogReasonTranslation {
 
         let row = asset_log_reason_row;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
     }
 }
 
@@ -85,7 +92,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

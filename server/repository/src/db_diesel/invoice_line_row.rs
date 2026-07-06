@@ -326,6 +326,14 @@ impl<'a> InvoiceLineRowRepository<'a> {
             .get_results(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn check_exists_by_id(&self, record_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            invoice_line.filter(id.eq(record_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 #[derive(Debug, Clone)]
