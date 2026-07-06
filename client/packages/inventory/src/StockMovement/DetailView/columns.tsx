@@ -40,6 +40,12 @@ export const useStockMovementColumns = () => {
         defaultHideOnMobile: true,
       },
       {
+        accessorKey: 'stockLine.totalNumberOfPacks',
+        header: t('label.packs-in-stock'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+      },
+      {
         accessorKey: 'stockLine.packSize',
         header: t('label.pack-size'),
         columnType: ColumnType.Number,

@@ -10,6 +10,7 @@ import {
   useNonPaginatedMaterialTable,
   NothingHere,
   MaterialTable,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -18,6 +19,8 @@ import { SidePanel } from './SidePanel';
 import { StockMovementLineFragment, useStockMovement } from '../api';
 import { useStockMovementColumns } from './columns';
 import { Footer } from './Footer';
+import { StockMovementLineEdit } from './LineEdit';
+import { isStockMovementDisabled } from '../utils';
 
 export const DetailView = () => {
   const t = useTranslation();
@@ -27,6 +30,10 @@ export const DetailView = () => {
 
   const { data, isLoading } = useStockMovement(id);
   const lines = data?.lines.nodes ?? [];
+  const isDisabled = !data || isStockMovementDisabled(data.status);
+
+  const { isOpen, entity, onOpen, onClose, mode } =
+    useEditModal<StockMovementLineFragment>();
 
   useEffect(() => {
     setCustomBreadcrumbs({
@@ -41,9 +48,16 @@ export const DetailView = () => {
     columns,
     isLoading,
     data: lines,
+    onRowClick: isDisabled ? undefined : row => onOpen(row),
     grouping: { field: 'stockLine.item.code' },
     initialSort: { key: 'stockLine.item.name', dir: 'asc' },
-    noDataElement: <NothingHere body={t('messages.no-stock-movement-lines')} />,
+    noDataElement: (
+      <NothingHere
+        body={t('messages.no-stock-movement-lines')}
+        onCreate={isDisabled ? undefined : () => onOpen()}
+        buttonText={t('button.add-line')}
+      />
+    ),
   });
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} />;
@@ -66,11 +80,20 @@ export const DetailView = () => {
 
   return (
     <>
-      <AppBarButtons movement={data} />
+      <AppBarButtons movement={data} onAddLine={() => onOpen()} />
       <SidePanel movement={data} />
       <Toolbar movement={data} />
       <MaterialTable table={table} />
       <Footer movement={data} />
+      {isOpen && (
+        <StockMovementLineEdit
+          movement={data}
+          line={entity}
+          mode={mode}
+          isOpen={isOpen}
+          onClose={onClose}
+        />
+      )}
     </>
   );
 };
