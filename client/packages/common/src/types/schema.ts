@@ -10117,6 +10117,7 @@ export type StocktakeNode = {
   countedBy?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  documents: SyncFileReferenceConnector;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   inventoryAddition?: Maybe<InvoiceNode>;

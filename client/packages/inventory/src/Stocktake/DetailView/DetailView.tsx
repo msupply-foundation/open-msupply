@@ -13,12 +13,14 @@ import {
   useNonPaginatedMaterialTable,
   NothingHere,
   MaterialTable,
+  AppFooterStatusPortal,
+  useQueryClient,
   usePreferences,
   StocktakeNodeStatus,
 } from '@openmsupply-client/common';
-import { ActivityLogList } from '@openmsupply-client/system';
+import { ActivityLogList, DocumentsTab } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
-import { Footer } from './Footer';
+import { Footer, StatusFooter } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
@@ -46,6 +48,13 @@ const DetailViewInner = () => {
     isLoading: rowsLoading,
     lines,
   } = useStocktakeOld.line.rows();
+
+  const stocktakeApi = useStocktakeOld.utils.api();
+  const queryClient = useQueryClient();
+  const invalidateDocuments = () =>
+    queryClient.invalidateQueries({
+      queryKey: stocktakeApi.keys.detail(stocktake?.id ?? ''),
+    });
 
   const { isOpen, entity, onOpen, onClose, mode } =
     useEditModal<StocktakeLineFragment['item']>();
@@ -110,6 +119,17 @@ const DetailViewInner = () => {
       value: 'Details',
     },
     {
+      Component: (
+        <DocumentsTab
+          documents={stocktake?.documents.nodes ?? []}
+          recordId={stocktake?.id ?? ''}
+          tableName="stocktake"
+          invalidateQueries={invalidateDocuments}
+        />
+      ),
+      value: 'Documents',
+    },
+    {
       Component: <ActivityLogList recordId={stocktake?.id ?? ''} />,
       value: 'Log',
     },
@@ -157,6 +177,11 @@ const DetailViewInner = () => {
       ) : (
         <DetailTabs tabs={tabs} />
       )}
+
+      {/* Fallback status footer for tabs that don't own the lines table.
+        The lines table's `Footer` mounts an `AppFooterPortal` only when
+        rows are selected; otherwise this portal shows the status crumbs. */}
+      <AppFooterStatusPortal Content={<StatusFooter />} />
 
       {isOpen && (
         <StocktakeLineEdit
