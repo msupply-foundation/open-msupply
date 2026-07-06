@@ -1,7 +1,8 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, NameRowRepository, NameStoreJoin,
-    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, Row,
-    StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter, InvoiceRepository,
+    InvoiceType, NameRowRepository, NameRowType, NameStoreJoin, NameStoreJoinFilter,
+    NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, Row, StorageConnection,
+    StoreFilter, StoreRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -12,7 +13,8 @@ use crate::sync::{
 };
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 
 #[allow(non_snake_case)]
@@ -142,6 +144,36 @@ impl SyncTranslation for NameStoreJoinTranslation {
             name_is_supplier: name.is_supplier,
         };
 
+        // On central, keep the incoming OG join for a patient and delete any other
+        // join for the same name & store (issue #12365): a synthesized
+        // prescription-visibility join (see the invoice translator) is replaced by
+        // OG's, and OG duplicates converge to the most recently received one.
+        // Patients only — that's the scope of the prescription-visibility flow, and
+        // it avoids the duplicate lookup for the far more common facility joins
+        if CentralServerConfig::is_central_server() && name.r#type == NameRowType::Patient {
+            let duplicate_joins: Vec<IntegrationOperation> =
+                NameStoreJoinRepository::new(connection)
+                    .query_by_filter(
+                        NameStoreJoinFilter::new()
+                            .name_id(EqualFilter::equal_to(name.id.clone()))
+                            .store_id(EqualFilter::equal_to(result.store_id.clone())),
+                    )?
+                    .into_iter()
+                    .filter(|join| join.name_store_join.id != result.id)
+                    .map(|join| {
+                        IntegrationOperation::delete(NameStoreJoinRowDelete(
+                            join.name_store_join.id,
+                        ))
+                    })
+                    .collect();
+
+            if !duplicate_joins.is_empty() {
+                let mut operations = vec![IntegrationOperation::upsert(result)];
+                operations.extend(duplicate_joins);
+                return Ok(PullTranslateResult::IntegrationOperations(operations));
+            }
+        }
+
         Ok(PullTranslateResult::upsert(result))
     }
 
@@ -190,9 +222,32 @@ impl SyncTranslation for NameStoreJoinTranslation {
 
     fn try_translate_from_delete_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
+        // On central, keep the join while the name still has prescriptions in the
+        // store (issue #12365): deleting it would stop the patient syncing to the
+        // site that holds those prescriptions, breaking FK integration there.
+        // In the future this should mark the join inactive instead
+        if CentralServerConfig::is_central_server() {
+            if let Some(join) =
+                NameStoreJoinRepository::new(connection).find_one_by_id(&sync_record.record_id)?
+            {
+                let prescription_count = InvoiceRepository::new(connection).count(Some(
+                    InvoiceFilter::new()
+                        .name_id(EqualFilter::equal_to(join.name_id))
+                        .store_id(EqualFilter::equal_to(join.store_id))
+                        .r#type(InvoiceType::Prescription.equal_to()),
+                ))?;
+
+                if prescription_count > 0 {
+                    return Ok(PullTranslateResult::Ignored(
+                        "Not deleted, name has prescriptions in store".to_string(),
+                    ));
+                }
+            }
+        }
+
         // it is possible for name store join to be set inactive
         // this is handled in the upsert translation
         Ok(PullTranslateResult::delete(NameStoreJoinRowDelete(
@@ -205,11 +260,13 @@ impl SyncTranslation for NameStoreJoinTranslation {
 mod tests {
     use super::*;
     use crate::sync::{
-        test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+        test::merge_helpers::merge_all_name_links, test_util_set_is_central_server,
+        translations::ToSyncRecordTranslationType,
     };
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
-        CursorAndLimit, FilterBuilder, RowOrDelete,
+        CursorAndLimit, FilterBuilder, InvoiceRow, InvoiceRowRepository, RowOrDelete, SyncAction,
+        SyncRecordData,
     };
     use serde_json::json;
 
@@ -302,4 +359,247 @@ mod tests {
             assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
         }
     }
+
+    /// On central, an incoming OG join for a patient replaces any existing join
+    /// for the same name & store — a synthesized prescription-visibility join or
+    /// an OG duplicate. Non-patient joins are not deduped (issue #12365)
+    #[actix_rt::test]
+    async fn test_name_store_join_dedup_keeps_incoming_join() {
+        let translator = NameStoreJoinTranslation {};
+
+        let (_, connection, _, _) = setup_all(
+            "test_name_store_join_dedup_keeps_incoming_join",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+
+        let incoming_join = |id: &str, name_id: &str, store_id: &str| SyncBufferRow {
+            table_name: "name_store_join".to_string(),
+            record_id: id.to_string(),
+            data: SyncRecordData(json!({
+                "ID": id,
+                "name_ID": name_id,
+                "store_ID": store_id,
+                "inactive": false
+            })),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        // A synthesized prescription-visibility join for the patient ("testId")
+        // is replaced by OG's
+        let synthesized_id = "synthesized_join".to_string();
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one_without_changelog(&NameStoreJoinRow {
+                id: synthesized_id.clone(),
+                store_id: "store_b".to_string(),
+                name_id: "testId".to_string(),
+                name_is_customer: true,
+                name_is_supplier: false,
+            })
+            .unwrap();
+
+        let patient = NameRowRepository::new(&connection)
+            .find_one_by_id("testId")
+            .unwrap()
+            .unwrap();
+
+        let translation_result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &incoming_join("og_name_store_join", "testId", "store_b"),
+            )
+            .unwrap();
+
+        assert_eq!(
+            translation_result,
+            PullTranslateResult::IntegrationOperations(vec![
+                IntegrationOperation::upsert(NameStoreJoinRow {
+                    id: "og_name_store_join".to_string(),
+                    store_id: "store_b".to_string(),
+                    name_id: "testId".to_string(),
+                    name_is_customer: patient.is_customer,
+                    name_is_supplier: patient.is_supplier,
+                }),
+                IntegrationOperation::delete(NameStoreJoinRowDelete(synthesized_id)),
+            ])
+        );
+
+        // An OG duplicate for the same patient & store is replaced too
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one_without_changelog(&NameStoreJoinRow {
+                id: "og_join_old".to_string(),
+                store_id: "store_a".to_string(),
+                name_id: "patient2".to_string(),
+                name_is_customer: true,
+                name_is_supplier: false,
+            })
+            .unwrap();
+
+        let patient = NameRowRepository::new(&connection)
+            .find_one_by_id("patient2")
+            .unwrap()
+            .unwrap();
+
+        let translation_result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &incoming_join("og_join_new", "patient2", "store_a"),
+            )
+            .unwrap();
+
+        assert_eq!(
+            translation_result,
+            PullTranslateResult::IntegrationOperations(vec![
+                IntegrationOperation::upsert(NameStoreJoinRow {
+                    id: "og_join_new".to_string(),
+                    store_id: "store_a".to_string(),
+                    name_id: "patient2".to_string(),
+                    name_is_customer: patient.is_customer,
+                    name_is_supplier: patient.is_supplier,
+                }),
+                IntegrationOperation::delete(NameStoreJoinRowDelete("og_join_old".to_string())),
+            ])
+        );
+
+        // Re-receiving the same join (same id) is a plain upsert, not a dedup
+        let translation_result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &incoming_join("og_join_old", "patient2", "store_a"),
+            )
+            .unwrap();
+
+        assert_eq!(
+            translation_result,
+            PullTranslateResult::upsert(NameStoreJoinRow {
+                id: "og_join_old".to_string(),
+                store_id: "store_a".to_string(),
+                name_id: "patient2".to_string(),
+                name_is_customer: patient.is_customer,
+                name_is_supplier: patient.is_supplier,
+            })
+        );
+
+        // A non-patient join is not deduped, even with a duplicate present
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one_without_changelog(&NameStoreJoinRow {
+                id: "facility_join_old".to_string(),
+                store_id: "store_b".to_string(),
+                name_id: "name_store_a".to_string(),
+                name_is_customer: false,
+                name_is_supplier: true,
+            })
+            .unwrap();
+
+        let facility_name = NameRowRepository::new(&connection)
+            .find_one_by_id("name_store_a")
+            .unwrap()
+            .unwrap();
+
+        let translation_result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &incoming_join("facility_join_new", "name_store_a", "store_b"),
+            )
+            .unwrap();
+
+        assert_eq!(
+            translation_result,
+            PullTranslateResult::upsert(NameStoreJoinRow {
+                id: "facility_join_new".to_string(),
+                store_id: "store_b".to_string(),
+                name_id: "name_store_a".to_string(),
+                name_is_customer: facility_name.is_customer,
+                name_is_supplier: facility_name.is_supplier,
+            })
+        );
+    }
+
+    /// On central, a join is not deleted while the name still has prescriptions
+    /// in the store (issue #12365)
+    #[actix_rt::test]
+    async fn test_name_store_join_delete_blocked_by_prescriptions() {
+        let translator = NameStoreJoinTranslation {};
+
+        let (_, connection, _, _) = setup_all(
+            "test_name_store_join_delete_blocked_by_prescriptions",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one_without_changelog(&NameStoreJoinRow {
+                id: "og_name_store_join".to_string(),
+                store_id: "store_b".to_string(),
+                name_id: "name_store_a".to_string(),
+                name_is_customer: false,
+                name_is_supplier: true,
+            })
+            .unwrap();
+
+        let delete_record = SyncBufferRow {
+            table_name: "name_store_join".to_string(),
+            record_id: "og_name_store_join".to_string(),
+            data: SyncRecordData(json!({})),
+            action: SyncAction::Delete,
+            ..Default::default()
+        };
+
+        // No prescriptions for the name in the store: delete goes through
+        let translation_result = translator
+            .try_translate_from_delete_sync_record(&connection, &delete_record)
+            .unwrap();
+        assert_eq!(
+            translation_result,
+            PullTranslateResult::delete(NameStoreJoinRowDelete("og_name_store_join".to_string()))
+        );
+
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&InvoiceRow {
+                id: "prescription_for_name_store_a".to_string(),
+                store_id: "store_b".to_string(),
+                name_id: "name_store_a".to_string(),
+                r#type: InvoiceType::Prescription,
+                ..Default::default()
+            })
+            .unwrap();
+
+        // With a prescription the join is kept
+        let translation_result = translator
+            .try_translate_from_delete_sync_record(&connection, &delete_record)
+            .unwrap();
+        assert_eq!(
+            translation_result,
+            PullTranslateResult::Ignored(
+                "Not deleted, name has prescriptions in store".to_string()
+            )
+        );
+
+        // The inactive soft-delete routes through the same path and is also kept
+        let inactive_record = SyncBufferRow {
+            table_name: "name_store_join".to_string(),
+            record_id: "og_name_store_join".to_string(),
+            data: SyncRecordData(json!({
+                "ID": "og_name_store_join",
+                "name_ID": "name_store_a",
+                "store_ID": "store_b",
+                "inactive": true
+            })),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+        let translation_result = translator
+            .try_translate_from_upsert_sync_record(&connection, &inactive_record)
+            .unwrap();
+        assert_eq!(
+            translation_result,
+            PullTranslateResult::Ignored(
+                "Not deleted, name has prescriptions in store".to_string()
+            )
+        );
+    }
+
 }
