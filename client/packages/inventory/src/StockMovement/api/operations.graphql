@@ -247,5 +247,15 @@ mutation batchStockRelocationLine(
         }
       }
     }
+    delete {
+      __typename
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
   }
 }
