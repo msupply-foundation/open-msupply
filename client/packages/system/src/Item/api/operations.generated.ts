@@ -564,6 +564,7 @@ export type ItemFragment = {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
     ignoreForOrders: boolean;
+    margin: number;
   } | null;
 };
 
@@ -813,6 +814,7 @@ export type ItemsWithStockLinesQuery = {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
         ignoreForOrders: boolean;
+        margin: number;
       } | null;
     }>;
   };
@@ -1190,6 +1192,7 @@ export type ItemByIdQuery = {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
         ignoreForOrders: boolean;
+        margin: number;
       } | null;
     }>;
   };
@@ -2011,6 +2014,7 @@ export const ItemFragmentDoc = gql`
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
       ignoreForOrders
+      margin
     }
   }
   ${LocationTypeFragmentDoc}

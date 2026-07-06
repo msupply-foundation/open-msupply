@@ -16,8 +16,14 @@ import { useSaveInboundLines } from './utils';
 import { isA } from '../../../utils';
 import { PurchaseOrderLineFragment } from '@openmsupply-client/purchasing/src/purchase_order/api/operations.generated';
 import { InboundLineFragment } from '../operations.generated';
+import { getDefaultSellPricePerPack } from '../../DetailView/modals/utils';
 
 export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
+
+type SellPriceContext = {
+  supplierMargin: number;
+  itemMarginOverridesSupplierMargin: boolean;
+};
 
 // PO line item has fewer fields than the inbound line item fragment.
 // Fill in defaults for the missing fields.
@@ -42,10 +48,24 @@ const makePurchaseOrderLineField = (pol: PurchaseOrderLineFragment) => ({
 const createDraftLine = (
   pol: PurchaseOrderLineFragment,
   invoiceId: string,
+  sellPriceContext: SellPriceContext,
   overrides?: Partial<DraftInboundLine>
 ): DraftInboundLine => {
   const exchangeRate = pol.purchaseOrder?.foreignExchangeRate ?? 1;
   const costPricePerPack = pol.pricePerPackAfterDiscount * exchangeRate;
+  const numberOfPacks = overrides?.numberOfPacks ?? 0;
+
+  const sellPricePerPack = getDefaultSellPricePerPack({
+    costPricePerPack,
+    packSize: pol.requestedPackSize,
+    defaultPackSize: pol.item.defaultPackSize,
+    defaultSellPricePerPack:
+      pol.item.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+    itemMargin: pol.item.itemStoreProperties?.margin ?? 0,
+    supplierMargin: sellPriceContext.supplierMargin,
+    itemMarginOverridesSupplierMargin:
+      sellPriceContext.itemMarginOverridesSupplierMargin,
+  });
 
   return {
     __typename: 'InvoiceLineNode',
@@ -55,14 +75,16 @@ const createDraftLine = (
     item: toInboundLineItem(pol.item),
     itemName: pol.item.name,
     packSize: pol.requestedPackSize,
-    numberOfPacks: 0,
+    numberOfPacks,
     costPricePerPack,
-    sellPricePerPack: costPricePerPack,
+    sellPricePerPack,
     totalBeforeTax: 0,
     totalAfterTax: 0,
     foreignCurrencyPriceBeforeTax: 0,
     volumePerPack: 0,
     shippedPackSize: pol.requestedPackSize,
+    // Packs shipped defaults to packs received
+    shippedNumberOfPacks: numberOfPacks,
     purchaseOrderLine: makePurchaseOrderLineField(pol),
     isCreated: true,
     ...overrides,
@@ -77,12 +99,24 @@ export const useDraftPurchaseOrderInboundLines = (
 
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
 
-  const { externalInboundShipmentLinesMustBeAuthorised } = usePreferences();
+  const {
+    externalInboundShipmentLinesMustBeAuthorised,
+    itemMarginOverridesSupplierMargin,
+  } = usePreferences();
   const {
     query: { data },
     isExternal,
   } = useInboundShipment();
   const invoiceId = data?.id ?? '';
+
+  const supplierMargin = data?.otherParty?.margin ?? 0;
+  const sellPriceContext: SellPriceContext = useMemo(
+    () => ({
+      supplierMargin,
+      itemMarginOverridesSupplierMargin: !!itemMarginOverridesSupplierMargin,
+    }),
+    [supplierMargin, itemMarginOverridesSupplierMargin]
+  );
   const defaultStatus =
     isExternal && externalInboundShipmentLinesMustBeAuthorised
       ? InvoiceLineStatusType.Pending
@@ -131,9 +165,8 @@ export const useDraftPurchaseOrderInboundLines = (
       const convertedPrice = pol.pricePerPackAfterDiscount * exchangeRate;
 
       setDraftLines([
-        createDraftLine(purchaseOrderLine, invoiceId, {
+        createDraftLine(purchaseOrderLine, invoiceId, sellPriceContext, {
           numberOfPacks,
-          shippedNumberOfPacks: numberOfPacks,
           totalBeforeTax: convertedPrice * numberOfPacks,
           totalAfterTax: convertedPrice * numberOfPacks,
           foreignCurrencyPriceBeforeTax:
@@ -143,19 +176,32 @@ export const useDraftPurchaseOrderInboundLines = (
       ]);
       setIsDirty(true);
     }
-  }, [existingLines, purchaseOrderLine, invoiceId, isDirty, setIsDirty]);
+  }, [
+    existingLines,
+    purchaseOrderLine,
+    invoiceId,
+    isDirty,
+    setIsDirty,
+    defaultStatus,
+    sellPriceContext,
+  ]);
 
   const addDraftLine = useCallback(
     (initialPatch?: Partial<DraftInboundLine>) => {
       if (!purchaseOrderLine) return;
-      const newLine = createDraftLine(purchaseOrderLine, invoiceId, {
-        status: defaultStatus,
-        ...initialPatch,
-      });
+      const newLine = createDraftLine(
+        purchaseOrderLine,
+        invoiceId,
+        sellPriceContext,
+        {
+          status: defaultStatus,
+          ...initialPatch,
+        }
+      );
       setIsDirty(true);
       setDraftLines(prev => [...prev, newLine]);
     },
-    [purchaseOrderLine, invoiceId, setIsDirty, defaultStatus]
+    [purchaseOrderLine, invoiceId, setIsDirty, defaultStatus, sellPriceContext]
   );
 
   const duplicateDraftLine = useCallback(

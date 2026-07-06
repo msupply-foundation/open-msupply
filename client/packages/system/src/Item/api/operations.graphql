@@ -267,6 +267,7 @@ fragment Item on ItemNode {
   itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
     ignoreForOrders
+    margin
   }
 }
 
