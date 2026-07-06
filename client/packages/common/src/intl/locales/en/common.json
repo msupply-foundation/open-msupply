@@ -908,6 +908,7 @@
   "label.calculate-demand": "Include in GAPS calculations",
   "label.calculated-demand": "Calculated demand",
   "label.campaign": "Campaign/program",
+  "label.campaign-only": "Campaign",
   "label.can-skip-dose": "Can skip dose",
   "label.cancel-prescription": "Cancel prescription",
   "label.cancelled": "Cancelled",

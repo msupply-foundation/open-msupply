@@ -194,6 +194,15 @@ export const useStocktakeColumns = ({
         defaultHideOnMobile: true,
       },
       {
+        id: 'campaign',
+        header: t('label.campaign-only'),
+        accessorFn: row => row.campaign?.name ?? '',
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        defaultHideOnMobile: true,
+      },
+      {
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
