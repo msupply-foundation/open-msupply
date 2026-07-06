@@ -43,7 +43,8 @@ export const DetailView = () => {
 
   const columns = useStockMovementColumns();
 
-  const { table } = useNonPaginatedMaterialTable<StockMovementLineFragment>({
+  const { table, selectedRows } =
+    useNonPaginatedMaterialTable<StockMovementLineFragment>({
     tableId: 'stock-movement-detail',
     columns,
     isLoading,
@@ -84,7 +85,11 @@ export const DetailView = () => {
       <SidePanel movement={data} />
       <Toolbar movement={data} />
       <MaterialTable table={table} />
-      <Footer movement={data} />
+      <Footer
+        movement={data}
+        selectedRows={selectedRows}
+        resetRowSelection={table.resetRowSelection}
+      />
       {isOpen && (
         <StockMovementLineEdit
           movement={data}
