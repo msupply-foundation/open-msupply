@@ -2423,6 +2423,7 @@
   "messages.no-stock-movement-lines": "No lines have been added to this stock movement yet.",
   "messages.confirm-delete-stock-movement-lines_one": "Are you sure you want to delete this line?",
   "messages.confirm-delete-stock-movement-lines_other": "Are you sure you want to delete these {{count}} lines?",
+  "messages.cant-delete-finalised-stock-movement-lines": "Lines cannot be deleted from a finalised stock movement",
   "messages.no-transaction-other-facility": "Stock transactions are not recorded for vaccinations given in other facilities",
   "messages.no-vaccine-items-configured": "No vaccine items configured for this vaccine course",
   "messages.no-vvm-statuses": "No VVM statuses configured",
