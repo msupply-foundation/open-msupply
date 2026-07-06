@@ -27,6 +27,7 @@ pub enum UpdateStockRelocationError {
     StockRelocationDoesNotExist,
     NotThisStoreRelocation,
     StockRelocationFinalised,
+    CannotReverseStatus,
     MovementHasNoLines,
     LineValidation {
         line_id: String,
@@ -56,6 +57,9 @@ pub fn update_stock_relocation(
             }
 
             if let Some(status) = input.status {
+                if status.index() < row.status.index() {
+                    return Err(CannotReverseStatus);
+                }
                 if status != StockRelocationStatus::New && row.confirmed_datetime.is_none() {
                     row.confirmed_datetime = Some(Utc::now().naive_utc());
                 }
@@ -383,6 +387,23 @@ mod test {
                 line_id,
                 error: ValidateMovementError::NotEnoughStock("changed_sl".to_string()),
             })
+        );
+
+        let reversed_movement = new_movement(&service_provider, &ctx).await;
+        service
+            .update_stock_relocation(
+                &ctx,
+                "store_a",
+                set_status(&reversed_movement, StockRelocationStatus::Confirmed),
+            )
+            .unwrap();
+        assert_eq!(
+            service.update_stock_relocation(
+                &ctx,
+                "store_a",
+                set_status(&reversed_movement, StockRelocationStatus::New)
+            ),
+            Err(UpdateStockRelocationError::CannotReverseStatus)
         );
 
         let movement_id = new_movement(&service_provider, &ctx).await;
