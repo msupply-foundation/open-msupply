@@ -344,9 +344,19 @@ export type StockMovementDraftLineFragment = {
   destinationLocation?: {
     __typename: 'LocationNode';
     id: string;
-    code: string;
     name: string;
     onHold: boolean;
+    code: string;
+    volume: number;
+    volumeUsed: number;
+    locationType?: {
+      __typename: 'LocationTypeNode';
+      id: string;
+      name: string;
+      maxTemperature: number;
+      minTemperature: number;
+    } | null;
+    stock: { __typename: 'StockLineConnector'; totalCount: number };
   } | null;
 };
 
@@ -382,9 +392,19 @@ export type StockRelocationDraftLinesQuery = {
     destinationLocation?: {
       __typename: 'LocationNode';
       id: string;
-      code: string;
       name: string;
       onHold: boolean;
+      code: string;
+      volume: number;
+      volumeUsed: number;
+      locationType?: {
+        __typename: 'LocationTypeNode';
+        id: string;
+        name: string;
+        maxTemperature: number;
+        minTemperature: number;
+      } | null;
+      stock: { __typename: 'StockLineConnector'; totalCount: number };
     } | null;
   }>;
 };
@@ -524,9 +544,22 @@ export const StockMovementDraftLineFragmentDoc = gql`
     destinationLocation {
       __typename
       id
-      code
       name
       onHold
+      code
+      volume
+      volumeUsed
+      locationType {
+        id
+        name
+        maxTemperature
+        minTemperature
+      }
+      stock {
+        ... on StockLineConnector {
+          totalCount
+        }
+      }
     }
   }
 `;
