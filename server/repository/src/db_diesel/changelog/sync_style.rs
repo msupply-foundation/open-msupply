@@ -716,6 +716,20 @@ impl ChangelogTableName {
                 transport: V6,
                 multi_device_site: false,
             },
+
+            // A table this site doesn't recognise (see `ChangelogTableName::Other`).
+            // It has no real sync style: never distribute it to a remote, reject it as
+            // a v7 authoring record, and mark it as belonging to neither v5 nor v6 so it
+            // is excluded from every transport's distribution filter.
+            Other(_) => SyncStyle {
+                authoring: vec![LegacyOnly],
+                distribution: vec![D::NotDistributed],
+                transport: SyncVersions {
+                    is_v5: false,
+                    is_v6: false,
+                },
+                multi_device_site: false,
+            },
         }
     }
 }
