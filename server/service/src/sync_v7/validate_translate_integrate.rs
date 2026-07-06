@@ -456,3 +456,27 @@ pub(crate) fn validate_translate_integrate_in_memory(
         })
         .map_err(|e| e.to_inner_error())
 }
+
+/// Offline/CLI entry point: integrate whatever is pending in the sync buffer for
+/// `source_site_id`, mirroring the remote `integrate` step during initialisation but without an
+/// API session or logger. Used by the CLI's `initialise-from-export` for v7 exports, where the
+/// buffer rows come from a file rather than a pull.
+pub fn integrate_pending_sync_buffer_v7(
+    connection: &StorageConnection,
+    source_site_id: i32,
+) -> Result<(), RepositoryError> {
+    let active_stores = ActiveStoresOnSite::get(connection)
+        .map_err(|e| RepositoryError::as_db_error("Failed to load active stores", e))?;
+
+    validate_translate_integrate(
+        connection,
+        None,
+        source_site_id,
+        None,
+        SyncContext::Remote {
+            active_stores,
+            is_initialising: true,
+        },
+        true,
+    )
+}
