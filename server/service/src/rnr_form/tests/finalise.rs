@@ -21,7 +21,7 @@ mod finalise {
             RnRFormLineRow {
                 id: "negative_line".to_string(),
                 rnr_form_id: mock_rnr_form_b().id,
-                item_link_id: mock_item_c().id,
+                item_id: mock_item_c().id,
                 final_balance: -5.0,
                 ..Default::default()
             }
@@ -98,7 +98,7 @@ mod finalise {
             RnRFormLineRow {
                 id: "auto_populated_line".to_string(),
                 rnr_form_id: mock_rnr_form_b().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 snapshot_quantity_received: 5.0,
                 snapshot_quantity_consumed: 7.0,
                 snapshot_adjustments: 1.0,
@@ -110,7 +110,7 @@ mod finalise {
             RnRFormLineRow {
                 id: "manually_entered_line".to_string(),
                 rnr_form_id: mock_rnr_form_b().id,
-                item_link_id: mock_item_b().id,
+                item_id: mock_item_b().id,
                 entered_quantity_received: Some(10.0),
                 entered_quantity_consumed: Some(14.0),
                 entered_adjustments: Some(5.0),
@@ -156,7 +156,15 @@ mod finalise {
         // Check the internal order (requisition) has been created
 
         let requisition = RequisitionRepository::new(&context.connection)
-            .query_one(RequisitionFilter::new().id(EqualFilter::equal_to(updated_row.linked_requisition_id.as_ref().unwrap().to_owned())))
+            .query_one(
+                RequisitionFilter::new().id(EqualFilter::equal_to(
+                    updated_row
+                        .linked_requisition_id
+                        .as_ref()
+                        .unwrap()
+                        .to_owned(),
+                )),
+            )
             .unwrap()
             .unwrap();
 
@@ -174,12 +182,12 @@ mod finalise {
         assert_eq!(requisition.requisition_row.store_id, mock_store_a().id);
 
         // Check the same number of lines in the internal order as the RnR form
-        let requisition_lines = RequisitionLineRepository::new(&context.connection)
-            .query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(requisition.requisition_row.id.to_string())),
-            )
-            .unwrap();
+        let requisition_lines =
+            RequisitionLineRepository::new(&context.connection)
+                .query_by_filter(RequisitionLineFilter::new().requisition_id(
+                    EqualFilter::equal_to(requisition.requisition_row.id.to_string()),
+                ))
+                .unwrap();
 
         assert_eq!(requisition_lines.len(), 3); // 1 from rnr_form mock data, plus 2 (above)
 
@@ -187,7 +195,7 @@ mod finalise {
         let auto_populated_line = &requisition_lines
             .iter()
             .find(|line| {
-                line.requisition_line_row.item_link_id == auto_populated_line().item_link_id
+                line.requisition_line_row.item_id == auto_populated_line().item_id
             })
             .unwrap()
             .requisition_line_row;
@@ -201,7 +209,7 @@ mod finalise {
         let manually_entered_line = &requisition_lines
             .iter()
             .find(|line| {
-                line.requisition_line_row.item_link_id == manually_entered_line().item_link_id
+                line.requisition_line_row.item_id == manually_entered_line().item_id
             })
             .unwrap()
             .requisition_line_row;

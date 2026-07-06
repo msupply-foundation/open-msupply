@@ -4,7 +4,7 @@ import { SupportedLocales } from '@common/intl';
 import { PropsWithChildrenOnly } from '@common/types';
 import mediaQuery from 'css-mediaquery';
 import { SnackbarProvider } from 'notistack';
-import { QueryClientProvider, QueryClient } from 'react-query';
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { GqlProvider, KBarProvider } from '../..';
 import { Environment } from '@openmsupply-client/config';

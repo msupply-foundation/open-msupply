@@ -7,9 +7,9 @@ export const useHasCustomerProgramRequisitionSettings = (
 ) => {
   const api = useResponseApi();
 
-  return useQuery(
-    api.keys.programSettings(),
-    () => api.hasCustomerProgramRequisitionSettings(customerNameIds),
-    { enabled }
-  );
+  return useQuery({
+    queryKey: api.keys.programSettings(),
+    queryFn: () => api.hasCustomerProgramRequisitionSettings(customerNameIds),
+    enabled
+  });
 };

@@ -7,7 +7,7 @@ import {
 } from 'graphql-request';
 import { AuthError, getAuthCookie } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
-import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
+import { DocumentNode } from 'graphql';
 import { RequestConfig } from 'graphql-request/build/esm/types';
 import { createRegisteredContext } from 'react-singleton-context';
 
@@ -20,16 +20,13 @@ export type SkipRequest = (documentNode: DocumentNode) => boolean;
 const permissionExceptions = [
   'reports',
   'stockCounts',
-  'invoiceCounts',
+  'inboundShipmentCounts',
+  'inboundShipmentExternalCounts',
+  'outboundShipmentCounts',
   'itemCounts',
   'requisitionCounts',
   'temperatureNotifications',
 ];
-
-// these queries are not considered to be part of the user's activity
-// they occur in the background and should not be used to determine
-// if the user has remained active
-const ignoredQueries = ['refreshToken', 'syncInfo', 'temperatureNotifications'];
 
 interface ResponseError {
   message?: string;
@@ -56,7 +53,9 @@ const hasPermissionException = (errors: ResponseError[]) =>
 const handleResponseError = (errors: ResponseError[]) => {
   if (hasError(errors, AuthError.Unauthenticated)) {
     LocalStorage.setItem('/error/auth', AuthError.Unauthenticated);
-    return;
+    // Throw instead of resolving with emptyData (`{}`), so the query errors
+    // cleanly rather than letting undefined cascade into components and crash.
+    throw new Error(AuthError.Unauthenticated);
   }
 
   if (hasError(errors, AuthError.PermissionDenied)) {
@@ -76,20 +75,9 @@ const handleResponseError = (errors: ResponseError[]) => {
   );
 };
 
-const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
-  const operationNode = definitionNode as OperationDefinitionNode;
-  if (operationNode.operation !== 'query') return false;
-
-  return ignoredQueries.indexOf(operationNode.name?.value ?? '') !== -1;
-};
-
-const shouldSaveRequestTime = (documentNode?: DocumentNode) =>
-  documentNode && !documentNode?.definitions?.some(shouldIgnoreQuery);
-
 class GQLClient extends GraphQLClient {
   private emptyData: object;
   private skipRequest: SkipRequest;
-  private lastRequestTime: Date;
   private _url: string;
 
   constructor(
@@ -101,7 +89,6 @@ class GQLClient extends GraphQLClient {
     this._url = url;
     this.emptyData = {};
     this.skipRequest = skipRequest || (() => false);
-    this.lastRequestTime = new Date();
   }
 
   public request<T, V extends Variables | undefined>(
@@ -119,8 +106,6 @@ class GQLClient extends GraphQLClient {
     if (this.skipRequest(document)) {
       return new Promise(() => this.emptyData);
     }
-
-    if (shouldSaveRequestTime(document)) this.lastRequestTime = new Date();
 
     super.setHeader('Authorization', `Bearer ${getAuthCookie().token}`);
     const response = options.document
@@ -148,7 +133,6 @@ class GQLClient extends GraphQLClient {
 
   public setSkipRequest = (skipRequest: SkipRequest) =>
     (this.skipRequest = skipRequest);
-  public getLastRequestTime = () => this.lastRequestTime;
   public getUrl = () => this._url;
   public setUrl = (url: string) => {
     this._url = url;

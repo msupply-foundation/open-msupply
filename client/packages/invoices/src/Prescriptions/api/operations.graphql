@@ -262,7 +262,7 @@ query prescriptions(
   }
 }
 
-fragment PrescriptionHistoryRow on InvoiceNode {
+fragment PrescriptionWithLines on InvoiceNode {
   __typename
   id
   invoiceNumber
@@ -289,7 +289,7 @@ fragment PrescriptionHistoryRow on InvoiceNode {
   }
 }
 
-query prescriptionHistory(
+query prescriptionsWithLines(
   $first: Int
   $offset: Int
   $key: InvoiceSortFieldInput!
@@ -306,7 +306,7 @@ query prescriptionHistory(
     ... on InvoiceConnector {
       __typename
       nodes {
-        ...PrescriptionHistoryRow
+        ...PrescriptionWithLines
       }
       totalCount
     }

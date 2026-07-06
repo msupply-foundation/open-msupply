@@ -95,7 +95,7 @@ export const usePrintReport = () => {
     throw new Error(t('messages.error-printing-report'));
   };
 
-  const { mutate, mutateAsync, isLoading } = useMutation({
+  const { mutate, mutateAsync, isPending: isLoading } = useMutation({
     mutationFn,
     onSuccess: (fileId, { format = EnvUtils.printFormat }) => {
       if (!fileId) throw new Error(t('messages.error-printing-report'));

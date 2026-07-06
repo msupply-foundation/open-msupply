@@ -45,7 +45,7 @@ export const usePrescription = (id?: string) => {
 
   const {
     mutateAsync: updateMutation,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdate(data?.id ?? '');
 
@@ -61,7 +61,7 @@ export const usePrescription = (id?: string) => {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreate();
 
@@ -74,7 +74,7 @@ export const usePrescription = (id?: string) => {
   // DELETE
   const {
     mutateAsync: deleteMutation,
-    isLoading: isDeleting,
+    isPending: isDeleting,
     error: deleteError,
   } = useDelete();
 
@@ -159,7 +159,9 @@ const useUpdate = (id: string) => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([PRESCRIPTION]);
+      queryClient.invalidateQueries({
+        queryKey: [PRESCRIPTION]
+      });
     },
   });
 };
@@ -187,6 +189,8 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PRESCRIPTION]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [PRESCRIPTION]
+    }),
   });
 };

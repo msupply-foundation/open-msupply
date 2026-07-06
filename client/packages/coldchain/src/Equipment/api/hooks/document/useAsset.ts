@@ -13,25 +13,25 @@ export const useAsset = () => {
 
 export const useAssetById = (assetId: string | undefined) => {
   const api = useAssetApi();
-  return useQuery(
-    api.keys.detail(assetId || ''),
-    () => api.get.byId(assetId || ''),
-    {
-      enabled: !!assetId,
-    }
-  );
+  return useQuery({
+    queryKey: api.keys.detail(assetId || ''),
+    queryFn: () => api.get.byId(assetId || ''),
+    enabled: !!assetId
+  });
 };
 
 export const useFetchAssetById = () => {
   const api = useAssetApi();
-  return useMutation(api.get.byId, {
-    onError: () => {},
+  return useMutation({
+    mutationFn: api.get.byId,
+    onError: () => {}
   });
 };
 
 export const useFetchAssetByGS1 = () => {
   const api = useAssetApi();
-  return useMutation(api.get.byGs1Elements, {
-    onError: () => {},
+  return useMutation({
+    mutationFn: api.get.byGs1Elements,
+    onError: () => {}
   });
 };

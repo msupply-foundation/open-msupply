@@ -1,4 +1,5 @@
 use super::{
+    insert_log::create_logs_for_imported_mapping_dates,
     location::set_asset_location,
     query::get_asset,
     validate::{check_asset_exists, check_asset_number_exists},
@@ -15,7 +16,7 @@ use repository::{
         asset_row::{AssetRow, AssetRowRepository},
     },
     migrations::constants::COLD_CHAIN_EQUIPMENT_UUID,
-    ActivityLogType, LocationRow, RepositoryError, StorageConnection, StringFilter, Upsert,
+    ActivityLogType, LocationRow, LocationRowRepository, RepositoryError, StorageConnection, StringFilter,
 };
 use util::uuid::uuid;
 
@@ -26,6 +27,7 @@ pub enum InsertAssetError {
     DatabaseError(RepositoryError),
     SerialNumberAlreadyExists,
     AssetNumberAlreadyExists,
+    InvalidMappingDate { key: String, value: String },
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -79,6 +81,15 @@ pub fn insert_asset(
             let new_asset = generate(input);
             AssetRowRepository::new(connection).upsert_one(&new_asset, None)?;
 
+            if let Some(props) = &new_asset.properties {
+                create_logs_for_imported_mapping_dates(
+                    connection,
+                    &new_asset.id,
+                    &ctx.user_id,
+                    props,
+                )?;
+            }
+
             // Automatically create a location for this asset (if it's a cold chain asset, and store is active on this site)
             if new_asset.asset_class_id == Some(COLD_CHAIN_EQUIPMENT_UUID.to_string()) {
                 let active_stores = ActiveStoresOnSite::get(&ctx.connection);
@@ -108,7 +119,7 @@ pub fn insert_asset(
                             location_type_id: None, // TODO(future): Based on asset type try to determine location type
                             volume: 0.0, // TODO(future): Map asset volume to location volume if applicable
                         };
-                        new_location.upsert(connection)?;
+                        LocationRowRepository::new(connection).upsert_one(&new_location)?;
                         set_asset_location(connection, &new_asset.id, vec![new_location.id])?;
                     }
                 }

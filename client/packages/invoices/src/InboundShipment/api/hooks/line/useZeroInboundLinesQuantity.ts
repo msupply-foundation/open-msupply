@@ -2,17 +2,17 @@ import {
   useTranslation,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useIsInboundDisabled } from '../utils/useIsInboundDisabled';
 import { useSaveInboundLines } from './useSaveInboundLines';
 import { InboundLineFragment } from '../../operations.generated';
+import { useInboundShipment } from '../useInboundShipment';
 
 export const useZeroInboundLinesQuantity = (
   rowsToZero: InboundLineFragment[],
   resetRowSelection: () => void
 ): (() => void) => {
   const t = useTranslation();
-  const { mutateAsync } = useSaveInboundLines();
-  const isDisabled = useIsInboundDisabled();
+  const { isDisabled, isExternal } = useInboundShipment();
+  const { mutateAsync } = useSaveInboundLines(isExternal);
 
   const onZeroQuantities = async () => {
     const linesToUpdate = rowsToZero.map(line => ({

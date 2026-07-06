@@ -26,6 +26,7 @@ impl PreferenceQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryStorePreferences,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
@@ -58,6 +59,7 @@ impl PreferenceQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryStore,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
@@ -93,7 +95,7 @@ impl PreferenceMutations {
         input: UpsertPreferencesInput,
     ) -> Result<OkResponse> {
         upsert_preferences(ctx, store_id, input).map_err(|err| {
-            log::error!("Error upserting preferences: {:?}", err);
+            log::error!("Error upserting preferences: {err:?}");
             err
         })?;
 

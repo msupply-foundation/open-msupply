@@ -190,6 +190,9 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   // adds the command to the cmd+K menu so that the keys are visible
   useRegisterActions(getButtonActions(), [disabled, variant]);
 
+  const shortcut =
+    variant === 'save' ? 'Alt+S' : variant === 'cancel' ? 'Escape' : undefined;
+
   return (
     <ButtonWithIcon
       autoFocus={autoFocus}
@@ -201,11 +204,6 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       label={customLabel ?? t(labelKey)}
       tabIndex={variant === 'cancel' ? 1 : 0}
       type={type}
-      onKeyDown={e => {
-        if (e.key === 'Enter') {
-          onClick(e);
-        }
-      }}
       sx={
         disabled
           ? {
@@ -216,6 +214,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       }
       shouldShrink={shouldShrink}
       ref={ref}
+      aria-keyshortcuts={shortcut}
     />
   );
 };

@@ -1,9 +1,13 @@
 use crate::{
-    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
+    invoice::{
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        inbound_shipment::InboundShipmentType,
+    },
     invoice_line::{
         stock_in_line::DeleteStockInLine,
         validate::{check_line_belongs_to_invoice, check_line_row_exists},
     },
+    validate::check_other_party_store_is_disabled,
 };
 use repository::{InvoiceLineRow, InvoiceType, StorageConnection};
 
@@ -13,6 +17,7 @@ pub fn validate(
     input: &DeleteStockInLine,
     store_id: &str,
     connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<InvoiceLineRow, DeleteInboundShipmentServiceLineError> {
     use DeleteInboundShipmentServiceLineError::*;
 
@@ -25,7 +30,15 @@ pub fn validate(
     if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
+    }
     if !check_invoice_is_editable(&invoice) {
+        return Err(CannotEditInvoice);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(CannotEditInvoice);
     }
     if !check_line_belongs_to_invoice(&line, &invoice) {

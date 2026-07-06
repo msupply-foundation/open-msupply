@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
-use log::{error, info};
 use repository::database_settings::DatabaseSettings;
 use reqwest::{Client, Error, Response};
 use serde::{Deserialize, Serialize};
@@ -11,12 +10,10 @@ use service::{
     sync::settings::{BatchSize, SyncSettings},
 };
 use std::{
-    collections::HashMap,
-    io::Write,
-    path::PathBuf,
+    path::{Path, PathBuf},
     time::{Duration, Instant},
 };
-use tokio::{process::Child, sync::mpsc, task::JoinHandle, time::sleep};
+use tokio::{process::Child, task::JoinHandle, time::sleep};
 use util::{hash::sha256, uuid::uuid};
 const TEST_API: &str = "sync/v5/test";
 
@@ -29,6 +26,15 @@ pub struct LoadTest {
     /// The OMS central server URL including protocol (http) and port
     #[clap(long)]
     pub oms_central_url: String,
+
+    /// Username of an OMS central server user account, used to authenticate the readiness
+    /// check that waits for OMS central to sync data from mSupply central before starting remotes
+    #[clap(long, default_value = "admin")]
+    pub oms_central_username: String,
+
+    /// Password for the OMS central server user account
+    #[clap(long, default_value = "pass")]
+    pub oms_central_password: String,
 
     /// The output directory for test results
     #[clap(short, long, default_value = "load_test")]
@@ -64,8 +70,6 @@ struct SyncSite {
     #[serde(rename = "site_ID")]
     site_id: usize,
     name: String,
-    #[serde(rename = "password")]
-    password_sha256: String,
 }
 #[derive(Deserialize, Debug, Clone)]
 struct SyncStore {
@@ -99,95 +103,48 @@ struct SyncInfo {
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct LatestSyncStatus {
-    latest_sync_status: FullSyncStatus,
+    // Null until the site's first-ever sync run inserts a sync log row — `wait_for_sync` treats
+    // `None` as "initial sync hasn't started yet" and keeps polling.
+    latest_sync_status: Option<FullSyncStatus>,
 }
+// The remote's `latestSyncStatus` returns the V7 node. We need `isSyncing` (to know a sync cycle
+// has settled), `error` (to know whether that cycle failed — e.g. central is unreachable; without
+// this a failed sync looks identical to a successful one, just faster) and `summary.finished` (to
+// know the cycle integrated). Per-cycle push/pull counts are NOT read here: on the V7 node they're
+// cursor-delta progress fields that read 0 for single-batch syncs. The actual throughput is
+// measured on OMS central instead, by parsing its `sync_v7 push` / `sync_v7 pull` log lines after
+// the test.
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct FullSyncStatus {
     is_syncing: bool,
-    push: Option<SyncDone>,
-    push_v6: Option<SyncDone>,
-    pull_v6: Option<SyncDone>,
-    pull_remote: Option<SyncDone>,
-    pull_central: Option<SyncDone>,
+    error: Option<SyncErrorInfo>,
     summary: SyncStatus,
-}
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-struct SyncDone {
-    done: Option<usize>,
 }
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct SyncStatus {
     finished: Option<DateTime<Utc>>,
 }
-
-#[derive(Debug, Clone)]
-struct Metric {
-    start_time: Instant,
-    end_time: Instant,
-    pushed: usize,
-    pulled: usize,
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+struct SyncErrorInfo {
+    variant: String,
+    full_error: String,
 }
 
-impl Metric {
-    fn new() -> Self {
-        let now = Instant::now();
-        Self {
-            start_time: now,
-            end_time: now,
-            pushed: 0,
-            pulled: 0,
-        }
-    }
-
-    fn update_sync_metrics(&mut self, site_info: &SyncInfo) {
-        let FullSyncStatus {
-            push,
-            push_v6,
-            pull_v6,
-            pull_remote,
-            pull_central,
-            ..
-        } = &site_info.data.latest_sync_status;
-        self.pushed = push_v6.as_ref().map_or(0, |s| s.done.unwrap_or(0))
-            + push.as_ref().map_or(0, |s| s.done.unwrap_or(0));
-
-        self.pulled = pull_v6.as_ref().map_or(0, |s| s.done.unwrap_or(0))
-            + pull_remote.as_ref().map_or(0, |s| s.done.unwrap_or(0))
-            + pull_central.as_ref().map_or(0, |s| s.done.unwrap_or(0));
-    }
+// OMS central is a central server, so its `latestSyncStatus` returns the V5/V6 node
+// (it syncs from mSupply central via v5). Used by the readiness gate below.
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+struct OmsCentralFullSyncStatus {
+    is_syncing: bool,
+    summary: SyncStatus,
 }
 
 impl LoadTest {
-    pub fn new(
-        msupply_central_url: String,
-        oms_central_url: String,
-        base_port: u16,
-        output_dir: PathBuf,
-        test_site_name: Option<String>,
-        test_site_pass: Option<String>,
-        sites: usize,
-        lines: usize,
-        duration: usize,
-    ) -> Self {
-        Self {
-            msupply_central_url,
-            oms_central_url,
-            base_port,
-            output_dir,
-            test_site_name,
-            test_site_pass,
-            sites,
-            lines,
-            duration,
-        }
-    }
-
     pub async fn run(&self) -> anyhow::Result<()> {
         use tokio::process::Command;
-        use util::hash::sha256;
 
         println!("Starting load test with the following parameters:");
         let msupply_central_test_url = format!("{}/{}", self.msupply_central_url, TEST_API);
@@ -199,13 +156,16 @@ impl LoadTest {
         println!("Requisition Lines: {}", self.lines);
         println!("Duration: {} seconds", self.duration);
 
+        // Fail fast if either central server is misconfigured. Without this a bad URL or wrong
+        // credential only surfaces deep into setup — after the output dir has been wiped and sites
+        // and items have been created on mSupply central.
+        println!("Checking central server connections");
+        self.validate_central_servers().await?;
+
         let _ = std::fs::remove_dir_all(&self.output_dir);
         let client = Client::new();
         let test_site_name = self.test_site_name.as_ref().unwrap();
         let test_site_pass = Some(sha256(self.test_site_pass.as_ref().unwrap()));
-
-        // Check the OMS central server sync api is available by using the site_status endpoint
-        self.check_oms_central(&client).await?;
 
         // Creating the sites on OG central
         let num_sites = if self.sites > 1 { self.sites } else { 2 };
@@ -229,6 +189,11 @@ impl LoadTest {
             )
             .await?;
 
+        // The remotes sync v7 solely from OMS central, so it must hold the sites/stores/items
+        // (and the site rows used for auth) before they initialise. Drive OMS central through a
+        // sync cycle per created store so all stores migrate from mSupply central.
+        self.wait_for_oms_central_synced(num_sites).await?;
+
         self.create_configs(&test_sites)?;
 
         // Start each remote OMS instance
@@ -237,12 +202,9 @@ impl LoadTest {
         let duration = self.duration as u64;
         let num_lines = self.lines;
 
-        let (metrics_tx, mut metrics_rx) = mpsc::unbounded_channel::<Metric>();
-
         for test_site in test_sites {
             let dir = self.output_dir.clone();
             let item_ids_copy = item_ids.clone();
-            let metrics_sender = metrics_tx.clone();
             let handle: JoinHandle<anyhow::Result<()>> = tokio::spawn(async move {
                 let log = std::fs::File::create(
                     dir.join(format!("site_{}_output.log", test_site.site.site_id)),
@@ -259,71 +221,89 @@ impl LoadTest {
 
                 sleep(Duration::from_secs(10)).await; // Let db get created, migrated and initialisation started
 
-                info!(
+                println!(
                     "Site {} started, waiting for initial sync to complete",
                     test_site.site.site_id
                 );
-                if let Err(e) = test_site.wait_for_sync().await {
-                    kill(&mut child, test_site.site.site_id).await;
-                    return Err(e);
-                }
+                // The watermark (the last settled sync's `finished` timestamp) lets each later
+                // sync wait for a strictly newer cycle, instead of mistaking the previous cycle's
+                // still-reported status for the freshly-triggered one.
+                let mut last_finished = match test_site.wait_for_initial_sync().await {
+                    Ok(finished) => finished,
+                    Err(e) => {
+                        report_site_failure(
+                            &mut child,
+                            &dir,
+                            test_site.site.site_id,
+                            "initial sync",
+                        )
+                        .await;
+                        return Err(e);
+                    }
+                };
 
-                info!("Beginning load test for site: {}", test_site.site.site_id);
+                println!("Beginning load test for site: {}", test_site.site.site_id);
 
+                // Drive load: create a requisition and sync it, repeatedly, until the duration
+                // elapses. The records this generates flow to OMS central as pushes (and come back
+                // to other sites as pulls); the counts are recorded on OMS central and parsed from
+                // its log after the test, not measured here. This loop owns the per-site duration
+                // bound (checked after each cycle); the timeout in `run` is only a coarse backstop
+                // for sites that hang during initialisation, before this timer starts.
                 let start = std::time::Instant::now();
+                let mut cycles = 0u64;
                 loop {
-                    let mut metric = Metric::new();
                     if let Err(e) =
                         create_and_send_requisition(&test_site, num_lines, &item_ids_copy).await
                     {
-                        kill(&mut child, test_site.site.site_id).await;
+                        report_site_failure(
+                            &mut child,
+                            &dir,
+                            test_site.site.site_id,
+                            "creating requisition",
+                        )
+                        .await;
                         return Err(e);
                     };
 
-                    let site_info = match test_site.do_sync_until_integrated().await {
-                        Ok(site_info) => site_info,
+                    let cycle_start = std::time::Instant::now();
+                    // A failed sync cycle (e.g. central returns a 502 under load) is logged but NOT
+                    // fatal: the remote stays alive, so we just drive the next cycle. Only an
+                    // unresponsive/dead remote ends the site, surfaced here as an Err.
+                    match test_site.do_sync_cycle(last_finished).await {
+                        Ok(finished) => last_finished = finished,
                         Err(e) => {
-                            kill(&mut child, test_site.site.site_id).await;
+                            report_site_failure(
+                                &mut child,
+                                &dir,
+                                test_site.site.site_id,
+                                "syncing requisition",
+                            )
+                            .await;
                             return Err(e.into());
                         }
-                    };
-
-                    metric.end_time = std::time::Instant::now();
-                    metric.update_sync_metrics(&site_info);
-                    println!(
-                        "Site {}: Pushed: {}, Pulled: {}, Duration: {:?}",
-                        test_site.site.site_id,
-                        metric.pushed,
-                        metric.pulled,
-                        metric.end_time.duration_since(metric.start_time)
-                    );
-
-                    // Send metric to parent process immediately
-                    if let Err(e) = metrics_sender.send(metric) {
-                        println!("Failed to send metric to parent: {}", e);
                     }
+                    cycles += 1;
+                    println!(
+                        "Site {}: sync cycle {} done in {:?}",
+                        test_site.site.site_id,
+                        cycles,
+                        cycle_start.elapsed()
+                    );
 
                     if start.elapsed().as_secs() >= duration {
                         kill(&mut child, test_site.site.site_id).await;
                         break;
                     }
                 }
+                println!(
+                    "Site {} finished after {} sync cycles",
+                    test_site.site.site_id, cycles
+                );
                 Ok(())
             });
             handles.push(handle)
         }
-
-        // Drop the sender so the receiver knows when all senders are done
-        drop(metrics_tx);
-
-        // Spawn a task to collect metrics and handle timeout
-        let results_handle = tokio::spawn(async move {
-            let mut all_metrics = Vec::new();
-            while let Some(metric) = metrics_rx.recv().await {
-                all_metrics.push(metric);
-            }
-            all_metrics
-        });
 
         // Wait for either all tasks to complete or timeout. We delay by a significant amount here as the child processes don't start their timers based
         // on duration until after they've initialised, where this timer will start essentially immediately, before the children have initialised.
@@ -351,103 +331,141 @@ impl LoadTest {
             }
         }
 
-        // Collect all metrics that were sent via channels
-        let results = match tokio::time::timeout(Duration::from_secs(5), results_handle).await {
-            Ok(Ok(metrics)) => metrics,
-            Ok(Err(e)) => {
-                println!("Error collecting results: {}", e);
-                Vec::new()
-            }
-            Err(_) => {
-                println!("Timeout waiting for results collection");
-                Vec::new()
-            }
-        };
-
-        // Aggregate the results into groups of 5 seconds
-        println!("\nProcessing results...");
-
-        self.write_results(results);
-
+        // Throughput is measured on OMS central itself, from the `sync_v7 push`/`pull` lines it
+        // logs (it sees all traffic). OMS central normally runs on a separate machine whose log
+        // isn't reachable from here, so analysis happens separately, not in this CLI.
         println!("end");
         Ok(())
     }
 
-    async fn check_oms_central(&self, client: &Client) -> Result<(), anyhow::Error> {
-        let site_status_url = format!("{}/{}", self.oms_central_url, "central/sync/site_status");
+    /// Verify, before doing any setup, that both central servers are reachable with valid
+    /// credentials: the mSupply central test-site basic-auth credentials are accepted, and an OMS
+    /// central bearer token can be obtained. Each check uses the exact same auth the rest of the
+    /// test relies on, so a pass here means the later requests will authenticate too.
+    async fn validate_central_servers(&self) -> Result<(), anyhow::Error> {
+        self.validate_msupply_central().await?;
+        self.validate_oms_central().await?;
+        Ok(())
+    }
 
-        let request = serde_json::json!({
-            "cursor": 0,
-            "batch_size": 512,
-            "is_initialised": true,
-            "syncV5Settings": {
-                "serverUrl": self.msupply_central_url,
-                "username": self.test_site_name.as_ref().unwrap(),
-                "passwordSha256": sha256(self.test_site_pass.as_ref().unwrap()),
-                "siteUuid": "load_test",
-                "appName": "load_test",
-                "appVersion": "0",
-                "syncVersion": "9",
-            },
-            "syncV6Version": 0
-        });
+    /// Check the mSupply central URL is reachable and the test-site credentials are accepted, via a
+    /// read-only `sync/v5/site` GET (the same basic auth — site name + sha256 password — that
+    /// `create_sites`/`create_items` use, but without mutating anything).
+    async fn validate_msupply_central(&self) -> Result<(), anyhow::Error> {
+        let url = format!("{}/sync/v5/site", self.msupply_central_url);
+        let username = self.test_site_name.as_ref().unwrap();
+        let password = sha256(self.test_site_pass.as_ref().unwrap());
 
-        let response = client.post(&site_status_url).json(&request).send().await?;
-        if !response.status().is_success() {
-            let message = response.text().await?;
+        let client = Client::builder()
+            .timeout(Duration::from_secs(30))
+            .build()
+            .expect("Failed to build validation HTTP client");
+
+        let response = client
+            .get(&url)
+            .header("app-name", "load_test")
+            .header("app-version", "0")
+            .header("msupply-site-uuid", "load_test")
+            .header("sync-version", "9001")
+            .basic_auth(username, Some(password))
+            .send()
+            .await
+            .map_err(|e| {
+                anyhow!(
+                    "mSupply central is not reachable at '{}': {}",
+                    self.msupply_central_url,
+                    format_reqwest_error(&e)
+                )
+            })?;
+
+        let status = response.status();
+        if status == reqwest::StatusCode::UNAUTHORIZED || status == reqwest::StatusCode::FORBIDDEN {
             return Err(anyhow!(
-                "Failed to connect to OMS central server: {}",
-                message
+                "mSupply central rejected the credentials for site '{}' (HTTP {})",
+                username,
+                status
             ));
         }
+        if !status.is_success() {
+            let body = response.text().await.unwrap_or_default();
+            return Err(anyhow!(
+                "mSupply central at {} returned HTTP {}: {}",
+                url,
+                status,
+                body
+            ));
+        }
+
         println!(
-            "Connected to OMS central server sync API at {}",
-            site_status_url
+            "mSupply central reachable and credentials valid ({})",
+            self.msupply_central_url
         );
         Ok(())
     }
 
-    fn write_results(&self, results: Vec<Metric>) {
-        // Group metrics by 5-second intervals
-        if !results.is_empty() {
-            let output_file = self.output_dir.join("load_test_results.txt");
-            let mut file =
-                std::fs::File::create(output_file).expect("Failed to create output file");
-            writeln!(file, "time, records pushed, records pulled")
-                .expect("Failed to write to output file");
+    /// Check the OMS central URL is reachable and the user credentials are valid by logging in for
+    /// a bearer token — the same login `wait_for_oms_central_synced` performs.
+    async fn validate_oms_central(&self) -> Result<(), anyhow::Error> {
+        let url = reqwest::Url::parse(&self.oms_central_url)
+            .map_err(|e| anyhow!("Invalid OMS central url '{}': {}", self.oms_central_url, e))?;
 
-            let mut grouped_metrics: Vec<(u64, usize, usize)> = Vec::new();
-            let mut interval_map: HashMap<u64, (usize, usize)> = HashMap::new();
-            let first_start = results
-                .iter()
-                .map(|m| m.start_time)
-                .min()
-                .unwrap_or(Instant::now());
+        crate::graphql::Api::new_with_token(
+            url,
+            self.oms_central_username.clone(),
+            self.oms_central_password.clone(),
+        )
+        .await
+        .map_err(|e| {
+            anyhow!(
+                "Could not authenticate with OMS central at '{}' as user '{}': {}",
+                self.oms_central_url,
+                self.oms_central_username,
+                e
+            )
+        })?;
 
-            for metric in &results {
-                let seconds_since_start = metric.start_time.duration_since(first_start).as_secs();
-                let interval = seconds_since_start / 5;
+        println!(
+            "OMS central reachable and credentials valid ({})",
+            self.oms_central_url
+        );
+        Ok(())
+    }
 
-                let entry = interval_map.entry(interval).or_insert((0, 0));
-                entry.0 += metric.pushed;
-                entry.1 += metric.pulled;
-            }
+    /// Wait until OMS central has synced the freshly-created sites/stores/items from mSupply
+    /// central. The remotes sync v7 solely from OMS central, so it must hold this data (and the
+    /// site rows used for auth) before they initialise. OMS central is a central server, so its
+    /// `latestSyncStatus` returns the V5/V6 node. We remember the previously completed sync and
+    /// wait for a newer one, so the data we just created is guaranteed to be included.
+    async fn wait_for_oms_central_synced(&self, store_count: usize) -> Result<(), anyhow::Error> {
+        // OMS central enforces access control on the sync-status GraphQL, so log in with an
+        // OMS central user account and use the returned bearer token (the spawned remotes get
+        // away with a placeholder header only because they run with debug_no_access_control).
+        let url = reqwest::Url::parse(&self.oms_central_url)
+            .map_err(|e| anyhow!("Invalid OMS central url '{}': {}", self.oms_central_url, e))?;
+        let api = crate::graphql::Api::new_with_token(
+            url,
+            self.oms_central_username.clone(),
+            self.oms_central_password.clone(),
+        )
+        .await
+        .map_err(|e| anyhow!("Failed to authenticate with OMS central: {}", e))?;
 
-            let mut keys: Vec<_> = interval_map.keys().collect();
-            keys.sort();
-
-            for key in keys {
-                if let Some(&(pushed, pulled)) = interval_map.get(key) {
-                    grouped_metrics.push((*key, pushed, pulled));
-                }
-            }
-            for (interval, pushed, pulled) in grouped_metrics {
-                writeln!(file, "{}, {}, {}", (interval + 1) * 5, pushed, pulled)
-                    .expect("Failed to write to output file");
-            }
-        } else {
-            println!("No results collected during the test.");
+        // COGS migrates one store's data to OMS central per sync cycle (see transition.md,
+        // "Moving one Store at a Time"). A site can only upgrade to v7 once all its stores have
+        // reached migration status "synced" on COGS, so drive OMS central through a full sync
+        // cycle for each store we created — pulling and integrating each in turn — before the
+        // remotes initialise and request their v7 token.
+        let cycles = store_count + 1; // need one extra cycle as first cycle triggers the first store to get migrated by COGS
+        println!(
+            "Syncing OMS central to migrate {} store(s) from mSupply central...",
+            store_count
+        );
+        for cycle in 1..=cycles {
+            run_oms_central_sync_cycle(&api).await?;
+            println!("OMS central sync cycle {}/{} complete", cycle, cycles);
         }
+        println!("OMS central is synced.");
+        Ok(())
     }
 
     fn create_configs(&self, test_sites: &Vec<TestSite>) -> Result<(), anyhow::Error> {
@@ -465,10 +483,13 @@ impl LoadTest {
                     "https://demo-open.msupply.org".to_string(),
                     "http://localhost:8000".to_string(),
                 ],
-                base_dir: Some("app_data".to_string()),
+                base_dir: "app_data".to_string(),
                 machine_uid: None,
                 override_is_central_server: false,
-                workers: None,
+                standalone_store_name: None,
+                standalone_admin_username: None,
+                standalone_admin_password: None,
+                workers: Some(2),
             },
             database: DatabaseSettings {
                 username: "postgres".to_string(),
@@ -486,6 +507,8 @@ impl LoadTest {
             backup: None,
             mail: None,
             sync: None,
+            features: None,
+            changelog_partition: None,
         };
         let base_config_path = self.output_dir.join("base.yaml");
         std::fs::write(base_config_path, serde_yml::to_string(&base_config)?)?;
@@ -523,7 +546,7 @@ impl LoadTest {
             .header("app-name", "load_test")
             .header("app-version", "0")
             .header("msupply-site-uuid", "load_test")
-            .header("sync-version", "9")
+            .header("sync-version", "9001")
             .header("content-length", body.len())
             .basic_auth(test_site_name, test_site_pass.to_owned())
             .body(body)
@@ -538,6 +561,7 @@ impl LoadTest {
 
     fn create_test_sites(&self, site_n_stores: Vec<SiteNStore>) -> Vec<TestSite> {
         let mut test_sites: Vec<TestSite> = Vec::new();
+        let password_sha256 = sha256("pass");
         for (i, site_n_store) in site_n_stores.iter().enumerate() {
             let next = if i >= site_n_stores.len() - 1 {
                 0
@@ -554,10 +578,13 @@ impl LoadTest {
                     debug_no_access_control: true, // Allow us to use GQL on the remote sites without auth
                     discovery: DiscoveryMode::Disabled,
                     cors_origins: vec![],
-                    base_dir: Some(database_path.to_string()),
+                    base_dir: database_path.to_string(),
                     machine_uid: Some("1337_test".to_string()),
                     override_is_central_server: false,
-                    workers: None,
+                    standalone_store_name: None,
+                    standalone_admin_username: None,
+                    standalone_admin_password: None,
+                    workers: Some(1), // We're spawning many remote site in separate processes. Each one of these remote sites don't need several actix workers. Their main runtime will still have num CPU cores workers.
                 },
                 database: DatabaseSettings {
                     username: "postgres".to_string(),
@@ -572,23 +599,36 @@ impl LoadTest {
                     init_sql: None,
                 },
                 sync: Some(SyncSettings {
-                    url: self.msupply_central_url.clone(),
+                    // Remotes sync v7 solely from OMS central. The remote DB is freshly
+                    // reset, so it defaults to SyncVersion::V7 (see populate_sync_version
+                    // migration); pointing the sync url at OMS central is all that's needed.
+                    url: self.oms_central_url.clone(),
                     username: site_n_store.site.name.clone(),
-                    password_sha256: site_n_store.site.password_sha256.clone(),
+                    password_sha256: password_sha256.clone(),
                     interval_seconds: 600,
                     batch_size: BatchSize {
                         remote_pull: 512,
                         remote_push: 512,
                         central_pull: 512,
                     },
+                    disable_integration_transaction: false,
+                    relax_hardware_id_token_checks: false,
                 }),
                 logging: None,
                 backup: None,
                 mail: None,
+                features: None,
+                changelog_partition: None,
             };
 
             let full_site = TestSite {
-                client: Client::new(),
+                // Bound request/connect time so an unresponsive (hung) remote surfaces as a
+                // timeout error instead of blocking a poll forever.
+                client: Client::builder()
+                    .timeout(Duration::from_secs(30))
+                    .connect_timeout(Duration::from_secs(10))
+                    .build()
+                    .expect("Failed to build site HTTP client"),
                 graphql_url: format!("http://localhost:{}/{}", settings.server.port, "graphql"),
                 site: site_n_store.site.clone(),
                 store: site_n_store.store.clone(),
@@ -603,6 +643,68 @@ impl LoadTest {
         }
         test_sites
     }
+}
+
+/// Trigger a single OMS central sync cycle and wait for it to finish (pull + integrate).
+/// Completion is detected by `latestSyncStatus.summary` reporting a newer `finished` timestamp
+/// than before the cycle was triggered, with no sync in progress.
+async fn run_oms_central_sync_cycle(api: &crate::graphql::Api) -> Result<(), anyhow::Error> {
+    let previous_finished = query_oms_central_sync_status(api)
+        .await?
+        .and_then(|s| s.summary.finished);
+
+    // Trigger a sync now rather than waiting on OMS central's natural sync interval.
+    let _ = api
+        .gql("mutation ManualSync { root: manualSync }", json!({}), None)
+        .await;
+
+    let start = Instant::now();
+    loop {
+        sleep(Duration::from_secs(2)).await;
+
+        if let Some(status) = query_oms_central_sync_status(api).await? {
+            if !status.is_syncing
+                && status.summary.finished.is_some()
+                && status.summary.finished != previous_finished
+            {
+                return Ok(());
+            }
+        }
+
+        if start.elapsed().as_secs() > 300 {
+            return Err(anyhow!(
+                "Timed out waiting for an OMS central sync cycle to finish"
+            ));
+        }
+    }
+}
+
+/// Query OMS central's `latestSyncStatus`. Returns `None` when OMS central has not produced a
+/// sync log yet (the union resolves to null). OMS central is central, so the status is the
+/// V5/V6 node. The query aliases the field to `root` because `Api::gql` returns `data.root`.
+async fn query_oms_central_sync_status(
+    api: &crate::graphql::Api,
+) -> Result<Option<OmsCentralFullSyncStatus>, anyhow::Error> {
+    const SYNC_STATUS_QUERY: &str = r#"
+query SyncInfo {
+  root: latestSyncStatus {
+    ... on FullSyncStatusV5V6Node {
+      isSyncing
+      summary {
+        finished
+      }
+    }
+  }
+}
+"#;
+
+    let value = api
+        .gql(SYNC_STATUS_QUERY, json!({}), None)
+        .await
+        .map_err(|e| anyhow!("Failed to query OMS central sync status: {}", e))?;
+
+    serde_json::from_value(value)
+        .map_err(|e| anyhow!("Failed to parse OMS central sync status: {}", e))
 }
 
 async fn create_sites(
@@ -627,7 +729,7 @@ async fn create_sites(
             .header("app-name", "load_test")
             .header("app-version", "0")
             .header("msupply-site-uuid", "load_test")
-            .header("sync-version", "9")
+            .header("sync-version", "9001")
             .header("content-length", body.len())
             .basic_auth(test_site_name, test_site_pass.to_owned())
             .body(body)
@@ -653,7 +755,108 @@ async fn kill(child: &mut Child, site_id: usize) {
     }
 }
 
+/// Log diagnostics for a failed/unresponsive site, then kill its remote process. Reports whether
+/// the remote process has already exited (a crash) or is still running but not responding (a hang),
+/// and dumps the tail of the remote's own output log — which holds the underlying panic/error,
+/// since the load test itself only sees "connection refused"/timeouts from outside.
+async fn report_site_failure(child: &mut Child, output_dir: &Path, site_id: usize, phase: &str) {
+    match child.try_wait() {
+        Ok(Some(status)) => eprintln!(
+            "Site {} failed during {}: remote process has exited ({}) — see its log below for the cause",
+            site_id, phase, status
+        ),
+        Ok(None) => eprintln!(
+            "Site {} failed during {}: remote process is still running but not responding (likely hung or deadlocked)",
+            site_id, phase
+        ),
+        Err(e) => eprintln!(
+            "Site {} failed during {}: could not query remote process state: {}",
+            site_id, phase, e
+        ),
+    }
+
+    let log_path = output_dir.join(format!("site_{}_output.log", site_id));
+    match read_log_tail(&log_path, 100) {
+        Ok(tail) if !tail.trim().is_empty() => {
+            eprintln!(
+                "Site {} remote log tail ({}):\n{}",
+                site_id,
+                log_path.display(),
+                tail
+            )
+        }
+        Ok(_) => eprintln!(
+            "Site {} remote log {} is empty",
+            site_id,
+            log_path.display()
+        ),
+        Err(e) => eprintln!(
+            "Site {} could not read remote log {}: {}",
+            site_id,
+            log_path.display(),
+            e
+        ),
+    }
+
+    kill(child, site_id).await;
+}
+
+/// Read the last `max_lines` lines of a file (best-effort, whole-file read — the remote output
+/// logs are small as the remotes don't log verbosely).
+fn read_log_tail(path: &Path, max_lines: usize) -> std::io::Result<String> {
+    let content = std::fs::read_to_string(path)?;
+    let lines: Vec<&str> = content.lines().collect();
+    let start = lines.len().saturating_sub(max_lines);
+    Ok(lines[start..].join("\n"))
+}
+
+/// Render a reqwest error together with its full source chain, so the underlying OS cause
+/// (e.g. "connection refused (os error 61)" vs "operation timed out") is visible — the top-level
+/// Display is only the generic "error sending request for url ...".
+fn format_reqwest_error(e: &reqwest::Error) -> String {
+    use std::error::Error;
+    let mut out = e.to_string();
+    let mut source = e.source();
+    while let Some(cause) = source {
+        out.push_str(" -> ");
+        out.push_str(&cause.to_string());
+        source = cause.source();
+    }
+    out
+}
+
+/// Run `create_and_send_requisition_once`, retrying transient failures. Creating a requisition is a
+/// set of local GraphQL mutations against the site's *own* server (independent of central), but
+/// under heavy load those can briefly fail (e.g. the local server is momentarily saturated). Give it
+/// a few spaced-out attempts before declaring the site dead, so a transient blip doesn't drop a site
+/// mid-test. Each attempt builds a fresh requisition, so a partially-created one is just harmless
+/// orphaned local data.
 async fn create_and_send_requisition(
+    test_site: &TestSite,
+    num_lines: usize,
+    item_ids: &Vec<String>,
+) -> anyhow::Result<()> {
+    const MAX_ATTEMPTS: u32 = 5;
+    const RETRY_DELAY: Duration = Duration::from_secs(30);
+
+    let mut attempt = 1;
+    loop {
+        match create_and_send_requisition_once(test_site, num_lines, item_ids).await {
+            Ok(()) => return Ok(()),
+            Err(e) if attempt < MAX_ATTEMPTS => {
+                eprintln!(
+                    "Site {}: failed to create requisition (attempt {}/{}): {} — retrying in {:?}",
+                    test_site.site.site_id, attempt, MAX_ATTEMPTS, e, RETRY_DELAY
+                );
+                attempt += 1;
+                sleep(RETRY_DELAY).await;
+            }
+            Err(e) => return Err(e),
+        }
+    }
+}
+
+async fn create_and_send_requisition_once(
     test_site: &TestSite,
     num_lines: usize,
     item_ids: &Vec<String>,
@@ -815,16 +1018,58 @@ impl TestSite {
             .await?)
     }
 
-    // Repeatedly starts sync until local db sync info confirms that integration of sync buffer finished
-    // Consider consolidating with similar `sync_omsupply_central` in `server/service/src/sync/test/integration/omsupply_central/mod.rs`
-    async fn do_sync_until_integrated(&self) -> Result<SyncInfo> {
+    /// Wait for the automatic initialisation sync to complete, tolerating transient recorded sync
+    /// errors. Under load central can momentarily return a 502/EOF; the remote records the failed
+    /// cycle but its sync driver stays alive, so we log it and re-trigger rather than declaring the
+    /// site dead. Errs only when the remote itself is unresponsive (crashed/hung) or its sync never
+    /// starts — see `wait_for_sync`.
+    async fn wait_for_initial_sync(&self) -> Result<Option<DateTime<Utc>>> {
+        // No sync has run yet, so anchor the watermark at None — the first settled cycle is the
+        // initialisation sync.
+        let mut previous_finished = None;
         loop {
-            self.do_sync().await?;
-            let sync_info = self.wait_for_sync().await?;
-            if sync_info.data.latest_sync_status.summary.finished.is_some() {
-                return Ok(sync_info);
+            let status = self.wait_for_sync(previous_finished).await?;
+            match &status.error {
+                Some(error) => {
+                    eprintln!(
+                        "Site {}: initial sync attempt failed [{}]: {} — remote is still alive, retrying",
+                        self.site.site_id, error.variant, error.full_error
+                    );
+                    previous_finished = status.summary.finished;
+                    sleep(Duration::from_secs(15)).await;
+                    self.do_sync().await?;
+                }
+                // Settled without a recorded error: initialisation succeeded. Hand the watermark to
+                // the caller so the first load cycle waits for a sync newer than this one.
+                None => return Ok(status.summary.finished),
             }
         }
+    }
+
+    /// Trigger one sync and wait for that cycle to settle, returning its `finished` watermark (so
+    /// the next call can wait for a strictly newer sync — see `wait_for_sync`).
+    ///
+    /// A cycle that settles with a recorded error (e.g. central returned a 502 while we waited for
+    /// integration) is logged to stderr but is NOT fatal: the remote keeps running, and the caller
+    /// simply drives the next cycle (its own loop's duration check decides when to stop). Killing
+    /// the site on such errors — as this previously did — sheds load mid-test and is exactly why
+    /// sites died before the end of a run. Errs only when `wait_for_sync` reports the remote
+    /// unresponsive (crashed/hung), the one genuinely fatal condition.
+    ///
+    // Consider consolidating with similar `sync_omsupply_central` in `server/service/src/sync/test/integration/omsupply_central/mod.rs`
+    async fn do_sync_cycle(
+        &self,
+        previous_finished: Option<DateTime<Utc>>,
+    ) -> Result<Option<DateTime<Utc>>> {
+        self.do_sync().await?;
+        let status = self.wait_for_sync(previous_finished).await?;
+        if let Some(error) = &status.error {
+            eprintln!(
+                "Site {}: sync attempt failed [{}]: {} — remote is still alive, continuing",
+                self.site.site_id, error.variant, error.full_error
+            );
+        }
+        Ok(status.summary.finished)
     }
 
     async fn do_sync(&self) -> Result<Response> {
@@ -844,64 +1089,160 @@ mutation ManualSync {
         };
     }
 
-    async fn wait_for_sync(&self) -> Result<SyncInfo> {
+    /// Poll the remote's `latestSyncStatus` until a sync cycle *newer* than `previous_finished` has
+    /// settled, then return it — whether it finished cleanly or recorded an error. A failed cycle
+    /// is not fatal to the remote (its driver stays alive and retries), so the caller, not this
+    /// poll, decides what to do with an error.
+    ///
+    /// `previous_finished` is the `summary.finished` timestamp captured *before* the sync was
+    /// triggered. `manualSync` only signals the driver and returns immediately, so until the new
+    /// cycle starts `latestSyncStatus` still reports the previous cycle's already-settled status.
+    /// Returning on "any settled status" would mistake that stale row for the new cycle and report
+    /// completion without a real sync having run. Holding out for a *different* `finished` skips it
+    /// regardless of timing, which is what lets us poll immediately and back off afterwards.
+    ///
+    /// Errs only when the remote answers nothing but transport errors for `UNRESPONSIVE_TIMEOUT`
+    /// (crashed/hung), or when its sync never starts within `SYNC_START_TIMEOUT` (`latestSyncStatus`
+    /// stays null). A successful response — even `isSyncing: true` — resets the unresponsive clock,
+    /// so a legitimately long sync doesn't trip it.
+    async fn wait_for_sync(
+        &self,
+        previous_finished: Option<DateTime<Utc>>,
+    ) -> Result<FullSyncStatus> {
+        const UNRESPONSIVE_TIMEOUT: Duration = Duration::from_secs(300);
+        // A fresh site reports `latestSyncStatus: null` until its first sync run inserts a log
+        // row, and that window stretches when many sites initialise concurrently on one machine —
+        // so this is deliberately generous. It only exists so a site whose sync never starts
+        // (e.g. bad sync settings) fails with a clear message instead of polling forever.
+        const SYNC_START_TIMEOUT: Duration = Duration::from_secs(60 * 30);
         const SYNC_INFO_QUERY: &str = r#"
 query SyncInfo {
   latestSyncStatus {
-    isSyncing
-    push {
-      done
-    }
-    pushV6 {
-      done
-    }
-    pullV6 {
-      done
-    }
-    pullRemote {
-      done
-    }
-    pullCentral {
-      done
-    }
-    summary {
-      finished
+    ... on FullSyncStatusV7Node {
+      isSyncing
+      error {
+        variant
+        fullError
+      }
+      summary {
+        finished
+      }
     }
   }
 }
 "#;
-        loop {
-            sleep(Duration::from_millis(1000)).await;
-            let sync_gql = json!({
-                "operationName": "SyncInfo",
-                "query": SYNC_INFO_QUERY,
-            });
+        let sync_gql = json!({
+            "operationName": "SyncInfo",
+            "query": SYNC_INFO_QUERY,
+        });
 
-            let response = match self.do_post(&sync_gql).await {
-                Ok(response) => response,
+        let mut first_error_at: Option<Instant> = None;
+        let mut consecutive_errors: u32 = 0;
+        let mut last_logged_at: Option<Instant> = None;
+        let mut null_status_since: Option<Instant> = None;
+
+        loop {
+            match self.do_post(&sync_gql).await {
+                Ok(response) => {
+                    // The remote answered — it's alive. Reset the unresponsive tracker.
+                    first_error_at = None;
+                    consecutive_errors = 0;
+                    last_logged_at = None;
+
+                    let status = response.status();
+                    if status.is_success() {
+                        let response_text = response.text().await?;
+                        match serde_json::from_str::<SyncInfo>(&response_text) {
+                            Ok(sync_info) => match sync_info.data.latest_sync_status {
+                                Some(sync_status) => {
+                                    // A cycle has settled once the remote reports `isSyncing: false`
+                                    // with a `finished` timestamp (set for both clean and errored
+                                    // cycles). It's the *new* cycle — not the stale previous one —
+                                    // once that timestamp differs from the pre-trigger watermark.
+                                    let is_new_settle = !sync_status.is_syncing
+                                        && sync_status.summary.finished.is_some()
+                                        && sync_status.summary.finished != previous_finished;
+                                    if is_new_settle {
+                                        return Ok(sync_status);
+                                    }
+                                }
+                                // Null until the site's first-ever sync run inserts a log row —
+                                // expected right after startup while the db is created/migrated and
+                                // initialisation kicks off. Keep polling, but fail if it never
+                                // starts.
+                                None => {
+                                    if null_status_since.is_none() {
+                                        println!(
+                                            "Site {}: waiting for initial sync to start",
+                                            self.site.site_id
+                                        );
+                                    }
+                                    let since = *null_status_since.get_or_insert_with(Instant::now);
+                                    if since.elapsed() >= SYNC_START_TIMEOUT {
+                                        return Err(anyhow!(
+                                            "Site {}: sync has not started after {:?} \
+                                             (latestSyncStatus is still null)",
+                                            self.site.site_id,
+                                            since.elapsed(),
+                                        ));
+                                    }
+                                }
+                            },
+                            Err(e) => eprintln!(
+                                "Site {}: failed to parse sync info: {}\nResponse body: {}",
+                                self.site.site_id, e, response_text
+                            ),
+                        };
+                    } else {
+                        let body = response.text().await.unwrap_or_default();
+                        eprintln!(
+                            "Site {}: sync info query returned HTTP {}: {}",
+                            self.site.site_id, status, body
+                        );
+                    }
+                }
                 Err(e) => {
-                    error!("Error fetching sync info: {}", e);
-                    continue;
+                    consecutive_errors += 1;
+                    let since = *first_error_at.get_or_insert_with(Instant::now);
+                    let elapsed = since.elapsed();
+
+                    // Throttle: log the first failure, then at most once every 5s, with the error
+                    // classification and full cause chain to distinguish crash vs hang vs reset.
+                    if last_logged_at.map_or(true, |t| t.elapsed() >= Duration::from_secs(5)) {
+                        eprintln!(
+                            "Site {}: cannot reach {} ({} consecutive failures over {:?}) \
+                             [connect={}, timeout={}, request={}, status={:?}]: {}",
+                            self.site.site_id,
+                            self.graphql_url,
+                            consecutive_errors,
+                            elapsed,
+                            e.is_connect(),
+                            e.is_timeout(),
+                            e.is_request(),
+                            e.status(),
+                            format_reqwest_error(&e),
+                        );
+                        last_logged_at = Some(Instant::now());
+                    }
+
+                    if elapsed >= UNRESPONSIVE_TIMEOUT {
+                        return Err(anyhow!(
+                            "Site {}: remote at {} unresponsive for {:?} ({} consecutive failures); \
+                             last error: {}",
+                            self.site.site_id,
+                            self.graphql_url,
+                            elapsed,
+                            consecutive_errors,
+                            format_reqwest_error(&e),
+                        ));
+                    }
                 }
             };
 
-            if response.status().is_success() {
-                let response_text = response.text().await?;
-                // dbg!(&response_text);
-                let response = serde_json::from_str::<SyncInfo>(&response_text);
-                match response {
-                    Ok(sync_info) => {
-                        // dbg!(&sync_info);
-                        if !sync_info.data.latest_sync_status.is_syncing {
-                            return Ok(sync_info);
-                        }
-                    }
-                    Err(e) => error!("Error parsing SyncInfo: {}, \n{}", e, response_text),
-                };
-            } else {
-                // dbg!(&response);
-                // dbg!(&response.text().await.unwrap());
-            }
+            // Poll-then-wait: we just checked the status, so back off before checking again. The
+            // sleep is at the end (not the start) so a cycle that has already settled on entry is
+            // returned without an upfront delay.
+            sleep(Duration::from_millis(1000)).await;
         }
     }
 }

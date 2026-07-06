@@ -5,8 +5,12 @@ use repository::{
 use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
 use crate::{
-    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
+    invoice::{
+        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        inbound_shipment::InboundShipmentType,
+    },
     invoice_line::validate::{check_item_exists, check_line_exists},
+    validate::check_other_party_store_is_disabled,
 };
 
 use super::{InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError};
@@ -17,6 +21,7 @@ pub fn validate(
     input: &InsertInboundShipmentServiceLine,
     store_id: &str,
     connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<(ItemRow, InvoiceRow), OutError> {
     if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(OutError::LineAlreadyExists);
@@ -43,7 +48,15 @@ pub fn validate(
     if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(OutError::NotAnInboundShipment);
     }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(OutError::WrongInboundShipmentType);
+        }
+    }
     if !check_invoice_is_editable(&invoice) {
+        return Err(OutError::CannotEditInvoice);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(OutError::CannotEditInvoice);
     }
 

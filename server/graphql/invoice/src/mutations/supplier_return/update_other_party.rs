@@ -45,6 +45,7 @@ pub fn update_other_party(
         &ResourceAccessRequest {
             resource: Resource::MutateSupplierReturn,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -90,7 +91,7 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateOtherPa
 
 fn map_error(error: ServiceError) -> Result<UpdateReturnOtherPartyErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::InvoiceDoesNotExist => {

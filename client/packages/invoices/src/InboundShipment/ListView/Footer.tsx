@@ -3,15 +3,17 @@ import {
   Action,
   ActionsFooter,
   DeleteIcon,
+  CopyIcon,
   useTranslation,
   AppFooterPortal,
-  useMutation,
-  useQueryClient,
-  InvoiceNodeStatus,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { InboundRowFragment } from '../api';
-import { useInboundApi } from '../api/hooks/utils/useInboundApi';
+import {
+  InboundRowFragment,
+  useInboundList,
+  useDuplicateInbound,
+} from '../api';
+import { canDeleteInbound } from '../../utils';
 
 export const FooterComponent = ({
   selectedRows,
@@ -21,25 +23,21 @@ export const FooterComponent = ({
   resetRowSelection: () => void;
 }) => {
   const t = useTranslation();
-  const queryClient = useQueryClient();
-  const api = useInboundApi();
-  const { mutateAsync } = useMutation(api.delete);
+
+  const {
+    delete: { deleteInbounds },
+  } = useInboundList();
+  const { duplicateInbound, hasMutatePermission } = useDuplicateInbound();
 
   const deleteAction = async () => {
-    await mutateAsync(selectedRows)
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
-      .catch(err => {
-        throw err;
-      });
+    await deleteInbounds(selectedRows);
     resetRowSelection();
   };
 
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction,
-    canDelete: selectedRows.every(
-      ({ status }) => status === InvoiceNodeStatus.New
-    ),
+    canDelete: selectedRows.every(canDeleteInbound),
     messages: {
       confirmMessage: t('messages.confirm-delete-shipments', {
         count: selectedRows.length,
@@ -50,11 +48,25 @@ export const FooterComponent = ({
     },
   });
 
+  const source = selectedRows[0];
+  const onlyOneSelected = selectedRows.length === 1;
+  const canDuplicate =
+    onlyOneSelected && !!source && hasMutatePermission(!!source.purchaseOrder);
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
+    },
+    {
+      label: t('button.make-a-copy'),
+      icon: <CopyIcon />,
+      onClick: () => source && duplicateInbound(source, resetRowSelection),
+      disabled: !canDuplicate,
+      tooltip: onlyOneSelected
+        ? undefined
+        : t('messages.select-single-shipment-to-copy'),
     },
   ];
 

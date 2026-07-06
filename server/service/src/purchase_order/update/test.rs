@@ -40,7 +40,6 @@ mod update {
 
         let store_id = &mock_store_a().id;
         let purchase_order_id = "purchase_order_id".to_string();
-        let user_permission = false;
 
         service
             .insert_purchase_order(
@@ -63,7 +62,6 @@ mod update {
                     supplier_id: Some("non_existent_supplier".to_string()),
                     ..Default::default()
                 },
-                None
             ),
             Err(UpdatePurchaseOrderError::SupplierDoesNotExist)
         );
@@ -78,7 +76,6 @@ mod update {
                     supplier_id: Some(mock_name_store_b().id.to_string()),
                     ..Default::default()
                 },
-                None
             ),
             Err(UpdatePurchaseOrderError::NotASupplier)
         );
@@ -95,34 +92,8 @@ mod update {
                     }),
                     ..Default::default()
                 },
-                None
             ),
             Err(UpdatePurchaseOrderError::DonorDoesNotExist)
-        );
-
-        // UserUnableToAuthorisePurchaseOrder
-        // Add preference to require authorisation on purchase orders
-        PreferenceRowRepository::new(&context.connection)
-            .upsert_one(&PreferenceRow {
-                id: "authorise_purchase_order_pref".to_string(),
-                key: AuthorisePurchaseOrder.key().to_string(),
-                value: "true".to_string(),
-                store_id: None, // Global pref so needs store: None
-            })
-            .unwrap();
-
-        assert_eq!(
-            service.update_purchase_order(
-                &context,
-                store_id,
-                UpdatePurchaseOrderInput {
-                    id: "purchase_order_id".to_string(),
-                    status: Some(PurchaseOrderStatus::Confirmed),
-                    ..Default::default()
-                },
-                Some(user_permission)
-            ),
-            Err(UpdatePurchaseOrderError::UserUnableToAuthorisePurchaseOrder)
         );
     }
 
@@ -139,7 +110,6 @@ mod update {
 
         let store_id = &mock_store_a().id;
         let purchase_order_id = "purchase_order_id".to_string();
-        let user_permission = true;
 
         // Create a purchase order row with a valid supplier
         service
@@ -214,7 +184,6 @@ mod update {
                     }),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
 
@@ -240,7 +209,6 @@ mod update {
                     status: Some(PurchaseOrderStatus::RequestApproval),
                     ..Default::default()
                 },
-                Some(user_permission),
             )
             .unwrap();
 
@@ -272,7 +240,6 @@ mod update {
                     status: Some(PurchaseOrderStatus::Sent),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
 
@@ -382,7 +349,6 @@ mod update {
                     status: Some(PurchaseOrderStatus::Sent),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
 
@@ -411,7 +377,6 @@ mod update {
 
         let store_id = &mock_store_a().id;
         let purchase_order_id = "purchase_order_id_with_auth".to_string();
-        let user_permission = true;
 
         // Add preference to require authorisation on purchase orders
         PreferenceRowRepository::new(&context.connection)
@@ -471,7 +436,6 @@ mod update {
                     status: Some(PurchaseOrderStatus::RequestApproval),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
 
@@ -500,7 +464,6 @@ mod update {
                     status: Some(PurchaseOrderStatus::Confirmed),
                     ..Default::default()
                 },
-                Some(user_permission),
             )
             .unwrap();
 
@@ -528,7 +491,6 @@ mod update {
                     status: Some(PurchaseOrderStatus::Sent),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
 
@@ -553,7 +515,6 @@ mod update {
                     status: Some(PurchaseOrderStatus::Finalised),
                     ..Default::default()
                 },
-                None,
             )
             .unwrap();
 

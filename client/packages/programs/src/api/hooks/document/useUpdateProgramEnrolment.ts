@@ -4,7 +4,11 @@ import { useProgramEnrolmentApi } from '../utils/useProgramEnrolmentApi';
 export const useUpdateProgramEnrolment = () => {
   const queryClient = useQueryClient();
   const api = useProgramEnrolmentApi();
-  return useMutation(api.updateProgramEnrolment, {
-    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
+  return useMutation({
+    mutationFn: api.updateProgramEnrolment,
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: api.keys.base()
+    })
   });
 };

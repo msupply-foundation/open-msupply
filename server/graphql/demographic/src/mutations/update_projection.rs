@@ -25,6 +25,7 @@ pub fn update_demographic_projection(
         &ResourceAccessRequest {
             resource: Resource::MutateDemographic,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -103,7 +104,7 @@ pub enum UpdateDemographicProjectionErrorInterface {
 
 fn map_error(error: ProjectionServiceError) -> Result<UpdateDemographicProjectionErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Standard Graphql Errors

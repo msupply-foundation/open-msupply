@@ -62,7 +62,7 @@ impl MigrationFragment for Migrate {
                         .set(sync_buffer::integration_error.eq(e.to_string()))
                         .execute(connection.lock().connection())?;
 
-                    println!("Error parsing legacy location data for ID {}: {}", id, e);
+                    println!("Error parsing legacy location data for ID {id}: {e}");
                     continue; // Skip rows with parsing errors
                 }
             };
@@ -131,7 +131,7 @@ async fn migration_location_volume() {
     )
     .unwrap();
 
-    migrate(&connection, Some(version.clone())).unwrap();
+    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
 
     let locations = location::table
         .select((location::id, location::volume, location::name))

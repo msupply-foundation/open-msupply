@@ -20,6 +20,7 @@ fragment UserStoreNode on UserStoreNode {
     monthsItemsExpire
     stocktakeFrequency
     extraFieldsInRequisition
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
     manuallyLinkInternalOrderToInboundShipment
     useConsumptionAndStockFromCustomersForInternalOrders
     editPrescribedQuantityOnPrescription
@@ -91,6 +92,10 @@ query isCentralServer {
   isCentralServer
 }
 
+query isCentralStandalone {
+  isCentralStandalone
+}
+
 query refreshToken {
   refreshToken {
     ... on RefreshToken {
@@ -148,48 +153,10 @@ query permissions($storeId: String!) {
   }
 }
 
-fragment UpdateUser on UpdateUserNode {
-  lastSuccessfulSync
-}
-
-mutation updateUser {
-  updateUser {
-    __typename
-    ... on UpdateUserNode {
-      ...UpdateUser
-    }
-    ... on UpdateUserError {
-      __typename
-      error {
-        ... on InvalidCredentials {
-          __typename
-          description
-        }
-        ... on ConnectionError {
-          __typename
-          description
-        }
-        ... on MissingCredentials {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-
-query lastSuccessfulUserSync {
-  lastSuccessfulUserSync {
-    __typename
-    ...UpdateUser
-  }
-}
-
 query preferences($storeId: String!) {
   preferences(storeId: $storeId) {
     adjustForNumberOfDaysOutOfStock
     allowTrackingOfStockByDonor
-    authoriseGoodsReceived
     authorisePurchaseOrder
     canCreateInternalOrderFromARequisition
     customTranslations
@@ -215,15 +182,37 @@ query preferences($storeId: String!) {
     useSimplifiedMobileUi
     expiredStockPreventIssue
     expiredStockIssueThreshold
+    displayPopulationBasedForecasting
     warnWhenMissingRecentStocktake {
       enabled
       maxAge
       minItems
     }
     warningForExcessRequest
+    externalInboundShipmentLinesMustBeAuthorised
     invoiceStatusOptions
     itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions
+    doNotPrintPlaceholderLineLabels
     isGaps
+    globalTableConfigs
+    backdating {
+      shipmentsEnabled
+      inventoryAdjustmentsEnabled
+      maxDays
+    }
+  }
+}
+
+mutation saveGlobalTableConfigs(
+  $storeId: String!
+  $input: UpsertPreferencesInput!
+) {
+  centralServer {
+    preferences {
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
+      }
+    }
   }
 }

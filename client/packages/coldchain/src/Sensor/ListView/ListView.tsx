@@ -12,27 +12,40 @@ import {
   usePaginatedMaterialTable,
   ColumnDef,
   ColumnType,
+  Typography,
 } from '@openmsupply-client/common';
 import { SensorFragment, useSensorList } from '../api';
 import { SensorEditModal } from '../Components';
 import { BreachTypeCell, useFormatTemperature } from '../../common';
+import { Toolbar } from './Toolbar';
 
 export const SensorListView: FC = () => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   const formatTemperature = useFormatTemperature();
 
-  const {
-    queryParams,
-  } = useUrlQueryParams({
+  const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'serial', dir: 'desc' },
     filters: [
       { key: 'serial' },
       { key: 'name' },
+      { key: 'locationCode' },
+      { key: 'type', condition: 'equalTo' },
     ],
   });
 
-  const { data, isError, isLoading } = useSensorList(queryParams);
+  // Show only active sensors by default; turning the toggle off adds
+  // activeOnly=false to the URL to reveal inactive sensors too. Note useUrlQuery
+  // coerces the param to a boolean, so this compares against `false`, not 'false'.
+  const activeOnly = urlQuery['activeOnly'] !== false;
+
+  const { data, isError, isLoading } = useSensorList({
+    ...queryParams,
+    filterBy: {
+      ...queryParams.filterBy,
+      ...(activeOnly && { isActive: true }),
+    },
+  });
 
   const { isOpen, entity, onClose, onOpen } = useEditModal<SensorFragment>();
 
@@ -58,6 +71,20 @@ export const SensorListView: FC = () => {
         size: 200,
         enableSorting: true,
         enableColumnFilter: true,
+      },
+      {
+        id: 'status',
+        header: t('label.status'),
+        size: 100,
+        accessorFn: row => row.isActive,
+        Cell: ({ cell }) => {
+          const isActive = cell.getValue<boolean>();
+          return (
+            <Typography sx={{ color: isActive ? 'inherit' : 'gray.main' }}>
+              {isActive ? t('label.active') : t('label.inactive')}
+            </Typography>
+          );
+        },
       },
       {
         id: 'cce',
@@ -88,8 +115,8 @@ export const SensorListView: FC = () => {
         accessorFn: row =>
           !!row.latestTemperatureLog?.nodes[0]?.temperature
             ? `${formatTemperature(
-              row.latestTemperatureLog?.nodes[0]?.temperature
-            )}`
+                row.latestTemperatureLog?.nodes[0]?.temperature
+              )}`
             : UNDEFINED_STRING_VALUE,
         size: 130,
       },
@@ -136,6 +163,12 @@ export const SensorListView: FC = () => {
       {isOpen && entity && (
         <SensorEditModal isOpen={isOpen} onClose={onClose} sensor={entity} />
       )}
+      <Toolbar
+        activeOnly={activeOnly}
+        onToggleActiveOnly={checked =>
+          updateQuery({ activeOnly: checked ? '' : 'false' })
+        }
+      />
       <MaterialTable table={table} />
     </>
   );

@@ -67,8 +67,9 @@ pub fn check_location_in_use(
         StockLineFilter::new().location_id(EqualFilter::equal_to(id.to_string())),
         None,
     )?;
-    let invoice_lines = InvoiceLineRepository::new(connection)
-        .query_by_filter(InvoiceLineFilter::new().location_id(EqualFilter::equal_to(id.to_string())))?;
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new().location_id(EqualFilter::equal_to(id.to_string())),
+    )?;
 
     if !stock_lines.is_empty() || !invoice_lines.is_empty() {
         Ok(Some(LocationInUse {

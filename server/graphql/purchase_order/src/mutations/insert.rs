@@ -40,6 +40,7 @@ pub fn insert_purchase_order(
         &ResourceAccessRequest {
             resource: Resource::MutatePurchaseOrder,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -60,7 +61,7 @@ fn map_response(from: Result<PurchaseOrderRow, ServiceError>) -> Result<InsertRe
 }
 
 fn map_error(error: ServiceError) -> Result<InsertResponse> {
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::SupplierDoesNotExist

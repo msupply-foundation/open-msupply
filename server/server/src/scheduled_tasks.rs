@@ -19,7 +19,6 @@ async fn scheduled_task_runner(service_provider: Arc<ServiceProvider>, interval_
 
     loop {
         interval.tick().await;
-        log::debug!("Processing Scheduled Tasks");
         if CentralServerConfig::is_central_server() {
             // Email sending is only supported on the central server
             let send_emails = service_provider
@@ -28,10 +27,10 @@ async fn scheduled_task_runner(service_provider: Arc<ServiceProvider>, interval_
             match send_emails {
                 Ok(num) => {
                     if num > 0 {
-                        log::info!("Sent {} queued emails", num);
+                        log::info!("Sent {num} queued emails");
                     }
                 }
-                Err(error) => log::error!("Error sending queued emails: {:?}", error),
+                Err(error) => log::error!("Error sending queued emails: {error:?}"),
             };
         }
     }

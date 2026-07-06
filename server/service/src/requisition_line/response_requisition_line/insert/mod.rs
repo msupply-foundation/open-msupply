@@ -63,7 +63,7 @@ pub fn insert_response_requisition_line(
             };
             let new_requisition_line_row = RequisitionLineRow {
                 id: input.id.clone(),
-                item_link_id: item_row.id.clone(),
+                item_id: item_row.id.clone(),
                 item_name: item_row.name.clone(),
                 requisition_id: requisition_row.id,
                 snapshot_datetime: Some(Utc::now().naive_utc()),
@@ -88,6 +88,9 @@ pub fn insert_response_requisition_line(
                 approval_comment: None,
                 available_volume: None,
                 location_type_id: None,
+                forecast_total_units: None,
+                forecast_total_doses: None,
+                vaccine_courses: None,
             };
 
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
@@ -129,7 +132,7 @@ mod test {
         RequisitionLineRow {
             id: "new requisition line id".to_string(),
             requisition_id: new_response_requisition().id,
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             ..Default::default()
         }
     }
@@ -138,7 +141,7 @@ mod test {
         RequisitionRow {
             id: "new_request_requisition".to_string(),
             store_id: mock_store_a().id,
-            name_link_id: mock_name_b().id,
+            name_id: mock_name_b().id,
             r#type: RequisitionType::Request,
             status: RequisitionStatus::New,
             ..Default::default()
@@ -149,7 +152,7 @@ mod test {
         RequisitionRow {
             id: "program_requisition".to_string(),
             store_id: mock_store_a().id,
-            name_link_id: mock_name_b().id,
+            name_id: mock_name_b().id,
             r#type: RequisitionType::Response,
             status: RequisitionStatus::New,
             program_id: Some(mock_program_a().id),

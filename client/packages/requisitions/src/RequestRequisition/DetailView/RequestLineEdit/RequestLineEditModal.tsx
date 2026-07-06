@@ -11,10 +11,13 @@ import {
   RepresentationValue,
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
-import { ItemWithStatsFragment } from '@openmsupply-client/system';
+import {
+  ItemWithAvailableStockFragment,
+  ItemWithStatsFragment,
+} from '@openmsupply-client/system';
 import { RequestFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
-import { isRequestDisabled, shouldDeleteLine } from '../../../utils';
+import { shouldDeleteLine } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
 
 interface RequestLineEditModalProps {
@@ -36,8 +39,8 @@ export const RequestLineEditModal = ({
 }: RequestLineEditModalProps) => {
   const { error } = useNotification();
   const deleteLine = useRequest.line.deleteLine();
-  const isDisabled = isRequestDisabled(requisition);
-  const { orderInPacks } = usePreferences();
+  const isDisabled = useRequest.utils.isDisabled();
+  const { orderInPacks, manageVaccinesInDoses } = usePreferences();
 
   const lines = useMemo(
     () =>
@@ -47,13 +50,21 @@ export const RequestLineEditModal = ({
     [requisition?.lines.nodes]
   );
 
-  const [currentItem, setCurrentItem] = useState(
-    lines?.find(line => line.item.id === itemId)?.item
-  );
-  const rep = orderInPacks ? Representation.PACKS : Representation.UNITS;
+  const [currentItem, setCurrentItem] = useState<
+    ItemWithAvailableStockFragment | ItemWithStatsFragment | undefined
+  >(lines?.find(line => line.item.id === itemId)?.item);
+  const getDefaultRepresentation = (
+    item?: { isVaccine?: boolean; doses?: number } | null
+  ): RepresentationValue => {
+    if (orderInPacks) return Representation.PACKS;
+    if (manageVaccinesInDoses && item?.isVaccine && !!item?.doses)
+      return Representation.DOSES;
+    return Representation.UNITS;
+  };
 
-  const [representation, setRepresentation] =
-    useState<RepresentationValue>(rep);
+  const [representation, setRepresentation] = useState<RepresentationValue>(
+    getDefaultRepresentation(currentItem)
+  );
 
   const { draft, save, update, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);
@@ -66,7 +77,8 @@ export const RequestLineEditModal = ({
   const nextDisabled =
     (!hasNext && mode === ModalMode.Update) ||
     !currentItem ||
-    isEditingRequested;
+    isEditingRequested ||
+    isLoading;
 
   const deletePreviousLine = () => {
     const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
@@ -92,7 +104,7 @@ export const RequestLineEditModal = ({
     if (mode === ModalMode.Create) {
       deletePreviousLine();
     }
-    setRepresentation(rep);
+    setRepresentation(getDefaultRepresentation(item));
     setCurrentItem(item);
   };
 
@@ -141,7 +153,7 @@ export const RequestLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem || isEditingRequested}
+          disabled={!currentItem || isEditingRequested || isLoading}
           onClick={async () => {
             if (requisition.status === RequisitionNodeStatus.Sent) {
               onClose();

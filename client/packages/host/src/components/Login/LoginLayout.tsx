@@ -10,13 +10,16 @@ import { Theme } from '@common/styles';
 import { AppVersion } from '../AppVersion';
 import { LanguageButton } from '../LanguageButton';
 
-type LoginLayoutProps = {
+export type LoginLayoutProps = {
   UsernameInput: React.ReactNode;
   PasswordInput: React.ReactNode;
   LoginButton: React.ReactNode;
   ErrorMessage: React.ReactNode;
   SiteInfo: React.ReactNode;
   onLogin: () => Promise<void>;
+  fullSize: boolean;
+  StoreSelector?: React.ReactNode;
+  showStoreSelector?: boolean;
 };
 
 export const LoginLayout = ({
@@ -26,16 +29,27 @@ export const LoginLayout = ({
   ErrorMessage,
   SiteInfo,
   onLogin,
+  fullSize,
+  StoreSelector,
+  showStoreSelector = false,
 }: LoginLayoutProps) => {
   const t = useTranslation();
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
-    if (e.key === 'Enter') {
-      onLogin();
-    }
-  };
+  const loginForm = (
+    <LoginForm
+      UsernameInput={UsernameInput}
+      PasswordInput={PasswordInput}
+      LoginButton={LoginButton}
+      ErrorMessage={ErrorMessage}
+      SiteInfo={SiteInfo}
+      onLogin={onLogin}
+      fullSize={fullSize}
+    />
+  );
 
-  return (
+  return !fullSize ? (
+    loginForm
+  ) : (
     <Box display="flex" style={{ width: '100%' }}>
       <Box
         flex="1 0 50%"
@@ -92,38 +106,81 @@ export const LoginLayout = ({
       </Box>
       <Box
         flex="1 0 50%"
-        flexDirection="column"
-        alignItems="center"
-        display="flex"
         sx={{
           backgroundColor: 'background.login',
-          overflowY: 'scroll',
+          overflow: 'hidden',
+          position: 'relative',
         }}
       >
         <Box
-          display="flex"
-          flexGrow="1"
+          inert={showStoreSelector}
+          aria-hidden={showStoreSelector}
           sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
+            overflowY: 'auto',
+            transition: 'transform 0.35s ease-in-out',
+            transform: showStoreSelector ? 'translateX(-100%)' : 'translateX(0)',
           }}
         >
-          <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
-            <Stack spacing={5}>
-              <Box display="flex" justifyContent="center">
-                <LoginIcon />
-              </Box>
-              {UsernameInput}
-              {PasswordInput}
-              {ErrorMessage}
-              <Box display="flex" justifyContent="flex-end">
-                {LoginButton}
-              </Box>
-            </Stack>
-          </form>
+          <Box display="flex" flexGrow={1} sx={{ alignItems: 'center' }}>
+            {loginForm}
+          </Box>
+          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
+          <LanguageButton />
         </Box>
-        <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} />
-        <LanguageButton />
+        <Box
+          inert={!showStoreSelector}
+          aria-hidden={!showStoreSelector}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto',
+            transition: 'transform 0.35s ease-in-out',
+            transform: showStoreSelector ? 'translateX(0)' : 'translateX(100%)',
+          }}
+        >
+          {StoreSelector}
+        </Box>
       </Box>
     </Box>
+  );
+};
+
+const LoginForm = ({
+  UsernameInput,
+  PasswordInput,
+  LoginButton,
+  ErrorMessage,
+  onLogin,
+  fullSize,
+}: LoginLayoutProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter') {
+      onLogin();
+    }
+  };
+
+  return (
+    <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
+      <Stack spacing={fullSize ? 5 : 2}>
+        {fullSize && (
+          <Box display="flex" justifyContent="center">
+            <LoginIcon />
+          </Box>
+        )}
+        {UsernameInput}
+        {PasswordInput}
+        {ErrorMessage}
+        <Box display="flex" justifyContent="flex-end">
+          {LoginButton}
+        </Box>
+      </Stack>
+    </form>
   );
 };

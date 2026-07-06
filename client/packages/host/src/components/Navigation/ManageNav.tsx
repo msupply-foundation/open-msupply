@@ -14,6 +14,7 @@ import {
 import { SlidersIcon } from '@common/icons';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
+import { usePluginNavLinksForCategory } from './usePluginNavLinks';
 
 export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   const { isActive } = useNestedNav(
@@ -24,6 +25,7 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   const vaccineModuleEnabled = store?.preferences.vaccineModule;
   const { userHasPermission } = useAuthContext();
   const isServerAdmin = userHasPermission(UserPermission.ServerAdmin);
+  const pluginLinks = usePluginNavLinksForCategory(AppRoute.Manage);
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Manage}>
@@ -61,7 +63,7 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Equipment)
               .build()}
-            text={t('equipment')}
+            text={t('manage-equipment')}
           />
           <AppNavLink
             visible={isCentralServer}
@@ -73,10 +75,32 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
           <AppNavLink
             visible={isCentralServer && isServerAdmin}
             to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.Sites)
+              .build()}
+            text={t('sites')}
+          />
+          <AppNavLink
+            visible={isCentralServer && isServerAdmin}
+            to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Reports)
               .build()}
             text={t('reports')}
           />
+          <AppNavLink
+            visible={isCentralServer && isServerAdmin}
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.SyncMessage)
+              .build()}
+            text={t('sync-message')}
+          />
+          <AppNavLink
+            visible={isCentralServer && isServerAdmin}
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.Plugins)
+              .build()}
+            text={t('plugins')}
+          />
+          {pluginLinks}
         </List>
       </Collapse>
     </AppNavSection>

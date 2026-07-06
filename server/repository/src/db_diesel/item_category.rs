@@ -1,18 +1,22 @@
 use super::{
     item_category_row::{item_category_join, ItemCategoryJoinRow},
+    item_row::item,
     DBType, StorageConnection,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, Pagination,
+    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, ItemRow,
+    Pagination,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct ItemCategory {
     pub item_category_join_row: ItemCategoryJoinRow,
 }
+
+type ItemCategoryJoin = (ItemCategoryJoinRow, ItemRow);
 
 #[derive(Clone, Default)]
 pub struct ItemCategoryFilter {
@@ -85,29 +89,33 @@ impl<'a> ItemCategoryRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result =
-            final_query.load::<ItemCategoryJoinRow>(self.connection.lock().connection())?;
+        let result = final_query.load::<ItemCategoryJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-fn to_domain(row: ItemCategoryJoinRow) -> ItemCategory {
+fn to_domain((item_category_join_row, _): ItemCategoryJoin) -> ItemCategory {
     ItemCategory {
-        item_category_join_row: row,
+        item_category_join_row,
     }
 }
 
-type BoxedItemCategoryQuery = IntoBoxed<'static, item_category_join::table, DBType>;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    item_category_join::table.inner_join(item::table)
+}
+
+type BoxedItemCategoryQuery = IntoBoxed<'static, query, DBType>;
 
 fn create_filtered_query(filter: Option<ItemCategoryFilter>) -> BoxedItemCategoryQuery {
-    let mut query = item_category_join::table.into_boxed();
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let ItemCategoryFilter { id, item_id } = f;
 
         apply_equal_filter!(query, id, item_category_join::id);
-        apply_equal_filter!(query, item_id, item_category_join::item_id);
+        apply_equal_filter!(query, item_id, item::id);
     }
 
     query = query.filter(item_category_join::deleted_datetime.is_null());

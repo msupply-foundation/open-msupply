@@ -108,7 +108,7 @@ export const SidePanel = ({ rnrFormId }: { rnrFormId: string }) => {
 
         <Grid container gap={1} marginTop={2}>
           <PanelRow>
-            <PanelLabel flex={0.5}>{t('heading.reference')}</PanelLabel>
+            <PanelLabel flex={0.5}>{t('label.reference')}</PanelLabel>
             <PanelField>
               <BufferedTextInput
                 disabled={data.status === RnRFormNodeStatus.Finalised}

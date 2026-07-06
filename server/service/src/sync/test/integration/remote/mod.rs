@@ -61,7 +61,7 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
             .expect("Problem deleting central data");
 
         // Pull required central data
-        previous_synchroniser.sync(None).await.unwrap();
+        previous_synchroniser.sync().await.unwrap();
 
         let mut integration_records = step_data.integration_records;
         // Replace system name codes (for inventory adjustment name etc..)
@@ -71,12 +71,12 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         let integration_records =
             integrate_with_is_sync_reset(&previous_connection, integration_records);
         // Push integrated changes
-        previous_synchroniser.sync(None).await.unwrap();
+        previous_synchroniser.sync().await.unwrap();
         // Re initialise
         site_config = init_test_context(site_config.config, &inner_identifier).await;
         previous_connection = site_config.context.connection;
         previous_synchroniser = site_config.synchroniser;
-        previous_synchroniser.sync(None).await.unwrap();
+        previous_synchroniser.sync().await.unwrap();
 
         // Confirm records have synced back correctly
         check_integrated(&previous_connection, &integration_records)
@@ -107,7 +107,7 @@ fn replace_system_name_ids(
         if mut_invoice.r#type == InvoiceType::InventoryAddition
             || mut_invoice.r#type == InvoiceType::InventoryReduction
         {
-            mut_invoice.name_link_id = inventory_adjustment_name.id.clone();
+            mut_invoice.name_id = inventory_adjustment_name.id.clone();
             mut_invoice.name_store_id = None;
         }
     }

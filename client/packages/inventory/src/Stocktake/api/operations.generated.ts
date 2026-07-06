@@ -2,6 +2,7 @@ import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 import { VvmStatusFragmentDoc } from '../../../../system/src/Stock/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StocktakeRowFragment = {
@@ -25,6 +26,7 @@ export type StocktakeLineFragment = {
   itemName: string;
   id: string;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   packSize?: number | null;
   snapshotNumberOfPacks: number;
   countedNumberOfPacks?: number | null;
@@ -35,6 +37,21 @@ export type StocktakeLineFragment = {
   donorId?: string | null;
   donorName?: string | null;
   itemVariantId?: string | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
+  } | null;
   location?: {
     __typename: 'LocationNode';
     id: string;
@@ -121,6 +138,7 @@ export type StocktakeFragment = {
       itemName: string;
       id: string;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       packSize?: number | null;
       snapshotNumberOfPacks: number;
       countedNumberOfPacks?: number | null;
@@ -131,6 +149,21 @@ export type StocktakeFragment = {
       donorId?: string | null;
       donorName?: string | null;
       itemVariantId?: string | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
+      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -261,6 +294,7 @@ export type StocktakeQuery = {
             itemName: string;
             id: string;
             expiryDate?: string | null;
+            manufactureDate?: string | null;
             packSize?: number | null;
             snapshotNumberOfPacks: number;
             countedNumberOfPacks?: number | null;
@@ -271,6 +305,21 @@ export type StocktakeQuery = {
             donorId?: string | null;
             donorName?: string | null;
             itemVariantId?: string | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+                isDisabled: boolean;
+              } | null;
+            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -377,6 +426,7 @@ export type StocktakeByNumberQuery = {
             itemName: string;
             id: string;
             expiryDate?: string | null;
+            manufactureDate?: string | null;
             packSize?: number | null;
             snapshotNumberOfPacks: number;
             countedNumberOfPacks?: number | null;
@@ -387,6 +437,21 @@ export type StocktakeByNumberQuery = {
             donorId?: string | null;
             donorName?: string | null;
             itemVariantId?: string | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+                isDisabled: boolean;
+              } | null;
+            } | null;
             location?: {
               __typename: 'LocationNode';
               id: string;
@@ -478,6 +543,7 @@ export type StocktakeLinesQuery = {
       itemName: string;
       id: string;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       packSize?: number | null;
       snapshotNumberOfPacks: number;
       countedNumberOfPacks?: number | null;
@@ -488,6 +554,21 @@ export type StocktakeLinesQuery = {
       donorId?: string | null;
       donorName?: string | null;
       itemVariantId?: string | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
+      } | null;
       location?: {
         __typename: 'LocationNode';
         id: string;
@@ -557,8 +638,12 @@ export type StockLineReducedBelowZeroErrorFragment = {
   stockLine: {
     __typename: 'StockLineNode';
     id: string;
+    itemId: string;
+    itemName: string;
+    batch?: string | null;
     totalNumberOfPacks: number;
     availableNumberOfPacks: number;
+    item: { __typename: 'ItemNode'; code: string };
   };
 };
 
@@ -575,7 +660,15 @@ export type AdjustmentReasonNotValidErrorFragment = {
 export type SnapshotCountCurrentCountMismatchLineErrorFragment = {
   __typename: 'SnapshotCountCurrentCountMismatchLine';
   description: string;
-  stocktakeLine: { __typename: 'StocktakeLineNode'; id: string };
+  stocktakeLine: {
+    __typename: 'StocktakeLineNode';
+    id: string;
+    itemId: string;
+    itemName: string;
+    batch?: string | null;
+    item: { __typename: 'ItemNode'; code: string };
+    stockLine?: { __typename: 'StockLineNode'; id: string } | null;
+  };
 };
 
 export type UpsertStocktakeLinesMutationVariables = Types.Exact<{
@@ -624,8 +717,12 @@ export type UpsertStocktakeLinesMutation = {
                   stockLine: {
                     __typename: 'StockLineNode';
                     id: string;
+                    itemId: string;
+                    itemName: string;
+                    batch?: string | null;
                     totalNumberOfPacks: number;
                     availableNumberOfPacks: number;
+                    item: { __typename: 'ItemNode'; code: string };
                   };
                 };
           }
@@ -651,6 +748,14 @@ export type UpsertStocktakeLinesMutation = {
                   stocktakeLine: {
                     __typename: 'StocktakeLineNode';
                     id: string;
+                    itemId: string;
+                    itemName: string;
+                    batch?: string | null;
+                    item: { __typename: 'ItemNode'; code: string };
+                    stockLine?: {
+                      __typename: 'StockLineNode';
+                      id: string;
+                    } | null;
                   };
                 }
               | {
@@ -659,8 +764,12 @@ export type UpsertStocktakeLinesMutation = {
                   stockLine: {
                     __typename: 'StockLineNode';
                     id: string;
+                    itemId: string;
+                    itemName: string;
+                    batch?: string | null;
                     totalNumberOfPacks: number;
                     availableNumberOfPacks: number;
+                    item: { __typename: 'ItemNode'; code: string };
                   };
                 };
           };
@@ -695,8 +804,12 @@ export type StockLinesReducedBelowZeroErrorFragment = {
     stockLine: {
       __typename: 'StockLineNode';
       id: string;
+      itemId: string;
+      itemName: string;
+      batch?: string | null;
       totalNumberOfPacks: number;
       availableNumberOfPacks: number;
+      item: { __typename: 'ItemNode'; code: string };
     };
   }>;
 };
@@ -706,7 +819,15 @@ export type SnapshotCountCurrentCountMismatchErrorFragment = {
   lines: Array<{
     __typename: 'SnapshotCountCurrentCountMismatchLine';
     description: string;
-    stocktakeLine: { __typename: 'StocktakeLineNode'; id: string };
+    stocktakeLine: {
+      __typename: 'StocktakeLineNode';
+      id: string;
+      itemId: string;
+      itemName: string;
+      batch?: string | null;
+      item: { __typename: 'ItemNode'; code: string };
+      stockLine?: { __typename: 'StockLineNode'; id: string } | null;
+    };
   }>;
 };
 
@@ -729,7 +850,18 @@ export type UpdateStocktakeMutation = {
               lines: Array<{
                 __typename: 'SnapshotCountCurrentCountMismatchLine';
                 description: string;
-                stocktakeLine: { __typename: 'StocktakeLineNode'; id: string };
+                stocktakeLine: {
+                  __typename: 'StocktakeLineNode';
+                  id: string;
+                  itemId: string;
+                  itemName: string;
+                  batch?: string | null;
+                  item: { __typename: 'ItemNode'; code: string };
+                  stockLine?: {
+                    __typename: 'StockLineNode';
+                    id: string;
+                  } | null;
+                };
               }>;
             }
           | {
@@ -741,8 +873,12 @@ export type UpdateStocktakeMutation = {
                 stockLine: {
                   __typename: 'StockLineNode';
                   id: string;
+                  itemId: string;
+                  itemName: string;
+                  batch?: string | null;
                   totalNumberOfPacks: number;
                   availableNumberOfPacks: number;
+                  item: { __typename: 'ItemNode'; code: string };
                 };
               }>;
             }
@@ -787,6 +923,7 @@ export const StocktakeLineFragmentDoc = gql`
     itemName
     id
     expiryDate
+    manufactureDate
     packSize
     snapshotNumberOfPacks
     countedNumberOfPacks
@@ -796,6 +933,9 @@ export const StocktakeLineFragmentDoc = gql`
     volumePerPack
     donorId
     donorName
+    manufacturer(storeId: $storeId) {
+      ...NameRow
+    }
     location {
       __typename
       id
@@ -854,6 +994,7 @@ export const StocktakeLineFragmentDoc = gql`
       name
     }
   }
+  ${NameRowFragmentDoc}
   ${VvmStatusFragmentDoc}
 `;
 export const StocktakeFragmentDoc = gql`
@@ -902,6 +1043,12 @@ export const StockLineReducedBelowZeroErrorFragmentDoc = gql`
     __typename
     stockLine {
       id
+      itemId
+      itemName
+      batch
+      item {
+        code
+      }
       totalNumberOfPacks
       availableNumberOfPacks
     }
@@ -923,6 +1070,15 @@ export const SnapshotCountCurrentCountMismatchLineErrorFragmentDoc = gql`
     __typename
     stocktakeLine {
       id
+      itemId
+      itemName
+      batch
+      item {
+        code
+      }
+      stockLine {
+        id
+      }
     }
     description
   }

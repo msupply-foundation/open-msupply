@@ -110,7 +110,7 @@ impl ContactTraceFilterInput {
             last_name: last_name.map(StringFilter::from),
             patient_id: patient_id.map(EqualFilter::from),
             program_context_id: None,
-            gender: gender.map(|t| map_filter!(t, |g| GenderType::from(g))),
+            gender: gender.map(|t| map_filter!(t, GenderType::from)),
             date_of_birth: date_of_birth.map(DateFilter::from),
         }
     }
@@ -253,9 +253,7 @@ impl ContactTraceNode {
     }
 
     pub async fn gender(&self) -> Option<GenderTypeNode> {
-        Some(GenderTypeNode::from(
-            self.trace_row().gender.clone().unwrap_or_default(),
-        ))
+        self.trace_row().gender.clone().map(GenderTypeNode::from)
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {

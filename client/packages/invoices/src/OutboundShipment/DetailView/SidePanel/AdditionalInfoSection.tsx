@@ -14,6 +14,7 @@ import {
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
+import { PickedDateInput } from './PickedDateInput';
 
 export const AdditionalInfoSectionComponent: FC = () => {
   const t = useTranslation();
@@ -41,6 +42,7 @@ export const AdditionalInfoSectionComponent: FC = () => {
           <PanelLabel>{t('label.created')}</PanelLabel>
           <PanelField>{localisedDate(createdDatetime)}</PanelField>
         </PanelRow>
+        <PickedDateInput />
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>

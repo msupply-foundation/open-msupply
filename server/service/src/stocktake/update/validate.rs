@@ -67,6 +67,11 @@ fn check_snapshot_matches_current_count(
 ) -> Option<Vec<StocktakeLine>> {
     let mut mismatches = Vec::new();
     for line in stocktake_lines {
+        // Skip uncounted lines as they won't have a snapshot count
+        // to compare against when the stocktake is finalised
+        if line.line.counted_number_of_packs.is_none() {
+            continue;
+        }
         let stock_line = match &line.stock_line {
             Some(stock_line) => stock_line,
             None => continue,
@@ -101,7 +106,8 @@ fn check_stock_lines_reduced_to_zero(
             {
                 let stock_line = StockLineRepository::new(connection)
                     .query_by_filter(
-                        StockLineFilter::new().id(EqualFilter::equal_to(stock_line_row.id.to_string())),
+                        StockLineFilter::new()
+                            .id(EqualFilter::equal_to(stock_line_row.id.to_string())),
                         None,
                     )?
                     .pop()

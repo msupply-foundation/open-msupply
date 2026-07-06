@@ -35,6 +35,7 @@ pub fn insert_document_registry(
         &ResourceAccessRequest {
             resource: Resource::MutateDocumentRegistry,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();
@@ -52,7 +53,7 @@ pub fn insert_document_registry(
             document_registry,
         }),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let graphql_error = match error {
                 InsertDocRegistryError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)

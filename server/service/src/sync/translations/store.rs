@@ -1,7 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-    NameLinkRowRepository, StorageConnection, StoreMode, StoreRowDelete, StoreRowWithLogo,
-    SyncBufferRow,
+    NameLinkRowRepository, StorageConnection, StoreLogoRow, StoreMode, StoreRow, SyncBufferRow,
 };
 
 use crate::sync::translations::name::NameTranslation;
@@ -9,7 +8,7 @@ use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
 
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{IntegrationOperation, PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyStoreMode {
@@ -59,7 +58,7 @@ impl SyncTranslation for StoreTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyStoreRow>()?;
 
         // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
         // HIS -> Hospital Information System (no name_id)
@@ -96,28 +95,28 @@ impl SyncTranslation for StoreTranslation {
             LegacyStoreMode::Dispensary => StoreMode::Dispensary,
         };
 
-        let result = StoreRowWithLogo {
-            id: data.id,
-            name_link_id: data.name_id,
+        // The lean store row is upserted first so the row exists; the logo
+        // upsert is a plain UPDATE on the same row (id, logo) and would fail
+        // if it ran on its own against a brand-new store. Ordering here is
+        // load-bearing.
+        let store_row = StoreRow {
+            id: data.id.clone(),
+            name_id: data.name_id,
             code: data.code,
             site_id: data.site_id,
-            logo: data.logo,
             store_mode,
             created_date: data.created_date,
             is_disabled: data.is_disabled,
         };
+        let logo_row = StoreLogoRow {
+            id: data.id,
+            logo: data.logo,
+        };
 
-        Ok(PullTranslateResult::upsert(result))
-    }
-    // TODO soft delete
-    fn try_translate_from_delete_sync_record(
-        &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::delete(StoreRowDelete(
-            sync_record.record_id.clone(),
-        )))
+        Ok(PullTranslateResult::IntegrationOperations(vec![
+            IntegrationOperation::upsert(store_row),
+            IntegrationOperation::upsert(logo_row),
+        ]))
     }
 }
 
@@ -158,15 +157,6 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_delete_records() {
-            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            let translation_result = translator
-                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

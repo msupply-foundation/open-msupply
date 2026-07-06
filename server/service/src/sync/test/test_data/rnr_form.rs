@@ -23,7 +23,7 @@ fn rnr_form1() -> RnRFormRow {
     RnRFormRow {
         id: RNR_FORM1.0.to_string(),
         store_id: "store_a".to_string(),
-        name_link_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+        name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
         period_id: "period_1".to_string(),
         program_id: "program_test".to_string(),
         created_datetime: chrono::NaiveDate::from_ymd_opt(2020, 01, 22)
@@ -50,7 +50,20 @@ pub(crate) fn test_v6_records() -> Vec<TestSyncOutgoingRecord> {
     vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: RNR_FORM1.0.to_string(),
-        push_data: json!(rnr_form1()),
+        push_data: json!({
+            "id": "cfd578f8-c3d5-4a04-a466-0ac81dde2aab",
+            "store_id": "store_a",
+            "period_id": "period_1",
+            "program_id": "program_test",
+            "created_datetime": "2020-01-22T15:16:00",
+            "finalised_datetime": null,
+            "status": "DRAFT",
+            "linked_requisition_id": null,
+            "their_reference": null,
+            "comment": null,
+            "name_id": "1FB32324AF8049248D929CFB35F255BA",
+            "name_link_id": "1FB32324AF8049248D929CFB35F255BA",
+        }),
     }]
 }
 

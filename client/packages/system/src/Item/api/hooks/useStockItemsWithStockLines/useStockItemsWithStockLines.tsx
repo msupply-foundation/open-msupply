@@ -10,7 +10,10 @@ export const useStockItemsWithStockLines = () => {
   };
   const api = useItemApi();
 
-  return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.stockItemsWithStockLines(queryParams)
-  );
+  return useQuery({
+    queryKey: api.keys.paramList(queryParams),
+
+    queryFn: () =>
+      api.get.stockItemsWithStockLines(queryParams)
+  });
 };

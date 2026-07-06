@@ -2,19 +2,19 @@ import {
   useTranslation,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useIsInboundDisabled } from '../utils/useIsInboundDisabled';
 import { useDeleteInboundLines } from './useDeleteInboundLines';
 import { useInboundShipmentLineErrorContext } from '../../../context/inboundShipmentLineError';
 import { mapErrorToMessageAndSetContext } from '../mapErrorToMessageAndSetContext';
 import { InboundLineFragment } from '../../operations.generated';
+import { useInboundShipment } from '../useInboundShipment';
 
 export const useInboundDeleteSelectedLines = (
   rowsToDelete: InboundLineFragment[],
   resetRowSelection: () => void
 ): (() => void) => {
   const t = useTranslation();
-  const { mutateAsync } = useDeleteInboundLines();
-  const isDisabled = useIsInboundDisabled();
+  const { isAddOrDeleteLinesDisabled, isExternal } = useInboundShipment();
+  const { mutateAsync } = useDeleteInboundLines(isExternal);
   const errorsContext = useInboundShipmentLineErrorContext();
 
   const onDelete = async () => {
@@ -49,7 +49,7 @@ export const useInboundDeleteSelectedLines = (
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows: rowsToDelete,
     deleteAction: onDelete,
-    canDelete: !isDisabled,
+    canDelete: !isAddOrDeleteLinesDisabled,
     messages: {
       confirmMessage: t('messages.confirm-delete-shipment-lines', {
         count: rowsToDelete.length,
@@ -57,7 +57,7 @@ export const useInboundDeleteSelectedLines = (
       deleteSuccess: t('messages.deleted-lines', {
         count: rowsToDelete.length,
       }),
-      cantDelete: handleCantDelete({ isDisabled }),
+      cantDelete: handleCantDelete({ isDisabled: isAddOrDeleteLinesDisabled }),
     },
   });
 

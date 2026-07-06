@@ -46,6 +46,7 @@ export interface ModalProps {
   sx?: SxProps<Theme>;
   title: string;
   deleteButton?: JSX.Element;
+  headerActions?: React.ReactNode;
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
   disableEnforceFocus?: boolean;
@@ -162,6 +163,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     enableAutocomplete,
     sx = {},
     deleteButton,
+    headerActions,
     disableEnforceFocus = false,
   }: ModalProps) => {
     const t = useTranslation();
@@ -259,13 +261,15 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             label={t('button.close')}
           />
         )}
-        {title ? <ModalTitle title={title} /> : null}
+        {title ? (
+          <ModalTitle title={title} headerActions={headerActions} />
+        ) : null}
         <form
           style={{
             display: 'flex',
             flexDirection: 'column',
             flex: '1 1 auto',
-            overflow: 'auto',
+            overflow: 'hidden',
             width: defaultFullscreen ? '100%' : dimensions.width,
             margin: '0 auto',
           }}
@@ -277,10 +281,28 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
           >
             {slideAnimation ? (
               <Slide in={slideConfig.in} direction={slideConfig.direction}>
-                <div>{slideConfig.in && children}</div>
+                <div
+                  style={{
+                    flex: 1,
+                    minHeight: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  {slideConfig.in && children}
+                </div>
               </Slide>
             ) : (
-              <div>{children}</div>
+              <div
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                {children}
+              </div>
             )}
           </DialogContent>
           <DialogActions

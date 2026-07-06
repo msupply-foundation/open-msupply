@@ -49,7 +49,10 @@ mod query {
             .get_master_lists(
                 &context,
                 None,
-                Some(MasterListFilter::new().exists_for_store_id(EqualFilter::equal_to("store_a".to_string()))),
+                Some(
+                    MasterListFilter::new()
+                        .exists_for_store_id(EqualFilter::equal_to("store_a".to_string())),
+                ),
                 None,
             )
             .unwrap();

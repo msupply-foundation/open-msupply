@@ -13,10 +13,14 @@ export const useInsertProgramRequest = () => {
   const t = useTranslation();
   const { error } = useNotification();
 
-  const { mutateAsync } = useMutation(api.insertProgram, {
+  const { mutateAsync } = useMutation({
+    mutationFn: api.insertProgram,
+
     onSettled: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 
   const insert = async (input: InsertProgramRequestRequisitionInput) => {
@@ -25,6 +29,10 @@ export const useInsertProgramRequest = () => {
       switch (result.error.__typename) {
         case 'MaxOrdersReachedForPeriod': {
           error(t('error.max-orders-reached-for-period'))();
+          break;
+        }
+        case 'SupplierNotValid': {
+          error(t('error.program-not-valid-for-supplier'))();
           break;
         }
         default:

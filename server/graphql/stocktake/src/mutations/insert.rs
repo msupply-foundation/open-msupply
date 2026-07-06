@@ -52,6 +52,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         &ResourceAccessRequest {
             resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -71,7 +72,7 @@ pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<InsertRespo
         ))),
         Err(error) => {
             use StandardGraphqlError::*;
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
 
             let graphql_error = match error {
                 ServiceError::InvalidStore => BadUserInput(formatted_error),

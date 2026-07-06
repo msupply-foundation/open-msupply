@@ -89,6 +89,7 @@ pub fn stocktake_lines(
         &ResourceAccessRequest {
             resource: Resource::QueryStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -120,7 +121,7 @@ pub fn stocktake_lines(
         }))
     } else {
         let err = stocktake_lines.unwrap_err();
-        let formatted_error = format!("{:#?}", err);
+        let formatted_error = format!("{err:#?}");
         let graphql_error = match err {
             GetStocktakeLinesError::DatabaseError(err) => err.into(),
             GetStocktakeLinesError::InvalidStore => {
@@ -260,7 +261,7 @@ mod test {
                         batch: Some("batch".to_string()),
                         expiry_date: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
                         stocktake_id: "stocktake_id".to_string(),
-                        item_link_id: mock_stocktake_line_a().item_link_id,
+                        item_id: mock_stocktake_line_a().item_id,
                         ..Default::default()
                     },
                     item: mock_item_a(),

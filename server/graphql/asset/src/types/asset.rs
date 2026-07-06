@@ -2,7 +2,7 @@ use std::vec;
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use repository::asset_log_row::AssetLogStatus;
 use serde_json;
 
@@ -147,12 +147,12 @@ impl AssetNode {
         self.row().replacement_date
     }
 
-    pub async fn created_datetime(&self) -> &chrono::NaiveDateTime {
-        &self.row().created_datetime
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
 
-    pub async fn modified_datetime(&self) -> &chrono::NaiveDateTime {
-        &self.row().modified_datetime
+    pub async fn modified_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().modified_datetime, Utc)
     }
 
     pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {

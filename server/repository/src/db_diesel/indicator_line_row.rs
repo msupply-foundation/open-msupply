@@ -1,6 +1,9 @@
 use super::StorageConnection;
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
+    SourceSiteId, Upsert,
+};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
@@ -30,7 +33,7 @@ table! {
     }
 }
 
-#[derive(Clone, Eq, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(Clone, Eq, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = indicator_line)]
 pub struct IndicatorLineRow {
     pub id: String,
@@ -53,7 +56,7 @@ impl<'a> IndicatorLineRowRepository<'a> {
         IndicatorLineRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &IndicatorLineRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &IndicatorLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(indicator_line::table)
             .values(row)
             .on_conflict(indicator_line::id)
@@ -61,6 +64,17 @@ impl<'a> IndicatorLineRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &IndicatorLineRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = IndicatorLineRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -71,6 +85,16 @@ impl<'a> IndicatorLineRowRepository<'a> {
             .filter(indicator_line::id.eq(record_id))
             .first(self.connection.lock().connection())
             .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_ids(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<IndicatorLineRow>, RepositoryError> {
+        let result = indicator_line::table
+            .filter(indicator_line::id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -86,9 +110,25 @@ impl<'a> IndicatorLineRowRepository<'a> {
 }
 
 impl Upsert for IndicatorLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        IndicatorLineRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        IndicatorLineRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

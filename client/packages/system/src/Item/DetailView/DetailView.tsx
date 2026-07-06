@@ -4,6 +4,7 @@ import {
   AlertModal,
   RouteBuilder,
   useNavigate,
+  useParams,
   useTranslation,
   Box,
   useBreadcrumbs,
@@ -19,15 +20,18 @@ import { AppRoute } from '@openmsupply-client/config';
 import { ItemVariantsTab } from './Tabs/ItemVariants';
 import { ItemLedgerTab } from './Tabs/ItemLedger';
 import { StoreTab } from './Tabs/Store';
+import { AncillarySupplies } from './Tabs/AncillarySupplies';
+import { ActivityLogList } from '../../ActivityLog';
 
 export const ItemDetailView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isCentralServer = useIsCentralServerApi();
+  const { id: paramId } = useParams();
   const {
     byId: { data, isLoading },
-  } = useItem();
+  } = useItem(paramId);
 
   React.useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.name ?? '' });
@@ -40,7 +44,11 @@ export const ItemDetailView = () => {
       case InvoiceNodeType.InboundShipment:
         navigate(
           RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.InboundShipment)
+            .addPart(
+              ledger.isExternal
+                ? AppRoute.InboundShipmentExternal
+                : AppRoute.InboundShipment
+            )
             .addPart(String(ledger.invoiceId))
             .build()
         );
@@ -101,6 +109,10 @@ export const ItemDetailView = () => {
       ),
       value: t('label.ledger'),
     },
+    {
+      Component: <AncillarySupplies item={data} />,
+      value: t('title.ancillary-supplies'),
+    },
   ];
 
   isCentralServer &&
@@ -108,6 +120,11 @@ export const ItemDetailView = () => {
       Component: <ItemVariantsTab item={data} itemVariants={data.variants} />,
       value: t('label.variants'),
     });
+
+  tabs.push({
+    Component: <ActivityLogList recordId={data.id} />,
+    value: t('label.log'),
+  });
 
   return !!data ? (
     <Box style={{ width: '100%' }}>

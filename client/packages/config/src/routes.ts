@@ -30,6 +30,7 @@ export enum AppRoute {
   Replenishment = 'replenishment',
   PurchaseOrder = 'purchase-order',
   InboundShipment = 'inbound-shipment',
+  InboundShipmentExternal = 'inbound-shipment-external',
   InternalOrder = 'internal-order',
   Suppliers = 'suppliers',
   SupplierReturn = 'supplier-return',
@@ -37,6 +38,7 @@ export enum AppRoute {
   Inventory = 'inventory',
   Stock = 'stock',
   Stocktakes = 'stocktakes',
+  StockMovement = 'stock-movement',
   Locations = 'locations',
   MasterLists = 'master-lists',
   IndicatorsDemographics = 'indicators-demographics',
@@ -47,6 +49,8 @@ export enum AppRoute {
   Stores = 'stores',
   GlobalPreferences = 'global-preferences',
   Campaigns = 'campaigns',
+  Plugins = 'plugins',
+  Sites = 'sites',
 
   Tools = 'tools',
 
@@ -69,8 +73,8 @@ export enum AppRoute {
   RnRForms = 'r-and-r-forms',
 
   PageNotFound = 'page-not-found',
-  GoodsReceived = 'goods-received',
   PurchaseOrderOutstandingLines = 'outstanding-lines',
+  SyncMessage = 'sync-message',
 }
 
 export enum ExternalURL {

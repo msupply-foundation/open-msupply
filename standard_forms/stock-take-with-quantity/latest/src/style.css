@@ -1,12 +1,18 @@
 @media print {
   @page {
-    size: portrait;
+    @bottom-right {
+      font-family: Tahoma;
+      font-size: 8pt;
+      /* do not allow formatter to add a line break in the content */
+      /* prettier-ignore*/
+      content: '{{t(k="report.page",f="Page")}} ' counter(page) ' {{t(k="report.of",f="of")}} ' counter(pages);
+    }
   }
 }
 
 .header_image_section,
 .header_supplied_section {
-  margin-left: 8px;
+  margin-inline-start: 8px;
   width: 100%;
   font-family: Tahoma;
   font-size: 8pt;
@@ -19,15 +25,21 @@
   height: 96px;
 }
 
-.body_column_label th {
-  border-bottom: 0.5px solid black;
-  text-align: left;
+.body_section {
+  border-collapse: collapse;
+  width: 100%;
 }
 
 .body_column_label th,
 .body_value td {
+  border: 1px solid black;
+  padding: 3px 4px;
   font-family: Tahoma;
   font-size: 8pt;
+}
+
+.body_column_label th {
+  text-align: start;
 }
 
 .batch {

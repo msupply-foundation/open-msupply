@@ -1,18 +1,64 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use repository::SyncLogRow;
-use tokio::sync::{broadcast, mpsc};
+use repository::{Description, SyncLogV5V6Row, SyncLogV7Row};
+use tokio::sync::{broadcast, mpsc, watch};
 use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
 use crate::service_provider::ServiceProvider;
-use crate::sync::sync_status::status::{FullSyncStatus, InitialisationStatus};
+use crate::sync::sync_status::status::{
+    FullSyncStatus, FullSyncStatusV5V6, InitialisationStatus, SyncStatus,
+};
+use crate::sync_v7::sync_status::status::FullSyncStatusV7;
 
-const CHANNEL_BUFFER_SIZE: usize = 64;
+const CHANNEL_BUFFER_SIZE: usize = 1024;
 const PUSH_QUEUE_DEBOUNCE: Duration = Duration::from_secs(30);
 
 // ── Triggers (inbound to worker) ──
+
+/// Discriminated row carrying either v5_v6 or v7 sync log data. V7 also
+/// carries the sync_request descriptions linked to the run via
+/// `reference_id`, cached by the logger so the worker doesn't re-query.
+#[derive(Clone, Debug)]
+pub enum SyncLogRow {
+    V5V6(SyncLogV5V6Row),
+    V7 {
+        row: SyncLogV7Row,
+        linked_descriptions: Vec<Description>,
+    },
+}
+
+impl SyncLogRow {
+    fn push_progress_total(&self) -> i32 {
+        match self {
+            SyncLogRow::V5V6(row) => row.push_progress_total.unwrap_or(0),
+            SyncLogRow::V7 { row, .. } => row.push_progress_total.unwrap_or(0),
+        }
+    }
+
+    fn push_progress_done(&self) -> i32 {
+        match self {
+            SyncLogRow::V5V6(row) => row.push_progress_done.unwrap_or(0),
+            SyncLogRow::V7 { row, .. } => row.push_progress_done.unwrap_or(0),
+        }
+    }
+
+    fn full_sync_status(self) -> FullSyncStatus {
+        match self {
+            SyncLogRow::V5V6(row) => {
+                FullSyncStatus::V5V6(FullSyncStatusV5V6::from_sync_log_row(row))
+            }
+            SyncLogRow::V7 {
+                row,
+                linked_descriptions,
+            } => FullSyncStatus::V7(FullSyncStatusV7::from_sync_log_v7_row(
+                row,
+                linked_descriptions,
+            )),
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub enum SubscriptionTrigger {
@@ -28,28 +74,49 @@ pub enum SubscriptionTrigger {
 pub enum ResolvedSubscription {
     SyncInfo {
         status: FullSyncStatus,
-        last_successful: Option<FullSyncStatus>,
+        /// Just the summary — both v5/v6 and v7 produce the same `SyncStatus`
+        /// shape so callers don't need to discriminate.
+        last_successful: Option<SyncStatus>,
         push_queue_count: u64,
     },
     InitialisationStatus(InitialisationStatus),
 }
 
+// SyncStatus triggers use a watch channel so rapid progress updates coalesce:
+// the worker always processes the latest row rather than queuing every update.
+// PushQueueChanged uses a small mpsc channel; the worker's debounce logic
+// already ensures at most one is in flight at a time.
 #[derive(Clone)]
 pub struct SubscriptionTriggerHandle {
-    sender: mpsc::Sender<SubscriptionTrigger>,
+    sync_status_sender: Arc<watch::Sender<Option<SyncLogRow>>>,
+    push_queue_sender: mpsc::Sender<()>,
 }
 
 impl SubscriptionTriggerHandle {
     pub fn send(&self, trigger: SubscriptionTrigger) {
-        if let Err(error) = self.sender.try_send(trigger) {
-            log::error!("Problem sending subscription trigger: {error:#?}");
+        match trigger {
+            SubscriptionTrigger::SyncStatus(row) => {
+                // watch::send only fails if all receivers are dropped — safe to ignore
+                let _ = self.sync_status_sender.send(Some(row));
+            }
+            SubscriptionTrigger::PushQueueChanged => {
+                if let Err(e) = self.push_queue_sender.try_send(()) {
+                    // Full is expected — the debounce means at most one is queued at a time
+                    if matches!(e, mpsc::error::TrySendError::Closed(_)) {
+                        log::error!("Subscription push queue channel closed: {e:#?}");
+                    }
+                }
+            }
         }
     }
 
     /// Empty handle for tests/CLI that don't use subscriptions
     pub fn new_void() -> Self {
+        let (sync_status_sender, _) = watch::channel(None);
+        let (push_queue_sender, _) = mpsc::channel(1);
         Self {
-            sender: mpsc::channel(1).0,
+            sync_status_sender: Arc::new(sync_status_sender),
+            push_queue_sender,
         }
     }
 }
@@ -57,15 +124,23 @@ impl SubscriptionTriggerHandle {
 // ── Worker (receives triggers, resolves, broadcasts) ──
 
 pub struct SubscriptionWorker {
-    receiver: mpsc::Receiver<SubscriptionTrigger>,
+    sync_status_receiver: watch::Receiver<Option<SyncLogRow>>,
+    push_queue_receiver: mpsc::Receiver<()>,
 }
 
 impl SubscriptionWorker {
     pub fn init() -> (SubscriptionTriggerHandle, SubscriptionWorker) {
-        let (sender, receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
+        let (sync_status_sender, sync_status_receiver) = watch::channel(None);
+        let (push_queue_sender, push_queue_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
         (
-            SubscriptionTriggerHandle { sender },
-            SubscriptionWorker { receiver },
+            SubscriptionTriggerHandle {
+                sync_status_sender: Arc::new(sync_status_sender),
+                push_queue_sender,
+            },
+            SubscriptionWorker {
+                sync_status_receiver,
+                push_queue_receiver,
+            },
         )
     }
 
@@ -77,7 +152,13 @@ impl SubscriptionWorker {
         let tx = broadcast_tx.clone();
 
         let handle = tokio::spawn(async move {
-            subscription_worker_loop(self.receiver, tx, service_provider).await;
+            subscription_worker_loop(
+                self.sync_status_receiver,
+                self.push_queue_receiver,
+                tx,
+                service_provider,
+            )
+            .await;
         });
 
         (handle, broadcast_tx)
@@ -85,17 +166,18 @@ impl SubscriptionWorker {
 }
 
 async fn subscription_worker_loop(
-    mut rx: mpsc::Receiver<SubscriptionTrigger>,
+    mut sync_status_receiver: watch::Receiver<Option<SyncLogRow>>,
+    mut push_queue_receiver: mpsc::Receiver<()>,
     tx: broadcast::Sender<ResolvedSubscription>,
     service_provider: Arc<ServiceProvider>,
 ) {
-    let mut last_successful: Option<FullSyncStatus> = None;
+    let mut last_successful: Option<SyncStatus> = None;
     let mut last_status: Option<FullSyncStatus> = None;
     // Once a sync has completed, the site is initialised. Don't emit
     // InitialisationStatus::Initialising during subsequent syncs, as that
     // would cause Host.tsx's PreInit to logout the user.
-    // Check DB at startup to see if there's already a completed sync.
-    let initialised = service_provider
+    // Check DB at startup to see if there's already a completed sync (either flow).
+    let mut initialised = service_provider
         .basic_context()
         .ok()
         .and_then(|ctx| {
@@ -111,22 +193,24 @@ async fn subscription_worker_loop(
     let trigger_handle = service_provider.subscription_trigger.clone();
 
     loop {
-        let Some(trigger) = rx.recv().await else {
-            break;
-        };
+        tokio::select! {
+            result = sync_status_receiver.changed() => {
+                if result.is_err() { break; } // all senders dropped
 
-        match trigger {
-            SubscriptionTrigger::SyncStatus(row) => {
-                let status = FullSyncStatus::from_sync_log_row(row.clone());
+                let row = match sync_status_receiver.borrow_and_update().clone() {
+                    Some(row) => row,
+                    None => continue,
+                };
 
-                if status.summary.finished.is_some() && status.error.is_none() {
-                    last_successful = Some(status.clone());
+                let push_queue_count =
+                    (row.push_progress_total() - row.push_progress_done()) as u64;
+                let status = row.full_sync_status();
+
+                let just_finished_successfully = status.is_finished_successfully();
+                if just_finished_successfully {
+                    last_successful = Some(status.summary());
                 }
                 last_status = Some(status.clone());
-
-                let push_queue_count = (row.push_progress_total.unwrap_or(0)
-                    - row.push_progress_done.unwrap_or(0))
-                    as u64;
 
                 let _ = tx.send(ResolvedSubscription::SyncInfo {
                     status,
@@ -134,10 +218,16 @@ async fn subscription_worker_loop(
                     push_queue_count,
                 });
 
-                // Derive initialisation status from the same row.
-                if !initialised {
-                    match service_provider.basic_context() {
-                        Ok(ctx) => match service_provider
+                // Only emit a fresh InitialisationStatus when the site transitions
+                // from not-yet-initialised to initialised — i.e. the row we just
+                // observed shows a successful finish. Querying the DB on every
+                // progress trigger floods the worker (thousands of progress
+                // events per pull/integrate); this single-shot lookup runs once
+                // per sync at most.
+                if !initialised && just_finished_successfully {
+                    initialised = true;
+                    if let Ok(ctx) = service_provider.basic_context() {
+                        match service_provider
                             .sync_status_service
                             .get_initialisation_status(&ctx)
                         {
@@ -147,17 +237,14 @@ async fn subscription_worker_loop(
                             Err(e) => {
                                 log::error!("Failed to get initialisation status: {e:?}");
                             }
-                        },
-                        Err(e) => {
-                            log::error!(
-                                "Failed to get DB connection for initialisation status: {e:?}"
-                            );
                         }
                     }
                 }
             }
 
-            SubscriptionTrigger::PushQueueChanged => {
+            result = push_queue_receiver.recv() => {
+                if result.is_none() { break; } // all senders dropped
+
                 if last_push_query.elapsed() >= PUSH_QUEUE_DEBOUNCE {
                     // Outside debounce window — query immediately
                     push_queue_queued = false;

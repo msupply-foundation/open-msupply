@@ -1,7 +1,8 @@
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::generic_errors::StockLineReducedBelowZero;
+use graphql_types::generic_errors::{LedgerWouldGoBelowZero, StockLineReducedBelowZero};
 use graphql_types::types::{AdjustmentReasonNotProvided, InvoiceNode};
 use service::invoice::inventory_adjustment::InsertInventoryAdjustmentError as ServiceError;
 use service::{
@@ -18,6 +19,7 @@ pub struct CreateInventoryAdjustmentInput {
     #[graphql(deprecation = "Since 2.8.0. Use reason_option_id")]
     pub inventory_adjustment_reason_id: Option<String>,
     pub reason_option_id: Option<String>,
+    pub backdated_datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(SimpleObject)]
@@ -50,6 +52,7 @@ pub fn create_inventory_adjustment(
         &ResourceAccessRequest {
             resource: Resource::MutateInventoryAdjustment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -78,6 +81,7 @@ impl CreateInventoryAdjustmentInput {
             adjustment_type,
             inventory_adjustment_reason_id,
             reason_option_id,
+            backdated_datetime,
         }: CreateInventoryAdjustmentInput = self;
 
         InsertInventoryAdjustment {
@@ -85,6 +89,7 @@ impl CreateInventoryAdjustmentInput {
             adjustment,
             adjustment_type: adjustment_type.to_domain(),
             reason_option_id: reason_option_id.or(inventory_adjustment_reason_id),
+            backdated_datetime,
         }
     }
 }
@@ -94,6 +99,7 @@ impl CreateInventoryAdjustmentInput {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
+    LedgerWouldGoBelowZero(LedgerWouldGoBelowZero),
     AdustmentReasonNotProvided(AdjustmentReasonNotProvided),
 }
 
@@ -108,6 +114,12 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             ))
         }
 
+        ServiceError::LedgerGoesBelowZero(line) => {
+            return Ok(InsertErrorInterface::LedgerWouldGoBelowZero(
+                LedgerWouldGoBelowZero::from_domain(line),
+            ))
+        }
+
         ServiceError::AdjustmentReasonNotProvided => {
             return Ok(InsertErrorInterface::AdustmentReasonNotProvided(
                 AdjustmentReasonNotProvided,
@@ -118,12 +130,16 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::StockLineDoesNotExist
         | ServiceError::InvalidStore
         | ServiceError::InvalidAdjustment
-        | ServiceError::AdjustmentReasonNotValid => BadUserInput(formatted_error),
+        | ServiceError::AdjustmentReasonNotValid
+        | ServiceError::BackdatingNotEnabled
+        | ServiceError::CannotSetDateInFuture
+        | ServiceError::ExceedsMaximumBackdatingDays => BadUserInput(formatted_error),
 
         ServiceError::NewlyCreatedInvoiceDoesNotExist
         | ServiceError::StockInLineInsertError(_)
         | ServiceError::StockOutLineInsertError(_)
         | ServiceError::InternalError(_)
+        | ServiceError::PreferenceError(_)
         | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

@@ -37,6 +37,7 @@ pub fn insert_encounter(
         &ResourceAccessRequest {
             resource: Resource::MutateEncounter,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();
@@ -59,7 +60,7 @@ pub fn insert_encounter(
     ) {
         Ok(document) => document,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let std_err = match error {
                 InsertEncounterError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)

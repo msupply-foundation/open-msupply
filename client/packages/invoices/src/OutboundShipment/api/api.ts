@@ -87,6 +87,8 @@ const outboundParsers = {
     currencyRate: 'currency' in patch ? patch.currency?.rate : undefined,
     expectedDeliveryDate: setNullableInput('expectedDeliveryDate', patch),
     shippingMethodId: setNullableInput('id', patch?.shippingMethod),
+    backdatedDatetime:
+      'backdatedDatetime' in patch ? patch.backdatedDatetime : undefined,
   }),
   toUpdateName: (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>
@@ -284,6 +286,10 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not delete invoices');
+  },
+  duplicate: async (id: string) => {
+    const result = await sdk.duplicateOutboundShipment({ id, storeId });
+    return result?.duplicateOutboundShipment;
   },
   update: async (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>

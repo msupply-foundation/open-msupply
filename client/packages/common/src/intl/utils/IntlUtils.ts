@@ -40,7 +40,6 @@ import { pt } from 'date-fns/locale/pt';
 import { faIR as fa } from 'date-fns/locale/fa-IR';
 
 import pluralize from 'pluralize';
-import { localeKeySet } from '../locales';
 export { splitTranslatedLines } from './ReactUtils';
 
 // Map locale string (from i18n) to locale object (from date-fns)
@@ -160,6 +159,8 @@ const locales = [
 
 const rtlLocales = ['ar', 'prs', 'ps'];
 
+const pluralExceptions = ['each'];
+
 export type SupportedLocales = (typeof locales)[number];
 export const isRtlLocale = (locale: string) => rtlLocales.includes(locale);
 
@@ -213,9 +214,13 @@ export const useIntlUtils = () => {
     [language]
   );
 
-  // pluralize only works for English words. Any other language strings are returned unchanged
   const getPlural = (word: string, count: number) => {
+    // pluralize only works for English words. Any other language strings are returned unchanged
     if (language !== 'en') return word;
+
+    // pick up any known failures in the pluralization library and return the original word in that case
+    if (pluralExceptions.includes(word.toLowerCase())) return word;
+
     return pluralize(word, count);
   };
 
@@ -225,14 +230,6 @@ export const useIntlUtils = () => {
   const translateServerError = (serverKey: string) => {
     const localeKey = `server-error.${serverKey}` as LocaleKey;
     return t(localeKey, Formatter.fromCamelCase(serverKey));
-  };
-
-  const translateDynamicKey = (key: string, fallback: string) => {
-    return isLocaleKey(key) ? t(key) : fallback;
-  };
-
-  const isLocaleKey = (key: string): key is LocaleKey => {
-    return localeKeySet.has(key);
   };
 
   const invalidateCustomTranslations = () => {
@@ -245,14 +242,7 @@ export const useIntlUtils = () => {
       )
       .forEach(key => localStorage.removeItem(key));
 
-    // Clear from i18next cache (specifically for when we delete a translation)
-    for (const lang of i18n.languages) {
-      i18n.removeResourceBundle(lang, CUSTOM_TRANSLATIONS_NAMESPACE);
-    }
-
-    // Then reload from backend
-    // Note - this is still requires the components in question to
-    // re-render to pick up the new translations
+    // Reload from backend.
     i18n.reloadResources(undefined, CUSTOM_TRANSLATIONS_NAMESPACE);
   };
 
@@ -271,8 +261,6 @@ export const useIntlUtils = () => {
     getLocalisedFullName,
     getPlural,
     translateServerError,
-    isLocaleKey,
-    translateDynamicKey,
     invalidateCustomTranslations,
   };
 };

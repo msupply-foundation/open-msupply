@@ -48,6 +48,7 @@ pub fn upsert_campaign(
         &ResourceAccessRequest {
             resource: Resource::MutateCampaigns,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 
@@ -85,7 +86,7 @@ fn map_response(from: Result<Campaign, ServiceError>) -> Result<UpsertCampaignRe
 
 fn map_error(error: ServiceError) -> Result<UpsertCampaignErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured errors

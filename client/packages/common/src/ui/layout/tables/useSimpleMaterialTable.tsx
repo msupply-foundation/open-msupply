@@ -31,7 +31,7 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
       sorting: [],
     },
     ...tableOptions,
-    renderBottomToolbar: ({ table }) => (
+    bottomToolbar: ({ table, renderSettingsMenu }) => (
       <Box
         sx={{
           display: 'flex',
@@ -40,22 +40,30 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
         }}
       >
         <MRT_ShowHideColumnsButton table={table} />
-        {bottomToolbarContent}
+        {/* Density is pinned to compact for simple tables, so hide the toggle */}
+        {renderSettingsMenu({ showDensityToggle: false })}
+        {bottomToolbarContent && (
+          <Box sx={{ marginLeft: 'auto' }}>{bottomToolbarContent}</Box>
+        )}
       </Box>
     ),
 
     muiTableHeadCellProps: {
       sx: {
         fontSize: '0.85em',
+        '& .Mui-TableHeadCell-Content-Wrapper': {
+          whiteSpace: 'normal',
+        },
       },
     },
     muiTableBodyCellProps: ({ row }) => ({
       sx: {
         fontSize: '0.85em',
         fontWeight: 400,
-        color: getIsPlaceholderRow(row.original)
+        alignItems: 'flex-end',
+        color: getIsPlaceholderRow(row)
           ? 'secondary.light'
-          : getIsRestrictedRow(row.original)
+          : getIsRestrictedRow(row)
             ? 'gray.main'
             : undefined,
         paddingY: '0.2rem',

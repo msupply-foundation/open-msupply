@@ -55,12 +55,6 @@ export const ReviewTab = ({
         filterVariant: 'range-slider',
       },
       {
-        accessorKey: 'unit',
-        header: t('label.unit'),
-        size: 90,
-        enableColumnFilter: true,
-      },
-      {
         accessorKey: 'supplierItemCode',
         header: t('label.supplier-item-code'),
         size: 90,
@@ -144,7 +138,7 @@ export const ReviewTab = ({
     data: uploadedRows,
     columns,
     enableRowSelection: false,
-    noUrlFiltering: true,
+    localStateOnly: true,
     noDataElement: (
       <NothingHere body={t('error.purchase-order-line-not-found')} />
     ),

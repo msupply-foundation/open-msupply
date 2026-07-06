@@ -118,7 +118,7 @@ export const QuantityReturnedTableComponent = ({
           <NumberInputCell
             cell={cell}
             disabled={isDisabled}
-            defaultValue={0}
+            defaultValue={1}
             updateFn={packSize =>
               updateLine({
                 ...row,
@@ -175,6 +175,37 @@ export const QuantityReturnedTableComponent = ({
     tableId: 'customer-return-line-quantity',
     columns,
     data: lines,
+    muiTablePaperProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: 'none',
+      },
+    },
+    muiTableContainerProps: {
+      sx: {
+        flex: 1,
+        minHeight: 0,
+        overflowX: 'auto',
+        overflowY: 'auto',
+        maxHeight: 'unset',
+        '& .MuiTableBody-root .MuiTableRow-root': {
+          minHeight: '30px',
+        },
+        '& .MuiTableBody-root .MuiTableCell-root': {
+          paddingTop: '0.1rem',
+          paddingBottom: '0.1rem',
+        },
+        '& .MuiInputBase-root.MuiInput-root': {
+          minHeight: '32px',
+        },
+        '& .MuiPickersOutlinedInput-root': {
+          height: '32px',
+        },
+      },
+    },
   });
 
   return <MaterialTable table={table} />;

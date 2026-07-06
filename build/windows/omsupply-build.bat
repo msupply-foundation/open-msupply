@@ -20,39 +20,31 @@ start /b /wait build\windows\omsupply-prepare.bat
     exit /b %errorlevel%
 )
 
+@ECHO ##### update cargo binary version #####
+@FOR /F "delims=*" %%i in ('more omSupply\version.txt') do SET versionTag=%%i
+@FOR /F "delims=*" %%i in ('node getVersion.js') do set version=%%i
+
 @cd server 
 
-@ECHO ##### Building omsupply service::sqlite #####
-cargo build --release --bin omsupply_service && copy "target\release\omsupply_service.exe" "..\omSupply\Server\omSupply-sqlite.exe"
-@if %errorlevel% neq 0 (
-    exit /b %errorlevel%
-)
+cargo install cargo-edit
+cargo set-version %version%
 
-@ECHO ##### Building sqlite omsupply server::sqlite #####
-cargo build --release && copy "target\release\remote_server.exe" "..\omSupply\Server\omSupply-server-sqlite.exe"
-@if %errorlevel% neq 0 (
-    exit /b %errorlevel%
-)
+@ECHO ##### Building all sqlite binaries #####
+cargo build --release --bin omsupply_service --bin remote_server --bin remote_server_cli --bin test_connection
+@if %errorlevel% neq 0 ( exit /b %errorlevel% )
 
-@ECHO ##### Building omsupply service::postgres #####
-cargo build --release --bin omsupply_service --features postgres && copy "target\release\omsupply_service.exe" "..\omSupply\Server\omSupply-postgres.exe"
-@if %errorlevel% neq 0 (
-    exit /b %errorlevel%
-)
+copy "target\release\omsupply_service.exe" "..\omSupply\Server\omSupply-sqlite.exe"
+copy "target\release\remote_server.exe"    "..\omSupply\Server\omSupply-server-sqlite.exe"
+copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-sqlite.exe"
+copy "target\release\test_connection.exe"  "..\omSupply\Server\test-connection-sqlite.exe"
 
-@ECHO ##### Building omSupply cli #####
-cargo build --release --bin remote_server_cli && copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-sqlite.exe"
-cargo build --release --bin remote_server_cli --features postgres && copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-postgres.exe"
-@if %errorlevel% neq 0 (
-    exit /b %errorlevel%
-)
+@ECHO ##### Building all postgres binaries #####
+cargo build --release --bin omsupply_service --bin remote_server_cli --bin test_connection --features postgres
+@if %errorlevel% neq 0 ( exit /b %errorlevel% )
 
-@ECHO ##### Building connection test utility #####
-cargo build --release --bin test_connection && copy "target\release\test_connection.exe" "..\omSupply\Server\test-connection-sqlite.exe"
-cargo build --release --bin test_connection --features postgres && copy "target\release\test_connection.exe" "..\omSupply\Server\test-connection-postgres.exe"
-@if %errorlevel% neq 0 (
-    exit /b %errorlevel%
-)
+copy "target\release\omsupply_service.exe" "..\omSupply\Server\omSupply-postgres.exe"
+copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-postgres.exe"
+copy "target\release\test_connection.exe"  "..\omSupply\Server\test-connection-postgres.exe"
 
 @cd..
 
