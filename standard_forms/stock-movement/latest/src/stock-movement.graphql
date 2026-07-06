@@ -1,28 +1,36 @@
-query StockMovement($storeId: String!, $relocationIds: [String!]) {
-  stockRelocations(
-    storeId: $storeId
-    filter: { id: { equalAny: $relocationIds } }
-  ) {
-    ... on StockRelocationConnector {
-      totalCount
-      nodes {
-        id
-        itemCode
-        itemName
-        batch
-        expiryDate
-        numberOfPacks
-        fromPackSize
-        toPackSize
-        status
-        createdDatetime
-        fromLocation {
-          code
-          name
-        }
-        toLocation {
-          code
-          name
+query StockMovement($storeId: String!, $dataId: String!) {
+  stockRelocation(storeId: $storeId, id: $dataId) {
+    ... on StockRelocationNode {
+      id
+      stockMovementNumber
+      status
+      comment
+      createdDatetime
+      lineCount
+      user {
+        username
+      }
+      lines {
+        nodes {
+          id
+          numberOfPacks
+          stockLine {
+            batch
+            expiryDate
+            packSize
+            item {
+              code
+              name
+            }
+          }
+          sourceLocation {
+            code
+            name
+          }
+          destinationLocation {
+            code
+            name
+          }
         }
       }
     }
