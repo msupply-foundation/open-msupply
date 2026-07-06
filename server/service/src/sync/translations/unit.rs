@@ -33,7 +33,7 @@ impl SyncTranslation for UnitTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyUnitRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyUnitRow>()?;
         let mut result = UnitRow {
             id: data.ID,
             name: data.units,
@@ -49,7 +49,6 @@ impl SyncTranslation for UnitTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
-    // TODO soft delete
     fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,

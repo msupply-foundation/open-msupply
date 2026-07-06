@@ -65,13 +65,8 @@ async fn do_login(
     .await
     {
         Ok(success) => {
-            // Note: this seeds the shared per-user password cache inside `SessionStore`. Any
-            // subsequent `SyncUser::update_user` for this user will be able to re-authenticate
-            // against central using the cold-chain login's credentials. That's surprising but
-            // intentional — the alternative would be a duplicated store-without-password code
-            // path. Preserves the pre-refactor behaviour (the old `TokenBucket` did the same).
             let token = match auth_data.session_store.write() {
-                Ok(mut store) => store.create(&success.user_id, &success.password),
+                Ok(mut store) => store.create(&success.user_id),
                 Err(err) => {
                     error!("Session store lock poisoned: {err}");
                     return Ok(None);

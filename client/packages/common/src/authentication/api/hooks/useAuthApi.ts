@@ -16,8 +16,7 @@ export const useAuthApi = () => {
   const keys = {
     me: () => ['me'] as const,
     isCentralServer: ['isCentralServer'] as const,
-    refresh: () => ['refresh'] as const,
-    userSync: () => ['userSync'] as const,
+    isCentralStandalone: ['isCentralStandalone'] as const,
   };
 
   return { ...queries, sdk, keys, client };

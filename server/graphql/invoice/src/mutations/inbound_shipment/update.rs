@@ -4,7 +4,7 @@ use crate::mutations::{
 };
 use async_graphql::*;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, FixedOffset};
 use graphql_core::generic_inputs::{InboundShipmentType, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, OtherPartyNotASupplier, OtherPartyNotVisible,
@@ -51,7 +51,7 @@ pub struct UpdateInput {
     pub charges_local_currency: Option<f64>,
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
-    pub received_datetime: Option<DateTime<Utc>>,
+    pub received_datetime: Option<DateTime<FixedOffset>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -86,6 +86,7 @@ pub fn update(
         &ResourceAccessRequest {
             resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -184,7 +185,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 CannotReverseInvoiceStatus,
             ))
         }
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(CannotEditInvoice))
         }
         ServiceError::CannotReceiveWithPendingLines => {
@@ -226,9 +227,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotMoveReceivedDateForward
         | ServiceError::ExceedsMaximumBackdatingDays
         | ServiceError::CannotSetShippedStatusOnManualInboundShipment
-        | ServiceError::CurrencyRateMustBePositive => {
-            BadUserInput(formatted_error)
-        }
+        | ServiceError::CurrencyRateMustBePositive => BadUserInput(formatted_error),
         ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),

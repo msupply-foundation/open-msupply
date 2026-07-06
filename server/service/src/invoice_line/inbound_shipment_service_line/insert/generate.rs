@@ -52,6 +52,7 @@ pub fn generate(
         linked_invoice_id: None,
         donor_id: None,
         manufacturer_id: None,
+        legacy_goods_received_line_id: None,
         vvm_status_id: None,
         reason_option_id: None,
         campaign_id: None,
@@ -60,5 +61,7 @@ pub fn generate(
         volume_per_pack: 0.0,
         shipped_pack_size: None,
         status: None,
+        received_number_of_packs: None,
+        linked_invoice_line_id: None,
     })
 }

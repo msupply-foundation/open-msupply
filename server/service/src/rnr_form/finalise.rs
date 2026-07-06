@@ -8,7 +8,8 @@ use repository::{
     ActivityLogType, EqualFilter, NumberRowType, RepositoryError, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionStatus,
     RequisitionType, RnRForm, RnRFormLine, RnRFormLineFilter, RnRFormLineRepository,
-    RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, RnRFormStatus,
+    RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, RnRFormStatus, StoreFilter,
+    StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -60,6 +61,21 @@ pub fn finalise_rnr_form(
                 rnr_form_line_repo
                     .update_requisition_line_id(&rnr_form_line_id, &requisition_line.id)?;
             }
+
+            activity_log_entry(
+                ctx,
+                ActivityLogType::RequisitionCreated,
+                Some(requisition_row.id.clone()),
+                None,
+                None,
+            )?;
+            activity_log_entry(
+                ctx,
+                ActivityLogType::RequisitionStatusSent,
+                Some(requisition_row.id.clone()),
+                None,
+                None,
+            )?;
 
             activity_log_entry(
                 ctx,
@@ -127,6 +143,11 @@ fn generate(
 
     let store_preferences = get_store_preferences(&ctx.connection, &rnr_form_row.store_id)?;
 
+    // Resolve the other-party name to its store (when the name IS a store)
+    let other_party_store = StoreRepository::new(&ctx.connection).query_one(
+        StoreFilter::new().name_id(EqualFilter::equal_to(rnr_form_row.name_id.clone())),
+    )?;
+
     // Create an internal order based on the RnR form
     // Internal Orders are known as requisitions in the code base
     let requisition_row = RequisitionRow {
@@ -158,6 +179,7 @@ fn generate(
         is_emergency: false,
         created_from_requisition_id: None,
         destination_customer_id: None,
+        name_store_id: other_party_store.map(|store| store.store_row.id),
     };
 
     let rnr_form_id = rnr_form_row.id.clone();

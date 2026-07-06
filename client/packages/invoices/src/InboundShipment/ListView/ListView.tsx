@@ -55,6 +55,7 @@ export const InboundListView = () => {
     }),
     filters: [
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
+      { key: 'invoiceNumberOrStatus', condition: 'like' },
       { key: 'otherPartyName' },
       {
         key: 'createdDatetime',
@@ -128,7 +129,7 @@ export const InboundListView = () => {
         accessorFn: row => getStatusTranslator(t)(row.status),
         id: 'status',
         size: 140,
-        filterVariant: 'select',
+        filterVariant: 'multi-select',
         filterSelectOptions: statuses.map(status => ({
           value: status,
           label: getStatusTranslator(t)(status),

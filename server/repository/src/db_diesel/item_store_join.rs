@@ -2,7 +2,10 @@ use diesel::prelude::*;
 
 use crate::db_diesel::item_row::item;
 use crate::diesel_macros::define_linked_tables;
-use crate::{RepositoryError, StorageConnection, Upsert};
+use crate::{
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
+};
 
 define_linked_tables! {
     view: item_store_join = "item_store_join_view",
@@ -26,7 +29,17 @@ define_linked_tables! {
 joinable!(item_store_join -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_store_join, item);
 
-#[derive(Clone, Queryable, Debug, PartialEq, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = item_store_join)]
 pub struct ItemStoreJoinRow {
     pub id: String,
@@ -77,7 +90,12 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> 
 
     fn upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert(row)?;
-        Ok(())
+        let changelog = row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
@@ -85,12 +103,48 @@ impl<'a> ItemStoreJoinRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ItemStoreJoinRowRepository { connection }
     }
+
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<ItemStoreJoinRow>, RepositoryError> {
+        Ok(item_store_join::dsl::item_store_join
+            .filter(item_store_join::dsl::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    pub fn find_many_by_item_and_store_ids(
+        &self,
+        item_ids: &[String],
+        store_ids: &[String],
+    ) -> Result<Vec<ItemStoreJoinRow>, RepositoryError> {
+        let result = item_store_join::table
+            .filter(item_store_join::item_id.eq_any(item_ids))
+            .filter(item_store_join::store_id.eq_any(store_ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
 }
 
 impl Upsert for ItemStoreJoinRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemStoreJoinRowRepository::new(con).upsert_one(self)?;
-        Ok(None)
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ItemStoreJoinRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

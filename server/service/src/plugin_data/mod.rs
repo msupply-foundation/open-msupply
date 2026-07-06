@@ -10,6 +10,8 @@ mod insert;
 pub use self::insert::*;
 mod update;
 pub use self::update::*;
+mod delete;
+pub use self::delete::*;
 
 pub trait PluginDataServiceTrait: Sync + Send {
     fn get_plugin_data(
@@ -42,6 +44,10 @@ pub trait PluginDataServiceTrait: Sync + Send {
         input: UpdatePluginData,
     ) -> Result<PluginData, UpdatePluginDataError> {
         update(ctx, input)
+    }
+
+    fn delete(&self, ctx: &ServiceContext, id: &str) -> Result<String, DeletePluginDataError> {
+        delete(ctx, id)
     }
 }
 

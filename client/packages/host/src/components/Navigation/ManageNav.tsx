@@ -63,7 +63,7 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Equipment)
               .build()}
-            text={t('equipment')}
+            text={t('manage-equipment')}
           />
           <AppNavLink
             visible={isCentralServer}
@@ -71,6 +71,13 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .addPart(AppRoute.Campaigns)
               .build()}
             text={t('campaigns')}
+          />
+          <AppNavLink
+            visible={isCentralServer && isServerAdmin}
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.Sites)
+              .build()}
+            text={t('sites')}
           />
           <AppNavLink
             visible={isCentralServer && isServerAdmin}

@@ -49,6 +49,21 @@ pub enum InstallUploadedPluginError {
     #[error(transparent)]
     DatabaseError(#[from] RepositoryError),
 }
+
+#[derive(Error, Debug)]
+pub enum UninstallPluginError {
+    #[error("Plugin not found")]
+    PluginNotFound,
+    #[error(transparent)]
+    DatabaseError(#[from] RepositoryError),
+}
+
+#[derive(Clone, Debug)]
+pub struct UninstallPluginResult {
+    pub id: String,
+    pub code: String,
+    pub kind: InstalledPluginKind,
+}
 #[derive(Error, Debug)]
 pub enum PluginGraphqlQueryError {
     #[error(transparent)]
@@ -59,6 +74,7 @@ pub enum PluginGraphqlQueryError {
 
 #[derive(Clone, Debug)]
 pub struct FrontendPluginMetadata {
+    pub id: String,
     pub code: String,
     pub version: Version,
     pub entry_point: String,
@@ -199,6 +215,7 @@ pub trait PluginServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         FrontendPluginRow {
+            id,
             code,
             entry_point,
             files,
@@ -263,6 +280,7 @@ pub trait PluginServiceTrait: Sync + Send {
             code.clone(),
             FrontendPlugin {
                 metadata: FrontendPluginMetadata {
+                    id,
                     code,
                     version,
                     entry_point,
@@ -317,6 +335,44 @@ pub trait PluginServiceTrait: Sync + Send {
         Ok(result_bundle)
     }
 
+    fn uninstall_plugin(
+        &self,
+        ctx: &ServiceContext,
+        id: &str,
+    ) -> Result<UninstallPluginResult, UninstallPluginError> {
+        let result = ctx
+            .connection
+            .transaction_sync::<_, UninstallPluginError, _>(|connection| {
+                // Look up in both tables so callers don't need to know the kind.
+                let backend_repo = BackendPluginRowRepository::new(connection);
+                if let Some(row) = backend_repo.find_one_by_id(id)? {
+                    backend_repo.delete(id)?;
+                    return Ok(UninstallPluginResult {
+                        id: row.id,
+                        code: row.code,
+                        kind: InstalledPluginKind::Backend,
+                    });
+                }
+
+                let frontend_repo = FrontendPluginRowRepository::new(connection);
+                if let Some(row) = frontend_repo.find_one_by_id(id)? {
+                    frontend_repo.delete(id)?;
+                    return Ok(UninstallPluginResult {
+                        id: row.id,
+                        code: row.code,
+                        kind: InstalledPluginKind::Frontend,
+                    });
+                }
+
+                Err(UninstallPluginError::PluginNotFound)
+            })
+            .map_err(|error| error.to_inner_error())?;
+
+        ctx.processors_trigger
+            .trigger_processor(ProcessorType::LoadPlugin);
+        Ok(result)
+    }
+
     fn plugin_graphql_query(
         &self,
         store_id: String,
@@ -347,11 +403,12 @@ mod test {
     };
     use repository::{
         mock::{MockData, MockDataInserts},
-        BackendPluginRow, BackendPluginRowRepository, FrontendPluginRow,
-        FrontendPluginRowRepository, FrontendPluginTypes, PluginType, PluginTypes,
+        BackendPluginRow, BackendPluginRowRepository, ChangelogCondition, ChangelogRepository,
+        ChangelogTableName, CursorAndLimit, FilterBuilder, FrontendPluginRow,
+        FrontendPluginRowRepository, FrontendPluginTypes, PluginType, PluginTypes, RowActionType,
     };
 
-    use super::InstalledPluginKind;
+    use super::{InstalledPluginKind, UninstallPluginError};
 
     #[actix_rt::test]
     async fn installed_plugins() {
@@ -498,4 +555,130 @@ mod test {
             ]
         )
     }
+
+    #[actix_rt::test]
+    async fn uninstall_plugin() {
+        let backend_row = BackendPluginRow {
+            id: "backend-to-delete".to_string(),
+            code: "doomed_backend".to_string(),
+            version: "1.0.0".to_string(),
+            ..Default::default()
+        };
+        let frontend_row = FrontendPluginRow {
+            id: "frontend-to-delete".to_string(),
+            code: "doomed_frontend".to_string(),
+            version: "1.0.0".to_string(),
+            types: FrontendPluginTypes(vec!["report".to_string()]),
+            ..Default::default()
+        };
+
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "uninstall_plugin",
+            MockDataInserts::none(),
+            MockData {
+                backend_plugin: vec![backend_row.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+        FrontendPluginRowRepository::new(&connection)
+            .upsert_one(frontend_row.clone())
+            .unwrap();
+
+        let changelog_repo = ChangelogRepository::new(&connection);
+        // Cursor after the upserts so we only inspect changelog rows produced
+        // by the uninstall_plugin calls below.
+        let cursor_before_uninstall = changelog_repo
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: i64::MAX,
+                },
+            )
+            .unwrap()
+            .rows
+            .last()
+            .map(|r| r.cursor)
+            .unwrap_or(0);
+
+        // Backend
+        let backend_result = service_provider
+            .plugin_service
+            .uninstall_plugin(&service_context, &backend_row.id)
+            .unwrap();
+        assert_eq!(backend_result.id, backend_row.id);
+        assert_eq!(backend_result.code, backend_row.code);
+        assert_eq!(backend_result.kind, InstalledPluginKind::Backend);
+        assert_eq!(
+            BackendPluginRowRepository::new(&connection)
+                .find_one_by_id(&backend_row.id)
+                .unwrap(),
+            None
+        );
+
+        // Frontend
+        let frontend_result = service_provider
+            .plugin_service
+            .uninstall_plugin(&service_context, &frontend_row.id)
+            .unwrap();
+        assert_eq!(frontend_result.id, frontend_row.id);
+        assert_eq!(frontend_result.code, frontend_row.code);
+        assert_eq!(frontend_result.kind, InstalledPluginKind::Frontend);
+        assert_eq!(
+            FrontendPluginRowRepository::new(&connection)
+                .find_one_by_id(&frontend_row.id)
+                .unwrap(),
+            None
+        );
+
+        // Each uninstall must have produced exactly one Delete-action changelog
+        // row (and no Upsert rows) for its table.
+        let backend_changelogs = changelog_repo
+            .query(
+                ChangelogCondition::table_name::equal(ChangelogTableName::BackendPlugin),
+                CursorAndLimit {
+                    cursor: cursor_before_uninstall,
+                    limit: i64::MAX,
+                },
+            )
+            .unwrap()
+            .rows;
+        let backend_new: Vec<_> = backend_changelogs
+            .into_iter()
+            .filter(|c| c.cursor > cursor_before_uninstall && c.record_id == backend_row.id)
+            .collect();
+        assert_eq!(backend_new.len(), 1);
+        assert_eq!(backend_new[0].row_action, RowActionType::Delete);
+
+        let frontend_changelogs = changelog_repo
+            .query(
+                ChangelogCondition::table_name::equal(ChangelogTableName::FrontendPlugin),
+                CursorAndLimit {
+                    cursor: cursor_before_uninstall,
+                    limit: i64::MAX,
+                },
+            )
+            .unwrap()
+            .rows;
+        let frontend_new: Vec<_> = frontend_changelogs
+            .into_iter()
+            .filter(|c| c.cursor > cursor_before_uninstall && c.record_id == frontend_row.id)
+            .collect();
+        assert_eq!(frontend_new.len(), 1);
+        assert_eq!(frontend_new[0].row_action, RowActionType::Delete);
+
+        // Unknown id surfaces as PluginNotFound, not as a silent no-op.
+        let err = service_provider
+            .plugin_service
+            .uninstall_plugin(&service_context, "no-such-plugin")
+            .unwrap_err();
+        assert!(matches!(err, UninstallPluginError::PluginNotFound));
+    }
+
 }

@@ -1,3 +1,4 @@
+use actix_web::web::Data;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
@@ -7,7 +8,6 @@ use graphql_core::{
         OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
 };
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
@@ -17,6 +17,7 @@ use service::{
         UpdateRequestRequisition as ServiceInput, UpdateRequestRequisitionError as ServiceError,
         UpdateRequestRequisitionStatus,
     },
+    service_provider::ServiceProvider,
     NullableUpdate,
 };
 
@@ -70,12 +71,17 @@ pub enum UpdateResponse {
     Response(RequisitionNode),
 }
 
-pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+pub async fn update(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateInput,
+) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -85,18 +91,29 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
             &ResourceAccessRequest {
                 resource: Resource::RequisitionSend,
                 store_id: Some(store_id.to_string()),
+                require_central_standalone: false,
             },
         )?;
     }
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let store_id = store_id.to_string();
+    let input = input.to_domain();
 
-    map_response(
-        service_provider
-            .requisition_service
-            .update_request_requisition(&service_context, input.to_domain()),
+    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949). The
+    // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<Requisition, ServiceError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            Ok(service_provider
+                .requisition_service
+                .update_request_requisition(&service_context, input))
+        },
     )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<UpdateResponse> {

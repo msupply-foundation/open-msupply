@@ -2,11 +2,15 @@ use repository::{
     item_variant::{
         bundled_item::{BundledItemFilter, BundledItemRepository},
         bundled_item_row::{BundledItemRow, BundledItemRowRepository},
+        item_variant_row::ItemVariantRow,
     },
-    EqualFilter, RepositoryError, StorageConnection,
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
 };
 
-use crate::{check_item_variant_exists, service_provider::ServiceContext};
+use crate::{
+    activity_log::activity_log_entry_with_diff, check_item_variant_exists,
+    service_provider::ServiceContext,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertBundledItemError {
@@ -34,11 +38,24 @@ pub fn upsert_bundled_item(
     let bundled_item = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &input)?;
-            let new_bundled_item = generate(input.clone());
+            let (existing, principal_item_variant) = validate(connection, &input)?;
+            let new_bundled_item = generate(input);
             let repo = BundledItemRowRepository::new(connection);
 
             repo.upsert_one(&new_bundled_item)?;
+
+            let log_type = if existing.is_some() {
+                ActivityLogType::BundledItemUpdated
+            } else {
+                ActivityLogType::BundledItemCreated
+            };
+            activity_log_entry_with_diff(
+                ctx,
+                log_type,
+                Some(principal_item_variant.item_id.clone()),
+                existing.as_ref(),
+                &new_bundled_item,
+            )?;
 
             repo.find_one_by_id(&new_bundled_item.id)?
                 .ok_or(UpsertBundledItemError::CreatedRecordNotFound)
@@ -73,7 +90,7 @@ pub fn generate(
 fn validate(
     connection: &StorageConnection,
     input: &UpsertBundledItem,
-) -> Result<(), UpsertBundledItemError> {
+) -> Result<(Option<BundledItemRow>, ItemVariantRow), UpsertBundledItemError> {
     let principal_item_variant =
         match check_item_variant_exists(connection, &input.principal_item_variant_id)? {
             Some(principal_item_variant) => principal_item_variant,
@@ -133,5 +150,7 @@ fn validate(
         return Err(UpsertBundledItemError::CanNotNestBundledItems);
     }
 
-    Ok(())
+    let old_bundled_item = BundledItemRowRepository::new(connection).find_one_by_id(&input.id)?;
+
+    Ok((old_bundled_item, principal_item_variant))
 }

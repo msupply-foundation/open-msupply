@@ -187,6 +187,7 @@ pub fn outbound_shipment_counts(
         &ResourceAccessRequest {
             resource: Resource::QueryOutboundShipment,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -207,6 +208,7 @@ pub fn inbound_shipment_counts(
         &ResourceAccessRequest {
             resource: Resource::QueryInboundShipment,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -228,6 +230,7 @@ pub fn inbound_shipment_external_counts(
         &ResourceAccessRequest {
             resource: Resource::QueryInboundShipmentExternal,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -285,6 +288,7 @@ pub fn invoice_counts(
         &ResourceAccessRequest {
             resource: Resource::InvoiceCount,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

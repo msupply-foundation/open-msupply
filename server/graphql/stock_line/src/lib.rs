@@ -32,6 +32,7 @@ pub enum StockLineSortFieldInput {
     SupplierName,
     LocationCode,
     CostPricePerPack,
+    SellPricePerPack,
     VvmStatusThenExpiry,
 }
 #[derive(InputObject)]
@@ -112,6 +113,7 @@ impl StockLineQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryStockLine,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
@@ -164,6 +166,7 @@ impl StockLineQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryStockLine,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
@@ -176,15 +179,17 @@ impl StockLineQueries {
             .unwrap_or_default()
             .store_id(EqualFilter::equal_to(store_id.to_string()));
 
-        let items = service_provider.stock_line_service.get_items_by_stock_line_filter(
-            &service_context,
-            page.map(PaginationOption::from),
-            Some(filter),
-            sort.and_then(|mut sort_list| sort_list.pop())
-                .map(|sort| sort.to_domain()),
-            Some(store_id),
-        )
-        .map_err(StandardGraphqlError::from_list_error)?;
+        let items = service_provider
+            .stock_line_service
+            .get_items_by_stock_line_filter(
+                &service_context,
+                page.map(PaginationOption::from),
+                Some(filter),
+                sort.and_then(|mut sort_list| sort_list.pop())
+                    .map(|sort| sort.to_domain()),
+                Some(store_id),
+            )
+            .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(ItemsResponse::Response(ItemConnector::from_domain(items)))
     }
@@ -202,6 +207,7 @@ impl StockLineQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryStockLine,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 

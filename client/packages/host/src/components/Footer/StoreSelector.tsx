@@ -1,11 +1,14 @@
 import React, { FC, useState, useMemo } from 'react';
 import {
   Box,
+  Checkbox,
   CircularProgress,
   FlatButton,
   PaperPopoverSection,
+  Typography,
   useAuthContext,
   useSelectStore,
+  useLocalStorage,
   useTranslation,
   useNavigate,
   useUserDetails,
@@ -13,15 +16,27 @@ import {
   useRootNavigationPath,
   PaperPopover,
 } from '@openmsupply-client/common';
+import { FormControlLabel } from '@mui/material';
 import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
 
 export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { store } = useAuthContext();
+  const { store, user } = useAuthContext();
   const setStore = useSelectStore();
   const { data, isLoading } = useUserDetails();
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
+  const [skipPrefs, setSkipPrefs] = useLocalStorage(
+    '/login/skip-store-selector',
+    {}
+  );
+
+  // For store selector on login
+  const skipKey = (user?.name ?? '').toLowerCase();
+  const rememberChoice = !!(skipPrefs ?? {})[skipKey];
+  const setRememberChoice = (checked: boolean) => {
+    if (skipKey) setSkipPrefs({ ...(skipPrefs ?? {}), [skipKey]: checked });
+  };
 
   const rootNavigationPath = useRootNavigationPath();
 
@@ -104,13 +119,30 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
                 ) : (
                   <FlatButton
                     label={t('control.search.no-results-label')}
-                    onClick={() => {}}
+                    onClick={() => { }}
                     disabled={true}
                     key="no-results"
                     sx={buttonStyle}
                   />
                 )}
               </Box>
+              <FormControlLabel
+                sx={{ marginTop: 1 }}
+                control={
+                  <Checkbox
+                    checked={rememberChoice}
+                    onChange={e => setRememberChoice(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label={
+                  <Typography
+                    sx={{ fontSize: '14px', color: 'text.secondary' }}
+                  >
+                    {t('message.remember-store-choice')}
+                  </Typography>
+                }
+              />
             </>
           )}
         </PaperPopoverSection>

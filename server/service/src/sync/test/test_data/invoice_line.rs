@@ -98,6 +98,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             purchase_order_line_id: None,
             donor_id: Some("donor_a".to_string()),
             manufacturer_id: None,
@@ -109,6 +110,8 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 10.0,
             shipped_pack_size: Some(1.0),
             status: None,
+            received_number_of_packs: None,
+            legacy_goods_received_line_id: None,
         },
     )
 }
@@ -140,6 +143,7 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             donor_id: Some("donor_a".to_string()),
             vvm_status_id: None,
             shipped_number_of_packs: Some(0.0),
@@ -150,9 +154,11 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 10.0,
             shipped_pack_size: Some(1.0),
+            goods_received_lines_ID: None,
         }),
     }
 }
@@ -244,6 +250,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             purchase_order_line_id: None,
             donor_id: None,
             manufacturer_id: None,
@@ -255,6 +262,8 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             status: None,
+            received_number_of_packs: None,
+            legacy_goods_received_line_id: None,
         },
     )
 }
@@ -286,6 +295,7 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             donor_id: None,
             vvm_status_id: None,
             shipped_number_of_packs: Some(10.0),
@@ -296,9 +306,11 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
+            goods_received_lines_ID: None,
         }),
     }
 }
@@ -398,6 +410,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: Some("5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string()),
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             purchase_order_line_id: Some("test_purchase_order_a_line_1".to_string()),
             donor_id: None,
             manufacturer_id: None,
@@ -409,6 +422,8 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             status: Some(repository::InvoiceLineStatus::Pending),
+            received_number_of_packs: None,
+            legacy_goods_received_line_id: None,
         },
     )
 }
@@ -440,6 +455,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: Some("5fb99f9c-03f4-47f2-965b-c9ecd083c675".to_string()),
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             donor_id: None,
             vvm_status_id: None,
             manufacturer_id: None,
@@ -449,10 +465,12 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
                 status: Some("PENDING".to_string()),
                 manufacture_date: None,
                 purchase_order_line_id: Some("test_purchase_order_a_line_1".to_string()),
+                received_number_of_packs: None,
             }),
             shipped_number_of_packs: Some(0.0),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
+            goods_received_lines_ID: None,
         }),
     }
 }
@@ -547,6 +565,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             purchase_order_line_id: None,
             donor_id: None,
             manufacturer_id: None,
@@ -558,6 +577,8 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             status: None,
+            received_number_of_packs: None,
+            legacy_goods_received_line_id: None,
         },
     )
 }
@@ -589,6 +610,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             donor_id: None,
             vvm_status_id: None,
             shipped_number_of_packs: Some(0.0),
@@ -599,9 +621,11 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
+            goods_received_lines_ID: None,
         }),
     }
 }
@@ -696,6 +720,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             purchase_order_line_id: None,
             donor_id: None,
             manufacturer_id: None,
@@ -707,6 +732,8 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
+            received_number_of_packs: None,
+            legacy_goods_received_line_id: None,
         },
     )
 }
@@ -738,6 +765,7 @@ fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             donor_id: None,
             vvm_status_id: None,
             shipped_number_of_packs: Some(0.0),
@@ -748,9 +776,11 @@ fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
+            goods_received_lines_ID: None,
         }),
     }
 }
@@ -846,6 +876,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(0.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             purchase_order_line_id: None,
             donor_id: None,
             manufacturer_id: None,
@@ -857,6 +888,8 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
+            received_number_of_packs: None,
+            legacy_goods_received_line_id: None,
         },
     )
 }
@@ -889,6 +922,7 @@ fn trans_line_prescribed_quantity_push_record() -> TestSyncOutgoingRecord {
             reason_option_id: None,
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             donor_id: None,
             vvm_status_id: None,
             shipped_number_of_packs: Some(0.0),
@@ -899,9 +933,11 @@ fn trans_line_prescribed_quantity_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
+            goods_received_lines_ID: None,
         }),
     }
 }
@@ -995,6 +1031,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             purchase_order_line_id: None,
             donor_id: None,
             manufacturer_id: None,
@@ -1006,6 +1043,8 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
+            received_number_of_packs: None,
+            legacy_goods_received_line_id: None,
         },
     )
 }
@@ -1037,6 +1076,7 @@ fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             donor_id: None,
             vvm_status_id: None,
             shipped_number_of_packs: Some(0.0),
@@ -1047,9 +1087,11 @@ fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
+            goods_received_lines_ID: None,
         }),
     }
 }
@@ -1143,6 +1185,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             purchase_order_line_id: None,
             donor_id: None,
             manufacturer_id: None,
@@ -1154,6 +1197,8 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             status: None,
+            received_number_of_packs: None,
+            legacy_goods_received_line_id: None,
         },
     )
 }
@@ -1186,6 +1231,7 @@ fn trans_line_empty_stockline_push_record() -> TestSyncOutgoingRecord {
             foreign_currency_price_before_tax: Some(200.0),
             item_variant_id: None,
             linked_invoice_id: None,
+            linked_invoice_line_id: None,
             donor_id: None,
             vvm_status_id: None,
             shipped_number_of_packs: Some(0.0),
@@ -1196,9 +1242,11 @@ fn trans_line_empty_stockline_push_record() -> TestSyncOutgoingRecord {
                 status: None,
                 manufacture_date: None,
                 purchase_order_line_id: None,
+                received_number_of_packs: None,
             }),
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
+            goods_received_lines_ID: None,
         }),
     }
 }

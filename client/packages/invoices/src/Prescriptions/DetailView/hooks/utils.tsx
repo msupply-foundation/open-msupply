@@ -1,4 +1,4 @@
-import { PrescriptionLineFragment, PrescriptionRowFragment } from '../../api';
+import { PrescriptionLineFragment, PrescriptionFragment } from '../../api';
 
 interface ItemDetails {
   id: string;
@@ -17,12 +17,17 @@ interface Label {
 }
 
 export const groupItems = (
-  lines: PrescriptionLineFragment[]
+  lines: PrescriptionLineFragment[],
+  doNotPrintPlaceholderLineLabels = false
 ): ItemDetails[] => {
   const linesByItem: { [key: string]: PrescriptionLineFragment[] } = {};
 
-  // groups all batches of an item by id
+  // Groups all batches of an item by id. Ignore placeholder lines if store
+  // preference for this is turned on
   lines.forEach(line => {
+    if (doNotPrintPlaceholderLineLabels && line.numberOfPacks * line.packSize <= 0) {
+      return;
+    }
     const { id } = line.item;
     if (!linesByItem[id]) {
       linesByItem[id] = [];
@@ -61,7 +66,7 @@ export const groupItems = (
 
 export const generateLabel = (
   results: ItemDetails[],
-  prescription: PrescriptionRowFragment,
+  prescription: PrescriptionFragment,
   store: string
 ): Label[] => {
   const clinicianDetails = prescription.clinician

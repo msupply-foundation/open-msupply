@@ -10,8 +10,8 @@ import {
 } from '@openmsupply-client/common';
 import {
   PartialPrescriptionLineFragment,
+  PrescriptionFragment,
   PrescriptionLineFragment,
-  PrescriptionRowFragment,
 } from '../operations.generated';
 import { DraftPrescriptionLine } from '../../../types';
 
@@ -26,7 +26,7 @@ export const sortFieldMap: Record<string, InvoiceSortFieldInput> = {
   theirReference: InvoiceSortFieldInput.TheirReference,
 };
 
-export const mapStatus = (patch: RecordPatch<PrescriptionRowFragment>) => {
+export const mapStatus = (patch: RecordPatch<PrescriptionFragment>) => {
   switch (patch.status) {
     case InvoiceNodeStatus.Picked:
       return UpdatePrescriptionStatusInput.Picked;

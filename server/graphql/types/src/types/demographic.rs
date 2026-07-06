@@ -15,6 +15,11 @@ impl DemographicNode {
     pub async fn name(&self) -> &str {
         &self.row().name
     }
+    /// Percentage of the store's served population this demographic represents
+    /// (e.g. 3.5 for under-1s). Used by population-based vaccine forecasting.
+    pub async fn population_percentage(&self) -> f64 {
+        self.row().population_percentage
+    }
 }
 
 impl DemographicNode {

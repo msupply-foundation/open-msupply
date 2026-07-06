@@ -17,7 +17,7 @@ import {
 } from '@openmsupply-client/system';
 import { RequestFragment, useRequest } from '../../api';
 import { useDraftRequisitionLine, useNextRequestLine } from './hooks';
-import { isRequestDisabled, shouldDeleteLine } from '../../../utils';
+import { shouldDeleteLine } from '../../../utils';
 import { RequestLineEdit } from './RequestLineEdit';
 
 interface RequestLineEditModalProps {
@@ -39,7 +39,7 @@ export const RequestLineEditModal = ({
 }: RequestLineEditModalProps) => {
   const { error } = useNotification();
   const deleteLine = useRequest.line.deleteLine();
-  const isDisabled = isRequestDisabled(requisition);
+  const isDisabled = useRequest.utils.isDisabled();
   const { orderInPacks, manageVaccinesInDoses } = usePreferences();
 
   const lines = useMemo(
@@ -77,7 +77,8 @@ export const RequestLineEditModal = ({
   const nextDisabled =
     (!hasNext && mode === ModalMode.Update) ||
     !currentItem ||
-    isEditingRequested;
+    isEditingRequested ||
+    isLoading;
 
   const deletePreviousLine = () => {
     const shouldDelete = shouldDeleteLine(mode, draft?.id, isDisabled);
@@ -152,7 +153,7 @@ export const RequestLineEditModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!currentItem || isEditingRequested}
+          disabled={!currentItem || isEditingRequested || isLoading}
           onClick={async () => {
             if (requisition.status === RequisitionNodeStatus.Sent) {
               onClose();

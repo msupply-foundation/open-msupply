@@ -3,8 +3,10 @@ import { DocumentNode, print } from 'graphql';
 import { useGql } from '../GqlContext';
 import { useAuthContext } from '../../authentication/AuthContext';
 import {
+  getConnectionState,
   getSubscriptionClient,
   reconnectSubscriptionClient,
+  subscribeToConnectionState,
 } from '../SubscriptionClient';
 
 interface UseSubscriptionOptions<TSubscription, TData> {
@@ -48,16 +50,23 @@ export const useSubscription = <TSubscription, TData>({
   enabled = true,
   requireAuth = true,
   select,
-}: UseSubscriptionOptions<TSubscription, TData>): UseSubscriptionResult<TData> => {
+}: UseSubscriptionOptions<
+  TSubscription,
+  TData
+>): UseSubscriptionResult<TData> => {
   const { client: gqlClient } = useGql();
   const { isAuthenticated } = useAuthContext();
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isConnected, setIsConnected] = useState(getConnectionState);
   const [data, setData] = useState<TData | undefined>(undefined);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    setIsConnected(getConnectionState());
+    return subscribeToConnectionState(setIsConnected);
+  }, []);
+
+  useEffect(() => {
     if (!enabled || (requireAuth && !isAuthenticated)) {
-      setIsSubscribed(false);
       setData(undefined);
       return;
     }
@@ -74,8 +83,6 @@ export const useSubscription = <TSubscription, TData>({
 
     let disposed = false;
 
-    setIsSubscribed(true);
-
     unsubscribeRef.current = wsClient.subscribe(
       {
         query: print(document),
@@ -89,13 +96,11 @@ export const useSubscription = <TSubscription, TData>({
         },
         error: () => {
           if (!disposed) {
-            setIsSubscribed(false);
             setData(undefined);
           }
         },
         complete: () => {
           if (!disposed) {
-            setIsSubscribed(false);
             setData(undefined);
           }
         },
@@ -104,7 +109,6 @@ export const useSubscription = <TSubscription, TData>({
 
     return () => {
       disposed = true;
-      setIsSubscribed(false);
       setData(undefined);
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
@@ -113,6 +117,11 @@ export const useSubscription = <TSubscription, TData>({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, document, isAuthenticated]);
+
+  // Active only when the socket is connected, the caller has enabled it, and
+  // (when auth is required) we believe we're logged in.
+  const isSubscribed =
+    isConnected && enabled && (!requireAuth || isAuthenticated);
 
   return { isSubscribed, data };
 };
