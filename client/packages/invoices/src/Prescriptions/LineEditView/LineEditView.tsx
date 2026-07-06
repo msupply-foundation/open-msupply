@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import {
   BasicSpinner,
-  InvoiceNodeStatus,
   NothingHere,
   RouteBuilder,
   useBreadcrumbs,
   useConfirmOnLeaving,
   useNavigate,
   useParams,
+  useShallow,
 } from '@openmsupply-client/common';
-
 import { ItemRowFragment, ListItems } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PageLayout } from './PageLayout';
@@ -35,14 +34,21 @@ export const PrescriptionLineEditView = () => {
     note,
     allocatedQuantity,
     setIsDirty: setAllocationIsDirty,
-  } = useAllocationContext(state => ({
-    ...state,
-    allocatedQuantity: getAllocatedQuantity(state),
-  }));
+  } = useAllocationContext(
+    useShallow(state => ({
+      isDirty: state.isDirty,
+      draftLines: state.draftLines,
+      item: state.item,
+      prescribedUnits: state.prescribedUnits,
+      note: state.note,
+      allocatedQuantity: getAllocatedQuantity(state),
+      setIsDirty: state.setIsDirty,
+    }))
+  );
 
   const {
     mutateAsync: savePrescriptionItemLineData,
-    isLoading: isSavingLines,
+    isPending: isSavingLines,
   } = useSavePrescriptionItemLineData(invoiceId);
 
   const {
@@ -60,8 +66,6 @@ export const PrescriptionLineEditView = () => {
 
   const lines =
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
-
-  const status = data?.status;
 
   // Future TODO: expose on Prescription/Invoice query - items, and whether they have
   // any packs allocated or not!
@@ -148,7 +152,12 @@ export const PrescriptionLineEditView = () => {
   if (!data) return <NothingHere />;
 
   const itemIdList = items.map(item => item.id);
-  if (status !== InvoiceNodeStatus.Verified) itemIdList.push('new');
+  if (!isDisabled) itemIdList.push('new');
+
+  const canSave =
+    !!item?.id &&
+    allocationIsDirty &&
+    !(allocatedQuantity === 0 && prescribedUnits === 0);
 
   return (
     <>
@@ -163,7 +172,7 @@ export const PrescriptionLineEditView = () => {
               .addPart(invoiceId)}
             enteredLineIds={enteredLineIds}
             showNew={!isDisabled}
-            isDirty={isDirty.current}
+            isDirty={canSave}
             handleSaveNew={onSave}
             scrollRef={scrollRef}
           />
@@ -196,11 +205,7 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        disabled={
-          !item?.id ||
-          !allocationIsDirty ||
-          (allocatedQuantity === 0 && prescribedUnits === 0)
-        }
+        disabled={!canSave}
         handleSave={onSave}
         handleCancel={() =>
           navigate(

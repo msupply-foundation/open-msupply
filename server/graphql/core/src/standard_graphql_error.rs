@@ -4,6 +4,7 @@ use async_graphql::{Context, ErrorExtensions, Result};
 use repository::RepositoryError;
 use service::{
     auth::{AuthDeniedKind, AuthError, ResourceAccessRequest, ValidatedUser},
+    sync::CentralServerConfig,
     ListError,
 };
 use thiserror::Error;
@@ -27,7 +28,7 @@ pub enum StandardGraphqlError {
 impl ErrorExtensions for StandardGraphqlError {
     // lets define our base extensions
     fn extend(&self) -> async_graphql::Error {
-        async_graphql::Error::new(format!("{}", self)).extend_with(|_, e| match self {
+        async_graphql::Error::new(format!("{self}")).extend_with(|_, e| match self {
             StandardGraphqlError::InternalError(details) => e.set("details", details.clone()),
             StandardGraphqlError::BadUserInput(details) => e.set("details", details.clone()),
             StandardGraphqlError::Unauthenticated(details) => e.set("details", details.clone()),
@@ -38,13 +39,13 @@ impl ErrorExtensions for StandardGraphqlError {
 
 impl From<RepositoryError> for StandardGraphqlError {
     fn from(err: RepositoryError) -> Self {
-        StandardGraphqlError::InternalError(format!("{:?}", err))
+        StandardGraphqlError::InternalError(format!("{err:?}"))
     }
 }
 
 impl StandardGraphqlError {
     pub fn from_list_error(error: ListError) -> async_graphql::Error {
-        let formatted_error = format!("{:#?}", error);
+        let formatted_error = format!("{error:#?}");
         let graphql_error = match error {
             ListError::DatabaseError(error) => error.into(),
             ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(formatted_error),
@@ -58,6 +59,11 @@ impl StandardGraphqlError {
         StandardGraphqlError::from(error).extend()
     }
 
+    /// Maps a `spawn_blocking` join failure (e.g. the plugin task panicked) to an internal error.
+    pub fn from_join_error(error: tokio::task::JoinError) -> async_graphql::Error {
+        StandardGraphqlError::InternalError(format!("Plugin task error: {error}")).extend()
+    }
+
     pub fn from_str_slice(str_slice: &str) -> async_graphql::Error {
         StandardGraphqlError::InternalError(str_slice.to_string()).extend()
     }
@@ -67,7 +73,7 @@ impl StandardGraphqlError {
     }
 
     pub fn from_debug<E: std::fmt::Debug>(error: E) -> async_graphql::Error {
-        StandardGraphqlError::InternalError(format!("{:#?}", error)).extend()
+        StandardGraphqlError::InternalError(format!("{error:#?}")).extend()
     }
 }
 
@@ -76,6 +82,13 @@ pub fn validate_auth(
     ctx: &Context<'_>,
     access_request: &ResourceAccessRequest,
 ) -> Result<ValidatedUser> {
+    if access_request.require_central_standalone && !CentralServerConfig::is_standalone_central() {
+        return Err(StandardGraphqlError::Forbidden(
+            "Only available on standalone central servers".to_string(),
+        )
+        .extend());
+    }
+
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.basic_context()?;
 
@@ -90,7 +103,7 @@ pub fn validate_auth(
         let graphql_error = match err {
             AuthError::Denied(kind) => match kind {
                 AuthDeniedKind::NotAuthenticated(_) => {
-                    StandardGraphqlError::Unauthenticated(format!("{:?}", kind))
+                    StandardGraphqlError::Unauthenticated(format!("{kind:?}"))
                 }
                 AuthDeniedKind::InsufficientPermission {
                     msg,
@@ -109,9 +122,9 @@ pub fn validate_auth(
 pub fn list_error_to_gql_err(err: ListError) -> async_graphql::Error {
     let gql_err = match err {
         ListError::DatabaseError(err) => err.into(),
-        ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
-        ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(format!("{:?}", err)),
-        _ => StandardGraphqlError::InternalError(format!("{:?}", err)),
+        ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(format!("{err:?}")),
+        ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(format!("{err:?}")),
+        _ => StandardGraphqlError::InternalError(format!("{err:?}")),
     };
     gql_err.extend()
 }

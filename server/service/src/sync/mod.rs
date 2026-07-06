@@ -10,14 +10,13 @@ pub mod file_synchroniser;
 mod integrate_document;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
-pub mod site_info;
+pub mod site_auth;
 pub mod sync_buffer;
 pub mod sync_on_central;
 pub mod sync_status;
-pub mod sync_user;
-pub(crate) mod sync_utils;
 pub mod synchroniser;
 pub mod synchroniser_driver;
+pub mod synchroniser_runner;
 pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
 
@@ -26,8 +25,8 @@ use std::sync::RwLock;
 
 use log::info;
 use repository::{
-    ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
-    Store, StoreFilter, StoreRepository,
+    EqualFilter, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, Store,
+    StoreFilter, StoreRepository,
 };
 
 use serde::{Deserialize, Serialize};
@@ -38,43 +37,8 @@ use self::api::SiteInfoV5;
 
 #[derive(Serialize, Deserialize, TS, Debug)]
 pub(crate) struct ActiveStoresOnSite {
-    stores: Vec<Store>,
-}
-
-#[derive(Error, Debug)]
-pub enum SyncChangelogError {
-    #[error(transparent)]
-    DatabaseError(#[from] RepositoryError),
-    #[error("Failed to get active stores on site")]
-    GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
-    #[error("mSupply Central site id is not set in database")]
-    CentralSiteIdNotSet,
-}
-
-/// Returns changelog filter to filter out records that are not active on site
-/// It is possible to have entries for foreign records in change log (other half of transfers)
-/// these should be filtered out in sync push operation
-pub(crate) fn get_sync_push_changelogs_filter(
-    connection: &StorageConnection,
-) -> Result<Option<ChangelogFilter>, SyncChangelogError> {
-    if CentralServerConfig::is_central_server() {
-        // If this is a central server, we want to send everything that that wasn't from legacy site
-        let msupply_central_server_id = KeyValueStoreRepository::new(connection)
-            .get_i32(repository::KeyType::SettingsSyncCentralServerSiteId)?
-            .ok_or(SyncChangelogError::CentralSiteIdNotSet)?;
-
-        return Ok(Some(ChangelogFilter::new().source_site_id(
-            EqualFilter::not_equal_to_or_null(msupply_central_server_id),
-        )));
-    }
-
-    let active_stores = ActiveStoresOnSite::get(connection)?;
-
-    Ok(Some(
-        ChangelogFilter::new()
-            .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids()))
-            .is_sync_update(EqualFilter::equal_any_or_null(vec![false])),
-    ))
+    pub(crate) site_id: i32,
+    pub(crate) stores: Vec<Store>,
 }
 
 #[derive(Error, Debug)]
@@ -98,7 +62,11 @@ impl ActiveStoresOnSite {
         let stores = StoreRepository::new(connection)
             .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to(site_id)))?;
 
-        Ok(ActiveStoresOnSite { stores })
+        Ok(ActiveStoresOnSite { site_id, stores })
+    }
+
+    pub(crate) fn site_id(&self) -> i32 {
+        self.site_id
     }
 
     pub(crate) fn name_ids(&self) -> Vec<String> {
@@ -115,6 +83,15 @@ impl ActiveStoresOnSite {
     pub(crate) fn store_ids(&self) -> Vec<String> {
         self.stores.iter().map(|r| r.store_row.id.clone()).collect()
     }
+
+    pub(crate) fn store_ids_for_site(
+        connection: &StorageConnection,
+        site_id: i32,
+    ) -> Result<Vec<String>, RepositoryError> {
+        let stores = StoreRepository::new(connection)
+            .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to(site_id)))?;
+        Ok(stores.into_iter().map(|s| s.store_row.id).collect())
+    }
 }
 
 #[derive(PartialEq, Clone)]
@@ -123,6 +100,7 @@ pub enum CentralServerConfig {
     IsCentralServer,
     CentralServerUrl(String),
     ForcedCentralServer,
+    StandaloneCentral,
 }
 
 static CENTRAL_SERVER_CONFIG: RwLock<CentralServerConfig> =
@@ -131,7 +109,10 @@ static IS_INITIALISED: RwLock<bool> = RwLock::new(false);
 
 impl CentralServerConfig {
     fn inner_is_central_server(&self) -> bool {
-        matches!(self, Self::IsCentralServer | Self::ForcedCentralServer)
+        matches!(
+            self,
+            Self::IsCentralServer | Self::ForcedCentralServer | Self::StandaloneCentral
+        )
     }
 
     fn new(site_info: &SiteInfoV5) -> Self {
@@ -148,6 +129,13 @@ impl CentralServerConfig {
             .inner_is_central_server()
     }
 
+    pub fn is_standalone_central() -> bool {
+        matches!(
+            *CENTRAL_SERVER_CONFIG.read().unwrap(),
+            CentralServerConfig::StandaloneCentral
+        )
+    }
+
     pub fn get() -> Self {
         CENTRAL_SERVER_CONFIG.read().unwrap().clone()
     }
@@ -157,6 +145,11 @@ impl CentralServerConfig {
         // Need to drop read before write
         {
             let current_config = CENTRAL_SERVER_CONFIG.read().unwrap();
+
+            // Standalone central never syncs upstream
+            if matches!(*current_config, CentralServerConfig::StandaloneCentral) {
+                return;
+            }
 
             if new_config == *current_config {
                 return;
@@ -175,13 +168,29 @@ impl CentralServerConfig {
         info!("Running as central from override");
         *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::ForcedCentralServer;
     }
+
+    pub fn set_standalone_central() {
+        info!("Running as standalone central");
+        *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::StandaloneCentral;
+    }
+
+    pub fn restore_central_standalone(
+        connection: &StorageConnection,
+    ) -> Result<(), RepositoryError> {
+        if let Some(true) =
+            KeyValueStoreRepository::new(connection).get_bool(KeyType::IsStandaloneCentral)?
+        {
+            Self::set_standalone_central();
+        }
+        Ok(())
+    }
 }
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
     // We cache the initialised state to avoid having to check the database every time. This stops
     // unnecessary database queries and avoids having to unwrap the database connection. We still
     // unwrap on the first check as there's no point starting up without the database.
-    if IS_INITIALISED.read().unwrap().clone() {
-        return true;
+    if *IS_INITIALISED.read().unwrap() {
+        true
     } else {
         let ctx = service_provider.basic_context().unwrap();
         let is_initialised = service_provider
@@ -208,4 +217,12 @@ pub fn test_util_set_is_central_server(is_central: bool) {
                 CentralServerConfig::CentralServerUrl("".to_string());
         }
     }
+}
+
+// TEST ONLY — override the central server URL the FileSyncDriver reads on
+// each iteration. Used by integration tests that need to route file uploads
+// through toxiproxy after the initial sync has populated the config with the
+// real central URL.
+pub fn test_util_set_central_server_url(url: String) {
+    *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::CentralServerUrl(url);
 }

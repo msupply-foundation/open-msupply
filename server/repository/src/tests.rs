@@ -17,7 +17,7 @@ mod repository_test {
         pub fn store_1() -> StoreRow {
             StoreRow {
                 id: "store1".to_string(),
-                name_link_id: "name1".to_string(),
+                name_id: "name1".to_string(),
                 code: "code1".to_string(),
                 ..Default::default()
             }
@@ -56,7 +56,7 @@ mod repository_test {
         pub fn stock_line_1() -> StockLineRow {
             StockLineRow {
                 id: "StockLine1".to_string(),
-                item_link_id: "item1".to_string(),
+                item_id: "item1".to_string(),
                 store_id: "store1".to_string(),
                 batch: Some("batch1".to_string()),
                 available_number_of_packs: 6.0,
@@ -68,7 +68,7 @@ mod repository_test {
                 on_hold: false,
                 note: None,
                 location_id: None,
-                supplier_link_id: Some(String::from("name1")),
+                supplier_id: Some(String::from("name1")),
                 ..Default::default()
             }
         }
@@ -98,7 +98,7 @@ mod repository_test {
         pub fn master_list_line_1() -> MasterListLineRow {
             MasterListLineRow {
                 id: "masterlistline1".to_string(),
-                item_link_id: item_1().id.to_string(),
+                item_id: item_1().id.to_string(),
                 master_list_id: master_list_1().id.to_string(),
                 ..Default::default()
             }
@@ -107,7 +107,7 @@ mod repository_test {
         pub fn master_list_line_upsert_1() -> MasterListLineRow {
             MasterListLineRow {
                 id: "masterlistline1".to_string(),
-                item_link_id: item_2().id.to_string(),
+                item_id: item_2().id.to_string(),
                 master_list_id: master_list_1().id.to_string(),
                 ..Default::default()
             }
@@ -117,14 +117,14 @@ mod repository_test {
             MasterListNameJoinRow {
                 id: "masterlistnamejoin1".to_string(),
                 master_list_id: master_list_1().id.to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
             }
         }
 
         pub fn invoice_1() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice1".to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceType::InboundShipment,
@@ -140,7 +140,7 @@ mod repository_test {
         pub fn invoice_2() -> InvoiceRow {
             InvoiceRow {
                 id: "invoice2".to_string(),
-                name_link_id: name_1().id.to_string(),
+                name_id: name_1().id.to_string(),
                 store_id: store_1().id.to_string(),
                 invoice_number: 12,
                 r#type: InvoiceType::OutboundShipment,
@@ -155,7 +155,7 @@ mod repository_test {
         pub fn invoice_line_1() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test1".to_string(),
-                item_link_id: item_1().id.to_string(),
+                item_id: item_1().id.to_string(),
                 item_name: item_1().name.to_string(),
                 item_code: item_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
@@ -176,7 +176,7 @@ mod repository_test {
         pub fn invoice_line_2() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test2-with-optional".to_string(),
-                item_link_id: item_1().id.to_string(),
+                item_id: item_1().id.to_string(),
                 item_name: item_1().name.to_string(),
                 item_code: item_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
@@ -198,7 +198,7 @@ mod repository_test {
         pub fn invoice_line_3() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test3".to_string(),
-                item_link_id: item_2().id.to_string(),
+                item_id: item_2().id.to_string(),
                 item_name: item_2().name.to_string(),
                 item_code: item_2().code.to_string(),
                 invoice_id: invoice_2().id.to_string(),
@@ -220,7 +220,7 @@ mod repository_test {
         pub fn invoice_line_service() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test_service_item".to_string(),
-                item_link_id: item_service_1().id.to_string(),
+                item_id: item_service_1().id.to_string(),
                 item_name: item_service_1().name.to_string(),
                 item_code: item_service_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
@@ -284,15 +284,15 @@ mod repository_test {
         },
         requisition_row::RequisitionStatus,
         test_db, ActivityLogRowRepository, CurrencyRowRepository, InvoiceFilter,
-        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
-        InvoiceType, ItemLinkRowRepository, ItemRow, ItemRowRepository, KeyType,
-        KeyValueStoreRepository, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
-        MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType, PricingRow,
-        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
-        StockLineFilter, StockLineRepository, StockLineRowRepository, StorageConnection,
-        StoreRowRepository, UserAccountRowRepository,
+        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, ItemLinkRowRepository, ItemRow,
+        ItemRowRepository, KeyType, KeyValueStoreRepository, MasterListFilter,
+        MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListRepository, MasterListRowRepository,
+        NameRowRepository, NumberRowRepository, NumberRowType, PricingRow, RequisitionFilter,
+        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
+        RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
+        StockLineRowRepository, StorageConnection, StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, StringFilter};
     use chrono::Duration;
@@ -639,7 +639,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceType::OutboundShipment.equal_to())
-                    .name_id(EqualFilter::equal_to(item1.name_link_id.to_string())),
+                    .name_id(EqualFilter::equal_to(item1.name_id.to_string())),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());
@@ -652,6 +652,66 @@ mod repository_test {
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());
+    }
+
+    #[actix_rt::test]
+    async fn test_invoice_number_or_status_filter() {
+        let settings =
+            test_db::get_test_db_settings("omsupply-database-invoice-number-or-status-filter");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        NameRowRepository::new(&connection)
+            .insert_one(&data::name_1())
+            .await
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .insert_one(&data::store_1())
+            .await
+            .unwrap();
+        CurrencyRowRepository::new(&connection)
+            .upsert_one(&currency_a())
+            .unwrap();
+
+        let shipped = InvoiceRow {
+            id: "number_or_status_shipped".to_string(),
+            invoice_number: 100,
+            status: InvoiceStatus::Shipped,
+            ..data::invoice_1()
+        };
+        let verified = InvoiceRow {
+            id: "number_or_status_verified".to_string(),
+            invoice_number: 200,
+            status: InvoiceStatus::Verified,
+            ..data::invoice_1()
+        };
+        let invoice_row_repo = InvoiceRowRepository::new(&connection);
+        invoice_row_repo.upsert_one(&shipped).unwrap();
+        invoice_row_repo.upsert_one(&verified).unwrap();
+
+        let invoice_repo = InvoiceRepository::new(&connection);
+        let search = |term: &str| {
+            invoice_repo
+                .query_by_filter(
+                    InvoiceFilter::new().invoice_number_or_status(StringFilter::like(term)),
+                )
+                .unwrap()
+        };
+
+        let result = search("100");
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].invoice_row.id, shipped.id);
+        assert_eq!(search("200").len(), 1);
+
+        let result = search("verified");
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].invoice_row.id, verified.id);
+
+        let result = search("SHIP");
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].invoice_row.id, shipped.id);
+
+        assert_eq!(search("does-not-exist").len(), 0);
     }
 
     #[actix_rt::test]
@@ -1157,7 +1217,7 @@ mod repository_test {
                     let sleep_duration = SystemTime::now()
                         .duration_since(start_dt)
                         .expect("Time went backwards");
-                    println!("A: Slept for {:?}", sleep_duration);
+                    println!("A: Slept for {sleep_duration:?}");
                     println!("A: writing");
                     repo.upsert_one(&ItemRow {
                         id: "tx_deadlock_id2".to_string(),
@@ -1196,7 +1256,7 @@ mod repository_test {
                     println!("B: write 2");
                     Ok(())
                 });
-            println!("B: Returning {:?}", result);
+            println!("B: Returning {result:?}");
             result
         });
 

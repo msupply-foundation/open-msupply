@@ -1,25 +1,24 @@
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician, invoice_line_row::invoice_line,
-    invoice_row::invoice, name_link_row::name_link, name_row::name, store_row::store, ClinicianRow,
-    DBType, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection,
-    StoreRow,
+    invoice_row::invoice, name_row::name, purchase_order_row::purchase_order,
+    requisition::requisition_row::requisition, store_row::store, ClinicianRow, DBType, InvoiceRow,
+    InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection, StoreRow,
 };
 
 use crate::{
     diesel_extensions::datetime_coalesce,
     diesel_macros::{
-        apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
-        apply_string_filter,
+        apply_date_time_filter, apply_equal_filter, apply_equal_or_filter, apply_sort,
+        apply_sort_no_case, apply_string_filter,
     },
-    ClinicianLinkRow, NameLinkRow,
+    ClinicianLinkRow,
 };
+
+use strum::IntoEnumIterator;
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Invoice {
@@ -32,6 +31,7 @@ pub struct Invoice {
 pub struct InvoiceFilter {
     pub id: Option<EqualFilter<String>>,
     pub invoice_number: Option<EqualFilter<i64>>,
+    pub invoice_number_or_status: Option<StringFilter>,
     pub name_id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub store_id: Option<EqualFilter<String>>,
@@ -56,7 +56,9 @@ pub struct InvoiceFilter {
     pub stock_line_id: Option<String>,
     pub is_program_invoice: Option<bool>,
     pub is_cancellation: Option<bool>,
-    pub goods_received_id: Option<EqualFilter<String>>,
+    pub purchase_order_id: Option<EqualFilter<String>>,
+    pub purchase_order_number: Option<EqualFilter<i64>>,
+    pub linked_order_number: Option<EqualFilter<i64>>,
     pub program_id: Option<EqualFilter<String>>,
 }
 
@@ -85,7 +87,7 @@ pub struct InvoiceRepository<'a> {
 
 type InvoiceJoin = (
     InvoiceRow,
-    (NameLinkRow, NameRow),
+    NameRow,
     StoreRow,
     Option<(ClinicianLinkRow, ClinicianRow)>,
 );
@@ -191,14 +193,14 @@ impl<'a> InvoiceRepository<'a> {
     pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
         Ok(invoice::table
             .filter(invoice::id.eq(record_id))
-            .inner_join(name_link::table.inner_join(name::table))
+            .inner_join(name::table)
             .inner_join(store::table)
             .left_join(clinician_link::table.inner_join(clinician::table))
             .first::<InvoiceJoin>(self.connection.lock().connection())?)
     }
 }
 
-fn to_domain((invoice_row, (_, name_row), store_row, clinician_link_join): InvoiceJoin) -> Invoice {
+fn to_domain((invoice_row, name_row, store_row, clinician_link_join): InvoiceJoin) -> Invoice {
     Invoice {
         invoice_row,
         name_row,
@@ -207,29 +209,24 @@ fn to_domain((invoice_row, (_, name_row), store_row, clinician_link_join): Invoi
     }
 }
 
-type BoxedInvoiceQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        InnerJoin<
-            InnerJoin<invoice::table, InnerJoin<name_link::table, name::table>>,
-            store::table,
-        >,
-        InnerJoin<clinician_link::table, clinician::table>,
-    >,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
-    let mut query = invoice::table
-        .inner_join(name_link::table.inner_join(name::table))
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    invoice::table
+        .inner_join(name::table)
         .inner_join(store::table)
         .left_join(clinician_link::table.inner_join(clinician::table))
-        .into_boxed();
+}
+
+type BoxedInvoiceQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let InvoiceFilter {
             id,
             invoice_number,
+            invoice_number_or_status,
             name_id,
             name,
             store_id,
@@ -254,9 +251,37 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             stock_line_id,
             is_program_invoice,
             is_cancellation,
-            goods_received_id,
+            purchase_order_id,
+            purchase_order_number,
+            linked_order_number,
             program_id,
         } = f;
+
+        // OR filters must be applied before AND filters to work correctly.
+        if let Some(string_filter) = invoice_number_or_status {
+            let search = string_filter
+                .like
+                .or(string_filter.equal_to)
+                .unwrap_or_default();
+            let search = search.trim();
+
+            if !search.is_empty() {
+                let number_filter = search.parse::<i64>().ok().map(EqualFilter::equal_to);
+
+                let lowercase_search = search.to_lowercase();
+                let matching_statuses = InvoiceStatus::iter()
+                    .filter(|status| {
+                        format!("{status:?}")
+                            .to_lowercase()
+                            .contains(&lowercase_search)
+                    })
+                    .collect();
+                let status_filter = Some(EqualFilter::equal_any(matching_statuses));
+
+                apply_equal_filter!(query, number_filter, invoice::invoice_number);
+                apply_equal_or_filter!(query, status_filter, invoice::status);
+            }
+        }
 
         apply_equal_filter!(query, id, invoice::id);
         apply_equal_filter!(query, invoice_number, invoice::invoice_number);
@@ -265,7 +290,40 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         apply_equal_filter!(query, store_id, invoice::store_id);
         apply_string_filter!(query, their_reference, invoice::their_reference);
         apply_equal_filter!(query, requisition_id, invoice::requisition_id);
-        apply_equal_filter!(query, goods_received_id, invoice::goods_received_id);
+        apply_equal_filter!(query, purchase_order_id, invoice::purchase_order_id);
+
+        if let Some(purchase_order_number) = purchase_order_number {
+            let mut po_subquery = purchase_order::table
+                .select(purchase_order::id.nullable())
+                .into_boxed();
+            apply_equal_filter!(
+                po_subquery,
+                Some(purchase_order_number),
+                purchase_order::purchase_order_number
+            );
+            query = query.filter(invoice::purchase_order_id.eq_any(po_subquery));
+        }
+
+        if let Some(linked_order_number) = linked_order_number {
+            if let Some(number) = linked_order_number.equal_to {
+                let po_subquery = purchase_order::table
+                    .select(purchase_order::id.nullable())
+                    .filter(purchase_order::purchase_order_number.eq(number))
+                    .into_boxed();
+
+                let req_subquery = requisition::table
+                    .select(requisition::id.nullable())
+                    .filter(requisition::requisition_number.eq(number))
+                    .into_boxed();
+
+                query = query.filter(
+                    invoice::purchase_order_id
+                        .eq_any(po_subquery)
+                        .or(invoice::requisition_id.eq_any(req_subquery)),
+                );
+            }
+        }
+
         apply_string_filter!(query, comment, invoice::comment);
         apply_equal_filter!(query, linked_invoice_id, invoice::linked_invoice_id);
         apply_equal_filter!(query, user_id, invoice::user_id);
@@ -384,6 +442,11 @@ impl InvoiceFilter {
         self
     }
 
+    pub fn invoice_number_or_status(mut self, filter: StringFilter) -> Self {
+        self.invoice_number_or_status = Some(filter);
+        self
+    }
+
     pub fn status(mut self, filter: EqualFilter<InvoiceStatus>) -> Self {
         self.status = Some(filter);
         self
@@ -486,8 +549,13 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn goods_received_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.goods_received_id = Some(filter);
+    pub fn purchase_order_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.purchase_order_id = Some(filter);
+        self
+    }
+
+    pub fn purchase_order_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.purchase_order_number = Some(filter);
         self
     }
 }

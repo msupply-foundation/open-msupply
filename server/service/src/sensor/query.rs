@@ -42,7 +42,7 @@ pub fn get_sensor_logs_filter_for_breach(
     breach: &TemperatureBreachRow,
 ) -> Option<TemperatureLogFilter> {
     let Some(end_datetime) = breach.end_datetime else {
-        log::info!("Breach {:?} has no end time", breach);
+        log::info!("Breach {breach:?} has no end time");
         return None;
     };
     // Add datetime range

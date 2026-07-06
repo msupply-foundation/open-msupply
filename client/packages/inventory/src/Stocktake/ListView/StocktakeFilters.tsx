@@ -140,7 +140,6 @@ export const StocktakeFilters = ({
               width={380}
               selected={vvmStatus}
               placeholder={t('label.all-statuses')}
-              clearable
             />
           }
         />

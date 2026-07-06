@@ -66,6 +66,7 @@ pub fn patients(
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();
@@ -106,6 +107,7 @@ pub fn patient(
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

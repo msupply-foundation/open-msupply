@@ -24,7 +24,7 @@ export const TransportSectionComponent: FC = () => {
     <DetailPanelSection title={t('heading.transport-details')}>
       <Grid container gap={0.5} key="transport-details">
         <PanelLabel display="flex" alignItems="center">
-          {t('heading.reference')}
+          {t('label.transport-reference')}
         </PanelLabel>
         <BufferedTextInput
           disabled={isDisabled}
@@ -33,7 +33,7 @@ export const TransportSectionComponent: FC = () => {
             setBufferedState({ transportReference });
             debouncedUpdate({ id, transportReference });
           }}
-          value={transportReference}
+          value={transportReference ?? ''}
           slotProps={{
             input: {
               style: {

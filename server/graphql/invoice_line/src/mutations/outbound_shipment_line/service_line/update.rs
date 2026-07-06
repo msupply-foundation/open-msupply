@@ -33,6 +33,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -105,7 +106,7 @@ impl UpdateInput {
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

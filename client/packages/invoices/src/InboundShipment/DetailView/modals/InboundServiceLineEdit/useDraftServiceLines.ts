@@ -1,17 +1,26 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { RecordPatch } from '@openmsupply-client/common';
 import { toItemWithPackSize, useItem } from '@openmsupply-client/system';
-import { useInbound } from '../../../api';
+import { useInboundShipment } from '../../../api';
+import { useSaveInboundLines } from '../../../api/hooks/utils';
 import { DraftInboundLine } from './../../../../types';
 import { CreateDraft } from '../utils';
+import { isA } from '../../../../utils';
 
 export const useDraftServiceLines = () => {
-  const { id } = useInbound.document.fields('id');
-  const { data: lines } = useInbound.lines.serviceLines();
+  const {
+    query: { data },
+    isExternal,
+  } = useInboundShipment();
+  const id = data?.id ?? '';
+  const lines = useMemo(
+    () => data?.lines.nodes.filter(isA.serviceLine) ?? [],
+    [data?.lines.nodes]
+  );
   const {
     serviceItem: { data: defaultServiceItem, isLoading },
   } = useItem();
-  const { mutateAsync } = useInbound.lines.save();
+  const { mutateAsync } = useSaveInboundLines(isExternal);
 
   const [draftLines, setDraftLines] = React.useState<DraftInboundLine[]>([]);
 

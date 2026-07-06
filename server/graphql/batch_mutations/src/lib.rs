@@ -5,6 +5,7 @@ mod batch_request_requisition;
 mod batch_response_requisition;
 mod batch_stocktake;
 use async_graphql::*;
+use graphql_core::generic_inputs::InboundShipmentType;
 
 #[derive(Default, Clone)]
 pub struct BatchMutations;
@@ -17,7 +18,21 @@ impl BatchMutations {
         store_id: String,
         input: batch_inbound_shipment::BatchInput,
     ) -> Result<batch_inbound_shipment::BatchResponse> {
-        batch_inbound_shipment::batch(ctx, &store_id, input)
+        batch_inbound_shipment::batch(ctx, &store_id, input, InboundShipmentType::InboundShipment)
+    }
+
+    async fn batch_inbound_shipment_external(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: batch_inbound_shipment::BatchInput,
+    ) -> Result<batch_inbound_shipment::BatchResponse> {
+        batch_inbound_shipment::batch(
+            ctx,
+            &store_id,
+            input,
+            InboundShipmentType::InboundShipmentExternal,
+        )
     }
 
     async fn batch_outbound_shipment(
@@ -84,6 +99,6 @@ fn to_standard_error<I>(input: I, error: Error) -> Error
 where
     I: std::fmt::Debug,
 {
-    let input_string = format!("{:#?}", input);
+    let input_string = format!("{input:#?}");
     error.extend_with(|_, e| e.set("input", input_string))
 }

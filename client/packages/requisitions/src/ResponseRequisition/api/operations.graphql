@@ -93,7 +93,7 @@ fragment ResponseLine on RequisitionLineNode {
     averageMonthlyConsumption
   }
   item {
-    ...ItemWithStats
+    ...ItemWithAvailableStock
   }
   approvedQuantity
   approvalComment
@@ -112,6 +112,9 @@ fragment ResponseLine on RequisitionLineNode {
   availableVolumeAtLocationType {
     ...AvailableVolumeAtLocationType
   }
+  forecastTotalUnits
+  forecastTotalDoses
+  vaccineCourses
 }
 
 fragment AvailableVolumeAtLocationType on AvailableVolumeAtLocationTypeNode {
@@ -193,6 +196,7 @@ fragment Response on RequisitionNode {
     store {
       id
       code
+      isDisabled
     }
   }
   destinationCustomer(storeId: $storeId) {
@@ -206,6 +210,7 @@ fragment Response on RequisitionNode {
     store {
       id
       code
+      isDisabled
     }
   }
   programName
@@ -672,7 +677,7 @@ mutation insertRequestFromResponseRequisition(
   $storeId: String!
   $input: InsertFromResponseRequisitionInput!
 ) {
-  insertFromResponseRequisition(input: $input, storeId: $storeId) {
+  insertRequestFromResponseRequisition(input: $input, storeId: $storeId) {
     ... on RequisitionNode {
       __typename
       id

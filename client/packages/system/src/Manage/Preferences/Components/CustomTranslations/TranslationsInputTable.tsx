@@ -1,16 +1,19 @@
-import React, { useMemo } from 'react';
-import { DeleteIcon } from '@common/icons';
+import React, { useMemo, useState } from 'react';
+import { DeleteIcon, FilterIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import {
+  BasicTextInput,
   Box,
   ColumnDef,
   IconButton,
+  InputAdornment,
   MaterialTable,
   NothingHere,
   TextWithTooltipCell,
   useSimpleMaterialTable,
   TextInputCell,
 } from '@openmsupply-client/common';
+import { useDebounceCallback } from '@common/hooks';
 import { checkInvalidVariables, Translation } from './helpers';
 import {
   TranslationOption,
@@ -28,6 +31,12 @@ export const TranslationsTable = ({
 }) => {
   const t = useTranslation();
 
+  // filterInput drives the text field (immediate), filter drives the
+  // table data (debounced) so typing doesn't re-render every row per keystroke.
+  const [filterInput, setFilterInput] = useState('');
+  const [filter, setFilter] = useState('');
+  const debouncedSetFilter = useDebounceCallback(setFilter, [], 300);
+
   const onAdd = (options: TranslationOption[]) => {
     if (options.length === 0) return;
     const newLines = options.map(option => ({
@@ -39,6 +48,16 @@ export const TranslationsTable = ({
     }));
     setTranslations(translations => [...newLines, ...translations]);
   };
+
+  // Debounce updates to the translations array so that typing in a cell
+  // doesn't trigger a full table re-render on every keystroke.
+  // The TextInputCell's internal useBufferState keeps the input responsive.
+  const debouncedSetTranslations = useDebounceCallback(
+    (updater: (prev: Translation[]) => Translation[]) =>
+      setTranslations(updater),
+    [],
+    300
+  );
 
   const columns = useMemo(
     (): ColumnDef<Translation>[] => [
@@ -69,7 +88,7 @@ export const TranslationsTable = ({
                   ...row.original,
                   custom: value,
                 });
-                setTranslations(translations =>
+                debouncedSetTranslations(translations =>
                   translations.map(tr =>
                     tr.id === row.original.id
                       ? { ...tr, custom: value, isInvalid }
@@ -81,11 +100,11 @@ export const TranslationsTable = ({
               sx={{
                 ...(showInvalid
                   ? {
-                      borderColor: theme => theme.palette.error.main,
-                      borderWidth: '2px',
-                      borderStyle: 'solid',
-                      borderRadius: '8px',
-                    }
+                    borderColor: theme => theme.palette.error.main,
+                    borderWidth: '2px',
+                    borderStyle: 'solid',
+                    borderRadius: '8px',
+                  }
                   : undefined),
               }}
             />
@@ -113,20 +132,65 @@ export const TranslationsTable = ({
     [showValidationErrors]
   );
 
+  // Memoize to avoid creating a new array reference on every render,
+  // which would cause TranslationSearchInput to re-render unnecessarily.
+  const existingKeys = useMemo(
+    () => translations.map(tr => tr.key),
+    [translations]
+  );
+
+  const filteredTranslations = useMemo(() => {
+    const searchTerm = filter.trim().toLowerCase();
+    if (!searchTerm) return translations;
+    return translations.filter(
+      tr =>
+        tr.key.toLowerCase().includes(searchTerm) ||
+        tr.default.toLowerCase().includes(searchTerm) ||
+        tr.custom.toLowerCase().includes(searchTerm)
+    );
+  }, [translations, filter]);
+
   const table = useSimpleMaterialTable<Translation>({
     tableId: 'custom-translations-input-table',
-    data: translations,
+    data: filteredTranslations,
     columns,
-    getIsPlaceholderRow: row => row.isNew ?? false,
-    noDataElement: <NothingHere body={t('message.add-a-translation')} />,
+    getIsPlaceholderRow: row => row.original.isNew ?? false,
+    enableRowVirtualization: true,
+    noDataElement: (
+      <NothingHere
+        body={
+          filter
+            ? t('messages.no-matching-translations')
+            : t('message.add-a-translation')
+        }
+      />
+    ),
   });
 
   return (
     <>
-      <Box display="flex" justifyContent="flex-start" marginBottom="8px">
-        <TranslationSearchInput
-          onChange={onAdd}
-          existingKeys={translations.map(t => t.key)}
+      <Box display="flex" flexDirection="column" gap={1} marginBottom="8px">
+        <TranslationSearchInput onChange={onAdd} existingKeys={existingKeys} />
+        <BasicTextInput
+          fullWidth
+          value={filterInput}
+          onChange={e => {
+            setFilterInput(e.target.value);
+            debouncedSetFilter(e.target.value);
+          }}
+          placeholder={t('placeholder.filter-translations')}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <FilterIcon sx={{ color: 'gray.main' }} fontSize="small" />
+                </InputAdornment>
+              ),
+              sx: {
+                backgroundColor: theme => theme.palette.background.drawer,
+              },
+            },
+          }}
         />
       </Box>
 

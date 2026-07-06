@@ -49,6 +49,7 @@ pub fn allocate(ctx: &Context<'_>, store_id: &str, line_id: String) -> Result<Al
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -75,11 +76,8 @@ pub fn map_response(from: Result<ServiceResult, ServiceError>) -> Result<Allocat
 
 fn map_error(error: ServiceError) -> Result<AllocateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
-    log::error!(
-        "Error allocating outbound shipment unallocated line: {}",
-        formatted_error
-    );
+    let formatted_error = format!("{error:#?}");
+    log::error!("Error allocating outbound shipment unallocated line: {formatted_error}");
 
     let graphql_error = match error {
         // Structured Errors

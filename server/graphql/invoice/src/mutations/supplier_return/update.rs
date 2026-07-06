@@ -43,6 +43,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutateSupplierReturn,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -63,7 +64,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
 fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Standard Graphql Errors
@@ -72,6 +73,7 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         | ServiceError::ReturnIsNotEditable
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
+        | ServiceError::CannotIssueSupplierReturnWithNoLines
         | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
 
         ServiceError::InvoiceLineHasNoStockLine(_)

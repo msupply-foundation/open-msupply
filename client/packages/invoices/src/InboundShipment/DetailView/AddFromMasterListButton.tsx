@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuthContext } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
-import { useInbound } from '../api';
+import { useAddFromMasterList } from '../api/hooks/utils';
 
 export const AddFromMasterListButtonComponent = ({
   isOn,
@@ -10,7 +10,7 @@ export const AddFromMasterListButtonComponent = ({
   isOn: boolean;
   toggleOff: () => void;
 }) => {
-  const { addFromMasterList } = useInbound.utils.addFromMasterList();
+  const { addFromMasterList } = useAddFromMasterList();
   const { storeId } = useAuthContext();
   const filterByStore = { existsForStoreId: { equalTo: storeId } };
 

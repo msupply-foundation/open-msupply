@@ -56,6 +56,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -82,7 +83,7 @@ pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<UpdateRes
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -117,7 +118,7 @@ mod graphql {
             mock_item_a, mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
             MockDataInserts,
         },
-        InvoiceLine, StorageConnectionManager,
+        InvoiceLine, InvoiceLineStatsRow, StorageConnectionManager,
     };
     use serde_json::json;
 
@@ -269,6 +270,7 @@ mod graphql {
                 invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
                 invoice_row: mock_outbound_shipment_a(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: None,
                 stock_line_option: None,
             }

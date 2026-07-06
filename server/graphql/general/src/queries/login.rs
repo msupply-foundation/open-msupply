@@ -4,12 +4,10 @@ use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use http2::header::SET_COOKIE;
 use service::{
-    login::{LoginError, LoginFailure, LoginInput, LoginService},
+    login::{LoginError, LoginFailure, LoginInput, LoginService, MIN_ERR_RESPONSE_TIME_SEC},
+    sync::CentralServerConfig,
     token::TokenPair,
 };
-
-// Fixed login response time in case of an error (see service)
-const MIN_ERR_RESPONSE_TIME_SEC: u64 = 6;
 
 pub struct AuthToken {
     pub pair: TokenPair,
@@ -39,14 +37,6 @@ impl InvalidCredentials {
     }
 }
 
-pub struct MissingCredentials;
-#[Object]
-impl MissingCredentials {
-    pub async fn description(&self) -> &str {
-        "Missing credentials"
-    }
-}
-
 pub struct CentralSyncRequired;
 #[Object]
 impl CentralSyncRequired {
@@ -54,7 +44,6 @@ impl CentralSyncRequired {
         "Could not reach mSupply central server"
     }
 }
-
 
 pub struct AccountBlocked {
     pub timeout_remaining: u64,
@@ -95,12 +84,18 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
     let auth_data = ctx.get_auth_data();
-    let sync_settings = service_provider
-        .settings
-        .sync_settings(&service_context)?
-        .ok_or(StandardGraphqlError::InternalError(
-            "Sync settings not available".to_string(),
-        ))?;
+
+    let central_server_url = if CentralServerConfig::is_standalone_central() {
+        String::new()
+    } else {
+        service_provider
+            .settings
+            .sync_settings(&service_context)?
+            .ok_or(StandardGraphqlError::InternalError(
+                "Sync settings not available".to_string(),
+            ))?
+            .url
+    };
 
     let pair = match LoginService::login(
         service_provider,
@@ -108,7 +103,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
         LoginInput {
             username: username.to_string(),
             password: password.to_string(),
-            central_server_url: sync_settings.url.clone(),
+            central_server_url,
         },
         MIN_ERR_RESPONSE_TIME_SEC,
     )
@@ -116,7 +111,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     {
         Ok(pair) => pair,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let graphql_error = match error {
                 LoginError::LoginFailure(LoginFailure::InvalidCredentials) => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
@@ -132,7 +127,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                 }
                 LoginError::MSupplyCentralNotReached => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
-                        error: AuthTokenErrorInterface::CentralSyncRequired(CentralSyncRequired)
+                        error: AuthTokenErrorInterface::CentralSyncRequired(CentralSyncRequired),
                     }))
                 }
                 LoginError::LoginFailure(LoginFailure::NoSiteAccess) => {
@@ -188,8 +183,7 @@ pub fn set_refresh_token_cookie(
     ctx.insert_http_header(
         SET_COOKIE,
         format!(
-            "refresh_token={}; Max-Age={}{}; HttpOnly; SameSite=Strict",
-            refresh_token, max_age, secure
+            "refresh_token={refresh_token}; Max-Age={max_age}{secure}; HttpOnly; SameSite=Strict"
         ),
     );
 }

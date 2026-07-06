@@ -1,5 +1,9 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
+use repository::{KeyType, KeyValueStoreRepository};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     sync::settings::SyncSettings,
@@ -26,6 +30,27 @@ impl SyncSettingsNode {
     pub async fn interval_seconds(&self) -> u64 {
         self.settings.interval_seconds
     }
+
+    pub async fn central_server_site_id(&self, ctx: &Context<'_>) -> Result<i32> {
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.basic_context()?;
+        KeyValueStoreRepository::new(&service_context.connection)
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+            .ok_or_else(|| {
+                StandardGraphqlError::InternalError(
+                    "SettingsSyncCentralServerSiteId is not set".to_string(),
+                )
+                .extend()
+            })
+    }
+
+    pub async fn sync_site_id(&self, ctx: &Context<'_>) -> Result<Option<i32>> {
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.basic_context()?;
+        let value = KeyValueStoreRepository::new(&service_context.connection)
+            .get_i32(KeyType::SettingsSyncSiteId)?;
+        Ok(value)
+    }
 }
 
 pub(crate) fn sync_settings(
@@ -38,6 +63,7 @@ pub(crate) fn sync_settings(
             &ResourceAccessRequest {
                 resource: Resource::ServerAdmin,
                 store_id: None,
+                require_central_standalone: false,
             },
         )?;
     }

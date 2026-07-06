@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import {
   MessageSquareIcon,
-  PaperHoverPopover,
+  PaperPopover,
   PaperPopoverSection,
 } from '@openmsupply-client/common';
 
@@ -15,8 +15,13 @@ export const PopoverCell = ({
   if (!value) return null;
 
   return (
-    <PaperHoverPopover
+    <PaperPopover
+      mode="hover"
       width={400}
+      placement={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
       Content={
         <PaperPopoverSection label={label}>
           <>{value}</>
@@ -24,6 +29,6 @@ export const PopoverCell = ({
       }
     >
       <MessageSquareIcon sx={{ fontSize: 16 }} color="primary" />
-    </PaperHoverPopover>
+    </PaperPopover>
   );
 };

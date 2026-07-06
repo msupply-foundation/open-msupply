@@ -1,12 +1,21 @@
+#![recursion_limit = "256"]
+
 #[cfg(not(target_os = "android"))]
 extern crate machine_uid;
 
 use crate::{
-    central::config_central, certs::Certificates, cold_chain::config_cold_chain,
-    configuration::get_or_create_token_secret, cors::cors_policy,
-    custom_translations::config_custom_translations, middleware::central_server_only,
-    print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
-    support::config_support, upload_fridge_tag::config_upload_fridge_tag,
+    central::config_central,
+    certs::Certificates,
+    cold_chain::config_cold_chain,
+    configuration::{get_or_create_token_secret, save_token_secret},
+    cors::cors_policy,
+    custom_translations::config_custom_translations,
+    middleware::central_server_only,
+    print::config_print,
+    serve_frontend::config_serve_frontend,
+    static_files::config_static_files,
+    support::config_support,
+    upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -20,7 +29,9 @@ use graphql::{
 };
 use log::info;
 use repository::{
-    get_storage_connection_manager, migrations::migrate, system_log_row::SystemLogType,
+    get_storage_connection_manager,
+    migrations::{migrate, MigrationConfig},
+    system_log_row::SystemLogType,
     StorageConnection,
 };
 
@@ -36,10 +47,11 @@ use service::{
     processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
+    standalone_central::InitialiseAsCentralServerInput,
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
     sync::{
-        file_sync_driver::FileSyncDriver,
+        sync_status::status::InitialisationStatus,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
         CentralServerConfig,
     },
@@ -48,16 +60,19 @@ use service::{
 
 use actix_web::{web, web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Instant;
 use util::format_error;
 
 mod authentication;
 pub mod certs;
+mod changelog_partitions;
 pub mod cold_chain;
 pub mod configuration;
 pub mod cors;
 pub mod environment;
 mod logging;
 pub mod middleware;
+mod schedule_plugin;
 mod scheduled_tasks;
 mod serve_frontend;
 pub mod static_files;
@@ -100,38 +115,21 @@ pub async fn start_server(
     // Run info log here. The system log for server starting is after the migrations
     // because it can't upsert until the database is running. If there is an error in
     // migrations the system log won't run.
-    info!("{}", server_start_message);
+    info!("{server_start_message}");
 
     // ON STARTUP OVERRIDE IS CENTRAL SERVER
     if settings.server.override_is_central_server {
         CentralServerConfig::set_is_central_server_on_startup();
     }
 
-    // INITIALISE DATABASE AND CONNECTION
+    // CREATE BASE DIRECTORY IF IT DOESN'T EXIST
+    let base_dir = &settings.server.base_dir;
+    info!("Creating base directory if needed: {}", base_dir);
+    std::fs::create_dir_all(base_dir)?;
+
+    // INITIALISE DATABASE CONNECTION
     let mut connection_manager = get_storage_connection_manager(&settings.database);
-
-    if let Some(init_sql) = &settings.database.startup_sql() {
-        connection_manager.execute(init_sql).unwrap();
-    }
-
-    info!("Run DB migrations...");
     let connection = connection_manager.connection().unwrap();
-    let (version, messages) = match migrate(&connection, None) {
-        Ok(result) => result,
-        Err(e) => {
-            log::error!("Failed to run DB migrations: {}", format_error(&e));
-            std::process::exit(1);
-        }
-    };
-    // Log the server starting message with the startup timestamp
-    let status_log = StatusLog(&connection);
-    status_log.no_console_with_timestamp(&server_start_message, server_start_timestamp);
-
-    add_migration_results_to_system_log(&connection, messages).unwrap();
-    info!("Run DB migrations...done");
-
-    // Upsert standard reports
-    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -141,19 +139,38 @@ pub async fn start_server(
     // Wire transaction notifications to the subscription worker.
     // Fired after outermost transaction commits.
     let commit_trigger = subscription_trigger.clone();
-    connection_manager.set_on_commit(std::sync::Arc::new(move |notification| {
-        match notification {
+    connection_manager.set_on_commit(std::sync::Arc::new(
+        move |notification| match notification {
             repository::TransactionNotification::ChangelogInsert => {
                 commit_trigger.send(SubscriptionTrigger::PushQueueChanged);
             }
-        }
-    }));
-    let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
-    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
+        },
+    ));
+    // let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
+    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init();
+
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
     let (site_is_initialise_trigger, site_is_initialised_callback) =
         SiteIsInitialisedCallback::init();
 
+    let batch_size = settings
+        .sync
+        .as_ref()
+        .map(|s| s.batch_size.clone())
+        .unwrap_or_default();
+    let disable_integration_transaction = settings
+        .sync
+        .as_ref()
+        .map(|s| s.disable_integration_transaction)
+        .unwrap_or(false);
+    let relax_hardware_id_token_checks = settings
+        .sync
+        .as_ref()
+        .map(|s| s.relax_hardware_id_token_checks)
+        .unwrap_or(false);
+    if relax_hardware_id_token_checks {
+        log::warn!("relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED");
+    }
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
         processors_trigger,
@@ -161,12 +178,22 @@ pub async fn start_server(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        Some(settings.clone()),
         subscription_trigger,
+        batch_size,
+        disable_integration_transaction,
+        relax_hardware_id_token_checks,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
+    let cert_start = Instant::now();
     let certificates = Certificates::try_load(&settings.server).unwrap();
+    info!(
+        "Certificates loaded in {} ms",
+        cert_start.elapsed().as_millis()
+    );
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
+    let token_secret_copy = token_secret.clone();
     let auth = auth_data(&settings.server, token_bucket, token_secret, &certificates);
     info!("Initialising server context..done");
 
@@ -175,25 +202,19 @@ pub async fn start_server(
     // LOGGING
     let log_service = &service_provider.log_service;
     info!("Checking log settings..");
-    let log_level = log_service.get_log_level(&service_context).unwrap();
+    let log_level = log_service.get_log_level(&service_context).ok().flatten();
 
     if settings.logging.is_some() {
-        log_service
-            .set_log_directory(
-                &service_context,
-                settings.logging.clone().unwrap().directory,
-            )
-            .unwrap();
+        log_service.set_log_directory(
+            &service_context,
+            settings.logging.clone().unwrap().directory,
+        );
 
-        log_service
-            .set_log_file_name(&service_context, settings.logging.clone().unwrap().filename)
-            .unwrap();
+        log_service.set_log_file_name(&service_context, settings.logging.clone().unwrap().filename);
     }
 
     if log_level.is_none() && settings.logging.is_some() {
-        log_service
-            .update_log_level(&service_context, settings.logging.clone().unwrap().level)
-            .unwrap();
+        log_service.update_log_level(&service_context, settings.logging.clone().unwrap().level);
     }
 
     // SET HARDWARE UUID
@@ -215,74 +236,6 @@ pub async fn start_server(
         .unwrap();
     info!("Setting hardware uuid.. done");
 
-    // CHECK SYNC STATUS
-    info!("Checking sync status..");
-    let yaml_sync_settings = settings.sync.clone();
-    let database_sync_settings = service_provider
-        .settings
-        .sync_settings(&service_context)
-        .unwrap();
-
-    // Need to set sync settings in database if they are provided via yaml configurations
-    let force_trigger_sync_on_startup = match (database_sync_settings, yaml_sync_settings) {
-        // If we are changing sync setting via yaml configurations, need to check against central server
-        // to confirm that site is still the same (request_and_set_site_info checks site UUID)
-        (Some(database_sync_settings), Some(yaml_sync_settings)) => {
-            if database_sync_settings.core_site_details_changed(&yaml_sync_settings) {
-                info!("Sync settings in configurations don't match database");
-                info!("Checking sync credentials are for the same site..");
-                service_provider
-                    .site_info_service
-                    .request_and_set_site_info(&service_provider, &yaml_sync_settings)
-                    .await
-                    .unwrap();
-                info!("Checking sync credentials are for the same site..done");
-            }
-            service_provider
-                .settings
-                .update_sync_settings(&service_context, &yaml_sync_settings)
-                .unwrap();
-            // Settings are set in database -> try syncing on startup
-            true
-        }
-        (None, Some(yaml_sync_settings)) => {
-            info!("Sync settings in configurations and not in database");
-            info!("Checking sync credentials..");
-            // If fresh sync settings provided in yaml, check credentials against central server and save them in database
-            service_provider
-                .site_info_service
-                .request_and_set_site_info(&service_provider, &yaml_sync_settings)
-                .await
-                .unwrap();
-            info!("Checking sync credentials..done");
-            service_provider
-                .settings
-                .update_sync_settings(&service_context, &yaml_sync_settings)
-                .unwrap();
-            // Settings are set in database -> try syncing on startup
-            true
-        }
-        // Settings are set in database -> try syncing on startup
-        (Some(_), None) => true,
-        // Settings are not set in database -> don't try syncing on startup
-        (None, None) => false,
-    };
-
-    // CREATE GRAPHQL SCHEMA
-    let is_operational = service_provider
-        .sync_status_service
-        .is_initialised(&service_context)
-        .unwrap();
-    let initial_status = if is_operational {
-        OperationalStatus::Operational
-    } else {
-        OperationalStatus::Initialising
-    };
-    info!(
-        "Creating graphql schema in {:?} mode..",
-        initial_status
-    );
-
     let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
     let validated_plugins = Data::new(Mutex::new(validated_plugins));
 
@@ -291,7 +244,7 @@ pub async fn start_server(
 
     let graphql_schema = Data::new(GraphqlSchema::new(
         GraphSchemaData {
-            connection_manager: Data::new(connection_manager),
+            connection_manager: Data::new(connection_manager.clone()),
             loader_registry: Data::new(LoaderRegistry { loaders }),
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
@@ -299,31 +252,22 @@ pub async fn start_server(
             validated_plugins: validated_plugins.clone(),
             subscription_broadcast,
         },
-        initial_status,
+        OperationalStatus::MigratingDatabase,
     ));
+
     // Bind trigger to change schema when site is initialised
-    if !is_operational {
+    {
         let graphql_schema = graphql_schema.clone();
         site_is_initialised_callback.on_trigger(async move {
             info!("Changing graphql schema to operational mode");
-            graphql_schema.clone().set_operational_status(OperationalStatus::Operational).await;
+            graphql_schema
+                .clone()
+                .set_operational_status(OperationalStatus::Operational)
+                .await;
         });
     }
+
     info!("Creating graphql schema..done");
-
-    // PLUGIN CONTEXT
-    info!("Creating plugin context and reloading plugins..");
-    BoaJsContext::new(
-        &service_provider,
-        PluginExecuteGraphql(graphql_schema.clone()),
-    )
-    .bind();
-
-    service_provider
-        .plugin_service
-        .reload_all_plugins(&service_context)
-        .unwrap();
-    info!("Creating plugin context and reloading plugins..done");
 
     // START DISCOVERY
     // Only run discovery on Mac or Windows
@@ -368,20 +312,11 @@ pub async fn start_server(
     // START SERVER
     info!("Initialising http server..",);
     let processors_task = processors.spawn(service_provider.clone().into_inner());
-    let synchroniser_task = synchroniser_driver.run(
-        service_provider.clone().into_inner(),
-        force_trigger_sync_on_startup,
-    );
     let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
-    let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
-
-    // Scheduled tasks
-    let scheduled_task_handle = spawn_scheduled_task_runner(
-        service_provider.clone().into_inner(),
-        settings.mail.clone().map(|m| m.interval).unwrap_or(60),
-    );
 
     let closure_settings = settings.clone();
+    let closure_service_provider = service_provider.clone();
+    let closure_schema = graphql_schema.clone();
     let mut http_server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(closure_settings.clone()))
@@ -393,11 +328,11 @@ pub async fn start_server(
             // Configure JSON payload limit (default is 2MB, setting to 10MB)
             .app_data(web::JsonConfig::default().limit(10 * 1024 * 1024))
             // needed for cold chain service
-            .app_data(service_provider.clone())
+            .app_data(closure_service_provider.clone())
             .app_data(auth.clone())
             .app_data(validated_plugins.clone())
             .app_data(get_default_directory(&closure_settings))
-            .configure(attach_graphql_schema(graphql_schema.clone()))
+            .configure(attach_graphql_schema(closure_schema.clone()))
             .configure(config_static_files)
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
@@ -426,12 +361,197 @@ pub async fn start_server(
 
     let running_server = http_server.run();
     let server_handle = running_server.handle();
-    info!(
-        "Server started, running on port: {}, version: {}",
-        settings.server.port, version
-    );
+
     // run server in another task so that we can handle restart/off events here
     tokio::spawn(running_server);
+
+    if let Some(init_sql) = &settings.database.startup_sql() {
+        connection_manager.execute(init_sql).unwrap();
+    }
+
+    info!("Run DB migrations...");
+    // start database migrations
+    let changelog_partition_settings = settings.changelog_partition.clone().unwrap_or_default();
+    let migration_config = MigrationConfig {
+        changelog_partition: changelog_partition_settings.to_migration_config(),
+    };
+    let (version, messages) = match migrate(&connection, None, migration_config) {
+        Ok(result) => result,
+        Err(e) => {
+            log::error!("Failed to run DB migrations: {}", format_error(&e));
+            std::process::exit(1);
+        }
+    };
+
+    add_migration_results_to_system_log(&connection, messages).unwrap();
+    info!("Run DB migrations...done");
+
+    if let Err(e) = CentralServerConfig::restore_central_standalone(&connection) {
+        log::error!(
+            "Failed to restore standalone central state: {}",
+            format_error(&e)
+        );
+    }
+
+    if settings.server.override_is_central_server {
+        let non_empty =
+            |s: &Option<String>| s.as_deref().filter(|s| !s.is_empty()).map(str::to_owned);
+        if let (Some(store_name), Some(admin_username), Some(admin_password)) = (
+            non_empty(&settings.server.standalone_store_name),
+            non_empty(&settings.server.standalone_admin_username),
+            non_empty(&settings.server.standalone_admin_password),
+        ) {
+            match service_provider
+                .sync_status_service
+                .get_initialisation_status(&service_context)
+            {
+                Ok(InitialisationStatus::PreInitialisation) => {
+                    match service_provider.standalone_central_service.initialise(
+                        &service_provider,
+                        InitialiseAsCentralServerInput {
+                            store_name,
+                            admin_username,
+                            admin_password,
+                        },
+                    ) {
+                        Ok(()) => {
+                            info!("Standalone central initialised from YAML configuration");
+                        }
+                        Err(e) => {
+                            log::error!("Failed to auto-initialise standalone central: {:?}", e)
+                        }
+                    }
+                }
+                Ok(_) => {
+                    // DB already initialised — YAML creds are ignored.
+                }
+                Err(e) => log::error!(
+                    "Could not check initialisation status for standalone central bootstrap: {}",
+                    format_error(&e)
+                ),
+            }
+        }
+    }
+
+    // Persist token secret now that the key_value_store table is guaranteed to exist
+    save_token_secret(&connection, &token_secret_copy);
+
+    StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
+
+    // Log the server starting message with the startup timestamp
+    let status_log = StatusLog(&connection);
+    status_log.no_console_with_timestamp(&server_start_message, server_start_timestamp);
+
+    // PLUGIN CONTEXT
+    info!("Creating plugin context and reloading plugins..");
+    BoaJsContext::new(
+        &service_provider,
+        PluginExecuteGraphql(graphql_schema.clone()),
+    )
+    .bind();
+
+    service_provider
+        .plugin_service
+        .reload_all_plugins(&service_context)
+        .unwrap();
+    info!("Creating plugin context and reloading plugins..done");
+
+    graphql_schema
+        .set_operational_status(OperationalStatus::Initialising)
+        .await;
+    info!("GraphQL now in initialisation mode");
+
+    // CHECK SYNC STATUS
+    info!("Checking sync status..");
+    // A flags-only `sync:` block (no credentials) counts as "no sync settings" here.
+    let yaml_sync_settings = settings
+        .sync
+        .clone()
+        .filter(|s| s.has_core_sync_settings());
+    let database_sync_settings = service_provider
+        .settings
+        .sync_settings(&service_context)
+        .unwrap();
+
+    // Need to set sync settings in database if they are provided via yaml configurations
+    let force_trigger_sync_on_startup = match (database_sync_settings, yaml_sync_settings) {
+        // If we are changing sync setting via yaml configurations, need to check against central server
+        // to confirm that site is still the same (request_and_set_site_auth checks site UUID)
+        (Some(database_sync_settings), Some(yaml_sync_settings)) => {
+            if database_sync_settings.core_site_details_changed(&yaml_sync_settings) {
+                info!("Sync settings in configurations don't match database");
+                info!("Checking sync credentials are for the same site..");
+                service_provider
+                    .site_auth_service
+                    .request_and_set_site_auth(&service_provider, &yaml_sync_settings)
+                    .await
+                    .unwrap();
+                info!("Checking sync credentials are for the same site..done");
+            }
+            service_provider
+                .settings
+                .update_sync_settings(&service_context, &yaml_sync_settings)
+                .unwrap();
+            // Settings are set in database -> try syncing on startup
+            true
+        }
+        (None, Some(yaml_sync_settings)) => {
+            info!("Sync settings in configurations and not in database");
+            info!("Checking sync credentials..");
+            // If fresh sync settings provided in yaml, check credentials against central server and save them in database
+            service_provider
+                .site_auth_service
+                .request_and_set_site_auth(&service_provider, &yaml_sync_settings)
+                .await
+                .unwrap();
+            info!("Checking sync credentials..done");
+            service_provider
+                .settings
+                .update_sync_settings(&service_context, &yaml_sync_settings)
+                .unwrap();
+            // Settings are set in database -> try syncing on startup
+            true
+        }
+        // Settings are set in database -> try syncing on startup
+        (Some(_), None) => true,
+        // Settings are not set in database -> don't try syncing on startup
+        (None, None) => false,
+    };
+
+    let is_initialised = matches!(
+        service_provider
+            .sync_status_service
+            .get_initialisation_status(&service_context),
+        Ok(InitialisationStatus::Initialised(_))
+    );
+
+    if is_initialised {
+        graphql_schema
+            .set_operational_status(OperationalStatus::Operational)
+            .await;
+        info!("GraphQL now in operational mode")
+    }
+
+    let synchroniser_task = synchroniser_driver.run(
+        service_provider.clone().into_inner(),
+        force_trigger_sync_on_startup,
+    );
+
+    info!(
+        "Server fully initialised and running on port: {}, version: {}",
+        settings.server.port, version
+    ); // Upsert standard reports
+
+    // Scheduled tasks
+    let schedule_plugin_task = schedule_plugin::spawn();
+    let changelog_partitions_task = changelog_partitions::spawn(
+        service_provider.clone().into_inner(),
+        changelog_partition_settings,
+    );
+    let scheduled_task_handle = spawn_scheduled_task_runner(
+        service_provider.clone().into_inner(),
+        settings.mail.clone().map(|m| m.interval).unwrap_or(60),
+    );
 
     tokio::select! {
         // TODO log error in ctrl_c and None in off_switch
@@ -442,9 +562,10 @@ pub async fn start_server(
             status_log.log("Server received request to stop with off switch");
         },
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
-        _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
           _ = ledger_fix_task => unreachable!("Ledger fix unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result),
+        result = schedule_plugin_task => unreachable!("Schedule plugin runner terminated ({:?})", result),
+        result = changelog_partitions_task => unreachable!("Changelog partition top-up terminated ({:?})", result),
         scheduled_error = scheduled_task_handle => unreachable!("Scheduled task stopped unexpectedly: {:?}", scheduled_error),
         subscription_error = subscription_task_handle => unreachable!("Subscription task stopped unexpectedly: {:?}", subscription_error),
     };

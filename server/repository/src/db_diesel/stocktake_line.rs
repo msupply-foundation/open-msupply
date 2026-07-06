@@ -1,21 +1,18 @@
 use super::{
-    item_link_row::item_link, item_row::item, location_row::location, name_link_row::name_link,
-    name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
-    stocktake_line_row::stocktake_line, LocationRow, NameLinkRow, NameRow, ReasonOptionRow,
+    item_row::item, location_row::location, name_row::name,
+    reason_option_row::reason_option, stock_line_row::stock_line,
+    stocktake_line_row::stocktake_line, LocationRow, NameRow, ReasonOptionRow,
     StockLineRow, StocktakeLineRow, StorageConnection,
 };
 
-use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
     diesel_macros::{
         apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
     },
-    DBType, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow, Pagination,
-    RepositoryError, Sort, StringFilter,
+    DBType, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination, RepositoryError, Sort,
+    StringFilter,
 };
 
 #[derive(Clone, Default)]
@@ -75,10 +72,10 @@ pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
 
 type StocktakeLineJoin = (
     StocktakeLineRow,
-    (ItemLinkRow, ItemRow),
+    ItemRow,
     Option<StockLineRow>,
     Option<LocationRow>,
-    Option<(NameLinkRow, NameRow)>,
+    Option<NameRow>,
     Option<ReasonOptionRow>,
 );
 
@@ -176,13 +173,7 @@ impl<'a> StocktakeLineRepository<'a> {
     }
 
     pub fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeLineQuery {
-        let mut query = stocktake_line::table
-            .inner_join(item_link::table.inner_join(item::table))
-            .left_join(stock_line::table)
-            .left_join(location::table)
-            .left_join(name_link::table.inner_join(name::table))
-            .left_join(reason_option::table)
-            .into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, stocktake_line::id);
@@ -196,33 +187,27 @@ impl<'a> StocktakeLineRepository<'a> {
     }
 }
 
-type BoxedStocktakeLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<
-            LeftJoin<
-                LeftJoin<
-                    InnerJoin<stocktake_line::table, InnerJoin<item_link::table, item::table>>,
-                    stock_line::table,
-                >,
-                location::table,
-            >,
-            InnerJoin<name_link::table, name::table>,
-        >,
-        reason_option::table,
-    >,
-    DBType,
->;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    stocktake_line::table
+        .inner_join(item::table)
+        .left_join(stock_line::table)
+        .left_join(location::table)
+        .left_join(name::table)
+        .left_join(reason_option::table)
+}
+
+type BoxedStocktakeLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn to_domain(
-    (line, (_, item), stock_line, location, name_link, reason_option): StocktakeLineJoin,
+    (line, item, stock_line, location, donor, reason_option): StocktakeLineJoin,
 ) -> StocktakeLine {
     StocktakeLine {
         line,
         item,
         stock_line,
         location,
-        donor: name_link.map(|(_, name_row)| name_row),
+        donor,
         reason_option,
     }
 }

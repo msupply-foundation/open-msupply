@@ -29,6 +29,7 @@ pub fn delete_bundled_item(
         &ResourceAccessRequest {
             resource: Resource::MutateItemNamesCodesAndUnits,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -54,7 +55,7 @@ fn map_response(from: Result<String, DeleteBundledItemError>) -> Result<DeleteBu
     match from {
         Ok(result) => Ok(DeleteBundledItemResponse::Response(DeleteResponse(result))),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
 
             let graphql_error = match error {
                 DeleteBundledItemError::DatabaseError(_) => {

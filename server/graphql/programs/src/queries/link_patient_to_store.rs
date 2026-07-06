@@ -56,6 +56,7 @@ pub async fn link_patient_to_store(
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -74,8 +75,8 @@ fn map_result(
             name_store_join,
         })),
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
-            println!("Error while linking patient: {}", formatted_error);
+            let formatted_error = format!("{err:#?}");
+            println!("Error while linking patient: {formatted_error}");
 
             let graphql_error = match err {
                 CentralPatientRequestError::DatabaseError(_) => {

@@ -1,7 +1,7 @@
 use chrono::{Days, Utc};
 use repository::{
-    DatetimeFilter, EqualFilter, RepositoryError, StorageConnection, TemperatureExcursion,
-    TemperatureExcursionRepository, TemperatureLogFilter, TemperatureRow,
+    DatetimeFilter, EqualFilter, RepositoryError, SensorFilter, StorageConnection,
+    TemperatureExcursion, TemperatureExcursionRepository, TemperatureLogFilter, TemperatureRow,
 };
 
 pub struct TemperatureExcursionService {}
@@ -20,7 +20,8 @@ pub trait TemperatureExcursionServiceTrait: Sync + Send {
                     .naive_utc()
                     .checked_sub_days(Days::new(7))
                     .unwrap(),
-            ));
+            ))
+            .sensor(SensorFilter::new().is_active(true));
 
         let log_data = TemperatureExcursionRepository::new(connection).query(filter)?;
 
@@ -90,7 +91,7 @@ mod test {
     };
 
     use chrono::{Days, NaiveTime, Utc};
-    use rand::{seq::SliceRandom, thread_rng};
+    use rand::seq::SliceRandom;
 
     use crate::temperature_excursion::temperature_excursions;
 
@@ -103,7 +104,7 @@ mod test {
 
         let store = StoreRow {
             id: "store".to_string(),
-            name_link_id: name.id.clone(),
+            name_id: name.id.clone(),
             ..Default::default()
         };
 
@@ -178,7 +179,7 @@ mod test {
 
         // This repository should return results ordered by datetime descending
         // shuffling in order to test this
-        temperature_logs.shuffle(&mut thread_rng());
+        temperature_logs.shuffle(&mut rand::rng());
 
         let (_, connection, _, _) = setup_all_with_data(
             "temperature_excursions",

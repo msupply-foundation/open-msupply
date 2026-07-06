@@ -42,6 +42,7 @@ pub fn response_requisition_stats(
         &ResourceAccessRequest {
             resource: Resource::RequisitionStats,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -65,7 +66,7 @@ pub fn response_requisition_stats(
 
 fn map_error(error: ServiceError) -> Result<RequisitionStatsErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

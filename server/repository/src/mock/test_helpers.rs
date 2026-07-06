@@ -39,7 +39,7 @@ pub fn make_movements_extended(
                 InvoiceRow {
                     id: invoice_id.clone(),
                     store_id: stock_line.store_id.clone(),
-                    name_link_id: mock_name_a().id.clone(),
+                    name_id: mock_name_a().id.clone(),
                     r#type: if quantity > 0 {
                         InvoiceType::InboundShipment
                     } else {
@@ -62,7 +62,7 @@ pub fn make_movements_extended(
                 InvoiceLineRow {
                     id: format!("line_{invoice_id}"),
                     invoice_id,
-                    item_link_id: stock_line.item_link_id.clone(),
+                    item_id: stock_line.item_id.clone(),
                     stock_line_id: Some(stock_line.id.clone()),
                     pack_size: stock_line.pack_size,
                     number_of_packs: quantity.abs() as f64,

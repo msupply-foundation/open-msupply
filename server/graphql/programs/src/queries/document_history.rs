@@ -23,6 +23,7 @@ pub fn document_history(
         &ResourceAccessRequest {
             resource: Resource::QueryDocument,
             store_id: Some(store_id),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();
@@ -34,7 +35,7 @@ pub fn document_history(
         .document_service
         .document_history(&context, &document_name, allowed_ctx)
         .map_err(|err| {
-            let formated_err = format! {"{:?}", err};
+            let formated_err = format! {"{err:?}"};
             let error = match err {
                 DocumentHistoryError::DatabaseError(err) => err.into(),
                 DocumentHistoryError::InternalError(_) => {

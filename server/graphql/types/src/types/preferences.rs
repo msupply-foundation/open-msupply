@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 
 use crate::types::{
-    invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
+    backdating::BackdatingNode,
+    invoice_query::InvoiceNodeStatus,
+    patient::GenderTypeNode,
     warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
 };
 use async_graphql::*;
@@ -34,12 +36,13 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.authorise_purchase_order)
     }
 
-    pub async fn authorise_goods_received(&self) -> Result<bool> {
-        self.load_preference(&self.preferences.authorise_goods_received)
-    }
-
     pub async fn custom_translations(&self) -> Result<BTreeMap<String, String>> {
         self.load_preference(&self.preferences.custom_translations)
+    }
+
+    pub async fn custom_translations_v2(&self) -> Result<serde_json::Value> {
+        let value = self.load_preference(&self.preferences.custom_translations_v2)?;
+        Ok(serde_json::to_value(value)?)
     }
 
     pub async fn prevent_transfers_months_before_initialisation(&self) -> Result<i32> {
@@ -85,9 +88,27 @@ impl PreferencesNode {
     pub async fn item_margin_overrides_supplier_margin(&self) -> Result<bool> {
         self.load_preference(&self.preferences.item_margin_overrides_supplier_margin)
     }
-    
+
     pub async fn is_gaps(&self) -> Result<bool> {
         self.load_preference(&self.preferences.is_gaps)
+    }
+
+    pub async fn display_population_based_forecasting(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.display_population_based_forecasting)
+    }
+
+    pub async fn global_table_configs(&self) -> Result<serde_json::Value> {
+        self.load_preference(&self.preferences.global_table_configs)
+    }
+
+    pub async fn backdating(&self) -> Result<BackdatingNode> {
+        Ok(BackdatingNode::from_domain(
+            self.load_preference(&self.preferences.backdating)?,
+        ))
+    }
+
+    pub async fn receive_payments_from_prescriptions(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.receive_payments_from_prescriptions)
     }
 
     // Store preferences
@@ -143,6 +164,14 @@ impl PreferencesNode {
         )
     }
 
+    pub async fn external_inbound_shipment_lines_must_be_authorised(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .external_inbound_shipment_lines_must_be_authorised,
+        )
+    }
+
     pub async fn number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products(
         &self,
     ) -> Result<i32> {
@@ -155,7 +184,7 @@ impl PreferencesNode {
 
     pub async fn number_of_months_threshold_to_show_low_stock_alerts_for_products(
         &self,
-    ) -> Result<i32> {
+    ) -> Result<f64> {
         self.load_preference(
             &self
                 .preferences
@@ -165,7 +194,7 @@ impl PreferencesNode {
 
     pub async fn number_of_months_threshold_to_show_over_stock_alerts_for_products(
         &self,
-    ) -> Result<i32> {
+    ) -> Result<f64> {
         self.load_preference(
             &self
                 .preferences
@@ -200,6 +229,10 @@ impl PreferencesNode {
             .map(|s| InvoiceNodeStatus::from(s.clone()))
             .collect();
         Ok(statuses)
+    }
+
+    pub async fn do_not_print_placeholder_line_labels(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.do_not_print_placeholder_line_labels)
     }
 }
 
@@ -250,9 +283,9 @@ impl PreferenceDescriptionNode {
 pub enum PreferenceKey {
     // Global preferences
     AllowTrackingOfStockByDonor,
-    AuthoriseGoodsReceived,
     AuthorisePurchaseOrder,
     CustomTranslations,
+    CustomTranslationsV2,
     GenderOptions,
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
@@ -263,6 +296,10 @@ pub enum PreferenceKey {
     ExpiredStockIssueThreshold,
     ItemMarginOverridesSupplierMargin,
     IsGaps,
+    DisplayPopulationBasedForecasting,
+    GlobalTableConfigs,
+    Backdating,
+    ReceivePaymentsFromPrescriptions,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -276,6 +313,7 @@ pub enum PreferenceKey {
     WarningForExcessRequest,
     CanCreateInternalOrderFromARequisition,
     SelectDestinationStoreForAnInternalOrder,
+    ExternalInboundShipmentLinesMustBeAuthorised,
     NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     NumberOfMonthsThresholdToShowLowStockAlertsForProducts,
     NumberOfMonthsThresholdToShowOverStockAlertsForProducts,
@@ -286,6 +324,7 @@ pub enum PreferenceKey {
     WarnWhenMissingRecentStocktake,
     InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
+    DoNotPrintPlaceholderLineLabels,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
@@ -300,8 +339,12 @@ pub enum PreferenceNodeType {
 pub enum PreferenceValueNodeType {
     Boolean,
     Integer,
+    Float,
     MultiChoice,
     CustomTranslations, // Specific type for CustomTranslations preference
+    CustomTranslationsV2, // Specific type for v2 CustomTranslations preference
     WarnWhenMissingRecentStocktakeData,
+    BackdatingData,
     String,
+    Colour,
 }

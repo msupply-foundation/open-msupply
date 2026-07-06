@@ -11,9 +11,10 @@ use umya_spreadsheet::{
 };
 
 pub fn csv_to_excel(
-    base_dir: &Option<String>,
+    base_dir: &str,
     csv_data: &str,
     filename: &str,
+    sheet_name: Option<&str>,
 ) -> Result<String, ReportError> {
     // Parse CSV data
     let mut reader = Reader::from_reader(csv_data.as_bytes());
@@ -29,6 +30,10 @@ pub fn csv_to_excel(
 
     // Create Excel workbook
     let mut book = umya_spreadsheet::new_file();
+    if let Some(name) = sheet_name.map(sanitize_sheet_name).filter(|n| !n.is_empty()) {
+        // Failure to rename the default sheet is non-fatal — fall through with the default name.
+        let _ = book.set_sheet_name(0, &name);
+    }
     let sheet = book
         .get_sheet_mut(&0)
         .ok_or_else(|| ReportError::DocGenerationError("Failed to get worksheet".to_string()))?;
@@ -58,7 +63,7 @@ pub fn csv_to_excel(
 
 /// Converts the report to an Excel file and returns the file id
 pub fn export_html_report_to_excel(
-    base_dir: &Option<String>,
+    base_dir: &str,
     report: GeneratedReport,
     report_name: String,
     template_as_buffer: &Option<Vec<u8>>,
@@ -83,8 +88,23 @@ pub fn export_html_report_to_excel(
     Ok(reserved_file.id)
 }
 
+/// Coerce a free-form string into a value Excel will accept as a sheet name.
+/// Excel forbids `\ / ? * [ ] :`, leading/trailing apostrophes, names longer
+/// than 31 chars, and empty names.
+fn sanitize_sheet_name(name: &str) -> String {
+    let cleaned: String = name
+        .chars()
+        .map(|c| match c {
+            '\\' | '/' | '?' | '*' | '[' | ']' | ':' => '_',
+            _ => c,
+        })
+        .collect();
+    let trimmed = cleaned.trim().trim_matches('\'');
+    trimmed.chars().take(31).collect()
+}
+
 /// Hold a file in the temporary directory
-fn reserve_file(base_dir: &Option<String>, report_name: &str) -> Result<StaticFile, ReportError> {
+fn reserve_file(base_dir: &str, report_name: &str) -> Result<StaticFile, ReportError> {
     let now: DateTime<Utc> = SystemTime::now().into();
     let file_service = StaticFileService::new(base_dir)
         .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
@@ -636,7 +656,7 @@ mod report_to_excel_test {
         assert_eq!(
             res.first()
                 .unwrap()
-                .into_iter()
+                .iter()
                 .map(|e| inner_text(*e))
                 .collect::<Vec<&str>>(),
             vec!["Row One Cell One", "Row One Cell Two"],
@@ -718,13 +738,13 @@ mod report_to_excel_test {
     fn test_csv_to_excel() {
         let csv_data = "Name,Status,Invoice Number\nHarry Potter,Picked,2\nHermione Granger,New,3\nRon Weasley,New,4\n";
 
-        let result = csv_to_excel(&None, csv_data, "test_csv_export");
+        let result = csv_to_excel(".", csv_data, "test_csv_export", None);
         assert!(result.is_ok(), "CSV to Excel conversion should succeed");
 
         let file_id = result.unwrap();
         assert!(!file_id.is_empty(), "File ID should not be empty");
 
-        let file_service = StaticFileService::new(&None).unwrap();
+        let file_service = StaticFileService::new(".").unwrap();
         let generated_file = file_service
             .find_file(&file_id, StaticFileCategory::Temporary)
             .unwrap()
@@ -754,6 +774,33 @@ mod report_to_excel_test {
         assert_eq!(get_value("A4"), "Ron Weasley");
         assert_eq!(get_value("B4"), "New");
         assert_eq!(get_value("C4"), "4");
+    }
+
+    #[test]
+    fn test_csv_to_excel_sets_sheet_name() {
+        let csv_data = "Name,Status\nHarry Potter,Picked\n";
+        let file_id =
+            csv_to_excel(".", csv_data, "test_sheet_name", Some("fsmclinic")).unwrap();
+
+        let file_service = StaticFileService::new(".").unwrap();
+        let generated_file = file_service
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        let book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+        let sheet = book.get_sheet(&0).unwrap();
+        assert_eq!(sheet.get_name(), "fsmclinic");
+    }
+
+    #[test]
+    fn test_sanitize_sheet_name_strips_forbidden_chars_and_truncates() {
+        // Forbidden characters become underscores
+        assert_eq!(sanitize_sheet_name("a/b\\c?d*e[f]g:h"), "a_b_c_d_e_f_g_h");
+        // Leading/trailing apostrophes and whitespace stripped
+        assert_eq!(sanitize_sheet_name("  'name'  "), "name");
+        // Truncated to 31 chars
+        let long = "a".repeat(50);
+        assert_eq!(sanitize_sheet_name(&long).len(), 31);
     }
 
     #[test]
@@ -835,7 +882,7 @@ mod report_to_excel_test {
 
         // Test the full export function with template
         let result = export_html_report_to_excel(
-            &None, // base_dir
+            ".", // base_dir
             report,
             "test_with_template".to_string(),
             &Some(template_bytes),
@@ -845,7 +892,7 @@ mod report_to_excel_test {
         let file_id = result.unwrap();
 
         // Read back the generated file to verify content
-        let file_service = StaticFileService::new(&None).unwrap();
+        let file_service = StaticFileService::new(".").unwrap();
         let generated_file = file_service
             .find_file(&file_id, StaticFileCategory::Temporary)
             .unwrap()
@@ -973,7 +1020,7 @@ mod report_to_excel_test {
         book.set_sheet_name(0, "test").unwrap();
         let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        let coords = vec![(1_u32, 1_u32), (2_u32, 1_u32), (3_u32, 1_u32)];
+        let coords = [(1_u32, 1_u32), (2_u32, 1_u32), (3_u32, 1_u32)];
         for (coord, td) in coords.iter().zip(tds.by_ref()) {
             let cell = sheet.get_cell_mut(*coord);
             cell.set_value(inner_text(td));

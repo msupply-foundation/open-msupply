@@ -27,11 +27,15 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())))
+            .query_by_filter(
+                LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())),
+            )
             .unwrap();
 
         let locations_not_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::not_equal_to("store_a".to_string())))
+            .query_by_filter(
+                LocationFilter::new().store_id(EqualFilter::not_equal_to("store_a".to_string())),
+            )
             .unwrap();
 
         // Location does not exist
@@ -85,7 +89,9 @@ mod query {
         let service = service_provider.location_service;
 
         let locations_in_store = location_repository
-            .query_by_filter(LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())))
+            .query_by_filter(
+                LocationFilter::new().store_id(EqualFilter::equal_to("store_a".to_string())),
+            )
             .unwrap();
 
         // Success with no changes
@@ -104,7 +110,8 @@ mod query {
         assert_eq!(
             location_repository
                 .query_by_filter(
-                    LocationFilter::new().id(EqualFilter::equal_to(location.location_row.id.to_string()))
+                    LocationFilter::new()
+                        .id(EqualFilter::equal_to(location.location_row.id.to_string()))
                 )
                 .unwrap()[0],
             location
@@ -133,7 +140,8 @@ mod query {
         assert_eq!(
             location_repository
                 .query_by_filter(
-                    LocationFilter::new().id(EqualFilter::equal_to(location.location_row.id.to_string()))
+                    LocationFilter::new()
+                        .id(EqualFilter::equal_to(location.location_row.id.to_string()))
                 )
                 .unwrap()[0],
             location

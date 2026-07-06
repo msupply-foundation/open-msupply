@@ -84,6 +84,7 @@ pub fn asset_catalogue_items(
         &ResourceAccessRequest {
             resource: Resource::QueryAsset,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;

@@ -7,16 +7,17 @@ use crate::{
     processors::transfer::requisition::RequisitionTransferOutput,
     requisition::common::{get_indicative_price_pref, get_lines_for_requisition},
     store_preference::get_store_preferences,
+    sync::sync_status::status::get_first_initialisation_finished_datetime,
 };
 use chrono::{Months, Utc};
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
-    ActivityLogType, ApprovalStatusType, DatetimeFilter, EqualFilter, IndicatorValueRow,
+    ActivityLogType, ApprovalStatusType, EqualFilter, IndicatorValueRow,
     IndicatorValueRowRepository, ItemRow, MasterListFilter, MasterListLineFilter,
-    MasterListLineRepository, MasterListRepository, NumberRowType, Pagination, RepositoryError,
-    Requisition, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, RequisitionStatus, RequisitionType, Sort, StorageConnection,
-    StoreFilter, StoreRepository, SyncLogFilter, SyncLogRepository, SyncLogSortField,
+    MasterListLineRepository, MasterListRepository, NumberRowType, RepositoryError, Requisition,
+    RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection, StoreFilter,
+    StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -68,28 +69,14 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
                     msg: e.to_string(),
                     extra: "".to_string(),
                 })?;
-            if pref_months > 0 {
-                let sort = Sort {
-                    key: SyncLogSortField::DoneDatetime,
-                    desc: None,
-                };
-
-                let filter = SyncLogFilter::new()
-                    .integration_finished_datetime(DatetimeFilter::is_null(false));
-
-                let first_initialisation_log = SyncLogRepository::new(connection)
-                    .query(Pagination::one(), Some(filter), Some(sort))?
-                    .pop();
-
-                if first_initialisation_log
-                    .and_then(|log| log.sync_log_row.integration_finished_datetime)
+            if pref_months > 0
+                && get_first_initialisation_finished_datetime(connection)?
                     .and_then(|initialisation_date| {
                         initialisation_date.checked_sub_months(Months::new(pref_months as u32))
                     })
                     .is_some_and(|cutoff_date| sent_datetime < cutoff_date)
-                {
-                    return Ok(RequisitionTransferOutput::BeforeInitialisationMonths);
-                }
+            {
+                return Ok(RequisitionTransferOutput::BeforeInitialisationMonths);
             }
         }
 
@@ -268,7 +255,8 @@ fn generate_response_requisition(
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
-        name_link_id: store_name.id,
+        name_id: store_name.id,
+        name_store_id: Some(record_for_processing.requisition.store_row.id.clone()),
         store_id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -284,7 +272,7 @@ fn generate_response_requisition(
         period_id: request_requisition_row.period_id.clone(),
         order_type: request_requisition_row.order_type.clone(),
         is_emergency: request_requisition_row.is_emergency,
-        original_customer_id: request_requisition_row.original_customer_id.clone(),
+        destination_customer_id: request_requisition_row.destination_customer_id.clone(),
         created_from_requisition_id: request_requisition_row.created_from_requisition_id.clone(),
         // Default
         user_id: None,
@@ -292,6 +280,7 @@ fn generate_response_requisition(
         sent_datetime: None,
         finalised_datetime: None,
         colour: None,
+        ..Default::default()
     };
 
     Ok(result)
@@ -303,7 +292,8 @@ fn generate_response_requisition_lines(
     request_requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
     let request_lines = get_lines_for_requisition(connection, &request_requisition.id)?;
-    let populate_price_per_unit = get_indicative_price_pref(connection, &response_requisition.store_id)?;
+    let populate_price_per_unit =
+        get_indicative_price_pref(connection, &response_requisition.store_id)?;
     let price_list = if populate_price_per_unit {
         Some(get_pricing_for_items(
             connection,
@@ -327,7 +317,7 @@ fn generate_response_requisition_lines(
                 requisition_id: _,
                 approved_quantity: _,
                 approval_comment: _,
-                item_link_id: _,
+                item_id: _,
                 supply_quantity: _,
                 requested_quantity,
                 suggested_quantity,
@@ -347,6 +337,9 @@ fn generate_response_requisition_lines(
                 price_per_unit,
                 available_volume,
                 location_type_id,
+                forecast_total_doses,
+                forecast_total_units,
+                vaccine_courses,
             },
         item_row: ItemRow { id: item_id, .. },
         requisition_row: _,
@@ -370,7 +363,7 @@ fn generate_response_requisition_lines(
         response_lines.push(RequisitionLineRow {
             id: uuid(),
             requisition_id: response_requisition.id.to_string(),
-            item_link_id: item_id,
+            item_id: item_id,
             requested_quantity,
             suggested_quantity,
             available_stock_on_hand,
@@ -388,11 +381,14 @@ fn generate_response_requisition_lines(
             option_id,
             available_volume,
             location_type_id,
+            price_per_unit,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
             // Default
             supply_quantity: 0.0,
             approved_quantity: 0.0,
             approval_comment: None,
-            price_per_unit,
         });
     }
 
@@ -447,12 +443,12 @@ mod test {
         },
         test_db::setup_all_with_data,
         PreferenceRow, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionRepository, SyncLogRow,
+        RequisitionRepository, SyncLogV5V6Row,
     };
 
     #[actix_rt::test]
     async fn test_create_inbound_requisition_picked_cutoff() {
-        let log_1 = SyncLogRow {
+        let log_1 = SyncLogV5V6Row {
             id: "sync_log_1".to_string(),
             integration_finished_datetime: Some(
                 NaiveDate::from_ymd_opt(2025, 1, 1)
@@ -463,7 +459,7 @@ mod test {
             ..Default::default()
         };
 
-        let log_2 = SyncLogRow {
+        let log_2 = SyncLogV5V6Row {
             id: "sync_log_2".to_string(),
             integration_finished_datetime: Some(
                 NaiveDate::from_ymd_opt(2024, 1, 1)
@@ -474,7 +470,7 @@ mod test {
             ..Default::default()
         };
 
-        let log_3 = SyncLogRow {
+        let log_3 = SyncLogV5V6Row {
             id: "sync_log_3".to_string(),
             integration_finished_datetime: None,
             ..Default::default()
@@ -575,7 +571,7 @@ mod test {
         let requisition_line_1 = RequisitionLineRow {
             id: "line_1".to_string(),
             requisition_id: requisition_row.id.to_string(),
-            item_link_id: mock_item_a().id,
+            item_id: mock_item_a().id,
             price_per_unit: Some(0.0),
             ..Default::default()
         };
@@ -583,7 +579,7 @@ mod test {
         let requisition_line_2 = RequisitionLineRow {
             id: "line_2".to_string(),
             requisition_id: requisition_row.id.to_string(),
-            item_link_id: mock_item_b().id,
+            item_id: mock_item_b().id,
             price_per_unit: None,
             ..Default::default()
         };

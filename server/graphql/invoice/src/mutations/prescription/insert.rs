@@ -34,6 +34,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         &ResourceAccessRequest {
             resource: Resource::MutatePrescription,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -82,7 +83,7 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<InsertRespons
 
 fn map_error(error: ServiceError) -> Result<InsertResponse> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Standard Graphql Errors

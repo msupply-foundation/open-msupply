@@ -8,7 +8,6 @@ import {
   TypedTFunction,
   useBreadcrumbs,
   useDownloadFile,
-  useIntlUtils,
   useParams,
   useTranslation,
   useUrlQuery,
@@ -57,13 +56,14 @@ const DetailViewInner = ({
   t: TypedTFunction<LocaleKey>;
 }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
-  const { translateDynamicKey } = useIntlUtils();
   const [state, setState] = useState<
     | { s: 'loading' }
     | { s: 'error'; errorMessage: string }
     | { s: 'loaded'; fileId: string }
   >({ s: 'loading' });
-  const { mutateAsync, isLoading } = useGenerateReport();
+  const { mutateAsync } = useGenerateReport();
+  const { mutateAsync: exportMutation, isLoading: isExporting } =
+    useGenerateReport();
 
   const { print, isPrinting } = usePrintReport();
   const { updateQuery } = useUrlQuery();
@@ -76,7 +76,8 @@ const DetailViewInner = ({
 
   useEffect(() => {
     setCustomBreadcrumbs({
-      1: translateDynamicKey(`report-code.${report.code}`, report.name),
+      // Cast is safe — i18next falls back to report.name if key doesn't exist
+      1: t(`report-code.${report.code}` as LocaleKey, report.name),
     });
 
     // Initial report generation
@@ -159,7 +160,7 @@ const DetailViewInner = ({
 
   const exportExcelReport = useCallback(async () => {
     try {
-      const result = await mutateAsync({
+      const result = await exportMutation({
         reportId: report.id,
         args: reportArgs,
         dataId: '',
@@ -201,13 +202,14 @@ const DetailViewInner = ({
 
   return (
     <>
-      <Toolbar reportName={report.name} isCustom={report.isCustom} />
+      <Toolbar reportCode={report.code} />
       <AppBarButtons
         isFilterDisabled={!report?.argumentSchema}
         onFilterOpen={openReportArgumentsModal}
         printReport={printReport}
         exportReport={exportExcelReport}
-        isPrinting={isPrinting || isLoading}
+        isPrinting={isPrinting}
+        isExporting={isExporting}
       />
       <ReportArgumentsModal
         key={report.id}

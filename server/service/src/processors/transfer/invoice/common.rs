@@ -8,7 +8,8 @@ use util::uuid::uuid;
 
 use crate::invoice::common::calculate_total_after_tax;
 use crate::invoice::inbound_shipment::{
-    update_inbound_shipment, UpdateInboundShipment, UpdateInboundShipmentStatus,
+    update_inbound_shipment, InboundShipmentType, UpdateInboundShipment,
+    UpdateInboundShipmentStatus,
 };
 use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
 use crate::service_provider::ServiceContext;
@@ -36,15 +37,16 @@ pub(crate) fn generate_inbound_lines(
         .map(
             |(
                 InvoiceLineRow {
-                    id: _,
+                    id: source_line_id,
                     invoice_id: _,
                     stock_line_id: _,
                     location_id: _,
                     cost_price_per_pack,
                     total_after_tax: _,
                     linked_invoice_id: _,
+                    linked_invoice_line_id: _,
                     reason_option_id,
-                    item_link_id,
+                    item_id: _,
                     item_name,
                     item_code,
                     batch,
@@ -59,13 +61,19 @@ pub(crate) fn generate_inbound_lines(
                     tax_percentage,
                     foreign_currency_price_before_tax,
                     item_variant_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     vvm_status_id,
                     campaign_id,
                     program_id,
                     shipped_number_of_packs,
                     volume_per_pack,
                     shipped_pack_size,
+                    status,
+                    manufacture_date,
+                    purchase_order_line_id,
+                    received_number_of_packs: _,
+                    legacy_goods_received_line_id: _,
                 },
                 ItemRow {
                     id: item_id,
@@ -77,7 +85,7 @@ pub(crate) fn generate_inbound_lines(
                     .find_one_by_item_and_store_id(&item_id, inbound_store_id)
                     .unwrap_or(None);
 
-                let supplier_id = &source_invoice.store_row.name_link_id;
+                let supplier_id = &source_invoice.store_row.name_id;
 
                 let trans_cost_price = sell_price_per_pack;
 
@@ -108,11 +116,13 @@ pub(crate) fn generate_inbound_lines(
                 InvoiceLineRow {
                     id: uuid(),
                     invoice_id: inbound_invoice_id.to_string(),
-                    item_link_id,
+                    item_id,
                     item_name,
                     item_code,
                     batch,
                     expiry_date,
+                    manufacture_date,
+                    purchase_order_line_id,
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
@@ -132,7 +142,8 @@ pub(crate) fn generate_inbound_lines(
                     item_variant_id,
                     linked_invoice_id: Some(invoice_row.id.to_string()),
                     vvm_status_id,
-                    donor_link_id,
+                    donor_id: donor_link_id,
+                    manufacturer_id,
                     campaign_id,
                     program_id,
                     shipped_number_of_packs,
@@ -143,9 +154,13 @@ pub(crate) fn generate_inbound_lines(
                     },
                     shipped_pack_size,
                     reason_option_id,
+                    linked_invoice_line_id: Some(source_line_id),
                     // Default
                     stock_line_id: None,
                     location_id: None,
+                    status,
+                    received_number_of_packs: None,
+                    legacy_goods_received_line_id: None,
                 }
             },
         )
@@ -213,6 +228,7 @@ pub(crate) fn auto_verify_if_store_preference(
                 ..Default::default()
             },
             Some(&inbound_shipment.store_id),
+            InboundShipmentType::InboundShipment,
         )
         .map_err(|e| {
             log::error!("{e:?}");
@@ -310,7 +326,7 @@ mod test {
         let cost_price_per_pack = 5.0;
 
         let outbound_store = mock_store_b();
-        let supplier_id = outbound_store.name_link_id;
+        let supplier_id = outbound_store.name_id;
         let item_properties = mock_item_a_join_store_a();
 
         // Set preference to true -> item margin has priority
@@ -360,7 +376,7 @@ mod test {
         );
 
         let store_c = mock_store_c();
-        let supplier_no_margin_id = store_c.name_link_id;
+        let supplier_no_margin_id = store_c.name_id;
 
         // No supplier margin, fallback to item margin
         assert_eq!(

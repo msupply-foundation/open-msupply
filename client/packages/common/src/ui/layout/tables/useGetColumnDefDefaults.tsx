@@ -13,6 +13,7 @@ import {
   useFormatDateTime,
   PopoverCell,
   useTranslation,
+  Box,
   CircleIcon,
   MessageSquareIcon,
   Tooltip,
@@ -119,6 +120,7 @@ export const useGetColumnTypeDefaults = () => {
               <NumericTextDisplay
                 value={typeof value === 'number' ? value : undefined}
                 defaultValue={UNDEFINED_STRING_VALUE}
+                decimalLimit={column.decimalLimit}
               />
             );
           },
@@ -141,7 +143,9 @@ export const useGetColumnTypeDefaults = () => {
           // Comment popover is pretty narrow, show icon rather than full label
           Header: () => (
             <Tooltip title={t('label.comment')} placement="top">
-              <MessageSquareIcon fontSize="small" />
+              <Box>
+                <MessageSquareIcon fontSize="small" />
+              </Box>
             </Tooltip>
           ),
           Cell: ({ cell, row }) => {
@@ -172,13 +176,15 @@ export const useGetColumnTypeDefaults = () => {
           size: 130,
           Cell: ({ cell }: { cell: MRT_Cell<T> }) => {
             const value = cell.getValue();
-            return <>
-              <NumericTextDisplay
-                value={typeof value === 'number' ? value : undefined}
-                defaultValue={UNDEFINED_STRING_VALUE}
-              />
-              %
-            </>;
+            return (
+              <>
+                <NumericTextDisplay
+                  value={typeof value === 'number' ? value : undefined}
+                  defaultValue={UNDEFINED_STRING_VALUE}
+                />
+                %
+              </>
+            );
           },
         };
 

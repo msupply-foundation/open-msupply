@@ -4,6 +4,7 @@ use crate::{
         get_lines_for_requisition,
     },
     service_provider::ServiceContext,
+    validate::check_other_party_store_is_disabled,
 };
 
 use repository::{
@@ -56,8 +57,9 @@ pub fn supply_requested_quantity(
             }
 
             match RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(input.response_requisition_id.to_string())),
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
+                    input.response_requisition_id.to_string(),
+                )),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -84,6 +86,10 @@ fn validate(
     }
 
     if requisition_row.status != RequisitionStatus::New {
+        return Err(OutError::CannotEditRequisition);
+    }
+
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
     }
 

@@ -47,7 +47,7 @@ pub fn can_cancel_invoice(invoice: &InvoiceRow) -> bool {
         return false;
     }
 
-    return true;
+    true
 }
 
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {

@@ -9,9 +9,13 @@ export const useSupplyRequestedQuantity = () => {
   const { id } = useResponseFields('id');
   const api = useResponseApi();
 
-  return useMutation(() => api.supplyRequestedQuantity(id), {
+  return useMutation({
+    mutationFn: () => api.supplyRequestedQuantity(id),
+
     onSettled: () => {
-      queryClient.invalidateQueries(api.keys.detail(responseId));
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(responseId)
+      });
+    }
   });
 };

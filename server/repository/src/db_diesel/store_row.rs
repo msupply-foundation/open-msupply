@@ -1,6 +1,11 @@
-use super::{item_link_row::item_link, name_link_row::name_link, StorageConnection};
+use super::{item_link_row::item_link, name_row::name, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    db_diesel::changelog::ChangelogRepository,
+    diesel_macros::define_linked_tables,
+    repository_error::RepositoryError,
+    ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
+};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -8,41 +13,9 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-// Default `store` mapping: everything except `logo`. Used by all joins and
-// generic reads. The logo column is large (base64-encoded image) and is
-// almost never needed alongside other store columns — fetch it via
-// `store_logo_row` instead.
-table! {
-    store (id) {
-        id -> Text,
-        name_link_id -> Text,
-        code -> Text,
-        site_id -> Integer,
-        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
-        created_date -> Nullable<Date>,
-        is_disabled -> Bool,
-    }
-}
-
-// Full row including `logo`. Only sync translation should reach for this —
-// it's the path that legitimately needs to read/write the logo as part of a
-// store row.
-table! {
-    #[sql_name = "store"]
-    store_full_table (id) {
-        id -> Text,
-        name_link_id -> Text,
-        code -> Text,
-        site_id -> Integer,
-        logo -> Nullable<Text>,
-        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
-        created_date -> Nullable<Date>,
-        is_disabled -> Bool,
-    }
-}
-
-// Just `(id, logo)`. Fed to the GraphQL dataloader so `StoreNode.logo` can be
-// resolved lazily on demand.
+// Just `(id, logo)` on the same underlying SQL `store` table. Two callers:
+// the GraphQL dataloader that resolves `StoreNode.logo` lazily, and sync
+// translation which writes the logo separately from the lean `StoreRow`.
 table! {
     #[sql_name = "store"]
     store_logo_row (id) {
@@ -60,8 +33,30 @@ pub enum StoreMode {
     Dispensary,
 }
 
-joinable!(store -> name_link (name_link_id));
-allow_tables_to_appear_in_same_query!(store, name_link);
+// Default `store` mapping: everything except `logo`. Used by all joins and
+// generic reads. The logo column is large (base64-encoded image) and is
+// almost never needed alongside other store columns — fetch it via
+// `store_logo_row` instead.
+define_linked_tables! {
+    view: store = "store_view",
+    core: store_with_links = "store",
+    struct: StoreRow,
+    repo: StoreRowRepository,
+    shared: {
+        code -> Text,
+        site_id -> Integer,
+        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
+        created_date -> Nullable<Date>,
+        is_disabled -> Bool,
+    },
+    links: {
+        name_link_id -> name_id,
+    },
+    optional_links: {
+    }
+}
+
+joinable!(store -> name (name_id));
 allow_tables_to_appear_in_same_query!(store, item_link);
 
 #[derive(
@@ -80,35 +75,34 @@ allow_tables_to_appear_in_same_query!(store, item_link);
 #[diesel(table_name = store)]
 pub struct StoreRow {
     pub id: String,
-    pub name_link_id: String,
     pub code: String,
     pub site_id: i32,
     pub store_mode: StoreMode,
     pub created_date: Option<NaiveDate>,
     pub is_disabled: bool,
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
 }
 
-/// Full store row including the `logo` column. Sync translation only — every
-/// other read/write should use `StoreRow` (which omits `logo`).
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
-#[diesel(table_name = store_full_table)]
-pub struct StoreRowWithLogo {
-    pub id: String,
-    pub name_link_id: String,
-    pub code: String,
-    pub site_id: i32,
-    pub logo: Option<String>,
-    pub store_mode: StoreMode,
-    pub created_date: Option<NaiveDate>,
-    pub is_disabled: bool,
-}
-
-/// `(id, logo)` projection backing the GraphQL `StoreNode.logo` dataloader.
+/// `(id, logo)` projection. Used in two places:
+/// - the GraphQL `StoreLogoLoader` dataloader, so `StoreNode.logo` can be
+///   resolved on demand without dragging the column through every store join;
+/// - sync translation, which writes the logo for a store separately from the
+///   lean `StoreRow` upsert (after the lean row has been created/updated).
 #[derive(Clone, Queryable, Debug, PartialEq, Eq, Default)]
 #[diesel(table_name = store_logo_row)]
 pub struct StoreLogoRow {
     pub id: String,
     pub logo: Option<String>,
+}
+
+impl StoreRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Store
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
 }
 
 pub struct StoreRowRepository<'a> {
@@ -134,34 +128,18 @@ impl<'a> StoreRowRepository<'a> {
     /// Upsert a lean store row. Does NOT touch the `logo` column — existing
     /// logo data in the DB is preserved across this call.
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store::table)
-            .values(row)
-            .on_conflict(store::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    /// Upsert a full store row including the logo column. Sync translation
-    /// only — see the `StoreRowWithLogo` doc comment.
-    pub fn upsert_one_with_logo(
-        &self,
-        row: &StoreRowWithLogo,
-    ) -> Result<(), RepositoryError> {
-        diesel::insert_into(store_full_table::table)
-            .values(row)
-            .on_conflict(store_full_table::id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+        self._upsert(row)?;
+        let changelog = StoreRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(store::table)
-            .values(store_row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(store_row)?;
         Ok(())
     }
 
@@ -182,6 +160,14 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result.is_some())
     }
 
+    pub fn find_one_by_name_id(&self, name_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        let result = store::table
+            .filter(store::name_id.eq(name_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store::table
             .filter(store::id.eq_any(ids))
@@ -194,10 +180,7 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_logo_by_id(
-        &self,
-        store_id: &str,
-    ) -> Result<Option<StoreLogoRow>, RepositoryError> {
+    pub fn find_logo_by_id(&self, store_id: &str) -> Result<Option<StoreLogoRow>, RepositoryError> {
         let result = store_logo_row::table
             .filter(store_logo_row::id.eq(store_id))
             .first(self.connection.lock().connection())
@@ -205,63 +188,72 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_logos_by_ids(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<StoreLogoRow>, RepositoryError> {
+    pub fn find_logos_by_ids(&self, ids: &[String]) -> Result<Vec<StoreLogoRow>, RepositoryError> {
         let result = store_logo_row::table
             .filter(store_logo_row::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(store::table.filter(store::id.eq(id)))
+    /// Update the `logo` column for an existing store row. Plain UPDATE rather
+    /// than upsert: the lean `StoreRow` must already exist (sync emits the
+    /// lean upsert first, then the logo upsert second). A `None` logo value
+    /// is a no-op — matching the old AsChangeset semantics, where sync data
+    /// without a logo never cleared an existing one.
+    pub fn update_logo(&self, store_id: &str, logo: Option<&str>) -> Result<(), RepositoryError> {
+        let Some(logo) = logo else { return Ok(()) };
+        diesel::update(store_logo_row::table.filter(store_logo_row::id.eq(store_id)))
+            .set(store_logo_row::logo.eq(logo))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct StoreRowDelete(pub String);
-// TODO soft delete
-impl Delete for StoreRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StoreRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+impl Upsert for StoreRow {
+    fn upsert_sync(&self, con: &StorageConnection, sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        StoreRowRepository::new(con)._upsert(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StoreRow::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            StoreRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
+            StoreRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
         )
     }
 }
 
-impl Upsert for StoreRowWithLogo {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        StoreRowRepository::new(con).upsert_one_with_logo(self)?;
-        Ok(None) // Table not in Changelog
+impl Upsert for StoreLogoRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        _sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        StoreRowRepository::new(con).update_logo(&self.id, self.logo.as_deref())?;
+        Ok(()) // Table not in Changelog (logo lives on the store row, whose
+               // changelog is emitted via the lean StoreRow upsert)
     }
 
-    // Test only
+    // Test only — verify the logo round-trip by reading the (id, logo)
+    // projection back. The lean `StoreRow` is asserted separately.
     fn assert_upserted(&self, con: &StorageConnection) {
-        // assert_upserted compares using the lean StoreRow (logo is not
-        // included in that shape) — checking logo round-trip belongs in
-        // dedicated sync-translation tests.
-        let lean = StoreRow {
-            id: self.id.clone(),
-            name_link_id: self.name_link_id.clone(),
-            code: self.code.clone(),
-            site_id: self.site_id,
-            store_mode: self.store_mode.clone(),
-            created_date: self.created_date,
-            is_disabled: self.is_disabled,
-        };
+        if self.logo.is_none() {
+            // No-op upserts leave whatever was in the DB alone; nothing to assert.
+            return;
+        }
         assert_eq!(
-            StoreRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(lean))
+            StoreRowRepository::new(con).find_logo_by_id(&self.id),
+            Ok(Some(self.clone()))
         )
     }
 }

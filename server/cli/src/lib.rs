@@ -1,4 +1,8 @@
 extern crate diesel;
+extern crate machine_uid;
+
+pub mod connection_tests;
+pub use connection_tests::*;
 mod refresh_dates;
 pub use refresh_dates::*;
 mod report_utils;
@@ -19,6 +23,9 @@ pub use generate_plugin_typescript_types::*;
 mod load_test;
 #[cfg(feature = "integration_test")]
 pub use load_test::*;
+
+mod sync_throughput_csv;
+pub use sync_throughput_csv::*;
 
 #[cfg(windows)]
 const YARN_COMMAND: &str = "yarn.cmd";

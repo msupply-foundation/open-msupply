@@ -1,7 +1,7 @@
 name: Sync labels from linked issue to PR
 on:
   pull_request_target:
-    types: [opened, reopened, edited]
+    types: [opened, reopened, edited, labeled, unlabeled]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,6 +12,19 @@ jobs:
         with:
           script: |
             core.debug(`where the PR? ${context.repo.repo} ${context.repo.owner} ${context.issue.number}`);
+
+            // Belt-and-braces guard against an infinite label-event loop.
+            // GitHub already prevents events produced by GITHUB_TOKEN from
+            // triggering further workflow runs (except workflow_dispatch /
+            // repository_dispatch), so the labels we apply below normally
+            // won't re-trigger this workflow. This explicit check protects
+            // us if the auth method ever changes (e.g. a PAT or GitHub App
+            // token), which would re-enable downstream triggers.
+            if (context.payload.sender?.login === 'github-actions[bot]') {
+              core.info('Triggered by github-actions bot — skipping to avoid label-event loop.')
+              return
+            }
+
             let x = 1
             const pullRequestResult = await github.graphql(`
               query($owner: String!, $repo: String!, $number: Int!) {
@@ -22,10 +35,12 @@ jobs:
                     labels (first: 100){
                       nodes {
                         id
+                        name
                       }
                     }
                     closingIssuesReferences(first: 1) {
                       nodes {
+                        id
                         labels(first: 100) {
                           nodes {
                             id
@@ -49,13 +64,26 @@ jobs:
 
             const pullRequest = pullRequestResult.repository.pullRequest
 
+            const hasNoLinkedIssueLabel = pullRequest.labels.nodes.some(
+              label => label.name === 'no linked issue'
+            )
+
             let issue = pullRequest.closingIssuesReferences.nodes[0]
 
             if (!issue) {
-              const regex = new RegExp(/#(\d+)/);
-              const issueNumber = Number(pullRequest.body.match(regex)[1])
+              // Search for GitHub closing keywords followed by issue reference
+              // https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/using-keywords-in-issues-and-pull-requests
+              const keywords = ['close', 'closes', 'closed', 'fix', 'fixes', 'fixed', 'resolve', 'resolves', 'resolved'];
+              const keywordPattern = keywords.join('|');
+              const regex = new RegExp(`(?:${keywordPattern})\\s+#(\\d+)`, 'i');
+              const bodyMatch = pullRequest.body && pullRequest.body.match(regex)
+              const issueNumber = bodyMatch?.[1] ? Number(bodyMatch[1]) : null
 
-              if  (!issueNumber) {
+              if (!issueNumber) {
+                if (hasNoLinkedIssueLabel) {
+                  core.notice('No linked issue found, but "no linked issue" label is set — skipping label sync.')
+                  return
+                }
                 throw new Error('No associated issue found for this pull request. Not even in the body!')
               }
 
@@ -63,6 +91,7 @@ jobs:
                 query ($repo: String!, $owner: String!, $number: Int!) {
                   repository(name: $repo, owner: $owner) {
                     issue(number: $number) {
+                      id
                       labels(first: 100) {
                         nodes {
                           id
@@ -84,8 +113,26 @@ jobs:
               issue = issueResult.repository.issue
 
               if (!issue) {
-                throw new Error('No associated issue found for this pull request. There was a match in the description, but not to an issue: ${issueNumber}')
+                if (hasNoLinkedIssueLabel) {
+                  core.notice('No linked issue found, but "no linked issue" label is set — skipping label sync.')
+                  return
+                }
+                throw new Error(`No associated issue found for this pull request. There was a match in the description, but not to an issue: ${issueNumber}`)
               }
+
+              // Explicitly link the PR to the issue using linkPullRequestToIssue mutation
+              // This ensures the PR appears in the issue's Development panel
+              core.debug(`Linking PR #${context.issue.number} to issue #${issueNumber}`)
+              await github.graphql(`
+                mutation($pullRequestId: ID!, $issueId: ID!) {
+                  linkPullRequestToIssue(input: {pullRequestId: $pullRequestId, issueId: $issueId}) {
+                    clientMutationId
+                  }
+                }
+              `, {
+                pullRequestId: pullRequest.id,
+                issueId: issue.id
+              })
             }
 
             core.debug(issue)

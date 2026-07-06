@@ -60,6 +60,7 @@ pub fn patient_search(
         &ResourceAccessRequest {
             resource: Resource::QueryPatient,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();
@@ -101,7 +102,7 @@ impl PatientSearchInput {
             first_name: self.first_name,
             last_name: self.last_name,
             date_of_birth: self.date_of_birth,
-            gender: self.gender.map(|g| GenderType::from(g)),
+            gender: self.gender.map(GenderType::from),
             identifier: self.identifier,
         }
     }

@@ -5,7 +5,7 @@ use crate::sync::translations::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow,
-    PurchaseOrderLineRowRepository, PurchaseOrderLineStatus, StorageConnection, SyncBufferRow,
+    PurchaseOrderLineStatus, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -45,9 +45,6 @@ pub struct LegacyPurchaseOrderLineRow {
     #[serde(deserialize_with = "zero_f64_as_none")]
     #[serde(rename = "quan_adjusted_order")]
     pub adjusted_number_of_units: Option<f64>,
-    #[serde(default)]
-    #[serde(rename = "quan_rec_to_date")]
-    pub received_number_of_units: f64,
     #[serde(default)]
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
@@ -123,7 +120,6 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_pack_size,
             requested_number_of_units,
             adjusted_number_of_units,
-            received_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             supplier_item_code,
@@ -135,19 +131,18 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             note,
             unit,
             oms_fields,
-        } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let result = PurchaseOrderLineRow {
             id,
             store_id,
             purchase_order_id,
             line_number,
-            item_link_id,
+            item_id: item_link_id,
             item_name,
             requested_number_of_units,
             requested_pack_size,
             adjusted_number_of_units,
-            received_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             stock_on_hand_in_units,
@@ -155,7 +150,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             price_per_pack_before_discount,
             price_per_pack_after_discount,
             comment,
-            manufacturer_link_id: manufacturer_id,
+            manufacturer_id: manufacturer_id,
             note,
             unit,
             status: oms_fields.map_or(PurchaseOrderLineStatus::New, |f| f.status),
@@ -175,34 +170,36 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::PurchaseOrderLine(purchase_order_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let PurchaseOrderLineRow {
             id,
             store_id,
             purchase_order_id,
             line_number,
-            item_link_id,
+            item_id: item_link_id,
             item_name,
             requested_delivery_date,
             expected_delivery_date,
             requested_number_of_units,
             requested_pack_size,
             adjusted_number_of_units,
-            received_number_of_units,
             stock_on_hand_in_units,
             supplier_item_code,
             price_per_pack_before_discount,
             price_per_pack_after_discount,
             comment,
-            manufacturer_link_id,
+            manufacturer_id: manufacturer_link_id,
             note,
             unit,
             status,
-        } = PurchaseOrderLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
+        } = purchase_order_line_row;
 
         // Total Cost calculated in Front End: price_per_pack_after_discount * number_of_packs
         // Number of packs = (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
@@ -225,7 +222,6 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             requested_pack_size,
             requested_number_of_units,
             adjusted_number_of_units,
-            received_number_of_units,
             requested_delivery_date,
             expected_delivery_date,
             supplier_item_code,
@@ -261,7 +257,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
 
@@ -305,25 +302,26 @@ mod tests {
         .await;
 
         let translator = PurchaseOrderLineTranslation {};
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new()
-                        .table_name(ChangelogTableName::PurchaseOrderLine.equal_to()),
-                ),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrderLine),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

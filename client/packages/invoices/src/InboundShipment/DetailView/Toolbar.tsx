@@ -9,9 +9,15 @@ import {
   Alert,
   Tooltip,
   BufferedTextArea,
+  Link,
+  RouteBuilder,
+  DisabledStoreNotice,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { InboundRowFragment, useInbound } from '../api';
+import { InboundRowFragment, useInboundShipment } from '../api';
+import { ReceivedDateInput } from './ReceivedDateInput';
 
 const InboundInfoPanel = ({
   shipment,
@@ -37,34 +43,32 @@ const InboundInfoPanel = ({
 export const Toolbar = () => {
   const t = useTranslation();
 
-  const isDisabled = useInbound.utils.isDisabled();
-  const { data: shipment } = useInbound.document.get();
+  const {
+    query: { data: shipment },
+    draft,
+    isDisabled,
+    isExternal,
+    updatePatch,
+    update: { update, saveDraft },
+  } = useInboundShipment();
 
-  const { otherParty, theirReference, update } = useInbound.document.fields([
-    'otherParty',
-    'theirReference',
-  ]);
+  const { otherParty, theirReference, purchaseOrder } = draft || {};
+  const debouncedSave = useDebounceCallback(saveDraft, [saveDraft]);
 
   const isTransfer = !!shipment?.linkedShipment?.id;
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
-      <Grid
-        container
-        flexDirection="row"
-        display="flex"
-        flex={1}
-        alignItems="flex-end"
-        gap={1}
-      >
-        <Grid display="flex" flex={1}>
-          <Box display="flex" flex={1} flexDirection="column" gap={1}>
+      <Grid container spacing={2} width="100%">
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
                 label={t('label.supplier-name')}
+                labelWidth="9rem"
                 Input={
                   <SupplierSearchInput
-                    disabled={isDisabled || isTransfer}
+                    disabled={isDisabled || isTransfer || isExternal}
                     value={otherParty}
                     onChange={name => {
                       update({ otherParty: name ?? undefined });
@@ -74,7 +78,8 @@ export const Toolbar = () => {
               />
             )}
             <InputWithLabelRow
-              label={t('label.supplier-ref')}
+              label={t('label.supplier-reference')}
+              labelWidth="9rem"
               Input={
                 <Tooltip title={theirReference} placement="bottom-start">
                   <BufferedTextArea
@@ -83,8 +88,10 @@ export const Toolbar = () => {
                     sx={{ width: 250 }}
                     value={theirReference ?? ''}
                     onChange={event => {
-                      update({ theirReference: event.target.value });
+                      updatePatch({ theirReference: event.target.value });
+                      debouncedSave();
                     }}
+                    onBlur={saveDraft}
                     maxRows={2}
                     minRows={1}
                     slotProps={{
@@ -101,8 +108,45 @@ export const Toolbar = () => {
                 </Tooltip>
               }
             />
-            <InboundInfoPanel shipment={shipment} />
           </Box>
+        </Grid>
+        {purchaseOrder && (
+          <Grid>
+            <Box display="flex" flex={1} flexDirection="column" gap={1}>
+              <InputWithLabelRow
+                label={t('label.purchase-order-number')}
+                Input={
+                  <Link
+                    to={RouteBuilder.create(AppRoute.Replenishment)
+                      .addPart(AppRoute.PurchaseOrder)
+                      .addPart(purchaseOrder?.id ?? '')
+                      .build()}
+                  >{`#${purchaseOrder?.number}`}</Link>
+                }
+                sx={{
+                  width: 200,
+                  height: 35,
+                }}
+              />
+              <InputWithLabelRow
+                label={t('label.purchase-order-reference')}
+                Input={`${purchaseOrder?.reference ?? ''}`}
+                sx={{
+                  width: 200,
+                  height: 35,
+                }}
+              />
+            </Box>
+          </Grid>
+        )}
+        <Grid>
+          <ReceivedDateInput />
+        </Grid>
+        <Grid size={12}>
+          <DisabledStoreNotice otherParty={otherParty} />
+        </Grid>
+        <Grid size={12}>
+          <InboundInfoPanel shipment={shipment} />
         </Grid>
       </Grid>
     </AppBarContentPortal>

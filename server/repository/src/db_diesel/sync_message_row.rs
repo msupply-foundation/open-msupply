@@ -1,8 +1,8 @@
 use super::{
-    store_row::store, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    name_row::name, store_row::store, ChangelogRepository, RowActionType, RowOrId,
     StorageConnection,
 };
-use crate::{RepositoryError, Upsert};
+use crate::{ChangelogSyncType, RepositoryError, SourceSiteId, Upsert};
 use ts_rs::TS;
 
 use chrono::NaiveDateTime;
@@ -16,13 +16,17 @@ use serde::{Deserialize, Serialize};
 pub enum SyncMessageRowStatus {
     #[default]
     New,
+    InProgress,
     Processed,
+    Error,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, TS)]
 pub enum SyncMessageRowType {
     #[default]
     RequestFieldChange,
+    SupportUpload,
+    Merge,
     #[serde(untagged)]
     Other(String),
 }
@@ -55,6 +59,7 @@ table! {
 
 joinable!(sync_message -> store (to_store_id));
 allow_tables_to_appear_in_same_query!(sync_message, store);
+allow_tables_to_appear_in_same_query!(sync_message, name);
 
 #[derive(
     Clone, Queryable, Insertable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize, TS,
@@ -74,7 +79,6 @@ pub struct SyncMessageRow {
     #[ts(optional)]
     pub error_message: Option<String>,
 }
-
 pub struct SyncMessageRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -84,14 +88,25 @@ impl<'a> SyncMessageRowRepository<'a> {
         SyncMessageRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &SyncMessageRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, row: &SyncMessageRow) -> Result<(), RepositoryError> {
         diesel::insert_into(sync_message::table)
             .values(row.clone())
             .on_conflict(sync_message::id)
             .do_update()
             .set(row.clone())
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id)
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &SyncMessageRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = SyncMessageRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncMessageRow>, RepositoryError> {
@@ -102,23 +117,33 @@ impl<'a> SyncMessageRowRepository<'a> {
         Ok(result)
     }
 
-    fn insert_changelog(&self, id: &str) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::SyncMessage,
-            record_id: id.to_string(),
-            row_action: RowActionType::Upsert,
-            name_link_id: None,
-            store_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SyncMessageRow>, RepositoryError> {
+        Ok(sync_message::table
+            .filter(sync_message::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for SyncMessageRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = SyncMessageRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        SyncMessageRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                RowOrId::Row(self),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

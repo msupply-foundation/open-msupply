@@ -1917,7 +1917,7 @@ Screen.Back();
 <Script>-- These actions are performed when the Next button is clicked.
 -- Launch omSupply
 if (cbStartOmSupply) then
-	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe"));
+	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe"), "--standalone", "");
 end
 -- advance to the next screen
 Screen.Next();
@@ -3407,7 +3407,7 @@ if not hasOmsupplyStandaloneInstalled then
 	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone");
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Path", omSupplyDesktopPath, REG_SZ);
 
-	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Desktop", omSupplyDesktopPath, "--standalone", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 end
 </Script>
 <BookMarks count="0">
@@ -3552,18 +3552,19 @@ a2F0aG1hbmR1MzEy</CodeSignCertificatePasswordSHA256>
 <CodeSignDescriptionURL>https://msupply.foundation</CodeSignDescriptionURL>
 <UseCustomIcon>1</UseCustomIcon>
 <CustomIconFile>#PROJECTFILEDIR#\omSupply.ico</CustomIconFile>
-<ResourceFileVersion>9.5.1.0</ResourceFileVersion>
-<ResourceProductVersion>9.5.1.0</ResourceProductVersion>
-<ResourceCompanyName>Indigo Rose Corporation</ResourceCompanyName>
-<ResourceProductName>Setup Factory Runtime</ResourceProductName>
-<ResourceComments>Created with Setup Factory</ResourceComments>
+<ResourceFileVersion>replace canonical version</ResourceFileVersion>
+<ResourceProductVersion>replace canonical version</ResourceProductVersion>
+<ResourceCompanyName>mSupply Foundation</ResourceCompanyName>
+<ResourceProductName>Open mSupply</ResourceProductName>
+<ResourceComments/>
 <ResourceInternalName>sf_rt</ResourceInternalName>
-<ResourceFileDescription>Setup Application</ResourceFileDescription>
-<ResourceCopyright>Setup Engine Copyright � 1992-2016 Indigo Rose Corporation</ResourceCopyright>
-<ResourceTrademarks>Setup Factory is a trademark of Indigo Rose Corporation</ResourceTrademarks>
+<ResourceFileDescription>Open mSupply standalone installer</ResourceFileDescription>
+<ResourceCopyright/>
+<ResourceTrademarks/>
 <ResourcePrivateBuild/>
 <ResourceSpecialBuild/>
-<StampResources>0</StampResources>
+<StampResources>1</StampResources>
+
 <CompressionType CompressionSetting="LZMA_LOW" DictionarySize="24" WordSize="32" CPUThreads="2"/>
 <Vars/>
 </BuildConfig>

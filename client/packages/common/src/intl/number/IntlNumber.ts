@@ -1,9 +1,20 @@
+import { useCallback } from 'react';
 import { RegexUtils } from '../../utils/regex';
 import { useCurrency } from '../currency';
 import { MAX_FRACTION_DIGITS, SupportedLocales, useIntlUtils } from '../utils';
 
 const localeNumberOverrides: { [locale: string]: /* Override */ string } = {
   tet: 'en-US',
+  ar: 'ar-u-nu-arab',
+  // Dari (prs) & Pashto (ps), Afghanistan — both should render Eastern /
+  // extended-Arabic digits (۰-۹). We can't just tag the numbering system: ICU
+  // pins `ps` to Latin digits and *silently ignores* a `-u-nu-arabext`
+  // override on it (it resolves straight back to `latn`), so Pashto kept
+  // rendering Western numerals. Afghan Persian (`fa-AF`) natively uses the same
+  // digits and separators, so we format both languages through it. (`prs`
+  // already defaults to extended-Arabic; routed the same way for consistency.)
+  prs: 'fa-AF',
+  ps: 'fa-AF',
 };
 
 // This method needs to be used instead of Intl.NumberFormat directly
@@ -11,7 +22,14 @@ export const intlNumberFormat = (
   locale: string,
   params?: Intl.NumberFormatOptions
 ) => {
-  return new Intl.NumberFormat(localeNumberOverrides[locale] ?? locale, params);
+  // Fall back to the base language so regional tags (e.g. `ps-AF`, `ar-SA`)
+  // still pick up the override; otherwise their digits revert to the browser
+  // default (Latin for Pashto).
+  const override =
+    localeNumberOverrides[locale] ??
+    localeNumberOverrides[locale.split('-')[0] ?? locale] ??
+    locale;
+  return new Intl.NumberFormat(override, params);
 };
 
 export const useFormatNumber = () => {
@@ -20,8 +38,8 @@ export const useFormatNumber = () => {
     options: { separator, decimal },
   } = useCurrency();
 
-  return {
-    format: (
+  const format = useCallback(
+    (
       value: number | undefined,
       options?: Intl.NumberFormatOptions & { locale?: SupportedLocales }
     ) => {
@@ -47,7 +65,11 @@ export const useFormatNumber = () => {
             : (maximumFractionDigits ?? MAX_FRACTION_DIGITS),
       }).format(value);
     },
-    round: (value?: number, dp?: number): string => {
+    [currentLanguage]
+  );
+
+  const round = useCallback(
+    (value?: number, dp?: number): string => {
       if (value === undefined || value === null || typeof value !== 'number')
         return '';
 
@@ -62,7 +84,11 @@ export const useFormatNumber = () => {
       });
       return intl.format(newVal ?? 0);
     },
-    roundUpToWholeNumber: (value?: number): string => {
+    [currentLanguage]
+  );
+
+  const roundUpToWholeNumber = useCallback(
+    (value?: number): string => {
       if (value === undefined || value === null || typeof value !== 'number')
         return '';
 
@@ -72,10 +98,14 @@ export const useFormatNumber = () => {
       });
       return intl.format(newVal ?? 0);
     },
-    parse: (numberString: string, decimalChar: string = decimal) => {
+    [currentLanguage]
+  );
+
+  const parse = useCallback(
+    (numberString: string, decimalChar: string = decimal) => {
       const negative = numberString.startsWith('-') ? -1 : 1;
 
-      const num = numberString
+      const num = RegexUtils.convertIndoArToArNumerals(numberString)
         // Remove separators
         .replace(new RegExp(`\\${separator}`, 'g'), '')
         // Convert decimal separator to standard decimal point
@@ -87,5 +117,8 @@ export const useFormatNumber = () => {
 
       return Number(num) * negative;
     },
-  };
+    [separator, decimal]
+  );
+
+  return { format, round, roundUpToWholeNumber, parse };
 };

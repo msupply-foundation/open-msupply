@@ -1,13 +1,13 @@
+use crate::store_preference::get_store_preferences;
 use chrono::Utc;
 use repository::{
     vvm_status::vvm_status_log_row::VVMStatusLogRow, CurrencyFilter, CurrencyRepository,
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
-    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, NameLinkRowRepository,
+    InvoiceRow, ItemFilter, ItemRepository, MasterList, MasterListFilter, MasterListRepository,
     RepositoryError, StockLineRow, StorageConnection,
 };
+use std::collections::HashSet;
 use util::uuid::uuid;
-
-use crate::store_preference::get_store_preferences;
 
 pub fn generate_invoice_user_id_update(
     user_id: &str,
@@ -15,7 +15,7 @@ pub fn generate_invoice_user_id_update(
 ) -> Option<InvoiceRow> {
     let user_id_option = Some(user_id.to_string());
     let user_id_has_changed = existing_invoice_row.user_id != user_id_option;
-    user_id_has_changed.then(|| InvoiceRow {
+    user_id_has_changed.then_some(InvoiceRow {
         user_id: user_id_option,
         ..existing_invoice_row
     })
@@ -30,6 +30,33 @@ pub(crate) fn get_lines_for_invoice(
     )?;
 
     Ok(result)
+}
+
+pub fn generate_duplicate_comment(source_number: i64, source_comment: &Option<String>) -> String {
+    match source_comment {
+        Some(comment) => format!("Copied from shipment #{source_number} ({comment})"),
+        None => format!("Copied from shipment #{source_number}"),
+    }
+}
+
+pub fn active_items(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_ids: Vec<String>,
+) -> Result<HashSet<String>, RepositoryError> {
+    if item_ids.is_empty() {
+        return Ok(HashSet::new());
+    }
+
+    let items = ItemRepository::new(connection).query_by_filter(
+        ItemFilter::new()
+            .id(EqualFilter::equal_any(item_ids))
+            .is_visible(true)
+            .is_active(true),
+        Some(store_id.to_string()),
+    )?;
+
+    Ok(items.into_iter().map(|item| item.item_row.id).collect())
 }
 
 pub fn calculate_total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64 {
@@ -66,19 +93,15 @@ pub struct AddToShipmentFromMasterListInput {
     pub master_list_id: String,
 }
 
-pub fn check_master_list_for_name_link_id(
+pub fn check_master_list_for_name_id(
     connection: &StorageConnection,
-    name_link_id: &str,
+    name_id: &str,
     master_list_id: &str,
 ) -> Result<Option<MasterList>, RepositoryError> {
-    let Some(name_link) = NameLinkRowRepository::new(connection).find_one_by_id(name_link_id)?
-    else {
-        return Ok(None);
-    };
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
             .id(EqualFilter::equal_to(master_list_id.to_string()))
-            .exists_for_name_id(EqualFilter::equal_to(name_link.name_id.to_string())),
+            .exists_for_name_id(EqualFilter::equal_to(name_id.to_string())),
     )?;
     Ok(rows.pop())
 }

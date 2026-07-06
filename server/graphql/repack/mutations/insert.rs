@@ -51,6 +51,7 @@ pub fn insert_repack(
         &ResourceAccessRequest {
             resource: Resource::CreateRepack,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -95,7 +96,7 @@ impl InsertRepackInput {
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

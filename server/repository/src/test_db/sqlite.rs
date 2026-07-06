@@ -8,7 +8,7 @@ use util::lock_file;
 
 use crate::{
     database_settings::{DatabaseSettings, SqliteConnectionOptions},
-    migrations::{migrate, Version},
+    migrations::{migrate, MigrationConfig, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
     DBBackendConnection, StorageConnectionManager,
 };
@@ -31,7 +31,7 @@ fn get_test_db_settings_etc(db_name: &str, is_template: bool) -> DatabaseSetting
         database_name: if is_template {
             format!("{}/{}.sqlite", template_dir().to_string_lossy(), db_name)
         } else {
-            format!("{}/{}.sqlite", TEST_OUTPUT_DIR, db_name)
+            format!("{TEST_OUTPUT_DIR}/{db_name}.sqlite")
         },
         init_sql: None,
         database_path: None,
@@ -108,7 +108,9 @@ pub(crate) async fn setup_with_version(
 
                 // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
                 // this loop is interrupted by user
-                if file_name == TEMPLATE_MARKER_FILE_SQLITE || file_name == TEMPLATE_MARKER_FILE_POSTGRES {
+                if file_name == TEMPLATE_MARKER_FILE_SQLITE
+                    || file_name == TEMPLATE_MARKER_FILE_POSTGRES
+                {
                     continue;
                 }
 
@@ -178,7 +180,7 @@ fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> Storag
         .connection()
         .expect("Failed to connect to database");
 
-    migrate(&connection, version).unwrap();
+    migrate(&connection, version, MigrationConfig::default()).unwrap();
 
     connection_manager
 }

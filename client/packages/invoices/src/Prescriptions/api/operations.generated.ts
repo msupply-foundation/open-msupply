@@ -374,7 +374,7 @@ export type PrescriptionsQuery = {
   };
 };
 
-export type PrescriptionHistoryRowFragment = {
+export type PrescriptionWithLinesFragment = {
   __typename: 'InvoiceNode';
   id: string;
   invoiceNumber: number;
@@ -400,7 +400,7 @@ export type PrescriptionHistoryRowFragment = {
   };
 };
 
-export type PrescriptionHistoryQueryVariables = Types.Exact<{
+export type PrescriptionsWithLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.InvoiceSortFieldInput;
@@ -409,7 +409,7 @@ export type PrescriptionHistoryQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type PrescriptionHistoryQuery = {
+export type PrescriptionsWithLinesQuery = {
   __typename: 'Queries';
   invoices: {
     __typename: 'InvoiceConnector';
@@ -1384,8 +1384,8 @@ export const PartialPrescriptionLineFragmentDoc = gql`
   ${ItemDirectionFragmentDoc}
   ${WarningFragmentDoc}
 `;
-export const PrescriptionHistoryRowFragmentDoc = gql`
-  fragment PrescriptionHistoryRow on InvoiceNode {
+export const PrescriptionWithLinesFragmentDoc = gql`
+  fragment PrescriptionWithLines on InvoiceNode {
     __typename
     id
     invoiceNumber
@@ -1470,8 +1470,8 @@ export const PrescriptionsDocument = gql`
   }
   ${PrescriptionRowFragmentDoc}
 `;
-export const PrescriptionHistoryDocument = gql`
-  query prescriptionHistory(
+export const PrescriptionsWithLinesDocument = gql`
+  query prescriptionsWithLines(
     $first: Int
     $offset: Int
     $key: InvoiceSortFieldInput!
@@ -1488,13 +1488,13 @@ export const PrescriptionHistoryDocument = gql`
       ... on InvoiceConnector {
         __typename
         nodes {
-          ...PrescriptionHistoryRow
+          ...PrescriptionWithLines
         }
         totalCount
       }
     }
   }
-  ${PrescriptionHistoryRowFragmentDoc}
+  ${PrescriptionWithLinesFragmentDoc}
 `;
 export const PrescriptionByNumberDocument = gql`
   query prescriptionByNumber($invoiceNumber: Int!, $storeId: String!) {
@@ -1895,20 +1895,20 @@ export function getSdk(
         variables
       );
     },
-    prescriptionHistory(
-      variables: PrescriptionHistoryQueryVariables,
+    prescriptionsWithLines(
+      variables: PrescriptionsWithLinesQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<PrescriptionHistoryQuery> {
+    ): Promise<PrescriptionsWithLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<PrescriptionHistoryQuery>({
-            document: PrescriptionHistoryDocument,
+          client.request<PrescriptionsWithLinesQuery>({
+            document: PrescriptionsWithLinesDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'prescriptionHistory',
+        'prescriptionsWithLines',
         'query',
         variables
       );

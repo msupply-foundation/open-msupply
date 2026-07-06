@@ -51,6 +51,7 @@ const useHostSync = (enabled: boolean) => {
   const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
+  const { refreshUserCookie } = useAuthContext();
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
@@ -76,11 +77,17 @@ const useHostSync = (enabled: boolean) => {
       keepAwake();
     } else {
       allowSleep();
-      queryClient.invalidateQueries(); // refresh the page user is on after sync finishes
 
-      // Reload custom translations, in case we received new ones via sync
       // Shouldn't run on first mount, when translations might still be loading - see issue #9042
-      !isInitialMount && invalidateCustomTranslations();
+      if (!isInitialMount) {
+        // Mark all queries stale but don't refetch active ones immediately.
+        // This avoids surrounding UI components to jump around
+        queryClient.invalidateQueries({ refetchType: 'none' });
+        invalidateCustomTranslations();
+        // Pick up permission/user-detail changes that the just-completed sync
+        // brought in, so the UI reflects them without forcing a re-login.
+        refreshUserCookie();
+      }
     }
   }, [syncStatus?.isSyncing]);
 
@@ -107,7 +114,7 @@ const useHostSync = (enabled: boolean) => {
   };
 };
 
-export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
+export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { userHasPermission } = useAuthContext();
@@ -122,26 +129,23 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading, updateUser, setStore, store } = useAuthContext();
+  const { refreshUserCookie } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
   const sync = async () => {
-    await updateUser();
     await onManualSync();
-    if (!!store) {
-      await setStore(store);
-    }
+    // Pick up permission/user-detail changes that sync just brought in,
+    // so the UI reflects them without forcing a re-login.
+    await refreshUserCookie();
   };
 
-  const durationAsDate = new Date(
-    0,
-    0,
-    0,
-    0,
-    0,
-    syncStatus?.summary?.durationInSeconds || 0
+  const durationAsDate = DateUtils.secondsAsDate(
+    DateUtils.durationInSeconds(
+      syncStatus?.summary?.started,
+      syncStatus?.summary?.finished
+    )
   );
 
   const getSyncStatusMessage = (): string => {
@@ -185,10 +189,13 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     });
   };
 
-  const modalWidth = Math.min(width, window.innerWidth - 50);
   return (
     <BasicModal
-      width={!isExtraSmallScreen ? modalWidth : 340}
+      // BasicModal clamps to the viewport itself (min(width, 100vw - 64px)),
+      // so pass the desired width straight through. Don't re-clamp here against
+      // a window.innerWidth snapshot - with no resize listener it gets stuck at
+      // a stale narrow value when the window grows back. See issue #12172.
+      width={!isExtraSmallScreen ? width : 340}
       open={open}
       onKeyDown={e => {
         if (e.key === 'Escape') onCancel();
@@ -219,7 +226,9 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           <Typography textAlign="center" marginBottom="10">
             {getSyncStatusMessage()}
           </Typography>
-          <SyncProgress syncStatus={syncStatus} isOperational={true} />
+          {syncStatus && (
+            <SyncProgress syncStatus={syncStatus} isOperational={true} />
+          )}
         </Box>
 
         {error && (
@@ -237,7 +246,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           </Alert>
         )}
 
-        {!error && latestSuccessfulSyncDate && (
+        {!error && !syncStatus?.isSyncing && latestSuccessfulSyncDate && (
           <Alert
             sx={{
               backgroundColor: theme.palette.background.drawer,
@@ -246,7 +255,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
               marginTop:
                 (!!numberOfRecordsInPushQueue &&
                   numberOfRecordsInPushQueue >= 100) ||
-                error
+                  error
                   ? '5'
                   : '20',
             }}
@@ -265,7 +274,7 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           <LoadingButton
             shouldShrink={false}
             autoFocus
-            isLoading={isLoading || updateUserIsLoading}
+            isLoading={isLoading}
             startIcon={<RadioIcon />}
             variant="contained"
             disabled={false}

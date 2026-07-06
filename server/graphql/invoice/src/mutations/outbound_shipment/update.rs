@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
@@ -39,6 +39,7 @@ pub struct UpdateInput {
     currency_rate: Option<f64>,
     expected_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
     shipping_method_id: Option<NullableUpdateInput<String>>,
+    backdated_datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -68,6 +69,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -122,6 +124,7 @@ impl UpdateInput {
             currency_rate,
             expected_delivery_date,
             shipping_method_id,
+            backdated_datetime,
         } = self;
 
         ServiceInput {
@@ -140,13 +143,14 @@ impl UpdateInput {
             expected_delivery_date: expected_delivery_date
                 .map(|d| NullableUpdate { value: d.value }),
             shipping_method_id: shipping_method_id.map(|d| NullableUpdate { value: d.value }),
+            backdated_datetime,
         }
     }
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -195,7 +199,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::ShippingMethodDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::CantBackDate(_) => BadUserInput(formatted_error),
+        ServiceError::ExceedsMaximumBackdatingDays => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };

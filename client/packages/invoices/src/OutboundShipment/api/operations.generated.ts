@@ -15,6 +15,7 @@ export type OutboundFragment = {
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
   verifiedDatetime?: string | null;
+  backdatedDatetime?: string | null;
   invoiceNumber: number;
   colour?: string | null;
   onHold: boolean;
@@ -49,6 +50,7 @@ export type OutboundFragment = {
       batch?: string | null;
       expiryDate?: string | null;
       numberOfPacks: number;
+      receivedNumberOfPacks?: number | null;
       prescribedQuantity?: number | null;
       packSize: number;
       invoiceId: string;
@@ -61,6 +63,13 @@ export type OutboundFragment = {
       itemName: string;
       itemVariantId?: string | null;
       vvmStatusId?: string | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+      } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
@@ -113,7 +122,12 @@ export type OutboundFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
   pricing: {
     __typename: 'PricingNode';
@@ -265,6 +279,7 @@ export type InvoiceQuery = {
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
+        backdatedDatetime?: string | null;
         invoiceNumber: number;
         colour?: string | null;
         onHold: boolean;
@@ -299,6 +314,7 @@ export type InvoiceQuery = {
             batch?: string | null;
             expiryDate?: string | null;
             numberOfPacks: number;
+            receivedNumberOfPacks?: number | null;
             prescribedQuantity?: number | null;
             packSize: number;
             invoiceId: string;
@@ -311,6 +327,13 @@ export type InvoiceQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
@@ -363,7 +386,12 @@ export type InvoiceQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         pricing: {
           __typename: 'PricingNode';
@@ -420,6 +448,7 @@ export type OutboundByNumberQuery = {
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
         verifiedDatetime?: string | null;
+        backdatedDatetime?: string | null;
         invoiceNumber: number;
         colour?: string | null;
         onHold: boolean;
@@ -454,6 +483,7 @@ export type OutboundByNumberQuery = {
             batch?: string | null;
             expiryDate?: string | null;
             numberOfPacks: number;
+            receivedNumberOfPacks?: number | null;
             prescribedQuantity?: number | null;
             packSize: number;
             invoiceId: string;
@@ -466,6 +496,13 @@ export type OutboundByNumberQuery = {
             itemName: string;
             itemVariantId?: string | null;
             vvmStatusId?: string | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             vvmStatus?: {
               __typename: 'VvmstatusNode';
               id: string;
@@ -518,7 +555,12 @@ export type OutboundByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         pricing: {
           __typename: 'PricingNode';
@@ -556,23 +598,20 @@ export type OutboundByNumberQuery = {
       };
 };
 
-export type InvoiceCountsQueryVariables = Types.Exact<{
+export type OutboundShipmentCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
 }>;
 
-export type InvoiceCountsQuery = {
+export type OutboundShipmentCountsQuery = {
   __typename: 'Queries';
-  invoiceCounts: {
-    __typename: 'InvoiceCounts';
-    outbound: {
-      __typename: 'OutboundInvoiceCounts';
-      notShipped: number;
-      created: {
-        __typename: 'InvoiceCountsSummary';
-        today: number;
-        thisWeek: number;
-      };
+  outboundShipmentCounts: {
+    __typename: 'OutboundInvoiceCounts';
+    notShipped: number;
+    created: {
+      __typename: 'InvoiceCountsSummary';
+      today: number;
+      thisWeek: number;
     };
   };
 };
@@ -718,6 +757,29 @@ export type DeleteOutboundShipmentsMutation = {
         | { __typename: 'DeleteResponse'; id: string };
     }> | null;
   };
+};
+
+export type DuplicateOutboundShipmentMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DuplicateOutboundShipmentMutation = {
+  __typename: 'Mutations';
+  duplicateOutboundShipment:
+    | {
+        __typename: 'DuplicateOutboundShipmentError';
+        error: { __typename: 'CustomerIsInactive'; description: string };
+      }
+    | {
+        __typename: 'DuplicateOutboundShipmentNode';
+        skippedItemCount: number;
+        invoice: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        };
+      };
 };
 
 export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
@@ -1087,6 +1149,16 @@ export type InsertBarcodeMutation = {
   };
 };
 
+export type OutboundStocktakeCountAfterDateQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.StocktakeFilterInput>;
+}>;
+
+export type OutboundStocktakeCountAfterDateQuery = {
+  __typename: 'Queries';
+  stocktakes: { __typename: 'StocktakeConnector'; totalCount: number };
+};
+
 export const OutboundFragmentDoc = gql`
   fragment Outbound on InvoiceNode {
     __typename
@@ -1099,6 +1171,7 @@ export const OutboundFragmentDoc = gql`
     pickedDatetime
     shippedDatetime
     verifiedDatetime
+    backdatedDatetime
     invoiceNumber
     colour
     onHold
@@ -1143,6 +1216,7 @@ export const OutboundFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     pricing {
@@ -1307,16 +1381,14 @@ export const OutboundByNumberDocument = gql`
   }
   ${OutboundFragmentDoc}
 `;
-export const InvoiceCountsDocument = gql`
-  query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
-    invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-      outbound {
-        created {
-          today
-          thisWeek
-        }
-        notShipped
+export const OutboundShipmentCountsDocument = gql`
+  query outboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
+    outboundShipmentCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
+      created {
+        today
+        thisWeek
       }
+      notShipped
     }
   }
 `;
@@ -1520,6 +1592,27 @@ export const DeleteOutboundShipmentsDocument = gql`
           ... on DeleteResponse {
             id
           }
+        }
+      }
+    }
+  }
+`;
+export const DuplicateOutboundShipmentDocument = gql`
+  mutation duplicateOutboundShipment($id: String!, $storeId: String!) {
+    duplicateOutboundShipment(storeId: $storeId, id: $id) {
+      __typename
+      ... on DuplicateOutboundShipmentNode {
+        invoice {
+          __typename
+          id
+          invoiceNumber
+        }
+        skippedItemCount
+      }
+      ... on DuplicateOutboundShipmentError {
+        error {
+          __typename
+          description
         }
       }
     }
@@ -1947,6 +2040,18 @@ export const InsertBarcodeDocument = gql`
   }
   ${BarcodeFragmentDoc}
 `;
+export const OutboundStocktakeCountAfterDateDocument = gql`
+  query outboundStocktakeCountAfterDate(
+    $storeId: String!
+    $filter: StocktakeFilterInput
+  ) {
+    stocktakes(storeId: $storeId, filter: $filter) {
+      ... on StocktakeConnector {
+        totalCount
+      }
+    }
+  }
+`;
 
 export type SdkFunctionWrapper = <T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
@@ -2021,20 +2126,20 @@ export function getSdk(
         variables
       );
     },
-    invoiceCounts(
-      variables: InvoiceCountsQueryVariables,
+    outboundShipmentCounts(
+      variables: OutboundShipmentCountsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<InvoiceCountsQuery> {
+    ): Promise<OutboundShipmentCountsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<InvoiceCountsQuery>({
-            document: InvoiceCountsDocument,
+          client.request<OutboundShipmentCountsQuery>({
+            document: OutboundShipmentCountsDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'invoiceCounts',
+        'outboundShipmentCounts',
         'query',
         variables
       );
@@ -2129,6 +2234,24 @@ export function getSdk(
         variables
       );
     },
+    duplicateOutboundShipment(
+      variables: DuplicateOutboundShipmentMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DuplicateOutboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DuplicateOutboundShipmentMutation>({
+            document: DuplicateOutboundShipmentDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'duplicateOutboundShipment',
+        'mutation',
+        variables
+      );
+    },
     upsertOutboundShipment(
       variables: UpsertOutboundShipmentMutationVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -2216,6 +2339,24 @@ export function getSdk(
           }),
         'insertBarcode',
         'mutation',
+        variables
+      );
+    },
+    outboundStocktakeCountAfterDate(
+      variables: OutboundStocktakeCountAfterDateQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<OutboundStocktakeCountAfterDateQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<OutboundStocktakeCountAfterDateQuery>({
+            document: OutboundStocktakeCountAfterDateDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'outboundStocktakeCountAfterDate',
+        'query',
         variables
       );
     },

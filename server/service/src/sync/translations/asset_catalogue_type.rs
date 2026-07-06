@@ -1,13 +1,13 @@
 use repository::{
-    asset_type_row::{AssetTypeRow, AssetTypeRowRepository},
+    asset_type_row::AssetTypeRow,
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    Row,
+
 };
 
 use crate::sync::translations::asset_category::AssetCategoryTranslation;
 
-use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -31,9 +31,9 @@ impl SyncTranslation for AssetCatalogueTypeTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
             AssetTypeRow,
-        >(&sync_record.data)?))
+        >(sync_record.data.0.clone())?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -56,21 +56,15 @@ impl SyncTranslation for AssetCatalogueTypeTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
-        changelog: &ChangelogRow,
+        _connection: &StorageConnection,
+        _changelog: &ChangelogRow,
+        _row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = AssetTypeRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "AssetType row ({}) not found",
-                changelog.record_id
-            )))?;
-
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            serde_json::to_value(row)?,
-        ))
+        // AssetCatalogueType is not represented in the `Row` enum
+        // (no bare-row variant for the asset_type repo at the moment),
+        // so `query_with_data` cannot surface it. Unreachable for push
+        // until the table is added to `Row`.
+        Ok(PushTranslateResult::NotMatched)
     }
 }
 

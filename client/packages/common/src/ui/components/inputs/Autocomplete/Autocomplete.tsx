@@ -6,7 +6,6 @@ import {
   CreateFilterOptionsConfig,
   AutocompleteInputChangeReason,
   AutocompleteProps as MuiAutocompleteProps,
-  PopperProps,
   SxProps,
   Theme,
   Box,
@@ -32,11 +31,10 @@ export interface ClickableOptionConfig {
   [extraField: string]: unknown;
 }
 
-export interface AutocompleteProps<T>
-  extends Omit<
-    MuiAutocompleteProps<T, undefined, boolean, undefined>,
-    'renderInput'
-  > {
+export interface AutocompleteProps<T> extends Omit<
+  MuiAutocompleteProps<T, undefined, boolean, undefined>,
+  'renderInput'
+> {
   defaultValue?: AutocompleteOption<T> | null;
   getOptionDisabled?: (option: T) => boolean;
   filterOptionConfig?: CreateFilterOptionsConfig<T>;
@@ -62,6 +60,7 @@ export interface AutocompleteProps<T>
   inputValue?: string;
   popperMinWidth?: number;
   inputProps?: BasicTextInputProps;
+  error?: boolean;
   required?: boolean;
   textSx?: SxProps<Theme>;
   clickableOption?: ClickableOptionConfig;
@@ -81,7 +80,7 @@ export function Autocomplete<T>({
   options,
   renderInput,
   renderOption,
-  width = 'auto',
+  width,
   value,
   isOptionEqualToValue,
   clearable = true,
@@ -92,6 +91,7 @@ export function Autocomplete<T>({
   getOptionLabel,
   popperMinWidth,
   inputProps,
+  error,
   required,
   textSx,
   clickableOption,
@@ -124,7 +124,7 @@ export function Autocomplete<T>({
       required={required}
       {...props}
       {...inputProps}
-      error={inputProps?.error}
+      error={error || inputProps?.error}
       autoFocus={autoFocus}
       slotProps={{
         input: {
@@ -149,15 +149,6 @@ export function Autocomplete<T>({
 
     return (option as { label?: string }).label ?? '';
   };
-
-  const CustomPopper = (props: PopperProps) => (
-    <StyledPopper
-      {...props}
-      placement="bottom-start"
-      style={{ minWidth: popperMinWidth, width: 'auto' }}
-    />
-  );
-  const popper = popperMinWidth ? CustomPopper : StyledPopper;
 
   const clickableOptionRenderer = (clickableOption: ClickableOptionConfig) => (
     <Box
@@ -245,9 +236,19 @@ export function Autocomplete<T>({
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       slots={{
         ...restOfAutocompleteProps.slots,
-        popper: popper,
+        popper: StyledPopper,
+      }}
+      slotProps={{
+        ...restOfAutocompleteProps.slotProps,
+        popper: popperMinWidth
+          ? {
+            placement: 'bottom-start',
+            style: { minWidth: popperMinWidth, width: 'auto' },
+          }
+          : undefined,
       }}
       sx={{
+        width,
         ...restOfAutocompleteProps.sx,
       }}
     />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -16,86 +16,121 @@ import {
   ArrowRightIcon,
   useEditModal,
   useNotification,
+  useDisabledNotificationToast,
   usePreferences,
   useIsExtraSmallScreen,
+  CheckIcon,
+  CloseIcon,
+  ClockIcon,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { ChangeCampaignOrProgramConfirmationModal } from '@openmsupply-client/system';
+import { getStatusTranslator, getInboundShipmentType } from '../../../utils';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
+import { InboundLineFragment, useInboundShipment } from '../../api';
 import {
-  getStatusTranslator,
-  inboundStatuses,
-  manualInboundStatuses,
-} from '../../../utils';
-import { InboundFragment, InboundLineFragment, useInbound } from '../../api';
-import { StatusChangeButton } from './StatusChangeButton';
+  useInboundDeleteSelectedLines,
+  useZeroInboundLinesQuantity,
+  useSaveInboundLines,
+  useChangeStatusOfInboundLines,
+} from '../../api/hooks/utils';
 import { OnHoldButton } from './OnHoldButton';
-import { useIsInboundDisabled } from '../../api/hooks/utils/useIsInboundDisabled';
+import { StatusChangeButton } from './StatusChangeButton';
 
-const createStatusLog = (invoice: InboundFragment) => {
-  const statusIdx = inboundStatuses.findIndex(s => invoice.status === s);
-  const statusLog: Record<InvoiceNodeStatus, null | string | undefined> = {
-    [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Picked]: null,
-    [InvoiceNodeStatus.Shipped]: null,
-    [InvoiceNodeStatus.Delivered]: null,
-    [InvoiceNodeStatus.Received]: null,
-    [InvoiceNodeStatus.Verified]: null,
-    // Placeholder for typescript, not used in inbounds
-    [InvoiceNodeStatus.Allocated]: null,
-    [InvoiceNodeStatus.Cancelled]: null,
-  };
+/**
+ * Status crumbs + on-hold/close/status-change buttons. Extracted so the parent
+ * `DetailView` can render it through `AppFooterStatusPortal` on every tab —
+ * the Details tab's own `Footer` only takes over to show row-selection
+ * actions.
+ */
+export const StatusFooter = (): ReactElement | null => {
+  const t = useTranslation();
+  const { navigateUpOne } = useBreadcrumbs();
+  const { invoiceStatusOptions } = usePreferences();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const {
+    query: { data },
+  } = useInboundShipment();
 
-  if (statusIdx >= 0) {
-    statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
-  }
-  if (statusIdx >= 2) {
-    statusLog[InvoiceNodeStatus.Shipped] = invoice.shippedDatetime;
-  }
-  if (statusIdx >= 3) {
-    statusLog[InvoiceNodeStatus.Delivered] = invoice.deliveredDatetime;
-  }
-  if (statusIdx >= 4) {
-    statusLog[InvoiceNodeStatus.Received] = invoice.receivedDatetime;
-  }
-  if (statusIdx >= 5) {
-    statusLog[InvoiceNodeStatus.Verified] = invoice.verifiedDatetime;
-  }
+  if (!data) return null;
 
-  return statusLog;
+  const shipmentType = getInboundShipmentType(data);
+  const statuses = getStatusSequence(InvoiceNodeType.InboundShipment, {
+    inboundShipmentType: shipmentType,
+  }).filter(status =>
+    invoiceStatusOptions ? invoiceStatusOptions.includes(status) : true
+  );
+
+  return (
+    <Box
+      gap={2}
+      display="flex"
+      flexDirection="row"
+      alignItems="center"
+      height={64}
+    >
+      {!isExtraSmallScreen && <OnHoldButton />}
+      <StatusCrumbs
+        statuses={statuses}
+        statusLog={createStatusLog(data, statuses)}
+        statusFormatter={getStatusTranslator(t)}
+      />
+
+      <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+        <ButtonWithIcon
+          shrinkThreshold="lg"
+          Icon={<XCircleIcon />}
+          label={t('button.close')}
+          color="secondary"
+          sx={{ fontSize: '12px' }}
+          onClick={() => navigateUpOne()}
+        />
+
+        <StatusChangeButton />
+      </Box>
+    </Box>
+  );
 };
 
 interface FooterComponentProps {
   onReturnLines: () => void;
   selectedRows: InboundLineFragment[];
   resetRowSelection: () => void;
+  showLineStatus: boolean;
 }
 
 export const FooterComponent = ({
   onReturnLines,
   selectedRows,
   resetRowSelection,
+  showLineStatus,
 }: FooterComponentProps) => {
   const t = useTranslation();
-  const { navigateUpOne } = useBreadcrumbs();
   const { info } = useNotification();
   const changeCampaignOrProgramModal = useEditModal();
-  const { invoiceStatusOptions } = usePreferences();
-  const isExtraSmallScreen = useIsExtraSmallScreen();
 
-  const { data } = useInbound.document.get();
-  const onDelete = useInbound.lines.deleteSelected(
+  const {
+    query: { data },
+    isDisabled,
+    isExternal,
+    hasAuthorisePermission,
+  } = useInboundShipment();
+  const permissionDeniedNotification = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+  const onDelete = useInboundDeleteSelectedLines(
     selectedRows,
     resetRowSelection
   );
-  const onZeroQuantities = useInbound.lines.zeroQuantities(
+  const onZeroQuantities = useZeroInboundLinesQuantity(
     selectedRows,
     resetRowSelection
   );
-  const { mutateAsync } = useInbound.lines.save();
-  const isDisabled = useIsInboundDisabled();
-  const isManuallyCreated = !data?.linkedShipment?.id;
+  const { mutateAsync } = useSaveInboundLines(isExternal);
+  const onChangeLineStatus = useChangeStatusOfInboundLines(
+    selectedRows,
+    resetRowSelection
+  );
 
   const handleCampaignClick = () => {
     if (isDisabled) {
@@ -107,7 +142,29 @@ export const FooterComponent = ({
     }
   };
 
-  const actions: Action[] = [
+  const changeLineStatus = (status: 'approve' | 'reject' | 'pending') => {
+    if (!selectedRows.length) {
+      const selectLinesSnack = info(t(`messages.select-rows-to-${status}`));
+      selectLinesSnack();
+      return;
+    }
+
+    if (data?.status === InvoiceNodeStatus.Received || isDisabled) {
+      info(t('messages.cant-change-line-status-on-received-invoice'))();
+      return;
+    }
+
+    if (
+      (status === 'approve' || status === 'reject') &&
+      !hasAuthorisePermission
+    ) {
+      return permissionDeniedNotification();
+    }
+
+    onChangeLineStatus(status);
+  };
+
+  let actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
@@ -132,64 +189,54 @@ export const FooterComponent = ({
       shouldShrink: false,
     },
   ];
-  const statuses = isManuallyCreated
-    ? manualInboundStatuses.filter(status =>
-        invoiceStatusOptions?.includes(status)
-      )
-    : inboundStatuses.filter(status => invoiceStatusOptions?.includes(status));
+  if (showLineStatus) {
+    actions = actions.concat([
+      {
+        label: t('button.approve'),
+        icon: <CheckIcon />,
+        onClick: () => changeLineStatus('approve'),
+      },
+      {
+        label: t('button.reject'),
+        icon: <CloseIcon />,
+        onClick: () => changeLineStatus('reject'),
+      },
+      {
+        label: t('button.pending'),
+        icon: <ClockIcon />,
+        onClick: () => changeLineStatus('pending'),
+      },
+    ]);
+  }
 
+  // Only mount the footer portal when there's a selection. Otherwise leave the
+  // slot free so the parent `AppFooterStatusPortal` (status crumbs) shows
+  // through. The campaign-change confirmation modal is opened from one of the
+  // row actions but renders via its own portal, so it can stay mounted
+  // outside the conditional.
   return (
-    <AppFooterPortal
-      Content={
-        <>
-          {selectedRows.length !== 0 && (
+    <>
+      {selectedRows.length !== 0 && (
+        <AppFooterPortal
+          Content={
             <ActionsFooter
               actions={actions}
               selectedRowCount={selectedRows.length}
               resetRowSelection={resetRowSelection}
             />
-          )}
-          {data && selectedRows.length === 0 ? (
-            <Box
-              gap={2}
-              display="flex"
-              flexDirection="row"
-              alignItems="center"
-              height={64}
-            >
-              {!isExtraSmallScreen && <OnHoldButton />}
-              <StatusCrumbs
-                statuses={statuses}
-                statusLog={createStatusLog(data)}
-                statusFormatter={getStatusTranslator(t)}
-              />
-
-              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-                <ButtonWithIcon
-                  shrinkThreshold="lg"
-                  Icon={<XCircleIcon />}
-                  label={t('button.close')}
-                  color="secondary"
-                  sx={{ fontSize: '12px' }}
-                  onClick={() => navigateUpOne()}
-                />
-
-                <StatusChangeButton />
-              </Box>
-            </Box>
-          ) : null}
-          {
-            <ChangeCampaignOrProgramConfirmationModal
-              isOpen={changeCampaignOrProgramModal.isOpen}
-              onCancel={changeCampaignOrProgramModal.onClose}
-              clearSelected={resetRowSelection}
-              rows={selectedRows}
-              onChange={mutateAsync}
-            />
           }
-        </>
-      }
-    />
+        />
+      )}
+      {changeCampaignOrProgramModal.isOpen && (
+        <ChangeCampaignOrProgramConfirmationModal
+          isOpen={changeCampaignOrProgramModal.isOpen}
+          onCancel={changeCampaignOrProgramModal.onClose}
+          clearSelected={resetRowSelection}
+          rows={selectedRows}
+          onChange={mutateAsync}
+        />
+      )}
+    </>
   );
 };
 

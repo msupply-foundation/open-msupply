@@ -29,6 +29,7 @@ pub fn update_log_level(
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: Some(store_id),
+            require_central_standalone: false,
         },
     )?;
 
@@ -45,7 +46,7 @@ pub fn update_log_level(
 
     service_provider
         .log_service
-        .update_log_level(&service_context, level.clone())?;
+        .update_log_level(&service_context, level.clone());
 
     Ok(UpsertLogLevelResponse { level: input.level })
 }

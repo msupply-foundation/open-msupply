@@ -35,11 +35,11 @@ impl SyncTranslation for ItemDirectionTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyItemDirectionRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyItemDirectionRow>()?;
 
         let result = ItemDirectionRow {
             id: data.ID,
-            item_link_id: data.item_ID,
+            item_id: data.item_ID,
             directions: data.directions,
             priority: data.priority,
         };

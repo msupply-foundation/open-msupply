@@ -5,10 +5,11 @@ use repository::{
         packaging_variant::{PackagingVariantFilter, PackagingVariantRepository},
         packaging_variant_row::PackagingVariantRowRepository,
     },
-    EqualFilter, RepositoryError, TransactionError,
+    ActivityLogType, EqualFilter, RepositoryError, TransactionError,
 };
 
 use crate::{
+    activity_log::activity_log_entry,
     item::packaging_variant::{
         upsert_packaging_variant, UpsertPackagingVariant, UpsertPackagingVariantError,
     },
@@ -80,6 +81,14 @@ pub fn upsert_item_variant(
                     .any(|v| v.id == existing_packaging_variant_id)
                 {
                     packaging_variant_row_repo.mark_deleted(&existing_packaging_variant_id)?;
+
+                    activity_log_entry(
+                        ctx,
+                        ActivityLogType::PackagingVariantDeleted,
+                        Some(new_item_variant.item_id.clone()),
+                        None,
+                        None,
+                    )?;
                 }
             }
 
@@ -91,7 +100,8 @@ pub fn upsert_item_variant(
 
             let updated_variant = ItemVariantRepository::new(connection)
                 .query_one(
-                    ItemVariantFilter::new().id(EqualFilter::equal_to(new_item_variant.id.to_string())),
+                    ItemVariantFilter::new()
+                        .id(EqualFilter::equal_to(new_item_variant.id.to_string())),
                 )?
                 .ok_or(UpsertItemVariantError::CreatedRecordNotFound)?;
 

@@ -178,7 +178,9 @@ fn validate_patient_program_exists(
         .query_by_filter(
             ProgramEnrolmentFilter::new()
                 .patient_id(EqualFilter::equal_to(patient_id.to_string()))
-                .context_id(EqualFilter::equal_to(encounter_registry.context_id.to_string())),
+                .context_id(EqualFilter::equal_to(
+                    encounter_registry.context_id.to_string(),
+                )),
         )?
         .pop())
 }
@@ -204,7 +206,7 @@ fn validate(
     };
 
     let encounter = validate_encounter_schema(&input.data).map_err(|err| {
-        InsertEncounterError::InvalidDataSchema(format!("Invalid program data: {}", err))
+        InsertEncounterError::InvalidDataSchema(format!("Invalid program data: {err}"))
     })?;
 
     let clinician_row = if let Some(clinician_id) = encounter

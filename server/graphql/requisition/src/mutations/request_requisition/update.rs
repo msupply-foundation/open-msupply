@@ -1,3 +1,4 @@
+use actix_web::web::Data;
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
@@ -7,7 +8,6 @@ use graphql_core::{
         OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
 };
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
@@ -17,6 +17,7 @@ use service::{
         UpdateRequestRequisition as ServiceInput, UpdateRequestRequisitionError as ServiceError,
         UpdateRequestRequisitionStatus,
     },
+    service_provider::ServiceProvider,
     NullableUpdate,
 };
 
@@ -34,6 +35,8 @@ pub struct UpdateInput {
     pub status: Option<UpdateRequestRequisitionStatusInput>,
     pub other_party_id: Option<String>,
     pub expected_delivery_date: Option<NaiveDate>,
+    pub destination_customer_id: Option<NullableUpdateInput<String>>,
+    #[graphql(deprecation = "Since 2.17.0. Use destination_customer_id")]
     pub original_customer_id: Option<NullableUpdateInput<String>>,
 }
 
@@ -68,12 +71,17 @@ pub enum UpdateResponse {
     Response(RequisitionNode),
 }
 
-pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+pub async fn update(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateInput,
+) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -83,18 +91,29 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
             &ResourceAccessRequest {
                 resource: Resource::RequisitionSend,
                 store_id: Some(store_id.to_string()),
+                require_central_standalone: false,
             },
         )?;
     }
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let store_id = store_id.to_string();
+    let input = input.to_domain();
 
-    map_response(
-        service_provider
-            .requisition_service
-            .update_request_requisition(&service_context, input.to_domain()),
+    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949). The
+    // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<Requisition, ServiceError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            Ok(service_provider
+                .requisition_service
+                .update_request_requisition(&service_context, input))
+        },
     )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<UpdateResponse> {
@@ -120,6 +139,7 @@ impl UpdateInput {
             status,
             other_party_id,
             expected_delivery_date,
+            destination_customer_id,
             original_customer_id,
         } = self;
 
@@ -133,14 +153,16 @@ impl UpdateInput {
             status: status.map(|status| status.to_domain()),
             other_party_id,
             expected_delivery_date,
-            original_customer_id: original_customer_id.map(|c| NullableUpdate { value: c.value }),
+            destination_customer_id: destination_customer_id
+                .or(original_customer_id)
+                .map(|c| NullableUpdate { value: c.value }),
         }
     }
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::RequisitionDoesNotExist => {
@@ -171,12 +193,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 RequisitionReasonsNotProvided(lines),
             ))
         }
-        ServiceError::OriginalCustomerNotACustomer => {
+        ServiceError::DestinationCustomerNotACustomer => {
             return Ok(UpdateErrorInterface::OtherPartyNotACustomer(
                 OtherPartyNotACustomer,
             ))
         }
-        ServiceError::OriginalCustomerNotVisible => {
+        ServiceError::DestinationCustomerNotVisible => {
             return Ok(UpdateErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
             ))
@@ -187,8 +209,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::OtherPartyDoesNotExist
         | ServiceError::OtherPartyIsNotAStore
         | ServiceError::CannotEditProgramRequisitionInformation
-        | ServiceError::OriginalCustomerDoesNotExist
-        | ServiceError::OriginalCustomerIsNotAStore => BadUserInput(formatted_error),
+        | ServiceError::DestinationCustomerDoesNotExist
+        | ServiceError::DestinationCustomerIsNotAStore => BadUserInput(formatted_error),
         ServiceError::UpdatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::PluginError(_) => {
             InternalError(formatted_error)
@@ -443,7 +465,7 @@ mod test {
                     other_party_id: Some("other_party_id".to_string()),
                     status: Some(UpdateRequestRequisitionStatus::Sent),
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
-                    original_customer_id: None,
+                    destination_customer_id: None,
                 }
             );
             Ok(Requisition {

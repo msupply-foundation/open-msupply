@@ -23,7 +23,7 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
 
   const {
     mutateAsync: finalise,
-    isLoading: isFinalising,
+    isPending: isFinalising,
     error: finaliseError,
   } = useFinalise(rnrFormId);
 
@@ -170,7 +170,9 @@ const useUpdate = (id: string) => {
 
   const { mutateAsync } = useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([RNR_FORM]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [RNR_FORM]
+    }),
   });
 
   const debouncedUpdateRnRForm = useDebounceCallback(
@@ -207,6 +209,8 @@ const useFinalise = (id: string) => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([RNR_FORM]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [RNR_FORM]
+    }),
   });
 };

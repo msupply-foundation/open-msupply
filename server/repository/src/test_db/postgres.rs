@@ -8,10 +8,11 @@ use util::lock_file;
 use crate::{
     database_settings::DatabaseSettings,
     get_storage_connection_manager,
-    migrations::{migrate, Version},
+    migrations::{migrate, MigrationConfig, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
     test_db::constants::{
-        env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE_POSTGRES, TEST_OUTPUT_DIR,
+        env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE_POSTGRES,
+        TEST_OUTPUT_DIR,
     },
     DBConnection, StorageConnectionManager,
 };
@@ -53,7 +54,7 @@ fn create_template_db(
     // migrate the DB:
     let connection_manager = get_storage_connection_manager(&db_settings);
     let connection = connection_manager.connection().unwrap();
-    migrate(&connection, version).unwrap();
+    migrate(&connection, version, MigrationConfig::default()).unwrap();
 
     connection_manager
 }
@@ -67,6 +68,7 @@ table! {
 
 #[derive(QueryableByName)]
 #[diesel(table_name = pg_database)]
+#[allow(dead_code)]
 struct PgDatabaseRow {
     #[allow(dead_code)]
     oid: i64,
@@ -106,7 +108,7 @@ async fn setup_with_version_no_template(
 
     let connection_manager = get_storage_connection_manager(&db_settings);
     let connection = connection_manager.connection().unwrap();
-    migrate(&connection, version).unwrap();
+    migrate(&connection, version, MigrationConfig::default()).unwrap();
 
     let collection = insert_all_mock_data(&connection, inserts).await;
     (connection_manager, collection)
@@ -158,7 +160,9 @@ pub(crate) async fn setup_with_version(
             .load(&mut root_connection)
             .unwrap();
 
-        let marker_path = test_output_dir.join(TEMPLATE_MARKER_FILE_POSTGRES).to_path_buf();
+        let marker_path = test_output_dir
+            .join(TEMPLATE_MARKER_FILE_POSTGRES)
+            .to_path_buf();
         let marker_exists = marker_path.exists();
 
         // if test_output_dir doesn't exist or if the marker exist, refresh the cache
