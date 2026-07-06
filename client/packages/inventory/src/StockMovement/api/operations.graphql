@@ -192,9 +192,22 @@ fragment StockMovementDraftLine on DraftStockRelocationLineNode {
   destinationLocation {
     __typename
     id
-    code
     name
     onHold
+    code
+    volume
+    volumeUsed
+    locationType {
+      id
+      name
+      maxTemperature
+      minTemperature
+    }
+    stock {
+      ... on StockLineConnector {
+        totalCount
+      }
+    }
   }
 }
 
