@@ -69,6 +69,7 @@ export const StockMovementLineEdit = ({
     itemId: line?.stockLine?.itemId ?? null,
     numberOfPacks: line?.numberOfPacks,
   }));
+  const [itemInputKey, setItemInputKey] = useState(0);
 
   const { data: stockLines, isLoading } = useStockMovementDraftLines(
     { itemId: draft.itemId },
@@ -158,7 +159,10 @@ export const StockMovementLineEdit = ({
   };
 
   const onNext = async () => {
-    if (await save()) setDraft(emptyDraft());
+    if (await save()) {
+      setDraft(emptyDraft());
+      setItemInputKey(key => key + 1);
+    }
   };
 
   return (
@@ -187,6 +191,7 @@ export const StockMovementLineEdit = ({
       <Box display="flex" flexDirection="column" gap={2} paddingX={1}>
         <Field label={t('label.item', { count: 1 })}>
           <StockItemSearchInput
+            key={itemInputKey}
             autoFocus={!draft.itemId}
             openOnFocus={!draft.itemId}
             disabled={isUpdate}
