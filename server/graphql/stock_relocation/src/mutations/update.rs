@@ -113,6 +113,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         E::StockRelocationDoesNotExist
         | E::NotThisStoreRelocation
         | E::StockRelocationFinalised
+        | E::CannotReverseStatus
         | E::MovementHasNoLines
         | E::LineValidation { .. } => BadUserInput(formatted_error),
         E::UpdateStockLine(_) | E::DatabaseError(_) => InternalError(formatted_error),
