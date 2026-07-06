@@ -933,6 +933,73 @@ async fn test_changelog_outgoing_patient_sync_records() {
     assert_eq!(outgoing_results.len(), 0);
 }
 
+/// When a store is moved to another site we re-sync it via `data_for_store`. That
+/// filter must include patient-scoped data for patients visible at the moved store
+/// (via name_store_join), otherwise the store arrives missing its patient data (#12325).
+/// It must NOT pull patient data for patients the store can't see.
+#[actix_rt::test]
+async fn test_data_for_store_includes_patient_data() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_data_for_store_includes_patient_data",
+        MockDataInserts::all(),
+    )
+    .await;
+
+    let repo = ChangelogRepository::new(&connection);
+
+    // patient2 has a name_store_join to store_a (mock_patient_store_join_b), and none to store_b.
+    // Author the vaccination (a Patient-distribution table) at store_c, so it reaches store_a
+    // only via the patient route — not via store_c's own (Remote) store_id route.
+    let cursor_before = repo.max_cursor().unwrap() as i64;
+    let vaccination = VaccinationRow {
+        id: "mock_vax_id".to_string(),
+        patient_id: "patient2".to_string(),
+        store_id: "store_c".to_string(),
+        vaccine_course_dose_id: "vaccine_course_a_dose_a".to_string(),
+        user_id: "user_account_a".to_string(),
+        ..Default::default()
+    };
+    VaccinationRowRepository::new(&connection)
+        .upsert_one(&vaccination)
+        .unwrap();
+
+    // Re-syncing store_a should include the vaccination (patient2 is visible at store_a).
+    let outgoing_results = repo
+        .query(
+            ChangelogFilter::data_for_store("store_a"),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert!(
+        outgoing_results
+            .iter()
+            .any(|r| r.record_id == vaccination.id),
+        "data_for_store(store_a) should include patient2's vaccination"
+    );
+
+    // Re-syncing store_b should NOT include it — patient2 is not visible at store_b.
+    let outgoing_results = repo
+        .query(
+            ChangelogFilter::data_for_store("store_b"),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert!(
+        !outgoing_results
+            .iter()
+            .any(|r| r.record_id == vaccination.id),
+        "data_for_store(store_b) should not include patient2's vaccination"
+    );
+}
+
 /// Concurrent-tx race: while connection A is mid-transaction with a changelog
 /// row in flight, an observer on connection B (same manager) should see
 /// `max_cursor()` clamped below A's tracked boundary and `query()` must not
