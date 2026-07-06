@@ -1,31 +1,21 @@
 use chrono::Utc;
 use repository::{
-    RepositoryError, StockRelocationRow, StockRelocationRowRepository, StockRelocationStatus,
-    TransactionError,
+    NumberRowType, RepositoryError, StockRelocationRow, StockRelocationRowRepository,
+    StockRelocationStatus, TransactionError,
 };
 
+use crate::number::next_number;
 use crate::service_provider::ServiceContext;
-use crate::stock_relocation::validate::{
-    validate_movement, RelocationMovement, ValidateMovementError,
-};
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct InsertStockRelocation {
-    pub lines: Vec<InsertStockRelocationLine>,
-}
-
-#[derive(Debug, Clone, PartialEq, Default)]
-pub struct InsertStockRelocationLine {
     pub id: String,
-    pub from_stock_line_id: String,
-    pub from_number_of_packs: f64,
-    pub to_location_id: Option<String>,
-    pub to_pack_size: f64,
+    pub comment: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum InsertStockRelocationError {
-    ValidateMovement(ValidateMovementError),
+    StockRelocationAlreadyExists,
     DatabaseError(RepositoryError),
 }
 
@@ -33,49 +23,31 @@ pub fn insert_stock_relocation(
     ctx: &ServiceContext,
     store_id: &str,
     input: InsertStockRelocation,
-) -> Result<Vec<StockRelocationRow>, InsertStockRelocationError> {
-    let results = ctx
-        .connection
+) -> Result<StockRelocationRow, InsertStockRelocationError> {
+    ctx.connection
         .transaction_sync(|connection| {
-            let now = Utc::now().naive_utc();
-            let mut rows = Vec::with_capacity(input.lines.len());
-
-            for line in input.lines {
-                let stock_line = validate_movement(
-                    connection,
-                    store_id,
-                    &RelocationMovement {
-                        from_stock_line_id: line.from_stock_line_id.clone(),
-                        from_number_of_packs: line.from_number_of_packs,
-                        to_location_id: line.to_location_id.clone(),
-                        to_pack_size: Some(line.to_pack_size),
-                    },
-                )
-                .map_err(InsertStockRelocationError::ValidateMovement)?;
-
-                let row = StockRelocationRow {
-                    id: line.id.clone(),
-                    created_datetime: now,
-                    finalised_datetime: None,
-                    from_stock_line_id: line.from_stock_line_id,
-                    from_location_id: stock_line.location_id.clone(),
-                    from_number_of_packs: line.from_number_of_packs,
-                    to_stock_line_id: None,
-                    to_location_id: line.to_location_id,
-                    to_pack_size: Some(line.to_pack_size),
-                    status: StockRelocationStatus::New,
-                    store_id: store_id.to_string(),
-                    user_id: ctx.user_id.clone(),
-                };
-                StockRelocationRowRepository::new(connection).upsert_one(&row)?;
-                rows.push(row);
+            let repo = StockRelocationRowRepository::new(connection);
+            if repo.find_one_by_id(&input.id)?.is_some() {
+                return Err(InsertStockRelocationError::StockRelocationAlreadyExists);
             }
 
-            Ok(rows)
-        })
-        .map_err(|error: TransactionError<InsertStockRelocationError>| error.to_inner_error())?;
+            let number = next_number(connection, &NumberRowType::StockRelocation, store_id)?;
 
-    Ok(results)
+            let row = StockRelocationRow {
+                id: input.id,
+                store_id: store_id.to_string(),
+                stock_movement_number: number,
+                status: StockRelocationStatus::New,
+                created_datetime: Utc::now().naive_utc(),
+                created_by: ctx.user_id.clone(),
+                finalised_datetime: None,
+                comment: input.comment,
+            };
+            repo.upsert_one(&row)?;
+
+            Ok(row)
+        })
+        .map_err(|error: TransactionError<InsertStockRelocationError>| error.to_inner_error())
 }
 
 impl From<RepositoryError> for InsertStockRelocationError {
@@ -86,32 +58,12 @@ impl From<RepositoryError> for InsertStockRelocationError {
 
 #[cfg(test)]
 mod test {
-    use repository::{
-        mock::{
-            mock_location_1, mock_location_on_hold, mock_location_with_restricted_location_type_a,
-            MockDataInserts,
-        },
-        test_db::setup_all,
-        StockLineRow, StockLineRowRepository, StockRelocationStatus, Upsert,
-    };
+    use repository::{mock::MockDataInserts, test_db::setup_all, StockRelocationStatus};
     use util::uuid::uuid;
 
-    use crate::service_provider::ServiceProvider;
+    use crate::service_provider::{ServiceContext, ServiceProvider};
 
     use super::*;
-
-    fn whole_line(id: &str, on_hold: bool) -> StockLineRow {
-        StockLineRow {
-            id: id.to_string(),
-            item_id: "item_a".to_string(),
-            store_id: "store_a".to_string(),
-            pack_size: 1.0,
-            available_number_of_packs: 10.0,
-            total_number_of_packs: 10.0,
-            on_hold,
-            ..Default::default()
-        }
-    }
 
     async fn setup(test: &str) -> (ServiceProvider, ServiceContext) {
         let (_, _, connection_manager, _) = setup_all(test, MockDataInserts::all()).await;
@@ -122,106 +74,65 @@ mod test {
         (service_provider, context)
     }
 
-    fn line(stock_line_id: &str) -> InsertStockRelocationLine {
-        InsertStockRelocationLine {
-            id: uuid(),
-            from_stock_line_id: stock_line_id.to_string(),
-            from_number_of_packs: 10.0,
-            to_location_id: Some(mock_location_1().id),
-            to_pack_size: 1.0,
-        }
-    }
-
     #[actix_rt::test]
-    async fn stock_relocation_validation_errors() {
-        let (service_provider, ctx) = setup("stock_relocation_validation_errors").await;
-        whole_line("ok_sl", false).upsert(&ctx.connection).unwrap();
-        whole_line("held_sl", true).upsert(&ctx.connection).unwrap();
-        // Stock of an item restricted to location_type_b.
-        StockLineRow {
-            item_id: "restricted_location_type_item".to_string(),
-            ..whole_line("restricted_sl", false)
-        }
-        .upsert(&ctx.connection)
-        .unwrap();
+    async fn insert_stock_relocation_creates_empty_movement() {
+        let (service_provider, ctx) = setup("insert_stock_relocation_creates_empty_movement").await;
         let service = &service_provider.stock_relocation_service;
 
-        let insert = |line: InsertStockRelocationLine| {
-            service.insert_stock_relocation(
-                &ctx,
-                "store_a",
-                InsertStockRelocation { lines: vec![line] },
-            )
-        };
-
-        assert_eq!(
-            insert(line("held_sl")),
-            Err(InsertStockRelocationError::ValidateMovement(
-                ValidateMovementError::StockLineOnHold("held_sl".to_string())
-            ))
-        );
-        assert_eq!(
-            insert(InsertStockRelocationLine {
-                from_number_of_packs: 999.0,
-                ..line("ok_sl")
-            }),
-            Err(InsertStockRelocationError::ValidateMovement(
-                ValidateMovementError::NotEnoughStock("ok_sl".to_string())
-            ))
-        );
-        assert_eq!(
-            insert(InsertStockRelocationLine {
-                to_location_id: Some(mock_location_on_hold().id),
-                ..line("ok_sl")
-            }),
-            Err(InsertStockRelocationError::ValidateMovement(
-                ValidateMovementError::LocationOnHold(mock_location_on_hold().id)
-            ))
-        );
-        assert_eq!(
-            insert(InsertStockRelocationLine {
-                to_location_id: Some(mock_location_with_restricted_location_type_a().id),
-                ..line("restricted_sl")
-            }),
-            Err(InsertStockRelocationError::ValidateMovement(
-                ValidateMovementError::IncorrectLocationType
-            ))
-        );
-    }
-
-    #[actix_rt::test]
-    async fn stock_relocation_insert_does_not_move_stock() {
-        let (service_provider, ctx) = setup("stock_relocation_insert_does_not_move_stock").await;
-        whole_line("relocate_sl", false)
-            .upsert(&ctx.connection)
-            .unwrap();
-
-        let service = &service_provider.stock_relocation_service;
-        let rows = service
+        let first = service
             .insert_stock_relocation(
                 &ctx,
                 "store_a",
                 InsertStockRelocation {
-                    lines: vec![InsertStockRelocationLine {
-                        to_pack_size: 2.0,
-                        ..line("relocate_sl")
-                    }],
+                    id: uuid(),
+                    comment: Some("relocate to cold room".to_string()),
                 },
             )
             .unwrap();
 
-        assert_eq!(rows.len(), 1);
-        let row = &rows[0];
-        assert_eq!(row.status, StockRelocationStatus::New);
-        assert_eq!(row.finalised_datetime, None);
-        assert_eq!(row.to_stock_line_id, None);
-        assert_eq!(row.to_pack_size, Some(2.0));
+        assert_eq!(first.status, StockRelocationStatus::New);
+        assert_eq!(first.created_by, "user_account_a");
+        assert_eq!(first.finalised_datetime, None);
+        assert_eq!(first.comment.as_deref(), Some("relocate to cold room"));
+        assert_eq!(first.stock_movement_number, 1);
 
-        let source = StockLineRowRepository::new(&ctx.connection)
-            .find_one_by_id("relocate_sl")
-            .unwrap()
+        let second = service
+            .insert_stock_relocation(
+                &ctx,
+                "store_a",
+                InsertStockRelocation {
+                    id: uuid(),
+                    comment: None,
+                },
+            )
             .unwrap();
-        assert_eq!(source.available_number_of_packs, 10.0);
-        assert_eq!(source.location_id, None);
+        assert_eq!(second.stock_movement_number, 2);
+    }
+
+    #[actix_rt::test]
+    async fn insert_stock_relocation_rejects_duplicate_id() {
+        let (service_provider, ctx) = setup("insert_stock_relocation_rejects_duplicate_id").await;
+        let service = &service_provider.stock_relocation_service;
+
+        let id = uuid();
+        service
+            .insert_stock_relocation(
+                &ctx,
+                "store_a",
+                InsertStockRelocation {
+                    id: id.clone(),
+                    comment: None,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            service.insert_stock_relocation(
+                &ctx,
+                "store_a",
+                InsertStockRelocation { id, comment: None }
+            ),
+            Err(InsertStockRelocationError::StockRelocationAlreadyExists)
+        );
     }
 }

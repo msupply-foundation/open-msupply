@@ -9,22 +9,7 @@ pub use delete::{
     DeleteStockRelocationResponse,
 };
 pub use insert::{insert_stock_relocation, InsertInput, InsertResponse};
-pub use update::{
-    update_stock_relocation, update_stock_relocations, UpdateInput, UpdateResponse, UpdateResponses,
-};
-
-pub struct StockLineOnHold {
-    pub stock_line_id: String,
-}
-#[Object]
-impl StockLineOnHold {
-    pub async fn description(&self) -> &str {
-        "Stock line is on hold and cannot be moved."
-    }
-    pub async fn stock_line_id(&self) -> &str {
-        &self.stock_line_id
-    }
-}
+pub use update::{update_stock_relocation, UpdateInput, UpdateResponse};
 
 pub struct LocationOnHold {
     pub location_id: String,

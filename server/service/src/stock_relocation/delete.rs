@@ -1,6 +1,6 @@
 use repository::{
-    RepositoryError, StockRelocationRowRepository, StockRelocationStatus, StorageConnection,
-    TransactionError,
+    RepositoryError, StockRelocationLineRowRepository, StockRelocationRowRepository,
+    StockRelocationStatus, StorageConnection, TransactionError,
 };
 
 use crate::service_provider::ServiceContext;
@@ -48,6 +48,12 @@ fn delete_one(
     id: &str,
 ) -> Result<String, DeleteStockRelocationError> {
     validate(connection, store_id, id)?;
+
+    let line_repo = StockRelocationLineRowRepository::new(connection);
+    for line in line_repo.find_many_by_stock_relocation_id(id)? {
+        line_repo.delete(&line.id)?;
+    }
+
     StockRelocationRowRepository::new(connection).delete(id)?;
     Ok(id.to_string())
 }
@@ -82,17 +88,20 @@ impl From<RepositoryError> for DeleteStockRelocationError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, StockLineRow, StockRelocationRowRepository,
-        StockRelocationStatus, Upsert,
+        mock::{mock_location_1, MockDataInserts},
+        test_db::setup_all,
+        StockLineRow, StockRelocationLineRow, StockRelocationLineRowRepository,
+        StockRelocationRowRepository, StockRelocationStatus, Upsert,
     };
     use util::uuid::uuid;
 
     use crate::service_provider::{ServiceContext, ServiceProvider};
-    use crate::stock_relocation::insert::{InsertStockRelocation, InsertStockRelocationLine};
+    use crate::stock_relocation::insert::InsertStockRelocation;
+    use crate::stock_relocation::update::UpdateStockRelocation;
 
     use super::*;
 
-    fn whole_line(id: &str) -> StockLineRow {
+    fn stock_line(id: &str) -> StockLineRow {
         StockLineRow {
             id: id.to_string(),
             item_id: "item_a".to_string(),
@@ -104,6 +113,26 @@ mod test {
         }
     }
 
+    fn add_line(
+        ctx: &ServiceContext,
+        movement_id: &str,
+        stock_line_id: &str,
+        number_of_packs: f64,
+    ) -> String {
+        let id = uuid();
+        StockRelocationLineRow {
+            id: id.clone(),
+            stock_relocation_id: movement_id.to_string(),
+            stock_line_id: stock_line_id.to_string(),
+            number_of_packs,
+            destination_location_id: Some(mock_location_1().id),
+            ..Default::default()
+        }
+        .upsert(&ctx.connection)
+        .unwrap();
+        id
+    }
+
     async fn setup(test: &str) -> (ServiceProvider, ServiceContext) {
         let (_, _, connection_manager, _) = setup_all(test, MockDataInserts::all()).await;
         let service_provider = ServiceProvider::new(connection_manager);
@@ -113,81 +142,74 @@ mod test {
         (service_provider, context)
     }
 
-    async fn insert_relocation(
-        service_provider: &ServiceProvider,
-        ctx: &ServiceContext,
-        stock_line_id: &str,
-    ) -> String {
+    fn new_movement(service_provider: &ServiceProvider, ctx: &ServiceContext) -> String {
+        let id = uuid();
         service_provider
             .stock_relocation_service
             .insert_stock_relocation(
                 ctx,
                 "store_a",
                 InsertStockRelocation {
-                    lines: vec![InsertStockRelocationLine {
-                        id: uuid(),
-                        from_stock_line_id: stock_line_id.to_string(),
-                        from_number_of_packs: 10.0,
-                        to_location_id: None,
-                        to_pack_size: 1.0,
-                    }],
+                    id: id.clone(),
+                    comment: None,
                 },
             )
-            .unwrap()[0]
-            .id
-            .clone()
+            .unwrap();
+        id
     }
 
     #[actix_rt::test]
-    async fn delete_stock_relocation_success() {
-        let (service_provider, ctx) = setup("delete_stock_relocation_success").await;
-        whole_line("delete_sl").upsert(&ctx.connection).unwrap();
+    async fn stock_movement_delete_success() {
+        let (service_provider, ctx) = setup("stock_movement_delete_success").await;
+        stock_line("delete_sl").upsert(&ctx.connection).unwrap();
         let service = &service_provider.stock_relocation_service;
+        let repo = StockRelocationRowRepository::new(&ctx.connection);
+        let line_repo = StockRelocationLineRowRepository::new(&ctx.connection);
 
-        let id = insert_relocation(&service_provider, &ctx, "delete_sl").await;
-
+        let id = new_movement(&service_provider, &ctx);
         let deleted = service
             .delete_stock_relocation(&ctx, "store_a", DeleteStockRelocation { id: id.clone() })
             .unwrap();
         assert_eq!(deleted, id);
-        assert_eq!(
-            StockRelocationRowRepository::new(&ctx.connection)
-                .find_one_by_id(&id)
-                .unwrap(),
-            None
-        );
-    }
+        assert!(repo.find_one_by_id(&id).unwrap().is_none());
 
-    #[actix_rt::test]
-    async fn delete_stock_relocations_batch() {
-        let (service_provider, ctx) = setup("delete_stock_relocations_batch").await;
-        whole_line("batch_del_1").upsert(&ctx.connection).unwrap();
-        whole_line("batch_del_2").upsert(&ctx.connection).unwrap();
-        let service = &service_provider.stock_relocation_service;
-        let relocation_repo = StockRelocationRowRepository::new(&ctx.connection);
+        let delete_id = new_movement(&service_provider, &ctx);
+        let line_id = add_line(&ctx, &delete_id, "delete_sl", 4.0);
+        assert!(line_repo.find_one_by_id(&line_id).unwrap().is_some());
+        service
+            .delete_stock_relocation(
+                &ctx,
+                "store_a",
+                DeleteStockRelocation {
+                    id: delete_id.clone(),
+                },
+            )
+            .unwrap();
+        assert!(repo.find_one_by_id(&delete_id).unwrap().is_none());
+        assert!(line_repo.find_one_by_id(&line_id).unwrap().is_none());
 
-        let id1 = insert_relocation(&service_provider, &ctx, "batch_del_1").await;
-        let id2 = insert_relocation(&service_provider, &ctx, "batch_del_2").await;
-
-        let deleted = service
+        // Batch delete is all-or-nothing.
+        let id1 = new_movement(&service_provider, &ctx);
+        let id2 = new_movement(&service_provider, &ctx);
+        let batch_deleted = service
             .delete_stock_relocations(&ctx, "store_a", vec![id1.clone(), id2.clone()])
             .unwrap();
-        assert_eq!(deleted.len(), 2);
-        assert!(relocation_repo.find_one_by_id(&id1).unwrap().is_none());
-        assert!(relocation_repo.find_one_by_id(&id2).unwrap().is_none());
+        assert_eq!(batch_deleted.len(), 2);
+        assert!(repo.find_one_by_id(&id1).unwrap().is_none());
+        assert!(repo.find_one_by_id(&id2).unwrap().is_none());
 
-        whole_line("batch_del_3").upsert(&ctx.connection).unwrap();
-        let id3 = insert_relocation(&service_provider, &ctx, "batch_del_3").await;
-
-        let result = service.delete_stock_relocations(&ctx, "store_a", vec![id3.clone(), uuid()]);
-        assert!(result.is_err());
-        assert!(relocation_repo.find_one_by_id(&id3).unwrap().is_some());
+        // roll-back
+        let id3 = new_movement(&service_provider, &ctx);
+        assert!(service
+            .delete_stock_relocations(&ctx, "store_a", vec![id3.clone(), uuid()])
+            .is_err());
+        assert!(repo.find_one_by_id(&id3).unwrap().is_some());
     }
 
     #[actix_rt::test]
-    async fn delete_validation_errors() {
-        let (service_provider, ctx) = setup("delete_validation_errors").await;
-        whole_line("delete_sl").upsert(&ctx.connection).unwrap();
+    async fn stock_movement_delete_error() {
+        let (service_provider, ctx) = setup("stock_movement_delete_error").await;
+        stock_line("fin_sl").upsert(&ctx.connection).unwrap();
         let service = &service_provider.stock_relocation_service;
 
         assert_eq!(
@@ -195,8 +217,7 @@ mod test {
             Err(DeleteStockRelocationError::RelocationDoesNotExist)
         );
 
-        let id = insert_relocation(&service_provider, &ctx, "delete_sl").await;
-
+        let id = new_movement(&service_provider, &ctx);
         assert_eq!(
             service.delete_stock_relocation(
                 &ctx,
@@ -206,20 +227,25 @@ mod test {
             Err(DeleteStockRelocationError::NotThisStoreRelocation)
         );
 
+        let finalised_id = new_movement(&service_provider, &ctx);
+        add_line(&ctx, &finalised_id, "fin_sl", 10.0);
         service
             .update_stock_relocation(
                 &ctx,
                 "store_a",
-                crate::stock_relocation::update::UpdateStockRelocation {
-                    id: id.clone(),
+                UpdateStockRelocation {
+                    id: finalised_id.clone(),
+                    comment: None,
                     status: Some(StockRelocationStatus::Finalised),
-                    ..Default::default()
                 },
             )
             .unwrap();
-
         assert_eq!(
-            service.delete_stock_relocation(&ctx, "store_a", DeleteStockRelocation { id }),
+            service.delete_stock_relocation(
+                &ctx,
+                "store_a",
+                DeleteStockRelocation { id: finalised_id }
+            ),
             Err(DeleteStockRelocationError::RelocationAlreadyFinalised)
         );
     }
