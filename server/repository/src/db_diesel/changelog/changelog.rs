@@ -43,7 +43,7 @@ diesel::alias!(
 );
 
 diesel_string_enum! {
-    #[derive(Clone, Eq, Serialize, Deserialize, TS)]
+    #[derive(Clone, Eq, TS)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     pub enum RowActionType {
         #[default]
@@ -53,7 +53,7 @@ diesel_string_enum! {
 }
 
 diesel_string_enum! {
-    #[derive(Clone, Eq, Hash, Serialize, Deserialize, strum::EnumIter, TS)]
+    #[derive(Clone, Eq, Hash, strum::EnumIter, TS)]
     #[strum(serialize_all = "snake_case")]
     // The set of tables tracked by the changelog. How each one syncs is
     // defined separately in `sync_style.rs`.
@@ -162,6 +162,13 @@ diesel_string_enum! {
         VaccineCourseDose,
         VaccineCourseItem,
         VaccineCourseStoreConfig,
+        // Fallback for a table this site doesn't recognise (e.g. a newer central
+        // pushing a table added after this site's version). The raw name is preserved
+        // so the record lands in the sync buffer under its real table name and is simply
+        // skipped at integration (no translator matches) instead of failing the whole
+        // batch parse. Must remain the last variant — see `diesel_string_enum!`.
+        #[strum(default, transparent)]
+        Other(String),
     }
 }
 
@@ -669,5 +676,44 @@ mod print_query_tests {
     fn row_action_type_serializes_uppercase() {
         assert_eq!(RowActionType::Upsert.to_string(), "UPSERT");
         assert_eq!(RowActionType::Delete.to_string(), "DELETE");
+    }
+
+    /// The v7 wire format uses serde and must stay PascalCase (the variant identifier),
+    /// independent of the `strum` `snake_case` used for the DB column.
+    #[test]
+    fn changelog_table_name_serde_is_pascal_case() {
+        assert_eq!(
+            serde_json::to_string(&ChangelogTableName::StockLine).unwrap(),
+            "\"StockLine\""
+        );
+        assert_eq!(
+            serde_json::from_str::<ChangelogTableName>("\"StockLine\"").unwrap(),
+            ChangelogTableName::StockLine
+        );
+        // DB column stays snake_case via strum.
+        assert_eq!(ChangelogTableName::StockLine.to_string(), "stock_line");
+    }
+
+    /// Regression for issue #12361: a table name a newer central knows but this site
+    /// doesn't must deserialize to `Other(..)` instead of failing the whole batch parse,
+    /// and must round-trip back out unchanged so it reaches the sync buffer under its
+    /// real name.
+    #[test]
+    fn changelog_table_name_unknown_falls_back_to_other() {
+        // serde (v7 wire) — unknown PascalCase name is captured verbatim.
+        let parsed: ChangelogTableName = serde_json::from_str("\"CustomField\"").unwrap();
+        assert_eq!(parsed, ChangelogTableName::Other("CustomField".to_string()));
+        assert_eq!(
+            serde_json::to_string(&parsed).unwrap(),
+            "\"CustomField\"",
+            "Other round-trips back to its raw wire name"
+        );
+
+        // strum (DB column / sync buffer `to_string()`) — same fallback, inner string
+        // preserved thanks to `#[strum(transparent)]`.
+        use std::str::FromStr;
+        let from_db = ChangelogTableName::from_str("custom_field").unwrap();
+        assert_eq!(from_db, ChangelogTableName::Other("custom_field".to_string()));
+        assert_eq!(from_db.to_string(), "custom_field");
     }
 }

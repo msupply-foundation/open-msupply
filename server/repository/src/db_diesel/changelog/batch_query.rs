@@ -793,6 +793,12 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::AssetCatalogueType(r));
                 }
             }
+            // A table this server doesn't recognise — there is no row repository to
+            // fetch from. This shouldn't occur for a server's own changelog, but if it
+            // does we skip it (leaving the id unfetched) rather than panicking.
+            ChangelogTableName::Other(table_name) => {
+                log::warn!("Cannot fetch rows for unrecognised changelog table `{table_name}`");
+            }
         }
     }
 
