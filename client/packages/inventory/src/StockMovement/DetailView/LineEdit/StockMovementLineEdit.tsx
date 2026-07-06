@@ -122,10 +122,7 @@ export const StockMovementLineEdit = ({
       ...d,
       stockLine: selected,
       numberOfPacks: undefined,
-      destinationLocation:
-        destinationLocation?.id === selected?.sourceLocation?.id
-          ? null
-          : d.destinationLocation,
+      destinationLocation: null,
     }));
 
   const isValid =
