@@ -6,13 +6,10 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
-    vvm_status::vvm_status_row::VVMStatusRowRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowDelete, InvoiceLineStatus, InvoiceLineType, InvoiceRowRepository, InvoiceType,
-    ItemRowRepository,
-    LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository, Row,
-    StockLineRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineStatus,
+    InvoiceLineType, InvoiceRowRepository, InvoiceType, ItemRowRepository, Row, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -21,8 +18,8 @@ use util::sync_serde::{
 };
 
 use super::{
-    is_active_record_on_site, utils::clear_invalid_fk, ActiveRecordCheck, PullTranslateResult,
-    PushTranslateResult, SyncTranslation,
+    is_active_record_on_site, ActiveRecordCheck, FkField, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -179,6 +176,7 @@ impl SyncTranslation for InvoiceLineTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyTransLineRow {
@@ -300,43 +298,30 @@ impl SyncTranslation for InvoiceLineTranslation {
         // inbound shipment — omSupply should be generating the inbound with valid stock lines.
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign
         // key constraint violation, so we still need this for active-on-site records.
-        let stock_line_id = clear_invalid_fk(
+        let fk_check = fk_checker.with_table(connection, "invoice_line", &id);
+        let check_fk = fk_checker.with_table_required(connection, "invoice_line", &id);
+
+        let stock_line_id = fk_checker.clear_invalid(
             connection,
             "invoice_line",
             &id,
-            "stock_line_id",
             stock_line_id,
-            |c, id| StockLineRowRepository::new(c).check_exists_by_id(id),
+            "stock_line_id",
+            FkField::StockLine,
             is_record_active_on_site,
         )?;
-        let location_id = clear_invalid_fk(
+        let location_id = fk_checker.clear_invalid(
             connection,
             "invoice_line",
             &id,
-            "location_id",
             location_id,
-            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
+            "location_id",
+            FkField::Location,
             is_record_active_on_site,
         )?;
 
-        let item_variant_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "item_variant_id",
-            item_variant_id,
-            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let vvm_status_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "vvm_status_id",
-            vvm_status_id,
-            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let item_variant_id = fk_check(item_variant_id, "item_variant_id", FkField::ItemVariant)?;
+        let vvm_status_id = fk_check(vvm_status_id, "vvm_status_id", FkField::VvmStatus)?;
 
         // "0" is a sentinel value used by OG for "no option set" — treat it as None before
         // the FK validation so we don't write a system_log entry for the sentinel.
@@ -347,15 +332,8 @@ impl SyncTranslation for InvoiceLineTranslation {
                 Some(reason_option_id)
             }
         });
-        let reason_option_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "reason_option_id",
-            reason_option_id,
-            |c, id| ReasonOptionRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let reason_option_id =
+            fk_check(reason_option_id, "reason_option_id", FkField::ReasonOption)?;
 
         let TransLineRowOmsFields {
             campaign_id,
@@ -366,29 +344,13 @@ impl SyncTranslation for InvoiceLineTranslation {
             received_number_of_packs,
         } = oms_fields.unwrap_or_default();
 
-        let campaign_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "campaign_id",
-            campaign_id,
-            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let program_id = clear_invalid_fk(
-            connection,
-            "invoice_line",
-            &id,
-            "program_id",
-            program_id,
-            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let campaign_id = fk_check(campaign_id, "campaign_id", FkField::Campaign)?;
+        let program_id = fk_check(program_id, "program_id", FkField::Program)?;
 
         let result = InvoiceLineRow {
             id,
-            invoice_id,
-            item_id: item_id,
+            invoice_id: check_fk(invoice_id, "invoice_id", FkField::Invoice)?,
+            item_id: check_fk(item_id, "item_link_id", FkField::ItemLink)?,
             item_name,
             item_code,
             stock_line_id,
@@ -409,7 +371,9 @@ impl SyncTranslation for InvoiceLineTranslation {
             item_variant_id,
             linked_invoice_id,
             linked_invoice_line_id,
-            donor_id,
+            // donor/manufacturer are name ids resolved to name_link on upsert; name_link.id ==
+            // name.id by convention, so validating the name id against name_link is correct.
+            donor_id: fk_check(donor_id, "donor_link_id", FkField::NameLink)?,
             reason_option_id,
             vvm_status_id,
             campaign_id,
@@ -424,9 +388,13 @@ impl SyncTranslation for InvoiceLineTranslation {
                 _ => None,
             },
             manufacture_date,
-            purchase_order_line_id,
+            purchase_order_line_id: fk_check(
+                purchase_order_line_id,
+                "purchase_order_line_id",
+                FkField::PurchaseOrderLine,
+            )?,
             received_number_of_packs,
-            manufacturer_id,
+            manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
             legacy_goods_received_line_id: goods_received_lines_ID,
         };
 
@@ -625,8 +593,7 @@ mod tests {
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder, ItemRow,
-        KeyType, KeyValueStoreRow, ProgramRow,
-        SyncAction, SyncRecordData, RowOrDelete,
+        KeyType, KeyValueStoreRow, ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -637,7 +604,7 @@ mod tests {
 
         let (_, connection, _, _) = setup_all_with_data(
             "test_invoice_line_translation",
-            MockDataInserts::none()
+            MockDataInserts::all()
                 .units()
                 .items()
                 .names()
@@ -689,7 +656,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -781,7 +752,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "trans_line".to_string(),
             record_id: "TRANS_LINE_FK_INVALID".to_string(),
-            data: SyncRecordData(serde_json::from_str(r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
                 "ID": "TRANS_LINE_FK_INVALID",
                 "transaction_ID": "outbound_shipment_a",
                 "item_ID": "item_a",
@@ -810,17 +783,27 @@ mod tests {
                     "campaign_id": "does_not_exist_campaign",
                     "program_id": "does_not_exist_program"
                 }
-            }"#).unwrap()),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
 
         let PullTranslateResult::IntegrationOperations(ops) = result else {
-            panic!("{}", format!("expected IntegrationOperations, got {result:?}"));
+            panic!(
+                "{}",
+                format!("expected IntegrationOperations, got {result:?}")
+            );
         };
         let debug = format!("{ops:?}");
         for (field, _id) in [
@@ -840,9 +823,7 @@ mod tests {
         }
 
         // One system_log entry per invalid FK
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
@@ -946,7 +927,11 @@ mod tests {
         };
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
 
         let PullTranslateResult::IntegrationOperations(ops) = result else {

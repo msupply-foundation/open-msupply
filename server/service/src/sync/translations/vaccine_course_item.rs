@@ -1,15 +1,13 @@
 use repository::{
-    vaccine_course::vaccine_course_item_row::VaccineCourseItemRow,
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    vaccine_course::vaccine_course_item_row::VaccineCourseItemRow, ChangelogRow,
+    ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{item::ItemTranslation, vaccine_course::VaccineCourseTranslation};
 
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 /// FK column renamed during the entity-link abstraction. Central emits both the canonical
@@ -39,13 +37,21 @@ impl SyncTranslation for VaccineCourseItemTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let row = from_renamed_keys_str::<VaccineCourseItemRow>(
+        let mut row = from_renamed_keys_str::<VaccineCourseItemRow>(
             &sync_record.data.0.to_string(),
             RENAMED_KEYS,
         )?;
+
+        let check_fk = fk_checker.with_table_required(connection, "vaccine_course_item", &row.id);
+
+        row.vaccine_course_id =
+            check_fk(row.vaccine_course_id, "vaccine_course_id", FkField::VaccineCourse)?;
+        row.item_id = check_fk(row.item_id, "item_link_id", FkField::ItemLink)?;
+
         Ok(PullTranslateResult::upsert(row))
     }
 
@@ -93,7 +99,11 @@ impl SyncTranslation for VaccineCourseItemTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_vaccine_course_a, MockDataInserts},
+        test_db::setup_all,
+        VaccineCourseRow, VaccineCourseRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_vaccine_course_item_translation() {
@@ -102,14 +112,26 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_vaccine_course_item_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the vaccine_course parent the item's required FK points at.
+        VaccineCourseRowRepository::new(&connection)
+            .upsert_one(&VaccineCourseRow {
+                id: "test_vaccine_course".to_string(),
+                ..mock_vaccine_course_a()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

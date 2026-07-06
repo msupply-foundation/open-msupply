@@ -1,17 +1,16 @@
 use repository::{
-    vaccine_course::vaccine_course_row::VaccineCourseRow,
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    vaccine_course::vaccine_course_row::VaccineCourseRow, ChangelogRow, ChangelogTableName, Row,
+    StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
     demographic::DemographicTranslation, master_list::MasterListTranslation,
     program_requisition_settings::ProgramRequisitionSettingsTranslation,
-
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -36,12 +35,19 @@ impl SyncTranslation for VaccineCourseTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            VaccineCourseRow,
-        >(sync_record.data.0.clone())?))
+        let mut row = serde_json::from_value::<VaccineCourseRow>(sync_record.data.0.clone())?;
+
+        let fk_check = fk_checker.with_table(connection, "vaccine_course", &row.id);
+        let check_fk = fk_checker.with_table_required(connection, "vaccine_course", &row.id);
+
+        row.program_id = check_fk(row.program_id, "program_id", FkField::Program)?;
+        row.demographic_id = fk_check(row.demographic_id, "demographic_id", FkField::Demographic)?;
+
+        Ok(PullTranslateResult::upsert(row))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -79,14 +85,22 @@ impl SyncTranslation for VaccineCourseTranslation {
 
         let row = vaccine_course_row;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_program_a, MockDataInserts},
+        test_db::setup_all,
+        ProgramRow, ProgramRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_vaccine_course_translation() {
@@ -94,12 +108,24 @@ mod tests {
         let translator = VaccineCourseTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_vaccine_course_translation", MockDataInserts::none()).await;
+            setup_all("test_vaccine_course_translation", MockDataInserts::all()).await;
+
+        // Seed the program parent the course's required FK points at.
+        ProgramRowRepository::new(&connection)
+            .upsert_one(&ProgramRow {
+                id: "program_test".to_string(),
+                ..mock_program_a()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

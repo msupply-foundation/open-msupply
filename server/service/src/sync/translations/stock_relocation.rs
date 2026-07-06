@@ -1,6 +1,6 @@
 use crate::sync::translations::{
     location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
@@ -121,7 +121,8 @@ impl SyncTranslation for StockRelocationTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyReplenishmentRow {
@@ -146,6 +147,19 @@ impl SyncTranslation for StockRelocationTranslation {
         let finalised_datetime = oms_fields
             .finalised_datetime
             .or_else(|| date_finalised.and_then(|date| date.and_hms_opt(0, 0, 0)));
+
+        let check_required_fks =
+            fk_checker.with_table_required(connection, "stock_relocation", &id);
+        let check_fks = fk_checker.with_table(connection, "stock_relocation", &id);
+
+        // Required FKs (NOT NULL REFERENCES): error + system_log if the parent is missing.
+        let from_stock_line_id =
+            check_required_fks(from_stock_line_id, "from_stock_line_id", FkField::StockLine)?;
+        let store_id = check_required_fks(store_id, "store_id", FkField::Store)?;
+        // Optional FKs (nullable REFERENCES): cleared to None + system_log if the parent is missing.
+        let from_location_id = check_fks(from_location_id, "from_location_id", FkField::Location)?;
+        let to_stock_line_id = check_fks(to_stock_line_id, "to_stock_line_id", FkField::StockLine)?;
+        let to_location_id = check_fks(to_location_id, "to_location_id", FkField::Location)?;
 
         let result = StockRelocationRow {
             id,
@@ -238,7 +252,12 @@ impl SyncTranslation for StockRelocationTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_stock_line_a, MockDataInserts},
+        system_log_row::{SystemLogRowRepository, SystemLogType},
+        test_db::setup_all,
+        StockLineRow, StockLineRowRepository, SyncAction, SyncRecordData,
+    };
 
     #[actix_rt::test]
     async fn test_stock_relocation_translation() {
@@ -246,12 +265,27 @@ mod tests {
         let translator = StockRelocationTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_stock_relocation_translation", MockDataInserts::none()).await;
+            setup_all("test_stock_relocation_translation", MockDataInserts::all()).await;
+
+        // Seed the stock_line parents the records' required/optional FKs point at
+        // (these ids aren't part of the mock dataset).
+        for stock_line_id in ["stock_line_a", "stock_line_b", "stock_line_c"] {
+            StockLineRowRepository::new(&connection)
+                .upsert_one(&StockLineRow {
+                    id: stock_line_id.to_string(),
+                    ..mock_stock_line_a()
+                })
+                .unwrap();
+        }
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -265,5 +299,72 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_relocation_clears_invalid_optional_fks_and_writes_system_log() {
+        let translator = StockRelocationTranslation {};
+        let (_, connection, _, _) = setup_all(
+            "test_stock_relocation_clears_invalid_optional_fks_and_writes_system_log",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        // Seed the required stock_line parent (store_a is mock); the bogus optional FKs
+        // (does_not_exist_*) stay unseeded so they clear + log.
+        StockLineRowRepository::new(&connection)
+            .upsert_one(&StockLineRow {
+                id: "stock_line_a".to_string(),
+                ..mock_stock_line_a()
+            })
+            .unwrap();
+
+        let sync_record = SyncBufferRow {
+            table_name: "replenishment".to_string(),
+            record_id: "STOCK_RELOCATION_FK_INVALID".to_string(),
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
+                "ID": "STOCK_RELOCATION_FK_INVALID",
+                "store_ID": "store_a",
+                "user_ID_created_by": "user_account_a",
+                "from_item_line_ID": "stock_line_a",
+                "from_number_of_packs": 5,
+                "from_location_ID": "does_not_exist_location",
+                "to_item_line_ID": "does_not_exist_stock_line",
+                "to_location_ID": "does_not_exist_location_2",
+                "date_created": "2024-01-15",
+                "date_finalised": "0000-00-00",
+                "status": "sg"
+            }"#,
+                )
+                .unwrap(),
+            ),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
+            .unwrap();
+        let debug = format!("{result:?}");
+        for field in [
+            "from_location_id: None",
+            "to_stock_line_id: None",
+            "to_location_id: None",
+        ] {
+            assert!(debug.contains(field), "expected {field}; got:\n{debug}");
+        }
+
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
+        let fk_errors: Vec<_> = logs
+            .iter()
+            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
+            .collect();
+        assert_eq!(fk_errors.len(), 3, "got {fk_errors:?}");
     }
 }
