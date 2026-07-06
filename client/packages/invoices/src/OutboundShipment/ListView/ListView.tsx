@@ -42,6 +42,7 @@ export const OutboundShipmentListView = () => {
       { key: 'createdDatetime', condition: 'between' },
       { key: 'shippedDatetime', condition: 'between' },
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
+      { key: 'invoiceNumberOrStatus', condition: 'like' },
     ],
   });
   const queryParams = { ...filter, sortBy, first, offset };
@@ -76,7 +77,7 @@ export const OutboundShipmentListView = () => {
         size: 140,
         enableSorting: true,
         enableColumnFilter: true,
-        filterVariant: 'select',
+        filterVariant: 'multi-select',
         filterSelectOptions: statuses.map(status => ({
           value: status,
           label: getStatusTranslator(t)(status),

@@ -13,10 +13,13 @@ use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
-use async_graphql::{EmptyMutation, EmptySubscription, MergedSubscription, Object, Schema, Subscription};
+use async_graphql::{
+    EmptyMutation, EmptySubscription, MergedSubscription, Object, Schema, Subscription,
+};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
 
+use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_asset::property::AssetPropertiesQueries;
 use graphql_asset::{
     logs::{AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries},
@@ -43,7 +46,6 @@ use graphql_general::{
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
-use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_item_bundle::BundledItemMutations;
 use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -57,9 +59,11 @@ use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
+use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
+use graphql_stock_relocation::{StockRelocationMutations, StockRelocationQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 use graphql_sync_message::{SyncMessageMutations, SyncMessageQueries};
@@ -72,11 +76,11 @@ use futures::stream::Stream;
 use tokio::sync::broadcast;
 
 use service::auth_data::AuthData;
-use service::subscription::ResolvedSubscription;
 use service::boajs::utils::{ExecuteGraphQlError, ExecuteGraphql};
 use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
+use service::subscription::ResolvedSubscription;
 use service::sync::CentralServerConfig;
 
 pub type OperationalSchema = async_graphql::Schema<Queries, Mutations, Subscriptions>;
@@ -133,6 +137,10 @@ impl CentralServerMutationNode {
     async fn reports(&self) -> CentralReportMutations {
         CentralReportMutations
     }
+
+    async fn site(&self) -> CentralSiteMutations {
+        CentralSiteMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -145,6 +153,10 @@ impl CentralServerQueryNode {
 
     async fn sync_message(&self) -> SyncMessageQueries {
         SyncMessageQueries
+    }
+
+    async fn site(&self) -> CentralSiteQueries {
+        CentralSiteQueries
     }
 }
 
@@ -186,6 +198,7 @@ pub struct Queries(
     pub RequisitionQueries,
     pub ReportQueries,
     pub StockLineQueries,
+    pub StockRelocationQueries,
     pub RepackQueries,
     pub PrinterQueries,
     pub ProgramsQueries,
@@ -222,6 +235,7 @@ impl Queries {
             RequisitionQueries,
             ReportQueries,
             StockLineQueries,
+            StockRelocationQueries,
             RepackQueries,
             PrinterQueries,
             ProgramsQueries,
@@ -257,6 +271,7 @@ pub struct Mutations(
     pub RequisitionMutations,
     pub RequisitionLineMutations,
     pub StockLineMutations,
+    pub StockRelocationMutations,
     pub RepackMutations,
     pub PrinterMutations,
     pub GeneralMutations,
@@ -288,6 +303,7 @@ impl Mutations {
             RequisitionMutations,
             RequisitionLineMutations,
             StockLineMutations,
+            StockRelocationMutations,
             RepackMutations,
             PrinterMutations,
             GeneralMutations,
@@ -347,6 +363,17 @@ pub struct GraphSchemaData {
     pub subscription_broadcast: broadcast::Sender<ResolvedSubscription>,
 }
 
+fn with_request_logger<Q, M, S>(
+    builder: async_graphql::SchemaBuilder<Q, M, S>,
+    enabled: bool,
+) -> async_graphql::SchemaBuilder<Q, M, S> {
+    if enabled {
+        builder.extension(GraphQLRequestLogger)
+    } else {
+        builder
+    }
+}
+
 impl GraphqlSchema {
     pub fn new(data: GraphSchemaData, operational_status: OperationalStatus) -> GraphqlSchema {
         let GraphSchemaData {
@@ -361,19 +388,25 @@ impl GraphqlSchema {
         let cookie_suffix = auth.cookie_suffix.clone();
         let subscription_broadcast = Data::new(subscription_broadcast);
 
+        // Setting for logging graphQL
+        let log_graphql_queries = settings
+            .logging
+            .as_ref()
+            .map(|logging| logging.log_graphql_queries())
+            .unwrap_or(true);
+
         // Self requester schema is a copy of operational schema, used for reports
         // needs to be available as data in operational schema
-        let self_requester_schema =
+        let self_requester_builder =
             OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
                 .data(connection_manager.clone())
                 .data(loader_registry.clone())
                 .data(service_provider.clone())
                 .data(auth.clone())
                 .data(settings.clone())
-                .data(validated_plugins.clone())
-                .extension(GraphQLRequestLogger)
-                .finish();
-        // Self requester does not need loggers
+                .data(validated_plugins.clone());
+        let self_requester_schema =
+            with_request_logger(self_requester_builder, log_graphql_queries).finish();
 
         // Shared operational status across all schemas
         let operational_status_ref = Data::new(RwLock::new(operational_status.clone()));
@@ -390,26 +423,24 @@ impl GraphqlSchema {
                 .data(subscription_broadcast.clone())
                 // Add self requester to operational
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)))
-                .data(operational_status_ref.clone())
-                .extension(GraphQLRequestLogger);
+                .data(operational_status_ref.clone());
+        let operational_builder = with_request_logger(operational_builder, log_graphql_queries);
 
         // Initialisation schema should ony need service_provider
         let initialisation_builder = InitialisationSchema::build(
             InitialisationQueries,
             InitialisationMutations,
-            InitialisationSubscriptions::default(),
+            InitialisationSubscriptions,
         )
         .data(service_provider.clone())
         .data(subscription_broadcast.clone())
         .data(operational_status_ref.clone())
-        .data(subscription_broadcast.clone())
-        .extension(GraphQLRequestLogger);
+        .data(subscription_broadcast.clone());
 
         let migration_builder =
             MigrationSchema::build(MigrationQueries, EmptyMutation, EmptySubscription)
                 .data(service_provider.clone())
-                .data(operational_status_ref.clone())
-                .extension(GraphQLRequestLogger);
+                .data(operational_status_ref.clone());
 
         GraphqlSchema {
             operational: operational_builder.finish(),
@@ -502,16 +533,12 @@ async fn graphql_ws(
     };
 
     match &*schema.operational_status.read().await {
-        OperationalStatus::Operational => {
-            GraphQLSubscription::new(schema.operational.clone())
-                .on_connection_init(on_connection_init)
-                .start(&req, payload)
-        }
-        OperationalStatus::Initialising => {
-            GraphQLSubscription::new(schema.initialisation.clone())
-                .on_connection_init(on_connection_init)
-                .start(&req, payload)
-        }
+        OperationalStatus::Operational => GraphQLSubscription::new(schema.operational.clone())
+            .on_connection_init(on_connection_init)
+            .start(&req, payload),
+        OperationalStatus::Initialising => GraphQLSubscription::new(schema.initialisation.clone())
+            .on_connection_init(on_connection_init)
+            .start(&req, payload),
         OperationalStatus::MigratingDatabase => {
             //TODO: add migration status subscription and route to that instead of returning an error here
             Err(actix_web::error::ErrorServiceUnavailable(
@@ -538,7 +565,6 @@ async fn graphql_playground() -> HttpResponse {
 
 // TODO remove this and just do reqwest query to self
 /// Used for reports
-
 struct SelfRequestImpl {
     schema: OperationalSchema,
 }

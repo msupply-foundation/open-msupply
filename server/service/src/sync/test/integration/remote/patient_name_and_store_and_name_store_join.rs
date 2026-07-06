@@ -22,6 +22,8 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             name: "facility".to_string(),
             is_customer: true,
             is_supplier: true,
+            margin: Some(0.0),
+            freight_factor: Some(0.0),
             ..Default::default()
         };
         let facility_name_json = json!({
@@ -37,7 +39,6 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             name_id: facility_name_row.id.clone(),
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
-            logo: None,
             store_mode: StoreMode::Dispensary,
             created_date: NaiveDate::from_ymd_opt(2021, 1, 1),
             is_disabled: false,
@@ -59,6 +60,9 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             is_supplier: false,
             gender: Some(GenderType::Male),
             supplying_store_id: Some(store_row.id.clone()),
+            // 4D defaults these float columns to 0 when the upsert omits them.
+            margin: Some(0.0),
+            freight_factor: Some(0.0),
             ..Default::default()
         };
         let patient_name_json = json!({

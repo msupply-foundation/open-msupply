@@ -155,7 +155,9 @@ each caller).
 
 ## 6 `run tests`
 
-Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test  integration_sync  --features integration_test --package service`
+Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo nextest run integration_sync --features integration_test --package service`
+
+These tests share a single 4D mSupply server and several process-global statics, so they must run serially. The `sync-integration` test-group in `server/.config/nextest.toml` enforces this — no `--test-threads=1` flag needed.
 
 If you've set configurations in rust analyzer, can use inlay hint play and debug buttons in:
 
@@ -251,5 +253,5 @@ Transfer integration test follow this pattern:
 Full test including integration can be run with:
 
 ```bash
-SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test  --features integration_test && SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test --features integration_test,postgres
+SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo nextest run --features integration_test && SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo nextest run --features integration_test,postgres
 ```

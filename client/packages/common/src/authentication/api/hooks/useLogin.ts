@@ -135,8 +135,20 @@ export const useLogin = () => {
     // signal for legacy reasons.
     const { token, error } = await mutateAsync({ username, password });
     const isLoggedIn = !!token;
+    if (!isLoggedIn) return { token, error };
 
-    const userDetails = await getUserDetails();
+    let userDetails;
+    try {
+      userDetails = await getUserDetails();
+    } catch (e) {
+      return {
+        token: '',
+        error: {
+          message: 'ConnectionError',
+          detail: (e as Error)?.message,
+        },
+      };
+    }
     queryClient.setQueryData(api.keys.me(), userDetails);
     const store = await getStore(userDetails, mostRecentCredentials);
     const permissions = await getUserPermissions(store);

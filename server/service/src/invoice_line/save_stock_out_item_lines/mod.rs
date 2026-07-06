@@ -40,6 +40,8 @@ pub struct SaveStockOutInvoiceLine {
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub received_number_of_packs: Option<f64>,
+    pub reason_option_id: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -329,6 +331,8 @@ mod test {
                             campaign_id: None,
                             program_id: None,
                             vvm_status_id: None,
+                            received_number_of_packs: None,
+                            reason_option_id: None,
                         }],
                         ..Default::default()
                     }

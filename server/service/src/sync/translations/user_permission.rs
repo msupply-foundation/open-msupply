@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use repository::{
     PermissionType, StorageConnection, SyncBufferRow, UserPermissionRow, UserPermissionRowDelete,
+
 };
 
 use crate::sync::translations::{master_list::MasterListTranslation, store::StoreTranslation};
@@ -61,7 +62,7 @@ impl SyncTranslation for UserPermissionTranslation {
             store_id,
             permission,
             context,
-        } = serde_json::from_str::<LegacyUserPermissionTable>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let user_permission = match permission {
             LegacyPermission::DocumentQuery => PermissionType::DocumentQuery,

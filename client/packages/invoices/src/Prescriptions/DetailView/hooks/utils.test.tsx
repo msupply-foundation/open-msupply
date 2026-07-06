@@ -8,7 +8,7 @@ import { FnUtils } from '@common/utils';
 import { generateLabel, groupItems } from './utils';
 import {
   PrescriptionLineFragment,
-  PrescriptionRowFragment,
+  PrescriptionFragment,
   WarningFragment,
 } from '../../api';
 
@@ -113,8 +113,8 @@ const createTestLine = ({
     },
   });
 
-const createTestPrescription = (): PrescriptionRowFragment => {
-  // this generates a line to satisfy the PrescriptionRowFragment type - not used for the labels
+const createTestPrescription = (): PrescriptionFragment => {
+  // this generates a line to satisfy the PrescriptionFragment type - not used for the labels
   const prescriptionLine = createTestLine({
     id: 'test',
     itemId: 'test',
@@ -133,6 +133,8 @@ const createTestPrescription = (): PrescriptionRowFragment => {
     type: InvoiceNodeType.Prescription,
     currencyRate: 0,
     status: InvoiceNodeStatus.Picked,
+    isCancellation: false,
+    store: { __typename: 'StoreNode', id: 'store-id' },
     patientId: '',
     pricing: {
       __typename: 'PricingNode',
@@ -386,6 +388,69 @@ describe('generate labels from prescribed items', () => {
 
     expect(generated).toEqual(expected);
   });
+  it('will not print a label for a placeholder line when placeholder labels are disabled', () => {
+    const placeholder = createTestLine({
+      id: '1',
+      itemId: '1',
+      itemName: 'Ibuprofen',
+      note: 'first item note',
+      numberOfPacks: 0,
+      packSize: 100,
+    });
+    const two = createTestLine({
+      id: '2',
+      itemId: '2',
+      itemName: 'Amoxicillin',
+      note: 'second item note',
+      numberOfPacks: 3,
+      packSize: 100,
+    });
+
+    const draftPrescriptionLines = [placeholder, two];
+    const generate = groupItems(draftPrescriptionLines, true);
+
+    const labelTwo = {
+      id: '2',
+      sum: 300,
+      itemDirections: 'second item note',
+      unitName: 'tablet',
+      name: 'Amoxicillin',
+      warning: '',
+    };
+
+    const expected = [labelTwo];
+    const generated = generate;
+
+    expect(generated).toEqual(expected);
+  });
+
+  it('will print a label for a placeholder line by default', () => {
+    const placeholder = createTestLine({
+      id: '1',
+      itemId: '1',
+      itemName: 'Ibuprofen',
+      note: 'first item note',
+      numberOfPacks: 0,
+      packSize: 100,
+    });
+
+    const draftPrescriptionLines = [placeholder];
+    const generated = groupItems(draftPrescriptionLines);
+
+    const expected = [
+      {
+        id: '1',
+        sum: 0,
+        itemDirections: 'first item note',
+        unitName: 'tablet',
+        name: 'Ibuprofen',
+        warning: '',
+      },
+    ];
+
+    expect(generated).toEqual(expected);
+  });
+
   /* **********************************************************
      input lines:
     [{

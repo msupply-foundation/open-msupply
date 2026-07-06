@@ -1,9 +1,12 @@
+import { useEffect } from 'react';
 import {
+  AuthError,
   LIST_KEY,
   useNotification,
   useQuery,
   useTranslation,
   useAuthContext,
+  useLocalStorage,
   UserPermission,
 } from '@openmsupply-client/common';
 import { TEMPERATURE_NOTIFICATION } from './keys';
@@ -24,27 +27,20 @@ export const useTemperatureNotificationList = (queryParams?: ListParams) => {
   const { temperatureNotificationApi, storeId } =
     useTemperatureNotificationGraphQL();
   const { userHasPermission } = useAuthContext();
+  const [authError] = useLocalStorage('/error/auth');
 
   const canViewSensorDetails = userHasPermission(UserPermission.SensorQuery);
   const queryKey = [TEMPERATURE_NOTIFICATION, storeId, LIST_KEY, queryParams];
 
   const queryFn = async () => {
-    try {
-      const { first, offset } = queryParams ?? {};
+    const { first, offset } = queryParams ?? {};
 
-      const result = await temperatureNotificationApi.temperatureNotifications({
-        storeId,
-        page: { offset, first },
-      });
+    const result = await temperatureNotificationApi.temperatureNotifications({
+      storeId,
+      page: { offset, first },
+    });
 
-      return result?.temperatureNotifications;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      warning(`${t('error.fetch-notifications')}: ${errorMessage}`)();
-
-      throw error;
-    }
+    return result?.temperatureNotifications;
   };
 
   const query = useQuery({
@@ -55,6 +51,24 @@ export const useTemperatureNotificationList = (queryParams?: ListParams) => {
     staleTime: STALE_TIME_MS,
     enabled: !!storeId && canViewSensorDetails,
   });
+
+  const { isError, error } = query;
+
+  useEffect(() => {
+    // Notify on the error state rather than inside queryFn, so the toast is
+    // shown once per failure instead of once per (retried) request.
+    // Skip when the user is no longer authenticated (e.g. logged out due to
+    // inactivity) - a failed background poll isn't actionable for them. A
+    // stale token may still be present, so gate on the auth error instead.
+    const isLoggedOut =
+      authError === AuthError.Unauthenticated ||
+      authError === AuthError.Timeout;
+    if (!isError || isLoggedOut) return;
+
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    warning(`${t('error.fetch-notifications')}: ${errorMessage}`)();
+  }, [isError, error, authError, warning, t]);
 
   return query;
 };

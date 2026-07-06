@@ -5,12 +5,13 @@ use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use http2::header::SET_COOKIE;
 use service::{
     auth_data::AuthData,
-    login::{LoginError, LoginFailure, LoginInput, LoginService, LoginSuccess},
+    login::{
+        LoginError, LoginFailure, LoginInput, LoginService, LoginSuccess,
+        MIN_ERR_RESPONSE_TIME_SEC,
+    },
     session_store::SESSION_LIFETIME,
+    sync::CentralServerConfig,
 };
-
-// Fixed login response time in case of an error (see service)
-const MIN_ERR_RESPONSE_TIME_SEC: u64 = 6;
 
 pub struct AuthToken {
     /// Opaque session token (issued by `SessionStore::create`).
@@ -63,14 +64,6 @@ impl InvalidCredentials {
     }
 }
 
-pub struct MissingCredentials;
-#[Object]
-impl MissingCredentials {
-    pub async fn description(&self) -> &str {
-        "Missing credentials"
-    }
-}
-
 pub struct CentralSyncRequired;
 #[Object]
 impl CentralSyncRequired {
@@ -118,12 +111,18 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
     let auth_data = ctx.get_auth_data();
-    let sync_settings = service_provider
-        .settings
-        .sync_settings(&service_context)?
-        .ok_or(StandardGraphqlError::InternalError(
-            "Sync settings not available".to_string(),
-        ))?;
+
+    let central_server_url = if CentralServerConfig::is_standalone_central() {
+        String::new()
+    } else {
+        service_provider
+            .settings
+            .sync_settings(&service_context)?
+            .ok_or(StandardGraphqlError::InternalError(
+                "Sync settings not available".to_string(),
+            ))?
+            .url
+    };
 
     let success = match LoginService::login(
         service_provider,
@@ -131,7 +130,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
         LoginInput {
             username: username.to_string(),
             password: password.to_string(),
-            central_server_url: sync_settings.url.clone(),
+            central_server_url,
         },
         MIN_ERR_RESPONSE_TIME_SEC,
     )
@@ -172,14 +171,14 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
         }
     };
 
-    let LoginSuccess { user_id, password } = success;
+    let LoginSuccess { user_id } = success;
     let token = auth_data
         .session_store
         .write()
         .map_err(|e| {
             StandardGraphqlError::InternalError(format!("Session store lock poisoned: {e}"))
         })?
-        .create(&user_id, &password);
+        .create(&user_id);
 
     let expiry_date = (Utc::now() + SESSION_LIFETIME).timestamp() as usize;
     set_session_cookie(ctx, &token, auth_data);

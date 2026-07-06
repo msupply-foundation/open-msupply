@@ -92,6 +92,10 @@ query isCentralServer {
   isCentralServer
 }
 
+query isCentralStandalone {
+  isCentralStandalone
+}
+
 query logout {
   logout {
     ... on Logout {
@@ -114,43 +118,6 @@ query permissions($storeId: String!) {
         totalCount
       }
     }
-  }
-}
-
-fragment UpdateUser on UpdateUserNode {
-  lastSuccessfulSync
-}
-
-mutation updateUser {
-  updateUser {
-    __typename
-    ... on UpdateUserNode {
-      ...UpdateUser
-    }
-    ... on UpdateUserError {
-      __typename
-      error {
-        ... on InvalidCredentials {
-          __typename
-          description
-        }
-        ... on ConnectionError {
-          __typename
-          description
-        }
-        ... on MissingCredentials {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-
-query lastSuccessfulUserSync {
-  lastSuccessfulUserSync {
-    __typename
-    ...UpdateUser
   }
 }
 
@@ -194,6 +161,7 @@ query preferences($storeId: String!) {
     invoiceStatusOptions
     itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions
+    doNotPrintPlaceholderLineLabels
     isGaps
     globalTableConfigs
     backdating {

@@ -88,6 +88,10 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
       const result = await sdk.isCentralServer();
       return result.isCentralServer;
     },
+    isCentralStandalone: async () => {
+      const result = await sdk.isCentralStandalone();
+      return result.isCentralStandalone;
+    },
     // Revokes the server-side session and clears the HttpOnly cookie. Best-effort: if the call
     // fails (network down, session already expired, etc.) we still proceed with client-side
     // cleanup — the goal is "ensure no live session", not "confirm with the server".
@@ -107,6 +111,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         console.error(e);
         LocalStorage.setItem('/error/auth', AuthError.ServerError);
         LocalStorage.setItem('/error/server', (e as Error).message);
+        throw e;
       }
     },
     permissions: async ({ storeId }: { storeId: string }) => {
@@ -117,15 +122,6 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         console.error(e);
         return { nodes: [] };
       }
-    },
-    lastSuccessfulUserSync: async () => {
-      return (await sdk.lastSuccessfulUserSync()).lastSuccessfulUserSync
-        .lastSuccessfulSync;
-    },
-    updateUser: async () => {
-      const result = await sdk.updateUser();
-
-      return result.updateUser;
     },
   },
 });

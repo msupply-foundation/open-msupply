@@ -32,6 +32,7 @@ import {
   Tabs,
 } from './StocktakeLineEditTabs';
 import { StocktakeLineFragment, useStocktakeOld } from '../../../api';
+import { useStocktakeLineErrorContext } from '../../../context';
 import {
   LocationTable,
   BatchTable,
@@ -39,6 +40,7 @@ import {
 } from './StocktakeLineEditTables';
 import { StocktakeLineEditModal } from './StocktakeLineEditModal';
 import { DraftStocktakeLine } from './utils';
+import { StocktakeLineEditErrorBanner } from './StocktakeLineEditErrorBanner';
 
 // A stocktake line auto-seeded by the server (e.g. all-items stocktake
 // creates one row for an item with no stock) — nothing filled in yet.
@@ -75,8 +77,22 @@ export const StocktakeLineEdit = ({
 
   const { isDisabled, items, totalLineCount, lines } =
     useStocktakeOld.line.rows();
-  const { draftLines, update, addLine, isSaving, save, nextItem } =
-    useStocktakeLineEdit(currentItem, items, lines);
+  const {
+    draftLines,
+    update: updateLine,
+    addLine,
+    isSaving,
+    save,
+    nextItem,
+  } = useStocktakeLineEdit(currentItem, items, lines);
+  const { unsetError } = useStocktakeLineErrorContext();
+  const update: typeof updateLine = useCallback(
+    patch => {
+      unsetError(patch.id);
+      updateLine(patch);
+    },
+    [unsetError, updateLine]
+  );
   const t = useTranslation();
   const { error } = useNotification();
   const {
@@ -299,54 +315,48 @@ export const StocktakeLineEdit = ({
       hasNext={!!nextItem || hasMorePages}
       isValid={hasValidBatches && !isSaving}
     >
-      {(() => {
-        if (isSaving) {
-          return (
-            <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
-              <BasicSpinner messageKey="saving" />
-            </Box>
-          );
-        }
-
-        return (
-          <>
-            <StocktakeLineEditForm
-              item={currentItem}
-              items={items}
-              onChangeItem={setCurrentItem}
-              mode={mode}
-              hasInvalidLocationLines={hasInvalidLocationLines ?? false}
-            />
-            {!currentItem ? (
-              <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
-            ) : null}
-            {!!currentItem ? (
-              <>
-                <Divider margin={5} />
-                {tableContent}
-                <ItemVariantSelectPanel
-                  itemId={currentItem.id}
-                  open={variantAction !== null}
-                  onClose={() => setVariantAction(null)}
-                  onSelect={applyVariant}
-                  onManual={() => {
-                    // Auto-pop with a server-seeded placeholder already
-                    // present (all-items stocktake): leave it for the
-                    // user to fill in. Otherwise add a blank row (Add
-                    // Batch, or auto-pop with no placeholder yet).
-                    const hasPlaceholder =
-                      draftLines.some(isFreshPlaceholder);
-                    if (variantAction === 'add' || !hasPlaceholder) {
-                      addLine();
-                    }
-                    setVariantAction(null);
-                  }}
-                />
-              </>
-            ) : null}
-          </>
-        );
-      })()}
+      {isSaving ? (
+        <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
+          <BasicSpinner messageKey="saving" />
+        </Box>
+      ) : (
+        <>
+          <StocktakeLineEditForm
+            item={currentItem}
+            items={items}
+            onChangeItem={setCurrentItem}
+            mode={mode}
+            hasInvalidLocationLines={hasInvalidLocationLines ?? false}
+          />
+          {!currentItem ? (
+            <Box sx={{ height: isMediumScreen ? 400 : 500 }} />
+          ) : null}
+          {!!currentItem ? (
+            <>
+              <StocktakeLineEditErrorBanner draftLines={draftLines} />
+              <Divider margin={5} />
+              {tableContent}
+              <ItemVariantSelectPanel
+                itemId={currentItem.id}
+                open={variantAction !== null}
+                onClose={() => setVariantAction(null)}
+                onSelect={applyVariant}
+                onManual={() => {
+                  // Auto-pop with a server-seeded placeholder already
+                  // present (all-items stocktake): leave it for the
+                  // user to fill in. Otherwise add a blank row (Add
+                  // Batch, or auto-pop with no placeholder yet).
+                  const hasPlaceholder = draftLines.some(isFreshPlaceholder);
+                  if (variantAction === 'add' || !hasPlaceholder) {
+                    addLine();
+                  }
+                  setVariantAction(null);
+                }}
+              />
+            </>
+          ) : null}
+        </>
+      )}
     </StocktakeLineEditModal>
   );
 };

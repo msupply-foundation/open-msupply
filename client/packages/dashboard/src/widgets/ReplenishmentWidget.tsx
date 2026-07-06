@@ -213,7 +213,7 @@ export const ReplenishmentWidget = ({
       panelContext={internalOrdersPanelContext}
       stats={[
         {
-          label: t('label.new'),
+          label: t('label.draft'),
           value: formatNumber.round(internalOrder.stats?.count),
           link: RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.InternalOrder)

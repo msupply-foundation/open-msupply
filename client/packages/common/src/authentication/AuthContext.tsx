@@ -57,7 +57,7 @@ export const clearAuthState = () => LocalStorage.removeItem('/auth/state');
  *   - [[useLogin]] — sign in
  *   - [[useLogout]] — sign out (server + local)
  *   - [[useSelectStore]] — change active store
- *   - [[useUpdateUserInfo]] — refresh user metadata after sync
+ *   - [[useRefreshUserCookie]] — refresh user metadata after sync
  */
 export const useAuthContext = () => {
   const [authState] = useLocalStorage('/auth/state', EMPTY_STATE);

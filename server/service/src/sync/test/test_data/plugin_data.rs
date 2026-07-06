@@ -1,7 +1,7 @@
 use crate::sync::test::TestSyncOutgoingRecord;
 
 use super::TestSyncIncomingRecord;
-use repository::PluginDataRow;
+use repository::{PluginDataRow, PluginDataRowDelete};
 use serde_json::json;
 
 const TABLE_NAME: &str = "plugin_data";
@@ -34,6 +34,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         TABLE_NAME,
         PLUGIN_DATA,
         plugin_data(),
+    )]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
+        PLUGIN_DATA.0,
+        PluginDataRowDelete(PLUGIN_DATA.0.to_string()),
     )]
 }
 

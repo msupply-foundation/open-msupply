@@ -53,7 +53,9 @@ const hasPermissionException = (errors: ResponseError[]) =>
 const handleResponseError = (errors: ResponseError[]) => {
   if (hasError(errors, AuthError.Unauthenticated)) {
     LocalStorage.setItem('/error/auth', AuthError.Unauthenticated);
-    return;
+    // Throw instead of resolving with emptyData (`{}`), so the query errors
+    // cleanly rather than letting undefined cascade into components and crash.
+    throw new Error(AuthError.Unauthenticated);
   }
 
   if (hasError(errors, AuthError.PermissionDenied)) {

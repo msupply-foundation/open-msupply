@@ -2,6 +2,7 @@ import React from 'react';
 import {
   MRT_Row,
   MRT_RowData,
+  MRT_TableInstance,
   MRT_TableOptions,
   useMaterialReactTable,
 } from 'material-react-table';
@@ -23,6 +24,7 @@ import {
   useColumnGrouping,
 } from './tableState';
 import { clearSavedState, getSavedState } from './tableState/utils';
+import { SettingsMenu } from './components/SettingsMenu';
 import { DataError, NothingHere } from '@common/components';
 import {
   useIsCentralServerApi,
@@ -50,6 +52,16 @@ export interface BaseTableConfig<T extends MRT_RowData> extends Omit<
     onToggle?: (isGrouped: boolean) => void;
   };
   columns: ColumnDef<T>[];
+  /** Renders a custom bottom toolbar. Receives the settings menu render fn so
+   * tables without a top toolbar (e.g. simple modal tables) can still show the
+   * table settings menu (reset state, save as global default for central
+   * server admins). */
+  bottomToolbar?: (params: {
+    table: MRT_TableInstance<T>;
+    renderSettingsMenu: (opts?: {
+      showDensityToggle?: boolean;
+    }) => React.ReactNode;
+  }) => React.ReactNode;
   /** Keep sorting and filtering in local component state instead of syncing to URL query params. Use for tables in modals, popovers, or anywhere the table state shouldn't affect the URL. */
   localStateOnly?: boolean;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
@@ -67,6 +79,7 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
   getIsRestrictedRow,
   columns: omsColumns,
   data,
+  bottomToolbar,
   grouping: groupingInput,
   enableColumnResizing = true,
   manualFiltering = false,
@@ -163,14 +176,27 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     ? () => saveGlobalTableConfig(tableId, getSavedState(tableId) ?? {})
     : undefined;
 
+  const renderSettingsMenu = (
+    table: MRT_TableInstance<T>,
+    opts?: { showDensityToggle?: boolean }
+  ) => (
+    <SettingsMenu
+      table={table}
+      tableId={tableId}
+      density={density}
+      columnSizing={columnSizing}
+      columnVisibility={columnVisibility}
+      columnPinning={columnPinning}
+      columnOrder={columnOrder}
+      resetTableState={resetTableState}
+      onSaveAsGlobalDefault={onSaveAsGlobalDefault}
+      globalDefaults={resetDefaults}
+      showDensityToggle={opts?.showDensityToggle}
+    />
+  );
+
   const displayOptions = useTableDisplayOptions({
-    tableId,
-    density,
-    columnSizing,
-    columnVisibility,
-    columnPinning,
-    columnOrder,
-    resetTableState,
+    renderSettingsMenu,
     hasColumnFilters,
     onRowClick,
     isGrouped: !!grouping.state.length,
@@ -185,8 +211,6 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
     getIsRestrictedRow,
     muiTableBodyRowProps,
     isMobile,
-    onSaveAsGlobalDefault,
-    globalDefaults: resetDefaults,
   });
 
   const table = useMaterialReactTable<T>({
@@ -217,6 +241,13 @@ export const useBaseMaterialTable = <T extends MRT_RowData>({
 
     // Disable bottom footer - use OMS custom action footer instead
     enableBottomToolbar: false,
+    renderBottomToolbar: bottomToolbar
+      ? ({ table }) =>
+          bottomToolbar({
+            table,
+            renderSettingsMenu: opts => renderSettingsMenu(table, opts),
+          })
+      : undefined,
 
     // Grouping options
     enableGrouping: true,

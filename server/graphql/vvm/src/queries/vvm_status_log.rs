@@ -16,6 +16,7 @@ pub fn get_vvm_status_log_by_stock_line(
         &ResourceAccessRequest {
             resource: Resource::QueryVvmStatus,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

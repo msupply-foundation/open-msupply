@@ -1,6 +1,5 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, VaccinationRow,
-    VaccinationRowRepository,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow, VaccinationRow,
 };
 
 use crate::sync::translations::{
@@ -10,8 +9,18 @@ use crate::sync::translations::{
 };
 
 use super::{
+    utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
+
+/// FK columns renamed during the name_link / entity-link abstraction. Central emits both the
+/// canonical `*_id` and the legacy `*_link_id` alias and accepts either, for cross-version
+/// sync. See `RenamedKeys`. Each pair is `(canonical, legacy_alias)`.
+const RENAMED_KEYS: RenamedKeys = &[
+    ("patient_id", "patient_link_id"),
+    ("item_id", "item_link_id"),
+    ("facility_name_id", "facility_name_link_id"),
+];
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -42,9 +51,11 @@ impl SyncTranslation for VaccinationTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            VaccinationRow,
-        >(&sync_record.data)?))
+        let row = from_renamed_keys_str::<VaccinationRow>(
+            &sync_record.data.0.to_string(),
+            RENAMED_KEYS,
+        )?;
+        Ok(PullTranslateResult::upsert(row))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -69,20 +80,20 @@ impl SyncTranslation for VaccinationTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = VaccinationRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Vaccination row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::Vaccination(vaccination_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = vaccination_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(row)?,
+            to_renamed_keys_value(&row, RENAMED_KEYS)?,
         ))
     }
 }
@@ -110,27 +121,39 @@ mod tests {
         }
     }
 
-    /// `try_translate_to_upsert_sync_record` serializes `VaccinationRow` directly.
-    /// The JSON wire format must keep the legacy `*_link_id` field names so older
-    /// remote clients can still deserialize records pulled from an upgraded central.
+    /// Central serialises `VaccinationRow` for the v6 wire. After the name_link / entity-link
+    /// rename the canonical fields are the bare `*_id` names; central must still emit the
+    /// legacy `*_link_id` aliases and accept either name on the way back in (see `RenamedKeys`).
     #[test]
-    fn test_push_wire_format_uses_legacy_field_names() {
+    fn test_wire_format_keeps_both_link_id_names() {
         let row = VaccinationRow {
             patient_id: "test_patient".to_string(),
             item_id: Some("test_item".to_string()),
             facility_name_id: Some("test_facility".to_string()),
             ..Default::default()
         };
-        let json = serde_json::to_value(&row).unwrap();
+
+        let json = to_renamed_keys_value(&row, RENAMED_KEYS).unwrap();
+        assert_eq!(json["patient_id"], "test_patient");
         assert_eq!(json["patient_link_id"], "test_patient");
+        assert_eq!(json["item_id"], "test_item");
         assert_eq!(json["item_link_id"], "test_item");
+        assert_eq!(json["facility_name_id"], "test_facility");
         assert_eq!(json["facility_name_link_id"], "test_facility");
-        for renamed_field in ["patient_id", "item_id", "facility_name_id"] {
-            assert!(
-                json.get(renamed_field).is_none(),
-                "JSON should not contain `{}`; expected legacy `*_link_id` name",
-                renamed_field
-            );
+
+        // Records carrying both keys round-trip.
+        let parsed: VaccinationRow =
+            from_renamed_keys_str(&json.to_string(), RENAMED_KEYS).unwrap();
+        assert_eq!(parsed, row);
+
+        // A <= v2.16 remote sends only the legacy `*_link_id` names; they are promoted.
+        let mut legacy_only = json.clone();
+        let object = legacy_only.as_object_mut().unwrap();
+        for (canonical_key, _) in RENAMED_KEYS {
+            object.remove(*canonical_key);
         }
+        let parsed: VaccinationRow =
+            from_renamed_keys_str(&legacy_only.to_string(), RENAMED_KEYS).unwrap();
+        assert_eq!(parsed, row);
     }
 }

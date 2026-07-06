@@ -120,6 +120,7 @@ export const useGetColumnTypeDefaults = () => {
               <NumericTextDisplay
                 value={typeof value === 'number' ? value : undefined}
                 defaultValue={UNDEFINED_STRING_VALUE}
+                decimalLimit={column.decimalLimit}
               />
             );
           },

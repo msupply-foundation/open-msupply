@@ -4,7 +4,7 @@ use repository::{
     ActivityLogType, RepositoryError,
 };
 
-use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
+use crate::{activity_log::activity_log_entry_with_diff, service_provider::ServiceContext};
 
 use super::UpsertItemVariantWithPackaging;
 
@@ -49,70 +49,20 @@ pub fn generate_logs(
     existing_variant: Option<ItemVariant>,
     updated_variant: ItemVariant,
 ) -> Result<(), RepositoryError> {
-    if let Some(existing_variant) = existing_variant {
-        let existing_item_variant = existing_variant.item_variant_row;
-        let updated_item_variant = updated_variant.item_variant_row;
+    let existing = existing_variant.map(|v| v.item_variant_row);
+    let updated = updated_variant.item_variant_row;
 
-        if existing_item_variant.name != updated_item_variant.name {
-            activity_log_entry(
-                ctx,
-                ActivityLogType::ItemVariantUpdatedName,
-                Some(existing_item_variant.id.clone()),
-                Some(existing_item_variant.name.clone()),
-                Some(updated_item_variant.name.clone()),
-            )?;
-        }
-
-        if existing_item_variant.location_type_id != updated_item_variant.location_type_id {
-            let existing_variant_name: Option<String> = existing_variant
-                .location_type_row
-                .map(|row| row.name.clone());
-            let updated_variant_name = updated_variant
-                .location_type_row
-                .map(|row| row.name.clone());
-
-            activity_log_entry(
-                ctx,
-                ActivityLogType::ItemVariantUpdateLocationType,
-                Some(existing_item_variant.id.clone()),
-                existing_variant_name,
-                updated_variant_name,
-            )?;
-        }
-
-        if existing_item_variant.manufacturer_id != updated_item_variant.manufacturer_id {
-            let existing_manufacturer_name = existing_variant
-                .manufacturer_row
-                .map(|row| row.name.clone());
-            let updated_manufacturer_name =
-                updated_variant.manufacturer_row.map(|row| row.name.clone());
-
-            activity_log_entry(
-                ctx,
-                ActivityLogType::ItemVariantUpdateManufacturer,
-                Some(existing_item_variant.id.clone()),
-                existing_manufacturer_name,
-                updated_manufacturer_name,
-            )?;
-        }
-
-        if existing_item_variant.vvm_type != updated_item_variant.vvm_type {
-            activity_log_entry(
-                ctx,
-                ActivityLogType::ItemVariantUpdateVVMType,
-                Some(existing_item_variant.id.clone()),
-                existing_item_variant.vvm_type.clone(),
-                updated_item_variant.vvm_type.clone(),
-            )?;
-        }
+    let log_type = if existing.is_some() {
+        ActivityLogType::ItemVariantUpdated
     } else {
-        activity_log_entry(
-            ctx,
-            ActivityLogType::ItemVariantCreated,
-            Some(updated_variant.item_variant_row.id.clone()),
-            None,
-            None,
-        )?;
-    }
+        ActivityLogType::ItemVariantCreated
+    };
+    activity_log_entry_with_diff(
+        ctx,
+        log_type,
+        Some(updated.item_id.clone()),
+        existing.as_ref(),
+        &updated,
+    )?;
     Ok(())
 }

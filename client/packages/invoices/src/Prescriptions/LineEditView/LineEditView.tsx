@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import {
   BasicSpinner,
-  InvoiceNodeStatus,
   NothingHere,
   RouteBuilder,
   useBreadcrumbs,
@@ -67,8 +66,6 @@ export const PrescriptionLineEditView = () => {
 
   const lines =
     data?.lines.nodes.sort((a, b) => a.id.localeCompare(b.id)) ?? [];
-
-  const status = data?.status;
 
   // Future TODO: expose on Prescription/Invoice query - items, and whether they have
   // any packs allocated or not!
@@ -155,7 +152,12 @@ export const PrescriptionLineEditView = () => {
   if (!data) return <NothingHere />;
 
   const itemIdList = items.map(item => item.id);
-  if (status !== InvoiceNodeStatus.Verified) itemIdList.push('new');
+  if (!isDisabled) itemIdList.push('new');
+
+  const canSave =
+    !!item?.id &&
+    allocationIsDirty &&
+    !(allocatedQuantity === 0 && prescribedUnits === 0);
 
   return (
     <>
@@ -170,7 +172,7 @@ export const PrescriptionLineEditView = () => {
               .addPart(invoiceId)}
             enteredLineIds={enteredLineIds}
             showNew={!isDisabled}
-            isDirty={isDirty.current}
+            isDirty={canSave}
             handleSaveNew={onSave}
             scrollRef={scrollRef}
           />
@@ -203,11 +205,7 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        disabled={
-          !item?.id ||
-          !allocationIsDirty ||
-          (allocatedQuantity === 0 && prescribedUnits === 0)
-        }
+        disabled={!canSave}
         handleSave={onSave}
         handleCancel={() =>
           navigate(

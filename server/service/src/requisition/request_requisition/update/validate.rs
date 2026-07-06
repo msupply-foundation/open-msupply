@@ -5,7 +5,10 @@ use crate::{
         OrderTypeNotFoundError,
     },
     store_preference::get_store_preferences,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
+        OtherPartyErrors,
+    },
     NullableUpdate,
 };
 use repository::{
@@ -45,6 +48,10 @@ pub fn validate(
     }
 
     if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
+    }
+
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
     }
 

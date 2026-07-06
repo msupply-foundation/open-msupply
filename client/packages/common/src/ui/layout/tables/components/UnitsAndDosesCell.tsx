@@ -21,12 +21,15 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
   showAlert,
   roundUp,
   decimalLimit,
+  packSize,
 }: {
   cell: MRT_Cell<T>;
   row: MRT_Row<T & { item?: ItemData }>;
   showAlert?: boolean;
   roundUp?: boolean;
   decimalLimit?: number;
+  /** When the cell value is in packs (not units), pass packSize to get correct dose count */
+  packSize?: number;
 }) => {
   const t = useTranslation();
   const { format } = useFormatNumber();
@@ -37,7 +40,7 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
 
   // Doses should always be a whole number, round if fractional packs are giving
   // us funky decimals
-  const doseCount = format((item?.doses ?? 1) * (value ?? 0), {
+  const doseCount = format((item?.doses ?? 1) * (packSize ?? 1) * (value ?? 0), {
     maximumFractionDigits: 0,
   });
 
@@ -53,7 +56,8 @@ export const UnitsAndDosesCell = <T extends MRT_RowData>({
         <Typography
           sx={{
             fontSize: 'small',
-            color: 'text.secondary',
+            color: 'inherit',
+            opacity: 0.6,
             marginLeft: '4px',
           }}
         >

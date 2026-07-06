@@ -13,7 +13,7 @@ use repository::{
 };
 
 use crate::{
-    activity_log::activity_log_entry,
+    activity_log::activity_log_entry_with_diff,
     invoice_line::{
         stock_in_line::{insert_stock_in_line, InsertStockInLineError},
         stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
@@ -73,7 +73,13 @@ pub fn update_stocktake(
             let stocktake_id = input.id.clone();
             let (existing, stocktake_lines, status_changed) =
                 validate(connection, &ctx.store_id, &input)?;
-            let result = generate(ctx, input, existing, stocktake_lines, status_changed)?;
+            let result = generate(
+                ctx,
+                input,
+                existing.clone(),
+                stocktake_lines,
+                status_changed,
+            )?;
 
             // write data to the DB
             let stock_line_repo = StockLineRowRepository::new(connection);
@@ -155,15 +161,13 @@ pub fn update_stocktake(
                 vvm_status_log_repo.upsert_one(&vvm_status_log)?;
             }
 
-            if status_changed {
-                activity_log_entry(
-                    ctx,
-                    ActivityLogType::StocktakeStatusFinalised,
-                    Some(stocktake_id.to_string()),
-                    None,
-                    None,
-                )?;
-            }
+            activity_log_entry_with_diff(
+                ctx,
+                ActivityLogType::StocktakeEdited,
+                Some(stocktake_id.to_string()),
+                Some(&existing),
+                &result.stocktake,
+            )?;
 
             // return the updated stocktake
             let stocktake = get_stocktake(ctx, stocktake_id)?;
@@ -654,10 +658,7 @@ mod test {
             )
             .unwrap();
         let stock_line = stocktake_line[0].stock_line.clone().unwrap();
-        assert_eq!(
-            stock_line.supplier_id,
-            mock_stock_line_b().supplier_id
-        );
+        assert_eq!(stock_line.supplier_id, mock_stock_line_b().supplier_id);
 
         // success - prunes uncounted lines, and a stale snapshot on an
         // uncounted line does not block finalisation (regression for #11408)

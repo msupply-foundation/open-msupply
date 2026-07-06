@@ -37,13 +37,14 @@ pub(crate) fn generate_inbound_lines(
         .map(
             |(
                 InvoiceLineRow {
-                    id: _,
+                    id: source_line_id,
                     invoice_id: _,
                     stock_line_id: _,
                     location_id: _,
                     cost_price_per_pack,
                     total_after_tax: _,
                     linked_invoice_id: _,
+                    linked_invoice_line_id: _,
                     reason_option_id,
                     item_id: _,
                     item_name,
@@ -71,6 +72,8 @@ pub(crate) fn generate_inbound_lines(
                     status,
                     manufacture_date,
                     purchase_order_line_id,
+                    received_number_of_packs: _,
+                    legacy_goods_received_line_id: _,
                 },
                 ItemRow {
                     id: item_id,
@@ -151,10 +154,13 @@ pub(crate) fn generate_inbound_lines(
                     },
                     shipped_pack_size,
                     reason_option_id,
+                    linked_invoice_line_id: Some(source_line_id),
                     // Default
                     stock_line_id: None,
                     location_id: None,
                     status,
+                    received_number_of_packs: None,
+                    legacy_goods_received_line_id: None,
                 }
             },
         )

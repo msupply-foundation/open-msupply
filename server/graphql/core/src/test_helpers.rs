@@ -1,4 +1,7 @@
-use std::sync::{Arc, RwLock};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use actix_web::{
     guard,
@@ -15,6 +18,7 @@ use repository::{
 
 use service::{
     auth_data::AuthData, service_provider::ServiceProvider, session_store::SessionStore,
+    settings::Settings,
 };
 
 use crate::{
@@ -26,6 +30,9 @@ pub struct TestGraphqlSettings<Q: 'static + ObjectType + Clone, M: 'static + Obj
     pub queries: Q,
     pub mutations: M,
     pub connection_manager: StorageConnectionManager,
+    /// Server settings injected into the GraphQL context. Tests can mutate
+    /// `settings.features` to exercise feature-gated resolvers.
+    pub settings: Settings,
 }
 
 pub async fn run_test_gql_query<
@@ -68,6 +75,7 @@ pub async fn run_test_gql_query<
                 .data(loader_registry_data.clone())
                 .data(service_provider_data.clone())
                 .data(auth_data.clone())
+                .data(Data::new(settings.settings.clone()))
                 .finish(),
             ))
             .service(web::resource("/graphql").guard(guard::Post()).to(
@@ -223,8 +231,16 @@ pub async fn setup_graphql_test_with_data<
     StorageConnectionManager,
     TestGraphqlSettings<Q, M>,
 ) {
-    let (mock_data, connection, connection_manager, _) =
+    let (mock_data, connection, connection_manager, database_settings) =
         setup_all_with_data(db_name, inserts, extra_mock_data).await;
+
+    // Enable feature-gated functionality by default so tests exercise the real
+    // resolvers. Individual tests can override `settings.features` to test the
+    // disabled path.
+    let settings = service::settings::test_settings(
+        database_settings,
+        Some(HashMap::from([("stock_movement".to_string(), true)])),
+    );
 
     (
         mock_data,
@@ -234,6 +250,7 @@ pub async fn setup_graphql_test_with_data<
             queries,
             mutations,
             connection_manager,
+            settings,
         },
     )
 }

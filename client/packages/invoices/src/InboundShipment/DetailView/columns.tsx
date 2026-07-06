@@ -8,6 +8,7 @@ import {
   ExpiryDateCell,
   StatusCell,
   weightedAverageByUnits,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { useInboundShipmentLineErrorContext } from '../context/inboundShipmentLineError';
 import { isInboundPlaceholderRow } from '../../utils';
@@ -26,6 +27,7 @@ export const useInboundShipmentColumns = (
   } = usePreferences();
   const { getError } = useInboundShipmentLineErrorContext();
   const statusMap = useInvoiceLineStatusMap();
+  const { plugins } = usePluginProvider();
 
   return useMemo((): ColumnDef<InboundLineFragment>[] => {
     return [
@@ -128,6 +130,18 @@ export const useInboundShipmentColumns = (
         size: 100,
       },
       {
+        id: 'difference',
+        accessorFn: row =>
+          row.shippedNumberOfPacks == null
+            ? null
+            : row.shippedNumberOfPacks - row.numberOfPacks,
+        header: t('label.difference'),
+        description: t('description.difference-packs'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        size: 100,
+      },
+      {
         id: 'unitQuantity',
         accessorFn: row => row.packSize * row.numberOfPacks,
         header: t('label.unit-quantity'),
@@ -224,6 +238,7 @@ export const useInboundShipmentColumns = (
         accessorFn: row => row.campaign?.name ?? row.program?.name ?? '',
         includeColumn: !external,
       },
+      ...(plugins.inboundShipmentLine?.tableColumn ?? []),
     ];
   }, [
     external,
@@ -234,5 +249,6 @@ export const useInboundShipmentColumns = (
     allowTrackingOfStockByDonor,
     getError,
     statusMap,
+    plugins.inboundShipmentLine?.tableColumn,
   ]);
 };

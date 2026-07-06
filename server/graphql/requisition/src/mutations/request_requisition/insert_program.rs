@@ -1,9 +1,7 @@
+use actix_web::web::Data;
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::{
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
-    ContextExt,
-};
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
 use service::{
@@ -11,6 +9,7 @@ use service::{
     requisition::request_requisition::{
         InsertProgramRequestRequisition, InsertProgramRequestRequisitionError as ServiceError,
     },
+    service_provider::ServiceProvider,
 };
 use util::{constants::expected_delivery_date_offset, date_now_with_offset};
 
@@ -51,7 +50,7 @@ pub enum InsertResponse {
     Response(RequisitionNode),
 }
 
-pub fn insert_program(
+pub async fn insert_program(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertProgramRequestRequisitionInput,
@@ -61,17 +60,28 @@ pub fn insert_program(
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let store_id = store_id.to_string();
+    let input = input.to_domain();
 
-    map_response(
-        service_provider
-            .requisition_service
-            .insert_program_request_requisition(&service_context, input.to_domain()),
+    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949). The
+    // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<Requisition, ServiceError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            Ok(service_provider
+                .requisition_service
+                .insert_program_request_requisition(&service_context, input))
+        },
     )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    map_response(result)
 }
 
 pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<InsertResponse> {

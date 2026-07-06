@@ -4,6 +4,7 @@ use graphql_core::standard_graphql_error::validate_auth;
 use service::auth::{Resource, ResourceAccessRequest};
 
 pub mod delete;
+pub mod duplicate;
 pub mod insert;
 pub mod update;
 
@@ -35,6 +36,7 @@ pub fn validate_shipment_verify_authorisation(
         &ResourceAccessRequest {
             resource,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

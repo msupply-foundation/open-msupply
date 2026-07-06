@@ -1,3 +1,5 @@
+use crate::sync::translations::serde_utils::deserialize_sync_version;
+use repository::SyncVersion;
 use serde::{Deserialize, Serialize};
 
 use super::*;
@@ -14,6 +16,8 @@ pub struct SiteInfoV5 {
     pub(crate) is_central_server: bool,
     #[serde(rename = "mSupplyCentralSiteId")]
     pub(crate) msupply_central_site_id: i32,
+    #[serde(default, deserialize_with = "deserialize_sync_version")]
+    pub(crate) sync_version: SyncVersion,
 }
 
 // See SITE_INITIALISATION_STATUS mSupply method
@@ -76,7 +80,34 @@ mod test {
                 is_central_server: false,
                 central_server_url: "http://localhost:2000".to_string(),
                 msupply_central_site_id: 1,
+                sync_version: SyncVersion::V5V6,
             }
         );
+    }
+
+    #[actix_rt::test]
+    async fn test_get_site_info_v7() {
+        let mock_server = MockServer::start();
+        let url = mock_server.base_url();
+
+        mock_server.mock(|when, then| {
+            when.method(GET).path("/sync/v5/site");
+            then.status(200).body(
+                r#"{
+                    "id": "abc123",
+                    "siteId": 123,
+                    "code": "s123",
+                    "name": "Site 123",
+                    "initialisationStatus": "new",
+                    "isOmSupplyCentralServer": false,
+                    "omSupplyCentralServerUrl": "http://localhost:2000",
+                    "mSupplyCentralSiteId": 1,
+                    "syncVersion": "v7"
+                }"#,
+            );
+        });
+
+        let result = create_api(&url, "", "").get_site_info().await.unwrap();
+        assert_eq!(result.sync_version, SyncVersion::V7);
     }
 }

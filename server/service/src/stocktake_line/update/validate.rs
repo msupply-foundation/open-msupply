@@ -1,5 +1,5 @@
 use crate::{
-    campaign::check_campaign_exists,
+    campaign::check_campaign_exists_including_deleted,
     check_location_exists, check_location_type_is_valid, check_vvm_status_exists,
     common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
@@ -8,7 +8,10 @@ use crate::{
         check_snapshot_matches_current_count, check_stock_line_reduced_below_zero,
         check_stocktake_line_exist, stocktake_reduction_amount,
     },
-    validate::{check_other_party, check_store_id_matches, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_date_is_not_in_future, check_other_party, check_store_id_matches,
+        CheckOtherPartyType, OtherPartyErrors,
+    },
     NullableUpdate,
 };
 use repository::{RepositoryError, StocktakeLine, StorageConnection};
@@ -41,6 +44,15 @@ pub fn validate(
 
     if !check_store_id_matches(store_id, &stocktake.store_id) {
         return Err(InvalidStore);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(manufacture_date),
+    }) = &input.manufacture_date
+    {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
     }
 
     let stock_line = match &stocktake_line_row.stock_line_id {
@@ -156,7 +168,7 @@ pub fn validate(
         value: Some(ref campaign_id),
     }) = &input.campaign_id
     {
-        if !check_campaign_exists(connection, campaign_id)? {
+        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
             return Err(CampaignDoesNotExist);
         }
     }

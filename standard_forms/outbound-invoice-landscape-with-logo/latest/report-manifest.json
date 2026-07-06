@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.6.6",
+  "version": "2.6.7",
   "code": "outbound-invoice-landscape-with-logo",
   "context": "OUTBOUND_SHIPMENT",
   "name": "Outbound Shipment (landscape)",
@@ -8,5 +8,6 @@
     "gql": "outbound.graphql"
   },
   "arguments": {},
-  "header": "header.html"
+  "header": "header.html",
+  "footer": "footer.html"
 }

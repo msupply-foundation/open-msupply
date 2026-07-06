@@ -8,6 +8,8 @@ import {
   ExpiryDateCell,
   Box,
   weightedAverageByUnits,
+  usePluginProvider,
+  NumericTextDisplay,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 
@@ -17,6 +19,7 @@ const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
 export const useOutboundColumns = () => {
   const t = useTranslation();
   const { manageVaccinesInDoses, manageVvmStatusForStock } = usePreferences();
+  const { plugins } = usePluginProvider();
 
   const columns = useMemo(() => {
     const cols: ColumnDef<StockOutLineFragment>[] = [
@@ -106,6 +109,27 @@ export const useOutboundColumns = () => {
         enableSorting: true,
       },
       {
+        id: 'receivedNumberOfPacks',
+        accessorFn: row => row.receivedNumberOfPacks ?? row.numberOfPacks,
+        header: t('label.packs-received'),
+        description: t('description.packs-received'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        aggregationFn: 'sum',
+      },
+      {
+        id: 'difference',
+        accessorFn: row =>
+          row.receivedNumberOfPacks == null
+            ? null
+            : row.receivedNumberOfPacks - row.numberOfPacks,
+        header: t('label.difference'),
+        description: t('description.difference-packs'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        size: 100,
+      },
+      {
         id: 'unitQuantity',
         header: t('label.unit-quantity'),
         description: t('description.unit-quantity'),
@@ -153,6 +177,7 @@ export const useOutboundColumns = () => {
         header: t('label.volume'),
         size: 100,
         columnType: ColumnType.Number,
+        decimalLimit: 5,
         accessorFn: row =>
           (row.stockLine?.volumePerPack ?? 0) * row.numberOfPacks,
         aggregationFn: 'sum',
@@ -163,7 +188,7 @@ export const useOutboundColumns = () => {
               return (
                 sum +
                 (row.original.stockLine?.volumePerPack ?? 0) *
-                  row.original.numberOfPacks
+                row.original.numberOfPacks
               );
             }, 0);
           return (
@@ -173,15 +198,21 @@ export const useOutboundColumns = () => {
                 width: '100%',
               }}
             >
-              {totalVolume}
+              <NumericTextDisplay value={totalVolume} decimalLimit={5} />
             </Box>
           );
         },
       },
+      ...(plugins.outboundShipmentLine?.tableColumn ?? []),
     ];
 
     return cols;
-  }, [t, manageVvmStatusForStock, manageVaccinesInDoses]);
+  }, [
+    t,
+    manageVvmStatusForStock,
+    manageVaccinesInDoses,
+    plugins.outboundShipmentLine?.tableColumn,
+  ]);
 
   return columns;
 };

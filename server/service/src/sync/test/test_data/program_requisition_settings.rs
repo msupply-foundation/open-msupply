@@ -3,8 +3,8 @@ use repository::{
         mock_name_tag_1, mock_name_tag_2, mock_name_tag_3, mock_period_schedule_1,
         mock_period_schedule_2,
     },
-    ContextRow, ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow,
-    SyncAction, SyncBufferRow,
+    sync_buffer::SyncRecordData, ContextRow, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionSettingsRow, ProgramRow, SyncAction, SyncBufferRow,
 };
 
 use crate::sync::{
@@ -210,7 +210,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             sync_buffer_row: SyncBufferRow {
                 table_name: TABLE_NAME.to_string(),
                 record_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
-                data: MASTER_LIST_WITH_PROGRAM_1.1.to_owned(),
+                data: SyncRecordData(serde_json::from_str(MASTER_LIST_WITH_PROGRAM_1.1).unwrap()),
                 action: SyncAction::Upsert,
                 ..Default::default()
             },
@@ -241,7 +241,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             sync_buffer_row: SyncBufferRow {
                 table_name: TABLE_NAME.to_string(),
                 record_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
-                data: MASTER_LIST_WITH_PROGRAM_2.1.to_owned(),
+                data: SyncRecordData(serde_json::from_str(MASTER_LIST_WITH_PROGRAM_2.1).unwrap()),
                 action: SyncAction::Upsert,
                 ..Default::default()
             },
