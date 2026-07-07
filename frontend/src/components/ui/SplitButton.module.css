@@ -1,0 +1,143 @@
+/*
+ * Split button — mirrors the app's SplitButton (MUI ButtonGroup): NO outer
+ * border, a shadow[2] drop-shadow, pill radius, and a 1px divider between the
+ * main action and the caret. Each half fills orange on hover independently,
+ * like the outlined ButtonGroup. Logical borders → mirror in RTL.
+ */
+.split {
+  display: inline-flex;
+  align-items: stretch;
+  height: var(--nav-item-height);
+  border-radius: var(--radius-button);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+
+/* Both halves — shared base (rest rules first so specificity ascends). */
+.main,
+.caret {
+  position: relative; /* hosts its own ripple layer */
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--button-text);
+  font: inherit;
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
+  /* Ripple: orange at rest, white when this half is filled */
+  --ripple-color: color-mix(in srgb, var(--primary-main) 22%, transparent);
+}
+
+.main {
+  gap: var(--space-2);
+  padding-inline: 1.25rem;
+  white-space: nowrap;
+}
+
+.caret {
+  padding-inline: var(--space-2);
+  border-inline-start: 1px solid var(--color-divider);
+}
+
+/* Content sits above the ripple layer */
+.icon,
+.label,
+.caretIcon {
+  position: relative;
+  z-index: 1;
+}
+
+.icon {
+  display: inline-flex;
+  font-size: 1.25rem;
+  color: var(--primary-main);
+}
+
+.caretIcon {
+  font-size: 1.125rem;
+  color: var(--gray-dark);
+}
+
+/* Hover / open — the half fills brand orange, its content + ripple go white. */
+.main:hover,
+.caret:hover,
+.caret[data-expanded] {
+  background: var(--primary-main);
+  --ripple-color: color-mix(in srgb, var(--primary-contrast) 35%, transparent);
+}
+
+.main:hover {
+  color: var(--primary-contrast);
+}
+
+.main:hover .icon {
+  color: var(--primary-contrast);
+}
+
+.caret:hover .caretIcon,
+.caret[data-expanded] .caretIcon {
+  color: var(--primary-contrast);
+}
+
+.main:focus-visible,
+.caret:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+}
+
+/* --- Menu (portaled to <body>; inherits dir for RTL) ------------------- */
+.content {
+  z-index: 50;
+  min-inline-size: 12.5rem;
+  max-block-size: 21.25rem;
+  overflow-y: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-4);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  white-space: nowrap;
+}
+
+.item[data-highlighted] {
+  background: var(--bg-group-main);
+}
+
+.item[data-current='true'] {
+  color: var(--primary-main);
+  font-weight: var(--weight-bold);
+}
+
+@media (pointer: coarse) {
+  .item {
+    min-height: var(--touch-target);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .split,
+  .main,
+  .caret {
+    transition: none;
+  }
+}

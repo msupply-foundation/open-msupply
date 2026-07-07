@@ -6,6 +6,28 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-08 · Button family (Button + SplitButton) — hand-rolled, with the click ripple as the one deliberate JS-for-interaction exception
+
+- **Decision:** The action buttons from last week's demo are ported to Solid as two hand-rolled elements plus shared ripple infrastructure:
+  - **`Button`** — a plain `<button>` + CSS Modules, `data-color` selecting the tone (**orange** brand default / **blue** action), optional leading icon. No component library: a native button already carries role, accessible name, keyboard operability and `disabled`.
+  - **`SplitButton`** — our two-half markup + CSS over **Kobalte DropdownMenu** for the caret's menu (main half runs the selected action; a menu pick selects *and* runs it).
+  - **`createRipple` + `Ripple`** — the MUI-style click ripple, and the **single place we use JavaScript for interaction** in the whole app.
+
+- **Why:**
+  - `Button` is exactly principle #1 ("own the simple"): a styled native button owes no a11y contract worth buying. `SplitButton` is principle #2 ("buy the hard") applied only to the caret's menu popup — the same focus/type-ahead/keyboard call already made for the footer LanguageSelector (see the entry below), reusing the Kobalte dependency already in the tree. Solid ports of the prototype's `<Button>` and `ExportButton`.
+  - **The ripple is the documented exception to "interaction is pure CSS."** It must originate at the exact pointer coordinates, which CSS cannot read; so JS supplies each ripple's position/size and spawns one element per click, while the animation itself stays CSS. Kept tiny and isolated in `createRipple`, and skipped entirely under `prefers-reduced-motion`.
+  - **Ripple position/size are the rare legitimate px in TSX** — they're measured pixel offsets from the pointer, not layout spacing, so the rem rule (#6) doesn't apply. Everything static stays rem/tokens.
+
+- **Deltas from the prototype (small, deliberate):**
+  - Ripple tints use `color-mix(in srgb, <token> 22%, transparent)` instead of the prototype's hard-coded `rgba(...)`, so they derive from the palette tokens and **track the theme** (the repo's established tint pattern — same as the footer/divider tints).
+  - Radius uses the `--radius-button` token rather than a literal `1.5rem`.
+  - `SplitButton`'s caret open state is styled via Kobalte's `data-expanded` (the prototype's Radix used `data-state='open'`); `ExportButton` is generalised into a reusable `SplitButton` (options + `onAction`/`onValueChange`).
+  - `--ripple-color` is a cross-component contract var (a button sets it, `Ripple` reads it), so it's allow-listed in `.stylelintrc.json` alongside the Kobalte popper var.
+
+- **Alternatives rejected:** a CSS-only "ripple" (e.g. radial-gradient on `:active`) — can't originate at the click point, reads as a flash not a ripple; a MUI/other button component — rejected by principles #1–3 (opinionated look, unnecessary dependency); hand-rolling the caret menu — rejected by #2 (the keyboard/focus contract is the buy-don't-build part).
+
+- **Status:** Adopted for the showcase (new **Buttons** section). Faithful Solid re-authoring of last week's demo, flagged for Carl's review of the rendered result.
+
 ## 2026-07-08 · Footer language selector (Kobalte DropdownMenu) + document-level RTL flip
 
 - **Decision:** The footer language picker is built on **Kobalte DropdownMenu** (headless), styled to our look via `data-*` attributes, opening upward out of the footer (`placement="top-start"`). The list is the current app's native-name language options with the RTL locales (`ar`/`prs`/`ps`) tagged. Selecting an RTL locale flips the whole app to RTL by setting `dir="rtl"` on **`document.documentElement`**; `AppShell` restores `ltr` on unmount.

@@ -1,4 +1,5 @@
 import type { Component } from 'solid-js'
+import { ButtonsShowcase } from './ButtonsShowcase'
 import { SelectorsShowcase } from './SelectorsShowcase'
 import { PageLayoutShowcase } from './PageLayoutShowcase'
 
@@ -25,7 +26,7 @@ const ComingSoon: Component = () => (
  * as the URL hash (#/buttons), so sections are linkable.
  */
 export const sections: SectionDef[] = [
-  { id: 'buttons', label: 'Buttons', component: ComingSoon },
+  { id: 'buttons', label: 'Buttons', component: ButtonsShowcase },
   { id: 'inputs', label: 'Inputs', component: ComingSoon },
   { id: 'selectors', label: 'Selectors', component: SelectorsShowcase },
   { id: 'layout', label: 'Layout', component: ComingSoon },

@@ -1,0 +1,117 @@
+/*
+ * Faithful to the current app's BaseButton (outlined): NO border; a shadow[2]
+ * drop-shadow does the lifting; pill radius; white (raised-surface) bg;
+ * coloured icon; fills with its colour on hover. `data-color` picks the tone:
+ * orange (brand) or blue (secondary — footer actions).
+ *
+ * Hover: inverts (coloured bg, white text/icon) with a short transition.
+ * Click: a subtle ripple (createRipple) in --ripple-color — coloured at rest,
+ * white while hover-filled — clipped to the pill. The ripple tints are derived
+ * from the palette tokens via color-mix, so they track the theme.
+ */
+.button {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--nav-item-height);
+  min-width: 7.1875rem;
+  padding-inline: 1.25rem;
+  border: none;
+  border-radius: var(--radius-button);
+  background: var(--surface-raised);
+  color: var(--button-text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--shadow-2);
+  transition:
+    background 140ms ease,
+    color 140ms ease;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* Content sits above the ripple layer */
+.icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  transition: color 140ms ease;
+}
+
+.label {
+  position: relative;
+  z-index: 1;
+}
+
+/*
+ * Tone at rest — dark/coloured label, coloured icon. Orange (brand) keeps the
+ * dark --button-text; blue recolours the label too. (Rest rules first, hover
+ * fills grouped below, so specificity ascends — no-descending-specificity.)
+ */
+.button[data-color='orange'] {
+  --ripple-color: color-mix(in srgb, var(--primary-main) 22%, transparent);
+}
+
+.button[data-color='orange'] .icon {
+  color: var(--primary-main);
+}
+
+.button[data-color='blue'] {
+  color: var(--secondary-main);
+  --ripple-color: color-mix(in srgb, var(--secondary-main) 22%, transparent);
+}
+
+.button[data-color='blue'] .icon {
+  color: var(--secondary-main);
+}
+
+.button[data-color='blue']:focus-visible {
+  outline-color: var(--secondary-main);
+}
+
+/* Hover fills — the pill inverts (coloured bg, white label + icon + ripple). */
+.button[data-color='orange']:hover:not(:disabled) {
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+  --ripple-color: color-mix(in srgb, var(--primary-contrast) 35%, transparent);
+}
+
+.button[data-color='blue']:hover:not(:disabled) {
+  background: var(--secondary-main);
+  color: var(--primary-contrast);
+  --ripple-color: color-mix(in srgb, var(--primary-contrast) 35%, transparent);
+}
+
+.button[data-color='orange']:hover:not(:disabled) .icon,
+.button[data-color='blue']:hover:not(:disabled) .icon {
+  color: var(--primary-contrast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .icon {
+    transition: none;
+  }
+}
+
+/* NB: no pointer:coarse min-height bump. It inflated buttons to 48px in touch /
+   device-emulation mode (taller than the split button, which never had it). We
+   keep the consistent 40px height instead. */

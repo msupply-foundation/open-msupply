@@ -9,7 +9,8 @@
           "src/styles/tokens.css",
           {
             "customProperties": {
-              "--kb-popper-content-available-height": "100vh"
+              "--kb-popper-content-available-height": "100vh",
+              "--ripple-color": "transparent"
             }
           }
         ]
