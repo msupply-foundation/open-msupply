@@ -1505,6 +1505,7 @@ export type CentralSiteMutations = {
   clearSiteHardwareId: ClearSiteHardwareIdNode;
   clearSiteToken: ClearSiteTokenNode;
   deleteSite: DeleteSiteResponse;
+  setSiteMultiDevice: SetSiteMultiDeviceNode;
   upsertSite: UpsertSiteResponse;
 };
 
@@ -1521,6 +1522,11 @@ export type CentralSiteMutationsClearSiteTokenArgs = {
 };
 
 export type CentralSiteMutationsDeleteSiteArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsSetSiteMultiDeviceArgs = {
+  isMultiDevice: Scalars['Boolean']['input'];
   siteId: Scalars['Int']['input'];
 };
 
@@ -7423,7 +7429,6 @@ export enum PreferenceKey {
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
-  DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
   ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
   ExpiredStockPreventIssue = 'expiredStockPreventIssue',
   ExternalInboundShipmentLinesMustBeAuthorised = 'externalInboundShipmentLinesMustBeAuthorised',
@@ -7497,7 +7502,6 @@ export type PreferencesNode = {
   daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
-  doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
   expiredStockPreventIssue: Scalars['Boolean']['output'];
   externalInboundShipmentLinesMustBeAuthorised: Scalars['Boolean']['output'];
@@ -9916,6 +9920,11 @@ export type SetPrescribedQuantityWithId = {
   response: SetPrescribedQuantityResponse;
 };
 
+export type SetSiteMultiDeviceNode = {
+  __typename: 'SetSiteMultiDeviceNode';
+  id: Scalars['Int']['output'];
+};
+
 export type ShippingMethodConnector = {
   __typename: 'ShippingMethodConnector';
   nodes: Array<ShippingMethodNode>;
@@ -9958,6 +9967,7 @@ export type SiteNode = {
   code: Scalars['String']['output'];
   hardwareId?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
+  isMultiDevice: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
 };
 
@@ -12270,7 +12280,6 @@ export type UpsertPreferencesInput = {
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
-  doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
   expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
   expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   externalInboundShipmentLinesMustBeAuthorised?: InputMaybe<

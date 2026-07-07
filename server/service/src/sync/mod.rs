@@ -65,21 +65,6 @@ impl ActiveStoresOnSite {
         Ok(ActiveStoresOnSite { site_id, stores })
     }
 
-    pub(crate) fn site_id(&self) -> i32 {
-        self.site_id
-    }
-
-    pub(crate) fn name_ids(&self) -> Vec<String> {
-        self.stores.iter().map(|r| r.name_row.id.clone()).collect()
-    }
-
-    pub(crate) fn get_store_id_for_name_id(&self, name_id: &str) -> Option<String> {
-        self.stores
-            .iter()
-            .find(|r| r.name_row.id == name_id)
-            .map(|r| r.store_row.id.clone())
-    }
-
     pub(crate) fn store_ids(&self) -> Vec<String> {
         self.stores.iter().map(|r| r.store_row.id.clone()).collect()
     }

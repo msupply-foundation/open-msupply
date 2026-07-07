@@ -250,7 +250,6 @@ export type PreferencesQuery = {
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
-    doNotPrintPlaceholderLineLabels: boolean;
     isGaps: boolean;
     globalTableConfigs: any;
     warnWhenMissingRecentStocktake: {
@@ -487,7 +486,6 @@ export const PreferencesDocument = gql`
       invoiceStatusOptions
       itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions
-      doNotPrintPlaceholderLineLabels
       isGaps
       globalTableConfigs
       backdating {
