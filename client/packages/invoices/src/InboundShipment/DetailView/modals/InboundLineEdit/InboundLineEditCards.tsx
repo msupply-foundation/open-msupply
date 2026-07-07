@@ -43,6 +43,7 @@ import {
   LocationRowFragment,
   LocationSearchInput,
   ManufacturerSearchInput,
+  useItemPrice,
   VVMStatusSearchInput,
 } from '@openmsupply-client/system';
 import { PatchDraftLineInput } from '../../../api';
@@ -120,6 +121,8 @@ export const InboundLineEditCards = ({
     !inboundData?.otherParty?.store;
 
   const supplierMargin = inboundData?.otherParty?.margin ?? 0;
+  const { data: itemPrice } = useItemPrice(item?.id);
+  const defaultPricePerUnit = itemPrice?.defaultPricePerUnit ?? 0;
   const getLineDefaultSellPrice = useCallback(
     (line: DraftInboundLine, costPricePerPack: number, packSize: number) =>
       getDefaultSellPricePerPack({
@@ -131,8 +134,9 @@ export const InboundLineEditCards = ({
         itemMargin: line.item?.itemStoreProperties?.margin ?? 0,
         supplierMargin,
         itemMarginOverridesSupplierMargin: !!itemMarginOverridesSupplierMargin,
+        defaultPricePerUnit,
       }),
-    [supplierMargin, itemMarginOverridesSupplierMargin]
+    [supplierMargin, itemMarginOverridesSupplierMargin, defaultPricePerUnit]
   );
 
   const showLineStatus =
@@ -224,7 +228,8 @@ export const InboundLineEditCards = ({
                     const packToUnits = packSize * value;
                     setPackRoundingMessage?.('');
 
-                    const shipped = isManualShipment &&
+                    const shipped =
+                      isManualShipment &&
                       (line.shippedNumberOfPacks == null ||
                         line.shippedNumberOfPacks === line.numberOfPacks);
                     updateDraftLine({
@@ -477,9 +482,7 @@ export const InboundLineEditCards = ({
                   receivedNumberOfUnits: actualUnits,
                   numberOfPacks: roundedPacks,
                   id: row.original.id,
-                  ...(shipped
-                    ? { shippedNumberOfPacks: roundedPacks }
-                    : {}),
+                  ...(shipped ? { shippedNumberOfPacks: roundedPacks } : {}),
                 });
                 return actualUnits;
               }
@@ -518,7 +521,10 @@ export const InboundLineEditCards = ({
                 disabled={isDisabled || !isManualShipment}
                 decimalsLimit={5}
                 updateFn={value =>
-                  updateDraftLine({ id: row.original.id, costPricePerPack: value })
+                  updateDraftLine({
+                    id: row.original.id,
+                    costPricePerPack: value,
+                  })
                 }
               />
             </span>

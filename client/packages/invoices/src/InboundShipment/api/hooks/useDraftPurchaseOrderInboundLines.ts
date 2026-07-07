@@ -8,6 +8,7 @@ import {
   usePreferences,
   useTranslation,
 } from '@openmsupply-client/common';
+import { useItemPrice } from '@openmsupply-client/system';
 import { DraftInboundLine } from '../../../types';
 import { useDeleteInboundLines } from './line/useDeleteInboundLines';
 import { mapErrorToMessageAndSetContext } from './mapErrorToMessageAndSetContext';
@@ -23,6 +24,7 @@ export type PatchDraftLineInput = Partial<DraftInboundLine> & { id: string };
 type SellPriceContext = {
   supplierMargin: number;
   itemMarginOverridesSupplierMargin: boolean;
+  defaultPricePerUnit: number;
 };
 
 // PO line item has fewer fields than the inbound line item fragment.
@@ -65,6 +67,7 @@ const createDraftLine = (
     supplierMargin: sellPriceContext.supplierMargin,
     itemMarginOverridesSupplierMargin:
       sellPriceContext.itemMarginOverridesSupplierMargin,
+    defaultPricePerUnit: sellPriceContext.defaultPricePerUnit,
   });
 
   return {
@@ -110,12 +113,17 @@ export const useDraftPurchaseOrderInboundLines = (
   const invoiceId = data?.id ?? '';
 
   const supplierMargin = data?.otherParty?.margin ?? 0;
+  const { data: itemPrice, isLoading: itemPriceIsLoading } = useItemPrice(
+    purchaseOrderLine?.item.id
+  );
+  const defaultPricePerUnit = itemPrice?.defaultPricePerUnit ?? 0;
   const sellPriceContext: SellPriceContext = useMemo(
     () => ({
       supplierMargin,
       itemMarginOverridesSupplierMargin: !!itemMarginOverridesSupplierMargin,
+      defaultPricePerUnit,
     }),
-    [supplierMargin, itemMarginOverridesSupplierMargin]
+    [supplierMargin, itemMarginOverridesSupplierMargin, defaultPricePerUnit]
   );
   const defaultStatus =
     isExternal && externalInboundShipmentLinesMustBeAuthorised
@@ -151,7 +159,9 @@ export const useDraftPurchaseOrderInboundLines = (
       // Editing existing lines for this PO line
       setDraftLines(existingLines.map(line => ({ ...line })));
     } else {
-      // Creating a new line for this PO line
+      // Creating a new line for this PO line. Wait for the master list
+      // default price so the seeded sell price includes it.
+      if (itemPriceIsLoading) return;
       const pol = purchaseOrderLine;
       const qty = pol.adjustedNumberOfUnits ?? pol.requestedNumberOfUnits;
       const shipped = pol.shippedNumberOfUnits;
@@ -184,6 +194,7 @@ export const useDraftPurchaseOrderInboundLines = (
     setIsDirty,
     defaultStatus,
     sellPriceContext,
+    itemPriceIsLoading,
   ]);
 
   const addDraftLine = useCallback(

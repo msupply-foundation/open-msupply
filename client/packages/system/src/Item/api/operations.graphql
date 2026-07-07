@@ -420,6 +420,16 @@ query itemById($storeId: String!, $itemId: String!) {
   }
 }
 
+query itemPrice($storeId: String!, $itemId: String!) {
+  itemPrice(storeId: $storeId, input: { itemId: $itemId }) {
+    ... on ItemPriceNode {
+      __typename
+      itemId
+      defaultPricePerUnit
+    }
+  }
+}
+
 query itemVariantsConfigured($storeId: String!) {
   itemVariantsConfigured(storeId: $storeId)
 }
