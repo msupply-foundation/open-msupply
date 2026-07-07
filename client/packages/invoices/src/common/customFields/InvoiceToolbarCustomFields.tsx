@@ -20,7 +20,10 @@ interface InvoiceToolbarCustomFieldsProps {
   /**
    * Saves a single-key patch through the view's own update mutation. The server
    * patch-merges into the existing blob, so a partial patch never clobbers the
-   * other property values — no need to merge the current blob here.
+   * other property values — no need to merge the current blob here. Callers
+   * whose local draft state replaces top-level keys (the Returns toolbars) must
+   * still merge the patch into their local blob, or the other prominent fields
+   * blank out until the next refetch.
    */
   onUpdate: (patch: DraftProperties) => void;
   /** Status-based editability, matching the other toolbar fields. */

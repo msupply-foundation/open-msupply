@@ -13,7 +13,10 @@ import {
 } from '@openmsupply-client/common';
 import { SupplierReturnFragment, useReturns } from '../api';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { InvoiceToolbarCustomFields } from '../../common';
+import {
+  InvoiceToolbarCustomFields,
+  useCustomFieldsQuickEdit,
+} from '../../common';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const Toolbar: FC = () => {
@@ -33,6 +36,19 @@ export const Toolbar: FC = () => {
     setBufferedState({ ...data });
     debouncedMutateAsync({ id, ...data });
   };
+
+  // Quick-edits need different shapes locally vs on the wire — the whole
+  // merged blob for setBufferedState (which replaces top-level keys), the
+  // accumulated patch for the server (which merge-patches customFields) — see
+  // the hook.
+  const updateCustomFields = useCustomFieldsQuickEdit(
+    customFields,
+    ({ customFields, patch }) => {
+      if (!id) return;
+      setBufferedState({ customFields });
+      debouncedMutateAsync({ id, customFields: patch });
+    }
+  );
 
   const isDisabled = useReturns.utils.supplierIsDisabled();
 
@@ -90,7 +106,7 @@ export const Toolbar: FC = () => {
             <InvoiceToolbarCustomFields
               invoiceType={InvoiceNodeType.SupplierReturn}
               customFields={customFields}
-              onUpdate={patch => update({ customFields: patch })}
+              onUpdate={updateCustomFields}
               disabled={isDisabled}
             />
           </Box>

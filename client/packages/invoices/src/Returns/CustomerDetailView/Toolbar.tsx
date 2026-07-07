@@ -13,7 +13,10 @@ import {
 } from '@openmsupply-client/common';
 import { CustomerReturnFragment, useReturns } from '../api';
 import { CustomerSearchInput } from '@openmsupply-client/system';
-import { InvoiceToolbarCustomFields } from '../../common';
+import {
+  InvoiceToolbarCustomFields,
+  useCustomFieldsQuickEdit,
+} from '../../common';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
@@ -35,6 +38,18 @@ export const Toolbar: FC = () => {
     setDraft({ ...data });
     debouncedMutateAsync({ id, ...data });
   };
+
+  // Quick-edits need different shapes locally vs on the wire — the whole
+  // merged blob for setDraft (which replaces top-level keys), the accumulated
+  // patch for the server (which merge-patches customFields) — see the hook.
+  const updateCustomFields = useCustomFieldsQuickEdit(
+    customFields,
+    ({ customFields, patch }) => {
+      if (!id) return;
+      setDraft({ customFields });
+      debouncedMutateAsync({ id, customFields: patch });
+    }
+  );
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -76,7 +91,7 @@ export const Toolbar: FC = () => {
             <InvoiceToolbarCustomFields
               invoiceType={InvoiceNodeType.CustomerReturn}
               customFields={customFields}
-              onUpdate={patch => update({ customFields: patch })}
+              onUpdate={updateCustomFields}
               disabled={isDisabled}
             />
           </Box>
