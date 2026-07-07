@@ -356,7 +356,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                 // `wait_for_initialisation` finishes when `/site` reports completed.
                 initialisation_status: crate::sync::api::InitialisationStatus::Completed,
                 queue_length: None,
-                central_server_url: format!("http://127.0.0.1:{}", ctx.open_msupply_central_port),
+                central_server_url: "".to_string(),
                 is_central_server: false,
                 msupply_central_site_id: 1,
                 sync_version: repository::SyncVersion::V5V6,
@@ -502,7 +502,7 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
                 // `wait_for_initialisation` finishes when `/site` reports completed.
                 initialisation_status: crate::sync::api::InitialisationStatus::Completed,
                 queue_length: None,
-                central_server_url: format!("http://127.0.0.1:{}", ctx.open_msupply_central_port),
+                central_server_url: "".to_string(),
                 is_central_server: false,
                 msupply_central_site_id: 1,
                 sync_version: repository::SyncVersion::V5V6,
