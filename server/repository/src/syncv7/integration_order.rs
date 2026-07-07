@@ -299,7 +299,12 @@ mod tests {
             setup_all("test_sync_v7_integration_order", MockDataInserts::none()).await;
 
         let in_order: Vec<String> = INTEGRATION_ORDER.iter().map(|t| t.to_string()).collect();
-        let all_tables: Vec<String> = ChangelogTableName::iter().map(|t| t.to_string()).collect();
+        // `Other(..)` is a fallback for unrecognised table names, not a real schema table,
+        // so it has no integration slot and is excluded from the coverage check.
+        let all_tables: Vec<String> = ChangelogTableName::iter()
+            .filter(|t| !matches!(t, ChangelogTableName::Other(_)))
+            .map(|t| t.to_string())
+            .collect();
         let skipped: Vec<String> = NOT_YET_IN_V7.iter().map(|t| t.to_string()).collect();
 
         let in_order_refs: Vec<&str> = in_order.iter().map(String::as_str).collect();
@@ -337,6 +342,90 @@ mod tests {
             }
         }
         panic!("{}", msg);
+    }
+
+    /// Every table synced to multi-device sites must have all its FK parents
+    /// synced too. Check that no FK dependencies are violated.
+    #[actix_rt::test]
+    async fn multi_device_synced_tables_include_fk_parents() {
+        let (_, connection, _, _) = setup_all(
+            "test_sync_v7_multi_device_fk_dependencies",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let multi_device_tables: HashSet<String> = ChangelogTableName::iter()
+            .filter(|t| t.sync_style().multi_device_site)
+            .map(|t| t.to_string())
+            .collect();
+        let changelog_tables: HashSet<String> =
+            ChangelogTableName::iter().map(|t| t.to_string()).collect();
+
+        // Same FK source as check_integration_order: child -> parent across `public`.
+        let fk_query = r#"
+            SELECT DISTINCT
+                tc.table_name   AS child_table,
+                ccu.table_name  AS parent_table
+            FROM information_schema.table_constraints  tc
+            JOIN information_schema.constraint_column_usage ccu
+              ON tc.constraint_name = ccu.constraint_name
+             AND tc.table_schema    = ccu.table_schema
+            WHERE tc.constraint_type = 'FOREIGN KEY'
+              AND tc.table_schema    = 'public'
+              AND tc.table_name     <> ccu.table_name
+        "#;
+        let all_fks: Vec<FkRow> = diesel::sql_query(fk_query)
+            .load(connection.lock().connection())
+            .expect("failed to query information_schema for FK constraints");
+
+        let mut parents_of: HashMap<String, Vec<String>> = HashMap::new();
+        for fk in &all_fks {
+            parents_of
+                .entry(fk.child_table.clone())
+                .or_default()
+                .push(fk.parent_table.clone());
+        }
+
+        // BFS from each listed table, hopping through non-listed intermediates
+        // to find transitive listed-table parents.
+        let mut violations: Vec<(String, String)> = Vec::new();
+        for child in &multi_device_tables {
+            let mut queue: VecDeque<String> = VecDeque::new();
+            let mut visited: HashSet<String> = HashSet::new();
+            queue.push_back(child.clone());
+            visited.insert(child.clone());
+
+            while let Some(current) = queue.pop_front() {
+                let Some(parents) = parents_of.get(&current) else {
+                    continue;
+                };
+                for parent in parents {
+                    if !visited.insert(parent.clone()) {
+                        continue;
+                    }
+                    if changelog_tables.contains(parent) {
+                        if !multi_device_tables.contains(parent) {
+                            violations.push((child.clone(), parent.clone()));
+                        }
+                    } else {
+                        queue.push_back(parent.clone());
+                    }
+                }
+            }
+        }
+        violations.sort();
+        violations.dedup();
+
+        assert!(
+            violations.is_empty(),
+            "FK violation:  FK parent doesn't sync to multi-device sites, so the child \
+             fails to integrate. Set multi_device_site: true on each parent (or false on the child):\n{}",
+            violations
+                .iter()
+                .map(|(c, p)| format!("  - {c} depends on {p}"))
+                .collect::<Vec<_>>()
+                .join("\n"),
+        );
     }
 
     // ---- Shared meta-test setup ----

@@ -66,6 +66,14 @@ impl<'a> ProgramIndicatorRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, record_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            program_indicator::table.filter(program_indicator::id.eq(record_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_many_by_id(
         &self,
         ids: &[String],

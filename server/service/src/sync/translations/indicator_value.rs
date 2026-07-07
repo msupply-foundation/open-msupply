@@ -1,16 +1,17 @@
 use repository::{
     indicator_value::{IndicatorValueFilter, IndicatorValueRepository},
-    ChangelogRow, ChangelogTableName, EqualFilter, IndicatorValueRow, IndicatorValueRowDelete,
+    ChangelogRow, ChangelogTableName, EqualFilter, IndicatorValueRow, IndicatorValueRowDelete, Row,
     StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
-    Row,
-
 };
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::translations::indicator_attribute::IndicatorAttribute;
+use crate::sync::translations::{
+    indicator_attribute::IndicatorAttribute, name::NameTranslation, period::PeriodTranslation,
+    store::StoreTranslation,
+};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyIndicatorValue {
@@ -40,7 +41,13 @@ impl SyncTranslation for IndicatorValue {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![IndicatorAttribute.table_name()]
+        vec![
+            // IndicatorAttribute yields indicator_line + indicator_column
+            IndicatorAttribute.table_name(),
+            NameTranslation.table_name(),
+            StoreTranslation.table_name(),
+            PeriodTranslation.table_name(),
+        ]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -50,6 +57,7 @@ impl SyncTranslation for IndicatorValue {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyIndicatorValue {
@@ -69,13 +77,15 @@ impl SyncTranslation for IndicatorValue {
             .store_row
             .name_id;
 
+        let check_fk = fk_checker.with_table_required(connection, "indicator_value", &id);
+
         Ok(PullTranslateResult::upsert(IndicatorValueRow {
             id,
-            customer_name_id,
-            store_id,
-            period_id,
-            indicator_line_id,
-            indicator_column_id,
+            customer_name_id: check_fk(customer_name_id, "customer_name_link_id", FkField::NameLink)?,
+            store_id: check_fk(store_id, "store_id", FkField::Store)?,
+            period_id: check_fk(period_id, "period_id", FkField::Period)?,
+            indicator_line_id: check_fk(indicator_line_id, "indicator_line_id", FkField::IndicatorLine)?,
+            indicator_column_id: check_fk(indicator_column_id, "indicator_column_id", FkField::IndicatorColumn)?,
             value,
         }))
     }
@@ -92,8 +102,7 @@ impl SyncTranslation for IndicatorValue {
 
         let Some(indicator_value) = IndicatorValueRepository::new(connection)
             .query_by_filter(
-                IndicatorValueFilter::new()
-                    .id(EqualFilter::equal_to(indicator_value_row.id)),
+                IndicatorValueFilter::new().id(EqualFilter::equal_to(indicator_value_row.id)),
             )?
             .pop()
         else {
@@ -129,7 +138,11 @@ impl SyncTranslation for IndicatorValue {
             store_id,
             value,
         };
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -155,7 +168,9 @@ impl SyncTranslation for IndicatorValue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, IndicatorLineRow, IndicatorLineRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_indicator_value_translation() {
@@ -164,16 +179,29 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_indicator_value_translation",
-            MockDataInserts::none().stores(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the indicator_line parent the value's required FK points at.
+        IndicatorLineRowRepository::new(&connection)
+            .upsert_one(&IndicatorLineRow {
+                id: "indicator_line_a".to_string(),
+                program_indicator_id: "program_indicator_a".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
 
         indicator_value::test_pull_upsert_records()
             .into_iter()
             .for_each(|record| {
                 assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
                 let translation_result = translator
-                    .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                    .try_translate_from_upsert_sync_record(
+                        &connection,
+                        &crate::sync::translations::FkChecker::new(),
+                        &record.sync_buffer_row,
+                    )
                     .unwrap();
 
                 assert_eq!(translation_result, record.translated_record);

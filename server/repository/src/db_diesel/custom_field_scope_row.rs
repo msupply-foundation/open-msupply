@@ -1,7 +1,7 @@
 use super::custom_field_scope_row::custom_field_scope::dsl::*;
 
 use diesel::prelude::*;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::diesel_macros::diesel_string_enum;
 use crate::ChangelogRepository;
@@ -36,22 +36,6 @@ diesel_string_enum! {
         // CustomFieldKind; pinned by the serde round-trip test below.
         #[strum(default, transparent)]
         Other(String),
-    }
-}
-
-// Serialize to/from the plain string form on the sync wire, delegating to the
-// strum representation so the SCREAMING_SNAKE_CASE naming and the `Other`
-// catch-all match the DB (TEXT) storage exactly — a remote that receives an
-// unrecognised mode deserialises it into `Other` rather than failing the record.
-impl Serialize for CustomFieldDisplayMode {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(self.as_ref())
-    }
-}
-
-impl<'de> Deserialize<'de> for CustomFieldDisplayMode {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Ok(Self::from(String::deserialize(deserializer)?))
     }
 }
 
@@ -202,13 +186,14 @@ mod tests {
     // this build (added on a newer central) survives losslessly.
     #[test]
     fn custom_field_display_mode_serde_wire_form() {
-        // Known variants <-> flat SCREAMING_SNAKE_CASE string, matching the DB TEXT column.
+        // Known variants <-> flat variant-identifier string (`diesel_string_enum!`'s
+        // generated serde form); the strum SCREAMING_SNAKE_CASE governs only the DB column.
         assert_eq!(
             serde_json::to_value(CustomFieldDisplayMode::Prominent).unwrap(),
-            serde_json::json!("PROMINENT")
+            serde_json::json!("Prominent")
         );
         assert_eq!(
-            serde_json::from_value::<CustomFieldDisplayMode>(serde_json::json!("HIDDEN")).unwrap(),
+            serde_json::from_value::<CustomFieldDisplayMode>(serde_json::json!("Hidden")).unwrap(),
             CustomFieldDisplayMode::Hidden
         );
 

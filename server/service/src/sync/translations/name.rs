@@ -1,8 +1,8 @@
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, CurrencyRowRepository, GenderType, NameRow, NameRowDelete,
-    NameRowRepository, NameRowType, Row, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowRepository,
+    NameRowType, Row, StorageConnection, SyncBufferRow,
 };
 use util::sync_serde::{
     date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
@@ -16,8 +16,9 @@ use crate::sync::{
 };
 
 use super::{
-    utils::{clear_invalid_fk, merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 
 /// `custom_fields` keys the legacy OG→OMS name import owns (derived from
@@ -329,6 +330,7 @@ impl SyncTranslation for NameTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let legacy: LegacyNameRow = sync_record.deserialize()?;
@@ -414,15 +416,9 @@ impl SyncTranslation for NameTranslation {
         // No DB-level FK constraint on supplying_store_id, because the store records also rely on name.
         // We don't want to blank out supplying_store_id if the store record just hasn't been synced yet
 
-        let currency_id = clear_invalid_fk(
-            connection,
-            "name",
-            &id,
-            "currency_id",
-            currency_id,
-            |c, id| CurrencyRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let fk_check = fk_checker.with_table(connection, "name", &id);
+
+        let currency_id = fk_check(currency_id, "currency_id", FkField::Currency)?;
 
         let result = NameRow {
             id,
@@ -835,7 +831,11 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             // TODO add match record here
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap_or_else(|_| {
                     panic!(
                         "Error translating from upsert sync record {:?}",
@@ -915,7 +915,11 @@ mod tests {
         };
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         // supplying_store_id has no DB-level FK constraint (store depends on name so we can't

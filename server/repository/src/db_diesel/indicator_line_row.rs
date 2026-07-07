@@ -107,6 +107,14 @@ impl<'a> IndicatorLineRowRepository<'a> {
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            indicator_line::table.filter(indicator_line::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for IndicatorLineRow {

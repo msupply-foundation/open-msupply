@@ -89,6 +89,7 @@ impl SyncTranslation for NameCategoryTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         // Central-only: remotes receive the options over v7 and must not author
@@ -195,7 +196,11 @@ mod tests {
         test_util_set_is_central_server(true);
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &cat1)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &cat1,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(debug.contains("CustomFieldOptionRow"), "{}", debug);
@@ -209,7 +214,11 @@ mod tests {
         );
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &cat4)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &cat4,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(debug.contains("name_category_4"), "{}", debug);
@@ -223,7 +232,11 @@ mod tests {
         // On a remote, nothing is authored (options arrive via v7).
         test_util_set_is_central_server(false);
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &cat1)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &cat1,
+            )
             .unwrap();
         assert!(
             matches!(result, PullTranslateResult::Ignored(_)),

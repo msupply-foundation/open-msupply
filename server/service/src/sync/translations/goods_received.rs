@@ -1,7 +1,7 @@
 use super::{
     currency::CurrencyTranslation, invoice::InvoiceTranslation, name::NameTranslation,
-    purchase_order::PurchaseOrderTranslation, store::StoreTranslation, PullTranslateResult,
-    SyncTranslation,
+    purchase_order::PurchaseOrderTranslation, store::StoreTranslation, FkField,
+    PullTranslateResult, SyncTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -62,6 +62,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyGoodsReceivedRow>()?;
@@ -131,11 +132,20 @@ impl SyncTranslation for GoodsReceivedTranslation {
                 chrono::Utc::now().naive_utc()
             });
 
+        // Validate the FKs sourced from the goods_received record itself. name_id/currency_id
+        // come from the already-validated purchase order, and purchase_order_id was confirmed
+        // present above, so those need no re-check.
+        let check_required_fks = fk_checker.with_table_required(connection, "invoice", &data.id);
+        let check_fks = fk_checker.with_table(connection, "invoice", &data.id);
+        let store_id = check_required_fks(data.store_ID, "store_id", FkField::Store)?;
+        let default_donor_id =
+            check_fks(data.donor_id, "default_donor_link_id", FkField::NameLink)?;
+
         let invoice = InvoiceRow {
             id: data.id,
             name_id: po.supplier_name_id,
             name_store_id: None,
-            store_id: data.store_ID,
+            store_id,
             user_id: data.user_id_created,
             invoice_number: data.serial_number,
             r#type: InvoiceType::InboundShipment,
@@ -173,7 +183,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
-            default_donor_id: data.donor_id,
+            default_donor_id,
             legacy_goods_received_id: None,
         };
 
@@ -198,7 +208,11 @@ mod tests {
             record.insert_extra_data(&connection).await;
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
             assert_eq!(translation_result, record.translated_record);
         }

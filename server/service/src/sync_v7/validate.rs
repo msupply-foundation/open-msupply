@@ -21,6 +21,8 @@ pub enum ValidationError {
     CentralOnlyEditableByCentral,
     #[error("Store is not active on the source site")]
     StoreNotActiveOnSourceSite,
+    #[error("Non-multi-device data received on a multi-device site")]
+    NonMultiDeviceDataOnMultiDeviceSite,
 }
 
 pub(crate) fn validate_on_remote(
@@ -28,9 +30,16 @@ pub(crate) fn validate_on_remote(
     table_name: &ChangelogTableName,
     active_on_site: &ActiveStoresOnSite,
     is_initialising: bool,
+    is_multi_device: bool,
 ) -> Result<(), ValidationError> {
     use Authoring::*;
     let sync_style = table_name.sync_style();
+
+    // A multi-device site only handles multi-device tables — reject anything else, then
+    // fall through so what passes is still checked by its authoring arm below.
+    if is_multi_device && !sync_style.multi_device_site {
+        return Err(ValidationError::NonMultiDeviceDataOnMultiDeviceSite);
+    }
 
     let active_store_ids = active_on_site.store_ids();
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
@@ -81,9 +90,17 @@ pub(crate) fn validate_on_central(
     sync_buffer_row: &SyncBufferRow,
     table_name: &ChangelogTableName,
     source_site_active_store_ids: &[String],
+    is_multi_device: bool,
 ) -> Result<(), ValidationError> {
     use Authoring::*;
     let sync_style = table_name.sync_style();
+
+    // A multi-device site only pushes multi-device tables — reject anything else, then
+    // fall through so what passes is still checked by its authoring arm below.
+    if is_multi_device && !sync_style.multi_device_site {
+        return Err(ValidationError::NonMultiDeviceDataOnMultiDeviceSite);
+    }
+
     let mut last_err = ValidationError::UnexpectedSyncStyleForV7;
 
     let store_active_on_source = |id: &String| source_site_active_store_ids.iter().any(|s| s == id);
@@ -145,6 +162,7 @@ mod tests {
                 &Item,
                 &site(),
                 false,
+                false,
             ),
             Ok(())
         );
@@ -158,6 +176,7 @@ mod tests {
                 &Item,
                 &site(),
                 false,
+                false,
             ),
             Err(ValidationError::UnexpectedSyncStyleForV7)
         );
@@ -170,6 +189,7 @@ mod tests {
                 },
                 &Item,
                 &site(),
+                false,
                 false,
             ),
             Err(ValidationError::UnexpectedSyncStyleForV7)
@@ -186,6 +206,7 @@ mod tests {
                 &Stocktake,
                 &site(),
                 true,
+                false,
             ),
             Ok(())
         );
@@ -198,6 +219,7 @@ mod tests {
                 &Stocktake,
                 &site(),
                 true,
+                false,
             ),
             Err(ValidationError::NoStoreId)
         );
@@ -211,6 +233,7 @@ mod tests {
                 &Stocktake,
                 &site(),
                 true,
+                false,
             ),
             Err(ValidationError::InactiveStore)
         );
@@ -224,6 +247,7 @@ mod tests {
                 },
                 &Stocktake,
                 &site(),
+                false,
                 false,
             ),
             Err(ValidationError::SiteAlreadyInitialised)
@@ -239,6 +263,7 @@ mod tests {
                 },
                 &Preference,
                 &site(),
+                false,
                 false,
             ),
             Ok(())
@@ -257,6 +282,7 @@ mod tests {
                 &Requisition,
                 &site(),
                 false,
+                false,
             ),
             Ok(())
         );
@@ -269,6 +295,7 @@ mod tests {
                 },
                 &Requisition,
                 &site(),
+                false,
                 false,
             ),
             Err(ValidationError::TransferStoreNotActiveOnThisSite)
@@ -285,6 +312,7 @@ mod tests {
                 &Document,
                 &site(),
                 false,
+                false,
             ),
             Ok(())
         );
@@ -296,6 +324,7 @@ mod tests {
                 },
                 &Document,
                 &site(),
+                false,
                 false,
             ),
             Err(ValidationError::NoPatientId)
@@ -310,6 +339,7 @@ mod tests {
                 },
                 &Site,
                 &site(),
+                false,
                 false,
             ),
             Err(ValidationError::UnexpectedSyncStyleForV7)
@@ -331,6 +361,7 @@ mod tests {
                 },
                 &Item,
                 &source_site_stores,
+                false,
             ),
             Err(ValidationError::CentralOnlyEditableByCentral)
         );
@@ -345,6 +376,7 @@ mod tests {
                 },
                 &Stocktake,
                 &source_site_stores,
+                false,
             ),
             Ok(())
         );
@@ -358,6 +390,7 @@ mod tests {
                 },
                 &Stocktake,
                 &source_site_stores,
+                false,
             ),
             Err(ValidationError::StoreNotActiveOnSourceSite)
         );
@@ -370,6 +403,7 @@ mod tests {
                 },
                 &Stocktake,
                 &source_site_stores,
+                false,
             ),
             Err(ValidationError::StoreNotActiveOnSourceSite)
         );
@@ -381,6 +415,7 @@ mod tests {
                 },
                 &Stocktake,
                 &source_site_stores,
+                false,
             ),
             Err(ValidationError::NoStoreId)
         );
@@ -396,6 +431,7 @@ mod tests {
                 },
                 &Requisition,
                 &source_site_stores,
+                false,
             ),
             Err(ValidationError::NoStoreId)
         );
@@ -411,6 +447,7 @@ mod tests {
                 },
                 &Document,
                 &source_site_stores,
+                false,
             ),
             Ok(())
         );
@@ -424,6 +461,7 @@ mod tests {
                 },
                 &Document,
                 &source_site_stores,
+                false,
             ),
             Ok(())
         );
@@ -437,6 +475,7 @@ mod tests {
                 },
                 &Document,
                 &source_site_stores,
+                false,
             ),
             Err(ValidationError::StoreNotActiveOnSourceSite)
         );
@@ -448,6 +487,7 @@ mod tests {
                 },
                 &Document,
                 &source_site_stores,
+                false,
             ),
             Err(ValidationError::NoPatientId)
         );
@@ -461,6 +501,7 @@ mod tests {
                 },
                 &Clinician,
                 &source_site_stores,
+                false,
             ),
             Ok(())
         );
@@ -474,8 +515,82 @@ mod tests {
                 },
                 &Site,
                 &source_site_stores,
+                false,
             ),
             Err(ValidationError::UnexpectedSyncStyleForV7)
+        );
+    }
+
+    // On a multi-device site, non-multi-device tables are rejected by the gate; multi-device
+    // tables pass it and are validated by their authoring arm as on any other site.
+
+    #[test]
+    fn on_remote_multi_device_site() {
+        // Non-multi-device table → rejected by the gate.
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &Stocktake,
+                &site(),
+                true,
+                true,
+            ),
+            Err(ValidationError::NonMultiDeviceDataOnMultiDeviceSite)
+        );
+
+        // Multi-device table → passes the gate, then validated as on any site (see `on_remote`).
+        assert_eq!(
+            validate_on_remote(
+                &SyncBufferRow {
+                    store_id: Some("store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &TemperatureLog,
+                &site(),
+                true,
+                true,
+            ),
+            Ok(())
+        );
+    }
+
+    #[test]
+    fn on_central_multi_device_site() {
+        let source_site_stores = vec!["remote_store_a".to_string()];
+
+        // Non-multi-device table → rejected by the gate.
+        assert_eq!(
+            validate_on_central(
+                &SyncBufferRow {
+                    store_id: Some("remote_store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &Stocktake,
+                &source_site_stores,
+                true,
+            ),
+            Err(ValidationError::NonMultiDeviceDataOnMultiDeviceSite)
+        );
+
+        // Multi-device table → passes the gate, then validated as on any site (see `on_central`).
+        assert_eq!(
+            validate_on_central(
+                &SyncBufferRow {
+                    store_id: Some("remote_store_a".into()),
+                    source_site_id: 2,
+                    ..Default::default()
+                },
+                &TemperatureLog,
+                &source_site_stores,
+                true,
+            ),
+            Ok(())
         );
     }
 }
