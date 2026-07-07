@@ -133,7 +133,7 @@ mod tests {
         let err = serde_yaml::from_str::<SyncSettings>("url: http://x\nusername: y\n")
             .unwrap_err()
             .to_string();
-        assert!(err.contains("all together"), "unexpected error: {err}");
+        assert!(err.contains("all together"), "unexpected error: {}", err);
 
         // A flags-only block is allowed.
         let flags_only =
