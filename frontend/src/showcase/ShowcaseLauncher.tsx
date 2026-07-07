@@ -37,8 +37,8 @@ export const ShowcaseLauncher = (props: { activeId: string }) => {
                     onClick={() => setOpen(false)}
                   >
                     <span>{s.label}</span>
-                    <Show when={s.kind === 'page'}>
-                      <span class={styles.pageTag}>page</span>
+                    <Show when={s.kind === 'page' || s.kind === 'app'}>
+                      <span class={styles.pageTag}>{s.kind}</span>
                     </Show>
                   </a>
                 </li>

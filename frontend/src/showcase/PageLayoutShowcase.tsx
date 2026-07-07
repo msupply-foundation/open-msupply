@@ -1,5 +1,6 @@
-import { For } from 'solid-js'
+import { createSignal, For } from 'solid-js'
 import { AppShell } from '../components/layout/AppShell/AppShell'
+import type { NavLeaf } from '../components/layout/AppShell/navModel'
 import styles from './PageLayoutShowcase.module.css'
 
 /* Deterministic placeholder rows — enough to make the body scroll. */
@@ -30,10 +31,21 @@ const ROWS = Array.from({ length: 16 }, (_, i) => ({
  * Demonstrates the AppShell layout element as a full page. It's rendered
  * full-bleed by the showcase (kind: 'page'); resize the window to watch the
  * docked sidebar collapse to a hamburger overlay at the navOverlay breakpoint.
+ * The showcase owns the demo's nav selection (AppShell is controlled) so the
+ * body content here can react to sidebar picks — in the real app a router
+ * plays this role (see pages/Home for the showcase-free usage).
  */
-export const PageLayoutShowcase = () => (
-  <AppShell>
-    {(selected) => (
+const DEMO_START: NavLeaf = {
+  id: 'outbound',
+  label: 'Outbound Shipments',
+  to: '/distribution/outbound-shipment',
+}
+
+export const PageLayoutShowcase = () => {
+  const [selected, setSelected] = createSignal<NavLeaf>(DEMO_START)
+
+  return (
+    <AppShell selected={selected()} onNavigate={setSelected}>
       <div class={styles.page}>
         <p class={styles.note}>
           Whole-page layout demo. Resize the window (or use the device toolbar) —
@@ -44,7 +56,7 @@ export const PageLayoutShowcase = () => (
 
         <div class={styles.toolbar}>
           <span class={styles.count}>
-            {ROWS.length} {selected.label.toLowerCase()}
+            {ROWS.length} {selected().label.toLowerCase()}
           </span>
           <div class={styles.filters}>
             <For each={STATUSES}>
@@ -94,6 +106,6 @@ export const PageLayoutShowcase = () => (
           </table>
         </div>
       </div>
-    )}
-  </AppShell>
-)
+    </AppShell>
+  )
+}

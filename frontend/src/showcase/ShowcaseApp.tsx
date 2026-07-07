@@ -1,29 +1,37 @@
 import { createSignal, onCleanup, For, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { sections } from "./showcase/sections";
-import { ThemeToggle } from "./components/ThemeToggle/ThemeToggle";
-import { ShowcaseLauncher } from "./showcase/ShowcaseLauncher";
-import styles from "./App.module.css";
+import { sections } from "./sections";
+import { ThemeToggle } from "../components/ThemeToggle/ThemeToggle";
+import { ShowcaseLauncher } from "./ShowcaseLauncher";
+import styles from "./ShowcaseApp.module.css";
 
 /*
- * Storybook shell: header + section nav + active section panel. The active
- * section lives in the URL hash (#/buttons) so views are linkable — plain
- * anchors + a hashchange listener, no routing library (routing is an
+ * Storybook shell: header + section nav + active section panel. Everything in
+ * src/showcase/ is demo scaffolding — the reusable library (src/components/,
+ * src/hooks/, src/styles/) and real pages (src/pages/) never import from here.
+ * index.tsx mounts this while the library is the app; the real app will take
+ * over the entry point later.
+ *
+ * The active section lives in the URL hash (#/buttons) so views are linkable —
+ * plain anchors + a hashchange listener, no routing library (routing is an
  * undecided item; see DECISIONS.md conventions carried from the prototype).
  *
- * Two rendering modes, chosen by the section's `kind`:
+ * Three rendering modes, chosen by the section's `kind`:
  *   - 'component' (default): renders inside the padded panel below the nav.
  *   - 'page': renders full-bleed so a whole-page layout (e.g. the app shell,
  *     with its own sidebar/header) owns the real viewport — the point being to
  *     resize/device-test it without competing chrome. The ShowcaseLauncher
  *     floats over it as the escape hatch back to the menu.
+ *   - 'app': full-bleed with no showcase chrome at all — a real app page
+ *     (src/pages/) exactly as a build would ship it. Browser Back returns to
+ *     the showcase.
  */
 const sectionFromHash = () => {
   const id = window.location.hash.replace(/^#\/?/, "");
   return sections.some((s) => s.id === id) ? id : sections[0].id;
 };
 
-function App() {
+export function ShowcaseApp() {
   const [activeId, setActiveId] = createSignal(sectionFromHash());
 
   const onHashChange = () => setActiveId(sectionFromHash());
@@ -34,7 +42,7 @@ function App() {
 
   return (
     <Show
-      when={active().kind === "page"}
+      when={active().kind === "page" || active().kind === "app"}
       fallback={
         <div class={styles.shell}>
           <header class={styles.header}>
@@ -64,9 +72,9 @@ function App() {
       <div class={styles.pageCanvas}>
         <Dynamic component={active().component} />
       </div>
-      <ShowcaseLauncher activeId={activeId()} />
+      <Show when={active().kind === "page"}>
+        <ShowcaseLauncher activeId={activeId()} />
+      </Show>
     </Show>
   );
 }
-
-export default App;

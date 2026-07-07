@@ -114,3 +114,11 @@ export const lowerNav: NavItem[] = [
   { id: 'sync', label: 'Sync', to: '/sync', icon: RadioIcon },
   { id: 'help', label: 'Help', to: '/help', icon: HelpIcon },
 ]
+
+/**
+ * The nav group a leaf belongs to, if any — drives the header breadcrumb root
+ * (e.g. "Distribution / Outbound Shipments"). Top-level leaves (Reports…) and
+ * pages outside the nav (Home) have no parent and get a single crumb.
+ */
+export const findNavParent = (leafId: string): NavItem | undefined =>
+  [...upperNav, ...lowerNav].find((item) => item.children?.some((c) => c.id === leafId))

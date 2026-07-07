@@ -3,6 +3,7 @@ import { ButtonsShowcase } from './ButtonsShowcase'
 import { InputsShowcase } from './InputsShowcase'
 import { SelectorsShowcase } from './SelectorsShowcase'
 import { PageLayoutShowcase } from './PageLayoutShowcase'
+import { Home } from '../pages/Home/Home'
 
 export type SectionDef = {
   id: string
@@ -12,9 +13,11 @@ export type SectionDef = {
    * 'component' (default) renders inside the padded showcase panel. 'page'
    * renders full-bleed — the component owns the whole viewport (e.g. an app
    * shell with its own sidebar/header), with the ShowcaseLauncher floating over
-   * it as the way back. See App.tsx.
+   * it as the way back. 'app' is full-bleed with NO showcase chrome at all —
+   * a real app page exactly as a build would ship it; the way back is the
+   * browser's Back button. See ShowcaseApp.tsx.
    */
-  kind?: 'component' | 'page'
+  kind?: 'component' | 'page' | 'app'
 }
 
 const ComingSoon: Component = () => (
@@ -33,5 +36,9 @@ export const sections: SectionDef[] = [
   { id: 'layout', label: 'Layout', component: ComingSoon },
   { id: 'feedback', label: 'Feedback', component: ComingSoon },
   { id: 'table', label: 'Table', component: ComingSoon },
+  // 'app-shell' demos the AppShell layout element with showcase-owned demo
+  // content; 'home' is the REAL home page scaffold (src/pages/Home — imports
+  // only from the library), registered here so it's reachable and testable.
   { id: 'app-shell', label: 'App shell', component: PageLayoutShowcase, kind: 'page' },
+  { id: 'home', label: 'Home', component: Home, kind: 'app' },
 ]

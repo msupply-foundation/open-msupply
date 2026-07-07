@@ -1,0 +1,13 @@
+/* Placeholder empty state for pages that haven't been built yet. */
+
+.empty {
+  display: grid;
+  place-content: center;
+  block-size: 100%;
+  text-align: center;
+}
+
+.emptyText {
+  margin: 0;
+  color: var(--text-secondary);
+}

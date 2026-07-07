@@ -6,6 +6,20 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-08 · Library / showcase / pages separation — AppShell gets a real app-facing API
+
+- **Decision (Carl):** The reusable library and the showcase are strictly separated, with a third home for real application pages:
+  - **`src/components/` + `src/hooks/` + `src/styles/`** — the reusable library. Imports **nothing** from `src/showcase/` or `src/pages/`, and carries no demo state, demo defaults, or demo-shaped APIs.
+  - **`src/showcase/`** — *all* storybook scaffolding, including the storybook shell itself (`ShowcaseApp.tsx`, moved from `src/App.tsx`; `src/index.tsx` mounts it while the library is the app — the real app takes over the entry point later).
+  - **`src/pages/`** — real application pages, importing only from the library. First page: **`Home`** (`#/home`, full-bleed) — the actual home-page scaffold: AppShell + an empty body, proving the shell mounts with zero showcase ceremony. Real pages register with **`kind: 'app'`**: full-bleed with *no* showcase chrome at all — not even the floating ShowcaseLauncher that `kind: 'page'` demos get (Carl: the real page must look exactly as a build would ship it). The way back to the showcase is the browser's Back button, as in a real app.
+  - **`AppShell` is now a controlled, pure layout element:** plain `children` (was a render-prop that existed only so demo content could react to nav clicks), `selected`/`onNavigate` props (was internal state with a hard-coded "Outbound Shipments" default), and the header breadcrumb derived from `navModel` via `findNavParent` (was a hard-coded "Distribution"). The demo ceremony moved into `PageLayoutShowcase`, which now owns its own selection signal — exactly the role a router will play in the real app.
+
+- **Why:** Others are about to build the rest of the app on these components; anything demo-flavoured in the library's APIs becomes load-bearing the moment they do. Showcase→library imports were already one-directional, but AppShell's *shape* was a showcase construction — state ownership and defaults chosen for the demo, not the app. Controlled selection + plain children is precisely what route-driven usage will need.
+
+- **Alternatives rejected:** keeping the render-prop `children` (couples the shell to a demo need; a router drives selection from outside anyway); leaving the storybook shell at `src/App.tsx` (showcase scaffolding squatting on the real app's entry point); a barrel `src/components/index.ts` for nicer import paths (deferred, not refused — paths are shallow today and a barrel is one more thing to maintain; revisit when the library surface stabilises).
+
+- **Status:** Adopted. `#/home` is the reference for how pages are built until routing is decided.
+
 ## 2026-07-08 · No hard-coded colours in component CSS — every colour derives from a token
 
 - **Decision (Carl):** Component CSS may not contain colour literals (`#hex`, `rgb()/rgba()`, `hsl()`, named colours). Every colour is `var(--token)`, or `color-mix(in srgb, var(--token) N%, transparent)` for tints. **White included** — content on a coloured fill is `var(--primary-contrast)`, never `#fff`. Colour literals live only in `src/styles/tokens.css`, where the palette is defined. If a needed colour has no token, **add one to the theme contract** (with a dark override) instead of inlining a literal. Recorded as an addendum to principle #5 in `CLAUDE.md`.

@@ -20,18 +20,21 @@ import { useIsNavOverlay } from '../../../hooks/createMediaQuery'
 import { Sidebar, type SidebarState } from './Sidebar'
 import { LanguageSelector } from './LanguageSelector'
 import { isRtlLocale } from './languages'
-import type { NavLeaf } from './navModel'
+import { findNavParent, type NavLeaf } from './navModel'
 import styles from './AppShell.module.css'
 
-interface AppShellProps {
-  /** Body is a render-prop so the demo content can reflect the selected page. */
-  children: (selected: NavLeaf) => JSX.Element
-}
-
-const DEFAULT_SELECTED: NavLeaf = {
-  id: 'outbound',
-  label: 'Outbound Shipments',
-  to: '/distribution/outbound-shipment',
+export interface AppShellProps {
+  /**
+   * The current page — drives the sidebar highlight and the header breadcrumb.
+   * The caller owns selection (a router eventually; page-local state for now),
+   * so the shell stays a pure layout element. A page outside the nav (e.g.
+   * Home) simply highlights nothing.
+   */
+  selected: NavLeaf
+  /** The user picked a sidebar item. */
+  onNavigate: (leaf: NavLeaf) => void
+  /** Page body, rendered in the scrolling region between header and footer. */
+  children: JSX.Element
 }
 
 /*
@@ -69,9 +72,9 @@ const FooterCell = (props: {
 export const AppShell = (props: AppShellProps) => {
   const [railCollapsed, setRailCollapsed] = createSignal(false)
   const [overlayOpen, setOverlayOpen] = createSignal(false)
-  const [selected, setSelected] = createSignal<NavLeaf>(DEFAULT_SELECTED)
   const [language, setLanguage] = createSignal('en')
   const isOverlay = useIsNavOverlay()
+  const crumbRoot = () => findNavParent(props.selected.id)?.label
 
   const nav: SidebarState = {
     railCollapsed,
@@ -87,8 +90,10 @@ export const AppShell = (props: AppShellProps) => {
     if (!isOverlay()) setOverlayOpen(false)
   })
 
-  // Picking an RTL language flips the whole document; restore LTR on leaving
-  // the page so the component showcase isn't left mirrored.
+  // Picking an RTL language flips the whole document (document-level so
+  // portaled popups inherit dir — see DECISIONS.md 2026-07-08). In the real
+  // app the shell never unmounts; restoring LTR on unmount is plain effect
+  // hygiene for hosts that do unmount it.
   createEffect(() => {
     document.documentElement.dir = isRtlLocale(language()) ? 'rtl' : 'ltr'
   })
@@ -101,8 +106,8 @@ export const AppShell = (props: AppShellProps) => {
       <Sidebar
         nav={nav}
         isOverlay={isOverlay()}
-        selectedId={selected().id}
-        onSelect={setSelected}
+        selectedId={props.selected.id}
+        onSelect={props.onNavigate}
       />
       <div class={styles.main}>
         <header class={styles.header}>
@@ -117,11 +122,13 @@ export const AppShell = (props: AppShellProps) => {
             </button>
           </Show>
           <div class={styles.crumbs}>
-            <span class={styles.crumbRoot}>Distribution</span>
-            <span class={styles.crumbSep} aria-hidden="true">
-              /
-            </span>
-            <h1 class={styles.crumbLeaf}>{selected().label}</h1>
+            <Show when={crumbRoot()}>
+              <span class={styles.crumbRoot}>{crumbRoot()}</span>
+              <span class={styles.crumbSep} aria-hidden="true">
+                /
+              </span>
+            </Show>
+            <h1 class={styles.crumbLeaf}>{props.selected.label}</h1>
           </div>
           <div class={styles.headerActions}>
             <div class={styles.search}>
@@ -139,7 +146,7 @@ export const AppShell = (props: AppShellProps) => {
           </div>
         </header>
 
-        <div class={styles.body}>{props.children(selected())}</div>
+        <div class={styles.body}>{props.children}</div>
 
         <footer class={styles.footer}>
           <FooterCell icon={HomeIcon} label="General" />
