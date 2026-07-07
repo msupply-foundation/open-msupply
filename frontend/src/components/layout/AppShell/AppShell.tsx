@@ -1,4 +1,11 @@
-import { createSignal, createEffect, Show, type JSX, type Component } from 'solid-js'
+import {
+  createSignal,
+  createEffect,
+  onCleanup,
+  Show,
+  type JSX,
+  type Component,
+} from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import {
   MenuIcon,
@@ -6,12 +13,13 @@ import {
   HomeIcon,
   EditIcon,
   UserIcon,
-  TranslateIcon,
   CentralIcon,
   type IconProps,
 } from '../../icons'
 import { useIsNavOverlay } from '../../../hooks/createMediaQuery'
 import { Sidebar, type SidebarState } from './Sidebar'
+import { LanguageSelector } from './LanguageSelector'
+import { isRtlLocale } from './languages'
 import type { NavLeaf } from './navModel'
 import styles from './AppShell.module.css'
 
@@ -62,6 +70,7 @@ export const AppShell = (props: AppShellProps) => {
   const [railCollapsed, setRailCollapsed] = createSignal(false)
   const [overlayOpen, setOverlayOpen] = createSignal(false)
   const [selected, setSelected] = createSignal<NavLeaf>(DEFAULT_SELECTED)
+  const [language, setLanguage] = createSignal('en')
   const isOverlay = useIsNavOverlay()
 
   const nav: SidebarState = {
@@ -76,6 +85,15 @@ export const AppShell = (props: AppShellProps) => {
   // off-canvas panel — close it so the docked rail shows cleanly.
   createEffect(() => {
     if (!isOverlay()) setOverlayOpen(false)
+  })
+
+  // Picking an RTL language flips the whole document; restore LTR on leaving
+  // the page so the component showcase isn't left mirrored.
+  createEffect(() => {
+    document.documentElement.dir = isRtlLocale(language()) ? 'rtl' : 'ltr'
+  })
+  onCleanup(() => {
+    document.documentElement.dir = 'ltr'
   })
 
   return (
@@ -129,7 +147,7 @@ export const AppShell = (props: AppShellProps) => {
           <span class={styles.footerDivider} aria-hidden="true" />
           <FooterCell icon={UserIcon} label="demo" />
           <span class={styles.footerDivider} aria-hidden="true" />
-          <FooterCell icon={TranslateIcon} label="English" onClick={() => {}} />
+          <LanguageSelector language={language()} onSelect={setLanguage} />
           <FooterCell icon={CentralIcon} label="Central server" />
         </footer>
       </div>

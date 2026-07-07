@@ -6,6 +6,19 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-08 · Footer language selector (Kobalte DropdownMenu) + document-level RTL flip
+
+- **Decision:** The footer language picker is built on **Kobalte DropdownMenu** (headless), styled to our look via `data-*` attributes, opening upward out of the footer (`placement="top-start"`). The list is the current app's native-name language options with the RTL locales (`ar`/`prs`/`ps`) tagged. Selecting an RTL locale flips the whole app to RTL by setting `dir="rtl"` on **`document.documentElement`**; `AppShell` restores `ltr` on unmount.
+
+- **Why:**
+  - Extends the existing "buy the hard a11y contract" call (see 2026-07-07 Kobalte entry): a menu popup's focus management, type-ahead and arrow/Escape nav are the dangerous-to-hand-roll part, and Kobalte is already in the tree. Solid analogue of the prototype's Radix DropdownMenu.
+  - **Document-level `dir`** (not a scoped container) so *portaled* popups — the menu itself, and any Select/Combobox content in `<body>` — inherit RTL too. Logical properties + `:dir(rtl)` rules across the app then mirror everything with no extra work; this is what exercises principle #8 end-to-end.
+  - **Reset-on-unmount** keeps RTL scoped to viewing the full-bleed page, so returning to the LTR component showcase is clean.
+
+- **Alternatives rejected:** scoping `dir` to the `AppShell` root div — better isolation, but portaled menus live in `<body>` and wouldn't inherit it, rendering LTR-misaligned over an RTL page; hand-rolling the menu — rejected per principle #2 (the keyboard/focus contract is the buy-don't-build part).
+
+- **Status:** Adopted for the shell demo. The switch is display-only (native names + `dir`); no i18n message catalogue yet.
+
 ## 2026-07-07 · Whole-page layouts shown via full-bleed takeover, not an iframe canvas
 
 - **Decision:** The showcase demonstrates whole-page layouts (the app shell, with its own sidebar/header/footer) by a **full-bleed takeover**: a section marked `kind: 'page'` renders edge-to-edge and owns the real browser viewport, with the showcase chrome replaced by a single floating **ShowcaseLauncher** (bottom inline-start, above the shell's overlay scrim) as the way back to the menu and the theme toggle. Mechanically: `SectionDef` gains a `kind` field, `App.tsx` branches on it with `<Show>`, and the launcher reuses the existing hash nav. The first such page is the `AppShell` layout element; the responsive docked-vs-overlay decision is driven by `createMediaQuery`/`useIsNavOverlay` against `breakpoints.navOverlay` (1024) with the phone shrink at `compact` (600).
