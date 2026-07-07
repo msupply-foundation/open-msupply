@@ -14,7 +14,11 @@ import {
   TextInputCell,
 } from '@openmsupply-client/common';
 import { useDebounceCallback } from '@common/hooks';
-import { checkInvalidVariables, Translation } from './helpers';
+import {
+  checkInvalidVariables,
+  DEFAULT_CUSTOM_TRANSLATION_NAMESPACE,
+  Translation,
+} from './helpers';
 import {
   TranslationOption,
   TranslationSearchInput,
@@ -24,10 +28,12 @@ export const TranslationsTable = ({
   translations,
   setTranslations,
   showValidationErrors,
+  namespace,
 }: {
   translations: Translation[];
   setTranslations: React.Dispatch<React.SetStateAction<Translation[]>>;
   showValidationErrors: boolean;
+  namespace: string;
 }) => {
   const t = useTranslation();
 
@@ -170,7 +176,16 @@ export const TranslationsTable = ({
   return (
     <>
       <Box display="flex" flexDirection="column" gap={1} marginBottom="8px">
-        <TranslationSearchInput onChange={onAdd} existingKeys={existingKeys} />
+        {/* The add-translation search offers keys from the bundled `common`
+            base, so it's only meaningful for the common namespace. Other
+            namespaces (plugins, desktop, legacy) have no bundled key list, so
+            showing it there just surfaces irrelevant common keys - hide it. */}
+        {namespace === DEFAULT_CUSTOM_TRANSLATION_NAMESPACE && (
+          <TranslationSearchInput
+            onChange={onAdd}
+            existingKeys={existingKeys}
+          />
+        )}
         <BasicTextInput
           fullWidth
           value={filterInput}

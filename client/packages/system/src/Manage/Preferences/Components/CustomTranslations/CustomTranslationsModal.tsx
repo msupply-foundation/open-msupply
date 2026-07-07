@@ -22,6 +22,7 @@ import {
   mapTranslationsToObject,
   mergeTranslations,
   ImportMode,
+  DEFAULT_CUSTOM_TRANSLATION_NAMESPACE,
 } from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
 
@@ -234,6 +235,8 @@ export const CustomTranslationsModal = ({
               translations={translations}
               setTranslations={setTranslations}
               showValidationErrors={showValidationErrors}
+              // Legacy v1 is the global flat map of app-wide (common) keys.
+              namespace={DEFAULT_CUSTOM_TRANSLATION_NAMESPACE}
             />
           </Box>
         </Box>
