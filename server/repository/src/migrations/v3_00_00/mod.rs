@@ -13,6 +13,7 @@ mod add_site_is_multi_device_pg_enum;
 mod add_site_multi_device;
 mod add_site_sync_metadata;
 mod add_site_sync_version;
+mod add_sync_batch_size_key_value_store;
 mod add_sync_log_v7;
 mod add_sync_log_v7_reference;
 mod add_sync_request;
@@ -95,6 +96,7 @@ impl Migration for V3_00_00 {
             Box::new(add_site_multi_device::Migrate),
             Box::new(add_site_is_multi_device_pg_enum::Migrate),
             Box::new(add_site_sync_metadata::Migrate),
+            Box::new(add_sync_batch_size_key_value_store::Migrate),
         ]
     }
 }
