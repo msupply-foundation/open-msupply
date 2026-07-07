@@ -95,7 +95,7 @@
   border: none;
   border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-body);
   font-size: var(--text-sm);
   text-align: start;
   white-space: nowrap;
@@ -186,16 +186,12 @@
 .childList {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
   margin: var(--space-1) 0 0;
   margin-inline-start: 1.75rem;
   padding-inline-start: var(--space-3);
   border-inline-start: 1px solid var(--gray-light);
   list-style: none;
-}
-
-.childList .navButton {
-  block-size: var(--nav-child-height);
 }
 
 /* --- Collapsed (icon-only) rail ---------------------------------------- */
@@ -261,9 +257,5 @@
 @media (pointer: coarse) {
   .navButton {
     min-block-size: var(--touch-target);
-  }
-
-  .childList .navButton {
-    min-block-size: 2.5rem;
   }
 }

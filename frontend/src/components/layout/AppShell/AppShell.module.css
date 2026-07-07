@@ -199,7 +199,7 @@ button.footerCell:hover {
 
 button.footerCell:focus-visible {
   outline: 2px solid var(--primary-contrast);
-  outline-offset: -2px;
+  outline-offset: -0.125rem;
 }
 
 .footerIcon {
