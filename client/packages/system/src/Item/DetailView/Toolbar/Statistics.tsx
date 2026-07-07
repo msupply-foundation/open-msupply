@@ -3,6 +3,7 @@ import {
   Grid,
   StatsPanel,
   useFormatNumber,
+  useParams,
   useTranslation,
   usePreferences,
   RouteBuilder,
@@ -13,9 +14,10 @@ import { AppRoute } from '@openmsupply-client/config';
 export const Statistics = () => {
   const t = useTranslation();
   const formatNumber = useFormatNumber();
+  const { id: paramId } = useParams();
   const {
     byId: { data },
-  } = useItem();
+  } = useItem(paramId);
   const { manageVaccinesInDoses } = usePreferences();
   const { stats, isVaccine, doses } = data || {};
 

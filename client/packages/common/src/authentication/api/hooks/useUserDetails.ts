@@ -19,12 +19,3 @@ export const useUserPermissions = () => {
   const api = useAuthApi();
   return useMutation({ mutationFn: api.get.permissions });
 };
-
-export const useLastSuccessfulUserSync = () => {
-  const api = useAuthApi();
-  return useQuery({
-    queryKey: api.keys.userSync(),
-    queryFn: api.get.lastSuccessfulUserSync,
-    gcTime: 0,
-  });
-};

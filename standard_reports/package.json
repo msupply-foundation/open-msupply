@@ -6,11 +6,6 @@
   "scripts": {
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom"
   },
-  "workspaces": {
-    "packages": [
-      "standard_reports/*"
-    ]
-  },
   "devDependencies": {
     "@swc/core": "^1.6.7",
     "@swc/jest": "^0.2.15",

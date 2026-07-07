@@ -629,6 +629,7 @@ impl InvoiceTransferTester {
         let outbound_shipment = InvoiceRow {
             id: uuid(),
             name_id: inbound_name.map_or(inbound_store.name_id.clone(), |n| n.id.clone()),
+            name_store_id: Some(inbound_store.id.clone()),
             store_id: outbound_store.id.clone(),
             invoice_number: 20,
             r#type: InvoiceType::OutboundShipment,
@@ -772,6 +773,7 @@ impl InvoiceTransferTester {
         let supplier_return = InvoiceRow {
             id: uuid(),
             name_id: outbound_name.map_or(outbound_store.name_id.clone(), |n| n.id.clone()),
+            name_store_id: Some(outbound_store.id.clone()),
             store_id: inbound_store.id.clone(),
             invoice_number: 5,
             r#type: InvoiceType::SupplierReturn,

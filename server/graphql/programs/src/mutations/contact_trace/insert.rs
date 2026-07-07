@@ -37,6 +37,7 @@ pub fn insert_contact_trace(
         &ResourceAccessRequest {
             resource: Resource::MutateContactTrace,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

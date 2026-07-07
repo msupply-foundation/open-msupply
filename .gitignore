@@ -12,12 +12,13 @@ scripts/plugin-management/pluginAuth.json
 node_modules/
 
 # Yarn 4
-client/.yarn/*
-!client/.yarn/patches
-!client/.yarn/plugins
-!client/.yarn/releases
-!client/.yarn/sdks
-!client/.yarn/versions
+**/.yarn/*
+!**/.yarn/patches
+!**/.yarn/plugins
+!**/.yarn/releases
+!**/.yarn/sdks
+!**/.yarn/versions
+.pnp.*
 
 standard_reports/test-config.json
 client/dist
