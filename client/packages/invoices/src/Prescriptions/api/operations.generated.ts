@@ -32,6 +32,7 @@ export type PrescriptionFragment = {
   type: Types.InvoiceNodeType;
   status: Types.InvoiceNodeStatus;
   colour?: string | null;
+  customFields?: any | null;
   nameInsuranceJoinId?: string | null;
   insuranceDiscountAmount?: number | null;
   insuranceDiscountPercentage?: number | null;
@@ -465,6 +466,7 @@ export type PrescriptionByNumberQuery = {
         type: Types.InvoiceNodeType;
         status: Types.InvoiceNodeStatus;
         colour?: string | null;
+        customFields?: any | null;
         nameInsuranceJoinId?: string | null;
         insuranceDiscountAmount?: number | null;
         insuranceDiscountPercentage?: number | null;
@@ -658,6 +660,7 @@ export type PrescriptionByIdQuery = {
         type: Types.InvoiceNodeType;
         status: Types.InvoiceNodeStatus;
         colour?: string | null;
+        customFields?: any | null;
         nameInsuranceJoinId?: string | null;
         insuranceDiscountAmount?: number | null;
         insuranceDiscountPercentage?: number | null;
@@ -1279,6 +1282,7 @@ export const PrescriptionFragmentDoc = gql`
     type
     status
     colour
+    customFields
     nameInsuranceJoinId
     insuranceDiscountAmount
     insuranceDiscountPercentage

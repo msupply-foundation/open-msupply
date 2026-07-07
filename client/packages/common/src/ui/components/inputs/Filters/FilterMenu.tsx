@@ -13,6 +13,10 @@ import {
 import { useTranslation } from '@common/intl';
 import { TextFilter, TextFilterDefinition } from './TextFilter';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
+import {
+  HierarchicalEnumFilter,
+  HierarchicalEnumFilterDefinition,
+} from './HierarchicalEnumFilter';
 import { DateFilterDefinition, DateFilter } from './DateFilter';
 import { NumberFilter, NumberFilterDefinition } from './NumberFilter';
 import { BooleanFilter, BooleanFilterDefinition } from './BooleanFilter';
@@ -32,6 +36,7 @@ export interface GroupFilterDefinition {
 export type FilterDefinition =
   | TextFilterDefinition
   | EnumFilterDefinition
+  | HierarchicalEnumFilterDefinition
   | DateFilterDefinition
   | NumberFilterDefinition
   | BooleanFilterDefinition;
@@ -221,6 +226,13 @@ const getFilterComponent = (
     case 'enum':
       return (
         <EnumFilter key={filter.urlParameter} filterDefinition={filter} />
+      );
+    case 'hierarchicalEnum':
+      return (
+        <HierarchicalEnumFilter
+          key={filter.urlParameter}
+          filterDefinition={filter}
+        />
       );
     case 'date':
     case 'dateTime':

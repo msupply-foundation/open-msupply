@@ -164,6 +164,9 @@ pub enum Resource {
     // Campaigns
     QueryCampaigns,
     MutateCampaigns,
+    // Custom fields (config)
+    QueryCustomFieldConfig,
+    MutateCustomFieldConfig,
     // Purchase Order
     QueryPurchaseOrder,
     MutatePurchaseOrder,
@@ -840,6 +843,17 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutateHelpDocuments,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+
+    // Custom field config is a central-server admin screen — restricted to
+    // server admins (the client nav is gated the same way, see ManageNav).
+    map.insert(
+        Resource::QueryCustomFieldConfig,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+    map.insert(
+        Resource::MutateCustomFieldConfig,
         PermissionDSL::HasPermission(PermissionType::ServerAdmin),
     );
 

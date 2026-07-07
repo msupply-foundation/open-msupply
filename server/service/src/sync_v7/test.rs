@@ -15,7 +15,7 @@ mod test_sync_v7_client_api {
 
     use crate::cursor_controller::CursorType;
     use crate::sync::settings::{BatchSize, SyncSettings};
-    use crate::sync_v7::api::{APP_VERSION_HEADER, HARDWARE_ID_HEADER};
+    use crate::sync_v7::api::{APP_NAME_HEADER, APP_VERSION_HEADER, HARDWARE_ID_HEADER};
     use crate::sync_v7::sync::sync_v7;
     use crate::sync_v7::sync_request::{SyncRequest, SyncRequestStep};
     use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
@@ -150,6 +150,11 @@ mod test_sync_v7_client_api {
                 .get(APP_VERSION_HEADER)
                 .and_then(|v| v.to_str().ok()),
             Some(Version::from_package_json().to_string().as_str()),
+        );
+        // The remote reports its app name on every request, like its version (#11784).
+        assert_eq!(
+            headers.get(APP_NAME_HEADER).and_then(|v| v.to_str().ok()),
+            Some(crate::sync::api::APP_NAME),
         );
         assert!(headers.get(HARDWARE_ID_HEADER).is_some());
     }
@@ -321,8 +326,64 @@ mod test_sync_v7_client_api {
     async fn test_sync_v7_api() {
         test_sync_v7_pull_and_integrate().await;
         test_sync_v7_integrates_records_out_of_fk_order().await;
+        test_sync_v7_tolerates_unknown_table().await;
         test_sync_v7_push().await;
         test_sync_v7_writes_multi_device_kvs().await;
+    }
+
+    /// Regression for issue #12361: a newer central pushing a table this remote has never
+    /// heard of must not fail the whole pull. The unknown record deserializes to
+    /// `ChangelogTableName::Other(..)`, lands in the sync buffer under its real name, and is
+    /// left unintegrated; the known record alongside it still integrates.
+    async fn test_sync_v7_tolerates_unknown_table() {
+        let pull_response = json!({
+            "Ok": {
+                "siteId": 1,
+                "maxCursor": 2,
+                "lastCursorInBatch": 2,
+                "remaining": 0,
+                "records": [
+                    // A table added on a newer central but unknown to this site.
+                    { "cursor": 1, "recordId": "future_table_1", "tableName": "TableFromTheFuture", "action": "Upsert", "data": json!({ "id": "future_table_1" }), "storeId": null, "transferStoreId": null, "patientId": null },
+                    // A known table in the same batch must still integrate.
+                    { "cursor": 2, "recordId": "unit_test_1",    "tableName": "Unit",        "action": "Upsert", "data": unit(),                          "storeId": null, "transferStoreId": null, "patientId": null },
+                ]
+            }
+        });
+
+        let (connection, _) = run_sync_v7_test(Test {
+            db_name: "test_sync_v7_tolerates_unknown_table",
+            pull_response: Some(pull_response),
+            is_initialising: true,
+            ..Default::default()
+        })
+        .await;
+
+        // Known record integrated normally.
+        unit().assert_upserted(&connection);
+
+        let buffers = SyncBufferRepository::new(&connection).get_all().unwrap();
+        assert_eq!(buffers.len(), 2);
+
+        // Unknown record is buffered under its real (unchanged) table name and never
+        // integrated — no translator matches it and it isn't in INTEGRATION_ORDER.
+        let unknown = buffers
+            .iter()
+            .find(|b| b.record_id == "future_table_1")
+            .expect("unknown record should be in the sync buffer");
+        assert_eq!(unknown.table_name, "TableFromTheFuture");
+        assert!(
+            unknown.integration_datetime.is_none(),
+            "unknown table should be left unintegrated, not errored or integrated"
+        );
+
+        // The known record was integrated.
+        let known = buffers
+            .iter()
+            .find(|b| b.record_id == "unit_test_1")
+            .expect("known record should be in the sync buffer");
+        assert_eq!(known.integration_error, None);
+        assert!(known.integration_datetime.is_some());
     }
 
     async fn test_sync_v7_pull_and_integrate() {

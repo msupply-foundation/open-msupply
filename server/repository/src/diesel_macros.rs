@@ -645,19 +645,35 @@ macro_rules! define_linked_tables {
 /// Defines an enum that is stored as plain `TEXT` in the database via `strum` serialization
 /// (`snake_case` by default). No database migration is needed when adding new variants.
 ///
-/// Variants may optionally include a single-field payload (e.g.
-/// `Unknown(String)`). The fallback variant should carry `#[strum(default)]`
+/// # serde
+///
+/// The macro also generates `serde::Serialize`/`Deserialize` so the enum can travel over
+/// the wire (e.g. sync v7). To keep the wire format stable, serde uses the *variant
+/// identifier* (PascalCase — serde's own default naming) rather than the `strum` casing
+/// used for the database column. **Do not** add `Serialize`/`Deserialize` to the enum's
+/// own `#[derive(...)]`; the macro provides them.
+///
+/// # Fallback variant (unknown values)
+///
+/// Variants may optionally include a single-field `String` payload, e.g. `Other(String)`.
+/// When one is present and marked `#[strum(default, transparent)]` it becomes the fallback
+/// for any value the enum doesn't recognise — both from the database and from serde. This
+/// lets a newer peer send a value an older peer has never heard of (e.g. a table added on
+/// central but not yet on a remote) without failing the whole parse: the unknown string is
+/// captured in the fallback variant and round-trips back out unchanged (`transparent` makes
+/// `as_ref()`/`Display`/serde emit the inner string). Enums with no fallback variant keep
+/// the strict behaviour — an unknown value is an error.
 ///
 /// Usage:
 /// ```
 /// diesel_string_enum! {
-///     #[derive(Clone, Serialize, Deserialize)]
+///     #[derive(Clone)]
 ///     pub enum MyEnum {
 ///         #[default]
 ///         VariantA,
 ///         VariantB,
-///         #[strum(default)]
-///         Unknown(String),
+///         #[strum(default, transparent)]
+///         Other(String),
 ///     }
 /// }
 /// ```
@@ -725,6 +741,70 @@ macro_rules! diesel_string_enum {
                 Self::from_str(&s).map_err(|e| e.into())
             }
         }
+
+        // serde uses the variant *identifier* (PascalCase) for known variants — this is
+        // serde's default enum naming, so the on-the-wire representation is unchanged from a
+        // plain `#[derive(Serialize, Deserialize)]`. The `strum` casing only governs the
+        // database column, not the wire. A `String`-payload fallback variant (declared last,
+        // marked `#[strum(default, transparent)]`) captures any unrecognised value instead of
+        // erroring, and round-trips it back out unchanged.
+        impl serde::Serialize for $name {
+            #[allow(unreachable_code)]
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                $(
+                    diesel_string_enum!(@serialize_variant self serializer $name $variant $(( $($variant_payload)* ))?);
+                )*
+                // All variants are handled above; this is only here to satisfy the
+                // return-type checker for the (impossible) fall-through.
+                Err(serde::ser::Error::custom("unhandled variant"))
+            }
+        }
+
+        impl<'de> serde::Deserialize<'de> for $name {
+            // A fallback variant's arm returns unconditionally, making the trailing `Err`
+            // unreachable for enums that have one; enums without a fallback do reach it.
+            #[allow(unreachable_code)]
+            fn deserialize<D: serde::Deserializer<'de>>(
+                deserializer: D,
+            ) -> Result<Self, D::Error> {
+                let value = <String as serde::Deserialize>::deserialize(deserializer)?;
+                $(
+                    diesel_string_enum!(@deserialize_variant value $name $variant $(( $($variant_payload)* ))?);
+                )*
+                // No known variant matched and there was no fallback variant.
+                Err(serde::de::Error::custom(format!(
+                    "unknown variant `{}`",
+                    value
+                )))
+            }
+        }
+    };
+
+    // --- serde serialize: one `if let` per variant (macros can't emit partial match arms) ---
+    // Unit variant: emit its PascalCase identifier.
+    (@serialize_variant $self:ident $serializer:ident $name:ident $variant:ident) => {
+        if let $name::$variant = $self {
+            return $serializer.serialize_str(stringify!($variant));
+        }
+    };
+    // Fallback variant with a payload: emit the captured inner string verbatim.
+    (@serialize_variant $self:ident $serializer:ident $name:ident $variant:ident ( $($variant_payload:tt)* )) => {
+        if let $name::$variant(inner) = $self {
+            return $serializer.serialize_str(inner);
+        }
+    };
+
+    // --- serde deserialize: compare against each known name; fallback catches the rest ---
+    // Unit variant: match on its PascalCase identifier.
+    (@deserialize_variant $value:ident $name:ident $variant:ident) => {
+        if $value == stringify!($variant) {
+            return Ok($name::$variant);
+        }
+    };
+    // Fallback variant with a payload: capture whatever value is left. Declared last in the
+    // enum, so it only runs once every known variant has been ruled out above.
+    (@deserialize_variant $value:ident $name:ident $variant:ident ( $($variant_payload:tt)* )) => {
+        return Ok($name::$variant($value));
     };
 }
 

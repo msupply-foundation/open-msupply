@@ -7,6 +7,7 @@ use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use std::any::Any;
 
 table! {
     temperature_log (id) {
@@ -126,6 +127,24 @@ impl<'a> TemperatureLogRowRepository<'a> {
         Ok(result)
     }
 
+    /// Existence check on the natural key of a reading: a sensor cannot have two
+    /// readings at the same instant. Used to de-duplicate logs that arrive from
+    /// multiple devices reading the same FridgeTag (each device assigns its own
+    /// `id` to what is physically the same reading).
+    pub fn find_id_by_sensor_and_datetime(
+        &self,
+        sensor_id: &str,
+        datetime: NaiveDateTime,
+    ) -> Result<Option<String>, RepositoryError> {
+        let result = temperature_log::table
+            .filter(temperature_log::sensor_id.eq(sensor_id))
+            .filter(temperature_log::datetime.eq(datetime))
+            .select(temperature_log::id)
+            .first::<String>(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn find_many_by_id(
         &self,
         ids: &[String],
@@ -163,5 +182,9 @@ impl Upsert for TemperatureLogRow {
             TemperatureLogRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+
+    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
+        Some(self)
     }
 }

@@ -1,4 +1,5 @@
 pub mod campaign;
+pub mod custom_field;
 pub mod help_document;
 mod mutations;
 mod queries;
@@ -22,7 +23,7 @@ use service::sync::CentralServerConfig;
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
     AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, DiagnosisNode,
-    MasterListFilterInput, StorePreferenceNode,
+    MasterListFilterInput, CustomFieldsResponse, StorePreferenceNode,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
@@ -461,6 +462,17 @@ impl GeneralQueries {
 
     pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
         name_properties(ctx)
+    }
+
+    /// Properties v2 definitions. Used by list views, detail views and modals
+    /// to learn what columns/fields to render. Filter by `scope` to restrict
+    /// to a record kind (`{ equalTo: "customer" }`).
+    pub async fn custom_fields(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Filter option")] filter: Option<CustomFieldFilterInput>,
+    ) -> Result<CustomFieldsResponse> {
+        custom_fields(ctx, filter)
     }
 
     pub async fn reason_options(

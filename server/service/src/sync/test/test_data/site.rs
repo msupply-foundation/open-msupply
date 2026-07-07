@@ -98,6 +98,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 code: "code1".to_string(),
                 token: None,
                 sync_version: SyncVersion::V5V6,
+                ..Default::default()
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -113,6 +114,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 code: "code2".to_string(),
                 token: None,
                 sync_version: SyncVersion::V5V6,
+                ..Default::default()
             },
         ),
     ]
