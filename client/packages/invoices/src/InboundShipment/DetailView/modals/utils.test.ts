@@ -9,6 +9,7 @@ describe('getDefaultSellPricePerPack', () => {
     itemMargin: 0,
     supplierMargin: 0,
     itemMarginOverridesSupplierMargin: false,
+    defaultPricePerUnit: 0,
   };
 
   it('uses the default item price (pack-size adjusted) when set, ignoring margins', () => {
@@ -66,14 +67,18 @@ describe('getDefaultSellPricePerPack', () => {
   });
 
   it('falls back to the item margin when there is no supplier margin', () => {
-    expect(
-      getDefaultSellPricePerPack({ ...base, itemMargin: 25 })
-    ).toBeCloseTo(125);
+    expect(getDefaultSellPricePerPack({ ...base, itemMargin: 25 })).toBeCloseTo(
+      125
+    );
   });
 
   it('prefers the supplier margin over the item margin by default', () => {
     expect(
-      getDefaultSellPricePerPack({ ...base, supplierMargin: 10, itemMargin: 50 })
+      getDefaultSellPricePerPack({
+        ...base,
+        supplierMargin: 10,
+        itemMargin: 50,
+      })
     ).toBeCloseTo(110);
   });
 
@@ -97,6 +102,47 @@ describe('getDefaultSellPricePerPack', () => {
         itemMarginOverridesSupplierMargin: true,
       })
     ).toBeCloseTo(110);
+  });
+
+  it('uses the master list price (pack-size adjusted) when there is no default item price or margin', () => {
+    expect(
+      getDefaultSellPricePerPack({
+        ...base,
+        packSize: 10,
+        defaultPricePerUnit: 5,
+      })
+    ).toBe(50);
+  });
+
+  it('prefers a margin over the master list price', () => {
+    expect(
+      getDefaultSellPricePerPack({
+        ...base,
+        supplierMargin: 10,
+        defaultPricePerUnit: 5,
+      })
+    ).toBeCloseTo(110);
+  });
+
+  it('prefers the default item price over the master list price', () => {
+    expect(
+      getDefaultSellPricePerPack({
+        ...base,
+        defaultSellPricePerPack: 20,
+        defaultPricePerUnit: 5,
+      })
+    ).toBe(20);
+  });
+
+  it('uses the master list price when a margin is set but the cost price is 0', () => {
+    expect(
+      getDefaultSellPricePerPack({
+        ...base,
+        costPricePerPack: 0,
+        supplierMargin: 10,
+        defaultPricePerUnit: 5,
+      })
+    ).toBe(5);
   });
 
   it('returns the cost price when no rules are defined', () => {
