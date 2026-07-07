@@ -1678,7 +1678,7 @@
   "label.status-pending": "Pending",
   "label.statushistory": "Status history",
   "label.stock-level": "Stock level",
-  "label.stock-line-option": "{{batch}} · pack size {{packSize}} · {{packs}} packs",
+  "label.stock-line-option": "{{batch}} · pack size {{packSize}} · {{packs}} packs · location {{location}}",
   "label.stock-movement": "Stock movement",
   "label.stock-on-hand": "Stock on hand",
   "label.stock-on-hand-remaining": "SoH (Est. remaining)",
