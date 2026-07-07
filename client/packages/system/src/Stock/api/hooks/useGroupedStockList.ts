@@ -5,19 +5,23 @@ import {
   keepPreviousData,
   useQuery,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../operations.generated';
+import { StockLineListRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
 // Only a subset of stock-line filters apply in grouped mode — the Toolbar
-// hides location/expiry/VVM/masterList filters when grouping is active. The
-// search/name/code subset is what the Toolbar exposes.
-type GroupedFilterBy = Pick<StockLineFilterInput, 'search' | 'name' | 'code'>;
+// hides location/expiry/VVM filters when grouping is active. masterList is an
+// item-level filter so it stays available; the rest is what the Toolbar
+// exposes when grouped.
+type GroupedFilterBy = Pick<
+  StockLineFilterInput,
+  'search' | 'name' | 'code' | 'masterList'
+>;
 
 export type GroupedStockListParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<StockLineRowFragment>;
+  sortBy?: SortBy<StockLineListRowFragment>;
   filterBy?: GroupedFilterBy;
 };
 
@@ -50,7 +54,7 @@ export const useGroupedStockList = (
   ];
 
   const queryFn = async (): Promise<{
-    nodes: StockLineRowFragment[];
+    nodes: StockLineListRowFragment[];
     totalCount: number;
   }> => {
     // hasPacksInStore: true is the parity-guaranteeing predicate — items
@@ -61,6 +65,7 @@ export const useGroupedStockList = (
       ...(filterBy?.search ? { search: filterBy.search } : {}),
       ...(filterBy?.name ? { name: filterBy.name } : {}),
       ...(filterBy?.code ? { code: filterBy.code } : {}),
+      ...(filterBy?.masterList ? { masterList: filterBy.masterList } : {}),
     };
 
     const query = await stockApi.itemsByStockLineFilter({
@@ -77,7 +82,7 @@ export const useGroupedStockList = (
 
     // Flatten: items with nested stock lines → flat stock line array.
     // MRT's column grouping handles the visual grouping + aggregation.
-    const nodes: StockLineRowFragment[] = [];
+    const nodes: StockLineListRowFragment[] = [];
     for (const item of items.nodes) {
       for (const stockLine of item.availableBatches.nodes) {
         nodes.push(stockLine);
@@ -98,7 +103,7 @@ export const useGroupedStockList = (
 };
 
 const toItemSortField = (
-  sortBy: SortBy<StockLineRowFragment>
+  sortBy: SortBy<StockLineListRowFragment>
 ): ItemSortFieldInput => {
   const sortFieldMap: Record<string, ItemSortFieldInput> = {
     name: ItemSortFieldInput.Name,

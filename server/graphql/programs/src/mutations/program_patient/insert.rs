@@ -32,6 +32,7 @@ pub fn insert_program_patient(
         &ResourceAccessRequest {
             resource: Resource::MutatePatient,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();

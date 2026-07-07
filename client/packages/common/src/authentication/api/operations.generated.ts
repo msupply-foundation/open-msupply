@@ -153,6 +153,15 @@ export type IsCentralServerQuery = {
   isCentralServer: boolean;
 };
 
+export type IsCentralStandaloneQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type IsCentralStandaloneQuery = {
+  __typename: 'Queries';
+  isCentralStandalone: boolean;
+};
+
 export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never }>;
 
 export type RefreshTokenQuery = {
@@ -197,38 +206,6 @@ export type PermissionsQuery = {
         storeId: string;
       }>;
     };
-  };
-};
-
-export type UpdateUserFragment = {
-  __typename: 'UpdateUserNode';
-  lastSuccessfulSync?: string | null;
-};
-
-export type UpdateUserMutationVariables = Types.Exact<{ [key: string]: never }>;
-
-export type UpdateUserMutation = {
-  __typename: 'Mutations';
-  updateUser:
-    | {
-        __typename: 'UpdateUserError';
-        error:
-          | { __typename: 'ConnectionError'; description: string }
-          | { __typename: 'InvalidCredentials'; description: string }
-          | { __typename: 'MissingCredentials'; description: string };
-      }
-    | { __typename: 'UpdateUserNode'; lastSuccessfulSync?: string | null };
-};
-
-export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{
-  [key: string]: never;
-}>;
-
-export type LastSuccessfulUserSyncQuery = {
-  __typename: 'Queries';
-  lastSuccessfulUserSync: {
-    __typename: 'UpdateUserNode';
-    lastSuccessfulSync?: string | null;
   };
 };
 
@@ -338,11 +315,6 @@ export const UserStoreNodeFragmentDoc = gql`
     isDisabled
   }
 `;
-export const UpdateUserFragmentDoc = gql`
-  fragment UpdateUser on UpdateUserNode {
-    lastSuccessfulSync
-  }
-`;
 export const AuthTokenDocument = gql`
   query authToken($username: String!, $password: String!) {
     authToken(password: $password, username: $username) {
@@ -409,6 +381,11 @@ export const IsCentralServerDocument = gql`
     isCentralServer
   }
 `;
+export const IsCentralStandaloneDocument = gql`
+  query isCentralStandalone {
+    isCentralStandalone
+  }
+`;
 export const RefreshTokenDocument = gql`
   query refreshToken {
     refreshToken {
@@ -467,43 +444,6 @@ export const PermissionsDocument = gql`
       }
     }
   }
-`;
-export const UpdateUserDocument = gql`
-  mutation updateUser {
-    updateUser {
-      __typename
-      ... on UpdateUserNode {
-        ...UpdateUser
-      }
-      ... on UpdateUserError {
-        __typename
-        error {
-          ... on InvalidCredentials {
-            __typename
-            description
-          }
-          ... on ConnectionError {
-            __typename
-            description
-          }
-          ... on MissingCredentials {
-            __typename
-            description
-          }
-        }
-      }
-    }
-  }
-  ${UpdateUserFragmentDoc}
-`;
-export const LastSuccessfulUserSyncDocument = gql`
-  query lastSuccessfulUserSync {
-    lastSuccessfulUserSync {
-      __typename
-      ...UpdateUser
-    }
-  }
-  ${UpdateUserFragmentDoc}
 `;
 export const PreferencesDocument = gql`
   query preferences($storeId: String!) {
@@ -644,6 +584,24 @@ export function getSdk(
         variables
       );
     },
+    isCentralStandalone(
+      variables?: IsCentralStandaloneQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<IsCentralStandaloneQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<IsCentralStandaloneQuery>({
+            document: IsCentralStandaloneDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'isCentralStandalone',
+        'query',
+        variables
+      );
+    },
     refreshToken(
       variables?: RefreshTokenQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -676,42 +634,6 @@ export function getSdk(
             signal,
           }),
         'permissions',
-        'query',
-        variables
-      );
-    },
-    updateUser(
-      variables?: UpdateUserMutationVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<UpdateUserMutation> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<UpdateUserMutation>({
-            document: UpdateUserDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'updateUser',
-        'mutation',
-        variables
-      );
-    },
-    lastSuccessfulUserSync(
-      variables?: LastSuccessfulUserSyncQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<LastSuccessfulUserSyncQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<LastSuccessfulUserSyncQuery>({
-            document: LastSuccessfulUserSyncDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'lastSuccessfulUserSync',
         'query',
         variables
       );

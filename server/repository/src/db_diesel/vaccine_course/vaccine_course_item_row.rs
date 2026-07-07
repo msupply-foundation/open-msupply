@@ -1,40 +1,49 @@
 use super::vaccine_course_item_row::vaccine_course_item::dsl::*;
-use crate::db_diesel::item_link_row::item_link;
 use crate::db_diesel::item_row::item;
+use crate::diesel_macros::define_linked_tables;
 use crate::RepositoryError;
 use crate::StorageConnection;
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, Upsert};
+use crate::{
+    ChangelogRepository, ChangelogSyncType, RowActionType,
+    SourceSiteId, Upsert,
+};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-table! {
-    vaccine_course_item (id) {
-        id -> Text,
+define_linked_tables! {
+    view: vaccine_course_item = "vaccine_course_item_view",
+    core: vaccine_course_item_with_links = "vaccine_course_item",
+    struct: VaccineCourseItemRow,
+    repo: VaccineCourseItemRowRepository,
+    shared: {
         vaccine_course_id -> Text,
-        item_link_id -> Text,
         deleted_datetime -> Nullable<Timestamp>,
-
+    },
+    links: {
+        item_link_id -> item_id,
+    },
+    optional_links: {
     }
 }
 
-joinable!(vaccine_course_item -> item_link (item_link_id));
-allow_tables_to_appear_in_same_query!(vaccine_course_item, item_link);
+joinable!(vaccine_course_item -> item (item_id));
 allow_tables_to_appear_in_same_query!(vaccine_course_item, item);
 
 #[derive(
-    Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Deserialize, Serialize,
+    Clone, Queryable, Debug, PartialEq, Default, Deserialize, Serialize,
 )]
-#[diesel(treat_none_as_null = true)]
 #[diesel(table_name = vaccine_course_item)]
 pub struct VaccineCourseItemRow {
     pub id: String,
     pub vaccine_course_id: String,
-    pub item_link_id: String,
     pub deleted_datetime: Option<NaiveDateTime>,
+    // Resolved from item_link - must be last to match view column order.
+    // Serialises as `item_id`; the sync translator also emits the legacy `item_link_id`
+    // alias for cross-version compatibility (see `RenamedKeys`).
+    pub item_id: String,
 }
-
 pub struct VaccineCourseItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -44,36 +53,28 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         VaccineCourseItemRowRepository { connection }
     }
 
+    pub fn _upsert_one(
+        &self,
+        vaccine_course_item_row: &VaccineCourseItemRow,
+    ) -> Result<(), RepositoryError> {
+        // Write goes through the linked-tables core table (`vaccine_course_item_with_links`)
+        // via the macro-generated `_upsert`, since `vaccine_course_item` is a read-only view.
+        self._upsert(vaccine_course_item_row)?;
+        Ok(())
+    }
+
     pub fn upsert_one(
         &self,
         vaccine_course_item_row: &VaccineCourseItemRow,
-    ) -> Result<i64, RepositoryError> {
-        diesel::insert_into(vaccine_course_item)
-            .values(vaccine_course_item_row)
-            .on_conflict(id)
-            .do_update()
-            .set(vaccine_course_item_row)
-            .execute(self.connection.lock().connection())?;
-
-        self.insert_changelog(
-            vaccine_course_item_row.id.to_string(),
+    ) -> Result<(), RepositoryError> {
+        self._upsert_one(vaccine_course_item_row)?;
+        let changelog = VaccineCourseItemRow::generate_changelog(
+            vaccine_course_item_row.id.clone(),
+            self.connection,
             RowActionType::Upsert,
-        )
-    }
-
-    fn insert_changelog(
-        &self,
-        row_id: String,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::VaccineCourseItem,
-            record_id: row_id,
-            row_action: action,
-            store_id: None,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<VaccineCourseItemRow>, RepositoryError> {
@@ -92,20 +93,55 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, vaccine_course_item_id: &str) -> Result<i64, RepositoryError> {
-        diesel::update(vaccine_course_item.filter(id.eq(vaccine_course_item_id)))
-            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(self.connection.lock().connection())?;
+    pub fn mark_deleted(&self, vaccine_course_item_id: &str) -> Result<(), RepositoryError> {
+        // Update the linked-tables core table (`vaccine_course_item_with_links`); the
+        // `vaccine_course_item` view is read-only.
+        diesel::update(
+            vaccine_course_item_with_links::table
+                .filter(vaccine_course_item_with_links::id.eq(vaccine_course_item_id)),
+        )
+        .set(vaccine_course_item_with_links::deleted_datetime.eq(Some(
+            chrono::Utc::now().naive_utc(),
+        )))
+        .execute(self.connection.lock().connection())?;
 
         // Upsert row action as this is a soft delete, not actual delete
-        self.insert_changelog(vaccine_course_item_id.to_string(), RowActionType::Upsert)
+        let changelog = VaccineCourseItemRow::generate_changelog(
+            vaccine_course_item_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccineCourseItemRow>, RepositoryError> {
+        Ok(vaccine_course_item::table
+            .filter(vaccine_course_item::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for VaccineCourseItemRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = VaccineCourseItemRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        VaccineCourseItemRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

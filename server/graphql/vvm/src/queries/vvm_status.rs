@@ -12,6 +12,7 @@ pub fn active_vvm_statuses(ctx: &Context<'_>, store_id: String) -> Result<VVMSta
         &ResourceAccessRequest {
             resource: Resource::QueryVvmStatus,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

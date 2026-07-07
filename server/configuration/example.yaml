@@ -8,6 +8,11 @@
 #   # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
 #   # danger_allow_http: true # allow http in production mode
 #   # override_is_central_server: true # set server mode as central server, should only be used in testing, demo and development, sync calls can override this back to normal
+#   # # Setting all three values below on a fresh DB initialises OMS central and comment out sync settings.
+#   # # Requires `override_is_central_server: true` above as well.
+#   # standalone_store_name: 'Central Config'
+#   # standalone_admin_username: 'admin'
+#   # standalone_admin_password: 'pass'
 #   # workers: 8 # number of actix-web worker threads; defaults to logical CPU count. Increase to reduce 408 timeouts under heavy load.
 #   cors_origins: [
 #       http://localhost:3003,
@@ -16,6 +21,8 @@
 #     ] # Used to set the allowed Origin in Cross Origin Request Security
 #   base_dir: "app_data"
 # sync:
+#   # url/username/password_sha256/interval_seconds are all-or-nothing: set them all, or omit them
+#   # all to carry only flags (e.g. on a central server). A partial set is a startup error.
 #   url: "http://localhost:2048"
 #   username: "demo"
 #   # 'd74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1' = 'pass'
@@ -28,6 +35,10 @@
 #   # Set to true to disable the outer transaction during integration. This can prevent PostgreSQL
 #   # from exhausting max_locks_per_transaction during large store migrations. Use with caution.
 #   disable_integration_transaction: false
+#   # Central server only. Relax the v7 hardware-id and "token already allocated" guards so a site
+#   # can re-pair from a new machine without an admin reset (name + password still required). For
+#   # recovery/migration only — leave false in normal operation.
+#   relax_hardware_id_token_checks: false
 # database:
 #   host: "localhost"
 #   port: 5432
@@ -61,5 +72,20 @@
 #   #  Can make this smaller for testing emails
 #   interval: 60 # in seconds
 # features:
-#   example_feature: true
-
+#   stock_movement: true
+# changelog_partition: # postgres-only; controls partitioning of the changelog table
+#   partition_size: 5000000      # cursor values per partition
+#   lookahead: 30000000          # number of insertable records headroom for changelog; also the lower bound — yaml values below this are clamped up
+#   interval:                    # poll period for the runtime top-up task
+#     hours: 0
+#     mins: 1
+#     secs: 0
+# changelog_dedup: # central + postgres only; periodically deletes superseded (duplicate) changelog rows
+#   interval:                    # how often the task wakes to consider a dedup run
+#     hours: 24
+#     mins: 0
+#     secs: 0
+#   time_window:                 # optional; if set, dedup only runs between these local times and stops at 'to'
+#     from: "02:00"
+#     to: "05:00"
+#   batch_size: 50000            # changelog rows deleted per committed batch

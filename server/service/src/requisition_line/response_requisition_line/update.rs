@@ -5,6 +5,7 @@ use crate::{
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
+    validate::check_other_party_store_is_disabled,
 };
 
 use repository::{
@@ -101,6 +102,10 @@ fn validate(
     }
 
     if requisition_row.status != RequisitionStatus::New {
+        return Err(OutError::CannotEditRequisition);
+    }
+
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
     }
 

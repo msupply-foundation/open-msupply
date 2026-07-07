@@ -5,6 +5,7 @@ import {
   Typography,
   FlatButton,
   MinusCircleIcon,
+  Tooltip,
 } from '@openmsupply-client/common';
 
 export interface Action {
@@ -14,6 +15,7 @@ export interface Action {
   disabled?: boolean;
   loading?: boolean;
   shouldShrink?: boolean;
+  tooltip?: string;
 }
 
 interface ActionsFooterProps {
@@ -52,17 +54,28 @@ export const ActionsFooter = ({
           {selectedRowCount} {t('label.selected')}
         </Typography>
         {actions.map(
-          ({ label, icon, onClick, disabled, shouldShrink, loading }) => (
-            <FlatButton
-              key={label}
-              startIcon={icon}
-              label={label}
-              disabled={disabled}
-              loading={loading}
-              onClick={onClick}
-              // Flatbutton doesn't shrink by default but we want it to in actions footer
-              shouldShrink={shouldShrink ?? true}
-            />
+          ({
+            label,
+            icon,
+            onClick,
+            disabled,
+            shouldShrink,
+            loading,
+            tooltip,
+          }) => (
+            <Tooltip key={label} title={tooltip ?? ''}>
+              <span>
+                <FlatButton
+                  startIcon={icon}
+                  label={label}
+                  disabled={disabled}
+                  loading={loading}
+                  onClick={onClick}
+                  // Flatbutton doesn't shrink by default but we want it to in actions footer
+                  shouldShrink={shouldShrink ?? true}
+                />
+              </span>
+            </Tooltip>
           )
         )}
       </Stack>

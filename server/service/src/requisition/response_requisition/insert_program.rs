@@ -181,6 +181,10 @@ fn generate(
     }: InsertProgramResponseRequisition,
 ) -> Result<GenerateResult, RepositoryError> {
     let connection = &ctx.connection;
+
+    let customer_store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())))?;
+
     let requisition = RequisitionRow {
         id,
         user_id: Some(ctx.user_id.clone()),
@@ -190,6 +194,9 @@ fn generate(
             &ctx.store_id,
         )?,
         name_id: other_party_id.clone(),
+        name_store_id: customer_store
+            .as_ref()
+            .map(|store| store.store_row.id.clone()),
         store_id: ctx.store_id.clone(),
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -211,6 +218,7 @@ fn generate(
         linked_requisition_id: None,
         created_from_requisition_id: None,
         destination_customer_id: None,
+        ..Default::default()
     };
 
     let master_list_id = program.master_list_id.clone().unwrap_or_default();
@@ -241,9 +249,6 @@ fn generate(
     } else {
         vec![]
     };
-
-    let customer_store = StoreRepository::new(connection)
-        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.to_string())))?;
 
     let indicator_values = match customer_store {
         Some(_) => generate_program_indicator_values(
@@ -292,7 +297,7 @@ fn generate_lines(
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
-                item_link_id: item.item_row.id.clone(),
+                item_id: item.item_row.id.clone(),
                 item_name: item.item_row.name.clone(),
                 snapshot_datetime: Some(Utc::now().naive_utc()),
                 price_per_unit: if let Some(price_list) = &price_list {

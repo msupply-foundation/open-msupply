@@ -58,7 +58,7 @@ pub fn add_from_purchase_order(
         invoice_line_row_repository.upsert_one(&InvoiceLineRow {
             id: uuid(),
             invoice_id: invoice_id.clone(),
-            item_link_id: item.id,
+            item_id: item.id,
             item_name: item.name,
             item_code: item.code,
             stock_line_id: None,
@@ -88,6 +88,7 @@ pub fn add_from_purchase_order(
             linked_invoice_id: None,
             donor_id: None,
             manufacturer_id: None,
+            legacy_goods_received_line_id: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
@@ -96,6 +97,8 @@ pub fn add_from_purchase_order(
             volume_per_pack: 0.0,
             shipped_pack_size: Some(pack_size),
             status: status.clone(),
+            received_number_of_packs: None,
+            linked_invoice_line_id: None,
         })?;
     }
 

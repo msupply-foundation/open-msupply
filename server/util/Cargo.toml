@@ -8,12 +8,14 @@ path = "src/lib.rs"
 
 [dependencies]
 sha2 = { workspace = true }
-uuid = { version = "1.22.0", features = ["v7"] }
+uuid = { version = "1.22.0", features = ["v5", "v7"] }
 chrono = { workspace = true }
 serde = { workspace = true }
 env_logger = "0.11.9"
 serde_json = { workspace = true }
 reqwest = { workspace = true }
+rustls = { workspace = true }
+webpki-roots = { workspace = true }
 anyhow.workspace = true
 sanitize-filename = "0.6.0"
 log = { workspace = true }

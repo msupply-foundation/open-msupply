@@ -159,11 +159,11 @@ use crate::{
     reason_option_row::{ReasonOptionRow, ReasonOptionRowRepository},
     vaccine_course::{
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
+        vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
+        vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
         vaccine_course_store_config_row::{
             VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
         },
-        vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
-        vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
     vvm_status::vvm_status_row::{VVMStatusRow, VVMStatusRowRepository},
     *,
@@ -218,7 +218,8 @@ pub struct MockData {
     pub sync_buffer_rows: Vec<SyncBufferRow>,
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub activity_logs: Vec<ActivityLogRow>,
-    pub sync_logs: Vec<SyncLogRow>,
+    pub sync_logs: Vec<SyncLogV5V6Row>,
+    pub sync_logs_v7: Vec<SyncLogV7Row>,
     pub name_tags: Vec<NameTagRow>,
     pub name_tag_joins: Vec<NameTagJoinRow>,
     pub program_requisition_settings: Vec<ProgramRequisitionSettingsRow>,
@@ -314,6 +315,7 @@ pub struct MockDataInserts {
     pub key_value_store_rows: bool,
     pub activity_logs: bool,
     pub sync_logs: bool,
+    pub sync_logs_v7: bool,
     pub barcodes: bool,
     pub programs: bool,
     pub program_requisition_settings: bool,
@@ -398,6 +400,7 @@ impl MockDataInserts {
             key_value_store_rows: true,
             activity_logs: true,
             sync_logs: true,
+            sync_logs_v7: true,
             barcodes: true,
             programs: true,
             program_requisition_settings: true,
@@ -620,6 +623,11 @@ impl MockDataInserts {
 
     pub fn sync_logs(mut self) -> Self {
         self.sync_logs = true;
+        self
+    }
+
+    pub fn sync_logs_v7(mut self) -> Self {
+        self.sync_logs_v7 = true;
         self
     }
 
@@ -1000,6 +1008,13 @@ pub fn insert_mock_data(
     mock_data: MockDataCollection,
 ) -> MockDataCollection {
     for (_, mock_data) in &mock_data.data {
+        if inserts.key_value_store_rows {
+            let repo = KeyValueStoreRepository::new(connection);
+            for row in &mock_data.key_value_store_rows {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
         if inserts.names {
             for row in &mock_data.names {
                 NameRowRepository::new(connection).upsert_one(row).unwrap();
@@ -1231,17 +1246,14 @@ pub fn insert_mock_data(
         }
 
         if inserts.sync_buffer_rows {
-            let repo = SyncBufferRowRepository::new(connection);
-            for row in &mock_data.sync_buffer_rows {
-                repo.upsert_one(row).unwrap();
-            }
-        }
-
-        if inserts.key_value_store_rows {
-            let repo = KeyValueStoreRepository::new(connection);
-            for row in &mock_data.key_value_store_rows {
-                repo.upsert_one(row).unwrap();
-            }
+            let repo = SyncBufferRepository::new(connection);
+            let rows: Vec<SyncBufferRowInsert> = mock_data
+                .sync_buffer_rows
+                .iter()
+                .cloned()
+                .map(SyncBufferRowInsert::from)
+                .collect();
+            repo.insert_many(&rows).unwrap();
         }
 
         if inserts.activity_logs {
@@ -1274,7 +1286,14 @@ pub fn insert_mock_data(
 
         if inserts.sync_logs {
             for row in &mock_data.sync_logs {
-                let repo = SyncLogRowRepository::new(connection);
+                let repo = SyncLogV5V6RowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.sync_logs_v7 {
+            for row in &mock_data.sync_logs_v7 {
+                let repo = SyncLogV7Repository::new(connection);
                 repo.upsert_one(row).unwrap();
             }
         }
@@ -1572,6 +1591,7 @@ impl MockData {
             mut key_value_store_rows,
             mut activity_logs,
             mut sync_logs,
+            mut sync_logs_v7,
             mut name_tag_joins,
             mut program_requisition_settings,
             mut programs,
@@ -1651,6 +1671,7 @@ impl MockData {
         self.key_value_store_rows.append(&mut key_value_store_rows);
         self.activity_logs.append(&mut activity_logs);
         self.sync_logs.append(&mut sync_logs);
+        self.sync_logs_v7.append(&mut sync_logs_v7);
         self.name_tag_joins.append(&mut name_tag_joins);
         self.program_requisition_settings
             .append(&mut program_requisition_settings);

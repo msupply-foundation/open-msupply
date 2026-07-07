@@ -77,6 +77,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -213,6 +214,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::VvmStatusDoesNotExist
         | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
         ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
+        ServiceError::CannotSetManufactureDateInFuture => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
     };
@@ -324,7 +326,7 @@ mod test {
                     snapshot_number_of_packs: 10.0,
                     counted_number_of_packs: Some(20.0),
                     comment: Some("comment".to_string()),
-                    item_link_id: "item id".to_string(),
+                    item_id: "item id".to_string(),
                     item_name: "item name".to_string(),
                     batch: Some("batch".to_string()),
                     expiry_date: Some(NaiveDate::from_ymd_opt(2023, 1, 22).unwrap()),

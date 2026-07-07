@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -24,6 +24,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { StocktakeLineFragment, useStocktakeOld } from '../api';
 import { StocktakeLineErrorProvider } from '../context';
 import { useStocktakeColumns } from './columns';
+import { StocktakeErrorModal } from './StocktakeErrorModal';
 
 export const DetailView = () => (
   <StocktakeLineErrorProvider>
@@ -75,6 +76,22 @@ const DetailViewInner = () => {
         />
       ),
     });
+
+  const getSortedItems = useCallback(
+    () =>
+      table
+        .getSortedRowModel()
+        .rows.reduce<StocktakeLineFragment['item'][]>((acc, row) => {
+          const leafRows = row.getLeafRows();
+          const rows = leafRows.length ? leafRows : [row];
+          rows.forEach(leaf => {
+            const item = leaf.original?.item;
+            if (item && !acc.some(i => i?.id === item.id)) acc.push(item);
+          });
+          return acc;
+        }, []),
+    [table]
+  );
 
   const tabs = [
     {
@@ -137,8 +154,10 @@ const DetailViewInner = () => {
           mode={mode}
           item={entity}
           isInitialStocktake={stocktake.isInitialStocktake}
+          getSortedItems={getSortedItems}
         />
       )}
+      <StocktakeErrorModal />
     </>
   );
 };

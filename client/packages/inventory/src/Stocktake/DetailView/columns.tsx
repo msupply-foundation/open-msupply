@@ -1,7 +1,8 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   useTranslation,
   usePreferences,
+  usePluginProvider,
   ColumnDef,
   ColumnType,
   ExpiryDateCell,
@@ -14,6 +15,7 @@ export const useStocktakeColumns = () => {
   const t = useTranslation();
   const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
     usePreferences();
+  const { plugins } = usePluginProvider();
   const { errors } = useStocktakeLineErrorContext();
 
   const getIsError = useCallback(
@@ -26,6 +28,11 @@ export const useStocktakeColumns = () => {
     [errors]
   );
 
+  const getRowHasError = useCallback(
+    (row: StocktakeLineFragment) => !!errors?.[row.id],
+    [errors]
+  );
+
   const columns = useMemo(() => {
     const cols: ColumnDef<StocktakeLineFragment>[] = [
       {
@@ -35,6 +42,7 @@ export const useStocktakeColumns = () => {
         size: 120,
         enableColumnFilter: true,
         enableSorting: true,
+        getIsError: getRowHasError,
       },
       {
         accessorKey: 'itemName',
@@ -132,7 +140,11 @@ export const useStocktakeColumns = () => {
           if (!row.item.isVaccine) return null;
           const counted = row.countedNumberOfPacks;
           if (counted === null || counted === undefined) return null;
-          return counted * (row.packSize ?? 1) * (row.item.doses ?? 1);
+          return (
+            counted *
+            (row.packSize || row.item.defaultPackSize || 1) *
+            (row.item.doses ?? 1)
+          );
         },
       },
       {
@@ -143,7 +155,17 @@ export const useStocktakeColumns = () => {
         header: t('label.difference'),
         columnType: ColumnType.Number,
         aggregationFn: 'sum',
-        Cell: UnitsAndDosesCell,
+        Cell: ({ cell, row }) => (
+          <UnitsAndDosesCell
+            cell={cell}
+            row={row}
+            packSize={
+              row.original.packSize ||
+              row.original.item.defaultPackSize ||
+              1
+            }
+          />
+        ),
       },
       {
         id: 'reason',
@@ -170,9 +192,17 @@ export const useStocktakeColumns = () => {
         header: t('label.comment'),
         columnType: ColumnType.Comment,
       },
+      ...(plugins.stocktakeLine?.tableColumn || []),
     ];
     return cols;
-  }, [t, manageVaccinesInDoses, allowTrackingOfStockByDonor, getIsError]);
+  }, [
+    t,
+    manageVaccinesInDoses,
+    allowTrackingOfStockByDonor,
+    getIsError,
+    getRowHasError,
+    plugins.stocktakeLine?.tableColumn,
+  ]);
 
   return columns;
 };

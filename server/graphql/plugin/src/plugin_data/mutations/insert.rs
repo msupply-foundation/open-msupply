@@ -1,5 +1,6 @@
 use crate::types::PluginDataNode;
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -19,6 +20,8 @@ pub struct InsertPluginDataInput {
     pub related_record_id: Option<String>,
     pub data_identifier: String,
     pub data: String,
+    /// Optional plugin-controlled timestamp.
+    pub datetime: Option<DateTime<Utc>>,
 }
 
 #[derive(Union)]
@@ -42,6 +45,7 @@ pub fn insert_plugin_data(
         &ResourceAccessRequest {
             resource: Resource::MutatePluginData,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -86,6 +90,7 @@ impl InsertPluginDataInput {
             related_record_id: self.related_record_id,
             data_identifier: self.data_identifier,
             data: self.data,
+            datetime: self.datetime.map(|d| d.naive_utc()),
         }
     }
 }

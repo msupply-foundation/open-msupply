@@ -26,13 +26,7 @@ export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
       }}
     >
       <Grid padding={1} paddingBottom={0} display="flex" flexDirection="column">
-        <Grid
-          display="flex"
-          flexDirection="row"
-          flex={1}
-          gap={1}
-          justifyContent="flex-end"
-        >
+        <Grid container gap={1} justifyContent="flex-end">
           <Grid>
             <Typography fontWeight={700}>{t('label.app-version')}</Typography>
           </Grid>

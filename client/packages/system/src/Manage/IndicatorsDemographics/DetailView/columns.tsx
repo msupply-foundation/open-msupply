@@ -81,12 +81,14 @@ export const useIndicatorsDemographicsColumns = ({
           accessorFn: row => row[yearOffset],
           header: `${t('label.year')} ${yearOffset}`,
           columnType: ColumnType.Number,
+          size: 150,
           Header: ({ column }) => <Box display="flex" flexDirection="row" alignItems="center" gap={2}>
             {column.columnDef.header}
             <NumericTextInput
               value={headerDraft ? headerDraft[yearOffset].value : 0}
               min={0}
               max={100}
+              decimalLimit={2}
               endAdornment="%"
               onChange={value => {
                 if (!headerDraft) return;

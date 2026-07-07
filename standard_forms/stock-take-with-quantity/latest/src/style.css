@@ -25,15 +25,21 @@
   height: 96px;
 }
 
-.body_column_label th {
-  border-bottom: 0.5px solid black;
-  text-align: start;
+.body_section {
+  border-collapse: collapse;
+  width: 100%;
 }
 
 .body_column_label th,
 .body_value td {
+  border: 1px solid black;
+  padding: 3px 4px;
   font-family: Tahoma;
   font-size: 8pt;
+}
+
+.body_column_label th {
+  text-align: start;
 }
 
 .batch {

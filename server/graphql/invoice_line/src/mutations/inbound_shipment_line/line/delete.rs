@@ -43,17 +43,18 @@ pub fn delete(
         &ResourceAccessRequest {
             resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .invoice_line_service
-            .delete_stock_in_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
-    )
+    map_response(service_provider.invoice_line_service.delete_stock_in_line(
+        &service_context,
+        input.to_domain(),
+        Some(r#type.to_domain()),
+    ))
 }
 
 #[derive(Interface)]
@@ -97,7 +98,9 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::LineDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditFinalised
+        | ServiceError::OtherPartyStoreDisabled
+        | ServiceError::CannotDeleteLinesOfAuthorisedReceivedInvoice => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))

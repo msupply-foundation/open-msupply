@@ -47,12 +47,13 @@ impl SyncRecordTester for RequisitionRecordTester {
             is_emergency: false,
             created_from_requisition_id: None,
             destination_customer_id: None,
+            name_store_id: None,
         };
         let requisition_row_1 = base_requisition_row.clone();
         let requisition_line_row_1 = RequisitionLineRow {
             id: uuid(),
             requisition_id: requisition_row_1.id.clone(),
-            item_link_id: uuid(),
+            item_id: uuid(),
             item_name: "test item".to_string(),
             requested_quantity: 50.0,
             suggested_quantity: 10.0,
@@ -63,7 +64,8 @@ impl SyncRecordTester for RequisitionRecordTester {
             snapshot_datetime: None,
             approved_quantity: 0.0,
             approval_comment: None,
-            initial_stock_on_hand_units: 5.0,
+            // 4D recalculates this to match available_stock_on_hand for Draft requisitions.
+            initial_stock_on_hand_units: 10.0,
             incoming_units: 5.0,
             outgoing_units: 5.0,
             loss_in_units: 5.0,
@@ -95,7 +97,7 @@ impl SyncRecordTester for RequisitionRecordTester {
         result.push(TestStepData {
             central_upsert: json!({
                 "item": [{
-                    "ID": requisition_line_row_1.item_link_id,
+                    "ID": requisition_line_row_1.item_id,
                     "type_of": "general"
                 }],
                 "name": [{
@@ -145,7 +147,8 @@ impl SyncRecordTester for RequisitionRecordTester {
         requisition_line_row_1.snapshot_datetime = NaiveDate::from_ymd_opt(2022, 03, 20)
             .unwrap()
             .and_hms_opt(12, 13, 14);
-        requisition_line_row_1.initial_stock_on_hand_units = 5.0;
+        // 4D recalculates this to match available_stock_on_hand.
+        requisition_line_row_1.initial_stock_on_hand_units = 15.0;
         requisition_line_row_1.incoming_units = 5.0;
         requisition_line_row_1.outgoing_units = 5.0;
         requisition_line_row_1.loss_in_units = 5.0;

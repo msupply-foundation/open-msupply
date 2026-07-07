@@ -7,7 +7,18 @@ server/report_builder/config.yaml
 # Temp export files
 server/data
 .gitmodules
+scripts/plugin-management/pluginRepoMap.json
+scripts/plugin-management/pluginAuth.json
 node_modules/
+
+# Yarn 4
+**/.yarn/*
+!**/.yarn/patches
+!**/.yarn/plugins
+!**/.yarn/releases
+!**/.yarn/sdks
+!**/.yarn/versions
+.pnp.*
 
 standard_reports/test-config.json
 client/dist
