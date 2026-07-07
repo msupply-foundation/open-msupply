@@ -1,6 +1,6 @@
 use repository::{
-    help_document_row::{HelpDocumentRow, HelpDocumentRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    help_document_row::HelpDocumentRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
 };
 
 use super::{
@@ -29,9 +29,9 @@ impl SyncTranslation for HelpDocumentTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
             HelpDocumentRow,
-        >(&sync_record.data)?))
+        >(sync_record.data.0.clone())?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -54,20 +54,18 @@ impl SyncTranslation for HelpDocumentTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = HelpDocumentRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "HelpDocument row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::HelpDocument(help_document_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(row)?,
+            serde_json::to_value(help_document_row)?,
         ))
     }
 }

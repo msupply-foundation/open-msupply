@@ -57,6 +57,7 @@ pub enum Row {
     Demographic(DemographicRow),
     FormSchema(FormSchemaRow),
     FrontendPlugin(FrontendPluginRow),
+    HelpDocument(HelpDocumentRow),
     ItemVariant(ItemVariantRow),
     NameProperty(NamePropertyRow),
     PackagingVariant(PackagingVariantRow),
@@ -465,6 +466,11 @@ fn fetch_rows_for_table(
             ChangelogTableName::FrontendPlugin => {
                 for r in FrontendPluginRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::FrontendPlugin(r));
+                }
+            }
+            ChangelogTableName::HelpDocument => {
+                for r in HelpDocumentRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::HelpDocument(r));
                 }
             }
             ChangelogTableName::ItemVariant => {
