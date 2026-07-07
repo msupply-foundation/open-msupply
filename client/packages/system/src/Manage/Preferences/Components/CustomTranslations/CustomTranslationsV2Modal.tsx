@@ -462,6 +462,7 @@ export const CustomTranslationsV2Modal = ({
               translations={translations}
               setTranslations={setTranslations}
               showValidationErrors={showValidationErrors}
+              namespace={namespace}
             />
           </Box>
         </Box>
