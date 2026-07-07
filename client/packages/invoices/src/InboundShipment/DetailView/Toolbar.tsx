@@ -12,6 +12,7 @@ import {
   Link,
   RouteBuilder,
   DisabledStoreNotice,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
@@ -44,12 +45,15 @@ export const Toolbar = () => {
 
   const {
     query: { data: shipment },
+    draft,
     isDisabled,
     isExternal,
-    update: { update },
+    updatePatch,
+    update: { update, saveDraft },
   } = useInboundShipment();
 
-  const { otherParty, theirReference, purchaseOrder } = shipment || {};
+  const { otherParty, theirReference, purchaseOrder } = draft || {};
+  const debouncedSave = useDebounceCallback(saveDraft, [saveDraft]);
 
   const isTransfer = !!shipment?.linkedShipment?.id;
 
@@ -84,8 +88,10 @@ export const Toolbar = () => {
                     sx={{ width: 250 }}
                     value={theirReference ?? ''}
                     onChange={event => {
-                      update({ theirReference: event.target.value });
+                      updatePatch({ theirReference: event.target.value });
+                      debouncedSave();
                     }}
+                    onBlur={saveDraft}
                     maxRows={2}
                     minRows={1}
                     slotProps={{

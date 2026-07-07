@@ -48,6 +48,7 @@ pub fn return_reasons(
         &ResourceAccessRequest {
             resource: Resource::QueryReasonOptions,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

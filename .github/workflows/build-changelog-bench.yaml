@@ -1,0 +1,88 @@
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Build target'
+        required: true
+        type: choice
+        options:
+          - linux-x64
+          - windows-x64
+          - both
+
+name: Build Changelog Bench Tool
+
+jobs:
+  build-linux:
+    name: Build (Linux x64)
+    if: inputs.target == 'linux-x64' || inputs.target == 'both'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install libpq-dev
+        run: sudo apt-get update && sudo apt-get install -y libpq-dev
+
+      - name: Build
+        working-directory: ./syncdoc/content/changelog/bench
+        run: cargo build --release
+
+      - name: Package
+        run: |
+          mkdir -p changelog-bench-linux-x64
+          cp syncdoc/content/changelog/bench/target/release/changelog-bench changelog-bench-linux-x64/
+          cp syncdoc/content/changelog/bench/config.toml changelog-bench-linux-x64/
+          cp -r syncdoc/content/changelog/bench/pg-configs changelog-bench-linux-x64/
+          cp -r syncdoc/content/changelog/bench/index-configs changelog-bench-linux-x64/
+          cp -r syncdoc/content/changelog/bench/partition-configs changelog-bench-linux-x64/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: changelog-bench-linux-x64
+          path: changelog-bench-linux-x64/
+
+  build-windows:
+    name: Build (Windows x64)
+    if: inputs.target == 'windows-x64' || inputs.target == 'both'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      PQ_LIB_DIR: C:\Program Files\PostgreSQL\17\lib
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install PostgreSQL
+        shell: pwsh
+        run: |
+          choco install postgresql17 --params '/Password:postgres' -y
+          echo "C:\Program Files\PostgreSQL\17\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build
+        working-directory: ./syncdoc/content/changelog/bench
+        run: cargo build --release
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p changelog-bench-windows-x64
+          cp syncdoc/content/changelog/bench/target/release/changelog-bench.exe changelog-bench-windows-x64/
+          cp syncdoc/content/changelog/bench/config.toml changelog-bench-windows-x64/
+          cp -r syncdoc/content/changelog/bench/pg-configs changelog-bench-windows-x64/
+          cp -r syncdoc/content/changelog/bench/index-configs changelog-bench-windows-x64/
+          cp -r syncdoc/content/changelog/bench/partition-configs changelog-bench-windows-x64/
+          # Bundle libpq.dll and its dependencies so the exe runs standalone
+          cp "/c/Program Files/PostgreSQL/17/bin/libpq.dll" changelog-bench-windows-x64/
+          cp "/c/Program Files/PostgreSQL/17/bin/libssl-3-x64.dll" changelog-bench-windows-x64/ || true
+          cp "/c/Program Files/PostgreSQL/17/bin/libcrypto-3-x64.dll" changelog-bench-windows-x64/ || true
+          cp "/c/Program Files/PostgreSQL/17/bin/libintl-9.dll" changelog-bench-windows-x64/ || true
+          cp "/c/Program Files/PostgreSQL/17/bin/libiconv-2.dll" changelog-bench-windows-x64/ || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: changelog-bench-windows-x64
+          path: changelog-bench-windows-x64/

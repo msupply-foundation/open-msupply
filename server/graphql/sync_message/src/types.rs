@@ -150,6 +150,9 @@ impl SyncMessageNodeType {
         match msg_type {
             SyncMessageRowType::RequestFieldChange => SyncMessageNodeType::RequestFieldChange,
             SyncMessageRowType::SupportUpload => SyncMessageNodeType::SupportUpload,
+            // `Merge` is an internal sync mechanism, not a user-facing message type, so it
+            // surfaces through the GraphQL API as `Other`.
+            SyncMessageRowType::Merge => SyncMessageNodeType::Other,
             SyncMessageRowType::Other(_) => SyncMessageNodeType::Other,
         }
     }

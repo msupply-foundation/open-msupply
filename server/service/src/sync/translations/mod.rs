@@ -70,7 +70,9 @@ pub(crate) mod requisition_line;
 pub(crate) mod rnr_form;
 pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
+pub(crate) mod serde_utils;
 pub(crate) mod shipping_method;
+pub(crate) mod site;
 pub(crate) mod special;
 pub(crate) mod stock_line;
 pub(crate) mod stock_relocation;
@@ -87,6 +89,7 @@ pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
+pub(crate) mod user_store_permissions;
 pub(crate) mod utils;
 pub(crate) mod vaccination;
 pub(crate) mod vaccination_legacy;
@@ -117,6 +120,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         diagnosis::boxed(),
         item_direction::boxed(),
         user::boxed(),
+        user_store_permissions::boxed(),
         name::boxed(),
         name_tag::boxed(),
         name_tag_join::boxed(),
@@ -124,6 +128,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         category::boxed(),
         item::boxed(),
         item_store_join::boxed(),
+        site::boxed(),
         store::boxed(),
         master_list::boxed(),
         master_list_line::boxed(),
@@ -369,11 +374,28 @@ impl PushTranslateResult {
         table_name: &str,
         record_data: serde_json::Value,
     ) -> Self {
+        Self::upsert_with_record_id(
+            changelog,
+            table_name,
+            changelog.record_id.clone(),
+            record_data,
+        )
+    }
+
+    /// Like `upsert`, but lets the translator override the wire `recordId`.
+    /// Needed when the row's local primary key differs from the OG primary
+    /// key (e.g. `site.id` is an i32 while OG keys on the `og_id` UUID).
+    pub(crate) fn upsert_with_record_id(
+        changelog: &ChangelogRow,
+        table_name: &str,
+        record_id: String,
+        record_data: serde_json::Value,
+    ) -> Self {
         Self::PushRecord(vec![PushSyncRecord {
             cursor: changelog.cursor,
             record: CommonSyncRecord {
                 table_name: table_name.to_string(),
-                record_id: changelog.record_id.clone(),
+                record_id,
                 action: SyncAction::Update,
                 record_data,
             },
@@ -489,10 +511,19 @@ pub(crate) trait SyncTranslation {
         }
     }
 
+    /// Translate a pre-loaded bare row into the JSON wire payload.
+    /// `row` is passed by value so the translator can move fields out
+    /// of it without cloning. Translators that fit (no joined struct
+    /// needed) pattern-match on the matching `Row::*` variant.
+    /// Translators that need additional joined data may use
+    /// `_connection` for further `query_by_filter` lookups; the bare
+    /// `_row` is then ignored. Cursor / store_id / record_id are
+    /// added by the dispatcher.
     fn try_translate_to_upsert_sync_record(
         &self,
-        _: &StorageConnection,
-        _: &ChangelogRow,
+        _connection: &StorageConnection,
+        _changelog: &ChangelogRow,
+        _row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
         Ok(PushTranslateResult::NotMatched)
     }
@@ -512,16 +543,17 @@ pub(crate) struct PushTranslationError {
     source: anyhow::Error,
 }
 
-pub(crate) fn translate_changelogs_to_sync_records(
+pub(crate) fn translate_rows_to_sync_records(
     connection: &StorageConnection,
-    changelogs: Vec<ChangelogRow>,
+    rows: Vec<RowOrDelete>,
     r#type: Vec<ToSyncRecordTranslationType>,
 ) -> Result<Vec<PushSyncRecord>, PushTranslationError> {
     let translators = all_translators();
     let mut out_records = Vec::new();
-    for changelog in changelogs {
+    for row_or_delete in rows {
+        let changelog = row_or_delete.changelog().clone();
         let mut translation_results =
-            translate_changelog(connection, &translators, &changelog, &r#type)
+            translate_row_or_delete(connection, &translators, row_or_delete, &r#type)
                 .map_err(|source| PushTranslationError { source, changelog })?;
         out_records.append(&mut translation_results);
     }
@@ -529,28 +561,31 @@ pub(crate) fn translate_changelogs_to_sync_records(
     Ok(out_records)
 }
 
-fn translate_changelog(
+fn translate_row_or_delete(
     connection: &StorageConnection,
     translators: &SyncTranslators,
-    changelog: &ChangelogRow,
+    row_or_delete: RowOrDelete,
     r#type: &Vec<ToSyncRecordTranslationType>,
 ) -> Result<Vec<PushSyncRecord>, anyhow::Error> {
     let mut translation_results = Vec::new();
+    let changelog = row_or_delete.changelog().clone();
 
     for translator in translators.iter() {
         if !r#type
             .iter()
-            .any(|r| translator.should_translate_to_sync_record(changelog, r))
+            .any(|r| translator.should_translate_to_sync_record(&changelog, r))
         {
             continue;
         }
 
-        let translation_result = match changelog.row_action {
-            RowActionType::Upsert => {
-                translator.try_translate_to_upsert_sync_record(connection, changelog)?
-            }
-            RowActionType::Delete => {
-                translator.try_translate_to_delete_sync_record(connection, changelog)?
+        let translation_result = match &row_or_delete {
+            RowOrDelete::Row { row, .. } => translator.try_translate_to_upsert_sync_record(
+                connection,
+                &changelog,
+                row.clone(),
+            )?,
+            RowOrDelete::Delete { .. } => {
+                translator.try_translate_to_delete_sync_record(connection, &changelog)?
             }
         };
 

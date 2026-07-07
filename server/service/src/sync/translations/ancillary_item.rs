@@ -1,5 +1,5 @@
-use repository::ancillary_item_row::{AncillaryItemRow, AncillaryItemRowRepository};
-use repository::{ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow};
+use repository::ancillary_item_row::AncillaryItemRow;
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow};
 
 use crate::sync::translations::item::ItemTranslation;
 
@@ -29,9 +29,11 @@ impl SyncTranslation for AncillaryItemTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
             AncillaryItemRow,
-        >(&sync_record.data)?))
+        >(
+            sync_record.data.0.clone(),
+        )?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -54,20 +56,18 @@ impl SyncTranslation for AncillaryItemTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = AncillaryItemRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "AncillaryItem row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::AncillaryItem(ancillary_item_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(row)?,
+            serde_json::to_value(ancillary_item_row)?,
         ))
     }
 }

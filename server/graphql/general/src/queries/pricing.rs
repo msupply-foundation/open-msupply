@@ -54,6 +54,7 @@ pub async fn item_price(
         &ResourceAccessRequest {
             resource: Resource::QueryItems,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

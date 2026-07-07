@@ -107,6 +107,10 @@ impl PreferencesNode {
         ))
     }
 
+    pub async fn receive_payments_from_prescriptions(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.receive_payments_from_prescriptions)
+    }
+
     // Store preferences
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
@@ -226,6 +230,10 @@ impl PreferencesNode {
             .collect();
         Ok(statuses)
     }
+
+    pub async fn do_not_print_placeholder_line_labels(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.do_not_print_placeholder_line_labels)
+    }
 }
 
 impl PreferencesNode {
@@ -291,6 +299,7 @@ pub enum PreferenceKey {
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
     Backdating,
+    ReceivePaymentsFromPrescriptions,
     // Store preferences
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
@@ -315,6 +324,7 @@ pub enum PreferenceKey {
     WarnWhenMissingRecentStocktake,
     InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
+    DoNotPrintPlaceholderLineLabels,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
