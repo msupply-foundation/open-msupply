@@ -56,7 +56,7 @@ export const useOutboundLineEditColumns = ({
   allocateIn,
   setVvmStatus,
   setReceivedNumberOfPacks,
-  setReasonOption,
+  updateLine,
   pluginEvents,
   getIsDisabled,
 }: {
@@ -68,10 +68,7 @@ export const useOutboundLineEditColumns = ({
   allocateIn: AllocateInOption;
   setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
   setReceivedNumberOfPacks: (id: string, value: number | null) => void;
-  setReasonOption: (
-    id: string,
-    reasonOption: DraftStockOutLineFragment['reasonOption']
-  ) => void;
+  updateLine: (id: string, patch: Partial<DraftStockOutLineFragment>) => void;
   pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }) => {
   const { store } = useAuthContext();
@@ -199,7 +196,10 @@ export const useOutboundLineEditColumns = ({
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
         Cell: props => (
-          <CurrencyValueCell {...props} currencyCode={currency?.code as Currencies} />
+          <CurrencyValueCell
+            {...props}
+            currencyCode={currency?.code as Currencies}
+          />
         ),
         accessorFn: rowData =>
           currency ? rowData.sellPricePerPack / currency.rate : undefined,
@@ -269,9 +269,9 @@ export const useOutboundLineEditColumns = ({
             max={
               dosesView
                 ? QuantityUtils.packsToDoses(
-                  row.original.availablePacks,
-                  row.original
-                )
+                    row.original.availablePacks,
+                    row.original
+                  )
                 : row.original.availablePacks
             }
             disabled={getIsDisabled(row.original)}
@@ -329,7 +329,10 @@ export const useOutboundLineEditColumns = ({
         includeColumn: isExternalSupplier,
       },
       ...(plugins.outboundShipmentLine?.editViewField ?? []).map(
-        ({ header, Component }, index): ColumnDef<DraftStockOutLineFragment> => ({
+        (
+          { header, Component },
+          index
+        ): ColumnDef<DraftStockOutLineFragment> => ({
           id: `plugin-field-${index}`,
           header,
           size: 180,
@@ -339,7 +342,10 @@ export const useOutboundLineEditColumns = ({
             <Component
               line={row.original as unknown as StockOutLineFragment}
               update={patch =>
-                setReasonOption(row.original.id, patch.reasonOption ?? null)
+                updateLine(
+                  row.original.id,
+                  patch as Partial<DraftStockOutLineFragment>
+                )
               }
               events={pluginEvents}
               isExternal={isExternalSupplier}
