@@ -202,6 +202,9 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                  ..
              }| {
                 let mut new_status = previous_status.clone();
+                // summary.duration_in_seconds advances during the init poll wait; reconcile it (like
+                // the `initialise` handler) - this assertion checks pull_central progress, not summary.
+                new_status.summary.clone_from(&current_status.summary);
                 if iteration == 0 {
                     new_status
                         .prepare_initial
@@ -350,7 +353,9 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
             let site_info = SiteInfoV5 {
                 id: "abc123".to_string(),
                 site_id: 123,
-                initialisation_status: crate::sync::api::InitialisationStatus::New,
+                // `wait_for_initialisation` finishes when `/site` reports completed.
+                initialisation_status: crate::sync::api::InitialisationStatus::Completed,
+                queue_length: None,
                 central_server_url: "".to_string(),
                 is_central_server: false,
                 msupply_central_site_id: 1,
@@ -494,7 +499,9 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
             let site_info = SiteInfoV5 {
                 id: "abc123".to_string(),
                 site_id: 123,
-                initialisation_status: crate::sync::api::InitialisationStatus::New,
+                // `wait_for_initialisation` finishes when `/site` reports completed.
+                initialisation_status: crate::sync::api::InitialisationStatus::Completed,
+                queue_length: None,
                 central_server_url: "".to_string(),
                 is_central_server: false,
                 msupply_central_site_id: 1,
