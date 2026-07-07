@@ -2,6 +2,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod add_help_document_table;
+mod add_sync_batch_size_key_value_store;
 
 pub(crate) struct V2_21_00;
 impl Migration for V2_21_00 {
@@ -14,7 +15,10 @@ impl Migration for V2_21_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_help_document_table::Migrate)]
+        vec![
+            Box::new(add_help_document_table::Migrate),
+            Box::new(add_sync_batch_size_key_value_store::Migrate),
+        ]
     }
 }
 

@@ -1,5 +1,4 @@
 import React, { FC, useEffect, useState } from 'react';
-import { intervalToDuration } from 'date-fns';
 import {
   LocaleKey,
   TypedTFunction,
@@ -97,11 +96,14 @@ const getStepElapsed = (
   const endMs = progress.finished
     ? new Date(progress.finished).getTime()
     : now;
-  const {
-    hours = 0,
-    minutes = 0,
-    seconds = 0,
-  } = intervalToDuration({ start: startMs, end: Math.max(startMs, endMs) });
+
+  // Compute directly from the elapsed milliseconds so that durations over a day
+  // fold into the hours field rather than being dropped (a long initial sync on
+  // a low-bandwidth link can exceed 24h).
+  const totalSeconds = Math.floor(Math.max(0, endMs - startMs) / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
   if (hours > 0) return `${hours}h ${String(minutes).padStart(2, '0')}m`;
   if (minutes > 0) return `${minutes}m ${seconds}s`;
   return `${seconds}s`;
