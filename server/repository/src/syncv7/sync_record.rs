@@ -55,6 +55,8 @@ diesel_json_type! {
         SiteIdMismatch { expected: i32, found: i32 },
         #[error("Site has not been transitioned to v7 on the legacy server")]
         SiteIsNotV7,
+        #[error("Waiting for next sync on central to update site to v7")]
+        WaitingForCentralV7Upgrade,
         #[error("Request site authentication error: {0}")]
         RequestSiteAuthError(String),
         #[error("Unmatched error {0}")]

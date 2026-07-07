@@ -185,6 +185,9 @@ fn translate_delete(
         | ChangelogTableName::ProgramEvent
         | ChangelogTableName::ProgramIndicator
         | ChangelogTableName::Property
+        | ChangelogTableName::CustomField
+        | ChangelogTableName::CustomFieldOption
+        | ChangelogTableName::CustomFieldScope
         | ChangelogTableName::ReasonOption
         | ChangelogTableName::ShippingMethod
         | ChangelogTableName::Store
@@ -201,6 +204,12 @@ fn translate_delete(
         | ChangelogTableName::VaccineCourseItem
         | ChangelogTableName::VaccineCourseStoreConfig => {
             return Err(Error::DeleteTranslatorNotFound(table_name.clone()));
+        }
+        // A table this site doesn't recognise (e.g. added on a newer central). Such
+        // records aren't part of `INTEGRATION_ORDER` so they never reach here, but treat
+        // it as an unknown table rather than a missing delete translator if one does.
+        ChangelogTableName::Other(unknown) => {
+            return Err(Error::UnknownTableName(unknown.clone()));
         }
     };
 

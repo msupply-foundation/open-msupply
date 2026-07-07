@@ -121,6 +121,14 @@ impl<'a> StocktakeRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            stocktake::table.filter(stocktake::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_max_stocktake_number(
         &self,
         store_id: &str,

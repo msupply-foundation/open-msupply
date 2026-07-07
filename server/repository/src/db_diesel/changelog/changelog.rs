@@ -43,7 +43,7 @@ diesel::alias!(
 );
 
 diesel_string_enum! {
-    #[derive(Clone, Eq, Serialize, Deserialize, TS)]
+    #[derive(Clone, Eq, TS)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     pub enum RowActionType {
         #[default]
@@ -53,7 +53,7 @@ diesel_string_enum! {
 }
 
 diesel_string_enum! {
-    #[derive(Clone, Eq, Hash, Serialize, Deserialize, strum::EnumIter, TS)]
+    #[derive(Clone, Eq, Hash, strum::EnumIter, TS)]
     #[strum(serialize_all = "snake_case")]
     // The set of tables tracked by the changelog. How each one syncs is
     // defined separately in `sync_style.rs`.
@@ -129,6 +129,9 @@ diesel_string_enum! {
         ProgramRequisitionOrderType,
         ProgramRequisitionSettings,
         Property,
+        CustomField,
+        CustomFieldOption,
+        CustomFieldScope,
         PurchaseOrder,
         PurchaseOrderLine,
         ReasonOption,
@@ -163,6 +166,13 @@ diesel_string_enum! {
         VaccineCourseDose,
         VaccineCourseItem,
         VaccineCourseStoreConfig,
+        // Fallback for a table this site doesn't recognise (e.g. a newer central
+        // pushing a table added after this site's version). The raw name is preserved
+        // so the record lands in the sync buffer under its real table name and is simply
+        // skipped at integration (no translator matches) instead of failing the whole
+        // batch parse. Must remain the last variant — see `diesel_string_enum!`.
+        #[strum(default, transparent)]
+        Other(String),
     }
 }
 
@@ -406,6 +416,18 @@ create_condition!(
                 .select(patient_name_links.field(name_link::id).nullable())
         )
     )),
+    // Patients visible at a specific store (via name_store_join), rather than at a whole site.
+    // Used by `data_for_store` to re-sync a moved store's patient data without pulling every
+    // patient on the destination site. Mirrors `patient_site_id` but constrains on the
+    // name_store_join's store_id directly instead of the joined store's site_id.
+    (patient_store_id, subquery: String, |for_store| changelog_with_links::patient_link_id.is_not_null().and(
+        changelog_with_links::patient_link_id.eq_any(
+            name_store_join::table
+                .inner_join(patient_name_links.on(name_store_join::name_id.eq(patient_name_links.field(name_link::id))))
+                .filter(name_store_join::store_id.eq(for_store))
+                .select(patient_name_links.field(name_link::id).nullable())
+        )
+    )),
     // Resolve a patient by their (resolved) name_id: match changelog rows whose patient_link_id
     // points at any name_link row resolving to that name_id.
     //   changelog.patient_link_id IN (SELECT name_link.id FROM name_link WHERE name_link.name_id = $patient_id)
@@ -549,6 +571,7 @@ impl ChangelogFilter {
         let mut store_scoped_table_names = Remote.get_table_names_for_distribution(None);
         store_scoped_table_names.extend(RemoteOwned.get_table_names_for_distribution(None));
         let transfer_table_names = Transfer.get_table_names_for_distribution(None);
+        let patient_table_names = Patient.get_table_names_for_distribution(None);
 
         C::Or(vec![
             C::And(vec![
@@ -558,6 +581,14 @@ impl ChangelogFilter {
             C::And(vec![
                 C::table_name::any(transfer_table_names),
                 C::transfer_store_id::equal(store_id.to_string()),
+            ]),
+            // Patient-scoped data for patients visible at this store. Without this, a moved
+            // store would arrive on the destination site missing its patients' data (#12325).
+            // Scoped to the store (via name_store_join) rather than the whole site, so we only
+            // re-pull patients this store can actually see.
+            C::And(vec![
+                C::table_name::any(patient_table_names),
+                C::patient_store_id::matching(store_id.to_string()),
             ]),
         ])
     }
@@ -649,5 +680,52 @@ mod print_query_tests {
     fn row_action_type_serializes_uppercase() {
         assert_eq!(RowActionType::Upsert.to_string(), "UPSERT");
         assert_eq!(RowActionType::Delete.to_string(), "DELETE");
+    }
+
+    /// The v7 wire format uses serde and must stay PascalCase (the variant identifier),
+    /// independent of the `strum` `snake_case` used for the DB column.
+    #[test]
+    fn changelog_table_name_serde_is_pascal_case() {
+        assert_eq!(
+            serde_json::to_string(&ChangelogTableName::StockLine).unwrap(),
+            "\"StockLine\""
+        );
+        assert_eq!(
+            serde_json::from_str::<ChangelogTableName>("\"StockLine\"").unwrap(),
+            ChangelogTableName::StockLine
+        );
+        // DB column stays snake_case via strum.
+        assert_eq!(ChangelogTableName::StockLine.to_string(), "stock_line");
+    }
+
+    /// Regression for issue #12361: a table name a newer central knows but this site
+    /// doesn't must deserialize to `Other(..)` instead of failing the whole batch parse,
+    /// and must round-trip back out unchanged so it reaches the sync buffer under its
+    /// real name.
+    #[test]
+    fn changelog_table_name_unknown_falls_back_to_other() {
+        // serde (v7 wire) — unknown PascalCase name is captured verbatim.
+        // (The original example, "CustomField", became a real variant when the
+        // custom-fields feature landed, so a fabricated name is used instead.)
+        let parsed: ChangelogTableName = serde_json::from_str("\"TableFromTheFuture\"").unwrap();
+        assert_eq!(
+            parsed,
+            ChangelogTableName::Other("TableFromTheFuture".to_string())
+        );
+        assert_eq!(
+            serde_json::to_string(&parsed).unwrap(),
+            "\"TableFromTheFuture\"",
+            "Other round-trips back to its raw wire name"
+        );
+
+        // strum (DB column / sync buffer `to_string()`) — same fallback, inner string
+        // preserved thanks to `#[strum(transparent)]`.
+        use std::str::FromStr;
+        let from_db = ChangelogTableName::from_str("table_from_the_future").unwrap();
+        assert_eq!(
+            from_db,
+            ChangelogTableName::Other("table_from_the_future".to_string())
+        );
+        assert_eq!(from_db.to_string(), "table_from_the_future");
     }
 }

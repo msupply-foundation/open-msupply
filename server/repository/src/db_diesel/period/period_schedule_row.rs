@@ -76,6 +76,14 @@ impl<'a> PeriodScheduleRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            period_schedule::table.filter(period_schedule::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for PeriodScheduleRow {

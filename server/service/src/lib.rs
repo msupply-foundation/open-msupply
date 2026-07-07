@@ -74,6 +74,7 @@ pub mod pricing;
 pub mod print;
 pub mod printer;
 pub mod processors;
+pub mod custom_field;
 pub mod program;
 pub mod programs;
 pub mod purchase_order;

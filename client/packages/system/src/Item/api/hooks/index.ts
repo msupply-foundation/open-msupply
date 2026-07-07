@@ -10,3 +10,4 @@ export * from './useItemVariant';
 export * from './bundledItem';
 export * from './ancillaryItem';
 export * from './useItemLedger';
+export * from './useItemCustomFields';

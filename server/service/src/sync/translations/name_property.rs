@@ -1,13 +1,14 @@
 use repository::{
-    name_property_row::NamePropertyRow,
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    name_property_row::NamePropertyRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
 };
 
 use crate::sync::translations::property::PropertyTranslation;
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
+};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -28,12 +29,25 @@ impl SyncTranslation for NamePropertyTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            NamePropertyRow,
-        >(sync_record.data.0.clone())?))
+        let NamePropertyRow {
+            id,
+            property_id,
+            remote_editable,
+        } = serde_json::from_value::<NamePropertyRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "name_property", &id);
+
+        let result = NamePropertyRow {
+            id,
+            property_id: check_fk(property_id, "property_id", FkField::Property)?,
+            remote_editable,
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -66,7 +80,11 @@ impl SyncTranslation for NamePropertyTranslation {
 
         let row = name_property_row;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
     }
 }
 
@@ -81,12 +99,16 @@ mod tests {
         let translator = NamePropertyTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_name_property_translation", MockDataInserts::none()).await;
+            setup_all("test_name_property_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

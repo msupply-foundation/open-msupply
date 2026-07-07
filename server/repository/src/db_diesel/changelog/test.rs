@@ -12,10 +12,12 @@ use crate::{
     test_db::{self, setup_all, setup_all_with_data},
     ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType,
     ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType, KeyValueStoreRepository,
-    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow,
-    StoreRowRepository, Upsert, VaccinationRow, VaccinationRowRepository,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType,
+    KeyValueStoreRepository, LocationRowRepository, NameRow, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RowActionType,
+    ShippingMethodRow, ShippingMethodRowRepository, StocktakeRow, StorageConnection, StoreRow,
+    StoreRowRepository, Upsert, VaccinationRow,
+    VaccinationRowRepository,
 };
 
 fn delete_all_changelog(connection: &StorageConnection) {
@@ -855,6 +857,188 @@ async fn test_changelog_outgoing_sync_records() {
 }
 
 #[actix_rt::test]
+async fn test_changelog_outgoing_multi_device_sync_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_outgoing_multi_device_sync_records",
+        MockDataInserts::none().names().stores(),
+    )
+    .await;
+
+    let site1_id = mock_store_a().site_id;
+    let site1_store_id = mock_store_a().id;
+
+    // Simulate the central server: current site id distinct from site1 so that
+    // locally-upserted rows (SourceSiteId::CurrentSiteId) get central's id.
+    let central_site_id = 999;
+    assert_ne!(central_site_id, site1_id);
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(central_site_id))
+        .unwrap();
+
+    let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
+    // Central, multi-device → reaches a multi-device site.
+    let md_central_id = "md_asset_class".to_string();
+    AssetClassRowRepository::new(&connection)
+        .upsert_one(&AssetClassRow {
+            id: md_central_id.clone(),
+            ..Default::default()
+        })
+        .unwrap();
+
+    // Central, NOT multi-device → dropped by the flag, kept by the ordinary filter.
+    // (Central-distributed so it survives a post-init pull, unlike RemoteOwned.)
+    let non_md_central_id = "non_md_shipping_method".to_string();
+    ShippingMethodRowRepository::new(&connection)
+        .upsert_one(&ShippingMethodRow {
+            id: non_md_central_id.clone(),
+            ..Default::default()
+        })
+        .unwrap();
+
+    // Remote, multi-device, authored by site1 itself. Post-initialisation the
+    // ordinary filter's echo guard drops this; the multi-device filter keeps it.
+    let md_self_sourced_id = "md_asset".to_string();
+    AssetRow {
+        id: md_self_sourced_id.clone(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(site1_id),
+        },
+    )
+    .unwrap();
+
+    // Ordinary post-init pull: both central rows (in cursor order); the
+    // self-sourced Asset is excluded by the echo guard.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[0].record_id, md_central_id);
+    assert_eq!(outgoing_results[1].record_id, non_md_central_id);
+
+    // Multi-device post-init pull: the non-multi-device ShippingMethod is dropped
+    // by the flag intersection, while the self-sourced Asset is kept (guard dropped).
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::multi_device_all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[0].record_id, md_central_id);
+    assert_eq!(outgoing_results[1].record_id, md_self_sourced_id);
+}
+
+#[actix_rt::test]
+async fn test_changelog_edited_on_multi_device_site_push_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_edited_on_multi_device_site_push_records",
+        MockDataInserts::none().names().stores(),
+    )
+    .await;
+
+    let site1_id = mock_store_a().site_id;
+    let site1_store_id = mock_store_a().id;
+
+    let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
+    // Multi-device table, authored by this site → pushed by both filters.
+    let md_edited_id = "md_asset".to_string();
+    AssetRow {
+        id: md_edited_id.clone(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(site1_id),
+        },
+    )
+    .unwrap();
+
+    // NOT a multi-device table, authored by this site → pushed by the ordinary
+    // filter, dropped by the multi-device filter's flag intersection.
+    let non_md_edited_id = "non_md_stocktake".to_string();
+    StocktakeRow {
+        id: non_md_edited_id.clone(),
+        store_id: site1_store_id.clone(),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(site1_id),
+        },
+    )
+    .unwrap();
+
+    // Multi-device table, but authored by a *different* site → excluded by the
+    // `source_site_id` match in both filters (nothing to push back out).
+    let other_site_id = 999;
+    assert_ne!(other_site_id, site1_id);
+    AssetRow {
+        id: "md_asset_other_site".to_string(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(other_site_id),
+        },
+    )
+    .unwrap();
+
+    // Ordinary push: both rows this site authored (in cursor order); the
+    // other-site row is excluded.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_edited_on_site(site1_id),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[0].record_id, md_edited_id);
+    assert_eq!(outgoing_results[1].record_id, non_md_edited_id);
+
+    // Multi-device push: the non-multi-device Stocktake is additionally dropped by
+    // the flag intersection, leaving only the tagged Asset this site authored.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_edited_on_multi_device_site(site1_id),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, md_edited_id);
+}
+
+#[actix_rt::test]
 async fn test_changelog_outgoing_patient_sync_records() {
     let (_, connection, _, _) = test_db::setup_all(
         "test_changelog_outgoing_patient_sync_records",
@@ -931,6 +1115,73 @@ async fn test_changelog_outgoing_patient_sync_records() {
         .unwrap()
         .rows;
     assert_eq!(outgoing_results.len(), 0);
+}
+
+/// When a store is moved to another site we re-sync it via `data_for_store`. That
+/// filter must include patient-scoped data for patients visible at the moved store
+/// (via name_store_join), otherwise the store arrives missing its patient data (#12325).
+/// It must NOT pull patient data for patients the store can't see.
+#[actix_rt::test]
+async fn test_data_for_store_includes_patient_data() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_data_for_store_includes_patient_data",
+        MockDataInserts::all(),
+    )
+    .await;
+
+    let repo = ChangelogRepository::new(&connection);
+
+    // patient2 has a name_store_join to store_a (mock_patient_store_join_b), and none to store_b.
+    // Author the vaccination (a Patient-distribution table) at store_c, so it reaches store_a
+    // only via the patient route — not via store_c's own (Remote) store_id route.
+    let cursor_before = repo.max_cursor().unwrap() as i64;
+    let vaccination = VaccinationRow {
+        id: "mock_vax_id".to_string(),
+        patient_id: "patient2".to_string(),
+        store_id: "store_c".to_string(),
+        vaccine_course_dose_id: "vaccine_course_a_dose_a".to_string(),
+        user_id: "user_account_a".to_string(),
+        ..Default::default()
+    };
+    VaccinationRowRepository::new(&connection)
+        .upsert_one(&vaccination)
+        .unwrap();
+
+    // Re-syncing store_a should include the vaccination (patient2 is visible at store_a).
+    let outgoing_results = repo
+        .query(
+            ChangelogFilter::data_for_store("store_a"),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert!(
+        outgoing_results
+            .iter()
+            .any(|r| r.record_id == vaccination.id),
+        "data_for_store(store_a) should include patient2's vaccination"
+    );
+
+    // Re-syncing store_b should NOT include it — patient2 is not visible at store_b.
+    let outgoing_results = repo
+        .query(
+            ChangelogFilter::data_for_store("store_b"),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert!(
+        !outgoing_results
+            .iter()
+            .any(|r| r.record_id == vaccination.id),
+        "data_for_store(store_b) should not include patient2's vaccination"
+    );
 }
 
 /// Concurrent-tx race: while connection A is mid-transaction with a changelog

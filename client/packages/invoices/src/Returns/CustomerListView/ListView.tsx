@@ -17,6 +17,10 @@ import {
   ColumnType,
   TextWithTooltipCell,
   InvoiceNodeType,
+  buildPropertyColumns,
+  buildPropertyUrlFilterConfigs,
+  mapPropertyFilters,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { AppBarButtons } from './AppBarButtons';
@@ -24,17 +28,23 @@ import { CustomerReturnRowFragment, useReturns } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { getStatusSequence } from '../../statuses';
+import { useInvoiceCustomFields } from '../../common';
 
 export const CustomerReturnListView = () => {
   const t = useTranslation();
+  const { localisedDate } = useFormatDateTime();
+  const { data: properties } = useInvoiceCustomFields(
+    InvoiceNodeType.CustomerReturn
+  );
   const {
     filter,
-    queryParams: { sortBy, first, offset },
+    queryParams: { sortBy, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
+      ...buildPropertyUrlFilterConfigs(properties ?? []),
     ],
   });
   const navigate = useNavigate();
@@ -46,7 +56,14 @@ export const CustomerReturnListView = () => {
     status => invoiceStatusOptions?.includes(status)
   );
 
-  const queryParams = { ...filter, sortBy, first, offset };
+  const queryParams = {
+    ...filter,
+    // Property filters travel to the API as the `dynamicFilter` condition AST
+    filterBy: mapPropertyFilters(filterBy, properties ?? []),
+    sortBy,
+    first,
+    offset,
+  };
 
   const { mutate } = useReturns.document.updateCustomerReturn();
 
@@ -124,8 +141,12 @@ export const CustomerReturnListView = () => {
         header: t('label.reference'),
         Cell: TextWithTooltipCell,
       },
+      ...buildPropertyColumns<CustomerReturnRowFragment>(
+        properties ?? [],
+        localisedDate
+      ),
     ],
-    []
+    [properties, localisedDate]
   );
 
   const { table, selectedRows } = usePaginatedMaterialTable({

@@ -82,6 +82,10 @@ impl ChangelogTableName {
             is_v6: true,
             is_v5: true,
         };
+        const V7_ONLY: SyncVersions = SyncVersions {
+            is_v6: false,
+            is_v5: false,
+        };
 
         match self {
             NameStoreJoin => SyncStyle {
@@ -220,7 +224,15 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: false,
             },
-
+            CustomField | CustomFieldOption | CustomFieldScope => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V7_ONLY,
+                // Multi-device sites sync `name` (which carries custom-field values in
+                // `name.custom_fields`), so the definitions must reach them too — same
+                // reasoning as Property/NameProperty.
+                multi_device_site: true,
+            },
             AncillaryItem => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],
@@ -720,6 +732,20 @@ impl ChangelogTableName {
                 authoring: vec![Anyone],
                 distribution: vec![D::NotDistributed],
                 transport: V6,
+                multi_device_site: false,
+            },
+
+            // A table this site doesn't recognise (see `ChangelogTableName::Other`).
+            // It has no real sync style: never distribute it to a remote, reject it as
+            // a v7 authoring record, and mark it as belonging to neither v5 nor v6 so it
+            // is excluded from every transport's distribution filter.
+            Other(_) => SyncStyle {
+                authoring: vec![LegacyOnly],
+                distribution: vec![D::NotDistributed],
+                transport: SyncVersions {
+                    is_v5: false,
+                    is_v6: false,
+                },
                 multi_device_site: false,
             },
         }

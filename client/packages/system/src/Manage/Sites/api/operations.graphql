@@ -4,6 +4,12 @@ fragment SiteRow on SiteNode {
   code
   name
   hardwareId
+  syncVersion
+  appName
+  appVersion
+  lastConnectionDatetime
+  lastSyncDatetime
+  firstSyncDatetime
   isMultiDevice
 }
 

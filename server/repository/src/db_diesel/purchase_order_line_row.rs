@@ -216,6 +216,14 @@ impl<'a> PurchaseOrderLineRowRepository<'a> {
             .filter(purchase_order_line::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            purchase_order_line::table.filter(purchase_order_line::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for PurchaseOrderLineRow {

@@ -1,10 +1,15 @@
 use crate::service_provider::ServiceContext;
-use repository::{KeyType, KeyValueStoreRepository, RepositoryError, SiteRow, SiteRowRepository};
+use repository::{
+    KeyType, KeyValueStoreRepository, RepositoryError, SiteRow, SiteRowRepository, SyncVersion,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum ClearSiteTokenError {
     SiteDoesNotExist,
     SameSite,
+    /// Clearing is only safe for v7 sites; legacy (v5/v6) sites manage their token
+    /// via 4D. See issue #11784.
+    SiteIsNotV7,
     DatabaseError(RepositoryError),
 }
 
@@ -23,6 +28,10 @@ pub fn clear_site_token(ctx: &ServiceContext, site_id: i32) -> Result<i32, Clear
             let site = repo
                 .find_one_by_id(site_id)?
                 .ok_or(ClearSiteTokenError::SiteDoesNotExist)?;
+
+            if site.sync_version != SyncVersion::V7 {
+                return Err(ClearSiteTokenError::SiteIsNotV7);
+            }
 
             repo.upsert(&SiteRow {
                 token: None,
@@ -58,7 +67,8 @@ mod tests {
             hardware_id: Some("hw-1".to_string()),
             is_multi_device: false,
             token,
-            sync_version: SyncVersion::V5V6,
+            sync_version: SyncVersion::V7,
+            ..Default::default()
         };
         SiteRowRepository::new(connection).upsert(&row).unwrap();
         row
@@ -117,5 +127,35 @@ mod tests {
         assert_eq!(stored.token, None);
         assert_eq!(stored.hardware_id.as_deref(), Some("hw-1"));
         assert_eq!(stored.name, "Site A");
+    }
+
+    #[actix_rt::test]
+    async fn clear_site_token_rejects_non_v7() {
+        let (_, connection, connection_manager, _) =
+            setup_all("clear_site_token_rejects_non_v7", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+
+        SiteRowRepository::new(&connection)
+            .upsert(&SiteRow {
+                id: 5,
+                name: "Legacy Site".to_string(),
+                token: Some("legacy-token".to_string()),
+                sync_version: SyncVersion::V5V6,
+                ..Default::default()
+            })
+            .unwrap();
+
+        assert_eq!(
+            clear_site_token(&context, 5),
+            Err(ClearSiteTokenError::SiteIsNotV7)
+        );
+        // The token must be left untouched for non-v7 sites.
+        let stored = SiteRowRepository::new(&connection)
+            .find_one_by_id(5)
+            .unwrap()
+            .unwrap();
+        assert_eq!(stored.token.as_deref(), Some("legacy-token"));
     }
 }

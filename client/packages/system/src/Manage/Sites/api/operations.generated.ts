@@ -9,6 +9,12 @@ export type SiteRowFragment = {
   code: string;
   name: string;
   hardwareId?: string | null;
+  syncVersion: Types.SyncVersionNode;
+  appName?: string | null;
+  appVersion?: string | null;
+  lastConnectionDatetime?: string | null;
+  lastSyncDatetime?: string | null;
+  firstSyncDatetime?: string | null;
   isMultiDevice: boolean;
 };
 
@@ -42,6 +48,12 @@ export type SitesQuery = {
           code: string;
           name: string;
           hardwareId?: string | null;
+          syncVersion: Types.SyncVersionNode;
+          appName?: string | null;
+          appVersion?: string | null;
+          lastConnectionDatetime?: string | null;
+          lastSyncDatetime?: string | null;
+          firstSyncDatetime?: string | null;
           isMultiDevice: boolean;
         }>;
       };
@@ -66,6 +78,12 @@ export type UpsertSiteMutation = {
             code: string;
             name: string;
             hardwareId?: string | null;
+            syncVersion: Types.SyncVersionNode;
+            appName?: string | null;
+            appVersion?: string | null;
+            lastConnectionDatetime?: string | null;
+            lastSyncDatetime?: string | null;
+            firstSyncDatetime?: string | null;
             isMultiDevice: boolean;
           }
         | {
@@ -196,6 +214,12 @@ export const SiteRowFragmentDoc = gql`
     code
     name
     hardwareId
+    syncVersion
+    appName
+    appVersion
+    lastConnectionDatetime
+    lastSyncDatetime
+    firstSyncDatetime
     isMultiDevice
   }
 `;
