@@ -66,6 +66,11 @@ mod tests {
             is_multi_device: false,
             token: Some("token".to_string()),
             sync_version: SyncVersion::V7,
+            app_name: None,
+            app_version: None,
+            last_connection_datetime: None,
+            last_sync_datetime: None,
+            first_sync_datetime: None,
         };
         SiteRowRepository::new(connection).upsert(&row).unwrap();
         row

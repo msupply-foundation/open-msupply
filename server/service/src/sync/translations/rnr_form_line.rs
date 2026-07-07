@@ -1,19 +1,16 @@
 use repository::{
-    rnr_form_line_row::RnRFormLineRow,
-    ChangelogRow, ChangelogTableName, RnRFormLineDelete, StorageConnection, SyncBufferRow,
-    Row,
-
+    rnr_form_line_row::RnRFormLineRow, ChangelogRow, ChangelogTableName, RnRFormLineDelete, Row,
+    StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
     item::ItemTranslation, requisition_line::RequisitionLineTranslation,
     rnr_form::RnRFormTranslation,
-
 };
 
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 /// FK column renamed during the entity-link abstraction. Central emits both the canonical
@@ -44,14 +41,24 @@ impl SyncTranslation for RnRFormLineTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let row = from_renamed_keys_str::<RnRFormLineRow>(
             &sync_record.data.0.to_string(),
             RENAMED_KEYS,
         )?;
-        Ok(PullTranslateResult::upsert(row))
+
+        let check_fk = fk_checker.with_table_required(connection, "rnr_form_line", &row.id);
+
+        let result = RnRFormLineRow {
+            rnr_form_id: check_fk(row.rnr_form_id, "rnr_form_id", FkField::RnrForm)?,
+            item_id: check_fk(row.item_id, "item_link_id", FkField::ItemLink)?,
+            ..row
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -105,7 +112,11 @@ impl SyncTranslation for RnRFormLineTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_rnr_form_a, MockDataInserts},
+        test_db::setup_all,
+        ItemLinkRow, ItemLinkRowRepository, RnRFormRow, RnRFormRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_rnr_form_translation() {
@@ -115,10 +126,29 @@ mod tests {
         let (_, connection, _, _) =
             setup_all("test_rnr_form_line_translation", MockDataInserts::all()).await;
 
+        // Seed the rnr_form parent the line's required FK points at.
+        RnRFormRowRepository::new(&connection)
+            .upsert_one(&RnRFormRow {
+                id: "cfd578f8-c3d5-4a04-a466-0ac81dde2aab".to_string(),
+                ..mock_rnr_form_a()
+            })
+            .unwrap();
+        // Seed the item_link parent the line's required FK points at.
+        ItemLinkRowRepository::new(&connection)
+            .upsert_one(&ItemLinkRow {
+                id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+                item_id: "item_a".to_string(),
+            })
+            .unwrap();
+
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

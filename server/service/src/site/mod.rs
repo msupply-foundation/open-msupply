@@ -19,6 +19,7 @@ pub mod clear_token;
 pub mod delete;
 pub mod query;
 pub mod set_multi_device;
+pub mod sync_metadata;
 pub mod upsert;
 
 pub trait SiteServiceTrait: Sync + Send {

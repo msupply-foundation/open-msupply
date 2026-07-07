@@ -12,7 +12,7 @@ use diesel::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 diesel_string_enum! {
-    #[derive(Clone, Serialize, Deserialize, Eq)]
+    #[derive(Clone, Eq)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     pub enum SyncAction {
         #[default]
@@ -23,7 +23,7 @@ diesel_string_enum! {
 }
 
 diesel_string_enum! {
-    #[derive(Clone, Copy, Serialize, Deserialize, Eq)]
+    #[derive(Clone, Copy, Eq)]
     pub enum SyncVersion {
         #[default]
         #[strum(serialize = "V5_V6")]
@@ -72,7 +72,7 @@ impl SyncVersion {
 }
 
 diesel_string_enum! {
-    #[derive(Clone, Copy, Serialize, Deserialize, Eq)]
+    #[derive(Clone, Copy, Eq)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     pub enum IntegrationResult {
         #[default]

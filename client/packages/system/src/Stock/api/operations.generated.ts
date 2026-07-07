@@ -96,6 +96,7 @@ export type StockLineRowFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    customFields?: any | null;
     store?: {
       __typename: 'StoreNode';
       id: string;
@@ -188,6 +189,7 @@ export type StockLineListRowFragment = {
       isDisabled: boolean;
     } | null;
   } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
 };
 
 export type RepackStockLineFragment = {
@@ -397,12 +399,18 @@ export type StockLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
           code: string;
           isDisabled: boolean;
         } | null;
+      } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
       } | null;
     }>;
   };
@@ -512,6 +520,7 @@ export type StockLineQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
@@ -681,6 +690,7 @@ export type UpdateStockLineMutation = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
+          customFields?: any | null;
           store?: {
             __typename: 'StoreNode';
             id: string;
@@ -1024,6 +1034,7 @@ export type InsertStockLineMutation = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
+          customFields?: any | null;
           store?: {
             __typename: 'StoreNode';
             id: string;
@@ -1195,12 +1206,18 @@ export type ItemsByStockLineFilterQuery = {
             isSupplier: boolean;
             isOnHold: boolean;
             name: string;
+            customFields?: any | null;
             store?: {
               __typename: 'StoreNode';
               id: string;
               code: string;
               isDisabled: boolean;
             } | null;
+          } | null;
+          campaign?: {
+            __typename: 'CampaignNode';
+            id: string;
+            name: string;
           } | null;
         }>;
       };
@@ -1352,6 +1369,10 @@ export const StockLineListRowFragmentDoc = gql`
     }
     manufacturer(storeId: $storeId) {
       ...NameRow
+    }
+    campaign {
+      id
+      name
     }
   }
   ${LocationRowFragmentDoc}

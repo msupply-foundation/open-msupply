@@ -102,6 +102,7 @@ export type PurchaseOrderFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
@@ -195,6 +196,7 @@ export type PurchaseOrderLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    customFields?: any | null;
     store?: {
       __typename: 'StoreNode';
       id: string;
@@ -343,6 +345,7 @@ export type PurchaseOrderByIdQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -520,6 +523,7 @@ export type PurchaseOrderLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
@@ -603,6 +607,7 @@ export type PurchaseOrderLineQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;

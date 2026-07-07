@@ -2931,6 +2931,7 @@ dependencies = [
  "num-traits",
  "pq-sys",
  "r2d2",
+ "serde_json",
  "sqlite-wasm-rs",
  "time",
 ]
@@ -5041,6 +5042,7 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
+ "chrono",
  "graphql_core",
  "graphql_types",
  "repository",

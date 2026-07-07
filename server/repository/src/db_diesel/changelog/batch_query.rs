@@ -62,6 +62,9 @@ pub enum Row {
     NameProperty(NamePropertyRow),
     PackagingVariant(PackagingVariantRow),
     Property(PropertyRow),
+    CustomField(CustomFieldRow),
+    CustomFieldOption(CustomFieldOptionRow),
+    CustomFieldScope(CustomFieldScopeRow),
     Report(ReportRow),
     VaccineCourse(VaccineCourseRow),
     VaccineCourseDose(VaccineCourseDoseRow),
@@ -493,6 +496,21 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::Property(r));
                 }
             }
+            ChangelogTableName::CustomField => {
+                for r in CustomFieldRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomField(r));
+                }
+            }
+            ChangelogTableName::CustomFieldOption => {
+                for r in CustomFieldOptionRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomFieldOption(r));
+                }
+            }
+            ChangelogTableName::CustomFieldScope => {
+                for r in CustomFieldScopeRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomFieldScope(r));
+                }
+            }
             ChangelogTableName::Report => {
                 for r in ReportRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::Report(r));
@@ -798,6 +816,12 @@ fn fetch_rows_for_table(
                 for r in AssetTypeRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::AssetCatalogueType(r));
                 }
+            }
+            // A table this server doesn't recognise — there is no row repository to
+            // fetch from. This shouldn't occur for a server's own changelog, but if it
+            // does we skip it (leaving the id unfetched) rather than panicking.
+            ChangelogTableName::Other(table_name) => {
+                log::warn!("Cannot fetch rows for unrecognised changelog table `{table_name}`");
             }
         }
     }

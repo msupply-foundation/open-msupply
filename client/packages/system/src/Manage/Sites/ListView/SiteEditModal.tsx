@@ -12,6 +12,7 @@ import {
   XCircleIcon,
   LoadingButton,
   useConfirmationModal,
+  SyncVersionNode,
   Switch,
 } from '@openmsupply-client/common';
 import { DraftSite, useSiteStoresDraft } from '../api';
@@ -50,11 +51,24 @@ export const SiteEditModal = ({
   const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
-  const { id, code, name, password, hardwareId, isMultiDevice, isNew } = site;
+  const {
+    id,
+    code,
+    name,
+    password,
+    hardwareId,
+    syncVersion,
+    isMultiDevice,
+    isNew,
+  } = site;
   const isExisting = !isNew;
   const { data: syncSettings } = useSync.settings.syncSettings();
   const currentSiteId = syncSettings?.syncSiteId;
-  const showClearButtons = currentSiteId != null && currentSiteId !== id;
+  // Hardware id / token are only safe to clear once the site has transitioned to
+  // v7 (legacy v5/v6 sites still manage these via 4D). See issue #11784.
+  const isV7 = syncVersion === SyncVersionNode.V7;
+  const showClearButtons =
+    currentSiteId != null && currentSiteId !== id && isV7;
 
   const isValidCode = code.trim().length > 0 || (isExisting && code === '');
   const isValidName = name.trim().length > 0;
@@ -83,9 +97,7 @@ export const SiteEditModal = ({
 
   const confirmSetMultiDevice = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: isMultiDevice
-      ? t('messages.confirm-unset-multi-device')
-      : t('messages.confirm-set-multi-device'),
+    message: t('messages.confirm-set-multi-device'),
     onConfirm: () => setMultiDevice(id, !isMultiDevice),
   });
 
@@ -161,6 +173,16 @@ export const SiteEditModal = ({
           )}
           {isExisting && (
             <InputWithLabelRow
+              key="sync-version"
+              label={t('label.sync-version')}
+              labelWidth="130px"
+              Input={
+                <BasicTextInput fullWidth value={syncVersion ?? ''} disabled />
+              }
+            />
+          )}
+          {isExisting && (
+            <InputWithLabelRow
               key="hardware-id"
               label={t('label.hardware-id')}
               labelWidth="130px"
@@ -220,6 +242,9 @@ export const SiteEditModal = ({
                   <Switch
                     checked={isMultiDevice}
                     onChange={() => confirmSetMultiDevice()}
+                    // Don't allow a multi device site to become a single device site again
+                    // TODO: Need to implement re-syncing of skipped changelog entries - #12401
+                    disabled={isMultiDevice}
                   />
                 </Box>
               }
