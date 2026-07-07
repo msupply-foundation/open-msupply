@@ -4,6 +4,7 @@ import {
   AlertModal,
   RouteBuilder,
   useNavigate,
+  useParams,
   useTranslation,
   Box,
   useBreadcrumbs,
@@ -27,9 +28,10 @@ export const ItemDetailView = () => {
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const isCentralServer = useIsCentralServerApi();
+  const { id: paramId } = useParams();
   const {
     byId: { data, isLoading },
-  } = useItem();
+  } = useItem(paramId);
 
   React.useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.name ?? '' });

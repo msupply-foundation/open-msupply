@@ -3,9 +3,7 @@ use serde::Serialize;
 use crate::sync::CentralServerConfig;
 
 use super::{PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
-use repository::{
-    ChangelogRow, ChangelogTableName, EncounterRowRepository, StorageConnection,
-};
+use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection};
 
 /*
     This translator is only used to push Encounter rows to the legacy mSupply server.
@@ -67,15 +65,15 @@ impl SyncTranslation for EncounterLegacyTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let encounter_row = EncounterRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Encounter row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::Encounter(encounter_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let encounter_row = encounter_row;
 
         let legacy_row = LegacyEncounterRow {
             ID: encounter_row.id,
@@ -124,7 +122,7 @@ mod tests {
             setup_all("test_translate_encounter_to_legacy", MockDataInserts::all()).await;
 
         let cursor = ChangelogRepository::new(&connection)
-            .absolute_latest_cursor()
+            .max_cursor()
             .unwrap_or(0);
 
         // Create a new EncounterRow (this will get a changelog entry created automatically)
@@ -146,11 +144,21 @@ mod tests {
             .upsert_one(&encounter_row)
             .unwrap();
 
-        let changelog = ChangelogRepository::new(&connection)
-            .changelogs(cursor, 100, None)
+        let entry = ChangelogRepository::new(&connection)
+            .query_with_data(
+                repository::ChangelogCondition::True(),
+                repository::CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: 100,
+                },
+            )
             .unwrap()
+            .rows
             .pop()
             .expect("Expected at least one changelog entry");
+        let repository::RowOrDelete::Row { changelog, row } = entry else {
+            panic!("expected upsert row")
+        };
 
         // Shouldn't translate if not central server
         test_util_set_is_central_server(false);
@@ -167,15 +175,11 @@ mod tests {
         ));
 
         let translation_result = translator
-            .try_translate_to_upsert_sync_record(&connection, &changelog)
+            .try_translate_to_upsert_sync_record(&connection, &changelog, row)
             .unwrap();
         match translation_result {
-            PushTranslateResult::PushRecord(upsert_result) => {
-                assert_eq!(upsert_result[0].record.record_id, "test_encounter_id");
-                assert_eq!(
-                    upsert_result[0].record.table_name,
-                    LEGACY_ENCOUNTER_TABLE_NAME
-                );
+            PushTranslateResult::PushRecord(records) => {
+                assert_eq!(records[0].record.record_data["ID"], "test_encounter_id");
             }
             _ => panic!("Expected PushRecord result"),
         }

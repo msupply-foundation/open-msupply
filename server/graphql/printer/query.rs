@@ -29,6 +29,7 @@ pub fn printers(ctx: &Context<'_>, filter: Option<PrinterFilterInput>) -> Result
         &ResourceAccessRequest {
             resource: Resource::NoPermissionRequired,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

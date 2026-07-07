@@ -36,6 +36,7 @@ pub fn validate_shipment_verify_authorisation(
         &ResourceAccessRequest {
             resource,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

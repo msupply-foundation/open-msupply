@@ -199,6 +199,7 @@ pub fn report(
         &ResourceAccessRequest {
             resource: Resource::Report,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -231,6 +232,7 @@ pub fn reports(
         &ResourceAccessRequest {
             resource: Resource::Report,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -270,6 +272,7 @@ pub fn all_report_versions(
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

@@ -62,6 +62,7 @@ pub fn get_store(ctx: &Context<'_>, id: &str) -> Result<StoreResponse> {
         &ResourceAccessRequest {
             resource: Resource::QueryStore,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 
@@ -95,6 +96,7 @@ pub fn stores(
         &ResourceAccessRequest {
             resource: Resource::QueryStore,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

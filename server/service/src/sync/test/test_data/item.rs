@@ -3,8 +3,8 @@ use crate::sync::{
     translations::item::ordered_simple_json,
 };
 use repository::{
-    category_row::CategoryRow, item_category_row::ItemCategoryJoinRow, mock::MockData, ItemRow,
-    ItemRowDelete, ItemType, SyncAction, SyncBufferRow,
+    category_row::CategoryRow, item_category_row::ItemCategoryJoinRow, mock::MockData,
+    sync_buffer::SyncRecordData, ItemRow, ItemRowDelete, ItemType, SyncAction, SyncBufferRow,
 };
 
 const TABLE_NAME: &str = "item";
@@ -314,7 +314,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             sync_buffer_row: SyncBufferRow {
                 table_name: TABLE_NAME.to_string(),
                 record_id: ITEM_3_VACCINE.0.to_owned(),
-                data: ITEM_3_VACCINE.1.to_owned(),
+                data: SyncRecordData(serde_json::from_str(ITEM_3_VACCINE.1).unwrap()),
                 action: SyncAction::Upsert,
                 ..Default::default()
             },

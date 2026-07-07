@@ -5,6 +5,7 @@ pub(super) use self::restore::*;
 
 use std::env::VarError;
 use std::fs;
+use std::path::Path;
 use std::str::FromStr;
 use std::{io, path::PathBuf};
 
@@ -115,14 +116,27 @@ fn get_base_dir(settings: &Settings) -> Result<PathBuf, BackupError> {
 fn get_sqlite_files_paths(settings: &Settings) -> Result<Vec<PathBuf>, BackupError> {
     // omSupply database name can be specified with .sqlite extension, converting path and comparing file_stem()
     // seems pretty easy way to deal with database_name discrepancy
-    let backup_name = PathBuf::from_str(&settings.database.database_name)
-        .map_err(|_| BackupError::InvalidPath(settings.database.database_name.to_string()))?;
+    let database_string = settings.database.database_name.to_string();
 
-    let paths = fs::read_dir("./")?
-        .filter_map(Result::ok)
-        .map(|e| e.path())
-        .filter(|f| f.is_file() && f.file_stem() == backup_name.file_stem())
-        .collect();
+    let backup_path = PathBuf::from_str(&database_string)
+        .map_err(|_| BackupError::InvalidPath(database_string.clone()))?;
+
+    let backup_dir = backup_path
+        .parent()
+        .ok_or_else(|| BackupError::InvalidPath(database_string.clone()))?
+        .as_os_str();
+
+    let backup_name = backup_path.file_stem();
+
+    let paths = fs::read_dir(if backup_dir.is_empty() {
+        Path::new(".")
+    } else {
+        Path::new(backup_dir)
+    })?
+    .filter_map(Result::ok)
+    .map(|e| e.path())
+    .filter(|f| f.is_file() && f.file_stem() == backup_name)
+    .collect();
 
     Ok(paths)
 }
