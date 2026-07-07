@@ -40,9 +40,7 @@
 }
 
 .button:disabled {
-  opacity: 0.5;
   cursor: default;
-  box-shadow: none;
 }
 
 /* Content sits above the ripple layer */
@@ -85,6 +83,16 @@
 
 .button[data-color='blue']:focus-visible {
   outline-color: var(--secondary-main);
+}
+
+/*
+ * Disabled: the pill keeps its raised surface and shadow — only the content
+ * (label + icon) greys out. Placed after the tone rules so it wins the cascade
+ * over the per-colour label/icon colours.
+ */
+.button:disabled,
+.button:disabled .icon {
+  color: var(--gray-light);
 }
 
 /* Hover fills — the pill inverts (coloured bg, white label + icon + ripple). */

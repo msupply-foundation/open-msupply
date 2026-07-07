@@ -1,5 +1,6 @@
 import type { Component } from 'solid-js'
 import { ButtonsShowcase } from './ButtonsShowcase'
+import { InputsShowcase } from './InputsShowcase'
 import { SelectorsShowcase } from './SelectorsShowcase'
 import { PageLayoutShowcase } from './PageLayoutShowcase'
 
@@ -27,7 +28,7 @@ const ComingSoon: Component = () => (
  */
 export const sections: SectionDef[] = [
   { id: 'buttons', label: 'Buttons', component: ButtonsShowcase },
-  { id: 'inputs', label: 'Inputs', component: ComingSoon },
+  { id: 'inputs', label: 'Inputs', component: InputsShowcase },
   { id: 'selectors', label: 'Selectors', component: SelectorsShowcase },
   { id: 'layout', label: 'Layout', component: ComingSoon },
   { id: 'feedback', label: 'Feedback', component: ComingSoon },

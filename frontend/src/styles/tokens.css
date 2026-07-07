@@ -90,8 +90,9 @@
     0 4px 8px 0 rgba(40, 41, 61, 0.3);
   --shadow-drawer: 4px 0 16px 0 rgba(96, 97, 112, 0.18);
 
-  /* 3px orange glow focus ring */
+  /* 3px orange glow focus ring; error variant for invalid fields (red glow) */
   --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.25);
+  --focus-ring-error: 0 0 0 0.1875rem rgba(230, 53, 53, 0.2);
 
   /* Scrim behind the mobile nav overlay / modals */
   --overlay-scrim: rgba(28, 28, 40, 0.45);
@@ -222,7 +223,8 @@
   --shadow-4: 0 16px 28px 0 rgba(0, 0, 0, 0.6), 0 4px 10px 0 rgba(0, 0, 0, 0.45);
   --shadow-drawer: 4px 0 20px 0 rgba(0, 0, 0, 0.55);
 
-  /* Stronger focus glow + darker scrim read better on dark */
+  /* Stronger focus glows + darker scrim read better on dark */
   --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.45);
+  --focus-ring-error: 0 0 0 0.1875rem rgba(255, 95, 95, 0.4);
   --overlay-scrim: rgba(0, 0, 0, 0.6);
 }

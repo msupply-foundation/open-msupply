@@ -6,6 +6,21 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-08 · No hard-coded colours in component CSS — every colour derives from a token
+
+- **Decision (Carl):** Component CSS may not contain colour literals (`#hex`, `rgb()/rgba()`, `hsl()`, named colours). Every colour is `var(--token)`, or `color-mix(in srgb, var(--token) N%, transparent)` for tints. **White included** — content on a coloured fill is `var(--primary-contrast)`, never `#fff`. Colour literals live only in `src/styles/tokens.css`, where the palette is defined. If a needed colour has no token, **add one to the theme contract** (with a dark override) instead of inlining a literal. Recorded as an addendum to principle #5 in `CLAUDE.md`.
+
+- **Why:**
+  - Literals silently opt out of theming: they look right in light mode and wrong (or invisible/low-contrast) in dark, precisely the bug class the theme contract exists to prevent. Tokens carry the AA contrast pairs in both themes (principle #9).
+  - The RnD prototype — our main porting source — hard-codes whites and low-alpha `rgba()` tints (button on-fill text, ripple colours, the TextField error glow), so unreviewed ports import violations by default. Carl caught exactly this in the ported buttons (`#fff` on the hover fills).
+  - **Tooling gap, known:** stylelint's unknown-`var()` check validates token *references*, but nothing flags colour *literals*. Until a lint rule is added (candidate: `color-no-hex` + a declaration-property allowlist — needs care around `tokens.css` itself), the check is manual: grep new CSS for `#` / `rgb(` / `hsl(`.
+
+- **First applications:** the Button/SplitButton whites → `var(--primary-contrast)` (retro-fixed same day); TextField's error focus glow → new **`--focus-ring-error`** contract token (light `rgba(230,53,53,.2)`, dark `rgba(255,95,95,.4)` — stronger on dark, mirroring `--focus-ring`'s 0.25→0.45), rather than the prototype's inline rgba.
+
+- **Alternatives rejected:** inline `color-mix` over `--error-main` for the error glow — keeps the hue themed but pins the *strength*, and the existing `--focus-ring` precedent is that glow strength is a themed value; a blanket stylelint ban now — right direction, but needs configuration thought (tokens.css exemption), so deferred rather than half-done.
+
+- **Status:** Adopted; rule live in `CLAUDE.md` principle #5. Automated lint enforcement is an open candidate — confirm approach with Carl.
+
 ## 2026-07-08 · Button family (Button + SplitButton) — hand-rolled, with the click ripple as the one deliberate JS-for-interaction exception
 
 - **Decision:** The action buttons from last week's demo are ported to Solid as two hand-rolled elements plus shared ripple infrastructure:
