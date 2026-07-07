@@ -7,6 +7,7 @@ import { CampaignsList } from '../Campaigns';
 import { ReportsList } from '../Reports';
 import { SyncMessageListView } from '../../SyncMessages';
 import { PluginsList } from '../Plugins';
+import { HelpDocumentsList } from '../HelpDocuments';
 import { SitesList } from '../Sites';
 
 export const ManageService: FC = () => {
@@ -22,6 +23,7 @@ export const ManageService: FC = () => {
   const reportsRoute = RouteBuilder.create(AppRoute.Reports).build();
   const syncMessageRoute = RouteBuilder.create(AppRoute.SyncMessage).build();
   const pluginsRoute = RouteBuilder.create(AppRoute.Plugins).build();
+  const helpDocumentsRoute = RouteBuilder.create(AppRoute.HelpDocuments).build();
   const sitesRoute = RouteBuilder.create(AppRoute.Sites).build();
 
   return (
@@ -35,6 +37,7 @@ export const ManageService: FC = () => {
       <Route path={reportsRoute} element={<ReportsList />} />
       <Route path={syncMessageRoute} element={<SyncMessageListView />} />
       <Route path={pluginsRoute} element={<PluginsList />} />
+      <Route path={helpDocumentsRoute} element={<HelpDocumentsList />} />
       <Route path={sitesRoute} element={<SitesList />} />
     </Routes>
   );

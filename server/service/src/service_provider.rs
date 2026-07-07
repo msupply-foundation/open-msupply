@@ -24,6 +24,7 @@ use crate::{
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
     email::{EmailService, EmailServiceTrait},
+    help_document::{HelpDocumentService, HelpDocumentServiceTrait},
     insurance::{InsuranceService, InsuranceServiceTrait},
     insurance_provider::{InsuranceProviderService, InsuranceProviderServiceTrait},
     invoice::{InvoiceService, InvoiceServiceTrait},
@@ -213,6 +214,8 @@ pub struct ServiceProvider {
     pub stock_relocation_service: Box<dyn StockRelocationServiceTrait>,
     // Sync Message
     pub sync_message_service: Box<dyn SyncMessageTrait>,
+    // Help documents (uploaded centrally, synced to remotes for the Help page)
+    pub help_document_service: Box<dyn HelpDocumentServiceTrait>,
     // Subscription trigger handle — used by SyncLogger and changelog callbacks
     // to send events to the shared subscription worker.
     pub subscription_trigger: SubscriptionTriggerHandle,
@@ -346,6 +349,7 @@ impl ServiceProvider {
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
             contact_service: Box::new(ContactService {}),
             sync_message_service: Box::new(SyncMessageService),
+            help_document_service: Box::new(HelpDocumentService),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),
             stock_relocation_service: Box::new(StockRelocationService),

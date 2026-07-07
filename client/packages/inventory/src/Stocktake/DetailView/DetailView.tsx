@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   useEditModal,
   DetailViewSkeleton,
@@ -77,6 +77,22 @@ const DetailViewInner = () => {
       ),
     });
 
+  const getSortedItems = useCallback(
+    () =>
+      table
+        .getSortedRowModel()
+        .rows.reduce<StocktakeLineFragment['item'][]>((acc, row) => {
+          const leafRows = row.getLeafRows();
+          const rows = leafRows.length ? leafRows : [row];
+          rows.forEach(leaf => {
+            const item = leaf.original?.item;
+            if (item && !acc.some(i => i?.id === item.id)) acc.push(item);
+          });
+          return acc;
+        }, []),
+    [table]
+  );
+
   const tabs = [
     {
       Component: <MaterialTable table={table} />,
@@ -138,6 +154,7 @@ const DetailViewInner = () => {
           mode={mode}
           item={entity}
           isInitialStocktake={stocktake.isInitialStocktake}
+          getSortedItems={getSortedItems}
         />
       )}
       <StocktakeErrorModal />

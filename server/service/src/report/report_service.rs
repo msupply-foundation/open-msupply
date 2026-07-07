@@ -75,6 +75,14 @@ pub enum InstallReportError {
     FileNotFound,
 }
 
+#[derive(Debug, Error)]
+pub enum UpdateReportError {
+    #[error(transparent)]
+    RepositoryError(RepositoryError),
+    #[error("Report not found")]
+    ReportNotFound,
+}
+
 #[derive(Debug, Clone)]
 pub enum ResolvedReportQuery {
     SQLQuery(SQLQuery),
@@ -235,6 +243,15 @@ pub trait ReportServiceTrait: Sync + Send {
         sheet_name: Option<&str>,
     ) -> Result<String, ReportError> {
         csv_to_excel(base_dir, csv_data, filename, sheet_name)
+    }
+
+    fn update_report(
+        &self,
+        ctx: &ServiceContext,
+        id: &str,
+        is_active: bool,
+    ) -> Result<repository::ReportRow, UpdateReportError> {
+        update_report(ctx, id, is_active)
     }
 }
 
@@ -433,6 +450,24 @@ fn query_all_report_versions(
         ),
         rows: reports,
     })
+}
+
+fn update_report(
+    ctx: &ServiceContext,
+    id: &str,
+    is_active: bool,
+) -> Result<repository::ReportRow, UpdateReportError> {
+    let repo = ReportRowRepository::new(&ctx.connection);
+    let mut row = repo
+        .find_one_by_id(id)
+        .map_err(UpdateReportError::RepositoryError)?
+        .ok_or(UpdateReportError::ReportNotFound)?;
+
+    row.is_active = is_active;
+    repo.upsert_one(&row)
+        .map_err(UpdateReportError::RepositoryError)?;
+
+    Ok(row)
 }
 
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {
@@ -1055,7 +1090,7 @@ mod report_filter_test {
 
     use repository::{
         migrations::Version, mock::MockDataInserts, test_db::setup_all, EqualFilter, ReportFilter,
-        ReportRepository,
+        ReportRepository, StringFilter,
     };
 
     use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
@@ -1074,7 +1109,7 @@ mod report_filter_test {
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
-        let filter = ReportFilter::new().code(EqualFilter::equal_to("standard_report".to_string()));
+        let filter = ReportFilter::new().code(StringFilter::equal_to("standard_report"));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)
             .unwrap();
@@ -1142,9 +1177,8 @@ mod report_filter_test {
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
-        let filter = ReportFilter::new().code(EqualFilter::equal_to(
-            "report_with_custom_option".to_string(),
-        ));
+        let filter =
+            ReportFilter::new().code(StringFilter::equal_to("report_with_custom_option"));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)
             .unwrap();
