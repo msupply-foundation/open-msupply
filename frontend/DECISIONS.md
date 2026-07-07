@@ -6,6 +6,23 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-07 · Whole-page layouts shown via full-bleed takeover, not an iframe canvas
+
+- **Decision:** The showcase demonstrates whole-page layouts (the app shell, with its own sidebar/header/footer) by a **full-bleed takeover**: a section marked `kind: 'page'` renders edge-to-edge and owns the real browser viewport, with the showcase chrome replaced by a single floating **ShowcaseLauncher** (bottom inline-start, above the shell's overlay scrim) as the way back to the menu and the theme toggle. Mechanically: `SectionDef` gains a `kind` field, `App.tsx` branches on it with `<Show>`, and the launcher reuses the existing hash nav. The first such page is the `AppShell` layout element; the responsive docked-vs-overlay decision is driven by `createMediaQuery`/`useIsNavOverlay` against `breakpoints.navOverlay` (1024) with the phone shrink at `compact` (600).
+
+- **Why:**
+  - The whole point of showing a page layout is to **resize and device-test it** — watch the docked sidebar become a hamburger overlay at 1024px and the whole UI shrink at 600px. Full-bleed lets the page own the actual viewport, so the browser's own device toolbar and window resizing drive the real media-query breakpoints directly (Carl's call: "we need to switch the viewport to mobile view and try it out in various sizes, so with an extra frame around it that'll be silly").
+  - **Same document = free theming.** The page shares `data-theme` on `<html>` and the token cascade with the rest of the app; no cross-frame theme sync, no second Vite entry, no bundle duplication.
+  - It's a tiny, dependency-free addition to the existing hash-nav shell — one `<Show>` branch and a floating popover — with no routing library (still undecided).
+
+- **Alternatives rejected:**
+  - **Iframe canvas (Storybook's approach)** — gives true viewport isolation and CSS sandboxing, and would even allow an in-page viewport-preset selector. Rejected because it *defeats the primary use case*: an inner iframe viewport doesn't track the browser's device emulation, so you'd be testing a frame-in-a-frame, and it adds a second HTML entry plus `postMessage`/storage-event theme sync. Recorded fallback: revisit if we ever need to preview several page sizes side by side on one screen.
+  - **Route-based full pages + persistent launcher** — cleaner URLs, but needs a router (undecided) and is heavier than a hash flag for what is still a showcase.
+
+- **Adapted from the prototype (per CLAUDE.md copy-confirm rule):** `AppShell` and `Sidebar` follow the RnD prototype's React shell (docked rail / off-canvas overlay + scrim, `navModel`, `useMediaQuery`), re-authored in Solid idioms (signals + `<Show>`/`<For>`, `data-*` state attributes, logical properties). Built fresh, not copied verbatim — **flagged to Carl for confirmation.** Deltas: collapsible nav sections are a plain signal + `<Show>` rather than a Collapsible primitive (no ARIA/focus contract worth buying for show/hide), and nav items are inert `<button>`s pending a routing decision.
+
+- **Status:** Adopted for the showcase. AppShell/Sidebar pending Carl's review of the shell itself and a later routing decision (which will make nav items real links).
+
 ## 2026-07-07 · Kobalte as the headless primitive for the selector family (Select, Combobox, MultiSelect)
 
 - **Decision:** The three rich selector widgets — styled drop-down, autocomplete/combobox, multi-select autocomplete — are built on **`@kobalte/core`** (Select and Combobox primitives), replacing the prototype's React-only picks (Radix Select + Downshift). We own all markup and CSS; Kobalte supplies behaviour + ARIA, styled through its `data-*` state attributes (`data-highlighted`, `data-selected`, `data-expanded`, `data-placeholder-shown`) — the same styling contract as Radix.

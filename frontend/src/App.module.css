@@ -78,3 +78,12 @@
   font-size: var(--text-lg);
   font-weight: var(--weight-bold);
 }
+
+/*
+ * Full-bleed canvas for `kind: 'page'` sections — no showcase chrome, no
+ * padding. The page (e.g. AppShell) fills the real viewport; the
+ * ShowcaseLauncher floats over it as the way back.
+ */
+.pageCanvas {
+  block-size: 100%;
+}

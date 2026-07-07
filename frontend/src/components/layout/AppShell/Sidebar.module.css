@@ -1,0 +1,269 @@
+/*
+ * Sidebar — plain CSS Modules, all colours/dims from design tokens. Adapted
+ * from the RnD prototype's Sidebar (itself a port of the current AppDrawer):
+ *  - 16.25rem open, 5rem closed (icons only)
+ *  - pill nav items; selected = raised white + bold; active parent = orange
+ *  - children indented under a left "tree" line
+ * RTL via logical properties (no JS flipping).
+ */
+
+.sidebar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  inline-size: var(--drawer-width);
+  block-size: 100%;
+  overflow: hidden;
+  background: var(--bg-drawer);
+  border-start-end-radius: var(--radius-md);
+  border-end-end-radius: var(--radius-md);
+  box-shadow: var(--shadow-drawer);
+  transition: inline-size 200ms ease;
+}
+
+.sidebar[data-open='false'] {
+  inline-size: var(--drawer-closed-width);
+}
+
+/* --- Logo -------------------------------------------------------------- */
+.logoArea {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  block-size: var(--logo-area-height);
+}
+
+.logoButton {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+}
+
+.logoButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.logo {
+  inline-size: auto;
+  block-size: 3.5rem;
+}
+
+/* --- Nav lists --------------------------------------------------------- */
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+  margin: 0;
+  padding-inline: var(--space-2);
+  list-style: none;
+}
+
+.upper {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.upper::-webkit-scrollbar {
+  display: none;
+}
+
+.lower {
+  flex-shrink: 0;
+  padding-block-end: var(--space-3);
+}
+
+.item {
+  display: block;
+}
+
+/* --- Nav button (leaves + section triggers share this) ----------------- */
+.navButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  inline-size: 100%;
+  block-size: var(--nav-item-height);
+  padding-inline: var(--space-3);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.navButton:hover {
+  background: var(--drawer-hover-bg);
+  box-shadow: var(--shadow-3);
+}
+
+.navButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.navButton[data-selected='true'] {
+  background: var(--drawer-selected-bg);
+  box-shadow: var(--shadow-3);
+  color: var(--text-body);
+  font-weight: var(--weight-bold);
+}
+
+.navButton[data-active='true'] {
+  color: var(--primary-main);
+  font-weight: var(--weight-bold);
+}
+
+/* --- Icon + chevron slots ---------------------------------------------- */
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.25rem;
+  font-size: 1.25rem;
+  color: var(--primary-main);
+}
+
+/* Empty slot on leaf items keeps their labels aligned with section labels. */
+.chevronSlot {
+  flex-shrink: 0;
+  inline-size: 1rem;
+}
+
+.label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Collapse chevron on parent sections — grey, sits between icon and label. */
+.sectionChevron {
+  flex-shrink: 0;
+  inline-size: 1rem;
+  font-size: 1rem;
+  color: var(--gray-main);
+  transition: transform 150ms ease;
+}
+
+.sectionChevron[data-open='false'] {
+  transform: rotate(-90deg);
+}
+
+:dir(rtl) .sectionChevron[data-open='false'] {
+  transform: rotate(90deg);
+}
+
+/* Selected-item indicator — brand orange, pinned to the inline-end edge. */
+.endChevron {
+  flex-shrink: 0;
+  inline-size: 1rem;
+  margin-inline-start: auto;
+  font-size: 1rem;
+  color: var(--primary-main);
+  transform: rotate(-90deg);
+}
+
+:dir(rtl) .endChevron {
+  transform: rotate(90deg);
+}
+
+.navButton[data-active='true'] .icon {
+  color: var(--primary-main);
+}
+
+/* --- Section children (indented tree) ---------------------------------- */
+.childList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--space-1) 0 0;
+  margin-inline-start: 1.75rem;
+  padding-inline-start: var(--space-3);
+  border-inline-start: 1px solid var(--gray-light);
+  list-style: none;
+}
+
+.childList .navButton {
+  block-size: var(--nav-child-height);
+}
+
+/* --- Collapsed (icon-only) rail ---------------------------------------- */
+.sidebar[data-open='false'] .label,
+.sidebar[data-open='false'] .sectionChevron,
+.sidebar[data-open='false'] .chevronSlot,
+.sidebar[data-open='false'] .endChevron {
+  display: none;
+}
+
+.sidebar[data-open='false'] .navButton {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.sidebar[data-open='false'] .childList {
+  display: none;
+}
+
+/* --- Overlay mode (< navOverlay breakpoint) ---------------------------- */
+.overlayPanel {
+  --hide-x: -100%; /* slides in from the inline-start; flipped for RTL below */
+
+  position: fixed;
+  z-index: 40;
+  inset-block: 0;
+  inset-inline-start: 0;
+  display: flex;
+  flex-direction: column;
+  inline-size: var(--drawer-width);
+  max-inline-size: 85vw;
+  overflow: hidden;
+  background: var(--bg-drawer);
+  box-shadow: var(--shadow-4);
+  transform: translateX(var(--hide-x));
+  transition: transform 220ms ease;
+}
+
+:dir(rtl) .overlayPanel {
+  --hide-x: 100%;
+}
+
+.overlayPanel[data-open='true'] {
+  transform: none;
+}
+
+.scrim {
+  position: fixed;
+  z-index: 39;
+  inset: 0;
+  background: var(--overlay-scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.scrim[data-open='true'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Touch: larger tap targets on coarse pointers (spec: 3rem) */
+@media (pointer: coarse) {
+  .navButton {
+    min-block-size: var(--touch-target);
+  }
+
+  .childList .navButton {
+    min-block-size: 2.5rem;
+  }
+}

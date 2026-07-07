@@ -1,10 +1,18 @@
 import type { Component } from 'solid-js'
 import { SelectorsShowcase } from './SelectorsShowcase'
+import { PageLayoutShowcase } from './PageLayoutShowcase'
 
 export type SectionDef = {
   id: string
   label: string
   component: Component
+  /*
+   * 'component' (default) renders inside the padded showcase panel. 'page'
+   * renders full-bleed — the component owns the whole viewport (e.g. an app
+   * shell with its own sidebar/header), with the ShowcaseLauncher floating over
+   * it as the way back. See App.tsx.
+   */
+  kind?: 'component' | 'page'
 }
 
 const ComingSoon: Component = () => (
@@ -23,4 +31,5 @@ export const sections: SectionDef[] = [
   { id: 'layout', label: 'Layout', component: ComingSoon },
   { id: 'feedback', label: 'Feedback', component: ComingSoon },
   { id: 'table', label: 'Table', component: ComingSoon },
+  { id: 'app-shell', label: 'App shell', component: PageLayoutShowcase, kind: 'page' },
 ]
