@@ -36,6 +36,7 @@ pub enum KeyType {
     ContactFormProcessorCursor,
     LoadPluginProcessorCursor,
     AssignRequisitionNumberProcessorCursor,
+    AssignPrescriptionNumberProcessorCursor,
     RequisitionAutoFinaliseProcessorCursor,
     SupportUploadFilesProcessorCursor,
     MergeSyncMessageProcessorCursor,

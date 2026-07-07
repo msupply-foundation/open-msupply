@@ -100,6 +100,13 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .build()}
             text={t('plugins')}
           />
+          <AppNavLink
+            visible={isCentralServer && isServerAdmin}
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.HelpDocuments)
+              .build()}
+            text={t('help-documents')}
+          />
           {pluginLinks}
         </List>
       </Collapse>

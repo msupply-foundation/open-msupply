@@ -90,6 +90,7 @@ diesel_string_enum! {
         Encounter,
         FormSchema,
         FrontendPlugin,
+        HelpDocument,
         IndicatorColumn,
         IndicatorLine,
         IndicatorValue,
