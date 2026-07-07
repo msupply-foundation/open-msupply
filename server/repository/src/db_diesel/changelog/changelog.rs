@@ -726,5 +726,17 @@ mod print_query_tests {
             ChangelogTableName::Other("table_from_the_future".to_string())
         );
         assert_eq!(from_db.to_string(), "table_from_the_future");
+
+        // Stored-string healing: a wire-cased name captured by the fallback while the
+        // table was unknown must parse into the real variant once it exists, while a
+        // still-unknown name keeps falling back.
+        assert_eq!(
+            ChangelogTableName::from_stored_str("StockLine").unwrap(),
+            ChangelogTableName::StockLine
+        );
+        assert_eq!(
+            ChangelogTableName::from_stored_str("TableFromTheFuture").unwrap(),
+            ChangelogTableName::Other("TableFromTheFuture".to_string())
+        );
     }
 }

@@ -664,6 +664,20 @@ macro_rules! define_linked_tables {
 /// `as_ref()`/`Display`/serde emit the inner string). Enums with no fallback variant keep
 /// the strict behaviour — an unknown value is an error.
 ///
+/// # Stored-string healing (`from_stored_str`)
+///
+/// The fallback creates a casing asymmetry over time: when an older build receives a
+/// wire value it doesn't know, the `transparent` fallback writes the *wire* string
+/// (PascalCase identifier) verbatim into the DB column, whose known values use the
+/// `strum` casing. After that build upgrades to one that knows the variant, a plain
+/// `from_str` (strum) would keep reading the stored wire form as the fallback forever
+/// (until the record happens to re-sync). `from_stored_str` heals this: it parses with
+/// the `strum` casing first, and only if that lands in the fallback does it retry the
+/// value against the wire identifiers. The generated `FromSql` and `From<String>` go
+/// through it, so DB reads self-heal on upgrade; call it directly for enum strings
+/// persisted outside an enum-typed column (e.g. `sync_buffer.table_name`). Enums
+/// without a fallback variant are unaffected.
+///
 /// Usage:
 /// ```
 /// diesel_string_enum! {
@@ -706,10 +720,41 @@ macro_rules! diesel_string_enum {
             ),*
         }
 
+        impl $name {
+            /// Parse a *stored* string form of this enum (a DB TEXT column, or an
+            /// enum string persisted elsewhere, e.g. `sync_buffer.table_name`).
+            ///
+            /// Tries the `strum` (database) casing first. If that lands in the
+            /// `#[strum(default)]` fallback variant, the serde *wire* identifiers get
+            /// a second chance: an older build stores a then-unknown wire value
+            /// verbatim via the transparent fallback, so once this build knows the
+            /// variant the stored wire form must parse into it rather than staying
+            /// opaque. See the `diesel_string_enum!` docs ("Stored-string healing").
+            ///
+            /// The error type follows `FromStr`: `Infallible` when the enum has a
+            /// `#[strum(default)]` fallback, `strum::ParseError` when it is strict.
+            // The `false || …` chain is one `||` operand per variant (macros can't
+            // emit a partial `match`), which clippy would flag as non-minimal.
+            #[allow(clippy::nonminimal_bool)]
+            $vis fn from_stored_str(
+                value: &str,
+            ) -> Result<Self, <Self as std::str::FromStr>::Err> {
+                use std::str::FromStr;
+                let parsed = Self::from_str(value)?;
+                let is_fallback = false
+                    $(|| diesel_string_enum!(@is_fallback_variant parsed $name $variant $(( $($variant_payload)* ))?))*;
+                if is_fallback {
+                    $(
+                        diesel_string_enum!(@match_wire_identifier value $name $variant $(( $($variant_payload)* ))?);
+                    )*
+                }
+                Ok(parsed)
+            }
+        }
+
         impl From<String> for $name {
             fn from(value: String) -> Self {
-                use std::str::FromStr;
-                Self::from_str(&value).unwrap()
+                Self::from_stored_str(&value).unwrap()
             }
         }
 
@@ -736,9 +781,8 @@ macro_rules! diesel_string_enum {
             fn from_sql(
                 bytes: <crate::DBType as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
-                use std::str::FromStr;
                 let s = <String as diesel::deserialize::FromSql<diesel::sql_types::Text, crate::DBType>>::from_sql(bytes)?;
-                Self::from_str(&s).map_err(|e| e.into())
+                Self::from_stored_str(&s).map_err(|e| e.into())
             }
         }
 
@@ -806,6 +850,23 @@ macro_rules! diesel_string_enum {
     (@deserialize_variant $value:ident $name:ident $variant:ident ( $($variant_payload:tt)* )) => {
         return Ok($name::$variant($value));
     };
+
+    // --- from_stored_str helpers ---
+    // Is `parsed` the payload-carrying fallback variant? One `||` operand per variant.
+    (@is_fallback_variant $parsed:ident $name:ident $variant:ident) => {
+        false
+    };
+    (@is_fallback_variant $parsed:ident $name:ident $variant:ident ( $($variant_payload:tt)* )) => {
+        matches!(&$parsed, $name::$variant(_))
+    };
+    // Second-chance match of a stored string against the wire identifiers. The fallback
+    // variant expands to nothing — it must not re-capture here.
+    (@match_wire_identifier $value:ident $name:ident $variant:ident) => {
+        if $value == stringify!($variant) {
+            return Ok($name::$variant);
+        }
+    };
+    (@match_wire_identifier $value:ident $name:ident $variant:ident ( $($variant_payload:tt)* )) => {};
 }
 
 macro_rules! diesel_json_type {
@@ -861,3 +922,71 @@ pub(crate) use apply_string_or_filter;
 pub(crate) use define_linked_tables;
 pub(crate) use diesel_json_type;
 pub(crate) use diesel_string_enum;
+
+#[cfg(test)]
+mod diesel_string_enum_test {
+    diesel_string_enum! {
+        #[derive(Clone, Eq)]
+        #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+        pub enum WithFallback {
+            #[default]
+            VariantA,
+            VariantB,
+            #[strum(default, transparent)]
+            Other(String),
+        }
+    }
+
+    diesel_string_enum! {
+        #[derive(Clone, Eq)]
+        #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+        pub enum Strict {
+            #[default]
+            VariantA,
+            VariantB,
+        }
+    }
+
+    #[test]
+    fn from_stored_str_parses_db_casing() {
+        assert_eq!(
+            WithFallback::from_stored_str("VARIANT_B").unwrap(),
+            WithFallback::VariantB
+        );
+    }
+
+    #[test]
+    fn from_stored_str_heals_wire_cased_fallback_values() {
+        // An older build that didn't know VariantB captured the wire identifier in
+        // `Other` and stored it verbatim; once this build knows the variant, the
+        // stored wire form must parse into it instead of staying opaque.
+        assert_eq!(
+            WithFallback::from_stored_str("VariantB").unwrap(),
+            WithFallback::VariantB
+        );
+        // `From<String>` (and therefore the generated `FromSql`) heals the same way.
+        assert_eq!(
+            WithFallback::from("VariantB".to_string()),
+            WithFallback::VariantB
+        );
+    }
+
+    #[test]
+    fn from_stored_str_keeps_unknown_values_in_fallback() {
+        assert_eq!(
+            WithFallback::from_stored_str("NeverHeardOfIt").unwrap(),
+            WithFallback::Other("NeverHeardOfIt".to_string())
+        );
+    }
+
+    #[test]
+    fn from_stored_str_strict_enum_is_unaffected() {
+        assert_eq!(
+            Strict::from_stored_str("VARIANT_B").unwrap(),
+            Strict::VariantB
+        );
+        // No fallback ever wrote wire-cased values, so there is nothing to heal —
+        // an unknown (or wire-cased) value stays an error.
+        assert!(Strict::from_stored_str("VariantB").is_err());
+    }
+}

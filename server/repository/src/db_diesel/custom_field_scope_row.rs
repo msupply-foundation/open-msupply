@@ -208,5 +208,17 @@ mod tests {
                 .unwrap(),
             CustomFieldDisplayMode::Other("FUTURE_MODE".to_string())
         );
+
+        // Stored-string healing: a wire-cased mode captured into `Other` (and thus
+        // stored verbatim) by a build that predated the variant must parse into the
+        // real variant on a build that knows it. DB casing still parses too.
+        assert_eq!(
+            CustomFieldDisplayMode::from_stored_str("Prominent").unwrap(),
+            CustomFieldDisplayMode::Prominent
+        );
+        assert_eq!(
+            CustomFieldDisplayMode::from_stored_str("PROMINENT").unwrap(),
+            CustomFieldDisplayMode::Prominent
+        );
     }
 }

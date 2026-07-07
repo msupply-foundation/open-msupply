@@ -68,8 +68,11 @@ pub(crate) fn create_changelog(
 }
 
 fn parse_table_name(table_name: &str) -> Result<ChangelogTableName, Error> {
-    table_name
-        .parse::<ChangelogTableName>()
+    // `from_stored_str` (not plain `parse`) so buffer rows stored under the *wire*
+    // name — written while this site didn't know the table (see issue #12361) —
+    // parse into the real variant after an upgrade and become integrable, instead
+    // of staying `Other(..)` forever.
+    ChangelogTableName::from_stored_str(table_name)
         .map_err(|_| Error::UnknownTableName(table_name.to_string()))
 }
 

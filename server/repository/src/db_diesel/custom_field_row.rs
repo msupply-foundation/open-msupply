@@ -199,6 +199,18 @@ mod tests {
                 .unwrap(),
             CustomFieldValueType::Other("FUTURE_TYPE".to_string())
         );
+
+        // Stored-string healing: a wire-cased value captured into `Other` (and thus
+        // stored verbatim) by a build that predated the variant must parse into the
+        // real variant on a build that knows it. DB casing still parses too.
+        assert_eq!(
+            CustomFieldValueType::from_stored_str("Integer").unwrap(),
+            CustomFieldValueType::Integer
+        );
+        assert_eq!(
+            CustomFieldValueType::from_stored_str("INTEGER").unwrap(),
+            CustomFieldValueType::Integer
+        );
     }
 
     #[test]
