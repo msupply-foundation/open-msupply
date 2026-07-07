@@ -1,3 +1,4 @@
+import { DateUtils } from '@common/intl';
 import { CustomFieldNodeValueType } from '@common/types';
 
 /**
@@ -156,8 +157,11 @@ export const formatCustomFieldValue = (
     case CustomFieldNodeValueType.Option:
       return resolveOptionValue(definition, value);
     case CustomFieldNodeValueType.Date: {
-      const date = new Date(String(value));
-      return isNaN(date.getTime()) ? String(value) : localisedDate(date);
+      // DATE values are date-only strings (stored via Formatter.naiveDate), so
+      // parse as local midnight — `new Date('2024-03-15')` is UTC midnight,
+      // which renders as the previous day in negative-offset timezones.
+      const date = DateUtils.getNaiveDate(String(value));
+      return date ? localisedDate(date) : String(value);
     }
     default:
       return String(value);

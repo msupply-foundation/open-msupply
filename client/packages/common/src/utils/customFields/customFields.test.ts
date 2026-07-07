@@ -190,9 +190,17 @@ describe('getOptionAndDescendantIds', () => {
   });
 });
 
-describe('formatCustomFieldValue', () => {
-  const localisedDate = (d: Date) => d.toISOString().slice(0, 10);
+// Mirrors the real localisedDate (date-fns format), which renders the Date's
+// *local* date parts — a toISOString-based stub reads UTC parts instead and
+// would mask local-midnight vs UTC-midnight off-by-one-day bugs.
+const localisedDate = (d: Date) =>
+  [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0'),
+  ].join('-');
 
+describe('formatCustomFieldValue', () => {
   it('stringifies text/number/real values', () => {
     expect(formatCustomFieldValue(def({}), 'hello', localisedDate)).toBe('hello');
     expect(
@@ -225,6 +233,41 @@ describe('formatCustomFieldValue', () => {
       options: [option('opt_1', 'Red')],
     });
     expect(formatCustomFieldValue(optDef, 'opt_1', localisedDate)).toBe('Red');
+  });
+});
+
+describe('formatCustomFieldValue DATE values west of GMT', () => {
+  // Emulate a machine in a negative-offset zone — jest workers copy
+  // process.env, so setting TZ at runtime never reaches V8. getNaiveDate
+  // resolves the machine zone via Intl.DateTimeFormat().resolvedOptions()
+  // .timeZone, so mock that, and render via the same zone as the real
+  // localisedDate would on such a machine.
+  const timeZone = 'America/Chicago';
+
+  beforeAll(() => {
+    const defaults = new Intl.DateTimeFormat().resolvedOptions();
+    jest
+      .spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions')
+      .mockImplementation(() => ({ ...defaults, timeZone }));
+  });
+  afterAll(() => jest.restoreAllMocks());
+
+  const chicagoLocalisedDate = (d: Date) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d);
+
+  it('renders the stored calendar date, not the previous day', () => {
+    // `new Date('2024-03-15')` is UTC midnight — still 2024-03-14 in Chicago —
+    // so the parse must yield local midnight to keep the calendar date the
+    // user entered.
+    const dateDef = def({ valueType: CustomFieldNodeValueType.Date });
+    expect(
+      formatCustomFieldValue(dateDef, '2024-03-15', chicagoLocalisedDate)
+    ).toBe('2024-03-15');
   });
 });
 
