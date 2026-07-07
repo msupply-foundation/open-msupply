@@ -85,6 +85,7 @@ pub struct UpsertPreferencesInput {
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
     pub backdating: Option<BackdatingInput>,
+    pub receive_payments_from_prescriptions: Option<bool>,
 
     // Store preferences
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
@@ -159,6 +160,7 @@ impl UpsertPreferencesInput {
             display_population_based_forecasting,
             global_table_configs,
             backdating,
+            receive_payments_from_prescriptions,
             // Store preferences
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
@@ -214,6 +216,7 @@ impl UpsertPreferencesInput {
                 inventory_adjustments_enabled: b.inventory_adjustments_enabled,
                 max_days: b.max_days,
             }),
+            receive_payments_from_prescriptions: *receive_payments_from_prescriptions,
             // Store preferences
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
