@@ -16,13 +16,15 @@ use self::transfer::{
 };
 use general_processor::{process_records, ProcessorError};
 
-mod add_central_patient_visibility;
+mod assign_prescription_number;
 mod assign_requisition_number;
 mod contact_form;
 mod general_processor;
 mod load_plugin;
+mod merge_sync_message;
 mod plugin_processor;
 mod requisition_auto_finalise;
+mod support_upload_files;
 pub use general_processor::ProcessorType;
 #[cfg(test)]
 mod test_helpers;
@@ -126,7 +128,7 @@ impl Processors {
                 };
 
                 if let Err(error) = result {
-                    log::error!("{}", error);
+                    log::error!("{error}");
                 }
             }
         })
@@ -136,23 +138,20 @@ impl Processors {
 impl ProcessorsTrigger {
     pub(crate) fn trigger_requisition_transfer_processors(&self) {
         if let Err(error) = self.requisition_transfer.try_send(()) {
-            log::error!(
-                "Problem triggering requisition transfer processor {:#?}",
-                error
-            )
+            log::error!("Problem triggering requisition transfer processor {error:#?}")
         }
     }
 
     pub(crate) fn trigger_invoice_transfer_processors(&self) {
         if let Err(error) = self.invoice_transfer.try_send(()) {
-            log::error!("Problem triggering invoice transfer processor {:#?}", error)
+            log::error!("Problem triggering invoice transfer processor {error:#?}")
         }
     }
 
     pub(crate) fn trigger_processor(&self, r#type: ProcessorType) {
         if let Err(error) = self.general_processor.try_send(r#type.clone()) {
             let description = r#type.get_description();
-            log::error!("Problem triggering {description} processor {:#?}", error)
+            log::error!("Problem triggering {description} processor {error:#?}")
         }
     }
 

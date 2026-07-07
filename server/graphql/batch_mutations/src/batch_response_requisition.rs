@@ -54,6 +54,7 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -293,9 +294,10 @@ mod test {
               "deleteResponseRequisitionLines": [
                 {
                   "id": "id3",
-                  "response": {}
+                  "response": null
                 }
               ],
+              "deleteResponseRequisitions": null
             }
           }
         );

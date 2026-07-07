@@ -5,6 +5,7 @@ use crate::{
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
     store_preference::get_store_preferences,
+    validate::check_other_party_store_is_disabled,
 };
 
 use repository::{
@@ -101,6 +102,10 @@ fn validate(
     }
 
     if requisition_row.status != RequisitionStatus::New {
+        return Err(OutError::CannotEditRequisition);
+    }
+
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
     }
 
@@ -291,12 +296,16 @@ mod test {
         StorePreferenceRowRepository::new(&connection)
             .upsert_one(&store_pref)
             .unwrap();
-        let requisition_lines =
-            RequisitionLineRepository::new(&connection)
-                .query_by_filter(RequisitionLineFilter::new().requisition_id(
-                    EqualFilter::equal_to(mock_new_response_program_requisition().requisition.id.to_string()),
-                ))
-                .unwrap();
+        let requisition_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
+                    mock_new_response_program_requisition()
+                        .requisition
+                        .id
+                        .to_string(),
+                )),
+            )
+            .unwrap();
 
         assert_eq!(
             service.update_response_requisition_line(

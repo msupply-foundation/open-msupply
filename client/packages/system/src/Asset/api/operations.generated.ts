@@ -34,7 +34,7 @@ export type AssetLogFragment = {
   id: string;
   logDatetime: string;
   status?: Types.AssetLogStatusNodeType | null;
-  type?: string | null;
+  type: Types.AssetLogTypeNodeType;
   reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
   user?: {
     __typename: 'UserNode';

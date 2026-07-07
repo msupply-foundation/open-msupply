@@ -84,6 +84,7 @@ pub fn stocktakes(
         &ResourceAccessRequest {
             resource: Resource::QueryStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -124,6 +125,7 @@ pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Stocktak
         &ResourceAccessRequest {
             resource: Resource::QueryStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -162,6 +164,7 @@ pub fn stocktake_by_number(
         &ResourceAccessRequest {
             resource: Resource::QueryStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -208,9 +211,7 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             stocktake_number: f.stocktake_number.map(EqualFilter::from),
             comment: f.comment.map(StringFilter::from),
             description: f.description.map(StringFilter::from),
-            status: f
-                .status
-                .map(|t| map_filter!(t, |s| StocktakeStatus::from(s))),
+            status: f.status.map(|t| map_filter!(t, StocktakeStatus::from)),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             stocktake_date: f.stocktake_date.map(DateFilter::from),
             finalised_datetime: f.finalised_datetime.map(DatetimeFilter::from),

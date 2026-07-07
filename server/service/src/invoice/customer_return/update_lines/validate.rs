@@ -3,6 +3,7 @@ use repository::{InvoiceType, StorageConnection};
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
+use crate::validate::check_other_party_store_is_disabled;
 
 use super::UpdateCustomerReturnLinesError;
 
@@ -19,6 +20,9 @@ pub fn validate(
         return Err(ReturnDoesNotBelongToCurrentStore);
     }
     if !check_invoice_is_editable(&return_row) {
+        return Err(ReturnIsNotEditable);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &return_row.name_id)? {
         return Err(ReturnIsNotEditable);
     }
     if !check_invoice_type(&return_row, InvoiceType::CustomerReturn) {

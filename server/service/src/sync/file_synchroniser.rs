@@ -2,6 +2,7 @@ use chrono::{Duration, Utc};
 use std::cmp;
 use std::sync::Arc;
 use thiserror::Error;
+use tokio::sync::watch;
 use util::format_error;
 
 use repository::{
@@ -14,6 +15,7 @@ use repository::{
 use crate::static_files::{StaticFile, StaticFileCategory};
 use crate::sync::api::SyncApiV5;
 use crate::sync::api_v6::SyncApiV6;
+use crate::sync::api_v6::upload_file::UploadOutcome;
 use crate::sync::settings::SYNC_V5_VERSION;
 use crate::{service_provider::ServiceProvider, static_files::StaticFileService};
 
@@ -115,12 +117,15 @@ impl FileSynchroniser {
             },
         };
 
-        sync_file_repo.update_status(&file_row_update)?;
+        sync_file_repo.upsert_without_changelog(&file_row_update)?;
 
         Ok(download_result?)
     }
 
-    pub(crate) async fn sync(&self) -> Result<usize /* number of files */, FileSyncError> {
+    pub(crate) async fn sync(
+        &self,
+        pause_rx: watch::Receiver<bool>,
+    ) -> Result<usize /* number of files */, FileSyncError> {
         let ctx = self.service_provider.basic_context()?;
 
         // Find any files that need to be uploaded
@@ -139,7 +144,7 @@ impl FileSynchroniser {
         };
 
         // update the database to say we're uploading the file
-        sync_file_repo.update_status(&SyncFileReferenceRow {
+        sync_file_repo.upsert_without_changelog(&SyncFileReferenceRow {
             status: SyncFileStatus::InProgress,
             ..sync_file_reference.clone()
         })?;
@@ -158,20 +163,36 @@ impl FileSynchroniser {
 
         let upload_result = self
             .sync_api_v6
-            .upload_file(sync_file_reference, &file.name, file_handle)
+            .upload_file(sync_file_reference, &file.name, file_handle, pause_rx)
             .await;
 
-        let Err(error) = upload_result
-        // On Success
-        else {
-            sync_file_repo.update_status(&SyncFileReferenceRow {
-                uploaded_bytes: sync_file_reference.total_bytes, // We always upload the whole file in one go
-                status: SyncFileStatus::Done,
-                error: None,
-                ..sync_file_reference.clone()
-            })?;
+        let error = match upload_result {
+            Ok(UploadOutcome::Done) => {
+                // Terminal transition — use upsert_one so the Done status syncs to central.
+                // uploaded_bytes is local-only (absent from SyncFileReferenceWire) so it stays put
+                // for our own bookkeeping.
+                sync_file_repo.upsert_one(&SyncFileReferenceRow {
+                    uploaded_bytes: sync_file_reference.total_bytes,
+                    status: SyncFileStatus::Done,
+                    error: None,
+                    ..sync_file_reference.clone()
+                })?;
 
-            return Ok(file_references.len());
+                return Ok(file_references.len());
+            }
+            Ok(UploadOutcome::Paused { bytes_uploaded }) => {
+                // Pause observed mid-file. Server-side offset is durable; record local progress
+                // (uploaded_bytes is local-only) without producing a changelog. Leave status as
+                // InProgress and don't touch retries / retry_at — the next driver tick (after
+                // unpause) will re-enter and tus HEAD will pick up where we left off.
+                sync_file_repo.upsert_without_changelog(&SyncFileReferenceRow {
+                    uploaded_bytes: bytes_uploaded as i32,
+                    ..sync_file_reference.clone()
+                })?;
+
+                return Ok(file_references.len());
+            }
+            Err(error) => error,
         };
 
         // On Error
@@ -211,7 +232,10 @@ impl FileSynchroniser {
             }
         };
 
-        sync_file_repo.update_status(&SyncFileReferenceRow {
+        // Terminal failure transition — use upsert_one so the Error / PermanentFailure status and
+        // error message sync to central. retries / retry_at are local-only (absent from
+        // SyncFileReferenceWire) so each site keeps its own retry schedule.
+        sync_file_repo.upsert_one(&SyncFileReferenceRow {
             error: Some(format_error(&error)),
             ..sync_file_ref_update
         })?;

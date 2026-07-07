@@ -29,7 +29,7 @@ pub fn generate(
         StockLineInput {
             stock_line_id: None,
             store_id: existing_invoice_row.store_id.clone(),
-            supplier_link_id: existing_invoice_row.name_link_id.clone(),
+            supplier_id: existing_invoice_row.name_id.clone(),
             on_hold: false,
             barcode_id: None,
             overwrite_stock_levels: true,
@@ -66,7 +66,7 @@ fn generate_line(
     InvoiceLineRow {
         id: uuid(),
         invoice_id,
-        item_link_id: item_id,
+        item_id,
         pack_size: 1.0,
         note,
         r#type: InvoiceLineType::StockIn,
@@ -83,11 +83,15 @@ fn generate_line(
         cost_price_per_pack: 0.0,
         batch: None,
         expiry_date: None,
+        manufacture_date: None,
+        purchase_order_line_id: None,
         item_variant_id: None,
         location_id: None,
         foreign_currency_price_before_tax: None,
         linked_invoice_id: None,
-        donor_link_id: None,
+        donor_id: None,
+        manufacturer_id: None,
+        legacy_goods_received_line_id: None,
         vvm_status_id: None,
         reason_option_id: None,
         campaign_id: None,
@@ -95,5 +99,8 @@ fn generate_line(
         shipped_number_of_packs: None,
         volume_per_pack: 0.0,
         shipped_pack_size: None,
+        status: None,
+        received_number_of_packs: None,
+        linked_invoice_line_id: None,
     }
 }

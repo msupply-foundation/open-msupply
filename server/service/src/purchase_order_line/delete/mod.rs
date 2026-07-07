@@ -24,7 +24,7 @@ pub fn delete_purchase_order_line(
             let purchase_order_line = validate(&id, connection)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::PurchaseOrderLineDeleted,
                 Some(purchase_order_line.purchase_order_id),
                 None,

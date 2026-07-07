@@ -6,8 +6,8 @@ export const useSaveOutboundLines = (outboundId: string) => {
   const { keys, sdk, storeId } = useOutboundApi();
   const queryClient = useQueryClient();
 
-  return useMutation(
-    async ({
+  return useMutation({
+    mutationFn: async ({
       itemId,
       lines,
       placeholderQuantity,
@@ -28,15 +28,20 @@ export const useSaveOutboundLines = (outboundId: string) => {
             campaignId: line.campaign?.id,
             programId: line.program?.id,
             vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : null,
+            // Default received to issued when unset, so only an explicit
+            // edit creates a variance.
+            receivedNumberOfPacks:
+              line.receivedNumberOfPacks ?? line.numberOfPacks,
           })),
           placeholderQuantity,
         },
       });
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(keys.detail(outboundId));
-      },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keys.detail(outboundId)
+      });
     }
-  );
+  });
 };

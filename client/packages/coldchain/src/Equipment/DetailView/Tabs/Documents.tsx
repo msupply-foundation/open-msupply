@@ -58,7 +58,9 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
   const onSuccess = () => {
     success(t('success'))();
     const cacheKey = api.keys.detail(draft.id);
-    queryClient.invalidateQueries(cacheKey);
+    queryClient.invalidateQueries({
+      queryKey: cacheKey
+    });
   };
 
   const deleteFile = (id: string) => {

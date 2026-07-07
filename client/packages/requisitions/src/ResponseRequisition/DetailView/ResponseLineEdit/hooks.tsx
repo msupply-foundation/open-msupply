@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useResponse, ResponseLineFragment, ResponseFragment } from '../../api';
-import { ItemWithStatsFragment } from '@openmsupply-client/system';
+import { ItemWithAvailableStockFragment } from '@openmsupply-client/system';
 import { FnUtils } from '@common/utils';
 import { useTranslation } from '@common/intl';
 
@@ -13,7 +13,7 @@ export type DraftResponseLine = Omit<
 };
 
 const createDraftFromItem = (
-  item: ItemWithStatsFragment,
+  item: ItemWithAvailableStockFragment,
   requisition: ResponseFragment
 ): DraftResponseLine => {
   return {
@@ -55,12 +55,12 @@ const createDraftFromResponseLine = (
 });
 
 export const useDraftRequisitionLine = (
-  item?: ItemWithStatsFragment | null
+  item?: ItemWithAvailableStockFragment | null
 ) => {
   const t = useTranslation();
   const { lines } = useResponse.line.list();
   const { data } = useResponse.document.get();
-  const { mutateAsync: saveMutation, isLoading } = useResponse.line.save();
+  const { mutateAsync: saveMutation, isPending: isLoading } = useResponse.line.save();
   const [isReasonsError, setIsReasonsError] = useState(false);
 
   const [draft, setDraft] = useState<DraftResponseLine | null>(null);
@@ -126,25 +126,25 @@ export const useDraftRequisitionLine = (
 };
 
 export const useNextResponseLine = (
-  lines: ResponseLineFragment[],
-  currentItem?: ItemWithStatsFragment | null
+  // Returns the items in the order they're currently displayed in the table,
+  // so "OK & Next" follows the user's sort instead of a fixed item-name order.
+  getSortedItems: () => ResponseLineFragment['item'][],
+  currentItem?: ItemWithAvailableStockFragment | null
 ) => {
-  if (!lines || !currentItem) {
+  // Capture the display order once, when the modal opens, so navigation stays
+  // stable while the user steps through it.
+  const [items] = useState(getSortedItems);
+
+  if (!items || !currentItem) {
     return { hasNext: false, next: null };
   }
-  const nextState: {
-    hasNext: boolean;
-    next: ItemWithStatsFragment | null;
-  } = { hasNext: true, next: null };
-  const idx = lines.findIndex(l => l.item.id === currentItem?.id);
-  const next = lines[idx + 1];
 
-  if (!next) {
-    nextState.hasNext = false;
-    return nextState;
+  const idx = items.findIndex(item => item?.id === currentItem?.id);
+  const next = items[idx + 1];
+
+  if (idx === -1 || !next) {
+    return { hasNext: false, next: null };
   }
 
-  nextState.next = next.item;
-
-  return nextState;
+  return { hasNext: true, next };
 };

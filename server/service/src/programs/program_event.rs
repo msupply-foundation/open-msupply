@@ -295,7 +295,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                             active_start_datetime: it.active_start_datetime,
                             active_end_datetime,
                             // Use the current patient_id as link id
-                            patient_link_id: Some(patient_id.clone()),
+                            patient_id: Some(patient_id.clone()),
                             document_type: target.document_type.clone(),
                             document_name: target.document_name.clone(),
                             context_id: context_id.to_string(),

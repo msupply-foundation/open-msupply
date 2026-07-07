@@ -109,7 +109,7 @@ pub fn activity_log_entry_with_diff(
                     Some(serde_json::to_string(&from).unwrap_or_default()),
                     Some(serde_json::to_string(&to).unwrap_or_default()),
                 ),
-                None => (None, None), // No changes
+                None => return Ok(()),
             }
         }
         None => (
@@ -159,12 +159,7 @@ pub fn system_log_entry(
 
     let message = match message {
         SystemLogMessage::Error(error, context) => {
-            format!(
-                "{} - {} - {}",
-                context,
-                log_type.to_string(),
-                format_error(&error)
-            )
+            format!("{} - {} - {}", context, log_type, format_error(&error))
         }
         SystemLogMessage::Message(msg) => msg.to_string(),
     };
@@ -299,7 +294,7 @@ mod test {
             MockData {
                 invoices: vec![InvoiceRow {
                     id: "test".to_string(),
-                    name_link_id: mock_name_a().id,
+                    name_id: mock_name_a().id,
                     store_id: mock_store_a().id,
                     r#type: InvoiceType::OutboundShipment,
                     status: InvoiceStatus::Allocated,

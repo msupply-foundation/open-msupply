@@ -12,16 +12,27 @@ use crate::boajs::utils::NullError;
 
 use super::methods;
 
+// NB: BoaJsError must stay `Send + Sync` so callers like `PluginError` are `Send` and can cross
+// the `spawn_blocking` boundary in `call_plugin_async`. boa's `JsError` is `!Send` (it holds
+// `Gc`/`Rc`), so we capture it as a formatted string rather than storing it directly.
 #[derive(Error, Debug)]
 pub enum BoaJsError {
-    #[error(transparent)]
-    JsError(#[from] JsError),
+    #[error("Javascript error: {0}")]
+    JsError(String),
     #[error("Failed to load JS module")]
     LoadingModule,
     #[error("Failed to locate export {0}")]
     ExportMissing(String),
     #[error(transparent)]
     SerdeError(#[from] serde_json::Error),
+    #[error("Plugin task failed to join: {0}")]
+    TaskJoin(String),
+}
+
+impl From<JsError> for BoaJsError {
+    fn from(error: JsError) -> Self {
+        BoaJsError::JsError(error.to_string())
+    }
 }
 
 impl PartialEq for BoaJsError {
@@ -44,7 +55,7 @@ where
     use BoaJsError as Error;
     // Initialise context with loader
     let loader = Rc::new(SimpleModuleLoader::new(Path::new("."))?);
-    let mut context = &mut Context::builder().module_loader(loader.clone()).build()?;
+    let context = &mut Context::builder().module_loader(loader.clone()).build()?;
 
     // Add plugin code as module
     let module = Module::parse(Source::from_bytes(bundle), None, context)?;
@@ -67,14 +78,16 @@ where
     methods::use_repository::bind_method(context)?;
     methods::use_graphql::bind_method(context)?;
     methods::get_active_stores_on_site::bind_method(context)?;
+    methods::fetch::bind_method(context)?;
+    methods::enqueue_email::bind_method(context)?;
 
     let callable = find_callable_in_exports(context, module, export_location)?;
 
     let input: serde_json::Value = serde_json::to_value(&input)?;
-    let js_input = JsValue::from_json(&input, &mut context)?;
+    let js_input = JsValue::from_json(&input, context)?;
 
     let js_output = callable.call(&JsValue::undefined(), &[js_input], context)?;
-    let option_output = JsValue::to_json(&js_output, &mut context)?;
+    let option_output = JsValue::to_json(&js_output, context)?;
     let output = option_output.ok_or(JsError::from(NullError))?;
 
     Ok(serde_json::from_value(output)?)
@@ -91,7 +104,6 @@ fn find_callable_in_exports(
         path = path
             .get(js_string!(*name), context)?
             .as_object()
-            .cloned()
             .ok_or(BoaJsError::ExportMissing(name.to_string()))?;
     }
 

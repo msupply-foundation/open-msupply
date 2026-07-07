@@ -46,11 +46,11 @@ impl SyncTranslation for ItemWarningJoinTranslation {
             item_link_id,
             warning_id,
             priority,
-        } = serde_json::from_str::<LegacyItemWarningJoinRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let result = ItemWarningJoinRow {
             id,
-            item_link_id,
+            item_id: item_link_id,
             warning_id,
             priority,
         };

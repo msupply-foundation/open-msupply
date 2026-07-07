@@ -10,7 +10,6 @@ import {
   ColumnDef,
   ColumnType,
   MaterialTable,
-  CheckCell,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -28,6 +27,9 @@ export const LocationListView = () => {
         key: 'name',
       },
       {
+        key: 'code',
+      },
+      {
         key: 'onHold',
         condition: '=',
       },
@@ -35,7 +37,7 @@ export const LocationListView = () => {
   });
   const queryParams = { sortBy, first, offset, filterBy };
   const {
-    query: { data, isError, isLoading, isFetching },
+    query: { data, isError, isFetching },
   } = useLocationList(queryParams);
   const t = useTranslation();
 
@@ -49,6 +51,7 @@ export const LocationListView = () => {
         accessorKey: 'code',
         header: t('label.code'),
         enableSorting: true,
+        enableColumnFilter: true,
       },
       {
         accessorKey: 'name',
@@ -71,6 +74,7 @@ export const LocationListView = () => {
         accessorKey: 'volume',
         header: t('label.volume'),
         columnType: ColumnType.Number,
+        decimalLimit: 5,
       },
       {
         id: 'volumeUsed',
@@ -102,7 +106,7 @@ export const LocationListView = () => {
       {
         accessorKey: 'onHold',
         header: t('label.on-hold'),
-        Cell: CheckCell,
+        columnType: ColumnType.Boolean,
         size: 110,
         enableColumnFilter: true,
         filterVariant: 'select',
@@ -137,13 +141,11 @@ export const LocationListView = () => {
           isOpen={isOpen}
           onClose={onClose}
           location={entity}
+          sortBy={sortBy}
+          filterBy={filterBy}
         />
       )}
-      <AppBarButtons
-        onCreate={() => onOpen()}
-        locations={data?.nodes}
-        reportIsLoading={isLoading}
-      />
+      <AppBarButtons onCreate={() => onOpen()} sortBy={sortBy} />
       <MaterialTable table={table} />
       <Footer
         selectedRows={selectedRows}

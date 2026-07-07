@@ -1,6 +1,7 @@
 use anyhow::anyhow;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
+use colored::Colorize;
 use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
 use log::info;
 
@@ -9,9 +10,11 @@ use report_builder::{
     Format,
 };
 use repository::{
-    get_storage_connection_manager, migrations::migrate, schema_from_row, test_db, ContextType,
-    EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
-    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
+    get_storage_connection_manager,
+    migrations::{migrate, MigrationConfig},
+    schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
+    KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
+    ReportRowRepository, StringFilter, SyncBufferRepository, SyncBufferRowInsert,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -24,9 +27,8 @@ use service::{
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_buffer::SyncBufferSource,
-        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
-        synchroniser_driver::SynchroniserDriver,
+        settings::SyncSettings, sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
 };
@@ -43,13 +45,18 @@ use tokio::task::spawn_blocking;
 mod backup;
 use backup::*;
 
+mod reintegrate_buffer;
+use reintegrate_buffer::reintegrate_buffer;
+
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
-    generate_and_install_plugin_bundle, generate_plugin_bundle, generate_plugin_typescript_types,
-    generate_report_data, generate_reports_recursive, install_plugin_bundle,
+    all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
+    generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
+    install_plugin_bundle, list_installed_plugins, uninstall_plugin,
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
-    RefreshDatesRepository, ReportError,
+    ListInstalledPlugins, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
+    TestData, UninstallPlugin,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -179,6 +186,10 @@ enum Action {
     InstallPluginBundle(InstallPluginBundle),
     /// Will generate and then install  plugin bundle
     GenerateAndInstallPluginBundle(GenerateAndInstallPluginBundle),
+    /// Uninstall a single plugin row by id (use list-installed-plugins to discover ids)
+    UninstallPlugin(UninstallPlugin),
+    /// List installed plugins as JSON (stdout)
+    ListInstalledPlugins(ListInstalledPlugins),
     UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long, num_args=0..)]
@@ -220,8 +231,24 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
         disable: bool,
     },
+    /// Test connectivity to configured services (config, database, ping, sync, mail)
+    TestConnection {
+        /// Username for the login test
+        #[clap(short, long)]
+        username: Option<String>,
+        /// Password for the login test
+        #[clap(short, long)]
+        password: Option<String>,
+        /// Log level for the tests, by default set to off to avoid noisy console logging
+        #[clap(short, default_value = "off")]
+        log_level: log::LevelFilter,
+    },
     #[cfg(feature = "integration_test")]
     LoadTest(LoadTest),
+    /// Aggregate sync_v7 push/pull throughput from a central server's log file(s) into a CSV,
+    /// bucketing records into fixed-width time windows (default 5 seconds). Works on any logs
+    /// captured at level Info (or lower) to file, not only on load test output.
+    SyncThroughputCsv(SyncThroughputCsv),
     GeneratePluginTypescriptTypes {
         /// Optional path to save typescript types, if not provided will save to `../client/packages/plugins/backendCommon/generated`
         #[clap(
@@ -233,6 +260,37 @@ enum Action {
         /// Run prettier on the generated typescript files
         #[clap(long, short, default_value = "false")]
         skip_prettify: bool,
+    },
+    /// Re-run sync buffer integration against the sync_buffer already in the database.
+    /// Resets the buffer's integration state, then re-runs translate + integrate.
+    /// Useful for re-processing already-pulled records after fixing a translator, or for
+    /// replaying a `sync_buffer` dump loaded into a database.
+    ReintegrateBuffer {
+        /// Source site id whose records to integrate (V5/V6 buffer rows for this site).
+        #[clap(short, long, default_value = "1")]
+        source_site_id: i32,
+        /// Wrap integration in a transaction (outer batch + per-record sub-transactions).
+        /// Off by default for speed; turn on to integrate the whole batch atomically.
+        #[clap(short, long)]
+        use_transaction: bool,
+        /// Run pending database migrations before reintegrating.
+        #[clap(short, long)]
+        migrate: bool,
+        /// Skip resetting the buffer's integration state — re-run integration against the
+        /// buffer as it already is (e.g. to only retry rows that are still pending).
+        #[clap(long)]
+        skip_buffer_reset: bool,
+        /// Only reintegrate records that previously errored: the buffer reset clears integration
+        /// state for rows with an integration_error (excluding deliberately-ignored rows) and
+        /// leaves successfully-integrated rows alone. Errored rows are integrated (not pending),
+        /// so this requires a reset — it conflicts with --skip-buffer-reset.
+        #[clap(short, long, conflicts_with = "skip_buffer_reset")]
+        errors_only: bool,
+        /// Restrict integration to these sync buffer tables (comma-separated, matched against
+        /// `sync_buffer.table_name`, e.g. `--tables item,name`). Defaults to all tables.
+        /// Diagnostic use only — scoping can skip rows the chosen tables depend on.
+        #[clap(long, value_delimiter = ',')]
+        tables: Vec<String>,
     },
 }
 
@@ -257,6 +315,7 @@ async fn initialise_from_central(
     let sync_settings = settings
         .clone()
         .sync
+        .filter(|s| s.has_core_sync_settings())
         .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
     let central_server_url = sync_settings.url.clone();
 
@@ -270,17 +329,15 @@ async fn initialise_from_central(
     let service_context = service_provider.basic_context()?;
     info!("Initialising from central");
     service_provider
-        .site_info_service
-        .request_and_set_site_info(&service_provider, &sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(&service_provider, &sync_settings)
         .await?;
     service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)?;
 
-    // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
-    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
-    let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
-    sync_driver.sync(service_provider.clone(), None).await;
+    let (_, sync_driver) = SynchroniserDriver::init();
+    sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");
     for user in users.split(',') {
@@ -292,7 +349,7 @@ async fn initialise_from_central(
         };
         LoginService::login(&service_provider, &auth_data, input.clone(), 0)
             .await
-            .map_err(|_| anyhow!("Cannot login with user {:?}", input))?;
+            .map_err(|_| anyhow!("Cannot login with user {input:?}"))?;
     }
     info!("Initialisation finished");
     Ok((service_provider, service_context))
@@ -319,9 +376,12 @@ async fn main() -> anyhow::Result<()> {
     match args.action {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
-            let schema =
-                OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
-                    .finish();
+            let schema = OperationalSchema::build(
+                Queries::new(),
+                Mutations::new(),
+                Subscriptions::default(),
+            )
+            .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),
                 schema.sdl(),
@@ -339,10 +399,40 @@ async fn main() -> anyhow::Result<()> {
             if let Some(init_sql) = &settings.database.startup_sql() {
                 connection_manager.execute(init_sql).unwrap();
             }
-            migrate(&connection_manager.connection().unwrap(), None)
-                .expect("Failed to run DB migrations");
+            let migration_config = MigrationConfig {
+                changelog_partition: settings
+                    .changelog_partition
+                    .clone()
+                    .unwrap_or_default()
+                    .to_migration_config(),
+            };
+            migrate(
+                &connection_manager.connection().unwrap(),
+                None,
+                migration_config,
+            )
+            .expect("Failed to run DB migrations");
 
             info!("Finished applying database migrations");
+        }
+        Action::ReintegrateBuffer {
+            source_site_id,
+            use_transaction,
+            migrate: should_migrate,
+            skip_buffer_reset,
+            errors_only,
+            tables,
+        } => {
+            reintegrate_buffer(
+                &settings,
+                source_site_id,
+                use_transaction,
+                should_migrate,
+                skip_buffer_reset,
+                errors_only,
+                // empty `--tables` means no scoping (integrate everything)
+                (!tables.is_empty()).then_some(tables),
+            )?;
         }
         Action::InitialiseFromCentral { users } => {
             initialise_from_central(settings, &users).await?;
@@ -355,6 +445,7 @@ async fn main() -> anyhow::Result<()> {
             let url = settings
                 .sync
                 .clone()
+                .filter(|s| s.has_core_sync_settings())
                 .ok_or(anyhow!("sync settings not set in yaml configurations"))?
                 .url;
             let (service_provider, ctx) = initialise_from_central(settings, &users).await?;
@@ -378,10 +469,10 @@ async fn main() -> anyhow::Result<()> {
 
             let data = InitialisationData {
                 // Sync Buffer Rows
-                sync_buffer_rows: SyncBufferRowRepository::new(&ctx.connection).get_all()?,
+                sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
                 users: synced_user_info_rows,
                 site_id: service_provider
-                    .site_info_service
+                    .site_auth_service
                     .get_site_id(&ctx)?
                     .unwrap(),
             };
@@ -395,7 +486,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Saving export");
             let (folder, export_file, users_file) = export_paths(&name);
             if fs::create_dir(&folder).is_err() {
-                info!("Export directory already exists, replacing {:#?}", folder)
+                info!("Export directory already exists, replacing {folder:#?}")
             };
             fs::write(export_file, data_string)?;
             fs::write(users_file, users)?;
@@ -418,25 +509,23 @@ async fn main() -> anyhow::Result<()> {
             // Need to set site_id before integration
             KeyValueStoreRepository::new(&ctx.connection)
                 .set_i32(KeyType::SettingsSyncSiteId, Some(data.site_id))?;
-            let buffer_repo = SyncBufferRowRepository::new(&ctx.connection);
-            let buffer_rows = data
+            let buffer_repo = SyncBufferRepository::new(&ctx.connection);
+            let buffer_rows: Vec<SyncBufferRowInsert> = data
                 .sync_buffer_rows
                 .into_iter()
                 .map(|mut r| {
+                    // Reset integration state — we want re-init to retry integration
+                    r.integration_started_datetime = None;
                     r.integration_datetime = None;
                     r.integration_error = None;
-                    r
+                    r.integration_result = None;
+                    SyncBufferRowInsert::from(r)
                 })
                 .collect();
-            buffer_repo.upsert_many(&buffer_rows)?;
+            buffer_repo.insert_many(&buffer_rows)?;
 
             let mut logger = SyncLogger::start(&ctx.connection).unwrap();
-            integrate_and_translate_sync_buffer(
-                &ctx.connection,
-                Some(&mut logger),
-                SyncBufferSource::Central(0),
-                true,
-            )?;
+            integrate_and_translate_sync_buffer(&ctx.connection, Some(&mut logger), 0, true)?;
 
             info!("Initialising users");
             for (input, user_info) in data.users {
@@ -447,7 +536,7 @@ async fn main() -> anyhow::Result<()> {
                 info!("Refreshing dates");
                 let result = RefreshDatesRepository::new(&ctx.connection)
                     .refresh_dates(Utc::now().naive_utc())?;
-                info!("Refresh data result: {:#?}", result);
+                info!("Refresh data result: {result:#?}");
             }
 
             info!("Disabling sync");
@@ -489,7 +578,7 @@ async fn main() -> anyhow::Result<()> {
                 service.disable_sync(&ctx)?;
             }
 
-            info!("Refresh data result: {:#?}", result);
+            info!("Refresh data result: {result:#?}");
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
         Action::BuildReports { path } => {
@@ -524,15 +613,13 @@ async fn main() -> anyhow::Result<()> {
                 let output_path = base_dir.join("generated").join(output_name);
 
                 fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
-                    "Invalid output path: {:?}",
-                    output_path
+                    "Invalid output path: {output_path:?}"
                 )))?)?;
 
                 fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
                     |_| {
                         anyhow::Error::msg(format!(
-                            "Failed to write to {:?}. Does output dir exist?",
-                            output_path
+                            "Failed to write to {output_path:?}. Does output dir exist?"
                         ))
                     },
                 )?;
@@ -602,7 +689,7 @@ async fn main() -> anyhow::Result<()> {
                 }
                 (Some(arguments_path), Some(arguments_ui_path)) => {
                     Some(schema_from_row(FormSchemaRow {
-                        id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                        id: argument_schema_id.unwrap_or(format!("for_report_{id}")),
                         r#type: "reportArgument".to_string(),
                         json_schema: fs::read_to_string(arguments_path)?,
                         ui_schema: fs::read_to_string(arguments_ui_path)?,
@@ -657,6 +744,12 @@ async fn main() -> anyhow::Result<()> {
         Action::GenerateAndInstallPluginBundle(arguments) => {
             generate_and_install_plugin_bundle(arguments).await?;
         }
+        Action::UninstallPlugin(arguments) => {
+            uninstall_plugin(arguments).await?;
+        }
+        Action::ListInstalledPlugins(arguments) => {
+            list_installed_plugins(arguments).await?;
+        }
         Action::ShowReport {
             path,
             config,
@@ -702,7 +795,7 @@ async fn main() -> anyhow::Result<()> {
 
             let report_generate_data = ReportGenerateData {
                 report: report_json,
-                config: config,
+                config,
                 store_id: Some(test_config.store_id),
                 store_name: None,
                 output_filename: Some(output_name.clone()),
@@ -715,20 +808,20 @@ async fn main() -> anyhow::Result<()> {
             // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"
             spawn_blocking(|| generate_report_inner(report_generate_data))
                 .await?
-                .map_err(|e| ReportError::FailedToGenerateReport(path, e.into()))?;
+                .map_err(|e| ReportError::FailedToGenerateReport(path, e))?;
 
             let generated_file_path = current_dir()?.join(&output_name);
-#[cfg(windows)]
+            #[cfg(windows)]
             Command::new("cmd")
-                .args(["/C","start"])
+                .args(["/C", "start"])
                 .arg(generated_file_path.clone())
                 .status()
                 .expect(&format!("failed to open file {:?}", generated_file_path));
-#[cfg(not(windows))]
+            #[cfg(not(windows))]
             Command::new("open")
                 .arg(generated_file_path.clone())
                 .status()
-                .expect(&format!("failed to open file {:?}", generated_file_path));
+                .unwrap_or_else(|_| panic!("{}", "failed to open file {generated_file_path:?}"));
         }
         Action::ToggleReport {
             code,
@@ -739,12 +832,9 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let mut filter = ReportFilter::new().code(EqualFilter::equal_to(code.to_owned()));
-            match is_custom {
-                Some(value) => {
-                    filter = filter.is_custom(value);
-                }
-                None => {}
+            let mut filter = ReportFilter::new().code(StringFilter::equal_to(&code));
+            if let Some(value) = is_custom {
+                filter = filter.is_custom(value);
             }
 
             let report_list = ReportRepository::new(&con).query_by_filter(filter)?;
@@ -780,30 +870,44 @@ async fn main() -> anyhow::Result<()> {
         } => {
             generate_plugin_typescript_types(path, skip_prettify)?;
         }
+        Action::TestConnection {
+            username,
+            password,
+            log_level,
+        } => {
+            let credentials = TestCredentials {
+                username: username.unwrap_or_default(),
+                password: password.unwrap_or_default(),
+            };
+            let mut test_data = TestData {
+                server_config: None,
+                sync_api_v5: None,
+                credentials,
+            };
+            let tests = all_tests();
+            let current_log_level = log::max_level();
+            // Set log level, defaults to off to suppress noise
+            log::set_max_level(log_level);
+
+            for test in &tests {
+                println!();
+                println!("Running {} test...", test.name());
+                match test.run(&mut test_data).await {
+                    Ok(msg) => println!("{} {}: {}", "[PASS]".green(), test.name(), msg),
+                    Err(err) => {
+                        println!("{} {}: {}", "[FAIL]".red(), test.name(), err);
+                    }
+                }
+            }
+
+            log::set_max_level(current_log_level);
+        }
         #[cfg(feature = "integration_test")]
-        Action::LoadTest(LoadTest {
-            msupply_central_url,
-            oms_central_url,
-            base_port,
-            output_dir,
-            test_site_name,
-            test_site_pass,
-            sites,
-            lines,
-            duration,
-        }) => {
-            let load_test = LoadTest::new(
-                msupply_central_url,
-                oms_central_url,
-                base_port,
-                output_dir,
-                test_site_name,
-                test_site_pass,
-                sites,
-                lines,
-                duration,
-            );
+        Action::LoadTest(load_test) => {
             load_test.run().await?;
+        }
+        Action::SyncThroughputCsv(args) => {
+            args.run()?;
         }
     }
 

@@ -8,6 +8,7 @@ import { browserLanguageDetector } from './browserLanguageDetector';
 import { createRegisteredContext } from 'react-singleton-context';
 import { Environment } from '@openmsupply-client/config';
 import { GetBackendByNamespace } from './GetBackendByNamespace';
+import { intlNumberFormat } from '../number/IntlNumber';
 const appVersion = require('../../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
 // Created by webpack DefinePlugin see webpack.config.js
@@ -15,7 +16,7 @@ const appVersion = require('../../../../../../package.json').version; // eslint-
 declare const LANG_VERSION: string;
 
 export const CUSTOM_TRANSLATIONS_NAMESPACE = 'custom-translations';
-const defaultNS = 'common';
+export const DEFAULT_TRANSLATIONS_NAMESPACE = 'common';
 const minuteInMilliseconds = 60 * 1000;
 const isDevelopment = process.env['NODE_ENV'] === 'development';
 
@@ -39,7 +40,9 @@ export function initialiseI18n({
   const defaultTranslationsLoadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
 
   // Served from backend, on electron we use a dummy but valid url https://localhost:8000 which shouldn't actually be used.
-  const customTranslationsLoadPath = `${Environment.API_HOST.startsWith('file://') ? 'http://localhost:8000' : Environment.API_HOST}/custom-translations`;
+  // The `lng` query param lets the backend return language-specific custom
+  // translations (v2). Older servers ignore the param and return the flat v1 map.
+  const customTranslationsLoadPath = `${Environment.API_HOST.startsWith('file://') ? 'http://localhost:8000' : Environment.API_HOST}/custom-translations?lng={{lng}}`;
 
   i18next
     .use(initReactI18next) // passes i18n down to react-i18next
@@ -60,14 +63,13 @@ export function initialiseI18n({
           {
             languageVersion,
             endpointByNamespace: {
-              common: defaultTranslationsLoadPath,
+              [DEFAULT_TRANSLATIONS_NAMESPACE]: defaultTranslationsLoadPath,
               [CUSTOM_TRANSLATIONS_NAMESPACE]: customTranslationsLoadPath,
             },
           },
         ],
       },
       debug: isDevelopment,
-      defaultNS,
       detection: {
         order: [
           'querystring',
@@ -78,16 +80,30 @@ export function initialiseI18n({
           'htmlTag',
         ],
       },
-
-      ns: defaultNS, // behaving as I expect defaultNS should. Without specifying ns here, a request is made to 'translation.json'
+      defaultNS: CUSTOM_TRANSLATIONS_NAMESPACE,
+      ns: [CUSTOM_TRANSLATIONS_NAMESPACE, DEFAULT_TRANSLATIONS_NAMESPACE],
+      fallbackNS: DEFAULT_TRANSLATIONS_NAMESPACE,
       fallbackLng: 'en',
-      fallbackNS: 'common',
       // the following option was used to assist the browser language detection; but it prevents regional variations, so has been removed
       // load: 'languageOnly', // if requested language is 'en-US' then we load 'en'; change to the default value of 'all' to load 'en-US' and 'en'
       interpolation: {
         escapeValue: false, // not needed for react!!
       },
     });
+
+  // i18next's built-in `number` formatter uses `Intl.NumberFormat(lng)` directly,
+  // which ignores our numbering-system overrides (see localeNumberOverrides —
+  // e.g. Pashto otherwise defaults to Latin digits). Route `{{x, number}}`
+  // through `intlNumberFormat` so interpolated counts render in
+  // locale-appropriate digits (Arabic-Indic ٠-٩ for ar; extended-Arabic ۰-۹ for
+  // prs/ps). Fall back to the active language rather than 'en' if i18next
+  // doesn't supply one, and leave non-numeric values untouched instead of
+  // emitting "NaN".
+  i18next.services.formatter?.add('number', (value, lng, options) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return value == null ? '' : String(value);
+    return intlNumberFormat(lng ?? i18next.language, options).format(num);
+  });
 }
 
 export const IntlContext = createRegisteredContext<I18nextProviderProps>(

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { ComponentProps, useState } from 'react';
 import {
   Autocomplete,
   CloseIcon,
@@ -45,50 +45,30 @@ const getOptionLabel = (option: LocationOption) =>
 const optionRenderer = (
   props: React.HTMLAttributes<HTMLLIElement>,
   location: LocationOption
-) => {
-  const { style, ...rest } = props;
-
-  return location.value === null ? (
-    <MenuItem
-      {...rest}
-      sx={{
-        ...style,
-        display: 'inline-flex',
-        flex: 1,
-        width: '100%',
-        borderTop: '1px solid',
-        borderTopColor: 'divider',
+) => (
+  <MenuItem
+    {...props}
+    key={location.value}
+    sx={{ justifyContent: 'space-between !important' }}
+  >
+    <span
+      style={{
+        whiteSpace: 'nowrap',
+        maxWidth: '80%',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}
-      key={location.label}
     >
-      <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{location.label}</span>
-      <CloseIcon sx={{ color: 'gray.dark' }} />
-    </MenuItem>
-  ) : (
-    <MenuItem
-      {...props}
-      key={location.label}
-      sx={{ justifyContent: 'space-between !important' }}
+      {getOptionLabel(location)}
+    </span>
+    <Typography
+      component="span"
+      sx={{ color: 'gray.dark', fontSize: 'smaller' }}
     >
-      <span
-        style={{
-          whiteSpace: 'nowrap',
-          maxWidth: '80%',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {getOptionLabel(location)}
-      </span>
-      <Typography
-        component="span"
-        sx={{ color: 'gray.dark', fontSize: 'smaller' }}
-      >
-        {location.volumeUsed}
-      </Typography>
-    </MenuItem>
-  );
-};
+      {location.volumeUsed}
+    </Typography>
+  </MenuItem>
+);
 
 enum LocationFilter {
   All = 'all',
@@ -117,6 +97,8 @@ export const LocationSearchInput = ({
 
   const [filter, setFilter] = useState<LocationFilter>(LocationFilter.All);
 
+  const hasVolumeFilter = typeof volumeRequired === 'number';
+
   const {
     query: { data, isLoading },
   } = useLocationList(
@@ -132,6 +114,8 @@ export const LocationSearchInput = ({
   );
 
   const locations = data?.nodes || [];
+  const showRemoveOption =
+    includeRemoveOption && (locations.length > 0 || !!selectedLocation);
 
   // Filter locations based on selected filter
   const filteredLocations = locations.filter(location => {
@@ -170,31 +154,22 @@ export const LocationSearchInput = ({
     volumeUsed: getVolumeUsedLabel(l),
   }));
 
-  if (
-    includeRemoveOption &&
-    filteredLocations.length > 0 &&
-    selectedLocation !== null &&
-    selectedLocation !== undefined
-  ) {
-    options.push({ value: null, label: t('label.remove'), volumeUsed: '0' });
-  }
-
   // Define separately - even if the selected location doesn't match current
   // filter, we still want to show it as the selected option
   // Same goes if the location is not valid given the location type restriction
   const selectedLocationOption: LocationOption | null = selectedLocation
     ? {
-        value: selectedLocation.id,
-        label: formatLocationLabel(selectedLocation),
-        code: selectedLocation.code,
-        volumeUsed: getVolumeUsedLabel(selectedLocation),
-      }
+      value: selectedLocation.id,
+      label: formatLocationLabel(selectedLocation),
+      code: selectedLocation.code,
+      volumeUsed: getVolumeUsedLabel(selectedLocation),
+    }
     : null;
 
   const isInvalidLocation = !!selectedLocation
     ? checkInvalidLocationLines(restrictedToLocationTypeId ?? null, [
-        { location: selectedLocation },
-      ])
+      { location: selectedLocation },
+    ])
     : null;
 
   const errorStyles = {
@@ -226,14 +201,19 @@ export const LocationSearchInput = ({
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       slots={{
         paper:
-          typeof volumeRequired === 'number'
-            ? ({ children, ...paperProps }) => (
-                <Paper {...paperProps} sx={{ minWidth: '300px' }}>
-                  <LocationFilters filter={filter} setFilter={setFilter} />
-                  {children}
-                </Paper>
-              )
+          hasVolumeFilter || showRemoveOption
+            ? (LocationPaper as React.ComponentType)
             : undefined,
+      }}
+      slotProps={{
+        paper: {
+          hasVolumeFilter,
+          showRemoveOption,
+          filter,
+          setFilter,
+          onRemove: onChange,
+        } as LocationPaperProps,
+        listbox: { style: { maxHeight: '35vh' } },
       }}
     />
   );
@@ -242,6 +222,64 @@ export const LocationSearchInput = ({
 export const formatLocationLabel = (location: LocationRowFragment) => {
   const { name, locationType } = location;
   return `${name}${locationType ? ` (${locationType.name})` : ''}`;
+};
+
+type LocationPaperProps = ComponentProps<typeof Paper> & {
+  hasVolumeFilter: boolean;
+  showRemoveOption: boolean;
+  filter: LocationFilter;
+  setFilter: (filter: LocationFilter) => void;
+  onRemove: (location: LocationRowFragment | null) => void;
+};
+
+const LocationPaper = ({
+  children,
+  hasVolumeFilter,
+  showRemoveOption,
+  filter,
+  setFilter,
+  onRemove,
+  ...paperProps
+}: LocationPaperProps) => (
+  <Paper {...paperProps} sx={{ minWidth: '300px' }}>
+    {hasVolumeFilter && (
+      <LocationFilters filter={filter} setFilter={setFilter} />
+    )}
+    {children}
+    {showRemoveOption && <StickyRemoveButton onChange={onRemove} />}
+  </Paper>
+);
+
+const StickyRemoveButton = ({
+  onChange,
+}: {
+  onChange: (location: LocationRowFragment | null) => void;
+}) => {
+  const t = useTranslation();
+
+  return (
+    <MenuItem
+      onMouseDown={e => {
+        e.stopPropagation();
+        e.preventDefault();
+        onChange(null);
+      }}
+      sx={{
+        display: 'inline-flex',
+        flex: 1,
+        width: '100%',
+        borderTop: '1px solid',
+        borderTopColor: 'divider',
+        position: 'sticky',
+        bottom: 0,
+        backgroundColor: 'background.paper',
+        zIndex: 1,
+      }}
+    >
+      <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{t('label.remove')}</span>
+      <CloseIcon sx={{ color: 'gray.dark' }} />
+    </MenuItem>
+  );
 };
 
 const LocationFilters = ({

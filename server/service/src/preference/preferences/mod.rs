@@ -16,6 +16,8 @@ pub mod order_in_packs;
 pub use order_in_packs::*;
 pub mod custom_translations;
 pub use custom_translations::*;
+pub mod custom_translations_v2;
+pub use custom_translations_v2::*;
 pub mod sync_records_display_threshold;
 pub use sync_records_display_threshold::*;
 pub mod authorise_purchase_order;
@@ -24,14 +26,14 @@ pub mod show_indicative_price_in_requisitions;
 pub use show_indicative_price_in_requisitions::*;
 pub mod prevent_transfers_months_before_initialisation;
 pub use prevent_transfers_months_before_initialisation::*;
-pub mod authorise_goods_received;
-pub use authorise_goods_received::*;
 pub mod use_procurement_functionality;
 pub use use_procurement_functionality::*;
 pub mod disable_manual_returns;
 pub use disable_manual_returns::*;
 pub mod requisition_auto_finalise;
 pub use requisition_auto_finalise::*;
+pub mod external_inbound_shipment_lines_must_be_authorised;
+pub use external_inbound_shipment_lines_must_be_authorised::*;
 pub mod inbound_shipment_auto_verify;
 pub use inbound_shipment_auto_verify::*;
 pub mod warning_for_excess_request;
@@ -66,13 +68,23 @@ pub mod item_margin_overrides_supplier_margin;
 pub use item_margin_overrides_supplier_margin::*;
 pub mod is_gaps;
 pub use is_gaps::*;
+pub mod display_population_based_forecasting;
+pub use display_population_based_forecasting::*;
+pub mod global_table_configs;
+pub use global_table_configs::*;
+pub mod backdating;
+pub use backdating::*;
+pub mod receive_payments_from_prescriptions;
+pub use receive_payments_from_prescriptions::*;
+pub mod do_not_print_placeholder_line_labels;
+pub use do_not_print_placeholder_line_labels::*;
 
 pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
-    pub authorise_goods_received: AuthoriseGoodsReceived,
     pub authorise_purchase_order: AuthorisePurchaseOrder,
     pub custom_translations: CustomTranslations,
+    pub custom_translations_v2: CustomTranslationsV2,
     pub gender_options: GenderOptions,
     pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
     pub show_contact_tracing: ShowContactTracing,
@@ -84,6 +96,10 @@ pub struct PreferenceProvider {
     pub expired_stock_issue_threshold: ExpiredStockIssueThreshold,
     pub item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
     pub is_gaps: IsGaps,
+    pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
+    pub global_table_configs: GlobalTableConfigs,
+    pub backdating: Backdating,
+    pub receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
 
     // Store preferences
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
@@ -97,6 +113,8 @@ pub struct PreferenceProvider {
     pub disable_manual_returns: DisableManualReturns,
     pub can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
     pub select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+    pub external_inbound_shipment_lines_must_be_authorised:
+        ExternalInboundShipmentLinesMustBeAuthorised,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
     pub number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -109,15 +127,16 @@ pub struct PreferenceProvider {
     pub store_custom_colour: StoreCustomColour,
     pub invoice_status_options: InvoiceStatusOptions,
     pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
+    pub do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
     PreferenceProvider {
         // Global preferences
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
-        authorise_goods_received: AuthoriseGoodsReceived,
         authorise_purchase_order: AuthorisePurchaseOrder,
         custom_translations: CustomTranslations,
+        custom_translations_v2: CustomTranslationsV2,
         gender_options: GenderOptions,
         show_contact_tracing: ShowContactTracing,
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
@@ -129,6 +148,10 @@ pub fn get_preference_provider() -> PreferenceProvider {
         expired_stock_issue_threshold: ExpiredStockIssueThreshold,
         item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
         is_gaps: IsGaps,
+        display_population_based_forecasting: DisplayPopulationBasedForecasting,
+        global_table_configs: GlobalTableConfigs,
+        backdating: Backdating,
+        receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
 
         // Store preferences
         manage_vaccines_in_doses: ManageVaccinesInDoses,
@@ -142,6 +165,8 @@ pub fn get_preference_provider() -> PreferenceProvider {
         inbound_shipment_auto_verify: InboundShipmentAutoVerify,
         can_create_internal_order_from_a_requisition: CanCreateInternalOrderFromARequisition,
         select_destination_store_for_an_internal_order: SelectDestinationStoreForAnInternalOrder,
+        external_inbound_shipment_lines_must_be_authorised:
+            ExternalInboundShipmentLinesMustBeAuthorised,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
             NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -154,5 +179,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
         invoice_status_options: InvoiceStatusOptions,
         show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
+        do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
     }
 }

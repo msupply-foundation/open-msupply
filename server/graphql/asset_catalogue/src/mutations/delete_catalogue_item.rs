@@ -19,6 +19,7 @@ pub fn delete_asset_catalogue_item(
         &ResourceAccessRequest {
             resource: Resource::MutateAssetCatalogueItem,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 
@@ -60,7 +61,7 @@ pub enum DeleteAssetCatalogueItemErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<DeleteAssetCatalogueItemErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Standard Graphql Errors

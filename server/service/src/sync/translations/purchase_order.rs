@@ -1,5 +1,4 @@
 use crate::sync::{
-    sync_utils::{map_name_link_id_to_name_id, map_optional_name_link_id_to_name_id},
     translations::{
         name::NameTranslation, store::StoreTranslation, utils::clear_invalid_fk,
         PullTranslateResult, PushTranslateResult, SyncTranslation,
@@ -9,7 +8,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyRowRepository, EqualFilter, PurchaseOrderDelete,
     PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderRow, PurchaseOrderStatsRow,
-    PurchaseOrderStatus, StorageConnection, SyncBufferRow,
+    PurchaseOrderStatus, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -228,7 +227,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             order_total_before_discount,
             order_total_after_discount: _, // Not used, we calculate from the sum of the lines instead
             is_authorised: _,
-        } = serde_json::from_str::<LegacyPurchaseOrderRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let created_datetime = match oms_fields.clone() {
             Some(oms) => oms.created_datetime,
@@ -284,17 +283,17 @@ impl SyncTranslation for PurchaseOrderTranslation {
             created_by,
             purchase_order_number,
             store_id,
-            supplier_name_link_id: name_id,
+            supplier_name_id: name_id,
             status,
             created_datetime,
             confirmed_datetime,
             target_months,
             comment,
             supplier_discount_percentage,
-            donor_link_id: donor_id,
+            donor_id: donor_id,
             reference,
             currency_id,
-            foreign_exchange_rate: curr_rate,
+            foreign_exchange_rate: curr_rate.unwrap_or(1.0),
             shipping_method: delivery_method,
             sent_datetime,
             contract_signed_date,
@@ -332,11 +331,15 @@ impl SyncTranslation for PurchaseOrderTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::PurchaseOrder(purchase_order_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let purchase_order = PurchaseOrderRepository::new(connection)
             .query_by_filter(
-                PurchaseOrderFilter::new()
-                    .id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                PurchaseOrderFilter::new().id(EqualFilter::equal_to(purchase_order_row.id)),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Purchase Order not found"))?;
@@ -345,7 +348,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             id,
             store_id,
             created_by,
-            supplier_name_link_id,
+            supplier_name_id,
             purchase_order_number,
             status,
             created_datetime,
@@ -353,7 +356,7 @@ impl SyncTranslation for PurchaseOrderTranslation {
             target_months,
             comment,
             supplier_discount_percentage,
-            donor_link_id,
+            donor_id,
             reference,
             currency_id,
             foreign_exchange_rate,
@@ -394,9 +397,6 @@ impl SyncTranslation for PurchaseOrderTranslation {
             status: status.clone(),
         };
 
-        let donor_id = map_optional_name_link_id_to_name_id(connection, donor_link_id)?;
-        let supplier_id = map_name_link_id_to_name_id(connection, supplier_name_link_id)?;
-
         let legacy_row = LegacyPurchaseOrderRow {
             id,
             purchase_order_number,
@@ -429,10 +429,10 @@ impl SyncTranslation for PurchaseOrderTranslation {
             contract_signed_date,
             advance_paid_date,
             received_at_port_date,
-            name_id: supplier_id,
+            name_id: supplier_name_id,
             creation_date: created_datetime.date(),
             confirm_date: confirmed_datetime.map(|d| d.date()),
-            curr_rate: foreign_exchange_rate,
+            curr_rate: Some(foreign_exchange_rate),
             order_total_before_discount,
             order_total_after_discount,
             donor_id,
@@ -504,7 +504,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
 
@@ -546,24 +547,26 @@ mod tests {
         .await;
 
         let translator = PurchaseOrderTranslation {};
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new().table_name(ChangelogTableName::PurchaseOrder.equal_to()),
-                ),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrder),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

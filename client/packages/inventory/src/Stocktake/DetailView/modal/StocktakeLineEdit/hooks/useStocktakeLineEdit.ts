@@ -7,13 +7,12 @@ import { useStocktakeOld } from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
 import { useDraftStocktakeLines } from './useDraftStocktakeLines';
-import { StocktakeSummaryItem } from '../../../../../types';
 import { StocktakeLineFragment } from '../../../../api';
 
 interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
   update: (patch: RecordPatch<DraftStocktakeLine>) => void;
-  addLine: () => void;
+  addLine: (initialPatch?: Partial<DraftStocktakeLine>) => void;
   save: () => Promise<{ errorMessages?: string[] }>;
   isSaving: boolean;
   nextItem: DraftStocktakeLine['item'] | null;
@@ -21,14 +20,13 @@ interface useStocktakeLineEditController {
 
 export const useStocktakeLineEdit = (
   item: DraftStocktakeLine['item'] | null,
-  items: StocktakeSummaryItem[],
+  getSortedItems: () => StocktakeLineFragment['item'][],
   lines?: StocktakeLineFragment[]
 ): useStocktakeLineEditController => {
   const { id } = useStocktakeOld.document.fields('id');
-  const filteredItems = items.filter(item => item.item?.id === item?.id);
-  const nextItem = useNextItem(filteredItems, item?.id);
+  const nextItem = useNextItem(getSortedItems, item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item, lines);
-  const { saveAndMapStructuredErrors: upsertLines, isLoading: isSaving } =
+  const { saveAndMapStructuredErrors: upsertLines, isPending: isSaving } =
     useStocktakeOld.line.save();
 
   const update = (patch: RecordPatch<DraftStocktakeLine>) =>
@@ -47,9 +45,11 @@ export const useStocktakeLineEdit = (
     }
   };
 
-  const addLine = () => {
+  const addLine = (initialPatch?: Partial<DraftStocktakeLine>) => {
     if (item) {
-      setDraftLines(lines => [DraftLine.fromItem(id, item), ...lines]);
+      const newLine = DraftLine.fromItem(id, item);
+      const line = initialPatch ? { ...newLine, ...initialPatch } : newLine;
+      setDraftLines(lines => [line, ...lines]);
     }
   };
 

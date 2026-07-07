@@ -18,14 +18,14 @@ fn consumption_points() -> MockData {
             InvoiceRow {
                 id: invoice_id.clone(),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 ..Default::default()
             },
             InvoiceRow {
-                id: format!("{}-invoice-2", invoice_id),
+                id: format!("{invoice_id}-invoice-2"),
                 store_id: mock_store_a().id,
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 r#type: InvoiceType::OutboundShipment,
                 linked_invoice_id: Some(invoice_id.clone()),
                 ..Default::default()
@@ -33,26 +33,26 @@ fn consumption_points() -> MockData {
         ],
         invoice_lines: vec![
             InvoiceLineRow {
-                id: format!("{}-line-item1", invoice_id),
+                id: format!("{invoice_id}-line-item1"),
                 invoice_id: invoice_id.clone(),
-                item_link_id: item().id,
+                item_id: item().id,
                 r#type: InvoiceLineType::StockOut,
                 pack_size: 1.0,
                 ..Default::default()
             },
             InvoiceLineRow {
-                id: format!("{}-line-item2", invoice_id),
+                id: format!("{invoice_id}-line-item2"),
                 invoice_id: invoice_id.clone(),
-                item_link_id: item2().id,
+                item_id: item2().id,
                 r#type: InvoiceLineType::StockOut,
                 pack_size: 1.0,
                 ..Default::default()
             },
             InvoiceLineRow {
-                id: format!("{}-invoice-2-line-item3", invoice_id),
+                id: format!("{invoice_id}-invoice-2-line-item3"),
                 // Invoice 2 = transfer
-                invoice_id: format!("{}-invoice-2", invoice_id),
-                item_link_id: item2().id,
+                invoice_id: format!("{invoice_id}-invoice-2"),
+                item_id: item2().id,
                 r#type: InvoiceLineType::StockOut,
                 pack_size: 1.0,
                 ..Default::default()
@@ -93,7 +93,7 @@ pub fn mock_item_stats() -> MockData {
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 1000.0;
         u.invoice_lines[ITEM2_INDEX].number_of_packs = 30.0;
         // 34 days ago - Transfer invoice - intended to fall outside of custom days test
-        u.invoices[1].picked_datetime = Some(Utc::now().naive_utc() - Duration::days(34 as i64));
+        u.invoices[1].picked_datetime = Some(Utc::now().naive_utc() - Duration::days(34_i64));
         u.invoice_lines[ITEM2_TRANSFER_INDEX].number_of_packs = 2.0;
         u.invoice_lines[ITEM2_TRANSFER_INDEX].pack_size = 10.0;
         u
@@ -186,12 +186,12 @@ pub fn stock_line1() -> StockLineRow {
     let id = "stock_line1".to_string();
     StockLineRow {
         id: id.clone(),
-        item_link_id: item().id,
+        item_id: item().id,
         store_id: mock_store_a().id,
         pack_size: 10.0,
         available_number_of_packs: 1.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -200,12 +200,12 @@ pub fn stock_line2() -> StockLineRow {
     let id = "stock_line2".to_string();
     StockLineRow {
         id: id.clone(),
-        item_link_id: item().id,
+        item_id: item().id,
         store_id: mock_store_a().id,
         available_number_of_packs: 20.0,
         pack_size: 10.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -214,12 +214,12 @@ pub fn stock_line3() -> StockLineRow {
     let id = "stock_line3".to_string();
     StockLineRow {
         id: id.clone(),
-        item_link_id: item().id,
+        item_id: item().id,
         store_id: mock_store_a().id,
         available_number_of_packs: 10.0,
         pack_size: 1.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -232,12 +232,12 @@ pub fn stock_line_1_store_b() -> StockLineRow {
     let id = "stock_line_1_store_b".to_string();
     StockLineRow {
         id: id.clone(),
-        item_link_id: item().id,
+        item_id: item().id,
         store_id: mock_store_b().id,
         available_number_of_packs: 1.0,
         pack_size: 10.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }
@@ -261,12 +261,12 @@ pub fn stock_line1_item2() -> StockLineRow {
     let id = "stock_line1_item2".to_string();
     StockLineRow {
         id: id.clone(),
-        item_link_id: item2().id,
+        item_id: item2().id,
         store_id: mock_store_a().id,
         available_number_of_packs: 11.0,
         pack_size: 2.0,
         total_number_of_packs: 40.0,
-        supplier_link_id: Some(String::from("name_store_b")),
+        supplier_id: Some(String::from("name_store_b")),
         ..Default::default()
     }
 }

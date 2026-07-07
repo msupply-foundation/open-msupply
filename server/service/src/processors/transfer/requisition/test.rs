@@ -34,7 +34,7 @@ async fn requisition_transfer() {
 
     let request_store = StoreRow {
         id: uuid(),
-        name_link_id: request_store_name.id.clone(),
+        name_id: request_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -47,7 +47,7 @@ async fn requisition_transfer() {
 
     let response_store = StoreRow {
         id: uuid(),
-        name_link_id: response_store_name.id.clone(),
+        name_id: response_store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -110,26 +110,26 @@ async fn requisition_transfer() {
                 thread_num,
             );
 
-            log::debug!("{}: insert", thread_num);
+            log::debug!("{thread_num}: insert");
             tester.insert_request_requisition(&ctx.connection);
             // manually trigger because inserting the requisition doesn't trigger the processor
             ctx.processors_trigger
                 .requisition_transfer
                 .try_send(())
                 .unwrap();
-            log::debug!("{}: await_events_processed", thread_num);
+            log::debug!("{thread_num}: await_events_processed");
             ctx.processors_trigger.await_events_processed().await;
-            log::debug!("{}: check_response_requisition_not_created", thread_num);
+            log::debug!("{thread_num}: check_response_requisition_not_created");
             tester.check_response_requisition_not_created(&ctx.connection);
-            log::debug!("{}: update_request_requisition_to_sent", thread_num);
+            log::debug!("{thread_num}: update_request_requisition_to_sent");
             tester.update_request_requisition_to_sent(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            log::debug!("{}: check_response_requisition_created", thread_num);
+            log::debug!("{thread_num}: check_response_requisition_created");
             tester.check_response_requisition_created(&ctx.connection, thread_num);
             ctx.processors_trigger.await_events_processed().await;
-            log::debug!("{}: check_request_requisition_was_linked", thread_num);
+            log::debug!("{thread_num}: check_request_requisition_was_linked");
             tester.check_request_requisition_was_linked(&ctx.connection);
-            log::debug!("{}: update_response_requisition_to_approved", thread_num);
+            log::debug!("{thread_num}: update_response_requisition_to_approved");
             tester.update_response_requisition_to_approved(&service_provider, thread_num);
             // Response requisition approval is usually done by mSupply
             // Processor would be triggered after sync
@@ -138,14 +138,14 @@ async fn requisition_transfer() {
                 .requisition_transfer
                 .try_send(())
                 .unwrap();
-            log::debug!("{}: await_events_processed", thread_num);
+            log::debug!("{thread_num}: await_events_processed");
             ctx.processors_trigger.await_events_processed().await;
-            log::debug!("{}: check_request_requisition_approved", thread_num);
+            log::debug!("{thread_num}: check_request_requisition_approved");
             tester.check_request_requisition_approved(&ctx.connection, thread_num);
-            log::debug!("{}: update_response_requisition_to_finalised", thread_num);
+            log::debug!("{thread_num}: update_response_requisition_to_finalised");
             tester.update_response_requisition_to_finalised(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            log::debug!("{}: check_request_requisition_status_updated", thread_num);
+            log::debug!("{thread_num}: check_request_requisition_status_updated");
             tester.check_request_requisition_status_updated(&ctx.connection);
         },
     );
@@ -177,7 +177,7 @@ async fn stock_on_deleted_requisitions() {
 
     let store = StoreRow {
         id: uuid(),
-        name_link_id: store_name.id.clone(),
+        name_id: store_name.id.clone(),
         site_id,
         ..Default::default()
     };
@@ -185,7 +185,7 @@ async fn stock_on_deleted_requisitions() {
     let requisition = RequisitionRow {
         id: uuid(),
         requisition_number: 3,
-        name_link_id: store.name_link_id.clone(),
+        name_id: store.name_id.clone(),
         store_id: store.id.clone(),
         r#type: RequisitionType::Request,
         ..RequisitionRow::default()
@@ -251,7 +251,7 @@ impl RequisitionTransferTester {
         let request_requisition = RequisitionRow {
             id: format!("{}_request_requisition_{}", thread_number, uuid()),
             requisition_number: 3,
-            name_link_id: response_store.name_link_id.clone(),
+            name_id: response_store.name_id.clone(),
             store_id: request_store.id.clone(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
@@ -270,7 +270,7 @@ impl RequisitionTransferTester {
         let request_requisition_line1 = RequisitionLineRow {
             id: format!("{}_request_requisition_line_1_{}", thread_number, uuid()),
             requisition_id: request_requisition.id.clone(),
-            item_link_id: item1.id.clone(),
+            item_id: item1.id.clone(),
             requested_quantity: 2.0,
             suggested_quantity: 3.0,
             comment: Some("line comment".to_string()),
@@ -288,7 +288,7 @@ impl RequisitionTransferTester {
         let request_requisition_line2 = RequisitionLineRow {
             id: format!("{}_request_requisition_line_2_{}", thread_number, uuid()),
             requisition_id: request_requisition.id.clone(),
-            item_link_id: item2.id.clone(),
+            item_id: item2.id.clone(),
             requested_quantity: 10.0,
             suggested_quantity: 20.0,
             available_stock_on_hand: 30.0,
@@ -372,8 +372,8 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.status, RequisitionStatus::New);
         assert_eq!(response_requisition.store_id, self.response_store.id);
         assert_eq!(
-            response_requisition.name_link_id,
-            self.request_store.name_link_id
+            response_requisition.name_id,
+            self.request_store.name_id
         );
         assert_eq!(
             response_requisition.their_reference,
@@ -583,7 +583,7 @@ fn check_line(
         .query_one(
             RequisitionLineFilter::new()
                 .requisition_id(EqualFilter::equal_to(response_requisition_id.to_string()))
-                .item_id(EqualFilter::equal_to(request_line.item_link_id.to_string())),
+                .item_id(EqualFilter::equal_to(request_line.item_id.to_string())),
         )
         .unwrap();
 

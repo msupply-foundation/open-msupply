@@ -3,6 +3,7 @@ use chrono::NaiveDate;
 use graphql_core::{
     simple_generic_errors::ConnectionError, standard_graphql_error::StandardGraphqlError,
 };
+use graphql_types::types::patient::GenderTypeNode;
 use service::{
     apis::patient_v4::PatientV4,
     programs::patient::{CentralPatientRequestError, PatientSearch},
@@ -57,6 +58,10 @@ impl CentralPatientNode {
         &self.patient.code
     }
 
+    pub async fn code_2(&self) -> Option<&str> {
+        self.patient.code_2.as_deref()
+    }
+
     pub async fn first_name(&self) -> &str {
         &self.patient.first
     }
@@ -68,6 +73,14 @@ impl CentralPatientNode {
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
         self.patient.date_of_birth
     }
+
+    pub async fn gender(&self) -> Option<GenderTypeNode> {
+        self.patient.gender.clone().map(GenderTypeNode::from)
+    }
+
+    pub async fn is_deceased(&self) -> bool {
+        self.patient.is_deceased
+    }
 }
 
 pub fn map_central_patient_search_result(
@@ -76,7 +89,7 @@ pub fn map_central_patient_search_result(
     let result = match result {
         Ok(result) => Ok(result),
         Err(err) => {
-            let formatted_error = format!("{:#?}", err);
+            let formatted_error = format!("{err:#?}");
             let graphql_error = match err {
                 CentralPatientRequestError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)

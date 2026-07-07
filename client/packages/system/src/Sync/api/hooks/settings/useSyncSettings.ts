@@ -3,7 +3,9 @@ import { useSyncApi } from '../utils/useSyncApi';
 
 export const useSyncSettings = () => {
   const api = useSyncApi();
-  return useQuery(api.keys.syncSettings(), api.get.syncSettings, {
-    cacheTime: 0,
+  return useQuery({
+    queryKey: api.keys.syncSettings(),
+    queryFn: api.get.syncSettings,
+    gcTime: 0
   });
 };

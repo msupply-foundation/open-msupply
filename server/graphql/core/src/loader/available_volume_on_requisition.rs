@@ -102,7 +102,7 @@ mod tests {
         RequisitionRow {
             id: id.to_string(),
             requisition_number: number,
-            name_link_id: mock_name_a().id,
+            name_id: mock_name_a().id,
             store_id: mock_store_a().id,
             ..Default::default()
         }
@@ -112,7 +112,7 @@ mod tests {
         RequisitionLineRow {
             id: id.to_string(),
             requisition_id: requisition_id.to_string(),
-            item_link_id: item_id.to_string(),
+            item_id: item_id.to_string(),
             available_volume: Some(available_volume),
             ..Default::default()
         }

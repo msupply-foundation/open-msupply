@@ -22,6 +22,8 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             name: "facility".to_string(),
             is_customer: true,
             is_supplier: true,
+            margin: Some(0.0),
+            freight_factor: Some(0.0),
             ..Default::default()
         };
         let facility_name_json = json!({
@@ -34,7 +36,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
 
         let store_row = StoreRow {
             id: uuid(),
-            name_link_id: facility_name_row.id.clone(),
+            name_id: facility_name_row.id.clone(),
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
             store_mode: StoreMode::Dispensary,
@@ -44,7 +46,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
         let store_json = json!({
             "ID": store_row.id,
             "code": store_row.code,
-            "name_ID": store_row.name_link_id,
+            "name_ID": store_row.name_id,
             "sync_id_remote_site": store_row.site_id,
             "store_mode": "dispensary",
             "created_date": "2021-01-01"
@@ -58,6 +60,9 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             is_supplier: false,
             gender: Some(GenderType::Male),
             supplying_store_id: Some(store_row.id.clone()),
+            // 4D defaults these float columns to 0 when the upsert omits them.
+            margin: Some(0.0),
+            freight_factor: Some(0.0),
             ..Default::default()
         };
         let patient_name_json = json!({
@@ -73,14 +78,14 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
 
         let patient_name_store_join_row = NameStoreJoinRow {
             id: uuid(),
-            name_link_id: patient_name_row.id.clone(),
+            name_id: patient_name_row.id.clone(),
             store_id: store_row.id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
         };
         let patient_name_store_join_json = json!({
             "ID": patient_name_store_join_row.id,
-            "name_ID": patient_name_store_join_row.name_link_id,
+            "name_ID": patient_name_store_join_row.name_id,
             "store_ID": patient_name_store_join_row.store_id
         });
 

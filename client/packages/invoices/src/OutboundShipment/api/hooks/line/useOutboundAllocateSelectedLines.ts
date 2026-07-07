@@ -17,17 +17,28 @@ export const useOutboundAllocateLines = () => {
   const api = useOutboundApi();
   const queryKey = api.keys.detail(outboundId);
 
-  return useMutation(api.allocateLines, {
+  return useMutation({
+    mutationFn: api.allocateLines,
+
     onMutate: async () => {
-      await queryClient.cancelQueries(queryKey);
+      await queryClient.cancelQueries({
+        queryKey: queryKey
+      });
     },
+
     onError: (error: string) => {
       throw new Error(error);
     },
+
     onSuccess: () => {
-      queryClient.invalidateQueries(queryKey);
+      queryClient.invalidateQueries({
+        queryKey: queryKey
+      });
     },
-    onSettled: () => queryClient.invalidateQueries(queryKey),
+
+    onSettled: () => queryClient.invalidateQueries({
+      queryKey: queryKey
+    })
   });
 };
 

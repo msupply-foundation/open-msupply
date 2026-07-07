@@ -71,7 +71,10 @@ export const ConfirmationModal = ({
         </Grid>
         {info && (
           <Grid paddingY={1}>
-            <Alert style={{ whiteSpace: 'pre-line' }} severity="info">
+            <Alert
+              style={{ whiteSpace: 'pre-line' }}
+              severity={iconType === 'alert' ? 'warning' : 'info'}
+            >
               {info}
             </Alert>
           </Grid>
@@ -102,8 +105,11 @@ export const ConfirmationModal = ({
                 const result = onConfirm && onConfirm();
                 if (result instanceof Promise) {
                   setLoading(true);
-                  await result;
-                  setLoading(false);
+                  try {
+                    await result;
+                  } finally {
+                    setLoading(false);
+                  }
                 }
               }}
               label={buttonLabel ? buttonLabel : t('button.ok')}

@@ -1,104 +1,93 @@
 import {
-  useUrlQueryParams,
+  RecordPatch,
   useQuery,
   useTranslation,
-  uniqBy,
-  ArrayUtils,
-  TypedTFunction,
-  LocaleKey,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useDemographicsApi } from '../utils/useDemographicApi';
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { GENERAL_POPULATION_ID } from '../..';
 import {
   calculateAcrossRow,
   toDemographicIndicatorRow,
 } from '../../../DetailView/utils';
 import { HeaderData, Row } from '../../../types';
-import { DemographicIndicatorFragment } from '../../operations.generated';
+
+type RowEdit = Partial<Row> & { isNew?: boolean };
 
 export const useDemographicIndicators = (headerData?: HeaderData) => {
   const t = useTranslation();
   const api = useDemographicsApi();
-  const [draft, setDraft] = useState<Record<string, Row>>({});
   const { queryParams } = useUrlQueryParams({
     filters: [{ key: 'name' }, { key: 'basePopulation' }, { key: 'id' }],
   });
-  const { data, isLoading } = useQuery(
-    api.keys.paramIndicatorList(queryParams),
-    () => api.getIndicators.list(queryParams)
-  );
-
-  // initial load which populates from the API
-  useEffect(() => {
-    if (!data || !headerData) return;
-
-    const generalRow = getGeneralRow(draft, data?.nodes ?? [], headerData, t);
-    const nodes = [...data?.nodes];
-    const nodesAsRow = nodes.map(toDemographicIndicatorRow);
-    const nodesFiltered = uniqBy([generalRow, ...nodesAsRow], 'id');
-    const draftRows = ArrayUtils.toObject(nodesFiltered);
-    setDraft(draftRows);
-
-    // don't want this changing every time the draft updates
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, headerData]);
-
-  // recalculate the draft when the header changes
-  useEffect(() => {
-    const generalRow = draft[GENERAL_POPULATION_ID];
-    if (!generalRow || !headerData) return;
-
-    const updatedDraft: Record<string, Row> = {};
-    Object.values(draft).forEach(row => {
-      const updatedRow = calculateAcrossRow(
-        row,
-        headerData,
-        generalRow.basePopulation
-      );
-      updatedDraft[updatedRow.id] = updatedRow;
-    });
-
-    setDraft(updatedDraft);
-    // don't want to update on every draft change::recursion!
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t, headerData]);
-
-  return { draft, setDraft, isLoading, data };
-};
-
-const getGeneralRow = (
-  draft: Record<string, Row>,
-  nodes: DemographicIndicatorFragment[],
-  headerData: HeaderData,
-  t: TypedTFunction<LocaleKey>
-) => {
-  const draftGeneralRow = draft[GENERAL_POPULATION_ID];
-  if (!!draftGeneralRow) return draftGeneralRow;
-
-  // generate index row dynamically from basePopulation and baseYear
-  const generalRow = toDemographicIndicatorRow({
-    __typename: 'DemographicIndicatorNode',
-    id: GENERAL_POPULATION_ID,
-    populationPercentage: 100,
-    name: t('label.general-population'),
-    baseYear: nodes[0]?.baseYear ?? 2024,
-    // calculate basePopulation based on first matching row's base population
-    // later we could save generalPopulationRows in the database which are unique for any given year? Their id could be something
-    // like GENERAL_POPULATION_ID_<year>
-    basePopulation: nodes[0]?.basePopulation ?? 0,
-    year1Projection: nodes[0]?.basePopulation ?? 0,
-    year2Projection: 0,
-    year3Projection: 0,
-    year4Projection: 0,
-    year5Projection: 0,
+  const { data, isLoading } = useQuery({
+    queryKey: api.keys.paramIndicatorList(queryParams),
+    queryFn: () => api.getIndicators.list(queryParams),
   });
 
-  const generalRowCalculated = calculateAcrossRow(
-    generalRow,
-    headerData,
-    generalRow.basePopulation
-  );
+  const [edits, setEdits] = useState<Record<string, RowEdit>>({});
 
-  return generalRowCalculated;
+  const indexPopulation = useMemo<number>(() => {
+    const local = edits[GENERAL_POPULATION_ID]?.[0];
+    if (typeof local === 'number') return local;
+    const generalNode = data?.nodes.find(n => n.id === GENERAL_POPULATION_ID);
+    return generalNode?.basePopulation ?? 0;
+  }, [data, edits]);
+
+  const draft = useMemo<Record<string, Row>>(() => {
+    if (!data || !headerData) return {};
+    const rows: Record<string, Row> = {};
+
+    for (const node of data.nodes) {
+      const base = toDemographicIndicatorRow({
+        ...node,
+        // Always use the translated name for the general population row since
+        // it wasn't added by the user and is hardcoded in En
+        name:
+          node.id === GENERAL_POPULATION_ID
+            ? t('label.general-population')
+            : node.name,
+      });
+      const merged: Row = { ...base, ...edits[node.id] };
+      rows[node.id] = calculateAcrossRow(merged, headerData, indexPopulation);
+    }
+
+    for (const [id, edit] of Object.entries(edits)) {
+      if (rows[id] || !edit.isNew) continue;
+      rows[id] = calculateAcrossRow(
+        { ...(edit as Row), id },
+        headerData,
+        indexPopulation
+      );
+    }
+
+    return rows;
+  }, [data, headerData, edits, indexPopulation, t]);
+
+  const setDraft = useCallback((patch: RecordPatch<Row>) => {
+    setEdits(prev => ({
+      ...prev,
+      [patch.id]: { ...prev[patch.id], ...patch },
+    }));
+  }, []);
+
+  const addRow = useCallback((row: Row) => {
+    setEdits(prev => ({
+      ...prev,
+      [row.id]: { ...row, isNew: true },
+    }));
+  }, []);
+
+  const resetEdits = useCallback(() => setEdits({}), []);
+
+  return {
+    draft,
+    indexPopulation,
+    setDraft,
+    addRow,
+    resetEdits,
+    isLoading,
+    data,
+  };
 };

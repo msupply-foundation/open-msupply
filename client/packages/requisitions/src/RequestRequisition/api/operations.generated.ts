@@ -35,6 +35,8 @@ export type RequestRowFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   period?: {
@@ -95,7 +97,43 @@ export type RequestByNumberQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           margin?: number | null;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
+        };
+        ancillaryState: {
+          __typename: 'AncillaryStateResponse';
+          state: Types.AncillaryStateNode;
+          count: number;
+          toAdd: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+          toUpdate: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
         };
         documents: {
           __typename: 'SyncFileReferenceConnector';
@@ -105,6 +143,8 @@ export type RequestByNumberQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         user?: {
@@ -132,6 +172,9 @@ export type RequestByNumberQuery = {
             expiringUnits: number;
             daysOutOfStock: number;
             pricePerUnit?: number | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               availableStockOnHand: number;
@@ -153,16 +196,13 @@ export type RequestByNumberQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
+            ancillaryParents: Array<{
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+            }>;
             reason?: {
               __typename: 'ReasonOptionNode';
               id: string;
@@ -192,7 +232,12 @@ export type RequestByNumberQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         linkedRequisition?: {
           __typename: 'RequisitionNode';
@@ -253,7 +298,43 @@ export type RequestByIdQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           margin?: number | null;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
+        };
+        ancillaryState: {
+          __typename: 'AncillaryStateResponse';
+          state: Types.AncillaryStateNode;
+          count: number;
+          toAdd: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
+          toUpdate: Array<{
+            __typename: 'AncillaryDeltaNode';
+            itemId: string;
+            requiredQuantity: number;
+            currentQuantity?: number | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+            };
+          }>;
         };
         documents: {
           __typename: 'SyncFileReferenceConnector';
@@ -263,6 +344,8 @@ export type RequestByIdQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         user?: {
@@ -290,6 +373,9 @@ export type RequestByIdQuery = {
             expiringUnits: number;
             daysOutOfStock: number;
             pricePerUnit?: number | null;
+            forecastTotalUnits?: number | null;
+            forecastTotalDoses?: number | null;
+            vaccineCourses?: string | null;
             itemStats: {
               __typename: 'ItemStatsNode';
               availableStockOnHand: number;
@@ -311,16 +397,13 @@ export type RequestByIdQuery = {
               isVaccine: boolean;
               doses: number;
               availableStockOnHand: number;
-              stats: {
-                __typename: 'ItemStatsNode';
-                averageMonthlyConsumption: number;
-                availableStockOnHand: number;
-                availableMonthsOfStockOnHand?: number | null;
-                totalConsumption: number;
-                stockOnHand: number;
-                monthsOfStockOnHand?: number | null;
-              };
             };
+            ancillaryParents: Array<{
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+            }>;
             reason?: {
               __typename: 'ReasonOptionNode';
               id: string;
@@ -350,7 +433,12 @@ export type RequestByIdQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         linkedRequisition?: {
           __typename: 'RequisitionNode';
@@ -467,6 +555,8 @@ export type RequestsQuery = {
           fileName: string;
           recordId: string;
           createdDatetime: string;
+          status: Types.SyncFileReferenceNodeStatus;
+          error?: string | null;
         }>;
       };
       period?: {
@@ -480,6 +570,30 @@ export type RequestsQuery = {
       lines: { __typename: 'RequisitionLineConnector'; totalCount: number };
     }>;
   };
+};
+
+export type RefreshAncillaryItemsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.RefreshAncillaryItemsInput;
+}>;
+
+export type RefreshAncillaryItemsMutation = {
+  __typename: 'Mutations';
+  refreshAncillaryItems:
+    | {
+        __typename: 'RefreshAncillaryItemsError';
+        error:
+          | { __typename: 'CannotEditRequisition'; description: string }
+          | {
+              __typename: 'ForeignKeyError';
+              description: string;
+              key: Types.ForeignKey;
+            };
+      }
+    | {
+        __typename: 'RefreshAncillaryItemsSuccess';
+        lines: Array<{ __typename: 'RequisitionLineNode'; id: string }>;
+      };
 };
 
 export type InsertRequestLineMutationVariables = Types.Exact<{
@@ -627,7 +741,9 @@ export type InsertProgramRequestMutation = {
   insertProgramRequestRequisition:
     | {
         __typename: 'InsertProgramRequestRequisitionError';
-        error: { __typename: 'MaxOrdersReachedForPeriod'; description: string };
+        error:
+          | { __typename: 'MaxOrdersReachedForPeriod'; description: string }
+          | { __typename: 'SupplierNotValid'; description: string };
       }
     | { __typename: 'RequisitionNode'; id: string };
 };
@@ -738,7 +854,12 @@ export type SupplierProgramSettingsFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   }>;
   orderTypes: Array<{
     __typename: 'ProgramRequisitionOrderTypeNode';
@@ -772,7 +893,12 @@ export type SupplierProgramSettingsQuery = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
-      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      store?: {
+        __typename: 'StoreNode';
+        id: string;
+        code: string;
+        isDisabled: boolean;
+      } | null;
     }>;
     orderTypes: Array<{
       __typename: 'ProgramRequisitionOrderTypeNode';
@@ -800,6 +926,7 @@ export type ProgramIndicatorFragment = {
       columnNumber: number;
       name: string;
       valueType?: Types.IndicatorValueTypeNode | null;
+      isActive: boolean;
       value?: {
         __typename: 'IndicatorValueNode';
         id: string;
@@ -813,6 +940,7 @@ export type ProgramIndicatorFragment = {
       lineNumber: number;
       name: string;
       valueType?: Types.IndicatorValueTypeNode | null;
+      isActive: boolean;
     };
     customerIndicatorInfo: Array<{
       __typename: 'CustomerIndicatorInformationNode';
@@ -835,6 +963,7 @@ export type IndicatorLineRowFragment = {
   lineNumber: number;
   name: string;
   valueType?: Types.IndicatorValueTypeNode | null;
+  isActive: boolean;
 };
 
 export type IndicatorColumnFragment = {
@@ -843,6 +972,7 @@ export type IndicatorColumnFragment = {
   columnNumber: number;
   name: string;
   valueType?: Types.IndicatorValueTypeNode | null;
+  isActive: boolean;
   value?: {
     __typename: 'IndicatorValueNode';
     id: string;
@@ -882,6 +1012,7 @@ export type IndicatorLineWithColumnsFragment = {
     columnNumber: number;
     name: string;
     valueType?: Types.IndicatorValueTypeNode | null;
+    isActive: boolean;
     value?: {
       __typename: 'IndicatorValueNode';
       id: string;
@@ -895,6 +1026,7 @@ export type IndicatorLineWithColumnsFragment = {
     lineNumber: number;
     name: string;
     valueType?: Types.IndicatorValueTypeNode | null;
+    isActive: boolean;
   };
   customerIndicatorInfo: Array<{
     __typename: 'CustomerIndicatorInformationNode';
@@ -933,6 +1065,7 @@ export type ProgramIndicatorsQuery = {
           columnNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
           value?: {
             __typename: 'IndicatorValueNode';
             id: string;
@@ -946,6 +1079,7 @@ export type ProgramIndicatorsQuery = {
           lineNumber: number;
           name: string;
           valueType?: Types.IndicatorValueTypeNode | null;
+          isActive: boolean;
         };
         customerIndicatorInfo: Array<{
           __typename: 'CustomerIndicatorInformationNode';
@@ -1106,6 +1240,7 @@ export const IndicatorColumnFragmentDoc = gql`
     columnNumber
     name
     valueType
+    isActive
     value(
       periodId: $periodId
       customerNameId: $customerNameId
@@ -1123,6 +1258,7 @@ export const IndicatorLineRowFragmentDoc = gql`
     lineNumber
     name
     valueType
+    isActive
   }
 `;
 export const CustomerIndicatorInfoFragmentDoc = gql`
@@ -1294,6 +1430,37 @@ export const RequestsDocument = gql`
     }
   }
   ${RequestRowFragmentDoc}
+`;
+export const RefreshAncillaryItemsDocument = gql`
+  mutation refreshAncillaryItems(
+    $storeId: String!
+    $input: RefreshAncillaryItemsInput!
+  ) {
+    refreshAncillaryItems(storeId: $storeId, input: $input) {
+      __typename
+      ... on RefreshAncillaryItemsSuccess {
+        __typename
+        lines {
+          id
+        }
+      }
+      ... on RefreshAncillaryItemsError {
+        __typename
+        error {
+          description
+          ... on CannotEditRequisition {
+            __typename
+            description
+          }
+          ... on ForeignKeyError {
+            __typename
+            description
+            key
+          }
+        }
+      }
+    }
+  }
 `;
 export const InsertRequestLineDocument = gql`
   mutation insertRequestLine(
@@ -1499,6 +1666,10 @@ export const InsertProgramRequestDocument = gql`
         error {
           description
           ... on MaxOrdersReachedForPeriod {
+            __typename
+            description
+          }
+          ... on SupplierNotValid {
             __typename
             description
           }
@@ -1751,6 +1922,24 @@ export function getSdk(
           }),
         'requests',
         'query',
+        variables
+      );
+    },
+    refreshAncillaryItems(
+      variables: RefreshAncillaryItemsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<RefreshAncillaryItemsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<RefreshAncillaryItemsMutation>({
+            document: RefreshAncillaryItemsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'refreshAncillaryItems',
+        'mutation',
         variables
       );
     },

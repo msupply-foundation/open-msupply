@@ -66,7 +66,7 @@ pub fn update_supplier_return_other_party(
                 ActivityLogRowRepository::new(connection).insert_one(&new_activity)?;
             }
 
-            get_invoice(ctx, None, &new_invoice.id)
+            get_invoice(ctx, None, &new_invoice.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
@@ -123,7 +123,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "not_a_supplier_join".to_string(),
-                name_link_id: not_a_supplier().id,
+                name_id: not_a_supplier().id,
                 store_id: mock_store_b().id,
                 name_is_supplier: false,
                 ..Default::default()
@@ -243,7 +243,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             InvoiceRow {
                 id: "test_other_party_change".to_string(),
-                name_link_id: mock_name_a().id,
+                name_id: mock_name_a().id,
                 store_id: mock_store_c().id,
                 r#type: InvoiceType::SupplierReturn,
                 status: InvoiceStatus::Picked,
@@ -255,7 +255,7 @@ mod test {
             InvoiceLineRow {
                 id: "some_invoice_line_id_a".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 location_id: None,
                 stock_line_id: Some("stock_line_ci_d_siline_a".to_string()),
                 batch: Some("stock_line_ci_d_siline_a".to_string()),
@@ -267,7 +267,7 @@ mod test {
             InvoiceLineRow {
                 id: "some_invoice_line_id_b".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: "item_b".to_string(),
+                item_id: "item_b".to_string(),
                 location_id: None,
                 stock_line_id: Some("item_b_line_a".to_string()),
                 batch: Some("item_b_line_a".to_string()),
@@ -285,7 +285,7 @@ mod test {
         fn supplier_join() -> NameStoreJoinRow {
             NameStoreJoinRow {
                 id: "supplier_join".to_string(),
-                name_link_id: supplier().id,
+                name_id: supplier().id,
                 store_id: mock_store_c().id,
                 name_is_supplier: true,
                 ..Default::default()
@@ -344,8 +344,8 @@ mod test {
             updated_invoice.invoice_row
         );
         assert_ne!(
-            updated_invoice.invoice_row.name_link_id,
-            invoice().name_link_id
+            updated_invoice.invoice_row.name_id,
+            invoice().name_id
         );
         assert_eq!(
             updated_lines,

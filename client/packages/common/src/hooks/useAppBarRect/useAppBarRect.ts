@@ -28,7 +28,7 @@ export const useAppBarRectStore = create<AppBarRect>(set => ({
 }));
 
 export const useAppBarRect = <T extends HTMLElement>(): AppBarRect & {
-  ref: RefObject<T>;
+  ref: RefObject<T | null>;
 } => {
   const { setAppBarRect, ...rest } = useAppBarRectStore();
   const { ref } = useBoundingClientRectRef<T>(setAppBarRect);

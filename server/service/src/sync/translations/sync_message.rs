@@ -4,6 +4,8 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncMessageRow, SyncMessageRowRepository,
     SyncMessageRowStatus, SyncMessageRowType,
+    Row,
+
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{empty_str_as_option_string, naive_time};
@@ -39,7 +41,9 @@ pub struct LegacyMessageRow {
 pub enum LegacySyncMessageStatus {
     #[default]
     New,
+    InProgress,
     Processed,
+    Error,
 }
 
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -71,11 +75,13 @@ impl SyncTranslation for MessageTranslation {
             status,
             r#type,
             error_message,
-        } = serde_json::from_str(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let status = match status {
             LegacySyncMessageStatus::New => SyncMessageRowStatus::New,
+            LegacySyncMessageStatus::InProgress => SyncMessageRowStatus::InProgress,
             LegacySyncMessageStatus::Processed => SyncMessageRowStatus::Processed,
+            LegacySyncMessageStatus::Error => SyncMessageRowStatus::Error,
         };
 
         let body = serde_json::to_string(&body).context("Failed to serialize message body")?;
@@ -102,12 +108,26 @@ impl SyncTranslation for MessageTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::SyncMessage(sync_message_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(message) =
-            SyncMessageRowRepository::new(connection).find_one_by_id(&changelog.record_id)?
+            SyncMessageRowRepository::new(connection).find_one_by_id(&sync_message_row.id)?
         else {
             return Err(anyhow::anyhow!("Message not found"));
         };
+
+        // SupportUpload messages are an open-mSupply-only flow (processed by
+        // SupportUploadFilesProcessor on the receiving site, files uploaded
+        // to OMS central via TUS) — legacy mSupply has no handler for them.
+        // OmSyncMessageTranslation owns that path; we skip here so we don't
+        // double-sync the same row to both centrals.
+        if matches!(message.r#type, SyncMessageRowType::SupportUpload) {
+            return Ok(PushTranslateResult::NotMatched);
+        }
 
         let SyncMessageRow {
             id,
@@ -135,7 +155,9 @@ impl SyncTranslation for MessageTranslation {
             created_time,
             status: match status {
                 SyncMessageRowStatus::New => LegacySyncMessageStatus::New,
+                SyncMessageRowStatus::InProgress => LegacySyncMessageStatus::InProgress,
                 SyncMessageRowStatus::Processed => LegacySyncMessageStatus::Processed,
+                SyncMessageRowStatus::Error => LegacySyncMessageStatus::Error,
             },
             r#type,
             error_message,
@@ -143,11 +165,7 @@ impl SyncTranslation for MessageTranslation {
 
         let json_record = serde_json::to_value(legacy_row)?;
 
-        Ok(PushTranslateResult::upsert(
-            changelog,
-            self.table_name(),
-            json_record,
-        ))
+        Ok(PushTranslateResult::upsert(changelog, self.table_name(), json_record))
     }
 }
 

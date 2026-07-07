@@ -50,6 +50,7 @@ pub fn create_requisition_shipment(
         &ResourceAccessRequest {
             resource: Resource::CreateOutboundShipmentFromRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -84,7 +85,7 @@ impl CreateRequisitionShipmentInput {
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

@@ -108,6 +108,7 @@ pub fn get_requisition(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Re
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -142,6 +143,7 @@ pub fn get_requisitions(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -177,6 +179,7 @@ pub fn get_requisition_by_number(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -217,12 +220,8 @@ impl RequisitionFilterInput {
             id: self.id.map(EqualFilter::from),
             user_id: self.user_id.map(EqualFilter::from),
             requisition_number: self.requisition_number.map(EqualFilter::from),
-            r#type: self
-                .r#type
-                .map(|t| map_filter!(t, |r| RequisitionType::from(r))),
-            status: self
-                .status
-                .map(|t| map_filter!(t, |s| RequisitionStatus::from(s))),
+            r#type: self.r#type.map(|t| map_filter!(t, RequisitionType::from)),
+            status: self.status.map(|t| map_filter!(t, RequisitionStatus::from)),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             sent_datetime: self.sent_datetime.map(DatetimeFilter::from),
             finalised_datetime: self.finalised_datetime.map(DatetimeFilter::from),

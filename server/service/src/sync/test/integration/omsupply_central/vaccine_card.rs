@@ -44,8 +44,9 @@ mutation MyMutation(
             minIntervalDays: 1
           }
           coverageRate: 1
-          isActive: true
           wastageRate: 1
+          useInGapsCalculations: true
+          canSkipDose: false
         }
         storeId: $storeId
       ) {
@@ -87,7 +88,7 @@ pub(super) async fn test_vaccine_card() {
                     "ID": program_id,
                     "inactive":false,
                     "isProgram":true,
-                    "programSettings":"{}"
+                    "programSettings":{"storeTags":{}}
                 }
             ],
             "list_master_name_join":[
@@ -104,8 +105,8 @@ pub(super) async fn test_vaccine_card() {
         .expect("Problem inserting central data");
 
     // Sync both sites (only one needed here realy, to get central_server_url)
-    site1.synchroniser.sync(None).await.unwrap();
-    site2.synchroniser.sync(None).await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
+    site2.synchroniser.sync().await.unwrap();
 
     let CentralServerConfig::CentralServerUrl(central_server_url) = CentralServerConfig::get()
     else {
@@ -134,8 +135,8 @@ pub(super) async fn test_vaccine_card() {
     .await;
 
     // Sync all pre requisites
-    site1.synchroniser.sync(None).await.unwrap();
-    site2.synchroniser.sync(None).await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
+    site2.synchroniser.sync().await.unwrap();
 
     // TEST
 
@@ -146,13 +147,16 @@ pub(super) async fn test_vaccine_card() {
         // None would be translated to 'male' when records syncs back again
         // which would break assertions in check_integrated
         gender: Some(GenderType::Female),
+        // 4D defaults these float columns to 0 when the upsert omits them.
+        margin: Some(0.0),
+        freight_factor: Some(0.0),
         ..Default::default()
     };
 
     let vaccination_one = VaccinationRow {
         id: uuid(),
         store_id: site1.config.new_site_properties.store_id.clone(),
-        patient_link_id: patient_one.id.clone(),
+        patient_id: patient_one.id.clone(),
         vaccine_course_dose_id: dose_id.clone(),
         // This could break in the future (when constraints are added)
         ..Default::default()
@@ -174,7 +178,7 @@ pub(super) async fn test_vaccine_card() {
     )
     .unwrap();
 
-    site1.synchroniser.sync(None).await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
 
     // 2 - Link patient to sites 2, sync and test data from 1 is present
     let context = site2.context.service_provider.basic_context().unwrap();
@@ -187,11 +191,7 @@ pub(super) async fn test_vaccine_card() {
     .await
     .unwrap();
 
-    site2
-        .synchroniser
-        .sync(Some(patient_one.id.clone()))
-        .await
-        .unwrap();
+    site2.synchroniser.sync().await.unwrap();
 
     check_integrated(&site2.context.connection, &integrations_one);
 
@@ -199,7 +199,7 @@ pub(super) async fn test_vaccine_card() {
     let vaccination_two = VaccinationRow {
         id: uuid(),
         store_id: site2.config.new_site_properties.store_id.clone(),
-        patient_link_id: patient_one.id.clone(),
+        patient_id: patient_one.id.clone(),
         vaccine_course_dose_id: dose_id.clone(),
         // This could break in the future
         ..Default::default()
@@ -209,8 +209,8 @@ pub(super) async fn test_vaccine_card() {
     let integrations_two =
         integrate_with_is_sync_reset(&site2.context.connection, integrations_two);
 
-    site2.synchroniser.sync(None).await.unwrap();
-    site1.synchroniser.sync(None).await.unwrap();
+    site2.synchroniser.sync().await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
 
     check_integrated(&site1.context.connection, &integrations_two);
 
@@ -219,8 +219,8 @@ pub(super) async fn test_vaccine_card() {
     let site1 = init_test_context(site1.config, "vaccine_card_site_1_reinit").await;
     let site2 = init_test_context(site2.config, "vaccine_card_site_2_reinit").await;
 
-    site1.synchroniser.sync(None).await.unwrap();
-    site2.synchroniser.sync(None).await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
+    site2.synchroniser.sync().await.unwrap();
 
     check_integrated(&site1.context.connection, &integrations_one);
     check_integrated(&site1.context.connection, &integrations_two);

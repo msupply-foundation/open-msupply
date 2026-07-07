@@ -9,8 +9,8 @@ import {
   BufferedTextInput,
   Tooltip,
   BasicTextInput,
-  usePreferences,
   SearchBar,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useResponse } from '../../api';
@@ -36,21 +36,28 @@ export const Toolbar = () => {
     'programName',
     'destinationCustomer',
   ]);
-  const { selectDestinationStoreForAnInternalOrder } = usePreferences();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
         container
-        flexDirection="row"
         display="flex"
         flex={1}
-        alignItems="flex-end"
         gap={1}
+        sx={{
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'flex-start', md: 'flex-end' },
+        }}
       >
         <Grid display="flex" flex={1}>
-          <Box display="flex" flexDirection="row" gap={4}>
+          <Box
+            display="flex"
+            sx={{
+              flexDirection: { xs: 'column', md: 'row' },
+              gap: { xs: 1, md: 4 },
+            }}
+          >
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
               {otherParty && (
                 <InputWithLabelRow
@@ -62,6 +69,7 @@ export const Toolbar = () => {
                       onChange={newOtherParty => {
                         update({ otherParty: newOtherParty ?? undefined });
                       }}
+                      width={250}
                     />
                   }
                 />
@@ -70,17 +78,19 @@ export const Toolbar = () => {
                 label={t('label.customer-ref')}
                 Input={
                   <Tooltip title={theirReference} placement="bottom-start">
-                    <BufferedTextInput
-                      disabled={isDisabled}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={theirReference}
-                      onChange={e => update({ theirReference: e.target.value })}
-                    />
+                    <Box>
+                      <BufferedTextInput
+                        disabled={isDisabled}
+                        size="small"
+                        sx={{ width: 250 }}
+                        value={theirReference}
+                        onChange={e => update({ theirReference: e.target.value })}
+                      />
+                    </Box>
                   </Tooltip>
                 }
               />
-              {selectDestinationStoreForAnInternalOrder && (
+              {!!destinationCustomer && (
                 <InputWithLabelRow
                   label={t('label.destination-customer')}
                   Input={
@@ -89,6 +99,7 @@ export const Toolbar = () => {
                       value={destinationCustomer ?? null}
                       onChange={() => {}}
                       clearable
+                      width={250}
                     />
                   }
                 />
@@ -103,6 +114,7 @@ export const Toolbar = () => {
                   }
                 />
               )}
+              <DisabledStoreNotice otherParty={otherParty} />
             </Box>
             <Box display="flex" flex={1} flexDirection="column" gap={1}>
               <InputWithLabelRow

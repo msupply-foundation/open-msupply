@@ -3,41 +3,133 @@ import {
   FrontendPluginMetadataNode,
   isArray,
   mergeWith,
+  PluginPage,
   Plugins,
 } from '@openmsupply-client/common';
-import { Environment } from '@openmsupply-client/config';
+import { AppRoute, Environment } from '@openmsupply-client/config';
+
+const VALID_SEGMENT = /^[a-z0-9_-]+$/;
+const RESERVED_TOP_LEVEL_SEGMENTS: ReadonlySet<string> = new Set(
+  Object.values(AppRoute) as string[]
+);
+
+const isValidSegment = (value: string | undefined): value is string =>
+  typeof value === 'string' && VALID_SEGMENT.test(value);
+
+// A page route may be either a regular single-segment string (matching
+// VALID_SEGMENT) or the empty string. An empty route means the page mounts
+// at the category root (`/<category>` instead of `/<category>/<route>`), so
+// the category-level nav item links straight to it. At most one root page
+// per category is allowed; dedup is enforced via the same `seen` set used
+// for sibling routes.
+const isValidPageRoute = (value: string | undefined): value is string =>
+  typeof value === 'string' && (value === '' || VALID_SEGMENT.test(value));
+
+const stampAndValidatePages = (
+  bundle: Plugins,
+  code: string,
+  seen: Set<string>
+): Plugins => {
+  if (!bundle.pages?.length) return bundle;
+
+  if (!isValidSegment(code)) {
+    console.warn(
+      `Plugin code "${code}" is not a valid URL segment; skipping its pages.`
+    );
+    return { ...bundle, pages: [] };
+  }
+
+  const validated: PluginPage[] = [];
+  for (const page of bundle.pages) {
+    if (!isValidPageRoute(page.route)) {
+      console.warn(
+        `Plugin "${code}" page route "${page.route}" is not a valid URL segment; skipping.`
+      );
+      continue;
+    }
+
+    let categoryKey: string;
+    if (page.menu.category.type === 'existing') {
+      categoryKey = page.menu.category.appRoute;
+    } else {
+      const newKey = page.menu.category.key;
+      if (!isValidSegment(newKey)) {
+        console.warn(
+          `Plugin "${code}" new category key "${newKey}" is not a valid URL segment; skipping.`
+        );
+        continue;
+      }
+      if (RESERVED_TOP_LEVEL_SEGMENTS.has(newKey)) {
+        console.warn(
+          `Plugin "${code}" new category key "${newKey}" shadows a built-in route; skipping.`
+        );
+        continue;
+      }
+      categoryKey = newKey;
+    }
+
+    const dedupeKey = `${categoryKey}/${page.route}`;
+    if (seen.has(dedupeKey)) {
+      console.warn(
+        `Plugin "${code}" page "${dedupeKey}" already registered by another plugin; skipping.`
+      );
+      continue;
+    }
+    seen.add(dedupeKey);
+
+    validated.push({ ...page, pluginCode: code });
+  }
+
+  return { ...bundle, pages: validated };
+};
+
+// Merge and validate every cached bundle into the flat `plugins` shape used by
+// the rest of the app. Duplicate detection runs across the merged set, so the
+// `seen` set is rebuilt on each call rather than carried in state.
+const buildPlugins = (cachedPluginBundles: {
+  [code: string]: Plugins;
+}): Plugins => {
+  const seen = new Set<string>();
+  return Object.entries(cachedPluginBundles).reduce((acc, [bundleCode, bundle]) => {
+    // `configuration` is per-plugin (looked up by code from
+    // cachedPluginBundles) and must not be merged across bundles —
+    // deep-merging two plugins' configurations would corrupt them.
+    const { configuration: _configuration, ...mergeable } =
+      stampAndValidatePages(bundle, bundleCode, seen);
+    return mergeWith(acc, mergeable, (a, b) =>
+      isArray(a) ? a.concat(b) : undefined
+    );
+  }, {});
+};
 
 // PLUGIN PROVIDER
 type PluginProvider = {
   plugins: Plugins;
   cachedPluginBundles: { [code: string]: Plugins };
-  addPluginBundle: (bundle: Plugins, code: string) => void;
+  setPluginBundles: (bundles: { code: string; bundle: Plugins }[]) => void;
 };
 
 export const usePluginProvider = create<PluginProvider>(set => {
   return {
     plugins: {},
     cachedPluginBundles: {},
-    addPluginBundle: (pluginBundle, code) => {
+    // Replace the entire set of cached bundles. Both the remote and local
+    // plugin init load a complete list in one pass and call this to reconcile
+    // the store against it, so a plugin deleted on the central server (absent
+    // from the fetched list) disappears after a sync rather than lingering
+    // until a full page reload. See issues #12169 / #11988.
+    setPluginBundles: bundles => {
       set(state => {
-        // Cache plugin bundles by code, to support hot reloading
-        const cachedPluginBundles = {
-          ...state.cachedPluginBundles,
-          [code]: pluginBundle,
-        };
-
-        // TODO: Here can determine if version is suitable
-        const plugins = Object.values(cachedPluginBundles).reduce(
-          (acc, pluginBundle) =>
-            mergeWith(acc, pluginBundle, (a, b) =>
-              isArray(a) ? a.concat(b) : undefined
-            ),
+        const cachedPluginBundles = bundles.reduce<{ [code: string]: Plugins }>(
+          (acc, { code, bundle }) => {
+            acc[code] = bundle;
+            return acc;
+          },
           {}
         );
-
         return {
           ...state,
-          plugins,
+          plugins: buildPlugins(cachedPluginBundles),
           cachedPluginBundles,
         };
       });
@@ -59,9 +151,11 @@ export const fetchPlugin = (
   pluginNode: FrontendPluginMetadataNode
 ): Promise<Container> =>
   new Promise((resolve, reject) => {
-    // We define a script tag to use the browser for fetching the plugin js file
+    // We define a script tag to use the browser for fetching the plugin js file.
+    // ?v=<hash> makes the URL change whenever the bundle's bytes change, so the
+    // browser can safely cache the response with `immutable, max-age=1y`.
     const script = document.createElement('script');
-    script.src = `${Environment.API_HOST}/frontend_plugins/${pluginNode.path}`;
+    script.src = `${Environment.API_HOST}/frontend_plugins/${pluginNode.path}?v=${pluginNode.hash}`;
     script.onerror = err => {
       const message = typeof err === 'string' ? err : 'unknown';
       reject(
@@ -93,18 +187,30 @@ export const fetchPlugin = (
 declare const __webpack_init_sharing__: (shareScope: string) => Promise<void>;
 declare const __webpack_share_scopes__: Record<string, unknown>;
 
+// Tracks the bundle hash currently loaded for each plugin code. Used to detect
+// when a plugin has been updated on the server (same code, new hash) so we can
+// re-fetch it rather than reusing the stale module already on `window`.
+const loadedPluginHashes: Record<string, string> = {};
+
 export const loadRemotePlugin = async (
   pluginNode: FrontendPluginMetadataNode
 ): Promise<Plugins> => {
   try {
-    // Check if this plugin has already been loaded
-    if (!(pluginNode.code in window)) {
+    // Re-fetch when the plugin isn't loaded yet, or when its bundle hash has
+    // changed (i.e. the plugin was updated on the server). Keying only on
+    // `code in window` would reuse the old in-memory module and never pick up
+    // updates. See issue #12169.
+    const isCurrentlyLoaded =
+      pluginNode.code in window &&
+      loadedPluginHashes[pluginNode.code] === pluginNode.hash;
+    if (!isCurrentlyLoaded) {
       // Initializes the shared scope. Fills it with known provided modules from this build and all remotes
       await __webpack_init_sharing__('default');
       // Fetch the plugin app
       const fetchedContainer = await fetchPlugin(pluginNode);
       // Initialize the plugin app
       await fetchedContainer.init(__webpack_share_scopes__['default']);
+      loadedPluginHashes[pluginNode.code] = pluginNode.hash;
     }
     // `container` is the plugin app
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

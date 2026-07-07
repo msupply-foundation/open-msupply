@@ -1,8 +1,14 @@
-use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
+use repository::{
+    database_settings::DatabaseSettings, KeyType, KeyValueStoreRepository, RepositoryError,
+};
 use reqwest::Url;
 use thiserror::Error;
 
-use crate::{service_provider::ServiceContext, sync::settings::SyncSettings};
+use crate::{
+    service_provider::ServiceContext,
+    settings::{ServerSettings, Settings},
+    sync::settings::SyncSettings,
+};
 
 #[derive(Debug, Error)]
 pub enum UpdateSettingsError {
@@ -15,8 +21,7 @@ pub enum UpdateSettingsError {
 fn validate(settings: &SyncSettings) -> Result<(), UpdateSettingsError> {
     if let Err(err) = Url::parse(&settings.url) {
         return Err(UpdateSettingsError::InvalidSettings(format!(
-            "Invalid url: {:?}",
-            err
+            "Invalid url: {err:?}"
         )));
     }
 
@@ -30,7 +35,8 @@ fn validate(settings: &SyncSettings) -> Result<(), UpdateSettingsError> {
 }
 
 pub trait SettingsServiceTrait: Sync + Send {
-    /// Loads sync settings from the DB
+    /// Loads sync settings from the DB. Batch sizes come from `ctx.batch_size`
+    /// (YAML or defaults), not from the DB.
     fn sync_settings(&self, ctx: &ServiceContext) -> Result<Option<SyncSettings>, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
@@ -39,6 +45,10 @@ pub trait SettingsServiceTrait: Sync + Send {
         let password_sha256 = key_value_store.get_string(KeyType::SettingsSyncPasswordSha256)?;
         let interval_seconds = key_value_store.get_i64(KeyType::SettingsSyncIntervalSeconds)?;
 
+        let batch_size = ctx.batch_size.clone();
+        let disable_integration_transaction = ctx.disable_integration_transaction;
+        let relax_hardware_id_token_checks = ctx.relax_hardware_id_token_checks;
+
         // `?` inside this closure would result in closure returning `None`
         let make_settings = || {
             Some(SyncSettings {
@@ -46,8 +56,9 @@ pub trait SettingsServiceTrait: Sync + Send {
                 username: username?,
                 password_sha256: password_sha256?,
                 interval_seconds: interval_seconds? as u64,
-                batch_size: Default::default(),
-                disable_integration_transaction: false,
+                batch_size,
+                disable_integration_transaction,
+                relax_hardware_id_token_checks,
             })
         };
 
@@ -93,7 +104,38 @@ pub trait SettingsServiceTrait: Sync + Send {
         KeyValueStoreRepository::new(&ctx.connection)
             .set_bool(KeyType::SettingsSyncIsDisabled, Some(true))
     }
+
+    fn get_database_info(&self) -> Result<DatabaseSettings, UpdateSettingsError>;
+
+    fn get_server_settings_info(&self) -> Result<ServerSettings, UpdateSettingsError>;
 }
 
-pub struct SettingsService;
-impl SettingsServiceTrait for SettingsService {}
+pub struct SettingsService {
+    pub service: Option<Settings>,
+}
+
+impl SettingsService {
+    pub fn new(settings: Option<Settings>) -> Self {
+        SettingsService { service: settings }
+    }
+}
+
+impl SettingsServiceTrait for SettingsService {
+    fn get_database_info(&self) -> Result<DatabaseSettings, UpdateSettingsError> {
+        match &self.service {
+            None => Err(UpdateSettingsError::InvalidSettings(
+                "Settings not initialized".to_string(),
+            )),
+            Some(settings) => Ok(settings.database.clone()),
+        }
+    }
+
+    fn get_server_settings_info(&self) -> Result<ServerSettings, UpdateSettingsError> {
+        match &self.service {
+            None => Err(UpdateSettingsError::InvalidSettings(
+                "Settings not initialized".to_string(),
+            )),
+            Some(settings) => Ok(settings.server.clone()),
+        }
+    }
+}

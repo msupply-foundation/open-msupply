@@ -70,14 +70,16 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
 
         // Get response requisition lines
         let response_lines = requisition_line_repository.query_by_filter(
-            RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(response_requisition.requisition_row.id.to_string())),
+            RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
+                response_requisition.requisition_row.id.to_string(),
+            )),
         )?;
 
         // Update approved quantities on request requisition lines
         for line in response_lines.iter() {
             requisition_line_row_repository.update_approved_quantity_by_item_id(
                 &request_requisition.requisition_row.id,
-                &line.requisition_line_row.item_link_id,
+                &line.requisition_line_row.item_id,
                 line.requisition_line_row.approved_quantity,
             )?;
         }

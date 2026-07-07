@@ -1,6 +1,6 @@
 pub mod mutations;
 use self::mutations::{
-    request_requisition_line::{delete::*, insert::*, update::*},
+    request_requisition_line::{delete::*, insert::*, refresh_ancillary::*, update::*},
     response_requisition_line,
 };
 use async_graphql::*;
@@ -15,7 +15,7 @@ impl RequisitionLineMutations {
         store_id: String,
         input: InsertInput,
     ) -> Result<InsertResponse> {
-        insert(ctx, &store_id, input)
+        insert(ctx, &store_id, input).await
     }
 
     async fn update_request_requisition_line(
@@ -34,6 +34,15 @@ impl RequisitionLineMutations {
         input: DeleteInput,
     ) -> Result<DeleteResponse> {
         delete(ctx, &store_id, input)
+    }
+
+    async fn refresh_ancillary_items(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: RefreshAncillaryItemsInput,
+    ) -> Result<RefreshAncillaryItemsResponse> {
+        refresh_ancillary_items(ctx, &store_id, input)
     }
 
     async fn insert_response_requisition_line(

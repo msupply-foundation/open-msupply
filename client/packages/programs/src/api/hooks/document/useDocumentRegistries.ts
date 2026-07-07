@@ -12,7 +12,10 @@ export const useDocumentRegistries = (params?: DocumentRegistryParams) => {
     sortBy: { key: DocumentRegistrySortFieldInput.Type, direction: 'asc' },
   };
 
-  return useQuery(api.keys.documentRegistries(queryParams), () =>
-    api.get.documentRegistries(queryParams)
-  );
+  return useQuery({
+    queryKey: api.keys.documentRegistries(queryParams),
+
+    queryFn: () =>
+      api.get.documentRegistries(queryParams)
+  });
 };

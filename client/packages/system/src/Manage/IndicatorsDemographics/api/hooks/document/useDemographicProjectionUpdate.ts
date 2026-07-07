@@ -1,13 +1,13 @@
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import { DemographicProjectionFragment } from '../../operations.generated';
 import { useDemographicsApi } from '../utils/useDemographicApi';
 
 export const useDemographicProjectionUpdate = () => {
   const api = useDemographicsApi();
 
-  return useMutation(
-    async (
+  return useMutation({
+    mutationFn: async (
       demographicProjection: Omit<DemographicProjectionFragment, '__typename'>
-    ) => api.updateProjection(demographicProjection)
-  );
+    ) => api.updateProjection(demographicProjection),
+  });
 };

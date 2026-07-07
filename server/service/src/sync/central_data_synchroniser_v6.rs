@@ -5,22 +5,23 @@ use crate::{
     sync::{
         api_v6::{SyncBatchV6, SyncRecordV6},
         sync_status::logger::SyncStepProgress,
+        ActiveStoresOnSite, GetActiveStoresOnSiteError,
     },
 };
 
 use super::{
     api::{CommonSyncRecord, ParsingSyncRecordError, SyncApiSettings},
     api_v6::{SyncApiErrorV6, SyncApiV6, SyncApiV6CreatingError},
-    get_sync_push_changelogs_filter,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
-        translate_changelogs_to_sync_records, PushTranslationError, ToSyncRecordTranslationType,
+        translate_rows_to_sync_records, PushTranslationError, ToSyncRecordTranslationType,
     },
-    SyncChangelogError,
 };
 
 use repository::{
-    ChangelogRepository, KeyType, RepositoryError, StorageConnection, SyncBufferRowRepository,
+    ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, KeyType,
+    KeyValueStoreRepository, QueryWithData, RepositoryError, StorageConnection,
+    SyncBufferRepository,
 };
 use thiserror::Error;
 
@@ -34,6 +35,8 @@ pub(crate) enum CentralPullErrorV6 {
     ParsingRecordError(#[from] ParsingSyncRecordError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
+    #[error("Central server site id not configured (SettingsSyncCentralServerSiteId)")]
+    CentralServerSiteIdNotSet,
 }
 
 #[derive(Error, Debug)]
@@ -44,10 +47,10 @@ pub(crate) enum RemotePushErrorV6 {
     DatabaseError(#[from] RepositoryError),
     #[error(transparent)]
     PushTranslationError(#[from] PushTranslationError),
-    #[error("Problem getting changelog during remote pull")]
-    SyncChangelogError(#[from] SyncChangelogError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
+    #[error("Problem getting active stores on site during v6 push")]
+    GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
 }
 
 #[derive(Error, Debug)]
@@ -79,7 +82,7 @@ impl SynchroniserV6 {
         &self,
         connection: &StorageConnection,
     ) -> Result<(), RepositoryError> {
-        let cursor = ChangelogRepository::new(connection).latest_cursor()?;
+        let cursor = ChangelogRepository::new(connection).max_cursor()?;
 
         CursorController::new(KeyType::SyncPushCursorV6).update(connection, cursor + 1)?;
         Ok(())
@@ -93,6 +96,11 @@ impl SynchroniserV6 {
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), CentralPullErrorV6> {
         let cursor_controller = CursorController::new(KeyType::SyncPullCursorV6);
+
+        let central_server_site_id = KeyValueStoreRepository::new(connection)
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+            .ok_or(CentralPullErrorV6::CentralServerSiteIdNotSet)?;
+
         // TODO protection from infinite loop
         loop {
             let start_cursor = cursor_controller.get(connection)?;
@@ -112,17 +120,16 @@ impl SynchroniserV6 {
             let last_cursor_in_batch = records.last().map(|r| r.cursor).unwrap_or(start_cursor);
             let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
                 records.into_iter().map(|r| r.record).collect(),
-                None, // Everything from open-mSupply Central Server is considered to not have a source_site_id
+                central_server_site_id,
             )?;
             // Upsert sync buffer rows in a transaction together with cursor update
             connection
                 .transaction_sync(|t_con| {
-                    SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)?;
-                    cursor_controller.update(t_con, last_cursor_in_batch + 1)
+                    SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
+                    cursor_controller.update(t_con, last_cursor_in_batch)
                 })
                 .map_err(|e| e.to_inner_error())?;
-            // TODO it's likely that above update to cursor is redundant, this comment is to record this observation in a PR https://github.com/msupply-foundation/open-msupply/pull/4283/files/ac66350bc5aee585a10c2a8450e8d2abeffc527b#r1656344877
-            cursor_controller.update(connection, end_cursor + 1)?;
+            cursor_controller.update(connection, end_cursor)?;
 
             if is_last_batch {
                 logger.progress(SyncStepProgress::PullCentralV6, 0)?;
@@ -140,45 +147,47 @@ impl SynchroniserV6 {
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePushErrorV6> {
         let changelog_repo = ChangelogRepository::new(connection);
-        let change_log_filter = get_sync_push_changelogs_filter(connection)?;
+        let change_log_filter = build_v6_push_filter(connection)?;
         let cursor_controller = CursorController::new(KeyType::SyncPushCursorV6);
 
         loop {
             // TODO inside transaction
             let cursor = cursor_controller.get(connection)?;
-            let changelogs =
-                changelog_repo.changelogs(cursor, batch_size, change_log_filter.clone())?;
-            let change_logs_total = changelog_repo.count(cursor, change_log_filter.clone())?;
+            let QueryWithData {
+                rows,
+                last_cursor_in_batch,
+                remaining,
+                ..
+            } = changelog_repo.query_with_data(
+                change_log_filter.clone(),
+                CursorAndLimit {
+                    cursor: cursor as i64,
+                    limit: batch_size as i64,
+                },
+            )?;
 
-            logger.progress(SyncStepProgress::PushCentralV6, change_logs_total)?;
-
-            if change_logs_total == 0 {
-                break; // Nothing more to do, break out of the loop
-            };
-
-            let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
+            logger.progress(SyncStepProgress::PushCentralV6, remaining)?;
 
             log::info!(
                 "Pushing {}/{} records to v6 central server",
-                changelogs.len(),
-                change_logs_total
+                rows.len(),
+                remaining
             );
-            log::debug!("Records: {:#?}", changelogs);
 
-            let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
+            let records: Vec<SyncRecordV6> = translate_rows_to_sync_records(
                 connection,
-                changelogs,
+                rows,
                 vec![ToSyncRecordTranslationType::PushToOmSupplyCentral],
             )?
             .into_iter()
             .map(SyncRecordV6::from)
             .collect();
 
-            let is_last_batch = change_logs_total <= batch_size as u64;
+            let is_last_batch = remaining == 0;
 
             let batch = SyncBatchV6 {
-                total_records: change_logs_total,
-                end_cursor: last_pushed_cursor.unwrap_or(0) as u64,
+                total_records: remaining,
+                end_cursor: last_cursor_in_batch,
                 records,
                 is_last_batch,
             };
@@ -186,58 +195,13 @@ impl SynchroniserV6 {
             self.sync_api_v6.push(batch).await?;
 
             // Update cursor only if record for that cursor has been pushed/processed
-            if let Some(last_pushed_cursor_id) = last_pushed_cursor {
-                cursor_controller.update(connection, last_pushed_cursor_id as u64 + 1)?;
-            };
 
-            // TODO Wait for integration to start??? Or somehow control when/if we should continue to do pull and other actions...
-        }
-
-        Ok(())
-    }
-
-    // Replaces the `pull` step if running manual sync for a fetched patient
-    pub(crate) async fn patient_pull<'a>(
-        &self,
-        connection: &StorageConnection,
-        batch_size: u32,
-        fetch_patient_id: String,
-        logger: &mut SyncLogger<'a>,
-    ) -> Result<(), CentralPullErrorV6> {
-        // Temp cursor for patient pull
-        let mut patient_cursor: u64 = 0;
-
-        // TODO protection from infinite loop
-        loop {
-            let SyncBatchV6 {
-                end_cursor,
-                total_records,
-                is_last_batch,
-                records,
-            } = self
-                .sync_api_v6
-                .patient_pull(patient_cursor, batch_size, fetch_patient_id.clone())
-                .await?;
-
-            logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
-
-            let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
-                records.into_iter().map(|r| r.record).collect(),
-                None, // Everything from open-mSupply Central Server is considered to not have a source_site_id
-            )?;
-            // Upsert sync buffer rows
-            connection
-                .transaction_sync(|t_con| {
-                    SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)
-                })
-                .map_err(|e| e.to_inner_error())?;
-
-            patient_cursor = end_cursor + 1;
-
-            if is_last_batch {
+            cursor_controller.update(connection, last_cursor_in_batch)?;
+            if remaining == 0 {
                 break;
             }
         }
+
         Ok(())
     }
 
@@ -250,8 +214,12 @@ impl SynchroniserV6 {
         let poll_period = Duration::from_secs(poll_period_seconds);
         let timeout = Duration::from_secs(timeout_seconds);
         log::info!("Awaiting central server operation...");
+        let mut first_check = true;
         loop {
-            tokio::time::sleep(poll_period).await;
+            if !first_check {
+                tokio::time::sleep(poll_period).await;
+            }
+            first_check = false;
 
             let response = self.sync_api_v6.get_site_status().await?;
 
@@ -269,4 +237,30 @@ impl SynchroniserV6 {
 
         Ok(())
     }
+}
+
+/// Returns the changelog filter for v6 push: records edited on this site (by
+/// source_site_id null = locally originated, or matching this site_id),
+/// touching one of this site's active stores.
+fn build_v6_push_filter(
+    connection: &StorageConnection,
+) -> Result<ChangelogCondition::Inner, RemotePushErrorV6> {
+    use ChangelogCondition as C;
+
+    let active_stores = ActiveStoresOnSite::get(connection)?;
+    let store_ids = active_stores.store_ids();
+
+    // Records that originate on this site (no source_site_id set on local edits)
+    // and that affect one of our active stores. Records arriving via sync from
+    // central will have source_site_id set, so this naturally excludes them.
+    Ok(C::And(vec![
+        C::source_site_id::is_null(),
+        C::Or(
+            store_ids
+                .into_iter()
+                .map(C::store_id::equal)
+                .chain(std::iter::once(C::store_id::is_null()))
+                .collect(),
+        ),
+    ]))
 }

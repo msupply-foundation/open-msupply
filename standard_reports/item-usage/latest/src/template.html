@@ -33,17 +33,17 @@
       <tr>
         <td>{{item.code}}</td>
         <td>{{item.name}}</td>
-        <td>{{item.SOH | round( precision=1)}}</td>
-        <td>{{item.stockOnOrder}}</td>
-        <td>{{item.AMC12 | round( precision=1)}}</td>
-        <td>{{item.AMC24 | round( precision=1)}}</td>
-        <td>{{item.AMC | round( precision=1)}}</td>
-        <td>{{item.MOS | round( precision=1)}}</td>
-        <td>{{item.monthConsumption}}</td>
-        <td>{{item.lastMonthConsumption  | round( precision=1)}}</td>
-        <td>{{item.twoMonthsAgoConsumption | round( precision=1)}}</td>
-        <td>{{item.expiringInSixMonths}}</td>
-        <td>{{item.expiringInTwelveMonths}}</td>
+        <td style="text-align: right">{{item.SOH | round( precision=1)}}</td>
+        <td style="text-align: right">{{item.stockOnOrder}}</td>
+        <td style="text-align: right">{{item.AMC12 | round( precision=1)}}</td>
+        <td style="text-align: right">{{item.AMC24 | round( precision=1)}}</td>
+        <td style="text-align: right">{{item.AMC | round( precision=1)}}</td>
+        <td style="text-align: right">{{item.MOS | round( precision=1)}}</td>
+        <td style="text-align: right">{{item.monthConsumption}}</td>
+        <td style="text-align: right">{{item.lastMonthConsumption  | round( precision=1)}}</td>
+        <td style="text-align: right">{{item.twoMonthsAgoConsumption | round( precision=1)}}</td>
+        <td style="text-align: right">{{item.expiringInSixMonths}}</td>
+        <td style="text-align: right">{{item.expiringInTwelveMonths}}</td>
       </tr>
       {% endfor %}
     </tbody>

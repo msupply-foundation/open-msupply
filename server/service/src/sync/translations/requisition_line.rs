@@ -8,7 +8,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, ItemLinkRowRepository,
     ReasonOptionRowRepository, RequisitionFilter, RequisitionLineRow, RequisitionLineRowDelete,
-    RequisitionLineRowRepository, RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository,
+    RequisitionRepository, RnRFormLineFilter, RnRFormLineRepository, Row,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -23,6 +23,9 @@ pub struct RequisitionLineOmsFields {
     pub price_per_unit: Option<f64>,
     pub available_volume: Option<f64>,
     pub location_type_id: Option<String>,
+    pub forecast_total_units: Option<f64>,
+    pub forecast_total_doses: Option<f64>,
+    pub vaccine_courses: Option<String>,
 }
 
 #[allow(non_snake_case)]
@@ -116,15 +119,26 @@ impl SyncTranslation for RequisitionLineTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyRequisitionLineRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyRequisitionLineRow>()?;
 
-        let (price_per_unit, available_volume, location_type_id) = match data.oms_fields {
-            Some(fields) => (
-                fields.price_per_unit,
-                fields.available_volume,
-                fields.location_type_id,
-            ),
-            None => (None, None, None),
+        let (
+            price_per_unit,
+            available_volume,
+            location_type_id,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
+        ) = if let Some(oms_fields) = data.oms_fields {
+            (
+                oms_fields.price_per_unit,
+                oms_fields.available_volume,
+                oms_fields.location_type_id,
+                oms_fields.forecast_total_units,
+                oms_fields.forecast_total_doses,
+                oms_fields.vaccine_courses,
+            )
+        } else {
+            (None, None, None, None, None, None)
         };
 
         let option_id = clear_invalid_fk(
@@ -151,7 +165,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         let result = RequisitionLineRow {
             id: data.ID.to_string(),
             requisition_id: data.requisition_ID,
-            item_link_id: data.item_ID,
+            item_id: data.item_ID,
             requested_quantity: data.Cust_stock_order,
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,
@@ -175,6 +189,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -195,11 +212,16 @@ impl SyncTranslation for RequisitionLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::RequisitionLine(requisition_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let RequisitionLineRow {
             id,
             requisition_id,
-            item_link_id,
+            item_id: item_link_id,
             requested_quantity,
             suggested_quantity,
             supply_quantity,
@@ -221,12 +243,10 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
-        } = RequisitionLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Requisition line row not found: {}",
-                changelog.record_id
-            )))?;
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
+        } = requisition_line_row;
 
         // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
         let item_id = ItemLinkRowRepository::new(connection)
@@ -267,6 +287,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             price_per_unit,
             available_volume,
             location_type_id,
+            forecast_total_units,
+            forecast_total_doses,
+            vaccine_courses,
         });
 
         let legacy_row = LegacyRequisitionLineRow {
@@ -322,7 +345,8 @@ mod tests {
         mock::MockDataInserts,
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::setup_all,
-        ChangelogFilter, ChangelogRepository, SyncAction,
+        ChangelogCondition, ChangelogRepository, SyncAction, SyncRecordData,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
 
@@ -365,26 +389,27 @@ mod tests {
 
         merge_all_item_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new()
-                        .table_name(ChangelogTableName::RequisitionLine.equal_to()),
-                ),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::RequisitionLine),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
         let translator = RequisitionLineTranslation;
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
@@ -409,7 +434,7 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "requisition_line".to_string(),
             record_id: "REQ_LINE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(serde_json::from_str(r#"{
                 "ID": "REQ_LINE_FK_INVALID",
                 "requisition_ID": "req_a",
                 "item_ID": "item_a",
@@ -439,8 +464,7 @@ mod tests {
                     "available_volume": null,
                     "location_type_id": "does_not_exist_location_type"
                 }
-            }"#
-            .to_string(),
+            }"#).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };

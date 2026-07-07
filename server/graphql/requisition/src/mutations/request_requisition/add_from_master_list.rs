@@ -1,3 +1,4 @@
+use actix_web::web::Data;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
@@ -5,14 +6,15 @@ use graphql_core::{
     },
     standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError,
-    ContextExt,
 };
 use graphql_types::types::RequisitionLineConnector;
+use repository::RequisitionLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
         AddFromMasterList as ServiceInput, AddFromMasterListError as ServiceError,
     },
+    service_provider::ServiceProvider,
 };
 
 #[derive(InputObject)]
@@ -43,7 +45,7 @@ pub enum AddFromMasterListResponse {
     Response(RequisitionLineConnector),
 }
 
-pub fn add_from_master_list(
+pub async fn add_from_master_list(
     ctx: &Context<'_>,
     store_id: &str,
     input: AddFromMasterListInput,
@@ -53,16 +55,28 @@ pub fn add_from_master_list(
         &ResourceAccessRequest {
             resource: Resource::MutateRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let store_id = store_id.to_string();
+    let input = input.to_domain();
 
-    let response = match service_provider
-        .requisition_service
-        .add_from_master_list(&service_context, input.to_domain())
-    {
+    // Runs on the blocking pool: this service call may invoke a transform plugin (#11949). The
+    // ServiceContext is built inside the closure so nothing non-`Send` crosses the boundary.
+    let result = tokio::task::spawn_blocking(
+        move || -> Result<Result<Vec<RequisitionLine>, ServiceError>> {
+            let service_context = service_provider.context(store_id, user.user_id)?;
+            Ok(service_provider
+                .requisition_service
+                .add_from_master_list(&service_context, input))
+        },
+    )
+    .await
+    .map_err(StandardGraphqlError::from_join_error)??;
+
+    let response = match result {
         Ok(requisition_lines) => AddFromMasterListResponse::Response(
             RequisitionLineConnector::from_vec(requisition_lines),
         ),
@@ -89,7 +103,7 @@ impl AddFromMasterListInput {
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors

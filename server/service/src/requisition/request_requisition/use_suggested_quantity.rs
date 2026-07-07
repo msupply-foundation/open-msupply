@@ -1,6 +1,7 @@
 use crate::{
     requisition::common::{check_requisition_row_exists, get_lines_for_requisition},
     service_provider::ServiceContext,
+    validate::check_other_party_store_is_disabled,
 };
 use repository::EqualFilter;
 use repository::{
@@ -43,8 +44,9 @@ pub fn use_suggested_quantity(
             }
 
             match RequisitionLineRepository::new(connection).query_by_filter(
-                RequisitionLineFilter::new()
-                    .requisition_id(EqualFilter::equal_to(input.request_requisition_id.to_string())),
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
+                    input.request_requisition_id.to_string(),
+                )),
             ) {
                 Ok(lines) => Ok(lines),
                 Err(error) => Err(OutError::DatabaseError(error)),
@@ -71,6 +73,10 @@ fn validate(
     }
 
     if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
+    }
+
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
     }
     Ok(())

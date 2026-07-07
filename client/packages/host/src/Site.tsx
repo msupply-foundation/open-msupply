@@ -24,6 +24,8 @@ import {
   usePreferences,
   useIsCentralServerApi,
   useRootNavigationPath,
+  useIntlUtils,
+  GlobalStyles,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -47,6 +49,7 @@ import { EasterEggModalProvider } from './components';
 import { Help } from './Help/Help';
 import { SyncModalProvider } from './components/Sync';
 import { MobileNavBar } from './components/MobileNavBar';
+import { usePluginRoutes } from './PluginRoutes';
 
 const NotifyOnLogin = () => {
   const { success } = useNotification();
@@ -72,6 +75,10 @@ const Blocker = () => {
   return null;
 };
 
+const isModifierKey = (e: KeyboardEvent) => {
+  return e.key === 'Control' || e.key === 'Alt';
+};
+
 export const Site: FC = () => {
   const location = useLocation();
   const getPageTitle = useGetPageTitle();
@@ -80,12 +87,30 @@ export const Site: FC = () => {
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const rootNavigationPath = useRootNavigationPath();
   const isCentralServer = useIsCentralServerApi();
+  const { isRtl } = useIntlUtils();
   const { storeCustomColour } = usePreferences();
   const theme = useTheme();
+  const pluginRoutes = usePluginRoutes();
 
   useEffect(() => {
     setPageTitle(pageTitle);
   }, [location, pageTitle, setPageTitle]);
+
+  // Listen for modifier keys to show keyboard shortcut hints in the UI
+  useEffect(() => {
+    const onDown = (e: KeyboardEvent) => {
+      if (isModifierKey(e)) document.body.classList.add('show-hints');
+    };
+    const onUp = (e: KeyboardEvent) => {
+      if (isModifierKey(e)) document.body.classList.remove('show-hints');
+    };
+    document.addEventListener('keydown', onDown);
+    document.addEventListener('keyup', onUp);
+    return () => {
+      document.removeEventListener('keydown', onDown);
+      document.removeEventListener('keyup', onUp);
+    };
+  }, []);
 
   // Colours for the Footer bar, if specified in Store prefs
   let customColour: string | undefined;
@@ -113,10 +138,34 @@ export const Site: FC = () => {
   return (
     <RequireAuthentication>
       <Blocker />
+      <GlobalStyles
+        styles={{
+          'body.show-hints [aria-keyshortcuts]::after': {
+            content: 'attr(aria-keyshortcuts)',
+            position: 'absolute',
+            background: theme.mixins.dialog.button.primary.backgroundColor,
+            color: theme.mixins.dialog.button.primary.color,
+            paddingTop: '0.125rem',
+            paddingBottom: '0.125rem',
+            paddingLeft: '0.375rem',
+            paddingRight: '0.375rem',
+            borderRadius: '0.25rem',
+            fontSize: '0.75rem',
+            marginTop: '-0.5rem',
+            opacity: 0.8,
+          },
+        }}
+      />
       <EasterEggModalProvider>
         <SyncModalProvider>
           <CommandK>
-            <SnackbarProvider maxSnack={3}>
+            <SnackbarProvider
+              maxSnack={3}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: isRtl ? 'right' : 'left',
+              }}
+            >
               <BarcodeScannerProvider>
                 {!isExtraSmallScreen && <AppDrawer />}
                 <Box
@@ -241,11 +290,10 @@ export const Site: FC = () => {
                           </React.Suspense>
                         }
                       />
+                      {pluginRoutes}
                       <Route
                         path="/"
-                        element={
-                          <Navigate replace to={rootNavigationPath} />
-                        }
+                        element={<Navigate replace to={rootNavigationPath} />}
                       />
                       <Route path="*" element={<NotFound />} />
                     </Routes>

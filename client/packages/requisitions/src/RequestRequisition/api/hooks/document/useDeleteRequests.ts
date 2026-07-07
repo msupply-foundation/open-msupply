@@ -4,9 +4,13 @@ import { useRequestApi } from '../utils/useRequestApi';
 export const useDeleteRequests = () => {
   const queryClient = useQueryClient();
   const api = useRequestApi();
-  return useMutation(api.deleteRequests, {
+  return useMutation({
+    mutationFn: api.deleteRequests,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 };

@@ -15,6 +15,7 @@ async fn integration_sync_transfer_requisition_normal() {
         site_2_processors_task: response_site_processors_task,
         item1,
         item2,
+        item3: _,
         service_item: _,
     } = initialise_transfer_sites("requisition_transfers_normal").await;
 
@@ -97,6 +98,7 @@ async fn integration_sync_transfer_requisition_initialisation() {
         site_2_processors_task: response_site_processors_task,
         item1,
         item2,
+        item3: _,
         service_item: _,
     } = initialise_transfer_sites(identifier).await;
 

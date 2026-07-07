@@ -16,6 +16,7 @@ import {
   useSimpleMaterialTable,
   ColumnDef,
   ColumnType,
+  NaiveDateCell,
 } from '@openmsupply-client/common';
 import {
   PatientRowFragment,
@@ -128,6 +129,7 @@ const ModalContent: FC<ModalContentProps> = ({
         accessorKey: 'dateOfBirth',
         header: t('label.date-of-birth'),
         columnType: ColumnType.Date,
+        Cell: NaiveDateCell,
       },
       {
         accessorKey: 'gender',
@@ -152,7 +154,7 @@ const ModalContent: FC<ModalContentProps> = ({
     columns,
     data: matchingPatients,
     onRowClick: row => setLinkedPatientId(row.id),
-    getIsPlaceholderRow: row => row.id === linkedPatientId,
+    getIsPlaceholderRow: row => row.original.id === linkedPatientId,
     noDataElement: searchEnabled
       ? t('messages.no-matching-patients-for-contact-trace')
       : t('messages.patient-data-required-for-search'),

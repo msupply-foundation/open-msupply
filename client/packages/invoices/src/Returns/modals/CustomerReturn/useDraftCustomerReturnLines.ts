@@ -88,7 +88,7 @@ export const useDraftCustomerReturnLines = ({
     });
   };
 
-  const save = async () => {
+  const save = async (theirReference?: string) => {
     const customerReturnLines: CustomerReturnLineInput[] = draftLines.map(
       ({
         id,
@@ -124,6 +124,7 @@ export const useDraftCustomerReturnLines = ({
           id: FnUtils.generateUUID(),
           customerId,
           outboundShipmentId,
+          theirReference,
           customerReturnLines,
         })
       : await updateLines({

@@ -10,8 +10,10 @@ import { useAssetApi } from '../utils/useAssetApi';
 export const useAssetDelete = (id: string) => {
   const api = useAssetApi();
   const queryClient = useQueryClient();
-  const { mutateAsync } = useMutation(async (id: string) =>
-    api.delete(id, api.storeId)
+  const { mutateAsync } = useMutation({
+    mutationFn: async (id: string) =>
+      api.delete(id, api.storeId)
+  }
   );
   const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
@@ -22,7 +24,9 @@ export const useAssetDelete = (id: string) => {
         navigateUpOne();
         // invalidating before navigating results in a message
         // of 'asset not found'
-        queryClient.invalidateQueries(api.keys.base());
+        queryClient.invalidateQueries({
+          queryKey: api.keys.base()
+        });
       })
       .catch(err => {
         throw err;

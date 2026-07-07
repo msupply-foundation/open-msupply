@@ -2,9 +2,9 @@ use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
     item_category_row::ItemCategoryJoinRow,
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
-    ItemType, LocationTypeRowRepository, StorageConnection, SyncBufferRow, UnitRowRepository,
-    VENCategory,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemType,
+    LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow,
+    UnitRowRepository, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
@@ -121,7 +121,7 @@ impl SyncTranslation for ItemTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyItemRow>()?;
 
         let mut integration_operations = Vec::new();
 
@@ -154,7 +154,7 @@ impl SyncTranslation for ItemTranslation {
             code: data.code,
             unit_id,
             r#type: to_item_type(data.type_of),
-            legacy_record: ordered_simple_json(&sync_record.data)?,
+            legacy_record: ordered_simple_json(&serde_json::to_string(&sync_record.data.0)?)?,
             default_pack_size: data.default_pack_size,
             is_active: true,
             is_vaccine: data.is_vaccine,
@@ -190,8 +190,9 @@ impl SyncTranslation for ItemTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
         if !CentralServerConfig::is_central_server() {
             return Err(anyhow::anyhow!(
@@ -199,12 +200,8 @@ impl SyncTranslation for ItemTranslation {
             ));
         }
 
-        let Some(item) = ItemRowRepository::new(connection).find_one_by_id(&changelog.record_id)?
-        else {
-            return Err(anyhow::anyhow!(
-                "Item with ID {} could not be found",
-                changelog.record_id
-            ));
+        let Row::Item(item) = row else {
+            return Ok(PushTranslateResult::NotMatched);
         };
 
         let ItemRow {
@@ -301,7 +298,7 @@ mod tests {
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        LocationTypeRow, SyncAction, UnitRow,
+        LocationTypeRow, SyncAction, SyncRecordData, UnitRow,
     };
 
     #[actix_rt::test]
@@ -364,7 +361,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "item".to_string(),
             record_id: "ITEM_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
                 "ID": "ITEM_FK_INVALID",
                 "item_name": "Bad FK Item",
                 "code": "code",
@@ -379,8 +378,10 @@ mod tests {
                 "restricted_location_type_ID": "does_not_exist_location_type",
                 "volume_per_pack": 0,
                 "universalcodes_code": ""
-            }"#
-            .to_string(),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
@@ -400,9 +401,7 @@ mod tests {
             format!("expected restricted_location_type_id None; got:\n{debug}")
         );
 
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)

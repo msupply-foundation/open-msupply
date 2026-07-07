@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   FnUtils,
   QuantityUtils,
@@ -7,6 +7,7 @@ import {
 import {
   useRequest,
   RequestLineFragment,
+  ItemWithAvailableStockFragment,
   ItemWithStatsFragment,
   RequestFragment,
 } from '../../api';
@@ -35,7 +36,7 @@ const createDraftFromItem = (
     id: FnUtils.generateUUID(),
     requisitionId: request.id,
     itemId: item.id,
-    requestedQuantity: suggested,
+    requestedQuantity: 0,
     suggestedQuantity: suggested,
     isCreated: true,
     itemStats: item.stats,
@@ -48,6 +49,7 @@ const createDraftFromItem = (
     additionInUnits: 0,
     daysOutOfStock: 0,
     expiringUnits: 0,
+    ancillaryParents: [],
   };
 };
 
@@ -65,13 +67,14 @@ const createDraftFromRequestLine = (
 });
 
 export const useDraftRequisitionLine = (
-  item?: ItemWithStatsFragment | null
+  item?: ItemWithAvailableStockFragment | ItemWithStatsFragment | null
 ) => {
   const t = useTranslation();
   const [isReasonsError, setIsReasonsError] = useState(false);
   const { lines } = useRequest.line.list(item?.id);
   const { data } = useRequest.document.get();
-  const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
+  const { mutateAsync: saveMutation, isPending: isLoading } = useRequest.line.save();
+  const isSavingRef = useRef(false);
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
   useEffect(() => {
@@ -85,7 +88,7 @@ export const useDraftRequisitionLine = (
       );
       if (existingLine) {
         setDraft(createDraftFromRequestLine(existingLine, data));
-      } else {
+      } else if ('stats' in item) {
         setDraft(createDraftFromItem(item, data));
       }
     } else {
@@ -98,8 +101,19 @@ export const useDraftRequisitionLine = (
   }, []);
 
   const save = useCallback(async () => {
-    if (draft) {
+    if (!draft) return null;
+    // Guard against concurrent saves: the modal auto-saves new lines on creation
+    // and the user's OK click can call save() again before the first one resolves.
+    // Without this, both calls take the INSERT path (draft.isCreated still true)
+    // and the server rejects the second with RequisitionLineAlreadyExists.
+    if (isSavingRef.current) return null;
+    isSavingRef.current = true;
+    try {
       const result = await saveMutation(draft);
+
+      if (draft.isCreated) {
+        setDraft(current => (current ? { ...current, isCreated: false } : null));
+      }
 
       setIsReasonsError(false);
       if (result?.__typename === 'UpdateRequestRequisitionLineError') {
@@ -126,9 +140,9 @@ export const useDraftRequisitionLine = (
       return {
         data: result,
       };
+    } finally {
+      isSavingRef.current = false;
     }
-
-    return null;
   }, [draft, saveMutation]);
 
   return {
@@ -141,26 +155,21 @@ export const useDraftRequisitionLine = (
 };
 
 export const useNextRequestLine = (
-  lines?: RequestLineFragment[],
-  currentItem?: ItemWithStatsFragment | null
+  getSortedItems: () => RequestLineFragment['item'][],
+  currentItem?: ItemWithAvailableStockFragment | null
 ) => {
-  if (!lines || !currentItem) {
+  const [items] = useState(getSortedItems);
+
+  if (!items || !currentItem) {
     return { hasNext: false, next: null };
   }
 
-  const nextState: {
-    hasNext: boolean;
-    next: null | ItemWithStatsFragment;
-  } = { hasNext: true, next: null };
-  const idx = lines.findIndex(l => l.item.id === currentItem?.id);
-  const next = lines[idx + 1];
+  const idx = items.findIndex(item => item?.id === currentItem?.id);
+  const next = items[idx + 1];
 
-  if (!next) {
-    nextState.hasNext = false;
-    return nextState;
+  if (idx === -1 || !next) {
+    return { hasNext: false, next: null };
   }
 
-  nextState.next = next.item;
-
-  return nextState;
+  return { hasNext: true, next };
 };

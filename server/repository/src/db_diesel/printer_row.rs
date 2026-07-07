@@ -1,6 +1,8 @@
 use super::printer_row::printer::dsl::*;
-use crate::RepositoryError;
-use crate::StorageConnection;
+use crate::{
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
+};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -37,7 +39,7 @@ impl<'a> PrinterRowRepository<'a> {
         PrinterRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &PrinterRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &PrinterRow) -> Result<(), RepositoryError> {
         diesel::insert_into(printer::table)
             .values(row)
             .on_conflict(printer::id)
@@ -46,6 +48,17 @@ impl<'a> PrinterRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &PrinterRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = PrinterRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(&self, printer_id: &str) -> Result<Option<PrinterRow>, RepositoryError> {
@@ -57,8 +70,45 @@ impl<'a> PrinterRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PrinterRow>, RepositoryError> {
+        Ok(printer::table
+            .filter(printer::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
     pub fn find_all(&self) -> Result<Vec<PrinterRow>, RepositoryError> {
         let result = printer.load(self.connection.lock().connection())?;
         Ok(result)
+    }
+}
+
+impl Upsert for PrinterRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        PrinterRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PrinterRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

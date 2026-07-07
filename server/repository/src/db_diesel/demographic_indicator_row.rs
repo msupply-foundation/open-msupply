@@ -1,6 +1,8 @@
 use super::StorageConnection;
 
-use crate::RepositoryError;
+use crate::{
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId, Upsert,
+};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -48,7 +50,7 @@ impl<'a> DemographicIndicatorRowRepository<'a> {
         DemographicIndicatorRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &DemographicIndicatorRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &DemographicIndicatorRow) -> Result<(), RepositoryError> {
         diesel::insert_into(demographic_indicator::table)
             .values(row)
             .on_conflict(demographic_indicator::id)
@@ -57,6 +59,17 @@ impl<'a> DemographicIndicatorRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
 
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &DemographicIndicatorRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        let changelog = DemographicIndicatorRow::generate_changelog(
+            row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_id(
@@ -68,5 +81,45 @@ impl<'a> DemographicIndicatorRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<DemographicIndicatorRow>, RepositoryError> {
+        Ok(demographic_indicator::table
+            .filter(demographic_indicator::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+}
+
+impl Upsert for DemographicIndicatorRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        DemographicIndicatorRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => Self::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            DemographicIndicatorRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

@@ -4,6 +4,7 @@ import {
   useTranslation,
   ModalMode,
   DialogButton,
+  Box,
 } from '@openmsupply-client/common';
 
 interface StocktakeLineEditModalProps {
@@ -31,7 +32,7 @@ export const StocktakeLineEditModal: FC<
       title={
         mode === ModalMode.Create
           ? t('heading.add-item')
-          : t('heading.edit-item')
+          : t('heading.edit-line')
       }
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
@@ -47,8 +48,31 @@ export const StocktakeLineEditModal: FC<
       height={650}
       width={1260}
       slideAnimation={false}
+      sx={{
+        '& .MuiDialogTitle-root': { py: 1.25 },
+        '& .MuiDialogActions-root': { marginTop: '4px', marginBottom: '4px' },
+      }}
+      contentProps={{
+        sx: {
+          overflowY: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          paddingTop: '2px',
+          paddingBottom: 0,
+        },
+      }}
     >
-      <>{children}</>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </Box>
     </Modal>
   );
 };

@@ -65,6 +65,7 @@ pub fn upsert_item_variant(
         &ResourceAccessRequest {
             resource: Resource::MutateItemNamesCodesAndUnits,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -143,7 +144,7 @@ fn map_response(from: Result<ItemVariant, ServiceError>) -> Result<UpsertItemVar
 
 fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured errors

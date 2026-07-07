@@ -2903,7 +2903,7 @@ end
 <Event>
 <Name>On Post Uninstall</Name>
 <Args/>
-<Script>Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop");
+<Script>Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Desktop");
 if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
 	Registry.DeleteKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop");
 end</Script>
@@ -3263,18 +3263,18 @@ a2F0aG1hbmR1MzEy</CodeSignCertificatePasswordSHA256>
 <CodeSignDescriptionURL>https://msupply.foundation</CodeSignDescriptionURL>
 <UseCustomIcon>1</UseCustomIcon>
 <CustomIconFile>#PROJECTFILEDIR#\omSupply.ico</CustomIconFile>
-<ResourceFileVersion>9.5.1.0</ResourceFileVersion>
-<ResourceProductVersion>9.5.1.0</ResourceProductVersion>
-<ResourceCompanyName>Indigo Rose Corporation</ResourceCompanyName>
-<ResourceProductName>Setup Factory Runtime</ResourceProductName>
-<ResourceComments>Created with Setup Factory</ResourceComments>
+<ResourceFileVersion>replace canonical version</ResourceFileVersion>
+<ResourceProductVersion>replace canonical version</ResourceProductVersion>
+<ResourceCompanyName>mSupply Foundation</ResourceCompanyName>
+<ResourceProductName>Open mSupply</ResourceProductName>
+<ResourceComments/>
 <ResourceInternalName>sf_rt</ResourceInternalName>
-<ResourceFileDescription>Setup Application</ResourceFileDescription>
-<ResourceCopyright>Setup Engine Copyright � 1992-2016 Indigo Rose Corporation</ResourceCopyright>
-<ResourceTrademarks>Setup Factory is a trademark of Indigo Rose Corporation</ResourceTrademarks>
+<ResourceFileDescription>Open mSupply desktop installer</ResourceFileDescription>
+<ResourceCopyright/>
+<ResourceTrademarks/>
 <ResourcePrivateBuild/>
 <ResourceSpecialBuild/>
-<StampResources>0</StampResources>
+<StampResources>1</StampResources>
 <CompressionType CompressionSetting="LZMA_LOW" DictionarySize="24" WordSize="32" CPUThreads="2"/>
 <Vars/>
 </BuildConfig>

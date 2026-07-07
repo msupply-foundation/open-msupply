@@ -64,8 +64,9 @@ pub fn update_label_printer_settings(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::NoPermissionRequired,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

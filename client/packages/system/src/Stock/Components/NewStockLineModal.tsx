@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   useTranslation,
   Grid,
@@ -17,6 +17,13 @@ import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
 import { StockItemSearchInput } from '../..';
 import { AppRoute } from '@openmsupply-client/config';
+import {
+  getVolumePerPackFromVariant,
+  ItemVariantFragment,
+  ItemVariantSelectPanel,
+  useIsItemVariantsEnabled,
+  useItemVariants,
+} from '../../Item';
 
 interface NewStockLineModalProps {
   isOpen: boolean;
@@ -29,7 +36,7 @@ export const NewStockLineModal = ({
 }: NewStockLineModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const { success, error, warning } = useNotification();
   const pluginEvents = usePluginEvents({
     isDirty: false,
   });
@@ -46,6 +53,17 @@ export const NewStockLineModal = ({
     updatePatch,
     create: { create },
   } = useStockLine();
+
+  const [variantPanelOpen, setVariantPanelOpen] = useState(false);
+  const itemVariantsEnabled = useIsItemVariantsEnabled();
+  const { data: variantData } = useItemVariants(draft.itemId ?? '');
+  const hasVariants =
+    itemVariantsEnabled && (variantData?.variants?.length ?? 0) > 0;
+
+  useEffect(() => {
+    if (!hasVariants || !draft.itemId) return;
+    setVariantPanelOpen(true);
+  }, [hasVariants, draft.itemId]);
 
   const isDisabled =
     !draft.itemId || !draft.packSize || !draft.totalNumberOfPacks;
@@ -92,6 +110,36 @@ export const NewStockLineModal = ({
     }
   };
 
+  const onVariantSelected = useCallback(
+    (variant: ItemVariantFragment) => {
+      // A variant's manufacturer is configured centrally and may not be visible
+      // to this store. Drop it when not visible (else the save is rejected with
+      // ManufacturerNotVisible) and warn, so a valid variant is still usable.
+      const manufacturer =
+        variant.manufacturer && !variant.manufacturer.isVisible
+          ? null
+          : (variant.manufacturer ?? null);
+      if (variant.manufacturer && !manufacturer) {
+        warning(
+          t('messages.manufacturer-not-visible-dropped', {
+            name: variant.manufacturer.name,
+          })
+        )();
+      }
+      updatePatch({
+        itemVariant: variant,
+        manufacturer,
+        volumePerPack:
+          getVolumePerPackFromVariant({
+            packSize: draft.packSize,
+            itemVariant: variant,
+          }) ?? 0,
+      });
+      setVariantPanelOpen(false);
+    },
+    [updatePatch, draft.packSize, warning, t]
+  );
+
   return (
     <Modal
       width={700}
@@ -121,8 +169,8 @@ export const NewStockLineModal = ({
               openOnFocus={!draft.itemId}
               disabled={!!draft.itemId}
               currentItemId={draft.itemId}
-              onChange={newItem =>
-                newItem &&
+              onChange={newItem => {
+                if (!newItem) return;
                 updatePatch({
                   itemId: newItem.id,
                   item: {
@@ -132,8 +180,8 @@ export const NewStockLineModal = ({
                   packSize: newItem.defaultPackSize,
                   sellPricePerPack:
                     newItem.itemStoreProperties?.defaultSellPricePerPack ?? 0,
-                })
-              }
+                });
+              }}
             />
           </Grid>
         </ModalRow>
@@ -150,6 +198,15 @@ export const NewStockLineModal = ({
               pluginEvents={pluginEvents}
             />
           </Grid>
+        )}
+
+        {draft.itemId && (
+          <ItemVariantSelectPanel
+            itemId={draft.itemId}
+            open={variantPanelOpen}
+            onClose={() => setVariantPanelOpen(false)}
+            onSelect={onVariantSelected}
+          />
         )}
       </Grid>
     </Modal>

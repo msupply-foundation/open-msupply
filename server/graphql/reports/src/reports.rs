@@ -55,7 +55,6 @@ pub enum ReportContext {
     Prescription,
     InternalOrder,
     PurchaseOrder,
-    GoodsReceived,
     SupplierReturn,
     CustomerReturn,
 }
@@ -72,6 +71,7 @@ pub struct EqualFilterReportContextInput {
 pub struct ReportFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<StringFilterInput>,
+    pub code: Option<StringFilterInput>,
     pub context: Option<EqualFilterReportContextInput>,
     pub sub_context: Option<EqualFilterStringInput>,
     pub is_active: Option<bool>,
@@ -199,6 +199,7 @@ pub fn report(
         &ResourceAccessRequest {
             resource: Resource::Report,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -231,6 +232,7 @@ pub fn reports(
         &ResourceAccessRequest {
             resource: Resource::Report,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -270,6 +272,7 @@ pub fn all_report_versions(
         &ResourceAccessRequest {
             resource: Resource::ServerAdmin,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -281,7 +284,7 @@ pub fn all_report_versions(
 
     let reports = match service_provider.report_service.query_all_report_versions(
         &service_context,
-        &localisations,
+        localisations,
         user_language,
         filter.map(|f| f.to_domain()),
         sort.and_then(|mut sort_list| sort_list.pop())
@@ -302,11 +305,9 @@ impl ReportFilterInput {
         ReportFilter {
             id: self.id.map(EqualFilter::from),
             name: self.name.map(StringFilter::from),
-            context: self
-                .context
-                .map(|t| map_filter!(t, |c| ContextType::from(c))),
+            code: self.code.map(StringFilter::from),
+            context: self.context.map(|t| map_filter!(t, ContextType::from)),
             sub_context: self.sub_context.map(EqualFilter::from),
-            code: None,
             is_custom: None,
             is_active: self.is_active,
         }

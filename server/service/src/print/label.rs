@@ -168,11 +168,9 @@ pub fn host_status(settings: LabelPrinterSettingNode) -> Result<String> {
 
 fn sanitise_fd_field(value: &str) -> String {
     let mut fd: String = value
-        .replace('^', "-") // Control characters are replaced with -
-        .replace('~', "-") // Control characters are replaced with -
+        .replace(['^', '~'], "-") // Control characters are replaced with -
         .replace('\\', ":") // Backslashes `\` are replaced with colon `:` TODO: Probably could be an escaped Forward slash, e.g. \\\\ but apparently only works with CI13 or printed correctly using `FH` command ?
-        .replace('\n', "\\&") // Newline characters are replaced with \& in ZPL
-        .replace('\r', "\\&") // Carriage return characters are replaced with \&
+        .replace(['\n', '\r'], "\\&") // Carriage return characters are replaced with \&
         .chars()
         .map(|c| {
             if c.is_ascii() || c.is_alphabetic() {

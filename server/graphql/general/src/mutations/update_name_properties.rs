@@ -21,6 +21,7 @@ pub fn update_name_properties(
         &ResourceAccessRequest {
             resource: Resource::MutateNameProperties,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -74,7 +75,7 @@ pub enum UpdateNamePropertiesErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<UpdateNamePropertiesErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured errors

@@ -15,9 +15,19 @@ type BreadcrumbState = {
     customBreadcrumbs?: Record<number, string | React.ReactElement>,
     disabled?: number[]
   ) => void;
-  setUrlParts: (urlParts: UrlPart[]) => void;
+  setUrlParts: (
+    urlParts: UrlPart[],
+    derivedPathname: string,
+    derivedTopLevelPaths: string
+  ) => void;
   urlParts: UrlPart[];
   customBreadcrumbs: Record<number, string | React.ReactElement>;
+  // The (pathname, topLevelPaths) inputs that produced the current `urlParts`.
+  // The deriving effect compares against these to tell a real navigation apart
+  // from a change in the known top-level paths (plugin category keys arrive
+  // after the remote bundle loads — see the effect in `useBreadcrumbs`).
+  derivedPathname: string;
+  derivedTopLevelPaths: string;
 };
 
 const useBreadcrumbState = create<BreadcrumbState>(set => ({
@@ -28,9 +38,17 @@ const useBreadcrumbState = create<BreadcrumbState>(set => ({
       );
       return { ...state, urlParts, customBreadcrumbs };
     }),
-  setUrlParts: (urlParts: UrlPart[]) => set(state => ({ ...state, urlParts })),
+  setUrlParts: (urlParts, derivedPathname, derivedTopLevelPaths) =>
+    set(state => ({
+      ...state,
+      urlParts,
+      derivedPathname,
+      derivedTopLevelPaths,
+    })),
   urlParts: [],
   customBreadcrumbs: {},
+  derivedPathname: '',
+  derivedTopLevelPaths: '',
 }));
 
 export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
@@ -42,13 +60,33 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
   const { pathname } = location;
 
   useEffect(() => {
-    const currentPath = urlParts[urlParts.length - 1]?.path;
+    // Only the "router" caller (the AppBar's `<Breadcrumbs>`, which knows the
+    // app's top-level paths + plugin category keys) should derive `urlParts`.
+    // Other callers — e.g. detail views that just want `setCustomBreadcrumbs`
+    // — pass no `topLevelPaths` and would otherwise clobber the rich
+    // derivation with their own (which filters out URL index-1 segments).
+    if (topLevelPaths.length === 0) return;
 
-    // This hook can be called in multiple places, but we only want to run this effect once
-    // if the path has actually changed
-    if (currentPath === pathname) return;
+    const topLevelKey = topLevelPaths.join(',');
+    const { derivedPathname, derivedTopLevelPaths } =
+      useBreadcrumbState.getState();
 
-    setCustomBreadcrumbs({});
+    // Re-derive on navigation OR when the known top-level paths change. The
+    // latter matters because plugin category keys are added asynchronously
+    // (the remote bundle loads after first paint): a page refreshed directly
+    // onto a plugin route (e.g. `/daily-tally/{id}`) first derives without the
+    // category in `topLevelPaths`, so the `/daily-tally` segment is dropped and
+    // only the id crumb survives. Once the keys arrive we must re-split the
+    // same path to restore the category crumb. Skip only when both inputs are
+    // unchanged (a benign remount) so we don't needlessly clear crumbs.
+    if (derivedPathname === pathname && derivedTopLevelPaths === topLevelKey)
+      return;
+
+    // Clear the previous page's custom crumbs only on a real navigation. When
+    // just the top-level paths changed we're re-splitting the SAME path, so
+    // keep the crumbs the page already set — its own effects won't necessarily
+    // re-run to restore them.
+    if (derivedPathname !== pathname) setCustomBreadcrumbs({});
 
     const parts = pathname.split('/');
     const newUrlParts: UrlPart[] = [];
@@ -64,10 +102,10 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
         });
       return path;
     }, '');
-    setUrlParts(newUrlParts);
+    setUrlParts(newUrlParts, pathname, topLevelKey);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [pathname, topLevelPaths.join(',')]);
 
   const navigateUpOne = () => {
     if (urlParts.length < 2) return;

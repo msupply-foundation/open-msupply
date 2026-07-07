@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Box, SxProps, Tooltip, Typography } from '@mui/material';
-import { useFormatNumber } from '@common/intl';
+import { useFormatNumber, useIntlUtils } from '@common/intl';
 import { NumUtils } from '@common/utils';
 
 /*
@@ -31,6 +31,7 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
   roundUp = false,
 }) => {
   const format = useFormatNumber();
+  const { isRtl } = useIntlUtils();
   const tooltip = value ? format.round(value ?? undefined, 10) : null;
   const formattedValue = roundUp
     ? format.roundUpToWholeNumber(value ?? 0)
@@ -47,7 +48,11 @@ export const NumericTextDisplay: FC<NumericTextDisplayProps> = ({
             minWidth: width,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            textAlign: 'right',
+            // Keep numbers on the physical right in both directions so digits
+            // line up by place value. A physical `right` gets flipped to `left`
+            // by stylis-plugin-rtl, so use the logical edge that resolves to
+            // the right in each direction (end in LTR, start in RTL).
+            textAlign: isRtl ? 'start' : 'end',
             fontSize: 'inherit',
             color: 'inherit',
             paddingX: '1px', // so overflow hidden doesn't cut off last digit

@@ -69,7 +69,7 @@ export const TransportSectionComponent = () => {
           />
         </PanelRow>
         <PanelRow>
-          <PanelLabel>{t('heading.reference')}</PanelLabel>
+          <PanelLabel>{t('label.transport-reference')}</PanelLabel>
           <BufferedTextInput
             disabled={isDisabled}
             onChange={e => {

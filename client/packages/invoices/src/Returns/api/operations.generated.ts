@@ -47,7 +47,7 @@ export type SupplierReturnFragment = {
   createdDatetime: string;
   pickedDatetime?: string | null;
   shippedDatetime?: string | null;
-  deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
   verifiedDatetime?: string | null;
   otherPartyName: string;
   otherPartyId: string;
@@ -61,7 +61,12 @@ export type SupplierReturnFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
   user?: {
     __typename: 'UserNode';
@@ -72,6 +77,7 @@ export type SupplierReturnFragment = {
     __typename: 'InvoiceNode';
     id: string;
     invoiceNumber: number;
+    purchaseOrderId?: string | null;
     createdDatetime: string;
     user?: { __typename: 'UserNode'; username: string } | null;
   } | null;
@@ -116,7 +122,12 @@ export type CustomerReturnFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
 };
 
@@ -235,6 +246,7 @@ export type GenerateSupplierReturnLineFragment = {
   expiryDate?: string | null;
   id: string;
   numberOfPacksToReturn: number;
+  onHold: boolean;
   packSize: number;
   stockLineId: string;
   note?: string | null;
@@ -267,6 +279,7 @@ export type GenerateSupplierReturnLinesQuery = {
       expiryDate?: string | null;
       id: string;
       numberOfPacksToReturn: number;
+      onHold: boolean;
       packSize: number;
       stockLineId: string;
       note?: string | null;
@@ -397,7 +410,7 @@ export type SupplierReturnByNumberQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyName: string;
         otherPartyId: string;
@@ -434,7 +447,12 @@ export type SupplierReturnByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         user?: {
           __typename: 'UserNode';
@@ -445,6 +463,7 @@ export type SupplierReturnByNumberQuery = {
           __typename: 'InvoiceNode';
           id: string;
           invoiceNumber: number;
+          purchaseOrderId?: string | null;
           createdDatetime: string;
           user?: { __typename: 'UserNode'; username: string } | null;
         } | null;
@@ -471,7 +490,7 @@ export type SupplierReturnByIdQuery = {
         createdDatetime: string;
         pickedDatetime?: string | null;
         shippedDatetime?: string | null;
-        deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
         verifiedDatetime?: string | null;
         otherPartyName: string;
         otherPartyId: string;
@@ -479,6 +498,7 @@ export type SupplierReturnByIdQuery = {
         transportReference?: string | null;
         lines: {
           __typename: 'InvoiceLineConnector';
+          totalCount: number;
           nodes: Array<{
             __typename: 'InvoiceLineNode';
             id: string;
@@ -508,7 +528,12 @@ export type SupplierReturnByIdQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         user?: {
           __typename: 'UserNode';
@@ -519,6 +544,7 @@ export type SupplierReturnByIdQuery = {
           __typename: 'InvoiceNode';
           id: string;
           invoiceNumber: number;
+          purchaseOrderId?: string | null;
           createdDatetime: string;
           user?: { __typename: 'UserNode'; username: string } | null;
         } | null;
@@ -598,7 +624,12 @@ export type CustomerReturnByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
       }
     | { __typename: 'NodeError' };
@@ -676,7 +707,12 @@ export type CustomerReturnByIdQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
       }
     | { __typename: 'NodeError' };
@@ -869,7 +905,7 @@ export const SupplierReturnFragmentDoc = gql`
     createdDatetime
     pickedDatetime
     shippedDatetime
-    deliveredDatetime
+    receivedDatetime
     verifiedDatetime
     otherPartyName
     otherPartyId
@@ -884,6 +920,7 @@ export const SupplierReturnFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     user {
@@ -896,6 +933,7 @@ export const SupplierReturnFragmentDoc = gql`
     originalShipment {
       id
       invoiceNumber
+      purchaseOrderId
       createdDatetime
       user {
         username
@@ -951,6 +989,7 @@ export const CustomerReturnFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
   }
@@ -1005,6 +1044,7 @@ export const GenerateSupplierReturnLineFragmentDoc = gql`
     expiryDate
     id
     numberOfPacksToReturn
+    onHold
     packSize
     stockLineId
     note
@@ -1175,6 +1215,7 @@ export const SupplierReturnByIdDocument = gql`
           nodes {
             ...SupplierReturnLine
           }
+          totalCount
         }
       }
     }

@@ -10,7 +10,10 @@ export const useStockItems = () => {
     filterBy: { type: { equalTo: ItemNodeType.Stock } },
   };
 
-  return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.stockItems(queryParams)
-  );
+  return useQuery({
+    queryKey: api.keys.paramList(queryParams),
+
+    queryFn: () =>
+      api.get.stockItems(queryParams)
+  });
 };

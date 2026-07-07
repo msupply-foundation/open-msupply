@@ -25,7 +25,7 @@ export const AppBarButtonsComponent: FC<{
   const { error } = useNotification();
   const { mutateAsync: onCreate } = useOutbound.document.insert();
   const t = useTranslation();
-  const { fetchAsync, isLoading } = useOutbound.document.listAll({
+  const { fetchAsync, isPending: isLoading } = useOutbound.document.listAll({
     key: 'createdDateTime',
     direction: 'desc',
     isDesc: true,
@@ -63,7 +63,7 @@ export const AppBarButtonsComponent: FC<{
               });
             } catch (e) {
               const errorSnack = error(
-                'Failed to create invoice! ' + (e as Error).message
+                t('error.failed-to-create-outbound-shipment', { message: (e as Error).message })
               );
               errorSnack();
             }

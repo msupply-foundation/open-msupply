@@ -1,8 +1,8 @@
 use super::{
-    invoice_line_row::invoice_line, invoice_row::invoice, item_link_row::item_link, item_row::item,
+    invoice_line_row::invoice_line, invoice_line_stats, invoice_row::invoice, item_row::item,
     location_row::location, reason_option_row::reason_option, stock_line_row::stock_line, DBType,
-    DatetimeFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, LocationRow, ReasonOptionRow,
-    StorageConnection,
+    DatetimeFilter, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType, InvoiceRow, LocationRow,
+    ReasonOptionRow, StorageConnection,
 };
 
 use crate::{
@@ -11,11 +11,11 @@ use crate::{
         apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    EqualFilter, InvoiceStatus, InvoiceType, ItemLinkRow, ItemRow, Pagination, Sort, StockLineRow,
+    EqualFilter, InvoiceStatus, InvoiceType, ItemRow, Pagination, Sort, StockLineRow,
 };
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    dsl::IntoBoxed,
     prelude::*,
 };
 
@@ -52,6 +52,7 @@ pub struct InvoiceLine {
     pub invoice_line_row: InvoiceLineRow,
     pub invoice_row: InvoiceRow,
     pub item_row: ItemRow,
+    pub invoice_line_stats_row: InvoiceLineStatsRow,
     pub location_row_option: Option<LocationRow>,
     pub stock_line_option: Option<StockLineRow>,
 }
@@ -197,8 +198,9 @@ impl InvoiceLineFilter {
 
 type InvoiceLineJoin = (
     InvoiceLineRow,
-    (ItemLinkRow, ItemRow),
+    ItemRow,
     InvoiceRow,
+    InvoiceLineStatsRow,
     Option<LocationRow>,
     Option<StockLineRow>,
     Option<ReasonOptionRow>,
@@ -265,11 +267,12 @@ impl<'a> InvoiceLineRepository<'a> {
                     apply_sort_no_case!(query, sort, location::name);
                 }
             };
-        } else {
-            query = query.order_by(invoice_line::id.asc());
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let result = query
+            .then_order_by(invoice_line::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<InvoiceLineJoin>(self.connection.lock().connection())?;
@@ -286,32 +289,21 @@ impl<'a> InvoiceLineRepository<'a> {
     }
 }
 
-type BoxedInvoiceLineQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<
-            LeftJoin<
-                InnerJoin<
-                    InnerJoin<invoice_line::table, InnerJoin<item_link::table, item::table>>,
-                    invoice::table,
-                >,
-                location::table,
-            >,
-            stock_line::table,
-        >,
-        reason_option::table,
-    >,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQuery {
-    let mut query = invoice_line::table
-        .inner_join(item_link::table.inner_join(item::table))
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    invoice_line::table
+        .inner_join(item::table)
         .inner_join(invoice::table)
+        .inner_join(invoice_line_stats::table)
         .left_join(location::table)
         .left_join(stock_line::table)
         .left_join(reason_option::table)
-        .into_boxed();
+}
+
+type BoxedInvoiceLineQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQuery {
+    let mut query = query().into_boxed();
 
     if let Some(f) = filter {
         let InvoiceLineFilter {
@@ -341,7 +333,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, requisition_id, invoice::requisition_id);
         apply_equal_filter!(query, invoice_id, invoice_line::invoice_id);
         apply_equal_filter!(query, location_id, invoice_line::location_id);
-        apply_equal_filter!(query, item_id, item_link::item_id);
+        apply_equal_filter!(query, item_id, invoice_line::item_id);
         apply_equal_filter!(query, r#type, invoice_line::type_);
         apply_equal_filter!(query, number_of_packs, invoice_line::number_of_packs);
         apply_equal_filter!(query, invoice_type, invoice::type_);
@@ -384,12 +376,21 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
 }
 
 fn to_domain(
-    (invoice_line_row, (_, item_row), invoice_row, location_row_option, stock_line_option, _): InvoiceLineJoin,
+    (
+        invoice_line_row,
+        item_row,
+        invoice_row,
+        invoice_line_stats_row,
+        location_row_option,
+        stock_line_option,
+        _,
+    ): InvoiceLineJoin,
 ) -> InvoiceLine {
     InvoiceLine {
         invoice_line_row,
         invoice_row,
         item_row,
+        invoice_line_stats_row,
         location_row_option,
         stock_line_option,
     }
