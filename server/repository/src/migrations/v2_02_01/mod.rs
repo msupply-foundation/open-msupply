@@ -46,7 +46,7 @@ async fn migration_2_02_01() {
     assert!(!check_changelogs_have_store_id(&connection));
 
     // Run this migration
-    migrate(&connection, Some(version.clone())).unwrap();
+    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
     assert_eq!(get_database_version(&connection), version);
 
     assert!(check_changelogs_have_store_id(&connection));

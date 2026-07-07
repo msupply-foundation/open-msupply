@@ -10,7 +10,12 @@ import {
   ActionsFooter,
 } from '@openmsupply-client/common';
 import { getRequisitionTranslator, requestStatuses } from '../../../utils';
-import { RequestFragment, RequestLineFragment, useRequest } from '../../api';
+import {
+  ProgramIndicatorFragment,
+  RequestFragment,
+  RequestLineFragment,
+  useRequest,
+} from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 
 export const createStatusLog = (requisition: RequestFragment) => {
@@ -30,7 +35,11 @@ export const createStatusLog = (requisition: RequestFragment) => {
  * can render it through `AppFooterStatusPortal` on every tab — the Details
  * tab's own `Footer` only takes over to show row-selection actions.
  */
-export const StatusFooter = (): ReactElement | null => {
+export const StatusFooter = ({
+  indicators,
+}: {
+  indicators: ProgramIndicatorFragment[] | undefined;
+}): ReactElement | null => {
   const t = useTranslation();
   const { data } = useRequest.document.get();
 
@@ -51,7 +60,7 @@ export const StatusFooter = (): ReactElement | null => {
       />
 
       <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-        <StatusChangeButton />
+        <StatusChangeButton indicators={indicators} />
       </Box>
     </Box>
   );

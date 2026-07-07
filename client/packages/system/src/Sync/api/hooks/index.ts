@@ -8,6 +8,7 @@ export const useSync = {
   },
   sync: {
     initialise: Sync.useInitialiseSite,
+    initialiseAsCentralServer: Sync.useInitialiseAsCentralServer,
     manualSync: Sync.useManualSync,
     update: Sync.useUpdateSyncSettings,
   },

@@ -63,6 +63,7 @@ export const Toolbar = () => {
                   { replace: true }
                 );
               }}
+              width={250}
             />
           }
         />

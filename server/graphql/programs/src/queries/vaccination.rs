@@ -24,6 +24,7 @@ pub fn vaccination_card(
         &ResourceAccessRequest {
             resource: Resource::QueryEncounter,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -55,6 +56,7 @@ pub fn vaccination(
         &ResourceAccessRequest {
             resource: Resource::QueryEncounter,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();

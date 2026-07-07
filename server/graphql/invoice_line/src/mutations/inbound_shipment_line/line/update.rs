@@ -72,6 +72,7 @@ pub fn update(
         &ResourceAccessRequest {
             resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -254,6 +255,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
         ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
         ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
+        ServiceError::CannotSetManufactureDateInFuture => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

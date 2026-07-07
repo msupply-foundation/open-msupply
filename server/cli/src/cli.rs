@@ -10,9 +10,11 @@ use report_builder::{
     Format,
 };
 use repository::{
-    get_storage_connection_manager, migrations::migrate, schema_from_row, test_db, ContextType,
-    EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
-    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
+    get_storage_connection_manager,
+    migrations::{migrate, MigrationConfig},
+    schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
+    KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
+    ReportRowRepository, SyncBufferRepository, SyncBufferRowInsert,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -25,9 +27,8 @@ use service::{
     settings::Settings,
     standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
-        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_buffer::SyncBufferSource,
-        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
-        synchroniser_driver::SynchroniserDriver,
+        settings::SyncSettings, sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
 };
@@ -44,6 +45,9 @@ use tokio::task::spawn_blocking;
 mod backup;
 use backup::*;
 
+mod reintegrate_buffer;
+use reintegrate_buffer::reintegrate_buffer;
+
 #[cfg(feature = "integration_test")]
 use cli::LoadTest;
 use cli::{
@@ -51,8 +55,8 @@ use cli::{
     generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
     install_plugin_bundle, list_installed_plugins, uninstall_plugin,
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
-    ListInstalledPlugins, RefreshDatesRepository, ReportError, TestCredentials, TestData,
-    UninstallPlugin,
+    ListInstalledPlugins, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
+    TestData, UninstallPlugin,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -241,6 +245,10 @@ enum Action {
     },
     #[cfg(feature = "integration_test")]
     LoadTest(LoadTest),
+    /// Aggregate sync_v7 push/pull throughput from a central server's log file(s) into a CSV,
+    /// bucketing records into fixed-width time windows (default 5 seconds). Works on any logs
+    /// captured at level Info (or lower) to file, not only on load test output.
+    SyncThroughputCsv(SyncThroughputCsv),
     GeneratePluginTypescriptTypes {
         /// Optional path to save typescript types, if not provided will save to `../client/packages/plugins/backendCommon/generated`
         #[clap(
@@ -252,6 +260,37 @@ enum Action {
         /// Run prettier on the generated typescript files
         #[clap(long, short, default_value = "false")]
         skip_prettify: bool,
+    },
+    /// Re-run sync buffer integration against the sync_buffer already in the database.
+    /// Resets the buffer's integration state, then re-runs translate + integrate.
+    /// Useful for re-processing already-pulled records after fixing a translator, or for
+    /// replaying a `sync_buffer` dump loaded into a database.
+    ReintegrateBuffer {
+        /// Source site id whose records to integrate (V5/V6 buffer rows for this site).
+        #[clap(short, long, default_value = "1")]
+        source_site_id: i32,
+        /// Wrap integration in a transaction (outer batch + per-record sub-transactions).
+        /// Off by default for speed; turn on to integrate the whole batch atomically.
+        #[clap(short, long)]
+        use_transaction: bool,
+        /// Run pending database migrations before reintegrating.
+        #[clap(short, long)]
+        migrate: bool,
+        /// Skip resetting the buffer's integration state — re-run integration against the
+        /// buffer as it already is (e.g. to only retry rows that are still pending).
+        #[clap(long)]
+        skip_buffer_reset: bool,
+        /// Only reintegrate records that previously errored: the buffer reset clears integration
+        /// state for rows with an integration_error (excluding deliberately-ignored rows) and
+        /// leaves successfully-integrated rows alone. Errored rows are integrated (not pending),
+        /// so this requires a reset — it conflicts with --skip-buffer-reset.
+        #[clap(short, long, conflicts_with = "skip_buffer_reset")]
+        errors_only: bool,
+        /// Restrict integration to these sync buffer tables (comma-separated, matched against
+        /// `sync_buffer.table_name`, e.g. `--tables item,name`). Defaults to all tables.
+        /// Diagnostic use only — scoping can skip rows the chosen tables depend on.
+        #[clap(long, value_delimiter = ',')]
+        tables: Vec<String>,
     },
 }
 
@@ -276,6 +315,7 @@ async fn initialise_from_central(
     let sync_settings = settings
         .clone()
         .sync
+        .filter(|s| s.has_core_sync_settings())
         .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
     let central_server_url = sync_settings.url.clone();
 
@@ -289,17 +329,15 @@ async fn initialise_from_central(
     let service_context = service_provider.basic_context()?;
     info!("Initialising from central");
     service_provider
-        .site_info_service
-        .request_and_set_site_info(&service_provider, &sync_settings)
+        .site_auth_service
+        .request_and_set_site_auth(&service_provider, &sync_settings)
         .await?;
     service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)?;
 
-    // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
-    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
-    let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
-    sync_driver.sync(service_provider.clone(), None).await;
+    let (_, sync_driver) = SynchroniserDriver::init();
+    sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");
     for user in users.split(',') {
@@ -338,9 +376,12 @@ async fn main() -> anyhow::Result<()> {
     match args.action {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
-            let schema =
-                OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
-                    .finish();
+            let schema = OperationalSchema::build(
+                Queries::new(),
+                Mutations::new(),
+                Subscriptions::default(),
+            )
+            .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),
                 schema.sdl(),
@@ -358,10 +399,40 @@ async fn main() -> anyhow::Result<()> {
             if let Some(init_sql) = &settings.database.startup_sql() {
                 connection_manager.execute(init_sql).unwrap();
             }
-            migrate(&connection_manager.connection().unwrap(), None)
-                .expect("Failed to run DB migrations");
+            let migration_config = MigrationConfig {
+                changelog_partition: settings
+                    .changelog_partition
+                    .clone()
+                    .unwrap_or_default()
+                    .to_migration_config(),
+            };
+            migrate(
+                &connection_manager.connection().unwrap(),
+                None,
+                migration_config,
+            )
+            .expect("Failed to run DB migrations");
 
             info!("Finished applying database migrations");
+        }
+        Action::ReintegrateBuffer {
+            source_site_id,
+            use_transaction,
+            migrate: should_migrate,
+            skip_buffer_reset,
+            errors_only,
+            tables,
+        } => {
+            reintegrate_buffer(
+                &settings,
+                source_site_id,
+                use_transaction,
+                should_migrate,
+                skip_buffer_reset,
+                errors_only,
+                // empty `--tables` means no scoping (integrate everything)
+                (!tables.is_empty()).then_some(tables),
+            )?;
         }
         Action::InitialiseFromCentral { users } => {
             initialise_from_central(settings, &users).await?;
@@ -374,6 +445,7 @@ async fn main() -> anyhow::Result<()> {
             let url = settings
                 .sync
                 .clone()
+                .filter(|s| s.has_core_sync_settings())
                 .ok_or(anyhow!("sync settings not set in yaml configurations"))?
                 .url;
             let (service_provider, ctx) = initialise_from_central(settings, &users).await?;
@@ -397,10 +469,10 @@ async fn main() -> anyhow::Result<()> {
 
             let data = InitialisationData {
                 // Sync Buffer Rows
-                sync_buffer_rows: SyncBufferRowRepository::new(&ctx.connection).get_all()?,
+                sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
                 users: synced_user_info_rows,
                 site_id: service_provider
-                    .site_info_service
+                    .site_auth_service
                     .get_site_id(&ctx)?
                     .unwrap(),
             };
@@ -437,25 +509,23 @@ async fn main() -> anyhow::Result<()> {
             // Need to set site_id before integration
             KeyValueStoreRepository::new(&ctx.connection)
                 .set_i32(KeyType::SettingsSyncSiteId, Some(data.site_id))?;
-            let buffer_repo = SyncBufferRowRepository::new(&ctx.connection);
-            let buffer_rows = data
+            let buffer_repo = SyncBufferRepository::new(&ctx.connection);
+            let buffer_rows: Vec<SyncBufferRowInsert> = data
                 .sync_buffer_rows
                 .into_iter()
                 .map(|mut r| {
+                    // Reset integration state — we want re-init to retry integration
+                    r.integration_started_datetime = None;
                     r.integration_datetime = None;
                     r.integration_error = None;
-                    r
+                    r.integration_result = None;
+                    SyncBufferRowInsert::from(r)
                 })
                 .collect();
-            buffer_repo.upsert_many(&buffer_rows)?;
+            buffer_repo.insert_many(&buffer_rows)?;
 
             let mut logger = SyncLogger::start(&ctx.connection).unwrap();
-            integrate_and_translate_sync_buffer(
-                &ctx.connection,
-                Some(&mut logger),
-                SyncBufferSource::Central(0),
-                true,
-            )?;
+            integrate_and_translate_sync_buffer(&ctx.connection, Some(&mut logger), 0, true)?;
 
             info!("Initialising users");
             for (input, user_info) in data.users {
@@ -833,29 +903,11 @@ async fn main() -> anyhow::Result<()> {
             log::set_max_level(current_log_level);
         }
         #[cfg(feature = "integration_test")]
-        Action::LoadTest(LoadTest {
-            msupply_central_url,
-            oms_central_url,
-            base_port,
-            output_dir,
-            test_site_name,
-            test_site_pass,
-            sites,
-            lines,
-            duration,
-        }) => {
-            let load_test = LoadTest::new(
-                msupply_central_url,
-                oms_central_url,
-                base_port,
-                output_dir,
-                test_site_name,
-                test_site_pass,
-                sites,
-                lines,
-                duration,
-            );
+        Action::LoadTest(load_test) => {
             load_test.run().await?;
+        }
+        Action::SyncThroughputCsv(args) => {
+            args.run()?;
         }
     }
 

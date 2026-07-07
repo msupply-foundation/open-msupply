@@ -253,7 +253,8 @@ mod test {
         mock::{mock_location_1, mock_location_2, mock_stock_line_a, MockDataInserts},
         test_db::setup_all,
         EqualFilter, StockRelocationFilter, StockRelocationRepository, StockRelocationRow,
-        StockRelocationSort, StockRelocationSortField, StockRelocationStatus, StringFilter, Upsert,
+        StockRelocationRowRepository, StockRelocationSort, StockRelocationSortField,
+        StockRelocationStatus, StringFilter,
     };
 
     fn relocation(id: &str) -> StockRelocationRow {
@@ -279,7 +280,9 @@ mod test {
             setup_all("stock_relocation_query_repository", MockDataInserts::all()).await;
 
         let row = relocation("stock_relocation_1");
-        row.upsert(&connection).unwrap();
+        StockRelocationRowRepository::new(&connection)
+            .upsert_one(&row)
+            .unwrap();
 
         let repo = StockRelocationRepository::new(&connection);
 
@@ -326,12 +329,12 @@ mod test {
             .iter()
             .any(|r| r.stock_relocation_row.id == "stock_relocation_1"));
 
-        StockRelocationRow {
-            from_location_id: Some(mock_location_2().id),
-            ..relocation("stock_relocation_2")
-        }
-        .upsert(&connection)
-        .unwrap();
+        StockRelocationRowRepository::new(&connection)
+            .upsert_one(&StockRelocationRow {
+                from_location_id: Some(mock_location_2().id),
+                ..relocation("stock_relocation_2")
+            })
+            .unwrap();
         let from_location_ids = |desc: bool| {
             repo.query(
                 crate::Pagination::all(),

@@ -24,6 +24,9 @@ mod load_test;
 #[cfg(feature = "integration_test")]
 pub use load_test::*;
 
+mod sync_throughput_csv;
+pub use sync_throughput_csv::*;
+
 #[cfg(windows)]
 const YARN_COMMAND: &str = "yarn.cmd";
 #[cfg(not(windows))]
