@@ -1,27 +1,27 @@
 import React from 'react';
 import {
   NothingHere,
-  PreferenceNodeType,
+  PreferenceDescriptionNode,
   PreferenceValueNodeType,
+  UpsertPreferencesInput,
 } from '@openmsupply-client/common';
 import {
   EditPreference,
   PreferenceSearchInput,
-  useEditPreferences,
   usePreferenceSearch,
 } from '../../../Manage/Preferences';
 
 interface EditStorePreferencesProps {
   storeId: string;
+  preferences: PreferenceDescriptionNode[];
+  update: (input: Partial<UpsertPreferencesInput>) => void;
 }
 
 export const EditStorePreferences = ({
   storeId,
+  preferences,
+  update,
 }: EditStorePreferencesProps) => {
-  const { update, preferences } = useEditPreferences(
-    PreferenceNodeType.Store,
-    storeId
-  );
   const { searchTerm, setSearchTerm, filteredPreferences, hasSearchTerm } =
     usePreferenceSearch(preferences);
 
@@ -39,15 +39,18 @@ export const EditStorePreferences = ({
             <EditPreference
               key={pref.key}
               preference={pref}
-              update={value => {
+              isAutoSave={false}
+              update={async value => {
                 const finalValue =
-                  pref.valueType === PreferenceValueNodeType.Integer &&
-                  value === undefined
+                  (pref.valueType === PreferenceValueNodeType.Integer ||
+                    pref.valueType === PreferenceValueNodeType.Float) &&
+                    value === undefined
                     ? 0
                     : value;
-                return update({
+                update({
                   [pref.key]: [{ storeId, value: finalValue }],
                 });
+                return true;
               }}
               isLast={isLast}
             />

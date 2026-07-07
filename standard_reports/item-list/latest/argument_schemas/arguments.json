@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "ItemListFilters": {
+      "properties": {
+        "itemCode": {
+          "description": "Item Code",
+          "type": ["string", "null"]
+        },
+        "itemName": {
+          "description": "Item Name",
+          "type": ["string", "null"]
+        },
+        "masterListId": {
+          "description": "Master List",
+          "type": ["string", "null"]
+        },
+        "isActive": {
+          "description": "Is Active",
+          "type": ["boolean", "null"],
+          "default": true
+        },
+        "onlyOutOfStock": {
+          "description": "Only out of stock",
+          "type": "boolean",
+          "default": false
+        },
+        "venCategory": {
+          "description": "VEN Category",
+          "type": ["string", "null"],
+          "enum": ["V", "E", "N", "V_OR_E", "V_E_N", "NONE"]
+        },
+        "sort": {
+          "description": "sort by",
+          "type": "string",
+          "enum": [
+            "name",
+            "code",
+            "SOH",
+            "locationName",
+            "categoryName"
+          ]
+        },
+        "dir": {
+          "description": "sort by dir",
+          "type": ["string", "null"],
+          "enum": ["asc", "desc"],
+          "format": "SortToggle"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/ItemListFilters"
+    }
+  ]
+}

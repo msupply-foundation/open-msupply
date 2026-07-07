@@ -26,9 +26,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
         let PreferenceProvider {
             // Global preferences
             allow_tracking_of_stock_by_donor,
-            authorise_goods_received,
             authorise_purchase_order,
-            custom_translations,
+            // v1 custom translations are hidden from the preferences edit list; they can still
+            // be edited via the v2 custom translations editor (legacy namespace) when needed.
+            custom_translations: _,
+            custom_translations_v2,
             gender_options,
             prevent_transfers_months_before_initialisation,
             show_contact_tracing,
@@ -41,6 +43,12 @@ pub trait PreferenceServiceTrait: Sync + Send {
             show_indicative_price_in_requisitions,
             item_margin_overrides_supplier_margin,
             is_gaps,
+            display_population_based_forecasting,
+            global_table_configs: _, // Not included in preference descriptions UI
+            backdating,
+            // Hidden from the preferences edit UI until prescription payment
+            // functionality is implemented (#6179)
+            receive_payments_from_prescriptions: _,
 
             // Store preferences
             manage_vaccines_in_doses,
@@ -54,6 +62,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
+            external_inbound_shipment_lines_must_be_authorised,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
             number_of_months_threshold_to_show_over_stock_alerts_for_products,
@@ -62,6 +71,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             warn_when_missing_recent_stocktake,
             store_custom_colour,
             invoice_status_options,
+            do_not_print_placeholder_line_labels,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -74,9 +84,8 @@ pub trait PreferenceServiceTrait: Sync + Send {
 
         // Global preferences
         append_if_type(allow_tracking_of_stock_by_donor, &mut prefs, &input)?;
-        append_if_type(authorise_goods_received, &mut prefs, &input)?;
         append_if_type(authorise_purchase_order, &mut prefs, &input)?;
-        append_if_type(custom_translations, &mut prefs, &input)?;
+        append_if_type(custom_translations_v2, &mut prefs, &input)?;
         append_if_type(gender_options, &mut prefs, &input)?;
         append_if_type(
             prevent_transfers_months_before_initialisation,
@@ -93,6 +102,10 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(show_indicative_price_in_requisitions, &mut prefs, &input)?;
         append_if_type(item_margin_overrides_supplier_margin, &mut prefs, &input)?;
         append_if_type(is_gaps, &mut prefs, &input)?;
+        append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
+        append_if_type(backdating, &mut prefs, &input)?;
+        // TODO: receive_payments_from_prescriptions intentionally omitted, hidden from
+        // the edit UI until prescription payment functionality exists
 
         // Store preferences
         append_if_type(order_in_packs, &mut prefs, &input)?;
@@ -111,6 +124,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
         )?;
         append_if_type(
             select_destination_store_for_an_internal_order,
+            &mut prefs,
+            &input,
+        )?;
+        append_if_type(
+            external_inbound_shipment_lines_must_be_authorised,
             &mut prefs,
             &input,
         )?;
@@ -134,6 +152,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(store_custom_colour, &mut prefs, &input)?;
         append_if_type(warn_when_missing_recent_stocktake, &mut prefs, &input)?;
         append_if_type(invoice_status_options, &mut prefs, &input)?;
+        append_if_type(do_not_print_placeholder_line_labels, &mut prefs, &input)?;
 
         Ok(prefs)
     }

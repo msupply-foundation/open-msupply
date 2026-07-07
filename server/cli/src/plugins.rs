@@ -19,7 +19,8 @@ use thiserror::Error as ThisError;
 use util::format_error;
 
 use crate::{
-    queries_mutations::INSTALL_PLUGINS, run_command_with_error, Api, ApiError, CommandError, YARN_COMMAND,
+    queries_mutations::{INSTALLED_PLUGINS, INSTALL_PLUGINS, UNINSTALL_PLUGIN},
+    run_command_with_error, Api, ApiError, CommandError, YARN_COMMAND,
 };
 
 #[derive(ThisError, Debug)]
@@ -91,6 +92,35 @@ pub struct GenerateAndInstallPluginBundle {
     #[clap(long)]
     password: String,
 }
+
+#[derive(clap::Parser, Debug)]
+pub struct UninstallPlugin {
+    /// Id of the plugin row to uninstall (as returned by list-installed-plugins).
+    #[clap(long)]
+    id: String,
+    /// Server url
+    #[clap(short, long)]
+    url: Url,
+    /// Username
+    #[clap(long)]
+    username: String,
+    /// Password
+    #[clap(long)]
+    password: String,
+}
+
+#[derive(clap::Parser, Debug)]
+pub struct ListInstalledPlugins {
+    /// Server url
+    #[clap(short, long)]
+    url: Url,
+    /// Username
+    #[clap(long)]
+    username: String,
+    /// Password
+    #[clap(long)]
+    password: String,
+}
 // THe expected package.json format is as follows:
 // Front end: https://github.com/msupply-foundation/open-msupply-plugins/blob/81b78c31e5f938dd8b30783f7e3ee97555285f70/frontend/latest/package.json#L6-L14
 // Back end: https://github.com/msupply-foundation/open-msupply-plugins/blob/81b78c31e5f938dd8b30783f7e3ee97555285f70/backend/latest/package.json#L4-L10
@@ -145,7 +175,11 @@ fn generate_bundle_recursive(
     manifest_name: &OsStr,
     path: &PathBuf,
 ) -> Result<(), Error> {
-    if let Some(_) = ignore_paths.iter().find(|p| Some(**p) == path.file_name()) {
+    if ignore_paths
+        .iter()
+        .find(|p| Some(**p) == path.file_name())
+        .is_some()
+    {
         return Ok(());
     }
 
@@ -164,7 +198,7 @@ fn generate_bundle_recursive(
         let next_path = file_or_folder
             .map_err(|e| Error::FailedToGetFileOrDir(path.clone(), e))?
             .path();
-        generate_bundle_recursive(bundle, &ignore_paths, manifest_name, &next_path)?;
+        generate_bundle_recursive(bundle, ignore_paths, manifest_name, &next_path)?;
     }
 
     Ok(())
@@ -197,17 +231,16 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
     // Yarn install
     run_command_with_error(
         Command::new(YARN_COMMAND)
-            .args(["install", "--cwd"])
-            .arg(&plugin_root),
+            .arg("install")
+            .current_dir(plugin_root),
     )
     .map_err(|e| Error::FailedToYarnInstall(plugin_root.to_path_buf(), e))?;
 
     // Yarn build plugin
     run_command_with_error(
         Command::new(YARN_COMMAND)
-            .arg("--cwd")
-            .arg(&plugin_root)
-            .arg("build-plugin"),
+            .arg("build-plugin")
+            .current_dir(plugin_root),
     )
     .map_err(|e| Error::FailedToBuildPlugin(plugin_root.to_path_buf(), e))?;
 
@@ -242,7 +275,7 @@ fn bundle_backend_plugin(
 
     bundle.backend_plugins.push(BackendPluginRow {
         id: format!("backend_{code}_{version_id}"),
-        bundle_base64: bundle_base64,
+        bundle_base64,
         variant_type,
         types,
         code,
@@ -380,6 +413,56 @@ pub async fn generate_and_install_plugin_bundle(
     })
     .await?;
     fs::remove_file(out_file.clone()).map_err(|e| Error::FiledToRemoveTempFile(e, out_file))?;
+
+    Ok(())
+}
+
+pub async fn uninstall_plugin(
+    UninstallPlugin {
+        id,
+        url,
+        username,
+        password,
+    }: UninstallPlugin,
+) -> Result<(), Error> {
+    let api = Api::new_with_token(url.clone(), username, password).await?;
+
+    let result = api
+        .gql(
+            UNINSTALL_PLUGIN,
+            json!({ "id": id }),
+            Some("CentralServerMutationNode"),
+        )
+        .await?;
+
+    info!("Result:{}", serde_json::to_string_pretty(&result).unwrap());
+
+    Ok(())
+}
+
+/// Prints the installed plugins array as JSON on stdout so callers (e.g. the
+/// yarn plugin script) can parse it. All other output goes to log/stderr.
+pub async fn list_installed_plugins(
+    ListInstalledPlugins {
+        url,
+        username,
+        password,
+    }: ListInstalledPlugins,
+) -> Result<(), Error> {
+    let api = Api::new_with_token(url.clone(), username, password).await?;
+
+    let result = api
+        .gql(INSTALLED_PLUGINS, json!({}), Some("CentralServerQueryNode"))
+        .await?;
+
+    let nodes = result
+        .get("plugin")
+        .and_then(|p| p.get("installedPlugins"))
+        .and_then(|p| p.get("nodes"))
+        .cloned()
+        .unwrap_or_else(|| serde_json::json!([]));
+
+    println!("{}", serde_json::to_string(&nodes).unwrap());
 
     Ok(())
 }

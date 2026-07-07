@@ -49,6 +49,7 @@ pub enum Resource {
     MutateTemperatureBreach,
     // store
     QueryStore,
+    StoreAccess,
     // master list
     QueryMasterList,
     // items
@@ -79,8 +80,13 @@ pub enum Resource {
     UpdateStocktakeLine,
     DeleteStocktakeLine,
     // invoice
-    InvoiceCount,
+    InvoiceCount, // Deprecated: requires all invoice count permissions combined
     QueryInvoice,
+    QueryOutboundShipment,
+    QueryInboundShipment,
+    QueryPrescription,
+    QuerySupplierReturn,
+    QueryCustomerReturn,
     // outbound shipment
     MutateOutboundShipment,
     // inbound shipment
@@ -162,10 +168,17 @@ pub enum Resource {
     QueryPurchaseOrder,
     MutatePurchaseOrder,
     AuthorisePurchaseOrder,
-    // Goods Received
-    MutateGoodsReceived,
-    QueryGoodsReceived,
-    AuthoriseGoodsReceived,
+    FinalisePurchaseOrder,
+    // Inbound Shipment External
+    MutateInboundShipmentExternal,
+    QueryInboundShipmentExternal,
+    AuthoriseInboundShipmentExternal,
+    VerifyInboundShipmentExternal,
+    // Help documents
+    QueryHelpDocuments,
+    MutateHelpDocuments,
+
+    MutateSites,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -247,6 +260,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     // store: No permission needed
     map.insert(Resource::QueryStore, PermissionDSL::NoPermissionRequired);
+    map.insert(Resource::StoreAccess, PermissionDSL::HasStoreAccess);
     // master list
     map.insert(Resource::QueryMasterList, PermissionDSL::HasStoreAccess);
 
@@ -411,17 +425,55 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
             PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
             PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
             PermissionDSL::HasPermission(PermissionType::SupplierReturnQuery),
             PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
         ]),
     );
     map.insert(
+        Resource::QueryOutboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryInboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryPrescription,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QuerySupplierReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::SupplierReturnQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryCustomerReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
+        ]),
+    );
+    // Deprecated: combined invoice count resource requiring all query permissions
+    map.insert(
         Resource::InvoiceCount,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
             PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
         ]),
     );
     // outbound shipment
@@ -445,6 +497,35 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::InboundShipmentVerify),
+        ]),
+    );
+    // inbound shipment external
+    map.insert(
+        Resource::QueryInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalMutate),
+        ]),
+    );
+    map.insert(
+        Resource::VerifyInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalVerify),
+        ]),
+    );
+    map.insert(
+        Resource::AuthoriseInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalAuthorise),
         ]),
     );
     // Supplier return
@@ -492,7 +573,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(
         Resource::QueryLog,
-        PermissionDSL::HasPermission(PermissionType::LogQuery),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::LogQuery),
+        ]),
     );
 
     map.insert(Resource::QueryClinician, PermissionDSL::HasStoreAccess);
@@ -727,8 +811,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::PluginGraphql, PermissionDSL::HasStoreAccess);
 
     // vvm status - queries only need authentication
-    map.insert(Resource::QueryVvmStatus, PermissionDSL::NoPermissionRequired);
-    
+    map.insert(
+        Resource::QueryVvmStatus,
+        PermissionDSL::NoPermissionRequired,
+    );
+
     // vvm status - mutations need permission
     map.insert(
         Resource::MutateVvmStatus,
@@ -744,6 +831,17 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
 
     map.insert(Resource::QueryCampaigns, PermissionDSL::HasStoreAccess);
+
+    // Help documents (uploaded centrally, listed on the Help page on every site).
+    // Read is open to any authenticated user; write is ServerAdmin only.
+    map.insert(
+        Resource::QueryHelpDocuments,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateHelpDocuments,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
 
     map.insert(
         Resource::QueryPurchaseOrder,
@@ -763,27 +861,17 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
         ]),
     );
+    map.insert(
+        Resource::FinalisePurchaseOrder,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PurchaseOrderFinalise),
+        ]),
+    );
 
     map.insert(
-        Resource::QueryGoodsReceived,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::GoodsReceivedQuery),
-        ]),
-    );
-    map.insert(
-        Resource::MutateGoodsReceived,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::GoodsReceivedMutate),
-        ]),
-    );
-    map.insert(
-        Resource::AuthoriseGoodsReceived,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::GoodsReceivedAuthorise),
-        ]),
+        Resource::MutateSites,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
 
     map
@@ -892,6 +980,8 @@ pub struct ResourceAccessRequest {
     pub resource: Resource,
     /// The store id if specified
     pub store_id: Option<String>,
+    /// For endpoints that configure central data in mixed configurations.
+    pub require_central_standalone: bool,
 }
 
 fn validate_resource_permissions(
@@ -1152,6 +1242,7 @@ mod validate_resource_permissions_test {
         let resource_request = ResourceAccessRequest {
             resource: Resource::MutateLocation,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         };
         let required_permissions = PermissionDSL::HasPermission(PermissionType::ServerAdmin);
 
@@ -1443,6 +1534,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: None,
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1465,6 +1557,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: None,
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1488,6 +1581,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_a".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1511,6 +1605,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_b".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1525,6 +1620,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_a".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1542,7 +1638,7 @@ mod permission_validation_test {
         fn store() -> StoreRow {
             StoreRow {
                 id: "store".to_string(),
-                name_link_id: name().id,
+                name_id: name().id,
                 code: "n/a".to_string(),
                 ..Default::default()
             }
@@ -1625,7 +1721,8 @@ mod permission_validation_test {
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
-                    store_id: Some(store().id)
+                    store_id: Some(store().id),
+                    require_central_standalone: false,
                 }
             )
             .is_ok());
@@ -1647,7 +1744,8 @@ mod permission_validation_test {
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
-                    store_id: Some(store().id)
+                    store_id: Some(store().id),
+                    require_central_standalone: false,
                 }
             )
             .is_err());

@@ -24,7 +24,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             store_id: store_id.to_string(),
             user_id: None,
             requisition_number: 456,
-            name_link_id: uuid(),
+            name_id: uuid(),
             r#type: RequisitionType::Request,
             status: RequisitionStatus::Draft,
             created_datetime: NaiveDate::from_ymd_opt(2022, 03, 23)
@@ -45,12 +45,15 @@ impl SyncRecordTester for RequisitionRecordTester {
             period_id: None,
             order_type: None,
             is_emergency: false,
+            created_from_requisition_id: None,
+            destination_customer_id: None,
+            name_store_id: None,
         };
         let requisition_row_1 = base_requisition_row.clone();
         let requisition_line_row_1 = RequisitionLineRow {
             id: uuid(),
             requisition_id: requisition_row_1.id.clone(),
-            item_link_id: uuid(),
+            item_id: uuid(),
             item_name: "test item".to_string(),
             requested_quantity: 50.0,
             suggested_quantity: 10.0,
@@ -61,7 +64,8 @@ impl SyncRecordTester for RequisitionRecordTester {
             snapshot_datetime: None,
             approved_quantity: 0.0,
             approval_comment: None,
-            initial_stock_on_hand_units: 5.0,
+            // 4D recalculates this to match available_stock_on_hand for Draft requisitions.
+            initial_stock_on_hand_units: 10.0,
             incoming_units: 5.0,
             outgoing_units: 5.0,
             loss_in_units: 5.0,
@@ -69,6 +73,12 @@ impl SyncRecordTester for RequisitionRecordTester {
             expiring_units: 5.0,
             days_out_of_stock: 5.0,
             option_id: None,
+            price_per_unit: None,
+            available_volume: None,
+            location_type_id: None,
+            forecast_total_units: None,
+            forecast_total_doses: None,
+            vaccine_courses: None,
         };
 
         let mut requisition_row_2 = base_requisition_row.clone();
@@ -87,11 +97,11 @@ impl SyncRecordTester for RequisitionRecordTester {
         result.push(TestStepData {
             central_upsert: json!({
                 "item": [{
-                    "ID": requisition_line_row_1.item_link_id,
+                    "ID": requisition_line_row_1.item_id,
                     "type_of": "general"
                 }],
                 "name": [{
-                    "ID": base_requisition_row.name_link_id,
+                    "ID": base_requisition_row.name_id,
                     "type": "store"
                 }],
             }),
@@ -137,7 +147,8 @@ impl SyncRecordTester for RequisitionRecordTester {
         requisition_line_row_1.snapshot_datetime = NaiveDate::from_ymd_opt(2022, 03, 20)
             .unwrap()
             .and_hms_opt(12, 13, 14);
-        requisition_line_row_1.initial_stock_on_hand_units = 5.0;
+        // 4D recalculates this to match available_stock_on_hand.
+        requisition_line_row_1.initial_stock_on_hand_units = 15.0;
         requisition_line_row_1.incoming_units = 5.0;
         requisition_line_row_1.outgoing_units = 5.0;
         requisition_line_row_1.loss_in_units = 5.0;

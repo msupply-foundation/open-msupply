@@ -1,5 +1,6 @@
 import React from 'react';
-import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
+import { SvgIconProps } from '@mui/material/SvgIcon';
+import { RtlFlipIcon } from './RtlFlipIcon';
 
 export const FileIcon = (props: SvgIconProps): JSX.Element => {
   const combinedProps: SvgIconProps = {
@@ -10,7 +11,7 @@ export const FileIcon = (props: SvgIconProps): JSX.Element => {
     ...props,
   };
   return (
-    <SvgIcon
+    <RtlFlipIcon
       {...combinedProps}
       viewBox="0 0 24 24"
       strokeWidth="2"
@@ -22,6 +23,6 @@ export const FileIcon = (props: SvgIconProps): JSX.Element => {
       <line x1="16" y1="13" x2="8" y2="13"></line>
       <line x1="16" y1="17" x2="8" y2="17"></line>
       <polyline points="10 9 9 9 8 9"></polyline>{' '}
-    </SvgIcon>
+    </RtlFlipIcon>
   );
 };

@@ -16,6 +16,7 @@ async fn integration_sync_transfer_return_normal() {
         site_2_processors_task: returning_site_processors_task,
         item1,
         item2,
+        item3,
         service_item,
     } = initialise_transfer_sites("sync_return_transfers_normal").await;
 
@@ -27,6 +28,7 @@ async fn integration_sync_transfer_return_normal() {
             None,
             &item1,
             &item2,
+            &item3,
             &service_item,
         );
 
@@ -176,6 +178,7 @@ async fn integration_sync_transfer_return_delete() {
         site_2_processors_task: returning_site_processors_task,
         item1,
         item2,
+        item3,
         service_item,
     } = initialise_transfer_sites("return_transfers_delete").await;
 
@@ -187,6 +190,7 @@ async fn integration_sync_transfer_return_delete() {
             None,
             &item1,
             &item2,
+            &item3,
             &service_item,
         );
 
@@ -283,6 +287,7 @@ async fn integration_sync_transfer_return_initialise() {
         site_2_processors_task: returning_site_processors_task,
         item1,
         item2,
+        item3,
         service_item,
     } = initialise_transfer_sites(identifier).await;
 
@@ -294,6 +299,7 @@ async fn integration_sync_transfer_return_initialise() {
             None,
             &item1,
             &item2,
+            &item3,
             &service_item,
         );
 

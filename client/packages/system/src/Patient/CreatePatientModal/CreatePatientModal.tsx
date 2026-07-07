@@ -6,6 +6,7 @@ import {
   DialogButton,
   useDialog,
   useTranslation,
+  useNotification,
   BasicSpinner,
   DetailTab,
   SaveIcon,
@@ -30,6 +31,7 @@ export const CreatePatientModal = ({
   onSelectPatient: onSelect,
 }: CreatePatientModal) => {
   const t = useTranslation();
+  const { error } = useNotification();
 
   const { Modal } = useDialog({ isOpen: open, onClose });
 
@@ -57,8 +59,6 @@ export const CreatePatientModal = ({
     }
   }, [open, setCreateNewPatient]);
 
-  if (isLoading) return <BasicSpinner />;
-
   return (
     <Modal
       title=""
@@ -69,9 +69,13 @@ export const CreatePatientModal = ({
             color="secondary"
             label={t('button.save')}
             startIcon={<SaveIcon />}
-            onClick={() => {
-              handleSave();
-              onCreate();
+            onClick={async () => {
+              try {
+                await handleSave();
+                onCreate();
+              } catch (e) {
+                error(t('error.failed-to-save-patient'))();
+              }
             }}
             isLoading={isSaving}
             disabled={!isDirty || isSaving || !!validationError}
@@ -102,20 +106,29 @@ export const CreatePatientModal = ({
       slideAnimation={false}
     >
       <DetailContainer>
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-          <WizardStepper
-            activeStep={getActiveStep()}
-            steps={patientSteps}
-            nowrap
-          />
-          <TabContext value={currentTab}>
-            {tabs.map(({ Component, value }) => (
-              <DetailTab value={value} key={value}>
-                {Component}
-              </DetailTab>
-            ))}
-          </TabContext>
-        </Box>
+        {isLoading ? (
+          <BasicSpinner />
+        ) : (
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap={2}
+          >
+            <WizardStepper
+              activeStep={getActiveStep()}
+              steps={patientSteps}
+              nowrap
+            />
+            <TabContext value={currentTab}>
+              {tabs.map(({ Component, value }) => (
+                <DetailTab value={value} key={value}>
+                  {Component}
+                </DetailTab>
+              ))}
+            </TabContext>
+          </Box>
+        )}
       </DetailContainer>
     </Modal>
   );

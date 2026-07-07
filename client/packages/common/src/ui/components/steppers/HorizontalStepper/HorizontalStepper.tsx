@@ -33,16 +33,30 @@ interface StepperProps {
 
 type PaletteColour = Omit<PaletteColor, 'contrastText'> & { error: string };
 
+// Circle/connector geometry. Kept as constants so the connector lines stay
+// aligned to the circles (see issue #12172 - lines were sitting too high and
+// over/under-shooting the circles).
+const CIRCLE_DIAMETER = 30;
+const CIRCLE_BORDER_WIDTH = 3;
+// Outer radius of the circle, including its border. The connector should meet
+// the circle's outer edge, so this is also the horizontal inset from a step's
+// centre.
+const CIRCLE_OUTER_RADIUS = CIRCLE_DIAMETER / 2 + CIRCLE_BORDER_WIDTH; // 18px
+const CONNECTOR_THICKNESS = 4;
+// Vertical position so the line is centred on the circle.
+const CONNECTOR_TOP = CIRCLE_OUTER_RADIUS - CONNECTOR_THICKNESS / 2; // 16px
+
 const getConnector = (paletteColour: PaletteColour) => () => {
   const style = {
     '&.MuiStepConnector-root': {
-      left: 'calc(-50% + 15px)',
-      right: 'calc(50% + 15px)',
+      top: `${CONNECTOR_TOP}px`,
+      left: `calc(-50% + ${CIRCLE_OUTER_RADIUS}px)`,
+      right: `calc(50% + ${CIRCLE_OUTER_RADIUS}px)`,
     },
     [`& .${stepConnectorClasses.line}`]: {
       borderColor: paletteColour.light,
       // The width is for the connector which is significantly thicker than the default.
-      borderWidth: '4px 0 0 0',
+      borderWidth: `${CONNECTOR_THICKNESS}px 0 0 0`,
     },
     [`&.${stepConnectorClasses.active}`]: {
       [`& .${stepConnectorClasses.line}`]: {
@@ -86,11 +100,17 @@ const getCircle =
     return (
       <div
         style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           border: 'solid',
-          borderWidth: 3,
-          width: 30,
-          height: 30,
-          borderRadius: 30,
+          // content-box: total outer size is CIRCLE_DIAMETER + 2*border, which
+          // the connector geometry constants depend on.
+          boxSizing: 'content-box',
+          borderWidth: CIRCLE_BORDER_WIDTH,
+          width: CIRCLE_DIAMETER,
+          height: CIRCLE_DIAMETER,
+          borderRadius: '50%',
           textAlign: 'center',
           fontWeight: 700,
           animation: active ? 'pulse 2s infinite' : 'none',
@@ -189,10 +209,11 @@ export const HorizontalStepper = ({
   nowrap = false,
 }: StepperProps) => {
   const paletteColour = usePaletteColour(colour);
+  const theme = useTheme();
   const StyledConnector = getConnector(paletteColour);
 
   return (
-    <Box flex={1}>
+    <Box flex={1} dir={theme.direction}>
       <GlobalStyles styles={getAnimationStyles(colour)} />
       <Stepper
         connector={<StyledConnector />}

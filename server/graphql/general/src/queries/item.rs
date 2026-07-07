@@ -84,6 +84,7 @@ pub fn items(
         &ResourceAccessRequest {
             resource: Resource::QueryItems,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -131,7 +132,7 @@ impl ItemFilterInput {
             id: id.map(EqualFilter::from),
             name: name.map(StringFilter::from),
             code: code.map(StringFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, |r| ItemType::from(r))),
+            r#type: r#type.map(|t| map_filter!(t, ItemType::from)),
             category_id,
             category_name,
             is_visible,

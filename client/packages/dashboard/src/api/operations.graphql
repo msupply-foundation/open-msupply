@@ -1,9 +1,17 @@
-query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
-  itemCounts(lowStockThreshold: $lowStockThreshold, storeId: $storeId) {
+query itemCounts(
+  $storeId: String!
+  $lowStockThreshold: Float!
+  $highStockThreshold: Float!
+) {
+  itemCounts(
+    lowStockThreshold: $lowStockThreshold
+    highStockThreshold: $highStockThreshold
+    storeId: $storeId
+  ) {
     itemCounts {
       lowStock
       noStock
-      moreThanSixMonthsStock
+      highStock
       total
       outOfStockProducts
       productsAtRiskOfBeingOutOfStock
@@ -12,23 +20,29 @@ query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
   }
 }
 
-query inboundCounts($storeId: String!) {
-  invoiceCounts(storeId: $storeId) {
-    inbound {
-      created {
-        today
-        thisWeek
-      }
-      notDelivered
+query inboundInternalCounts($storeId: String!) {
+  inboundShipmentCounts(storeId: $storeId) {
+    created {
+      today
+      thisWeek
     }
+    notDelivered
+  }
+}
+
+query inboundExternalCounts($storeId: String!) {
+  inboundShipmentExternalCounts(storeId: $storeId) {
+    created {
+      today
+      thisWeek
+    }
+    notDelivered
   }
 }
 
 query outboundCounts($storeId: String!) {
-  invoiceCounts(storeId: $storeId) {
-    outbound {
-      notShipped
-    }
+  outboundShipmentCounts(storeId: $storeId) {
+    notShipped
   }
 }
 

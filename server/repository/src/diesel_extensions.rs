@@ -111,6 +111,11 @@ pub mod datetime_coalesce {
     define_sql_function! { fn coalesce(x: Nullable<Timestamp>, y: Timestamp) -> Timestamp; }
 }
 
+pub mod double_coalesce {
+    use diesel::sql_types::{Double, Nullable};
+    define_sql_function! { fn coalesce(x: Nullable<Double>, y: Double) -> Double; }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;

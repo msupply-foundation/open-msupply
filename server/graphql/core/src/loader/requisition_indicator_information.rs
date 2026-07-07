@@ -79,8 +79,8 @@ mod tests {
     use super::*;
     use repository::{
         mock::{
-            mock_name_store_b, mock_period, mock_period_2_a, mock_store_a, MockData,
-            MockDataInserts,
+            mock_indicator_line_a, mock_name_store_b, mock_period, mock_period_2_a, mock_store_a,
+            MockData, MockDataInserts,
         },
         test_db, NameRow, StorePreferenceRow,
     };
@@ -115,12 +115,17 @@ mod tests {
             service_provider: Data::new(ServiceProvider::new(connection_manager)),
         };
 
-        let line_id = "test_indicator_line";
+        // Must be a real indicator line: the service skips line_ids it can't resolve
+        // to an IndicatorLineRow (elmis_code cross-program expansion, PR #11278).
+        let line_id = mock_indicator_line_a().id;
         // Same store + line, two different periods, in a single batch.
-        let period_1_input =
-            RequisitionIndicatorInfoLoaderInput::new(line_id, &mock_store_a().id, &mock_period().id);
+        let period_1_input = RequisitionIndicatorInfoLoaderInput::new(
+            &line_id,
+            &mock_store_a().id,
+            &mock_period().id,
+        );
         let period_2_input = RequisitionIndicatorInfoLoaderInput::new(
-            line_id,
+            &line_id,
             &mock_store_a().id,
             &mock_period_2_a().id,
         );

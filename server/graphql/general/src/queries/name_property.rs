@@ -31,6 +31,7 @@ pub fn configure_name_properties(
         &ResourceAccessRequest {
             resource: Resource::ConfigureNameProperties,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 
@@ -47,7 +48,7 @@ pub fn configure_name_properties(
     match result {
         Ok(_) => Ok(ConfigureNamePropertiesResponse::Response(Success)),
         Err(error) => {
-            let formatted_error = format!("{:?}", error);
+            let formatted_error = format!("{error:?}");
 
             let graphql_error = match error {
                 // TODO: When there is a UI to enter the key, this should probably become structured error

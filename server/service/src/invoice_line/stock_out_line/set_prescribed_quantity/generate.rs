@@ -16,7 +16,7 @@ pub fn generate(
         invoice_id,
         item_name: item.name,
         item_code: item.code,
-        item_link_id: item_id,
+        item_id,
         r#type: InvoiceLineType::UnallocatedStock,
         prescribed_quantity: Some(prescribed_quantity),
 
@@ -30,13 +30,17 @@ pub fn generate(
         location_id: None,
         batch: None,
         expiry_date: None,
+        manufacture_date: None,
+        purchase_order_line_id: None,
         sell_price_per_pack: 0.0,
         cost_price_per_pack: 0.0,
         stock_line_id: None,
         foreign_currency_price_before_tax: None,
         item_variant_id: None,
         linked_invoice_id: None,
-        donor_link_id: None,
+        donor_id: None,
+        manufacturer_id: None,
+        legacy_goods_received_line_id: None,
         vvm_status_id: None,
         reason_option_id: None,
         campaign_id: None,
@@ -44,6 +48,9 @@ pub fn generate(
         shipped_number_of_packs: None,
         volume_per_pack: 0.0,
         shipped_pack_size: None,
+        status: None,
+        received_number_of_packs: None,
+        linked_invoice_line_id: None,
     };
 
     Ok(invoice_line)

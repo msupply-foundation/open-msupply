@@ -1,0 +1,76 @@
+query InvoiceQuery(
+  $storeId: String!
+  $dataId: String!
+  $sort: PrintReportSortInput
+) {
+  invoice(storeId: $storeId, id: $dataId) {
+    ... on InvoiceNode {
+      id
+      otherPartyId
+      invoiceNumber
+      theirReference
+      shippedDatetime
+      otherPartyName
+      pricing {
+        totalAfterTax
+        totalBeforeTax
+        taxPercentage
+      }
+      otherParty(storeId: $storeId) {
+        name
+        id
+        code
+        address1
+        address2
+      }
+      user {
+        username
+      }
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+  invoiceLines(
+    storeId: $storeId
+    filter: { invoiceId: { equalTo: $dataId } }
+    reportSort: $sort
+  ) {
+    ... on InvoiceLineConnector {
+      nodes {
+        id
+        itemId
+        itemCode
+        itemName
+        item {
+          unitName
+        }
+        packSize
+        expiryDate
+        batch
+        numberOfPacks
+        packSize
+        sellPricePerPack
+        costPricePerPack
+      }
+    }
+  }
+  store(id: $storeId) {
+    ... on StoreNode {
+      code
+      storeName
+      logo
+      id
+      name(storeId: $storeId) {
+        address1
+        address2
+        code
+        email
+        phone
+      }
+    }
+  }
+}

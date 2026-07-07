@@ -3,6 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { LocationRowFragmentDoc } from '../../Location/api/operations.generated';
+import { NameRowFragmentDoc } from '../../Name/api/operations.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StockLineRowFragment = {
   __typename: 'StockLineNode';
@@ -10,6 +11,7 @@ export type StockLineRowFragment = {
   batch?: string | null;
   costPricePerPack: number;
   expiryDate?: string | null;
+  manufactureDate?: string | null;
   id: string;
   itemId: string;
   locationId?: string | null;
@@ -86,6 +88,21 @@ export type StockLineRowFragment = {
     description: string;
   } | null;
   donor?: { __typename: 'NameNode'; id: string } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
+  } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
   itemVariant?: {
@@ -97,6 +114,79 @@ export type StockLineRowFragment = {
       packSize?: number | null;
       volumePerUnit?: number | null;
     }>;
+  } | null;
+};
+
+export type StockLineListRowFragment = {
+  __typename: 'StockLineNode';
+  availableNumberOfPacks: number;
+  batch?: string | null;
+  costPricePerPack: number;
+  expiryDate?: string | null;
+  manufactureDate?: string | null;
+  id: string;
+  itemId: string;
+  locationId?: string | null;
+  vvmStatusId?: string | null;
+  locationName?: string | null;
+  onHold: boolean;
+  packSize: number;
+  sellPricePerPack: number;
+  storeId: string;
+  totalNumberOfPacks: number;
+  supplierName?: string | null;
+  volumePerPack: number;
+  totalVolume: number;
+  barcode?: string | null;
+  location?: {
+    __typename: 'LocationNode';
+    id: string;
+    name: string;
+    onHold: boolean;
+    code: string;
+    volume: number;
+    volumeUsed: number;
+    locationType?: {
+      __typename: 'LocationTypeNode';
+      id: string;
+      name: string;
+      maxTemperature: number;
+      minTemperature: number;
+    } | null;
+    stock: { __typename: 'StockLineConnector'; totalCount: number };
+  } | null;
+  item: {
+    __typename: 'ItemNode';
+    code: string;
+    name: string;
+    unitName?: string | null;
+    isVaccine: boolean;
+    doses: number;
+    restrictedLocationTypeId?: string | null;
+    defaultPackSize: number;
+    masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
+  };
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    priority: number;
+    unusable: boolean;
+    description: string;
+  } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
 };
 
@@ -203,6 +293,7 @@ export type LedgerRowFragment = {
   stockLineId?: string | null;
   storeId: string;
   runningBalance: number;
+  user?: { __typename: 'UserNode'; username: string } | null;
 };
 
 export type VvmStatusLogRowFragment = {
@@ -245,6 +336,7 @@ export type StockLinesQuery = {
       batch?: string | null;
       costPricePerPack: number;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       id: string;
       itemId: string;
       locationId?: string | null;
@@ -289,33 +381,7 @@ export type StockLinesQuery = {
           __typename: 'MasterListNode';
           name: string;
         }> | null;
-        itemStoreProperties?: {
-          __typename: 'ItemStorePropertiesNode';
-          defaultSellPricePerPack: number;
-        } | null;
       };
-      vvmStatusLogs?: {
-        __typename: 'VvmstatusLogConnector';
-        nodes: Array<{
-          __typename: 'VvmstatusLogNode';
-          id: string;
-          createdDatetime: string;
-          comment?: string | null;
-          user?: {
-            __typename: 'UserNode';
-            firstName?: string | null;
-            lastName?: string | null;
-            username: string;
-          } | null;
-          status?: {
-            __typename: 'VvmstatusNode';
-            id: string;
-            description: string;
-            code: string;
-            priority: number;
-          } | null;
-        }>;
-      } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
@@ -323,22 +389,20 @@ export type StockLinesQuery = {
         unusable: boolean;
         description: string;
       } | null;
-      donor?: { __typename: 'NameNode'; id: string } | null;
-      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
-      campaign?: {
-        __typename: 'CampaignNode';
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
         id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
         name: string;
-      } | null;
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        packagingVariants: Array<{
-          __typename: 'PackagingVariantNode';
+        store?: {
+          __typename: 'StoreNode';
           id: string;
-          packSize?: number | null;
-          volumePerUnit?: number | null;
-        }>;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
     }>;
   };
@@ -360,6 +424,7 @@ export type StockLineQuery = {
       batch?: string | null;
       costPricePerPack: number;
       expiryDate?: string | null;
+      manufactureDate?: string | null;
       id: string;
       itemId: string;
       locationId?: string | null;
@@ -439,6 +504,21 @@ export type StockLineQuery = {
         description: string;
       } | null;
       donor?: { __typename: 'NameNode'; id: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
+      } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
@@ -494,6 +574,7 @@ export type LedgerQuery = {
       stockLineId?: string | null;
       storeId: string;
       runningBalance: number;
+      user?: { __typename: 'UserNode'; username: string } | null;
     }>;
   };
 };
@@ -512,6 +593,7 @@ export type UpdateStockLineMutation = {
         batch?: string | null;
         costPricePerPack: number;
         expiryDate?: string | null;
+        manufactureDate?: string | null;
         id: string;
         itemId: string;
         locationId?: string | null;
@@ -591,6 +673,21 @@ export type UpdateStockLineMutation = {
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        manufacturer?: {
+          __typename: 'NameNode';
+          code: string;
+          id: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -801,6 +898,7 @@ export type CreateInventoryAdjustmentMutation = {
         __typename: 'CreateInventoryAdjustmentError';
         error:
           | { __typename: 'AdjustmentReasonNotProvided'; description: string }
+          | { __typename: 'LedgerWouldGoBelowZero'; description: string }
           | { __typename: 'StockLineReducedBelowZero'; description: string };
       }
     | {
@@ -838,6 +936,7 @@ export type InsertStockLineMutation = {
         batch?: string | null;
         costPricePerPack: number;
         expiryDate?: string | null;
+        manufactureDate?: string | null;
         id: string;
         itemId: string;
         locationId?: string | null;
@@ -917,6 +1016,21 @@ export type InsertStockLineMutation = {
           description: string;
         } | null;
         donor?: { __typename: 'NameNode'; id: string } | null;
+        manufacturer?: {
+          __typename: 'NameNode';
+          code: string;
+          id: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          name: string;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
+        } | null;
         program?: {
           __typename: 'ProgramNode';
           id: string;
@@ -992,6 +1106,108 @@ export type UpdateVvmStatusLogMutation = {
   updateVvmStatusLog: { __typename: 'IdResponse'; id: string };
 };
 
+export type ItemsByStockLineFilterQueryVariables = Types.Exact<{
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.ItemSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.StockLineFilterInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type ItemsByStockLineFilterQuery = {
+  __typename: 'Queries';
+  itemsByStockLineFilter: {
+    __typename: 'ItemConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'ItemNode';
+      id: string;
+      code: string;
+      name: string;
+      availableBatches: {
+        __typename: 'StockLineConnector';
+        totalCount: number;
+        nodes: Array<{
+          __typename: 'StockLineNode';
+          availableNumberOfPacks: number;
+          batch?: string | null;
+          costPricePerPack: number;
+          expiryDate?: string | null;
+          manufactureDate?: string | null;
+          id: string;
+          itemId: string;
+          locationId?: string | null;
+          vvmStatusId?: string | null;
+          locationName?: string | null;
+          onHold: boolean;
+          packSize: number;
+          sellPricePerPack: number;
+          storeId: string;
+          totalNumberOfPacks: number;
+          supplierName?: string | null;
+          volumePerPack: number;
+          totalVolume: number;
+          barcode?: string | null;
+          location?: {
+            __typename: 'LocationNode';
+            id: string;
+            name: string;
+            onHold: boolean;
+            code: string;
+            volume: number;
+            volumeUsed: number;
+            locationType?: {
+              __typename: 'LocationTypeNode';
+              id: string;
+              name: string;
+              maxTemperature: number;
+              minTemperature: number;
+            } | null;
+            stock: { __typename: 'StockLineConnector'; totalCount: number };
+          } | null;
+          item: {
+            __typename: 'ItemNode';
+            code: string;
+            name: string;
+            unitName?: string | null;
+            isVaccine: boolean;
+            doses: number;
+            restrictedLocationTypeId?: string | null;
+            defaultPackSize: number;
+            masterLists?: Array<{
+              __typename: 'MasterListNode';
+              name: string;
+            }> | null;
+          };
+          vvmStatus?: {
+            __typename: 'VvmstatusNode';
+            id: string;
+            priority: number;
+            unusable: boolean;
+            description: string;
+          } | null;
+          manufacturer?: {
+            __typename: 'NameNode';
+            code: string;
+            id: string;
+            isCustomer: boolean;
+            isSupplier: boolean;
+            isOnHold: boolean;
+            name: string;
+            store?: {
+              __typename: 'StoreNode';
+              id: string;
+              code: string;
+              isDisabled: boolean;
+            } | null;
+          } | null;
+        }>;
+      };
+    }>;
+  };
+};
+
 export const VvmStatusLogRowFragmentDoc = gql`
   fragment VVMStatusLogRow on VvmstatusLogNode {
     id
@@ -1017,6 +1233,7 @@ export const StockLineRowFragmentDoc = gql`
     batch
     costPricePerPack
     expiryDate
+    manufactureDate
     id
     itemId
     locationId
@@ -1064,6 +1281,9 @@ export const StockLineRowFragmentDoc = gql`
     donor(storeId: $storeId) {
       id
     }
+    manufacturer(storeId: $storeId) {
+      ...NameRow
+    }
     program {
       id
       name
@@ -1085,6 +1305,57 @@ export const StockLineRowFragmentDoc = gql`
   }
   ${LocationRowFragmentDoc}
   ${VvmStatusLogRowFragmentDoc}
+  ${NameRowFragmentDoc}
+`;
+export const StockLineListRowFragmentDoc = gql`
+  fragment StockLineListRow on StockLineNode {
+    availableNumberOfPacks
+    batch
+    costPricePerPack
+    expiryDate
+    manufactureDate
+    id
+    itemId
+    locationId
+    vvmStatusId
+    locationName
+    onHold
+    packSize
+    sellPricePerPack
+    storeId
+    totalNumberOfPacks
+    supplierName
+    volumePerPack
+    totalVolume
+    barcode
+    location {
+      ...LocationRow
+    }
+    item {
+      code
+      name
+      unitName
+      masterLists(storeId: $storeId) {
+        name
+      }
+      isVaccine
+      doses
+      restrictedLocationTypeId
+      defaultPackSize
+    }
+    vvmStatus {
+      __typename
+      id
+      priority
+      unusable
+      description
+    }
+    manufacturer(storeId: $storeId) {
+      ...NameRow
+    }
+  }
+  ${LocationRowFragmentDoc}
+  ${NameRowFragmentDoc}
 `;
 export const RepackStockLineFragmentDoc = gql`
   fragment RepackStockLine on RepackStockLineNode {
@@ -1139,6 +1410,9 @@ export const LedgerRowFragmentDoc = gql`
     stockLineId
     storeId
     runningBalance
+    user {
+      username
+    }
   }
 `;
 export const VvmStatusFragmentDoc = gql`
@@ -1170,13 +1444,13 @@ export const StockLinesDocument = gql`
         __typename
         nodes {
           __typename
-          ...StockLineRow
+          ...StockLineListRow
         }
         totalCount
       }
     }
   }
-  ${StockLineRowFragmentDoc}
+  ${StockLineListRowFragmentDoc}
 `;
 export const StockLineDocument = gql`
   query stockLine($id: String!, $storeId: String!) {
@@ -1321,6 +1595,10 @@ export const CreateInventoryAdjustmentDocument = gql`
             __typename
             description
           }
+          ... on LedgerWouldGoBelowZero {
+            __typename
+            description
+          }
           ... on AdjustmentReasonNotProvided {
             __typename
             description
@@ -1391,6 +1669,43 @@ export const UpdateVvmStatusLogDocument = gql`
       }
     }
   }
+`;
+export const ItemsByStockLineFilterDocument = gql`
+  query itemsByStockLineFilter(
+    $first: Int
+    $offset: Int
+    $key: ItemSortFieldInput!
+    $desc: Boolean
+    $filter: StockLineFilterInput
+    $storeId: String!
+  ) {
+    itemsByStockLineFilter(
+      storeId: $storeId
+      page: { first: $first, offset: $offset }
+      sort: { key: $key, desc: $desc }
+      filter: $filter
+    ) {
+      ... on ItemConnector {
+        __typename
+        nodes {
+          __typename
+          id
+          code
+          name
+          availableBatches(storeId: $storeId) {
+            __typename
+            totalCount
+            nodes {
+              __typename
+              ...StockLineListRow
+            }
+          }
+        }
+        totalCount
+      }
+    }
+  }
+  ${StockLineListRowFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -1661,6 +1976,24 @@ export function getSdk(
           }),
         'updateVvmStatusLog',
         'mutation',
+        variables
+      );
+    },
+    itemsByStockLineFilter(
+      variables: ItemsByStockLineFilterQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ItemsByStockLineFilterQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ItemsByStockLineFilterQuery>({
+            document: ItemsByStockLineFilterDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'itemsByStockLineFilter',
+        'query',
         variables
       );
     },

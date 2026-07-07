@@ -60,6 +60,7 @@ pub fn update_patient(
         &ResourceAccessRequest {
             resource: Resource::MutatePatient,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();
@@ -74,7 +75,7 @@ pub fn update_patient(
         code_2,
         first_name,
         last_name,
-        gender: gender.map(|g| GenderType::from(g)),
+        gender: gender.map(GenderType::from),
         date_of_birth,
         address1,
         phone,
@@ -95,7 +96,7 @@ pub fn update_patient(
             allowed_ctx: allowed_ctx.clone(),
         })),
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let std_err = match error {
                 UpdatePatientError::PatientDoesNotExists => {
                     StandardGraphqlError::BadUserInput(formatted_error)

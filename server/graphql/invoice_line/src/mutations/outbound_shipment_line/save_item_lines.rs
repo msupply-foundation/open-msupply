@@ -26,6 +26,8 @@ pub struct OutboundShipmentLineInput {
     pub program_id: Option<String>,
     pub campaign_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub received_number_of_packs: Option<f64>,
+    pub reason_option_id: Option<String>,
 }
 
 pub fn save_outbound_shipment_item_lines(
@@ -38,6 +40,7 @@ pub fn save_outbound_shipment_item_lines(
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -82,6 +85,8 @@ impl SaveOutboundShipmentLinesInput {
                     campaign_id: line.campaign_id,
                     program_id: line.program_id,
                     vvm_status_id: line.vvm_status_id,
+                    received_number_of_packs: line.received_number_of_packs,
+                    reason_option_id: line.reason_option_id,
                 })
                 .collect(),
             prescribed_quantity: None, // Only used for prescription lines
@@ -92,9 +97,9 @@ impl SaveOutboundShipmentLinesInput {
 
 fn map_error(error: SaveStockOutItemLinesError) -> Result<InvoiceNode> {
     use SaveStockOutItemLinesError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
-    log::error!("Error: {}", formatted_error);
+    log::error!("Error: {formatted_error}");
 
     // Future TODO: Implement structured errors where needed
     // (Would only occur if 2 people editing at same time)

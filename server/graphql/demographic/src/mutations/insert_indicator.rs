@@ -24,6 +24,7 @@ pub fn insert_demographic_indicator(
         &ResourceAccessRequest {
             resource: Resource::MutateDemographic,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -111,7 +112,7 @@ pub enum InsertDemographicIndicatorErrorInterface {
 
 fn map_error(error: IndicatorServiceError) -> Result<InsertDemographicIndicatorErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Standard Graphql Errors

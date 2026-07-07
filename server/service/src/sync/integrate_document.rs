@@ -1,7 +1,7 @@
 use repository::{
-    Document, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
-    DocumentRepository, EncounterFilter, EncounterRepository, EqualFilter, ProgramFilter,
-    ProgramRepository, RepositoryError, StorageConnection, Upsert,
+    ChangelogSyncType, Document, DocumentRegistryCategory, DocumentRegistryFilter,
+    DocumentRegistryRepository, DocumentRepository, EncounterFilter, EncounterRepository,
+    EqualFilter, ProgramFilter, ProgramRepository, RepositoryError, StorageConnection, Upsert,
 };
 
 use crate::{
@@ -20,9 +20,9 @@ use crate::{
 pub(crate) struct DocumentUpsert(pub(crate) Document);
 
 impl Upsert for DocumentUpsert {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = sync_upsert_document(con, &self.0)?;
-        Ok(Some(change_log_id))
+    fn upsert_sync(&self, con: &StorageConnection, _sync_type: ChangelogSyncType) -> Result<(), RepositoryError> {
+        sync_upsert_document(con, &self.0)?;
+        Ok(())
     }
 
     fn assert_upserted(&self, con: &StorageConnection) {
@@ -36,17 +36,17 @@ impl Upsert for DocumentUpsert {
 fn sync_upsert_document(
     con: &StorageConnection,
     document: &Document,
-) -> Result<i64, RepositoryError> {
+) -> Result<(), RepositoryError> {
     // Fetch current document by name to check if the new document is the latest in the DB
     let new_doc_is_latest = is_latest_doc(con, &document.name, document.datetime)?;
 
     // Insert the new document
     // Note, every document is immutable for which reason an insert (instead of an upsert) is used.
-    let change_log_id = DocumentRepository::new(con).insert(document)?;
+    DocumentRepository::new(con).insert(document)?;
 
     // Only if the new document is the latest, update the aux tables
     if !new_doc_is_latest {
-        return Ok(change_log_id);
+        return Ok(());
     }
     let Some(registry) = DocumentRegistryRepository::new(con)
         .query_by_filter(
@@ -56,7 +56,7 @@ fn sync_upsert_document(
         .pop()
     else {
         log::warn!("Received unknown document type: {}", document.r#type);
-        return Ok(change_log_id);
+        return Ok(());
     };
     match registry.category {
         DocumentRegistryCategory::Patient => {
@@ -67,7 +67,7 @@ fn sync_upsert_document(
         DocumentRegistryCategory::ContactTrace => update_contact_trace(con, document)?,
         DocumentRegistryCategory::Custom => {}
     };
-    Ok(change_log_id)
+    Ok(())
 }
 
 fn update_program_enrolment(
@@ -82,7 +82,7 @@ fn update_program_enrolment(
     };
     let program_enrolment: SchemaProgramEnrolment = serde_json::from_value(document.data.clone())
         .map_err(|err| {
-        RepositoryError::as_db_error(&format!("Invalid program enrolment data: {}", err), "")
+        RepositoryError::as_db_error(&format!("Invalid program enrolment data: {err}"), "")
     })?;
     let program_row = ProgramRepository::new(con)
         .query_one(
@@ -90,7 +90,7 @@ fn update_program_enrolment(
         )?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     update_program_enrolment_row(con, patient_id, document, program_enrolment, program_row)
-        .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
+        .map_err(|err| RepositoryError::as_db_error(&format!("{err:?}"), ""))?;
     Ok(())
 }
 
@@ -104,7 +104,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
 
     let encounter: crate::programs::encounter::validate_misc::ValidatedSchemaEncounter =
         validate_encounter_schema(&document.data).map_err(|err| {
-            RepositoryError::as_db_error(&format!("Invalid encounter data: {}", err), "")
+            RepositoryError::as_db_error(&format!("Invalid encounter data: {err}"), "")
         })?;
     let encounter_start_time = encounter.start_datetime;
     let existing_encounter = EncounterRepository::new(con)
@@ -134,7 +134,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         existing_encounter.map(|encounter| encounter.row.start_datetime),
         None,
     )
-    .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
+    .map_err(|err| RepositoryError::as_db_error(&format!("{err:?}"), ""))?;
     Ok(())
 }
 
@@ -150,7 +150,7 @@ fn update_contact_trace(
     };
     let contact_trace: SchemaContactTrace =
         serde_json::from_value(document.data.clone()).map_err(|err| {
-            RepositoryError::as_db_error(&format!("Invalid contact trace data: {}", err), "")
+            RepositoryError::as_db_error(&format!("Invalid contact trace data: {err}"), "")
         })?;
     let program_row = ProgramRepository::new(con)
         .query_one(
@@ -158,7 +158,7 @@ fn update_contact_trace(
         )?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     update_contact_trace_row(con, patient_id, document, contact_trace, program_row)
-        .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
+        .map_err(|err| RepositoryError::as_db_error(&format!("{err:?}"), ""))?;
     Ok(())
 }
 

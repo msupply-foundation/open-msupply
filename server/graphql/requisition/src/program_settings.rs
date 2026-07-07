@@ -56,6 +56,7 @@ pub fn get_supplier_program_requisition_settings(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -95,7 +96,7 @@ pub fn get_supplier_program_requisition_settings(
                             id: order_type.id,
                             available_periods: available_periods
                                 .into_iter()
-                                .map(|period| PeriodNode::from_domain(period))
+                                .map(PeriodNode::from_domain)
                                 .collect(),
                             is_emergency: order_type.is_emergency,
                         },
@@ -118,6 +119,7 @@ pub fn get_program_requisition_settings_by_customer(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -155,7 +157,7 @@ pub fn get_program_requisition_settings_by_customer(
                         available_periods: order_type
                             .available_periods
                             .into_iter()
-                            .map(|period| PeriodNode::from_domain(period))
+                            .map(PeriodNode::from_domain)
                             .collect(),
                         is_emergency: order_type.is_emergency,
                     })
@@ -177,6 +179,7 @@ pub fn has_customer_program_requisition_settings(
         &ResourceAccessRequest {
             resource: Resource::QueryRequisition,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

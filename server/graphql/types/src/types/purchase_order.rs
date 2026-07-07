@@ -46,7 +46,7 @@ impl PurchaseOrderNode {
             return Ok(loader.load_one(user_id).await?.map(UserNode::from_domain));
         }
 
-        return Ok(None);
+        Ok(None)
     }
 
     pub async fn order_total_after_discount(&self) -> f64 {
@@ -68,11 +68,11 @@ impl PurchaseOrderNode {
         let name = loader
             .load_one(NameByIdLoaderInput::new(
                 &self.row().store_id,
-                &self.row().supplier_name_link_id,
+                &self.row().supplier_name_id,
             ))
             .await?
             .map(NameNode::from_domain);
-        return Ok(name);
+        Ok(name)
     }
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
@@ -93,13 +93,13 @@ impl PurchaseOrderNode {
 
     pub async fn donor(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
-        if let Some(donor_id) = self.row().donor_link_id.clone() {
+        if let Some(donor_id) = self.row().donor_id.clone() {
             return Ok(loader
                 .load_one(NameByIdLoaderInput::new(&self.row().store_id, &donor_id))
                 .await?
                 .map(NameNode::from_domain));
         }
-        return Ok(None);
+        Ok(None)
     }
     pub async fn reference(&self) -> &Option<String> {
         &self.row().reference
@@ -107,8 +107,8 @@ impl PurchaseOrderNode {
     pub async fn currency_id(&self) -> &Option<String> {
         &self.row().currency_id
     }
-    pub async fn foreign_exchange_rate(&self) -> &Option<f64> {
-        &self.row().foreign_exchange_rate
+    pub async fn foreign_exchange_rate(&self) -> f64 {
+        self.row().foreign_exchange_rate
     }
     pub async fn shipping_method(&self) -> &Option<String> {
         &self.row().shipping_method

@@ -113,6 +113,31 @@ describe('formatTemplateString', () => {
   });
 });
 
+describe('convertIndoArToArNumerals', () => {
+  it('converts Arabic-Indic digits to Arabic numerals', () => {
+    expect(RegexUtils.convertIndoArToArNumerals('٠١٢٣٤٥٦٧٨٩')).toBe(
+      '0123456789'
+    );
+  });
+
+  it('converts Eastern Arabic-Indic digits to Arabic numerals', () => {
+    expect(RegexUtils.convertIndoArToArNumerals('۰۱۲۳۴۵۶۷۸۹')).toBe(
+      '0123456789'
+    );
+  });
+
+  it('leaves Arabic numerals unchanged', () => {
+    expect(RegexUtils.convertIndoArToArNumerals('0123456789')).toBe(
+      '0123456789'
+    );
+  });
+
+  it('preserves non-digit characters', () => {
+    expect(RegexUtils.convertIndoArToArNumerals('٣.١٤')).toBe('3.14');
+    expect(RegexUtils.convertIndoArToArNumerals('-۴٢')).toBe('-42');
+  });
+});
+
 describe('Check if email is valid', () => {
   it('rejects empty space in email', () => {
     expect(RegexUtils.checkEmailIsValid('t est@email.com')).toBeFalsy();

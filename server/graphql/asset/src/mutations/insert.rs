@@ -25,6 +25,7 @@ pub fn insert_asset(
         &ResourceAccessRequest {
             resource: Resource::AddAsset,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -148,6 +149,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetErrorInterface> {
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::SerialNumberAlreadyExists => BadUserInput(formatted_error),
         ServiceError::AssetNumberAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::InvalidMappingDate { .. } => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

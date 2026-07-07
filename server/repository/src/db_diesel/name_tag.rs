@@ -2,8 +2,7 @@ use diesel::prelude::*;
 
 use crate::{
     db_diesel::{
-        name_link_row::name_link, name_row::name, name_tag_join::name_tag_join,
-        name_tag_row::name_tag, store_row::store,
+        name_row::name, name_tag_join::name_tag_join, name_tag_row::name_tag, store_row::store,
     },
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
@@ -47,11 +46,7 @@ impl<'a> NameTagRepository<'a> {
         };
 
         let mut name_tag_query = name_tag_join::table
-            .left_join(
-                name_link::table
-                    .left_join(name::table)
-                    .left_join(store::table),
-            )
+            .left_join(name::table.left_join(store::table))
             .into_boxed();
 
         apply_equal_filter!(name_tag_query, store_id, store::id);

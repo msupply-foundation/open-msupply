@@ -13,10 +13,11 @@ use crate::{
 
 use chrono::NaiveDate;
 use diesel::{dsl::IntoBoxed, prelude::*};
+use serde::{Deserialize, Serialize};
 
 pub type Patient = NameRow;
 
-#[derive(Clone, Default, PartialEq, Debug)]
+#[derive(Clone, Default, PartialEq, Debug, Serialize, Deserialize)]
 pub struct PatientFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
@@ -141,11 +142,12 @@ impl<'a> PatientRepository<'a> {
                     apply_sort!(query, sort, name::created_datetime)
                 }
             }
-        } else {
-            query = query.order(name::id.asc())
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let final_query = query
+            .then_order_by(name::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
@@ -531,7 +533,7 @@ mod tests {
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
-                patient_link_id: patient_row.id.clone(),
+                patient_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
@@ -641,7 +643,7 @@ mod tests {
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
-                patient_link_id: patient_row.id.clone(),
+                patient_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),

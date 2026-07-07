@@ -114,7 +114,7 @@ impl RequisitionMutations {
         store_id: String,
         input: request_requisition::insert_program::InsertProgramRequestRequisitionInput,
     ) -> Result<request_requisition::insert_program::InsertResponse> {
-        request_requisition::insert_program::insert_program(ctx, &store_id, input)
+        request_requisition::insert_program::insert_program(ctx, &store_id, input).await
     }
 
     async fn update_request_requisition(
@@ -123,7 +123,7 @@ impl RequisitionMutations {
         store_id: String,
         input: request_requisition::update::UpdateInput,
     ) -> Result<request_requisition::update::UpdateResponse> {
-        request_requisition::update::update(ctx, &store_id, input)
+        request_requisition::update::update(ctx, &store_id, input).await
     }
 
     async fn delete_request_requisition(
@@ -135,13 +135,13 @@ impl RequisitionMutations {
         request_requisition::delete::delete(ctx, &store_id, input)
     }
 
-    async fn insert_from_response_requisition(
+    async fn insert_request_from_response_requisition(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: request_requisition::insert_from_response_requisition::InsertFromResponseRequisitionInput,
-    ) -> Result<request_requisition::insert_from_response_requisition::InsertFromResponse> {
-        request_requisition::insert_from_response_requisition::insert_from_response_requisition(
+        input: request_requisition::insert_request_from_response_requisition::InsertFromResponseRequisitionInput,
+    ) -> Result<request_requisition::insert_request_from_response_requisition::InsertFromResponse> {
+        request_requisition::insert_request_from_response_requisition::insert_request_from_response_requisition(
             ctx, &store_id, input,
         )
     }
@@ -163,7 +163,7 @@ impl RequisitionMutations {
         store_id: String,
         input: request_requisition::add_from_master_list::AddFromMasterListInput,
     ) -> Result<request_requisition::add_from_master_list::AddFromMasterListResponse> {
-        request_requisition::add_from_master_list::add_from_master_list(ctx, &store_id, input)
+        request_requisition::add_from_master_list::add_from_master_list(ctx, &store_id, input).await
     }
 
     async fn response_add_from_master_list(

@@ -11,10 +11,14 @@ export const useUpdateOutboundTax = () => {
   const queryClient = useQueryClient();
   const api = useOutboundApi();
   const { lines } = useOutboundFields('lines');
-  const { mutateAsync, ...mutateState } = useMutation(api.updateTax, {
+  const { mutateAsync, ...mutateState } = useMutation({
+    mutationFn: api.updateTax,
+
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
-    },
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
   });
 
   const updateServiceLineTax = useCallback(

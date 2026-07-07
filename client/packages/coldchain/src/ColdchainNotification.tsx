@@ -3,7 +3,6 @@ import {
   BaseButton,
   Box,
   RouteBuilder,
-  TemperatureBreachSortFieldInput,
   TemperatureLogSortFieldInput,
   Typography,
   useMatch,
@@ -246,7 +245,7 @@ export const ColdchainNotification = () => {
       notification={breach}
       tab={t('label.breaches')}
       queryParameters={{
-        sort: TemperatureBreachSortFieldInput.StartDatetime,
+        sort: TemperatureLogSortFieldInput.Datetime,
         unacknowledged: true,
       }}
     />

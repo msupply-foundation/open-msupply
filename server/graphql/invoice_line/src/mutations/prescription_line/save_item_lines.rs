@@ -36,6 +36,7 @@ pub fn save_prescription_item_lines(
         &ResourceAccessRequest {
             resource: Resource::MutatePrescription,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -83,6 +84,8 @@ impl SavePrescriptionLinesInput {
                     campaign_id: None,
                     program_id: None,
                     vvm_status_id: None,
+                    received_number_of_packs: None,
+                    reason_option_id: None,
                 })
                 .collect(),
         }
@@ -91,9 +94,9 @@ impl SavePrescriptionLinesInput {
 
 fn map_error(error: SaveStockOutItemLinesError) -> Result<InvoiceNode> {
     use SaveStockOutItemLinesError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
-    log::error!("Error: {}", formatted_error);
+    log::error!("Error: {formatted_error}");
 
     // Future TODO: Implement structured errors where needed
     // (Would only occur if 2 people editing at same time)

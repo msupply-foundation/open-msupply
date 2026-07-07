@@ -10,9 +10,9 @@ import { Box } from '@mui/material';
 import React, { FC, PropsWithChildren } from 'react';
 
 interface SettingsSectionProps {
-  children: JSX.Element | JSX.Element[];
+  children: React.ReactNode;
   expanded: boolean;
-  Icon: (props: SvgIconProps & { stroke?: string }) => JSX.Element;
+  Icon: (props: SvgIconProps & { stroke?: string }) => React.JSX.Element;
   onChange: () => void;
   titleKey: LocaleKey;
   visible: boolean;

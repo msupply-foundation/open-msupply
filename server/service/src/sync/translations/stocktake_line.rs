@@ -10,7 +10,7 @@ use repository::{
     campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
     ChangelogRow, ChangelogTableName,
     EqualFilter, LocationRowRepository, ProgramRowRepository, ReasonOptionRowRepository,
-    StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
+    Row, StockLineRowRepository, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -32,6 +32,8 @@ pub struct LegacyStocktakeLineRowOmsFields {
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub program_id: Option<String>,
+    #[serde(default)]
+    pub manufacture_date: Option<NaiveDate>,
 }
 
 #[allow(non_snake_case)]
@@ -80,6 +82,10 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub vvm_status_id: Option<String>,
     pub volume_per_pack: f64,
+    #[serde(rename = "manufacturer_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub manufacturer_id: Option<String>,
     #[serde(default)]
     #[serde(deserialize_with = "object_fields_as_option")]
     pub oms_fields: Option<LegacyStocktakeLineRowOmsFields>,
@@ -140,8 +146,9 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            manufacturer_id,
             oms_fields,
-        } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         // TODO is this correct?
         let counted_number_of_packs = if is_edited {
@@ -163,9 +170,15 @@ impl SyncTranslation for StocktakeLineTranslation {
             true,
         )?;
 
-        let (campaign_id, program_id) = oms_fields
-            .map(|fields| (fields.campaign_id, fields.program_id))
-            .unwrap_or((None, None));
+        let (campaign_id, program_id, manufacture_date) = oms_fields
+            .map(|fields| {
+                (
+                    fields.campaign_id,
+                    fields.program_id,
+                    fields.manufacture_date,
+                )
+            })
+            .unwrap_or((None, None, None));
 
         let location_id = clear_invalid_fk(
             connection,
@@ -223,16 +236,18 @@ impl SyncTranslation for StocktakeLineTranslation {
             comment,
             snapshot_number_of_packs: snapshot_qty,
             counted_number_of_packs,
-            item_link_id: item_ID,
+            item_id: item_ID,
             item_name,
             batch: Batch,
             expiry_date: expiry,
+            manufacture_date,
             pack_size: Some(snapshot_packsize),
             cost_price_per_pack: Some(cost_price),
             sell_price_per_pack: Some(sell_price),
             note,
             item_variant_id,
-            donor_link_id: donor_id,
+            donor_id,
+            manufacturer_id,
             reason_option_id,
             vvm_status_id,
             volume_per_pack,
@@ -247,11 +262,15 @@ impl SyncTranslation for StocktakeLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::StocktakeLine(stocktake_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(stocktake_line) = StocktakeLineRepository::new(connection)
             .query_by_filter(
-                StocktakeLineFilter::new()
-                    .id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                StocktakeLineFilter::new().id(EqualFilter::equal_to(stocktake_line_row.id)),
                 None,
             )?
             .pop()
@@ -269,16 +288,18 @@ impl SyncTranslation for StocktakeLineTranslation {
                     comment,
                     snapshot_number_of_packs,
                     counted_number_of_packs,
-                    item_link_id: _,
+                    item_id: _,
                     item_name,
                     batch,
                     expiry_date,
+                    manufacture_date,
                     pack_size,
                     cost_price_per_pack,
                     sell_price_per_pack,
                     note,
                     item_variant_id,
-                    donor_link_id: donor_id,
+                    donor_id,
+                    manufacturer_id,
                     reason_option_id,
                     vvm_status_id,
                     volume_per_pack,
@@ -290,11 +311,12 @@ impl SyncTranslation for StocktakeLineTranslation {
             ..
         } = stocktake_line;
 
-        let oms_fields = match (&campaign_id, &program_id) {
-            (None, None) => None,
+        let oms_fields = match (&campaign_id, &program_id, &manufacture_date) {
+            (None, None, None) => None,
             _ => Some(LegacyStocktakeLineRowOmsFields {
                 campaign_id,
                 program_id,
+                manufacture_date,
             }),
         };
 
@@ -321,6 +343,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             donor_id,
             vvm_status_id,
             volume_per_pack,
+            manufacturer_id,
             oms_fields,
         };
 
@@ -353,7 +376,8 @@ mod tests {
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
         vvm_status::vvm_status_row::VVMStatusRow,
-        ChangelogFilter, ChangelogRepository, ContextRow, ProgramRow, SyncAction,
+        ChangelogCondition, ChangelogRepository, ContextRow, ProgramRow, SyncAction, SyncRecordData,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
 
@@ -429,7 +453,7 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "Stock_take_lines".to_string(),
             record_id: "STOCKTAKE_LINE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(serde_json::from_str(r#"{
                 "ID": "STOCKTAKE_LINE_FK_INVALID",
                 "stock_take_ID": "stocktake_a",
                 "Batch": "",
@@ -454,8 +478,7 @@ mod tests {
                     "campaign_id": "does_not_exist_campaign",
                     "program_id": "does_not_exist_program"
                 }
-            }"#
-            .to_string(),
+            }"#).unwrap()),
             action: SyncAction::Upsert,
             ..Default::default()
         };
@@ -472,7 +495,7 @@ mod tests {
             comment: None,
             snapshot_number_of_packs: 1.0,
             counted_number_of_packs: None,
-            item_link_id: "item_a".to_string(),
+            item_id: "item_a".to_string(),
             item_name: "Item A".to_string(),
             batch: None,
             expiry_date: None,
@@ -481,7 +504,9 @@ mod tests {
             sell_price_per_pack: Some(0.0),
             note: None,
             item_variant_id: None,
-            donor_link_id: None,
+            donor_id: None,
+            manufacturer_id: None,
+            manufacture_date: None,
             reason_option_id: None,
             vvm_status_id: Some("does_not_exist_vvm".to_string()),
             volume_per_pack: 0.0,
@@ -535,19 +560,21 @@ mod tests {
 
         merge_all_item_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new().table_name(ChangelogTableName::StocktakeLine.equal_to()),
-                ),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::StocktakeLine),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
         let translator = StocktakeLineTranslation {};
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             // Translate and sort
             // Translate and sort
             assert!(translator.should_translate_to_sync_record(
@@ -555,7 +582,7 @@ mod tests {
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

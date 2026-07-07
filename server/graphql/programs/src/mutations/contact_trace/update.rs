@@ -39,6 +39,7 @@ pub fn update_contact_trace(
         &ResourceAccessRequest {
             resource: Resource::MutateContactTrace,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let allowed_ctx = user.capabilities();
@@ -68,7 +69,7 @@ pub fn update_contact_trace(
     ) {
         Ok(document) => document,
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
+            let formatted_error = format!("{error:#?}");
             let std_err = match error {
                 UpsertContactTraceError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)

@@ -6,11 +6,12 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.webkit.WebView;
 
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.WebViewListener;
 import java.io.File;
 
 
@@ -19,6 +20,7 @@ public class MainActivity extends BridgeActivity {
     RemoteServer server = new RemoteServer();
     DiscoveryConstants discoveryConstants;
     private FileManager fileManager;
+    private String js = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +36,38 @@ public class MainActivity extends BridgeActivity {
         WebView webView = getBridge().getWebView();
         webView.addJavascriptInterface(new LoadingPage(this), "LoadingPageInject");
         webView.loadUrl(LoadingPage.URL);
+
+        ViewCompat.setOnApplyWindowInsetsListener(webView, (v, insets) -> {
+            Insets bars = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+                            | WindowInsetsCompat.Type.displayCutout()
+                            | WindowInsetsCompat.Type.ime());
+
+            float d = v.getResources().getDisplayMetrics().density;
+            // set inset styles so that we can avoid edge-to-edge content being obscured by system bars, cutouts, or the keyboard
+            js = "document.documentElement.style.setProperty('--inset-top',    '" + (bars.top / d)    + "px');" +
+                    "document.documentElement.style.setProperty('--inset-bottom', '" + (bars.bottom / d) + "px');" +
+                    "document.documentElement.style.setProperty('--inset-left',   '" + (bars.left / d)   + "px');" +
+                    "document.documentElement.style.setProperty('--inset-right',  '" + (bars.right / d)  + "px');";
+
+            // Apply immediately to the currently loaded document
+            ((WebView) v).evaluateJavascript(js, null);
+
+            return WindowInsetsCompat.CONSUMED;
+        });
+
+        // Re-inject the inset variables after every page navigation. A full page
+        // load replaces the document, discarding any custom properties previously
+        // set on documentElement, so the values must be re-applied to the new page.
+        getBridge().addWebViewListener(new WebViewListener() {
+            @Override
+            public void onPageLoaded(WebView view) {
+                if (!js.isEmpty()) {
+                    view.evaluateJavascript(js, null);
+                }
+            }
+        });
+
 
         // The LoadingPage IS our loading UX now — release the native splash on the
         // next UI message (after loadData has been queued for rendering) so the

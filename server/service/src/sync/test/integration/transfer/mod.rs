@@ -5,7 +5,7 @@ use super::{
     central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
     create_site, init_test_context, FullSiteConfig,
 };
-use crate::{service_provider::ServiceProvider, sync::synchroniser::Synchroniser};
+use crate::{service_provider::ServiceProvider, sync::synchroniser_runner::Synchroniser};
 use repository::{CurrencyRow, ItemRow, ItemType, StorageConnection, StoreRow, StoreRowRepository};
 use serde_json::json;
 use std::{sync::Arc, time::Duration};
@@ -27,6 +27,7 @@ struct SyncIntegrationTransferContext {
     site_2_processors_task: JoinHandle<()>,
     item1: ItemRow,
     item2: ItemRow,
+    item3: ItemRow,
     service_item: ItemRow,
 }
 
@@ -60,14 +61,14 @@ async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferC
         .await
         .expect("Problem inserting central data");
 
-    let (item1, item2, service_item, _currency, central_data) = items_and_currency();
+    let (item1, item2, item3, service_item, _currency, central_data) = items_and_currency();
     central_server_configurations
         .upsert_records(central_data)
         .await
         .expect("Problem inserting central data");
 
-    site1.synchroniser.sync(None).await.unwrap();
-    site2.synchroniser.sync(None).await.unwrap();
+    site1.synchroniser.sync().await.unwrap();
+    site2.synchroniser.sync().await.unwrap();
 
     let (site_1, site_1_processors_task) = to_site_context_and_processors_task(site1);
     let (site_2, site_2_processors_task) = to_site_context_and_processors_task(site2);
@@ -79,6 +80,7 @@ async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferC
         site_2_processors_task,
         item1,
         item2,
+        item3,
         service_item,
     }
 }
@@ -101,7 +103,14 @@ fn to_site_context_and_processors_task(config: FullSiteConfig) -> (SiteContext, 
     )
 }
 
-fn items_and_currency() -> (ItemRow, ItemRow, ItemRow, CurrencyRow, serde_json::Value) {
+fn items_and_currency() -> (
+    ItemRow,
+    ItemRow,
+    ItemRow,
+    ItemRow,
+    CurrencyRow,
+    serde_json::Value,
+) {
     let item1 = ItemRow {
         id: uuid(),
         code: uuid(),
@@ -109,6 +118,12 @@ fn items_and_currency() -> (ItemRow, ItemRow, ItemRow, CurrencyRow, serde_json::
     };
 
     let item2 = ItemRow {
+        id: uuid(),
+        code: uuid(),
+        ..Default::default()
+    };
+
+    let item3 = ItemRow {
         id: uuid(),
         code: uuid(),
         ..Default::default()
@@ -134,6 +149,7 @@ fn items_and_currency() -> (ItemRow, ItemRow, ItemRow, CurrencyRow, serde_json::
         "item": [
             {"ID": item1.id, "type_of": "general", "code": item1.code},
             {"ID": item2.id, "type_of": "general", "code": item2.code},
+            {"ID": item3.id, "type_of": "general", "code": item3.code},
             {"ID": service_item.id, "type_of": "service", "code": service_item.code},
         ],
         "currency": [
@@ -141,7 +157,7 @@ fn items_and_currency() -> (ItemRow, ItemRow, ItemRow, CurrencyRow, serde_json::
         ]
     });
 
-    (item1, item2, service_item, currency, json)
+    (item1, item2, item3, service_item, currency, json)
 }
 
 async fn new_instance_of_existing_site(
@@ -149,18 +165,18 @@ async fn new_instance_of_existing_site(
     identifier: &str,
 ) -> (SiteContext, JoinHandle<()>) {
     let sync_context = init_test_context(config, &format!("{}_site2_2", identifier)).await;
-    sync_context.synchroniser.sync(None).await.unwrap();
+    sync_context.synchroniser.sync().await.unwrap();
     to_site_context_and_processors_task(sync_context)
 }
 
 async fn sync_and_delay(site_1: &SiteContext, site_2: &SiteContext) {
     log::info!("syncing site {:?}", site_1.config);
-    site_1.synchroniser.sync(None).await.unwrap();
+    site_1.synchroniser.sync().await.unwrap();
 
     tokio::time::sleep(Duration::from_secs(1)).await;
 
     log::info!("syncing site {:?}", site_2.config);
-    site_2.synchroniser.sync(None).await.unwrap();
+    site_2.synchroniser.sync().await.unwrap();
 
     tokio::time::sleep(Duration::from_secs(1)).await;
 }

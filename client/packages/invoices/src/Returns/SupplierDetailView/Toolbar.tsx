@@ -8,6 +8,7 @@ import {
   useTranslation,
   useNavigate,
   RouteBuilder,
+  DisabledStoreNotice,
 } from '@openmsupply-client/common';
 import { SupplierReturnFragment, useReturns } from '../api';
 import { SupplierSearchInput } from '@openmsupply-client/system';
@@ -72,19 +73,20 @@ export const Toolbar: FC = () => {
               />
             )}
             <InputWithLabelRow
-              label={t('label.supplier-ref')}
+              label={t('label.supplier-reference')}
               Input={
                 <BasicTextInput
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={theirReference}
+                  value={theirReference ?? ''}
                   onChange={event => {
                     update({ theirReference: event.target.value });
                   }}
                 />
               }
             />
+            <DisabledStoreNotice otherParty={otherParty} />
           </Box>
         </Grid>
       </Grid>

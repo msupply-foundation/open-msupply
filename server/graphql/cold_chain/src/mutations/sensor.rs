@@ -26,6 +26,7 @@ pub fn update_sensor(
         &ResourceAccessRequest {
             resource: Resource::MutateSensor,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -98,7 +99,7 @@ pub enum UpdateSensorErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<UpdateSensorErrorInterface> {
     use ServiceError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Standard Graphql Errors

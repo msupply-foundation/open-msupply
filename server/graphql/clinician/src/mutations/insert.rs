@@ -30,6 +30,7 @@ pub fn insert_clinician(
         &ResourceAccessRequest {
             resource: Resource::MutateClinician,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -64,7 +65,7 @@ impl InsertClinicianInput {
             initials,
             last_name,
             first_name,
-            gender: gender.map(|g| GenderType::from(g)),
+            gender: gender.map(GenderType::from),
             mobile,
         }
     }
@@ -72,8 +73,8 @@ impl InsertClinicianInput {
 
 fn map_error(error: InsertClinicianError) -> Result<IdResponse> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
-    log::error!("Error inserting clinician: {}", formatted_error);
+    let formatted_error = format!("{error:#?}");
+    log::error!("Error inserting clinician: {formatted_error}");
 
     let graphql_error = match error {
         InsertClinicianError::ClinicianAlreadyExists

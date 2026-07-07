@@ -13,12 +13,10 @@ import {
   NameAndColorSetterCell,
   NothingHere,
   usePreferences,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
-import {
-  getStatusTranslator,
-  isOutboundDisabled,
-  outboundStatuses,
-} from '../../utils';
+import { getStatusTranslator, isOutboundDisabled } from '../../utils';
+import { getStatusSequence } from '../../statuses';
 import { AppBarButtons } from './AppBarButtons';
 import { useOutbound } from '../api';
 import { OutboundRowFragment } from '../api/operations.generated';
@@ -44,14 +42,15 @@ export const OutboundShipmentListView = () => {
       { key: 'createdDatetime', condition: 'between' },
       { key: 'shippedDatetime', condition: 'between' },
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
+      { key: 'invoiceNumberOrStatus', condition: 'like' },
     ],
   });
   const queryParams = { ...filter, sortBy, first, offset };
 
   const { data, isFetching, isError } = useOutbound.document.list(queryParams);
   const { mutate: onUpdate } = useOutbound.document.update();
-  const statuses = outboundStatuses.filter(status =>
-    invoiceStatusOptions?.includes(status)
+  const statuses = getStatusSequence(InvoiceNodeType.OutboundShipment).filter(
+    status => invoiceStatusOptions?.includes(status)
   );
 
   const mrtColumns = useMemo(
@@ -78,7 +77,7 @@ export const OutboundShipmentListView = () => {
         size: 140,
         enableSorting: true,
         enableColumnFilter: true,
-        filterVariant: 'select',
+        filterVariant: 'multi-select',
         filterSelectOptions: statuses.map(status => ({
           value: status,
           label: getStatusTranslator(t)(status),
@@ -86,7 +85,7 @@ export const OutboundShipmentListView = () => {
       },
       {
         accessorKey: 'invoiceNumber',
-        header: t('label.invoice-number'),
+        header: t('label.number'),
         columnType: ColumnType.Number,
         description: t('description.invoice-number'),
         enableSorting: true,
@@ -131,7 +130,7 @@ export const OutboundShipmentListView = () => {
       data: data?.nodes,
       totalCount: data?.totalCount ?? 0,
       initialSort: { key: 'invoiceNumber', dir: 'desc' },
-      getIsRestrictedRow: isOutboundDisabled,
+      getIsRestrictedRow: row => isOutboundDisabled(row.original),
       noDataElement: (
         <NothingHere
           body={t('error.no-outbound-shipments')}

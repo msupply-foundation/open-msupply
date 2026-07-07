@@ -1,3 +1,9 @@
+use crate::{
+    activity_log::{activity_log_entry, log_type_from_invoice_status},
+    invoice::{query::get_invoice, stock_effect::StockEffect},
+    service_provider::ServiceContext,
+    NullableUpdate,
+};
 use chrono::{Duration, NaiveDateTime, Utc};
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
@@ -5,13 +11,6 @@ use repository::{
     StorageConnection,
 };
 use util::uuid::uuid;
-
-use crate::{
-    activity_log::{activity_log_entry, log_type_from_invoice_status},
-    invoice::query::get_invoice,
-    service_provider::ServiceContext,
-    NullableUpdate,
-};
 
 mod generate;
 mod validate;
@@ -74,6 +73,7 @@ pub fn update_prescription(
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
+                stock_effect,
             } = generate(invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
@@ -94,12 +94,12 @@ pub fn update_prescription(
                     None,
                 )?;
 
-                if patch.status == Some(UpdatePrescriptionStatus::Cancelled) {
+                if stock_effect == Some(StockEffect::ReverseStock) {
                     create_reverse_prescription(connection, &update_invoice)?;
                 }
             }
 
-            get_invoice(ctx, None, &update_invoice.id)
+            get_invoice(ctx, None, &update_invoice.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
@@ -220,7 +220,7 @@ mod test {
         fn prescription_no_stock() -> InvoiceRow {
             InvoiceRow {
                 id: String::from("prescription_no_stock"),
-                name_link_id: String::from("name_store_a"),
+                name_id: String::from("name_store_a"),
                 store_id: String::from("store_a"),
                 r#type: InvoiceType::Prescription,
                 status: InvoiceStatus::New,
@@ -242,7 +242,7 @@ mod test {
             InvoiceLineRow {
                 id: String::from("prescription_no_stock_line_a"),
                 invoice_id: String::from("prescription_no_stock"),
-                item_link_id: String::from("item_a"),
+                item_id: String::from("item_a"),
                 item_name: String::from("Item A"),
                 item_code: String::from("item_a_code"),
                 batch: None,
@@ -353,7 +353,7 @@ mod test {
         fn prescription() -> InvoiceRow {
             InvoiceRow {
                 id: "test_prescription_pricing".to_string(),
-                name_link_id: mock_patient().id,
+                name_id: mock_patient().id,
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::Prescription,
                 ..Default::default()
@@ -442,7 +442,7 @@ mod test {
                 insurance_discount_percentage: _,
             } = get_update();
             InvoiceRow {
-                name_link_id: patient_id.unwrap(),
+                name_id: patient_id.unwrap(),
                 clinician_link_id: clinician_id.unwrap().value,
                 comment,
                 colour,
@@ -450,12 +450,12 @@ mod test {
             }
         });
 
-        // add a an invoice line to the prescription
+        // add an invoice line to the prescription
         let invoice_line_row_repo = InvoiceLineRowRepository::new(&connection);
         let invoice_line = InvoiceLineRow {
             id: "test_invoice_line".to_string(),
             invoice_id: prescription().id.clone(),
-            item_link_id: mock_stock_line_a().item_link_id.clone(),
+            item_id: mock_stock_line_a().item_id.clone(),
             item_name: "Test Item".to_string(),
             item_code: "test_item_code".to_string(),
             batch: mock_stock_line_a().batch.clone(),
@@ -464,6 +464,7 @@ mod test {
             stock_line_id: Some(mock_stock_line_a().id.clone()),
             location_id: None,
             expiry_date: None,
+            manufacture_date: None,
             pack_size: 0.0,
             cost_price_per_pack: 0.0,
             sell_price_per_pack: 0.0,
@@ -475,7 +476,9 @@ mod test {
             foreign_currency_price_before_tax: None,
             item_variant_id: None,
             linked_invoice_id: None,
-            donor_link_id: None,
+            purchase_order_line_id: None,
+            donor_id: None,
+            manufacturer_id: None,
             vvm_status_id: None,
             reason_option_id: None,
             campaign_id: None,
@@ -483,6 +486,10 @@ mod test {
             shipped_number_of_packs: None,
             volume_per_pack: 0.0,
             shipped_pack_size: None,
+            status: None,
+            received_number_of_packs: None,
+            linked_invoice_line_id: None,
+            legacy_goods_received_line_id: None,
         };
 
         invoice_line_row_repo.upsert_one(&invoice_line).unwrap();
@@ -586,7 +593,7 @@ mod test {
             .unwrap()
             .unwrap()
             .invoice_row;
-        assert_eq!(reverse_prescription.is_cancellation, true);
+        assert!(reverse_prescription.is_cancellation);
 
         let reverse_lines = InvoiceLineRowRepository::new(&connection)
             .find_many_by_invoice_id(&reverse_prescription.id)

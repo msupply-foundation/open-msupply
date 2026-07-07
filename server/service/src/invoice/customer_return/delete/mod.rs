@@ -30,6 +30,7 @@ pub fn delete_customer_return(
                         id: line.invoice_line_row.id.clone(),
                         r#type: StockInType::CustomerReturn,
                     },
+                    None,
                 )
                 .map_err(|error| DeleteCustomerReturnError::LineDeleteError {
                     line_id: line.invoice_line_row.id,
@@ -61,6 +62,7 @@ pub enum DeleteCustomerReturnError {
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     LineDeleteError {
         line_id: String,
         error: DeleteStockInLineError,
@@ -98,7 +100,7 @@ mod test {
                 id: "wrong_store".to_string(),
                 store_id: mock_store_a().id,
                 r#type: InvoiceType::CustomerReturn,
-                name_link_id: mock_name_store_a().id,
+                name_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 ..Default::default()
             }
@@ -108,7 +110,7 @@ mod test {
                 id: "verified".to_string(),
                 store_id: mock_store_b().id,
                 r#type: InvoiceType::CustomerReturn,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 status: InvoiceStatus::Verified,
                 currency_id: Some(currency_a().id),
                 ..Default::default()
@@ -162,7 +164,7 @@ mod test {
             InvoiceRow {
                 id: "return_to_delete".to_string(),
                 store_id: mock_store_b().id,
-                name_link_id: mock_name_store_b().id,
+                name_id: mock_name_store_b().id,
                 currency_id: Some(currency_a().id),
                 r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::New,
@@ -174,7 +176,7 @@ mod test {
             StockLineRow {
                 id: "test_stock_line".to_string(),
                 store_id: mock_store_b().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -183,7 +185,7 @@ mod test {
                 id: "return_line".to_string(),
                 invoice_id: return_to_delete().id,
                 stock_line_id: Some(stock_line().id),
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
                 ..Default::default()
             }

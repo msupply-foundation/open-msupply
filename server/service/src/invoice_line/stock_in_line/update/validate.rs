@@ -1,18 +1,29 @@
+use crate::common::check_program_exists;
+use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
-    campaign::check_campaign_exists,
+    campaign::check_campaign_exists_including_deleted,
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        stock_in_line::{check_batch, check_pack_size, check_program_visible_to_store},
+        stock_in_line::{check_batch, check_pack_size},
         validate::{
             check_item_exists, check_line_belongs_to_invoice, check_line_exists,
             check_number_of_packs,
         },
     },
+    validate::{
+        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
+        CheckOtherPartyType, OtherPartyErrors,
+    },
     NullableUpdate,
 };
-use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
+use repository::{
+    InvoiceLine, InvoiceRow, ItemRow, ReasonOptionRowRepository, ReasonOptionType,
+    StorageConnection,
+};
+
+use util::f64_approx_eq;
 
 use super::{UpdateStockInLine, UpdateStockInLineError};
 
@@ -20,6 +31,7 @@ pub fn validate(
     input: &UpdateStockInLine,
     store_id: &str,
     connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
 ) -> Result<(InvoiceLine, Option<ItemRow>, InvoiceRow), UpdateStockInLineError> {
     use UpdateStockInLineError::*;
 
@@ -33,6 +45,15 @@ pub fn validate(
         return Err(NumberOfPacksBelowZero);
     }
 
+    if let Some(NullableUpdate {
+        value: Some(manufacture_date),
+    }) = &input.manufacture_date
+    {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
+    }
+
     let item = check_item_option(&input.item_id, connection)?;
 
     let invoice =
@@ -41,8 +62,16 @@ pub fn validate(
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
         return Err(NotAStockIn);
     }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
+    }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(OtherPartyStoreDisabled);
     }
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
@@ -75,7 +104,10 @@ pub fn validate(
         }
     }
 
-    if let Some(vvm_status_id) = &input.vvm_status_id {
+    if let Some(NullableUpdate {
+        value: Some(vvm_status_id),
+    }) = &input.vvm_status_id
+    {
         if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
             return Err(VVMStatusDoesNotExist);
         }
@@ -85,18 +117,79 @@ pub fn validate(
         return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
     }
 
-    if let Some(program_id) = &input.program_id {
-        if !check_program_visible_to_store(connection, store_id, &program_id.value)? {
-            return Err(ProgramNotVisible);
+    if let Some(NullableUpdate {
+        value: Some(program_id),
+    }) = &input.program_id
+    {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(ProgramDoesNotExist);
         }
     }
+
+    if let Some(NullableUpdate {
+        value: Some(manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        match check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
+                OtherPartyErrors::OtherPartyNotVisible => return Err(ManufacturerNotVisible),
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
+    };
 
     if let Some(NullableUpdate {
         value: Some(campaign_id),
     }) = &input.campaign_id
     {
-        if !check_campaign_exists(connection, campaign_id)? {
+        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
             return Err(CampaignDoesNotExist);
+        }
+    }
+
+    // Cost price is read-only for internal suppliers and external suppliers linked to a PO.
+    // Use epsilon comparison to allow unchanged values that may have drifted
+    // through floating point serialization (Rust f64 → JSON → JS Number → JSON → f64).
+    if let Some(new_cost_price) = input.cost_price_per_pack {
+        if (invoice.name_store_id.is_some() || invoice.purchase_order_id.is_some())
+            && !f64_approx_eq(new_cost_price, line_row.cost_price_per_pack)
+        {
+            return Err(CannotEditCostPrice);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(reason_option_id),
+    }) = &input.reason_option_id
+    {
+        let reason = ReasonOptionRowRepository::new(connection)
+            .find_one_by_id(reason_option_id)?
+            .ok_or(UpdateStockInLineError::ReasonOptionDoesNotExist)?;
+        if reason.r#type != ReasonOptionType::ShipmentVariance {
+            return Err(UpdateStockInLineError::ReasonOptionTypeInvalid);
+        }
+    }
+
+    if input
+        .status
+        .as_ref()
+        .is_some_and(|s| s.value != line_row.status)
+    {
+        use repository::InvoiceStatus::*;
+        // Verified is already excluded by check_invoice_is_editable (invoice is no longer editable once verified).
+        // Can't change line status once invoice is received as stock lines may have already been allocated so rejecting a line at that point could cause issues with stock management.
+        if invoice.status == Received {
+            return Err(CannotChangeLineStatusOfReceivedInvoice);
         }
     }
 

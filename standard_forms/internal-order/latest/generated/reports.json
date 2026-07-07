@@ -1,0 +1,56 @@
+{
+  "reports": [
+    {
+      "id": "internal-order_2_6_5_false",
+      "name": "Internal Order",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": null,
+          "query": [
+            "query.graphql"
+          ],
+          "convert_data": null,
+          "convert_data_type": "Extism"
+        },
+        "entries": {
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<table class=\"body_section\">\n  <thead>\n      <tr class=\"body_column_label\">\n          <th>{{ t(k=\"label.code\", f=\"Code\") }}</th>\n          <th>{{ t(k=\"report.item-name\", f=\"Item name\") }}</th>\n          <th>{{ t(k=\"label.unit\", f=\"Unit\") }}</th>\n          <th>{{ t(k=\"report.stock-on-hand\",f=\"Stock on hand\") }}</th>\n          <th>{{ t(k=\"label.amc\",f=\"AMC\") }}</th>\n          <th>{{ t(k=\"label.months-of-stock\", f=\"MOS\") }}</th>\n          <th style=\"width: 10%\">{{ t(k=\"label.requested-quantity\", f=\"Requested quantity\") }}</th>\n      </tr>\n  </thead>\n  {% for line in data.requisition.lines.nodes -%}\n  <tr class=\"body_value\">\n      <td>{{ line.item.code }}</td>\n      <td>{{ line.item.name }}</td>\n      <td>{{ line.item.unitName }}</td>\n      <td>{{ line.itemStats.availableStockOnHand | default(value=0.00) |\n        round(precision=2) }}</td>\n      <td>{{ line.itemStats.averageMonthlyConsumption | default(value=0.00) |\n        round(precision=2) }}</td>\n      <td>{{ line.itemStats.availableMonthsOfStockOnHand | default(value=0.00) |\n        round(precision=2) }}</td>\n      <td>{{ line.requestedQuantity }}</td>\n  </tr>\n  {%- endfor %}\n</table>"
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "body > table {\n  width: 100%;\n  padding: 2em;\n}\n\n.logo {\n  display: block;\n  height: 96px;\n}\n\n.header_image_section,\n.header_supplied_section,\n.body_section,\n.body_total_section {\n  width: 100%;\n}\n\n.header_supplied_section {\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 1pt;\n}\n\n.header_image_section {\n  width: 100%;\n  font-family: Tahoma;\n  font-size: 8pt;\n  border-bottom: 0.5px solid black;\n  padding-top: 8pt;\n  font-family: \"Gill Sans\", \"Gill Sans MT\", Calibri, \"Trebuchet MS\", sans-serif;\n}\n\n.header-space-between {\n  display: flex;\n  justify-content: space-between;\n}\n.body_column_label th {\n  border-bottom: 0.5px solid black;\n  text-align: left;\n}\n\n.body_column_label th,\n.body_value td {\n  font-family: Tahoma;\n  font-size: 8pt;\n}\n"
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query requisitionQuery($storeId: String!, $dataId: String!) {\n  requisition(storeId: $storeId, id: $dataId) {\n    ... on RequisitionNode {\n      id\n      status\n      requisitionNumber\n      theirReference\n      createdDatetime\n      sentDatetime\n      finalisedDatetime\n      comment\n      maxMonthsOfStock\n      otherParty(storeId: $storeId) {\n        name\n        id\n        code\n        address1\n        address2\n        phone\n        email\n      }\n      lines {\n        nodes {\n          requestedQuantity\n          comment\n          item {\n            code\n            name\n            unitName\n          }\n          itemStats {\n            availableStockOnHand\n            averageMonthlyConsumption\n            availableMonthsOfStockOnHand\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          code\n          email\n          phone\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "{% macro dateOrNA(datetime) %} \n{% if datetime %}{{ datetime | date(format=\"%d/%m/%Y\", timezone=arguments.timezone) }}{% else %}{{t(k=\"messages.not-applicable\", f=\"N/A\")}}{% endif %} \n{% endmacro input %}\n\n<table class=\"header_image_section\" style=\"width: 100%;height: 98%;\"> \n  <tr>\n      {% if data.store.logo %}\n      <th style=\"text-align:left;width:10%;height:70%;\">\n          <img class=\"logo\" src=\"{{ data.store.logo }}\"/>\n      </th>\n      {% endif %}\n      <th style=\"text-align:left;width:20%;\">\n          <span style=\"font-weight:bold;\">{{ data.store.storeName }}</span><br>\n          <span style=\"font-size:6pt;\">{{ data.store.name.address1 }}</span><br>\n          <span style=\"font-size:6pt;\">{{ data.store.name.address2 }}</span><br>\n          <span style=\"font-size:6pt;\">\n              {{t(k=\"label.phone\",f=\"Telephone\")}}: {{ data.store.name.phone }}\n          </span><br>\n          <span style=\"font-size:6pt;\">\n              {{t(k=\"label.email\",f=\"Email\")}}: {{ data.store.name.email }}\n          </span>\n          <br>\n          <br>\n      </th>\n      <th style=\"text-align:right;width:70%;font-size:28pt;\">\n          {{ t(k=\"label.internal-order\", f=\"Internal Order\") }}<br>\n      </th>\n  </tr>\n</table>\n<div class=\"header_supplied_section\" style=\"display: flex; flex-direction: column;\">\n  <div class=\"header-space-between\">\n      <span>{{ t(k=\"label.supplier\", f=\"Supplier\") }}:</span>\n      <span>{{ t(k=\"label.number\", f=\"Number\") }}: {{ data.requisition.requisitionNumber }}</span>\n  </div>\n  <div class=\"header-space-between\">\n      <span >{{ data.requisition.otherParty.name }}</span>\n      <span id=\"date\">\n          {{t(k=\"report.printed-date\", f=\"Printed date\") }}: {{ now() | date(format=\"%d/%m/%Y\") }}\n      </span>\n  </div>\n  <div class=\"header-space-between\">\n      <span>{{ data.requisition.otherParty.code }}</span>\n      <span id=\"date\">{{t(k=\"report.sent-date\", f=\"Sent date\") }}: {{ self::dateOrNA(datetime=data.requisition.sentDatetime)}}</span>\n  </div>\n  <div class=\"header-space-between\">\n      <span>\n          {{data.requisition.otherParty.address1 }}{% if data.requisition.otherParty.address2 %},\n          {{data.requisition.otherParty.address2 }} {% endif %} \n        </span>\n        <span id=\"date\">{{t(k=\"report.finalised-date\", f=\"Finalised date\") }}: {{ self::dateOrNA(datetime=data.requisition.finalisedDatetime)}}</span>\n  </div>\n</div>\n"
+            }
+          }
+        }
+      },
+      "context": "INTERNAL_ORDER",
+      "sub_context": null,
+      "argument_schema_id": null,
+      "comment": null,
+      "is_custom": false,
+      "version": "2.6.5",
+      "code": "internal-order",
+      "form_schema": null,
+      "excel_template_buffer": null
+    }
+  ]
+}

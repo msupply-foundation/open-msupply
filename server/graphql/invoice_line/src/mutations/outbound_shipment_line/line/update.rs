@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::TaxInput;
+use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
     simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
@@ -14,6 +14,7 @@ use service::invoice_line::stock_out_line::{
     StockOutType, UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
+use service::NullableUpdate;
 
 use super::{
     LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
@@ -29,6 +30,7 @@ pub struct UpdateInput {
     prescribed_quantity: Option<f64>,
     tax: Option<TaxInput>,
     pub vvm_status_id: Option<String>,
+    pub reason_option_id: Option<NullableUpdateInput<String>>,
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
@@ -37,6 +39,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -97,6 +100,7 @@ impl UpdateInput {
             prescribed_quantity,
             tax,
             vvm_status_id,
+            reason_option_id,
         } = self;
         ServiceInput {
             id,
@@ -112,14 +116,18 @@ impl UpdateInput {
             note: None,
             campaign_id: None,
             program_id: None,
+            received_number_of_packs: None,
+            reason_option_id: reason_option_id.map(|reason_option_id| NullableUpdate {
+                value: reason_option_id.value,
+            }),
         }
     }
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use ServiceError::*;
-    let formatted_error = format!("{:#?}", error);
-    log::error!("Error updating outbound shipment line: {}", formatted_error);
+    let formatted_error = format!("{error:#?}");
+    log::error!("Error updating outbound shipment line: {formatted_error}");
 
     let graphql_error = match error {
         // Structured Errors
@@ -128,7 +136,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 ForeignKey::InvoiceId,
             )))
         }
-        CannotEditFinalised => {
+        CannotEditFinalised | OtherPartyStoreDisabled => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
@@ -179,6 +187,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ItemDoesNotMatchStockLine
         | VVMStatusDoesNotExist
         | NotThisInvoiceLine(_)
+        | ReasonOptionDoesNotExist
+        | ReasonOptionIsNotActive
+        | ReasonOptionTypeInvalid
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
         AutoPickFailed(_) | DatabaseError(_) | UpdatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
@@ -199,7 +210,7 @@ mod test {
             mock_item_a, mock_location_1, mock_outbound_shipment_c,
             mock_outbound_shipment_c_invoice_lines, MockDataInserts,
         },
-        InvoiceLine, RepositoryError, StorageConnectionManager,
+        InvoiceLine, InvoiceLineStatsRow, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -564,6 +575,7 @@ mod test {
                 invoice_row: mock_outbound_shipment_c(),
                 invoice_line_row: mock_outbound_shipment_c_invoice_lines()[0].clone(),
                 item_row: mock_item_a(),
+                invoice_line_stats_row: InvoiceLineStatsRow::default(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })

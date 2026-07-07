@@ -26,7 +26,6 @@ pub struct ItemStats {
     pub available_stock_on_hand: f64,
     pub total_stock_on_hand: f64,
     pub item_id: String,
-    pub item_name: String,
 }
 
 pub trait ItemStatsServiceTrait: Sync + Send {
@@ -128,10 +127,13 @@ pub fn get_item_stats(
         None => amc::Trait::call(&DefaultAmc, input),
     }?;
 
+    let stock_on_hand_rows = get_stock_on_hand_rows(connection, store_id, Some(item_ids.clone()))?;
+
     Ok(ItemStats::new_vec(
+        &item_ids,
         amc_by_item,
         consumption_map,
-        get_stock_on_hand_rows(connection, store_id, Some(item_ids))?,
+        stock_on_hand_rows,
     ))
 }
 
@@ -242,25 +244,30 @@ pub fn get_stock_on_hand_rows(
 
 impl ItemStats {
     fn new_vec(
+        item_ids: &[String],
         amc_by_item: amc::Output,
         consumption_map: HashMap<String /* item_id */, f64 /* total consumption */>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
     ) -> Vec<Self> {
-        stock_on_hand_rows
-            .into_iter()
-            .map(|stock_on_hand| ItemStats {
-                available_stock_on_hand: stock_on_hand.available_stock_on_hand,
-                item_id: stock_on_hand.item_id.clone(),
-                item_name: stock_on_hand.item_name.clone(),
-                average_monthly_consumption: amc_by_item
-                    .get(&stock_on_hand.item_id)
-                    .and_then(|r| r.average_monthly_consumption)
-                    .unwrap_or_default(),
-                total_consumption: consumption_map
-                    .get(&stock_on_hand.item_id)
-                    .copied()
-                    .unwrap_or_default(),
-                total_stock_on_hand: stock_on_hand.total_stock_on_hand,
+        let soh_map: HashMap<&str, &StockOnHandRow> = stock_on_hand_rows
+            .iter()
+            .map(|row| (row.item_id.as_str(), row))
+            .collect();
+
+        item_ids
+            .iter()
+            .map(|item_id| {
+                let soh = soh_map.get(item_id.as_str());
+                ItemStats {
+                    available_stock_on_hand: soh.map(|s| s.available_stock_on_hand).unwrap_or(0.0),
+                    item_id: item_id.clone(),
+                    average_monthly_consumption: amc_by_item
+                        .get(item_id)
+                        .and_then(|r| r.average_monthly_consumption)
+                        .unwrap_or_default(),
+                    total_consumption: consumption_map.get(item_id).copied().unwrap_or_default(),
+                    total_stock_on_hand: soh.map(|s| s.total_stock_on_hand).unwrap_or(0.0),
+                }
             })
             .collect()
     }
@@ -271,7 +278,6 @@ impl ItemStats {
             average_monthly_consumption: row.average_monthly_consumption,
             available_stock_on_hand: row.available_stock_on_hand,
             item_id: requisition_line.item_row.id.clone(),
-            item_name: requisition_line.item_row.name.clone(),
             // TODO: Implement total consumption & total_stock_on_hand
             total_consumption: 0.0,
             total_stock_on_hand: 0.0,
@@ -299,14 +305,15 @@ mod test {
     pub(crate) fn mock_data() -> MockData {
         let test_stock_line = StockLineRow {
             id: "test_stock_line".to_string(),
-            item_link_id: mock_item_a().id.clone(),
+            item_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
             pack_size: 1.0,
             ..Default::default()
         };
 
         // Use make_movements to create days where the item is out of stock
-        let mock_data = MockData {
+
+        MockData {
             stock_lines: vec![test_stock_line.clone()],
             ..Default::default()
         }
@@ -331,9 +338,7 @@ mod test {
                 https://www.tablesgenerator.com/text_tables (file -> paste table data)
                 */
             ],
-        ));
-
-        mock_data
+        ))
     }
 
     #[actix_rt::test]

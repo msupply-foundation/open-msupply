@@ -177,7 +177,7 @@ export const ResponseStoreStats = ({
         ) : (
           <>
             <Typography style={{ textAlign: 'start' }} variant="h6">
-              {t('label.requested')}
+              {t('label.customer-requested')}
             </Typography>
             <Box
               display="flex"

@@ -1,8 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { styled } from '@mui/material/styles';
 import { Breadcrumbs as MuiBreadcrumbs } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { useRegisterActions, useBreadcrumbs } from '@openmsupply-client/common';
+import {
+  useRegisterActions,
+  useBreadcrumbs,
+  usePluginProvider,
+} from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { UrlPart, useHostContext } from '@common/hooks';
 import { AppRoute } from '@openmsupply-client/config';
@@ -21,8 +25,29 @@ export const Breadcrumbs = ({
 }) => {
   const t = useTranslation();
   const { fullScreen } = useHostContext();
+  const { plugins } = usePluginProvider();
+
+  // Plugin category-root pages live at `/<categoryKey>` (no second segment),
+  // which `useBreadcrumbs` would otherwise drop from `urlParts` because the
+  // index-1 segment is only kept when it's in `topLevelPaths`. Merging the
+  // plugin category keys in lets those URLs surface as a urlPart at index 0,
+  // which `PluginBreadcrumbs` then maps its `customBreadcrumbs[0]` against.
+  const pluginCategoryKeys = useMemo(
+    () =>
+      (plugins.pages ?? [])
+        .filter(page => page.menu.category.type === 'new')
+        .map(page =>
+          page.menu.category.type === 'new' ? page.menu.category.key : ''
+        ),
+    [plugins.pages]
+  );
+  const allTopLevelPaths = useMemo(
+    () => [...topLevelPaths, ...pluginCategoryKeys],
+    [topLevelPaths, pluginCategoryKeys]
+  );
+
   const { urlParts, navigateUpOne, customBreadcrumbs } =
-    useBreadcrumbs(topLevelPaths);
+    useBreadcrumbs(allTopLevelPaths);
 
   // Use ref so `perform` function can access the latest value
   const fullScreenRef = useRef(fullScreen);

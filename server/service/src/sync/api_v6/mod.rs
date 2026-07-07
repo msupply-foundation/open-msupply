@@ -7,8 +7,6 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 use util::format_error;
 
-use crate::i64_to_u64;
-
 pub use self::core::*;
 
 use super::{
@@ -18,6 +16,7 @@ use super::{
     },
     translations::PushSyncRecord,
 };
+use crate::i64_to_u64;
 use crate::sync::api::ParsingSyncRecordError;
 
 #[derive(Deserialize, Debug, Error, Serialize)]
@@ -132,6 +131,15 @@ pub(crate) struct SyncRecordV6 {
     pub(crate) cursor: u64,
     pub(crate) record: CommonSyncRecord,
 }
+impl From<PushSyncRecord> for SyncRecordV6 {
+    fn from(PushSyncRecord { cursor, record }: PushSyncRecord) -> Self {
+        SyncRecordV6 {
+            cursor: i64_to_u64(cursor),
+            record,
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Default, Serialize)]
 pub struct SyncBatchV6 {
     // Latest changelog cursor in the 'records'
@@ -142,15 +150,6 @@ pub struct SyncBatchV6 {
     pub(crate) total_records: u64,
     pub(crate) records: Vec<SyncRecordV6>,
     pub(crate) is_last_batch: bool,
-}
-
-impl From<PushSyncRecord> for SyncRecordV6 {
-    fn from(PushSyncRecord { cursor, record }: PushSyncRecord) -> Self {
-        SyncRecordV6 {
-            cursor: i64_to_u64(cursor),
-            record,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -210,12 +209,27 @@ pub struct SyncDownloadFileRequestV6 {
     pub(crate) sync_v6_version: u32,
 }
 
+// ---------------------------------------------------------------------------
+// Backwards-compatibility: legacy multipart upload (PUT /central/sync/upload_file)
+// ---------------------------------------------------------------------------
+//
+// The current client speaks tus 1.0.0 against /central/sync/files (see upload_file.rs).
+// These request/response types only exist so that *older* remote sites — which have not yet
+// upgraded past the multipart PUT — can still upload files to a newer central server.
+//
+// Do NOT use these types from new client code. They are only referenced by the legacy server
+// handler in `sync_on_central::upload_file_legacy`. Once all deployed remote sites have moved
+// to the tus path these types and the handler can be removed together.
 #[derive(Deserialize, Debug, Serialize)]
 pub struct SyncUploadFileRequestV6 {
     pub file_id: String,
     pub sync_v5_settings: SyncApiSettings,
     #[serde(default)]
     pub(crate) sync_v6_version: u32,
+    #[serde(default)]
+    pub record_id: Option<String>,
+    #[serde(default)]
+    pub table_name: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -231,6 +245,8 @@ async fn response_or_err<T: DeserializeOwned>(
     let response = match result {
         Ok(result) => result,
         Err(error) => {
+            log::info!("Request error: {:#?}", error);
+
             if error.is_connect() {
                 return Err(SyncApiErrorVariantV6::ConnectionError(error));
             } else {

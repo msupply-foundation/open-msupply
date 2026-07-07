@@ -18,6 +18,11 @@ export const NumUtils = {
     return num > 0;
   },
   /**
+   * Whether a value is a whole number, ignoring floating point rounding
+   * (e.g. `9.999999999` counts as 10).
+   */
+  isWholeNumber: isNearlyInteger,
+  /**
    * Parses a string into a number, constraining it to the given min and max values.
    *
    * With the default `min` and `max` parameters this method will return a number >= 0.

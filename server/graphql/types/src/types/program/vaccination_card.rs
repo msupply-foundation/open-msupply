@@ -112,7 +112,7 @@ impl VaccinationCardItemNode {
         self.item
             .status
             .clone()
-            .map(|status| VaccinationCardItemNodeStatus::from(status))
+            .map(VaccinationCardItemNodeStatus::from)
     }
 
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {

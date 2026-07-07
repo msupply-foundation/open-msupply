@@ -19,6 +19,7 @@ pub struct InsertInput {
     pub id: String,
     pub customer_id: String,
     pub outbound_shipment_id: Option<String>,
+    pub their_reference: Option<String>,
     pub customer_return_lines: Vec<CustomerReturnLineInput>,
 }
 
@@ -56,6 +57,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         &ResourceAccessRequest {
             resource: Resource::MutateCustomerReturn,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -86,7 +88,7 @@ pub enum InsertErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::OtherPartyNotVisible => {
@@ -124,6 +126,7 @@ impl InsertInput {
             id,
             customer_id,
             outbound_shipment_id,
+            their_reference,
             customer_return_lines,
         }: InsertInput = self;
 
@@ -131,6 +134,7 @@ impl InsertInput {
             id,
             other_party_id: customer_id,
             outbound_shipment_id,
+            their_reference,
             customer_return_lines: customer_return_lines
                 .into_iter()
                 .map(|line| line.to_domain())

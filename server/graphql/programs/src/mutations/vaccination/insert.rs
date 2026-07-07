@@ -77,6 +77,7 @@ pub fn insert_vaccination(
         &ResourceAccessRequest {
             resource: Resource::MutateEncounter,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
     let service_provider = ctx.service_provider();
@@ -99,7 +100,7 @@ pub fn insert_vaccination(
 
 fn map_error(error: ServiceError) -> Result<InsertVaccinationResponse> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         ServiceError::VaccinationAlreadyExists

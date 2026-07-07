@@ -13,12 +13,12 @@ import {
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
-import { ResponseFragment, useResponse } from '../../api';
+import { ResponseFragment, ResponseLineFragment, useResponse } from '../../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
 import { RequestStoreStats } from '../ResponseStats/RequestStoreStats';
-import { shouldDeleteLine } from 'packages/requisitions/src/utils';
+import { shouldDeleteLine } from '../../../utils';
 
 interface ResponseLineEditModalProps {
   requisition: ResponseFragment;
@@ -27,6 +27,9 @@ interface ResponseLineEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
+  // Items in the order they're currently displayed in the table, so
+  // "OK & Next" follows the user's sort.
+  getSortedItems: () => ResponseLineFragment['item'][];
 }
 
 export const ResponseLineEditModal = ({
@@ -36,11 +39,12 @@ export const ResponseLineEditModal = ({
   mode,
   isOpen,
   onClose,
+  getSortedItems,
 }: ResponseLineEditModalProps) => {
   const { error } = useNotification();
   const deleteLine = useResponse.line.deleteLine();
   const isDisabled = useResponse.utils.isDisabled();
-  const { orderInPacks } = usePreferences();
+  const { orderInPacks, displayPopulationBasedForecasting } = usePreferences();
 
   const lines = useMemo(
     () =>
@@ -61,7 +65,7 @@ export const ResponseLineEditModal = ({
   const { draft, update, save, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);
   const draftIdRef = useRef<string | undefined>(draft?.id);
-  const { hasNext, next } = useNextResponseLine(lines, currentItem);
+  const { hasNext, next } = useNextResponseLine(getSortedItems, currentItem);
   const nextDisabled =
     (!hasNext && mode === ModalMode.Update) || !currentItem || isEditingSupply;
 
@@ -128,6 +132,8 @@ export const ResponseLineEditModal = ({
   const itemVolume =
     (draft?.availableVolumeAtLocationType?.itemVolumePerUnit ?? 0) *
     (draft?.supplyQuantity ?? 0);
+  const displayForecasting =
+    (displayPopulationBasedForecasting && !!draft?.forecastTotalUnits) || false;
 
   const tabs = [
     {
@@ -162,6 +168,8 @@ export const ResponseLineEditModal = ({
           }
           availableVolumeAtLocationType={draft?.availableVolumeAtLocationType}
           itemVolume={itemVolume}
+          displayForecasting={displayForecasting}
+          vaccineCourses={draft?.vaccineCourses}
         />
       ),
       value: 'label.customer',
@@ -219,6 +227,7 @@ export const ResponseLineEditModal = ({
             isUpdateMode={mode === ModalMode.Update}
             isReasonsError={isReasonsError}
             setIsEditingSupply={setIsEditingSupply}
+            displayForecasting={displayForecasting}
           />
           {!!draft && (
             <ModalTabs

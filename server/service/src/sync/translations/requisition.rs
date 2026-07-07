@@ -3,7 +3,7 @@ use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
     ApprovalStatusType, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
     InvoiceRepository, ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository,
-    RequisitionRow, RequisitionRowDelete, StorageConnection, SyncBufferRow,
+    RequisitionRow, RequisitionRowDelete, Row, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,9 @@ pub struct OmsFields {
     #[serde(default)]
     pub created_from_requisition_id: Option<String>,
     #[serde(default)]
-    pub original_customer_id: Option<String>,
+    #[serde(rename = "original_customer_id")]
+    #[serde(alias = "destination_customer_id")]
+    pub destination_customer_id: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -241,7 +243,7 @@ impl SyncTranslation for RequisitionTranslation {
         conn: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let json_data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let json_data = sync_record.deserialize::<serde_json::Value>()?;
         let sanitised_data = sanitize_legacy_record(json_data);
         let data = serde_json::from_value::<LegacyRequisitionRow>(sanitised_data)?;
         let r#type = match from_legacy_type(&data.r#type) {
@@ -301,7 +303,7 @@ impl SyncTranslation for RequisitionTranslation {
             id: data.ID.to_string(),
             user_id: data.user_id,
             requisition_number: data.serial_number,
-            name_link_id: data.name_ID,
+            name_id: data.name_ID,
             store_id: data.store_ID,
             r#type,
             status,
@@ -324,7 +326,8 @@ impl SyncTranslation for RequisitionTranslation {
                 .oms_fields
                 .clone()
                 .and_then(|f| f.created_from_requisition_id),
-            original_customer_id: data.oms_fields.and_then(|f| f.original_customer_id),
+            destination_customer_id: data.oms_fields.and_then(|f| f.destination_customer_id),
+            ..Default::default()
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -345,14 +348,19 @@ impl SyncTranslation for RequisitionTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Requisition(requisition_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Requisition {
             requisition_row:
                 RequisitionRow {
                     id,
                     user_id,
                     requisition_number,
-                    name_link_id: _,
+                    name_id: _,
                     store_id,
                     r#type,
                     status,
@@ -372,13 +380,14 @@ impl SyncTranslation for RequisitionTranslation {
                     order_type,
                     is_emergency,
                     created_from_requisition_id,
-                    original_customer_id,
+                    destination_customer_id,
+                    name_store_id: _,
                 },
             name_row,
             ..
         } = RequisitionRepository::new(connection)
             .query_by_filter(
-                RequisitionFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                RequisitionFilter::new().id(EqualFilter::equal_to(requisition_row.id.clone())),
             )?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Requisition not found"))?;
@@ -389,15 +398,15 @@ impl SyncTranslation for RequisitionTranslation {
             )?
             .is_empty();
 
-        let oms_fields = if created_from_requisition_id.is_some() || original_customer_id.is_some()
-        {
-            Some(OmsFields {
-                created_from_requisition_id,
-                original_customer_id,
-            })
-        } else {
-            None
-        };
+        let oms_fields =
+            if created_from_requisition_id.is_some() || destination_customer_id.is_some() {
+                Some(OmsFields {
+                    created_from_requisition_id,
+                    destination_customer_id,
+                })
+            } else {
+                None
+            };
 
         let legacy_row = LegacyRequisitionRow {
             ID: id.clone(),
@@ -411,7 +420,7 @@ impl SyncTranslation for RequisitionTranslation {
                 None => {
                     return Ok(PushTranslateResult::Ignored(format!(
                         "Unsupported requisition status: {:?} (type: {:?}) row id: {}",
-                        status, r#type, changelog.record_id
+                        status, r#type, requisition_row.id
                     )))
                 }
             },
@@ -463,7 +472,7 @@ fn from_legacy_sent_datetime(
     status: &LegacyRequisitionStatus,
 ) -> Option<NaiveDateTime> {
     match r#type {
-        RequisitionType::Request => {
+        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => {
             // In OG, a finalised "fn" request requisition is the equivalent of a "sent" request requisition in OMS.
             // There are no date/time fields in OG requisition table for this, there are logs though. Hence using last_modified_at.
             if last_modified_at > 0 && matches!(status, LegacyRequisitionStatus::Fn) {
@@ -487,7 +496,7 @@ fn from_legacy_finalised_datetime(
     status: &LegacyRequisitionStatus,
 ) -> Option<NaiveDateTime> {
     match r#type {
-        RequisitionType::Request => None,
+        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => None,
         RequisitionType::Response => {
             if last_modified_at > 0 && matches!(status, LegacyRequisitionStatus::Fn) {
                 Some(
@@ -508,9 +517,11 @@ fn to_legacy_last_modified_at(
     finalised_datetime: Option<NaiveDateTime>,
 ) -> i64 {
     match r#type {
-        RequisitionType::Request => sent_datetime
-            .map(|time| time.and_utc().timestamp())
-            .unwrap_or(0),
+        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => {
+            sent_datetime
+                .map(|time| time.and_utc().timestamp())
+                .unwrap_or(0)
+        }
         RequisitionType::Response => finalised_datetime
             .map(|time| time.and_utc().timestamp())
             .unwrap_or(0),
@@ -521,6 +532,8 @@ fn from_legacy_type(t: &LegacyRequisitionType) -> Option<RequisitionType> {
     let t = match t {
         LegacyRequisitionType::Response => RequisitionType::Response,
         LegacyRequisitionType::Request => RequisitionType::Request,
+        LegacyRequisitionType::Im => RequisitionType::Imprest,
+        LegacyRequisitionType::Sh => RequisitionType::StockHistory,
         _ => return None,
     };
     Some(t)
@@ -530,6 +543,8 @@ fn to_legacy_type(t: &RequisitionType) -> LegacyRequisitionType {
     match t {
         RequisitionType::Request => LegacyRequisitionType::Request,
         RequisitionType::Response => LegacyRequisitionType::Response,
+        RequisitionType::Imprest => LegacyRequisitionType::Im,
+        RequisitionType::StockHistory => LegacyRequisitionType::Sh,
     }
 }
 
@@ -540,20 +555,22 @@ fn from_legacy_status(
     let status = match r#type {
         LegacyRequisitionType::Request => match status {
             LegacyRequisitionStatus::Sg => RequisitionStatus::Draft,
-            &LegacyRequisitionStatus::Cn => RequisitionStatus::Sent,
+            LegacyRequisitionStatus::Cn => RequisitionStatus::Sent,
             LegacyRequisitionStatus::Fn => RequisitionStatus::Sent,
             // Note, nw shouldn't be possible but is seen historical data:
             LegacyRequisitionStatus::Nw => RequisitionStatus::Draft,
             LegacyRequisitionStatus::Others => return None,
         },
-        LegacyRequisitionType::Response => match status {
-            LegacyRequisitionStatus::Sg => RequisitionStatus::New,
-            &LegacyRequisitionStatus::Cn => RequisitionStatus::New,
-            LegacyRequisitionStatus::Fn => RequisitionStatus::Finalised,
-            // Note, nw shouldn't be possible but is seen historical data:
-            LegacyRequisitionStatus::Nw => RequisitionStatus::New,
-            LegacyRequisitionStatus::Others => return None,
-        },
+        LegacyRequisitionType::Response | LegacyRequisitionType::Im | LegacyRequisitionType::Sh => {
+            match status {
+                LegacyRequisitionStatus::Sg => RequisitionStatus::New,
+                LegacyRequisitionStatus::Cn => RequisitionStatus::New,
+                LegacyRequisitionStatus::Fn => RequisitionStatus::Finalised,
+                // Note, nw shouldn't be possible but is seen historical data:
+                LegacyRequisitionStatus::Nw => RequisitionStatus::New,
+                LegacyRequisitionStatus::Others => return None,
+            }
+        }
         _ => return None,
     };
     Some(status)
@@ -571,12 +588,14 @@ fn to_legacy_status(
             RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
             _ => return None,
         },
-        RequisitionType::Response => match status {
-            RequisitionStatus::New if has_outbound_shipment => LegacyRequisitionStatus::Cn,
-            RequisitionStatus::New => LegacyRequisitionStatus::Sg,
-            RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
-            _ => return None,
-        },
+        RequisitionType::Response | RequisitionType::Imprest | RequisitionType::StockHistory => {
+            match status {
+                RequisitionStatus::New if has_outbound_shipment => LegacyRequisitionStatus::Cn,
+                RequisitionStatus::New => LegacyRequisitionStatus::Sg,
+                RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
+                _ => return None,
+            }
+        }
     };
     Some(status)
 }
@@ -620,7 +639,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete, SyncAction, SyncBufferRow, SyncRecordData,
     };
     use serde_json::json;
     use util::assert_variant;
@@ -653,6 +673,71 @@ mod tests {
     }
 
     #[actix_rt::test]
+    async fn test_requisition_wp_status_errors() {
+        let translator = RequisitionTranslation {};
+        let (_, connection, _, _) =
+            setup_all("test_requisition_wp_status_errors", MockDataInserts::none()).await;
+
+        // An imprest requisition with "wp" (web in progress) status should error
+        // because "wp" deserializes to LegacyRequisitionStatus::Others which is unsupported
+        let wp_imprest_json = r#"{
+          "ID": "WP_TEST_RECORD_ID",
+          "date_stock_take": "2021-03-15",
+          "user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
+          "name_ID": "name_store_a",
+          "status": "wp",
+          "date_entered": "2021-03-16",
+          "nsh_custInv_ID": "",
+          "daysToSupply": 30,
+          "store_ID": "store_b",
+          "type": "im",
+          "date_order_received": "0000-00-00",
+          "previous_csh_id": "",
+          "serial_number": 20,
+          "requester_reference": "",
+          "comment": "",
+          "colour": 0,
+          "custom_data": null,
+          "linked_requisition_id": "",
+          "linked_purchase_order_ID": "",
+          "authorisationStatus": "",
+          "thresholdMOS": 0,
+          "orderType": "",
+          "periodID": "",
+          "programID": "",
+          "lastModifiedAt": 1615900000,
+          "is_emergency": false,
+          "isRemoteOrder": false,
+          "om_created_datetime": "",
+          "om_sent_datetime": "",
+          "om_finalised_datetime": "",
+          "om_expected_delivery_date": "0000-00-00",
+          "om_max_months_of_stock": 0,
+          "om_status": "",
+          "om_colour": "",
+          "oms_fields": {}
+        
+        }"#;
+
+        let sync_buffer_row = SyncBufferRow {
+            table_name: "requisition".to_string(),
+            record_id: "WP_TEST_RECORD_ID".to_string(),
+            data: SyncRecordData(serde_json::from_str(wp_imprest_json).unwrap()),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        assert!(translator.should_translate_from_sync_record(&sync_buffer_row));
+        let result =
+            translator.try_translate_from_upsert_sync_record(&connection, &sync_buffer_row);
+        assert!(
+            result.is_err(),
+            "Expected error for unsupported 'wp' status on imprest requisition, got: {:?}",
+            result
+        );
+    }
+
+    #[actix_rt::test]
     async fn test_requisition_push_merged() {
         let (mock_data, connection, _, _) = setup_all(
             "test_requisition_push_merged",
@@ -662,23 +747,27 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to())),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
         let translator = RequisitionTranslation {};
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
@@ -698,8 +787,7 @@ mod tests {
         let (_, connection, _, _) = setup_all("test_sanitise", MockDataInserts::none()).await;
 
         let sync_record = SyncBufferRow {
-            data: r#"
-            {
+            data: SyncRecordData(json!({
                 "//": "Status is set to sent, should be changed to draft",
                 "om_status": "SENT",
 
@@ -733,8 +821,7 @@ mod tests {
                 "thresholdMOS": 0,
                 "type": "response",
                 "user_ID": ""
-            }
-            "#.to_string(),
+            })),
             ..Default::default()
         };
 

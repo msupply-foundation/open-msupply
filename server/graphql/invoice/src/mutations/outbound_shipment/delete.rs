@@ -30,6 +30,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -64,14 +65,14 @@ pub enum DeleteErrorInterface {
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
+    let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
         // Structured Errors
         ServiceError::InvoiceDoesNotExist => {
             return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
         }
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditFinalised | ServiceError::OtherPartyStoreDisabled => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
@@ -95,7 +96,6 @@ mod graphql {
     use repository::mock::{MockData, MockDataInserts};
     use repository::{InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType};
     use serde_json::json;
-    
 
     use crate::{InvoiceMutations, InvoiceQueries};
 
@@ -116,7 +116,7 @@ mod graphql {
         fn shipped_outbound_shipment() -> InvoiceRow {
             InvoiceRow {
                 id: "shipped_outbound_shipment".to_string(),
-                name_link_id: String::from("name_store_a"),
+                name_id: String::from("name_store_a"),
                 store_id: String::from("store_a"),
                 invoice_number: 3,
                 r#type: InvoiceType::OutboundShipment,
@@ -140,7 +140,7 @@ mod graphql {
         fn outbound_shipment_no_lines() -> InvoiceRow {
             InvoiceRow {
                 id: String::from("outbound_shipment_no_lines_test"),
-                name_link_id: String::from("name_store_a"),
+                name_id: String::from("name_store_a"),
                 store_id: String::from("store_a"),
                 r#type: InvoiceType::OutboundShipment,
                 status: InvoiceStatus::Picked,

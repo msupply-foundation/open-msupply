@@ -57,7 +57,7 @@ impl Loader<ItemStoreJoinLoaderInput> for ItemStoreJoinLoader {
         let mut result_map: HashMap<ItemStoreJoinLoaderInput, Self::Value> = HashMap::new();
         for row in rows {
             result_map
-                .entry(ItemStoreJoinLoaderInput::new(&row.store_id, &row.item_link_id))
+                .entry(ItemStoreJoinLoaderInput::new(&row.store_id, &row.item_id))
                 .or_default()
                 .push(row);
         }
