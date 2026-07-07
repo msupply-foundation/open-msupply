@@ -1,0 +1,38 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "plugins": ["stylelint-value-no-unknown-custom-properties"],
+  "rules": {
+    "csstools/value-no-unknown-custom-properties": [
+      true,
+      {
+        "importFrom": [
+          "src/styles/tokens.css",
+          {
+            "customProperties": {
+              "--kb-popper-content-available-height": "100vh"
+            }
+          }
+        ]
+      }
+    ],
+    "color-function-notation": null,
+    "color-function-alias-notation": null,
+    "alpha-value-notation": null,
+    "media-feature-range-notation": null,
+    "comment-empty-line-before": null,
+    "custom-property-empty-line-before": null,
+    "value-keyword-case": [
+      "lower",
+      {
+        "ignoreProperties": ["--font-sans", "font-family"],
+        "ignoreKeywords": ["optimizeLegibility"]
+      }
+    ],
+    "selector-class-pattern": [
+      "^[a-z][a-zA-Z0-9]*$",
+      {
+        "message": "Expected class selector to be camelCase (CSS Modules convention)"
+      }
+    ]
+  }
+}

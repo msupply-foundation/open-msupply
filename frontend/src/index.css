@@ -1,0 +1,52 @@
+/*
+ * Base styles. The design tokens live in ./styles/tokens.css (a faithful port
+ * of the current app's theme.ts). This file is just the reset + global defaults
+ * that reference those tokens. No styling engine — plain CSS.
+ */
+
+/* Inter Variable — the current app's font (theme.ts: fontFamily 'Inter Variable') */
+@import url('@fontsource-variable/inter');
+@import url('./styles/tokens.css');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/*
+ * Single root sizing knob. Everything is sized in rem, so changing this one
+ * value rescales the entire UI. The phone view (< 600px compact breakpoint)
+ * drops it to 85% so the whole interface shrinks uniformly — this is the only
+ * place root size is touched.
+ */
+html {
+  font-size: 100%; /* = 16px default */
+}
+
+@media (max-width: 599px) {
+  html {
+    font-size: 85%;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--line-body);
+  color: var(--text-body);
+  background: var(--bg-white);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button {
+  font: inherit;
+}

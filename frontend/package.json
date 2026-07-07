@@ -1,0 +1,29 @@
+{
+  "name": "open-msupply-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n vite,css-types -c auto \"vite\" \"tcm --watch --pattern '**/*.module.css' src\"",
+    "build": "npm run css:types && tsc -b && vite build",
+    "preview": "vite preview",
+    "css:types": "tcm --pattern '**/*.module.css' src",
+    "check": "npm run css:types && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
+    "@kobalte/core": "^0.13.12",
+    "solid-js": "^1.9.13"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "concurrently": "^9.2.3",
+    "stylelint": "^17.14.0",
+    "stylelint-config-standard": "^40.0.0",
+    "stylelint-value-no-unknown-custom-properties": "^6.1.1",
+    "typed-css-modules": "^0.9.1",
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1",
+    "vite-plugin-solid": "^2.11.12"
+  }
+}

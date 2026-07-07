@@ -1,0 +1,133 @@
+import { createMemo, createSignal, Show, type JSX } from 'solid-js'
+import * as KCombobox from '@kobalte/core/combobox'
+import { ChevronDownIcon, CloseIcon, SearchIcon } from '../icons'
+import styles from './Combobox.module.css'
+
+interface ComboboxProps<T> {
+  label: string
+  /** The full option set; filtered locally as the user types. */
+  items: T[]
+  /** The plain-text label of an item — used for the input, filtering and a11y. */
+  itemToString: (item: T) => string
+  /**
+   * Unique string key per item (list identity + form value). Defaults to
+   * itemToString — override when labels can collide.
+   */
+  itemToValue?: (item: T) => string
+  onChange?: (item: T | null) => void
+  /** Rich per-option rendering; defaults to the plain itemToString label. */
+  renderItem?: (item: T) => JSX.Element
+  /**
+   * Override the default locale-aware substring filter. Per-item predicate
+   * (Kobalte's model), unlike the prototype's whole-list filter.
+   */
+  filter?: (item: T, input: string) => boolean
+  placeholder?: string
+  helperText?: string
+  loading?: boolean
+  class?: string
+}
+
+/*
+ * Autocomplete / combobox — Kobalte Combobox (headless). THE widget principle
+ * #2 says to buy rather than build: a text input wired to a filtered listbox.
+ * It's the one selector that's genuinely dangerous to hand-roll — the WAI-ARIA
+ * combobox pattern is `aria-activedescendant` virtual focus (the input keeps
+ * DOM focus while a *separate* option is "active"), result announcements for
+ * screen readers, and typeahead + arrow / Enter / Escape semantics. Kobalte's
+ * Combobox is the Solid analogue of the prototype's Downshift pick, and buys a
+ * couple of things Downshift left to us: the popup is portaled with
+ * collision-aware, trigger-width placement (the prototype deferred that to "a
+ * Radix Popover later"), and filtering is built in (we pass the predicate).
+ * We still own all markup + CSS.
+ *
+ * Clearing: the clear button clears a committed selection; stray typed text is
+ * already handled by Kobalte itself (Escape clears it, blur reverts it).
+ */
+export const Combobox = <T,>(props: ComboboxProps<T>) => {
+  const [selected, setSelected] = createSignal<T | null>(null)
+  const [inputValue, setInputValue] = createSignal('')
+  let inputEl: HTMLInputElement | undefined
+
+  const matches = (item: T, input: string) =>
+    props.filter
+      ? props.filter(item, input)
+      : props
+          .itemToString(item)
+          .toLocaleLowerCase()
+          .includes(input.toLocaleLowerCase())
+
+  const noMatches = createMemo(() =>
+    props.items.every(item => !matches(item, inputValue()))
+  )
+
+  const handleChange = (item: T | null) => {
+    setSelected(() => item)
+    props.onChange?.(item)
+  }
+
+  return (
+    <KCombobox.Root<T>
+      class={props.class ? `${styles.field} ${props.class}` : styles.field}
+      options={props.loading ? [] : props.items}
+      optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
+      optionTextValue={item => props.itemToString(item as T)}
+      optionLabel={item => props.itemToString(item as T)}
+      defaultFilter={(item, input) => matches(item as T, input)}
+      value={selected()}
+      onChange={handleChange}
+      onInputChange={setInputValue}
+      allowsEmptyCollection
+      placeholder={props.placeholder}
+      itemComponent={itemProps => (
+        <KCombobox.Item item={itemProps.item} class={styles.item}>
+          {props.renderItem
+            ? props.renderItem(itemProps.item.rawValue)
+            : props.itemToString(itemProps.item.rawValue)}
+        </KCombobox.Item>
+      )}
+    >
+      <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+      <KCombobox.Control class={styles.control}>
+        <span class={styles.searchIcon} aria-hidden="true">
+          <SearchIcon />
+        </span>
+        <KCombobox.Input ref={inputEl} class={styles.input} />
+        <Show when={selected() !== null}>
+          <button
+            type="button"
+            class={styles.clear}
+            aria-label="Clear selection"
+            onClick={() => {
+              handleChange(null)
+              inputEl?.focus()
+            }}
+          >
+            <CloseIcon />
+          </button>
+        </Show>
+        <KCombobox.Trigger class={styles.toggle} aria-label="Toggle options">
+          <KCombobox.Icon class={styles.toggleIcon}>
+            <ChevronDownIcon />
+          </KCombobox.Icon>
+        </KCombobox.Trigger>
+      </KCombobox.Control>
+      <Show when={props.helperText}>
+        <KCombobox.Description class={styles.helper}>
+          {props.helperText}
+        </KCombobox.Description>
+      </Show>
+      <KCombobox.Portal>
+        <KCombobox.Content class={styles.content}>
+          <Show when={props.loading}>
+            <div class={styles.status}>Loading…</div>
+          </Show>
+          <Show when={!props.loading && noMatches()}>
+            <div class={styles.status}>No matching items</div>
+          </Show>
+          <KCombobox.Listbox class={styles.listbox} />
+        </KCombobox.Content>
+      </KCombobox.Portal>
+    </KCombobox.Root>
+  )
+}
