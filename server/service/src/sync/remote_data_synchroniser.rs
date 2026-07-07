@@ -595,6 +595,7 @@ mod test {
             central_server_url: "http://localhost".to_string(),
             is_central_server: false,
             msupply_central_site_id: 1,
+            sync_version: repository::SyncVersion::V5V6,
         }
     }
 }
