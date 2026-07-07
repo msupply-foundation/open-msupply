@@ -263,6 +263,11 @@ impl ChangelogTableName {
                 distribution: vec![D::Central],
                 transport: V6,
             },
+            HelpDocument => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+            },
             ItemVariant => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],

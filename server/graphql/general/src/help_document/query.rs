@@ -23,6 +23,7 @@ pub async fn get_help_documents(
         &ResourceAccessRequest {
             resource: Resource::QueryHelpDocuments,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

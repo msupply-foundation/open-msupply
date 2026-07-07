@@ -160,6 +160,7 @@ fn translate_delete(
         | ChangelogTableName::Document
         | ChangelogTableName::DocumentRegistry
         | ChangelogTableName::Encounter
+        | ChangelogTableName::HelpDocument
         | ChangelogTableName::IndicatorColumn
         | ChangelogTableName::IndicatorLine
         | ChangelogTableName::InsuranceProvider

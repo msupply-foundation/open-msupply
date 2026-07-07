@@ -172,6 +172,7 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 | `Demographic` | Central | Central | v6 |
 | `FormSchema` | Central | Central | v6 |
 | `FrontendPlugin` | Central | Central | v6 |
+| `HelpDocument` | Central | Central | v6 |
 | `ItemVariant` | Central | Central | v6 |
 | `NameOmsFields` | Central | Central | v6 |
 | `NameProperty` | Central | Central | v6 |
