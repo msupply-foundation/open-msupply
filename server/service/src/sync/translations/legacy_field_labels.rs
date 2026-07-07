@@ -132,6 +132,7 @@ impl SyncTranslation for LegacyFieldLabelsTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         match sync_record.table_name.as_str() {
@@ -488,7 +489,11 @@ mod tests {
             "user_field_3": "",
         }));
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &record,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(debug.contains("ABC classification"), "{debug}");
@@ -513,6 +518,7 @@ mod tests {
         let result = translator
             .try_translate_from_upsert_sync_record(
                 &connection,
+                &crate::sync::translations::FkChecker::new(),
                 &user_fields_pref(serde_json::json!({ "user_field_1": "ABC classification" })),
             )
             .unwrap();
@@ -533,7 +539,11 @@ mod tests {
             ..Default::default()
         };
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &other)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &other,
+            )
             .unwrap();
         assert!(matches!(result, PullTranslateResult::NotMatched));
 
@@ -551,7 +561,11 @@ mod tests {
             ..Default::default()
         };
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &malformed)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &malformed,
+            )
             .unwrap();
         assert!(matches!(result, PullTranslateResult::Ignored(_)));
 
@@ -560,6 +574,7 @@ mod tests {
         let result = translator
             .try_translate_from_upsert_sync_record(
                 &connection,
+                &crate::sync::translations::FkChecker::new(),
                 &user_fields_pref(serde_json::json!({ "user_field_1": "ABC classification" })),
             )
             .unwrap();
@@ -597,7 +612,11 @@ mod tests {
 
         // The factory defaults match the seeded names exactly — nothing to do.
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &record(DEFAULT_NAME_LABELS_BLOB))
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &record(DEFAULT_NAME_LABELS_BLOB),
+            )
             .unwrap();
         assert!(matches!(result, PullTranslateResult::Ignored(_)));
 
@@ -609,6 +628,7 @@ mod tests {
         let result = translator
             .try_translate_from_upsert_sync_record(
                 &connection,
+                &crate::sync::translations::FkChecker::new(),
                 &record(&encode_4d_text_array(&labels, None)),
             )
             .unwrap();
@@ -624,6 +644,7 @@ mod tests {
         let result = translator
             .try_translate_from_upsert_sync_record(
                 &connection,
+                &crate::sync::translations::FkChecker::new(),
                 &record(CUSTOMISED_NAME_LABELS_BLOB),
             )
             .unwrap();
@@ -633,14 +654,22 @@ mod tests {
 
         // A malformed blob is ignored, never an error.
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &record("garbage"))
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &record("garbage"),
+            )
             .unwrap();
         assert!(matches!(result, PullTranslateResult::Ignored(_)));
 
         // On a remote, nothing is authored.
         test_util_set_is_central_server(false);
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &record(DEFAULT_NAME_LABELS_BLOB))
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &record(DEFAULT_NAME_LABELS_BLOB),
+            )
             .unwrap();
         assert!(matches!(result, PullTranslateResult::Ignored(_)));
     }

@@ -1,14 +1,13 @@
 use repository::{
     MasterListLineRow, MasterListLineRowDelete, MasterListRowRepository, StorageConnection,
     SyncBufferRow,
-
 };
 
 use serde::Deserialize;
 
 use crate::sync::translations::{item::ItemTranslation, master_list::MasterListTranslation};
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -53,6 +52,7 @@ impl SyncTranslation for MasterListLineTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyListMasterLineRow>()?;
@@ -64,10 +64,12 @@ impl SyncTranslation for MasterListLineTranslation {
             ));
         }
 
+        let check_fk = fk_checker.with_table_required(connection, "master_list_line", &data.ID);
+
         let result = MasterListLineRow {
             id: data.ID,
-            item_id: data.item_ID,
-            master_list_id: data.item_master_ID,
+            item_id: check_fk(data.item_ID, "item_link_id", FkField::ItemLink)?,
+            master_list_id: check_fk(data.item_master_ID, "master_list_id", FkField::MasterList)?,
             price_per_unit: data.price,
         };
 
@@ -92,7 +94,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

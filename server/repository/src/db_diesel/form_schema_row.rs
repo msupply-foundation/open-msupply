@@ -118,12 +118,11 @@ impl<'a> FormSchemaRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, schema_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = form_schema::dsl::form_schema
-            .filter(form_schema::dsl::id.eq(schema_id))
-            .select(form_schema::dsl::id)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            form_schema::dsl::form_schema.filter(form_schema::dsl::id.eq(schema_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
     }
 
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<FormSchemaJson>, RepositoryError> {

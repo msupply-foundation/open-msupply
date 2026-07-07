@@ -59,6 +59,14 @@ impl<'a> InsuranceProviderRowRepository<'a> {
             .map_err(RepositoryError::from)
     }
 
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            insurance_provider::table.filter(insurance_provider::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_all(&self) -> Result<Vec<InsuranceProviderRow>, RepositoryError> {
         let result = insurance_provider::table.load(self.connection.lock().connection())?;
         Ok(result)

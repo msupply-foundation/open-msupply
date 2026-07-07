@@ -1,6 +1,6 @@
 use super::{
-    utils::{clear_invalid_fk, merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
-    PullTranslateResult, PushTranslateResult, SyncTranslation,
+    utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
@@ -12,13 +12,12 @@ use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use repository::{
-    ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, CurrencyRowRepository,
-    DiagnosisRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow,
-    InvoiceRowDelete, InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyValueStoreRepository,
-    NameRow, NameRowRepository, Row, StorageConnection, StoreFilter, StoreRepository,
-    StoreRowRepository, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
+    ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
+    InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceRowRepository,
+    InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository, Row,
+    StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
+    UserAccountRow, UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -473,6 +472,7 @@ impl SyncTranslation for InvoiceTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<serde_json::Value>()?;
@@ -533,50 +533,33 @@ impl SyncTranslation for InvoiceTranslation {
         };
 
         // Validate AFTER home-currency fallback; the fallback resolves to a real id.
-        let currency_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "currency_id",
-            currency_id,
-            |c, id| CurrencyRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let diagnosis_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "diagnosis_id",
-            data.diagnosis_id,
-            |c, id| DiagnosisRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let name_insurance_join_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "name_insurance_join_id",
+        let fk_check = fk_checker.with_table(connection, "invoice", &data.ID);
+        let check_fk = fk_checker.with_table_required(connection, "invoice", &data.ID);
+
+        let store_id = check_fk(data.store_ID, "store_id", FkField::Store)?;
+        // name_id is a name id resolved to name_link on upsert; name_link.id == name.id by
+        // convention, so validating the name id against name_link is correct.
+        let name_id = check_fk(data.name_ID, "name_link_id", FkField::NameLink)?;
+        let default_donor_id =
+            fk_check(data.default_donor_id, "default_donor_link_id", FkField::NameLink)?;
+        let name_store_id = fk_check(name_store_id, "name_store_id", FkField::Store)?;
+
+        let currency_id = fk_check(currency_id, "currency_id", FkField::Currency)?;
+        let diagnosis_id = fk_check(data.diagnosis_id, "diagnosis_id", FkField::Diagnosis)?;
+        let name_insurance_join_id = fk_check(
             data.name_insurance_join_id,
-            |c, id| NameInsuranceJoinRowRepository::new(c).check_exists_by_id(id),
-            true,
+            "name_insurance_join_id",
+            FkField::NameInsuranceJoin,
         )?;
-        let shipping_method_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "shipping_method_id",
+        let shipping_method_id = fk_check(
             data.shipping_method_id,
-            |c, id| repository::ShippingMethodRowRepository::new(c).check_exists_by_id(id),
-            true,
+            "shipping_method_id",
+            FkField::ShippingMethod,
         )?;
-        let purchase_order_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "purchase_order_id",
+        let purchase_order_id = fk_check(
             data.purchase_order_id,
-            |c, id| repository::PurchaseOrderRowRepository::new(c).check_exists_by_id(id),
-            true,
+            "purchase_order_id",
+            FkField::PurchaseOrder,
         )?;
 
         // om_type (when present) overrides the legacy-derived type — resolve it
@@ -616,8 +599,8 @@ impl SyncTranslation for InvoiceTranslation {
         let result = InvoiceRow {
             id: data.ID,
             user_id: data.user_id,
-            store_id: data.store_ID,
-            name_id: data.name_ID,
+            store_id,
+            name_id,
             name_store_id,
             invoice_number: data.invoice_num,
             r#type: resolved_type,
@@ -628,7 +611,11 @@ impl SyncTranslation for InvoiceTranslation {
             tax_percentage: data.tax_percentage,
             currency_id,
             currency_rate: data.currency_rate,
-            clinician_link_id: data.clinician_id,
+            clinician_link_id: fk_check(
+                data.clinician_id,
+                "clinician_link_id",
+                FkField::ClinicianLink,
+            )?,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -645,12 +632,12 @@ impl SyncTranslation for InvoiceTranslation {
 
             requisition_id: data.requisition_ID,
             linked_invoice_id: data.linked_transaction_id,
-            default_donor_id: data.default_donor_id,
+            default_donor_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
             backdated_datetime: mapping.backdated_datetime,
             diagnosis_id,
-            program_id: data.program_id,
+            program_id: fk_check(data.program_id, "program_id", FkField::Program)?,
             name_insurance_join_id,
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
@@ -1241,8 +1228,9 @@ mod tests {
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
         ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository,
-        CursorAndLimit, DiagnosisRow, FilterBuilder, InsuranceProviderRow, KeyType,
-        KeyValueStoreRow, RowOrDelete, ShippingMethodRow, SyncAction, SyncRecordData,
+        CursorAndLimit, DiagnosisRow, DiagnosisRowRepository, FilterBuilder, InsuranceProviderRow,
+        KeyType, KeyValueStoreRow, NameInsuranceJoinRowRepository, RowOrDelete, ShippingMethodRow,
+        SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -1337,7 +1325,11 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
 
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -1476,7 +1468,11 @@ mod tests {
         };
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(
@@ -1581,7 +1577,11 @@ mod tests {
         // `inbound_shipment_category`.
         test_util_set_is_central_server(true);
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(
@@ -1592,7 +1592,11 @@ mod tests {
         // Off central: custom_fields stays untouched (None here — no existing row).
         test_util_set_is_central_server(false);
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(

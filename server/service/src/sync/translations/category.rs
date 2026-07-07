@@ -62,6 +62,7 @@ impl SyncTranslation for CategoryTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyItemCategoryRow>()?;
@@ -163,7 +164,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -207,7 +212,11 @@ mod tests {
         // emitted (parent_ID -> parent_option_id; option id == category id).
         test_util_set_is_central_server(true);
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(debug.contains("CategoryRow"), "{}", debug);
@@ -228,7 +237,11 @@ mod tests {
         // On a remote, only the relational category row is emitted.
         test_util_set_is_central_server(false);
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(debug.contains("CategoryRow"), "{}", debug);
@@ -272,7 +285,11 @@ mod tests {
 
             test_util_set_is_central_server(true);
             let result = translator
-                .try_translate_from_upsert_sync_record(&connection, &sync_record)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &sync_record,
+                )
                 .unwrap();
             let debug = format!("{result:?}");
             assert!(debug.contains("CustomFieldOptionRow"), "{}", debug);
@@ -286,7 +303,11 @@ mod tests {
             // On a remote, nothing is authored at all for the flat dimensions.
             test_util_set_is_central_server(false);
             let result = translator
-                .try_translate_from_upsert_sync_record(&connection, &sync_record)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &sync_record,
+                )
                 .unwrap();
             let debug = format!("{result:?}");
             assert!(

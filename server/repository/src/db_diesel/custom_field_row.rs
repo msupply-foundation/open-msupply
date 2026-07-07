@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::diesel_macros::diesel_string_enum;
 use crate::ChangelogRepository;
@@ -30,23 +30,6 @@ diesel_string_enum! {
     }
 }
 
-// Serialize to/from the plain string form on the sync wire (and anywhere serde
-// is used), delegating to the strum representation so the SCREAMING_SNAKE_CASE
-// naming and the `Other` catch-all match the DB (TEXT) storage exactly. A
-// remote that receives an unrecognised type deserialises it into `Other` rather
-// than failing the sync record.
-impl Serialize for CustomFieldValueType {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(self.as_ref())
-    }
-}
-
-impl<'de> Deserialize<'de> for CustomFieldValueType {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Ok(Self::from(String::deserialize(deserializer)?))
-    }
-}
-
 diesel_string_enum! {
     #[derive(Clone, Eq)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
@@ -62,21 +45,6 @@ diesel_string_enum! {
         Legacy,
         #[strum(default, transparent)]
         Other(String),
-    }
-}
-
-// Same flat-string serde form as CustomFieldValueType (see above): the whole row
-// is the sync wire format, so `kind` must serialise to/from the plain DB string
-// and an unrecognised kind from a newer central deserialises into `Other`.
-impl Serialize for CustomFieldKind {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(self.as_ref())
-    }
-}
-
-impl<'de> Deserialize<'de> for CustomFieldKind {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Ok(Self::from(String::deserialize(deserializer)?))
     }
 }
 
@@ -204,17 +172,18 @@ mod tests {
     // the sync wire format for `value_type`. These tests pin that wire form and
     // verify a value type unknown to this build (added on a newer central)
     // survives the round-trip losslessly — the behaviour `#[strum(default,
-    // transparent)]` plus the custom Serialize/Deserialize impls guarantee.
+    // transparent)]` plus the serde impls `diesel_string_enum!` generates guarantee.
 
     #[test]
     fn custom_field_value_type_serde_wire_form() {
-        // Known variant <-> flat SCREAMING_SNAKE_CASE string, matching the DB TEXT column.
+        // Known variant <-> flat variant-identifier string (`diesel_string_enum!`'s
+        // generated serde form); the strum SCREAMING_SNAKE_CASE governs only the DB column.
         assert_eq!(
             serde_json::to_value(CustomFieldValueType::Integer).unwrap(),
-            serde_json::json!("INTEGER")
+            serde_json::json!("Integer")
         );
         assert_eq!(
-            serde_json::from_value::<CustomFieldValueType>(serde_json::json!("INTEGER")).unwrap(),
+            serde_json::from_value::<CustomFieldValueType>(serde_json::json!("Integer")).unwrap(),
             CustomFieldValueType::Integer
         );
 
@@ -234,21 +203,22 @@ mod tests {
 
     #[test]
     fn custom_field_kind_serde_wire_form() {
-        // Known variants <-> flat SCREAMING_SNAKE_CASE string, matching the DB TEXT column.
+        // Known variants <-> flat variant-identifier string (`diesel_string_enum!`'s
+        // generated serde form); the strum SCREAMING_SNAKE_CASE governs only the DB column.
         assert_eq!(
             serde_json::to_value(CustomFieldKind::Standard).unwrap(),
-            serde_json::json!("STANDARD")
+            serde_json::json!("Standard")
         );
         assert_eq!(
-            serde_json::from_value::<CustomFieldKind>(serde_json::json!("STANDARD")).unwrap(),
+            serde_json::from_value::<CustomFieldKind>(serde_json::json!("Standard")).unwrap(),
             CustomFieldKind::Standard
         );
         assert_eq!(
             serde_json::to_value(CustomFieldKind::Legacy).unwrap(),
-            serde_json::json!("LEGACY")
+            serde_json::json!("Legacy")
         );
         assert_eq!(
-            serde_json::from_value::<CustomFieldKind>(serde_json::json!("LEGACY")).unwrap(),
+            serde_json::from_value::<CustomFieldKind>(serde_json::json!("Legacy")).unwrap(),
             CustomFieldKind::Legacy
         );
 

@@ -2,16 +2,15 @@ use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
     item_category_row::ItemCategoryJoinRow,
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemType,
-    LocationTypeRowRepository, Row, StorageConnection, SyncBufferRow, UnitRowRepository,
-    VENCategory,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemType, Row,
+    StorageConnection, SyncBufferRow, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
     translations::{
         category::CategoryTranslation, location_type::LocationTypeTranslation,
-        unit::UnitTranslation, utils::clear_invalid_fk,
+        unit::UnitTranslation, FkField,
     },
     CentralServerConfig,
 };
@@ -179,6 +178,7 @@ impl SyncTranslation for ItemTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyItemRow>()?;
@@ -190,25 +190,15 @@ impl SyncTranslation for ItemTranslation {
         let mut integration_operations = Vec::new();
 
         // Translate the item_category join row
-        let item_category_upserts = translate_item_category_join(connection, &data)?;
+        let item_category_upserts = translate_item_category_join(connection, fk_checker, &data)?;
 
-        let unit_id = clear_invalid_fk(
-            connection,
-            "item",
-            &data.ID,
-            "unit_id",
-            data.unit_ID,
-            |c, id| UnitRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let restricted_location_type_id = clear_invalid_fk(
-            connection,
-            "item",
-            &data.ID,
-            "restricted_location_type_id",
+        let fk_check = fk_checker.with_table(connection, "item", &data.ID);
+
+        let unit_id = fk_check(data.unit_ID, "unit_id", FkField::Unit)?;
+        let restricted_location_type_id = fk_check(
             data.restricted_location_type_ID,
-            |c, id| LocationTypeRowRepository::new(c).check_exists_by_id(id),
-            true,
+            "restricted_location_type_id",
+            FkField::LocationType,
         )?;
 
         // Translate the item row
@@ -332,6 +322,7 @@ impl SyncTranslation for ItemTranslation {
 
 fn translate_item_category_join(
     connection: &StorageConnection,
+    fk_checker: &crate::sync::translations::FkChecker,
     data: &LegacyItemRow,
 ) -> Result<Vec<IntegrationOperation>, anyhow::Error> {
     let mut integration_operations = Vec::new();
@@ -355,12 +346,16 @@ fn translate_item_category_join(
         }
     }
 
-    // Upsert the new item category join if a category ID is provided in the latest item data
-    if let Some(category_id) = &data.category_ID {
+    // Upsert the new item category join only when the referenced category exists.
+    // category_id is a NOT NULL FK, so a dangling category_ID is cleared + logged and the
+    // join is skipped entirely (rather than raising a raw ForeignKeyViolation at integrate).
+    let fk_check = fk_checker.with_table(connection, "item_category_join", &data.ID);
+    if let Some(category_id) = fk_check(data.category_ID.clone(), "category_id", FkField::Category)?
+    {
         let item_category_join_row = ItemCategoryJoinRow {
-            id: format!("{}-{}", data.ID.clone(), category_id.clone()),
+            id: format!("{}-{}", data.ID.clone(), &category_id),
             item_id: data.ID.clone(),
-            category_id: category_id.clone(),
+            category_id,
             deleted_datetime: None,
         };
         integration_operations.push(IntegrationOperation::upsert(item_category_join_row));
@@ -376,7 +371,7 @@ mod tests {
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        LocationTypeRow, SyncAction, SyncRecordData, UnitRow,
+        CategoryRow, LocationTypeRow, SyncAction, SyncRecordData, UnitRow,
     };
 
     #[actix_rt::test]
@@ -409,6 +404,14 @@ mod tests {
                     id: "84AA2B7A18694A2AB1E84DCABAD19617".to_string(),
                     ..Default::default()
                 }],
+                // Category referenced by the test item — required by the new category_id FK check.
+                categories: vec![CategoryRow {
+                    id: "FA6FC67251CC4560AC7FED0C0B23E5A0".to_string(),
+                    name: "test".to_string(),
+                    description: None,
+                    parent_id: None,
+                    deleted_datetime: None,
+                }],
                 ..Default::default()
             },
         )
@@ -417,7 +420,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -471,7 +478,11 @@ mod tests {
         };
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(

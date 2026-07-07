@@ -93,6 +93,14 @@ impl<'a> AssetCategoryRowRepository<'a> {
             .filter(asset_category::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    pub fn check_exists_by_id(&self, asset_category_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            asset_category::table.filter(asset_category::id.eq(asset_category_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for AssetCategoryRow {

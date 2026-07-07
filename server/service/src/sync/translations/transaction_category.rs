@@ -57,6 +57,7 @@ impl SyncTranslation for TransactionCategoryTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyTransactionCategoryRow>()?;
@@ -173,7 +174,11 @@ mod tests {
             let record = sync_record(category_type);
             assert!(translator.should_translate_from_sync_record(&record));
             let result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record,
+                )
                 .unwrap();
             assert_eq!(
                 result,
@@ -192,7 +197,11 @@ mod tests {
         // Unsupported OG types (no OMS UI surface) are ignored.
         for category_type in ["sr", "bu", "in", "te", ""] {
             let result = translator
-                .try_translate_from_upsert_sync_record(&connection, &sync_record(category_type))
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &sync_record(category_type),
+                )
                 .unwrap();
             assert!(
                 matches!(result, PullTranslateResult::Ignored(_)),
@@ -203,7 +212,11 @@ mod tests {
         // On a remote, nothing is authored (options arrive over v7).
         test_util_set_is_central_server(false);
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record("si"))
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record("si"),
+            )
             .unwrap();
         assert!(matches!(result, PullTranslateResult::Ignored(_)));
     }

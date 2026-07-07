@@ -85,6 +85,7 @@ mod test {
         let ctx = SyncContext::Remote {
             is_initialising: false,
             active_stores: site_with_store("our_store"),
+            is_multi_device: false,
         };
 
         let translated_row = translated(translate_invoice_line(
@@ -124,6 +125,7 @@ mod test {
         let ctx = SyncContext::Remote {
             is_initialising: false,
             active_stores: site_with_store("our_store"),
+            is_multi_device: false,
         };
 
         let translated_row = translated(translate_invoice_line(
@@ -143,6 +145,7 @@ mod test {
         let data = serde_json::to_value(&input).unwrap();
         let ctx = SyncContext::Central {
             source_site_active_store_ids: vec!["any_store".into()],
+            is_multi_device: false,
         };
 
         let translated_row = translated(translate_invoice_line(

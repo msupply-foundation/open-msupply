@@ -1,6 +1,8 @@
 use super::{
     sync_buffer::{write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success},
-    translations::{IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators},
+    translations::{
+        FkChecker, IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators,
+    },
 };
 use log::{debug, warn};
 use repository::*;
@@ -9,6 +11,9 @@ use util::datetime_now;
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
+    /// Integration-scoped FK existence cache, shared across every record translated by this
+    /// integrator (i.e. the whole upsert phase). See [`FkChecker`].
+    fk_checker: FkChecker,
     pub(crate) result: TranslationAndIntegrationResults,
 }
 
@@ -25,6 +30,7 @@ impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(connection: &'a StorageConnection) -> TranslationAndIntegration<'a> {
         TranslationAndIntegration {
             connection,
+            fk_checker: FkChecker::new(),
             result: TranslationAndIntegrationResults::new(),
         }
     }
@@ -43,8 +49,11 @@ impl<'a> TranslationAndIntegration<'a> {
             }
 
             let translation_result = match sync_record.action {
-                SyncAction::Upsert => translator
-                    .try_translate_from_upsert_sync_record(self.connection, sync_record)?,
+                SyncAction::Upsert => translator.try_translate_from_upsert_sync_record(
+                    self.connection,
+                    &self.fk_checker,
+                    sync_record,
+                )?,
                 SyncAction::Delete => translator
                     .try_translate_from_delete_sync_record(self.connection, sync_record)?,
                 SyncAction::Merge => {
