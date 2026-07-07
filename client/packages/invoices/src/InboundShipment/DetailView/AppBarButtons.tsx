@@ -17,19 +17,17 @@ import { ScannedBarcode } from '../../types';
 
 interface AppBarButtonProps {
   onAddItem: (scannedBarcode?: ScannedBarcode) => void;
-  openUploadModal: () => void;
   simplifiedTabletView?: boolean;
 }
 
 export const AppBarButtonsComponent = ({
   onAddItem,
-  openUploadModal,
   simplifiedTabletView,
 }: AppBarButtonProps) => {
   const { store } = useAuthContext();
   const {
     query: { data },
-    isDisabled,
+    isAddOrDeleteLinesDisabled,
   } = useInboundShipment();
   const { OpenButton } = useDetailPanel();
   const {
@@ -56,7 +54,7 @@ export const AppBarButtonsComponent = ({
     // We just want to show the scan button for mobile users to use the scanner approach.
     return (
       <AppBarButtonsPortal>
-        <AddFromScannerButton disabled={isDisabled} />
+        <AddFromScannerButton disabled={isAddOrDeleteLinesDisabled} />
       </AppBarButtonsPortal>
     );
   }
@@ -71,15 +69,14 @@ export const AppBarButtonsComponent = ({
       <Grid container gap={1}>
         <AddButton
           onAddItem={onAddItem}
-          openUploadModal={openUploadModal}
           requisitionId={data?.requisition?.id ?? ''}
           invoice={data}
-          disable={isDisabled}
+          disable={isAddOrDeleteLinesDisabled}
           disableAddFromMasterListButton={!!data?.linkedShipment || !!data?.purchaseOrder}
           disableAddFromInternalOrderButton={disableInternalOrderButton}
           allPurchaseOrderItemsAdded={allPurchaseOrderItemsAdded}
         />
-        <AddFromScannerButton disabled={isDisabled} />
+        <AddFromScannerButton disabled={isAddOrDeleteLinesDisabled} />
         {data && (
           <>
             {plugins.inboundShipmentAppBar?.map((Plugin, index) => (

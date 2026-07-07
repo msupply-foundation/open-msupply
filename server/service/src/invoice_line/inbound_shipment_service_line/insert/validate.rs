@@ -10,6 +10,7 @@ use crate::{
         inbound_shipment::InboundShipmentType,
     },
     invoice_line::validate::{check_item_exists, check_line_exists},
+    validate::check_other_party_store_is_disabled,
 };
 
 use super::{InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError};
@@ -53,6 +54,9 @@ pub fn validate(
         }
     }
     if !check_invoice_is_editable(&invoice) {
+        return Err(OutError::CannotEditInvoice);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
         return Err(OutError::CannotEditInvoice);
     }
 

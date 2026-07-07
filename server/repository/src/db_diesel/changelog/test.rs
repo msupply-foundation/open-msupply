@@ -25,7 +25,7 @@ async fn test_changelog() {
     let location_repo = LocationRowRepository::new(&connection);
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
-    let starting_cursor = repo.latest_cursor().unwrap();
+    let starting_cursor = repo.absolute_latest_cursor().unwrap();
     repo.delete(0).unwrap();
     // single entry:
     location_repo.upsert_one(&mock_location_1()).unwrap();
@@ -154,7 +154,7 @@ async fn test_changelog_iteration() {
     let location_repo = LocationRowRepository::new(&connection);
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
-    let starting_cursor = repo.latest_cursor().unwrap();
+    let starting_cursor = repo.absolute_latest_cursor().unwrap();
     repo.delete(0).unwrap();
 
     location_repo.upsert_one(&mock_location_1()).unwrap();

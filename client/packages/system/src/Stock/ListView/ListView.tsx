@@ -16,7 +16,7 @@ import {
   ExpiryDateCell,
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../api';
+import { StockLineListRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
 import { useGroupedStockList } from '../api/hooks/useGroupedStockList';
@@ -41,7 +41,7 @@ export const StockListView = () => {
       { key: 'vvmStatusId', condition: 'equalTo' },
       { key: 'search' },
       {
-        key: 'location.code',
+        key: 'location.codeOrName',
       },
       {
         key: 'name',
@@ -54,15 +54,21 @@ export const StockListView = () => {
         condition: 'between',
       },
       {
-        key: 'masterList.name',
+        key: 'masterList.id',
+        condition: 'equalTo',
       },
+      { key: 'campaignId', condition: 'equalTo' },
     ],
   });
 
   // Stock-line-specific filters don't apply in grouped mode (and vice versa
   // there are no grouped-only filters yet). Clear them on toggle so stale URL
   // params don't silently affect the ungrouped query when the user switches back.
-  const stockLineFilterKeys = ['location.code', 'expiryDate', 'vvmStatusId'];
+  const stockLineFilterKeys = [
+    'location.codeOrName',
+    'expiryDate',
+    'vvmStatusId',
+  ];
   const initialRender = useRef(true);
   useEffect(() => {
     if (initialRender.current) {
@@ -97,7 +103,7 @@ export const StockListView = () => {
   const isError = isGrouped ? groupedResult.isError : ungroupedResult.isError;
 
   const mrtColumns = useMemo(
-    (): ColumnDef<StockLineRowFragment>[] => [
+    (): ColumnDef<StockLineListRowFragment>[] => [
       {
         id: 'code',
         accessorKey: 'item.code',
@@ -168,12 +174,21 @@ export const StockListView = () => {
       {
         id: 'location.code',
         accessorFn: row => row.location?.code || '',
-        header: t('label.location'),
+        header: t('label.location-code'),
         Cell: TextWithTooltipCell,
         size: 100,
         defaultHideOnMobile: true,
         enableSorting: !isGrouped,
         enableColumnFilter: true,
+      },
+      {
+        id: 'location.name',
+        accessorFn: row => row.location?.name || '',
+        header: t('label.location-name'),
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+        enableSorting: false,
       },
       {
         id: 'itemUnit',
@@ -234,6 +249,14 @@ export const StockListView = () => {
         enableSorting: !isGrouped,
       },
       {
+        header: t('label.pack-sell-price'),
+        accessorKey: 'sellPricePerPack',
+        columnType: ColumnType.Currency,
+        size: 125,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+      },
+      {
         id: 'totalCost',
         header: t('label.total'),
         description: t('description.total-cost'),
@@ -253,6 +276,14 @@ export const StockListView = () => {
         defaultHideOnMobile: true,
       },
       {
+        id: 'campaign',
+        header: t('label.campaign-only'),
+        accessorFn: row => row.campaign?.name ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+      },
+      {
         id: 'supplierName',
         header: t('label.supplier'),
         accessorFn: row =>
@@ -267,7 +298,7 @@ export const StockListView = () => {
     [isGrouped, manageVvmStatusForStock, plugins.stockLine?.tableColumn, t]
   );
 
-  const { table } = usePaginatedMaterialTable<StockLineRowFragment>({
+  const { table } = usePaginatedMaterialTable<StockLineListRowFragment>({
     tableId: 'stock-list',
     isLoading: isFetching,
     isError,
@@ -284,7 +315,7 @@ export const StockListView = () => {
       <NothingHere
         body={t('error.no-stock')}
         onCreate={onOpen}
-        buttonText={t('button.add-new-stock')}
+        buttonText={t('button.new-stock')}
       />
     ),
   });

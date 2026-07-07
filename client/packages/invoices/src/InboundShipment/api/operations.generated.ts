@@ -38,7 +38,12 @@ export type InboundLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
@@ -101,6 +106,13 @@ export type InboundLineFragment = {
       packSize?: number | null;
       volumePerUnit?: number | null;
     }>;
+  } | null;
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    id: string;
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+    isActive: boolean;
   } | null;
   purchaseOrderLine?: {
     __typename: 'PurchaseOrderLineNode';
@@ -196,7 +208,12 @@ export type InboundFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
@@ -264,6 +281,13 @@ export type InboundFragment = {
           volumePerUnit?: number | null;
         }>;
       } | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+      } | null;
       purchaseOrderLine?: {
         __typename: 'PurchaseOrderLineNode';
         id: string;
@@ -285,7 +309,12 @@ export type InboundFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
   pricing: {
     __typename: 'PricingNode';
@@ -547,6 +576,7 @@ export type InvoiceQuery = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             program?: {
@@ -619,6 +649,13 @@ export type InvoiceQuery = {
                 volumePerUnit?: number | null;
               }>;
             } | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
               id: string;
@@ -640,7 +677,12 @@ export type InvoiceQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         pricing: {
           __typename: 'PricingNode';
@@ -809,6 +851,7 @@ export type InboundByNumberQuery = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             program?: {
@@ -881,6 +924,13 @@ export type InboundByNumberQuery = {
                 volumePerUnit?: number | null;
               }>;
             } | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
             purchaseOrderLine?: {
               __typename: 'PurchaseOrderLineNode';
               id: string;
@@ -902,7 +952,12 @@ export type InboundByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         pricing: {
           __typename: 'PricingNode';
@@ -1130,6 +1185,29 @@ export type InsertInboundShipmentExternalMutation = {
           | { __typename: 'OtherPartyNotVisible'; description: string };
       }
     | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
+};
+
+export type DuplicateInboundShipmentMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DuplicateInboundShipmentMutation = {
+  __typename: 'Mutations';
+  duplicateInboundShipment:
+    | {
+        __typename: 'DuplicateInboundShipmentError';
+        error: { __typename: 'SupplierIsInactive'; description: string };
+      }
+    | {
+        __typename: 'DuplicateInboundShipmentNode';
+        skippedItemCount: number;
+        invoice: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        };
+      };
 };
 
 export type LineLinkedToTransferredInvoiceErrorFragment = {
@@ -1854,6 +1932,13 @@ export const InboundLineFragmentDoc = gql`
         volumePerUnit
       }
     }
+    reasonOption {
+      __typename
+      id
+      reason
+      type
+      isActive
+    }
     purchaseOrderLine {
       __typename
       id
@@ -1934,6 +2019,7 @@ export const InboundFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     pricing {
@@ -2387,6 +2473,27 @@ export const InsertInboundShipmentExternalDocument = gql`
         __typename
         id
         invoiceNumber
+      }
+    }
+  }
+`;
+export const DuplicateInboundShipmentDocument = gql`
+  mutation duplicateInboundShipment($id: String!, $storeId: String!) {
+    duplicateInboundShipment(storeId: $storeId, id: $id) {
+      __typename
+      ... on DuplicateInboundShipmentNode {
+        invoice {
+          __typename
+          id
+          invoiceNumber
+        }
+        skippedItemCount
+      }
+      ... on DuplicateInboundShipmentError {
+        error {
+          __typename
+          description
+        }
       }
     }
   }
@@ -3321,6 +3428,24 @@ export function getSdk(
             signal,
           }),
         'insertInboundShipmentExternal',
+        'mutation',
+        variables
+      );
+    },
+    duplicateInboundShipment(
+      variables: DuplicateInboundShipmentMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DuplicateInboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DuplicateInboundShipmentMutation>({
+            document: DuplicateInboundShipmentDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'duplicateInboundShipment',
         'mutation',
         variables
       );

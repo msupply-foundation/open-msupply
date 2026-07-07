@@ -37,8 +37,8 @@ pub struct VaccineCourseItemRow {
     pub vaccine_course_id: String,
     pub deleted_datetime: Option<NaiveDateTime>,
     // Resolved from item_link - must be last to match view column order.
-    // `rename` keeps the wire format emitting `item_link_id` for sync compatibility.
-    #[serde(rename = "item_link_id")]
+    // Serialises as `item_id`; the sync translator also emits the legacy `item_link_id`
+    // alias for cross-version compatibility (see `RenamedKeys`).
     pub item_id: String,
 }
 

@@ -10,13 +10,16 @@ impl MigrationFragment for Migrate {
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         // Add the storage_capacity_5c property for the insulated containers category
         // (previously only existed for cold rooms (-cr) and refrigerators/freezers (-fr)).
+        // ON CONFLICT DO NOTHING: asset_property syncs down from central, so the row may
+        // already exist before this migration runs.
         sql!(
             connection,
             r#"
             INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id)
             SELECT 'storage_capacity_5c-ic', 'storage_capacity_5c', 'Storage capacity +5 °C (litres)', 'FLOAT', NULL, asset_class_id, asset_category_id
             FROM asset_property
-            WHERE id = 'temperature_monitoring_device-ic';
+            WHERE id = 'temperature_monitoring_device-ic'
+            ON CONFLICT (id) DO NOTHING;
             "#
         )?;
 

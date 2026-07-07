@@ -86,13 +86,10 @@ pub struct VaccinationRow {
     pub not_given_reason: Option<String>,
     pub comment: Option<String>,
     // Resolved from link tables - must be last to match view column order.
-    // `rename` keeps the wire format emitting `*_link_id` so older remote clients
-    // serialising/deserialising via this struct still see the legacy field name.
-    #[serde(rename = "patient_link_id")]
+    // Serialise as `*_id`; the sync translator also emits the legacy `*_link_id` aliases
+    // for cross-version compatibility (see `RenamedKeys`).
     pub patient_id: String,
-    #[serde(rename = "item_link_id")]
     pub item_id: Option<String>,
-    #[serde(rename = "facility_name_link_id")]
     pub facility_name_id: Option<String>,
 }
 

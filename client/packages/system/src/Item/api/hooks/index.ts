@@ -3,7 +3,6 @@ export * from './useItems';
 export * from './useHistoricalStockLines';
 export * from './useItemApi';
 export * from './useStockItemsWithStats';
-export * from './useStockItemsWithStockLines';
 export * from './useStockItems';
 export * from './useItemStockOnHand';
 export * from './useItemApi';

@@ -16,6 +16,8 @@ pub mod order_in_packs;
 pub use order_in_packs::*;
 pub mod custom_translations;
 pub use custom_translations::*;
+pub mod custom_translations_v2;
+pub use custom_translations_v2::*;
 pub mod sync_records_display_threshold;
 pub use sync_records_display_threshold::*;
 pub mod authorise_purchase_order;
@@ -72,12 +74,15 @@ pub mod global_table_configs;
 pub use global_table_configs::*;
 pub mod backdating;
 pub use backdating::*;
+pub mod blind_stocktake;
+pub use blind_stocktake::*;
 
 pub struct PreferenceProvider {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
     pub authorise_purchase_order: AuthorisePurchaseOrder,
     pub custom_translations: CustomTranslations,
+    pub custom_translations_v2: CustomTranslationsV2,
     pub gender_options: GenderOptions,
     pub prevent_transfers_months_before_initialisation: PreventTransfersMonthsBeforeInitialisation,
     pub show_contact_tracing: ShowContactTracing,
@@ -94,6 +99,7 @@ pub struct PreferenceProvider {
     pub backdating: Backdating,
 
     // Store preferences
+    pub blind_stocktake: BlindStocktake,
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub order_in_packs: OrderInPacks,
@@ -127,6 +133,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         allow_tracking_of_stock_by_donor: AllowTrackingOfStockByDonor,
         authorise_purchase_order: AuthorisePurchaseOrder,
         custom_translations: CustomTranslations,
+        custom_translations_v2: CustomTranslationsV2,
         gender_options: GenderOptions,
         show_contact_tracing: ShowContactTracing,
         sync_records_display_threshold: SyncRecordsDisplayThreshold,
@@ -143,6 +150,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         backdating: Backdating,
 
         // Store preferences
+        blind_stocktake: BlindStocktake,
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         order_in_packs: OrderInPacks,

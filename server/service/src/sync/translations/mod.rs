@@ -28,6 +28,7 @@ pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
 pub(crate) mod goods_received;
 pub(crate) mod goods_received_line;
+pub(crate) mod help_document;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
@@ -72,6 +73,7 @@ pub(crate) mod sensor;
 pub(crate) mod shipping_method;
 pub(crate) mod special;
 pub(crate) mod stock_line;
+pub(crate) mod stock_relocation;
 pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
@@ -225,11 +227,14 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Purchase Order
         purchase_order::boxed(),
         purchase_order_line::boxed(),
+        stock_relocation::boxed(), // OG -> Replenishment
         // Shipping Method
         shipping_method::boxed(),
         // Goods Received (legacy OG → InboundShipment)
         goods_received::boxed(),
         goods_received_line::boxed(),
+        // Help documents (central → all sites)
+        help_document::boxed(),
     ]
 }
 

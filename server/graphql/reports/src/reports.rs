@@ -71,6 +71,7 @@ pub struct EqualFilterReportContextInput {
 pub struct ReportFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<StringFilterInput>,
+    pub code: Option<StringFilterInput>,
     pub context: Option<EqualFilterReportContextInput>,
     pub sub_context: Option<EqualFilterStringInput>,
     pub is_active: Option<bool>,
@@ -301,9 +302,9 @@ impl ReportFilterInput {
         ReportFilter {
             id: self.id.map(EqualFilter::from),
             name: self.name.map(StringFilter::from),
+            code: self.code.map(StringFilter::from),
             context: self.context.map(|t| map_filter!(t, ContextType::from)),
             sub_context: self.sub_context.map(EqualFilter::from),
-            code: None,
             is_custom: None,
             is_active: self.is_active,
         }

@@ -95,6 +95,15 @@ impl InvoiceMutations {
         outbound_shipment::delete::delete(ctx, &store_id, id)
     }
 
+    async fn duplicate_outbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "id of the outbound shipment to duplicate")] id: String,
+    ) -> Result<outbound_shipment::duplicate::DuplicateResponse> {
+        outbound_shipment::duplicate::duplicate(ctx, &store_id, id)
+    }
+
     async fn insert_inbound_shipment(
         &self,
         ctx: &Context<'_>,
@@ -163,6 +172,15 @@ impl InvoiceMutations {
             input,
             InboundShipmentType::InboundShipment,
         )
+    }
+
+    async fn duplicate_inbound_shipment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "id of the inbound shipment to duplicate")] id: String,
+    ) -> Result<inbound_shipment::duplicate::DuplicateResponse> {
+        inbound_shipment::duplicate::duplicate(ctx, &store_id, id)
     }
 
     async fn delete_inbound_shipment_external(

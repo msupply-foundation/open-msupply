@@ -5,10 +5,13 @@ use crate::{
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        stock_in_line::check_pack_size,
+        stock_in_line::{check_lines_locked_by_authorisation, check_pack_size},
         validate::{check_item_exists, check_line_exists, check_number_of_packs},
     },
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
+        OtherPartyErrors,
+    },
     NullableUpdate,
 };
 use repository::{InvoiceRow, ItemRow, PurchaseOrderLineRowRepository, StorageConnection};
@@ -77,6 +80,12 @@ pub fn validate(
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(OtherPartyStoreDisabled);
+    }
+    if check_lines_locked_by_authorisation(connection, &invoice)? {
+        return Err(CannotAddLinesToAuthorisedReceivedInvoice);
     }
 
     if let Some(donor_id) = &input.donor_id {

@@ -38,6 +38,7 @@ export enum AppRoute {
   Inventory = 'inventory',
   Stock = 'stock',
   Stocktakes = 'stocktakes',
+  StockMovement = 'stock-movement',
   Locations = 'locations',
   MasterLists = 'master-lists',
   IndicatorsDemographics = 'indicators-demographics',
@@ -59,6 +60,7 @@ export enum AppRoute {
   Settings = 'settings',
 
   Help = 'help',
+  HelpDocuments = 'help-documents',
 
   Logout = 'logout',
 

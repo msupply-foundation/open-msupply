@@ -13,10 +13,13 @@ use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
-use async_graphql::{EmptyMutation, EmptySubscription, MergedSubscription, Object, Schema, Subscription};
+use async_graphql::{
+    EmptyMutation, EmptySubscription, MergedSubscription, Object, Schema, Subscription,
+};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
 
+use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_asset::property::AssetPropertiesQueries;
 use graphql_asset::{
     logs::{AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries},
@@ -35,6 +38,7 @@ use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, Se
 use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
+use graphql_general::help_document::{HelpDocumentMutations, HelpDocumentQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
     InitialisationMutations, InitialisationQueries, InitialisationSubscriptions, MigrationQueries,
@@ -43,7 +47,6 @@ use graphql_general::{
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
-use graphql_ancillary_item::AncillaryItemMutations;
 use graphql_item_bundle::BundledItemMutations;
 use graphql_item_variant::{ItemVariantMutations, ItemVariantQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -60,6 +63,7 @@ use graphql_reports::{CentralReportMutations, ReportQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
+use graphql_stock_relocation::{StockRelocationMutations, StockRelocationQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 use graphql_sync_message::{SyncMessageMutations, SyncMessageQueries};
@@ -72,11 +76,11 @@ use futures::stream::Stream;
 use tokio::sync::broadcast;
 
 use service::auth_data::AuthData;
-use service::subscription::ResolvedSubscription;
 use service::boajs::utils::{ExecuteGraphQlError, ExecuteGraphql};
 use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
+use service::subscription::ResolvedSubscription;
 use service::sync::CentralServerConfig;
 
 pub type OperationalSchema = async_graphql::Schema<Queries, Mutations, Subscriptions>;
@@ -128,6 +132,10 @@ impl CentralServerMutationNode {
 
     async fn campaign(&self) -> CampaignMutations {
         CampaignMutations
+    }
+
+    async fn help_document(&self) -> HelpDocumentMutations {
+        HelpDocumentMutations
     }
 
     async fn reports(&self) -> CentralReportMutations {
@@ -186,6 +194,7 @@ pub struct Queries(
     pub RequisitionQueries,
     pub ReportQueries,
     pub StockLineQueries,
+    pub StockRelocationQueries,
     pub RepackQueries,
     pub PrinterQueries,
     pub ProgramsQueries,
@@ -206,6 +215,7 @@ pub struct Queries(
     pub CampaignQueries,
     pub PurchaseOrderQueries,
     pub PurchaseOrderLineQueries,
+    pub HelpDocumentQueries,
 );
 
 impl Queries {
@@ -222,6 +232,7 @@ impl Queries {
             RequisitionQueries,
             ReportQueries,
             StockLineQueries,
+            StockRelocationQueries,
             RepackQueries,
             PrinterQueries,
             ProgramsQueries,
@@ -242,6 +253,7 @@ impl Queries {
             CampaignQueries,
             PurchaseOrderQueries,
             PurchaseOrderLineQueries,
+            HelpDocumentQueries,
         )
     }
 }
@@ -257,6 +269,7 @@ pub struct Mutations(
     pub RequisitionMutations,
     pub RequisitionLineMutations,
     pub StockLineMutations,
+    pub StockRelocationMutations,
     pub RepackMutations,
     pub PrinterMutations,
     pub GeneralMutations,
@@ -288,6 +301,7 @@ impl Mutations {
             RequisitionMutations,
             RequisitionLineMutations,
             StockLineMutations,
+            StockRelocationMutations,
             RepackMutations,
             PrinterMutations,
             GeneralMutations,
@@ -485,16 +499,12 @@ async fn graphql_ws(
     };
 
     match &*schema.operational_status.read().await {
-        OperationalStatus::Operational => {
-            GraphQLSubscription::new(schema.operational.clone())
-                .on_connection_init(on_connection_init)
-                .start(&req, payload)
-        }
-        OperationalStatus::Initialising => {
-            GraphQLSubscription::new(schema.initialisation.clone())
-                .on_connection_init(on_connection_init)
-                .start(&req, payload)
-        }
+        OperationalStatus::Operational => GraphQLSubscription::new(schema.operational.clone())
+            .on_connection_init(on_connection_init)
+            .start(&req, payload),
+        OperationalStatus::Initialising => GraphQLSubscription::new(schema.initialisation.clone())
+            .on_connection_init(on_connection_init)
+            .start(&req, payload),
         OperationalStatus::MigratingDatabase => {
             //TODO: add migration status subscription and route to that instead of returning an error here
             Err(actix_web::error::ErrorServiceUnavailable(

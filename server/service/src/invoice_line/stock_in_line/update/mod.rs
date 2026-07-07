@@ -1,11 +1,12 @@
 use crate::{
+    activity_log::activity_log_entry_with_diff,
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
     NullableUpdate, WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{
-    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, InvoiceLine,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository, ActivityLogType, InvoiceLine,
     InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository, RepositoryError,
     StockLineRowRepository,
 };
@@ -46,6 +47,7 @@ pub struct UpdateStockInLine {
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
     pub status: Option<NullableUpdate<InvoiceLineStatus>>,
+    pub reason_option_id: Option<NullableUpdate<String>>,
 }
 
 type OutError = UpdateStockInLineError;
@@ -61,6 +63,8 @@ pub fn update_stock_in_line(
             let (line, item, invoice) =
                 validate(&input, &ctx.store_id, connection, inbound_shipment_type)?;
 
+            let existing_stock_line = line.stock_line_option.clone();
+
             let GenerateResult {
                 invoice_row_option,
                 updated_line,
@@ -72,6 +76,13 @@ pub fn update_stock_in_line(
             let stock_line_repository = StockLineRowRepository::new(connection);
             if let Some(upsert_batch) = upsert_batch_option {
                 stock_line_repository.upsert_one(&upsert_batch)?;
+                activity_log_entry_with_diff(
+                    ctx,
+                    ActivityLogType::StockLineEdit,
+                    Some(upsert_batch.id.clone()),
+                    existing_stock_line.as_ref(),
+                    &upsert_batch,
+                )?;
             }
 
             InvoiceLineRowRepository::new(connection).upsert_one(&updated_line)?;
@@ -105,6 +116,7 @@ pub enum UpdateStockInLineError {
     NotAStockIn,
     NotThisStoreInvoice,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     CannotChangeLineStatusOfReceivedInvoice,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,
@@ -123,6 +135,8 @@ pub enum UpdateStockInLineError {
     CampaignDoesNotExist,
     WrongInboundShipmentType,
     CannotEditCostPrice,
+    ReasonOptionDoesNotExist,
+    ReasonOptionTypeInvalid,
 }
 
 impl From<RepositoryError> for UpdateStockInLineError {
@@ -151,7 +165,8 @@ mod test {
             mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
             mock_immunisation_program_a, mock_inbound_shipment_a, mock_item_a, mock_item_b,
             mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
-            mock_name_store_b, mock_store_a, mock_store_b, mock_supplier_return_a_invoice_line_a,
+            mock_name_store_b, mock_reason_option, mock_shipment_variance_reason_option,
+            mock_store_a, mock_store_b, mock_supplier_return_a_invoice_line_a,
             mock_transferred_inbound_shipment_a, mock_user_account_a, mock_vaccine_item_a,
             mock_vvm_status_a, mock_vvm_status_b, MockData, MockDataInserts,
         },
@@ -405,6 +420,37 @@ mod test {
             Err(ServiceError::ManufacturerDoesNotExist)
         );
 
+        // ReasonOptionDoesNotExist
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    reason_option_id: Some(NullableUpdate {
+                        value: Some("does-not-exist".to_string()),
+                    }),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::ReasonOptionDoesNotExist)
+        );
+
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    reason_option_id: Some(NullableUpdate {
+                        value: Some(mock_reason_option().id),
+                    }),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::ReasonOptionTypeInvalid)
+        );
+
         // NotThisStoreInvoice
         context.store_id = mock_store_a().id;
         assert_eq!(
@@ -606,6 +652,44 @@ mod test {
         let stock_line = invoice_line.stock_line_option.clone().unwrap();
         assert_eq!(stock_line.volume_per_pack, 10.0);
         assert_eq!(stock_line.total_volume, 150.0);
+
+        // Shipment variance reason: set, then clear
+        let reason_id = mock_shipment_variance_reason_option().id;
+        update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: return_line_id.clone(),
+                reason_option_id: Some(NullableUpdate {
+                    value: Some(reason_id.clone()),
+                }),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&return_line_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.reason_option_id, Some(reason_id));
+
+        update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: return_line_id.clone(),
+                reason_option_id: Some(NullableUpdate { value: None }),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&return_line_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.reason_option_id, None);
     }
 
     #[actix_rt::test]
