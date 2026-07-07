@@ -113,6 +113,7 @@ export const StockMovementLineEdit = ({
       batch: stockLine.batch ?? UNDEFINED_STRING_VALUE,
       packSize: stockLine.packSize,
       packs: stockLine.totalNumberOfPacks,
+      location: stockLine.sourceLocation?.code ?? UNDEFINED_STRING_VALUE,
     });
     return stockLine.sourceLocation?.onHold
       ? `${label} (${t('label.on-hold')})`
