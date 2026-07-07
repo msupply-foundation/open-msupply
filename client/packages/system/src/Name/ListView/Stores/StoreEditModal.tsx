@@ -12,6 +12,9 @@ import {
   TabContext,
   TabPanel,
   NamePropertyNode,
+  PreferenceDescriptionNode,
+  PreferenceNodeType,
+  UpsertPreferencesInput,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
@@ -22,6 +25,7 @@ import {
   useDraftStoreProperties,
 } from './useDraftStoreProperties';
 import { EditStorePreferences } from './EditStorePreferences';
+import { useEditPreferences } from '../../../Manage/Preferences';
 
 interface StoreEditModalProps {
   nameId: string;
@@ -48,13 +52,21 @@ export const StoreEditModal = ({
   const { draftProperties, setDraftProperties } = useDraftStoreProperties(
     data?.properties
   );
+  const {
+    preferences,
+    updateDraft: update,
+    saveDraft: savePreferences,
+  } = useEditPreferences(PreferenceNodeType.Store, data?.store?.id);
   const [currentTab, setCurrentTab] = useState(Tabs.Properties);
 
   const save = async () => {
-    mutateAsync({
-      id: nameId,
-      properties: JSON.stringify(draftProperties),
-    });
+    if (draftProperties && Object.keys(draftProperties).length > 0) {
+      await mutateAsync({
+        id: nameId,
+        properties: JSON.stringify(draftProperties),
+      });
+    }
+    await savePreferences();
   };
 
   if (isLoading || propertiesLoading) return <BasicSpinner />;
@@ -62,18 +74,12 @@ export const StoreEditModal = ({
   return !!data ? (
     <Modal
       title=""
-      cancelButton={
-        currentTab !== Tabs.Preferences ? (
-          <DialogButton variant="cancel" onClick={onClose} />
-        ) : undefined
-      }
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
-          variant="ok"
+          variant="save"
           onClick={async () => {
-            if (draftProperties && Object.keys(draftProperties).length > 0) {
-              await save();
-            }
+            await save();
             onClose();
           }}
         />
@@ -133,6 +139,8 @@ export const StoreEditModal = ({
             updateProperty={patch =>
               setDraftProperties({ ...draftProperties, ...patch })
             }
+            preferences={preferences}
+            update={update}
             currentTab={currentTab}
             setCurrentTab={setCurrentTab}
           />
@@ -152,6 +160,8 @@ interface ModalTabProps {
   propertyConfigs: NamePropertyNode[];
   draftProperties: DraftProperties;
   updateProperty: (update: DraftProperties) => void;
+  preferences: PreferenceDescriptionNode[];
+  update: (input: Partial<UpsertPreferencesInput>) => void;
   currentTab: Tabs;
   setCurrentTab: (tab: Tabs) => void;
 }
@@ -161,6 +171,8 @@ const ModalTabs = ({
   propertyConfigs,
   draftProperties,
   updateProperty,
+  preferences,
+  update,
   currentTab,
   setCurrentTab,
 }: ModalTabProps) => {
@@ -199,7 +211,11 @@ const ModalTabs = ({
             height: '100%',
           }}
         >
-          <EditStorePreferences storeId={storeId} />
+          <EditStorePreferences
+            storeId={storeId}
+            preferences={preferences}
+            update={update}
+          />
         </TabPanel>
       )}
     </TabContext>

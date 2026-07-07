@@ -1,6 +1,6 @@
 use repository::{
-    ContextType, EqualFilter, FormSchemaJson, FormSchemaRowRepository, ReportFilter,
-    ReportMetaDataRow, ReportRepository, ReportRow, ReportRowRepository, StorageConnection,
+    ContextType, FormSchemaJson, FormSchemaRowRepository, ReportFilter, ReportMetaDataRow,
+    ReportRepository, ReportRow, ReportRowRepository, StorageConnection, StringFilter,
 };
 use rust_embed::RustEmbed;
 use thiserror::Error;
@@ -61,7 +61,7 @@ impl StandardReports {
         let mut upserted_reports: Vec<ReportMetaDataRow> = vec![];
         for report in reports_data.reports {
             let report_versions = ReportRepository::new(con).query_by_filter(
-                ReportFilter::new().code(EqualFilter::equal_to(report.code.to_owned())),
+                ReportFilter::new().code(StringFilter::equal_to(&report.code)),
             )?;
 
             let existing_report = report_versions

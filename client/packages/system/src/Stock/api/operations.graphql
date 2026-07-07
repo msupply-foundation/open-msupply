@@ -75,6 +75,58 @@ fragment StockLineRow on StockLineNode {
   }
 }
 
+# Lean fragment for the paginated stock list (ungrouped + grouped) and CSV
+# export. Carries only the fields those views render. The full StockLineRow
+# fragment above is kept for the detail/edit queries (stockLine, insert/update)
+# which need vvmStatusLogs, itemVariant, donor, program, campaign and
+# itemStoreProperties.
+fragment StockLineListRow on StockLineNode {
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  manufactureDate
+  id
+  itemId
+  locationId
+  vvmStatusId
+  locationName
+  onHold
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+  supplierName
+  volumePerPack
+  totalVolume
+  barcode
+  location {
+    ...LocationRow
+  }
+  item {
+    code
+    name
+    unitName
+    masterLists(storeId: $storeId) {
+      name
+    }
+    isVaccine
+    doses
+    restrictedLocationTypeId
+    defaultPackSize
+  }
+  vvmStatus {
+    __typename
+    id
+    priority
+    unusable
+    description
+  }
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
+}
+
 fragment RepackStockLine on RepackStockLineNode {
   location {
     ...LocationRow
@@ -163,7 +215,7 @@ query stockLines(
       __typename
       nodes {
         __typename
-        ...StockLineRow
+        ...StockLineListRow
       }
       totalCount
     }
@@ -401,7 +453,7 @@ query itemsByStockLineFilter(
           totalCount
           nodes {
             __typename
-            ...StockLineRow
+            ...StockLineListRow
           }
         }
       }

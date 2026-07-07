@@ -46,6 +46,7 @@ pub fn add_from_master_list(
         &ResourceAccessRequest {
             resource: Resource::MutateInboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -296,7 +297,7 @@ mod test {
                 invoice_line_row: InvoiceLineRow {
                     id: String::from("inbound_shipment_line_a"),
                     invoice_id: String::from("inbound_shipment_c"),
-                    item_link_id: String::from("item_a"),
+                    item_id: String::from("item_a"),
                     r#type: InvoiceLineType::StockIn,
                     ..Default::default()
                 },

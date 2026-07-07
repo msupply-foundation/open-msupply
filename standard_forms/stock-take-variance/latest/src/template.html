@@ -29,6 +29,7 @@
 
   {% for line in data.stocktakeLines.nodes -%}
   {%set costPricePerPack=line.costPricePerPack | default(value=0) %}
+  <tr>
     <td class="table_text">{{line.item.code}}</td>
     <td class="table_text">{{line.item.name}}</td>
     <td class="table_text batch-wrap">{{line.batch}}</td>
@@ -84,7 +85,7 @@
 
 
   <tr>
-    <td colspan="10" />
+    <td colspan="10" class="no-border" />
     <td  class="borderline"><span class="table_text">{{t(k="report.net-increase",f="Net Increase")}}</span></td>
     <td class="borderline"><span class="table_text">{{VvalueIncrease | round( precision=2)}}</span></td>
   </tr>
@@ -92,13 +93,13 @@
 
 
   <tr>
-    <td colspan="10" />
+    <td colspan="10" class="no-border" />
     <td class="borderline"><span class="table_text">{{t(k="report.net-decrease",f="Net Decrease")}}</span></td>
     <td class="borderline"><span class="table_text">{{VvalueDecrease | round( precision=2)}}</span></td>
   </tr>
 
   <tr>
-    <td colspan="10"  />
+    <td colspan="10"  class="no-border" />
     <td  class="borderline"><span class="table_text">{{t(k="report.net-variance",f="Net Variance")}}</span></td>
     <td  class="borderline"><span class="table_text">{{VnetVarience | round( precision=2)}}</span></td>
   </tr>

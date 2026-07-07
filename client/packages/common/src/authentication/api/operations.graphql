@@ -92,6 +92,10 @@ query isCentralServer {
   isCentralServer
 }
 
+query isCentralStandalone {
+  isCentralStandalone
+}
+
 query refreshToken {
   refreshToken {
     ... on RefreshToken {
@@ -146,43 +150,6 @@ query permissions($storeId: String!) {
         totalCount
       }
     }
-  }
-}
-
-fragment UpdateUser on UpdateUserNode {
-  lastSuccessfulSync
-}
-
-mutation updateUser {
-  updateUser {
-    __typename
-    ... on UpdateUserNode {
-      ...UpdateUser
-    }
-    ... on UpdateUserError {
-      __typename
-      error {
-        ... on InvalidCredentials {
-          __typename
-          description
-        }
-        ... on ConnectionError {
-          __typename
-          description
-        }
-        ... on MissingCredentials {
-          __typename
-          description
-        }
-      }
-    }
-  }
-}
-
-query lastSuccessfulUserSync {
-  lastSuccessfulUserSync {
-    __typename
-    ...UpdateUser
   }
 }
 

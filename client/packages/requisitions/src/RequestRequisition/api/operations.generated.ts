@@ -35,6 +35,8 @@ export type RequestRowFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   period?: {
@@ -95,7 +97,12 @@ export type RequestByNumberQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           margin?: number | null;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         ancillaryState: {
           __typename: 'AncillaryStateResponse';
@@ -136,6 +143,8 @@ export type RequestByNumberQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         user?: {
@@ -223,7 +232,12 @@ export type RequestByNumberQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         linkedRequisition?: {
           __typename: 'RequisitionNode';
@@ -284,7 +298,12 @@ export type RequestByIdQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           margin?: number | null;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         ancillaryState: {
           __typename: 'AncillaryStateResponse';
@@ -325,6 +344,8 @@ export type RequestByIdQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         user?: {
@@ -412,7 +433,12 @@ export type RequestByIdQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         linkedRequisition?: {
           __typename: 'RequisitionNode';
@@ -529,6 +555,8 @@ export type RequestsQuery = {
           fileName: string;
           recordId: string;
           createdDatetime: string;
+          status: Types.SyncFileReferenceNodeStatus;
+          error?: string | null;
         }>;
       };
       period?: {
@@ -826,7 +854,12 @@ export type SupplierProgramSettingsFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   }>;
   orderTypes: Array<{
     __typename: 'ProgramRequisitionOrderTypeNode';
@@ -860,7 +893,12 @@ export type SupplierProgramSettingsQuery = {
       isSupplier: boolean;
       isOnHold: boolean;
       name: string;
-      store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+      store?: {
+        __typename: 'StoreNode';
+        id: string;
+        code: string;
+        isDisabled: boolean;
+      } | null;
     }>;
     orderTypes: Array<{
       __typename: 'ProgramRequisitionOrderTypeNode';

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   useAuthContext,
   useTranslation,
@@ -28,8 +28,11 @@ import {
   InvoiceNodeStatus,
   InfoIcon,
   useSimplifiedTabletUI,
+  usePluginProvider,
+  UsePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
-import { Select, MenuItem } from '@mui/material';
+import { Select, MenuItem, Tooltip } from '@mui/material';
 import { DraftInboundLine } from '../../../../types';
 import {
   CampaignOrProgramCell,
@@ -63,11 +66,11 @@ interface CardProps {
 interface InboundLineEditCardsProps extends CardProps {
   duplicateDraftLine: (id: string) => void;
   removeDraftLine: (id: string) => void;
-  isReceived?: boolean;
   lastCardRef?: React.RefObject<HTMLDivElement | null>;
   actions?: React.ReactNode;
   /** The specific line ID to scroll into view when the modal opens */
   scrollToLineId?: string | null;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }
 
 export const InboundLineEditCards = ({
@@ -76,7 +79,6 @@ export const InboundLineEditCards = ({
   duplicateDraftLine,
   removeDraftLine,
   isDisabled = false,
-  isReceived = false,
   foreignCurrency,
   isExternalSupplier,
   hasItemVariantsEnabled,
@@ -87,9 +89,11 @@ export const InboundLineEditCards = ({
   lastCardRef,
   actions,
   scrollToLineId,
+  pluginEvents,
 }: InboundLineEditCardsProps) => {
   const t = useTranslation();
   const simplified = useSimplifiedTabletUI();
+  const { plugins } = usePluginProvider();
   const { getPlural } = useIntlUtils();
   const { format } = useFormatNumber();
   // Ref avoids format in useMemo deps (unstable reference)
@@ -106,9 +110,12 @@ export const InboundLineEditCards = ({
     query: { data: inboundData },
     hasAuthorisePermission,
     isExternal,
+    isAddOrDeleteLinesDisabled,
   } = useInboundShipment();
   const isManualShipment =
-    !inboundData?.purchaseOrder && !inboundData?.linkedShipment;
+    !inboundData?.purchaseOrder &&
+    !inboundData?.linkedShipment &&
+    !inboundData?.otherParty?.store;
 
   const showLineStatus =
     lines.some(line => line.status != null) ||
@@ -146,6 +153,24 @@ export const InboundLineEditCards = ({
     }
   }
   prevLineIdsRef.current = currentLineIds;
+
+  const scrollToLatestCard = useCallback(() => {
+    const scroll = () => {
+      lastCardRef?.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest',
+      });
+    };
+
+    // Wait for duplicate line render/layout before trying to scroll.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scroll);
+    });
+
+    // Fallback for slower render paths.
+    setTimeout(scroll, 80);
+  }, [lastCardRef]);
 
   const columns = useMemo(() => {
     const cols: ColumnDef<DraftInboundLine>[] = [
@@ -193,8 +218,8 @@ export const InboundLineEditCards = ({
                 helperText={
                   isPlaceholder
                     ? t('error.field-must-be-specified', {
-                        field: t('label.packs-received'),
-                      })
+                      field: t('label.packs-received'),
+                    })
                     : undefined
                 }
               />
@@ -233,7 +258,7 @@ export const InboundLineEditCards = ({
                   const shouldClearSellPrice =
                     item?.defaultPackSize !== line.packSize &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
-                      line.sellPricePerPack;
+                    line.sellPricePerPack;
 
                   updateDraftLine({
                     volumePerPack:
@@ -337,6 +362,34 @@ export const InboundLineEditCards = ({
         ),
       },
       {
+        id: 'difference',
+        header: t('label.difference'),
+        description: t('description.difference-packs'),
+        size: 100,
+        columnGroup: 'stockLineDetails',
+        accessorFn: row =>
+          row.shippedNumberOfPacks == null
+            ? null
+            : row.shippedNumberOfPacks - row.numberOfPacks,
+      },
+      ...(plugins.inboundShipmentLine?.editViewField ?? []).map(
+        ({ header, Component }, index): ColumnDef<DraftInboundLine> => ({
+          id: `plugin-field-${index}`,
+          header,
+          size: 180,
+          columnGroup: 'stockLineDetails',
+          Cell: ({ row }) => (
+            <Component
+              line={row.original}
+              update={patch =>
+                updateDraftLine({ id: row.original.id, ...patch })
+              }
+              events={pluginEvents}
+            />
+          ),
+        })
+      ),
+      {
         accessorKey: 'shippedPackSize',
         header: t('label.shipped-pack-size'),
         size: 120,
@@ -418,14 +471,21 @@ export const InboundLineEditCards = ({
         columnGroup: 'moreInfo',
         defaultHideOnMobile: true,
         Cell: ({ cell, row }) => (
-          <CurrencyInputCell
-            cell={cell}
-            disabled={isDisabled || !isManualShipment}
-            decimalsLimit={5}
-            updateFn={value =>
-              updateDraftLine({ id: row.original.id, costPricePerPack: value })
-            }
-          />
+          <Tooltip
+            title={!isManualShipment ? t('info.cost-price-not-editable') : ''}
+            placement="top"
+          >
+            <span style={{ display: 'inline-block', width: '100%' }}>
+              <CurrencyInputCell
+                cell={cell}
+                disabled={isDisabled || !isManualShipment}
+                decimalsLimit={5}
+                updateFn={value =>
+                  updateDraftLine({ id: row.original.id, costPricePerPack: value })
+                }
+              />
+            </span>
+          </Tooltip>
         ),
       },
       {
@@ -617,6 +677,7 @@ export const InboundLineEditCards = ({
             <DateTimePickerInput
               value={value}
               disabled={isDisabled}
+              disableFuture
               onChange={date =>
                 updateDraftLine({
                   id: row.original.id,
@@ -709,17 +770,12 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            disabled={isDisabled || isReceived}
+            disabled={isDisabled || isAddOrDeleteLinesDisabled}
             label={t('label.duplicate-batch')}
             showLabel={!simplified}
             onClick={() => {
               duplicateDraftLine(row.original.id);
-              setTimeout(() => {
-                lastCardRef?.current?.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'nearest',
-                });
-              }, 0);
+              scrollToLatestCard();
             }}
             icon={<CopyIcon fontSize="small" />}
           />
@@ -732,7 +788,7 @@ export const InboundLineEditCards = ({
         pin: 'right',
         Cell: ({ row }) => (
           <IconButton
-            disabled={isDisabled || isReceived}
+            disabled={isDisabled || isAddOrDeleteLinesDisabled}
             label={t('label.delete-batch')}
             showLabel={!simplified}
             color="error"
@@ -752,7 +808,7 @@ export const InboundLineEditCards = ({
     hasItemVariantsEnabled,
     hasVvmStatusesEnabled,
     isDisabled,
-    isReceived,
+    isAddOrDeleteLinesDisabled,
     isExternalSupplier,
     isManualShipment,
     item?.isVaccine,
@@ -765,6 +821,8 @@ export const InboundLineEditCards = ({
     store?.preferences.issueInForeignCurrency,
     unitName,
     updateDraftLine,
+    scrollToLatestCard,
+    plugins.inboundShipmentLine?.editViewField,
   ]);
 
   const table = useSimpleMaterialTable<DraftInboundLine>({
@@ -780,9 +838,9 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-        stockLineDetails: <StockIcon />,
-        moreInfo: <InfoIcon />,
-      };
+      stockLineDetails: <StockIcon />,
+      moreInfo: <InfoIcon />,
+    };
 
   return (
     <>

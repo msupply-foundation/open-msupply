@@ -59,6 +59,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutateCustomerReturn,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -101,6 +102,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::ReturnIsNotEditable
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
+        | ServiceError::CannotIssueCustomerReturnWithNoLines
         | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
 
         ServiceError::UpdatedInvoiceDoesNotExist | ServiceError::DatabaseError(_) => {

@@ -50,10 +50,7 @@
             {
               "type": "DateOfBirth",
               "label": "label.date-of-birth",
-              "scope": "#",
-              "options": {
-                "hideClear": true
-              }
+              "scope": "#"
             },
             {
               "type": "Control",

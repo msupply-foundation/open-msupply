@@ -28,14 +28,19 @@ pub enum KeyType {
     CentralSyncPullCursor,
     SyncPullCursorV6,
     SyncPushCursorV6,
+    SyncPullCursorV7,
+    SyncPushCursorV7,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
     ContactFormProcessorCursor,
     LoadPluginProcessorCursor,
     AssignRequisitionNumberProcessorCursor,
-    AddCentralPatientVisibilityProcessorCursor,
+    AssignPrescriptionNumberProcessorCursor,
     RequisitionAutoFinaliseProcessorCursor,
+    SupportUploadFilesProcessorCursor,
+    MergeSyncMessageProcessorCursor,
+    ChangelogDedupCursor,
     // Nested key value store to store dynamic cursor values as JSON text
     DynamicCursor,
 
@@ -47,7 +52,10 @@ pub enum KeyType {
     SettingsSyncSiteId,
     SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
+    SettingsSyncV7Token,
+    SettingsSyncVersion,
     SettingsTokenSecret,
+    SettingsSyncSiteIsMultiDevice,
 
     DatabaseVersion,
 
@@ -62,6 +70,8 @@ pub enum KeyType {
     LogFileName,
 
     LastLedgerFixRun,
+
+    IsStandaloneCentral,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -81,8 +91,10 @@ static KEY_VALUE_STORE_CACHE: RwLock<Option<HashMap<KeyType, KeyValueStoreRow>>>
 
 fn get_cached_row(key: &KeyType) -> Option<KeyValueStoreRow> {
     // Disable cache in tests: each test has its own database but shares this
-    // process-global static, causing cross-test contamination.
-    if cfg!(test) {
+    // process-global static, causing cross-test contamination. `cfg!(test)`
+    // only fires for the crate being compiled as a test, so we also gate on
+    // the integration_test feature for tests in dependent crates.
+    if cfg!(test) || cfg!(feature = "integration_test") {
         return None;
     }
     let cache = KEY_VALUE_STORE_CACHE.read().unwrap();
@@ -90,7 +102,7 @@ fn get_cached_row(key: &KeyType) -> Option<KeyValueStoreRow> {
 }
 
 fn set_cached_row(row: KeyValueStoreRow) {
-    if cfg!(test) {
+    if cfg!(test) || cfg!(feature = "integration_test") {
         return;
     }
     let mut cache = KEY_VALUE_STORE_CACHE.write().unwrap();
@@ -215,6 +227,10 @@ impl<'a> KeyValueStoreRepository<'a> {
     pub fn get_bool(&self, key: KeyType) -> Result<Option<bool>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_bool))
+    }
+
+    pub fn get_current_site_id(&self) -> Result<Option<i32>, RepositoryError> {
+        self.get_i32(KeyType::SettingsSyncSiteId)
     }
 }
 

@@ -101,6 +101,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
                 isLoading={isPrintingLabels}
                 onClick={handleClick}
                 selectedOption={selected}
+                dataShortcut="Alt+L"
                 onSelectOption={(option, e) => {
                   setSelected(option);
                   handleClick(option, e);

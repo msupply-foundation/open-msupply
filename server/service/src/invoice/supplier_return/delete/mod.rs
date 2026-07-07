@@ -66,6 +66,7 @@ pub enum DeleteSupplierReturnError {
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
     LineDeleteError {
         line_id: String,
         error: DeleteStockOutLineError,

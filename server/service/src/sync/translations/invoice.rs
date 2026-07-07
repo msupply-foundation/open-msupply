@@ -7,14 +7,14 @@ use crate::sync::translations::{
 };
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, CurrencyRowRepository,
     DiagnosisRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow,
     InvoiceRowDelete, InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyValueStoreRepository,
-    NameRow, NameRowRepository, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
-    SyncBufferRow, UserAccountRow, UserAccountRowRepository,
+    NameRow, NameRowRepository, Row, StorageConnection, StoreFilter, StoreRepository,
+    StoreRowRepository, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
 };
-use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::sync_serde::{
@@ -364,7 +364,7 @@ impl SyncTranslation for InvoiceTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let data = sync_record.deserialize::<serde_json::Value>()?;
         let data = sanitize_legacy_record(data);
         let data = serde_json::from_value::<LegacyTransactRow>(data)?;
         // For owner records, only integrate if it's an insert operation, to happen only during initialisation,
@@ -521,6 +521,8 @@ impl SyncTranslation for InvoiceTranslation {
             shipping_method_id,
             charges_local_currency: oms_fields.charges_local_currency,
             charges_foreign_currency: oms_fields.charges_foreign_currency,
+            legacy_goods_received_id: data.goods_received_ID,
+            ..Default::default()
         };
 
         // HACK...
@@ -557,11 +559,14 @@ impl SyncTranslation for InvoiceTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Invoice(invoice_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(invoice) = InvoiceRepository::new(connection)
-            .query_by_filter(
-                InvoiceFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
-            )?
+            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(invoice_row.id)))?
             .pop()
         else {
             return Err(anyhow::anyhow!("Invoice not found"));
@@ -613,6 +618,7 @@ impl SyncTranslation for InvoiceTranslation {
                     shipping_method_id,
                     charges_local_currency,
                     charges_foreign_currency,
+                    legacy_goods_received_id: _,
                 },
             name_row,
             clinician_row,
@@ -1086,8 +1092,9 @@ mod tests {
         shipping_method_row::ShippingMethodRowRepository,
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, CurrencyRow, CurrencyRowRepository, DiagnosisRow,
-        InsuranceProviderRow, KeyType, KeyValueStoreRow, ShippingMethodRow, SyncAction, Upsert,
+        ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository,
+        CursorAndLimit, DiagnosisRow, FilterBuilder, InsuranceProviderRow, KeyType,
+        KeyValueStoreRow, RowOrDelete, ShippingMethodRow, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -1142,22 +1149,22 @@ mod tests {
                 comment: None,
             })
             .unwrap();
-        NameInsuranceJoinRow {
-            id: "NAME_INSURANCE_JOIN_1_ID".to_string(),
-            name_id: "name_a".to_string(),
-            insurance_provider_id: "INSURANCE_PROVIDER_1".to_string(),
-            policy_number_person: None,
-            policy_number_family: None,
-            policy_number: "PN1".to_string(),
-            policy_type: InsurancePolicyType::Personal,
-            discount_percentage: 0.0,
-            expiry_date: NaiveDate::from_ymd_opt(2030, 1, 1).unwrap(),
-            is_active: true,
-            entered_by_id: None,
-            name_of_insured: None,
-        }
-        .upsert(&connection)
-        .unwrap();
+        NameInsuranceJoinRowRepository::new(&connection)
+            .upsert_one(&NameInsuranceJoinRow {
+                id: "NAME_INSURANCE_JOIN_1_ID".to_string(),
+                name_id: "name_a".to_string(),
+                insurance_provider_id: "INSURANCE_PROVIDER_1".to_string(),
+                policy_number_person: None,
+                policy_number_family: None,
+                policy_number: "PN1".to_string(),
+                policy_type: InsurancePolicyType::Personal,
+                discount_percentage: 0.0,
+                expiry_date: NaiveDate::from_ymd_opt(2030, 1, 1).unwrap(),
+                is_active: true,
+                entered_by_id: None,
+                name_of_insured: None,
+            })
+            .unwrap();
         ShippingMethodRowRepository::new(&connection)
             .upsert_one(&ShippingMethodRow {
                 id: "SHIPPING_METHOD_1_ID".to_string(),
@@ -1165,15 +1172,15 @@ mod tests {
                 deleted_datetime: None,
             })
             .unwrap();
-        DiagnosisRow {
-            id: "503E901E00534F1797DF4F29E12F907D".to_string(),
-            code: "DX1".to_string(),
-            description: "Test diagnosis".to_string(),
-            notes: None,
-            valid_till: None,
-        }
-        .upsert(&connection)
-        .unwrap();
+        DiagnosisRowRepository::new(&connection)
+            .upsert_one(&DiagnosisRow {
+                id: "503E901E00534F1797DF4F29E12F907D".to_string(),
+                code: "DX1".to_string(),
+                description: "Test diagnosis".to_string(),
+                notes: None,
+                valid_till: None,
+            })
+            .unwrap();
         repository::PurchaseOrderRowRepository::new(&connection)
             .upsert_one(&repository::mock::mock_purchase_order_a())
             .unwrap();
@@ -1212,23 +1219,27 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Invoice.equal_to())),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Invoice),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
         let translator = InvoiceTranslation {};
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
@@ -1265,7 +1276,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "transact".to_string(),
             record_id: "INVOICE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
               "ID": "INVOICE_FK_INVALID",
               "name_ID": "name_store_a",
               "store_ID": "store_b",
@@ -1306,8 +1319,10 @@ mod tests {
               "insuranceDiscountRate": 0,
               "goods_received_ID": "",
               "original_PO_ID": "does_not_exist_purchase_order"
-            }"#
-            .to_string(),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
@@ -1342,9 +1357,7 @@ mod tests {
             format!("expected purchase_order_id None; got:\n{debug}")
         );
 
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)

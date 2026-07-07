@@ -162,6 +162,8 @@ fn transact_1_pull_row() -> InvoiceRow {
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
         charges_local_currency: 15.5,
         charges_foreign_currency: 20.0,
+        legacy_goods_received_id: Some("some goods id".to_string()),
+        ..Default::default()
     }
 }
 
@@ -383,6 +385,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -624,6 +627,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -869,6 +873,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -1091,6 +1096,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -1309,6 +1315,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }
@@ -1533,6 +1540,7 @@ fn cancelled_prescription_pull_record() -> TestSyncIncomingRecord {
             shipping_method_id: None,
             charges_local_currency: 0.0,
             charges_foreign_currency: 0.0,
+            ..Default::default()
         },
     )
 }

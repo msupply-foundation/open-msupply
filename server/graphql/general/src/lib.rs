@@ -1,16 +1,18 @@
 pub mod campaign;
+pub mod help_document;
 mod mutations;
 mod queries;
 mod subscriptions;
 mod sync_api_error;
+mod sync_v7;
 pub mod types;
 
 use std::collections::HashMap;
 
 pub use self::queries::item::{ItemSortFieldInput, ItemSortInput, ItemsResponse};
 pub use self::queries::sync_status::*;
-pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
 use self::queries::*;
+pub use self::subscriptions::{InitialisationSubscriptions, SyncStatusSubscriptions};
 
 use abbreviation::abbreviations;
 use diagnosis::diagnoses_active;
@@ -28,6 +30,10 @@ use mutations::{
     display_settings::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
+    initialise_as_central_server::{
+        initialise_as_central_server, InitialiseAsCentralServerInputNode,
+        InitialiseAsCentralServerResponse,
+    },
     initialise_site::{initialise_site, InitialiseSiteResponse},
     insert_insurance::{insert_insurance, InsertInsuranceInput, InsertInsuranceResponse},
     label_printer_settings::{
@@ -41,7 +47,6 @@ use mutations::{
     update_name_properties::{
         update_name_properties, UpdateNamePropertiesInput, UpdateNamePropertiesResponse,
     },
-    update_user,
 };
 use queries::{
     abbreviation::AbbreviationFilterInput,
@@ -105,6 +110,10 @@ impl GeneralQueries {
 
     pub async fn is_central_server(&self) -> bool {
         CentralServerConfig::is_central_server()
+    }
+
+    pub async fn is_central_standalone(&self) -> bool {
+        CentralServerConfig::is_standalone_central()
     }
 
     pub async fn feature_flags(&self, ctx: &Context<'_>) -> HashMap<String, bool> {
@@ -226,7 +235,9 @@ impl GeneralQueries {
         inbound_shipment_external_counts(ctx, store_id, timezone_offset)
     }
 
-    #[graphql(deprecation = "Use outboundShipmentCounts, inboundShipmentCounts, or inboundShipmentExternalCounts instead")]
+    #[graphql(
+        deprecation = "Use outboundShipmentCounts, inboundShipmentCounts, or inboundShipmentExternalCounts instead"
+    )]
     #[allow(deprecated)]
     pub async fn invoice_counts(
         &self,
@@ -382,13 +393,6 @@ impl GeneralQueries {
 
     pub async fn log_level(&self, ctx: &Context<'_>) -> Result<LogLevelNode> {
         log_level(ctx)
-    }
-
-    pub async fn last_successful_user_sync(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<update_user::UpdateUserNode> {
-        last_successful_user_sync(ctx)
     }
 
     pub async fn frontend_plugin_metadata(
@@ -554,12 +558,22 @@ impl GeneralMutations {
         initialise_site(ctx, input).await
     }
 
+    // Only available for graphql introspection, error will be thrown after PreInitialisation state
+    pub async fn initialise_as_central_server(
+        &self,
+        ctx: &Context<'_>,
+        input: InitialiseAsCentralServerInputNode,
+    ) -> Result<InitialiseAsCentralServerResponse> {
+        initialise_as_central_server(ctx, input).await
+    }
+
     pub async fn manual_sync(
         &self,
         ctx: &Context<'_>,
-        fetch_patient_id: Option<String>,
+        // TODO remove
+        _fetch_patient_id: Option<String>,
     ) -> Result<String> {
-        manual_sync(ctx, true, fetch_patient_id)
+        manual_sync(ctx, true)
     }
 
     pub async fn update_display_settings(
@@ -586,10 +600,6 @@ impl GeneralMutations {
         input: LogLevelInput,
     ) -> Result<UpsertLogLevelResponse> {
         update_log_level(ctx, store_id, input)
-    }
-
-    pub async fn update_user(&self, ctx: &Context<'_>) -> Result<update_user::UpdateResponse> {
-        update_user::update_user(ctx).await
     }
 
     pub async fn update_label_printer_settings(
@@ -656,6 +666,11 @@ impl InitialisationQueries {
     pub async fn migration_status(&self, ctx: &Context<'_>) -> Result<MigrationStatusNode> {
         migration_status(ctx).await
     }
+
+    /// Available without authorisation/authentication
+    pub async fn is_central_server(&self) -> bool {
+        CentralServerConfig::is_central_server()
+    }
 }
 /// Auth is not checked during initialisation stage
 #[derive(Default, Clone)]
@@ -671,12 +686,21 @@ impl InitialisationMutations {
         initialise_site(ctx, input).await
     }
 
+    pub async fn initialise_as_central_server(
+        &self,
+        ctx: &Context<'_>,
+        input: InitialiseAsCentralServerInputNode,
+    ) -> Result<InitialiseAsCentralServerResponse> {
+        initialise_as_central_server(ctx, input).await
+    }
+
     pub async fn manual_sync(
         &self,
         ctx: &Context<'_>,
+        // TODO remove
         _fetch_patient_id: Option<String>,
     ) -> Result<String> {
-        manual_sync(ctx, false, None)
+        manual_sync(ctx, false)
     }
 }
 

@@ -1,3 +1,7 @@
+/// Small fudge subtracted before `ceil()` so float drift (e.g. 100 * 1.1 =
+/// 110.0000000…01) doesn't bump exact integers up to the next whole unit.
+pub const EPSILON: f64 = 1e-6;
+
 pub fn fraction_is_integer(fraction: f64) -> bool {
     fraction.fract() == 0.0
 }

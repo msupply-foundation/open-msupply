@@ -174,6 +174,11 @@ pub enum Resource {
     QueryInboundShipmentExternal,
     AuthoriseInboundShipmentExternal,
     VerifyInboundShipmentExternal,
+    // Help documents
+    QueryHelpDocuments,
+    MutateHelpDocuments,
+
+    MutateSites,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -827,6 +832,17 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(Resource::QueryCampaigns, PermissionDSL::HasStoreAccess);
 
+    // Help documents (uploaded centrally, listed on the Help page on every site).
+    // Read is open to any authenticated user; write is ServerAdmin only.
+    map.insert(
+        Resource::QueryHelpDocuments,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateHelpDocuments,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+
     map.insert(
         Resource::QueryPurchaseOrder,
         PermissionDSL::HasPermission(PermissionType::PurchaseOrderQuery),
@@ -851,6 +867,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::PurchaseOrderFinalise),
         ]),
+    );
+
+    map.insert(
+        Resource::MutateSites,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
 
     map
@@ -959,6 +980,8 @@ pub struct ResourceAccessRequest {
     pub resource: Resource,
     /// The store id if specified
     pub store_id: Option<String>,
+    /// For endpoints that configure central data in mixed configurations.
+    pub require_central_standalone: bool,
 }
 
 fn validate_resource_permissions(
@@ -1219,6 +1242,7 @@ mod validate_resource_permissions_test {
         let resource_request = ResourceAccessRequest {
             resource: Resource::MutateLocation,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         };
         let required_permissions = PermissionDSL::HasPermission(PermissionType::ServerAdmin);
 
@@ -1510,6 +1534,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: None,
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1532,6 +1557,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: None,
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1555,6 +1581,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_a".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1578,6 +1605,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_b".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1592,6 +1620,7 @@ mod permission_validation_test {
                 &ResourceAccessRequest {
                     resource: Resource::QueryStocktake,
                     store_id: Some("store_a".to_string()),
+                    require_central_standalone: false,
                 }
             )
             .is_err());
@@ -1692,7 +1721,8 @@ mod permission_validation_test {
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
-                    store_id: Some(store().id)
+                    store_id: Some(store().id),
+                    require_central_standalone: false,
                 }
             )
             .is_ok());
@@ -1714,7 +1744,8 @@ mod permission_validation_test {
                 &None,
                 &ResourceAccessRequest {
                     resource: Resource::MutateRequisition,
-                    store_id: Some(store().id)
+                    store_id: Some(store().id),
+                    require_central_standalone: false,
                 }
             )
             .is_err());

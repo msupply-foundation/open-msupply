@@ -1,6 +1,6 @@
 License
 
-Open mSupply software (including it�s documentation produced by mSupply Foundation) is protected by copyright and is the exclusive property of mSupply Foundation and all rights are reserved.
+Open mSupply software (including its documentation, produced by mSupply Foundation) is protected by copyright and is the exclusive property of mSupply Foundation and all rights are reserved.
 
 mSupply Foundation grants you license to use Open mSupply software according to the clauses herein stated and your installation and/or continued use of Open mSupply confirms your agreement.
 

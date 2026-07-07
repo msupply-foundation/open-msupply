@@ -23,6 +23,7 @@ pub enum ReasonOptionNodeType {
     ReturnReason,
     RequisitionLineVariance,
     ClosedVialWastage,
+    ShipmentVariance,
 }
 
 #[Object]

@@ -3,7 +3,12 @@ use std::{
     fmt::{Display, Formatter, Result},
 };
 
-use repository::database_settings::DatabaseSettings;
+use repository::{
+    database_settings::DatabaseSettings,
+    migrations::{
+        ChangelogPartitionConfig, DEFAULT_CHANGELOG_LOOKAHEAD, DEFAULT_CHANGELOG_PARTITION_SIZE,
+    },
+};
 use serde::{Deserialize, Serialize};
 
 use crate::sync::settings::SyncSettings;
@@ -17,6 +22,8 @@ pub struct Settings {
     pub backup: Option<BackupSettings>,
     pub mail: Option<MailSettings>,
     pub features: Option<HashMap<String, bool>>,
+    pub changelog_partition: Option<ChangelogPartitionSettings>,
+    pub changelog_dedup: Option<ChangelogDedupSettings>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -41,6 +48,15 @@ pub struct ServerSettings {
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
+
+    // Standalone central initialisation; requires `override_is_central_server: true`
+    #[serde(default)]
+    pub standalone_store_name: Option<String>,
+    #[serde(default)]
+    pub standalone_admin_username: Option<String>,
+    #[serde(default)]
+    pub standalone_admin_password: Option<String>,
+
     /// Number of actix-web worker threads. Defaults to the number of logical CPUs.
     /// Increase if 408 timeouts are observed under load.
     pub workers: Option<usize>,
@@ -48,6 +64,39 @@ pub struct ServerSettings {
 
 fn default_base_dir() -> String {
     "app_data".to_string()
+}
+
+/// Builds a `Settings` value suitable for tests, given the `DatabaseSettings`
+/// produced by the test setup. `features` enables feature flags that gate
+/// functionality under test (e.g. `stock_movement`).
+pub fn test_settings(
+    database: DatabaseSettings,
+    features: Option<HashMap<String, bool>>,
+) -> Settings {
+    Settings {
+        server: ServerSettings {
+            port: 0,
+            danger_allow_http: false,
+            debug_no_access_control: true,
+            discovery: DiscoveryMode::Disabled,
+            cors_origins: vec![],
+            base_dir: "test_output".to_string(),
+            machine_uid: None,
+            override_is_central_server: false,
+            standalone_store_name: None,
+            standalone_admin_username: None,
+            standalone_admin_password: None,
+            workers: None,
+        },
+        database,
+        sync: None,
+        logging: None,
+        backup: None,
+        mail: None,
+        features,
+        changelog_partition: None,
+        changelog_dedup: None,
+    }
 }
 
 impl ServerSettings {
@@ -181,4 +230,198 @@ pub struct MailSettings {
     pub password: String,
     pub from: String,
     pub interval: u64,
+}
+
+/// yaml-bound config for the postgres `changelog` partitioned table. The
+/// migration-internal counterpart lives in `repository::migrations::ChangelogPartitionConfig`
+/// (no serde, primitive values only); the server converts service → repository
+/// before calling `migrate()`.
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct ChangelogPartitionSettings {
+    // Privates — exposed via getter
+    #[serde(default = "default_partition_size")]
+    partition_size: i64,
+    #[serde(default = "default_lookahead")]
+    lookahead: i64,
+
+    // public fields
+    #[serde(default)]
+    pub interval: IntervalSettings,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct IntervalSettings {
+    #[serde(default)]
+    pub hours: u64,
+    #[serde(default = "default_interval_mins")]
+    pub mins: u64,
+    #[serde(default)]
+    pub secs: u64,
+}
+
+fn default_partition_size() -> i64 {
+    DEFAULT_CHANGELOG_PARTITION_SIZE
+}
+fn default_lookahead() -> i64 {
+    DEFAULT_CHANGELOG_LOOKAHEAD
+}
+fn default_interval_mins() -> u64 {
+    30
+}
+
+impl Default for ChangelogPartitionSettings {
+    fn default() -> Self {
+        Self {
+            partition_size: default_partition_size(),
+            lookahead: default_lookahead(),
+            interval: IntervalSettings::default(),
+        }
+    }
+}
+
+impl Default for IntervalSettings {
+    fn default() -> Self {
+        Self {
+            hours: 0,
+            mins: default_interval_mins(),
+            secs: 0,
+        }
+    }
+}
+
+impl IntervalSettings {
+    pub fn as_duration(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(self.hours * 3600 + self.mins * 60 + self.secs)
+    }
+}
+
+impl ChangelogPartitionSettings {
+    /// Effective partition size — yaml value clamped to at least 1
+    /// 1 is purely defensive to prevent division by zero
+    pub fn partition_size(&self) -> i64 {
+        self.partition_size.max(1)
+    }
+
+    /// Effective lookahead in cursor records — yaml value clamped up to
+    /// `DEFAULT_CHANGELOG_LOOKAHEAD` (the default doubles as the lower bound,
+    /// so the runtime top-up always has at least the default headroom).
+    pub fn lookahead(&self) -> i64 {
+        self.lookahead.max(DEFAULT_CHANGELOG_LOOKAHEAD)
+    }
+
+    /// Convert to the migration-internal primitive config that
+    /// `migrate()` and `ensure_partition_lookahead` accept.
+    pub fn to_migration_config(&self) -> ChangelogPartitionConfig {
+        ChangelogPartitionConfig {
+            partition_size: self.partition_size(),
+            lookahead: self.lookahead(),
+        }
+    }
+}
+
+/// yaml-bound config for the scheduled changelog deduplication task
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct ChangelogDedupSettings {
+    #[serde(default)]
+    pub interval: IntervalSettings,
+    /// When set, dedup only runs while the local clock is within [from, to].
+    /// When absent, dedup runs on every `interval` tick with no time gating.
+    #[serde(default)]
+    pub time_window: Option<TimeWindow>,
+    // Private — exposed via getter.
+    #[serde(default = "default_dedup_batch")]
+    batch_size: i64,
+}
+
+/// A local-clock time-of-day window. `from`/`to` are `"HH:MM"` in yaml, parsed to
+/// `NaiveTime` at deserialize time — a malformed value fails config loading at
+/// startup rather than silently disabling the task. Same-day only (midnight-
+/// crossing windows are not yet supported).
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TimeWindow {
+    #[serde(with = "hh_mm")]
+    pub from: chrono::NaiveTime,
+    #[serde(with = "hh_mm")]
+    pub to: chrono::NaiveTime,
+}
+
+/// serde (de)serialiser for `NaiveTime` <-> `"HH:MM"` yaml strings.
+mod hh_mm {
+    use chrono::NaiveTime;
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    const FORMAT: &str = "%H:%M";
+
+    pub fn serialize<S: Serializer>(time: &NaiveTime, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(&time.format(FORMAT).to_string())
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error> {
+        let raw = String::deserialize(d)?;
+        NaiveTime::parse_from_str(raw.trim(), FORMAT).map_err(|_| {
+            serde::de::Error::custom(format!("time_window time must be \"HH:MM\", got {raw:?}"))
+        })
+    }
+}
+
+fn default_dedup_batch() -> i64 {
+    50_000
+}
+
+fn default_dedup_interval_hours() -> u64 {
+    24
+}
+
+impl Default for ChangelogDedupSettings {
+    fn default() -> Self {
+        Self {
+            interval: IntervalSettings {
+                hours: default_dedup_interval_hours(),
+                mins: 0,
+                secs: 0,
+            },
+            time_window: None,
+            batch_size: default_dedup_batch(),
+        }
+    }
+}
+
+impl ChangelogDedupSettings {
+    /// Effective batch size — yaml value clamped to at least 1.
+    pub fn batch_size(&self) -> i64 {
+        self.batch_size.max(1)
+    }
+}
+
+impl TimeWindow {
+    /// True when `now` is within the [from, to] window (same-day).
+    pub fn contains(&self, now: chrono::NaiveTime) -> bool {
+        now >= self.from && now <= self.to
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::ChangelogDedupSettings;
+    use chrono::NaiveTime;
+
+    #[test]
+    fn time_window_parses_hh_mm() {
+        let s: ChangelogDedupSettings =
+            serde_yaml::from_str("time_window:\n  from: \"02:00\"\n  to: \"05:30\"").unwrap();
+        let window = s.time_window.unwrap();
+        assert_eq!(window.from, NaiveTime::from_hms_opt(2, 0, 0).unwrap());
+        assert_eq!(window.to, NaiveTime::from_hms_opt(5, 30, 0).unwrap());
+        assert!(window.contains(NaiveTime::from_hms_opt(3, 0, 0).unwrap()));
+        assert!(!window.contains(NaiveTime::from_hms_opt(6, 0, 0).unwrap()));
+    }
+
+    #[test]
+    fn time_window_rejects_bad_format() {
+        // A malformed HH:MM must fail deserialization (config load) rather than
+        // silently disabling the task.
+        let result: Result<ChangelogDedupSettings, _> =
+            serde_yaml::from_str("time_window:\n  from: \"2pm\"\n  to: \"05:00\"");
+        assert!(result.is_err());
+    }
 }

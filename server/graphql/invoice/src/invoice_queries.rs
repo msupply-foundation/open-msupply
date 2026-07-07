@@ -133,6 +133,7 @@ pub struct InvoiceFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name_id: Option<EqualFilterStringInput>,
     pub invoice_number: Option<EqualFilterBigNumberInput>,
+    pub invoice_number_or_status: Option<StringFilterInput>,
     pub other_party_name: Option<StringFilterInput>,
     pub other_party_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
@@ -176,6 +177,7 @@ pub fn get_invoice(
         &ResourceAccessRequest {
             resource,
             store_id: store_id.clone(),
+            require_central_standalone: false,
         },
     )?;
 
@@ -224,6 +226,7 @@ pub fn get_invoices(
             &ResourceAccessRequest {
                 resource: resource.clone(),
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?);
     }
@@ -266,6 +269,7 @@ pub fn get_invoice_by_number(
         &ResourceAccessRequest {
             resource: r#type.resource(),
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -297,6 +301,7 @@ impl InvoiceFilterInput {
         InvoiceFilter {
             id: self.id.map(EqualFilter::from),
             invoice_number: self.invoice_number.map(EqualFilter::from),
+            invoice_number_or_status: self.invoice_number_or_status.map(StringFilter::from),
             name_id: self.other_party_id.map(EqualFilter::from),
             name: self.other_party_name.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),

@@ -270,7 +270,7 @@ impl RequisitionTransferTester {
         let request_requisition_line1 = RequisitionLineRow {
             id: format!("{}_request_requisition_line_1_{}", thread_number, uuid()),
             requisition_id: request_requisition.id.clone(),
-            item_link_id: item1.id.clone(),
+            item_id: item1.id.clone(),
             requested_quantity: 2.0,
             suggested_quantity: 3.0,
             comment: Some("line comment".to_string()),
@@ -288,7 +288,7 @@ impl RequisitionTransferTester {
         let request_requisition_line2 = RequisitionLineRow {
             id: format!("{}_request_requisition_line_2_{}", thread_number, uuid()),
             requisition_id: request_requisition.id.clone(),
-            item_link_id: item2.id.clone(),
+            item_id: item2.id.clone(),
             requested_quantity: 10.0,
             suggested_quantity: 20.0,
             available_stock_on_hand: 30.0,
@@ -583,7 +583,7 @@ fn check_line(
         .query_one(
             RequisitionLineFilter::new()
                 .requisition_id(EqualFilter::equal_to(response_requisition_id.to_string()))
-                .item_id(EqualFilter::equal_to(request_line.item_link_id.to_string())),
+                .item_id(EqualFilter::equal_to(request_line.item_id.to_string())),
         )
         .unwrap();
 

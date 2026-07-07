@@ -19,7 +19,6 @@ impl SyncRecordTester for ClinicianRecordTester {
             name_id: new_site_properties.name_id.to_string(),
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
-            logo: None,
             store_mode: StoreMode::Dispensary,
             created_date: NaiveDate::from_ymd_opt(2021, 1, 1),
             is_disabled: false,
@@ -46,6 +45,7 @@ impl SyncRecordTester for ClinicianRecordTester {
             email: None,
             gender: Some(GenderType::Male),
             is_active: true,
+            store_id: Some(store_row.id.clone()),
             ..Default::default()
         };
 

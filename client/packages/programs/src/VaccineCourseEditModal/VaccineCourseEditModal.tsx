@@ -44,7 +44,9 @@ import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
 const FORM_ID = 'vaccine-course-edit';
 
-const getDemographicOptions = (demographics: DemographicNode[]) => {
+const getDemographicOptions = (
+  demographics: Pick<DemographicNode, 'id' | 'name'>[]
+) => {
   const options = demographics.map(demographic => {
     return {
       value: demographic.id,
@@ -268,7 +270,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
                 endAdornment="%"
                 decimalLimit={1}
                 min={0}
-                max={100}
                 required
                 formError={{
                   formId: FORM_ID,

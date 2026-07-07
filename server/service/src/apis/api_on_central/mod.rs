@@ -9,12 +9,6 @@ mod patient_name_store_join;
 
 pub use patient_name_store_join::{add_patient_name_store_join, NameStoreJoinParams};
 
-#[derive(Debug)]
-pub struct SiteAuth {
-    pub username: String,
-    pub password_sha256: String,
-}
-
 #[derive(Deserialize, Debug, Error, Serialize)]
 pub enum CentralApiError {
     #[error("Not a central server")]

@@ -45,6 +45,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         &ResourceAccessRequest {
             resource: Resource::MutatePrescription,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -94,7 +95,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 ForeignKey::InvoiceId,
             )))
         }
-        CannotEditFinalised => {
+        CannotEditFinalised | OtherPartyStoreDisabled => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
                 simple_generic_errors::CannotEditInvoice {},
             ))

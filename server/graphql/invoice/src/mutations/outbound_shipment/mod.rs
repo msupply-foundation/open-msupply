@@ -1,4 +1,5 @@
 pub mod delete;
+pub mod duplicate;
 pub mod error;
 pub mod insert;
 pub mod update;

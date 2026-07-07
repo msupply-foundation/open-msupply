@@ -1,10 +1,11 @@
 use super::{
-    item_link_row::item_link, item_row::item, requisition_line_row::requisition_line,
+    item_row::item, requisition_line_row::requisition_line,
     rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
 };
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
-    RnRFormRowRepository, RowActionType, StorageConnection, Upsert,
+    db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables,
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -12,11 +13,13 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-table! {
-    rnr_form_line (id) {
-        id -> Text,
+define_linked_tables! {
+    view: rnr_form_line = "rnr_form_line_view",
+    core: rnr_form_line_with_links = "rnr_form_line",
+    struct: RnRFormLineRow,
+    repo: RnRFormLineRowRepository,
+    shared: {
         rnr_form_id -> Text,
-        item_link_id -> Text,
         requisition_line_id -> Nullable<Text>,
         previous_monthly_consumption_values -> Text,
         average_monthly_consumption -> Double,
@@ -39,27 +42,29 @@ table! {
         low_stock -> crate::db_diesel::rnr_form_line_row::RnRFormLowStockMapping,
         comment -> Nullable<Text>,
         confirmed -> Bool,
+    },
+    links: {
+        item_link_id -> item_id,
+    },
+    optional_links: {
     }
 }
 
+joinable!(rnr_form_line -> item (item_id));
 joinable!(rnr_form_line -> rnr_form (rnr_form_id));
-joinable!(rnr_form_line -> item_link (item_link_id));
 joinable!(rnr_form_line -> requisition_line (requisition_line_id));
 
 allow_tables_to_appear_in_same_query!(rnr_form_line, rnr_form);
 allow_tables_to_appear_in_same_query!(rnr_form_line, item);
-allow_tables_to_appear_in_same_query!(rnr_form_line, item_link);
 allow_tables_to_appear_in_same_query!(rnr_form_line, requisition_line);
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default,
+    Clone, Queryable, Debug, PartialEq, Serialize, Deserialize, Default,
 )]
 #[diesel(table_name = rnr_form_line)]
-#[diesel(treat_none_as_null = true)]
 pub struct RnRFormLineRow {
     pub id: String,
     pub rnr_form_id: String,
-    pub item_link_id: String,
     pub requisition_line_id: Option<String>,
     pub previous_monthly_consumption_values: String,
     pub average_monthly_consumption: f64,
@@ -82,6 +87,10 @@ pub struct RnRFormLineRow {
     pub low_stock: RnRFormLowStock,
     pub comment: Option<String>,
     pub confirmed: bool,
+    // Resolved from item_link - must be last to match view column order.
+    // Serialises as `item_id`; the sync translator also emits the legacy `item_link_id`
+    // alias for cross-version compatibility (see `RenamedKeys`).
+    pub item_id: String,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -93,7 +102,6 @@ pub enum RnRFormLowStock {
     BelowHalf,
     BelowQuarter,
 }
-
 pub struct RnRFormLineRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -104,22 +112,19 @@ impl<'a> RnRFormLineRowRepository<'a> {
     }
 
     pub fn _upsert_one(&self, row: &RnRFormLineRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(rnr_form_line)
-            .values(row)
-            .on_conflict(id)
-            .do_update()
-            .set(row)
-            .execute(self.connection.lock().connection())?;
+        self._upsert(row)?;
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &RnRFormLineRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &RnRFormLineRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        self.insert_changelog(
-            row.id.to_string(),
-            Some(row.rnr_form_id.to_string()),
+        let changelog = RnRFormLineRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
             RowActionType::Upsert,
-        )
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn update_requisition_line_id(
@@ -127,42 +132,22 @@ impl<'a> RnRFormLineRowRepository<'a> {
         rnr_form_line_id: &str,
         linked_requisition_line_id: &str,
     ) -> Result<(), RepositoryError> {
-        diesel::update(rnr_form_line)
-            .filter(id.eq(rnr_form_line_id))
-            .set(requisition_line_id.eq(linked_requisition_line_id))
+        diesel::update(rnr_form_line_with_links::table)
+            .filter(rnr_form_line_with_links::id.eq(rnr_form_line_id))
+            .set(rnr_form_line_with_links::requisition_line_id.eq(linked_requisition_line_id))
             .execute(self.connection.lock().connection())?;
 
-        let form_id = self
+        let row = self
             .find_one_by_id(rnr_form_line_id)?
-            .map(|r| r.rnr_form_id);
-
-        self.insert_changelog(rnr_form_line_id.to_string(), form_id, RowActionType::Upsert)?;
+            .ok_or(RepositoryError::NotFound)?;
+        let changelog = RnRFormLineRow::generate_changelog(
+            RowOrId::Row(&row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
         Ok(())
-    }
-
-    fn insert_changelog(
-        &self,
-        record_id: String,
-        form_id: Option<String>,
-        action: RowActionType,
-    ) -> Result<i64, RepositoryError> {
-        // Get store id via rnr_form
-        let store_id = match form_id {
-            Some(form_id) => RnRFormRowRepository::new(self.connection)
-                .find_one_by_id(&form_id)?
-                .map(|r| r.store_id),
-            None => None,
-        };
-
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::RnrFormLine,
-            record_id,
-            row_action: action,
-            store_id,
-            name_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&self) -> Result<Vec<RnRFormLineRow>, RepositoryError> {
@@ -201,17 +186,31 @@ impl<'a> RnRFormLineRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, rnr_form_line_id: &str) -> Result<Option<i64>, RepositoryError> {
-        let form_id = self
-            .find_one_by_id(rnr_form_line_id)?
-            .map(|r| r.rnr_form_id);
+    pub fn delete(&self, rnr_form_line_id: &str) -> Result<(), RepositoryError> {
+        let changelog = match RnRFormLineRow::generate_changelog(
+            RowOrId::Id(rnr_form_line_id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        ) {
+            Ok(changelog) => changelog,
+            Err(RepositoryError::NotFound) => return Ok(()),
+            Err(e) => return Err(e),
+        };
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
-        let change_log_id =
-            self.insert_changelog(rnr_form_line_id.to_string(), form_id, RowActionType::Delete)?;
+        diesel::delete(
+            rnr_form_line_with_links::table
+                .filter(rnr_form_line_with_links::id.eq(rnr_form_line_id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 
-        diesel::delete(rnr_form_line.filter(id.eq(rnr_form_line_id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(Some(change_log_id))
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<RnRFormLineRow>, RepositoryError> {
+        Ok(rnr_form_line::table
+            .filter(rnr_form_line::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
     }
 }
 
@@ -219,8 +218,24 @@ impl<'a> RnRFormLineRowRepository<'a> {
 pub struct RnRFormLineDelete(pub String);
 // For tests only
 impl Delete for RnRFormLineDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        RnRFormLineRowRepository::new(con).delete(&self.0)
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormLineRow::generate_changelog(
+                RowOrId::Id(&self.0),
+                con,
+                RowActionType::Delete,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(rnr_form_line.filter(id.eq(&self.0))).execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -232,9 +247,25 @@ impl Delete for RnRFormLineDelete {
 }
 
 impl Upsert for RnRFormLineRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = RnRFormLineRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        RnRFormLineRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RnRFormLineRow::generate_changelog(
+                RowOrId::Row(self),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only

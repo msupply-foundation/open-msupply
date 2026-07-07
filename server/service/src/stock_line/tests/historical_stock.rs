@@ -4,8 +4,8 @@ mod query {
     use repository::mock::{mock_item_a, mock_name_customer_a, mock_name_store_b, mock_store_a};
     use repository::mock::{mock_user_account_a, MockDataInserts};
     use repository::{
-        InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
-        StockLineRowRepository, Upsert,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
     };
     use util::date_now;
 
@@ -88,11 +88,11 @@ mod query {
             ..Default::default()
         };
 
-        invoice.upsert(&ctx.connection).unwrap();
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&invoice).unwrap();
 
         let stock_line = StockLineRow {
             id: stock_line_id.clone(),
-            item_link_id: ITEM_ID.to_string(),
+            item_id: ITEM_ID.to_string(),
             pack_size,
             available_number_of_packs: new_number_of_packs,
             total_number_of_packs: new_number_of_packs,
@@ -101,12 +101,12 @@ mod query {
             ..old_stock_line
         };
 
-        stock_line.upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection).upsert_one(&stock_line).unwrap();
 
         let invoice_line = InvoiceLineRow {
             id: format!("invoice_line_{invoice_number}"),
             invoice_id: invoice.id.clone(),
-            item_link_id: ITEM_ID.to_string(),
+            item_id: ITEM_ID.to_string(),
             stock_line_id: Some(stock_line_id),
             pack_size,
             number_of_packs: number_of_packs.abs(),
@@ -115,7 +115,7 @@ mod query {
             ..Default::default()
         };
 
-        invoice_line.upsert(&ctx.connection).unwrap();
+        InvoiceLineRowRepository::new(&ctx.connection).upsert_one(&invoice_line).unwrap();
     }
 
     struct TestStockAdjustment {

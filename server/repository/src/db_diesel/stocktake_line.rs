@@ -1,6 +1,6 @@
 use super::{
-    item_link_row::item_link, item_row::item, location_row::location,
-    name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
+    item_row::item, location_row::location, name_row::name,
+    reason_option_row::reason_option, stock_line_row::stock_line,
     stocktake_line_row::stocktake_line, LocationRow, NameRow, ReasonOptionRow,
     StockLineRow, StocktakeLineRow, StorageConnection,
 };
@@ -11,8 +11,8 @@ use crate::{
     diesel_macros::{
         apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
     },
-    DBType, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow, Pagination,
-    RepositoryError, Sort, StringFilter,
+    DBType, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination, RepositoryError, Sort,
+    StringFilter,
 };
 
 #[derive(Clone, Default)]
@@ -72,7 +72,7 @@ pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
 
 type StocktakeLineJoin = (
     StocktakeLineRow,
-    (ItemLinkRow, ItemRow),
+    ItemRow,
     Option<StockLineRow>,
     Option<LocationRow>,
     Option<NameRow>,
@@ -160,11 +160,12 @@ impl<'a> StocktakeLineRepository<'a> {
                     apply_sort_no_case!(query, sort, reason_option::reason);
                 }
             };
-        } else {
-            query = query.order_by(stocktake_line::id.asc());
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let result = query
+            .then_order_by(stocktake_line::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<StocktakeLineJoin>(self.connection.lock().connection())?;
@@ -190,7 +191,7 @@ impl<'a> StocktakeLineRepository<'a> {
 #[diesel::dsl::auto_type]
 fn query() -> _ {
     stocktake_line::table
-        .inner_join(item_link::table.inner_join(item::table))
+        .inner_join(item::table)
         .left_join(stock_line::table)
         .left_join(location::table)
         .left_join(name::table)
@@ -200,7 +201,7 @@ fn query() -> _ {
 type BoxedStocktakeLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn to_domain(
-    (line, (_, item), stock_line, location, donor, reason_option): StocktakeLineJoin,
+    (line, item, stock_line, location, donor, reason_option): StocktakeLineJoin,
 ) -> StocktakeLine {
     StocktakeLine {
         line,
