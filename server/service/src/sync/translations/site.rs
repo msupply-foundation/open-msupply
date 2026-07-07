@@ -388,7 +388,11 @@ mod tests {
         let translator = SiteTranslation {};
         let record = test_data::test_pull_upsert_records().remove(0); // SITE_1 (site_id 1)
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &record.sync_buffer_row,
+            )
             .unwrap();
 
         // Identity fields come from 4D (incl. sync_version), but token + metadata

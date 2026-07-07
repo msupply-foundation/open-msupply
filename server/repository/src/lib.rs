@@ -7,7 +7,7 @@ pub mod diesel_extensions;
 pub(crate) mod diesel_helper_types;
 pub mod diesel_macros;
 pub(crate) mod dynamic_query_filter;
-pub use dynamic_query_filter::FilterBuilder;
+pub use dynamic_query_filter::{FilterBuilder, GeneralFilter};
 pub mod migrations;
 pub mod mock;
 mod repository_error;

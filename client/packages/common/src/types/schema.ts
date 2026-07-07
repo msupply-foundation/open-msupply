@@ -1475,6 +1475,7 @@ export type CentralServerMutationNode = {
   assetCatalogue: AssetCatalogueMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
+  customField: CustomFieldMutations;
   demographic: DemographicMutations;
   general: CentralGeneralMutations;
   itemVariant: ItemVariantMutations;
@@ -1488,6 +1489,7 @@ export type CentralServerMutationNode = {
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
+  customField: CustomFieldConfigQueries;
   plugin: CentralPluginQueries;
   site: CentralSiteQueries;
   syncMessage: SyncMessageQueries;
@@ -1831,6 +1833,123 @@ export type CurrencySortInput = {
   /** Sort query result by `key` */
   key: CurrencySortFieldInput;
 };
+
+export type CustomFieldConfigQueries = {
+  __typename: 'CustomFieldConfigQueries';
+  /**
+   * Admin/config read of a scope's custom fields, **including `HIDDEN`**
+   * ones — unlike the display `customFields` query, which filters hidden
+   * fields out. Drives the "Configure property visibility" admin page.
+   * Central-server only.
+   */
+  customFieldScopeConfig: CustomFieldsResponse;
+};
+
+export type CustomFieldConfigQueriesCustomFieldScopeConfigArgs = {
+  scope: Scalars['String']['input'];
+};
+
+export type CustomFieldConnector = {
+  __typename: 'CustomFieldConnector';
+  nodes: Array<CustomFieldNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type CustomFieldFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  key?: InputMaybe<EqualFilterStringInput>;
+  /**
+   * Restricts to custom_fields shown on this scope
+   * (`custom_field_scope.display_mode != HIDDEN`). Use e.g.
+   * `{ equalTo: "customer" }` or `{ equalTo: "supplier" }` to fetch the
+   * definitions that drive the matching name list views / modal. When a
+   * single `equalTo` scope is given, each returned node carries its
+   * `displayMode` for that scope.
+   */
+  scope?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type CustomFieldMutations = {
+  __typename: 'CustomFieldMutations';
+  /**
+   * Update the display mode (HIDDEN / VISIBLE / PROMINENT) of custom fields
+   * on a single scope. Only updates existing scope mappings (every
+   * field/scope pair is seeded from sync). Central-server only.
+   */
+  updateScopes: CustomFieldsResponse;
+};
+
+export type CustomFieldMutationsUpdateScopesArgs = {
+  input: UpdateCustomFieldScopesInput;
+};
+
+export type CustomFieldNode = {
+  __typename: 'CustomFieldNode';
+  /**
+   * How prominently this custom_field is shown on the queried scope
+   * (`null` when the query wasn't scoped to a single `scope`). Clients
+   * promote `PROMINENT` custom_fields to the record's primary surface, e.g. the
+   * invoice detail-view toolbar.
+   */
+  displayMode?: Maybe<CustomFieldNodeDisplayMode>;
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  kind: CustomFieldNodeKind;
+  name: Scalars['String']['output'];
+  /**
+   * Options for OPTION-type custom_fields. Empty list for any other value
+   * type. Resolved via dataloader so a list of N custom_fields triggers a
+   * single batched lookup.
+   */
+  options: Array<CustomFieldOptionNode>;
+  valueType: CustomFieldNodeValueType;
+};
+
+export enum CustomFieldNodeDisplayMode {
+  /** Not shown on this scope. */
+  Hidden = 'HIDDEN',
+  /**
+   * A mode configured on a newer central that this site doesn't yet recognise
+   * (the repository enum's `Other(String)` catch-all). Mapped manually rather
+   * than via `#[graphql(remote)]` because the GraphQL enum can't carry the
+   * captured string payload. Treated as non-hidden (shown) on read.
+   */
+  Other = 'OTHER',
+  /**
+   * Visible, and additionally promoted to the scope's primary surface (e.g.
+   * the invoice detail-view toolbar).
+   */
+  Prominent = 'PROMINENT',
+  /** Shown wherever the scope lists its custom_fields (e.g. the CustomFields tab). */
+  Visible = 'VISIBLE',
+}
+
+export enum CustomFieldNodeKind {
+  /** Synced from legacy mSupply. */
+  Legacy = 'LEGACY',
+  /** Configured natively in open-mSupply. */
+  Standard = 'STANDARD',
+}
+
+export enum CustomFieldNodeValueType {
+  Boolean = 'BOOLEAN',
+  Date = 'DATE',
+  Integer = 'INTEGER',
+  Option = 'OPTION',
+  Real = 'REAL',
+  Text = 'TEXT',
+}
+
+export type CustomFieldOptionNode = {
+  __typename: 'CustomFieldOptionNode';
+  customFieldId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  parentOptionId?: Maybe<Scalars['String']['output']>;
+};
+
+export type CustomFieldsResponse = CustomFieldConnector;
 
 export type CustomerIndicatorInformationNode = {
   __typename: 'CustomerIndicatorInformationNode';
@@ -4739,6 +4858,14 @@ export type InvoiceFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the requested invoice type's scope, e.g.
+   * `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`.
+   * Requires the query's `type` argument to pin a single supported invoice
+   * type (the custom fields scope is per type).
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   invoiceNumberOrStatus?: InputMaybe<StringFilterInput>;
@@ -4910,6 +5037,15 @@ export type InvoiceNode = {
   createdDatetime: Scalars['DateTime']['output'];
   currency?: Maybe<CurrencyNode>;
   currencyRate: Scalars['Float']['output'];
+  /**
+   * Properties v2 values for this invoice. The raw `invoice.custom_fields`
+   * JSONB blob is filtered server-side to keys that are (a) defined in
+   * `custom_field` and not soft-deleted, (b) marked visible for this invoice
+   * type's scope (e.g. `"inbound_shipment"`) via `custom_field_scope`. Stray
+   * keys never reach the client. `None` for types with no custom fields scope
+   * (repack, inventory adjustments).
+   */
+  customFields?: Maybe<Scalars['JSON']['output']>;
   defaultDonor?: Maybe<NameNode>;
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
@@ -5138,6 +5274,12 @@ export type ItemFilterInput = {
   categoryName?: InputMaybe<Scalars['String']['input']>;
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the "item" table scope, e.g.
+   * `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   /** Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true */
   hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -5222,6 +5364,14 @@ export type ItemNode = {
   availableStockOnHand: Scalars['Int']['output'];
   categories: Array<ItemCategoryNode>;
   code: Scalars['String']['output'];
+  /**
+   * Properties v2 values for this item. The raw `item.custom_fields` JSONB
+   * blob is filtered server-side to keys that are (a) defined in
+   * `custom_field` and not soft-deleted, (b) marked visible for the `item`
+   * table via `custom_field_scope`. Stray keys never reach the client.
+   * Imported from legacy mSupply `[item]user_field_1..7`; read-only.
+   */
+  customFields?: Maybe<Scalars['JSON']['output']>;
   ddd: Scalars['String']['output'];
   defaultPackSize: Scalars['Float']['output'];
   doses: Scalars['Int']['output'];
@@ -5915,6 +6065,11 @@ export type Mutations = {
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
   /** Updates a new patient (without document data) */
   updatePatient: UpdatePatientResponse;
+  /**
+   * Update a patient's new-system custom property values (`custom_fields`).
+   * Accepts a key->value patch; merges it into the patient's existing blob.
+   */
+  updatePatientCustomFields: UpdatePatientCustomFieldsResponse;
   updatePluginData: UpdatePluginDataResponse;
   updatePrescription: UpdatePrescriptionResponse;
   updatePrescriptionLine: UpdatePrescriptionLineResponse;
@@ -6571,6 +6726,11 @@ export type MutationsUpdatePatientArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdatePatientCustomFieldsArgs = {
+  input: UpdatePatientCustomFieldsInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUpdatePluginDataArgs = {
   input: UpdatePluginDataInput;
   storeId: Scalars['String']['input'];
@@ -6713,6 +6873,13 @@ export type NameFilterInput = {
   /** Search filter across name or code */
   codeOrName?: InputMaybe<StringFilterInput>;
   country?: InputMaybe<StringFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the "customer" or "supplier" table scope (the union,
+   * since names lists mix both), e.g.
+   * `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   email?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
@@ -6754,6 +6921,21 @@ export type NameNode = {
   createdDatetime?: Maybe<Scalars['DateTime']['output']>;
   currency?: Maybe<CurrencyNode>;
   customData?: Maybe<Scalars['JSON']['output']>;
+  /**
+   * Properties v2 values for this name. The raw `name.custom_fields` JSONB
+   * blob is filtered server-side to keys that are (a) defined in
+   * `custom_field` and not soft-deleted, (b) marked visible for one of this
+   * name's table scopes via `custom_field_scope`. Stray keys never reach the
+   * client.
+   *
+   * A name has no single scope: "customer"/"supplier" are independent role
+   * flags (not mutually exclusive) and "patient" is a type, so the visible
+   * set is the **union** over every scope the name qualifies for —
+   * `"patient"` if it's a patient, `"customer"` if `is_customer`,
+   * `"supplier"` if `is_supplier`. A name that matches none of these (e.g. a
+   * manufacturer/donor/store-only name) has no scope and surfaces nothing.
+   */
+  customFields?: Maybe<Scalars['JSON']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
@@ -7099,6 +7281,12 @@ export type PatientFilterInput = {
   country?: InputMaybe<StringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
   dateOfDeath?: InputMaybe<DateFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the "patient" table scope, e.g.
+   * `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   email?: InputMaybe<StringFilterInput>;
   firstName?: InputMaybe<StringFilterInput>;
   gender?: InputMaybe<EqualFilterGenderType>;
@@ -7121,6 +7309,12 @@ export type PatientNode = {
   contactTraces: ContactTraceResponse;
   country?: Maybe<Scalars['String']['output']>;
   createdDatetime?: Maybe<Scalars['DateTime']['output']>;
+  /**
+   * Patient custom property values (`name.custom_fields`), filtered to keys
+   * defined and visible for the `patient` table scope. Mirrors
+   * `NameNode.custom_fields` but always uses the `"patient"` scope.
+   */
+  customFields?: Maybe<Scalars['JSON']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
   document?: Maybe<DocumentNode>;
@@ -7989,6 +8183,12 @@ export type Queries = {
   contacts: ContactsResponse;
   csvToExcel: PrintReportResponse;
   currencies: CurrenciesResponse;
+  /**
+   * Properties v2 definitions. Used by list views, detail views and modals
+   * to learn what columns/fields to render. Filter by `scope` to restrict
+   * to a record kind (`{ equalTo: "customer" }`).
+   */
+  customFields: CustomFieldsResponse;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
   demographicProjectionByBaseYear: DemographicProjectionResponse;
@@ -8314,6 +8514,10 @@ export type QueriesCsvToExcelArgs = {
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
+};
+
+export type QueriesCustomFieldsArgs = {
+  filter?: InputMaybe<CustomFieldFilterInput>;
 };
 
 export type QueriesDemographicIndicatorsArgs = {
@@ -10982,6 +11186,17 @@ export type UpdateContactTraceInput = {
 
 export type UpdateContactTraceResponse = ContactTraceNode;
 
+export type UpdateCustomFieldScopeInput = {
+  customFieldId: Scalars['String']['input'];
+  displayMode: CustomFieldNodeDisplayMode;
+};
+
+export type UpdateCustomFieldScopesInput = {
+  /** The scope being configured, e.g. `"item"` or `"inbound_shipment"`. */
+  scope: Scalars['String']['input'];
+  updates: Array<UpdateCustomFieldScopeInput>;
+};
+
 export type UpdateCustomerReturnError = {
   __typename: 'UpdateCustomerReturnError';
   error: UpdateCustomerReturnErrorInterface;
@@ -10994,6 +11209,12 @@ export type UpdateCustomerReturnErrorInterface = {
 export type UpdateCustomerReturnInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Patch of customFields key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
@@ -11113,6 +11334,12 @@ export type UpdateInboundShipmentInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
+  /**
+   * Patch of customFields key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   defaultDonor?: InputMaybe<UpdateDonorInput>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
@@ -11304,6 +11531,12 @@ export type UpdateOutboundShipmentInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
+  /**
+   * Patch of customFields key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
@@ -11433,6 +11666,18 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
 };
 
 /**
+ * Patch of patient `custom_fields` values. `customFields` must be a JSON object
+ * of `key -> value`; a `null` value clears that key. Keys absent from the patch
+ * are left unchanged.
+ */
+export type UpdatePatientCustomFieldsInput = {
+  customFields: Scalars['JSON']['input'];
+  id: Scalars['String']['input'];
+};
+
+export type UpdatePatientCustomFieldsResponse = PatientNode;
+
+/**
  * All fields in the input object will be used to update the patient record.
  * This means that the caller also has to provide the fields that are not going to change.
  * For example, if the last_name is not provided, the last_name in the patient record will be cleared.
@@ -11481,6 +11726,12 @@ export type UpdatePrescriptionInput = {
   clinicianId?: InputMaybe<NullableStringUpdate>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Patch of customFields key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   diagnosisId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   insuranceDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
@@ -11952,6 +12203,12 @@ export enum UpdateStocktakeStatusInput {
 export type UpdateSupplierReturnInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Patch of customFields key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<UpdateSupplierReturnStatusInput>;

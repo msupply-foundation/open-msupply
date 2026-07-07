@@ -18,6 +18,7 @@ import {
   InboundNodeType,
   Box,
   AppFooterStatusPortal,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -45,6 +46,7 @@ import { DetailsTab } from './Tabs/Details';
 import { ScanInputModal } from './ScanInputModal';
 import { MobileToolbar } from './MobileToolbar';
 import { getInboundColorAndIcon } from '../ListView/SupplierCell';
+import { InvoiceCustomFieldsTab } from '../../common';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -75,7 +77,9 @@ const DetailViewInner = () => {
   const {
     query: { data, loading },
     isExternal,
+    isDisabled,
     invalidateQuery,
+    update: { update },
   } = useInboundShipment();
 
   // ScanInputModal needs the same line list that the table renders.
@@ -178,6 +182,17 @@ const DetailViewInner = () => {
         />
       ),
       value: InboundShipmentDetailTabs.Documents,
+    },
+    {
+      Component: (
+        <InvoiceCustomFieldsTab
+          invoiceType={InvoiceNodeType.InboundShipment}
+          customFields={data?.customFields}
+          onSave={patch => update({ customFields: patch })}
+          disabled={isDisabled}
+        />
+      ),
+      value: InboundShipmentDetailTabs.CustomFields,
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,

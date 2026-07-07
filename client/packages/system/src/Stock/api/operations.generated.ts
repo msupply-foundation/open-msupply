@@ -96,6 +96,7 @@ export type StockLineRowFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    customFields?: any | null;
     store?: {
       __typename: 'StoreNode';
       id: string;
@@ -351,6 +352,7 @@ export type StockLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
@@ -482,6 +484,7 @@ export type StockLineQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
@@ -651,6 +654,7 @@ export type UpdateStockLineMutation = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
+          customFields?: any | null;
           store?: {
             __typename: 'StoreNode';
             id: string;
@@ -994,6 +998,7 @@ export type InsertStockLineMutation = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
+          customFields?: any | null;
           store?: {
             __typename: 'StoreNode';
             id: string;
@@ -1192,6 +1197,7 @@ export type ItemsByStockLineFilterQuery = {
             isSupplier: boolean;
             isOnHold: boolean;
             name: string;
+            customFields?: any | null;
             store?: {
               __typename: 'StoreNode';
               id: string;

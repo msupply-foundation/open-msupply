@@ -91,6 +91,9 @@ pub use self::repack::*;
 pub mod property;
 pub use self::property::*;
 
+pub mod custom_field;
+pub use self::custom_field::*;
+
 pub mod program;
 pub use self::program::*;
 

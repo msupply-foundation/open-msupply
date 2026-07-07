@@ -11,6 +11,7 @@ import {
   useBreadcrumbs,
   useUrlQuery,
   AppFooterStatusPortal,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
@@ -22,6 +23,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { OutboundOpenedWith } from './OutboundLineEdit';
 import { DetailsTab } from './Tabs/Details';
 import { OutboundShipmentDetailTabs } from './types';
+import { InvoiceCustomFieldsTab } from '../../common';
 
 export const DetailView = () => {
   const t = useTranslation();
@@ -32,6 +34,8 @@ export const DetailView = () => {
   const lineEditModal = useEditModal<OutboundOpenedWith>();
 
   const { data, isLoading } = useOutbound.document.get();
+  const { mutateAsync: update } = useOutbound.document.update();
+  const isDisabled = useOutbound.utils.isDisabled();
 
   useEffect(() => {
     setCustomBreadcrumbs({ 1: data?.invoiceNumber.toString() ?? '' });
@@ -57,6 +61,20 @@ export const DetailView = () => {
     {
       Component: <DetailsTab lineEdit={lineEditModal} />,
       value: OutboundShipmentDetailTabs.Details,
+    },
+    {
+      Component: (
+        <InvoiceCustomFieldsTab
+          invoiceType={InvoiceNodeType.OutboundShipment}
+          customFields={data?.customFields}
+          onSave={async patch => {
+            if (!data?.id) return;
+            return update({ id: data.id, customFields: patch });
+          }}
+          disabled={isDisabled}
+        />
+      ),
+      value: 'custom-fields',
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,

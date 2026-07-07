@@ -17,6 +17,7 @@ diesel = { version = "2.3.7", default-features = false, features = [
     "r2d2",
     "numeric",
     "chrono",
+    "serde_json",
     "64-column-tables",
     "with-deprecated",
 ] }
