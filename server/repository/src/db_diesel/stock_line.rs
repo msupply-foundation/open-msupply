@@ -68,6 +68,7 @@ pub struct StockLineFilter {
     pub master_list: Option<MasterListFilter>,
     pub is_active: Option<bool>,
     pub is_program_stock_line: Option<bool>,
+    pub campaign_id: Option<EqualFilter<String>>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -286,6 +287,7 @@ impl<'a> StockLineRepository<'a> {
                 master_list,
                 is_active,
                 is_program_stock_line,
+                campaign_id,
             } = f;
 
             // OR filters must come first
@@ -318,6 +320,7 @@ impl<'a> StockLineRepository<'a> {
             apply_date_filter!(query, expiry_date, stock_line::expiry_date);
             apply_equal_filter!(query, store_id, stock_line::store_id);
             apply_equal_filter!(query, vvm_status_id, stock_line::vvm_status_id);
+            apply_equal_filter!(query, campaign_id, stock_line::campaign_id);
 
             if let Some(is_active) = is_active {
                 query = query.filter(item::is_active.eq(is_active));
@@ -453,6 +456,11 @@ impl StockLineFilter {
 
     pub fn is_program_stock_line(mut self, filter: bool) -> Self {
         self.is_program_stock_line = Some(filter);
+        self
+    }
+
+    pub fn campaign_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.campaign_id = Some(filter);
         self
     }
 }

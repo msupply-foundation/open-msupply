@@ -76,10 +76,10 @@ fragment StockLineRow on StockLineNode {
 }
 
 # Lean fragment for the paginated stock list (ungrouped + grouped) and CSV
-# export. Carries only the fields those views render. The full StockLineRow
-# fragment above is kept for the detail/edit queries (stockLine, insert/update)
-# which need vvmStatusLogs, itemVariant, donor, program, campaign and
-# itemStoreProperties.
+# export. Carries only the fields those views render (including campaign, for
+# the campaign column). The full StockLineRow fragment above is kept for the
+# detail/edit queries (stockLine, insert/update) which also need vvmStatusLogs,
+# itemVariant, donor, program and itemStoreProperties.
 fragment StockLineListRow on StockLineNode {
   availableNumberOfPacks
   batch
@@ -124,6 +124,10 @@ fragment StockLineListRow on StockLineNode {
   }
   manufacturer(storeId: $storeId) {
     ...NameRow
+  }
+  campaign {
+    id
+    name
   }
 }
 
