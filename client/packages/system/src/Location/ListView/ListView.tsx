@@ -141,6 +141,8 @@ export const LocationListView = () => {
           isOpen={isOpen}
           onClose={onClose}
           location={entity}
+          sortBy={sortBy}
+          filterBy={filterBy}
         />
       )}
       <AppBarButtons onCreate={() => onOpen()} sortBy={sortBy} />

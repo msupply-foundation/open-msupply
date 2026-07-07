@@ -95,7 +95,10 @@ impl<'a> PurchaseOrderRepository<'a> {
         // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let result = query
+            .then_order_by(purchase_order::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<PurchaseOrderJoin>(self.connection.lock().connection())?;

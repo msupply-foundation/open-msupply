@@ -67,6 +67,10 @@ pub fn get_plugin_data(
     let mut filter = filter.map(|f| f.to_domain()).unwrap_or_default();
     filter.plugin_code = Some(EqualFilter::equal_to(plugin_code.to_owned()));
 
+    // Scope to this store's own rows + global (NULL) rows; forced server-side so
+    // a caller can't read another store's data.
+    filter.store_id = Some(EqualFilter::equal_any_or_null(vec![store_id.to_string()]));
+
     let plugin_data = service_provider
         .plugin_data_service
         .get_plugin_data(
