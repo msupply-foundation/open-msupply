@@ -36,7 +36,6 @@ export const AppBarButtonsComponent = ({
         <ReportSelector
           context={ReportContext.StockMovement}
           dataId={movement.id}
-          extraArguments={{ relocationIds: [movement.id] }}
         />
         {OpenButton}
       </Grid>
