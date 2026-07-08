@@ -1,7 +1,6 @@
 use super::{
-    campaign_row::campaign, item_variant::item_variant_row::item_variant,
-    location_row::location, name_row::name, item_row::item, store_row::store,
-    StorageConnection,
+    campaign_row::campaign, item_row::item, item_variant::item_variant_row::item_variant,
+    location_row::location, name_row::name, store_row::store, StorageConnection,
 };
 
 use crate::{

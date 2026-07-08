@@ -1,0 +1,112 @@
+@media print {
+  @page {
+    @bottom-right {
+      font-family: Tahoma;
+      font-size: 8pt;
+      /* do not allow formatter to add a line break in the content */
+      /* prettier-ignore*/
+      content: '{{t(k="report.page",f="Page")}} ' counter(page) ' {{t(k="report.of",f="of")}} ' counter(pages);
+    }
+  }
+}
+
+body > table {
+  width: 100%;
+  padding: 2em;
+}
+
+.logo {
+  display: block;
+  height: 96px;
+}
+
+.header_image_section {
+  width: 100%;
+  font-family: Tahoma;
+  font-size: 8pt;
+  border-bottom: 0.5px solid black;
+  padding-top: 8pt;
+}
+
+.header_details_section {
+  width: 100%;
+  font-family: Tahoma;
+  font-size: 8pt;
+}
+
+.header_details_label {
+  width: 12%;
+  text-align: start;
+  vertical-align: top;
+}
+
+.header_details_value {
+  width: 38%;
+  text-align: start;
+  vertical-align: top;
+  font-weight: bold;
+}
+
+.body_section {
+  width: 100%;
+  font-family: Tahoma;
+  font-size: 8pt;
+  text-align: left;
+}
+
+.body_section tr.body_column_label th {
+  border-bottom: 0.5px solid black;
+  text-align: left;
+  vertical-align: bottom;
+}
+
+.body_value td {
+  border-bottom: 0.5px solid black;
+}
+
+.item_code {
+  font-size: 7pt;
+  color: #555;
+}
+
+/* Numeric columns are right-aligned */
+.pack,
+.packs {
+  text-align: right;
+}
+
+/* Manual-entry column for warehouse staff (tick / actual packs moved) */
+.done {
+  width: 60px;
+  text-align: center;
+}
+
+.line_count {
+  font-family: Tahoma;
+  font-size: 7pt;
+  color: #555;
+  padding: 4px 0 0 2em;
+}
+
+.signoff {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-family: Tahoma;
+  font-size: 8pt;
+  border-top: 0.5px solid black;
+  padding-top: 6px;
+}
+
+.signoff-col {
+  width: 30%;
+}
+
+.signoff-heading {
+  font-weight: bold;
+  margin: 0 0 18px 0;
+}
+
+.signoff-line {
+  border-bottom: 0.5px solid black;
+}
