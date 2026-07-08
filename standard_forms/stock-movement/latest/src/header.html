@@ -19,13 +19,42 @@
       <br>
     </th>
     <th style="text-align:end;width:60%;font-size:24pt;">
-      {{ t(k="label.stock-movements", f="Stock movements") }}<br>
+      {{ t(k="label.stock-movement", f="Stock movement") }}<br>
     </th>
   </tr>
 </table>
 
-<div class="header_image_section" style="display: flex; flex-direction: column;">
-  <div style="display: flex; justify-content: flex-end;">
-    {{t(k="label.date", f="Date")}}: {{ now() | date(format="%d/%m/%Y") }}
-  </div>
-</div>
+<table class="header_details_section">
+  <tr>
+    <td class="header_details_label">{{t(k="label.reference",f="Reference")}}</td>
+    <td class="header_details_value">{{ data.stockRelocation.stockMovementNumber }}</td>
+    <td class="header_details_label">{{t(k="label.date-created",f="Date created")}}</td>
+    <td class="header_details_value">
+      {{ data.stockRelocation.createdDatetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}
+    </td>
+  </tr>
+  <tr>
+    <td class="header_details_label">{{t(k="label.status",f="Status")}}</td>
+    <td class="header_details_value">
+      {% if data.stockRelocation.status == "NEW" %}{{t(k="label.new",f="New")}}
+      {% elif data.stockRelocation.status == "CONFIRMED" %}{{t(k="label.confirmed",f="Confirmed")}}
+      {% else %}{{t(k="label.finalised",f="Finalised")}}{% endif %}
+    </td>
+    <td class="header_details_label">{{t(k="label.printed",f="Printed")}}</td>
+    <td class="header_details_value">{{ now() | date(format="%d/%m/%Y") }}</td>
+  </tr>
+  <tr>
+    <td class="header_details_label">{{t(k="label.created-by",f="Created by")}}</td>
+    <td class="header_details_value">
+      {% if data.stockRelocation.user %}{{ data.stockRelocation.user.username }}{% endif %}
+    </td>
+    <td class="header_details_label"></td>
+    <td class="header_details_value"></td>
+  </tr>
+  {% if data.stockRelocation.comment %}
+  <tr>
+    <td class="header_details_label">{{t(k="label.comment",f="Comment")}}</td>
+    <td class="header_details_value" colspan="3">{{ data.stockRelocation.comment }}</td>
+  </tr>
+  {% endif %}
+</table>

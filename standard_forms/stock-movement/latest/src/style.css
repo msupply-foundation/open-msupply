@@ -28,6 +28,25 @@ body > table {
   padding-top: 8pt;
 }
 
+.header_details_section {
+  width: 100%;
+  font-family: Tahoma;
+  font-size: 8pt;
+}
+
+.header_details_label {
+  width: 12%;
+  text-align: start;
+  vertical-align: top;
+}
+
+.header_details_value {
+  width: 38%;
+  text-align: start;
+  vertical-align: top;
+  font-weight: bold;
+}
+
 .body_section {
   width: 100%;
   font-family: Tahoma;
@@ -45,18 +64,49 @@ body > table {
   border-bottom: 0.5px solid black;
 }
 
+.item_code {
+  font-size: 7pt;
+  color: #555;
+}
+
 /* Numeric columns are right-aligned */
 .pack,
 .packs {
   text-align: right;
 }
 
-/* Manual-entry columns for warehouse staff */
+/* Manual-entry column for warehouse staff (tick / actual packs moved) */
 .done {
-  width: 40px;
+  width: 60px;
   text-align: center;
 }
 
-.moved-on {
-  width: 70px;
+.line_count {
+  font-family: Tahoma;
+  font-size: 7pt;
+  color: #555;
+  padding: 4px 0 0 2em;
+}
+
+.signoff {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-family: Tahoma;
+  font-size: 8pt;
+  border-top: 0.5px solid black;
+  padding-top: 6px;
+}
+
+.signoff-col {
+  width: 30%;
+}
+
+.signoff-heading {
+  font-weight: bold;
+  margin: 0 0 18px 0;
+}
+
+.signoff-line {
+  border-bottom: 0.5px solid black;
 }
