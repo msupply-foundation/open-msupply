@@ -101,7 +101,10 @@ impl<'a> RnRFormRepository<'a> {
             query = query.order(rnr_form::created_datetime.asc())
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let result = query
+            .then_order_by(rnr_form::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<RnRFormJoin>(self.connection.lock().connection())?;
