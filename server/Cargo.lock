@@ -8889,6 +8889,7 @@ dependencies = [
  "diesel-derive-enum",
  "futures-util",
  "glob",
+ "heck 0.5.0",
  "libsqlite3-sys",
  "log",
  "pretty_assertions",

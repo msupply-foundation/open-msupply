@@ -34,6 +34,9 @@ reqwest = { version = "0.13.3", features = [
 # `util::tls::tests::https_client_builds`). Bump together with reqwest.
 rustls = "0.23.4"
 webpki-roots = "1.0"
+# The same crate/version strum_macros uses for `serialize_all` casings — the
+# diesel_string_enum! fallback normalization relies on identical conversions.
+heck = "0.5.0"
 serde = { version = "^1.0.219", features = ["derive"] }
 serde_json = "1.0.149"
 serde_yaml = "0.9.34"
