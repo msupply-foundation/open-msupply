@@ -660,14 +660,36 @@ macro_rules! define_linked_tables {
 /// for any value the enum doesn't recognise — both from the database and from serde. This
 /// lets a newer peer send a value an older peer has never heard of (e.g. a table added on
 /// central but not yet on a remote) without failing the whole parse: the unknown string is
-/// captured in the fallback variant and round-trips back out unchanged (`transparent` makes
-/// `as_ref()`/`Display`/serde emit the inner string). Enums with no fallback variant keep
+/// captured in the fallback variant and emitted back out via `transparent` (`as_ref()`/
+/// `Display`/serde all yield the inner string). Enums with no fallback variant keep
 /// the strict behaviour — an unknown value is an error.
+///
+/// # `db_case` — unknown values are normalized to the DB casing at capture
+///
+/// A serde-captured unknown arrives in the *wire* casing (the newer peer's variant
+/// identifier, PascalCase) but is subsequently written to a DB column whose known values
+/// use the *strum* casing — and would then never parse into the real variant once an
+/// upgrade adds it (`from_str` only knows the strum casing). To make stored values
+/// self-heal, an enum with a fallback variant declares its strum rule up front:
+///
+/// `db_case = SCREAMING_SNAKE_CASE;` (or `snake_case`)
+///
+/// and the serde deserialize fallback converts the captured string with the matching
+/// [`heck`] function — the same crate and version `strum_macros` uses for
+/// `serialize_all`, so the conversion is byte-identical to what strum derives for the
+/// variant on the build that knows it. The wire format for *known* values is unchanged
+/// in both directions; a pass-through unknown re-serialises in its normalized form and
+/// is re-captured idempotently at every hop. Caveat: a future variant carrying a
+/// per-variant `#[strum(serialize = "…")]` override won't match its heck-derived form
+/// and simply stays in the fallback after upgrade — the same as before this existed.
+/// Enums without a fallback variant don't need (or use) a declaration.
 ///
 /// Usage:
 /// ```
 /// diesel_string_enum! {
+///     db_case = SCREAMING_SNAKE_CASE;
 ///     #[derive(Clone)]
+///     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
 ///     pub enum MyEnum {
 ///         #[default]
 ///         VariantA,
@@ -678,7 +700,25 @@ macro_rules! define_linked_tables {
 /// }
 /// ```
 macro_rules! diesel_string_enum {
+    // Without a `db_case` declaration: unknown values are captured verbatim
+    // (only correct for enums without a fallback variant — see the macro docs).
     (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident {
+            $($body:tt)*
+        }
+    ) => {
+        diesel_string_enum! {
+            db_case = verbatim;
+            $(#[$meta])*
+            $vis enum $name {
+                $($body)*
+            }
+        }
+    };
+
+    (
+        db_case = $db_case:ident;
         $(#[$meta:meta])*
         $vis:vis enum $name:ident {
             $(
@@ -769,7 +809,7 @@ macro_rules! diesel_string_enum {
             ) -> Result<Self, D::Error> {
                 let value = <String as serde::Deserialize>::deserialize(deserializer)?;
                 $(
-                    diesel_string_enum!(@deserialize_variant value $name $variant $(( $($variant_payload)* ))?);
+                    diesel_string_enum!(@deserialize_variant $db_case value $name $variant $(( $($variant_payload)* ))?);
                 )*
                 // No known variant matched and there was no fallback variant.
                 Err(serde::de::Error::custom(format!(
@@ -796,15 +836,33 @@ macro_rules! diesel_string_enum {
 
     // --- serde deserialize: compare against each known name; fallback catches the rest ---
     // Unit variant: match on its PascalCase identifier.
-    (@deserialize_variant $value:ident $name:ident $variant:ident) => {
+    (@deserialize_variant $db_case:ident $value:ident $name:ident $variant:ident) => {
         if $value == stringify!($variant) {
             return Ok($name::$variant);
         }
     };
-    // Fallback variant with a payload: capture whatever value is left. Declared last in the
-    // enum, so it only runs once every known variant has been ruled out above.
-    (@deserialize_variant $value:ident $name:ident $variant:ident ( $($variant_payload:tt)* )) => {
-        return Ok($name::$variant($value));
+    // Fallback variant with a payload: capture whatever value is left, normalized to the
+    // enum's DB casing (see the `db_case` macro docs) so anything subsequently written to
+    // the database — a column via ToSql, or `sync_buffer.table_name` via `to_string()` —
+    // parses into the real variant once an upgrade adds it. Declared last in the enum, so
+    // it only runs once every known variant has been ruled out above.
+    (@deserialize_variant $db_case:ident $value:ident $name:ident $variant:ident ( $($variant_payload:tt)* )) => {
+        return Ok($name::$variant(diesel_string_enum!(@to_db_case $db_case $value)));
+    };
+
+    // --- db_case dispatch: expansion-time mapping to the heck conversion strum_macros
+    // uses for the matching `serialize_all` rule (same crate + version → byte-identical
+    // output for any variant identifier).
+    (@to_db_case SCREAMING_SNAKE_CASE $value:ident) => {{
+        use heck::ToShoutySnakeCase;
+        $value.to_shouty_snake_case()
+    }};
+    (@to_db_case snake_case $value:ident) => {{
+        use heck::ToSnakeCase;
+        $value.to_snake_case()
+    }};
+    (@to_db_case verbatim $value:ident) => {
+        $value
     };
 }
 
@@ -861,3 +919,103 @@ pub(crate) use apply_string_or_filter;
 pub(crate) use define_linked_tables;
 pub(crate) use diesel_json_type;
 pub(crate) use diesel_string_enum;
+
+#[cfg(test)]
+mod diesel_string_enum_test {
+    diesel_string_enum! {
+        db_case = SCREAMING_SNAKE_CASE;
+        #[derive(Clone, Eq)]
+        #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+        pub enum WithFallback {
+            #[default]
+            VariantA,
+            VariantB,
+            #[strum(default, transparent)]
+            Other(String),
+        }
+    }
+
+    // No db_case declaration: fallback capture stays verbatim (legacy behaviour,
+    // exercised to pin that the declaration-less arm still works).
+    diesel_string_enum! {
+        #[derive(Clone, Eq)]
+        #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+        pub enum VerbatimFallback {
+            #[default]
+            VariantA,
+            #[strum(default, transparent)]
+            Other(String),
+        }
+    }
+
+    diesel_string_enum! {
+        #[derive(Clone, Eq)]
+        #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
+        pub enum Strict {
+            #[default]
+            VariantA,
+            VariantB,
+        }
+    }
+
+    #[test]
+    fn known_variants_keep_the_identifier_wire_form() {
+        assert_eq!(
+            serde_json::to_value(WithFallback::VariantB).unwrap(),
+            serde_json::json!("VariantB")
+        );
+        assert_eq!(
+            serde_json::from_value::<WithFallback>(serde_json::json!("VariantB")).unwrap(),
+            WithFallback::VariantB
+        );
+        // DB casing is strum's, unaffected by db_case.
+        assert_eq!(WithFallback::VariantB.as_ref(), "VARIANT_B");
+    }
+
+    #[test]
+    fn unknown_values_are_captured_normalized_to_the_db_casing() {
+        // A wire-cased unknown (a variant only a newer build knows) is captured in the
+        // enum's DB casing, so ToSql / `to_string()` store a value that parses into the
+        // real variant once an upgrade adds it.
+        assert_eq!(
+            serde_json::from_value::<WithFallback>(serde_json::json!("FutureVariant")).unwrap(),
+            WithFallback::Other("FUTURE_VARIANT".to_string())
+        );
+        // Re-serialises in the normalized form; re-capture is idempotent.
+        assert_eq!(
+            serde_json::to_value(WithFallback::Other("FUTURE_VARIANT".to_string())).unwrap(),
+            serde_json::json!("FUTURE_VARIANT")
+        );
+        assert_eq!(
+            serde_json::from_value::<WithFallback>(serde_json::json!("FUTURE_VARIANT")).unwrap(),
+            WithFallback::Other("FUTURE_VARIANT".to_string())
+        );
+        // The normalized form is exactly what strum derives once the variant exists:
+        // heck's ShoutySnake of "VariantB" == strum's serialize_all output.
+        use std::str::FromStr;
+        assert_eq!(
+            serde_json::from_value::<WithFallback>(serde_json::json!("VariantB"))
+                .map(|v| v.as_ref().to_string())
+                .unwrap(),
+            WithFallback::from_str("VARIANT_B").unwrap().as_ref()
+        );
+    }
+
+    #[test]
+    fn without_db_case_capture_is_verbatim() {
+        assert_eq!(
+            serde_json::from_value::<VerbatimFallback>(serde_json::json!("FutureVariant"))
+                .unwrap(),
+            VerbatimFallback::Other("FutureVariant".to_string())
+        );
+    }
+
+    #[test]
+    fn strict_enum_still_errors_on_unknown() {
+        assert!(serde_json::from_value::<Strict>(serde_json::json!("FutureVariant")).is_err());
+        assert_eq!(
+            serde_json::from_value::<Strict>(serde_json::json!("VariantB")).unwrap(),
+            Strict::VariantB
+        );
+    }
+}
