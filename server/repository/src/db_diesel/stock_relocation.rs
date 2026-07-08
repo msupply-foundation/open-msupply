@@ -57,13 +57,6 @@ impl<'a> StockRelocationRepository<'a> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
-    pub fn query_one(
-        &self,
-        filter: StockRelocationFilter,
-    ) -> Result<Option<StockRelocation>, RepositoryError> {
-        Ok(self.query_by_filter(filter)?.pop())
-    }
-
     pub fn query(
         &self,
         pagination: Pagination,
@@ -99,9 +92,7 @@ impl<'a> StockRelocationRepository<'a> {
         Ok(result.into_iter().map(to_domain).collect())
     }
 
-    pub fn create_filtered_query(
-        filter: Option<StockRelocationFilter>,
-    ) -> BoxedStockRelocationQuery {
+    fn create_filtered_query(filter: Option<StockRelocationFilter>) -> BoxedStockRelocationQuery {
         let mut query = stock_relocation::table.into_boxed();
 
         if let Some(f) = filter {
@@ -152,35 +143,6 @@ impl StockRelocationFilter {
         self.id = Some(filter);
         self
     }
-    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.store_id = Some(filter);
-        self
-    }
-    pub fn status(mut self, filter: EqualFilter<StockRelocationStatus>) -> Self {
-        self.status = Some(filter);
-        self
-    }
-    pub fn stock_movement_number(mut self, filter: EqualFilter<i64>) -> Self {
-        self.stock_movement_number = Some(filter);
-        self
-    }
-    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.created_datetime = Some(filter);
-        self
-    }
-    pub fn username(mut self, filter: StringFilter) -> Self {
-        self.username = Some(filter);
-        self
-    }
-}
-
-impl StockRelocationStatus {
-    pub fn equal_to(&self) -> EqualFilter<Self> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            ..Default::default()
-        }
-    }
 }
 
 #[cfg(test)]
@@ -189,8 +151,8 @@ mod test {
 
     use crate::{
         mock::MockDataInserts, test_db::setup_all, EqualFilter, StockRelocationFilter,
-        StockRelocationRepository, StockRelocationRow, StockRelocationSort, StockRelocationSortField,
-        StockRelocationStatus, Upsert,
+        StockRelocationRepository, StockRelocationRow, StockRelocationSort,
+        StockRelocationSortField, StockRelocationStatus, Upsert,
     };
 
     fn relocation(id: &str) -> StockRelocationRow {
@@ -219,28 +181,29 @@ mod test {
         let repo = StockRelocationRepository::new(&connection);
 
         let result = repo
-            .query_one(
+            .query_by_filter(
                 StockRelocationFilter::new()
                     .id(EqualFilter::equal_to("stock_relocation_1".to_string())),
             )
             .unwrap()
+            .pop()
             .unwrap();
         assert_eq!(result.stock_relocation_row, row);
 
         assert_eq!(
-            repo.count(Some(
-                StockRelocationFilter::new()
-                    .store_id(EqualFilter::equal_to("store_a".to_string()))
-                    .status(StockRelocationStatus::Finalised.equal_to())
-            ))
+            repo.count(Some(StockRelocationFilter {
+                store_id: Some(EqualFilter::equal_to("store_a".to_string())),
+                status: Some(EqualFilter::equal_to(StockRelocationStatus::Finalised)),
+                ..Default::default()
+            }))
             .unwrap(),
             1
         );
         assert_eq!(
-            repo.query_by_filter(
-                StockRelocationFilter::new()
-                    .stock_movement_number(EqualFilter::equal_to(1))
-            )
+            repo.query_by_filter(StockRelocationFilter {
+                stock_movement_number: Some(EqualFilter::equal_to(1)),
+                ..Default::default()
+            })
             .unwrap()
             .len(),
             1

@@ -69,7 +69,9 @@ mod test {
 
     use crate::service_provider::{ServiceContext, ServiceProvider};
     use crate::stock_relocation::insert::InsertStockRelocation;
-    use crate::stock_relocation_line::upsert::UpsertStockRelocationLine;
+    use crate::stock_relocation_line::upsert::{
+        upsert_stock_relocation_line, UpsertStockRelocationLine,
+    };
 
     use super::*;
 
@@ -110,40 +112,30 @@ mod test {
         id
     }
 
-    async fn add_line(
-        service_provider: &ServiceProvider,
-        ctx: &ServiceContext,
-        movement_id: &str,
-        stock_line_id: &str,
-    ) -> String {
-        service_provider
-            .stock_relocation_service
-            .upsert_stock_relocation_line(
-                ctx,
-                "store_a",
-                UpsertStockRelocationLine {
-                    id: uuid(),
-                    stock_relocation_id: movement_id.to_string(),
-                    stock_line_id: stock_line_id.to_string(),
-                    number_of_packs: 1.0,
-                    destination_location_id: Some(mock_location_1().id),
-                },
-            )
-            .unwrap()
-            .id
+    async fn add_line(ctx: &ServiceContext, movement_id: &str, stock_line_id: &str) -> String {
+        upsert_stock_relocation_line(
+            ctx,
+            "store_a",
+            UpsertStockRelocationLine {
+                id: uuid(),
+                stock_relocation_id: movement_id.to_string(),
+                stock_line_id: stock_line_id.to_string(),
+                number_of_packs: 1.0,
+                destination_location_id: Some(mock_location_1().id),
+            },
+        )
+        .unwrap()
+        .id
     }
 
     #[actix_rt::test]
     async fn delete_line_success() {
         let (service_provider, ctx) = setup("delete_line_success").await;
         stock_line("del_sl").upsert(&ctx.connection).unwrap();
-        let service = &service_provider.stock_relocation_service;
         let movement_id = new_movement(&service_provider, &ctx).await;
-        let line_id = add_line(&service_provider, &ctx, &movement_id, "del_sl").await;
+        let line_id = add_line(&ctx, &movement_id, "del_sl").await;
 
-        let deleted = service
-            .delete_stock_relocation_line(&ctx, "store_a", line_id.clone())
-            .unwrap();
+        let deleted = delete_stock_relocation_line(&ctx, "store_a", line_id.clone()).unwrap();
         assert_eq!(deleted, line_id);
         assert!(StockRelocationLineRowRepository::new(&ctx.connection)
             .find_one_by_id(&line_id)
@@ -160,19 +152,19 @@ mod test {
         stock_line("fin_sl").upsert(&ctx.connection).unwrap();
         let service = &service_provider.stock_relocation_service;
         let movement_id = new_movement(&service_provider, &ctx).await;
-        let line_id = add_line(&service_provider, &ctx, &movement_id, "del_sl").await;
+        let line_id = add_line(&ctx, &movement_id, "del_sl").await;
 
         assert_eq!(
-            service.delete_stock_relocation_line(&ctx, "store_a", uuid()),
+            delete_stock_relocation_line(&ctx, "store_a", uuid()),
             Err(DeleteStockRelocationLineError::LineDoesNotExist)
         );
         assert_eq!(
-            service.delete_stock_relocation_line(&ctx, "store_b", line_id),
+            delete_stock_relocation_line(&ctx, "store_b", line_id),
             Err(DeleteStockRelocationLineError::NotThisStoreRelocation)
         );
 
         let finalised_id = new_movement(&service_provider, &ctx).await;
-        let finalised_line = add_line(&service_provider, &ctx, &finalised_id, "fin_sl").await;
+        let finalised_line = add_line(&ctx, &finalised_id, "fin_sl").await;
         service
             .update_stock_relocation(
                 &ctx,
@@ -185,7 +177,7 @@ mod test {
             )
             .unwrap();
         assert_eq!(
-            service.delete_stock_relocation_line(&ctx, "store_a", finalised_line),
+            delete_stock_relocation_line(&ctx, "store_a", finalised_line),
             Err(DeleteStockRelocationLineError::StockRelocationFinalised)
         );
     }
