@@ -8,7 +8,7 @@ use crate::{
         convert_invoice_line_to_single_pack, generate_batch, should_update_stock, StockInType,
         StockLineInput,
     },
-    preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference},
+    preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference, PreferenceError},
     store_preference::get_store_preferences,
 };
 use repository::{
@@ -38,7 +38,7 @@ pub fn generate(
     let external_inbound_shipment_lines_must_be_authorised =
         ExternalInboundShipmentLinesMustBeAuthorised
             .load(connection, Some(existing_invoice_row.store_id.clone()))
-            .unwrap_or(false);
+            .map_err(PreferenceError::into_repository_error)?;
 
     let mut new_line = generate_line(
         input.clone(),

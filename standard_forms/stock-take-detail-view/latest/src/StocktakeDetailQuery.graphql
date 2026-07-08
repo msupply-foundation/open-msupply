@@ -64,4 +64,7 @@ query StocktakeDetailQuery(
       }
     }
   }
+  preferences(storeId: $storeId) {
+    blindStocktake
+  }
 }
