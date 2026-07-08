@@ -210,10 +210,15 @@
   "Male": "مرد",
   "Female": "زن",
   "Women": "زنان",
+  "Women 15-49": "زنان ۱۵-۴۹ ساله",
   "Pregnant": "باردار",
   "Non Pregnant": "غیر باردار",
+  "Non-pregnant": "غیر باردار",
   "0-11 months": "۰-۱۱ ماه",
   "12-23 months": "۱۲-۲۳ ماه",
+  "months 0-11": "۰-۱۱ ماه",
+  "months 12-23": "۱۲-۲۳ ماه",
+  "months 24-59": "۲۴-۵۹ ماه",
   "Children's Vaccination Summary": "خلاصه واکسیناسیون کودکان",
   "Women's Vaccination Summary": "خلاصه واکسیناسیون زنان"
 }

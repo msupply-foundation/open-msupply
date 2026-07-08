@@ -210,10 +210,15 @@
   "Male": "نارینه",
   "Female": "ښځینه",
   "Women": "میرمنې",
+  "Women 15-49": "د ۱۵-۴۹ کلنو میرمنې",
   "Pregnant": "حامله",
   "Non Pregnant": "غیر حامله",
+  "Non-pregnant": "غیر حامله",
   "0-11 months": "۰-۱۱ میاشتې",
   "12-23 months": "۱۲-۲۳ میاشتې",
+  "months 0-11": "۰-۱۱ میاشتې",
+  "months 12-23": "۱۲-۲۳ میاشتې",
+  "months 24-59": "۲۴-۵۹ میاشتې",
   "Children's Vaccination Summary": "د ماشومانو واکسیناسیون لنډیز",
   "Women's Vaccination Summary": "د میرمنو واکسیناسیون لنډیز"
 }

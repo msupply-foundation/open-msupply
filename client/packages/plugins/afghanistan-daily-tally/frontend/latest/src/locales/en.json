@@ -210,10 +210,15 @@
   "Male": "Male",
   "Female": "Female",
   "Women": "Women",
+  "Women 15-49": "Women 15-49",
   "Pregnant": "Pregnant",
   "Non Pregnant": "Non Pregnant",
+  "Non-pregnant": "Non-pregnant",
   "0-11 months": "0-11 months",
   "12-23 months": "12-23 months",
+  "months 0-11": "months 0-11",
+  "months 12-23": "months 12-23",
+  "months 24-59": "months 24-59",
   "Children's Vaccination Summary": "Children's Vaccination Summary",
   "Women's Vaccination Summary": "Women's Vaccination Summary"
 }
