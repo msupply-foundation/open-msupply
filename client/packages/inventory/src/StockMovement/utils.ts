@@ -10,7 +10,7 @@ export const stockMovementStatuses = [
   StockRelocationNodeStatus.Finalised,
 ];
 
-export const getStatusTranslationKey = (
+const getStatusTranslationKey = (
   status: StockRelocationNodeStatus
 ): LocaleKey => {
   switch (status) {

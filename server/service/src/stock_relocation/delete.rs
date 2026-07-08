@@ -98,7 +98,7 @@ mod test {
     use crate::service_provider::{ServiceContext, ServiceProvider};
     use crate::stock_relocation::insert::InsertStockRelocation;
     use crate::stock_relocation::update::UpdateStockRelocation;
-    use crate::stock_relocation_line::UpsertStockRelocationLine;
+    use crate::stock_relocation_line::{upsert_stock_relocation_line, UpsertStockRelocationLine};
 
     use super::*;
 
@@ -115,27 +115,24 @@ mod test {
     }
 
     fn add_line(
-        service_provider: &ServiceProvider,
         ctx: &ServiceContext,
         movement_id: &str,
         stock_line_id: &str,
         number_of_packs: f64,
     ) -> String {
-        service_provider
-            .stock_relocation_service
-            .upsert_stock_relocation_line(
-                ctx,
-                "store_a",
-                UpsertStockRelocationLine {
-                    id: uuid(),
-                    stock_relocation_id: movement_id.to_string(),
-                    stock_line_id: stock_line_id.to_string(),
-                    number_of_packs,
-                    destination_location_id: Some(mock_location_1().id),
-                },
-            )
-            .unwrap()
-            .id
+        upsert_stock_relocation_line(
+            ctx,
+            "store_a",
+            UpsertStockRelocationLine {
+                id: uuid(),
+                stock_relocation_id: movement_id.to_string(),
+                stock_line_id: stock_line_id.to_string(),
+                number_of_packs,
+                destination_location_id: Some(mock_location_1().id),
+            },
+        )
+        .unwrap()
+        .id
     }
 
     async fn setup(test: &str) -> (ServiceProvider, ServiceContext) {
@@ -179,7 +176,7 @@ mod test {
         assert!(repo.find_one_by_id(&id).unwrap().is_none());
 
         let delete_id = new_movement(&service_provider, &ctx);
-        let line_id = add_line(&service_provider, &ctx, &delete_id, "delete_sl", 4.0);
+        let line_id = add_line(&ctx, &delete_id, "delete_sl", 4.0);
         assert!(line_repo.find_one_by_id(&line_id).unwrap().is_some());
         service
             .delete_stock_relocation(
@@ -233,7 +230,7 @@ mod test {
         );
 
         let finalised_id = new_movement(&service_provider, &ctx);
-        add_line(&service_provider, &ctx, &finalised_id, "fin_sl", 10.0);
+        add_line(&ctx, &finalised_id, "fin_sl", 10.0);
         service
             .update_stock_relocation(
                 &ctx,

@@ -1125,7 +1125,7 @@ mod report_generation_test {
 mod report_filter_test {
 
     use repository::{
-        migrations::Version, mock::MockDataInserts, test_db::setup_all, EqualFilter, ReportFilter,
+        migrations::Version, mock::MockDataInserts, test_db::setup_all, ReportFilter,
         ReportRepository, StringFilter,
     };
 

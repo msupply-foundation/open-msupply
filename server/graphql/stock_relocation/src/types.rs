@@ -32,9 +32,6 @@ impl StockRelocationNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
-    pub async fn store_id(&self) -> &str {
-        &self.row().store_id
-    }
     pub async fn stock_movement_number(&self) -> i64 {
         self.row().stock_movement_number
     }
@@ -43,9 +40,6 @@ impl StockRelocationNode {
     }
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
-    }
-    pub async fn created_by(&self) -> &str {
-        &self.row().created_by
     }
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserLoader>>();
@@ -128,9 +122,6 @@ impl StockRelocationLineNode {
     }
     pub async fn stock_line_id(&self) -> &str {
         &self.line.stock_line_id
-    }
-    pub async fn destination_stock_line_id(&self) -> &Option<String> {
-        &self.line.destination_stock_line_id
     }
     pub async fn number_of_packs(&self) -> f64 {
         self.line.number_of_packs
