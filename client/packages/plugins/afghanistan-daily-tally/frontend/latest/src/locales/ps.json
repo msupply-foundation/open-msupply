@@ -9,7 +9,7 @@
   "batch.banner.stock-over-unit": "د موجود سټاک څخه {{quantity}} {{unit}} ډیریږي — د دوام ورکولو دمخه ذخیره معرفي کړئ",
   "batch.banner.why.multiple-batches": "دا محصول په سټاک کې له یوې څخه ډیر بسته لري.",
   "batch.banner.why.multiple-products": "دا کورس په ذخیره کې له یو څخه ډیر محصولات لري.",
-  "batch.banner.why.no-stock": "No stock on hand.",
+  "batch.banner.why.no-stock": "هیڅ سټاک شتون نلري.",
   "batch.col.batch": "بسته",
   "batch.col.expiry": "ختمول",
   "batch.col.issued": "صادر شوی",
@@ -206,5 +206,14 @@
   "quick-entry.clients-recorded": "د دې ناستې کلیانت ثبت شوي",
   "quick-entry.doses-heading": "ډوزونه",
   "quick-entry.record-client": "کلیانت ثبت کړئ",
-  "unit.doses": "خوراکونه"
+  "unit.doses": "خوراکونه",
+  "Male": "نارینه",
+  "Female": "ښځینه",
+  "Women": "میرمنې",
+  "Pregnant": "حامله",
+  "Non Pregnant": "غیر حامله",
+  "0-11 months": "۰-۱۱ میاشتې",
+  "12-23 months": "۱۲-۲۳ میاشتې",
+  "Children's Vaccination Summary": "د ماشومانو واکسیناسیون لنډیز",
+  "Women's Vaccination Summary": "د میرمنو واکسیناسیون لنډیز"
 }

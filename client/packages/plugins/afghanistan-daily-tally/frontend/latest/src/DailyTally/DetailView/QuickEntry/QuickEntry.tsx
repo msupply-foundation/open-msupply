@@ -192,7 +192,7 @@ export const QuickEntry = ({ config, date, onDateChange, sessionType, onSessionT
                   {/* Column header = gender (Male / Female / Women) */}
                   <Box sx={{ bgcolor: color.header, px: 1.5, py: 1, textAlign: 'center' }}>
                     <Typography variant="subtitle2" fontWeight="bold" sx={{ color: '#fff' }}>
-                      <SplitLabel text={col.label} />
+                      <SplitLabel text={t(col.label, { defaultValue: col.label })} />
                     </Typography>
                   </Box>
 
@@ -228,7 +228,7 @@ export const QuickEntry = ({ config, date, onDateChange, sessionType, onSessionT
                           }}
                         >
                           <span style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', lineHeight: 1.3, display: 'block' }}>
-                            <SplitLabel text={row.label} />
+                            <SplitLabel text={t(row.label, { defaultValue: row.label })} />
                           </span>
                         </Button>
                       );

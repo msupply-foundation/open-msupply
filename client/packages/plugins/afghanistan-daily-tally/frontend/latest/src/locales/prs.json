@@ -206,5 +206,14 @@
   "quick-entry.clients-recorded": "مشتریان ثبت شده در این جلسه",
   "quick-entry.doses-heading": "دوزها",
   "quick-entry.record-client": "ثبت مشتری",
-  "unit.doses": "دوزها"
+  "unit.doses": "دوزها",
+  "Male": "مرد",
+  "Female": "زن",
+  "Women": "زنان",
+  "Pregnant": "باردار",
+  "Non Pregnant": "غیر باردار",
+  "0-11 months": "۰-۱۱ ماه",
+  "12-23 months": "۱۲-۲۳ ماه",
+  "Children's Vaccination Summary": "خلاصه واکسیناسیون کودکان",
+  "Women's Vaccination Summary": "خلاصه واکسیناسیون زنان"
 }

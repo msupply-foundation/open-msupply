@@ -206,5 +206,14 @@
   "quick-entry.client-heading": "Client",
   "quick-entry.doses-heading": "Doses",
   "quick-entry.record-client": "Record Client",
-  "detail.step.summary": "Summary"
+  "detail.step.summary": "Summary",
+  "Male": "Male",
+  "Female": "Female",
+  "Women": "Women",
+  "Pregnant": "Pregnant",
+  "Non Pregnant": "Non Pregnant",
+  "0-11 months": "0-11 months",
+  "12-23 months": "12-23 months",
+  "Children's Vaccination Summary": "Children's Vaccination Summary",
+  "Women's Vaccination Summary": "Women's Vaccination Summary"
 }
