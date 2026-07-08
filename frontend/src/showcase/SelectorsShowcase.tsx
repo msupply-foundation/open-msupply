@@ -2,6 +2,11 @@ import { createSignal, type JSX } from 'solid-js'
 import { Select } from '../components/ui/Select'
 import { Combobox } from '../components/ui/Combobox'
 import { MultiSelect } from '../components/ui/MultiSelect'
+import {
+  FilterBar,
+  type FilterField,
+  type FilterValues,
+} from '../components/ui/FilterBar'
 import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData'
 import styles from './SelectorsShowcase.module.css'
 
@@ -49,10 +54,38 @@ const itemFilter = (item: DemoItem, input: string) => {
   )
 }
 
+/* The outbound-shipment list's filterable fields (the current app's
+   FilterMenu set): three free-text columns + the status enum. */
+const FILTER_FIELDS: FilterField[] = [
+  { key: 'otherPartyName', name: 'Name', type: 'text', placeholder: 'Search by name' },
+  { key: 'invoiceNumber', name: 'Invoice number', type: 'text' },
+  { key: 'theirReference', name: 'Reference', type: 'text' },
+  {
+    key: 'status',
+    name: 'Status',
+    type: 'enum',
+    options: INVOICE_STATUSES.map(s => ({ value: s.value, label: s.label })),
+  },
+]
+
 export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated')
   const [picked, setPicked] = createSignal<DemoItem | null>(null)
   const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]])
+  // Seeded non-empty to show chips restoring from existing values.
+  const [filters, setFilters] = createSignal<FilterValues>({ status: ['new'] })
+
+  // What the page would hand to a table — rendered as the URL query string
+  // the values are destined to live in once routing lands.
+  const filterQuery = () => {
+    const params = new URLSearchParams()
+    for (const [key, value] of Object.entries(filters())) {
+      if (Array.isArray(value)) value.forEach(v => params.append(key, v))
+      else params.set(key, value)
+    }
+    const query = params.toString()
+    return query ? `?${query}` : ''
+  }
 
   return (
     <div class={styles.stack}>
@@ -133,6 +166,28 @@ export const SelectorsShowcase = () => {
           placeholder="Search to add items…"
           helperText={`${multi().length} selected`}
         />
+      </Card>
+
+      <Card
+        title="Filter bar — Kobalte DropdownMenu"
+        lead={
+          <>
+            The app's FilterMenu pattern: a <strong>Filters</strong> dropdown
+            lists the available fields; picking one adds an inline editor chip
+            beside it — a text input, or a multi-check menu for the status
+            enum (which stays open while ticking several). Both menus buy
+            Kobalte DropdownMenu, the same primitive as the SplitButton caret
+            and the footer language menu; the chips are hand-rolled. Values
+            are a controlled prop the page owns — destined for URL query
+            params once routing lands, so filtered views become shareable.
+          </>
+        }
+      >
+        <FilterBar fields={FILTER_FIELDS} values={filters()} onChange={setFilters} />
+        <p class={styles.filterReadout}>
+          What the page hands to the table:{' '}
+          <code>{filterQuery() || '(no filters)'}</code>
+        </p>
       </Card>
     </div>
   )

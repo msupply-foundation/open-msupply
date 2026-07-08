@@ -72,3 +72,17 @@
 .outOfStock {
   color: var(--error-main);
 }
+
+/* Live readout under the filter bar demo. */
+.filterReadout {
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.filterReadout code {
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+  font-size: 0.85em;
+}

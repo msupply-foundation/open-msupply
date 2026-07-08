@@ -6,6 +6,16 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-08 · FilterBar — controlled `values` prop stands in for the prototype's URL state; chip visibility stays local
+
+- **Decision:** The prototype's FilterBar (the current app's FilterMenu pattern: a "Filters" dropdown of available fields; picking one adds an inline editor chip — text input or multi-check enum menu) lands as `components/ui/FilterBar`, with both menus on **Kobalte DropdownMenu** (the primitive already bought for the SplitButton caret and the footer language menu; Radix `data-state` selectors become Kobalte's `data-expanded`/`data-checked`, and the enum menu stays open across ticks via `closeOnSelect={false}` rather than Radix's `onSelect` preventDefault). **State split:** filter *values* are a controlled prop (`values: Record<key, string | string[]>` + `onChange`) — the parent owns the object and a table reads it directly; an empty filter (cleared text, nothing ticked) is *absent* from the object. Which chips are *shown* is presentation state (a chip can be visible with no value yet) and stays component-local, seeded from `values` so a restored state opens with its chips visible.
+
+- **Why:** the prototype kept values in URL query params (source of truth → shareable filtered views) with chip visibility in local React state. There's no router here yet, so the URL's job falls to the controlled prop — the same ownership pattern as AppShell/MultiSelect, and the library keeps its no-app-state rule. When routing lands, the page (or a route hook) holds `values` in the URL and the component doesn't change.
+
+- **Alternatives rejected:** internal value state + change events (the parent couldn't seed/restore a shared view, and the table would need a second copy anyway); controlling chip visibility too (doubles the API surface for state no consumer needs — it's derivable-enough presentation); building the bar page-side from lone per-field chip components (the add/remove/reset-all flow *is* the reusable pattern; pages would each re-implement it).
+
+- **Status:** Adopted. Demoed in the Selectors showcase with the outbound-shipment field set and a live "what the table receives" readout; wiring it into the App shell demo's Toolbar (replacing the placeholder filter pills) is a natural follow-up.
+
 ## 2026-07-08 · Content footer — `contentFooter` shell slot; contextual content by composition, not a store
 
 - **Decision:** The last layout element from the prototype week, the **content footer** (the pinned blue-buttons action bar), lands as two hand-rolled components in `components/layout/ContentFooter/` — `ContentFooter` (the strip) + `ContentFooterActions` (the inline-end cluster) — with exactly the Header family's contract: one flat flex-wrap container, parts self-slot via their own CSS (`margin-inline-start: auto`, the HeaderButtons mechanism), zero state, page owns all content and handlers. `AppShell` gains a **`contentFooter?: JSX.Element` slot prop** (the mirror of `header`, same rationale as that entry): the shell pins the composed bar between the scrolling body and the orange app footer, so it never scrolls with the page.
