@@ -28,7 +28,7 @@ export const ListView = () => {
     filters: [
       { key: 'stockMovementNumber', condition: 'equalTo', isNumber: true },
       { key: 'status', condition: 'equalTo' },
-      { key: 'user.username' },
+      { key: 'username' },
       { key: 'createdDatetime', condition: 'between' },
     ],
   });
