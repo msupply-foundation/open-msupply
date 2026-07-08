@@ -75,6 +75,13 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
           <AppNavLink
             visible={isCentralServer && isServerAdmin}
             to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.CustomFields)
+              .build()}
+            text={t('custom-fields')}
+          />
+          <AppNavLink
+            visible={isCentralServer && isServerAdmin}
+            to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Sites)
               .build()}
             text={t('sites')}
@@ -99,6 +106,13 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .addPart(AppRoute.Plugins)
               .build()}
             text={t('plugins')}
+          />
+          <AppNavLink
+            visible={isCentralServer && isServerAdmin}
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.HelpDocuments)
+              .build()}
+            text={t('help-documents')}
           />
           {pluginLinks}
         </List>

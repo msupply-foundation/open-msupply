@@ -165,6 +165,8 @@ function mapSyncErrorV7(
     [SyncErrorVariantV7.GetCurrentSiteIdError]: 'error.internal-error',
     [SyncErrorVariantV7.SiteIdMismatch]: 'error.internal-error',
     [SyncErrorVariantV7.SiteIsNotV7]: 'error.site-is-not-v7',
+    [SyncErrorVariantV7.WaitingForCentralV7Upgrade]:
+      'error.waiting-for-central-v7-upgrade',
     [SyncErrorVariantV7.Other]: defaultKey || 'error.unknown-sync-error',
   };
 

@@ -23,6 +23,7 @@ pub struct Settings {
     pub mail: Option<MailSettings>,
     pub features: Option<HashMap<String, bool>>,
     pub changelog_partition: Option<ChangelogPartitionSettings>,
+    pub changelog_dedup: Option<ChangelogDedupSettings>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -94,6 +95,7 @@ pub fn test_settings(
         mail: None,
         features,
         changelog_partition: None,
+        changelog_dedup: None,
     }
 }
 
@@ -173,15 +175,9 @@ pub struct LoggingSettings {
     pub max_file_count: Option<i64>,
     /// Max logfile size in MB
     pub max_file_size: Option<usize>,
-    /// Log every GraphQL request/response
-    pub log_graphql_queries: Option<bool>,
 }
 
 impl LoggingSettings {
-    pub fn log_graphql_queries(&self) -> bool {
-        self.log_graphql_queries.unwrap_or(true)
-    }
-
     pub fn new(mode: LogMode, level: Level) -> Self {
         LoggingSettings {
             mode,
@@ -190,7 +186,6 @@ impl LoggingSettings {
             filename: None,
             max_file_count: None,
             max_file_size: None,
-            log_graphql_queries: None,
         }
     }
 
@@ -321,5 +316,112 @@ impl ChangelogPartitionSettings {
             partition_size: self.partition_size(),
             lookahead: self.lookahead(),
         }
+    }
+}
+
+/// yaml-bound config for the scheduled changelog deduplication task
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct ChangelogDedupSettings {
+    #[serde(default)]
+    pub interval: IntervalSettings,
+    /// When set, dedup only runs while the local clock is within [from, to].
+    /// When absent, dedup runs on every `interval` tick with no time gating.
+    #[serde(default)]
+    pub time_window: Option<TimeWindow>,
+    // Private — exposed via getter.
+    #[serde(default = "default_dedup_batch")]
+    batch_size: i64,
+}
+
+/// A local-clock time-of-day window. `from`/`to` are `"HH:MM"` in yaml, parsed to
+/// `NaiveTime` at deserialize time — a malformed value fails config loading at
+/// startup rather than silently disabling the task. Same-day only (midnight-
+/// crossing windows are not yet supported).
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TimeWindow {
+    #[serde(with = "hh_mm")]
+    pub from: chrono::NaiveTime,
+    #[serde(with = "hh_mm")]
+    pub to: chrono::NaiveTime,
+}
+
+/// serde (de)serialiser for `NaiveTime` <-> `"HH:MM"` yaml strings.
+mod hh_mm {
+    use chrono::NaiveTime;
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    const FORMAT: &str = "%H:%M";
+
+    pub fn serialize<S: Serializer>(time: &NaiveTime, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(&time.format(FORMAT).to_string())
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error> {
+        let raw = String::deserialize(d)?;
+        NaiveTime::parse_from_str(raw.trim(), FORMAT).map_err(|_| {
+            serde::de::Error::custom(format!("time_window time must be \"HH:MM\", got {raw:?}"))
+        })
+    }
+}
+
+fn default_dedup_batch() -> i64 {
+    50_000
+}
+
+fn default_dedup_interval_hours() -> u64 {
+    24
+}
+
+impl Default for ChangelogDedupSettings {
+    fn default() -> Self {
+        Self {
+            interval: IntervalSettings {
+                hours: default_dedup_interval_hours(),
+                mins: 0,
+                secs: 0,
+            },
+            time_window: None,
+            batch_size: default_dedup_batch(),
+        }
+    }
+}
+
+impl ChangelogDedupSettings {
+    /// Effective batch size — yaml value clamped to at least 1.
+    pub fn batch_size(&self) -> i64 {
+        self.batch_size.max(1)
+    }
+}
+
+impl TimeWindow {
+    /// True when `now` is within the [from, to] window (same-day).
+    pub fn contains(&self, now: chrono::NaiveTime) -> bool {
+        now >= self.from && now <= self.to
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::ChangelogDedupSettings;
+    use chrono::NaiveTime;
+
+    #[test]
+    fn time_window_parses_hh_mm() {
+        let s: ChangelogDedupSettings =
+            serde_yaml::from_str("time_window:\n  from: \"02:00\"\n  to: \"05:30\"").unwrap();
+        let window = s.time_window.unwrap();
+        assert_eq!(window.from, NaiveTime::from_hms_opt(2, 0, 0).unwrap());
+        assert_eq!(window.to, NaiveTime::from_hms_opt(5, 30, 0).unwrap());
+        assert!(window.contains(NaiveTime::from_hms_opt(3, 0, 0).unwrap()));
+        assert!(!window.contains(NaiveTime::from_hms_opt(6, 0, 0).unwrap()));
+    }
+
+    #[test]
+    fn time_window_rejects_bad_format() {
+        // A malformed HH:MM must fail deserialization (config load) rather than
+        // silently disabling the task.
+        let result: Result<ChangelogDedupSettings, _> =
+            serde_yaml::from_str("time_window:\n  from: \"2pm\"\n  to: \"05:00\"");
+        assert!(result.is_err());
     }
 }

@@ -6,7 +6,6 @@ import { sleepThink } from '../lib/thinktime.js';
 export function dashboardPoller(data) {
   const ctx = makeCtx(data);
   polling.me(ctx);
-  polling.lastSuccessfulUserSync(ctx);
   polling.syncInfo(ctx);
   polling.initialisationStatus(ctx);
   polling.isCentralServer(ctx);
@@ -15,7 +14,8 @@ export function dashboardPoller(data) {
   polling.requisitionCounts(ctx);
   polling.stockCounts(ctx);
   polling.internalOrderCounts(ctx);
-  polling.inboundCounts(ctx);
+  polling.inboundInternalCounts(ctx);
+  polling.inboundExternalCounts(ctx);
   polling.outboundCounts(ctx);
   // App-boot / per-navigation bundle the real client also emits. supplierProgramSettings and
   // frontendPluginMetadata are as frequent as `me`/the counts in the real capture, so fire them every

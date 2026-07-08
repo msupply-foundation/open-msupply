@@ -91,6 +91,9 @@ pub use self::repack::*;
 pub mod property;
 pub use self::property::*;
 
+pub mod custom_field;
+pub use self::custom_field::*;
+
 pub mod program;
 pub use self::program::*;
 
@@ -168,6 +171,9 @@ pub use self::shipping_method::*;
 
 pub mod pref_nodes;
 pub use self::pref_nodes::*;
+
+pub mod help_document;
+pub use self::help_document::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

@@ -1,7 +1,8 @@
 use crate::{
     invoice::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-        check_status_change, check_store, InvoiceRowStatusError,
+        check_status_change, check_store, custom_fields::check_unknown_custom_fields_key,
+        InvoiceRowStatusError,
     },
     validate::{
         check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
@@ -32,6 +33,14 @@ pub fn validate(
     }
     if !check_invoice_type(&return_row, InvoiceType::CustomerReturn) {
         return Err(NotACustomerReturn);
+    }
+
+    if let Some(properties) = &patch.custom_fields {
+        if let Some(unknown) =
+            check_unknown_custom_fields_key(connection, &return_row.r#type, properties)?
+        {
+            return Err(UnknownPropertyKey(unknown));
+        }
     }
 
     // Status check

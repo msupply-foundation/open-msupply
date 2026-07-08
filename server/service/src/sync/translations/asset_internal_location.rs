@@ -1,14 +1,14 @@
 use repository::{
-    asset_internal_location_row::AssetInternalLocationRowDelete,
     asset_internal_location_row::AssetInternalLocationRow,
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    asset_internal_location_row::AssetInternalLocationRowDelete, ChangelogRow, ChangelogTableName,
+    Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{asset::AssetTranslation, location::LocationTranslation};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -32,12 +32,25 @@ impl SyncTranslation for AssetInternalLocation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            AssetInternalLocationRow,
-        >(sync_record.data.0.clone())?))
+        let AssetInternalLocationRow {
+            id,
+            asset_id,
+            location_id,
+        } = serde_json::from_value::<AssetInternalLocationRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "asset_internal_location", &id);
+
+        let result = AssetInternalLocationRow {
+            id,
+            asset_id: check_fk(asset_id, "asset_id", FkField::Asset)?,
+            location_id,
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -72,7 +85,11 @@ impl SyncTranslation for AssetInternalLocation {
 
         let row = asset_internal_location_row;
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -98,7 +115,11 @@ impl SyncTranslation for AssetInternalLocation {
 mod tests {
     use super::*;
 
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        asset_row::{AssetRow, AssetRowRepository},
+        mock::{mock_asset_a, MockDataInserts},
+        test_db::setup_all,
+    };
 
     #[actix_rt::test]
     async fn test_asset_asset_internal_location_translation() {
@@ -107,14 +128,26 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_asset_asset_internal_location_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the asset parent the internal-location's required FK points at.
+        AssetRowRepository::new(&connection)
+            .upsert_one(&AssetRow {
+                id: "3de161ed-93ef-4210-aa31-3ae9e53748e8".to_string(),
+                ..mock_asset_a()
+            }, None)
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

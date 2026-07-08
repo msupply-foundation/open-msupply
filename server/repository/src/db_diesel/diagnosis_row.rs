@@ -77,12 +77,11 @@ impl<'a> DiagnosisRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, diagnosis_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = diagnosis
-            .filter(id.eq(diagnosis_id))
-            .select(id)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            diagnosis.filter(id.eq(diagnosis_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<DiagnosisRow>, RepositoryError> {

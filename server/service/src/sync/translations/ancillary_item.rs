@@ -4,7 +4,7 @@ use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncB
 use crate::sync::translations::item::ItemTranslation;
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 // Needs to be added to all_translators()
@@ -26,14 +26,35 @@ impl SyncTranslation for AncillaryItemTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_value::<
-            AncillaryItemRow,
-        >(
-            sync_record.data.0.clone(),
-        )?))
+        let AncillaryItemRow {
+            id,
+            item_quantity,
+            ancillary_quantity,
+            deleted_datetime,
+            item_id,
+            ancillary_item_id,
+        } = serde_json::from_value::<AncillaryItemRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "ancillary_item", &id);
+
+        let result = AncillaryItemRow {
+            id,
+            item_quantity,
+            ancillary_quantity,
+            deleted_datetime,
+            item_id: check_fk(item_id, "item_link_id", FkField::ItemLink)?,
+            ancillary_item_id: check_fk(
+                ancillary_item_id,
+                "ancillary_item_link_id",
+                FkField::ItemLink,
+            )?,
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

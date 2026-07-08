@@ -12,6 +12,8 @@ import {
   NumericTextInput,
   Box,
   useNotification,
+  SortBy,
+  LocationFilterInput,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList, useLocation } from '../../api';
 import { LocationTypeInput } from '@openmsupply-client/system';
@@ -21,6 +23,10 @@ interface LocationEditModalProps {
   onClose: () => void;
 
   location: LocationRowFragment | null;
+  // The list's current sort/filter, so "OK & Next" steps through locations in
+  // the same order (and within the same filtered set) the user sees.
+  sortBy: SortBy<LocationRowFragment>;
+  filterBy: LocationFilterInput | null;
 }
 
 const createNewLocation = (
@@ -47,14 +53,17 @@ interface UseDraftLocationControl {
 
 const useDraftLocation = (
   seed: LocationRowFragment | null,
-  mode: ModalMode | null
+  mode: ModalMode | null,
+  sortBy: SortBy<LocationRowFragment>,
+  filterBy: LocationFilterInput | null
 ): UseDraftLocationControl => {
   const [location, setLocation] = useState<LocationRowFragment>(() =>
     createNewLocation(seed)
   );
   const { nextLocation } = useLocationList(
     {
-      sortBy: { key: 'name', direction: 'asc' },
+      sortBy,
+      filterBy,
     },
     location
   );
@@ -97,12 +106,14 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
   isOpen,
   onClose,
   location,
+  sortBy,
+  filterBy,
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation();
   const { error } = useNotification();
   const { draft, onUpdate, onChangeLocation, onSave, isLoading } =
-    useDraftLocation(location, mode);
+    useDraftLocation(location, mode, sortBy, filterBy);
   const isInvalid = !draft.code.trim() || !draft.name.trim();
 
   const handleSave = async () => {

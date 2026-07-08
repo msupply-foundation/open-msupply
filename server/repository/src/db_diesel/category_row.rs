@@ -82,6 +82,14 @@ impl<'a> CategoryRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, record_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            category::table.filter(category::id.eq(record_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CategoryRow>, RepositoryError> {
         Ok(category::table
             .filter(category::id.eq_any(ids))

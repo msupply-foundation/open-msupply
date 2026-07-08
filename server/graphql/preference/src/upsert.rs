@@ -88,6 +88,7 @@ pub struct UpsertPreferencesInput {
     pub receive_payments_from_prescriptions: Option<bool>,
 
     // Store preferences
+    pub blind_stocktake: Option<Vec<BoolStorePrefInput>>,
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
     pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
@@ -162,6 +163,7 @@ impl UpsertPreferencesInput {
             backdating,
             receive_payments_from_prescriptions,
             // Store preferences
+            blind_stocktake,
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
@@ -218,6 +220,9 @@ impl UpsertPreferencesInput {
             }),
             receive_payments_from_prescriptions: *receive_payments_from_prescriptions,
             // Store preferences
+            blind_stocktake: blind_stocktake
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
