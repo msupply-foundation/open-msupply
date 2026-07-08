@@ -684,6 +684,15 @@ macro_rules! define_linked_tables {
 /// and simply stays in the fallback after upgrade — the same as before this existed.
 /// Enums without a fallback variant don't need (or use) a declaration.
 ///
+/// **An enum with a `#[strum(default, transparent)]` fallback variant must declare
+/// `db_case` — this is enforced at compile time.** The declaration-less form of the macro
+/// only accepts enums whose variants are all unit (no `String` payload); a fallback enum
+/// that omits `db_case` matches no arm and fails to build with a `compile_error!` pointing
+/// here, rather than silently capturing unknowns in wire casing (the stranded-value bug
+/// this section prevents). Choose the `db_case` that matches the enum's
+/// `#[strum(serialize_all = ...)]`. If you deliberately want unknowns captured as-is with
+/// no normalization, opt in explicitly with `db_case = verbatim;`.
+///
 /// Usage:
 /// ```
 /// diesel_string_enum! {
@@ -700,19 +709,28 @@ macro_rules! define_linked_tables {
 /// }
 /// ```
 macro_rules! diesel_string_enum {
-    // Without a `db_case` declaration: unknown values are captured verbatim
-    // (only correct for enums without a fallback variant — see the macro docs).
+    // Declaration-less form: accepted ONLY for enums whose variants are all unit (no
+    // `String`-payload fallback). Such enums capture nothing, so `db_case` is inert and
+    // defaults to `verbatim`. An enum with a fallback variant does NOT match this arm
+    // (the variant matcher below rejects payloads) — it must declare `db_case` explicitly,
+    // otherwise it falls through to the `compile_error!` arm below the main expansion.
     (
         $(#[$meta:meta])*
         $vis:vis enum $name:ident {
-            $($body:tt)*
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident
+            ),* $(,)?
         }
     ) => {
         diesel_string_enum! {
             db_case = verbatim;
             $(#[$meta])*
             $vis enum $name {
-                $($body)*
+                $(
+                    $(#[$variant_meta])*
+                    $variant
+                ),*
             }
         }
     };
@@ -818,6 +836,28 @@ macro_rules! diesel_string_enum {
                 )))
             }
         }
+    };
+
+    // Fallback-without-`db_case` guard. Only reached when the unit-only declaration-less
+    // arm rejected the enum (so it has a `String`-payload fallback variant) AND no
+    // `db_case = ...;` was supplied. Turn that into a clear error rather than silently
+    // capturing unknowns in wire casing. (`@`-prefixed internal calls never reach here —
+    // they don't match the `enum` shape — and explicit-`db_case` invocations matched above.)
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident {
+            $($body:tt)*
+        }
+    ) => {
+        compile_error!(concat!(
+            "diesel_string_enum!: `",
+            stringify!($name),
+            "` has a fallback (`String`-payload) variant, so it must declare a `db_case` as \
+             its first line, matching `#[strum(serialize_all = ...)]` — e.g. \
+             `db_case = SCREAMING_SNAKE_CASE;` or `db_case = snake_case;`. Use \
+             `db_case = verbatim;` only to deliberately capture unknowns in wire casing \
+             (no normalization)."
+        ));
     };
 
     // --- serde serialize: one `if let` per variant (macros can't emit partial match arms) ---
@@ -935,9 +975,11 @@ mod diesel_string_enum_test {
         }
     }
 
-    // No db_case declaration: fallback capture stays verbatim (legacy behaviour,
-    // exercised to pin that the declaration-less arm still works).
+    // Explicit `db_case = verbatim;`: the opt-out that keeps unknowns captured as-is (no
+    // normalization). A fallback enum can no longer omit `db_case` — it's a compile error —
+    // so this pins that `verbatim` remains available when a caller genuinely wants it.
     diesel_string_enum! {
+        db_case = verbatim;
         #[derive(Clone, Eq)]
         #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
         pub enum VerbatimFallback {
@@ -1001,8 +1043,11 @@ mod diesel_string_enum_test {
         );
     }
 
+    // `db_case = verbatim;` opts out of normalization: the unknown is captured exactly as
+    // it arrived on the wire. (A fallback enum can no longer omit `db_case` at all — that
+    // is now a compile error — so verbatim capture is only reachable by asking for it.)
     #[test]
-    fn without_db_case_capture_is_verbatim() {
+    fn verbatim_db_case_captures_unknown_as_is() {
         assert_eq!(
             serde_json::from_value::<VerbatimFallback>(serde_json::json!("FutureVariant"))
                 .unwrap(),
