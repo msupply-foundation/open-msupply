@@ -151,23 +151,21 @@ mod test {
     async fn upsert_stock_relocation_line_success() {
         let (service_provider, ctx) = setup("upsert_stock_relocation_line_success").await;
         stock_line("held_sl", true).upsert(&ctx.connection).unwrap();
-        let service = &service_provider.stock_relocation_service;
 
         let movement_id = new_movement(&service_provider, &ctx);
 
-        let line = service
-            .upsert_stock_relocation_line(
-                &ctx,
-                "store_a",
-                UpsertStockRelocationLine {
-                    id: uuid(),
-                    stock_relocation_id: movement_id,
-                    stock_line_id: "held_sl".to_string(),
-                    number_of_packs: 4.0,
-                    destination_location_id: Some(mock_location_1().id),
-                },
-            )
-            .unwrap();
+        let line = upsert_stock_relocation_line(
+            &ctx,
+            "store_a",
+            UpsertStockRelocationLine {
+                id: uuid(),
+                stock_relocation_id: movement_id,
+                stock_line_id: "held_sl".to_string(),
+                number_of_packs: 4.0,
+                destination_location_id: Some(mock_location_1().id),
+            },
+        )
+        .unwrap();
 
         assert_eq!(line.stock_line_id, "held_sl");
         assert_eq!(line.source_location_id, None);
@@ -175,19 +173,18 @@ mod test {
         assert_eq!(line.destination_location_id, Some(mock_location_1().id));
         assert_eq!(line.destination_stock_line_id, None);
 
-        let updated = service
-            .upsert_stock_relocation_line(
-                &ctx,
-                "store_a",
-                UpsertStockRelocationLine {
-                    id: line.id.clone(),
-                    stock_relocation_id: line.stock_relocation_id.clone(),
-                    stock_line_id: "held_sl".to_string(),
-                    number_of_packs: 6.0,
-                    destination_location_id: Some(mock_location_1().id),
-                },
-            )
-            .unwrap();
+        let updated = upsert_stock_relocation_line(
+            &ctx,
+            "store_a",
+            UpsertStockRelocationLine {
+                id: line.id.clone(),
+                stock_relocation_id: line.stock_relocation_id.clone(),
+                stock_line_id: "held_sl".to_string(),
+                number_of_packs: 6.0,
+                destination_location_id: Some(mock_location_1().id),
+            },
+        )
+        .unwrap();
         assert_eq!(updated.id, line.id);
         assert_eq!(updated.number_of_packs, 6.0);
     }
@@ -196,11 +193,10 @@ mod test {
     async fn upsert_line_validation_errors() {
         let (service_provider, ctx) = setup("upsert_line_validation_errors").await;
         stock_line("ok_sl", false).upsert(&ctx.connection).unwrap();
-        let service = &service_provider.stock_relocation_service;
         let movement_id = new_movement(&service_provider, &ctx);
 
         let upsert = |number_of_packs: f64, destination: Option<String>| {
-            service.upsert_stock_relocation_line(
+            upsert_stock_relocation_line(
                 &ctx,
                 "store_a",
                 UpsertStockRelocationLine {
@@ -233,7 +229,7 @@ mod test {
         );
 
         assert_eq!(
-            service.upsert_stock_relocation_line(
+            upsert_stock_relocation_line(
                 &ctx,
                 "store_a",
                 UpsertStockRelocationLine {
@@ -247,7 +243,7 @@ mod test {
             Err(UpsertStockRelocationLineError::StockRelocationDoesNotExist)
         );
         assert_eq!(
-            service.upsert_stock_relocation_line(
+            upsert_stock_relocation_line(
                 &ctx,
                 "store_b",
                 UpsertStockRelocationLine {

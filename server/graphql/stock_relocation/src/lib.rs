@@ -8,10 +8,10 @@ pub mod types;
 use graphql_types::types::DraftStockRelocationLineNode;
 
 use mutations::{
-    batch_stock_relocation_line, delete_stock_relocation, delete_stock_relocation_line,
-    delete_stock_relocations, insert_stock_relocation, update_stock_relocation, BatchLineInput,
-    BatchLineResponse, DeleteInput, DeleteLineResponse, DeleteResponses,
-    DeleteStockRelocationResponse, InsertInput, InsertResponse, UpdateInput, UpdateResponse,
+    batch_stock_relocation_line, delete_stock_relocation, delete_stock_relocations,
+    insert_stock_relocation, update_stock_relocation, BatchLineInput, BatchLineResponse,
+    DeleteInput, DeleteResponses, DeleteStockRelocationResponse, InsertInput, InsertResponse,
+    UpdateInput, UpdateResponse,
 };
 use queries::{
     get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
@@ -102,14 +102,5 @@ impl StockRelocationMutations {
         input: BatchLineInput,
     ) -> Result<BatchLineResponse> {
         batch_stock_relocation_line(ctx, &store_id, input)
-    }
-
-    pub async fn delete_stock_relocation_line(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        id: String,
-    ) -> Result<DeleteLineResponse> {
-        delete_stock_relocation_line(ctx, &store_id, id)
     }
 }

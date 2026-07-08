@@ -4,19 +4,17 @@ use self::delete::{
 };
 use self::insert::{insert_stock_relocation, InsertStockRelocation, InsertStockRelocationError};
 use self::query::{
-    get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocation_lines,
-    get_stock_relocations, DraftStockRelocationLine, StockRelocationDraftFilter,
+    get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
+    DraftStockRelocationLine, StockRelocationDraftFilter,
 };
 use self::update::{update_stock_relocation, UpdateStockRelocation, UpdateStockRelocationError};
 use crate::stock_relocation_line::{
-    batch_stock_relocation_line, delete_stock_relocation_line, upsert_stock_relocation_line,
-    BatchStockRelocationLine, BatchStockRelocationLineResult, DeleteStockRelocationLineError,
-    UpsertStockRelocationLine, UpsertStockRelocationLineError,
+    batch_stock_relocation_line, BatchStockRelocationLine, BatchStockRelocationLineResult,
 };
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{
-    PaginationOption, RepositoryError, StockRelocation, StockRelocationFilter,
-    StockRelocationLineRow, StockRelocationRow, StockRelocationSort,
+    PaginationOption, RepositoryError, StockRelocation, StockRelocationFilter, StockRelocationRow,
+    StockRelocationSort,
 };
 
 pub mod delete;
@@ -46,14 +44,6 @@ pub trait StockRelocationServiceTrait: Sync + Send {
         get_stock_relocation(ctx, store_id, id)
     }
 
-    fn get_stock_relocation_lines(
-        &self,
-        ctx: &ServiceContext,
-        stock_relocation_id: &str,
-    ) -> Result<Vec<StockRelocationLineRow>, RepositoryError> {
-        get_stock_relocation_lines(ctx, stock_relocation_id)
-    }
-
     fn get_stock_relocation_draft_lines(
         &self,
         ctx: &ServiceContext,
@@ -81,15 +71,6 @@ pub trait StockRelocationServiceTrait: Sync + Send {
         update_stock_relocation(ctx, store_id, input)
     }
 
-    fn upsert_stock_relocation_line(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-        input: UpsertStockRelocationLine,
-    ) -> Result<StockRelocationLineRow, UpsertStockRelocationLineError> {
-        upsert_stock_relocation_line(ctx, store_id, input)
-    }
-
     fn batch_stock_relocation_line(
         &self,
         ctx: &ServiceContext,
@@ -97,15 +78,6 @@ pub trait StockRelocationServiceTrait: Sync + Send {
         input: BatchStockRelocationLine,
     ) -> Result<BatchStockRelocationLineResult, RepositoryError> {
         batch_stock_relocation_line(ctx, store_id, input)
-    }
-
-    fn delete_stock_relocation_line(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-        line_id: String,
-    ) -> Result<String, DeleteStockRelocationLineError> {
-        delete_stock_relocation_line(ctx, store_id, line_id)
     }
 
     fn delete_stock_relocation(

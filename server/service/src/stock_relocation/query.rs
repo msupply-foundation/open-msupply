@@ -119,14 +119,6 @@ pub fn get_stock_relocation_draft_lines(
         .collect())
 }
 
-pub fn get_stock_relocation_lines(
-    ctx: &ServiceContext,
-    stock_relocation_id: &str,
-) -> Result<Vec<StockRelocationLineRow>, RepositoryError> {
-    StockRelocationLineRowRepository::new(&ctx.connection)
-        .find_many_by_stock_relocation_id(stock_relocation_id)
-}
-
 pub fn get_stock_relocations(
     ctx: &ServiceContext,
     store_id: Option<&str>,

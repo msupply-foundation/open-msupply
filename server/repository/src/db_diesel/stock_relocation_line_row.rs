@@ -131,7 +131,6 @@ impl<'a> StockRelocationLineRowRepository<'a> {
 
 #[derive(Debug, Clone)]
 pub struct StockRelocationLineRowDelete(pub String);
-// For tests only
 impl Delete for StockRelocationLineRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         StockRelocationLineRowRepository::new(con).delete(&self.0)

@@ -1,8 +1,5 @@
 use async_graphql::*;
-use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
-use graphql_core::ContextExt;
-use service::auth::{Resource, ResourceAccessRequest};
 use service::stock_relocation::validate::ValidateMovementError;
 use service::stock_relocation_line::{
     UpsertStockRelocationLine as UpsertServiceInput,
@@ -60,28 +57,6 @@ pub enum UpsertLineResponse {
 pub enum UpsertLineErrorInterface {
     NotEnoughStock(NotEnoughStock),
     LocationOnHold(LocationOnHold),
-}
-
-pub fn upsert_stock_relocation_line(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: UpsertLineInput,
-) -> Result<UpsertLineResponse> {
-    let user = validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::MutateStockLine,
-            store_id: Some(store_id.to_string()),
-        },
-    )?;
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
-
-    map_upsert_response(
-        service_provider
-            .stock_relocation_service
-            .upsert_stock_relocation_line(&service_context, store_id, input.to_domain()),
-    )
 }
 
 pub fn map_upsert_response(
