@@ -28,6 +28,7 @@ fragment StockMovementLine on StockRelocationLineNode {
     expiryDate
     packSize
     availableNumberOfPacks
+    totalNumberOfPacks
     item {
       __typename
       id
@@ -166,6 +167,99 @@ mutation deleteStockRelocations($ids: [String!]!, $storeId: String!) {
     ... on DeleteStockRelocationsNode {
       __typename
       ids
+    }
+  }
+}
+
+fragment StockMovementDraftLine on DraftStockRelocationLineNode {
+  __typename
+  id
+  itemId
+  itemCode
+  itemName
+  restrictedLocationTypeId
+  stockLineId
+  batch
+  expiryDate
+  packSize
+  availableNumberOfPacks
+  totalNumberOfPacks
+  onHold
+  numberOfPacks
+  sourceLocation {
+    __typename
+    id
+    code
+    name
+    onHold
+  }
+  destinationLocation {
+    __typename
+    id
+    name
+    onHold
+    code
+    volume
+    volumeUsed
+    locationType {
+      id
+      name
+      maxTemperature
+      minTemperature
+    }
+    stock {
+      ... on StockLineConnector {
+        totalCount
+      }
+    }
+  }
+}
+
+query stockRelocationDraftLines(
+  $storeId: String!
+  $input: StockRelocationDraftLinesInput!
+) {
+  stockRelocationDraftLines(storeId: $storeId, input: $input) {
+    __typename
+    ...StockMovementDraftLine
+  }
+}
+
+mutation batchStockRelocationLine(
+  $storeId: String!
+  $input: BatchStockRelocationLineInput!
+) {
+  batchStockRelocationLine(storeId: $storeId, input: $input) {
+    __typename
+    upsert {
+      __typename
+      id
+      response {
+        __typename
+        ... on UpsertStockRelocationLineError {
+          __typename
+          error {
+            __typename
+            description
+            ... on NotEnoughStock {
+              stockLineId
+            }
+            ... on LocationOnHold {
+              locationId
+            }
+          }
+        }
+      }
+    }
+    delete {
+      __typename
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
     }
   }
 }

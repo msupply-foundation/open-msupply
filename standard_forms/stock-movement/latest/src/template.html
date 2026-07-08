@@ -4,41 +4,62 @@
 
 <body>
     <table class="body_section" cellpadding="2" cellspacing="0">
-        <tr class="body_column_label">
-            <th class="item">{{t(k="label.item-name",f="Item name")}}</th>
-            <th class="batch">{{t(k="label.batch",f="Batch")}}</th>
-            <th class="expiry">{{t(k="label.expiry",f="Expiry")}}</th>
-            <th class="pack">{{t(k="label.from-pack-size",f="From pack size")}}</th>
-            <th class="location">{{t(k="label.from-location",f="From location")}}</th>
-            <th class="packs">{{t(k="label.from-number-of-packs",f="From number of packs")}}</th>
-            <th class="location">{{t(k="label.to-location",f="To location")}}</th>
-            <th class="packs">{{t(k="label.to-number-of-packs",f="To number of packs")}}</th>
-            <th class="pack">{{t(k="label.to-pack-size",f="To pack size")}}</th>
-            <th class="done">{{t(k="label.done",f="Done")}}</th>
-            <th class="moved-on">{{t(k="label.moved-on",f="Moved on")}}</th>
-        </tr>
-        {% for movement in data.stockRelocations.nodes %}
+        <thead>
+            <tr class="body_column_label">
+                <th class="item">{{t(k="label.item",f="Item")}}</th>
+                <th class="batch">{{t(k="label.batch",f="Batch")}}</th>
+                <th class="expiry">{{t(k="label.expiry",f="Expiry")}}</th>
+                <th class="pack">{{t(k="label.pack-size",f="Pack size")}}</th>
+                <th class="location">{{t(k="label.source",f="Source")}}</th>
+                <th class="location">{{t(k="label.destination",f="Destination")}}</th>
+                <th class="packs">{{t(k="label.packs-to-move",f="Packs to move")}}</th>
+                <th class="done">{{t(k="label.done",f="Done")}}</th>
+            </tr>
+        </thead>
+        {# Group lines by source location so pickers can work location by
+           location; lines without a source location are listed last #}
+        {% set nodes = data.stockRelocation.lines.nodes %}
+        {% set located = nodes | filter(attribute="sourceLocation") %}
+        {% for line in located | sort(attribute="stockLine.item.name") | sort(attribute="sourceLocation.code") %}
         <tr class="body_value">
-            <td class="item">{{ movement.itemCode }} {{ movement.itemName }}</td>
-            <td class="batch">{{ movement.batch }}</td>
+            <td class="item">
+                {{ line.stockLine.item.name }}<br>
+                <span class="item_code">{{ line.stockLine.item.code }}</span>
+            </td>
+            <td class="batch">{{ line.stockLine.batch }}</td>
             <td class="expiry">
-                {% if movement.expiryDate %}{{ movement.expiryDate | date(format="%d/%m/%Y") }}{% endif %}
+                {% if line.stockLine.expiryDate %}{{ line.stockLine.expiryDate | date(format="%b %Y") }}{% endif %}
             </td>
-            <td class="pack">{{ movement.fromPackSize }}</td>
+            <td class="pack">{{ line.stockLine.packSize }}</td>
+            <td class="location">{{ line.sourceLocation.code }}</td>
             <td class="location">
-                {% if movement.fromLocation %}{{ movement.fromLocation.code }}{% endif %}
+                {% if line.destinationLocation %}{{ line.destinationLocation.code }}{% endif %}
             </td>
-            <td class="packs">{{ movement.numberOfPacks }}</td>
-            <td class="location">
-                {% if movement.toLocation %}{{ movement.toLocation.code }}{% endif %}
-            </td>
-            <td class="packs">
-                {% if movement.toPackSize and movement.toPackSize > 0 %}{{ movement.numberOfPacks * movement.fromPackSize / movement.toPackSize }}{% endif %}
-            </td>
-            <td class="pack">{{ movement.toPackSize }}</td>
+            <td class="packs">{{ line.numberOfPacks }}</td>
             <td class="done"></td>
-            <td class="moved-on"></td>
         </tr>
         {% endfor %}
+        {% for line in nodes %}{% if not line.sourceLocation %}
+        <tr class="body_value">
+            <td class="item">
+                {{ line.stockLine.item.name }}<br>
+                <span class="item_code">{{ line.stockLine.item.code }}</span>
+            </td>
+            <td class="batch">{{ line.stockLine.batch }}</td>
+            <td class="expiry">
+                {% if line.stockLine.expiryDate %}{{ line.stockLine.expiryDate | date(format="%b %Y") }}{% endif %}
+            </td>
+            <td class="pack">{{ line.stockLine.packSize }}</td>
+            <td class="location"></td>
+            <td class="location">
+                {% if line.destinationLocation %}{{ line.destinationLocation.code }}{% endif %}
+            </td>
+            <td class="packs">{{ line.numberOfPacks }}</td>
+            <td class="done"></td>
+        </tr>
+        {% endif %}{% endfor %}
     </table>
+    <div class="line_count">
+        {{ data.stockRelocation.lineCount }} {{ t(k="label.lines", f="Lines") | lower }}
+    </div>
 </body>
