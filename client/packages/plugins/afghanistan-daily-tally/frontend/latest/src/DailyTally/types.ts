@@ -59,7 +59,6 @@ export interface NonVaccineItem {
 
 export interface WastageReasons {
   open_vial: string;
-  closed_vial: string;
   negative_adjustment: string;
 }
 
@@ -217,7 +216,6 @@ export interface IssuanceEntry {
 // broken, frozen, expired); non-vaccine items have GENERAL.
 export const WastageType = {
   OpenVial: 'OPEN_VIAL',
-  ClosedVial: 'CLOSED_VIAL',
   General: 'GENERAL',
 } as const;
 
@@ -225,8 +223,6 @@ export type WastageType = (typeof WastageType)[keyof typeof WastageType];
 
 export interface WastageEntry {
   stock_line_id: string;
-  // Absent on rows submitted before closed-vial wastage existed; those carry
-  // a single open-vial (vaccine) or general (non-vaccine) figure.
   type?: WastageType;
   // Canonical quantity in doses (units for GENERAL). CLOSED_VIAL entries are
   // always a whole-vial multiple — the input is captured in vials.

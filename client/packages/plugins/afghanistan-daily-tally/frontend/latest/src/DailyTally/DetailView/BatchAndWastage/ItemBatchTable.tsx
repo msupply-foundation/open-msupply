@@ -28,7 +28,6 @@ interface Props {
 const emptyEntry: BatchEntry = {
   issued: 0,
   openVialWastageDoses: 0,
-  closedVialWastageDoses: 0,
   wasted: 0,
   hasOpenVialWastage: false,
 };
