@@ -612,5 +612,19 @@ pub async fn get_loaders(
         tokio::spawn,
     ));
 
+    loaders.insert(DataLoader::new(
+        AllowedCustomFieldKeysByScopeLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        CustomFieldOptionsByCustomFieldIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    ));
+
     loaders
 }

@@ -11,7 +11,7 @@ use crate::sync::translations::{
 
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 /// FK column renamed during the name_link abstraction. Central emits both the canonical
@@ -45,12 +45,24 @@ impl SyncTranslation for RnRFormTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let row =
             from_renamed_keys_str::<RnRFormRow>(&sync_record.data.0.to_string(), RENAMED_KEYS)?;
-        Ok(PullTranslateResult::upsert(row))
+
+        let check_fk = fk_checker.with_table_required(connection, "rnr_form", &row.id);
+
+        let result = RnRFormRow {
+            name_id: check_fk(row.name_id, "name_link_id", FkField::NameLink)?,
+            store_id: check_fk(row.store_id, "store_id", FkField::Store)?,
+            period_id: check_fk(row.period_id, "period_id", FkField::Period)?,
+            program_id: check_fk(row.program_id, "program_id", FkField::Program)?,
+            ..row
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -107,7 +119,11 @@ impl SyncTranslation for RnRFormTranslation {
 mod tests {
     use super::*;
 
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_program_a, MockDataInserts},
+        test_db::setup_all,
+        NameLinkRow, NameLinkRowRepository, ProgramRow, ProgramRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_rnr_form_translation() {
@@ -117,10 +133,28 @@ mod tests {
         let (_, connection, _, _) =
             setup_all("test_rnr_form_translation", MockDataInserts::all()).await;
 
+        // Seed the name_link + program parents the form's required FKs point at.
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                name_id: "name_a".to_string(),
+            })
+            .unwrap();
+        ProgramRowRepository::new(&connection)
+            .upsert_one(&ProgramRow {
+                id: "program_test".to_string(),
+                ..mock_program_a()
+            })
+            .unwrap();
+
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

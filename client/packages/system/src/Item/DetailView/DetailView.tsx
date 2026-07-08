@@ -21,6 +21,7 @@ import { ItemVariantsTab } from './Tabs/ItemVariants';
 import { ItemLedgerTab } from './Tabs/ItemLedger';
 import { StoreTab } from './Tabs/Store';
 import { AncillarySupplies } from './Tabs/AncillarySupplies';
+import { CustomFieldsTab } from './Tabs/CustomFields';
 import { ActivityLogList } from '../../ActivityLog';
 
 export const ItemDetailView = () => {
@@ -114,6 +115,11 @@ export const ItemDetailView = () => {
       value: t('title.ancillary-supplies'),
     },
   ];
+
+  tabs.push({
+    Component: <CustomFieldsTab item={data} />,
+    value: t('label.custom-fields'),
+  });
 
   isCentralServer &&
     tabs.push({

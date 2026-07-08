@@ -51,6 +51,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             receive_payments_from_prescriptions: _,
 
             // Store preferences
+            blind_stocktake,
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
@@ -108,6 +109,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         // the edit UI until prescription payment functionality exists
 
         // Store preferences
+        append_if_type(blind_stocktake, &mut prefs, &input)?;
         append_if_type(order_in_packs, &mut prefs, &input)?;
         append_if_type(use_procurement_functionality, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;

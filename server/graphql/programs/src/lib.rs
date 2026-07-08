@@ -43,6 +43,9 @@ use mutations::patient::insert::InsertPatientResponse;
 use mutations::patient::update::update_patient;
 use mutations::patient::update::UpdatePatientInput;
 use mutations::patient::update::UpdatePatientResponse;
+use mutations::patient::update_custom_fields::update_patient_custom_fields;
+use mutations::patient::update_custom_fields::UpdatePatientCustomFieldsInput;
+use mutations::patient::update_custom_fields::UpdatePatientCustomFieldsResponse;
 use mutations::program_enrolment::insert::insert_program_enrolment;
 use mutations::program_enrolment::insert::InsertProgramEnrolmentInput;
 use mutations::program_enrolment::insert::InsertProgramEnrolmentResponse;
@@ -353,6 +356,17 @@ impl ProgramsMutations {
         input: UpdatePatientInput,
     ) -> Result<UpdatePatientResponse> {
         update_patient(ctx, store_id, input)
+    }
+
+    /// Update a patient's new-system custom property values (`custom_fields`).
+    /// Accepts a key->value patch; merges it into the patient's existing blob.
+    pub async fn update_patient_custom_fields(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdatePatientCustomFieldsInput,
+    ) -> Result<UpdatePatientCustomFieldsResponse> {
+        update_patient_custom_fields(ctx, store_id, input)
     }
 
     /// Inserts a new program patient, i.e. a patient that can contain additional information stored

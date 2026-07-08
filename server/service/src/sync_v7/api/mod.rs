@@ -16,12 +16,16 @@ pub mod status;
 
 pub const HARDWARE_ID_HEADER: &str = "hardware-id";
 pub const APP_VERSION_HEADER: &str = "app-version";
+pub const APP_NAME_HEADER: &str = "app-name";
 
 #[derive(Clone, Debug)]
 pub struct Common {
     pub token: String,
     pub hardware_id: String,
     pub version: Version,
+    /// The remote's client-application name (e.g. "Open mSupply Desktop"). Reported
+    /// like `version` so central can record it on the site row. See #11784.
+    pub app_name: String,
 }
 
 impl Common {
@@ -43,6 +47,7 @@ impl Common {
             token,
             hardware_id,
             version: Version::from_package_json(),
+            app_name: crate::sync::api::APP_NAME.to_string(),
         })
     }
 
@@ -50,6 +55,7 @@ impl Common {
         authorization: Option<&str>,
         hardware_id: Option<&str>,
         app_version: Option<&str>,
+        app_name: Option<&str>,
     ) -> Result<Self, SyncError> {
         let token = authorization
             .and_then(|s| s.split_at_checked(7))
@@ -69,10 +75,15 @@ impl Common {
             SyncError::MissingAuthHeader("missing app-version header".to_string())
         })?;
 
+        let app_name = app_name
+            .ok_or_else(|| SyncError::MissingAuthHeader("missing app-name header".to_string()))?
+            .to_string();
+
         Ok(Common {
             token,
             hardware_id,
             version,
+            app_name,
         })
     }
 
@@ -85,6 +96,7 @@ impl Common {
         )?;
         insert_header(&mut headers, HARDWARE_ID_HEADER, &self.hardware_id)?;
         insert_header(&mut headers, APP_VERSION_HEADER, &self.version.to_string())?;
+        insert_header(&mut headers, APP_NAME_HEADER, &self.app_name)?;
         Ok(headers)
     }
 }
@@ -197,7 +209,12 @@ mod tests {
     use super::*;
 
     fn from_authorization(authorization: Option<&str>) -> Result<Common, SyncError> {
-        Common::from_header_values(authorization, Some("hw-1"), Some("1.0.0"))
+        Common::from_header_values(
+            authorization,
+            Some("hw-1"),
+            Some("1.0.0"),
+            Some("Open mSupply Desktop"),
+        )
     }
 
     #[test]

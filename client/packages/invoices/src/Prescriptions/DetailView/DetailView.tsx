@@ -12,10 +12,12 @@ import {
   useNonPaginatedMaterialTable,
   NothingHere,
   MaterialTable,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { PrescriptionLineFragment, usePrescription } from '../api';
+import { InvoiceCustomFieldsTab } from '../../common';
 import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
@@ -33,6 +35,7 @@ export const PrescriptionDetailView = () => {
     query: { data, loading },
     rows,
     isDisabled,
+    update: { update },
   } = usePrescription();
   const columns = usePrescriptionColumn();
 
@@ -100,6 +103,17 @@ export const PrescriptionDetailView = () => {
     {
       Component: <MaterialTable table={table} />,
       value: 'Details',
+    },
+    {
+      Component: (
+        <InvoiceCustomFieldsTab
+          invoiceType={InvoiceNodeType.Prescription}
+          customFields={data?.customFields}
+          onSave={patch => update({ customFields: patch })}
+          disabled={isDisabled}
+        />
+      ),
+      value: 'custom-fields',
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,

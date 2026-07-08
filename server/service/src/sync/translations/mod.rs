@@ -28,6 +28,7 @@ pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
 pub(crate) mod goods_received;
 pub(crate) mod goods_received_line;
+pub(crate) mod help_document;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
@@ -38,6 +39,7 @@ pub(crate) mod item_direction;
 pub(crate) mod item_store_join;
 pub(crate) mod item_variant;
 pub(crate) mod item_warning_join;
+pub(crate) mod legacy_field_labels;
 pub(crate) mod location;
 pub(crate) mod location_movement;
 pub(crate) mod location_type;
@@ -45,6 +47,7 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
+pub(crate) mod name_category;
 pub(crate) mod name_insurance_join;
 pub(crate) mod name_oms_fields;
 pub(crate) mod name_property;
@@ -85,6 +88,7 @@ pub(crate) mod sync_message_om;
 pub(crate) mod system_log;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
+pub(crate) mod transaction_category;
 pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
@@ -110,6 +114,8 @@ use topological_sort::TopologicalSort;
 
 use super::api::{CommonSyncRecord, SyncAction};
 
+pub(crate) use utils::{FkChecker, FkField};
+
 pub(crate) type SyncTranslators = Vec<Box<dyn SyncTranslation>>;
 
 pub(crate) fn all_translators() -> SyncTranslators {
@@ -121,10 +127,12 @@ pub(crate) fn all_translators() -> SyncTranslators {
         user::boxed(),
         user_store_permissions::boxed(),
         name::boxed(),
+        name_category::boxed(),
         name_tag::boxed(),
         name_tag_join::boxed(),
         unit::boxed(),
         category::boxed(),
+        transaction_category::boxed(),
         item::boxed(),
         item_store_join::boxed(),
         site::boxed(),
@@ -145,6 +153,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         document_registry::boxed(),
         property::boxed(),
         name_property::boxed(),
+        legacy_field_labels::boxed(),
         location_type::boxed(),
         campaign::boxed(),
         contact::boxed(),
@@ -237,6 +246,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Goods Received (legacy OG → InboundShipment)
         goods_received::boxed(),
         goods_received_line::boxed(),
+        // Help documents (central → all sites)
+        help_document::boxed(),
     ]
 }
 
@@ -461,6 +472,7 @@ pub(crate) trait SyncTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _: &FkChecker,
         _: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::NotMatched)

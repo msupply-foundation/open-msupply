@@ -158,6 +158,7 @@ query preferences($storeId: String!) {
     adjustForNumberOfDaysOutOfStock
     allowTrackingOfStockByDonor
     authorisePurchaseOrder
+    blindStocktake
     canCreateInternalOrderFromARequisition
     customTranslations
     daysInMonth
@@ -193,7 +194,6 @@ query preferences($storeId: String!) {
     invoiceStatusOptions
     itemMarginOverridesSupplierMargin
     showIndicativePriceInRequisitions
-    doNotPrintPlaceholderLineLabels
     isGaps
     globalTableConfigs
     backdating {

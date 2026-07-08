@@ -71,6 +71,14 @@ impl<'a> NameLinkRowRepository<'a> {
             .load::<NameLinkRow>(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn check_exists_by_id(&self, record_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            name_link::table.filter(name_link::id.eq(record_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for NameLinkRow {

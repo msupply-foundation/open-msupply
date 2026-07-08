@@ -1119,6 +1119,57 @@ impl PropertyRow {
     }
 }
 
+impl CustomFieldRow {
+    pub(crate) fn generate_changelog(
+        record_id: String,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::CustomField,
+            record_id,
+            row_action: action,
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl CustomFieldOptionRow {
+    pub(crate) fn generate_changelog(
+        record_id: String,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::CustomFieldOption,
+            record_id,
+            row_action: action,
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl CustomFieldScopeRow {
+    pub(crate) fn generate_changelog(
+        record_id: String,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::CustomFieldScope,
+            record_id,
+            row_action: action,
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
 impl VaccineCourseRow {
     pub(crate) fn generate_changelog(
         record_id: String,
@@ -1264,6 +1315,23 @@ impl FrontendPluginRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::FrontendPlugin,
+            record_id,
+            row_action: action,
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl HelpDocumentRow {
+    pub(crate) fn generate_changelog(
+        record_id: String,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::HelpDocument,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,

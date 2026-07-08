@@ -7,6 +7,7 @@ use super::{ApiResponse, SyncApiV7};
 pub struct Output {
     pub site_id: i32,
     pub central_site_id: i32,
+    pub is_multi_device_site: bool,
 }
 
 pub type Response = ApiResponse<Output>;

@@ -1,6 +1,8 @@
 use super::{
     sync_buffer::{write_sync_buffer_error, write_sync_buffer_ignored, write_sync_buffer_success},
-    translations::{IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators},
+    translations::{
+        FkChecker, IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators,
+    },
 };
 use log::{debug, warn};
 use repository::*;
@@ -9,6 +11,9 @@ use util::datetime_now;
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
+    /// Integration-scoped FK existence cache, shared across every record translated by this
+    /// integrator (i.e. the whole upsert phase). See [`FkChecker`].
+    fk_checker: FkChecker,
     pub(crate) result: TranslationAndIntegrationResults,
 }
 
@@ -25,6 +30,7 @@ impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(connection: &'a StorageConnection) -> TranslationAndIntegration<'a> {
         TranslationAndIntegration {
             connection,
+            fk_checker: FkChecker::new(),
             result: TranslationAndIntegrationResults::new(),
         }
     }
@@ -43,8 +49,11 @@ impl<'a> TranslationAndIntegration<'a> {
             }
 
             let translation_result = match sync_record.action {
-                SyncAction::Upsert => translator
-                    .try_translate_from_upsert_sync_record(self.connection, sync_record)?,
+                SyncAction::Upsert => translator.try_translate_from_upsert_sync_record(
+                    self.connection,
+                    &self.fk_checker,
+                    sync_record,
+                )?,
                 SyncAction::Delete => translator
                     .try_translate_from_delete_sync_record(self.connection, sync_record)?,
                 SyncAction::Merge => {
@@ -94,7 +103,7 @@ impl<'a> TranslationAndIntegration<'a> {
             };
 
             let mut integration_records = Vec::new();
-            let mut ignored = false;
+            let mut ignore_message = None;
             for translation_result in translation_results {
                 match translation_result {
                     PullTranslateResult::IntegrationOperations(operations) => {
@@ -104,33 +113,31 @@ impl<'a> TranslationAndIntegration<'a> {
                             .map(|operation| (Some(sync_record.source_site_id), operation));
                         integration_records.extend(operations_with_source_site_id)
                     }
-                    PullTranslateResult::Ignored(ignore_message) => {
-                        ignored = true;
-                        write_sync_buffer_ignored(
-                            self.connection,
-                            cursor,
-                            started,
-                            &ignore_message,
-                        )?;
-                        self.result.insert_error(&sync_record.table_name);
-                        // Don't count this as an error in the count, it's valid to have records that are ignored based on translation logic.
-
-                        debug!(
-                            "Ignored record: {:?} {:?} {:?}",
-                            ignore_message, sync_record.record_id, sync_record.table_name
-                        );
-                        continue;
-                    }
+                    PullTranslateResult::Ignored(message) => ignore_message = Some(message),
                     PullTranslateResult::NotMatched => {}
                 }
             }
 
-            if ignored {
-                continue;
-            }
-
-            // Record translator not found error in sync buffer and in result, continue to next sync_record
+            // A record only counts as ignored when no matching translator
+            // produced operations: a table can have more than one pull
+            // translator (e.g. "pref" — store preferences + mapping property
+            // labels), and one of them declining its part must not drop
+            // another's operations.
             if integration_records.is_empty() {
+                if let Some(ignore_message) = ignore_message {
+                    write_sync_buffer_ignored(self.connection, cursor, started, &ignore_message)?;
+                    self.result.insert_error(&sync_record.table_name);
+                    // Don't count this as an error in the count, it's valid to have records that are ignored based on translation logic.
+
+                    debug!(
+                        "Ignored record: {:?} {:?} {:?}",
+                        ignore_message, sync_record.record_id, sync_record.table_name
+                    );
+                    // Next sync_record
+                    continue;
+                }
+
+                // Record translator not found error in sync buffer and in result, continue to next sync_record
                 let error = "Translator for record not found";
                 write_sync_buffer_error(self.connection, cursor, started, error)?;
                 self.result.insert_error(&sync_record.table_name);

@@ -5,6 +5,7 @@ import {
   InputWithLabelRow,
   BasicTextInput,
   Grid,
+  InvoiceNodeType,
   useTranslation,
   Alert,
   InvoiceNodeStatus,
@@ -12,6 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { CustomerReturnFragment, useReturns } from '../api';
 import { CustomerSearchInput } from '@openmsupply-client/system';
+import { InvoiceToolbarCustomFields } from '../../common';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();
@@ -21,6 +23,7 @@ export const Toolbar: FC = () => {
   const {
     otherParty,
     theirReference,
+    customFields,
     id,
     linkedShipment = '',
   } = draft ?? { id: '' };
@@ -35,15 +38,9 @@ export const Toolbar: FC = () => {
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
-      <Grid
-        container
-        flexDirection="row"
-        display="flex"
-        flex={1}
-        alignItems="flex-end"
-      >
-        <Grid display="flex" flex={1}>
-          <Box display="flex" flex={1} flexDirection="column" gap={1}>
+      <Grid container spacing={2} width="100%" alignItems="flex-start">
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
                 label={t('label.customer-name')}
@@ -73,9 +70,21 @@ export const Toolbar: FC = () => {
                 />
               }
             />
-            <DisabledStoreNotice otherParty={otherParty} />
-            <InfoAlert customerReturn={draft} />
           </Box>
+        </Grid>
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
+            <InvoiceToolbarCustomFields
+              invoiceType={InvoiceNodeType.CustomerReturn}
+              customFields={customFields}
+              onUpdate={patch => update({ customFields: patch })}
+              disabled={isDisabled}
+            />
+          </Box>
+        </Grid>
+        <Grid size={12}>
+          <DisabledStoreNotice otherParty={otherParty} />
+          <InfoAlert customerReturn={draft} />
         </Grid>
       </Grid>
     </AppBarContentPortal>
