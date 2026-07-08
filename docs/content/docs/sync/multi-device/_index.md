@@ -13,7 +13,7 @@ It's turned on from the central server, under Manage → Sites.
 
 The flag lives in two places:
 
-- **Central** — the authoritative `site.is_multi_device` column (toggled on or off from the UI).
+- **Central** — the authoritative `site.is_multi_device` column (toggled on from the UI).
 - **Remote** — a remote has no `site` row for itself, so each sync it reads `is_multi_device_site` from the `site_status` endpoint and caches it in `key_value_store` as `SettingsSyncSiteIsMultiDevice`.
 
 ## Allowed tables {#allowed-tables}
@@ -64,6 +64,8 @@ if is_multi_device && !sync_style.multi_device_site {
 ```
 
 ## Turning it off {#turning-off}
+
+> **Note.** Currently turning off a multi-device site is disabled until sync request is implemented. The below describes how authorisation works when this is re-enabled.
 
 Turning multi-device off returns the site to a single device syncing the full table set. It doesn't clear the token or hardware-id, so the site keeps working — but only the device whose `hardware_id` is currently stored on central can still sync. The other devices are locked out, and initialising a fresh device errors (central reports the site as already registered). To hand over to a different device, central can reset the `hardware_id`.
 

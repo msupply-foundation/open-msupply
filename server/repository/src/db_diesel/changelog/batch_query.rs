@@ -61,6 +61,9 @@ pub enum Row {
     NameProperty(NamePropertyRow),
     PackagingVariant(PackagingVariantRow),
     Property(PropertyRow),
+    CustomField(CustomFieldRow),
+    CustomFieldOption(CustomFieldOptionRow),
+    CustomFieldScope(CustomFieldScopeRow),
     Report(ReportRow),
     VaccineCourse(VaccineCourseRow),
     VaccineCourseDose(VaccineCourseDoseRow),
@@ -485,6 +488,21 @@ fn fetch_rows_for_table(
             ChangelogTableName::Property => {
                 for r in PropertyRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::Property(r));
+                }
+            }
+            ChangelogTableName::CustomField => {
+                for r in CustomFieldRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomField(r));
+                }
+            }
+            ChangelogTableName::CustomFieldOption => {
+                for r in CustomFieldOptionRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomFieldOption(r));
+                }
+            }
+            ChangelogTableName::CustomFieldScope => {
+                for r in CustomFieldScopeRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomFieldScope(r));
                 }
             }
             ChangelogTableName::Report => {

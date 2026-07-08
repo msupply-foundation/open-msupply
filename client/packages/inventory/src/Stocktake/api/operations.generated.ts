@@ -45,6 +45,7 @@ export type StocktakeLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    customFields?: any | null;
     store?: {
       __typename: 'StoreNode';
       id: string;
@@ -157,6 +158,7 @@ export type StocktakeFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
@@ -313,6 +315,7 @@ export type StocktakeQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -445,6 +448,7 @@ export type StocktakeByNumberQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -562,6 +566,7 @@ export type StocktakeLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;

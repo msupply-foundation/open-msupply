@@ -344,7 +344,7 @@ mod test_sync_v7_client_api {
                 "remaining": 0,
                 "records": [
                     // A table added on a newer central but unknown to this site.
-                    { "cursor": 1, "recordId": "custom_field_1", "tableName": "CustomField", "action": "Upsert", "data": json!({ "id": "custom_field_1" }), "storeId": null, "transferStoreId": null, "patientId": null },
+                    { "cursor": 1, "recordId": "future_table_1", "tableName": "TableFromTheFuture", "action": "Upsert", "data": json!({ "id": "future_table_1" }), "storeId": null, "transferStoreId": null, "patientId": null },
                     // A known table in the same batch must still integrate.
                     { "cursor": 2, "recordId": "unit_test_1",    "tableName": "Unit",        "action": "Upsert", "data": unit(),                          "storeId": null, "transferStoreId": null, "patientId": null },
                 ]
@@ -369,9 +369,9 @@ mod test_sync_v7_client_api {
         // integrated — no translator matches it and it isn't in INTEGRATION_ORDER.
         let unknown = buffers
             .iter()
-            .find(|b| b.record_id == "custom_field_1")
+            .find(|b| b.record_id == "future_table_1")
             .expect("unknown record should be in the sync buffer");
-        assert_eq!(unknown.table_name, "CustomField");
+        assert_eq!(unknown.table_name, "TableFromTheFuture");
         assert!(
             unknown.integration_datetime.is_none(),
             "unknown table should be left unintegrated, not errored or integrated"

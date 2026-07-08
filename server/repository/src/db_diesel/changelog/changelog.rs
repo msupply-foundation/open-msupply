@@ -128,6 +128,9 @@ diesel_string_enum! {
         ProgramRequisitionOrderType,
         ProgramRequisitionSettings,
         Property,
+        CustomField,
+        CustomFieldOption,
+        CustomFieldScope,
         PurchaseOrder,
         PurchaseOrderLine,
         ReasonOption,
@@ -701,19 +704,27 @@ mod print_query_tests {
     #[test]
     fn changelog_table_name_unknown_falls_back_to_other() {
         // serde (v7 wire) — unknown PascalCase name is captured verbatim.
-        let parsed: ChangelogTableName = serde_json::from_str("\"CustomField\"").unwrap();
-        assert_eq!(parsed, ChangelogTableName::Other("CustomField".to_string()));
+        // (The original example, "CustomField", became a real variant when the
+        // custom-fields feature landed, so a fabricated name is used instead.)
+        let parsed: ChangelogTableName = serde_json::from_str("\"TableFromTheFuture\"").unwrap();
+        assert_eq!(
+            parsed,
+            ChangelogTableName::Other("TableFromTheFuture".to_string())
+        );
         assert_eq!(
             serde_json::to_string(&parsed).unwrap(),
-            "\"CustomField\"",
+            "\"TableFromTheFuture\"",
             "Other round-trips back to its raw wire name"
         );
 
         // strum (DB column / sync buffer `to_string()`) — same fallback, inner string
         // preserved thanks to `#[strum(transparent)]`.
         use std::str::FromStr;
-        let from_db = ChangelogTableName::from_str("custom_field").unwrap();
-        assert_eq!(from_db, ChangelogTableName::Other("custom_field".to_string()));
-        assert_eq!(from_db.to_string(), "custom_field");
+        let from_db = ChangelogTableName::from_str("table_from_the_future").unwrap();
+        assert_eq!(
+            from_db,
+            ChangelogTableName::Other("table_from_the_future".to_string())
+        );
+        assert_eq!(from_db.to_string(), "table_from_the_future");
     }
 }

@@ -5,8 +5,8 @@ use crate::{
 
 use super::{
     clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
-    location_type_row::location_type, unit_row::unit, ItemLinkRow, ItemLinkRowRepository,
-    RepositoryError, StorageConnection,
+    location_type_row::location_type, custom_fields_json::JsonValue, unit_row::unit, ItemLinkRow,
+    ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -32,6 +32,7 @@ table! {
         restricted_location_type_id ->  Nullable<Text>,
         volume_per_pack -> Double,
         universal_code -> Nullable<Text>,
+        custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
     }
 }
 
@@ -87,6 +88,10 @@ pub struct ItemRow {
     pub restricted_location_type_id: Option<String>,
     pub volume_per_pack: f64,
     pub universal_code: Option<String>,
+    /// Properties v2 values keyed by `custom_field.key`. Imported from legacy
+    /// mSupply `[item]user_field_1..7` via the v5 sync translator; central-only
+    /// and never edited in OMS. See docs/content/server/service/properties/_index.md.
+    pub custom_fields: Option<JsonValue>,
 }
 
 impl ItemRow {
@@ -116,6 +121,7 @@ impl Default for ItemRow {
             restricted_location_type_id: None,
             volume_per_pack: 0.0,
             universal_code: None,
+            custom_fields: None,
         }
     }
 }
@@ -378,5 +384,34 @@ mod test {
             .unwrap()
             .unwrap();
         assert_eq!(updated_item.restricted_location_type_id, None);
+    }
+
+    // Round-trip the properties-v2 JSONB column through ItemRow on both PG
+    // (native Jsonb) and SQLite (TEXT Json) — mirrors `name_row_properties_round_trip`.
+    #[actix_rt::test]
+    async fn item_row_properties_round_trip() {
+        let (_, connection, _, _) =
+            setup_all("item_row_properties_round_trip", MockDataInserts::none()).await;
+
+        let repo = ItemRowRepository::new(&connection);
+
+        let properties = serde_json::json!({
+            "user_field_1": "Cold chain",
+            "user_field_5": 12.5,
+            "user_field_7": true,
+        });
+        let row = ItemRow {
+            id: "item_properties_round_trip".to_string(),
+            name: "name".to_string(),
+            code: "code".to_string(),
+            r#type: ItemType::Stock,
+            custom_fields: Some(properties.clone()),
+            ..Default::default()
+        };
+
+        repo.upsert_one(&row).unwrap();
+
+        let fetched = repo.find_one_by_id(&row.id).unwrap().unwrap();
+        assert_eq!(fetched.custom_fields, Some(properties));
     }
 }
