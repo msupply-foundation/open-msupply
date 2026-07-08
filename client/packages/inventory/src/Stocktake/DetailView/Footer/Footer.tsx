@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import {
   Box,
   StatusCrumbs,
@@ -31,6 +31,40 @@ const createStatusLog = (stocktake: StocktakeFragment) => {
   };
 };
 
+/**
+ * Status crumbs + lock/status-change buttons. Extracted so the parent
+ * `DetailView` can render it through `AppFooterStatusPortal` on every tab —
+ * the lines table's own `Footer` only takes over to show row-selection
+ * actions.
+ */
+export const StatusFooter = (): ReactElement | null => {
+  const t = useTranslation();
+  const { data: stocktake } = useStocktakeOld.document.get();
+
+  if (!stocktake) return null;
+
+  return (
+    <Box
+      gap={2}
+      display="flex"
+      flexDirection="row"
+      alignItems="center"
+      height={64}
+    >
+      <StocktakeLockButton />
+      <StatusCrumbs
+        statuses={stocktakeStatuses}
+        statusLog={createStatusLog(stocktake)}
+        statusFormatter={status => t(getStatusTranslation(status))}
+      />
+
+      <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+        <StatusChangeButton />
+      </Box>
+    </Box>
+  );
+};
+
 export const Footer = ({
   selectedRows,
   resetRowSelection,
@@ -39,7 +73,6 @@ export const Footer = ({
   resetRowSelection: () => void;
 }) => {
   const t = useTranslation();
-  const { data: stocktake } = useStocktakeOld.document.get();
   const isDisabled = useStocktakeOld.utils.isDisabled();
   const onDelete = useStocktakeOld.line.deleteSelected(
     selectedRows,
@@ -82,59 +115,40 @@ export const Footer = ({
     },
   ];
 
+  // Only mount the footer portal when there's a selection. Otherwise leave the
+  // slot free so the parent `AppFooterStatusPortal` (status crumbs) shows
+  // through on every tab. The confirmation modals are opened from row actions
+  // but render via their own portals, so they stay mounted outside the
+  // conditional.
   return (
-    <AppFooterPortal
-      Content={
-        <>
-          {selectedRows.length !== 0 && (
-            <>
-              {
-                <ActionsFooter
-                  actions={actions}
-                  selectedRowCount={selectedRows.length}
-                  resetRowSelection={resetRowSelection}
-                />
-              }
-              {reduceModal.isOpen && (
-                <ReduceLinesToZeroConfirmationModal
-                  isOpen={reduceModal.isOpen}
-                  onCancel={reduceModal.onClose}
-                  clearSelected={resetRowSelection}
-                  selectedRows={selectedRows}
-                />
-              )}
-              {changeLocationModal.isOpen && (
-                <ChangeLocationConfirmationModal
-                  isOpen={changeLocationModal.isOpen}
-                  onCancel={changeLocationModal.onClose}
-                  clearSelected={resetRowSelection}
-                  rows={selectedRows}
-                />
-              )}
-            </>
-          )}
-          {stocktake && selectedRows.length === 0 && (
-            <Box
-              gap={2}
-              display="flex"
-              flexDirection="row"
-              alignItems="center"
-              height={64}
-            >
-              <StocktakeLockButton />
-              <StatusCrumbs
-                statuses={stocktakeStatuses}
-                statusLog={createStatusLog(stocktake)}
-                statusFormatter={status => t(getStatusTranslation(status))}
-              />
-
-              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-                <StatusChangeButton />
-              </Box>
-            </Box>
-          )}
-        </>
-      }
-    />
+    <>
+      {selectedRows.length !== 0 && (
+        <AppFooterPortal
+          Content={
+            <ActionsFooter
+              actions={actions}
+              selectedRowCount={selectedRows.length}
+              resetRowSelection={resetRowSelection}
+            />
+          }
+        />
+      )}
+      {reduceModal.isOpen && (
+        <ReduceLinesToZeroConfirmationModal
+          isOpen={reduceModal.isOpen}
+          onCancel={reduceModal.onClose}
+          clearSelected={resetRowSelection}
+          selectedRows={selectedRows}
+        />
+      )}
+      {changeLocationModal.isOpen && (
+        <ChangeLocationConfirmationModal
+          isOpen={changeLocationModal.isOpen}
+          onCancel={changeLocationModal.onClose}
+          clearSelected={resetRowSelection}
+          rows={selectedRows}
+        />
+      )}
+    </>
   );
 };

@@ -28,6 +28,8 @@ export const ListView = () => {
     filters: [
       { key: 'stockMovementNumber', condition: 'equalTo', isNumber: true },
       { key: 'status', condition: 'equalTo' },
+      { key: 'user.username' },
+      { key: 'createdDatetime', condition: 'between' },
     ],
   });
 
@@ -67,6 +69,11 @@ export const ListView = () => {
         header: t('label.created'),
         columnType: ColumnType.Date,
         enableSorting: true,
+      },
+      {
+        id: 'createdBy',
+        accessorFn: row => row.user?.username ?? '',
+        header: t('label.created-by'),
       },
       {
         id: 'finalisedDatetime',

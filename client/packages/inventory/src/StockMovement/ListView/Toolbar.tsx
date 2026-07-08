@@ -38,6 +38,29 @@ export const Toolbar = () => {
                 value: status,
               })),
             },
+            {
+              type: 'text',
+              name: t('label.created-by'),
+              urlParameter: 'username',
+            },
+            {
+              type: 'group',
+              name: t('label.date'),
+              elements: [
+                {
+                  type: 'dateTime',
+                  name: t('label.from-date'),
+                  urlParameter: 'createdDatetime',
+                  range: 'from',
+                },
+                {
+                  type: 'dateTime',
+                  name: t('label.to-date'),
+                  urlParameter: 'createdDatetime',
+                  range: 'to',
+                },
+              ],
+            },
           ]}
         />
       </Box>

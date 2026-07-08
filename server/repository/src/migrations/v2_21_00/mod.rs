@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
+mod add_help_document_table;
 mod add_stock_relocation_line_table;
 mod recreate_stock_relocation_table;
 
@@ -18,6 +19,7 @@ impl Migration for V2_21_00 {
         vec![
             Box::new(recreate_stock_relocation_table::Migrate),
             Box::new(add_stock_relocation_line_table::Migrate),
+            Box::new(add_help_document_table::Migrate),
         ]
     }
 }

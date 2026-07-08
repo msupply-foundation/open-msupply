@@ -73,6 +73,10 @@ Register a complete page with its own route and menu item. The plugin chooses wh
 
 Array of components rendered in the app bar of the inbound-shipment detail view. Each receives the current `shipment: InboundFragment` as a prop.
 
+### Inbound shipment status change — `inboundShipment.validateStatusChange`
+
+Array of **pure validator functions** run before an inbound-shipment status change (from the detail-view footer). Each receives `(shipment: InboundFragment, targetStatus: InvoiceNodeStatus)` and returns a user-facing message to **block** the transition, or `null` to allow it. The host runs them after its own checks (permission, empty invoice, on-hold, pending lines) and shows the first returned message as an error. Use this to enforce a rule across all lines at receive/verify time — e.g. requiring a discrepancy reason — that a per-line `editViewField` alone can't guarantee (bulk actions like "set quantities to 0" never open the line modal). Functions must be pure (no React hooks); they run against the shipment data already loaded by the host.
+
 ### Prescription — `prescriptionPaymentForm`
 
 Array of components rendered inside the prescription payment dialog. Receives props described by `PrescriptionPaymentComponentProps`.

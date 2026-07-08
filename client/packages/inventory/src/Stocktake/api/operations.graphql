@@ -129,6 +129,13 @@ fragment Stocktake on StocktakeNode {
       ...StocktakeLine
     }
   }
+
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
 }
 
 query stocktakes(

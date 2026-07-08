@@ -1,7 +1,8 @@
-use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference};
+use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference, PreferenceError};
 use repository::InvoiceRow;
 use repository::InvoiceStatus;
 use repository::InvoiceType;
+use repository::RepositoryError;
 use repository::StorageConnection;
 
 pub mod generate;
@@ -42,7 +43,7 @@ impl StockInType {
 pub fn check_lines_locked_by_authorisation(
     connection: &StorageConnection,
     invoice: &InvoiceRow,
-) -> bool {
+) -> Result<bool, RepositoryError> {
     // Only external inbound shipments (linked to a purchase order) are
     // subject to line authorisation
     if invoice.purchase_order_id.is_none()
@@ -51,11 +52,11 @@ pub fn check_lines_locked_by_authorisation(
             InvoiceStatus::Received | InvoiceStatus::Verified
         )
     {
-        return false;
+        return Ok(false);
     }
     ExternalInboundShipmentLinesMustBeAuthorised
         .load(connection, Some(invoice.store_id.clone()))
-        .unwrap_or(false)
+        .map_err(PreferenceError::into_repository_error)
 }
 
 pub fn should_update_stock(invoice: &InvoiceRow) -> bool {
