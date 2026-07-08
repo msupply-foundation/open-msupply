@@ -1882,6 +1882,7 @@
   "log.invoice-date-backdated": "Received date backdated",
   "log.invoice-deleted": "Deleted",
   "log.invoice-number-allocated": "Number allocated",
+  "log.invoice-received-qty-updated": "Received quantity updated",
   "log.invoice-status-allocated": "Status changed to Allocated",
   "log.invoice-status-delivered": "Status changed to Delivered",
   "log.invoice-status-picked": "Status changed to Picked",
