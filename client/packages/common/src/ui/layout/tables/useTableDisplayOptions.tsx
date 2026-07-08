@@ -164,6 +164,9 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     }),
 
     muiTableHeadCellProps: ({ column, table }) => ({
+      // Stable per-column hook for e2e tests (survives re-ordering, resizing
+      // and localisation of the header text).
+      'data-testid': `header-${column.id}`,
       sx: {
         height: '100%',
         fontWeight: 600,
@@ -296,6 +299,8 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     },
 
     muiTableBodyCellProps: ({ row, column, table }) => ({
+      // Stable per-column hook for e2e tests — scope by row: row.getByTestId()
+      'data-testid': `cell-${column.id}`,
       sx: {
         fontSize: table.getState().density === 'compact' ? '0.90em' : '1em',
         fontWeight: 400,
@@ -356,6 +361,9 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
     }),
 
     muiSelectAllCheckboxProps: {
+      inputProps: {
+        'data-testid': 'select-all-rows-checkbox',
+      } as React.InputHTMLAttributes<HTMLInputElement>,
       color: 'outline',
       size: 'small',
       icon: <CheckboxEmptyIcon />,
@@ -363,6 +371,9 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       indeterminateIcon: <CheckboxIndeterminateIcon />,
     },
     muiSelectCheckboxProps: {
+      inputProps: {
+        'data-testid': 'select-row-checkbox',
+      } as React.InputHTMLAttributes<HTMLInputElement>,
       color: 'outline',
       size: 'small',
       icon: <CheckboxEmptyIcon />,

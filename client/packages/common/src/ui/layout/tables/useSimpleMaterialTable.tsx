@@ -48,15 +48,19 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
       </Box>
     ),
 
-    muiTableHeadCellProps: {
+    // NOTE: these replace (not merge with) the base display options, so the
+    // e2e `header-<columnId>` / `cell-<columnId>` testids must be re-applied.
+    muiTableHeadCellProps: ({ column }) => ({
+      'data-testid': `header-${column.id}`,
       sx: {
         fontSize: '0.85em',
         '& .Mui-TableHeadCell-Content-Wrapper': {
           whiteSpace: 'normal',
         },
       },
-    },
-    muiTableBodyCellProps: ({ row }) => ({
+    }),
+    muiTableBodyCellProps: ({ row, column }) => ({
+      'data-testid': `cell-${column.id}`,
       sx: {
         fontSize: '0.85em',
         fontWeight: 400,

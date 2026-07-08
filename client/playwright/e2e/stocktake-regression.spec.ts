@@ -3,22 +3,23 @@
  *
  * Source of truth: the OMS-REG-INV-03, OMS-REG-INV-04 and OMS-REG-SMV-01
  * regression cases in the (private) tmf-testing repo (behaviour-anchored format,
- * PR #10). Each test carries a `covers` annotation naming the behaviour ID(s) it
- * exercises; the coverage report is generated from those annotations via the json
- * reporter.
+ * tmf-testing#11). Each test carries a `covers` annotation naming the behaviour
+ * ID(s) it exercises; the coverage report is generated from those annotations
+ * via the json reporter.
  *
  *   - OMS-REG-INV-03  Stocktake creation & item/batch management (detail view)
  *   - OMS-REG-INV-04  Stocktake finalisation & edit protection
  *   - OMS-REG-SMV-01  Stock/ledger effects of finalising a stocktake
  *
- * Selector philosophy — RESILIENT TO A FRONT-END REWRITE.
- * The stocktake feature ships with no data-testids, so every locator here is
- * anchored to something a functional rewrite would preserve: ARIA roles,
- * accessible names, visible label text, and table *column headers* (never cell
- * indices hard-coded, never CSS classes). Where a field's label isn't
- * aria-linked to its input (InputWithLabelRow), we resolve the input from the
- * label text rather than a testid. If the rewrite keeps the same behaviour and
- * copy, these tests keep passing.
+ * Selector philosophy — data-testid first.
+ * Every interaction point is located by a `data-testid` documented in
+ * ../TESTIDS.md, so the suite is independent of copy, styling, and component
+ * internals — any front-end that renders those ids can run it unchanged. The
+ * few non-testid locators left are also documented there:
+ *   - `#stock-item-search-input`: DOM id on the item-search input
+ *   - `role=option`:              entries in autocomplete popups
+ *   - `tbody tr`:                 table rows (cells within a row carry
+ *                                 `cell-<columnId>` testids)
  *
  * Out of scope here (flagged non-automatable / data-dependent in the cases, or
  * covered by other suites): master-list / location / VVM / expiring-before
@@ -42,6 +43,19 @@ const DESCRIBE_MODE =
 
 const STOCKTAKE_ID_URL = /\/inventory\/stocktakes\/[0-9a-fA-F-]+/;
 
+/**
+ * Column-scoped cell testids (`cell-<columnId>`). Column ids come from the
+ * table column definitions — the accessor key verbatim, dots included
+ * (e.g. accessorKey `item.code` → `cell-item.code`).
+ */
+const CELL = {
+  batch: 'cell-batch',
+  snapshotPacks: 'cell-snapshotNumberOfPacks',
+  countedPacks: 'cell-countedNumberOfPacks',
+  reason: 'cell-inventoryAdjustmentReasonInput',
+  itemCode: 'cell-item.code',
+} as const;
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /** Open the "New stocktake" modal from the list view. */
@@ -49,10 +63,10 @@ async function openCreateModal(page: Page): Promise<Locator> {
   // Avoid waitUntil:'networkidle' — the app keeps a background sync poll open so
   // the network never idles; wait on the button instead.
   await page.goto('/inventory/stocktakes', { waitUntil: 'domcontentloaded' });
-  const newButton = page.getByRole('button', { name: 'New stocktake' });
+  const newButton = page.getByTestId('new-stocktake-button');
   await expect(newButton).toBeVisible({ timeout: 25000 });
   await newButton.click();
-  const modal = page.getByRole('dialog', { name: 'New stocktake' });
+  const modal = page.getByTestId('create-stocktake-modal');
   await expect(modal).toBeVisible();
   return modal;
 }
@@ -70,9 +84,9 @@ async function createStocktake(
 ): Promise<string> {
   const modal = await openCreateModal(page);
   if (kind === 'blank') {
-    await modal.getByRole('radio', { name: /blank stocktake/i }).click();
+    await modal.getByTestId('stocktake-type-blank').click();
   }
-  await modal.getByRole('button', { name: 'OK', exact: true }).click();
+  await modal.getByTestId('dialog-button-ok').click();
   await page.waitForURL(STOCKTAKE_ID_URL, { timeout: 30000 });
   // Widen the viewport so the responsive detail panel (which holds the Delete /
   // Copy actions) stays open — below ~1536px it auto-collapses off-screen and
@@ -82,39 +96,41 @@ async function createStocktake(
   return page.url();
 }
 
-/**
- * The Description field uses InputWithLabelRow; the "Description" label is not
- * aria-linked to its input, so resolve the first text input that follows the
- * label in document order. Survives a rewrite as long as the label precedes the
- * field.
- */
+/** The (buffered) Description input on the stocktake detail view. */
 function descriptionInput(page: Page): Locator {
-  return page
-    .getByText('Description:', { exact: false })
-    .locator('xpath=following::input[1]');
+  return page.getByTestId('description-field');
 }
 
 /** Open the Add-item / line-edit modal on the current stocktake detail view. */
 async function openAddItem(page: Page): Promise<Locator> {
-  await page
-    .getByRole('button', { name: 'Add item' })
-    .first()
-    .click();
-  const modal = page.getByRole('dialog', { name: 'Add item' });
+  await page.getByTestId('add-item-button').click();
+  const modal = page.getByTestId('add-item-modal');
   await expect(modal).toBeVisible();
+  // The item search force-opens its options popup ~500ms after mount (an
+  // openOnFocus popper-positioning workaround in StockItemSearchInput). Let
+  // that timer fire before driving the search — otherwise a fast selection is
+  // followed by a surprise popup reopen that covers the modal content and
+  // swallows subsequent clicks.
+  await page.waitForTimeout(600);
   return modal;
+}
+
+/** The item-search input inside the line-edit modal. */
+function itemSearchInput(modal: Locator): Locator {
+  return modal.locator('#stock-item-search-input');
 }
 
 /**
  * Type into the item search, pick the first matching option, and wait for the
- * batch table to render. Returns the picked option's text.
+ * batch table to render. Returns the picked item's code (from the option's
+ * `item-option-code` testid).
  */
 async function pickFirstItem(
   page: Page,
   modal: Locator,
   search: string
 ): Promise<string> {
-  const combo = modal.getByRole('combobox').first();
+  const combo = itemSearchInput(modal);
   // Set the term first (one-shot fill — char-by-char typing races the controlled
   // input and gets dropped), THEN click to open the popup so it renders the
   // options already filtered by the value. Clicking first and filling second
@@ -123,48 +139,74 @@ async function pickFirstItem(
   await combo.click();
   const firstOption = page.getByRole('option').first();
   await expect(firstOption).toBeVisible({ timeout: 45000 });
-  const text = ((await firstOption.textContent()) ?? '').trim();
+  const code = (
+    (await firstOption.getByTestId('item-option-code').textContent()) ?? ''
+  ).trim();
   await firstOption.click();
+  // Options carry an interactive tooltip; after the popup closes it can linger
+  // under the pointer and swallow later clicks (e.g. on the modal tabs). Park
+  // the mouse in a neutral corner to dismiss it.
+  await page.mouse.move(0, 0);
   // Selecting an item loads its stock lines into the Batch tab table.
-  await expect(modal.getByRole('tab', { name: 'Batch' })).toBeVisible({
-    timeout: 5000,
-  });
+  await expect(modal.getByTestId('tab-batch')).toBeVisible({ timeout: 5000 });
   await expect(modal.locator('tbody tr').first()).toBeVisible({
     timeout: 5000,
   });
-  return text;
+  return code;
+}
+
+/** The cell at (rowIndex, cell testid) of a line-edit table. */
+function cell(table: Locator, rowIndex: number, testId: string): Locator {
+  return table.locator('tbody tr').nth(rowIndex).getByTestId(testId);
 }
 
 /**
- * Resolve a line-edit table column's zero-based index by its header text so we
- * never hard-code cell positions. Headers and row cells align 1:1 (the count
- * checkbox is both the first header and the first cell).
+ * Read the (read-only) snapshot pack count of a batch row as a normalized
+ * string ("2,195.6" → "2195.6"). Snapshots can be decimal, so keep the exact
+ * value for counted == snapshot comparisons.
  */
-async function columnIndex(table: Locator, header: string): Promise<number> {
-  const headers = table.locator('thead th');
-  const count = await headers.count();
-  for (let i = 0; i < count; i++) {
-    const text = ((await headers.nth(i).textContent()) ?? '').trim();
-    if (text === header || text.startsWith(header)) return i;
-  }
-  throw new Error(`Column header "${header}" not found`);
+async function snapshotText(table: Locator, rowIndex: number): Promise<string> {
+  return (
+    (await cell(table, rowIndex, CELL.snapshotPacks).textContent()) ?? ''
+  ).replace(/[,\s]/g, '');
 }
 
-/** The cell at (rowIndex, header) of a line-edit table. */
-async function cell(
-  table: Locator,
-  rowIndex: number,
-  header: string
-): Promise<Locator> {
-  const idx = await columnIndex(table, header);
-  return table.locator('tbody tr').nth(rowIndex).locator('td').nth(idx);
-}
-
-/** Read the (read-only) snapshot pack count of a batch row as a number. */
+/** The snapshot pack count of a batch row as a number (may be decimal). */
 async function snapshotPacks(table: Locator, rowIndex: number): Promise<number> {
-  const snapCell = await cell(table, rowIndex, 'Packs snapshot');
-  const raw = ((await snapCell.textContent()) ?? '').replace(/[,\s]/g, '');
-  return parseInt(raw, 10);
+  return parseFloat(await snapshotText(table, rowIndex));
+}
+
+/**
+ * First batch row with a non-empty batch name and a positive integer snapshot
+ * — a line that can be adjusted with exact numbers and re-identified in a
+ * later stocktake. Falls back to row 0.
+ */
+async function countableRow(
+  table: Locator
+): Promise<{ index: number; batch: string }> {
+  const rowCount = await table.locator('tbody tr').count();
+  for (let i = 0; i < rowCount; i++) {
+    const batch = (
+      (await cell(table, i, CELL.batch).locator('input').inputValue()) ?? ''
+    ).trim();
+    if (!batch) continue;
+    const snap = await snapshotText(table, i);
+    if (/^\d+$/.test(snap) && parseInt(snap, 10) > 0) return { index: i, batch };
+  }
+  return { index: 0, batch: '' };
+}
+
+/**
+ * The status-change (finalise) button reads its line data from the stocktake
+ * query, which refetches asynchronously after the line-edit modal saves. Wait
+ * for a counted value to land in the detail table before finalising —
+ * otherwise the click is judged against stale "no counted lines" data and
+ * shows a toast instead of the confirmation dialog.
+ */
+async function waitForCountedLine(page: Page): Promise<void> {
+  await expect(
+    page.getByTestId(CELL.countedPacks).filter({ hasNotText: '-' }).first()
+  ).toBeVisible({ timeout: 15000 });
 }
 
 /** Select the first available reason for a batch row (enabled once counted ≠ snapshot). */
@@ -173,26 +215,37 @@ async function pickFirstReason(
   table: Locator,
   rowIndex: number
 ): Promise<void> {
-  const reasonCell = await cell(table, rowIndex, 'Reason');
-  await reasonCell.getByRole('combobox').click();
+  await cell(table, rowIndex, CELL.reason).getByRole('combobox').click();
   const option = page.getByRole('option').first();
   await expect(option).toBeVisible({ timeout: 5000 });
   await option.click();
 }
 
-/** Confirm a "Are you sure?" dialog (delete / finalise) by pressing OK. */
+/** Confirm an "Are you sure?" dialog (delete / finalise / hold) by pressing OK. */
 async function confirmAreYouSure(page: Page): Promise<void> {
-  const confirm = page
-    .getByRole('dialog')
-    .filter({ hasText: /Are you sure/i });
+  const confirm = page.getByTestId('confirmation-modal');
   await expect(confirm).toBeVisible({ timeout: 5000 });
-  await confirm.getByRole('button', { name: 'OK', exact: true }).click();
+  await confirm.getByTestId('confirmation-modal-ok').click();
   await expect(confirm).toBeHidden({ timeout: 5000 });
 }
 
-/** Delete the stocktake currently open in the detail view. */
+/**
+ * Click the finalise (status-change) button and confirm. The button no-ops
+ * with a "no lines" toast while its stocktake query is still refetching after
+ * a line save, so retry once if the confirmation didn't open.
+ */
+async function finalise(page: Page): Promise<void> {
+  const confirm = page.getByTestId('confirmation-modal');
+  await page.getByTestId('status-change-button-main').click();
+  if (!(await confirm.isVisible({ timeout: 3000 }).catch(() => false))) {
+    await page.getByTestId('status-change-button-main').click();
+  }
+  await confirmAreYouSure(page);
+}
+
+/** Delete the stocktake currently open in the detail view (side panel action). */
 async function deleteCurrentStocktake(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await page.getByTestId('delete-stocktake-button').click();
   await confirmAreYouSure(page);
   await page.waitForURL(/\/inventory\/stocktakes(\?|$)/, { timeout: 10000 });
 }
@@ -204,65 +257,50 @@ test.describe('Inventory: Stocktakes — creation & list', () => {
 
   test(
     'list view renders core controls',
-    { annotation: { type: 'covers', description: 'OMS-REG-INV-03.8' } },
+    // No `covers` — the case has no behaviour for the list view itself; this
+    // is the entry-point smoke test the detail behaviours depend on.
     async ({ page }) => {
       // Entry point for the whole case: the list must offer creation + the
       // standard table controls before any of the detail behaviours apply.
       await page.goto('/inventory/stocktakes', {
         waitUntil: 'domcontentloaded',
       });
-      await expect(
-        page.getByRole('button', { name: 'New stocktake' })
-      ).toBeVisible({ timeout: 25000 });
-      await expect(
-        page.getByRole('columnheader', { name: /Status/i }).first()
-      ).toBeVisible();
-      await expect(page.getByText(/Rows per page/i).first()).toBeVisible();
+      await expect(page.getByTestId('new-stocktake-button')).toBeVisible({
+        timeout: 25000,
+      });
+      await expect(page.getByTestId('header-status').first()).toBeVisible();
+      await expect(page.getByTestId('table-pagination')).toBeVisible();
     }
   );
 
   test(
     'create modal offers full / filtered / blank with sub-options',
-    {
-      annotation: [
-        { type: 'covers', description: 'OMS-REG-INV-03.4' },
-        { type: 'covers', description: 'OMS-REG-INV-03.5' },
-      ],
-    },
+    // No `covers` — this only asserts the initialisation options exist. The
+    // behaviours (.4 items-with-stock loads lines, .5 all-items includes
+    // zero-stock items) are about what each mode LOADS; .4 is covered by the
+    // "Full ... loads lines" test below, .5 has no deterministic test yet.
     async ({ page }) => {
       const modal = await openCreateModal(page);
 
       // Three initialisation modes.
-      await expect(
-        modal.getByRole('radio', { name: /full stocktake/i })
-      ).toBeVisible();
-      await expect(
-        modal.getByRole('radio', { name: /filtered stocktake/i })
-      ).toBeVisible();
-      await expect(
-        modal.getByRole('radio', { name: /blank stocktake/i })
-      ).toBeVisible();
+      await expect(modal.getByTestId('stocktake-type-full')).toBeVisible();
+      await expect(modal.getByTestId('stocktake-type-filtered')).toBeVisible();
+      await expect(modal.getByTestId('stocktake-type-blank')).toBeVisible();
 
-      // Full mode exposes the "with stock on hand" vs "all items" choice and an
-      // estimated-line count.
+      // Full mode (the default) exposes the "with stock on hand" vs "all
+      // items" choice and an estimated-line count.
       await expect(
-        modal.getByRole('radio', { name: /Items with stock on hand/i })
+        modal.getByTestId('stocktake-items-with-soh')
       ).toBeVisible();
-      await expect(
-        modal.getByRole('radio', {
-          name: /All items \(include out of stock/i,
-        })
-      ).toBeVisible();
-      await expect(modal.getByText(/lines estimated/i)).toBeVisible();
+      await expect(modal.getByTestId('stocktake-all-items')).toBeVisible();
+      await expect(modal.getByTestId('stocktake-line-estimate')).toBeVisible();
 
       // Switching to Blank swaps the estimate for the blank-stocktake notice.
-      await modal.getByRole('radio', { name: /blank stocktake/i }).click();
-      await expect(
-        modal.getByText(/create a blank stocktake/i)
-      ).toBeVisible();
+      await modal.getByTestId('stocktake-type-blank').click();
+      await expect(modal.getByTestId('blank-stocktake-notice')).toBeVisible();
 
       // Cancel — don't create anything from this smoke test.
-      await modal.getByRole('button', { name: 'Cancel' }).click();
+      await modal.getByTestId('dialog-button-cancel').click();
       await expect(modal).toBeHidden();
     }
   );
@@ -272,7 +310,7 @@ test.describe('Inventory: Stocktakes — creation & list', () => {
     { annotation: { type: 'covers', description: 'OMS-REG-INV-03.8' } },
     async ({ page }) => {
       await createStocktake(page, 'blank');
-      await expect(page.getByText(/Nothing here/i)).toBeVisible({
+      await expect(page.getByTestId('nothing-here')).toBeVisible({
         timeout: 10000,
       });
       await deleteCurrentStocktake(page);
@@ -288,7 +326,7 @@ test.describe('Inventory: Stocktakes — creation & list', () => {
       await expect(page.locator('tbody tr').first()).toBeVisible({
         timeout: 15000,
       });
-      await expect(page.getByText(/Nothing here/i)).toHaveCount(0);
+      await expect(page.getByTestId('nothing-here')).toHaveCount(0);
       await deleteCurrentStocktake(page);
     }
   );
@@ -345,7 +383,7 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
     async ({ page }) => {
       await createStocktake(page, 'blank');
       const modal = await openAddItem(page);
-      const combo = modal.getByRole('combobox').first();
+      const combo = itemSearchInput(modal);
       await combo.fill('amox');
       await combo.click();
       await expect(async () => {
@@ -358,7 +396,7 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
           ).toContain('amox');
         }
       }).toPass({ timeout: 45000 });
-      await modal.getByRole('button', { name: 'Cancel' }).click();
+      await modal.getByTestId('dialog-button-cancel').click();
       await deleteCurrentStocktake(page);
     }
   );
@@ -369,19 +407,18 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
     async ({ page }) => {
       await createStocktake(page, 'blank');
       const modal = await openAddItem(page);
-      const combo = modal.getByRole('combobox').first();
+      const combo = itemSearchInput(modal);
 
-      // Open the popup, then grab the first option's item code. Options render
-      // code and name in separate nodes, so textContent joins them with no
-      // separator ("03_0452Amoxicillin…"); pull the leading code by its shape
-      // (the datafile uses NN_NNNN codes) rather than a whitespace split.
+      // Open the popup, then grab the first option's item code from its
+      // `item-option-code` testid (options render code and name in separate
+      // marked nodes, so this works regardless of the datafile's code format).
       await combo.fill('amox');
       await combo.click();
       const firstOption = page.getByRole('option').first();
       await expect(firstOption).toBeVisible({ timeout: 45000 });
-      const code = (((await firstOption.textContent()) ?? '').match(
-        /^(\d+_\d+)/
-      ) ?? [])[1];
+      const code = (
+        (await firstOption.getByTestId('item-option-code').textContent()) ?? ''
+      ).trim();
       expect(code).toBeTruthy();
 
       // Narrow to the code using the same reliable fill-then-click recipe.
@@ -395,7 +432,7 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
           expect((await options.nth(i).textContent()) ?? '').toContain(code!);
         }
       }).toPass({ timeout: 45000 });
-      await modal.getByRole('button', { name: 'Cancel' }).click();
+      await modal.getByTestId('dialog-button-cancel').click();
       await deleteCurrentStocktake(page);
     }
   );
@@ -413,29 +450,25 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
       const modal = await openAddItem(page);
       await pickFirstItem(page, modal, 'amox');
 
-      await expect(modal.getByRole('tab', { name: 'Batch' })).toBeVisible();
-      await expect(modal.getByRole('tab', { name: 'Pricing' })).toBeVisible();
-      await expect(modal.getByRole('tab', { name: 'Other' })).toBeVisible();
+      await expect(modal.getByTestId('tab-batch')).toBeVisible();
+      await expect(modal.getByTestId('tab-pricing')).toBeVisible();
+      await expect(modal.getByTestId('tab-other')).toBeVisible();
 
       // Pricing tab exposes editable pack sell/cost price columns.
-      await modal.getByRole('tab', { name: 'Pricing' }).click();
+      await modal.getByTestId('tab-pricing').click();
       await expect(
-        modal.getByRole('columnheader', { name: /Pack sell price/i })
+        modal.getByTestId('header-sellPricePerPack')
       ).toBeVisible();
       await expect(
-        modal.getByRole('columnheader', { name: /Pack cost price/i })
-      ).toBeVisible();
-
-      // Other tab exposes location / manufacturer / comment columns.
-      await modal.getByRole('tab', { name: 'Other' }).click();
-      await expect(
-        modal.getByRole('columnheader', { name: /Location/i })
-      ).toBeVisible();
-      await expect(
-        modal.getByRole('columnheader', { name: /Manufacturer/i })
+        modal.getByTestId('header-costPricePerPack')
       ).toBeVisible();
 
-      await modal.getByRole('button', { name: 'Cancel' }).click();
+      // Other tab exposes location / manufacturer columns.
+      await modal.getByTestId('tab-other').click();
+      await expect(modal.getByTestId('header-location')).toBeVisible();
+      await expect(modal.getByTestId('header-manufacturer')).toBeVisible();
+
+      await modal.getByTestId('dialog-button-cancel').click();
       await deleteCurrentStocktake(page);
     }
   );
@@ -455,23 +488,26 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
       const table = modal.locator('table');
 
       // Snapshot cell has no input — it's rendered read-only.
-      const snapCell = await cell(table, 0, 'Packs snapshot');
+      const snapCell = cell(table, 0, CELL.snapshotPacks);
       await expect(snapCell.locator('input')).toHaveCount(0);
       const snapshot = await snapshotPacks(table, 0);
       expect(snapshot).toBeGreaterThan(0);
 
       // Enter a counted value different from the snapshot.
-      const countedCell = await cell(table, 0, 'Packs counted');
+      const countedCell = cell(table, 0, CELL.countedPacks);
       await countedCell.locator('input').fill(String(snapshot + 1));
 
-      // Saving without a reason is blocked with the reason-required warning.
-      await modal.getByRole('button', { name: 'OK', exact: true }).click();
+      // Saving without a reason is blocked with the reason-required error.
+      await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeVisible();
       await expect(
-        modal.getByText(/reason must be provided/i)
+        modal.getByTestId('stocktake-line-error').first()
       ).toBeVisible({ timeout: 5000 });
+      await expect(
+        modal.getByTestId('stocktake-line-error').first()
+      ).toContainText(/reason/i);
 
-      await modal.getByRole('button', { name: 'Cancel' }).click();
+      await modal.getByTestId('dialog-button-cancel').click();
       await deleteCurrentStocktake(page);
     }
   );
@@ -486,12 +522,12 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
       const table = modal.locator('table');
 
       const before = await table.locator('tbody tr').count();
-      await modal.getByRole('button', { name: /Add batch/i }).click();
+      await modal.getByTestId('add-batch-button').click();
       await expect(table.locator('tbody tr')).toHaveCount(before + 1, {
         timeout: 5000,
       });
 
-      await modal.getByRole('button', { name: 'Cancel' }).click();
+      await modal.getByTestId('dialog-button-cancel').click();
       await deleteCurrentStocktake(page);
     }
   );
@@ -503,10 +539,10 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
       await createStocktake(page, 'blank');
       const modal = await openAddItem(page);
       await pickFirstItem(page, modal, 'amox');
-      await modal.getByRole('button', { name: 'Cancel' }).click();
+      await modal.getByTestId('dialog-button-cancel').click();
       await expect(modal).toBeHidden();
       // Nothing saved — still the empty state.
-      await expect(page.getByText(/Nothing here/i)).toBeVisible({
+      await expect(page.getByTestId('nothing-here')).toBeVisible({
         timeout: 5000,
       });
       await deleteCurrentStocktake(page);
@@ -526,18 +562,16 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
       const modal = await openAddItem(page);
       // Leave counted empty (uncounted line) so no reason is needed and no stock
       // is mutated on save.
-      const picked = await pickFirstItem(page, modal, 'amox');
-      // Option text joins code+name without a separator; take the NN_NNNN code.
-      const code = (picked.match(/^(\d+_\d+)/) ?? [])[1] ?? '';
+      const code = await pickFirstItem(page, modal, 'amox');
       expect(code).toBeTruthy();
 
-      await modal.getByRole('button', { name: 'OK', exact: true }).click();
+      await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
 
       // The saved line shows up in the detail table (matched by item code).
-      await expect(page.getByText(/Nothing here/i)).toHaveCount(0);
+      await expect(page.getByTestId('nothing-here')).toHaveCount(0);
       await expect(
-        page.getByRole('cell', { name: code }).first()
+        page.getByTestId(CELL.itemCode).filter({ hasText: code }).first()
       ).toBeVisible({ timeout: 5000 });
 
       await deleteCurrentStocktake(page);
@@ -557,10 +591,11 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
     { annotation: { type: 'covers', description: 'OMS-REG-INV-03.40' } },
     async ({ page }) => {
       await createStocktake(page, 'blank');
-      await page.getByRole('tab', { name: 'Log' }).click();
-      await expect(
-        page.getByRole('tab', { name: 'Log', selected: true })
-      ).toBeVisible();
+      await page.getByTestId('tab-log').click();
+      await expect(page.getByTestId('tab-log')).toHaveAttribute(
+        'aria-selected',
+        'true'
+      );
       await deleteCurrentStocktake(page);
     }
   );
@@ -572,27 +607,21 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
       await createStocktake(page, 'blank');
       const modal = await openAddItem(page);
       await pickFirstItem(page, modal, 'amox');
-      await modal.getByRole('button', { name: 'OK', exact: true }).click();
+      await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
 
       // Select ALL lines (the item can have several batches) via the header
-      // select-all checkbox, then delete via the bulk-action footer. The footer
-      // Delete is first in the DOM; the side panel also has a "Delete" (for the
-      // whole stocktake), so .first() must stay the footer one.
+      // select-all checkbox, then delete via the bulk-action footer.
       await expect(page.locator('tbody tr').first()).toBeVisible();
-      await page
-        .getByRole('checkbox', { name: /select all/i })
-        .first()
-        .click();
-      await expect(page.getByText(/Selected/i)).toBeVisible({ timeout: 3000 });
+      await page.getByTestId('select-all-rows-checkbox').click();
+      await expect(page.getByTestId('selected-rows-count')).toBeVisible({
+        timeout: 3000,
+      });
 
-      await page
-        .getByRole('button', { name: 'Delete', exact: true })
-        .first()
-        .click();
+      await page.getByTestId('delete-lines-button').click();
       await confirmAreYouSure(page);
 
-      await expect(page.getByText(/Nothing here/i)).toBeVisible({
+      await expect(page.getByTestId('nothing-here')).toBeVisible({
         timeout: 5000,
       });
       await deleteCurrentStocktake(page);
@@ -601,47 +630,80 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
 
   test(
     'bulk "Reduce to 0" sets counted packs to 0 on the selected line',
-    { annotation: { type: 'covers', description: 'OMS-REG-INV-03.36' } },
+    {
+      annotation: [
+        { type: 'covers', description: 'OMS-REG-INV-03.36' },
+        // .14: the new batch line's Batch field accepts input — the typed name
+        // is saved and used to re-identify the row in the detail table.
+        { type: 'covers', description: 'OMS-REG-INV-03.14' },
+      ],
+    },
     async ({ page }) => {
+      // Reduce a batch the test creates itself: reducing existing stock-backed
+      // lines to 0 is rejected server-side (whole batch, silently) when any of
+      // their stock is reserved (StockLineReducedBelowZero), which is
+      // datafile-dependent. A fresh batch has no stock line, so reducing it is
+      // always legal.
       await createStocktake(page, 'blank');
       const modal = await openAddItem(page);
       await pickFirstItem(page, modal, 'amox');
-      await modal.getByRole('button', { name: 'OK', exact: true }).click();
+      const table = modal.locator('table');
+
+      const before = await table.locator('tbody tr').count();
+      await modal.getByTestId('add-batch-button').click();
+      await expect(table.locator('tbody tr')).toHaveCount(before + 1, {
+        timeout: 5000,
+      });
+
+      // Name the new batch (empty batch + snapshot 0) so we can re-identify
+      // its row in the detail table.
+      const uniq = `pw-reduce-${Date.now()}`;
+      const rowCount = await table.locator('tbody tr').count();
+      let named = false;
+      for (let i = 0; i < rowCount; i++) {
+        const batchInput = cell(table, i, CELL.batch).locator('input');
+        const batch = ((await batchInput.inputValue()) ?? '').trim();
+        if (batch === '' && (await snapshotText(table, i)) === '0') {
+          await batchInput.fill(uniq);
+          named = true;
+          break;
+        }
+      }
+      expect(named, 'found the newly added blank batch row').toBe(true);
+
+      await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
 
-      // Select all lines (the item may have multiple batches) and reduce them,
-      // so every row's counted becomes 0 regardless of row ordering.
-      await expect(page.locator('tbody tr').first()).toBeVisible();
-      await page
-        .getByRole('checkbox', { name: /select all/i })
-        .first()
-        .click();
-      await expect(page.getByText(/Selected/i)).toBeVisible({ timeout: 3000 });
+      // Select just that row and reduce it.
+      const row = page.locator('tbody tr').filter({ hasText: uniq });
+      await expect(row).toBeVisible({ timeout: 10000 });
+      await row.getByTestId('select-row-checkbox').click();
+      await expect(page.getByTestId('selected-rows-count')).toBeVisible({
+        timeout: 3000,
+      });
 
-      await page.getByRole('button', { name: /Reduce to 0/i }).click();
+      await page.getByTestId('reduce-lines-to-zero-button').click();
 
-      // "Reduce to 0" opens an "Are you sure?" modal that requires a reason.
-      const reduceModal = page
-        .getByRole('dialog')
-        .filter({ hasText: /Are you sure/i });
+      // "Reduce to 0" opens an "Are you sure?" modal that requires a reason
+      // when the store has inventory-adjustment reasons configured (the reason
+      // options load asynchronously — give them time to appear). Its OK is a
+      // standard dialog button (not the confirmation-modal-ok variant).
+      const reduceModal = page.getByTestId('confirmation-modal');
       await expect(reduceModal).toBeVisible({ timeout: 5000 });
       const reasonCombo = reduceModal.getByRole('combobox').first();
-      if (await reasonCombo.isVisible({ timeout: 1000 }).catch(() => false)) {
+      if (await reasonCombo.isVisible({ timeout: 5000 }).catch(() => false)) {
         await reasonCombo.click();
         const opt = page.getByRole('option').first();
         await expect(opt).toBeVisible({ timeout: 5000 });
         await opt.click();
       }
-      await reduceModal.getByRole('button', { name: 'OK', exact: true }).click();
+      await reduceModal.getByTestId('dialog-button-ok').click();
       await expect(reduceModal).toBeHidden({ timeout: 5000 });
 
-      // Every "Packs counted" cell in the detail line table should now read 0.
-      const detailTable = page.locator('table').last();
-      const countedIdx = await columnIndex(detailTable, 'Packs counted');
-      const countedCells = detailTable
-        .locator('tbody tr')
-        .locator(`td:nth-child(${countedIdx + 1})`);
-      await expect(countedCells.first()).toHaveText(/^0$/, { timeout: 10000 });
+      // The reduced row's "Packs counted" cell should now read 0.
+      await expect(row.getByTestId(CELL.countedPacks)).toHaveText(/^0$/, {
+        timeout: 10000,
+      });
 
       await deleteCurrentStocktake(page);
     }
@@ -659,12 +721,10 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
       await createStocktake(page, 'blank');
 
       // Cancel the delete — stocktake stays.
-      await page.getByRole('button', { name: 'Delete', exact: true }).click();
-      const confirm = page
-        .getByRole('dialog')
-        .filter({ hasText: /Are you sure/i });
+      await page.getByTestId('delete-stocktake-button').click();
+      const confirm = page.getByTestId('confirmation-modal');
       await expect(confirm).toBeVisible();
-      await confirm.getByRole('button', { name: 'Cancel' }).click();
+      await confirm.getByTestId('dialog-button-cancel').click();
       await expect(confirm).toBeHidden();
       await expect(page).toHaveURL(STOCKTAKE_ID_URL);
 
@@ -688,6 +748,12 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
       annotation: [
         { type: 'covers', description: 'OMS-REG-INV-04.2' },
         { type: 'covers', description: 'OMS-REG-INV-04.3' },
+        // .16: the Counted packs field accepts input (typed value is saved and
+        // visible in the detail table before finalising).
+        { type: 'covers', description: 'OMS-REG-INV-03.16' },
+        // .28: the reason dropdown offers the configured reason codes (an
+        // option list appears and a configured reason is selectable).
+        { type: 'covers', description: 'OMS-REG-INV-03.28' },
       ],
     },
     async ({ page }) => {
@@ -698,24 +764,28 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
       await pickFirstItem(page, modal, 'amox');
       const table = modal.locator('table');
 
-      const snapshot = await snapshotPacks(table, 0);
-      const countedCell = await cell(table, 0, 'Packs counted');
+      const { index } = await countableRow(table);
+      const snapshot = await snapshotPacks(table, index);
+      const countedCell = cell(table, index, CELL.countedPacks);
       await countedCell.locator('input').fill(String(snapshot + 1));
-      await pickFirstReason(page, table, 0);
+      await pickFirstReason(page, table, index);
 
-      await modal.getByRole('button', { name: 'OK', exact: true }).click();
+      await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
+      await waitForCountedLine(page);
 
-      await page.getByRole('button', { name: /Confirm Finalised/i }).click();
-      await confirmAreYouSure(page);
+      await finalise(page);
 
-      // Status footer no longer offers "Confirm Finalised" and the finalised
-      // notice appears.
+      // The footer no longer offers the status-change button and the
+      // finalised notice appears.
+      await expect(page.getByTestId('stocktake-status-alert')).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.getByTestId('stocktake-status-alert')).toContainText(
+        /finalised/i
+      );
       await expect(
-        page.getByText(/finalised and cannot be edited/i)
-      ).toBeVisible({ timeout: 10000 });
-      await expect(
-        page.getByRole('button', { name: /Confirm Finalised/i })
+        page.getByTestId('status-change-button-main')
       ).toHaveCount(0);
       // Finalised stocktakes cannot be deleted — leave it in place.
     }
@@ -736,23 +806,24 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
       const modal = await openAddItem(page);
       await pickFirstItem(page, modal, 'amox');
       const table = modal.locator('table');
-      const snapshot = await snapshotPacks(table, 0);
-      const countedCell = await cell(table, 0, 'Packs counted');
-      await countedCell.locator('input').fill(String(snapshot)); // no difference
-      await modal.getByRole('button', { name: 'OK', exact: true }).click();
+      // Fill the exact displayed snapshot (may be decimal) so there's no
+      // difference and no reason is required.
+      const snapshot = await snapshotText(table, 0);
+      const countedCell = cell(table, 0, CELL.countedPacks);
+      await countedCell.locator('input').fill(snapshot); // no difference
+      await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
+      await waitForCountedLine(page);
 
-      await page.getByRole('button', { name: /Confirm Finalised/i }).click();
-      await confirmAreYouSure(page);
-      await expect(
-        page.getByText(/finalised and cannot be edited/i)
-      ).toBeVisible({ timeout: 10000 });
+      await finalise(page);
+      await expect(page.getByTestId('stocktake-status-alert')).toContainText(
+        /finalised/i,
+        { timeout: 10000 }
+      );
 
       // Description is read-only and Add item is present but disabled.
       await expect(descriptionInput(page)).toBeDisabled();
-      await expect(
-        page.getByRole('button', { name: 'Add item' })
-      ).toBeDisabled();
+      await expect(page.getByTestId('add-item-button')).toBeDisabled();
     }
   );
 
@@ -762,24 +833,23 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
     async ({ page }) => {
       await createStocktake(page, 'blank');
 
-      await page.getByRole('button', { name: /On hold/i }).click();
+      await page.getByTestId('on-hold-button').click();
       // Some builds confirm the hold — accept if a dialog appears.
-      const confirm = page
-        .getByRole('dialog')
-        .filter({ hasText: /Are you sure/i });
+      const confirm = page.getByTestId('confirmation-modal');
       if (await confirm.isVisible({ timeout: 1500 }).catch(() => false)) {
-        await confirm.getByRole('button', { name: 'OK', exact: true }).click();
+        await confirm.getByTestId('confirmation-modal-ok').click();
       }
 
-      await expect(page.getByText(/on hold and cannot be edited/i)).toBeVisible(
+      await expect(page.getByTestId('stocktake-status-alert')).toContainText(
+        /on hold/i,
         { timeout: 5000 }
       );
       await expect(descriptionInput(page)).toBeDisabled();
 
       // Take it back off hold so the stocktake can be deleted for cleanup.
-      await page.getByRole('button', { name: /On hold/i }).click();
+      await page.getByTestId('on-hold-button').click();
       if (await confirm.isVisible({ timeout: 1500 }).catch(() => false)) {
-        await confirm.getByRole('button', { name: 'OK', exact: true }).click();
+        await confirm.getByTestId('confirmation-modal-ok').click();
       }
       await expect(descriptionInput(page)).toBeEnabled({ timeout: 5000 });
       await deleteCurrentStocktake(page);
@@ -802,34 +872,34 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
       // ledger view and is out of scope here.
       const INCREASE = 3;
 
-      // 1) Baseline: snapshot of the first batch of our item.
+      // 1) Baseline: a named, integer-snapshot batch of our item (exact
+      // arithmetic + re-identifiable in the follow-up stocktake).
       await createStocktake(page, 'blank');
       let modal = await openAddItem(page);
-      const picked = await pickFirstItem(page, modal, 'amox');
+      const pickedCode = await pickFirstItem(page, modal, 'amox');
       const table = modal.locator('table');
-      const baseline = await snapshotPacks(table, 0);
-      const batchCell = await cell(table, 0, 'Batch');
-      const batch = ((await batchCell.locator('input').inputValue()) ?? '').trim();
+      const { index, batch } = await countableRow(table);
+      expect(batch, 'a named batch with an integer snapshot').toBeTruthy();
+      const baseline = await snapshotPacks(table, index);
 
       // 2) Finalise a +INCREASE adjustment on that batch.
-      const countedCell = await cell(table, 0, 'Packs counted');
+      const countedCell = cell(table, index, CELL.countedPacks);
       await countedCell.locator('input').fill(String(baseline + INCREASE));
-      await pickFirstReason(page, table, 0);
-      await modal.getByRole('button', { name: 'OK', exact: true }).click();
+      await pickFirstReason(page, table, index);
+      await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
-      await page.getByRole('button', { name: /Confirm Finalised/i }).click();
-      await confirmAreYouSure(page);
-      await expect(
-        page.getByText(/finalised and cannot be edited/i)
-      ).toBeVisible({ timeout: 10000 });
+      await waitForCountedLine(page);
+      await finalise(page);
+      await expect(page.getByTestId('stocktake-status-alert')).toContainText(
+        /finalised/i,
+        { timeout: 10000 }
+      );
 
       // 3) Re-read: a new blank stocktake with the same item should show the
       // batch's snapshot raised by INCREASE (same batch number, not a new line).
       await createStocktake(page, 'blank');
       modal = await openAddItem(page);
-      // Option text joins code+name with no separator; take the NN_NNNN code.
-      const code = (picked.match(/^(\d+_\d+)/) ?? [])[1] ?? 'amox';
-      await pickFirstItem(page, modal, code);
+      await pickFirstItem(page, modal, pickedCode || 'amox');
       const table2 = modal.locator('table');
 
       // Find the row with the same batch number and assert its snapshot rose.
@@ -837,19 +907,22 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
       const rowCount = await rows.count();
       let matched = -1;
       for (let i = 0; i < rowCount; i++) {
-        const bCell = await cell(table2, i, 'Batch');
-        const b = ((await bCell.locator('input').inputValue()) ?? '').trim();
+        const b = (
+          (await cell(table2, i, CELL.batch).locator('input').inputValue()) ??
+          ''
+        ).trim();
         if (b === batch) {
           matched = i;
           break;
         }
       }
-      expect(matched, `batch ${batch} still present as one line`).toBeGreaterThanOrEqual(
-        0
-      );
+      expect(
+        matched,
+        `batch ${batch} still present as one line`
+      ).toBeGreaterThanOrEqual(0);
       expect(await snapshotPacks(table2, matched)).toBe(baseline + INCREASE);
 
-      await modal.getByRole('button', { name: 'Cancel' }).click();
+      await modal.getByTestId('dialog-button-cancel').click();
       await deleteCurrentStocktake(page);
     }
   );

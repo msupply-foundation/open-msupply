@@ -67,18 +67,21 @@ export const Footer = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: onDelete,
+      testId: 'delete-lines-button',
     },
     {
       label: t('button.change-location'),
       icon: <ArrowRightIcon />,
       onClick: handleChangeLocationClick,
       shouldShrink: false,
+      testId: 'change-location-button',
     },
     {
       label: t('button.reduce-lines-to-zero'),
       icon: <RewindIcon />,
       onClick: handleReduceLinesClick,
       shouldShrink: false,
+      testId: 'reduce-lines-to-zero-button',
     },
   ];
 
