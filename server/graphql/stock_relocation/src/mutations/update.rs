@@ -1,31 +1,38 @@
 use async_graphql::*;
-use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
-use repository::StockRelocationRow;
+use repository::{StockRelocation, StockRelocationRow};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::stock_relocation::update::{
-    UpdateStockRelocation as UpdateServiceInput, UpdateStockRelocationError as UpdateServiceError,
+    UpdateStockRelocation as ServiceInput, UpdateStockRelocationError as ServiceError,
 };
-use service::NullableUpdate;
+use service::stock_relocation::validate::ValidateMovementError;
 
-use super::{LocationOnHold, NotEnoughStock, StockLineOnHold};
-use crate::types::StockRelocationNodeStatus;
+use super::{LocationOnHold, NotEnoughStock};
+use crate::types::{StockRelocationNode, StockRelocationNodeStatus};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateStockRelocationInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub from_number_of_packs: Option<f64>,
-    pub to_location_id: Option<NullableUpdateInput<String>>,
-    pub to_pack_size: Option<f64>,
+    pub comment: Option<String>,
     pub status: Option<StockRelocationNodeStatus>,
 }
 
-#[derive(SimpleObject)]
-pub struct UpdateStockRelocationNode {
-    pub id: String,
+impl UpdateInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let UpdateInput {
+            id,
+            comment,
+            status,
+        } = self;
+        ServiceInput {
+            id,
+            comment,
+            status: status.map(|status| status.into()),
+        }
+    }
 }
 
 #[derive(SimpleObject)]
@@ -37,7 +44,7 @@ pub struct UpdateError {
 #[derive(Union)]
 #[graphql(name = "UpdateStockRelocationResponse")]
 pub enum UpdateResponse {
-    Response(UpdateStockRelocationNode),
+    Response(StockRelocationNode),
     Error(UpdateError),
 }
 
@@ -45,9 +52,8 @@ pub enum UpdateResponse {
 #[graphql(name = "UpdateStockRelocationErrorInterface")]
 #[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
-    StockLineOnHold(StockLineOnHold),
-    LocationOnHold(LocationOnHold),
     NotEnoughStock(NotEnoughStock),
+    LocationOnHold(LocationOnHold),
 }
 
 pub fn update_stock_relocation(
@@ -65,191 +71,53 @@ pub fn update_stock_relocation(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    let UpdateInput {
-        id,
-        from_number_of_packs,
-        to_location_id,
-        to_pack_size,
-        status,
-    } = input;
-
-    map_response(
-        service_provider
-            .stock_relocation_service
-            .update_stock_relocation(
-                &service_context,
-                store_id,
-                UpdateServiceInput {
-                    id,
-                    from_number_of_packs,
-                    to_location_id: to_location_id
-                        .map(|to_location_id| NullableUpdate {
-                            value: to_location_id.value,
-                        }),
-                    to_pack_size,
-                    status: status.map(|status| status.into()),
-                },
-            ),
-    )
-}
-
-fn map_response(from: Result<StockRelocationRow, UpdateServiceError>) -> Result<UpdateResponse> {
-    match from {
-        Ok(row) => Ok(UpdateResponse::Response(UpdateStockRelocationNode {
-            id: row.id,
-        })),
+    match service_provider
+        .stock_relocation_service
+        .update_stock_relocation(&service_context, store_id, input.to_domain())
+    {
+        Ok(row) => Ok(UpdateResponse::Response(node(row))),
         Err(error) => Ok(UpdateResponse::Error(UpdateError {
             error: map_error(error)?,
         })),
     }
 }
 
-fn map_error(error: UpdateServiceError) -> Result<UpdateErrorInterface> {
-    use UpdateServiceError as E;
+fn node(row: StockRelocationRow) -> StockRelocationNode {
+    StockRelocationNode::from_domain(StockRelocation {
+        stock_relocation_row: row,
+    })
+}
+
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
+    use ServiceError as E;
+    use ValidateMovementError as V;
     let formatted_error = format!("{error:#?}");
 
     let graphql_error = match error {
-        E::StockLineOnHold(stock_line_id) => {
-            return Ok(UpdateErrorInterface::StockLineOnHold(StockLineOnHold {
-                stock_line_id,
-            }))
-        }
-        E::LocationOnHold(location_id) => {
-            return Ok(UpdateErrorInterface::LocationOnHold(LocationOnHold {
-                location_id,
-            }))
-        }
-        E::NotEnoughStock(stock_line_id) => {
+        E::LineValidation {
+            error: V::NotEnoughStock(stock_line_id),
+            ..
+        } => {
             return Ok(UpdateErrorInterface::NotEnoughStock(NotEnoughStock {
                 stock_line_id,
             }))
         }
-
-        E::RelocationDoesNotExist
-        | E::NotThisStoreRelocation
-        | E::RelocationAlreadyFinalised
-        | E::StockLineDoesNotExist
-        | E::NotThisStoreStockLine
-        | E::ToLocationDoesNotExist
-        | E::NotThisStoreLocation
-        | E::IncorrectLocationType
-        | E::InvalidNumberOfPacks
-        | E::InvalidPackSize
-        | E::CannotHaveFractionalPack => BadUserInput(formatted_error),
-        E::NewlyCreatedStockLineDoesNotExist | E::DatabaseError(_) | E::InternalError(_) => {
-            InternalError(formatted_error)
+        E::LineValidation {
+            error: V::SourceLocationOnHold(location_id) | V::DestinationLocationOnHold(location_id),
+            ..
+        } => {
+            return Ok(UpdateErrorInterface::LocationOnHold(LocationOnHold {
+                location_id,
+            }))
         }
+        E::StockRelocationDoesNotExist
+        | E::NotThisStoreRelocation
+        | E::StockRelocationFinalised
+        | E::CannotReverseStatus
+        | E::MovementHasNoLines
+        | E::LineValidation { .. } => BadUserInput(formatted_error),
+        E::UpdateStockLine(_) | E::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
-}
-
-#[cfg(test)]
-mod test {
-    use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
-    use repository::{
-        mock::MockDataInserts, StockRelocationRow, StockRelocationStatus, StorageConnectionManager,
-    };
-    use serde_json::json;
-    use service::{
-        service_provider::{ServiceContext, ServiceProvider},
-        stock_relocation::{
-            update::{
-                UpdateStockRelocation as UpdateServiceInput,
-                UpdateStockRelocationError as UpdateServiceError,
-            },
-            StockRelocationServiceTrait,
-        },
-        NullableUpdate,
-    };
-
-    use crate::StockRelocationMutations;
-
-    type UpdateMethod =
-        dyn Fn(UpdateServiceInput) -> Result<StockRelocationRow, UpdateServiceError> + Sync + Send;
-
-    struct TestService(Box<UpdateMethod>);
-
-    impl StockRelocationServiceTrait for TestService {
-        fn update_stock_relocation(
-            &self,
-            _: &ServiceContext,
-            _: &str,
-            input: UpdateServiceInput,
-        ) -> Result<StockRelocationRow, UpdateServiceError> {
-            self.0(input)
-        }
-    }
-
-    fn service_provider(
-        test_service: TestService,
-        connection_manager: &StorageConnectionManager,
-    ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone());
-        service_provider.stock_relocation_service = Box::new(test_service);
-        service_provider
-    }
-
-    #[actix_rt::test]
-    async fn test_graphql_update_stock_relocation_success() {
-        let (_, _, connection_manager, settings) = setup_graphql_test(
-            EmptyMutation,
-            StockRelocationMutations,
-            "test_graphql_update_stock_relocation_success",
-            MockDataInserts::none(),
-        )
-        .await;
-
-        let mutation = r#"
-        mutation ($storeId: String!, $input: UpdateStockRelocationInput!) {
-            updateStockRelocation(storeId: $storeId, input: $input) {
-                ... on UpdateStockRelocationNode {
-                    id
-                }
-            }
-          }
-        "#;
-
-        let test_service = TestService(Box::new(|input| {
-            assert_eq!(input.id, "relocation_1");
-            assert_eq!(input.from_number_of_packs, Some(3.0));
-            assert_eq!(
-                input.to_location_id,
-                Some(NullableUpdate {
-                    value: Some("to_location".to_string())
-                })
-            );
-            assert_eq!(input.to_pack_size, Some(2.0));
-            assert_eq!(input.status, Some(StockRelocationStatus::Finalised));
-            Ok(StockRelocationRow {
-                id: "relocation_1".to_string(),
-                ..Default::default()
-            })
-        }));
-
-        let variables = json!({
-          "storeId": "n/a",
-          "input": {
-            "id": "relocation_1",
-            "fromNumberOfPacks": 3,
-            "toLocationId": { "value": "to_location" },
-            "toPackSize": 2,
-            "status": "FINALISED"
-          }
-        });
-
-        let expected = json!({
-            "updateStockRelocation": {
-              "id": "relocation_1"
-            }
-        });
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(variables),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-    }
 }

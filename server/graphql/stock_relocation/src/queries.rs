@@ -1,17 +1,23 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, StringFilterInput},
+    generic_filters::{
+        DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput,
+    },
     map_filter,
     pagination::PaginationInput,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::DraftStockRelocationLineNode;
 use repository::{
-    EqualFilter, PaginationOption, StockRelocationFilter, StockRelocationSort,
+    DatetimeFilter, EqualFilter, PaginationOption, StockRelocationFilter, StockRelocationSort,
     StockRelocationSortField, StockRelocationStatus, StringFilter,
 };
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    stock_relocation::query::StockRelocationDraftFilter,
+};
 
 use crate::types::{StockRelocationConnector, StockRelocationNode, StockRelocationNodeStatus};
 
@@ -22,13 +28,7 @@ pub enum StockRelocationSortFieldInput {
     CreatedDatetime,
     FinalisedDatetime,
     Status,
-    NumberOfPacks,
-    ItemCode,
-    ItemName,
-    Batch,
-    ExpiryDate,
-    FromLocation,
-    ToLocation,
+    StockMovementNumber,
 }
 
 #[derive(InputObject)]
@@ -51,9 +51,9 @@ pub struct StockRelocationFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterStockRelocationStatusInput>,
-    pub item_code_or_name: Option<StringFilterInput>,
-    pub from_location_code: Option<StringFilterInput>,
-    pub to_location_code: Option<StringFilterInput>,
+    pub stock_movement_number: Option<EqualFilterBigNumberInput>,
+    pub created_datetime: Option<DatetimeFilterInput>,
+    pub username: Option<StringFilterInput>,
 }
 
 #[derive(Union)]
@@ -131,6 +131,45 @@ pub fn get_stock_relocations(
     ))
 }
 
+#[derive(InputObject)]
+pub struct StockRelocationDraftLinesInput {
+    pub from_location_id: Option<String>,
+    pub item_id: Option<String>,
+    pub stock_relocation_line_id: Option<String>,
+}
+
+pub fn get_stock_relocation_draft_lines(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: StockRelocationDraftLinesInput,
+) -> Result<Vec<DraftStockRelocationLineNode>> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryStockLine,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    let draft_lines = service_provider
+        .stock_relocation_service
+        .get_stock_relocation_draft_lines(
+            &service_context,
+            store_id,
+            StockRelocationDraftFilter {
+                from_location_id: input.from_location_id,
+                item_id: input.item_id,
+                stock_relocation_line_id: input.stock_relocation_line_id,
+            },
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(DraftStockRelocationLineNode::from_vec(draft_lines))
+}
+
 impl StockRelocationFilterInput {
     pub fn to_domain(self) -> StockRelocationFilter {
         StockRelocationFilter {
@@ -139,9 +178,9 @@ impl StockRelocationFilterInput {
             status: self
                 .status
                 .map(|t| map_filter!(t, StockRelocationStatus::from)),
-            item_code_or_name: self.item_code_or_name.map(StringFilter::from),
-            from_location_code: self.from_location_code.map(StringFilter::from),
-            to_location_code: self.to_location_code.map(StringFilter::from),
+            stock_movement_number: self.stock_movement_number.map(EqualFilter::from),
+            created_datetime: self.created_datetime.map(DatetimeFilter::from),
+            username: self.username.map(StringFilter::from),
         }
     }
 }

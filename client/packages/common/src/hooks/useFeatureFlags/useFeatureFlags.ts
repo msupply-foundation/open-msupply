@@ -10,7 +10,7 @@
     # Add any other settings you need here, e.g. database connection, sync settings etc
 
     features:
-      stock_movement: true
+      my_feature: true
   ```
 */
 
@@ -32,8 +32,5 @@ export const useFeatureFlags = () => {
 
   return {
     ...featureFlags,
-    // Stock movement (stock relocation) feature - hidden by default while in
-    // development, can be enabled per-server via local.yaml
-    stockMovement: !!featureFlags['stock_movement'],
   };
 };
