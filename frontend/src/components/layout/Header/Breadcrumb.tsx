@@ -10,6 +10,13 @@ export interface Crumb {
    * showcase uses hash links); a router makes them real routes later.
    */
   to?: string
+  /**
+   * Interim navigation for pages that swap views with local state (list ↔
+   * detail) while routing is undecided: renders the crumb as a link and runs
+   * the callback instead of following `to`. A router replaces these with
+   * real routed hrefs later.
+   */
+  onClick?: () => void
 }
 
 export interface BreadcrumbProps {
@@ -49,7 +56,7 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
               </Show>
               <li class={styles.crumb}>
                 <Show
-                  when={crumb.to && !isLast(index())}
+                  when={(crumb.to || crumb.onClick) && !isLast(index())}
                   fallback={
                     <Show
                       when={isLast(index())}
@@ -61,7 +68,17 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
                     </Show>
                   }
                 >
-                  <a class={styles.link} href={crumb.to}>
+                  <a
+                    class={styles.link}
+                    href={crumb.to ?? '#'}
+                    onClick={
+                      crumb.onClick &&
+                      ((e) => {
+                        e.preventDefault()
+                        crumb.onClick!()
+                      })
+                    }
+                  >
                     {crumb.label}
                   </a>
                 </Show>

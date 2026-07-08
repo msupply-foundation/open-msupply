@@ -2,9 +2,9 @@ import { For, Show, createSignal } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { MSupplyGuyLogo, ChevronDownIcon } from '../../icons'
 import { upperNav, lowerNav, type NavItem, type NavLeaf } from './navModel'
-import styles from './Sidebar.module.css'
+import styles from './MenuBar.module.css'
 
-export interface SidebarState {
+export interface MenuBarState {
   railCollapsed: () => boolean
   toggleRail: () => void
   overlayOpen: () => boolean
@@ -12,8 +12,8 @@ export interface SidebarState {
   closeOverlay: () => void
 }
 
-interface SidebarProps {
-  nav: SidebarState
+interface MenuBarProps {
+  nav: MenuBarState
   /** True below the navOverlay breakpoint — render the hamburger overlay. */
   isOverlay: boolean
   selectedId: string
@@ -148,14 +148,14 @@ const NavLists = (props: { selectedId: string; onSelect: (leaf: NavLeaf) => void
 )
 
 /*
- * One sidebar, two layout modes — never a duplicate mobile nav component.
+ * One menu bar, two layout modes — never a duplicate mobile nav component.
  *   - docked  (>= navOverlay): part of the flex row; logo toggles the icon rail.
  *   - overlay (<  navOverlay): off-canvas panel + scrim, opened by the header's
  *     hamburger; the SAME NavLists, closing on navigate or scrim tap.
  * Which mode renders is a "which element" decision — the one place a breakpoint
  * is allowed (via useIsNavOverlay in AppShell).
  */
-export const Sidebar = (props: SidebarProps) => {
+export const MenuBar = (props: MenuBarProps) => {
   const select = (leaf: NavLeaf) => {
     props.onSelect(leaf)
     if (props.isOverlay) props.nav.closeOverlay()
@@ -166,7 +166,7 @@ export const Sidebar = (props: SidebarProps) => {
       when={props.isOverlay}
       fallback={
         <nav
-          class={styles.sidebar}
+          class={styles.menuBar}
           data-open={!props.nav.railCollapsed() ? 'true' : 'false'}
           aria-label="Main navigation"
         >

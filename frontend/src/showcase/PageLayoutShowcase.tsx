@@ -2,6 +2,7 @@ import { createSignal, For, Show } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { AppShell } from '../components/layout/AppShell/AppShell'
 import { findNavParent, type NavLeaf } from '../components/layout/AppShell/navModel'
+import { Page } from '../components/layout/Page/Page'
 import { Header } from '../components/layout/Header/Header'
 import { Breadcrumb, type Crumb } from '../components/layout/Header/Breadcrumb'
 import { HeaderButtons } from '../components/layout/Header/HeaderButtons'
@@ -10,6 +11,7 @@ import { ContentFooter } from '../components/layout/ContentFooter/ContentFooter'
 import { ContentFooterActions } from '../components/layout/ContentFooter/ContentFooterActions'
 import { Button } from '../components/ui/Button'
 import { SplitButton } from '../components/ui/SplitButton'
+import { Table } from '../components/ui/Table'
 import {
   PlusCircleIcon,
   DownloadIcon,
@@ -52,19 +54,21 @@ const EXPORT_OPTIONS = [
 ]
 
 /*
- * Demonstrates the AppShell layout element as a full page — the Outbound
- * Shipments demo. It's rendered full-bleed by the showcase (kind: 'page');
- * resize the window to watch the docked sidebar become a hamburger overlay
- * at the navOverlay breakpoint (the hamburger appears inside the page
- * header, via ShellNavContext). The showcase owns the demo's nav selection
+ * Demonstrates the AppShell + Page layout elements as a full page — the
+ * Outbound Shipments demo. It's rendered full-bleed by the showcase (kind:
+ * 'page'); resize the window to watch the docked menu bar become a hamburger
+ * overlay at the navOverlay breakpoint (the hamburger appears inside the
+ * page header, via ShellNavContext). AppShell is the app-level container
+ * (menu bar + orange footer); the page content is a <Page> frame whose
+ * header / contentFooter slots hold the composed regions — the same
+ * assembly as the real skeleton pages (pages/OutboundShipments), which are
+ * the canonical recipes. The showcase owns the demo's nav selection
  * (AppShell is controlled) and derives the header breadcrumb from it — in
- * the real app a router plays both roles (see pages/Home for the
- * showcase-free usage). The header buttons and toolbar stay the Outbound
- * Shipments set while you navigate; a real app swaps the whole Header per
- * page. The pinned ContentFooter (shell's `contentFooter` prop) is
- * contextual by composition: tick table rows and its children swap from the
- * detail actions to the selection actions — page-local signals, no store
- * (see DECISIONS.md 2026-07-08).
+ * the real app a router plays both roles. The header buttons and toolbar
+ * stay the Outbound Shipments set while you navigate; a real app swaps the
+ * whole page. The pinned ContentFooter is contextual by composition: tick
+ * table rows and its children swap from the detail actions to the selection
+ * actions — page-local signals, no store (see DECISIONS.md 2026-07-08).
  */
 const DEMO_START: NavLeaf = {
   id: 'outbound',
@@ -99,118 +103,113 @@ export const PageLayoutShowcase = () => {
   }
 
   return (
-    <AppShell
-      selected={selected()}
-      onNavigate={setSelected}
-      header={
-        <Header>
-          <Breadcrumb
-            icon={parent() && <Dynamic component={parent()!.icon} />}
-            crumbs={crumbs()}
-          />
-          <HeaderButtons>
-            <Button icon={<PlusCircleIcon />}>New shipment</Button>
-            <SplitButton
-              icon={<DownloadIcon />}
-              options={EXPORT_OPTIONS}
-              menuLabel="Export options"
+    <AppShell selected={selected()} onNavigate={setSelected}>
+      <Page
+        header={
+          <Header>
+            <Breadcrumb
+              icon={parent() && <Dynamic component={parent()!.icon} />}
+              crumbs={crumbs()}
             />
-          </HeaderButtons>
-          <Toolbar>
-            <div class={styles.toolbar}>
-              <span class={styles.count}>
-                {rows().length} {selected().label.toLowerCase()}
-              </span>
-              <div class={styles.filters}>
-                <For each={STATUSES}>
-                  {(s) => (
-                    <button type="button" class={styles.filterPill}>
-                      <span
-                        class={styles.dot}
-                        style={{ background: s.color }}
-                        aria-hidden="true"
-                      />
-                      {s.label}
-                    </button>
-                  )}
-                </For>
+            <HeaderButtons>
+              <Button icon={<PlusCircleIcon />}>New shipment</Button>
+              <SplitButton
+                icon={<DownloadIcon />}
+                options={EXPORT_OPTIONS}
+                menuLabel="Export options"
+              />
+            </HeaderButtons>
+            <Toolbar>
+              <div class={styles.toolbar}>
+                <span class={styles.count}>
+                  {rows().length} {selected().label.toLowerCase()}
+                </span>
+                <div class={styles.filters}>
+                  <For each={STATUSES}>
+                    {(s) => (
+                      <button type="button" class={styles.filterPill}>
+                        <span
+                          class={styles.dot}
+                          style={{ background: s.color }}
+                          aria-hidden="true"
+                        />
+                        {s.label}
+                      </button>
+                    )}
+                  </For>
+                </div>
               </div>
-            </div>
-          </Toolbar>
-        </Header>
-      }
-      contentFooter={
-        <ContentFooter>
-          <Show
-            when={picked().size > 0}
-            fallback={
-              <>
-                <Button color="blue" icon={<ClockIcon />}>
-                  History
+            </Toolbar>
+          </Header>
+        }
+        contentFooter={
+          <ContentFooter>
+            <Show
+              when={picked().size > 0}
+              fallback={
+                <>
+                  <Button color="blue" icon={<ClockIcon />}>
+                    History
+                  </Button>
+                  <ContentFooterActions>
+                    <Button color="blue" icon={<XCircleIcon />}>
+                      Cancel
+                    </Button>
+                    <Button color="blue" icon={<SaveIcon />}>
+                      Save
+                    </Button>
+                  </ContentFooterActions>
+                </>
+              }
+            >
+              <strong>{picked().size} selected</strong>
+              <ContentFooterActions>
+                <Button color="blue" icon={<TrashIcon />} onClick={deletePicked}>
+                  Delete
                 </Button>
-                <ContentFooterActions>
-                  <Button color="blue" icon={<XCircleIcon />}>
-                    Cancel
-                  </Button>
-                  <Button color="blue" icon={<SaveIcon />}>
-                    Save
-                  </Button>
-                </ContentFooterActions>
-              </>
-            }
-          >
-            <span class={styles.selectionCount}>{picked().size} selected</span>
-            <ContentFooterActions>
-              <Button color="blue" icon={<TrashIcon />} onClick={deletePicked}>
-                Delete
-              </Button>
-              <Button color="blue" icon={<CopyIcon />}>
-                Make a copy
-              </Button>
-              <Button
-                color="blue"
-                icon={<MinusCircleIcon />}
-                onClick={clearPicked}
-              >
-                Clear selection
-              </Button>
-            </ContentFooterActions>
-          </Show>
-        </ContentFooter>
-      }
-    >
-      <div class={styles.page}>
-        <p class={styles.note}>
-          Whole-page layout demo. Resize the window (or use the device toolbar) —
-          the docked sidebar becomes a hamburger overlay below 1024px (the
-          hamburger slots into the page header), and the whole UI shrinks below
-          600px. Pick a sidebar item to see the header breadcrumb update. Tick
-          rows to watch the pinned content footer swap to the selection
-          actions.
-        </p>
+                <Button color="blue" icon={<CopyIcon />}>
+                  Make a copy
+                </Button>
+                <Button
+                  color="blue"
+                  icon={<MinusCircleIcon />}
+                  onClick={clearPicked}
+                >
+                  Clear selection
+                </Button>
+              </ContentFooterActions>
+            </Show>
+          </ContentFooter>
+        }
+      >
+        <div class={styles.page}>
+          <p class={styles.note}>
+            Whole-page layout demo. Resize the window (or use the device toolbar) —
+            the docked menu bar becomes a hamburger overlay below 1024px (the
+            hamburger slots into the page header), and the whole UI shrinks below
+            600px. Pick a menu item to see the header breadcrumb update. Tick
+            rows to watch the pinned content footer swap to the selection
+            actions.
+          </p>
 
-        <div class={styles.tableWrap}>
-          <table class={styles.table}>
+          <Table label="Outbound shipments">
             <thead>
               <tr>
-                <th class={styles.checkCell}>
-                  <span class={styles.srOnly}>Select</span>
-                </th>
+                <th data-check aria-label="Selected" />
                 <th>Status</th>
                 <th>Reference</th>
                 <th>Customer</th>
-                <th class={styles.numeric}>Items</th>
+                <th data-numeric>Items</th>
                 <th>Created</th>
               </tr>
             </thead>
             <tbody>
               <For each={rows()}>
                 {(row) => (
-                  <tr>
-                    <td class={styles.checkCell}>
+                  <tr data-selected={picked().has(row.reference) ? '' : undefined}>
+                    <td data-check>
                       <input
                         type="checkbox"
-                        class={styles.checkbox}
                         checked={picked().has(row.reference)}
                         onChange={() => togglePicked(row.reference)}
                         aria-label={`Select ${row.reference}`}
@@ -226,17 +225,17 @@ export const PageLayoutShowcase = () => {
                         {row.status.label}
                       </span>
                     </td>
-                    <td class={styles.mono}>{row.reference}</td>
+                    <td data-mono>{row.reference}</td>
                     <td>{row.customer}</td>
-                    <td class={styles.numeric}>{row.items}</td>
-                    <td class={styles.muted}>{row.created}</td>
+                    <td data-numeric>{row.items}</td>
+                    <td data-muted>{row.created}</td>
                   </tr>
                 )}
               </For>
             </tbody>
-          </table>
+          </Table>
         </div>
-      </div>
+      </Page>
     </AppShell>
   )
 }

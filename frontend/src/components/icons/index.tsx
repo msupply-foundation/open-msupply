@@ -134,7 +134,7 @@ export const MinusCircleIcon = (props: IconProps) => (
   </Stroke>
 )
 
-/* --- Navigation icons (from the current app; added as the sidebar needs them) --- */
+/* --- Navigation icons (from the current app; added as the menu bar needs them) --- */
 
 /* Inventory */
 export const StockIcon = (props: IconProps) => (
@@ -243,7 +243,7 @@ export const HelpIcon = (props: IconProps) => (
   </Stroke>
 )
 
-/* Hamburger — opens the nav overlay below the docked-sidebar breakpoint.
+/* Hamburger — opens the nav overlay below the docked-menu-bar breakpoint.
    Filled bars, matching the current app's MUI Menu icon. */
 export const MenuIcon = (props: IconProps) => (
   <Fill viewBox="0 0 24 24" {...props}>

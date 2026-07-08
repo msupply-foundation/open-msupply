@@ -1,0 +1,148 @@
+import { createSignal, For } from 'solid-js'
+import { Dynamic } from 'solid-js/web'
+import { Page } from '../../components/layout/Page/Page'
+import { Header } from '../../components/layout/Header/Header'
+import { Breadcrumb, type Crumb } from '../../components/layout/Header/Breadcrumb'
+import { HeaderButtons } from '../../components/layout/Header/HeaderButtons'
+import { ContentFooter } from '../../components/layout/ContentFooter/ContentFooter'
+import { ContentFooterActions } from '../../components/layout/ContentFooter/ContentFooterActions'
+import { SidePanel, SidePanelSection } from '../../components/layout/SidePanel/SidePanel'
+import { findNavParent } from '../../components/layout/AppShell/navModel'
+import { Button } from '../../components/ui/Button'
+import { Tabs, TabList, TabPanel, type TabDef } from '../../components/ui/Tabs'
+import { Table } from '../../components/ui/Table'
+import { EmptyState } from '../../components/ui/EmptyState'
+import {
+  PlusCircleIcon,
+  ClockIcon,
+  SaveIcon,
+  XCircleIcon,
+} from '../../components/icons'
+import { linesFor, SHIPMENTS, statusLabel } from './demoData'
+
+const DETAIL_TABS: TabDef[] = [
+  { value: 'details', label: 'Details' },
+  { value: 'log', label: 'Log' },
+]
+
+export interface DetailViewProps {
+  /** Which shipment — the host (a router later) owns this. */
+  reference: string
+  /** Navigate back up to the list (breadcrumb / Cancel). */
+  onBack: () => void
+}
+
+/*
+ * Outbound Shipment DetailView — THE DETAIL-PAGE RECIPE (see DECISIONS.md
+ * 2026-07-08): a <Tabs> root wrapping a <Page> frame from outside, so the
+ * TabList sits in the Header (becoming its bottom edge) while the panels live
+ * in the scrolling body; a SidePanel docked in the frame's sidePanel slot;
+ * and a persistent ContentFooter with the detail actions. Same frame as the
+ * list view — the side panel slot is simply used here and collapsed there.
+ * The page composes library components and owns NO CSS; the breadcrumb's
+ * ancestor crumb navigates back via its interim onClick (a router makes it a
+ * real href later).
+ */
+export const DetailView = (props: DetailViewProps) => {
+  const [tab, setTab] = createSignal('details')
+  const shipment = () => SHIPMENTS.find((s) => s.reference === props.reference)
+  const lines = () => linesFor(props.reference)
+
+  const parent = findNavParent('outbound')
+  const crumbs = (): Crumb[] => [
+    { label: parent?.label ?? 'Distribution' },
+    { label: 'Outbound Shipments', onClick: props.onBack },
+    { label: props.reference },
+  ]
+
+  return (
+    <Tabs value={tab()} onValueChange={setTab}>
+      <Page
+        header={
+          <Header>
+            <Breadcrumb
+              icon={parent && <Dynamic component={parent.icon} />}
+              crumbs={crumbs()}
+            />
+            <HeaderButtons>
+              <Button icon={<PlusCircleIcon />}>Add item</Button>
+            </HeaderButtons>
+            <TabList tabs={DETAIL_TABS} />
+          </Header>
+        }
+        sidePanel={
+          <SidePanel>
+            <SidePanelSection title="Additional info">
+              <dl>
+                <dt>Status</dt>
+                <dd>{statusLabel(shipment()?.status ?? '')}</dd>
+                <dt>Entered</dt>
+                <dd>{shipment()?.created}</dd>
+                <dt>Customer</dt>
+                <dd>{shipment()?.customer}</dd>
+                <dt>Their reference</dt>
+                <dd>{shipment()?.theirReference || '(none)'}</dd>
+              </dl>
+            </SidePanelSection>
+            <SidePanelSection title="Related documents">
+              <dl>
+                <dt>Requisition</dt>
+                <dd>RQ-{props.reference.slice(-4)}</dd>
+              </dl>
+            </SidePanelSection>
+            <SidePanelSection title="Comment">
+              <p>Placeholder — comments land with the Feedback work.</p>
+            </SidePanelSection>
+          </SidePanel>
+        }
+        contentFooter={
+          <ContentFooter>
+            <Button color="blue" icon={<ClockIcon />}>
+              History
+            </Button>
+            <ContentFooterActions>
+              <Button color="blue" icon={<XCircleIcon />} onClick={props.onBack}>
+                Cancel
+              </Button>
+              <Button color="blue" icon={<SaveIcon />}>
+                Save
+              </Button>
+            </ContentFooterActions>
+          </ContentFooter>
+        }
+      >
+        <TabPanel value="details">
+          <Table label="Shipment lines">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Item</th>
+                <th data-numeric>Pack size</th>
+                <th data-numeric>Quantity</th>
+                <th>Batch</th>
+                <th>Expiry</th>
+              </tr>
+            </thead>
+            <tbody>
+              <For each={lines()}>
+                {(line) => (
+                  <tr>
+                    <td data-mono>{line.code}</td>
+                    <td>{line.item}</td>
+                    <td data-numeric>{line.packSize}</td>
+                    <td data-numeric>{line.quantity}</td>
+                    <td>{line.batch}</td>
+                    <td data-muted>{line.expiry}</td>
+                  </tr>
+                )}
+              </For>
+            </tbody>
+          </Table>
+        </TabPanel>
+        <TabPanel value="log">
+          <EmptyState message="Activity log — lands with the data layer." />
+        </TabPanel>
+      </Page>
+    </Tabs>
+  )
+}

@@ -8,6 +8,7 @@ import { ContentFooterShowcase } from './ContentFooterShowcase'
 import { PageLayoutShowcase } from './PageLayoutShowcase'
 import { Home } from '../pages/Home/Home'
 import { Login } from '../pages/Login/Login'
+import { OutboundShipments } from '../pages/OutboundShipments/OutboundShipments'
 
 export type SectionDef = {
   id: string
@@ -16,7 +17,7 @@ export type SectionDef = {
   /*
    * 'component' (default) renders inside the padded showcase panel. 'page'
    * renders full-bleed — the component owns the whole viewport (e.g. an app
-   * shell with its own sidebar/header), with the ShowcaseLauncher floating over
+   * shell with its own menu bar/header), with the ShowcaseLauncher floating over
    * it as the way back. 'app' is full-bleed with NO showcase chrome at all —
    * a real app page exactly as a build would ship it; the way back is the
    * browser's Back button. See ShowcaseApp.tsx.
@@ -50,4 +51,13 @@ export const sections: SectionDef[] = [
   { id: 'app-shell', label: 'App shell', component: PageLayoutShowcase, kind: 'page' },
   { id: 'home', label: 'Home', component: Home, kind: 'app' },
   { id: 'login', label: 'Login', component: Login, kind: 'app' },
+  // The list/detail skeleton pages — the canonical page-pattern recipes
+  // (see DECISIONS.md 2026-07-08). One host = one AppShell; open a row to
+  // watch the detail page swap in without the shell remounting.
+  {
+    id: 'outbound-shipments',
+    label: 'Outbound Shipments',
+    component: OutboundShipments,
+    kind: 'app',
+  },
 ]

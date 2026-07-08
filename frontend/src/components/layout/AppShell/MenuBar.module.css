@@ -1,13 +1,13 @@
 /*
- * Sidebar — plain CSS Modules, all colours/dims from design tokens. Adapted
- * from the RnD prototype's Sidebar (itself a port of the current AppDrawer):
+ * MenuBar — plain CSS Modules, all colours/dims from design tokens. Adapted
+ * from the RnD prototype's Sidebar component (itself a port of the current AppDrawer):
  *  - 16.25rem open, 5rem closed (icons only)
  *  - pill nav items; selected = raised white + bold; active parent = orange
  *  - children indented under a left "tree" line
  * RTL via logical properties (no JS flipping).
  */
 
-.sidebar {
+.menuBar {
   position: relative;
   z-index: 2;
   display: flex;
@@ -23,7 +23,7 @@
   transition: inline-size 200ms ease;
 }
 
-.sidebar[data-open='false'] {
+.menuBar[data-open='false'] {
   inline-size: var(--drawer-closed-width);
 }
 
@@ -195,19 +195,19 @@
 }
 
 /* --- Collapsed (icon-only) rail ---------------------------------------- */
-.sidebar[data-open='false'] .label,
-.sidebar[data-open='false'] .sectionChevron,
-.sidebar[data-open='false'] .chevronSlot,
-.sidebar[data-open='false'] .endChevron {
+.menuBar[data-open='false'] .label,
+.menuBar[data-open='false'] .sectionChevron,
+.menuBar[data-open='false'] .chevronSlot,
+.menuBar[data-open='false'] .endChevron {
   display: none;
 }
 
-.sidebar[data-open='false'] .navButton {
+.menuBar[data-open='false'] .navButton {
   justify-content: center;
   padding-inline: 0;
 }
 
-.sidebar[data-open='false'] .childList {
+.menuBar[data-open='false'] .childList {
   display: none;
 }
 

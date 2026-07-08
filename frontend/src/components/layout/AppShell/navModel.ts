@@ -31,7 +31,7 @@ export interface NavItem {
 }
 
 /*
- * Models the current app's sidebar for the shell demo. Two groups: the
+ * Models the current app's main menu for the shell demo. Two groups: the
  * scrolling upper list and the pinned lower cluster. Ported from the RnD
  * prototype's navModel (data only; icons come from our own icon set).
  */

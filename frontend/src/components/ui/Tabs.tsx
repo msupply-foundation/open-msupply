@@ -50,7 +50,12 @@ export const Tabs = (props: TabsProps) => (
     value={props.value}
     defaultValue={props.defaultValue}
     onChange={props.onValueChange}
-    class={props.class}
+    // The root is a STATE boundary, not a layout box — display: contents
+    // (styles.root) removes its div from layout so the strip and panels
+    // participate directly in the surrounding flex/grid. This is what lets a
+    // <Tabs> wrap a <Page> frame from outside (TabList in the header, panels
+    // in the body) without breaking the shell column's flex chain.
+    class={props.class ? `${styles.root} ${props.class}` : styles.root}
   >
     {props.children}
   </KTabs.Root>
@@ -90,8 +95,15 @@ export const TabList = (props: { tabs: TabDef[] }) => {
     // Labels reflow when the webfont lands (the prototype's underline sat
     // 1px off until the first interaction) — measure again then.
     document.fonts?.ready.then(measure)
-    window.addEventListener('resize', measure)
-    onCleanup(() => window.removeEventListener('resize', measure))
+    // Re-measure whenever the strip's own box changes — a ResizeObserver on
+    // the list, not a window resize listener: a window listener fires BEFORE
+    // sibling which-element swaps it triggers (e.g. the AppShell menu bar
+    // docking/undocking at the nav-overlay breakpoint), so it would measure
+    // the pre-reflow layout and strand the underline. The observer fires
+    // after any reflow of the strip, whatever caused it.
+    const observer = new ResizeObserver(measure)
+    if (listEl) observer.observe(listEl)
+    onCleanup(() => observer.disconnect())
   })
   createEffect(on([context.selectedTab, () => props.tabs], measure, { defer: true }))
 

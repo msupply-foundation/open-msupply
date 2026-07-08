@@ -65,97 +65,9 @@
   border-radius: 50%;
 }
 
-/* --- Content footer ------------------------------------------------------ */
-.selectionCount {
-  color: var(--text-body);
-  font-weight: var(--weight-bold);
-}
-
-/* --- Table ------------------------------------------------------------- */
-.tableWrap {
-  overflow-x: auto;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-}
-
-.table {
-  inline-size: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-sm);
-}
-
-.table th {
-  padding: var(--space-2) var(--space-3);
-  background: var(--bg-toolbar);
-  color: var(--text-secondary);
-  font-weight: var(--weight-medium);
-  text-align: start;
-  white-space: nowrap;
-  border-block-end: 1px solid var(--color-divider);
-}
-
-.table td {
-  block-size: var(--table-data-row);
-  padding: 0 var(--space-3);
-  color: var(--text-body);
-  border-block-end: 1px solid var(--color-divider);
-  white-space: nowrap;
-}
-
-.table tbody tr:last-child td {
-  border-block-end: none;
-}
-
-.table tbody tr:hover td {
-  background: var(--bg-row);
-}
-
-/* Selected rows get a light brand tint (plus the checkbox itself — not
-   colour-only: the checkmark carries the state). */
-.table tbody tr:has(.checkbox:checked) td {
-  background: color-mix(in srgb, var(--primary-main) 8%, transparent);
-}
-
-.checkCell {
-  inline-size: 2rem;
-  text-align: center;
-}
-
-.checkbox {
-  display: block;
-  margin: 0 auto;
-  inline-size: 1rem;
-  block-size: 1rem;
-  accent-color: var(--primary-main);
-  cursor: pointer;
-}
-
-/* Visually hidden but announced — the checkbox column's header label. */
-.srOnly {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.numeric {
-  text-align: end;
-  font-variant-numeric: tabular-nums;
-}
-
+/* --- Table cell decoration (the table itself is ui/Table now) ----------- */
 .status {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-}
-
-.mono {
-  font-family: ui-monospace, monospace;
-  color: var(--text-secondary);
-}
-
-.muted {
-  color: var(--text-secondary);
 }

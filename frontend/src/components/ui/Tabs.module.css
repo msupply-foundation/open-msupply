@@ -6,6 +6,12 @@
  * (the header suppresses its own border and pulls the strip out to its edges —
  * see Header.module.css). Ported from the RnD prototype's Tabs.module.css.
  */
+/* The root div is a state boundary only — remove it from layout so children
+   sit directly in the surrounding flex/grid (see Tabs.tsx). */
+.root {
+  display: contents;
+}
+
 .list {
   position: relative;
   display: flex;

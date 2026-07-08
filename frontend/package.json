@@ -8,7 +8,7 @@
     "build": "npm run css:types && tsc -b && vite build",
     "preview": "vite preview",
     "css:types": "tcm --pattern '**/*.module.css' src",
-    "check": "npm run css:types && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs"
+    "check": "npm run css:types && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",

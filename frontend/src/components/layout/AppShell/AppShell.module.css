@@ -1,9 +1,9 @@
 /*
- * AppShell layout — the page frame. Flex row (sidebar + main), main is a flex
- * column of the page-provided header (see components/layout/Header), a
- * scrolling body, and a slim footer. All dims/colours from tokens; RTL via
- * logical properties. Intrinsic layout — the only breakpoint lives in JS
- * (useIsNavOverlay), never here.
+ * AppShell layout — the app-level container. Flex row (menu bar + main), main
+ * is a flex column of the content slot (where the current page's <Page>
+ * frame renders and does its own scrolling) and the slim orange app footer.
+ * All dims/colours from tokens; RTL via logical properties. Intrinsic layout
+ * — the only breakpoint lives in JS (useIsNavOverlay), never here.
  */
 
 .shell {
@@ -20,11 +20,15 @@
   overflow: hidden;
 }
 
-/* --- Body (scroll region) ---------------------------------------------- */
-.body {
+/* --- Content slot (the current page) ------------------------------------ */
+/* A flex column so the page's <Page> frame stretches to fill it; the frame
+   owns its own scrolling — the shell never scrolls. */
+.content {
+  display: flex;
   flex: 1;
-  padding: var(--space-5);
-  overflow: auto;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow: hidden;
   background: var(--bg-white);
 }
 

@@ -15,7 +15,7 @@ import {
   type IconProps,
 } from '../../icons'
 import { useIsNavOverlay } from '../../../hooks/createMediaQuery'
-import { Sidebar, type SidebarState } from './Sidebar'
+import { MenuBar, type MenuBarState } from './MenuBar'
 import { LanguageSelector } from './LanguageSelector'
 import { isRtlLocale } from './languages'
 import { ShellNavContext } from './shellContext'
@@ -24,30 +24,23 @@ import styles from './AppShell.module.css'
 
 export interface AppShellProps {
   /**
-   * The current page — drives the sidebar highlight. The caller owns
+   * The current page — drives the menu-bar highlight. The caller owns
    * selection (a router eventually; page-local state for now), so the shell
    * stays a pure layout element. A page outside the nav (e.g. Home) simply
    * highlights nothing.
    */
   selected: NavLeaf
-  /** The user picked a sidebar item. */
+  /** The user picked a menu item. */
   onNavigate: (leaf: NavLeaf) => void
   /**
-   * The page's header — a composed <Header>…</Header>. The shell pins it
-   * above the scrolling body; the page owns everything in it (crumb trail,
-   * actions, toolbar). Always provide one: in overlay mode the hamburger
-   * that opens the nav renders inside it (via ShellNavContext), so a page
-   * without a header has no way into the sidebar on narrow viewports.
+   * The current page — typically a composed <Page> frame (which supplies the
+   * pinned-header / scrolling-body / side-panel / content-footer geometry;
+   * see components/layout/Page). The shell provides the space between the
+   * menu bar and the orange app footer and never scrolls itself. The page's
+   * header must include a <Header>: in overlay mode the hamburger that opens
+   * the nav renders inside it (via ShellNavContext), so a page without one
+   * has no way into the menu on narrow viewports.
    */
-  header?: JSX.Element
-  /**
-   * The page's pinned action bar — a composed <ContentFooter>…</ContentFooter>.
-   * The shell pins it between the scrolling body and the orange app footer
-   * (it never scrolls with the body); the page owns its content and handlers,
-   * same contract as `header`. Omit it on pages with no bar.
-   */
-  contentFooter?: JSX.Element
-  /** Page body, rendered in the scrolling region between header and footer. */
   children: JSX.Element
 }
 
@@ -77,15 +70,21 @@ const FooterCell = (props: {
 )
 
 /*
- * Whole-page application shell: docked sidebar + main column (the page's
- * header, scrolling body, optional pinned content footer, app footer). The
- * one responsive decision — docked rail
- * vs. hamburger overlay — is driven by useIsNavOverlay; everything else is
- * intrinsic layout. A layout element, not a component: it owns the page frame,
- * the page owns the header content and the body. The shell renders no header
- * of its own — it pins the page-composed <Header> (the `header` prop) above
- * the scroll region, and hands the overlay hamburger into it via
- * ShellNavContext. Adapted from the RnD prototype's App shell.
+ * Application shell — the APP-LEVEL container, not the page frame: docked
+ * menu bar (the main menu), the orange app footer, and the content slot
+ * between them where the current page renders. App chrome lives here
+ * because it's identical on every page and its state (rail collapse,
+ * overlay open, language) must survive navigation — so the shell mounts
+ * ONCE per app host and pages swap inside it; per-page geometry (pinned
+ * header, scrolling body, side panel, content footer) belongs to the <Page>
+ * frame the page itself composes (see DECISIONS.md 2026-07-08). Until
+ * routing is decided the host owning `selected`/`onNavigate` is the router
+ * stand-in; a root layout route takes both over later.
+ *
+ * The one responsive decision — docked rail vs. hamburger overlay — is
+ * driven by useIsNavOverlay; everything else is intrinsic layout. The shell
+ * renders no header of its own: the page's <Header> hosts the overlay
+ * hamburger via ShellNavContext. Adapted from the RnD prototype's App shell.
  */
 export const AppShell = (props: AppShellProps) => {
   const [railCollapsed, setRailCollapsed] = createSignal(false)
@@ -93,7 +92,7 @@ export const AppShell = (props: AppShellProps) => {
   const [language, setLanguage] = createSignal('en')
   const isOverlay = useIsNavOverlay()
 
-  const nav: SidebarState = {
+  const nav: MenuBarState = {
     railCollapsed,
     toggleRail: () => setRailCollapsed((c) => !c),
     overlayOpen,
@@ -123,18 +122,14 @@ export const AppShell = (props: AppShellProps) => {
       value={{ isOverlay, openNav: nav.openOverlay }}
     >
       <div class={styles.shell}>
-        <Sidebar
+        <MenuBar
           nav={nav}
           isOverlay={isOverlay()}
           selectedId={props.selected.id}
           onSelect={props.onNavigate}
         />
         <div class={styles.main}>
-          {props.header}
-
-          <div class={styles.body}>{props.children}</div>
-
-          {props.contentFooter}
+          <div class={styles.content}>{props.children}</div>
 
           <footer class={styles.footer}>
             <FooterCell icon={HomeIcon} label="General" />

@@ -26,7 +26,7 @@ export interface HeaderProps {
  * (the strip's border replaces the header's own — see Header.module.css);
  * the surrounding <Tabs> root wraps the header from outside.
  *
- * Inside an AppShell, the sidebar hamburger renders here automatically
+ * Inside an AppShell, the menu-bar hamburger renders here automatically
  * (via ShellNavContext) when the nav is in overlay mode — the shell owns
  * the state, the header owns the spot. Standalone headers show none.
  */

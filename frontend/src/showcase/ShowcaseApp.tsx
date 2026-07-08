@@ -19,7 +19,7 @@ import styles from "./ShowcaseApp.module.css";
  * Three rendering modes, chosen by the section's `kind`:
  *   - 'component' (default): renders inside the padded panel below the nav.
  *   - 'page': renders full-bleed so a whole-page layout (e.g. the app shell,
- *     with its own sidebar/header) owns the real viewport — the point being to
+ *     with its own menu bar/header) owns the real viewport — the point being to
  *     resize/device-test it without competing chrome. The ShowcaseLauncher
  *     floats over it as the escape hatch back to the menu.
  *   - 'app': full-bleed with no showcase chrome at all — a real app page
