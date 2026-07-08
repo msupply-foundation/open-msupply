@@ -4,6 +4,7 @@ import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 import { VvmStatusFragmentDoc } from '../../../../system/src/Stock/api/operations.generated';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StocktakeRowFragment = {
   __typename: 'StocktakeNode';
@@ -227,6 +228,18 @@ export type StocktakeFragment = {
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
     }>;
   };
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
+    }>;
+  };
 };
 
 export type StocktakesQueryVariables = Types.Exact<{
@@ -388,6 +401,18 @@ export type StocktakeQuery = {
             } | null;
           }>;
         };
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
+          }>;
+        };
       };
 };
 
@@ -519,6 +544,18 @@ export type StocktakeByNumberQuery = {
               id: string;
               name: string;
             } | null;
+          }>;
+        };
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
       };
@@ -1028,8 +1065,15 @@ export const StocktakeFragmentDoc = gql`
         ...StocktakeLine
       }
     }
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
   }
   ${StocktakeLineFragmentDoc}
+  ${SyncFileReferenceFragmentDoc}
 `;
 export const AdjustmentReasonNotProvidedErrorFragmentDoc = gql`
   fragment AdjustmentReasonNotProvidedError on AdjustmentReasonNotProvided {

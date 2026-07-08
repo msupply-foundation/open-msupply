@@ -14,7 +14,7 @@ use repository::{
     migrations::{migrate, MigrationConfig},
     schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
     KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
-    ReportRowRepository, SyncBufferRepository, SyncBufferRowInsert,
+    ReportRowRepository, StringFilter, SyncBufferRepository, SyncBufferRowInsert,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -832,7 +832,7 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let mut filter = ReportFilter::new().code(EqualFilter::equal_to(code.to_owned()));
+            let mut filter = ReportFilter::new().code(StringFilter::equal_to(&code));
             if let Some(value) = is_custom {
                 filter = filter.is_custom(value);
             }

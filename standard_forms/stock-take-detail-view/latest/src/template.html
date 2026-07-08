@@ -2,6 +2,14 @@
     {% include "style.css" %}
 </style>
 
+{# Blind stock take: hide theoretical (snapshot) stock and the difference while
+counting (status NEW); they reappear once finalised. The adjustment reason is
+hidden for the whole life of a blind stock take. #}
+{% set is_blind = data.preferences.blindStocktake | default(value=false) %}
+{% set is_new = data.stocktake.status == "NEW" %}
+{% set hide_snapshot = is_blind and is_new %}
+{% set hide_reason = is_blind %}
+
 <table class="body_section">
     <thead>
         <tr class="body_column_label">
@@ -12,10 +20,16 @@
             <th>{{t(k="label.location", f="Location")}}</th>
             <th>{{t(k="label.unit", f="Unit")}}</th>
             <th>{{t(k="label.pack-size",f="Pack size")}}</th>
+            {% if not hide_snapshot %}
             <th>{{t(k="label.snapshot-num-of-packs",f="Snapshot Packs")}}</th>
+            {% endif %}
             <th>{{t(k="label.counted-num-of-packs",f="Counted Packs")}}</th>
+            {% if not hide_snapshot %}
             <th>{{t(k="label.difference",f="Difference")}}</th>
+            {% endif %}
+            {% if not hide_reason %}
             <th>{{t(k="label.reason-adjustment",f="Adjustment Reason")}}</th>
+            {% endif %}
             <th>{{t(k="label.comment",f="Comment")}}</th>
         </tr>
     </thead>
@@ -36,7 +50,9 @@
         </td>
         <td>{{ line.item.unitName }}</td>
         <td>{{ line.packSize}}</td>
+        {% if not hide_snapshot %}
         <td>{{ line.snapshotNumberOfPacks }}</td>
+        {% endif %}
         <td>
             {% if line.countedNumberOfPacks is number %}
             {{ line.countedNumberOfPacks }}
@@ -44,6 +60,7 @@
             -
             {% endif %}
         </td>
+        {% if not hide_snapshot %}
         <td>
             {% if line.countedNumberOfPacks is number %}
             {{ line.countedNumberOfPacks - line.snapshotNumberOfPacks }}
@@ -51,7 +68,10 @@
             -
             {% endif %}
         </td>
+        {% endif %}
+        {% if not hide_reason %}
         <td>{{ line.reasonOption.reason | default(value='') }}</td>
+        {% endif %}
         <td style="white-space: pre-line; word-break: break-word;">{{ line.comment | default(value='') }}</td>
     </tr>
     {%- endfor %}
