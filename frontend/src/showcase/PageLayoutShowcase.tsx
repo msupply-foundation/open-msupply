@@ -1,4 +1,4 @@
-import { createSignal, For } from 'solid-js'
+import { createSignal, For, Show } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { AppShell } from '../components/layout/AppShell/AppShell'
 import { findNavParent, type NavLeaf } from '../components/layout/AppShell/navModel'
@@ -6,9 +6,20 @@ import { Header } from '../components/layout/Header/Header'
 import { Breadcrumb, type Crumb } from '../components/layout/Header/Breadcrumb'
 import { HeaderButtons } from '../components/layout/Header/HeaderButtons'
 import { Toolbar } from '../components/layout/Header/Toolbar'
+import { ContentFooter } from '../components/layout/ContentFooter/ContentFooter'
+import { ContentFooterActions } from '../components/layout/ContentFooter/ContentFooterActions'
 import { Button } from '../components/ui/Button'
 import { SplitButton } from '../components/ui/SplitButton'
-import { PlusCircleIcon, DownloadIcon } from '../components/icons'
+import {
+  PlusCircleIcon,
+  DownloadIcon,
+  ClockIcon,
+  CopyIcon,
+  MinusCircleIcon,
+  SaveIcon,
+  TrashIcon,
+  XCircleIcon,
+} from '../components/icons'
 import styles from './PageLayoutShowcase.module.css'
 
 /* Deterministic placeholder rows — enough to make the body scroll. */
@@ -50,7 +61,10 @@ const EXPORT_OPTIONS = [
  * the real app a router plays both roles (see pages/Home for the
  * showcase-free usage). The header buttons and toolbar stay the Outbound
  * Shipments set while you navigate; a real app swaps the whole Header per
- * page.
+ * page. The pinned ContentFooter (shell's `contentFooter` prop) is
+ * contextual by composition: tick table rows and its children swap from the
+ * detail actions to the selection actions — page-local signals, no store
+ * (see DECISIONS.md 2026-07-08).
  */
 const DEMO_START: NavLeaf = {
   id: 'outbound',
@@ -65,6 +79,23 @@ export const PageLayoutShowcase = () => {
     const leaf = { label: selected().label }
     const p = parent()
     return p ? [{ label: p.label }, leaf] : [leaf]
+  }
+
+  // Row data + selection are signals so the footer's Delete really deletes —
+  // the closest hand-rolled stand-in for the table engine that arrives later.
+  const [rows, setRows] = createSignal(ROWS)
+  const [picked, setPicked] = createSignal<ReadonlySet<string>>(new Set())
+  const togglePicked = (reference: string) =>
+    setPicked((prev) => {
+      const next = new Set(prev)
+      if (next.has(reference)) next.delete(reference)
+      else next.add(reference)
+      return next
+    })
+  const clearPicked = () => setPicked(new Set<string>())
+  const deletePicked = () => {
+    setRows((rs) => rs.filter((r) => !picked().has(r.reference)))
+    clearPicked()
   }
 
   return (
@@ -88,7 +119,7 @@ export const PageLayoutShowcase = () => {
           <Toolbar>
             <div class={styles.toolbar}>
               <span class={styles.count}>
-                {ROWS.length} {selected().label.toLowerCase()}
+                {rows().length} {selected().label.toLowerCase()}
               </span>
               <div class={styles.filters}>
                 <For each={STATUSES}>
@@ -108,19 +139,63 @@ export const PageLayoutShowcase = () => {
           </Toolbar>
         </Header>
       }
+      contentFooter={
+        <ContentFooter>
+          <Show
+            when={picked().size > 0}
+            fallback={
+              <>
+                <Button color="blue" icon={<ClockIcon />}>
+                  History
+                </Button>
+                <ContentFooterActions>
+                  <Button color="blue" icon={<XCircleIcon />}>
+                    Cancel
+                  </Button>
+                  <Button color="blue" icon={<SaveIcon />}>
+                    Save
+                  </Button>
+                </ContentFooterActions>
+              </>
+            }
+          >
+            <span class={styles.selectionCount}>{picked().size} selected</span>
+            <ContentFooterActions>
+              <Button color="blue" icon={<TrashIcon />} onClick={deletePicked}>
+                Delete
+              </Button>
+              <Button color="blue" icon={<CopyIcon />}>
+                Make a copy
+              </Button>
+              <Button
+                color="blue"
+                icon={<MinusCircleIcon />}
+                onClick={clearPicked}
+              >
+                Clear selection
+              </Button>
+            </ContentFooterActions>
+          </Show>
+        </ContentFooter>
+      }
     >
       <div class={styles.page}>
         <p class={styles.note}>
           Whole-page layout demo. Resize the window (or use the device toolbar) —
           the docked sidebar becomes a hamburger overlay below 1024px (the
           hamburger slots into the page header), and the whole UI shrinks below
-          600px. Pick a sidebar item to see the header breadcrumb update.
+          600px. Pick a sidebar item to see the header breadcrumb update. Tick
+          rows to watch the pinned content footer swap to the selection
+          actions.
         </p>
 
         <div class={styles.tableWrap}>
           <table class={styles.table}>
             <thead>
               <tr>
+                <th class={styles.checkCell}>
+                  <span class={styles.srOnly}>Select</span>
+                </th>
                 <th>Status</th>
                 <th>Reference</th>
                 <th>Customer</th>
@@ -129,9 +204,18 @@ export const PageLayoutShowcase = () => {
               </tr>
             </thead>
             <tbody>
-              <For each={ROWS}>
+              <For each={rows()}>
                 {(row) => (
                   <tr>
+                    <td class={styles.checkCell}>
+                      <input
+                        type="checkbox"
+                        class={styles.checkbox}
+                        checked={picked().has(row.reference)}
+                        onChange={() => togglePicked(row.reference)}
+                        aria-label={`Select ${row.reference}`}
+                      />
+                    </td>
                     <td>
                       <span class={styles.status}>
                         <span

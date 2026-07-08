@@ -6,6 +6,16 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-08 · Content footer — `contentFooter` shell slot; contextual content by composition, not a store
+
+- **Decision:** The last layout element from the prototype week, the **content footer** (the pinned blue-buttons action bar), lands as two hand-rolled components in `components/layout/ContentFooter/` — `ContentFooter` (the strip) + `ContentFooterActions` (the inline-end cluster) — with exactly the Header family's contract: one flat flex-wrap container, parts self-slot via their own CSS (`margin-inline-start: auto`, the HeaderButtons mechanism), zero state, page owns all content and handlers. `AppShell` gains a **`contentFooter?: JSX.Element` slot prop** (the mirror of `header`, same rationale as that entry): the shell pins the composed bar between the scrolling body and the orange app footer, so it never scrolls with the page.
+
+- **Contextual content stays, the store goes.** Carl's one-bar rule from the prototype (2026-07-01: one pinned bar whose *content* is contextual — detail actions ↔ selection actions — so two rows of blue buttons never stack) is preserved, but the prototype's mechanism (a zustand `selectionFooter` store bridging table → footer) is **not carried over**. The page swaps the bar's children with a plain `<Show>` on its own selection signal. Why: the store was React-era plumbing for getting selection state out of a distant table component; in our structure the page owns both the table state and the bar it passes to the shell, so a local signal covers it — and the library keeps its rule that layout elements carry no app state. **Revisit** when TanStack Table lands: if selection turns out to live inside a table component, decide then how it reaches the page (probably a controlled `onSelectionChange`, still no global store).
+
+- **Alternatives rejected:** a library-level selection-footer primitive (speculative before the table exists); the shell rendering the bar itself from action props (a demo-shaped API — exactly what the separation entry below removed from AppShell); `<footer>` markup for the bar (the orange app bar is the page's one footer landmark; the content footer is an action strip, so it's a plain `<div>`).
+
+- **Status:** Adopted. Demoed standalone (new **Content footer** showcase section, replacing the empty "Layout" placeholder — Header / Content footer / App shell each have a section now) and live in the App shell demo (row selection swaps the bar; Delete really deletes). Save's confirm dialog is deliberately not ported — Dialog arrives with the Feedback/basic components.
+
 ## 2026-07-08 · Header replaces the shell's hard-coded header — `header` slot prop, shell-context hamburger, breadcrumb leaf is the page's h1
 
 - **Decision (Carl: "replace the hard-coded in both"):** `AppShell`'s built-in header row (navModel-derived crumbs + placeholder search/New button) is deleted. Integration mechanics (resolving the open questions in the entry below):

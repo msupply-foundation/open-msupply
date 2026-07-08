@@ -40,6 +40,13 @@ export interface AppShellProps {
    * without a header has no way into the sidebar on narrow viewports.
    */
   header?: JSX.Element
+  /**
+   * The page's pinned action bar — a composed <ContentFooter>…</ContentFooter>.
+   * The shell pins it between the scrolling body and the orange app footer
+   * (it never scrolls with the body); the page owns its content and handlers,
+   * same contract as `header`. Omit it on pages with no bar.
+   */
+  contentFooter?: JSX.Element
   /** Page body, rendered in the scrolling region between header and footer. */
   children: JSX.Element
 }
@@ -71,7 +78,8 @@ const FooterCell = (props: {
 
 /*
  * Whole-page application shell: docked sidebar + main column (the page's
- * header, scrolling body, footer). The one responsive decision — docked rail
+ * header, scrolling body, optional pinned content footer, app footer). The
+ * one responsive decision — docked rail
  * vs. hamburger overlay — is driven by useIsNavOverlay; everything else is
  * intrinsic layout. A layout element, not a component: it owns the page frame,
  * the page owns the header content and the body. The shell renders no header
@@ -125,6 +133,8 @@ export const AppShell = (props: AppShellProps) => {
           {props.header}
 
           <div class={styles.body}>{props.children}</div>
+
+          {props.contentFooter}
 
           <footer class={styles.footer}>
             <FooterCell icon={HomeIcon} label="General" />

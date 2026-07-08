@@ -65,6 +65,12 @@
   border-radius: 50%;
 }
 
+/* --- Content footer ------------------------------------------------------ */
+.selectionCount {
+  color: var(--text-body);
+  font-weight: var(--weight-bold);
+}
+
 /* --- Table ------------------------------------------------------------- */
 .tableWrap {
   overflow-x: auto;
@@ -102,6 +108,36 @@
 
 .table tbody tr:hover td {
   background: var(--bg-row);
+}
+
+/* Selected rows get a light brand tint (plus the checkbox itself — not
+   colour-only: the checkmark carries the state). */
+.table tbody tr:has(.checkbox:checked) td {
+  background: color-mix(in srgb, var(--primary-main) 8%, transparent);
+}
+
+.checkCell {
+  inline-size: 2rem;
+  text-align: center;
+}
+
+.checkbox {
+  display: block;
+  margin: 0 auto;
+  inline-size: 1rem;
+  block-size: 1rem;
+  accent-color: var(--primary-main);
+  cursor: pointer;
+}
+
+/* Visually hidden but announced — the checkbox column's header label. */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .numeric {
