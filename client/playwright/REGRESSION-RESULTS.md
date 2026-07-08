@@ -1,7 +1,7 @@
 # OMS regression suites — results & cross-FE matrix
 
 Deterministic Playwright coverage of the behaviour-anchored regression cases in
-the (private) `tmf-testing` repo (PR #10). Each test carries a `covers`
+the (private) `tmf-testing` repo (tmf-testing#11). Each test carries a `covers`
 annotation naming the behaviour ID(s) it exercises; the tables below are rolled
 up from those annotations.
 
@@ -13,9 +13,11 @@ front-ends sharing the same backend, store and reference datafile:
 | **:3006** | Current app (React + MUI + Material-React-Table) — the RC v3 FE in this repo | full app; login + store select; large real client datafile |
 | **:3100** | Greenfield **"Thin React"** stocktake rebuild (`esmehm/rnd-the-fe#1`) — React + TanStack Table + React Aria + vanilla-extract, **no MUI** | **stocktake-only** prototype; **no auth**; `/graphql`→:8000 proxy |
 
-Selectors in both suites use **roles / accessible names / visible label text /
-table column headers only** — no `data-testid`, no CSS classes — so they are
-resilient to incidental refactors of the FE they were written against.
+Selectors: the **distribution** suite uses roles / accessible names / visible
+label text / column headers. The **stocktake** suite has since been re-anchored
+to the shared `data-testid` contract in [`TESTIDS.md`](TESTIDS.md) (the
+"shared contract" the cross-FE takeaway in §3 calls for), so it runs unchanged
+on any front-end that renders those ids.
 
 > Roll-up rule: a behaviour ID exercised by more than one test takes
 > **worst-status-wins** (a single failing test fails the ID).
@@ -89,16 +91,20 @@ returns (07.\*), requisitions (05/06) — passes.
 
 ---
 
-## 2. Stocktake suite — :3006 (RC v3, current FE)
+## 2. Stocktake suite — current FE (testid-anchored)
 
-`stocktake-regression.spec.ts` — 21 tests (OMS-REG-INV-03 / INV-04 / SMV-01).
+`stocktake-regression.spec.ts` — 28 tests + auth setup
+(OMS-REG-INV-03 / INV-04 / SMV-01). Latest full run: **2026-07-08**, dev FE on
+`:3009` against a central-server dev datafile — **29/29 passed in 2.4 min**
+(the earlier :3006 run of the 21-test role/label version scored 20/21).
 
 | Behaviour ID | Status | Test |
 |---|---|---|
-| OMS-REG-INV-03.8 | ✅ PASS | list view renders core controls |
-| OMS-REG-INV-03.4, 03.5 | ✅ PASS | create modal: full / filtered / blank + sub-options |
+| — (entry-point smoke) | ✅ PASS | list view renders core controls |
+| — (UI affordance smoke) | ✅ PASS | create modal: full / filtered / blank + sub-options |
 | OMS-REG-INV-03.8 | ✅ PASS | Blank stocktake opens with no lines |
 | OMS-REG-INV-03.4 | ✅ PASS | Full "items with stock on hand" loads lines |
+| OMS-REG-INV-03.5 | ✅ PASS | "All items" includes out-of-stock items (via line estimate) |
 | OMS-REG-INV-03.9 | ✅ PASS | default description "Created by … on …" |
 | OMS-REG-INV-03.10 | ✅ PASS | description edits persist across reload |
 | OMS-REG-INV-03.11 | ✅ PASS | Add item: search by name filters options |
@@ -108,32 +114,39 @@ returns (07.\*), requisitions (05/06) — passes.
 | OMS-REG-INV-03.26 | ✅ PASS | Add batch adds a blank batch line |
 | OMS-REG-INV-03.32 | ✅ PASS | Cancel closes line-edit without saving |
 | OMS-REG-INV-03.13, 03.30 | ✅ PASS | Ok saves the line; item appears in list |
+| OMS-REG-INV-03.31 | ✅ PASS | "OK & Next" saves and presents a blank form |
+| OMS-REG-INV-03.15, 03.17, 03.18, 03.19 | ✅ PASS | line fields accept input: pack size, expiry, manufacture date, volume |
+| OMS-REG-INV-03.29 | ✅ PASS | reason options follow the adjustment direction |
 | OMS-REG-INV-03.40 | ✅ PASS | Log tab loads |
 | OMS-REG-INV-03.33 | ✅ PASS | delete selected line → empty state |
-| OMS-REG-INV-03.36 | ❌ FAIL | bulk "Reduce to 0" sets counted to 0 |
+| OMS-REG-INV-03.34 | ✅ PASS | cancelling line delete keeps the lines |
+| OMS-REG-INV-03.38 | ✅ PASS | "Order by" reorders the line list |
+| OMS-REG-INV-03.37 | ✅ PASS | comment edits persist across reload |
+| OMS-REG-INV-03.36, 03.14 | ✅ PASS | bulk "Reduce to 0" sets counted to 0 (on a test-created batch) |
 | OMS-REG-INV-03.41, 03.42 | ✅ PASS | delete stocktake (cancel + confirm) |
-| OMS-REG-INV-04.2, 04.3 | ✅ PASS | finalise with reason → status Finalised |
-| OMS-REG-INV-04.8, 04.9 | ✅ PASS | finalised stocktake is read-only |
+| OMS-REG-INV-04.2, 04.3, INV-03.16, 03.28 | ✅ PASS | finalise with reason → status Finalised |
+| OMS-REG-INV-04.4–04.10 | ✅ PASS | finalised stocktake is read-only (fields, add item, line delete) |
 | OMS-REG-INV-04.11 | ✅ PASS | on-hold makes stocktake read-only |
 | OMS-REG-SMV-01.1, 01.2 | ✅ PASS | finalising an increase raises batch qty (same line) |
 
-**Total 21: ✅ 20 · ❌ 1.**
+**Behaviour coverage: 44 / 59** — INV-03 32/42, INV-04 10/11, SMV-01 2/6.
 
-Unlike distribution, the stocktake item picker resolved reliably here (once the
-central item catalogue on `:8000` was reachable), so the item-dependent tests
-pass. The one failure:
+Resolved from the earlier run:
 
-- **INV-03.36 (Reduce to 0)** — "Reduce to 0" opens an *Are you sure?*
-  confirmation that requires a valid **negative-adjustment reason**; on this
-  datafile the confirmed reduction is not reflected on the line
-  (`counted` stays `-`). Needs a datafile with the right reason reference data,
-  or a closer look at the reduce-to-zero save path — under investigation.
+- **INV-03.36 (Reduce to 0)** — root-caused, not a bug: reducing stock-backed
+  lines to 0 is rejected server-side (`StockLineReducedBelowZero`, whole batch
+  rolled back) when any of their stock is **reserved** in unpicked shipments —
+  datafile-dependent. The UI does surface it (error toast + red highlight on
+  the blocked rows). The test now reduces a batch it creates itself, which is
+  always legal.
 
-Coverage scope: the suite deliberately targets the automatable, deterministic
-subset. Out of scope (flagged non-automatable / data-dependent in the cases):
-master-list / location / VVM / expiring-before initialisation filters, the
-expiry calendar widget, item variants, the vaccine VVM dropdown, bulk
-change-location, print output, and the stock-ledger views (SMV-01 .3–.6).
+Out of scope (needs specific reference data or a UI the suite can't reach):
+master-list / location / VVM / expiring-before initialisation filters
+(INV-03 .1–.3/.6/.7), the expiry calendar widget (.21), item variants (.24),
+the vaccine VVM dropdown (.25), bulk change-location (.35), print output
+(.39), the finalise-time reason gate (INV-04 .1 — unreachable via UI: the
+line-edit already blocks saving without a reason), and the stock-ledger views
+(SMV-01 .3–.6).
 
 ---
 
@@ -204,3 +217,8 @@ they do **not** transfer to a *greenfield* reimplementation that changes copy an
 ARIA structure — even when the behaviour is equivalent. Cross-FE differential
 testing needs a **shared contract** both FEs commit to: agreed `data-testid`s, or
 an agreed accessible-name + copy spec, anchored to the same behaviour IDs.
+
+> **Follow-up:** that contract now exists — the stocktake suite is anchored to
+> the `data-testid`s in [`TESTIDS.md`](TESTIDS.md), and the current FE renders
+> them. A rebuild that renders the same ids runs the suite unchanged; the
+> matrix above predates the contract.
