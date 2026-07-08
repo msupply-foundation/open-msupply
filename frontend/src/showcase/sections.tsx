@@ -2,6 +2,7 @@ import type { Component } from 'solid-js'
 import { ButtonsShowcase } from './ButtonsShowcase'
 import { InputsShowcase } from './InputsShowcase'
 import { SelectorsShowcase } from './SelectorsShowcase'
+import { HeaderShowcase } from './HeaderShowcase'
 import { PageLayoutShowcase } from './PageLayoutShowcase'
 import { Home } from '../pages/Home/Home'
 
@@ -33,6 +34,7 @@ export const sections: SectionDef[] = [
   { id: 'buttons', label: 'Buttons', component: ButtonsShowcase },
   { id: 'inputs', label: 'Inputs', component: InputsShowcase },
   { id: 'selectors', label: 'Selectors', component: SelectorsShowcase },
+  { id: 'header', label: 'Header', component: HeaderShowcase },
   { id: 'layout', label: 'Layout', component: ComingSoon },
   { id: 'feedback', label: 'Feedback', component: ComingSoon },
   { id: 'table', label: 'Table', component: ComingSoon },

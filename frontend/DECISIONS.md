@@ -6,6 +6,35 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-08 · Header replaces the shell's hard-coded header — `header` slot prop, shell-context hamburger, breadcrumb leaf is the page's h1
+
+- **Decision (Carl: "replace the hard-coded in both"):** `AppShell`'s built-in header row (navModel-derived crumbs + placeholder search/New button) is deleted. Integration mechanics (resolving the open questions in the entry below):
+  - **Slot prop:** the shell gains `header?: JSX.Element`; the page composes `<Header>…</Header>` and passes it in, and the shell pins it in the main column above the scrolling body — the fixed-header/scrolling-body guarantee stays with the shell.
+  - **Hamburger via context:** the overlay hamburger moves *inside* `Header` (start of the strip). New `ShellNavContext` (`isOverlay`, `openNav`) provided by `AppShell`, consumed by `Header` — the shell owns the state, the header owns the spot. A `Header` outside any shell (the showcase panel) has no provider and never shows one. Consequence, documented on the prop: a full-bleed page **must** pass a header, or narrow viewports have no way into the nav.
+  - **Breadcrumb leaf is now the page's `<h1>`** (was a prototype-faithful span): deleting the shell header would otherwise leave pages with no h1 at all (the old `crumbLeaf` was it). Styled as an ordinary crumb (UA h1 size/weight/margins reset); pages must not render another h1.
+  - **Crumb derivation moves to the pages** (`findNavParent` + selected leaf, in `pages/Home` and the App shell demo) — the exact job a router takes over later. The demo's filter strip moved from the body into the header's `<Toolbar>`, completing the AppBar shape.
+
+- **Why slot prop over the alternatives flagged earlier:** it's the smallest mechanism that works with the current pages-render-the-shell pattern and keeps scroll ownership in the shell. Page-renders-Header-in-body was rejected because the body is the scroll region — the header would scroll away, or every page would have to re-implement the fixed/scroll split; portals (the current app's model) buy nothing while pages can reach the shell's props directly. **Known revisit:** under a future router-outlet layout a page can't pass props to the shell — re-evaluate (likely: keep `Header` as-is, move where it's mounted) when routing is decided.
+
+- **Status:** Adopted. `pages/Home` and the App shell showcase demo both compose their own `Header`; the shell's placeholder search/New button are gone (real search comes back as a designed component when a page needs it).
+
+## 2026-07-08 · Page-header family (Header / Breadcrumb / HeaderButtons / Toolbar) — flat children, self-slotting CSS, page owns all state
+
+- **Decision:** The page-top layout atom is four hand-rolled components in `components/layout/Header/`, composed exactly as Carl specified: `<Header><Breadcrumb/><HeaderButtons/><Toolbar/></Header>`. `Header` is a single flex-wrap `<header>` strip with **no nested row markup** — the parts pin themselves via their own CSS (`HeaderButtons` → `margin-inline-start: auto`; `Toolbar` → `flex-basis: 100%` for its own full-width row). **State ownership:** all four are stateless. The page owns the crumb trail (a plain `crumbs` prop — a router derives it later), the action buttons and their handlers, and the entire toolbar content; `Header` only claims the rows.
+
+- **Why:**
+  - Keeps the sketched flat composition API while staying robust to omission — any part can be left out and the rest still lands correctly (auto margin pins buttons to inline-end even with no breadcrumb beside them).
+  - **Flex-wrap, not grid-template-areas:** the prototype's responsive decision for shell chrome is intrinsic wrap (buttons drop below the breadcrumb when squeezed — no breakpoints, principle #7), and named grid areas can't reflow across rows. This is why the parts self-slot instead of being placed by the container.
+  - `Toolbar` is deliberately **not** `role="toolbar"` — that ARIA role demands arrow-key roving focus between controls, which would be wrong for a loose strip of filters.
+
+- **Deltas from the prototype (deliberate):** flat three-children structure (prototype nested `.topRow`/`.lead` wrappers); a wrapped button cluster hugs **inline-end** (prototype: start) — reads as more intentional; `Header` owns its `border-block-end` (the prototype's bottom edge came from its tab strip, which isn't ported); `Breadcrumbs` renamed `Breadcrumb`; the export split-button is our generalised `SplitButton` rather than the bespoke `ExportButton`.
+
+- **Alternatives rejected:** named slot props (`<Header breadcrumb={…} buttons={…}>`) — more explicit but a heavier API for no behavioural win, and deviates from the agreed composition; grid-template-areas with children self-assigning areas — order-independent but can't wrap intrinsically (see Why); portals for buttons/toolbar (the current app's `AppBarButtonsPortal` model) — machinery that's only necessary when pages can't reach the header directly, which isn't our structure.
+
+- **Open questions (Carl):** (1) **AppShell integration** — the shell still renders its own hard-coded header row (crumbs + placeholder search/New) and owns the overlay hamburger; how `Header` replaces that row (slot prop vs. shell context with the page rendering `Header` in the body vs. portal) interacts with the routing decision, and the header must stay fixed while the body scrolls. (2) Whether the breadcrumb **leaf should be the page's `<h1>`** — AppShell's current crumb leaf is an h1; the prototype's was a plain `aria-current` span, copied faithfully here.
+
+- **Status:** Adopted for the showcase (new **Header** section). Shell integration deliberately not attempted yet.
+
 ## 2026-07-08 · Library / showcase / pages separation — AppShell gets a real app-facing API
 
 - **Decision (Carl):** The reusable library and the showcase are strictly separated, with a third home for real application pages:

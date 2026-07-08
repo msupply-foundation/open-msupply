@@ -1,0 +1,15 @@
+/*
+ * Header action cluster. margin-inline-start: auto is the slotting contract
+ * with Header.module.css — it pushes the cluster to the inline-end edge of
+ * whichever flex line it lands on (beside the breadcrumb, or alone after
+ * wrapping). The buttons themselves also wrap when the cluster is squeezed.
+ */
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  margin-inline-start: auto;
+}

@@ -1,0 +1,10 @@
+/*
+ * Per-page toolbar row. flex-basis: 100% is the slotting contract with
+ * Header.module.css — it forces the toolbar onto its own full-width flex
+ * line below the breadcrumb/buttons row. Header's row-gap spaces the rows.
+ */
+
+.toolbar {
+  flex-basis: 100%;
+  min-inline-size: 0;
+}

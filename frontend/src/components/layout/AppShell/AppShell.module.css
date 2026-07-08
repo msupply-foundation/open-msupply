@@ -1,8 +1,9 @@
 /*
  * AppShell layout — the page frame. Flex row (sidebar + main), main is a flex
- * column of a fixed header, a scrolling body, and a slim footer. All dims/colours
- * from tokens; RTL via logical properties. Intrinsic layout — the only breakpoint
- * lives in JS (useIsNavOverlay), never here.
+ * column of the page-provided header (see components/layout/Header), a
+ * scrolling body, and a slim footer. All dims/colours from tokens; RTL via
+ * logical properties. Intrinsic layout — the only breakpoint lives in JS
+ * (useIsNavOverlay), never here.
  */
 
 .shell {
@@ -17,132 +18,6 @@
   flex-direction: column;
   min-inline-size: 0;
   overflow: hidden;
-}
-
-/* --- Header ------------------------------------------------------------ */
-.header {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: var(--space-3);
-  padding-block: var(--space-2);
-  padding-inline: var(--space-4);
-  background: var(--header-bg);
-  border-block-end: 1px solid var(--header-border);
-}
-
-.hamburger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-body);
-  cursor: pointer;
-}
-
-.hamburger:hover {
-  background: var(--bg-group-main);
-}
-
-.hamburger:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-.hamburgerIcon {
-  font-size: 1.5rem;
-}
-
-.crumbs {
-  display: flex;
-  flex: 1;
-  align-items: baseline;
-  gap: var(--space-2);
-  min-inline-size: 0;
-}
-
-.crumbRoot {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
-.crumbSep {
-  color: var(--gray-main);
-}
-
-.crumbLeaf {
-  margin: 0;
-  overflow: hidden;
-  color: var(--text-body);
-  font-size: var(--text-lg);
-  font-weight: var(--weight-bold);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.headerActions {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-/* --- Search (placeholder input styled locally for the shell demo) ------ */
-.search {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.searchIcon {
-  position: absolute;
-  inset-inline-start: var(--space-2);
-  color: var(--gray-main);
-  pointer-events: none;
-}
-
-.searchInput {
-  inline-size: 12rem;
-  max-inline-size: 100%;
-  block-size: var(--input-height-sm);
-  padding-inline: 2rem var(--space-3);
-  border: 1px solid var(--input-border);
-  border-radius: var(--input-radius);
-  background: var(--bg-input);
-  color: var(--text-body);
-  font: inherit;
-}
-
-.searchInput:focus-visible {
-  outline: none;
-  border-color: var(--primary-main);
-  box-shadow: var(--focus-ring);
-}
-
-.newButton {
-  flex-shrink: 0;
-  block-size: var(--input-height-sm);
-  padding-inline: var(--space-4);
-  border: none;
-  border-radius: var(--radius-button);
-  background: var(--primary-main);
-  color: var(--primary-contrast);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-}
-
-.newButton:hover {
-  background: var(--primary-dark);
-}
-
-.newButton:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
 }
 
 /* --- Body (scroll region) ---------------------------------------------- */
@@ -221,12 +96,4 @@ button.footerCell:focus-visible {
   inline-size: 1px;
   block-size: 1.5rem;
   background: color-mix(in srgb, var(--primary-contrast) 45%, transparent);
-}
-
-/* On coarse pointers give the header controls a full touch target. */
-@media (pointer: coarse) {
-  .hamburger {
-    inline-size: var(--touch-target);
-    block-size: var(--touch-target);
-  }
 }

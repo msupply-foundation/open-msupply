@@ -8,8 +8,6 @@ import {
 } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import {
-  MenuIcon,
-  SearchIcon,
   HomeIcon,
   EditIcon,
   UserIcon,
@@ -20,19 +18,28 @@ import { useIsNavOverlay } from '../../../hooks/createMediaQuery'
 import { Sidebar, type SidebarState } from './Sidebar'
 import { LanguageSelector } from './LanguageSelector'
 import { isRtlLocale } from './languages'
-import { findNavParent, type NavLeaf } from './navModel'
+import { ShellNavContext } from './shellContext'
+import type { NavLeaf } from './navModel'
 import styles from './AppShell.module.css'
 
 export interface AppShellProps {
   /**
-   * The current page — drives the sidebar highlight and the header breadcrumb.
-   * The caller owns selection (a router eventually; page-local state for now),
-   * so the shell stays a pure layout element. A page outside the nav (e.g.
-   * Home) simply highlights nothing.
+   * The current page — drives the sidebar highlight. The caller owns
+   * selection (a router eventually; page-local state for now), so the shell
+   * stays a pure layout element. A page outside the nav (e.g. Home) simply
+   * highlights nothing.
    */
   selected: NavLeaf
   /** The user picked a sidebar item. */
   onNavigate: (leaf: NavLeaf) => void
+  /**
+   * The page's header — a composed <Header>…</Header>. The shell pins it
+   * above the scrolling body; the page owns everything in it (crumb trail,
+   * actions, toolbar). Always provide one: in overlay mode the hamburger
+   * that opens the nav renders inside it (via ShellNavContext), so a page
+   * without a header has no way into the sidebar on narrow viewports.
+   */
+  header?: JSX.Element
   /** Page body, rendered in the scrolling region between header and footer. */
   children: JSX.Element
 }
@@ -63,18 +70,20 @@ const FooterCell = (props: {
 )
 
 /*
- * Whole-page application shell: docked sidebar + main column (header, scrolling
- * body, footer). The one responsive decision — docked rail vs. hamburger
- * overlay — is driven by useIsNavOverlay; everything else is intrinsic layout.
- * A layout element, not a component: it owns the page frame, the page owns the
- * body content. Adapted from the RnD prototype's App shell.
+ * Whole-page application shell: docked sidebar + main column (the page's
+ * header, scrolling body, footer). The one responsive decision — docked rail
+ * vs. hamburger overlay — is driven by useIsNavOverlay; everything else is
+ * intrinsic layout. A layout element, not a component: it owns the page frame,
+ * the page owns the header content and the body. The shell renders no header
+ * of its own — it pins the page-composed <Header> (the `header` prop) above
+ * the scroll region, and hands the overlay hamburger into it via
+ * ShellNavContext. Adapted from the RnD prototype's App shell.
  */
 export const AppShell = (props: AppShellProps) => {
   const [railCollapsed, setRailCollapsed] = createSignal(false)
   const [overlayOpen, setOverlayOpen] = createSignal(false)
   const [language, setLanguage] = createSignal('en')
   const isOverlay = useIsNavOverlay()
-  const crumbRoot = () => findNavParent(props.selected.id)?.label
 
   const nav: SidebarState = {
     railCollapsed,
@@ -102,62 +111,32 @@ export const AppShell = (props: AppShellProps) => {
   })
 
   return (
-    <div class={styles.shell}>
-      <Sidebar
-        nav={nav}
-        isOverlay={isOverlay()}
-        selectedId={props.selected.id}
-        onSelect={props.onNavigate}
-      />
-      <div class={styles.main}>
-        <header class={styles.header}>
-          <Show when={isOverlay()}>
-            <button
-              type="button"
-              class={styles.hamburger}
-              onClick={nav.openOverlay}
-              aria-label="Open navigation"
-            >
-              <MenuIcon class={styles.hamburgerIcon} />
-            </button>
-          </Show>
-          <div class={styles.crumbs}>
-            <Show when={crumbRoot()}>
-              <span class={styles.crumbRoot}>{crumbRoot()}</span>
-              <span class={styles.crumbSep} aria-hidden="true">
-                /
-              </span>
-            </Show>
-            <h1 class={styles.crumbLeaf}>{props.selected.label}</h1>
-          </div>
-          <div class={styles.headerActions}>
-            <div class={styles.search}>
-              <SearchIcon class={styles.searchIcon} />
-              <input
-                class={styles.searchInput}
-                type="search"
-                placeholder="Search…"
-                aria-label="Search"
-              />
-            </div>
-            <button type="button" class={styles.newButton}>
-              New
-            </button>
-          </div>
-        </header>
+    <ShellNavContext.Provider
+      value={{ isOverlay, openNav: nav.openOverlay }}
+    >
+      <div class={styles.shell}>
+        <Sidebar
+          nav={nav}
+          isOverlay={isOverlay()}
+          selectedId={props.selected.id}
+          onSelect={props.onNavigate}
+        />
+        <div class={styles.main}>
+          {props.header}
 
-        <div class={styles.body}>{props.children}</div>
+          <div class={styles.body}>{props.children}</div>
 
-        <footer class={styles.footer}>
-          <FooterCell icon={HomeIcon} label="General" />
-          <FooterCell icon={EditIcon} label="Edit" onClick={() => {}} />
-          <span class={styles.footerDivider} aria-hidden="true" />
-          <FooterCell icon={UserIcon} label="demo" />
-          <span class={styles.footerDivider} aria-hidden="true" />
-          <LanguageSelector language={language()} onSelect={setLanguage} />
-          <FooterCell icon={CentralIcon} label="Central server" />
-        </footer>
+          <footer class={styles.footer}>
+            <FooterCell icon={HomeIcon} label="General" />
+            <FooterCell icon={EditIcon} label="Edit" onClick={() => {}} />
+            <span class={styles.footerDivider} aria-hidden="true" />
+            <FooterCell icon={UserIcon} label="demo" />
+            <span class={styles.footerDivider} aria-hidden="true" />
+            <LanguageSelector language={language()} onSelect={setLanguage} />
+            <FooterCell icon={CentralIcon} label="Central server" />
+          </footer>
+        </div>
       </div>
-    </div>
+    </ShellNavContext.Provider>
   )
 }
