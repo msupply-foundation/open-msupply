@@ -28,6 +28,7 @@ pub(crate) mod form_schema;
 pub(crate) mod frontend_plugin;
 pub(crate) mod goods_received;
 pub(crate) mod goods_received_line;
+pub(crate) mod help_document;
 pub(crate) mod indicator_attribute;
 pub(crate) mod indicator_value;
 pub(crate) mod insurance_provider;
@@ -235,6 +236,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Goods Received (legacy OG → InboundShipment)
         goods_received::boxed(),
         goods_received_line::boxed(),
+        // Help documents (central → all sites)
+        help_document::boxed(),
     ]
 }
 

@@ -10,6 +10,7 @@ import {
   useConfirmationModal,
   useDisabledNotificationToast,
   usePreferences,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import {
   isInboundPlaceholderRow,
@@ -37,6 +38,7 @@ const StatusChangeButtonContent = ({
 }) => {
   const t = useTranslation();
   const { invoiceStatusOptions } = usePreferences();
+  const { plugins } = usePluginProvider();
   const { success, error } = useNotification();
   const { status, onHold, lines } = data;
   const shipmentType = getInboundShipmentType(data);
@@ -138,6 +140,11 @@ const StatusChangeButtonContent = ({
       if (!validateNoPendingLines(lines)) {
         return pendingLinesNotification();
       }
+    }
+    // Let plugins block the transition (e.g. require a discrepancy reason).
+    for (const validate of plugins.inboundShipment?.validateStatusChange ?? []) {
+      const message = validate(data, selectedOption.value);
+      if (message) return error(message)();
     }
     if (selectedOption?.value === InvoiceNodeStatus.Verified) return onVerify();
     return getConfirmation();

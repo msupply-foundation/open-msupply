@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileList } from '../../../../../coldchain/src/Equipment/Components';
+import { FileList } from '../../../Documents';
 import { Environment } from '@openmsupply-client/config';
 import {
   useTranslation,
