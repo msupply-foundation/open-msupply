@@ -52,9 +52,9 @@ export const ContentFooterShowcase = () => {
             inline-start edge, and <code>&lt;ContentFooterActions&gt;</code>{' '}
             pins the button cluster inline-end. The page owns every handler
             (Save's confirm dialog arrives with the Feedback components).
-            Inside the app shell it pins between the scrolling body and the app
-            footer via the shell's <code>contentFooter</code> prop — see the
-            App shell section.
+            Inside the app it pins between the scrolling body and the app
+            footer via the Page frame's <code>contentFooter</code> slot — see
+            the Outbound Shipments page in the Full page group.
           </>
         }
       >

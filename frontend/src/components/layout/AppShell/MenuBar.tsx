@@ -1,7 +1,7 @@
 import { For, Show, createSignal } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { MSupplyGuyLogo, ChevronDownIcon } from '../../icons'
-import { upperNav, lowerNav, type NavItem, type NavLeaf } from './navModel'
+import type { NavItem, NavLeaf } from './navModel'
 import styles from './MenuBar.module.css'
 
 export interface MenuBarState {
@@ -16,6 +16,13 @@ interface MenuBarProps {
   nav: MenuBarState
   /** True below the navOverlay breakpoint — render the hamburger overlay. */
   isOverlay: boolean
+  /**
+   * The nav model, host-supplied: the scrolling upper list, and optionally
+   * the cluster pinned at the block-end (AppShell passes the app's navModel;
+   * the showcase passes its section registry).
+   */
+  upper: NavItem[]
+  lower?: NavItem[]
   selectedId: string
   onSelect: (leaf: NavLeaf) => void
 }
@@ -130,20 +137,27 @@ const NavGroup = (props: {
   </ul>
 )
 
-const NavLists = (props: { selectedId: string; onSelect: (leaf: NavLeaf) => void }) => (
+const NavLists = (props: {
+  upper: NavItem[]
+  lower?: NavItem[]
+  selectedId: string
+  onSelect: (leaf: NavLeaf) => void
+}) => (
   <>
     <NavGroup
-      items={upperNav}
+      items={props.upper}
       selectedId={props.selectedId}
       onSelect={props.onSelect}
       class={styles.upper}
     />
-    <NavGroup
-      items={lowerNav}
-      selectedId={props.selectedId}
-      onSelect={props.onSelect}
-      class={styles.lower}
-    />
+    <Show when={props.lower?.length}>
+      <NavGroup
+        items={props.lower!}
+        selectedId={props.selectedId}
+        onSelect={props.onSelect}
+        class={styles.lower}
+      />
+    </Show>
   </>
 )
 
@@ -181,7 +195,12 @@ export const MenuBar = (props: MenuBarProps) => {
               <MSupplyGuyLogo class={styles.logo} />
             </button>
           </div>
-          <NavLists selectedId={props.selectedId} onSelect={select} />
+          <NavLists
+            upper={props.upper}
+            lower={props.lower}
+            selectedId={props.selectedId}
+            onSelect={select}
+          />
         </nav>
       }
     >
@@ -200,7 +219,12 @@ export const MenuBar = (props: MenuBarProps) => {
         <div class={styles.logoArea}>
           <MSupplyGuyLogo class={styles.logo} />
         </div>
-        <NavLists selectedId={props.selectedId} onSelect={select} />
+        <NavLists
+          upper={props.upper}
+          lower={props.lower}
+          selectedId={props.selectedId}
+          onSelect={select}
+        />
       </nav>
     </Show>
   )

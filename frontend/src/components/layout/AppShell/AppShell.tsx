@@ -19,7 +19,7 @@ import { MenuBar, type MenuBarState } from './MenuBar'
 import { LanguageSelector } from './LanguageSelector'
 import { isRtlLocale } from './languages'
 import { ShellNavContext } from './shellContext'
-import type { NavLeaf } from './navModel'
+import { upperNav, lowerNav, type NavLeaf } from './navModel'
 import styles from './AppShell.module.css'
 
 export interface AppShellProps {
@@ -125,6 +125,8 @@ export const AppShell = (props: AppShellProps) => {
         <MenuBar
           nav={nav}
           isOverlay={isOverlay()}
+          upper={upperNav}
+          lower={lowerNav}
           selectedId={props.selected.id}
           onSelect={props.onNavigate}
         />

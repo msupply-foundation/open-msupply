@@ -1,16 +1,28 @@
+/*
+ * Storybook shell — the real MenuBar beside a main column (header strip +
+ * scrolling section panel). Container geometry mirrors AppShell's: flex row,
+ * the menu bar owns its own width (and animates it on rail collapse), the
+ * main column flexes and never lets the shell itself scroll.
+ */
 .shell {
-  display: grid;
-  grid-template-columns: 13rem 1fr;
-  grid-template-rows: auto 1fr;
+  display: flex;
   block-size: 100%;
+  background: var(--bg-white);
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+  overflow: hidden;
 }
 
 .header {
   display: flex;
-  grid-column: 1 / -1;
+  flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
   padding-block: var(--space-2);
   padding-inline: var(--space-4);
   background: var(--header-bg);
@@ -18,56 +30,46 @@
 }
 
 .title {
+  flex: 1;
   margin: 0;
   color: var(--text-body);
   font-size: var(--text-md);
   font-weight: var(--weight-bold);
 }
 
-.nav {
-  padding: var(--space-3);
-  overflow-y: auto;
-  background: var(--bg-drawer);
-  border-inline-end: 1px solid var(--color-divider);
-}
-
-.navList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.navList a {
-  display: flex;
+/* Overlay-mode hamburger — the showcase header's own (the library Header's
+   shell-context hamburger is a page-region affair; this shell has no Page). */
+.hamburger {
+  display: inline-flex;
   align-items: center;
-  block-size: var(--nav-item-height);
-  padding-inline: var(--space-3);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-weight: var(--weight-medium);
-  text-decoration: none;
+  justify-content: center;
+  padding: var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-body);
+  font-size: 1.5rem;
+  cursor: pointer;
 }
 
-.navList a:hover {
+.hamburger:hover {
   background: var(--drawer-hover-bg);
-  color: var(--text-body);
 }
 
-.navList a[aria-current='page'] {
-  background: var(--drawer-selected-bg);
-  box-shadow: var(--shadow-1);
-  color: var(--text-body);
-}
-
-.navList a:focus-visible {
+.hamburger:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
 
-.main {
+@media (pointer: coarse) {
+  .hamburger {
+    min-inline-size: var(--touch-target);
+    min-block-size: var(--touch-target);
+  }
+}
+
+.panel {
+  flex: 1;
   padding: var(--space-5);
   overflow-y: auto;
   background: var(--bg-white);
@@ -80,9 +82,9 @@
 }
 
 /*
- * Full-bleed canvas for `kind: 'page'` sections — no showcase chrome, no
- * padding. The page (e.g. AppShell) fills the real viewport; the
- * ShowcaseLauncher floats over it as the way back.
+ * Full-bleed canvas for `kind: 'app'` sections — no showcase chrome, no
+ * padding. The real page fills the real viewport; browser Back returns to
+ * the showcase.
  */
 .pageCanvas {
   block-size: 100%;
