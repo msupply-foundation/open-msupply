@@ -17,6 +17,7 @@ table! {
         status -> crate::db_diesel::stock_relocation_row::StockRelocationStatusMapping,
         created_datetime -> Timestamp,
         created_by -> Text,
+        confirmed_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
         comment -> Nullable<Text>,
     }
@@ -53,6 +54,7 @@ pub struct StockRelocationRow {
     pub status: StockRelocationStatus,
     pub created_datetime: NaiveDateTime,
     pub created_by: String,
+    pub confirmed_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
     pub comment: Option<String>,
 }

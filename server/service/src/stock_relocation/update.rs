@@ -1,9 +1,8 @@
 use chrono::Utc;
 use repository::{
-    ActivityLogType, LocationMovementRow, LocationMovementRowRepository, RepositoryError,
-    StockLineRow, StockLineRowRepository, StockRelocationLineRow, StockRelocationLineRowRepository,
-    StockRelocationRow, StockRelocationRowRepository, StockRelocationStatus, StorageConnection,
-    TransactionError,
+    ActivityLogType, RepositoryError, StockLineRow, StockLineRowRepository, StockRelocationLineRow,
+    StockRelocationLineRowRepository, StockRelocationRow, StockRelocationRowRepository,
+    StockRelocationStatus, StorageConnection, TransactionError,
 };
 use util::uuid::uuid;
 use util::EPSILON;
@@ -61,6 +60,9 @@ pub fn update_stock_relocation(
                 if status.index() < row.status.index() {
                     return Err(CannotReverseStatus);
                 }
+                if status != StockRelocationStatus::New && row.confirmed_datetime.is_none() {
+                    row.confirmed_datetime = Some(Utc::now().naive_utc());
+                }
                 if status == StockRelocationStatus::Finalised {
                     finalise(ctx, connection, store_id, &row.id)?;
                     row.finalised_datetime = Some(Utc::now().naive_utc());
@@ -106,8 +108,7 @@ fn finalise(
             error,
         })?;
 
-        line.destination_stock_line_id =
-            apply_movement(ctx, connection, store_id, &line, &stock_line)?;
+        line.destination_stock_line_id = apply_movement(ctx, connection, &line, &stock_line)?;
         line_repo.upsert_one(&line)?;
     }
 
@@ -117,7 +118,6 @@ fn finalise(
 fn apply_movement(
     ctx: &ServiceContext,
     connection: &StorageConnection,
-    store_id: &str,
     line: &StockRelocationLineRow,
     stock_line: &StockLineRow,
 ) -> Result<Option<String>, UpdateStockRelocationError> {
@@ -157,15 +157,6 @@ fn apply_movement(
     let stock_line_repo = StockLineRowRepository::new(connection);
     stock_line_repo.upsert_one(&source)?;
     stock_line_repo.upsert_one(&new_line)?;
-
-    LocationMovementRowRepository::new(connection).upsert_one(&LocationMovementRow {
-        id: uuid(),
-        store_id: store_id.to_string(),
-        stock_line_id: new_line.id.clone(),
-        location_id: new_line.location_id.clone(),
-        enter_datetime: Some(Utc::now().naive_utc()),
-        exit_datetime: None,
-    })?;
     activity_log_entry(
         ctx,
         ActivityLogType::StockLineEdit,
@@ -288,6 +279,7 @@ mod test {
             )
             .unwrap();
         assert_eq!(confirmed.status, StockRelocationStatus::Confirmed);
+        assert!(confirmed.confirmed_datetime.is_some());
         assert_eq!(confirmed.finalised_datetime, None);
         let confirm_source = stock_line_repo
             .find_one_by_id("confirm_sl")

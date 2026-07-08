@@ -39,6 +39,7 @@ impl MigrationFragment for Migrate {
                     status {status_type} NOT NULL,
                     created_datetime {DATETIME} NOT NULL,
                     created_by TEXT NOT NULL,
+                    confirmed_datetime {DATETIME},
                     finalised_datetime {DATETIME},
                     comment TEXT
                 );
