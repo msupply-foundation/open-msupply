@@ -143,6 +143,14 @@ impl StockRelocationFilter {
         self.id = Some(filter);
         self
     }
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
+        self
+    }
+    pub fn username(mut self, filter: StringFilter) -> Self {
+        self.username = Some(filter);
+        self
+    }
 }
 
 #[cfg(test)]
