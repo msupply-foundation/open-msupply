@@ -156,6 +156,7 @@ export const SidePanel = () => {
             title={t('label.delete')}
             onClick={onDelete}
             disabled={!canDelete}
+            testId="delete-stocktake-button"
           />
           <DetailPanelAction
             icon={<CopyIcon />}

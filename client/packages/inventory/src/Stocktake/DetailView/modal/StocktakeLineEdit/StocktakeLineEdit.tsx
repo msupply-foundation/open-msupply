@@ -255,6 +255,7 @@ export const StocktakeLineEdit = ({
       />
       <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
         <ButtonWithIcon
+          data-testid="add-batch-button"
           disabled={isDisabled}
           color="primary"
           variant="outlined"

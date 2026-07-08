@@ -80,6 +80,9 @@ export const usePaginatedMaterialTable = <T extends MRT_RowData>({
     enablePagination: true,
     paginationDisplayMode: 'pages',
     muiBottomToolbarProps: {
+      // data-* attrs aren't in BoxProps — spread a widened object to get the
+      // testid onto the toolbar without an unsafe cast of the whole object.
+      ...({ 'data-testid': 'table-pagination' } as Record<string, unknown>),
       sx: {
         '& .MuiInputLabel-root': {
           fontSize: '0.9em',
