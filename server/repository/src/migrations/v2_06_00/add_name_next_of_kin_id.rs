@@ -120,7 +120,7 @@ mod tests {
         // name4 has sync data but empty next_of_kin_id
         add_name_sync_buffer_entry(&connection, "name4", "");
         // Run migration
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
         // Assert: Names updated as expected
         let name_rows = name::table

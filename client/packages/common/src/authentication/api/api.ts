@@ -96,6 +96,10 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
       const result = await sdk.isCentralServer();
       return result.isCentralServer;
     },
+    isCentralStandalone: async () => {
+      const result = await sdk.isCentralStandalone();
+      return result.isCentralStandalone;
+    },
     me: async (token?: string) => {
       try {
         const result = await sdk.me(
@@ -129,15 +133,6 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         console.error(e);
         return { nodes: [] };
       }
-    },
-    lastSuccessfulUserSync: async () => {
-      return (await sdk.lastSuccessfulUserSync()).lastSuccessfulUserSync
-        .lastSuccessfulSync;
-    },
-    updateUser: async () => {
-      const result = await sdk.updateUser();
-
-      return result.updateUser;
     },
   },
 });

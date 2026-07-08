@@ -40,6 +40,10 @@ pub struct UpdateInput {
     expected_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
     shipping_method_id: Option<NullableUpdateInput<String>>,
     backdated_datetime: Option<DateTime<Utc>>,
+    /// Patch of customFields key -> value (JSON object) merged into the
+    /// invoice's custom properties; a `null` value clears that key, keys absent
+    /// from the patch are left unchanged.
+    custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -69,6 +73,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutateOutboundShipment,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -124,6 +129,7 @@ impl UpdateInput {
             expected_delivery_date,
             shipping_method_id,
             backdated_datetime,
+            custom_fields,
         } = self;
 
         ServiceInput {
@@ -143,6 +149,7 @@ impl UpdateInput {
                 .map(|d| NullableUpdate { value: d.value }),
             shipping_method_id: shipping_method_id.map(|d| NullableUpdate { value: d.value }),
             backdated_datetime,
+            custom_fields: custom_fields.map(|json| json.0),
         }
     }
 }
@@ -200,6 +207,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::ShippingMethodDoesNotExist => BadUserInput(formatted_error),
         ServiceError::CantBackDate(_) => BadUserInput(formatted_error),
         ServiceError::ExceedsMaximumBackdatingDays => BadUserInput(formatted_error),
+        ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),

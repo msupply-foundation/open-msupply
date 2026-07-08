@@ -1,8 +1,10 @@
 import React from 'react';
 import {
   AppBarContentPortal,
+  Box,
   InputWithLabelRow,
   BasicTextInput,
+  InvoiceNodeType,
   useTranslation,
   useBufferState,
   Tooltip,
@@ -12,15 +14,17 @@ import {
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
+import { InvoiceToolbarCustomFields } from '../../common';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const Toolbar = () => {
   const t = useTranslation();
-  const { id, otherParty, theirReference, update, requisition } =
+  const { id, otherParty, theirReference, customFields, update, requisition } =
     useOutbound.document.fields([
       'id',
       'otherParty',
       'theirReference',
+      'customFields',
       'requisition',
     ]);
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
@@ -38,6 +42,7 @@ export const Toolbar = () => {
         marginY: 1,
         gap: 3,
         flexWrap: 'wrap',
+        alignItems: 'flex-start',
       }}
     >
       {otherParty && (
@@ -63,6 +68,7 @@ export const Toolbar = () => {
                   { replace: true }
                 );
               }}
+              width={250}
             />
           }
         />
@@ -84,6 +90,14 @@ export const Toolbar = () => {
           </Tooltip>
         }
       />
+      <Box display="flex" flexDirection="column" gap={1}>
+        <InvoiceToolbarCustomFields
+          invoiceType={InvoiceNodeType.OutboundShipment}
+          customFields={customFields}
+          onUpdate={patch => update({ customFields: patch })}
+          disabled={isDisabled}
+        />
+      </Box>
       <DisabledStoreNotice otherParty={otherParty} />
     </AppBarContentPortal>
   );

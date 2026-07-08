@@ -2,8 +2,8 @@ use super::asset_row::asset::dsl::*;
 use crate::asset_log_row::latest_asset_log;
 use crate::db_diesel::store_row::store;
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, RepositoryError,
-    RowActionType, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -90,41 +90,28 @@ impl<'a> AssetRowRepository<'a> {
         &self,
         asset_row: &AssetRow,
         original_store_id: Option<String>,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         self._upsert_one(asset_row)?;
-        let changelog_id = self.insert_changelog(
-            asset_row.id.to_string(),
+        let changelog = asset_row.generate_changelog(
+            self.connection,
             RowActionType::Upsert,
-            asset_row.store_id.clone(),
+            SourceSiteId::CurrentSiteId,
         )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
 
         if let Some(original_store) = original_store_id {
             // Insert upsert changelog for original store
             // if store is on different site it should be synced there
             // with new store_id, making it invisible in that store
-            self.insert_changelog(
-                asset_row.id.to_string(),
+            let mut original_changelog = asset_row.generate_changelog(
+                self.connection,
                 RowActionType::Upsert,
-                Some(original_store),
+                SourceSiteId::CurrentSiteId,
             )?;
+            original_changelog.store_id = Some(original_store);
+            ChangelogRepository::new(self.connection).insert(&original_changelog)?;
         }
-        Ok(changelog_id)
-    }
-
-    fn insert_changelog(
-        &self,
-        asset_id: String,
-        action: RowActionType,
-        asset_store_id: Option<String>,
-    ) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Asset,
-            record_id: asset_id,
-            row_action: action,
-            store_id: asset_store_id,
-            ..Default::default()
-        };
-        ChangelogRepository::new(self.connection).insert(&row)
+        Ok(())
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetRow>, RepositoryError> {
@@ -142,25 +129,58 @@ impl<'a> AssetRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn mark_deleted(&self, asset_id: &str) -> Result<i64, RepositoryError> {
-        diesel::update(asset.filter(id.eq(asset_id)))
+    fn _mark_deleted(&self, asset_id_param: &str) -> Result<(), RepositoryError> {
+        diesel::update(asset.filter(id.eq(asset_id_param)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 
-        let asset_row = AssetRowRepository::find_one_by_id(self, asset_id)?;
-
-        self.insert_changelog(
-            asset_id.to_string(),
+    pub fn mark_deleted(&self, asset_id_param: &str) -> Result<(), RepositoryError> {
+        let row = self
+            .find_one_by_id(asset_id_param)?
+            .ok_or(RepositoryError::NotFound)?;
+        self._mark_deleted(asset_id_param)?;
+        let changelog = row.generate_changelog(
+            self.connection,
             RowActionType::Upsert,
-            asset_row.and_then(|row| row.store_id),
-        )
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetRow>, RepositoryError> {
+        Ok(asset::table
+            .filter(asset::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    pub fn check_exists_by_id(&self, asset_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            asset::table.filter(asset::id.eq(asset_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
     }
 }
 
 impl Upsert for AssetRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = AssetRowRepository::new(con).upsert_one(self, None)?;
-        Ok(Some(cursor_id))
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        AssetRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
@@ -175,16 +195,40 @@ impl Upsert for AssetRow {
 #[derive(Debug, Clone)]
 pub struct AssetRowDelete(pub String);
 impl Delete for AssetRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let cursor_id = AssetRowRepository::new(con).mark_deleted(&self.0)?;
-        Ok(Some(cursor_id))
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = AssetRowRepository::new(con);
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => {
+                let row = repo
+                    .find_one_by_id(&self.0)?
+                    .ok_or(RepositoryError::NotFound)?;
+                row.generate_changelog(
+                    con,
+                    RowActionType::Upsert,
+                    SourceSiteId::SourceSiteId(source_site_id),
+                )?
+            }
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        repo._mark_deleted(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
 
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
+        assert!(matches!(
             AssetRowRepository::new(con).find_one_by_id(&self.0),
-            Ok(None)
-        );
+            Ok(Some(AssetRow {
+                deleted_datetime: Some(_),
+                ..
+            })) | Ok(None)
+        ));
     }
 }

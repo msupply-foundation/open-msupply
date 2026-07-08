@@ -62,6 +62,7 @@ pub enum InsertStocktakeLineError {
     ProgramDoesNotExist,
     StockLineReducedBelowZero(StockLine),
     IncorrectLocationType,
+    CannotSetManufactureDateInFuture,
 }
 
 pub fn insert_stocktake_line(
@@ -313,6 +314,25 @@ mod stocktake_line_test {
             )
             .unwrap_err();
         assert_eq!(error, InsertStocktakeLineError::StocktakeIsLocked);
+
+        // error CannotSetManufactureDateInFuture
+        let stocktake_a = mock_stocktake_a();
+        let error = service
+            .insert_stocktake_line(
+                &context,
+                InsertStocktakeLine {
+                    id: uuid(),
+                    stocktake_id: stocktake_a.id,
+                    item_id: Some(mock_item_a().id),
+                    manufacture_date: NaiveDate::from_ymd_opt(9999, 1, 1),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(
+            error,
+            InsertStocktakeLineError::CannotSetManufactureDateInFuture
+        );
 
         // check CannotEditFinalised
         let stocktake_finalised = mock_stocktake_finalised();

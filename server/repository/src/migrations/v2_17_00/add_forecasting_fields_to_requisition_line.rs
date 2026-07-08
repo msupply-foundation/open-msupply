@@ -99,17 +99,53 @@ impl MigrationFragment for Migrate {
 }
 
 #[cfg(test)]
+diesel::table! {
+    requisition_line (id) {
+        id -> Text,
+        forecast_total_units -> Nullable<Double>,
+        forecast_total_doses -> Nullable<Double>,
+        vaccine_courses -> Nullable<Text>,
+    }
+}
+
+#[cfg(test)]
+diesel::table! {
+    plugin_data (id) {
+        id -> Text,
+        plugin_code -> Text,
+    }
+}
+
+#[cfg(test)]
+diesel::table! {
+    backend_plugin (id) {
+        id -> Text,
+        code -> Text,
+    }
+}
+
+#[cfg(test)]
+diesel::table! {
+    frontend_plugin (id) {
+        id -> Text,
+        code -> Text,
+    }
+}
+
+#[cfg(test)]
+diesel::table! {
+    changelog (cursor) {
+        cursor -> BigInt,
+        record_id -> Text,
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db_diesel::backend_plugin_row::backend_plugin;
-    use crate::db_diesel::changelog::changelog;
-    use crate::db_diesel::plugin_data_row::plugin_data;
-    use crate::db_diesel::requisition_line::requisition_line_row::requisition_line_with_links;
-    use crate::frontend_plugin_row;
     use crate::{
         migrations::{v2_16_00::V2_16_00, v2_17_00::V2_17_00},
         test_db::*,
-        ChangelogTableName,
     };
     use diesel::{sql_query, ExpressionMethods, QueryDsl, RunQueryDsl};
     use util::uuid::uuid;
@@ -238,17 +274,17 @@ mod tests {
             r#"{}"#,
         );
 
-        migrate(&connection, Some(version.clone())).unwrap();
+        migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
         assert_eq!(get_database_version(&connection), version);
 
-        let results = requisition_line_with_links::table
+        let results = requisition_line::table
             .select((
-                requisition_line_with_links::id,
-                requisition_line_with_links::forecast_total_units,
-                requisition_line_with_links::forecast_total_doses,
-                requisition_line_with_links::vaccine_courses,
+                requisition_line::id,
+                requisition_line::forecast_total_units,
+                requisition_line::forecast_total_doses,
+                requisition_line::vaccine_courses,
             ))
-            .order(requisition_line_with_links::id.asc())
+            .order(requisition_line::id.asc())
             .load::<(String, Option<f64>, Option<f64>, Option<String>)>(
                 connection.lock().connection(),
             )
@@ -282,24 +318,25 @@ mod tests {
             .unwrap();
         assert_eq!(remaining_backend_plugin_count, 0);
 
-        let remaining_frontend_plugin_count: i64 = frontend_plugin_row::frontend_plugin::table
-            .filter(frontend_plugin_row::frontend_plugin::code.eq("forecasting_plugins"))
+        let remaining_frontend_plugin_count: i64 = frontend_plugin::table
+            .filter(frontend_plugin::code.eq("forecasting_plugins"))
             .count()
             .get_result(connection.lock().connection())
             .unwrap();
         assert_eq!(remaining_frontend_plugin_count, 0);
 
-        let backend_plugin_changelog_count_after: i64 = changelog::changelog::table
-            .filter(changelog::changelog::table_name.eq(ChangelogTableName::BackendPlugin))
-            .filter(changelog::changelog::record_id.eq("forecasting_plugin_id"))
+        // table_name filter omitted: at this migration level Postgres still uses the
+        // changelog_table_name enum, but Rust code now sends TEXT (diesel_string_enum).
+        // record_id alone is sufficient to verify the rows were deleted.
+        let backend_plugin_changelog_count_after: i64 = changelog::table
+            .filter(changelog::record_id.eq("forecasting_plugin_id"))
             .count()
             .get_result(connection.lock().connection())
             .unwrap();
         assert_eq!(backend_plugin_changelog_count_after, 0);
 
-        let frontend_plugin_changelog_count_after: i64 = changelog::changelog::table
-            .filter(changelog::changelog::table_name.eq(ChangelogTableName::FrontendPlugin))
-            .filter(changelog::changelog::record_id.eq("forecasting_frontend_plugin_id"))
+        let frontend_plugin_changelog_count_after: i64 = changelog::table
+            .filter(changelog::record_id.eq("forecasting_frontend_plugin_id"))
             .count()
             .get_result(connection.lock().connection())
             .unwrap();

@@ -4,6 +4,7 @@ export enum InboundShipmentDetailTabs {
   Currency = 'currency',
   Delivery = 'delivery',
   Documents = 'documents',
+  CustomFields = 'custom-fields',
   Log = 'log',
 }
 

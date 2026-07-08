@@ -37,6 +37,8 @@ pub mod initialisation_status;
 pub mod migration_status;
 pub mod name_property;
 pub use self::name_property::*;
+pub mod custom_field;
+pub use self::custom_field::*;
 pub mod requisition_line_chart;
 pub mod response_requisition_line_stats;
 pub mod sync_settings;
@@ -52,8 +54,6 @@ pub use self::barcode::*;
 pub use self::requisition_counts::*;
 pub mod log;
 pub use self::log::*;
-pub mod last_successful_user_sync;
-pub use self::last_successful_user_sync::*;
 pub use self::plugin::*;
 pub mod currency;
 pub mod label_printer_settings;
@@ -77,6 +77,5 @@ pub mod diagnosis;
 pub mod insurance_policies;
 pub mod insurance_providers;
 pub mod shipping_method;
-
 #[cfg(test)]
 mod tests;

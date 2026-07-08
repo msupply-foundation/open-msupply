@@ -93,6 +93,11 @@ export type PurchaseOrderFragment = {
         doses: number;
         restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          margin: number;
+          defaultSellPricePerPack: number;
+        } | null;
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -102,6 +107,7 @@ export type PurchaseOrderFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
@@ -186,6 +192,11 @@ export type PurchaseOrderLineFragment = {
     doses: number;
     restrictedLocationTypeId?: string | null;
     stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
+      margin: number;
+      defaultSellPricePerPack: number;
+    } | null;
   };
   manufacturer?: {
     __typename: 'NameNode';
@@ -195,6 +206,7 @@ export type PurchaseOrderLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    customFields?: any | null;
     store?: {
       __typename: 'StoreNode';
       id: string;
@@ -334,6 +346,11 @@ export type PurchaseOrderByIdQuery = {
               doses: number;
               restrictedLocationTypeId?: string | null;
               stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                margin: number;
+                defaultSellPricePerPack: number;
+              } | null;
             };
             manufacturer?: {
               __typename: 'NameNode';
@@ -343,6 +360,7 @@ export type PurchaseOrderByIdQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -511,6 +529,11 @@ export type PurchaseOrderLinesQuery = {
         doses: number;
         restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          margin: number;
+          defaultSellPricePerPack: number;
+        } | null;
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -520,6 +543,7 @@ export type PurchaseOrderLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
@@ -594,6 +618,11 @@ export type PurchaseOrderLineQuery = {
         doses: number;
         restrictedLocationTypeId?: string | null;
         stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          margin: number;
+          defaultSellPricePerPack: number;
+        } | null;
       };
       manufacturer?: {
         __typename: 'NameNode';
@@ -603,6 +632,7 @@ export type PurchaseOrderLineQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
@@ -799,6 +829,10 @@ export const PurchaseOrderLineFragmentDoc = gql`
       restrictedLocationTypeId
       stats(storeId: $storeId) {
         stockOnHand
+      }
+      itemStoreProperties(storeId: $storeId) {
+        margin
+        defaultSellPricePerPack
       }
     }
     requestedPackSize

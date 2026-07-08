@@ -40,6 +40,7 @@ impl SyncTranslation for CurrencyTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyCurrencyRow {
@@ -48,7 +49,7 @@ impl SyncTranslation for CurrencyTranslation {
             code,
             is_home_currency,
             date_updated,
-        } = serde_json::from_str(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
         let currency = CurrencyRowRepository::new(connection).find_one_by_id(&id)?;
 
@@ -91,7 +92,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
