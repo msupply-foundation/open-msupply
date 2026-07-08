@@ -9991,10 +9991,12 @@ export type StockRelocationDraftLinesInput = {
 };
 
 export type StockRelocationFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStockRelocationStatusInput>;
   stockMovementNumber?: InputMaybe<EqualFilterBigNumberInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
+  username?: InputMaybe<StringFilterInput>;
 };
 
 export type StockRelocationLineConnector = {
