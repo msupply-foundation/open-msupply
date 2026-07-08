@@ -29,7 +29,7 @@ export type ReportArgumentsModalProps = {
   /** Modal is shown if there is an argument schema present */
   report: ReportRowFragment | undefined;
   printFormat?: PrintFormat;
-  extraArguments?: Record<string, string | number | string[] | undefined>;
+  extraArguments?: Record<string, string | number | undefined>;
   onReset: () => void;
   onArgumentsSelected: (
     report: ReportRowFragment,

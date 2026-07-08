@@ -5768,7 +5768,6 @@ export type Mutations = {
   deleteResponseRequisitionLine: DeleteResponseRequisitionLineResponse;
   deleteRnrForm: DeleteRnRFormResponse;
   deleteStockRelocation: DeleteStockRelocationResponse;
-  deleteStockRelocationLine: DeleteStockRelocationLineResponse;
   deleteStockRelocations: DeleteStockRelocationsResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
@@ -6100,11 +6099,6 @@ export type MutationsDeleteRnrFormArgs = {
 
 export type MutationsDeleteStockRelocationArgs = {
   input: DeleteStockRelocationInput;
-  storeId: Scalars['String']['input'];
-};
-
-export type MutationsDeleteStockRelocationLineArgs = {
-  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -10012,7 +10006,6 @@ export type StockRelocationLineConnector = {
 export type StockRelocationLineNode = {
   __typename: 'StockRelocationLineNode';
   destinationLocation?: Maybe<LocationNode>;
-  destinationStockLineId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   numberOfPacks: Scalars['Float']['output'];
   sourceLocation?: Maybe<LocationNode>;
@@ -10026,7 +10019,6 @@ export type StockRelocationNode = {
   __typename: 'StockRelocationNode';
   comment?: Maybe<Scalars['String']['output']>;
   confirmedDatetime?: Maybe<Scalars['DateTime']['output']>;
-  createdBy: Scalars['String']['output'];
   createdDatetime: Scalars['DateTime']['output'];
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -10034,7 +10026,6 @@ export type StockRelocationNode = {
   lines: StockRelocationLineConnector;
   status: StockRelocationNodeStatus;
   stockMovementNumber: Scalars['Int']['output'];
-  storeId: Scalars['String']['output'];
   user?: Maybe<UserNode>;
 };
 

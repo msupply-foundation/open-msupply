@@ -21,7 +21,7 @@ interface ReportSelectorProps {
   subContext?: string;
   dataId: string;
   queryParams?: ReportListParams;
-  extraArguments?: Record<string, string | number | string[] | undefined>;
+  extraArguments?: Record<string, string | number | undefined>;
   sort?: PrintReportSortInput;
   CustomButton?: (props: {
     onPrint: (e?: React.MouseEvent<HTMLButtonElement>) => void;
