@@ -8,7 +8,7 @@ import {
   Stack,
   Typography,
 } from '@openmsupply-client/common';
-import { usePluginTranslation } from '../../../locales';
+import { usePluginLabelTranslation, usePluginTranslation } from '../../../locales';
 import { DemographicGroup } from '../../types';
 import { DoseRow } from './DoseRow';
 import { GroupTotalBadge } from './GroupTotalBadge';
@@ -28,6 +28,7 @@ export const DemographicGroupCard = React.memo(function DemographicGroupCard({
   readOnly = false,
 }: Props) {
   const t = usePluginTranslation();
+  const tLabel = usePluginLabelTranslation();
   const unit = group.unit ?? t('detail.default-unit');
 
   return (
@@ -52,7 +53,7 @@ export const DemographicGroupCard = React.memo(function DemographicGroupCard({
           flex={1}
         >
           <Typography variant="subtitle1" fontWeight="bold">
-            {t(group.label, { defaultValue: group.label })}
+            {tLabel(group.label)}
           </Typography>
           <GroupTotalBadge group={group} unit={unit} />
         </Stack>

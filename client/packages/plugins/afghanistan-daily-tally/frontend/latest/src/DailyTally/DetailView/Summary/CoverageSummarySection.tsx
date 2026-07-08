@@ -8,7 +8,7 @@ import {
   TableRow,
   Typography,
 } from '@openmsupply-client/common';
-import { usePluginTranslation } from '../../../locales';
+import { usePluginLabelTranslation, usePluginTranslation } from '../../../locales';
 import { CoverageTableModel } from './summaryMath';
 import { useDoseFormat } from '../useDoseFormat';
 
@@ -31,6 +31,7 @@ const TOTAL_MIN_WIDTH = 64;
 // counter labels), one body row per non-zero dose, plus a subtotal row.
 export const CoverageSummarySection = ({ model }: Props) => {
   const t = usePluginTranslation();
+  const tLabel = usePluginLabelTranslation();
   const { formatDoses } = useDoseFormat();
   const { table, columns, subColumns, rows, subtotalsByCell, subtotal } = model;
 
@@ -70,7 +71,7 @@ export const CoverageSummarySection = ({ model }: Props) => {
           fontWeight="bold"
           color="primary.contrastText"
         >
-          {t(table.label, { defaultValue: table.label })}
+          {tLabel(table.label)}
         </Typography>
       </Box>
 
@@ -112,7 +113,7 @@ export const CoverageSummarySection = ({ model }: Props) => {
                   align="center"
                   sx={{ fontWeight: 600, lineHeight: 1.2 }}
                 >
-                  {t(col.label, { defaultValue: col.label })}
+                  {tLabel(col.label)}
                 </TableCell>
               ))}
               <TableCell
@@ -135,7 +136,7 @@ export const CoverageSummarySection = ({ model }: Props) => {
                     verticalAlign: 'bottom',
                   }}
                 >
-                  {t(counterLabel, { defaultValue: counterLabel })}
+                  {tLabel(counterLabel)}
                 </TableCell>
               ))}
             </TableRow>

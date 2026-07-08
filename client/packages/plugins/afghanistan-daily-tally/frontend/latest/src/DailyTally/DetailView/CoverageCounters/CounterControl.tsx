@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@openmsupply-client/common';
 import MuiIconButton from '@mui/material/IconButton';
-import { usePluginTranslation } from '../../../locales';
+import { usePluginLabelTranslation, usePluginTranslation } from '../../../locales';
 import { useCellValue, useTallyDraftActions } from '../tallyDraftStore';
 
 interface Props {
@@ -38,6 +38,7 @@ export const CounterControl = React.memo(function CounterControl({
   readOnly = false,
 }: Props) {
   const t = usePluginTranslation();
+  const tLabel = usePluginLabelTranslation();
   const value = useCellValue(doseId, counterId);
   const { setCount } = useTallyDraftActions();
   const setValue = useCallback(
@@ -62,7 +63,7 @@ export const CounterControl = React.memo(function CounterControl({
       {/* The label is what gives way when space is tight — it shrinks/wraps
           while the stepper keeps its full width (see flexShrink below). */}
       <Typography variant="body2" sx={{ minWidth: 0 }}>
-        {t(label, { defaultValue: label })}
+        {tLabel(label)}
       </Typography>
       <Box
         sx={{

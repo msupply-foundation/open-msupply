@@ -4,7 +4,7 @@ import { DailyTallyConfig, DemographicGroup, SessionType } from '../../types';
 import { useTallyDraftActions } from '../tallyDraftStore';
 import { SessionHeader } from '../CoverageCounters/SessionHeader';
 import { VaccineButton } from './VaccineButton';
-import { usePluginTranslation } from '../../../locales';
+import { usePluginLabelTranslation, usePluginTranslation } from '../../../locales';
 
 interface Props {
   config: DailyTallyConfig;
@@ -105,6 +105,7 @@ const SplitLabel = ({ text }: { text: string }) => {
 export const QuickEntry = ({ config, date, onDateChange, sessionType, onSessionTypeChange, readOnly = false }: Props) => {
   const groups = config.demographic_groups;
   const t = usePluginTranslation();
+  const tLabel = usePluginLabelTranslation();
   const { incrementCount } = useTallyDraftActions();
 
   const [selectedGroupId, setSelectedGroupId] = useState('');
@@ -192,7 +193,7 @@ export const QuickEntry = ({ config, date, onDateChange, sessionType, onSessionT
                   {/* Column header = gender (Male / Female / Women) */}
                   <Box sx={{ bgcolor: color.header, px: 1.5, py: 1, textAlign: 'center' }}>
                     <Typography variant="subtitle2" fontWeight="bold" sx={{ color: '#fff' }}>
-                      <SplitLabel text={t(col.label, { defaultValue: col.label })} />
+                      <SplitLabel text={tLabel(col.label)} />
                     </Typography>
                   </Box>
 
@@ -228,7 +229,7 @@ export const QuickEntry = ({ config, date, onDateChange, sessionType, onSessionT
                           }}
                         >
                           <span style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', lineHeight: 1.3, display: 'block' }}>
-                            <SplitLabel text={t(row.label, { defaultValue: row.label })} />
+                            <SplitLabel text={tLabel(row.label)} />
                           </span>
                         </Button>
                       );
