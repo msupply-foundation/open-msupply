@@ -18,6 +18,7 @@ import {
   ItemNodeType,
   StockLineFilterInput,
   useNavigate,
+  usePreferences,
 } from '@openmsupply-client/common';
 import { CreateStocktakeInput } from '../api/hooks/useStocktake';
 import { CreateStocktakeModalState, StocktakeType } from './types';
@@ -51,6 +52,7 @@ export const CreateStocktakeModal = ({
 }: NewStocktakeModalProps) => {
   const navigate = useNavigate();
   const t = useTranslation();
+  const { blindStocktake } = usePreferences();
 
   const { Modal } = useDialog({
     isOpen: open,
@@ -174,6 +176,11 @@ export const CreateStocktakeModal = ({
                 margin: '0 auto',
               }}
             >
+              {blindStocktake && (
+                <Alert severity="info" sx={{ marginRight: 0 }}>
+                  {t('message.blind-stocktake-enabled')}
+                </Alert>
+              )}
               <Box>
                 <RadioGroup
                   value={type}

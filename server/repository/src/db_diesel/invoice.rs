@@ -177,14 +177,16 @@ impl<'a> InvoiceRepository<'a> {
                     apply_sort_no_case!(query, sort, invoice::transport_reference);
                 }
             }
-        } else {
-            query = query.order(invoice::id.asc())
         }
 
         // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties (e.g. many invoices sharing
+        // the same status or created_datetime).
         let result = query
+            .then_order_by(invoice::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<InvoiceJoin>(self.connection.lock().connection())?;

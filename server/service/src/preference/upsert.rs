@@ -38,6 +38,7 @@ pub struct UpsertPreferences {
     pub backdating: Option<BackdatingData>,
 
     // Store preferences
+    pub blind_stocktake: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub order_in_packs: Option<Vec<StorePrefUpdate<bool>>>,
@@ -89,6 +90,7 @@ pub fn upsert_preferences(
         backdating: backdating_input,
 
         // Store preferences
+        blind_stocktake: blind_stocktake_input,
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
         order_in_packs: order_in_packs_input,
@@ -139,6 +141,7 @@ pub fn upsert_preferences(
         backdating,
 
         // Store preferences
+        blind_stocktake,
         manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
         order_in_packs,
@@ -241,6 +244,10 @@ pub fn upsert_preferences(
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
+            if let Some(inputs) = blind_stocktake_input {
+                upsert_store_input(connection, blind_stocktake, inputs)?;
+            }
+
             if let Some(inputs) = manage_vaccines_in_doses_input {
                 upsert_store_input(connection, manage_vaccines_in_doses, inputs)?;
             }
