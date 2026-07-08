@@ -13,6 +13,7 @@ export type StockMovementRowFragment = {
   confirmedDatetime?: string | null;
   finalisedDatetime?: string | null;
   lineCount: number;
+  user?: { __typename: 'UserNode'; username: string } | null;
 };
 
 export type StockMovementLineFragment = {
@@ -133,6 +134,7 @@ export type StockRelocationsQuery = {
       confirmedDatetime?: string | null;
       finalisedDatetime?: string | null;
       lineCount: number;
+      user?: { __typename: 'UserNode'; username: string } | null;
     }>;
   };
 };
@@ -457,6 +459,10 @@ export const StockMovementRowFragmentDoc = gql`
     confirmedDatetime
     finalisedDatetime
     lineCount
+    user {
+      __typename
+      username
+    }
   }
 `;
 export const StockMovementLineFragmentDoc = gql`

@@ -1,9 +1,12 @@
 use super::{
     stock_relocation_row::{stock_relocation, StockRelocationRow, StockRelocationStatus},
+    user_row::user_account,
     DBType, RepositoryError, StorageConnection,
 };
-use crate::diesel_macros::{apply_equal_filter, apply_sort};
-use crate::{EqualFilter, Pagination, Sort};
+use crate::diesel_macros::{
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
+};
+use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -17,6 +20,8 @@ pub struct StockRelocationFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<StockRelocationStatus>>,
     pub stock_movement_number: Option<EqualFilter<i64>>,
+    pub created_datetime: Option<DatetimeFilter>,
+    pub username: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -105,6 +110,8 @@ impl<'a> StockRelocationRepository<'a> {
                 store_id,
                 status,
                 stock_movement_number,
+                created_datetime,
+                username,
             } = f;
 
             apply_equal_filter!(query, id, stock_relocation::id);
@@ -115,6 +122,13 @@ impl<'a> StockRelocationRepository<'a> {
                 stock_movement_number,
                 stock_relocation::stock_movement_number
             );
+            apply_date_time_filter!(query, created_datetime, stock_relocation::created_datetime);
+            if let Some(username) = username {
+                let mut sub_query = user_account::table.select(user_account::id).into_boxed();
+                apply_string_filter!(sub_query, Some(username), user_account::username);
+
+                query = query.filter(stock_relocation::created_by.eq_any(sub_query));
+            }
         }
 
         query
@@ -148,6 +162,14 @@ impl StockRelocationFilter {
     }
     pub fn stock_movement_number(mut self, filter: EqualFilter<i64>) -> Self {
         self.stock_movement_number = Some(filter);
+        self
+    }
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
+        self
+    }
+    pub fn username(mut self, filter: StringFilter) -> Self {
+        self.username = Some(filter);
         self
     }
 }

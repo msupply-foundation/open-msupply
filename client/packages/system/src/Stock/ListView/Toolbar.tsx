@@ -11,6 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { useVvmStatusesEnabled } from '../api';
 import { useMasterLists } from '../../MasterList';
+import { useCampaigns } from '../../Manage/Campaigns/api';
 
 export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
   const t = useTranslation();
@@ -22,6 +23,12 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
       filterBy: { existsForStoreId: { equalTo: store?.id } },
       first: 1000,
     },
+  });
+  const {
+    query: { data: campaigns },
+  } = useCampaigns({
+    sortBy: { key: 'name', direction: 'asc', isDesc: false },
+    first: 1000,
   });
 
   // Item-level filters apply in both grouped and ungrouped modes.
@@ -42,6 +49,19 @@ export const Toolbar = ({ isGrouped }: { isGrouped: boolean }) => {
           options: masterLists.nodes.map(ml => ({
             label: ml.name,
             value: ml.id,
+          })),
+        } as FilterDefinition,
+      ]
+      : []),
+    ...(campaigns?.nodes?.length
+      ? [
+        {
+          type: 'enum',
+          name: t('label.campaign-only'),
+          urlParameter: 'campaignId',
+          options: campaigns.nodes.map(c => ({
+            label: c.name,
+            value: c.id,
           })),
         } as FilterDefinition,
       ]

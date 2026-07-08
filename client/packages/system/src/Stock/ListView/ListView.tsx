@@ -57,6 +57,7 @@ export const StockListView = () => {
         key: 'masterList.id',
         condition: 'equalTo',
       },
+      { key: 'campaignId', condition: 'equalTo' },
     ],
   });
 
@@ -270,6 +271,14 @@ export const StockListView = () => {
         id: 'manufacturer',
         header: t('label.manufacturer'),
         accessorFn: row => row.manufacturer?.name ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'campaign',
+        header: t('label.campaign-only'),
+        accessorFn: row => row.campaign?.name ?? '',
         Cell: TextWithTooltipCell,
         size: 150,
         defaultHideOnMobile: true,

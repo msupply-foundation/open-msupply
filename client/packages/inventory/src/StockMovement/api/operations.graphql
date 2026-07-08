@@ -8,6 +8,10 @@ fragment StockMovementRow on StockRelocationNode {
   confirmedDatetime
   finalisedDatetime
   lineCount
+  user {
+    __typename
+    username
+  }
 }
 
 fragment StockMovementLine on StockRelocationLineNode {

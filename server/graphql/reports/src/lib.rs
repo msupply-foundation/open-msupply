@@ -3,6 +3,7 @@ mod mutations;
 use crate::export::csv_to_excel;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use mutations::install::install_uploaded_reports;
+use mutations::update::{update_report, UpdateReportInput, UpdateReportNode};
 use print::{generate_report, generate_report_definition, PrintReportResponse};
 use reports::{
     all_report_versions, report, reports, ReportFilterInput, ReportResponse, ReportSortInput,
@@ -164,5 +165,13 @@ impl CentralReportMutations {
     ) -> Result<Vec<String>> {
         let ids = install_uploaded_reports(ctx, file_id)?;
         Ok(ids)
+    }
+
+    pub async fn update_report(
+        &self,
+        ctx: &Context<'_>,
+        input: UpdateReportInput,
+    ) -> Result<UpdateReportNode> {
+        update_report(ctx, input)
     }
 }
