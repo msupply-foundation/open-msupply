@@ -43,6 +43,7 @@ use crate::{
     pricing::{PricingService, PricingServiceTrait},
     printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,
+    custom_field::{CustomFieldService, CustomFieldServiceTrait},
     program::ProgramServiceTrait,
     programs::{
         contact_trace::{ContactTraceService, ContactTraceServiceTrait},
@@ -207,6 +208,8 @@ pub struct ServiceProvider {
     pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
+    // Properties v2
+    pub custom_field_service: Box<dyn CustomFieldServiceTrait>,
     // Shipping Method
     pub shipping_method_service: Box<dyn ShippingMethodServiceTrait>,
     // Stock Relocation (Replenishments)
@@ -345,6 +348,7 @@ impl ServiceProvider {
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
             contact_service: Box::new(ContactService {}),
+            custom_field_service: Box::new(CustomFieldService {}),
             sync_message_service: Box::new(SyncMessageService),
             ledger_fix_trigger,
             shipping_method_service: Box::new(ShippingMethodService {}),

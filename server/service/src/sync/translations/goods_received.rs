@@ -165,6 +165,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
+            custom_fields: None,
             tax_percentage: None,
             currency_id: po.currency_id,
             currency_rate: po.foreign_exchange_rate,
