@@ -1,20 +1,24 @@
-use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+};
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
     name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
     shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
 };
+use crate::sync::central_mapping_custom_fields::keys;
+use crate::sync::CentralServerConfig;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, CurrencyRowRepository,
-    DiagnosisRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow,
-    InvoiceRowDelete, InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyValueStoreRepository,
-    NameRow, NameRowRepository, StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
-    SyncBufferRow, UserAccountRow, UserAccountRowRepository,
+    ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
+    InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceRowRepository,
+    InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository, Row,
+    StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
+    UserAccountRow, UserAccountRowRepository,
 };
-use repository::name_insurance_join_row::NameInsuranceJoinRowRepository;
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::sync_serde::{
@@ -160,6 +164,18 @@ pub struct LegacyTransactRow {
     pub transport_reference: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub goods_received_ID: Option<String>,
+    /// Transaction category (`transaction_category.ID`). Mapped to/from the
+    /// invoice type's `*_category` key in `custom_fields` — see
+    /// [`LEGACY_INVOICE_OWNED_KEYS`].
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub category_ID: Option<String>,
+    /// Second transaction category — prescriptions only in OG (the Patient Type
+    /// dropdown, from the "pi2" category pool). Mapped to/from
+    /// [`keys::PRESCRIPTION_CATEGORY_2`].
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub category2_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "original_PO_ID")]
     pub purchase_order_id: Option<String>,
@@ -295,6 +311,100 @@ pub struct LegacyTransactRow {
     pub oms_fields: Option<TransactRowOmsFields>,
 }
 
+/// `custom_fields` keys the legacy OG→OMS invoice import owns (derived from
+/// `transact.category_ID` / `category2_ID`). On a v5 re-import these are
+/// refreshed from OG; every other key in the blob (OMS-authored values) is
+/// preserved. See [`merge_legacy_custom_fields`]. The keys match the per-type
+/// category mapping custom fields (keyed `<type>_category`) seeded by
+/// `central_mapping_custom_fields` — one OPTION custom field per transact type, since
+/// mSupply partitions its category pool by type, plus the second prescription
+/// dimension (`pi2`, the OG Patient Type dropdown → `transact.category2_ID`).
+///
+/// Unlike name/item custom fields, the values are editable in OMS *and* pushed
+/// back to OG (`category_ID`/`category2_ID` in the push below) — invoices are
+/// store data OMS actively authors, so the one-way rule is relaxed (see the
+/// custom fields dev doc).
+/// NOTE: this list, [`category_key_for_invoice_type`], the category seeder
+/// entries (`central_mapping_custom_fields`)
+/// and `invoice_custom_field_scope` must stay in lock-step — the
+/// `transaction_category_mappings_stay_in_lock_step` test in
+/// `central_mapping_custom_fields` asserts it (the migration SQL backfill is the
+/// one copy a test can't reach; a future category-bearing type needs a NEW
+/// migration anyway, since shipped ones are frozen).
+pub(crate) const LEGACY_INVOICE_OWNED_KEYS: &[&str] = &[
+    keys::INBOUND_SHIPMENT_CATEGORY,
+    keys::OUTBOUND_SHIPMENT_CATEGORY,
+    keys::PRESCRIPTION_CATEGORY,
+    keys::SUPPLIER_RETURN_CATEGORY,
+    keys::CUSTOMER_RETURN_CATEGORY,
+    // `transact.category2_ID` is only ever written for prescriptions in OG
+    // (dispensary mode, from the "pi2" category pool), so it maps to a single
+    // prescription-scoped key rather than one per type.
+    keys::PRESCRIPTION_CATEGORY_2,
+];
+
+/// The `custom_fields` key holding the transaction category for an invoice of
+/// this type — `None` for types without a mapped category custom field (repack,
+/// inventory adjustments).
+pub(crate) fn category_key_for_invoice_type(invoice_type: &InvoiceType) -> Option<&'static str> {
+    match invoice_type {
+        InvoiceType::InboundShipment => Some(keys::INBOUND_SHIPMENT_CATEGORY),
+        InvoiceType::OutboundShipment => Some(keys::OUTBOUND_SHIPMENT_CATEGORY),
+        InvoiceType::Prescription => Some(keys::PRESCRIPTION_CATEGORY),
+        InvoiceType::SupplierReturn => Some(keys::SUPPLIER_RETURN_CATEGORY),
+        InvoiceType::CustomerReturn => Some(keys::CUSTOMER_RETURN_CATEGORY),
+        InvoiceType::InventoryAddition | InvoiceType::InventoryReduction | InvoiceType::Repack => {
+            None
+        }
+    }
+}
+
+/// Build the legacy-owned slice of `invoice.custom_fields` from
+/// `transact.category_ID` (keyed by the resolved invoice type) and, for
+/// prescriptions, `transact.category2_ID`.
+fn build_legacy_invoice_custom_fields(
+    invoice_type: &InvoiceType,
+    category_id: Option<&str>,
+    category2_id: Option<&str>,
+) -> Option<serde_json::Value> {
+    let key = category_key_for_invoice_type(invoice_type)?;
+    let mut builder = LegacyCustomFieldsBuilder::new().option(key, category_id);
+    if *invoice_type == InvoiceType::Prescription {
+        builder = builder.option(keys::PRESCRIPTION_CATEGORY_2, category2_id);
+    }
+    builder.build()
+}
+
+fn custom_field_string(custom_fields: &Option<serde_json::Value>, key: &str) -> Option<String> {
+    custom_fields
+        .as_ref()?
+        .as_object()?
+        .get(key)?
+        .as_str()
+        .map(str::to_string)
+}
+
+/// Inverse of [`build_legacy_invoice_custom_fields`]: read the invoice type's
+/// category option id out of `custom_fields` for the v5 push back to OG.
+fn legacy_category_id_from_custom_fields(
+    custom_fields: &Option<serde_json::Value>,
+    invoice_type: &InvoiceType,
+) -> Option<String> {
+    custom_field_string(custom_fields, category_key_for_invoice_type(invoice_type)?)
+}
+
+/// Second prescription dimension for the push: only prescriptions carry a
+/// `category2_ID` in OG.
+fn legacy_category2_id_from_custom_fields(
+    custom_fields: &Option<serde_json::Value>,
+    invoice_type: &InvoiceType,
+) -> Option<String> {
+    if *invoice_type != InvoiceType::Prescription {
+        return None;
+    }
+    custom_field_string(custom_fields, keys::PRESCRIPTION_CATEGORY_2)
+}
+
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
 /// receiving store. Same for Customer Returns.
 /// In the current version of mSupply all om_ fields get copied though.
@@ -362,9 +472,10 @@ impl SyncTranslation for InvoiceTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let data = sync_record.deserialize::<serde_json::Value>()?;
         let data = sanitize_legacy_record(data);
         let data = serde_json::from_value::<LegacyTransactRow>(data)?;
         // For owner records, only integrate if it's an insert operation, to happen only during initialisation,
@@ -422,51 +533,61 @@ impl SyncTranslation for InvoiceTranslation {
         };
 
         // Validate AFTER home-currency fallback; the fallback resolves to a real id.
-        let currency_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "currency_id",
-            currency_id,
-            |c, id| CurrencyRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let diagnosis_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "diagnosis_id",
-            data.diagnosis_id,
-            |c, id| DiagnosisRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let name_insurance_join_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "name_insurance_join_id",
+        let fk_check = fk_checker.with_table(connection, "invoice", &data.ID);
+        let check_fk = fk_checker.with_table_required(connection, "invoice", &data.ID);
+
+        let store_id = check_fk(data.store_ID, "store_id", FkField::Store)?;
+        // name_id is a name id resolved to name_link on upsert; name_link.id == name.id by
+        // convention, so validating the name id against name_link is correct.
+        let name_id = check_fk(data.name_ID, "name_link_id", FkField::NameLink)?;
+        let default_donor_id =
+            fk_check(data.default_donor_id, "default_donor_link_id", FkField::NameLink)?;
+        let name_store_id = fk_check(name_store_id, "name_store_id", FkField::Store)?;
+
+        let currency_id = fk_check(currency_id, "currency_id", FkField::Currency)?;
+        let diagnosis_id = fk_check(data.diagnosis_id, "diagnosis_id", FkField::Diagnosis)?;
+        let name_insurance_join_id = fk_check(
             data.name_insurance_join_id,
-            |c, id| NameInsuranceJoinRowRepository::new(c).check_exists_by_id(id),
-            true,
+            "name_insurance_join_id",
+            FkField::NameInsuranceJoin,
         )?;
-        let shipping_method_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "shipping_method_id",
+        let shipping_method_id = fk_check(
             data.shipping_method_id,
-            |c, id| repository::ShippingMethodRowRepository::new(c).check_exists_by_id(id),
-            true,
+            "shipping_method_id",
+            FkField::ShippingMethod,
         )?;
-        let purchase_order_id = clear_invalid_fk(
-            connection,
-            "invoice",
-            &data.ID,
-            "purchase_order_id",
+        let purchase_order_id = fk_check(
             data.purchase_order_id,
-            |c, id| repository::PurchaseOrderRowRepository::new(c).check_exists_by_id(id),
-            true,
+            "purchase_order_id",
+            FkField::PurchaseOrder,
         )?;
+
+        // om_type (when present) overrides the legacy-derived type — resolve it
+        // up front so the category maps to the right `custom_fields` key.
+        let resolved_type = data.om_type.clone().unwrap_or(invoice_type);
+
+        // Preserve any existing `custom_fields` rather than overwriting the
+        // whole blob: an OMS write path (invoice category edits) can author keys
+        // the legacy importer doesn't own, and a v5 re-pull of an unchanged OG
+        // record must not wipe them. On central we refresh the owned keys
+        // (`category_ID`) from OG and keep the rest; off central we leave
+        // `custom_fields` untouched — it arrives via v7 instead.
+        let existing_custom_fields = InvoiceRowRepository::new(connection)
+            .find_one_by_id(&data.ID)?
+            .and_then(|row| row.custom_fields);
+        let custom_fields = if CentralServerConfig::is_central_server() {
+            merge_legacy_custom_fields(
+                existing_custom_fields,
+                build_legacy_invoice_custom_fields(
+                    &resolved_type,
+                    data.category_ID.as_deref(),
+                    data.category2_ID.as_deref(),
+                ),
+                LEGACY_INVOICE_OWNED_KEYS,
+            )
+        } else {
+            existing_custom_fields
+        };
 
         let oms_fields = data.oms_fields.unwrap_or_default();
 
@@ -478,11 +599,11 @@ impl SyncTranslation for InvoiceTranslation {
         let result = InvoiceRow {
             id: data.ID,
             user_id: data.user_id,
-            store_id: data.store_ID,
-            name_id: data.name_ID,
+            store_id,
+            name_id,
             name_store_id,
             invoice_number: data.invoice_num,
-            r#type: data.om_type.unwrap_or(invoice_type),
+            r#type: resolved_type,
             status,
             on_hold: data.hold,
             comment: data.comment,
@@ -490,7 +611,11 @@ impl SyncTranslation for InvoiceTranslation {
             tax_percentage: data.tax_percentage,
             currency_id,
             currency_rate: data.currency_rate,
-            clinician_link_id: data.clinician_id,
+            clinician_link_id: fk_check(
+                data.clinician_id,
+                "clinician_link_id",
+                FkField::ClinicianLink,
+            )?,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -507,12 +632,12 @@ impl SyncTranslation for InvoiceTranslation {
 
             requisition_id: data.requisition_ID,
             linked_invoice_id: data.linked_transaction_id,
-            default_donor_id: data.default_donor_id,
+            default_donor_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
             backdated_datetime: mapping.backdated_datetime,
             diagnosis_id,
-            program_id: data.program_id,
+            program_id: fk_check(data.program_id, "program_id", FkField::Program)?,
             name_insurance_join_id,
             insurance_discount_amount: data.insurance_discount_amount,
             insurance_discount_percentage: data.insurance_discount_percentage,
@@ -521,6 +646,9 @@ impl SyncTranslation for InvoiceTranslation {
             shipping_method_id,
             charges_local_currency: oms_fields.charges_local_currency,
             charges_foreign_currency: oms_fields.charges_foreign_currency,
+            legacy_goods_received_id: data.goods_received_ID,
+            custom_fields,
+            ..Default::default()
         };
 
         // HACK...
@@ -557,11 +685,14 @@ impl SyncTranslation for InvoiceTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Invoice(invoice_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(invoice) = InvoiceRepository::new(connection)
-            .query_by_filter(
-                InvoiceFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
-            )?
+            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(invoice_row.id)))?
             .pop()
         else {
             return Err(anyhow::anyhow!("Invoice not found"));
@@ -613,6 +744,8 @@ impl SyncTranslation for InvoiceTranslation {
                     shipping_method_id,
                     charges_local_currency,
                     charges_foreign_currency,
+                    legacy_goods_received_id: _,
+                    custom_fields,
                 },
             name_row,
             clinician_row,
@@ -636,6 +769,12 @@ impl SyncTranslation for InvoiceTranslation {
                 )))
             }
         };
+
+        // First custom field values pushed back to OG: the invoice type's category
+        // key round-trips as `transact.category_ID`, and the prescription
+        // Patient Type as `category2_ID`.
+        let category_id = legacy_category_id_from_custom_fields(&custom_fields, &r#type);
+        let category2_id = legacy_category2_id_from_custom_fields(&custom_fields, &r#type);
 
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
@@ -687,6 +826,8 @@ impl SyncTranslation for InvoiceTranslation {
             expected_delivery_date,
             default_donor_id: default_donor_id,
             goods_received_ID: None,
+            category_ID: category_id,
+            category2_ID: category2_id,
             purchase_order_id,
             shipping_method_id,
             oms_fields: Some(TransactRowOmsFields {
@@ -1086,8 +1227,10 @@ mod tests {
         shipping_method_row::ShippingMethodRowRepository,
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, CurrencyRow, CurrencyRowRepository, DiagnosisRow,
-        InsuranceProviderRow, KeyType, KeyValueStoreRow, ShippingMethodRow, SyncAction, Upsert,
+        ChangelogCondition, ChangelogRepository, CurrencyRow, CurrencyRowRepository,
+        CursorAndLimit, DiagnosisRow, DiagnosisRowRepository, FilterBuilder, InsuranceProviderRow,
+        KeyType, KeyValueStoreRow, NameInsuranceJoinRowRepository, RowOrDelete, ShippingMethodRow,
+        SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -1142,22 +1285,22 @@ mod tests {
                 comment: None,
             })
             .unwrap();
-        NameInsuranceJoinRow {
-            id: "NAME_INSURANCE_JOIN_1_ID".to_string(),
-            name_id: "name_a".to_string(),
-            insurance_provider_id: "INSURANCE_PROVIDER_1".to_string(),
-            policy_number_person: None,
-            policy_number_family: None,
-            policy_number: "PN1".to_string(),
-            policy_type: InsurancePolicyType::Personal,
-            discount_percentage: 0.0,
-            expiry_date: NaiveDate::from_ymd_opt(2030, 1, 1).unwrap(),
-            is_active: true,
-            entered_by_id: None,
-            name_of_insured: None,
-        }
-        .upsert(&connection)
-        .unwrap();
+        NameInsuranceJoinRowRepository::new(&connection)
+            .upsert_one(&NameInsuranceJoinRow {
+                id: "NAME_INSURANCE_JOIN_1_ID".to_string(),
+                name_id: "name_a".to_string(),
+                insurance_provider_id: "INSURANCE_PROVIDER_1".to_string(),
+                policy_number_person: None,
+                policy_number_family: None,
+                policy_number: "PN1".to_string(),
+                policy_type: InsurancePolicyType::Personal,
+                discount_percentage: 0.0,
+                expiry_date: NaiveDate::from_ymd_opt(2030, 1, 1).unwrap(),
+                is_active: true,
+                entered_by_id: None,
+                name_of_insured: None,
+            })
+            .unwrap();
         ShippingMethodRowRepository::new(&connection)
             .upsert_one(&ShippingMethodRow {
                 id: "SHIPPING_METHOD_1_ID".to_string(),
@@ -1165,15 +1308,15 @@ mod tests {
                 deleted_datetime: None,
             })
             .unwrap();
-        DiagnosisRow {
-            id: "503E901E00534F1797DF4F29E12F907D".to_string(),
-            code: "DX1".to_string(),
-            description: "Test diagnosis".to_string(),
-            notes: None,
-            valid_till: None,
-        }
-        .upsert(&connection)
-        .unwrap();
+        DiagnosisRowRepository::new(&connection)
+            .upsert_one(&DiagnosisRow {
+                id: "503E901E00534F1797DF4F29E12F907D".to_string(),
+                code: "DX1".to_string(),
+                description: "Test diagnosis".to_string(),
+                notes: None,
+                valid_till: None,
+            })
+            .unwrap();
         repository::PurchaseOrderRowRepository::new(&connection)
             .upsert_one(&repository::mock::mock_purchase_order_a())
             .unwrap();
@@ -1182,7 +1325,11 @@ mod tests {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
 
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -1212,23 +1359,27 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Invoice.equal_to())),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Invoice),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
         let translator = InvoiceTranslation {};
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
@@ -1265,7 +1416,9 @@ mod tests {
         let sync_record = SyncBufferRow {
             table_name: "transact".to_string(),
             record_id: "INVOICE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
               "ID": "INVOICE_FK_INVALID",
               "name_ID": "name_store_a",
               "store_ID": "store_b",
@@ -1306,14 +1459,20 @@ mod tests {
               "insuranceDiscountRate": 0,
               "goods_received_ID": "",
               "original_PO_ID": "does_not_exist_purchase_order"
-            }"#
-            .to_string(),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
         let debug = format!("{result:?}");
         assert!(
@@ -1342,13 +1501,152 @@ mod tests {
             format!("expected purchase_order_id None; got:\n{debug}")
         );
 
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
             .collect();
         assert_eq!(fk_errors.len(), 5, "got {fk_errors:?}");
+    }
+
+    /// `transact.category_ID` maps to the resolved invoice type's category key
+    /// in `custom_fields` — on central only (off central the value arrives via
+    /// v7 and a v5 pull must not touch it). Inverse mapping feeds the push.
+    #[actix_rt::test]
+    async fn test_invoice_category_maps_to_custom_fields() {
+        use crate::sync::test_util_set_is_central_server;
+        let translator = InvoiceTranslation {};
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_invoice_category_maps_to_custom_fields",
+            MockDataInserts::none().names().stores().currencies(),
+            MockData {
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_a().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let sync_record = SyncBufferRow {
+            table_name: "transact".to_string(),
+            record_id: "INVOICE_WITH_CATEGORY".to_string(),
+            data: SyncRecordData(serde_json::json!({
+              "ID": "INVOICE_WITH_CATEGORY",
+              "name_ID": "name_store_a",
+              "store_ID": "store_b",
+              "invoice_num": 1,
+              "type": "si",
+              "status": "cn",
+              "hold": false,
+              "comment": "",
+              "their_ref": "",
+              "requisition_ID": "",
+              "linked_transaction_id": "",
+              "entry_date": "2021-07-30",
+              "entry_time": 47046,
+              "finalised_date": "0000-00-00",
+              "finalised_time": 0,
+              "confirm_date": "2021-07-30",
+              "confirm_time": 47046,
+              "mode": "store",
+              "om_transport_reference": "",
+              "tax_rate": 0,
+              "currency_ID": "",
+              "currency_rate": 1.0,
+              "prescriber_ID": "",
+              "diagnosis_ID": "",
+              "nameInsuranceJoinID": "",
+              "donor_default_id": "",
+              "ship_method_ID": "",
+              "user_ID": "",
+              "is_cancellation": false,
+              "insuranceDiscountAmount": 0,
+              "insuranceDiscountRate": 0,
+              "goods_received_ID": "",
+              "original_PO_ID": "",
+              "category_ID": "CATEGORY_1",
+            })),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        // Central: "si" resolves to InboundShipment, so the category lands under
+        // `inbound_shipment_category`.
+        test_util_set_is_central_server(true);
+        let result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
+            .unwrap();
+        let debug = format!("{result:?}");
+        assert!(
+            debug.contains("inbound_shipment_category") && debug.contains("CATEGORY_1"),
+            "category must map to the type's custom_fields key: {debug}"
+        );
+
+        // Off central: custom_fields stays untouched (None here — no existing row).
+        test_util_set_is_central_server(false);
+        let result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
+            .unwrap();
+        let debug = format!("{result:?}");
+        assert!(
+            debug.contains("custom_fields: None"),
+            "remote must not author legacy custom field values: {debug}"
+        );
+
+        // Push inverse: every supported type reads its own key; unsupported
+        // types carry no category.
+        let custom_fields = Some(serde_json::json!({
+            "inbound_shipment_category": "C_SI",
+            "outbound_shipment_category": "C_CI",
+            "prescription_category": "C_PI",
+            "supplier_return_category": "C_SC",
+            "customer_return_category": "C_CC",
+            "prescription_category_2": "C_PI2",
+        }));
+        for (invoice_type, expected) in [
+            (InvoiceType::InboundShipment, Some("C_SI")),
+            (InvoiceType::OutboundShipment, Some("C_CI")),
+            (InvoiceType::Prescription, Some("C_PI")),
+            (InvoiceType::SupplierReturn, Some("C_SC")),
+            (InvoiceType::CustomerReturn, Some("C_CC")),
+            (InvoiceType::Repack, None),
+            (InvoiceType::InventoryAddition, None),
+        ] {
+            assert_eq!(
+                legacy_category_id_from_custom_fields(&custom_fields, &invoice_type),
+                expected.map(str::to_string),
+                "type {invoice_type:?}"
+            );
+            // category2_ID only round-trips for prescriptions.
+            assert_eq!(
+                legacy_category2_id_from_custom_fields(&custom_fields, &invoice_type),
+                (invoice_type == InvoiceType::Prescription).then(|| "C_PI2".to_string()),
+                "category2 for type {invoice_type:?}"
+            );
+        }
+
+        // Prescriptions build both dimensions; other types ignore category2_ID.
+        assert_eq!(
+            build_legacy_invoice_custom_fields(&InvoiceType::Prescription, Some("C1"), Some("C2")),
+            Some(serde_json::json!({
+                "prescription_category": "C1",
+                "prescription_category_2": "C2",
+            }))
+        );
+        assert_eq!(
+            build_legacy_invoice_custom_fields(&InvoiceType::InboundShipment, Some("C1"), Some("C2")),
+            Some(serde_json::json!({ "inbound_shipment_category": "C1" }))
+        );
     }
 }

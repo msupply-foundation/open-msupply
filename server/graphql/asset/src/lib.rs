@@ -38,6 +38,7 @@ impl AssetQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryAsset,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
@@ -72,6 +73,7 @@ impl AssetQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryAsset,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 

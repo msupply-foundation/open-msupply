@@ -34,6 +34,10 @@ pub struct UpdateInput {
     pub name_insurance_join_id: Option<NullableUpdateInput<String>>,
     pub insurance_discount_amount: Option<f64>,
     pub insurance_discount_percentage: Option<f64>,
+    /// Patch of customFields key -> value (JSON object) merged into the
+    /// invoice's custom properties; a `null` value clears that key, keys absent
+    /// from the patch are left unchanged.
+    pub custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -63,6 +67,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutatePrescription,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -113,6 +118,7 @@ impl UpdateInput {
             name_insurance_join_id,
             insurance_discount_amount,
             insurance_discount_percentage,
+            custom_fields,
         } = self;
 
         ServiceInput {
@@ -141,6 +147,7 @@ impl UpdateInput {
             }),
             insurance_discount_amount,
             insurance_discount_percentage,
+            custom_fields: custom_fields.map(|json| json.0),
         }
     }
 }
@@ -173,7 +180,8 @@ fn map_error(error: ServiceError) -> Result<UpdatePrescriptionErrorInterface> {
         ServiceError::NotAPrescriptionInvoice
         | ServiceError::ClinicianDoesNotExist
         | ServiceError::NotThisStoreInvoice
-        | ServiceError::PatientDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::PatientDoesNotExist
+        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_)
         | ServiceError::InvoiceLineHasNoStockLine(_)
         | ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
@@ -405,7 +413,8 @@ mod test {
                     their_reference: None,
                     name_insurance_join_id: None,
                     insurance_discount_amount: None,
-                    insurance_discount_percentage: None
+                    insurance_discount_percentage: None,
+                    custom_fields: None
                 }
             );
             Ok(Invoice {

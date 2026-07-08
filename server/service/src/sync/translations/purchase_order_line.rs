@@ -1,11 +1,11 @@
 use crate::sync::translations::{
-    item::ItemTranslation, purchase_order::PurchaseOrderTranslation, PullTranslateResult,
-    PushTranslateResult, SyncTranslation,
+    item::ItemTranslation, purchase_order::PurchaseOrderTranslation, store::StoreTranslation,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, PurchaseOrderLineDelete, PurchaseOrderLineRow,
-    PurchaseOrderLineRowRepository, PurchaseOrderLineStatus, StorageConnection, SyncBufferRow,
+    PurchaseOrderLineStatus, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -97,6 +97,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
         vec![
             PurchaseOrderTranslation.table_name(),
             ItemTranslation.table_name(),
+            StoreTranslation.table_name(),
         ]
     }
 
@@ -106,7 +107,8 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyPurchaseOrderLineRow {
@@ -131,14 +133,21 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             note,
             unit,
             oms_fields,
-        } = serde_json::from_str::<LegacyPurchaseOrderLineRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
+
+        let fk_check = fk_checker.with_table(connection, "purchase_order_line", &id);
+        let check_fk = fk_checker.with_table_required(connection, "purchase_order_line", &id);
 
         let result = PurchaseOrderLineRow {
             id,
-            store_id,
-            purchase_order_id,
+            store_id: check_fk(store_id, "store_id", FkField::Store)?,
+            purchase_order_id: check_fk(
+                purchase_order_id,
+                "purchase_order_id",
+                FkField::PurchaseOrder,
+            )?,
             line_number,
-            item_id: item_link_id,
+            item_id: check_fk(item_link_id, "item_link_id", FkField::ItemLink)?,
             item_name,
             requested_number_of_units,
             requested_pack_size,
@@ -150,7 +159,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             price_per_pack_before_discount,
             price_per_pack_after_discount,
             comment,
-            manufacturer_id: manufacturer_id,
+            manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
             note,
             unit,
             status: oms_fields.map_or(PurchaseOrderLineStatus::New, |f| f.status),
@@ -170,9 +179,14 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::PurchaseOrderLine(purchase_order_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let PurchaseOrderLineRow {
             id,
             store_id,
@@ -194,9 +208,7 @@ impl SyncTranslation for PurchaseOrderLineTranslation {
             note,
             unit,
             status,
-        } = PurchaseOrderLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or_else(|| anyhow::anyhow!("Purchase Order Line not found"))?;
+        } = purchase_order_line_row;
 
         // Total Cost calculated in Front End: price_per_pack_after_discount * number_of_packs
         // Number of packs = (requested_number_of_units OR adjusted_number_of_units) / requested_pack_size
@@ -254,7 +266,10 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        mock::{mock_purchase_order_a, MockDataInserts},
+        test_db::setup_all,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, PurchaseOrderRow,
+        PurchaseOrderRowRepository, RowOrDelete,
     };
     use serde_json::json;
 
@@ -265,15 +280,36 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_purchase_order_line_translation",
-            MockDataInserts::none().purchase_order_line(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the purchase_order parents the lines' required FKs point at.
+        for (i, po_id) in [
+            "sync_test_purchase_order_1",
+            "12e889c0f0d211eb8dddb54df6d7fsadsa",
+        ]
+        .iter()
+        .enumerate()
+        {
+            PurchaseOrderRowRepository::new(&connection)
+                .upsert_one(&PurchaseOrderRow {
+                    id: po_id.to_string(),
+                    purchase_order_number: 9990 + i as i64,
+                    ..mock_purchase_order_a()
+                })
+                .unwrap();
+        }
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             println!("Translating record: {:?}", record.sync_buffer_row.data);
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -298,25 +334,26 @@ mod tests {
         .await;
 
         let translator = PurchaseOrderLineTranslation {};
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new()
-                        .table_name(ChangelogTableName::PurchaseOrderLine.equal_to()),
-                ),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::PurchaseOrderLine),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

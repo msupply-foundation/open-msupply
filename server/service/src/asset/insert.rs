@@ -16,7 +16,8 @@ use repository::{
         asset_row::{AssetRow, AssetRowRepository},
     },
     migrations::constants::COLD_CHAIN_EQUIPMENT_UUID,
-    ActivityLogType, LocationRow, RepositoryError, StorageConnection, StringFilter, Upsert,
+    ActivityLogType, LocationRow, LocationRowRepository, LocationTypeFilter,
+    LocationTypeRepository, RepositoryError, StorageConnection, StringFilter,
 };
 use util::uuid::uuid;
 
@@ -90,7 +91,7 @@ pub fn insert_asset(
                 )?;
             }
 
-            // Automatically create a location for this asset (if it's a cold chain asset, and store is active on this site)
+            // Automatically create locations for this asset (if it's a cold chain asset, and store is active on this site)
             if new_asset.asset_class_id == Some(COLD_CHAIN_EQUIPMENT_UUID.to_string()) {
                 let active_stores = ActiveStoresOnSite::get(&ctx.connection);
                 let active_store_ids = match active_stores {
@@ -101,26 +102,10 @@ pub fn insert_asset(
                     }
                 };
 
-                // Check if the asset is in a store that is active before creating a location
-                if let Some(store_id) = new_asset.store_id {
+                // Check if the asset is in a store that is active before creating locations
+                if let Some(store_id) = new_asset.store_id.clone() {
                     if active_store_ids.contains(&store_id) {
-                        let new_location = LocationRow {
-                            id: uuid(),
-                            name: new_asset
-                                .asset_number
-                                .clone()
-                                .unwrap_or_else(|| "Asset".to_string()),
-                            code: new_asset
-                                .asset_number
-                                .clone()
-                                .unwrap_or_else(|| "Asset".to_string()),
-                            on_hold: false,
-                            store_id,
-                            location_type_id: None, // TODO(future): Based on asset type try to determine location type
-                            volume: 0.0, // TODO(future): Map asset volume to location volume if applicable
-                        };
-                        new_location.upsert(connection)?;
-                        set_asset_location(connection, &new_asset.id, vec![new_location.id])?;
+                        create_asset_locations(connection, &new_asset, store_id)?;
                     }
                 }
             }
@@ -137,6 +122,131 @@ pub fn insert_asset(
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(asset)
+}
+
+struct StorageZone {
+    capacity_key: &'static str,
+    temperature: f64,
+    label: &'static str,
+}
+
+const STORAGE_ZONES: [StorageZone; 3] = [
+    StorageZone {
+        capacity_key: "storage_capacity_5c",
+        temperature: 5.0,
+        label: "+5°C",
+    },
+    StorageZone {
+        capacity_key: "storage_capacity_20c",
+        temperature: -20.0,
+        label: "-20°C",
+    },
+    StorageZone {
+        capacity_key: "storage_capacity_70c",
+        temperature: -70.0,
+        label: "-70°C",
+    },
+];
+
+fn create_asset_locations(
+    connection: &StorageConnection,
+    asset: &AssetRow,
+    store_id: String,
+) -> Result<(), RepositoryError> {
+    let asset_label = asset
+        .asset_number
+        .clone()
+        .unwrap_or_else(|| "Asset".to_string());
+
+    let properties = get_storage_properties(connection, asset)?;
+
+    let zones: Vec<(&StorageZone, f64)> = STORAGE_ZONES
+        .iter()
+        .filter_map(|zone| {
+            let volume = properties
+                .get(zone.capacity_key)
+                .and_then(|value| value.as_f64())
+                .unwrap_or(0.0);
+            (volume > 0.0).then_some((zone, volume))
+        })
+        .collect();
+
+    if zones.is_empty() {
+        let location = LocationRow {
+            id: uuid(),
+            name: asset_label.clone(),
+            code: asset_label,
+            on_hold: false,
+            store_id,
+            location_type_id: None,
+            volume: 0.0,
+        };
+        LocationRowRepository::new(connection).upsert_one(&location)?;
+        return set_asset_location(connection, &asset.id, vec![location.id]);
+    }
+
+    let location_types =
+        LocationTypeRepository::new(connection).query_by_filter(LocationTypeFilter::new())?;
+
+    let mut location_ids = Vec::new();
+
+    for (zone, volume) in zones {
+        let location_type_id = location_types
+            .iter()
+            .map(|location_type| &location_type.location_type_row)
+            .find(|location_type| {
+                location_type.min_temperature <= zone.temperature
+                    && location_type.max_temperature >= zone.temperature
+            })
+            .map(|location_type| location_type.id.clone());
+
+        let name = format!("{} {}", asset_label, zone.label);
+
+        let location = LocationRow {
+            id: uuid(),
+            name: name.clone(),
+            code: name,
+            on_hold: false,
+            store_id: store_id.clone(),
+            location_type_id,
+            volume,
+        };
+        LocationRowRepository::new(connection).upsert_one(&location)?;
+        location_ids.push(location.id);
+    }
+
+    set_asset_location(connection, &asset.id, location_ids)
+}
+
+fn get_storage_properties(
+    connection: &StorageConnection,
+    asset: &AssetRow,
+) -> Result<serde_json::Map<String, serde_json::Value>, RepositoryError> {
+    let mut properties = serde_json::Map::new();
+
+    if let Some(catalogue_item_id) = &asset.catalogue_item_id {
+        if let Some(catalogue_item) =
+            AssetCatalogueItemRowRepository::new(connection).find_one_by_id(catalogue_item_id)?
+        {
+            if let Some(catalogue_properties) = catalogue_item.properties {
+                if let Ok(parsed) = serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(
+                    &catalogue_properties,
+                ) {
+                    properties.extend(parsed);
+                }
+            }
+        }
+    }
+
+    if let Some(asset_properties) = &asset.properties {
+        if let Ok(parsed) =
+            serde_json::from_str::<serde_json::Map<String, serde_json::Value>>(asset_properties)
+        {
+            properties.extend(parsed);
+        }
+    }
+
+    Ok(properties)
 }
 
 pub fn validate(

@@ -10,14 +10,24 @@ import {
   usePaginatedMaterialTable,
   MaterialTable,
   UnitsAndDosesCell,
+  buildPropertyColumns,
+  buildPropertyUrlFilterConfigs,
+  mapPropertyFilters,
+  useFormatDateTime,
   ChipTableCell,
 } from '@openmsupply-client/common';
-import { useVisibleOrOnHandItems, ItemsWithStatsFragment } from '../api';
+import {
+  useVisibleOrOnHandItems,
+  useItemCustomFields,
+  ItemsWithStatsFragment,
+} from '../api';
 import { Toolbar } from './Toolbar';
 
 export const ItemListView = () => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { localisedDate } = useFormatDateTime();
+  const { data: properties } = useItemCustomFields();
 
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
@@ -29,9 +39,14 @@ export const ItemListView = () => {
       { key: 'stockStatus' },
       { key: 'productsAtRiskOfBeingOutOfStock', condition: '=' },
       { key: 'masterListId', condition: 'equalTo' },
+      ...buildPropertyUrlFilterConfigs(properties ?? []),
     ],
   });
-  const { data, isError, isLoading } = useVisibleOrOnHandItems(queryParams);
+  const { data, isError, isLoading } = useVisibleOrOnHandItems({
+    ...queryParams,
+    // Property filters travel to the API as the `dynamicFilter` condition AST
+    filterBy: mapPropertyFilters(queryParams.filterBy, properties ?? []),
+  });
 
   // required to have correct type for UnitsAndDosesCell
   const rows = (data?.nodes ?? []).map(row => ({
@@ -98,8 +113,11 @@ export const ItemListView = () => {
         columnType: ColumnType.Number,
         size: 120,
       },
+      ...buildPropertyColumns<
+        ItemsWithStatsFragment & { item: { doses: number; isVaccine: boolean } }
+      >(properties ?? [], localisedDate),
     ],
-    []
+    [properties, localisedDate, t]
   );
 
   const { table } = usePaginatedMaterialTable<

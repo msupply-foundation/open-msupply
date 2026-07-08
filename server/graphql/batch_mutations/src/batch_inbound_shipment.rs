@@ -133,6 +133,7 @@ pub fn batch(
         &ResourceAccessRequest {
             resource: r#type.resource(),
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

@@ -1,12 +1,12 @@
 use repository::{
-    contact_form_row::{ContactFormRow, ContactFormRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    contact_form_row::ContactFormRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
 };
 
 use crate::sync::translations::{store::StoreTranslation, user::UserTranslation};
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 // Needs to be added to all_translations()
@@ -28,12 +28,16 @@ impl SyncTranslation for ContactFormTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            ContactFormRow,
-        >(&sync_record.data)?))
+        let mut row = serde_json::from_value::<ContactFormRow>(sync_record.data.0.clone())?;
+
+        let check_fk = fk_checker.with_table_required(connection, "contact_form", &row.id);
+        row.store_id = check_fk(row.store_id, "store_id", FkField::Store)?;
+
+        Ok(PullTranslateResult::upsert(row))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -55,15 +59,15 @@ impl SyncTranslation for ContactFormTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = ContactFormRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Contact Form row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::ContactForm(contact_form_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = contact_form_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -83,7 +87,7 @@ mod tests {
         contact_form_row::ContactFormRow,
         mock::{mock_contact_form_a, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
-        RowActionType,
+        ChangelogRepository, FilterBuilder,
     };
     use serde_json::json;
 
@@ -93,12 +97,16 @@ mod tests {
         let translator = ContactFormTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_contact_form_translation", MockDataInserts::none()).await;
+            setup_all("test_contact_form_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -128,15 +136,21 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let changelog = ChangelogRow {
-            cursor: 1,
-            table_name: ChangelogTableName::ContactForm,
-            record_id: "contact_id".to_string(),
-            row_action: RowActionType::Upsert,
-            name_id: None,
-            store_id: None,
-            is_sync_update: false,
-            source_site_id: None,
+        let entry = ChangelogRepository::new(&connection)
+            .query_with_data(
+                repository::ChangelogCondition::table_name::equal(ChangelogTableName::ContactForm),
+                repository::CursorAndLimit {
+                    cursor: -1,
+                    limit: 1,
+                },
+            )
+            .unwrap()
+            .rows
+            .pop()
+            .unwrap();
+
+        let repository::RowOrDelete::Row { changelog, row } = entry else {
+            panic!("expected upsert row")
         };
 
         let translator = ContactFormTranslation {};
@@ -145,7 +159,7 @@ mod tests {
             &ToSyncRecordTranslationType::PushToOmSupplyCentral
         ));
         let translated = translator
-            .try_translate_to_upsert_sync_record(&connection, &changelog)
+            .try_translate_to_upsert_sync_record(&connection, &changelog, row)
             .unwrap();
 
         assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

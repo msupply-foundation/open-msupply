@@ -8,15 +8,12 @@ use util::sync_serde::{
 };
 
 use repository::{
-    ChangelogRow, ChangelogTableName, LocationRowRepository, StorageConnection, SyncBufferRow,
-    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachType,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow, TemperatureBreachRow,
+    TemperatureBreachType,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    to_legacy_time, utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult,
-    SyncTranslation,
-};
+use super::{to_legacy_time, FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -99,9 +96,10 @@ impl SyncTranslation for TemperatureBreachTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyTemperatureBreachRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyTemperatureBreachRow>()?;
         let LegacyTemperatureBreachRow {
             id,
             duration_milliseconds,
@@ -122,24 +120,19 @@ impl SyncTranslation for TemperatureBreachTranslation {
             comment,
         } = data;
 
-        let location_id = clear_invalid_fk(
-            connection,
-            "temperature_breach",
-            &id,
-            "location_id",
-            location_id,
-            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let fk_check = fk_checker.with_table(connection, "temperature_breach", &id);
+        let check_fk = fk_checker.with_table_required(connection, "temperature_breach", &id);
+
+        let location_id = fk_check(location_id, "location_id", FkField::Location)?;
 
         let r#type = from_legacy_breach_type(&r#type);
         let result = TemperatureBreachRow {
             id,
             duration_milliseconds,
             r#type,
-            sensor_id,
+            sensor_id: check_fk(sensor_id, "sensor_id", FkField::Sensor)?,
             location_id,
-            store_id,
+            store_id: check_fk(store_id, "store_id", FkField::Store)?,
             end_datetime: end_datetime.or(end_date.map(|date| NaiveDateTime::new(date, end_time))),
             unacknowledged: !acknowledged,
             threshold_minimum,
@@ -156,9 +149,14 @@ impl SyncTranslation for TemperatureBreachTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::TemperatureBreach(temperature_breach_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let TemperatureBreachRow {
             id,
             duration_milliseconds,
@@ -173,12 +171,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             threshold_maximum,
             threshold_duration_milliseconds,
             comment,
-        } = TemperatureBreachRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "TemperatureBreach row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = temperature_breach_row;
 
         let r#type = to_legacy_breach_type(&r#type);
 
@@ -235,7 +228,11 @@ pub fn to_legacy_breach_type(t: &TemperatureBreachType) -> LegacyTemperatureBrea
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_sensor_1, MockDataInserts},
+        test_db::setup_all,
+        SensorRow, SensorRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_temperature_breach_translation() {
@@ -244,14 +241,26 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_temperature_breach_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the sensor parent the breach's required FK points at.
+        SensorRowRepository::new(&connection)
+            .upsert_one(&SensorRow {
+                id: "cf5812e0c33911eb9757779d39ae2dbd".to_string(),
+                ..mock_sensor_1()
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

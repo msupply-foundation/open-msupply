@@ -17,6 +17,7 @@ diesel = { version = "2.3.7", default-features = false, features = [
     "r2d2",
     "numeric",
     "chrono",
+    "serde_json",
     "64-column-tables",
     "with-deprecated",
 ] }
@@ -43,6 +44,7 @@ urlencoding = "2.1.3"
 tokio = { version = "1.50.0", features = ["time", "rt-multi-thread", "macros"] }
 actix-rt = { workspace = true }
 strum = { workspace = true }
+topological-sort = "0.2.2"
 
 [features]
 default = ["sqlite"]

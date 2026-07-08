@@ -66,6 +66,7 @@ pub fn update_label_printer_settings(
         &ResourceAccessRequest {
             resource: Resource::NoPermissionRequired,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

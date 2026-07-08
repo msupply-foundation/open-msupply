@@ -1,3 +1,4 @@
+use chrono::{NaiveDate, Utc};
 use repository::{
     property::{PropertyFilter, PropertyRepository},
     EqualFilter, Name, NameFilter, NameRepository, Patient, PatientFilter, PatientRepository,
@@ -6,6 +7,10 @@ use repository::{
 
 pub fn check_store_id_matches(store_id_a: &str, store_id_b: &str) -> bool {
     store_id_a == store_id_b
+}
+
+pub fn check_date_is_not_in_future(date: &NaiveDate) -> bool {
+    date <= &Utc::now().naive_utc().date()
 }
 
 pub fn check_store_exists(

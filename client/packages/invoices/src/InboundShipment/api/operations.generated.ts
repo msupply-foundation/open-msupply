@@ -38,6 +38,7 @@ export type InboundLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
+    customFields?: any | null;
     store?: {
       __typename: 'StoreNode';
       id: string;
@@ -60,6 +61,7 @@ export type InboundLineFragment = {
     itemStoreProperties?: {
       __typename: 'ItemStorePropertiesNode';
       defaultSellPricePerPack: number;
+      margin: number;
     } | null;
     programs?: Array<{
       __typename: 'ProgramNode';
@@ -149,6 +151,7 @@ export type InboundFragment = {
   type: Types.InvoiceNodeType;
   taxPercentage?: number | null;
   expectedDeliveryDate?: string | null;
+  customFields?: any | null;
   currencyRate: number;
   chargesLocalCurrency: number;
   chargesForeignCurrency: number;
@@ -208,6 +211,7 @@ export type InboundFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
+        customFields?: any | null;
         store?: {
           __typename: 'StoreNode';
           id: string;
@@ -234,6 +238,7 @@ export type InboundFragment = {
         itemStoreProperties?: {
           __typename: 'ItemStorePropertiesNode';
           defaultSellPricePerPack: number;
+          margin: number;
         } | null;
         programs?: Array<{
           __typename: 'ProgramNode';
@@ -309,6 +314,7 @@ export type InboundFragment = {
     isCustomer: boolean;
     isSupplier: boolean;
     isOnHold: boolean;
+    margin?: number | null;
     store?: {
       __typename: 'StoreNode';
       id: string;
@@ -391,6 +397,7 @@ export type InboundRowFragment = {
   onHold: boolean;
   currencyRate: number;
   inboundType: Types.InboundNodeType;
+  customFields?: any | null;
   pricing: {
     __typename: 'PricingNode';
     totalAfterTax: number;
@@ -450,6 +457,7 @@ export type InvoicesQuery = {
       onHold: boolean;
       currencyRate: number;
       inboundType: Types.InboundNodeType;
+      customFields?: any | null;
       pricing: {
         __typename: 'PricingNode';
         totalAfterTax: number;
@@ -509,6 +517,7 @@ export type InvoiceQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
+        customFields?: any | null;
         currencyRate: number;
         chargesLocalCurrency: number;
         chargesForeignCurrency: number;
@@ -572,6 +581,7 @@ export type InvoiceQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -602,6 +612,7 @@ export type InvoiceQuery = {
               itemStoreProperties?: {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
+                margin: number;
               } | null;
               programs?: Array<{
                 __typename: 'ProgramNode';
@@ -677,6 +688,7 @@ export type InvoiceQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
+          margin?: number | null;
           store?: {
             __typename: 'StoreNode';
             id: string;
@@ -784,6 +796,7 @@ export type InboundByNumberQuery = {
         type: Types.InvoiceNodeType;
         taxPercentage?: number | null;
         expectedDeliveryDate?: string | null;
+        customFields?: any | null;
         currencyRate: number;
         chargesLocalCurrency: number;
         chargesForeignCurrency: number;
@@ -847,6 +860,7 @@ export type InboundByNumberQuery = {
               isSupplier: boolean;
               isOnHold: boolean;
               name: string;
+              customFields?: any | null;
               store?: {
                 __typename: 'StoreNode';
                 id: string;
@@ -877,6 +891,7 @@ export type InboundByNumberQuery = {
               itemStoreProperties?: {
                 __typename: 'ItemStorePropertiesNode';
                 defaultSellPricePerPack: number;
+                margin: number;
               } | null;
               programs?: Array<{
                 __typename: 'ProgramNode';
@@ -952,6 +967,7 @@ export type InboundByNumberQuery = {
           isCustomer: boolean;
           isSupplier: boolean;
           isOnHold: boolean;
+          margin?: number | null;
           store?: {
             __typename: 'StoreNode';
             id: string;
@@ -1886,6 +1902,7 @@ export const InboundLineFragmentDoc = gql`
       restrictedLocationTypeId
       itemStoreProperties(storeId: $storeId) {
         defaultSellPricePerPack
+        margin
       }
       programs(storeId: $storeId) {
         id
@@ -1976,6 +1993,7 @@ export const InboundFragmentDoc = gql`
     type
     taxPercentage
     expectedDeliveryDate
+    customFields
     defaultDonor(storeId: $storeId) {
       id
       name
@@ -2016,6 +2034,7 @@ export const InboundFragmentDoc = gql`
       isCustomer
       isSupplier
       isOnHold
+      margin
       store {
         id
         code
@@ -2117,6 +2136,7 @@ export const InboundRowFragmentDoc = gql`
       number
     }
     inboundType
+    customFields
   }
 `;
 export const LineLinkedToTransferredInvoiceErrorFragmentDoc = gql`

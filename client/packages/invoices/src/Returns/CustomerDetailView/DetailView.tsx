@@ -10,6 +10,7 @@ import {
   useBreadcrumbs,
   useUrlQuery,
   AppFooterStatusPortal,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -20,9 +21,12 @@ import { ActivityLogList } from '@openmsupply-client/system';
 import { DetailsTab } from './Tabs/Details';
 import { CustomerReturnDetailTabs } from './types';
 import { StatusFooter } from './Footer';
+import { InvoiceCustomFieldsTab } from '../../common';
 
 export const CustomerReturnDetailView = () => {
   const { data, isLoading } = useReturns.document.customerReturn();
+  const { mutateAsync: update } = useReturns.document.updateCustomerReturn();
+  const isDisabled = useReturns.utils.customerIsDisabled();
   const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
@@ -53,6 +57,22 @@ export const CustomerReturnDetailView = () => {
     {
       Component: <DetailsTab lineEdit={lineEditModal} />,
       value: CustomerReturnDetailTabs.Details,
+    },
+    {
+      Component: (
+        <InvoiceCustomFieldsTab
+          invoiceType={InvoiceNodeType.CustomerReturn}
+          customFields={data?.customFields}
+          onSave={async patch => {
+            // id is only undefined before the return exists; the tab isn't
+            // rendered until then
+            if (!data?.id) return;
+            return update({ id: data.id, customFields: patch });
+          }}
+          disabled={isDisabled}
+        />
+      ),
+      value: 'custom-fields',
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
