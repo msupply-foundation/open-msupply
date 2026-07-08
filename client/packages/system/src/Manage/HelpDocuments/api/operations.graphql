@@ -1,0 +1,97 @@
+fragment HelpDocumentFile on SyncFileReferenceNode {
+  __typename
+  id
+  fileName
+  mimeType
+  createdDatetime
+  status
+}
+
+fragment HelpDocumentRow on HelpDocumentNode {
+  __typename
+  id
+  title
+  createdDatetime
+  files {
+    __typename
+    totalCount
+    nodes {
+      __typename
+      ...HelpDocumentFile
+    }
+  }
+}
+
+query helpDocuments($first: Int, $offset: Int, $filter: HelpDocumentFilterInput) {
+  helpDocuments(page: { first: $first, offset: $offset }, filter: $filter) {
+    __typename
+    ... on HelpDocumentConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...HelpDocumentRow
+      }
+    }
+  }
+}
+
+mutation insertHelpDocument($input: InsertHelpDocumentInput!) {
+  centralServer {
+    helpDocument {
+      insertHelpDocument(input: $input) {
+        ... on InsertHelpDocumentError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on InternalError {
+              __typename
+              description
+              fullError
+            }
+            ... on RecordAlreadyExist {
+              __typename
+              description
+            }
+          }
+        }
+        ... on HelpDocumentNode {
+          ...HelpDocumentRow
+        }
+      }
+    }
+  }
+}
+
+mutation deleteHelpDocument($id: String!) {
+  centralServer {
+    helpDocument {
+      deleteHelpDocument(input: { id: $id }) {
+        ... on DeleteHelpDocumentError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}

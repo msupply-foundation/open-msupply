@@ -182,6 +182,7 @@ fragment ItemVariant on ItemVariantNode {
   manufacturerId
   manufacturer(storeId: $storeId) {
     ...NameRow
+    isVisible
   }
   locationTypeId
   locationType {

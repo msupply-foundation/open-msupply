@@ -243,6 +243,7 @@ export type PreferencesQuery = {
     adjustForNumberOfDaysOutOfStock: boolean;
     allowTrackingOfStockByDonor: boolean;
     authorisePurchaseOrder: boolean;
+    blindStocktake: boolean;
     canCreateInternalOrderFromARequisition: boolean;
     customTranslations: any;
     daysInMonth: number;
@@ -511,6 +512,7 @@ export const PreferencesDocument = gql`
       adjustForNumberOfDaysOutOfStock
       allowTrackingOfStockByDonor
       authorisePurchaseOrder
+      blindStocktake
       canCreateInternalOrderFromARequisition
       customTranslations
       daysInMonth

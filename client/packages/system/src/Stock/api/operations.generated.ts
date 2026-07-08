@@ -188,6 +188,7 @@ export type StockLineListRowFragment = {
       isDisabled: boolean;
     } | null;
   } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
 };
 
 export type RepackStockLineFragment = {
@@ -403,6 +404,11 @@ export type StockLinesQuery = {
           code: string;
           isDisabled: boolean;
         } | null;
+      } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
       } | null;
     }>;
   };
@@ -1202,6 +1208,11 @@ export type ItemsByStockLineFilterQuery = {
               isDisabled: boolean;
             } | null;
           } | null;
+          campaign?: {
+            __typename: 'CampaignNode';
+            id: string;
+            name: string;
+          } | null;
         }>;
       };
     }>;
@@ -1352,6 +1363,10 @@ export const StockLineListRowFragmentDoc = gql`
     }
     manufacturer(storeId: $storeId) {
       ...NameRow
+    }
+    campaign {
+      id
+      name
     }
   }
   ${LocationRowFragmentDoc}
