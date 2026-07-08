@@ -103,6 +103,7 @@ const AdditionalInfoSection: FC = () => {
             update({ comment: e.target.value });
           }}
           value={bufferedComment}
+          inputProps={{ 'data-testid': 'comment-field' }}
         />
       </Grid>
     </DetailPanelSection>

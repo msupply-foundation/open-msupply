@@ -57,6 +57,7 @@ Detail view (list table column ids: `item.code`, `itemName`, `batch`,
 | `on-hold-button` | On hold toggle |
 | `status-change-button-main` / `-dropdown` | finalise split button (absent when read-only) |
 | `delete-stocktake-button` | Delete action in the side panel |
+| `comment-field` | comment textarea in the side panel |
 
 Line-edit ("Add item") modal:
 
