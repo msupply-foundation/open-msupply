@@ -10,11 +10,16 @@
           {
             "customProperties": {
               "--kb-popper-content-available-height": "100vh",
-              "--ripple-color": "transparent"
+              "--ripple-color": "transparent",
+              "--chip-colour": "transparent"
             }
           }
         ]
       }
+    ],
+    "selector-pseudo-class-no-unknown": [
+      true,
+      { "ignorePseudoClasses": ["global"] }
     ],
     "color-function-notation": null,
     "color-function-alias-notation": null,

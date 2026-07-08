@@ -13,8 +13,15 @@ import { SplitButton } from '../../components/ui/SplitButton'
 import { FilterBar, type FilterField, type FilterValues } from '../../components/ui/FilterBar'
 import { Table } from '../../components/ui/Table'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { StatusChip } from '../../components/ui/StatusChip'
 import { PlusCircleIcon, DownloadIcon, TrashIcon, MinusCircleIcon } from '../../components/icons'
-import { SHIPMENTS, SHIPMENT_STATUSES, statusLabel, type ShipmentRow } from './demoData'
+import {
+  SHIPMENTS,
+  SHIPMENT_STATUSES,
+  statusColour,
+  statusLabel,
+  type ShipmentRow,
+} from './demoData'
 
 const FILTER_FIELDS: FilterField[] = [
   { key: 'customer', name: 'Customer', type: 'text', placeholder: 'Customer name' },
@@ -158,7 +165,12 @@ export const ListView = (props: ListViewProps) => {
                     </button>
                   </td>
                   <td>{row.customer}</td>
-                  <td>{statusLabel(row.status)}</td>
+                  <td>
+                    <StatusChip
+                      label={statusLabel(row.status)}
+                      colour={statusColour(row.status)}
+                    />
+                  </td>
                   <td data-numeric>{row.items}</td>
                   <td data-muted>{row.theirReference}</td>
                   <td data-muted>{row.created}</td>

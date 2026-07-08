@@ -1,4 +1,4 @@
-import { createSignal, For } from 'solid-js'
+import { createSignal, For, Show } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
 import { Page } from '../../components/layout/Page/Page'
 import { Header } from '../../components/layout/Header/Header'
@@ -12,13 +12,15 @@ import { Button } from '../../components/ui/Button'
 import { Tabs, TabList, TabPanel, type TabDef } from '../../components/ui/Tabs'
 import { Table } from '../../components/ui/Table'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
+import { StatusChip } from '../../components/ui/StatusChip'
 import {
   PlusCircleIcon,
   ClockIcon,
   SaveIcon,
   XCircleIcon,
 } from '../../components/icons'
-import { linesFor, SHIPMENTS, statusLabel } from './demoData'
+import { linesFor, SHIPMENTS, statusColour, statusLabel } from './demoData'
 
 const DETAIL_TABS: TabDef[] = [
   { value: 'details', label: 'Details' },
@@ -45,6 +47,7 @@ export interface DetailViewProps {
  */
 export const DetailView = (props: DetailViewProps) => {
   const [tab, setTab] = createSignal('details')
+  const [confirmSave, setConfirmSave] = createSignal(false)
   const shipment = () => SHIPMENTS.find((s) => s.reference === props.reference)
   const lines = () => linesFor(props.reference)
 
@@ -75,7 +78,16 @@ export const DetailView = (props: DetailViewProps) => {
             <SidePanelSection title="Additional info">
               <dl>
                 <dt>Status</dt>
-                <dd>{statusLabel(shipment()?.status ?? '')}</dd>
+                <dd>
+                  <Show when={shipment()} fallback="—">
+                    {(s) => (
+                      <StatusChip
+                        label={statusLabel(s().status)}
+                        colour={statusColour(s().status)}
+                      />
+                    )}
+                  </Show>
+                </dd>
                 <dt>Entered</dt>
                 <dd>{shipment()?.created}</dd>
                 <dt>Customer</dt>
@@ -104,9 +116,21 @@ export const DetailView = (props: DetailViewProps) => {
               <Button variant="secondary" icon={<XCircleIcon />} onClick={props.onBack}>
                 Cancel
               </Button>
-              <Button variant="secondary" icon={<SaveIcon />}>
+              <Button
+                variant="secondary"
+                icon={<SaveIcon />}
+                onClick={() => setConfirmSave(true)}
+              >
                 Save
               </Button>
+              <ConfirmDialog
+                open={confirmSave()}
+                onClose={() => setConfirmSave(false)}
+                message={`Save changes to ${props.reference}?`}
+                onConfirm={() => {
+                  /* no data layer yet — the recipe shows the wiring */
+                }}
+              />
             </ContentFooterActions>
           </ContentFooter>
         }

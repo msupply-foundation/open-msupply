@@ -8,18 +8,24 @@
 export interface StatusOption {
   value: string
   label: string
+  /** StatusChip colour — always a --status-* contract token, never a literal. */
+  colour: string
 }
 
 export const SHIPMENT_STATUSES: StatusOption[] = [
-  { value: 'new', label: 'New' },
-  { value: 'allocated', label: 'Allocated' },
-  { value: 'picked', label: 'Picked' },
-  { value: 'shipped', label: 'Shipped' },
-  { value: 'delivered', label: 'Delivered' },
+  { value: 'new', label: 'New', colour: 'var(--status-new)' },
+  { value: 'allocated', label: 'Allocated', colour: 'var(--status-allocated)' },
+  { value: 'picked', label: 'Picked', colour: 'var(--status-picked)' },
+  { value: 'shipped', label: 'Shipped', colour: 'var(--status-shipped)' },
+  { value: 'delivered', label: 'Delivered', colour: 'var(--status-delivered)' },
 ]
 
 export const statusLabel = (value: string): string =>
   SHIPMENT_STATUSES.find((s) => s.value === value)?.label ?? value
+
+export const statusColour = (value: string): string =>
+  SHIPMENT_STATUSES.find((s) => s.value === value)?.colour ??
+  'var(--status-new)'
 
 export interface ShipmentRow {
   reference: string

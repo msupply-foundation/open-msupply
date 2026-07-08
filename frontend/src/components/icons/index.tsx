@@ -134,6 +134,13 @@ export const MinusCircleIcon = (props: IconProps) => (
   </Stroke>
 )
 
+/* Comment / note (the table comment cell's popover trigger) */
+export const MessageSquareIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </Stroke>
+)
+
 /* --- Navigation icons (from the current app; added as the menu bar needs them) --- */
 
 /* Inventory */

@@ -103,6 +103,18 @@
   /* Scrim behind the mobile nav overlay / modals */
   --overlay-scrim: rgba(28, 28, 40, 0.45);
 
+  /* Shipment-status colours (StatusChip dot + tint). Demo values carried from
+     the RnD prototype's STATUS_META — swap for the design team's palette when
+     one lands. First three alias existing palette roles; the alias tracks the
+     theme automatically, but the contract check wants explicit dark overrides,
+     so the dark block re-declares them. */
+  --status-new: var(--gray-main);
+  --status-allocated: var(--secondary-main);
+  --status-picked: var(--color-warning);
+  --status-shipped: #1fb6b6;
+  --status-delivered: #7c5cff;
+  --status-verified: #38a169;
+
   /* @theme-contract:end */
 
   /* --- Spacing (4px base → rem) --------------------------------------- */
@@ -240,4 +252,14 @@
   --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.45);
   --focus-ring-error: 0 0 0 0.1875rem rgba(255, 95, 95, 0.4);
   --overlay-scrim: rgba(0, 0, 0, 0.6);
+
+  /* Status colours — aliases track the lifted dark palette by themselves
+     (re-declared to satisfy the contract check); the three own-hue values get
+     the same lift as the rest of the dark palette. */
+  --status-new: var(--gray-main);
+  --status-allocated: var(--secondary-main);
+  --status-picked: var(--color-warning);
+  --status-shipped: #2ecbcb;
+  --status-delivered: #9678ff;
+  --status-verified: #48c78e;
 }

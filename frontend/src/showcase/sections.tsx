@@ -3,6 +3,7 @@ import { SlidersIcon, CopyIcon, FileIcon, type IconProps } from '../components/i
 import { ButtonsShowcase } from './ButtonsShowcase'
 import { InputsShowcase } from './InputsShowcase'
 import { SelectorsShowcase } from './SelectorsShowcase'
+import { FeedbackShowcase } from './FeedbackShowcase'
 import { HeaderShowcase } from './HeaderShowcase'
 import { TabBarShowcase } from './TabBarShowcase'
 import { ContentFooterShowcase } from './ContentFooterShowcase'
@@ -53,7 +54,7 @@ export const sections: SectionDef[] = [
   { id: 'inputs', label: 'Inputs', component: InputsShowcase, category: 'components' },
   { id: 'selectors', label: 'Selectors', component: SelectorsShowcase, category: 'components' },
   { id: 'tab-bar', label: 'Tab bar', component: TabBarShowcase, category: 'components' },
-  { id: 'feedback', label: 'Feedback', component: ComingSoon, category: 'components' },
+  { id: 'feedback', label: 'Feedback', component: FeedbackShowcase, category: 'components' },
   { id: 'table', label: 'Table', component: ComingSoon, category: 'components' },
   { id: 'header', label: 'Header', component: HeaderShowcase, category: 'layout' },
   { id: 'content-footer', label: 'Content footer', component: ContentFooterShowcase, category: 'layout' },

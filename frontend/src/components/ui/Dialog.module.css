@@ -1,0 +1,100 @@
+/*
+ * Native <dialog> — the top layer handles stacking (no z-index) and the UA
+ * centres dialog:modal in the viewport (fixed + inset 0 + margin auto), so
+ * the CSS here is only the look. Padding lives on .body, NOT the dialog:
+ * scrim-click detection relies on "pointerdown targeting the <dialog> element
+ * itself means the ::backdrop was hit".
+ */
+
+.dialog {
+  width: min(30rem, calc(100vw - 2rem));
+  padding: 0;
+  border: none;
+  border-radius: 1rem;
+  background: var(--surface-raised);
+  color: var(--text-body);
+  box-shadow: var(--shadow-4);
+}
+
+.dialog::backdrop {
+  background: var(--overlay-scrim);
+}
+
+/* The page behind is inert but the UA still lets it scroll under the scrim. */
+:global(body:has(dialog:modal)) {
+  overflow: hidden;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 1.75rem;
+  color: var(--secondary-main);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--gray-dark);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-body);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] {
+    animation: content-in 150ms ease;
+  }
+
+  .dialog[open]::backdrop {
+    animation: overlay-in 150ms ease;
+  }
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes content-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -2,6 +2,7 @@ import { createSignal, For, Show, type JSX } from 'solid-js'
 import { ContentFooter } from '../components/layout/ContentFooter/ContentFooter'
 import { ContentFooterActions } from '../components/layout/ContentFooter/ContentFooterActions'
 import { Button } from '../components/ui/Button'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import {
   ClockIcon,
   CopyIcon,
@@ -29,6 +30,7 @@ const Card = (props: {
 const DEMO_ROWS = ['OS-001024', 'OS-001025', 'OS-001026']
 
 export const ContentFooterShowcase = () => {
+  const [confirmSave, setConfirmSave] = createSignal(false)
   const [picked, setPicked] = createSignal<ReadonlySet<string>>(new Set())
   const toggle = (id: string) =>
     setPicked((prev) => {
@@ -50,8 +52,9 @@ export const ContentFooterShowcase = () => {
             pure layout with zero state, the same contract as{' '}
             <code>&lt;Header&gt;</code>: loose children flow from the
             inline-start edge, and <code>&lt;ContentFooterActions&gt;</code>{' '}
-            pins the button cluster inline-end. The page owns every handler
-            (Save's confirm dialog arrives with the Feedback components).
+            pins the button cluster inline-end. The page owns every handler —
+            here Save opens the standard <code>&lt;ConfirmDialog&gt;</code>{' '}
+            (native <code>&lt;dialog&gt;</code> — see the Feedback section).
             Inside the app it pins between the scrolling body and the app
             footer via the Page frame's <code>contentFooter</code> slot — see
             the Outbound Shipments page in the Full page group.
@@ -68,9 +71,19 @@ export const ContentFooterShowcase = () => {
               <Button variant="secondary" icon={<XCircleIcon />}>
                 Cancel
               </Button>
-              <Button variant="secondary" icon={<SaveIcon />}>
+              <Button
+                variant="secondary"
+                icon={<SaveIcon />}
+                onClick={() => setConfirmSave(true)}
+              >
                 Save
               </Button>
+              <ConfirmDialog
+                open={confirmSave()}
+                onClose={() => setConfirmSave(false)}
+                message="Save changes to this shipment?"
+                onConfirm={() => {}}
+              />
             </ContentFooterActions>
           </ContentFooter>
         </div>
