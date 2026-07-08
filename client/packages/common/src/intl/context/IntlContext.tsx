@@ -17,6 +17,7 @@ declare const LANG_VERSION: string;
 
 export const CUSTOM_TRANSLATIONS_NAMESPACE = 'custom-translations';
 export const DEFAULT_TRANSLATIONS_NAMESPACE = 'common';
+export const DESKTOP_TRANSLATIONS_NAMESPACE = 'desktop';
 const minuteInMilliseconds = 60 * 1000;
 const isDevelopment = process.env['NODE_ENV'] === 'development';
 
@@ -64,6 +65,7 @@ export function initialiseI18n({
             languageVersion,
             endpointByNamespace: {
               [DEFAULT_TRANSLATIONS_NAMESPACE]: defaultTranslationsLoadPath,
+              [DESKTOP_TRANSLATIONS_NAMESPACE]: defaultTranslationsLoadPath,
               [CUSTOM_TRANSLATIONS_NAMESPACE]: customTranslationsLoadPath,
             },
           },

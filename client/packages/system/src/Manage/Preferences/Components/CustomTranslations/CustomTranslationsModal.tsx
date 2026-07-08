@@ -25,6 +25,7 @@ import {
   DEFAULT_CUSTOM_TRANSLATION_NAMESPACE,
 } from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
+import { useNamespaceTranslationOptions } from './useNamespaceTranslationOptions';
 
 export const EditCustomTranslations = ({
   value,
@@ -83,6 +84,10 @@ export const CustomTranslationsModal = ({
     mapTranslationsToArray(value, t)
   );
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+
+  const { options: addOptions } = useNamespaceTranslationOptions(
+    DEFAULT_CUSTOM_TRANSLATION_NAMESPACE
+  );
 
   const downloadTranslations = () => {
     const asObject = mapTranslationsToObject(translations);
@@ -235,8 +240,7 @@ export const CustomTranslationsModal = ({
               translations={translations}
               setTranslations={setTranslations}
               showValidationErrors={showValidationErrors}
-              // Legacy v1 is the global flat map of app-wide (common) keys.
-              namespace={DEFAULT_CUSTOM_TRANSLATION_NAMESPACE}
+              addOptions={addOptions}
             />
           </Box>
         </Box>
