@@ -17,6 +17,7 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::Diagnosis,
     ChangelogTableName::FormSchema,
     ChangelogTableName::FrontendPlugin,
+    ChangelogTableName::HelpDocument,
     ChangelogTableName::InsuranceProvider,
     ChangelogTableName::LocationType,
     ChangelogTableName::MasterList,
