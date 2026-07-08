@@ -3,9 +3,11 @@ import { ButtonsShowcase } from './ButtonsShowcase'
 import { InputsShowcase } from './InputsShowcase'
 import { SelectorsShowcase } from './SelectorsShowcase'
 import { HeaderShowcase } from './HeaderShowcase'
+import { TabBarShowcase } from './TabBarShowcase'
 import { ContentFooterShowcase } from './ContentFooterShowcase'
 import { PageLayoutShowcase } from './PageLayoutShowcase'
 import { Home } from '../pages/Home/Home'
+import { Login } from '../pages/Login/Login'
 
 export type SectionDef = {
   id: string
@@ -36,6 +38,7 @@ export const sections: SectionDef[] = [
   { id: 'inputs', label: 'Inputs', component: InputsShowcase },
   { id: 'selectors', label: 'Selectors', component: SelectorsShowcase },
   { id: 'header', label: 'Header', component: HeaderShowcase },
+  { id: 'tab-bar', label: 'Tab bar', component: TabBarShowcase },
   // The layout elements each have their own section (Header, Content footer,
   // App shell) — no umbrella "Layout" placeholder needed.
   { id: 'content-footer', label: 'Content footer', component: ContentFooterShowcase },
@@ -46,4 +49,5 @@ export const sections: SectionDef[] = [
   // only from the library), registered here so it's reachable and testable.
   { id: 'app-shell', label: 'App shell', component: PageLayoutShowcase, kind: 'page' },
   { id: 'home', label: 'Home', component: Home, kind: 'app' },
+  { id: 'login', label: 'Login', component: Login, kind: 'app' },
 ]

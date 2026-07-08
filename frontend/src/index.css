@@ -50,3 +50,13 @@ body {
 button {
   font: inherit;
 }
+
+/*
+ * Directional icons (arrows) mark themselves with data-flip-rtl and mirror
+ * when the document runs right-to-left — the plain-CSS analogue of the
+ * current app's RtlFlipIcon wrapper. dir lives on <html> (see DECISIONS.md
+ * 2026-07-08), so an ancestor selector is sufficient.
+ */
+[dir='rtl'] [data-flip-rtl] {
+  transform: scaleX(-1);
+}

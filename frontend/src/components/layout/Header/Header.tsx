@@ -6,7 +6,8 @@ import styles from './Header.module.css'
 export interface HeaderProps {
   /**
    * The header's parts: Breadcrumb (inline-start), HeaderButtons
-   * (inline-end) and Toolbar (its own full-width row below). Each part is
+   * (inline-end), Toolbar (its own full-width row below) and optionally a
+   * TabList as the last child (the header's bottom edge). Each part is
    * optional; they pin themselves into place via their own CSS, so the
    * header stays a flat flex-wrap container with no nested row markup.
    */
@@ -20,8 +21,10 @@ export interface HeaderProps {
  * the actions, and hands them in as children. When space runs out the
  * buttons wrap intrinsically below the breadcrumb (flex-wrap) — no
  * breakpoints, per the intrinsic-first responsive principle. Adapted from
- * the RnD prototype's Header (its tab strip is not ported; tabs come later
- * with the Toolbar).
+ * the RnD prototype's Header. Its tab strip is ported too: a ui/Tabs
+ * <TabList> rendered as the last child claims the header's bottom edge
+ * (the strip's border replaces the header's own — see Header.module.css);
+ * the surrounding <Tabs> root wraps the header from outside.
  *
  * Inside an AppShell, the sidebar hamburger renders here automatically
  * (via ShellNavContext) when the nav is in overlay mode — the shell owns

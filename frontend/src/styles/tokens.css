@@ -78,6 +78,12 @@
   --drawer-selected-bg: #fff;
   --drawer-hover-bg: #fafafc;
 
+  /* login page (theme.ts → mixins.gradient.primary, palette.background.login,
+     typography.login.color) */
+  --gradient-primary: linear-gradient(156deg, #f80 4%, #e63535 96%);
+  --bg-login: #f2f2f5;
+  --login-hero-text: #fafafa;
+
   /* --- Elevation (theme.ts → createTheme shadow overrides) ------------ */
   /* Shadow offsets stay in px (sub-pixel blur/spread) — intentional. */
   --shadow-1: 0 0.5px 2px 0 rgba(96, 97, 112, 0.16),
@@ -208,6 +214,13 @@
   --header-border: #33333f;
   --drawer-selected-bg: #2a2a38;
   --drawer-hover-bg: #21212b;
+
+  /* Login — the gradient hero panel is brand-invariant (like --primary-main,
+     orange kept for brand integrity), so gradient + hero text stay; only the
+     form panel background goes dark (matches the drawer surface). */
+  --gradient-primary: linear-gradient(156deg, #f80 4%, #e63535 96%);
+  --bg-login: #191921;
+  --login-hero-text: #fafafa;
 
   /* Raised surfaces sit LIGHTER than the #21212b content — on dark, lightness
      (not shadow) carries elevation, so buttons/menus/dialogs stand out. */

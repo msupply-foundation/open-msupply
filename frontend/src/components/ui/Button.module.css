@@ -59,6 +59,12 @@
   z-index: 1;
 }
 
+/* End icon (e.g. the login arrow): flex order flips the visual side only —
+   the icon is aria-hidden, so content order for AT is unaffected. */
+.button[data-icon-position='end'] .icon {
+  order: 1;
+}
+
 /*
  * Tone at rest — dark/coloured label, coloured icon. Orange (brand) keeps the
  * dark --button-text; blue recolours the label too. (Rest rules first, hover

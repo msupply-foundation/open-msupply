@@ -18,6 +18,27 @@
   border-block-end: 1px solid var(--header-border);
 }
 
+/*
+ * --- Tab bar slot -------------------------------------------------------
+ * A ui/Tabs <TabList> rendered as the header's LAST child (it emits
+ * data-tab-bar) claims its own full-width row and becomes the header's
+ * bottom edge, as in the RnD demo: the strip's own border replaces the
+ * header's, and negative inline margins undo the header's padding so the
+ * border runs edge to edge. These numbers compensate the header's own
+ * padding, so they live here, not in Tabs.module.css.
+ */
+.header:has(> [data-tab-bar]) {
+  padding-block-end: 0;
+  border-block-end: none;
+}
+
+.header > [data-tab-bar] {
+  flex-basis: 100%;
+  margin-inline: calc(-1 * var(--space-5));
+  /* row-gap already puts space-3 above; pull back to the demo's space-2 */
+  margin-block-start: calc(var(--space-2) - var(--space-3));
+}
+
 /* --- Overlay-mode hamburger (rendered only inside an AppShell) ---------- */
 .hamburger {
   display: inline-flex;

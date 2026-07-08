@@ -19,12 +19,15 @@
   cursor: pointer;
 }
 
+/* Hover tint + focus ring derive from currentColor, not a fixed white, so the
+   trigger works on any surface — white-on-dark in the footer (unchanged look),
+   dark-on-light on the login panel. */
 .trigger:hover {
-  background: color-mix(in srgb, var(--primary-contrast) 15%, transparent);
+  background: color-mix(in srgb, currentcolor 15%, transparent);
 }
 
 .trigger:focus-visible {
-  outline: 2px solid var(--primary-contrast);
+  outline: 2px solid currentcolor;
   outline-offset: -0.125rem;
 }
 
