@@ -97,14 +97,14 @@ export const DetailView = (props: DetailViewProps) => {
         }
         contentFooter={
           <ContentFooter>
-            <Button color="blue" icon={<ClockIcon />}>
+            <Button variant="secondary" icon={<ClockIcon />}>
               History
             </Button>
             <ContentFooterActions>
-              <Button color="blue" icon={<XCircleIcon />} onClick={props.onBack}>
+              <Button variant="secondary" icon={<XCircleIcon />} onClick={props.onBack}>
                 Cancel
               </Button>
-              <Button color="blue" icon={<SaveIcon />}>
+              <Button variant="secondary" icon={<SaveIcon />}>
                 Save
               </Button>
             </ContentFooterActions>

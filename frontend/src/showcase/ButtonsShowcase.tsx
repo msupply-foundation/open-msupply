@@ -34,13 +34,14 @@ export const ButtonsShowcase = () => {
   return (
     <div class={styles.stack}>
       <Card
-        title="Primary — brand orange"
+        title="Primary — the brand tone"
         lead={
           <>
-            The default action button: plain <code>&lt;button&gt;</code> + CSS,
-            no component library. White pill, no border, a shadow does the
-            lifting; the icon carries the brand orange and the whole pill
-            <strong> fills orange on hover</strong> (label + icon go white).
+            The default action button (<code>variant="primary"</code>): plain{' '}
+            <code>&lt;button&gt;</code> + CSS, no component library. White pill,
+            no border, a shadow does the lifting; the icon carries the brand
+            tone (orange in the current theme) and the whole pill
+            <strong> fills with it on hover</strong> (label + icon go white).
             Press one to see the click <strong>ripple</strong> — the single spot
             we use JS for interaction (it needs the pointer coordinates). Tab to
             one for the focus ring.
@@ -57,23 +58,25 @@ export const ButtonsShowcase = () => {
       </Card>
 
       <Card
-        title="Secondary — action blue"
+        title="Secondary — the action tone"
         lead={
           <>
-            The same button, <code>color="blue"</code>: action blue instead of
-            brand orange, for the app's edit/footer actions (Save, Delete,
-            Cancel…). Fills blue on hover; the focus ring follows the tone too.
+            The same button, <code>variant="secondary"</code>: the action tone
+            (blue in the current theme) for the app's edit/footer actions
+            (Save, Delete, Cancel…). Fills with its tone on hover; the focus
+            ring follows it too. Variants are named semantically — never after
+            a colour — the palette lives only in the tokens.
           </>
         }
       >
         <div class={styles.row}>
-          <Button color="blue" icon={<SaveIcon />}>
+          <Button variant="secondary" icon={<SaveIcon />}>
             Save
           </Button>
-          <Button color="blue" icon={<TrashIcon />}>
+          <Button variant="secondary" icon={<TrashIcon />}>
             Delete
           </Button>
-          <Button color="blue">Cancel</Button>
+          <Button variant="secondary">Cancel</Button>
         </div>
       </Card>
 

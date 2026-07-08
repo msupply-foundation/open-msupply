@@ -72,7 +72,7 @@ Header gets a `<Toolbar>` row (filters); the body is a `<Table>`; a contextual `
       <ContentFooter>
         <strong>{picked().size} selected</strong>
         <ContentFooterActions>
-          <Button color="blue" icon={<TrashIcon />} onClick={deletePicked}>Delete</Button>
+          <Button variant="secondary" icon={<TrashIcon />} onClick={deletePicked}>Delete</Button>
         </ContentFooterActions>
       </ContentFooter>
     </Show>
@@ -141,10 +141,10 @@ Table cell conventions (data attributes on your own markup): `data-numeric` (end
     }
     contentFooter={
       <ContentFooter>
-        <Button color="blue" icon={<ClockIcon />}>History</Button>
+        <Button variant="secondary" icon={<ClockIcon />}>History</Button>
         <ContentFooterActions>
-          <Button color="blue" icon={<XCircleIcon />} onClick={props.onBack}>Cancel</Button>
-          <Button color="blue" icon={<SaveIcon />}>Save</Button>
+          <Button variant="secondary" icon={<XCircleIcon />} onClick={props.onBack}>Cancel</Button>
+          <Button variant="secondary" icon={<SaveIcon />}>Save</Button>
         </ContentFooterActions>
       </ContentFooter>
     }
@@ -181,6 +181,7 @@ A router will absorb this host later; the pages themselves won't change.
 ## Quick don'ts
 
 - ❌ CSS files, `style=` attributes, or hard-coded colours/px in a page
+- ❌ Colour words in markup — component variants are semantic (`variant="primary" | "secondary"`), never a colour name
 - ❌ A second `<h1>` (the breadcrumb leaf is it)
 - ❌ `<AppShell>` inside a page component (it belongs to the host)
 - ❌ Importing anything from `src/showcase/`

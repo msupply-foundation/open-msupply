@@ -109,10 +109,10 @@ export const ListView = (props: ListViewProps) => {
           <ContentFooter>
             <strong>{picked().size} selected</strong>
             <ContentFooterActions>
-              <Button color="blue" icon={<TrashIcon />} onClick={deletePicked}>
+              <Button variant="secondary" icon={<TrashIcon />} onClick={deletePicked}>
                 Delete
               </Button>
-              <Button color="blue" icon={<MinusCircleIcon />} onClick={clearPicked}>
+              <Button variant="secondary" icon={<MinusCircleIcon />} onClick={clearPicked}>
                 Clear selection
               </Button>
             </ContentFooterActions>

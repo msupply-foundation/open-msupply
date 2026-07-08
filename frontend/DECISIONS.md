@@ -6,6 +6,16 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-09 · Variant APIs are semantic, never colour-named — Button `color="orange"/"blue"` → `variant="primary"/"secondary"`
+
+- **Decision (Carl):** no colour words in component APIs or page markup. The Button prop `color?: 'orange' | 'blue'` is renamed **`variant?: 'primary' | 'secondary'`** (default `primary`; the styling hook becomes `data-variant`), and the rule is general: a variant/tone prop is named for its **role**, and the CSS maps it to palette tokens (`--primary-main` / `--secondary-main`). Colour words live only in `tokens.css` (where the palette is defined) and in prose *describing* the current theme.
+
+- **Why:** the no-hard-coded-colours rule (2026-07-08) keeps colour *values* in tokens, but `color="blue"` at 18 call sites baked a colour *name* into page markup — every call site lies the moment the secondary tone stops being blue, and the cheat sheet was teaching new developers to write colour names into pages. The variants were already described semantically everywhere ("brand", "action"); the API now says the same thing.
+
+- **Alternatives rejected:** keeping `color` with semantic values (`color="secondary"` — the prop name still invites colour thinking, and MUI-muscle-memory `color="primary"` vs our old `color="orange"` was exactly the confusion); `tone`/`kind` as the prop name (`variant` matches the wider design-system convention and the current app's MUI `variant`/`color` vocabulary developers already know).
+
+- **Status:** Adopted. Mechanical rename (prop, `data-variant` selectors, 18 call sites, PAGES.md examples, UI_ELEMENTS row, showcase copy reworded to lead with the variant names); `npm run check` green. Rule recorded in `CLAUDE.md` principle #5. SplitButton has no tone prop today; if it (or any element) grows one, it follows this naming.
+
 ## 2026-07-08 · Showcase menu is the real MenuBar — nav data becomes a MenuBar prop; sections grouped Components / Layout Elements / Full page; App shell demo retired
 
 - **Decision (Carl):** the storybook shell's hand-rolled `<nav>` link list is replaced by the library's own **MenuBar**, with the section registry divided into three expandable groups — **Components**, **Layout Elements**, **Full page** (`category` on each `SectionDef`; the `categories` list in `sections.tsx` carries the group icons) — and a new **Side panel** section (`#/side-panel`, Layout Elements) whose demo is a button that slides the panel out **over the page from the inline-end edge, full viewport height** (Carl: the panel's real toggled behaviour, not a slide within a demo card). To make the reuse possible, MenuBar's nav lists move from a hard `navModel` import to **props** (`upper`, optional `lower`): AppShell passes the app's `upperNav`/`lowerNav` unchanged; the showcase passes a model derived from the section registry. **The App shell demo section (PageLayoutShowcase) is retired** (Carl: redundant now the Full page group exists — its real pages exercise AppShell exactly as shipped); it was the only `kind: 'page'` section, so the `'page'` kind and the **ShowcaseLauncher** go with it — `kind: 'app'` full-bleed remains, browser Back is the way back (supersedes the launcher mechanics of the 2026-07-07 full-bleed entry; the full-bleed-over-iframe decision itself stands).

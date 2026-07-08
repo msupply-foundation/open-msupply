@@ -1,8 +1,9 @@
 /*
  * Faithful to the current app's BaseButton (outlined): NO border; a shadow[2]
  * drop-shadow does the lifting; pill radius; white (raised-surface) bg;
- * coloured icon; fills with its colour on hover. `data-color` picks the tone:
- * orange (brand) or blue (secondary — footer actions).
+ * coloured icon; fills with its colour on hover. `data-variant` picks the
+ * tone — 'primary' (brand, --primary-main) or 'secondary' (actions,
+ * --secondary-main); variants are named semantically, never after colours.
  *
  * Hover: inverts (coloured bg, white text/icon) with a short transition.
  * Click: a subtle ripple (createRipple) in --ripple-color — coloured at rest,
@@ -66,28 +67,28 @@
 }
 
 /*
- * Tone at rest — dark/coloured label, coloured icon. Orange (brand) keeps the
- * dark --button-text; blue recolours the label too. (Rest rules first, hover
+ * Tone at rest — dark/coloured label, coloured icon. Primary keeps the dark
+ * --button-text; secondary recolours the label too. (Rest rules first, hover
  * fills grouped below, so specificity ascends — no-descending-specificity.)
  */
-.button[data-color='orange'] {
+.button[data-variant='primary'] {
   --ripple-color: color-mix(in srgb, var(--primary-main) 22%, transparent);
 }
 
-.button[data-color='orange'] .icon {
+.button[data-variant='primary'] .icon {
   color: var(--primary-main);
 }
 
-.button[data-color='blue'] {
+.button[data-variant='secondary'] {
   color: var(--secondary-main);
   --ripple-color: color-mix(in srgb, var(--secondary-main) 22%, transparent);
 }
 
-.button[data-color='blue'] .icon {
+.button[data-variant='secondary'] .icon {
   color: var(--secondary-main);
 }
 
-.button[data-color='blue']:focus-visible {
+.button[data-variant='secondary']:focus-visible {
   outline-color: var(--secondary-main);
 }
 
@@ -102,20 +103,20 @@
 }
 
 /* Hover fills — the pill inverts (coloured bg, white label + icon + ripple). */
-.button[data-color='orange']:hover:not(:disabled) {
+.button[data-variant='primary']:hover:not(:disabled) {
   background: var(--primary-main);
   color: var(--primary-contrast);
   --ripple-color: color-mix(in srgb, var(--primary-contrast) 35%, transparent);
 }
 
-.button[data-color='blue']:hover:not(:disabled) {
+.button[data-variant='secondary']:hover:not(:disabled) {
   background: var(--secondary-main);
   color: var(--primary-contrast);
   --ripple-color: color-mix(in srgb, var(--primary-contrast) 35%, transparent);
 }
 
-.button[data-color='orange']:hover:not(:disabled) .icon,
-.button[data-color='blue']:hover:not(:disabled) .icon {
+.button[data-variant='primary']:hover:not(:disabled) .icon,
+.button[data-variant='secondary']:hover:not(:disabled) .icon {
   color: var(--primary-contrast);
 }
 

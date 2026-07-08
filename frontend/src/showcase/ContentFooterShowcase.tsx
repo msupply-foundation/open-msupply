@@ -61,14 +61,14 @@ export const ContentFooterShowcase = () => {
         <div class={styles.pageFrame}>
           <div class={styles.pageBody} aria-hidden="true" />
           <ContentFooter>
-            <Button color="blue" icon={<ClockIcon />}>
+            <Button variant="secondary" icon={<ClockIcon />}>
               History
             </Button>
             <ContentFooterActions>
-              <Button color="blue" icon={<XCircleIcon />}>
+              <Button variant="secondary" icon={<XCircleIcon />}>
                 Cancel
               </Button>
-              <Button color="blue" icon={<SaveIcon />}>
+              <Button variant="secondary" icon={<SaveIcon />}>
                 Save
               </Button>
             </ContentFooterActions>
@@ -112,14 +112,14 @@ export const ContentFooterShowcase = () => {
               when={picked().size > 0}
               fallback={
                 <>
-                  <Button color="blue" icon={<ClockIcon />}>
+                  <Button variant="secondary" icon={<ClockIcon />}>
                     History
                   </Button>
                   <ContentFooterActions>
-                    <Button color="blue" icon={<XCircleIcon />}>
+                    <Button variant="secondary" icon={<XCircleIcon />}>
                       Cancel
                     </Button>
-                    <Button color="blue" icon={<SaveIcon />}>
+                    <Button variant="secondary" icon={<SaveIcon />}>
                       Save
                     </Button>
                   </ContentFooterActions>
@@ -128,14 +128,14 @@ export const ContentFooterShowcase = () => {
             >
               <span class={styles.count}>{picked().size} selected</span>
               <ContentFooterActions>
-                <Button color="blue" icon={<TrashIcon />} onClick={clear}>
+                <Button variant="secondary" icon={<TrashIcon />} onClick={clear}>
                   Delete
                 </Button>
-                <Button color="blue" icon={<CopyIcon />}>
+                <Button variant="secondary" icon={<CopyIcon />}>
                   Make a copy
                 </Button>
                 <Button
-                  color="blue"
+                  variant="secondary"
                   icon={<MinusCircleIcon />}
                   onClick={clear}
                 >

@@ -6,8 +6,12 @@ import styles from './Button.module.css'
 export interface ButtonProps
   extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: JSX.Element
-  /** Icon/label tone: brand orange (default) or action blue (footer actions). */
-  color?: 'orange' | 'blue'
+  /**
+   * Semantic tone: 'primary' (default — the brand tone) or 'secondary' (the
+   * action tone; footer edit actions). Never named after a colour — the
+   * variant maps to palette tokens in the CSS (Carl, 2026-07-09).
+   */
+  variant?: 'primary' | 'secondary'
   /** Which side of the label the icon sits on (mirrors in RTL). */
   iconPosition?: 'start' | 'end'
 }
@@ -17,13 +21,13 @@ export interface ButtonProps
  * port of the RnD prototype's <Button>). Mirrors the current app's outlined
  * ButtonWithIcon: white pill, no border, shadow[2], coloured icon; fills with
  * its colour on hover (text + icon go white); a subtle ripple on click
- * (createRipple). `color` picks the tone: orange (brand) or blue (secondary —
- * footer actions).
+ * (createRipple). `variant` picks the tone: primary (brand) or secondary
+ * (footer actions).
  */
 export const Button = (props: ButtonProps) => {
   const [local, rest] = splitProps(props, [
     'icon',
-    'color',
+    'variant',
     'iconPosition',
     'children',
     'class',
@@ -36,7 +40,7 @@ export const Button = (props: ButtonProps) => {
     <button
       type={local.type ?? 'button'}
       class={local.class ? `${styles.button} ${local.class}` : styles.button}
-      data-color={local.color ?? 'orange'}
+      data-variant={local.variant ?? 'primary'}
       data-icon-position={local.iconPosition ?? 'start'}
       onPointerDown={event => {
         ripple.onPointerDown(event)
