@@ -11,6 +11,7 @@ use crate::StorageConnection;
 use crate::{ChangelogSyncType, Upsert};
 
 diesel_string_enum! {
+    db_case = SCREAMING_SNAKE_CASE;
     #[derive(Clone, Eq)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     // Stored as plain TEXT (not a native DB enum) for v7 forwards-compatibility:
@@ -31,6 +32,7 @@ diesel_string_enum! {
 }
 
 diesel_string_enum! {
+    db_case = SCREAMING_SNAKE_CASE;
     #[derive(Clone, Eq)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     // Stored as plain TEXT (not a native DB enum) for v7 forwards-compatibility:
@@ -199,6 +201,16 @@ mod tests {
                 .unwrap(),
             CustomFieldValueType::Other("FUTURE_TYPE".to_string())
         );
+
+        // A wire-cased unknown (how a newer central actually sends a variant this build
+        // doesn't know) is captured normalized to the DB casing (`db_case` in
+        // diesel_string_enum!), so the stored value parses into the real variant once an
+        // upgrade adds it.
+        assert_eq!(
+            serde_json::from_value::<CustomFieldValueType>(serde_json::json!("FutureType"))
+                .unwrap(),
+            CustomFieldValueType::Other("FUTURE_TYPE".to_string())
+        );
     }
 
     #[test]
@@ -230,6 +242,12 @@ mod tests {
         );
         assert_eq!(
             serde_json::from_value::<CustomFieldKind>(serde_json::json!("FUTURE_KIND")).unwrap(),
+            CustomFieldKind::Other("FUTURE_KIND".to_string())
+        );
+
+        // Wire-cased unknown captures normalized to the DB casing (`db_case`).
+        assert_eq!(
+            serde_json::from_value::<CustomFieldKind>(serde_json::json!("FutureKind")).unwrap(),
             CustomFieldKind::Other("FUTURE_KIND".to_string())
         );
     }

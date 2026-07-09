@@ -1,12 +1,13 @@
 use super::{
     utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
-    name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
-    shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
+    name_insurance_join::NameInsuranceJoinTranslation,
+    purchase_order::PurchaseOrderTranslation, shipping_method::ShippingMethodTranslation,
+    store::StoreTranslation, to_legacy_time,
 };
 use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
@@ -15,12 +16,14 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
     InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceRowRepository,
-    InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository, Row,
-    StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
-    UserAccountRow, UserAccountRowRepository,
+    InvoiceStatus, InvoiceType, KeyValueStoreRepository, NameRow, NameRowRepository, NameRowType,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, Row, StorageConnection,
+    StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow, UserAccountRow,
+    UserAccountRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
+use util::uuid::uuid;
 use util::sync_serde::{
     date_option_to_isostring, date_to_isostring, empty_str_as_option, empty_str_as_option_string,
     naive_time, object_fields_as_option, zero_date_as_option, zero_f64_as_none,
@@ -667,7 +670,41 @@ impl SyncTranslation for InvoiceTranslation {
             }
         }
 
-        Ok(PullTranslateResult::upsert(result))
+        let mut operations = Vec::new();
+
+        // On central, a prescription can arrive for a patient with no
+        // name_store_join for the prescription's store (this configuration is
+        // possible in OG, see issue #12365). Without one the patient doesn't sync
+        // to the site holding the prescription and integration there fails on FK
+        // constraints, so synthesize the join here. If OG later authors a join for
+        // this name & store, the synthesized one is removed in its favour (see
+        // dedup in the name_store_join translator)
+        if CentralServerConfig::is_central_server()
+            && result.r#type == InvoiceType::Prescription
+            && name.r#type == NameRowType::Patient
+        {
+            let is_visible = !NameStoreJoinRepository::new(connection)
+                .query_by_filter(
+                    NameStoreJoinFilter::new()
+                        .name_id(EqualFilter::equal_to(name.id.clone()))
+                        .store_id(EqualFilter::equal_to(result.store_id.clone())),
+                )?
+                .is_empty();
+
+            if !is_visible {
+                operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
+                    id: uuid(),
+                    name_id: name.id.clone(),
+                    store_id: result.store_id.clone(),
+                    name_is_customer: true,
+                    name_is_supplier: false,
+                }));
+            }
+        }
+
+        operations.push(IntegrationOperation::upsert(result));
+
+        Ok(PullTranslateResult::IntegrationOperations(operations))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -1508,6 +1545,253 @@ mod tests {
             .collect();
         assert_eq!(fk_errors.len(), 5, "got {fk_errors:?}");
     }
+
+    /// A "ci" transact for the mock patient ("testId") in store_b, with no
+    /// diagnosis and the home-currency fallback. `mode` is "dispensary" for a
+    /// prescription or "store" for an outbound shipment
+    fn transact_for_patient_data(id: &str, mode: &str) -> serde_json::Value {
+        let data = r#"{
+          "Colour": 0,
+          "Date_order_received": "0000-00-00",
+          "Date_order_written": "2021-07-30",
+          "ID": "<id>",
+          "amount_outstanding": 0,
+          "arrival_date_actual": "0000-00-00",
+          "arrival_date_estimated": "0000-00-00",
+          "authorisationStatus": "",
+          "budget_period_ID": "",
+          "category2_ID": "",
+          "category_ID": "",
+          "comment": "",
+          "confirm_date": "2021-07-30",
+          "confirm_time": 47046,
+          "contact_id": "",
+          "currency_ID": "",
+          "currency_rate": 1,
+          "custom_data": null,
+          "diagnosis_ID": "",
+          "donor_default_id": "",
+          "encounter_id": "",
+          "entry_date": "2021-07-30",
+          "entry_time": 47046,
+          "export_batch": 0,
+          "foreign_currency_total": 0,
+          "goodsReceivedConfirmation": null,
+          "goods_received_ID": "",
+          "hold": false,
+          "insuranceDiscountAmount": 0,
+          "insuranceDiscountRate": 0,
+          "internalData": null,
+          "invoice_num": 1,
+          "invoice_printed_date": "0000-00-00",
+          "is_authorised": false,
+          "is_cancellation": false,
+          "lastModifiedAt": 1627607293,
+          "linked_goods_received_ID": "",
+          "linked_transaction_id": "",
+          "local_charge_distributed": 0,
+          "mode": "<mode>",
+          "mwks_sequence_num": 0,
+          "nameInsuranceJoinID": "",
+          "name_ID": "testId",
+          "number_of_cartons": 0,
+          "optionID": "",
+          "original_PO_ID": "",
+          "paymentTypeID": "",
+          "pickslip_printed_date": "0000-00-00",
+          "prescriber_ID": "",
+          "requisition_ID": "",
+          "responsible_officer_ID": "",
+          "service_descrip": "",
+          "service_price": 0,
+          "ship_date": "0000-00-00",
+          "ship_method_ID": "",
+          "ship_method_comment": "",
+          "status": "cn",
+          "store_ID": "store_b",
+          "subtotal": 0,
+          "supplier_charge_fc": 0,
+          "tax": 0,
+          "tax_rate": 0,
+          "their_ref": "",
+          "total": 0,
+          "type": "ci",
+          "user1": "",
+          "user2": "",
+          "user3": "",
+          "user4": "",
+          "user_ID": "",
+          "wardID": "",
+          "waybill_number": "",
+          "om_allocated_datetime": "",
+          "om_picked_datetime": null,
+          "om_shipped_datetime": "",
+          "om_delivered_datetime": "",
+          "om_verified_datetime": "",
+          "om_created_datetime": "",
+          "om_transport_reference": "",
+          "om_expected_delivery_date": "",
+          "finalised_date": "0000-00-00",
+          "finalised_time": 0
+        }"#
+        .replace("<id>", id)
+        .replace("<mode>", mode);
+
+        serde_json::from_str(&data).unwrap()
+    }
+
+    fn transact_sync_buffer_row(id: &str, data: serde_json::Value) -> SyncBufferRow {
+        SyncBufferRow {
+            table_name: "transact".to_string(),
+            record_id: id.to_string(),
+            data: SyncRecordData(data),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        }
+    }
+
+    /// On central, a prescription for a patient with no name_store_join in the
+    /// prescription's store synthesizes one so the patient syncs to the site
+    /// holding the prescription (issue #12365)
+    #[actix_rt::test]
+    async fn test_prescription_synthesizes_name_store_join_on_central() {
+        use crate::sync::test_util_set_is_central_server;
+
+        let translator = InvoiceTranslation {};
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_prescription_synthesizes_name_store_join_on_central",
+            MockDataInserts::none().names().stores().currencies(),
+            MockData {
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_a().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+        test_util_set_is_central_server(true);
+
+        // A non-prescription invoice ("ci" in store mode) for the same invisible
+        // patient doesn't synthesize a join
+        let translation_result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &transact_sync_buffer_row(
+                    "outbound_for_patient",
+                    transact_for_patient_data("outbound_for_patient", "store"),
+                ),
+            )
+            .unwrap();
+        let PullTranslateResult::IntegrationOperations(operations) = translation_result else {
+            panic!("expected integration operations");
+        };
+        assert_eq!(operations.len(), 1);
+
+        // The patient has no name_store_join for store_b: one is synthesized
+        let sync_record = transact_sync_buffer_row(
+            "prescription_for_patient",
+            transact_for_patient_data("prescription_for_patient", "dispensary"),
+        );
+        let translation_result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
+            .unwrap();
+        let PullTranslateResult::IntegrationOperations(operations) = translation_result else {
+            panic!("expected integration operations");
+        };
+        assert_eq!(operations.len(), 2);
+        // The join id is a fresh uuid, so assert on the remaining fields
+        let synthesized_join = format!("{:?}", operations[0]);
+        assert!(synthesized_join.contains("NameStoreJoinRow"), "{}", synthesized_join);
+        assert!(
+            synthesized_join.contains(r#"name_id: "testId""#),
+            "{}",
+            synthesized_join
+        );
+        assert!(
+            synthesized_join.contains(r#"store_id: "store_b""#),
+            "{}",
+            synthesized_join
+        );
+        assert!(
+            synthesized_join.contains("name_is_customer: true"),
+            "{}",
+            synthesized_join
+        );
+        assert!(
+            synthesized_join.contains("name_is_supplier: false"),
+            "{}",
+            synthesized_join
+        );
+
+        // Once the patient is visible in the store, no join is synthesized
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one_without_changelog(&NameStoreJoinRow {
+                id: "og_name_store_join".to_string(),
+                name_id: "testId".to_string(),
+                store_id: "store_b".to_string(),
+                name_is_customer: true,
+                name_is_supplier: false,
+            })
+            .unwrap();
+
+        let translation_result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
+            .unwrap();
+        let PullTranslateResult::IntegrationOperations(operations) = translation_result else {
+            panic!("expected integration operations");
+        };
+        assert_eq!(operations.len(), 1);
+    }
+
+    /// Joins are only synthesized on the central server
+    #[actix_rt::test]
+    async fn test_prescription_no_synthesized_join_when_not_central() {
+        let translator = InvoiceTranslation {};
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_prescription_no_synthesized_join_when_not_central",
+            MockDataInserts::none().names().stores().currencies(),
+            MockData {
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_a().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // The patient is not visible in store_b, but this is not the central
+        // server (default test configuration), so no join is synthesized
+        let translation_result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &transact_sync_buffer_row(
+                    "prescription_for_patient",
+                    transact_for_patient_data("prescription_for_patient", "dispensary"),
+                ),
+            )
+            .unwrap();
+        let PullTranslateResult::IntegrationOperations(operations) = translation_result else {
+            panic!("expected integration operations");
+        };
+        assert_eq!(operations.len(), 1);
+    }
+
 
     /// `transact.category_ID` maps to the resolved invoice type's category key
     /// in `custom_fields` — on central only (off central the value arrives via
