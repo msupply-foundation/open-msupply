@@ -220,7 +220,7 @@ fn build_v5_api_for_request(
         password_sha256: input.password_sha256.clone(),
         site_uuid: input.hardware_id.clone(),
         app_version: input.version.to_string(),
-        app_name: "Open mSupply Central".to_string(),
+        app_name: input.app_name.to_string(),
         sync_version: SYNC_V5_VERSION.to_string(),
     };
 
@@ -958,11 +958,8 @@ mod tests {
             connection,
             service_provider,
             ..
-        } = setup_all_and_service_provider(
-            "ensure_site_is_v7_already_v7",
-            MockDataInserts::none(),
-        )
-        .await;
+        } = setup_all_and_service_provider("ensure_site_is_v7_already_v7", MockDataInserts::none())
+            .await;
         test_util_set_is_central_server(true);
 
         // test_site inserts a v7 site. No legacy sync URL is set, so any attempt
