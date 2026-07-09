@@ -57,6 +57,11 @@ pub fn next_number(
                     repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
                 return Ok(next_number.number);
             }
+            NumberRowType::StockRelocation => {
+                let next_number =
+                    repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
+                return Ok(next_number.number);
+            }
         }
         // Invoices and requisitions synced from Legacy are given number `-1` until serial number assigned by OMS
         // That means max_number is -1 the first time this runs, which would assign 0 as the next number (invalid)

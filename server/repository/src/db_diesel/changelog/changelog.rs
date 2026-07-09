@@ -145,6 +145,7 @@ diesel_string_enum! {
         Site,
         StockLine,
         StockRelocation,
+        StockRelocationLine,
         Stocktake,
         StocktakeLine,
         Store,

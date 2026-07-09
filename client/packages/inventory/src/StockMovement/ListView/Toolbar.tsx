@@ -23,11 +23,11 @@ export const Toolbar = () => {
         <FilterMenu
           filters={[
             {
-              type: 'text',
-              name: t('label.code-or-name'),
-              urlParameter: 'itemCodeOrName',
-              placeholder: t('placeholder.enter-an-item-code-or-name'),
+              type: 'number',
+              name: t('label.number'),
+              urlParameter: 'stockMovementNumber',
               isDefault: true,
+              wide: true,
             },
             {
               type: 'enum',
@@ -40,16 +40,27 @@ export const Toolbar = () => {
             },
             {
               type: 'text',
-              name: t('label.from-location'),
-              urlParameter: 'fromLocationCode',
-              placeholder: t('placeholder.search-by-location-code'),
+              name: t('label.created-by'),
+              urlParameter: 'username',
             },
             {
-              type: 'text',
-              name: t('label.to-location'),
-              urlParameter: 'toLocationCode',
-              placeholder: t('placeholder.search-by-location-code'),
-            }
+              type: 'group',
+              name: t('label.date'),
+              elements: [
+                {
+                  type: 'dateTime',
+                  name: t('label.from-date'),
+                  urlParameter: 'createdDatetime',
+                  range: 'from',
+                },
+                {
+                  type: 'dateTime',
+                  name: t('label.to-date'),
+                  urlParameter: 'createdDatetime',
+                  range: 'to',
+                },
+              ],
+            },
           ]}
         />
       </Box>
