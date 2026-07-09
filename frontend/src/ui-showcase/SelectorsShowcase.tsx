@@ -4,8 +4,9 @@ import { Combobox } from '../ui/elements/selectors/Combobox'
 import { MultiSelect } from '../ui/elements/selectors/MultiSelect'
 import {
   FilterBar,
-  type FilterField,
-  type FilterValues,
+  FilterSelect,
+  FilterTextInput,
+  type Filter,
 } from '../ui/elements/selectors/FilterBar'
 import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData'
 import styles from './SelectorsShowcase.module.css'
@@ -54,17 +55,70 @@ const itemFilter = (item: DemoItem, input: string) => {
   )
 }
 
-/* The outbound-shipment list's filterable fields (the current app's
-   FilterMenu set): three free-text columns + the status enum. */
-const FILTER_FIELDS: FilterField[] = [
-  { key: 'otherPartyName', name: 'Name', type: 'text', placeholder: 'Search by name' },
-  { key: 'invoiceNumber', name: 'Invoice number', type: 'text' },
-  { key: 'theirReference', name: 'Reference', type: 'text' },
+/*
+ * A demo filter object, shaped like a list page's GraphQL filter (the FilterBar is
+ * generic over it — see kdd/page-composition). A key PRESENT (even as null/'') means
+ * its chip is shown; absent means it isn't. Three free-text columns + the status enum,
+ * the current app's outbound-shipment FilterMenu set.
+ */
+interface InvoiceFilter {
+  otherPartyName?: string | null
+  invoiceNumber?: string | null
+  theirReference?: string | null
+  status?: string | null
+}
+
+/* Built once as a stable const — labels are accessors, so FilterBar's <For> reuses
+   chip rows instead of remounting them (kdd/state-management: no remounts). */
+const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
+  {
+    key: 'otherPartyName',
+    label: () => 'Name',
+    render: ({ filter, setPartialFilter }) => (
+      <FilterTextInput
+        label="Name"
+        placeholder="Search by name"
+        value={filter().otherPartyName ?? ''}
+        onInput={value => setPartialFilter({ otherPartyName: value || null })}
+      />
+    ),
+  },
+  {
+    key: 'invoiceNumber',
+    label: () => 'Invoice number',
+    render: ({ filter, setPartialFilter }) => (
+      <FilterTextInput
+        label="Invoice number"
+        value={filter().invoiceNumber ?? ''}
+        onInput={value => setPartialFilter({ invoiceNumber: value || null })}
+      />
+    ),
+  },
+  {
+    key: 'theirReference',
+    label: () => 'Reference',
+    render: ({ filter, setPartialFilter }) => (
+      <FilterTextInput
+        label="Reference"
+        value={filter().theirReference ?? ''}
+        onInput={value => setPartialFilter({ theirReference: value || null })}
+      />
+    ),
+  },
   {
     key: 'status',
-    name: 'Status',
-    type: 'enum',
-    options: INVOICE_STATUSES.map(s => ({ value: s.value, label: s.label })),
+    label: () => 'Status',
+    render: ({ filter, setPartialFilter }) => (
+      <FilterSelect
+        label="Status"
+        value={filter().status ?? ''}
+        options={[
+          { value: '', label: 'Any' },
+          ...INVOICE_STATUSES.map(s => ({ value: s.value, label: s.label })),
+        ]}
+        onChange={value => setPartialFilter({ status: value || null })}
+      />
+    ),
   },
 ]
 
@@ -72,16 +126,17 @@ export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated')
   const [picked, setPicked] = createSignal<DemoItem | null>(null)
   const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]])
-  // Seeded non-empty to show chips restoring from existing values.
-  const [filters, setFilters] = createSignal<FilterValues>({ status: ['new'] })
+  // Seeded non-empty to show chips restoring from an existing filter (a key being
+  // present is what shows its chip — here status starts on 'new').
+  const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' })
 
-  // What the page would hand to a table — rendered as the URL query string
-  // the values are destined to live in once routing lands.
+  // What the page would hand to a table — rendered as the URL query string the filter
+  // is destined to live in once routing lands. Empty/null keys (added-but-empty chips)
+  // are dropped, mirroring the page's stripEmpty before querying.
   const filterQuery = () => {
     const params = new URLSearchParams()
     for (const [key, value] of Object.entries(filters())) {
-      if (Array.isArray(value)) value.forEach(v => params.append(key, v))
-      else params.set(key, value)
+      if (value != null && value !== '') params.set(key, String(value))
     }
     const query = params.toString()
     return query ? `?${query}` : ''
@@ -173,17 +228,17 @@ export const SelectorsShowcase = () => {
         lead={
           <>
             The app's FilterMenu pattern: a <strong>Filters</strong> dropdown
-            lists the available fields; picking one adds an inline editor chip
-            beside it — a text input, or a multi-check menu for the status
-            enum (which stays open while ticking several). Both menus buy
-            Kobalte DropdownMenu, the same primitive as the SplitButton caret
-            and the footer language menu; the chips are hand-rolled. Values
-            are a controlled prop the page owns — destined for URL query
-            params once routing lands, so filtered views become shareable.
+            lists the addable fields; picking one adds an inline editor chip
+            beside it — a text input, or a single-select menu for the status
+            enum. Its menu buys Kobalte DropdownMenu, the same primitive as the
+            SplitButton caret and the footer language menu; the chips are
+            hand-rolled. The filter object is a controlled prop the page owns,
+            in GraphQL-native shape — destined for URL query params once routing
+            lands, so filtered views become shareable.
           </>
         }
       >
-        <FilterBar fields={FILTER_FIELDS} values={filters()} onChange={setFilters} />
+        <FilterBar filters={DEMO_FILTERS} filter={filters()} onChange={setFilters} />
         <p class={styles.filterReadout}>
           What the page hands to the table:{' '}
           <code>{filterQuery() || '(no filters)'}</code>
