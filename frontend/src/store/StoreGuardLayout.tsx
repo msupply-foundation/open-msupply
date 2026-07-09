@@ -6,6 +6,7 @@ import { authUser } from '../auth/authContext';
 import { getPreviousStoreId, recordPreviousStoreId } from '../appData';
 import { refetchStoreContext, storeContext } from './storeContext';
 import { StoreSelectionModal } from './StoreSelectionModal';
+import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
 // Reserved path for "no store in the URL": the segment never names a store, so the
@@ -71,7 +72,7 @@ export const StoreGuardLayout: Component<RouteSectionProps> = (props) => {
           when={contextLoaded(store().id)}
           fallback={
             <div class={styles.page}>
-              <p>Loading store…</p>
+              <p>{t('store.loading')}</p>
             </div>
           }
         >

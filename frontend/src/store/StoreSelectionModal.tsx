@@ -1,6 +1,7 @@
 import { createSignal, For } from 'solid-js';
 import type { Component } from 'solid-js';
 import type { StoreSummary } from './StoreGuardLayout';
+import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
 const filterStores = (stores: StoreSummary[], searchTerm: string): StoreSummary[] => {
@@ -24,10 +25,10 @@ export const StoreSelectionModal: Component<{
   return (
     <div class={styles.overlay}>
       <div class={styles.modal}>
-        <h2>Select a store</h2>
+        <h2>{t('store.select')}</h2>
         <input
           class={styles.input}
-          placeholder="Search stores"
+          placeholder={t('store.search')}
           value={search()}
           onInput={e => setSearch(e.currentTarget.value)}
         />

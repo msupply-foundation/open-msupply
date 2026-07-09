@@ -2,6 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { authUser, login, reLoginRequired } from './authContext';
 import { FormField } from '../ui/elements/inputs/FormField';
+import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
 type SubmitState = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'error'; message: string };
@@ -36,8 +37,8 @@ const ReLoginForm: Component<{ currentUsername: string }> = (props) => {
     event.preventDefault();
     // Spec: the button is always clickable; validation errors show on click.
     const errors = {
-      username: values().username.trim() === '' ? 'Username is required' : '',
-      password: values().password.trim() === '' ? 'Password is required' : '',
+      username: values().username.trim() === '' ? t('login.username-required') : '',
+      password: values().password.trim() === '' ? t('login.password-required') : '',
     };
     setFieldErrors(errors);
     if (errors.username !== '' || errors.password !== '') return;
@@ -51,17 +52,17 @@ const ReLoginForm: Component<{ currentUsername: string }> = (props) => {
   return (
     <div class={styles.overlay}>
       <form class={styles.modal} onSubmit={submit}>
-        <h2>Log in again to continue</h2>
+        <h2>{t('login.again')}</h2>
         <FormField
           id="relogin-username"
-          label="Username"
+          label={t('login.username')}
           value={values().username}
           onInput={(username) => setValues((previous) => ({ ...previous, username }))}
           error={fieldErrors().username}
         />
         <FormField
           id="relogin-password"
-          label="Password"
+          label={t('login.password')}
           type="password"
           value={values().password}
           onInput={(password) => setValues((previous) => ({ ...previous, password }))}
@@ -71,7 +72,7 @@ const ReLoginForm: Component<{ currentUsername: string }> = (props) => {
           <p class={styles.errorText}>{submitError()}</p>
         </Show>
         <button class={styles.button} type="submit" disabled={submitting()}>
-          {submitting() ? 'Logging in…' : 'Log in'}
+          {submitting() ? t('login.submitting') : t('login.submit')}
         </button>
       </form>
     </div>

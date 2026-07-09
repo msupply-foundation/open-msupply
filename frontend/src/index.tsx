@@ -15,7 +15,16 @@ const root = document.getElementById('root')!;
  * switch live. See src/ui-showcase/README.md.
  */
 if (import.meta.env.DEV && window.location.hash.startsWith('#/showcase')) {
-  void import('./ui-showcase/ShowcaseApp').then(({ ShowcaseApp }) => {
+  // Library components resolve their strings through the reactive t(), so load
+  // the locale dictionary first — same as the app's startup — to avoid a flash
+  // of raw keys. (Showcase section labels are literal, not keys; see
+  // ShowcaseApp's nav model.)
+  void Promise.all([
+    import('./ui-showcase/ShowcaseApp'),
+    import('./intl').then(({ initialiseLocale, detectLocale }) =>
+      initialiseLocale(detectLocale())
+    ),
+  ]).then(([{ ShowcaseApp }]) => {
     render(() => <ShowcaseApp />, root);
   });
 } else {

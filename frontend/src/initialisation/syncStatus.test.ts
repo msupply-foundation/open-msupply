@@ -29,10 +29,11 @@ describe('toSyncOverview', () => {
     );
     expect(overview?.isSyncing).toBe(true);
     expect(overview?.succeeded).toBe(false);
+    // Labels are i18n keys now (SyncProgress resolves them with t() at render).
     expect(overview?.steps).toEqual([
-      { label: 'Pull', started: true, finished: false, done: 5, total: 10 },
-      { label: 'Push', started: false, finished: false, done: undefined, total: undefined },
-      { label: 'Integration', started: false, finished: false, done: undefined, total: undefined },
+      { label: 'sync.step.pull', started: true, finished: false, done: 5, total: 10 },
+      { label: 'sync.step.push', started: false, finished: false, done: undefined, total: undefined },
+      { label: 'sync.step.integration', started: false, finished: false, done: undefined, total: undefined },
     ]);
   });
 

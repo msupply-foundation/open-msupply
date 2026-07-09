@@ -1,4 +1,5 @@
 import { createSignal, Show } from 'solid-js'
+import { t } from '../../../intl'
 import styles from './ThemeToggle.module.css'
 
 const THEME_KEY = 'oms-theme'
@@ -31,8 +32,8 @@ export const ThemeToggle = () => {
       class={styles.toggle}
       onClick={toggle}
       aria-pressed={theme() === 'dark'}
-      aria-label="Dark theme"
-      title={theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+      aria-label={t('theme.dark')}
+      title={theme() === 'dark' ? t('theme.switch-to-light') : t('theme.switch-to-dark')}
     >
       <Show
         when={theme() === 'dark'}

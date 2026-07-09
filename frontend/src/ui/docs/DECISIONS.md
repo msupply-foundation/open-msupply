@@ -6,6 +6,13 @@ Append-only record of architectural decisions and **why**, including alternative
 
 ---
 
+## 2026-07-09 · Second integration merge — the i18n sweep; library strings resolve through `t()`
+
+- **Decision (Carl: reconcile against the moved base; anything styling stays Carl's):** merged `integration@4b3ac60` ("use translation everywhere"). **No CSS or styling changes came in** — nothing to arbitrate on that front. Git's rename detection mapped their `src/components/` edits onto our `src/ui/` files; the 11 conflicts were all import-block unions (their new `t` import + our re-pointed paths, with `intl` depths corrected for the moved locations).
+- **The sweep pushes `t()` into the library**: MenuBar's nav model now carries **`labelKey: LocaleKey`** resolved at render time (that's what keeps labels reactive to locale changes), and ThemeToggle, DataTable, FilterBar, Pagination, Header, Breadcrumb, LanguageSelector and AppShell also translate their internal strings. The library→`src/intl` coupling recorded at the first merge now spans the component library — same call, same grounds (their tested wiring beats a mid-merge redesign); the consolidation debt (e.g. an injectable translator) stands recorded.
+- **Showcase accommodation:** section labels are literal strings, so the showcase passes them as `labelKey` casts — `t()` falls back to the key itself, rendering them verbatim (contained in `ShowcaseApp` with a comment) — and the dev-only entry in `index.tsx` now initialises the locale dictionary before rendering, so library components show real strings instead of raw keys.
+- **Status:** Adopted. `pnpm check` green, vitest 38/38, production build emits no showcase chunk, showcase smoke shows no raw-key leaks and literal menu labels intact.
+
 ## 2026-07-09 · Integration merge — this branch joins the team's app; their `components/` superseded by `ui/`; showcase goes dev-only; skeleton pages retired
 
 - **Decision (Carl):** merge the shared repo's `integration` branch (the team's app: startup flow → auth → `@solidjs/router`, GraphQL data layer + codegen, i18n, the stocktakes reference vertical, spec/ + kdd/) into this branch ahead of the PR. Of the 9 textual conflicts: **theirs** taken for app plumbing — `src/App.tsx` (the real app supersedes our hash-router stand-in), `src/index.tsx`, `vite.config.ts` (GraphQL proxy, **dev port 3005**), `package.json` (superset; repo standardises on **pnpm**, our `package-lock.json` deleted), root `CLAUDE.md` (team working guidelines, our `src/ui/CLAUDE.md` pointer appended) — and **ours** for the library-path files — `.stylelintrc.json` (ui paths + `:global`), both check scripts (`check-page-css` additionally adopts their `existsSync` guard), `src/index.css`.

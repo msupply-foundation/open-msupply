@@ -22,6 +22,7 @@ import {
 } from '@tanstack/solid-table';
 import type { TableConfig } from './tableConfig';
 import { clickOutside } from '../../utils/clickOutside';
+import { t } from '../../../intl';
 import styles from './DataTable.module.css';
 
 // Generic, server-driven data table shared across list pages and the detail view
@@ -347,7 +348,7 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
                         <th class={`${styles.th} ${styles.selectCell}`}>
                           <input
                             type="checkbox"
-                            aria-label="Select all rows"
+                            aria-label={t('table.select-all')}
                             data-testid="select-all"
                             checked={allSelected()}
                             onChange={toggleAll}
@@ -367,7 +368,7 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
                   fallback={
                     <tr>
                       <td class={styles.empty} colSpan={leafColumnCount()}>
-                        {props.emptyMessage ?? 'No results.'}
+                        {props.emptyMessage ?? t('table.no-results')}
                       </td>
                     </tr>
                   }
@@ -389,7 +390,7 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
       >
         <Show
           when={cardRows().length > 0}
-          fallback={<div class={styles.empty}>{props.emptyMessage ?? 'No results.'}</div>}
+          fallback={<div class={styles.empty}>{props.emptyMessage ?? t('table.no-results')}</div>}
         >
           <div class={styles.cardList}>
             <For each={cardRows()}>
@@ -469,7 +470,7 @@ function CardRow<T>(props: {
           <div class={styles.cardHeader}>
             <input
               type="checkbox"
-              aria-label="Select row"
+              aria-label={t('table.select-row')}
               checked={props.row.getIsSelected()}
               onChange={props.row.getToggleSelectedHandler()}
               onClick={event => event.stopPropagation()}
@@ -527,7 +528,7 @@ function TableRow<T>(props: {
           <td class={styles.selectCell}>
             <input
               type="checkbox"
-              aria-label="Select row"
+              aria-label={t('table.select-row')}
               checked={props.row.getIsSelected()}
               onChange={props.row.getToggleSelectedHandler()}
               onClick={event => event.stopPropagation()}
@@ -618,9 +619,9 @@ function TableControls<T>(props: {
         <button
           type="button"
           class={`${styles.controlButton} ${props.view === 'card' ? styles.controlButtonActive : ''}`}
-          aria-label={props.view === 'card' ? 'Switch to table view' : 'Switch to card view'}
+          aria-label={props.view === 'card' ? t('table.switch-to-table') : t('table.switch-to-card')}
           data-testid="table-view"
-          title={props.view === 'card' ? 'Table view' : 'Card view'}
+          title={props.view === 'card' ? t('table.view-table') : t('table.view-card')}
           onClick={props.onToggleView}
         >
           {props.view === 'card' ? '▤' : '▦'}
@@ -631,9 +632,9 @@ function TableControls<T>(props: {
       <button
         type="button"
         class={`${styles.controlButton} ${props.fullScreen ? styles.controlButtonActive : ''}`}
-        aria-label="Toggle full screen"
+        aria-label={t('table.toggle-full-screen')}
         data-testid="table-fullscreen"
-        title="Full screen"
+        title={t('table.full-screen')}
         onClick={props.onToggleFullScreen}
       >
         {props.fullScreen ? '🡼' : '⛶'}
@@ -644,9 +645,9 @@ function TableControls<T>(props: {
         <button
           type="button"
           class={styles.controlButton}
-          aria-label="Columns"
+          aria-label={t('table.columns')}
           data-testid="table-columns"
-          title="Columns"
+          title={t('table.columns')}
           onClick={() => setColumnsOpen(o => !o)}
         >
           ☰
@@ -661,9 +662,9 @@ function TableControls<T>(props: {
         <button
           type="button"
           class={styles.controlButton}
-          aria-label="Table settings"
+          aria-label={t('table.settings-label')}
           data-testid="table-settings"
-          title="Settings"
+          title={t('table.settings')}
           onClick={() => setSettingsOpen(o => !o)}
         >
           ⚙
@@ -676,7 +677,7 @@ function TableControls<T>(props: {
               disabled={!has('columnOrder')}
               onClick={() => reset({ columnOrder: undefined }, () => setSettingsOpen(false))}
             >
-              Reset column order
+              {t('table.reset-column-order')}
             </button>
             <button
               class={styles.menuItem}
@@ -684,7 +685,7 @@ function TableControls<T>(props: {
               disabled={!has('columnSizing')}
               onClick={() => reset({ columnSizing: undefined }, () => setSettingsOpen(false))}
             >
-              Reset column widths
+              {t('table.reset-column-widths')}
             </button>
             <button
               class={styles.menuItem}
@@ -692,7 +693,7 @@ function TableControls<T>(props: {
               disabled={!has('columnPinning')}
               onClick={() => reset({ columnPinning: undefined }, () => setSettingsOpen(false))}
             >
-              Reset pinned columns
+              {t('table.reset-pinned')}
             </button>
             <button
               class={styles.menuItem}
@@ -700,7 +701,7 @@ function TableControls<T>(props: {
               disabled={!has('columnVisibility')}
               onClick={() => reset({ columnVisibility: undefined }, () => setSettingsOpen(false))}
             >
-              Show all columns
+              {t('table.show-all-columns')}
             </button>
             <button
               class={styles.menuItem}
@@ -719,7 +720,7 @@ function TableControls<T>(props: {
                 )
               }
             >
-              Reset all
+              {t('table.reset-all')}
             </button>
           </div>
         </Show>
@@ -730,9 +731,9 @@ function TableControls<T>(props: {
         <button
           type="button"
           class={`${styles.controlButton} ${props.grouped ? styles.controlButtonActive : ''}`}
-          aria-label="Group by item"
+          aria-label={t('table.group-by-item')}
           data-testid="table-group"
-          title="Group by item"
+          title={t('table.group-by-item')}
           onClick={props.onToggleGrouped}
         >
           ⊞
@@ -768,7 +769,7 @@ function ColumnsPanel<T>(props: { table: TanTable<T> }): JSX.Element {
             <button
               class={styles.columnsPanelIconButton}
               type="button"
-              aria-label={`Move ${column.id} up`}
+              aria-label={t('table.move-up', { column: String(column.columnDef.header) })}
               disabled={index() === 0}
               onClick={() => move(column.id, -1)}
             >
@@ -777,7 +778,7 @@ function ColumnsPanel<T>(props: { table: TanTable<T> }): JSX.Element {
             <button
               class={styles.columnsPanelIconButton}
               type="button"
-              aria-label={`Move ${column.id} down`}
+              aria-label={t('table.move-down', { column: String(column.columnDef.header) })}
               disabled={index() === cols().length - 1}
               onClick={() => move(column.id, 1)}
             >
@@ -789,16 +790,20 @@ function ColumnsPanel<T>(props: { table: TanTable<T> }): JSX.Element {
             <button
               class={styles.columnsPanelIconButton}
               type="button"
-              aria-label={`${column.getIsPinned() === 'left' ? 'Unpin' : 'Pin'} ${column.id}`}
+              aria-label={
+                column.getIsPinned() === 'left'
+                  ? t('table.unpin', { column: String(column.columnDef.header) })
+                  : t('table.pin', { column: String(column.columnDef.header) })
+              }
               data-testid={`pin-${column.id}`}
-              title={column.getIsPinned() === 'left' ? 'Unpin' : 'Pin left'}
+              title={column.getIsPinned() === 'left' ? t('table.unpin-short') : t('table.pin-left')}
               onClick={() => column.pin(column.getIsPinned() === 'left' ? false : 'left')}
             >
               {column.getIsPinned() === 'left' ? '📌' : '📍'}
             </button>
             <input
               type="checkbox"
-              aria-label={`Show ${column.id}`}
+              aria-label={t('table.show-column', { column: String(column.columnDef.header) })}
               data-testid={`visible-${column.id}`}
               checked={column.getIsVisible()}
               onChange={column.getToggleVisibilityHandler()}

@@ -24,7 +24,10 @@ export const ShellLayout: Component<RouteSectionProps> = (props) => {
     return rest.replace(/^\/+|\/+$/g, '');
   };
 
-  const NO_SELECTION: NavLeaf = { id: '', label: '', to: '' };
+  // Sentinel for "no menu item matches this route": only `id` is consumed (the
+  // menu highlights by id, and '' matches nothing). labelKey is never rendered
+  // for it, so any valid key satisfies the type.
+  const NO_SELECTION: NavLeaf = { id: '', labelKey: 'nav.dashboard', to: '' };
   const selected = (): NavLeaf =>
     findLeafByPath(relativePath() || 'dashboard') ?? NO_SELECTION;
 

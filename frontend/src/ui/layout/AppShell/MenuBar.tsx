@@ -1,6 +1,7 @@
 import { For, Show, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { MSupplyGuyLogo, ChevronDownIcon } from "../../icons";
+import { t } from "../../../intl";
 import type { NavItem, NavLeaf } from "./navModel";
 import styles from "./MenuBar.module.css";
 
@@ -40,13 +41,13 @@ const TopLeaf = (props: { item: NavItem; selected: boolean; onSelect: () => void
       type="button"
       class={styles.navButton}
       data-selected={props.selected ? "true" : undefined}
-      title={props.item.label}
+      title={t(props.item.labelKey)}
       onClick={props.onSelect}>
       <span class={styles.icon}>
         <Dynamic component={props.item.icon} />
       </span>
       <span class={styles.chevronSlot} aria-hidden="true" />
-      <span class={styles.label}>{props.item.label}</span>
+      <span class={styles.label}>{t(props.item.labelKey)}</span>
       <Show when={props.selected}>
         <EndChevron />
       </Show>
@@ -66,13 +67,13 @@ const NavSection = (props: { item: NavItem; selectedId: string; onSelect: (leaf:
         class={styles.navButton}
         data-active={containsSelected() ? "true" : undefined}
         aria-expanded={open()}
-        title={props.item.label}
+        title={t(props.item.labelKey)}
         onClick={() => setOpen((o) => !o)}>
         <span class={styles.icon}>
           <Dynamic component={props.item.icon} />
         </span>
         <ChevronDownIcon class={styles.sectionChevron} data-open={open() ? "true" : "false"} aria-hidden="true" />
-        <span class={styles.label}>{props.item.label}</span>
+        <span class={styles.label}>{t(props.item.labelKey)}</span>
       </button>
       <Show when={open()}>
         <ul class={styles.childList}>
@@ -83,9 +84,9 @@ const NavSection = (props: { item: NavItem; selectedId: string; onSelect: (leaf:
                   type="button"
                   class={styles.navButton}
                   data-selected={leaf.id === props.selectedId ? "true" : undefined}
-                  title={leaf.label}
+                  title={t(leaf.labelKey)}
                   onClick={() => props.onSelect(leaf)}>
-                  <span class={styles.label}>{leaf.label}</span>
+                  <span class={styles.label}>{t(leaf.labelKey)}</span>
                   <Show when={leaf.id === props.selectedId}>
                     <EndChevron />
                   </Show>
@@ -114,7 +115,7 @@ const NavGroup = (props: {
             <TopLeaf
               item={item}
               selected={item.id === props.selectedId}
-              onSelect={() => props.onSelect({ id: item.id, label: item.label, to: item.to })}
+              onSelect={() => props.onSelect({ id: item.id, labelKey: item.labelKey, to: item.to })}
             />
           }>
           <NavSection item={item} selectedId={props.selectedId} onSelect={props.onSelect} />
@@ -159,13 +160,13 @@ export const MenuBar = (props: MenuBarProps) => {
         <nav
           class={styles.menuBar}
           data-open={!props.nav.railCollapsed() ? "true" : "false"}
-          aria-label="Main navigation">
+          aria-label={t("shell.main-navigation")}>
           <div class={styles.logoArea}>
             <button
               type="button"
               class={styles.logoButton}
               onClick={props.nav.toggleRail}
-              aria-label={props.nav.railCollapsed() ? "Expand menu" : "Collapse menu"}
+              aria-label={props.nav.railCollapsed() ? t("shell.expand-menu") : t("shell.collapse-menu")}
               aria-expanded={!props.nav.railCollapsed()}>
               <MSupplyGuyLogo class={styles.logo} />
             </button>
@@ -182,7 +183,7 @@ export const MenuBar = (props: MenuBarProps) => {
       <nav
         class={styles.overlayPanel}
         data-open={props.nav.overlayOpen() ? "true" : "false"}
-        aria-label="Main navigation"
+        aria-label={t("shell.main-navigation")}
         aria-hidden={!props.nav.overlayOpen()}>
         <div class={styles.logoArea}>
           <MSupplyGuyLogo class={styles.logo} />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FILTER_FIELDS, toStocktakeFilter, toFilterValues } from './listFilters';
+import { filterFields, toStocktakeFilter, toFilterValues } from './listFilters';
 
 // Conformance (C1 traceability) for the stocktakes list filters — the runnable,
 // backend-free half. Cites spec/stocktakes acceptance IDs; the full UI-level
@@ -14,7 +14,7 @@ import { FILTER_FIELDS, toStocktakeFilter, toFilterValues } from './listFilters'
 
 describe('stocktakes list filters (AC-L1 mapping; deliberate-filters requirement)', () => {
   it('exposes exactly the deliberately-chosen filter fields', () => {
-    expect(FILTER_FIELDS.map((f) => f.key)).toEqual([
+    expect(filterFields().map((f) => f.key)).toEqual([
       'status',
       'description',
       'comment',

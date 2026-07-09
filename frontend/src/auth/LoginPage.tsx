@@ -47,14 +47,9 @@ export const LoginPage: Component = () => {
 
   return (
     <div class={styles.page}>
-      <section class={styles.hero} aria-label="About Open mSupply">
-        <h1 class={styles.heroHeading}>
-          {'Simple.\nPowerful.\nPharmaceutical\nManagement.'}
-        </h1>
-        <p class={styles.heroBody}>
-          Welcome to Open mSupply. Your partner for managing health supply chains and improving
-          medicine availability.
-        </p>
+      <section class={styles.hero} aria-label={t('login.about')}>
+        <h1 class={styles.heroHeading}>{t('login.hero-title')}</h1>
+        <p class={styles.heroBody}>{t('login.hero-body')}</p>
       </section>
 
       <main class={styles.panel}>
@@ -98,7 +93,7 @@ export const LoginPage: Component = () => {
         </div>
         <footer class={styles.panelFooter}>
           <p class={styles.version}>
-            <strong>App version</strong> 0.0.0
+            <strong>{t('login.version')}</strong> 0.0.0
           </p>
           <LanguageSelector language={locale()} onSelect={(v) => void changeLanguage(v)} />
         </footer>

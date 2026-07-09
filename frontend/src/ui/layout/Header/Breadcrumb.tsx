@@ -1,4 +1,5 @@
 import { For, Show, type JSX } from 'solid-js'
+import { t } from '../../../intl'
 import styles from './Breadcrumb.module.css'
 
 export interface Crumb {
@@ -39,7 +40,7 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
   const isLast = (index: number) => index === props.crumbs.length - 1
 
   return (
-    <nav class={styles.breadcrumb} aria-label="Breadcrumb">
+    <nav class={styles.breadcrumb} aria-label={t('breadcrumb.label')}>
       <Show when={props.icon}>
         <span class={styles.icon} aria-hidden="true">
           {props.icon}

@@ -3,6 +3,7 @@ import { Dynamic } from "solid-js/web";
 import { sections, categories } from "./sections";
 import { MenuBar, type MenuBarState } from "../ui/layout/AppShell/MenuBar";
 import type { NavItem, NavLeaf } from "../ui/layout/AppShell/navModel";
+import type { LocaleKey } from "../intl";
 import { useIsNavOverlay } from "../ui/utils/createMediaQuery";
 import { MenuIcon } from "../ui/icons";
 import { ThemeToggle } from "../ui/elements/buttons/ThemeToggle";
@@ -22,15 +23,18 @@ import styles from "./ShowcaseApp.module.css";
  * in play here; see src/ui/docs/DECISIONS.md).
  */
 
-/* The showcase's nav model: one expandable section per category. */
+/* The showcase's nav model: one expandable section per category. MenuBar
+ * resolves labelKey through t(), which falls back to the key itself for
+ * unknown keys — so passing our literal section labels as "keys" renders
+ * them verbatim. Dev-only scaffolding; the cast stays contained here. */
 const showcaseNav: NavItem[] = categories.map((c) => ({
   id: c.id,
-  label: c.label,
+  labelKey: c.label as LocaleKey,
   to: `/showcase/${c.id}`,
   icon: c.icon,
   children: sections
     .filter((s) => s.category === c.id)
-    .map((s) => ({ id: s.id, label: s.label, to: `/showcase/${s.id}` })),
+    .map((s) => ({ id: s.id, labelKey: s.label as LocaleKey, to: `/showcase/${s.id}` })),
 }));
 
 const sectionFromHash = () => {
