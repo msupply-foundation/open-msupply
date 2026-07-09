@@ -385,7 +385,9 @@ test.describe('Distribution: Outbound Shipments', () => {
       // the store (OutboundServiceLineEdit: `disabled={isDisabled || !defaultServiceItem}`).
       // Skip rather than fail — the datafile, not the code, controls this.
       const addCharge = modal.getByRole('button', { name: /Add charge/i });
-      const addEnabled = await addCharge.isEnabled().catch(() => false);
+      const addEnabled = await addCharge
+        .isEnabled({ timeout: 3000 })
+        .catch(() => false);
       test.skip(
         !addEnabled,
         'No default service item configured on this store — skipping'
@@ -621,7 +623,11 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       // Need >20 shipments for page 2 to exist. The footer shows "Showing 1-20 of N".
       const nextPage = page.getByRole('button', { name: 'Go to next page' });
-      const hasNextPage = await nextPage.isEnabled().catch(() => false);
+      // isEnabled waits for the element to exist — bound it, or a missing
+      // control turns this skip guard into a test timeout.
+      const hasNextPage = await nextPage
+        .isEnabled({ timeout: 3000 })
+        .catch(() => false);
       test.skip(
         !hasNextPage,
         'Fewer than 21 shipments in the list — skipping pagination test'
@@ -782,7 +788,11 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       const page2Button = page.getByRole('button', { name: 'Go to page 2' });
-      const hasPage2 = await page2Button.isEnabled().catch(() => false);
+      // MUI renders no "Go to page 2" button at all when there's only one
+      // page — bound the wait, or the skip guard eats the test timeout.
+      const hasPage2 = await page2Button
+        .isEnabled({ timeout: 3000 })
+        .catch(() => false);
       test.skip(!hasPage2, 'Fewer than 21 shipments — skipping');
 
       const numberColumn = await getColumnIndex(page, 'Number');

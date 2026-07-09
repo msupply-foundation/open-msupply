@@ -122,6 +122,41 @@ setup('Seed stock via API', async ({ request }) => {
     'no visible items in the store — the seed datafile is missing item/master-list data'
   ).toBeGreaterThan(0);
 
+  // One outbound shipment so list-driven distribution tests (search by
+  // customer name, row-dependent assertions) have a row to work with.
+  const invoices = await gql(
+    `query($storeId: String!) {
+       invoices(storeId: $storeId, page: { first: 1 },
+                filter: { type: { equalTo: OUTBOUND_SHIPMENT } }) {
+         ... on InvoiceConnector { totalCount }
+       }
+     }`,
+    { storeId },
+    token
+  );
+  if (invoices.invoices.totalCount === 0) {
+    const customers = await gql(
+      `query($storeId: String!) {
+         names(storeId: $storeId, page: { first: 1 },
+               filter: { isCustomer: true, isVisible: true }) {
+           ... on NameConnector { nodes { id } }
+         }
+       }`,
+      { storeId },
+      token
+    );
+    const customerId = customers.names.nodes[0]?.id;
+    expect(customerId, 'no customer visible to the store').toBeTruthy();
+    const shipment = await gql(
+      `mutation($storeId: String!, $input: InsertOutboundShipmentInput!) {
+         insertOutboundShipment(storeId: $storeId, input: $input) { __typename }
+       }`,
+      { storeId, input: { id: crypto.randomUUID(), otherPartyId: customerId } },
+      token
+    );
+    expect(shipment.insertOutboundShipment.__typename).toBe('InvoiceNode');
+  }
+
   const amoxIds = new Set(amox.items.nodes.map((n: { id: string }) => n.id));
   for (const item of nodes) {
     // Multi-batch items are needed by the sort/batch-picker tests; give the
