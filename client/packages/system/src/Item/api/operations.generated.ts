@@ -132,6 +132,7 @@ export type ItemWithPackSizeFragment = {
 export type ItemStockOnHandFragment = {
   __typename: 'ItemNode';
   availableStockOnHand: number;
+  stockOnHand: number;
   defaultPackSize: number;
   id: string;
   code: string;
@@ -140,34 +141,6 @@ export type ItemStockOnHandFragment = {
   isVaccine: boolean;
   doses: number;
   restrictedLocationTypeId?: string | null;
-  itemStoreProperties?: {
-    __typename: 'ItemStorePropertiesNode';
-    defaultSellPricePerPack: number;
-    ignoreForOrders: boolean;
-  } | null;
-  stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
-};
-
-export type ItemRowWithStatsFragment = {
-  __typename: 'ItemNode';
-  availableStockOnHand: number;
-  defaultPackSize: number;
-  id: string;
-  code: string;
-  name: string;
-  unitName?: string | null;
-  isVaccine: boolean;
-  doses: number;
-  restrictedLocationTypeId?: string | null;
-  stats: {
-    __typename: 'ItemStatsNode';
-    averageMonthlyConsumption: number;
-    availableStockOnHand: number;
-    availableMonthsOfStockOnHand?: number | null;
-    monthsOfStockOnHand?: number | null;
-    totalConsumption: number;
-    stockOnHand: number;
-  };
   itemStoreProperties?: {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
@@ -268,6 +241,7 @@ export type ItemVariantFragment = {
   } | null;
   manufacturer?: {
     __typename: 'NameNode';
+    isVisible: boolean;
     code: string;
     id: string;
     isCustomer: boolean;
@@ -466,6 +440,7 @@ export type ItemFragment = {
     } | null;
     manufacturer?: {
       __typename: 'NameNode';
+      isVisible: boolean;
       code: string;
       id: string;
       isCustomer: boolean;
@@ -567,260 +542,8 @@ export type ItemFragment = {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
     ignoreForOrders: boolean;
+    margin: number;
   } | null;
-};
-
-export type ItemsWithStockLinesQueryVariables = Types.Exact<{
-  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  key: Types.ItemSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.ItemFilterInput>;
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-export type ItemsWithStockLinesQuery = {
-  __typename: 'Queries';
-  items: {
-    __typename: 'ItemConnector';
-    totalCount: number;
-    nodes: Array<{
-      __typename: 'ItemNode';
-      id: string;
-      code: string;
-      name: string;
-      atcCategory: string;
-      ddd: string;
-      defaultPackSize: number;
-      doses: number;
-      isVaccine: boolean;
-      margin: number;
-      msupplyUniversalCode: string;
-      msupplyUniversalName: string;
-      outerPackSize: number;
-      strength?: string | null;
-      type: Types.ItemNodeType;
-      unitName?: string | null;
-      volumePerOuterPack: number;
-      volumePerPack: number;
-      weight: number;
-      restrictedLocationTypeId?: string | null;
-      availableStockOnHand: number;
-      customFields?: any | null;
-      restrictedLocationType?: {
-        __typename: 'LocationTypeNode';
-        id: string;
-        name: string;
-        minTemperature: number;
-        maxTemperature: number;
-      } | null;
-      availableBatches: {
-        __typename: 'StockLineConnector';
-        totalCount: number;
-        nodes: Array<{
-          __typename: 'StockLineNode';
-          availableNumberOfPacks: number;
-          batch?: string | null;
-          expiryDate?: string | null;
-          manufactureDate?: string | null;
-          id: string;
-          itemId: string;
-          note?: string | null;
-          onHold: boolean;
-          packSize: number;
-          sellPricePerPack: number;
-          costPricePerPack: number;
-          storeId: string;
-          totalNumberOfPacks: number;
-          itemVariantId?: string | null;
-          volumePerPack: number;
-          location?: {
-            __typename: 'LocationNode';
-            code: string;
-            id: string;
-            name: string;
-            onHold: boolean;
-            locationType?: {
-              __typename: 'LocationTypeNode';
-              id: string;
-              name: string;
-            } | null;
-          } | null;
-          item: {
-            __typename: 'ItemNode';
-            name: string;
-            code: string;
-            unitName?: string | null;
-            defaultPackSize: number;
-            doses: number;
-            isVaccine: boolean;
-            restrictedLocationTypeId?: string | null;
-            itemDirections: Array<{
-              __typename: 'ItemDirectionNode';
-              directions: string;
-              id: string;
-              itemId: string;
-              priority: number;
-            }>;
-            warnings: Array<{
-              __typename: 'WarningNode';
-              warningText: string;
-              id: string;
-              itemId: string;
-              priority: boolean;
-              code: string;
-            }>;
-          };
-          donor?: { __typename: 'NameNode'; id: string } | null;
-          vvmStatus?: {
-            __typename: 'VvmstatusNode';
-            id: string;
-            priority: number;
-            unusable: boolean;
-            description: string;
-          } | null;
-          program?: {
-            __typename: 'ProgramNode';
-            id: string;
-            name: string;
-          } | null;
-          campaign?: {
-            __typename: 'CampaignNode';
-            id: string;
-            name: string;
-          } | null;
-        }>;
-      };
-      stats: {
-        __typename: 'ItemStatsNode';
-        averageMonthlyConsumption: number;
-        availableStockOnHand: number;
-        availableMonthsOfStockOnHand?: number | null;
-        monthsOfStockOnHand?: number | null;
-        totalConsumption: number;
-        stockOnHand: number;
-      };
-      variants: Array<{
-        __typename: 'ItemVariantNode';
-        id: string;
-        name: string;
-        itemId: string;
-        manufacturerId?: string | null;
-        locationTypeId?: string | null;
-        vvmType?: string | null;
-        item?: {
-          __typename: 'ItemNode';
-          id: string;
-          name: string;
-          isVaccine: boolean;
-          restrictedLocationTypeId?: string | null;
-        } | null;
-        manufacturer?: {
-          __typename: 'NameNode';
-          code: string;
-          id: string;
-          isCustomer: boolean;
-          isSupplier: boolean;
-          isOnHold: boolean;
-          name: string;
-          customFields?: any | null;
-          store?: {
-            __typename: 'StoreNode';
-            id: string;
-            code: string;
-            isDisabled: boolean;
-          } | null;
-        } | null;
-        locationType?: {
-          __typename: 'LocationTypeNode';
-          id: string;
-          name: string;
-          minTemperature: number;
-          maxTemperature: number;
-        } | null;
-        packagingVariants: Array<{
-          __typename: 'PackagingVariantNode';
-          id: string;
-          name: string;
-          packagingLevel: number;
-          packSize?: number | null;
-          volumePerUnit?: number | null;
-        }>;
-        bundledItemVariants: Array<{
-          __typename: 'BundledItemNode';
-          id: string;
-          ratio: number;
-          principalItemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            name: string;
-            itemId: string;
-            itemName: string;
-          } | null;
-          bundledItemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            name: string;
-            itemId: string;
-            itemName: string;
-          } | null;
-        }>;
-        bundlesWith: Array<{
-          __typename: 'BundledItemNode';
-          id: string;
-          ratio: number;
-          principalItemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            name: string;
-            itemId: string;
-            itemName: string;
-          } | null;
-          bundledItemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            name: string;
-            itemId: string;
-            itemName: string;
-          } | null;
-        }>;
-      }>;
-      ancillaryItems: Array<{
-        __typename: 'AncillaryItemNode';
-        id: string;
-        itemQuantity: number;
-        ancillaryQuantity: number;
-        itemId: string;
-        ancillaryItemId: string;
-        item?: {
-          __typename: 'ItemNode';
-          id: string;
-          name: string;
-          code: string;
-          unitName?: string | null;
-        } | null;
-        ancillaryItem?: {
-          __typename: 'ItemNode';
-          id: string;
-          name: string;
-          code: string;
-          unitName?: string | null;
-        } | null;
-      }>;
-      itemDirections: Array<{
-        __typename: 'ItemDirectionNode';
-        directions: string;
-        id: string;
-        itemId: string;
-        priority: number;
-      }>;
-      itemStoreProperties?: {
-        __typename: 'ItemStorePropertiesNode';
-        defaultSellPricePerPack: number;
-        ignoreForOrders: boolean;
-      } | null;
-    }>;
-  };
 };
 
 export type ItemsQueryVariables = Types.Exact<{
@@ -867,6 +590,7 @@ export type ItemStockOnHandQuery = {
     nodes: Array<{
       __typename: 'ItemNode';
       availableStockOnHand: number;
+      stockOnHand: number;
       defaultPackSize: number;
       id: string;
       code: string;
@@ -880,7 +604,6 @@ export type ItemStockOnHandQuery = {
         defaultSellPricePerPack: number;
         ignoreForOrders: boolean;
       } | null;
-      stats: { __typename: 'ItemStatsNode'; stockOnHand: number };
     }>;
   };
 };
@@ -967,6 +690,7 @@ export type ItemByIdQuery = {
     totalCount: number;
     nodes: Array<{
       __typename: 'ItemNode';
+      stockOnHand: number;
       id: string;
       code: string;
       name: string;
@@ -1098,6 +822,7 @@ export type ItemByIdQuery = {
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
+          isVisible: boolean;
           code: string;
           id: string;
           isCustomer: boolean;
@@ -1199,8 +924,23 @@ export type ItemByIdQuery = {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
         ignoreForOrders: boolean;
+        margin: number;
       } | null;
     }>;
+  };
+};
+
+export type ItemPriceQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+}>;
+
+export type ItemPriceQuery = {
+  __typename: 'Queries';
+  itemPrice: {
+    __typename: 'ItemPriceNode';
+    itemId: string;
+    defaultPricePerUnit?: number | null;
   };
 };
 
@@ -1243,6 +983,7 @@ export type ItemVariantsQuery = {
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
+          isVisible: boolean;
           code: string;
           id: string;
           isCustomer: boolean;
@@ -1426,6 +1167,7 @@ export type UpsertItemVariantMutation = {
             } | null;
             manufacturer?: {
               __typename: 'NameNode';
+              isVisible: boolean;
               code: string;
               id: string;
               isCustomer: boolean;
@@ -1813,26 +1555,9 @@ export const ItemStockOnHandFragmentDoc = gql`
       defaultSellPricePerPack
       ignoreForOrders
     }
-    stats(storeId: $storeId) {
-      stockOnHand
-    }
+    stockOnHand(storeId: $storeId)
   }
   ${ItemWithPackSizeFragmentDoc}
-`;
-export const ItemRowWithStatsFragmentDoc = gql`
-  fragment ItemRowWithStats on ItemNode {
-    ...ItemStockOnHand
-    stats(storeId: $storeId) {
-      __typename
-      averageMonthlyConsumption
-      availableStockOnHand
-      availableMonthsOfStockOnHand
-      monthsOfStockOnHand
-      totalConsumption
-      stockOnHand
-    }
-  }
-  ${ItemStockOnHandFragmentDoc}
 `;
 export const LocationTypeFragmentDoc = gql`
   fragment LocationType on LocationTypeNode {
@@ -1963,6 +1688,7 @@ export const ItemVariantFragmentDoc = gql`
     manufacturerId
     manufacturer(storeId: $storeId) {
       ...NameRow
+      isVisible
     }
     locationTypeId
     locationType {
@@ -2065,6 +1791,7 @@ export const ItemFragmentDoc = gql`
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
       ignoreForOrders
+      margin
     }
     customFields
   }
@@ -2140,32 +1867,6 @@ export const CustomFieldFragmentDoc = gql`
       parentOptionId
     }
   }
-`;
-export const ItemsWithStockLinesDocument = gql`
-  query itemsWithStockLines(
-    $first: Int
-    $offset: Int
-    $key: ItemSortFieldInput!
-    $desc: Boolean
-    $filter: ItemFilterInput
-    $storeId: String!
-  ) {
-    items(
-      page: { first: $first, offset: $offset }
-      sort: { key: $key, desc: $desc }
-      filter: $filter
-      storeId: $storeId
-    ) {
-      ... on ItemConnector {
-        __typename
-        nodes {
-          ...Item
-        }
-        totalCount
-      }
-    }
-  }
-  ${ItemFragmentDoc}
 `;
 export const ItemsDocument = gql`
   query items(
@@ -2256,6 +1957,7 @@ export const ItemByIdDocument = gql`
         nodes {
           __typename
           ...Item
+          stockOnHand(storeId: $storeId)
           stats(storeId: $storeId) {
             __typename
             averageMonthlyConsumption
@@ -2275,6 +1977,17 @@ export const ItemByIdDocument = gql`
   }
   ${ItemFragmentDoc}
   ${StockLineFragmentDoc}
+`;
+export const ItemPriceDocument = gql`
+  query itemPrice($storeId: String!, $itemId: String!) {
+    itemPrice(storeId: $storeId, input: { itemId: $itemId }) {
+      ... on ItemPriceNode {
+        __typename
+        itemId
+        defaultPricePerUnit
+      }
+    }
+  }
 `;
 export const ItemVariantsConfiguredDocument = gql`
   query itemVariantsConfigured($storeId: String!) {
@@ -2524,24 +2237,6 @@ export function getSdk(
   withWrapper: SdkFunctionWrapper = defaultWrapper
 ) {
   return {
-    itemsWithStockLines(
-      variables: ItemsWithStockLinesQueryVariables,
-      requestHeaders?: GraphQLClientRequestHeaders,
-      signal?: RequestInit['signal']
-    ): Promise<ItemsWithStockLinesQuery> {
-      return withWrapper(
-        wrappedRequestHeaders =>
-          client.request<ItemsWithStockLinesQuery>({
-            document: ItemsWithStockLinesDocument,
-            variables,
-            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
-            signal,
-          }),
-        'itemsWithStockLines',
-        'query',
-        variables
-      );
-    },
     items(
       variables: ItemsQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
@@ -2610,6 +2305,24 @@ export function getSdk(
             signal,
           }),
         'itemById',
+        'query',
+        variables
+      );
+    },
+    itemPrice(
+      variables: ItemPriceQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ItemPriceQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ItemPriceQuery>({
+            document: ItemPriceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'itemPrice',
         'query',
         variables
       );

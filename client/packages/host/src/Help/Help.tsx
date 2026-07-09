@@ -9,6 +9,7 @@ import { useTranslation } from '@common/intl';
 import { AppVersion } from '../components';
 import { SiteInfo } from '../components/SiteInfo';
 import { ContactFormSection } from './ContactFormSection';
+import { HelpDocumentsSection } from './HelpDocumentsSection';
 import { UserGuide } from './UserGuide';
 
 export const Help = () => {
@@ -24,6 +25,7 @@ export const Help = () => {
       <Typography style={{ paddingBottom: 10 }}>
         {t('message.keyboard-shortcuts')}
       </Typography>
+      <HelpDocumentsSection />
       <ContactFormSection />
       <AppBarButtonsPortal>
         <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />

@@ -182,6 +182,7 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 | `Demographic` | Central | Central | v6 | — |
 | `FormSchema` | Central | Central | v6 | Yes |
 | `FrontendPlugin` | Central | Central | v6 | Yes |
+| `HelpDocument` | Central | Central | v6 | Yes |
 | `ItemVariant` | Central | Central | v6 | — |
 | `NameProperty` | Central | Central | v6 | Yes |
 | `PackagingVariant` | Central | Central | v6 | — |

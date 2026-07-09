@@ -90,6 +90,14 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
 
   const showRemoveOption = activeFilters.length > 0;
 
+  // Only surface the "Filters" dropdown when it has something actionable: a
+  // filter left to add, or a non-default (removable) filter that's active.
+  // Otherwise — e.g. a view whose only filter is a default, always-visible
+  // search — the dropdown would just offer "Remove all filters", which the
+  // per-input clear button already covers, so hide it entirely.
+  const showFilterMenu =
+    filterOptions.length > 0 || activeFilters.some(fil => !fil.isDefault);
+
   // updating active filters when the filters are changed
   // this allows for dependent data to update the filter options
   // i.e. choosing a filter option in one filter changes the options in another
@@ -113,26 +121,28 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
       })}
     >
       {/* 13px margin to make menu match the individual filter inputs */}
-      <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>
-        {filterOptions.map(option => (
-          <FilterMenuItem
-            key={
-              option.value.type === 'group'
-                ? option.value.name
-                : option.value.urlParameter
-            }
-            onClick={() => handleSelect(option.value)}
-            label={option.label}
-          />
-        ))}
-        {showRemoveOption && <Divider />}
-        {showRemoveOption && (
-          <FilterMenuItem
-            onClick={() => handleSelect(RESET_KEYWORD)}
-            label={t('label.remove-all-filters')}
-          />
-        )}
-      </DropdownMenu>
+      {showFilterMenu && (
+        <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>
+          {filterOptions.map(option => (
+            <FilterMenuItem
+              key={
+                option.value.type === 'group'
+                  ? option.value.name
+                  : option.value.urlParameter
+              }
+              onClick={() => handleSelect(option.value)}
+              label={option.label}
+            />
+          ))}
+          {showRemoveOption && <Divider />}
+          {showRemoveOption && (
+            <FilterMenuItem
+              onClick={() => handleSelect(RESET_KEYWORD)}
+              label={t('label.remove-all-filters')}
+            />
+          )}
+        </DropdownMenu>
+      )}
       {activeFilters.map(filter => getFilterComponent(filter, removeFilter))}
     </Box>
   );
@@ -215,11 +225,7 @@ const getFilterComponent = (
       );
     case 'enum':
       return (
-        <EnumFilter
-          key={filter.urlParameter}
-          filterDefinition={filter}
-          remove={() => removeFilter(filter)}
-        />
+        <EnumFilter key={filter.urlParameter} filterDefinition={filter} />
       );
     case 'hierarchicalEnum':
       return (

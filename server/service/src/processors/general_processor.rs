@@ -20,6 +20,7 @@ use crate::{
 };
 
 use super::{
+    assign_prescription_number::AssignPrescriptionNumber,
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
     plugin_processor::PluginProcessor,
@@ -52,6 +53,7 @@ pub enum ProcessorType {
     ContactFormEmail,
     LoadPlugin,
     AssignRequisitionNumber,
+    AssignPrescriptionNumber,
     SupportUploadFiles,
     Plugins,
     RequisitionAutoFinalise,
@@ -65,6 +67,7 @@ impl ProcessorType {
             ProcessorType::ContactFormEmail => vec![Box::new(QueueContactEmailProcessor)],
             ProcessorType::LoadPlugin => vec![Box::new(LoadPlugin)],
             ProcessorType::AssignRequisitionNumber => vec![Box::new(AssignRequisitionNumber)],
+            ProcessorType::AssignPrescriptionNumber => vec![Box::new(AssignPrescriptionNumber)],
             ProcessorType::Plugins => get_plugin_processors(),
             ProcessorType::RequisitionAutoFinalise => {
                 vec![Box::new(RequisitionAutoFinaliseProcessor)]
