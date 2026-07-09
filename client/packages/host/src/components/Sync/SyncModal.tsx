@@ -243,7 +243,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
               backgroundColor: theme.palette.background.drawer,
               fontSize: '14px',
               width: '100%',
-              marginTop: error ? '5' : '20',
+              marginTop: '5',
             }}
             icon={
               <CheckCircleIcon fontSize="small" sx={{ color: 'gray.dark' }} />
