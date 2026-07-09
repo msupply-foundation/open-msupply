@@ -12,7 +12,7 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TYPE context_type ADD VALUE 'STOCK_MOVEMENT';
+                    ALTER TYPE context_type ADD VALUE IF NOT EXISTS 'STOCK_MOVEMENT';
                 "#
             )?;
         }
