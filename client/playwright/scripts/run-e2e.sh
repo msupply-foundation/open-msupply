@@ -57,6 +57,11 @@ for port in "$SERVER_PORT" $((SERVER_PORT + 1)) "$FE_PORT"; do
   fi
 done
 
+# Fresh-checkout bootstrap: JS deps and the Playwright browser. Both are
+# fast no-ops when already present.
+[[ -d "$CLIENT_DIR/node_modules" ]] || (cd "$CLIENT_DIR" && yarn install)
+(cd "$CLIENT_DIR" && npx playwright install chromium)
+
 echo "Building server + CLI (sqlite; a no-op when already built)"
 (cd "$SERVER_DIR" && cargo build --bin remote_server --bin remote_server_cli)
 
