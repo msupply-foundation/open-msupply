@@ -21,9 +21,9 @@ import {
   MuiLink,
   useIsCentralServerApi,
   Collapse,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
-import { LoginNumericTextInput } from '../Login/LoginNumericTextInput';
 import { useInitialiseForm } from './hooks';
 import { SyncProgress } from '../SyncProgress';
 import { mapSyncError } from 'packages/system/src';
@@ -263,7 +263,7 @@ const RemoteForm: React.FC<RemoteFormProps> = ({
             </Box>
             <Collapse in={showAdvanced} unmountOnExit>
               <Box pt={2}>
-                <LoginNumericTextInput
+                <NumericTextInput
                   fullWidth
                   textAlign="left"
                   label={t('label.sync-batch-size')}
