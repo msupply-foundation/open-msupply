@@ -97,10 +97,14 @@ const asString = (value: string | string[] | undefined): string =>
 export const toStocktakeFilter = (values: FilterValues): StocktakeFilter => {
   const filter: StocktakeFilter = {};
 
+  // The server honours status.equalTo, NOT equalAny (equalAny is in the schema
+  // input but the resolver ignores it — the "declared but unreachable" wire trap,
+  // cf. spec/locations). Status has two values, so a single pick is equalTo and
+  // picking both (or none) is no filter.
   const status = asArray(values.status).filter(
     (s): s is 'NEW' | 'FINALISED' => s === 'NEW' || s === 'FINALISED',
   );
-  if (status.length) filter.status = { equalAny: status };
+  if (status.length === 1) filter.status = { equalTo: status[0] };
 
   const description = asString(values.description);
   if (description) filter.description = { like: description };
@@ -121,7 +125,8 @@ export const toStocktakeFilter = (values: FilterValues): StocktakeFilter => {
 /** The GraphQL filter object → FilterBar's flat values (to seed chips from the URL). */
 export const toFilterValues = (filter: StocktakeFilter): FilterValues => {
   const values: FilterValues = {};
-  if (filter.status?.equalAny?.length) values.status = filter.status.equalAny;
+  if (filter.status?.equalTo) values.status = [filter.status.equalTo];
+  else if (filter.status?.equalAny?.length) values.status = filter.status.equalAny;
   if (filter.description?.like) values.description = filter.description.like;
   if (filter.comment?.like) values.comment = filter.comment.like;
   if (filter.isLocked != null) values.isLocked = [String(filter.isLocked)];

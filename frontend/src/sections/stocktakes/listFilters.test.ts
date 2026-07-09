@@ -23,11 +23,10 @@ describe('stocktakes list filters (AC-L1 mapping; deliberate-filters requirement
     ]);
   });
 
-  it('maps a status selection to the GraphQL equalAny operator (AC-L1)', () => {
-    expect(toStocktakeFilter({ status: ['NEW'] })).toEqual({ status: { equalAny: ['NEW'] } });
-    expect(toStocktakeFilter({ status: ['NEW', 'FINALISED'] })).toEqual({
-      status: { equalAny: ['NEW', 'FINALISED'] },
-    });
+  it('maps a status selection to equalTo — not equalAny, which the server ignores (AC-L1)', () => {
+    expect(toStocktakeFilter({ status: ['NEW'] })).toEqual({ status: { equalTo: 'NEW' } });
+    // Both values selected is no status filter (the enum has only these two).
+    expect(toStocktakeFilter({ status: ['NEW', 'FINALISED'] })).toEqual({});
   });
 
   it('maps text fields to a like operator and drops empty values', () => {
