@@ -12,6 +12,7 @@ use crate::StorageConnection;
 use crate::{ChangelogSyncType, Upsert};
 
 diesel_string_enum! {
+    db_case = SCREAMING_SNAKE_CASE;
     #[derive(Clone, Eq)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     // How much UI presence a custom_field gets on this table scope — a single
@@ -205,6 +206,13 @@ mod tests {
         );
         assert_eq!(
             serde_json::from_value::<CustomFieldDisplayMode>(serde_json::json!("FUTURE_MODE"))
+                .unwrap(),
+            CustomFieldDisplayMode::Other("FUTURE_MODE".to_string())
+        );
+
+        // Wire-cased unknown captures normalized to the DB casing (`db_case`).
+        assert_eq!(
+            serde_json::from_value::<CustomFieldDisplayMode>(serde_json::json!("FutureMode"))
                 .unwrap(),
             CustomFieldDisplayMode::Other("FUTURE_MODE".to_string())
         );
