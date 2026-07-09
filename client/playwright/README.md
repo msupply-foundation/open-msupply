@@ -19,7 +19,8 @@ For full documentation, see [playwright.dev](https://playwright.dev).
 
 - Node.js >= 18
 - Yarn
-- A running Open mSupply instance (defaults to `http://localhost:3003`)
+- A running Open mSupply instance (defaults to `http://localhost:3003`) — **or
+  nothing at all** if you use the hermetic runner below, which boots its own.
 
 ## Setup
 
@@ -30,7 +31,35 @@ cd client
 npx playwright install chromium
 ```
 
-## Running Tests
+## Hermetic run (recommended) — no setup, deterministic data
+
+One command builds the (sqlite) server, restores a throwaway database from the
+committed reference datafile ([server/data/e2e](../../server/data/e2e/README.md)),
+boots server + front end on dedicated ports, runs the tests, and tears
+everything down. No postgres, no central server, no datafile of your own:
+
+```bash
+cd client
+yarn e2e:local stocktake-regression            # one suite
+yarn e2e:local                                 # everything
+yarn e2e:local stocktake-regression --headed   # watch it
+KEEP_SERVER=1 yarn e2e:local stocktake-regression   # leave the stack up to poke at
+```
+
+First run compiles the Rust server (slow); after that the whole cycle is a few
+minutes. Every run starts from identical data — this is the same shape CI uses,
+so "passes locally" means something.
+
+Two rules keep it deterministic:
+
+- **Suites must not assume datafile state.** Store-local data (stock, documents)
+  is arranged through the GraphQL API in [e2e/data.setup.ts](e2e/data.setup.ts)
+  — extend that, don't add rows to the reference datafile.
+- **Reference data (items, reasons, master lists) lives in the datafile.** The
+  remote API can't create it; see the
+  [regeneration recipe](../../server/data/e2e/README.md) when it needs to change.
+
+## Running Tests (against your own instance)
 
 All commands run from the `client/` directory.
 
