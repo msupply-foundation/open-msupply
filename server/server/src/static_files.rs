@@ -45,11 +45,24 @@ pub(crate) struct UploadForm {
     pub(crate) file: Vec<TempFile>,
 }
 
+/// Maximum size of a single uploaded sync file. The frontend enforces the same
+/// limit client-side (see DocumentUpload) so users get immediate feedback.
+pub(crate) const MAX_SYNC_FILE_SIZE_BYTES: usize = 50 * 1024 * 1024; // 50MB
+
 // this function could be located in different module
 pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/files").guard(guard::Get()).to(files));
     cfg.service(
         web::scope("/sync_files")
+            // The default multipart total limit (50MiB) would reject an upload
+            // just over the per-file limit with an opaque error before the
+            // clearer per-file size check in upload_sync_file could run. Raise
+            // it to match the content-length middleware (100MB); the per-file
+            // MAX_SYNC_FILE_SIZE_BYTES check is what users should hit.
+            .app_data(
+                actix_multipart::form::MultipartFormConfig::default()
+                    .total_limit(100 * 1024 * 1024),
+            )
             .service(download_sync_file)
             .service(delete_sync_file)
             .service(upload_sync_file)
@@ -195,6 +208,21 @@ async fn upload_sync_file(
     let path_inner = path.into_inner();
 
     check_purchase_order_document_editable(&service_provider, &path_inner.0, &path_inner.1)?;
+
+    for f in file.iter() {
+        if f.size > MAX_SYNC_FILE_SIZE_BYTES {
+            let file_name = f.file_name.as_deref().unwrap_or("file");
+            return Err(InternalError::new(
+                format!(
+                    "'{}' exceeds the maximum file size of {}MB",
+                    file_name,
+                    MAX_SYNC_FILE_SIZE_BYTES / (1024 * 1024)
+                ),
+                StatusCode::PAYLOAD_TOO_LARGE,
+            )
+            .into());
+        }
+    }
 
     let mut static_file_ids: Vec<String> = vec![];
 

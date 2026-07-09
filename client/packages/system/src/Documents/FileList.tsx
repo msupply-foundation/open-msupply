@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import {
   Box,
   FileUtils,
+  Formatter,
   IconButton,
   InlineSpinner,
   Link,
   Stack,
   Typography,
+  useFormatDateTime,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -20,6 +22,9 @@ export type SyncFile = Pick<File, 'name'> & {
   recordId?: string;
   /** Whether this file shows a delete (✕) action. Defaults to true. */
   canDelete?: boolean;
+  /** When set (with `totalBytes`), the list renders uploaded date/size columns. */
+  createdDatetime?: string | null;
+  totalBytes?: number | null;
 };
 
 interface FileListProps {
@@ -33,6 +38,9 @@ interface FileListProps {
   tableName?: string;
   removeFile?: (filename: string, id?: string, recordId?: string) => void;
 }
+
+const DATE_COLUMN_WIDTH = 120;
+const SIZE_COLUMN_WIDTH = 80;
 
 const Heading = ({ text }: { text: string }) => (
   <Typography sx={{ fontWeight: 'bold', fontSize: 20, paddingBottom: 2 }}>
@@ -51,6 +59,7 @@ export const FileList = ({
 }: FileListProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+  const { localisedDate } = useFormatDateTime();
   const [loadingIndex, setLoadingIndex] = useState<number>();
 
   if (files === undefined || files.length === 0) {
@@ -68,6 +77,12 @@ export const FileList = ({
   }
 
   const isAndroid = Capacitor.getPlatform() === 'android';
+  // Callers that load documents from the server pass upload metadata; local
+  // draft/staged file lists don't, and render as a plain name list.
+  const showDetailColumns = files.some(
+    file => file.createdDatetime != null || file.totalBytes != null
+  );
+  const showRemoveColumn = !!removeFile;
 
   return (
     <>
@@ -78,6 +93,21 @@ export const FileList = ({
         alignContent="center"
         paddingTop={4 * padding}
       >
+        {showDetailColumns && (
+          <Box display="flex" padding={padding} sx={{ width: '100%' }}>
+            <Box width={24} />
+            <Typography sx={{ flex: 1, fontWeight: 'bold', paddingLeft: 1 }}>
+              {t('label.filename')}
+            </Typography>
+            <Typography sx={{ width: DATE_COLUMN_WIDTH, fontWeight: 'bold' }}>
+              {t('label.uploaded-date')}
+            </Typography>
+            <Typography sx={{ width: SIZE_COLUMN_WIDTH, fontWeight: 'bold' }}>
+              {t('label.file-size')}
+            </Typography>
+            {showRemoveColumn && <Box width={40} />}
+          </Box>
+        )}
         {files?.map((file, idx) => {
           const recordId = file.recordId ?? assetId;
           const showRemove =
@@ -86,12 +116,18 @@ export const FileList = ({
             <Box
               key={`${idx}_${file.name}`}
               display="flex"
+              alignItems="center"
               padding={padding}
               sx={{ width: '100%' }}
             >
               <FileIcon sx={{ stroke: theme => theme.palette.gray.main }} />
               <Typography
-                sx={{ width: '100%', color: 'gray.main', paddingLeft: 1 }}
+                sx={{
+                  flex: 1,
+                  color: 'gray.main',
+                  paddingLeft: 1,
+                  wordBreak: 'break-all',
+                }}
               >
                 {file.id ? (
                   isAndroid ? (
@@ -125,16 +161,36 @@ export const FileList = ({
                   file.name
                 )}
               </Typography>
-              {showRemove && (
-                <IconButton
-                  onClick={() => removeFile(file.name, file.id, recordId)}
-                  icon={
-                    <XCircleIcon
-                      sx={{ fill: theme => theme.palette.gray.main }}
+              {showDetailColumns && (
+                <>
+                  <Typography
+                    sx={{ width: DATE_COLUMN_WIDTH, color: 'gray.main' }}
+                  >
+                    {file.createdDatetime
+                      ? localisedDate(file.createdDatetime)
+                      : ''}
+                  </Typography>
+                  <Typography
+                    sx={{ width: SIZE_COLUMN_WIDTH, color: 'gray.main' }}
+                  >
+                    {Formatter.fileSize(file.totalBytes)}
+                  </Typography>
+                </>
+              )}
+              {showRemoveColumn && (
+                <Box width={40} display="flex" justifyContent="center">
+                  {showRemove && (
+                    <IconButton
+                      onClick={() => removeFile(file.name, file.id, recordId)}
+                      icon={
+                        <XCircleIcon
+                          sx={{ fill: theme => theme.palette.gray.main }}
+                        />
+                      }
+                      label={t('button.remove-file')}
                     />
-                  }
-                  label={t('button.remove-file')}
-                />
+                  )}
+                </Box>
               )}
               {idx === loadingIndex && <InlineSpinner />}
             </Box>

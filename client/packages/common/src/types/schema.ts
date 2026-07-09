@@ -10453,6 +10453,7 @@ export type SyncFileReferenceNode = {
   recordId: Scalars['String']['output'];
   status: SyncFileReferenceNodeStatus;
   tableName: Scalars['String']['output'];
+  totalBytes: Scalars['Int']['output'];
 };
 
 export enum SyncFileReferenceNodeStatus {
