@@ -18,24 +18,24 @@ export const mapTranslationsToArray = (
   translations: Record<string, string>,
   t: TypedTFunction<LocaleKey>,
   // Keys without a default translation (e.g. report/plugin keys not in the
-  // bundle) are hidden by default. Pass true to keep them so they aren't
-  // dropped on save.
-  options?: { includeUnknownKeys?: boolean }
+  // bundle) are hidden by default. Pass `includeUnknownKeys: true` to keep
+  // them so they aren't dropped on save. Defaults come from the bundled
+  // common base unless a namespace-aware `getDefault` is supplied
+  options?: {
+    includeUnknownKeys?: boolean;
+    getDefault?: (key: string) => string;
+  }
 ): Translation[] => {
+  const getDefault =
+    options?.getDefault ??
+    ((key: string) =>
+      t(key as LocaleKey, { ns: DEFAULT_TRANSLATIONS_NAMESPACE }));
   return Object.entries(translations)
-    .filter(
-      ([key]) =>
-        options?.includeUnknownKeys ||
-        t(key as LocaleKey, {
-          ns: DEFAULT_TRANSLATIONS_NAMESPACE,
-        }) !== ''
-    )
+    .filter(([key]) => options?.includeUnknownKeys || getDefault(key) !== '')
     .map(([key, custom]) => ({
       id: key,
       key,
-      default: t(key as LocaleKey, {
-        ns: DEFAULT_TRANSLATIONS_NAMESPACE,
-      }),
+      default: getDefault(key),
       custom,
     }));
 };
@@ -161,7 +161,10 @@ const deepClone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
  * plugin_code) and any namespaces already present in the data are added on top.
  * Arbitrary namespaces are also supported via JSON upload.
  */
-export const BASE_CUSTOM_TRANSLATION_NAMESPACES = ['common', 'desktop'] as const;
+export const BASE_CUSTOM_TRANSLATION_NAMESPACES = [
+  'common',
+  'desktop',
+] as const;
 
 /**
  * Reserved pseudo-namespace used in the editor to view/edit the legacy v1 flat
