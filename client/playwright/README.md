@@ -63,9 +63,18 @@ Two rules keep it deterministic:
 
 All commands run from the `client/` directory.
 
+> **Run the regression suites with `--workers 1`.** The stocktake and
+> distribution suites mutate the same store's stock, so parallel workers
+> interleaving them against one database produce false failures. (The hermetic
+> runner enforces this for you; the smoke suite is read-only and parallelises
+> safely.)
+
 ```bash
 # Run all tests (headless)
 yarn e2e
+
+# Regression suites — always single-worker (see note above)
+yarn e2e stocktake-regression distribution-regression --workers 1
 
 # Run only the smoke tests
 yarn e2e smoke
