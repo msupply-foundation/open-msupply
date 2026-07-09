@@ -65,6 +65,31 @@ def buffer_row(cursor, record_id, received, table, data, source_site_id,
     }
 
 
+# PermissionType::known_iter() from server/repository/src/db_diesel/
+# user_permission_row.rs — the FE gates buttons on the login user's
+# permission list, so Admin gets the full set (as a real admin would have).
+ALL_PERMISSIONS = [
+    'ServerAdmin', 'StoreAccess', 'LocationMutate', 'SensorMutate',
+    'SensorQuery', 'TemperatureBreachQuery', 'TemperatureLogQuery',
+    'StockLineQuery', 'StockLineMutate', 'CreateRepack', 'StocktakeQuery',
+    'StocktakeMutate', 'InventoryAdjustmentMutate', 'RequisitionQuery',
+    'RequisitionMutate', 'RequisitionSend', 'RequisitionCreateOutboundShipment',
+    'RnrFormQuery', 'RnrFormMutate', 'OutboundShipmentQuery',
+    'OutboundShipmentMutate', 'InboundShipmentQuery', 'InboundShipmentMutate',
+    'InboundShipmentVerify', 'SupplierReturnQuery', 'SupplierReturnMutate',
+    'CustomerReturnQuery', 'CustomerReturnMutate', 'PrescriptionQuery',
+    'PrescriptionMutate', 'CancelFinalisedInvoices', 'PurchaseOrderQuery',
+    'PurchaseOrderMutate', 'PurchaseOrderAuthorise', 'PurchaseOrderFinalise',
+    'InboundShipmentExternalQuery', 'InboundShipmentExternalMutate',
+    'InboundShipmentExternalVerify', 'InboundShipmentExternalAuthorise',
+    'Report', 'LogQuery', 'ItemMutate', 'ItemNamesCodesAndUnitsMutate',
+    'PatientQuery', 'PatientMutate', 'DocumentQuery', 'DocumentMutate',
+    'ColdChainApi', 'AssetQuery', 'AssetMutate', 'AssetMutateViaDataMatrix',
+    'AssetCatalogueItemMutate', 'AssetStatusMutate', 'NamePropertiesMutate',
+    'EditCentralData', 'ViewAndEditVvmStatus', 'MutateClinician',
+]
+
+
 def injected_rows(next_cursor):
     """Rows a v7 pull doesn't deliver: login wiring for Admin on GRY."""
     rows = [
@@ -74,25 +99,21 @@ def injected_rows(next_cursor):
             'store_id': GRY_STORE_ID,
             'is_default': True,
         }),
-        ('user_permission', 'e2e_perm_admin_gry_store', {
-            'id': 'e2e_perm_admin_gry_store',
+    ]
+    # user_permission.store_id is NOT NULL — even ServerAdmin is store-scoped here.
+    rows += [
+        ('user_permission', f'e2e_perm_admin_{perm}', {
+            'id': f'e2e_perm_admin_{perm}',
             'user_id': ADMIN_USER_ID,
             'store_id': GRY_STORE_ID,
-            'permission': 'StoreAccess',
+            'permission': perm,
             'context_id': None,
-        }),
-        # user_permission.store_id is NOT NULL — even ServerAdmin is store-scoped here.
-        ('user_permission', 'e2e_perm_admin_server', {
-            'id': 'e2e_perm_admin_server',
-            'user_id': ADMIN_USER_ID,
-            'store_id': GRY_STORE_ID,
-            'permission': 'ServerAdmin',
-            'context_id': None,
-        }),
+        })
+        for perm in ALL_PERMISSIONS
     ]
     return [
-        # v7 validation requires a store_id on the buffer row itself (even for
-        # the store-less ServerAdmin permission), so stamp them all with GRY.
+        # v7 validation requires a store_id on the buffer row itself, so
+        # stamp them all with GRY.
         buffer_row(next_cursor + i, record_id, INJECT_STAMP, table, data,
                    source_site_id=6,
                    store_id=GRY_STORE_ID)

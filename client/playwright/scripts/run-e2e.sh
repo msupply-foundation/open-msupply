@@ -40,7 +40,13 @@ cleanup() {
   [[ -n "$FE_PID" ]] && kill "$FE_PID" 2>/dev/null || true
   # npm/yarn's webpack child survives its parent — free the port explicitly.
   lsof -ti tcp:"$FE_PORT" 2>/dev/null | xargs kill 2>/dev/null || true
-  [[ -n "$SERVER_PID" ]] && kill "$SERVER_PID" 2>/dev/null || true
+  # The server sometimes ignores a plain TERM — escalate to KILL.
+  if [[ -n "$SERVER_PID" ]]; then
+    kill "$SERVER_PID" 2>/dev/null || true
+    sleep 1
+    kill -9 "$SERVER_PID" 2>/dev/null || true
+  fi
+  lsof -ti tcp:"$SERVER_PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
 }
 trap cleanup EXIT
 
