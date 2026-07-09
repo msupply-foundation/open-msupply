@@ -12,6 +12,13 @@
   white-space: nowrap;
 }
 
+.pageSize {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
 .controls {
   display: flex;
   gap: 0.25rem;
