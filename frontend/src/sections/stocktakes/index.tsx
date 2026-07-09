@@ -13,7 +13,7 @@ export const stocktakesRoutes = () => (
     <Route path="/" component={StocktakesList} />
     <Route
       path="/:stocktakeId"
-      component={() => <EntryPage label="Stocktake detail (coming soon)" />}
+      component={() => <EntryPage labelKey="stocktake.detail-coming-soon" />}
     />
   </>
 );

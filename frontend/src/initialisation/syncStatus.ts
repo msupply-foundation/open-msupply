@@ -1,7 +1,9 @@
 import type { SyncStatusFragment } from '../api/initialisation.generated';
+import type { LocaleKey } from '../intl';
 
 export type SyncStep = {
-  label: string;
+  // i18n key for the step's name; SyncProgress resolves it with t() at render.
+  label: LocaleKey;
   started: boolean;
   finished: boolean;
   done?: number;
@@ -20,7 +22,7 @@ type ProgressPart =
   | null
   | undefined;
 
-const step = (label: string, part: ProgressPart): SyncStep => ({
+const step = (label: LocaleKey, part: ProgressPart): SyncStep => ({
   label,
   started: part != null,
   finished: part?.finished != null,
@@ -36,16 +38,16 @@ export const toSyncOverview = (
   const steps =
     status.__typename === 'FullSyncStatusV7Node'
       ? [
-          step('Pull', status.pull),
-          step('Push', status.push),
-          step('Integration', status.integration),
+          step('sync.step.pull', status.pull),
+          step('sync.step.push', status.push),
+          step('sync.step.integration', status.integration),
         ]
       : [
-          step('Prepare initial', status.prepareInitial),
-          step('Pull central', status.pullCentral),
-          step('Pull remote', status.pullRemote),
-          step('Push', status.push),
-          step('Integration', status.integration),
+          step('sync.step.prepare-initial', status.prepareInitial),
+          step('sync.step.pull-central', status.pullCentral),
+          step('sync.step.pull-remote', status.pullRemote),
+          step('sync.step.push', status.push),
+          step('sync.step.integration', status.integration),
         ];
 
   const errorMessage = status.error?.fullError ?? undefined;

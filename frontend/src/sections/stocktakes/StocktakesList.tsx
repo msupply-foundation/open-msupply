@@ -3,7 +3,7 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
 import { authUser } from '../../auth/authContext';
-import { localisedDate } from '../../intl';
+import { localisedDate, t } from '../../intl';
 import { Page } from '../../components/layout/Page/Page';
 import { Header } from '../../components/layout/Header/Header';
 import { Breadcrumb } from '../../components/layout/Header/Breadcrumb';
@@ -29,7 +29,7 @@ import { Stocktakes } from './stocktakes.generated';
 import type { StocktakesVariables, StocktakesResult } from './stocktakes.generated';
 import { GlobalTableConfigs } from '../../api/tableConfig.generated';
 import {
-  FILTER_FIELDS,
+  filterFields,
   toStocktakeFilter,
   toFilterValues,
   type StocktakeFilter,
@@ -71,8 +71,8 @@ const DEFAULT_STATE: StocktakesListState = { filter: {}, offset: 0, first: DEFAU
 // the neutral grey, FINALISED the terminal "done" green (tokens.css --status-*).
 const statusMeta = (status: StocktakeRow['status']) =>
   status === 'FINALISED'
-    ? { label: 'Finalised', colour: 'var(--status-finalised)' }
-    : { label: 'New', colour: 'var(--status-new)' };
+    ? { label: t('stocktake.status.finalised'), colour: 'var(--status-finalised)' }
+    : { label: t('stocktake.status.new'), colour: 'var(--status-new)' };
 
 const StocktakesList: Component = () => {
   // storeId is guaranteed present: this section renders only inside
@@ -152,37 +152,41 @@ const StocktakesList: Component = () => {
   const openRow = (row: StocktakeRow) =>
     navigate(`/${params.storeId}/inventory/stocktakes/${row.id}`);
 
-  const columns: Column<StocktakeRow, SortKey>[] = [
-    { header: 'Number', sortKey: 'stocktakeNumber', cell: (r) => r.stocktakeNumber },
-    { header: 'Status', sortKey: 'status', cell: (r) => <StatusChip {...statusMeta(r.status)} /> },
-    { header: 'Description', sortKey: 'description', cell: (r) => r.description ?? '—' },
-    { header: 'Comment', sortKey: 'comment', cell: (r) => r.comment ?? '—' },
+  // Columns and crumbs are accessors (not plain arrays): their text comes from
+  // t(), which must be read in a reactive scope to re-translate on a language
+  // switch. Passing columns()/crumbs() into a component prop lets Solid wrap it as
+  // a getter, so the table headers and breadcrumb re-label when the locale changes.
+  const columns = (): Column<StocktakeRow, SortKey>[] => [
+    { header: t('stocktake.column.number'), sortKey: 'stocktakeNumber', cell: (r) => r.stocktakeNumber },
+    { header: t('stocktake.column.status'), sortKey: 'status', cell: (r) => <StatusChip {...statusMeta(r.status)} /> },
+    { header: t('stocktake.column.description'), sortKey: 'description', cell: (r) => r.description ?? '—' },
+    { header: t('stocktake.column.comment'), sortKey: 'comment', cell: (r) => r.comment ?? '—' },
     {
-      header: 'Stocktake date',
+      header: t('stocktake.column.stocktake-date'),
       sortKey: 'stocktakeDate',
       cell: (r) => (r.stocktakeDate ? localisedDate(r.stocktakeDate) : '—'),
     },
-    { header: 'Created', sortKey: 'createdDatetime', cell: (r) => localisedDate(r.createdDatetime) },
-    { header: 'Locked', cell: (r) => (r.isLocked ? 'Yes' : 'No') },
+    { header: t('stocktake.column.created'), sortKey: 'createdDatetime', cell: (r) => localisedDate(r.createdDatetime) },
+    { header: t('stocktake.column.locked'), cell: (r) => (r.isLocked ? t('common.yes') : t('common.no')) },
   ];
 
-  const crumbs = [{ label: 'Inventory' }, { label: 'Stocktakes' }];
+  const crumbs = () => [{ label: t('nav.inventory') }, { label: t('nav.inventory.stocktakes') }];
 
   return (
     <Page
       header={
         <Header>
-          <Breadcrumb crumbs={crumbs} />
+          <Breadcrumb crumbs={crumbs()} />
           <HeaderButtons>
             {/* Create flow (modal) is deferred with the detail work — needs the
                 ⛔ Modal dialog. The button anchors the recipe shape for now. */}
-            <Button icon={<PlusCircleIcon />} disabled title="Coming soon">
-              New stocktake
+            <Button icon={<PlusCircleIcon />} disabled title={t('common.coming-soon')}>
+              {t('stocktake.new')}
             </Button>
           </HeaderButtons>
           <Toolbar>
             <FilterBar
-              fields={FILTER_FIELDS}
+              fields={filterFields()}
               values={toFilterValues(state().filter)}
               onChange={onFilterChange}
             />
@@ -192,14 +196,14 @@ const StocktakesList: Component = () => {
       contentFooter={
         <Show when={selectedIds().length > 0}>
           <ContentFooter>
-            <strong>{selectedIds().length} selected</strong>
+            <strong>{t('stocktake.selected', { count: selectedIds().length })}</strong>
             <ContentFooterActions>
               <Button variant="secondary" onClick={() => setSelectedIds([])}>
-                Clear
+                {t('common.clear')}
               </Button>
               {/* Batch delete is deferred (mutation + confirmation dialog). */}
-              <Button variant="secondary" icon={<TrashIcon />} disabled title="Coming soon">
-                Delete
+              <Button variant="secondary" icon={<TrashIcon />} disabled title={t('common.coming-soon')}>
+                {t('common.delete')}
               </Button>
             </ContentFooterActions>
           </ContentFooter>
@@ -207,13 +211,13 @@ const StocktakesList: Component = () => {
       }
     >
       <DataTable
-        columns={columns}
+        columns={columns()}
         rows={rows()}
         rowKey={(r) => r.id}
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        emptyMessage="No stocktakes match these filters."
+        emptyMessage={t('stocktake.empty')}
         config={tableConfig()}
         onConfigChange={onConfigChange}
         view={state().view ?? 'table'}

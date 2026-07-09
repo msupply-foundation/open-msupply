@@ -81,7 +81,7 @@ export const App: Component = () => {
                   (empty) entry page until a real section is registered above. */}
               <Route path="/:storeId" component={StoreGuardLayout}>
                 <Route path="/" component={ShellLayout}>
-                  <Route path="/" component={() => <EntryPage label="Dashboard" />} />
+                  <Route path="/" component={() => <EntryPage labelKey="nav.dashboard" />} />
                   <For each={Object.entries(sectionRoutes)}>
                     {([path, routes]) => <Route path={`/${path}`}>{routes()}</Route>}
                   </For>
@@ -89,11 +89,11 @@ export const App: Component = () => {
                     {(dest) => (
                       <Route
                         path={`/${dest.path}`}
-                        component={() => <EntryPage label={dest.label} />}
+                        component={() => <EntryPage labelKey={dest.labelKey} />}
                       />
                     )}
                   </For>
-                  <Route path="*" component={() => <EntryPage label="Not found" />} />
+                  <Route path="*" component={() => <EntryPage labelKey="app.not-found" />} />
                 </Route>
               </Route>
               <Route path="*" component={() => <Navigate href={resolveStorePath} />} />

@@ -1,7 +1,7 @@
 import { For, Show } from 'solid-js'
 import * as DropdownMenu from '@kobalte/core/dropdown-menu'
 import { TranslateIcon } from '../../icons'
-import { languageOptions, LOCALE_META } from '../../../intl'
+import { languageOptions, LOCALE_META, t } from '../../../intl'
 import styles from './LanguageSelector.module.css'
 
 interface LanguageSelectorProps {
@@ -25,13 +25,13 @@ const labelFor = (value: string) =>
  */
 export const LanguageSelector = (props: LanguageSelectorProps) => (
   <DropdownMenu.Root placement="top-start" gutter={8}>
-    <DropdownMenu.Trigger class={styles.trigger} title="Select language">
+    <DropdownMenu.Trigger class={styles.trigger} title={t('language.select')}>
       <TranslateIcon class={styles.icon} />
       <span class={styles.triggerText}>{labelFor(props.language)}</span>
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal>
       <DropdownMenu.Content class={styles.content}>
-        <div class={styles.heading}>Select language</div>
+        <div class={styles.heading}>{t('language.select')}</div>
         <For each={languageOptions}>
           {(option) => (
             <DropdownMenu.Item
@@ -41,7 +41,7 @@ export const LanguageSelector = (props: LanguageSelectorProps) => (
             >
               <span class={styles.itemLabel}>{option.label}</span>
               <Show when={LOCALE_META[option.value].dir === 'rtl'}>
-                <span class={styles.rtlTag}>RTL</span>
+                <span class={styles.rtlTag}>{t('language.rtl')}</span>
               </Show>
             </DropdownMenu.Item>
           )}

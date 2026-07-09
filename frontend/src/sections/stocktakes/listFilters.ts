@@ -1,4 +1,5 @@
 import { exhaustiveCheck } from '../../typeHelpers';
+import { t } from '../../intl';
 import type { FilterField, FilterValues } from '../../components/ui/FilterBar';
 import type { StocktakesVariables } from './stocktakes.generated';
 
@@ -25,35 +26,35 @@ const fieldFor = (key: FilterKey): FilterField | null => {
     case 'status':
       return {
         key,
-        name: 'Status',
+        name: t('stocktake.filter.status'),
         type: 'enum',
         options: [
-          { value: 'NEW', label: 'New' },
-          { value: 'FINALISED', label: 'Finalised' },
+          { value: 'NEW', label: t('stocktake.status.new') },
+          { value: 'FINALISED', label: t('stocktake.status.finalised') },
         ],
       };
     case 'description':
-      return { key, name: 'Description', type: 'text', placeholder: 'contains…' };
+      return { key, name: t('stocktake.filter.description'), type: 'text', placeholder: t('stocktake.filter.contains') };
     case 'comment':
-      return { key, name: 'Comment', type: 'text', placeholder: 'contains…' };
+      return { key, name: t('stocktake.filter.comment'), type: 'text', placeholder: t('stocktake.filter.contains') };
     case 'isLocked':
       return {
         key,
-        name: 'Locked',
+        name: t('stocktake.filter.locked'),
         type: 'enum',
         options: [
-          { value: 'true', label: 'Yes' },
-          { value: 'false', label: 'No' },
+          { value: 'true', label: t('common.yes') },
+          { value: 'false', label: t('common.no') },
         ],
       };
     case 'isProgramStocktake':
       return {
         key,
-        name: 'Program stocktake',
+        name: t('stocktake.filter.program'),
         type: 'enum',
         options: [
-          { value: 'true', label: 'Yes' },
-          { value: 'false', label: 'No' },
+          { value: 'true', label: t('common.yes') },
+          { value: 'false', label: t('common.no') },
         ],
       };
 
@@ -84,9 +85,12 @@ const FIELD_ORDER: FilterKey[] = [
   'isProgramStocktake',
 ];
 
-export const FILTER_FIELDS: FilterField[] = FIELD_ORDER.map(fieldFor).filter(
-  (field): field is FilterField => field !== null,
-);
+// A function, not a module-level constant: the field names/labels are t() calls,
+// so they must be resolved at render (inside a reactive scope) to re-translate on
+// a language switch. The page passes filterFields() into the FilterBar, which
+// Solid wraps as a getter — so the chips re-label when the locale changes.
+export const filterFields = (): FilterField[] =>
+  FIELD_ORDER.map(fieldFor).filter((field): field is FilterField => field !== null);
 
 const asArray = (value: string | string[] | undefined): string[] =>
   value === undefined ? [] : Array.isArray(value) ? value : [value];

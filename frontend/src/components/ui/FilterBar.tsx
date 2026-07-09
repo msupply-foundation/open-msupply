@@ -1,6 +1,7 @@
 import { createSignal, For, Show } from 'solid-js'
 import * as DropdownMenu from '@kobalte/core/dropdown-menu'
 import { CheckIcon, ChevronDownIcon, CloseIcon, SearchIcon } from '../icons'
+import { t } from '../../intl'
 import styles from './FilterBar.module.css'
 
 export interface FilterOption {
@@ -133,7 +134,7 @@ const FiltersMenu = (props: {
 }) => (
   <DropdownMenu.Root placement="bottom-start" gutter={4}>
     <DropdownMenu.Trigger class={styles.trigger}>
-      <span>Filters</span>
+      <span>{t('filter.filters')}</span>
       <ChevronDownIcon class={styles.triggerChevron} />
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal>
@@ -153,7 +154,7 @@ const FiltersMenu = (props: {
         </Show>
         <Show when={props.onReset}>
           <DropdownMenu.Item class={styles.item} onSelect={() => props.onReset?.()}>
-            <span class={styles.itemLabel}>Remove all filters</span>
+            <span class={styles.itemLabel}>{t('filter.remove-all')}</span>
           </DropdownMenu.Item>
         </Show>
       </DropdownMenu.Content>
@@ -182,7 +183,7 @@ const TextFilter = (props: {
     <button
       type="button"
       class={styles.remove}
-      aria-label={`Remove ${props.field.name} filter`}
+      aria-label={t('filter.remove', { name: props.field.name })}
       onClick={props.onRemove}
     >
       <CloseIcon />
@@ -232,7 +233,7 @@ const EnumFilter = (props: {
     <button
       type="button"
       class={styles.remove}
-      aria-label={`Remove ${props.field.name} filter`}
+      aria-label={t('filter.remove', { name: props.field.name })}
       onClick={props.onRemove}
     >
       <CloseIcon />

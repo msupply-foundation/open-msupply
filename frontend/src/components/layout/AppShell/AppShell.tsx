@@ -18,7 +18,7 @@ import { MenuBar, type MenuBarState } from './MenuBar'
 import { LanguageSelector } from './LanguageSelector'
 import { ShellNavContext } from './shellContext'
 import { upperNav, lowerNav, type NavLeaf } from './navModel'
-import { locale, changeLanguage } from '../../../intl'
+import { locale, changeLanguage, t } from '../../../intl'
 import styles from './AppShell.module.css'
 
 export interface AppShellProps {
@@ -125,13 +125,14 @@ export const AppShell = (props: AppShellProps) => {
           <div class={styles.content}>{props.children}</div>
 
           <footer class={styles.footer}>
-            <FooterCell icon={HomeIcon} label="General" />
-            <FooterCell icon={EditIcon} label="Edit" onClick={() => {}} />
+            <FooterCell icon={HomeIcon} label={t('shell.footer.general')} />
+            <FooterCell icon={EditIcon} label={t('shell.footer.edit')} onClick={() => {}} />
             <span class={styles.footerDivider} aria-hidden="true" />
+            {/* Placeholder username — real user data lands with the user menu. */}
             <FooterCell icon={UserIcon} label="demo" />
             <span class={styles.footerDivider} aria-hidden="true" />
             <LanguageSelector language={locale()} onSelect={(v) => void changeLanguage(v)} />
-            <FooterCell icon={CentralIcon} label="Central server" />
+            <FooterCell icon={CentralIcon} label={t('shell.footer.central-server')} />
           </footer>
         </div>
       </div>

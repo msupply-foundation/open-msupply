@@ -1,6 +1,7 @@
 import { Show, type JSX } from 'solid-js'
 import { MenuIcon } from '../../icons'
 import { useShellNav } from '../AppShell/shellContext'
+import { t } from '../../../intl'
 import styles from './Header.module.css'
 
 export interface HeaderProps {
@@ -40,7 +41,7 @@ export const Header = (props: HeaderProps) => {
           type="button"
           class={styles.hamburger}
           onClick={() => shell?.openNav()}
-          aria-label="Open navigation"
+          aria-label={t('shell.open-navigation')}
         >
           <MenuIcon class={styles.hamburgerIcon} />
         </button>

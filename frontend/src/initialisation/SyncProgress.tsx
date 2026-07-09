@@ -1,25 +1,27 @@
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import type { SyncOverview, SyncStep } from './syncStatus';
+import { t } from '../intl';
 import styles from '../styles/shared.module.css';
 
 // Spec (Initialization Logic): common component listing the sync steps and their progress.
 const stepStatus = (step: SyncStep): string => {
-  if (step.finished) return 'done';
-  if (!step.started) return 'pending';
-  if (step.done != null && step.total != null) return `${step.done} of ${step.total}`;
-  return 'in progress';
+  if (step.finished) return t('sync.status.done');
+  if (!step.started) return t('sync.status.pending');
+  if (step.done != null && step.total != null)
+    return t('sync.status.progress', { done: step.done, total: step.total });
+  return t('sync.status.in-progress');
 };
 
 export const SyncProgress: Component<{ overview: SyncOverview | undefined }> = props => (
-  <Show when={props.overview} fallback={<p>Waiting for sync status…</p>} keyed>
+  <Show when={props.overview} fallback={<p>{t('sync.waiting')}</p>} keyed>
     {overview => (
       <div>
         <ul class={styles.list}>
           <For each={overview.steps}>
             {step => (
               <li>
-                {step.label}: {stepStatus(step)}
+                {t(step.label)}: {stepStatus(step)}
               </li>
             )}
           </For>

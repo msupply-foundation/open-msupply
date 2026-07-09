@@ -1,5 +1,6 @@
 import { For, Show } from 'solid-js'
 import { ArrowRightIcon } from '../../icons'
+import { t } from '../../../intl'
 import styles from './Pagination.module.css'
 
 const DEFAULT_PAGE_SIZES = [20, 50, 100]
@@ -44,13 +45,13 @@ export const Pagination = (props: PaginationProps) => {
 
   return (
     <Show when={props.total > 0}>
-      <nav class={styles.pagination} aria-label="Pagination">
+      <nav class={styles.pagination} aria-label={t('pagination.label')}>
         <span class={styles.range} aria-live="polite">
-          {from()}–{to()} of {props.total}
+          {t('pagination.range', { from: from(), to: to(), total: props.total })}
         </span>
         <Show when={props.onPageSizeChange}>
           <label class={styles.pageSize}>
-            Rows:
+            {t('pagination.rows')}
             <select
               value={String(props.pageSize)}
               onChange={(e) => props.onPageSizeChange!(Number(e.currentTarget.value))}
@@ -65,7 +66,7 @@ export const Pagination = (props: PaginationProps) => {
             class={styles.button}
             onClick={prev}
             disabled={!hasPrev()}
-            aria-label="Previous page"
+            aria-label={t('pagination.previous')}
           >
             <ArrowRightIcon class={styles.prevIcon} />
           </button>
@@ -74,7 +75,7 @@ export const Pagination = (props: PaginationProps) => {
             class={styles.button}
             onClick={next}
             disabled={!hasNext()}
-            aria-label="Next page"
+            aria-label={t('pagination.next')}
           >
             <ArrowRightIcon />
           </button>
