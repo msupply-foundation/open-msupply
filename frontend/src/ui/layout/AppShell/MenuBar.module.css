@@ -186,7 +186,7 @@
 .childList {
   display: flex;
   flex-direction: column;
-  gap: 0.3125rem; /* 5px — the app's ListItem marginTop between child rows */
+  gap: 0.3125rem; /* the app's ListItem inter-row margin */
   margin: var(--space-1) 0 0;
   margin-inline-start: 1.75rem;
   padding-inline-start: var(--space-3);
@@ -194,9 +194,9 @@
   list-style: none;
 }
 
-/* Child rows are denser than section rows — the app's nested drawer items
-   are 30px against the sections' 40px (AppNavSection `height: 30`; the
-   --nav-child-height token was ported for exactly this but never applied). */
+/* Child rows are denser than section rows — --nav-child-height against
+   --nav-item-height, the app's nested-drawer spec (AppNavSection; the child
+   token was ported from theme.ts for exactly this but never applied). */
 .childList .navButton {
   block-size: var(--nav-child-height);
 }
