@@ -21,19 +21,15 @@ import {
   type TableConfig,
 } from '../../components/ui/DataTable/tableConfig';
 import { StatusChip } from '../../components/ui/StatusChip';
-import { FilterBar, type FilterValues } from '../../components/ui/FilterBar';
+import { FilterBar } from '../../components/ui/FilterBar';
 import { Pagination } from '../../components/ui/Pagination/Pagination';
 import { PlusCircleIcon, TrashIcon } from '../../components/icons';
 import { useUrlQueryState } from '../../list/urlQueryState';
+import { stripEmpty } from '../../typeHelpers';
 import { Stocktakes } from './stocktakes.generated';
 import type { StocktakesVariables, StocktakesResult } from './stocktakes.generated';
 import { GlobalTableConfigs } from '../../api/tableConfig.generated';
-import {
-  filterFields,
-  toStocktakeFilter,
-  toFilterValues,
-  type StocktakeFilter,
-} from './listFilters';
+import { filterFields, type StocktakeFilter } from './listFilters';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
 // filter/sort/pagination/view state come from the vertical; the UI is composed from
@@ -83,9 +79,12 @@ const StocktakesList: Component = () => {
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
 
   // GraphQL variables, derived straight from URL state + the store in the path.
+  // stripEmpty drops added-but-empty filter chips (held as null keys) and any empty
+  // operator objects, so the query — and the serialised resource key below — carry
+  // only live filters: adding an empty chip does not reflash the list.
   const variables = createMemo<StocktakesVariables>(() => ({
     storeId: params.storeId,
-    filter: state().filter,
+    filter: stripEmpty(state().filter),
     sort: state().sort,
     page: { first: state().first, offset: state().offset },
   }));
@@ -144,8 +143,8 @@ const StocktakesList: Component = () => {
     setState({ ...state(), sort: [{ key, desc }], offset: 0 });
   };
 
-  const onFilterChange = (values: FilterValues) => {
-    setState({ ...state(), filter: toStocktakeFilter(values), offset: 0 });
+  const onFilterChange = (filter: StocktakeFilter) => {
+    setState({ ...state(), filter, offset: 0 });
     setSelectedIds([]);
   };
 
@@ -186,8 +185,8 @@ const StocktakesList: Component = () => {
           </HeaderButtons>
           <Toolbar>
             <FilterBar
-              fields={filterFields()}
-              values={toFilterValues(state().filter)}
+              filters={filterFields()}
+              filter={state().filter}
               onChange={onFilterChange}
             />
           </Toolbar>

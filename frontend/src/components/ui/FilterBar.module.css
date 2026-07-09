@@ -53,23 +53,20 @@
   flex-shrink: 0;
 }
 
-/* Count badge on the enum trigger */
-.count {
+/* One added filter: [label][control][remove], laid out in a row. */
+.chip {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 1.125rem;
-  height: 1.125rem;
-  margin-inline-start: var(--space-2);
-  padding: 0 0.3125rem;
-  border-radius: 0.5625rem;
-  background: var(--primary-main);
-  color: var(--primary-contrast);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
+  gap: var(--space-2);
 }
 
-/* Inline text filter chip */
+.chipLabel {
+  font-size: var(--text-sm);
+  color: var(--text-body);
+  white-space: nowrap;
+}
+
+/* Inline text filter box (the control inside a chip) */
 .textFilter {
   display: inline-flex;
   align-items: center;
@@ -103,12 +100,6 @@
   font: inherit;
   font-size: var(--text-sm);
   min-width: 10rem;
-}
-
-.enumFilter {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
 }
 
 /* Round remove button on each chip */
@@ -181,7 +172,7 @@
   background: var(--color-divider);
 }
 
-/* Checkbox rows (enum menu) */
+/* Selected-mark rows (single-select menu — the FilterSelect radio items) */
 .checkbox {
   display: inline-flex;
   align-items: center;

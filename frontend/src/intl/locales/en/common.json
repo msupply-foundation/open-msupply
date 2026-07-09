@@ -73,6 +73,7 @@
   "filter.filters": "Filters",
   "filter.remove-all": "Remove all filters",
   "filter.remove": "Remove {{ name }} filter",
+  "filter.any": "Any",
 
   "pagination.label": "Pagination",
   "pagination.range": "{{ from }}–{{ to }} of {{ total }}",
