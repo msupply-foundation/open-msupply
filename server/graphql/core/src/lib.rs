@@ -1,3 +1,4 @@
+pub mod dynamic_filter;
 pub mod generic_filters;
 pub mod generic_inputs;
 pub mod loader;

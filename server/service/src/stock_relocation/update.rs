@@ -184,7 +184,7 @@ mod test {
     use repository::{
         mock::{mock_location_1, MockDataInserts},
         test_db::setup_all,
-        StockLineRow, StockLineRowRepository, StockRelocationStatus, Upsert,
+        StockLineRow, StockLineRowRepository, StockRelocationStatus,
     };
     use util::uuid::uuid;
 
@@ -237,16 +237,16 @@ mod test {
         number_of_packs: f64,
     ) -> String {
         let id = uuid();
-        StockRelocationLineRow {
-            id: id.clone(),
-            stock_relocation_id: movement_id.to_string(),
-            stock_line_id: stock_line_id.to_string(),
-            number_of_packs,
-            destination_location_id: Some(mock_location_1().id),
-            ..Default::default()
-        }
-        .upsert(&ctx.connection)
-        .unwrap();
+        StockRelocationLineRowRepository::new(&ctx.connection)
+            .upsert_one(&StockRelocationLineRow {
+                id: id.clone(),
+                stock_relocation_id: movement_id.to_string(),
+                stock_line_id: stock_line_id.to_string(),
+                number_of_packs,
+                destination_location_id: Some(mock_location_1().id),
+                ..Default::default()
+            })
+            .unwrap();
         id
     }
 
@@ -261,9 +261,10 @@ mod test {
     #[actix_rt::test]
     async fn stock_movement_update_success() {
         let (service_provider, ctx) = setup("stock_movement_update_success").await;
-        stock_line("confirm_sl").upsert(&ctx.connection).unwrap();
-        stock_line("full_sl").upsert(&ctx.connection).unwrap();
-        stock_line("partial_sl").upsert(&ctx.connection).unwrap();
+        let sl_repo = StockLineRowRepository::new(&ctx.connection);
+        sl_repo.upsert_one(&stock_line("confirm_sl")).unwrap();
+        sl_repo.upsert_one(&stock_line("full_sl")).unwrap();
+        sl_repo.upsert_one(&stock_line("partial_sl")).unwrap();
         let service = &service_provider.stock_relocation_service;
         let line_repo = StockRelocationLineRowRepository::new(&ctx.connection);
         let stock_line_repo = StockLineRowRepository::new(&ctx.connection);
@@ -355,7 +356,9 @@ mod test {
     #[actix_rt::test]
     async fn stock_movement_update_error() {
         let (service_provider, ctx) = setup("stock_movement_update_error").await;
-        stock_line("status_sl").upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&stock_line("status_sl"))
+            .unwrap();
         let service = &service_provider.stock_relocation_service;
 
         let empty_movement = new_movement(&service_provider, &ctx).await;
@@ -368,15 +371,16 @@ mod test {
             Err(UpdateStockRelocationError::MovementHasNoLines)
         );
 
-        stock_line("changed_sl").upsert(&ctx.connection).unwrap();
+        let sl_repo = StockLineRowRepository::new(&ctx.connection);
+        sl_repo.upsert_one(&stock_line("changed_sl")).unwrap();
         let changed_movement = new_movement(&service_provider, &ctx).await;
         let line_id = add_line(&ctx, &changed_movement, "changed_sl", 10.0);
-        StockLineRow {
-            available_number_of_packs: 2.0,
-            ..stock_line("changed_sl")
-        }
-        .upsert(&ctx.connection)
-        .unwrap();
+        sl_repo
+            .upsert_one(&StockLineRow {
+                available_number_of_packs: 2.0,
+                ..stock_line("changed_sl")
+            })
+            .unwrap();
         assert_eq!(
             service.update_stock_relocation(
                 &ctx,

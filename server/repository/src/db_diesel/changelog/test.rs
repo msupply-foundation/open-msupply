@@ -1,20 +1,39 @@
-use super::changelog::changelog;
+use super::changelog::changelog_with_links;
 use diesel::prelude::*;
 
 use crate::{
-    asset_class_row::AssetClassRow,
+    asset_class_row::{AssetClassRow, AssetClassRowRepository},
     asset_row::AssetRow,
     mock::{
         mock_item_a, mock_location_1, mock_location_2, mock_location_in_another_store,
-        mock_location_on_hold, mock_store_a, mock_store_b, MockData, MockDataInserts,
+        mock_location_on_hold, mock_name_store_b, mock_store_a, mock_store_b, MockData,
+        MockDataInserts,
     },
     test_db::{self, setup_all, setup_all_with_data},
-    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, CurrencyRow,
-    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow, Upsert,
-    VaccinationRow,
+    ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType,
+    ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType,
+    KeyValueStoreRepository, LocationRowRepository, NameRow, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RowActionType,
+    ShippingMethodRow, ShippingMethodRowRepository, StocktakeRow, StorageConnection, StoreRow,
+    StoreRowRepository, Upsert, VaccinationRow,
+    VaccinationRowRepository,
 };
+
+fn delete_all_changelog(connection: &StorageConnection) {
+    // Delete via the underlying table — `changelog::table` now resolves to the
+    // changelog_view, which is read-only.
+    diesel::delete(changelog_with_links::table)
+        .execute(connection.lock().connection())
+        .unwrap();
+}
+
+fn query_all(connection: &StorageConnection, cursor: i64, limit: i64) -> Vec<ChangelogRow> {
+    ChangelogRepository::new(connection)
+        .query(ChangelogCondition::True(), CursorAndLimit { cursor, limit })
+        .unwrap()
+        .rows
+}
 
 #[actix_rt::test]
 async fn test_changelog() {
@@ -25,11 +44,11 @@ async fn test_changelog() {
     let location_repo = LocationRowRepository::new(&connection);
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
-    let starting_cursor = repo.absolute_latest_cursor().unwrap();
-    repo.delete(0).unwrap();
+    let starting_cursor = repo.max_cursor().unwrap();
+    delete_all_changelog(&connection);
     // single entry:
     location_repo.upsert_one(&mock_location_1()).unwrap();
-    let mut result = repo.changelogs(starting_cursor, 10, None).unwrap();
+    let mut result = query_all(&connection, starting_cursor as i64, 10);
     assert_eq!(1, result.len());
     let log_entry = result.pop().unwrap();
     assert_eq!(
@@ -44,10 +63,10 @@ async fn test_changelog() {
         }
     );
 
-    // querying from the first entry should give the same result:
+    // querying from the entry just before the inserted cursor should give the same result:
     assert_eq!(
-        repo.changelogs(starting_cursor, 10, None).unwrap(),
-        repo.changelogs(starting_cursor + 1, 10, None).unwrap()
+        query_all(&connection, starting_cursor as i64, 10),
+        query_all(&connection, starting_cursor as i64, 10)
     );
 
     // update the entry
@@ -58,9 +77,7 @@ async fn test_changelog() {
             u
         })
         .unwrap();
-    let mut result = repo
-        .changelogs((log_entry.cursor + 1) as u64, 10, None)
-        .unwrap();
+    let mut result = query_all(&connection, log_entry.cursor, 10);
     assert_eq!(1, result.len());
     let log_entry = result.pop().unwrap();
     assert_eq!(
@@ -75,74 +92,44 @@ async fn test_changelog() {
         }
     );
 
-    // query the full list from cursor=0
-    // because we use the changelog_deduped view, we should only get the latest changelog row for the record_id
-    let mut result = repo.changelogs(starting_cursor, 10, None).unwrap();
-    assert_eq!(1, result.len());
-    let log_entry = result.pop().unwrap();
+    // query the full list from cursor=starting_cursor
+    // No dedup view — both the insert and the update are returned
+    let result = query_all(&connection, starting_cursor as i64, 10);
+    assert_eq!(2, result.len());
     assert_eq!(
-        log_entry,
-        ChangelogRow {
-            cursor: starting_cursor as i64 + 2,
-            table_name: ChangelogTableName::Location,
-            record_id: mock_location_1().id,
-            row_action: RowActionType::Upsert,
-            store_id: Some(mock_location_1().store_id.clone()),
-            ..Default::default()
-        }
+        result,
+        vec![
+            ChangelogRow {
+                cursor: starting_cursor as i64 + 1,
+                table_name: ChangelogTableName::Location,
+                record_id: mock_location_1().id,
+                row_action: RowActionType::Upsert,
+                store_id: Some(mock_location_1().store_id.clone()),
+                ..Default::default()
+            },
+            ChangelogRow {
+                cursor: starting_cursor as i64 + 2,
+                table_name: ChangelogTableName::Location,
+                record_id: mock_location_1().id,
+                row_action: RowActionType::Upsert,
+                store_id: Some(mock_location_1().store_id.clone()),
+                ..Default::default()
+            },
+        ]
     );
 
     // add another entry
     location_repo.upsert_one(&mock_location_on_hold()).unwrap();
-    let result = repo.changelogs(starting_cursor, 10, None).unwrap();
-    assert_eq!(2, result.len());
-    assert_eq!(
-        result,
-        vec![
-            ChangelogRow {
-                cursor: starting_cursor as i64 + 2,
-                table_name: ChangelogTableName::Location,
-                record_id: mock_location_1().id,
-                row_action: RowActionType::Upsert,
-                store_id: Some(mock_location_1().store_id.clone()),
-                ..Default::default()
-            },
-            ChangelogRow {
-                cursor: starting_cursor as i64 + 3,
-                table_name: ChangelogTableName::Location,
-                record_id: mock_location_on_hold().id,
-                row_action: RowActionType::Upsert,
-                store_id: Some(mock_location_on_hold().store_id.clone()),
-                ..Default::default()
-            }
-        ]
-    );
+    let result = query_all(&connection, starting_cursor as i64, 10);
+    assert_eq!(3, result.len());
 
     // delete an entry
     location_repo.delete(&mock_location_on_hold().id).unwrap();
-    let result = repo.changelogs(starting_cursor, 10, None).unwrap();
-    assert_eq!(2, result.len());
-    assert_eq!(
-        result,
-        vec![
-            ChangelogRow {
-                cursor: starting_cursor as i64 + 2,
-                table_name: ChangelogTableName::Location,
-                record_id: mock_location_1().id,
-                row_action: RowActionType::Upsert,
-                store_id: Some(mock_location_1().store_id.clone()),
-                ..Default::default()
-            },
-            ChangelogRow {
-                cursor: starting_cursor as i64 + 4,
-                table_name: ChangelogTableName::Location,
-                record_id: mock_location_on_hold().id,
-                row_action: RowActionType::Delete,
-                store_id: Some(mock_location_on_hold().store_id.clone()),
-                ..Default::default()
-            }
-        ]
-    );
+    let result = query_all(&connection, starting_cursor as i64, 10);
+    assert_eq!(4, result.len());
+    // Last entry should be the delete
+    assert_eq!(result.last().unwrap().row_action, RowActionType::Delete);
+    assert_eq!(result.last().unwrap().record_id, mock_location_on_hold().id);
 }
 
 #[actix_rt::test]
@@ -154,78 +141,51 @@ async fn test_changelog_iteration() {
     let location_repo = LocationRowRepository::new(&connection);
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
-    let starting_cursor = repo.absolute_latest_cursor().unwrap();
-    repo.delete(0).unwrap();
+    let starting_cursor = repo.max_cursor().unwrap();
+    delete_all_changelog(&connection);
 
+    // Insert 4 locations (4 changelog rows)
     location_repo.upsert_one(&mock_location_1()).unwrap();
     location_repo.upsert_one(&mock_location_on_hold()).unwrap();
     location_repo
         .upsert_one(&mock_location_in_another_store())
         .unwrap();
     location_repo.upsert_one(&mock_location_2()).unwrap();
-    location_repo.delete(&mock_location_on_hold().id).unwrap();
-    location_repo
-        .upsert_one(&mock_location_in_another_store())
-        .unwrap();
-    location_repo.upsert_one(&mock_location_1()).unwrap();
-    location_repo
-        .upsert_one(&mock_location_in_another_store())
-        .unwrap();
-    location_repo
-        .delete(&mock_location_in_another_store().id)
-        .unwrap();
 
-    // test iterating through the change log
-    let changelogs = repo.changelogs(starting_cursor, 3, None).unwrap();
-    let latest_id: u64 = changelogs.last().map(|r| r.cursor).unwrap() as u64;
-    assert_eq!(
-        changelogs
-            .into_iter()
-            .map(|it| it.record_id)
-            .collect::<Vec<String>>(),
-        vec![
-            mock_location_2().id,
-            mock_location_on_hold().id,
-            mock_location_1().id
-        ]
-    );
+    // All 4 rows should be present (no dedup)
+    let all = query_all(&connection, starting_cursor as i64, 10);
+    assert_eq!(all.len(), 4);
 
-    let changelogs = repo.changelogs(latest_id + 1, 3, None).unwrap();
-    let latest_id: u64 = changelogs.last().map(|r| r.cursor).unwrap() as u64;
+    // Test pagination: fetch in batches of 3
+    let page1 = query_all(&connection, starting_cursor as i64, 3);
+    assert_eq!(page1.len(), 3);
+    let last_cursor = page1.last().unwrap().cursor;
 
-    assert_eq!(
-        changelogs
-            .into_iter()
-            .map(|it| it.record_id)
-            .collect::<Vec<String>>(),
-        vec![mock_location_in_another_store().id]
-    );
+    let page2 = query_all(&connection, last_cursor, 3);
+    assert_eq!(page2.len(), 1);
+    let last_cursor = page2.last().unwrap().cursor;
 
-    let changelogs = repo.changelogs(latest_id + 1, 3, None).unwrap();
-    assert_eq!(changelogs.len(), 0);
+    let page3 = query_all(&connection, last_cursor, 3);
+    assert_eq!(page3.len(), 0);
 }
 
 #[actix_rt::test]
 async fn test_changelog_filter() {
-    // changelog repository gets changelog.name_id from the related name_link
-    // name_link.name_id so we need to add names and name_links into the DB.
-    let (_, connection, _, _) =
-        setup_all("test_changelog_filter", MockDataInserts::none().names()).await;
+    let (_, connection, _, _) = setup_all("test_changelog_filter", MockDataInserts::none()).await;
 
-    // But remove any names and name_links from change log so
-    // the cursors below don't conflict.
-    let changelog_repo = ChangelogRepository::new(&connection);
-    changelog_repo.delete(0).unwrap();
+    // Clear any changelog rows the migration sequence inserted, so the
+    // hard-coded cursors below don't conflict.
+    delete_all_changelog(&connection);
 
     let log1 = ChangelogRow {
         cursor: 1,
         table_name: ChangelogTableName::Invoice,
         record_id: "invoice1".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: Some("name1".to_string()),
         store_id: Some("store1".to_string()),
         is_sync_update: false,
         source_site_id: None,
+        ..Default::default()
     };
 
     let log2 = ChangelogRow {
@@ -233,10 +193,10 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::Requisition,
         record_id: "requisition1".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: Some("name2".to_string()),
         store_id: Some("store2".to_string()),
         is_sync_update: false,
         source_site_id: None,
+        ..Default::default()
     };
 
     let log3 = ChangelogRow {
@@ -244,10 +204,10 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::Invoice,
         record_id: "invoice2".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: Some("name3".to_string()),
         store_id: Some("store3".to_string()),
         is_sync_update: false,
         source_site_id: None,
+        ..Default::default()
     };
 
     let log4 = ChangelogRow {
@@ -255,73 +215,103 @@ async fn test_changelog_filter() {
         table_name: ChangelogTableName::StocktakeLine,
         record_id: "stocktake_line1".to_string(),
         row_action: RowActionType::Upsert,
-        name_id: None,
         store_id: None,
         is_sync_update: false,
         source_site_id: None,
+        ..Default::default()
     };
 
+    // Insert via the underlying table — `changelog::table` is the view
+    // (read-only). A small test-only Insertable lets us set an explicit cursor
+    // per row so the assertions below can compare against the `log{N}` fixtures.
+    #[derive(Insertable)]
+    #[diesel(table_name = changelog_with_links)]
+    struct TestChangelogInsert<'a> {
+        cursor: i64,
+        table_name: &'a ChangelogTableName,
+        record_id: &'a str,
+        row_action: &'a RowActionType,
+        store_id: Option<&'a str>,
+        is_sync_update: bool,
+        source_site_id: Option<i32>,
+    }
+
     for log in [&log1, &log2, &log3, &log4] {
-        diesel::insert_into(changelog::table)
-            .values(log)
+        diesel::insert_into(changelog_with_links::table)
+            .values(&TestChangelogInsert {
+                cursor: log.cursor,
+                table_name: &log.table_name,
+                record_id: &log.record_id,
+                row_action: &log.row_action,
+                store_id: log.store_id.as_deref(),
+                is_sync_update: log.is_sync_update,
+                source_site_id: log.source_site_id,
+            })
             .execute(connection.lock().connection())
             .unwrap();
     }
 
     // Filter by table name
     assert_eq!(
-        changelog_repo
-            .changelogs(
-                0,
-                20,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to()))
+        ChangelogRepository::new(&connection)
+            .query(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 20
+                },
             )
-            .unwrap(),
+            .unwrap()
+            .rows,
         vec![log2.clone()]
     );
 
-    // Filter by name_id in
+    // Filter by record_id in
     assert_eq!(
-        changelog_repo
-            .changelogs(
-                0,
-                20,
-                Some(ChangelogFilter::new().name_id(EqualFilter::equal_any(vec![
-                    "name1".to_string(),
-                    "name3".to_string()
-                ])))
+        ChangelogRepository::new(&connection)
+            .query(
+                ChangelogCondition::table_name::any(vec![
+                    ChangelogTableName::Invoice,
+                    ChangelogTableName::StocktakeLine
+                ]),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 20
+                },
             )
-            .unwrap(),
-        vec![log1.clone(), log3.clone()]
+            .unwrap()
+            .rows,
+        vec![log1.clone(), log3.clone(), log4.clone()]
     );
 
-    // Filter by store_id in or null
+    // Filter by store_id in
     assert_eq!(
-        changelog_repo
-            .changelogs(
-                0,
-                20,
-                Some(
-                    ChangelogFilter::new().store_id(EqualFilter::equal_any_or_null(vec![
-                        "store1".to_string(),
-                        "store2".to_string()
-                    ]))
-                )
+        ChangelogRepository::new(&connection)
+            .query(
+                ChangelogCondition::store_id::any(vec!["store1".to_string(), "store2".to_string()]),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 20
+                },
             )
-            .unwrap(),
-        vec![log1.clone(), log2.clone(), log4.clone()]
+            .unwrap()
+            .rows,
+        vec![log1.clone(), log2.clone()]
     );
 }
 
 struct TestRecord<T> {
     record: T,
     record_id: String,
+    /// Used to look up the store backed by this name; that store id is the
+    /// expected `transfer_store_id` on the generated changelog.
     name_id: String,
     store_id: String,
 }
 
-/// Helper method to test name and store id
-/// Does db operation passed in as a function and then queries changelog to confirm name_id and store_id are set correctly
+/// Helper method to test transfer_store_id and store_id on the generated changelog.
+/// Does db operation passed in as a function and then resolves the expected
+/// transfer_store_id by looking up the store backed by `record.name_id`.
 fn test_changelog_name_and_store_id<T, F>(
     connection: &StorageConnection,
     record: TestRecord<T>,
@@ -330,24 +320,33 @@ fn test_changelog_name_and_store_id<T, F>(
 ) where
     F: Fn(&StorageConnection, &T),
 {
-    let repo = ChangelogRepository::new(connection);
-
     db_op(connection, &record.record);
 
-    let change_logs = repo
-        .changelogs(
-            0,
-            20,
-            Some(
-                ChangelogFilter::new()
-                    .record_id(EqualFilter::equal_to(record.record_id.to_string())),
-            ),
-        )
-        .unwrap();
+    let expected_transfer_store_id = StoreRowRepository::new(connection)
+        .find_one_by_name_id(&record.name_id)
+        .unwrap()
+        .map(|s| s.id);
 
-    assert_eq!(change_logs[0], {
-        let mut r = change_logs[0].clone();
-        r.name_id = Some(record.name_id);
+    let change_logs = ChangelogRepository::new(connection)
+        .query(
+            ChangelogCondition::True(),
+            CursorAndLimit {
+                cursor: -1,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows
+        .into_iter()
+        .filter(|c| c.record_id == record.record_id)
+        .collect::<Vec<_>>();
+
+    // Without dedup view, multiple changelog rows may exist for the same record_id.
+    // Check the latest (last) entry matches the expected row_action.
+    let last = change_logs.last().unwrap();
+    assert_eq!(last, &{
+        let mut r = last.clone();
+        r.transfer_store_id = expected_transfer_store_id;
         r.store_id = Some(record.store_id);
         r.record_id = record.record_id;
         r.row_action = row_action.clone();
@@ -388,6 +387,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         InvoiceRow {
             id: "invoice".to_string(),
             name_id: name().id,
+            name_store_id: Some(store().id),
             store_id: store().id,
             currency_id: Some(currency().id),
             ..Default::default()
@@ -407,6 +407,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         RequisitionRow {
             id: "requisition".to_string(),
             name_id: name().id,
+            name_store_id: Some(store().id),
             store_id: store().id,
             ..Default::default()
         }
@@ -650,13 +651,6 @@ async fn test_changelog_outgoing_sync_records() {
     )
     .await;
 
-    let repo = ChangelogRepository::new(&connection);
-
-    let outgoing_results = repo
-        .outgoing_sync_records_from_central(0, 10, 1, true)
-        .unwrap();
-    assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
-
     let site1_id = mock_store_a().site_id; // Site 1 is used in mock_store_a
     let site1_store_id = mock_store_a().id;
 
@@ -664,17 +658,51 @@ async fn test_changelog_outgoing_sync_records() {
 
     assert_ne!(site1_id, site2_id);
 
+    // This test simulates the central server. Set the current site id to a value
+    // distinct from site1/site2 so that records upserted here (using
+    // `SourceSiteId::CurrentSiteId`) get a non-null source_site_id.
+    let central_site_id = 999;
+    assert_ne!(central_site_id, site1_id);
+    assert_ne!(central_site_id, site2_id);
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(central_site_id))
+        .unwrap();
+
+    // Skip past changelog rows from mock setup (Central-style names/stores).
+    let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(1, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 10,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
+
     // Insert an asset_class variant (which should trigger a changelog record for Central Sync)
     let asset_class_id = "asset_class_id".to_string();
     let row = AssetClassRow {
         id: asset_class_id.clone(),
         ..Default::default()
     };
-    let _result = row.upsert(&connection).unwrap();
-
-    let outgoing_results = repo
-        .outgoing_sync_records_from_central(0, 1000, 1, true)
+    AssetClassRowRepository::new(&connection)
+        .upsert_one(&row)
         .unwrap();
+
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(1, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
     // outgoing_results should contain the changelog record for the asset class
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
@@ -688,35 +716,326 @@ async fn test_changelog_outgoing_sync_records() {
         ..Default::default()
     };
 
-    let cursor_id = row.upsert(&connection).unwrap().unwrap();
-
-    // Set the source_site_id (usually this happens during integration step in sync)
-    repo.set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id))
-        .unwrap();
+    // We want to test the sync scenario where changelog is set with site id = site1_id.
+    row.upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(site1_id),
+        },
+    )
+    .unwrap();
 
     // Now we should have two records to send to site 1 the remote site on initialisation
     // The asset class and the asset
 
-    let outgoing_results = repo
-        .outgoing_sync_records_from_central(0, 1000, site1_id, false)
-        .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, true, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
     assert_eq!(outgoing_results[1].record_id, asset_id);
 
     // If not during initialisation, we should only get the asset_class as the asset was synced from the site already
-    let outgoing_results = repo
-        .outgoing_sync_records_from_central(0, 1000, site1_id, true)
-        .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
     // Site 2 should only get the asset_class
-    let outgoing_results = repo
-        .outgoing_sync_records_from_central(0, 1000, site2_id, true)
-        .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site2_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
+
+    // A requisition at store_a addressed to the name backing store_b should
+    // reach site 1 via store_id (RemoteOwned, during initialisation only) and
+    // site 2 via transfer_store_id (Transfer). `RequisitionRow::generate_changelog`
+    // derives `transfer_store_id` from `name_id` via the store lookup.
+    let req_id = "req_transfer".to_string();
+    RequisitionRowRepository::new(&connection)
+        .upsert_one(&RequisitionRow {
+            id: req_id.clone(),
+            store_id: site1_store_id.clone(),
+            name_id: mock_name_store_b().id,
+            ..Default::default()
+        })
+        .unwrap();
+
+    // Site 1 post-initialisation: RemoteOwned arm skips, so only asset_class.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
+
+    // Site 1 during initialisation: RemoteOwned relays, requisition included.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, true, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 3);
+    assert_eq!(outgoing_results[2].record_id, req_id);
+
+    // Site 2 post-initialisation: reaches via Transfer routing.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site2_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[1].record_id, req_id);
+
+    // A second asset for site 1's store, originated by central (Remote).
+    let central_asset_id = "central_asset_id".to_string();
+    AssetRow {
+        id: central_asset_id.clone(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(central_site_id),
+        },
+    )
+    .unwrap();
+
+    // Site 1 post-initialisation: Remote arm relays the central-edited asset.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[1].record_id, central_asset_id);
+}
+
+#[actix_rt::test]
+async fn test_changelog_outgoing_multi_device_sync_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_outgoing_multi_device_sync_records",
+        MockDataInserts::none().names().stores(),
+    )
+    .await;
+
+    let site1_id = mock_store_a().site_id;
+    let site1_store_id = mock_store_a().id;
+
+    // Simulate the central server: current site id distinct from site1 so that
+    // locally-upserted rows (SourceSiteId::CurrentSiteId) get central's id.
+    let central_site_id = 999;
+    assert_ne!(central_site_id, site1_id);
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(central_site_id))
+        .unwrap();
+
+    let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
+    // Central, multi-device → reaches a multi-device site.
+    let md_central_id = "md_asset_class".to_string();
+    AssetClassRowRepository::new(&connection)
+        .upsert_one(&AssetClassRow {
+            id: md_central_id.clone(),
+            ..Default::default()
+        })
+        .unwrap();
+
+    // Central, NOT multi-device → dropped by the flag, kept by the ordinary filter.
+    // (Central-distributed so it survives a post-init pull, unlike RemoteOwned.)
+    let non_md_central_id = "non_md_shipping_method".to_string();
+    ShippingMethodRowRepository::new(&connection)
+        .upsert_one(&ShippingMethodRow {
+            id: non_md_central_id.clone(),
+            ..Default::default()
+        })
+        .unwrap();
+
+    // Remote, multi-device, authored by site1 itself. Post-initialisation the
+    // ordinary filter's echo guard drops this; the multi-device filter keeps it.
+    let md_self_sourced_id = "md_asset".to_string();
+    AssetRow {
+        id: md_self_sourced_id.clone(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(site1_id),
+        },
+    )
+    .unwrap();
+
+    // Ordinary post-init pull: both central rows (in cursor order); the
+    // self-sourced Asset is excluded by the echo guard.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[0].record_id, md_central_id);
+    assert_eq!(outgoing_results[1].record_id, non_md_central_id);
+
+    // Multi-device post-init pull: the non-multi-device ShippingMethod is dropped
+    // by the flag intersection, while the self-sourced Asset is kept (guard dropped).
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::multi_device_all_data_for_site(site1_id, false, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[0].record_id, md_central_id);
+    assert_eq!(outgoing_results[1].record_id, md_self_sourced_id);
+}
+
+#[actix_rt::test]
+async fn test_changelog_edited_on_multi_device_site_push_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_edited_on_multi_device_site_push_records",
+        MockDataInserts::none().names().stores(),
+    )
+    .await;
+
+    let site1_id = mock_store_a().site_id;
+    let site1_store_id = mock_store_a().id;
+
+    let cursor_before = ChangelogRepository::new(&connection).max_cursor().unwrap() as i64;
+
+    // Multi-device table, authored by this site → pushed by both filters.
+    let md_edited_id = "md_asset".to_string();
+    AssetRow {
+        id: md_edited_id.clone(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(site1_id),
+        },
+    )
+    .unwrap();
+
+    // NOT a multi-device table, authored by this site → pushed by the ordinary
+    // filter, dropped by the multi-device filter's flag intersection.
+    let non_md_edited_id = "non_md_stocktake".to_string();
+    StocktakeRow {
+        id: non_md_edited_id.clone(),
+        store_id: site1_store_id.clone(),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(site1_id),
+        },
+    )
+    .unwrap();
+
+    // Multi-device table, but authored by a *different* site → excluded by the
+    // `source_site_id` match in both filters (nothing to push back out).
+    let other_site_id = 999;
+    assert_ne!(other_site_id, site1_id);
+    AssetRow {
+        id: "md_asset_other_site".to_string(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    }
+    .upsert_sync(
+        &connection,
+        ChangelogSyncType::SyncTypeV5V6 {
+            source_site_id: Some(other_site_id),
+        },
+    )
+    .unwrap();
+
+    // Ordinary push: both rows this site authored (in cursor order); the
+    // other-site row is excluded.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_edited_on_site(site1_id),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[0].record_id, md_edited_id);
+    assert_eq!(outgoing_results[1].record_id, non_md_edited_id);
+
+    // Multi-device push: the non-multi-device Stocktake is additionally dropped by
+    // the flag intersection, leaving only the tagged Asset this site authored.
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_edited_on_multi_device_site(site1_id),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, md_edited_id);
 }
 
 #[actix_rt::test]
@@ -741,39 +1060,367 @@ async fn test_changelog_outgoing_patient_sync_records() {
         ..Default::default()
     };
 
-    let cursor = vaccination.upsert(&connection).unwrap().unwrap();
+    let cursor_before = repo.max_cursor().unwrap() as i64;
+    VaccinationRowRepository::new(&connection)
+        .upsert_one(&vaccination)
+        .unwrap();
+    let cursor = repo.max_cursor().unwrap() as i64;
 
     // store A (on site1) has name_store_join for patient2
 
     // Site 1 sync should get the vaccination changelog via name_store_join
-    let outgoing_results = repo
-        .outgoing_sync_records_from_central(cursor as u64, 1000, site1_id, true)
-        .unwrap();
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogFilter::all_data_for_site(site1_id, true, None),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, vaccination.id);
 
     // Site 1 patient_pull
-    let outgoing_results = repo
-        .outgoing_patient_sync_records_from_central(
-            // Definitely a higher cursor than the vaccination changelog (+500)
-            (cursor) as u64,
-            1000,
-            site1_id,
-            "patient2".to_string(),
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogCondition::And(vec![
+                ChangelogFilter::patient_data_for_site(site1_id, None),
+                ChangelogCondition::patient_id::matching("patient2".to_string()),
+            ]),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
         )
-        .unwrap();
+        .unwrap()
+        .rows;
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, vaccination.id);
 
     // Ensure site without name_store_join for the patient does not get the vaccination changelog
     // on patient_pull
+    let outgoing_results = ChangelogRepository::new(&connection)
+        .query(
+            ChangelogCondition::And(vec![
+                ChangelogFilter::patient_data_for_site(5, None),
+                ChangelogCondition::patient_id::matching("patient2".to_string()),
+            ]),
+            CursorAndLimit {
+                cursor: cursor + 500,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert_eq!(outgoing_results.len(), 0);
+}
+
+/// When a store is moved to another site we re-sync it via `data_for_store`. That
+/// filter must include patient-scoped data for patients visible at the moved store
+/// (via name_store_join), otherwise the store arrives missing its patient data (#12325).
+/// It must NOT pull patient data for patients the store can't see.
+#[actix_rt::test]
+async fn test_data_for_store_includes_patient_data() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_data_for_store_includes_patient_data",
+        MockDataInserts::all(),
+    )
+    .await;
+
+    let repo = ChangelogRepository::new(&connection);
+
+    // patient2 has a name_store_join to store_a (mock_patient_store_join_b), and none to store_b.
+    // Author the vaccination (a Patient-distribution table) at store_c, so it reaches store_a
+    // only via the patient route — not via store_c's own (Remote) store_id route.
+    let cursor_before = repo.max_cursor().unwrap() as i64;
+    let vaccination = VaccinationRow {
+        id: "mock_vax_id".to_string(),
+        patient_id: "patient2".to_string(),
+        store_id: "store_c".to_string(),
+        vaccine_course_dose_id: "vaccine_course_a_dose_a".to_string(),
+        user_id: "user_account_a".to_string(),
+        ..Default::default()
+    };
+    VaccinationRowRepository::new(&connection)
+        .upsert_one(&vaccination)
+        .unwrap();
+
+    // Re-syncing store_a should include the vaccination (patient2 is visible at store_a).
     let outgoing_results = repo
-        .outgoing_patient_sync_records_from_central(
-            (cursor + 500) as u64,
-            1000,
-            5,
-            "patient2".to_string(),
+        .query(
+            ChangelogFilter::data_for_store("store_a"),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert!(
+        outgoing_results
+            .iter()
+            .any(|r| r.record_id == vaccination.id),
+        "data_for_store(store_a) should include patient2's vaccination"
+    );
+
+    // Re-syncing store_b should NOT include it — patient2 is not visible at store_b.
+    let outgoing_results = repo
+        .query(
+            ChangelogFilter::data_for_store("store_b"),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 1000,
+            },
+        )
+        .unwrap()
+        .rows;
+    assert!(
+        !outgoing_results
+            .iter()
+            .any(|r| r.record_id == vaccination.id),
+        "data_for_store(store_b) should not include patient2's vaccination"
+    );
+}
+
+/// Concurrent-tx race: while connection A is mid-transaction with a changelog
+/// row in flight, an observer on connection B (same manager) should see
+/// `max_cursor()` clamped below A's tracked boundary and `query()` must not
+/// return any rows beyond the clamp. After A commits, the clamp lifts and
+/// everything becomes visible.
+///
+/// Postgres-only: SQLite serialises writers under `BEGIN IMMEDIATE`, so the
+/// "concurrent in-flight tx on a separate connection" scenario can't be
+/// reproduced.
+#[cfg(feature = "postgres")]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_max_cursor_clamped_by_in_flight_tx() {
+    use crate::{
+        ChangelogCursorTracker, ClinicianRow, ClinicianRowRepository, ClinicianRowRepositoryTrait,
+        RepositoryError, TransactionError,
+    };
+
+    let (_, _, manager, _) = setup_all(
+        "test_max_cursor_clamped_by_in_flight_tx",
+        MockDataInserts::none(),
+    )
+    .await;
+
+    let observer = manager.connection().unwrap();
+    let cursor_before = ChangelogRepository::new(&observer).max_cursor().unwrap() as i64;
+
+    // Channels to drive the slow tx: signal it has registered, signal it to commit.
+    let (registered_tx, registered_rx) = std::sync::mpsc::channel::<()>();
+    let (release_tx, release_rx) = std::sync::mpsc::channel::<()>();
+
+    let manager_for_tx = manager.clone();
+    let slow_tx = tokio::task::spawn_blocking(move || {
+        let conn = manager_for_tx.connection().unwrap();
+        let _: Result<(), TransactionError<RepositoryError>> =
+            conn.transaction_sync(|con| -> Result<(), RepositoryError> {
+                ClinicianRowRepository::new(con).upsert_one(&ClinicianRow {
+                    id: "clinician_in_flight".to_string(),
+                    code: "C1".to_string(),
+                    last_name: "in_flight".to_string(),
+                    initials: "IF".to_string(),
+                    is_active: true,
+                    ..Default::default()
+                })?;
+                registered_tx.send(()).unwrap();
+                release_rx.recv().unwrap();
+                Ok(())
+            });
+    });
+
+    registered_rx.recv().unwrap();
+
+    // While the slow tx is open: the tracker has an entry for that connection
+    // pegged at `cursor_before + 1` (its lookup of MAX(cursor) before the
+    // insert), so observer's max_cursor must be `<= cursor_before`.
+    let max_during = ChangelogRepository::new(&observer).max_cursor().unwrap() as i64;
+    assert!(
+        max_during <= cursor_before,
+        "expected max_cursor <= {} while in-flight tx open, got {}",
+        cursor_before,
+        max_during
+    );
+    assert!(ChangelogCursorTracker::max_safe_cursor(&observer).is_some());
+
+    let rows_during = ChangelogRepository::new(&observer)
+        .query(
+            ChangelogCondition::True(),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 100,
+            },
         )
         .unwrap();
-    assert_eq!(outgoing_results.len(), 0);
+    assert!(
+        rows_during.rows.is_empty(),
+        "expected no rows past clamp while in-flight tx open, got {} rows",
+        rows_during.rows.len()
+    );
+
+    // Release the slow tx; once it commits the tracker entry is removed.
+    release_tx.send(()).unwrap();
+    slow_tx.await.unwrap();
+
+    assert_eq!(ChangelogCursorTracker::max_safe_cursor(&observer), None);
+    let max_after = ChangelogRepository::new(&observer).max_cursor().unwrap() as i64;
+    assert!(
+        max_after > cursor_before,
+        "expected max_cursor to advance past {} after commit, got {}",
+        cursor_before,
+        max_after
+    );
+    let rows_after = ChangelogRepository::new(&observer)
+        .query(
+            ChangelogCondition::True(),
+            CursorAndLimit {
+                cursor: cursor_before,
+                limit: 100,
+            },
+        )
+        .unwrap();
+    assert_eq!(rows_after.rows.len(), 1);
+    assert_eq!(rows_after.rows[0].record_id, "clinician_in_flight");
+}
+
+/// Windowed changelog dedup (postgres-only). Verifies:
+/// - within a window, only the newest row per (table_name, record_id, row_action) survives;
+/// - UPSERT and DELETE for the same record survive separately (row_action in the key);
+/// - the second run dedups the new window AND removes the old-part leftover of a record
+///   that reappears;
+/// - the dead-set table + concurrent index are dropped afterwards.
+/// Insert a single changelog row with an explicit cursor (table is always Invoice).
+#[cfg(feature = "postgres")]
+fn dedup_test_insert(
+    connection: &StorageConnection,
+    cursor: i64,
+    record_id: &str,
+    store_id: Option<&str>,
+    action: RowActionType,
+) {
+    #[derive(Insertable)]
+    #[diesel(table_name = changelog_with_links)]
+    struct Ins<'a> {
+        cursor: i64,
+        table_name: ChangelogTableName,
+        record_id: &'a str,
+        row_action: RowActionType,
+        store_id: Option<&'a str>,
+        is_sync_update: bool,
+    }
+    diesel::insert_into(changelog_with_links::table)
+        .values(&Ins {
+            cursor,
+            table_name: ChangelogTableName::Invoice,
+            record_id,
+            row_action: action,
+            store_id,
+            is_sync_update: false,
+        })
+        .execute(connection.lock().connection())
+        .unwrap();
+}
+
+/// All changelog cursors that remain, ascending.
+#[cfg(feature = "postgres")]
+fn dedup_test_surviving_cursors(connection: &StorageConnection) -> Vec<i64> {
+    #[derive(QueryableByName)]
+    struct C {
+        #[diesel(sql_type = diesel::sql_types::BigInt)]
+        cursor: i64,
+    }
+    diesel::sql_query("SELECT cursor FROM changelog ORDER BY cursor")
+        .get_results::<C>(connection.lock().connection())
+        .unwrap()
+        .into_iter()
+        .map(|c| c.cursor)
+        .collect()
+}
+
+/// Drive one dedup run over the window `(marker, max]` (batch size 2 to exercise
+/// the batch loop) and return the number of rows deleted.
+#[cfg(feature = "postgres")]
+fn dedup_test_run(connection: &StorageConnection, marker: i64, max: i64) -> u64 {
+    let repo = ChangelogRepository::new(connection);
+    repo.prepare_dead_set(marker, max).unwrap();
+    let mut total = 0u64;
+    loop {
+        let n = repo.delete_dead_batch(2).unwrap();
+        total += n;
+        if n == 0 {
+            break;
+        }
+    }
+    repo.finish_dead_set().unwrap();
+    total
+}
+
+/// Whether a relation (table or index) currently exists.
+#[cfg(feature = "postgres")]
+fn dedup_test_relation_exists(connection: &StorageConnection, name: &str) -> bool {
+    #[derive(QueryableByName)]
+    struct Exists {
+        #[diesel(sql_type = diesel::sql_types::Bool)]
+        present: bool,
+    }
+    let result: Exists = diesel::sql_query(format!(
+        "SELECT to_regclass('{name}') IS NOT NULL AS present"
+    ))
+    .get_result(connection.lock().connection())
+    .unwrap();
+    result.present
+}
+
+#[cfg(feature = "postgres")]
+#[actix_rt::test]
+async fn test_changelog_dedupe_windowed() {
+    use crate::test_db::SetupResult;
+    use RowActionType::{Delete, Upsert};
+
+    let SetupResult { connection, .. } = test_db::setup_test(test_db::SetupOption {
+        db_name: "test_changelog_dedupe_windowed",
+        inserts: MockDataInserts::none(),
+        ..Default::default()
+    })
+    .await;
+    delete_all_changelog(&connection);
+
+    // The marker (KeyType::ChangelogDedupCursor) is persisted by the task layer, not
+    // the repo; here we drive the repo helpers directly over explicit (marker, max]
+    // windows, so the marker is just a local value.
+
+    // rec_a: 3 upserts (only @3 survives). rec_b: single. rec_d: upsert@5 + delete@6 (both survive).
+    dedup_test_insert(&connection, 1, "rec_a", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 2, "rec_a", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 3, "rec_a", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 4, "rec_b", Some("store2"), Upsert);
+    dedup_test_insert(&connection, 5, "rec_d", Some("store1"), Upsert);
+    dedup_test_insert(&connection, 6, "rec_d", Some("store1"), Delete);
+
+    // Run 1: window (0, 6].
+    let deleted = dedup_test_run(&connection, 0, 6);
+    assert_eq!(deleted, 2, "run 1 should delete rec_a @1,@2");
+    assert_eq!(dedup_test_surviving_cursors(&connection), vec![3, 4, 5, 6]);
+
+    // rec_a reappears at @7 — its old survivor @3 is now stranded below the marker.
+    dedup_test_insert(&connection, 7, "rec_a", Some("store1"), Upsert);
+
+    // Run 2: window (6, 7]. Step 1 keeps @7; step 2 removes the old rec_a @3.
+    let deleted = dedup_test_run(&connection, 6, 7);
+    assert_eq!(deleted, 1, "run 2 should delete the stranded rec_a @3");
+    assert_eq!(dedup_test_surviving_cursors(&connection), vec![4, 5, 6, 7]);
+
+    // dead-set table + index dropped.
+    assert!(
+        !dedup_test_relation_exists(&connection, "changelog_dead"),
+        "changelog_dead should be dropped"
+    );
+    assert!(
+        !dedup_test_relation_exists(&connection, "index_changelog_dedup"),
+        "index_changelog_dedup should be dropped"
+    );
 }

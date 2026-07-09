@@ -17,6 +17,7 @@ fragment PatientRow on PatientNode {
   }
   isDeceased
   dateOfDeath
+  customFields
   programEnrolments {
     ... on ProgramEnrolmentConnector {
       __typename
@@ -56,6 +57,7 @@ fragment ProgramPatientRow on PatientNode {
   dateOfDeath
   nextOfKinId
   nextOfKinName
+  customFields
   programEnrolments {
     ... on ProgramEnrolmentConnector {
       __typename
@@ -68,6 +70,44 @@ fragment ProgramPatientRow on PatientNode {
         }
       }
       totalCount
+    }
+  }
+}
+
+fragment CustomField on CustomFieldNode {
+  id
+  key
+  name
+  valueType
+  kind
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
+}
+
+query patientCustomFields {
+  customFields(filter: { scope: { equalTo: "patient" } }) {
+    ... on CustomFieldConnector {
+      __typename
+      totalCount
+      nodes {
+        ...CustomField
+      }
+    }
+  }
+}
+
+mutation updatePatientCustomFields(
+  $storeId: String!
+  $input: UpdatePatientCustomFieldsInput!
+) {
+  updatePatientCustomFields(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...ProgramPatientRow
     }
   }
 }
@@ -126,9 +166,12 @@ query centralPatientSearch(
       nodes {
         id
         code
+        code2
         dateOfBirth
         firstName
         lastName
+        gender
+        isDeceased
       }
       totalCount
     }

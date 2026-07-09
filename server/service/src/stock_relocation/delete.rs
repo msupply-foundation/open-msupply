@@ -90,8 +90,8 @@ mod test {
     use repository::{
         mock::{mock_location_1, MockDataInserts},
         test_db::setup_all,
-        StockLineRow, StockRelocationLineRowRepository, StockRelocationRowRepository,
-        StockRelocationStatus, Upsert,
+        StockLineRow, StockLineRowRepository, StockRelocationLineRowRepository,
+        StockRelocationRowRepository, StockRelocationStatus,
     };
     use util::uuid::uuid;
 
@@ -163,7 +163,9 @@ mod test {
     #[actix_rt::test]
     async fn stock_movement_delete_success() {
         let (service_provider, ctx) = setup("stock_movement_delete_success").await;
-        stock_line("delete_sl").upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&stock_line("delete_sl"))
+            .unwrap();
         let service = &service_provider.stock_relocation_service;
         let repo = StockRelocationRowRepository::new(&ctx.connection);
         let line_repo = StockRelocationLineRowRepository::new(&ctx.connection);
@@ -211,7 +213,9 @@ mod test {
     #[actix_rt::test]
     async fn stock_movement_delete_error() {
         let (service_provider, ctx) = setup("stock_movement_delete_error").await;
-        stock_line("fin_sl").upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&stock_line("fin_sl"))
+            .unwrap();
         let service = &service_provider.stock_relocation_service;
 
         assert_eq!(

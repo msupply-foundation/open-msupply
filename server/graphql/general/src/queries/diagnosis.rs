@@ -11,6 +11,7 @@ pub fn diagnoses_active(ctx: &Context<'_>) -> Result<Vec<DiagnosisNode>> {
         &ResourceAccessRequest {
             resource: Resource::NoPermissionRequired,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

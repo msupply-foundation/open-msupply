@@ -1,6 +1,6 @@
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, NameRowRepository, NameStoreJoin,
-    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, Row,
     StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
 };
 
@@ -12,7 +12,8 @@ use crate::sync::{
 };
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 
 #[allow(non_snake_case)]
@@ -86,14 +87,20 @@ impl SyncTranslation for NameStoreJoinTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyNameStoreJoinRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyNameStoreJoinRow>()?;
 
         // in mSupply the inactive flag is used for soft-deletes.
         // given that we don't handle soft deletes, translate to a hard-delete
         if let Some(inactive) = data.inactive {
             if inactive {
+                if !NameStoreJoinRepository::new(connection).check_exists_by_id(&data.id)? {
+                    return Ok(PullTranslateResult::Ignored(
+                        "Is inactive and not found".to_string(),
+                    ));
+                }
                 return self.try_translate_from_delete_sync_record(connection, sync_record);
             }
         }
@@ -124,10 +131,12 @@ impl SyncTranslation for NameStoreJoinTranslation {
             }
         }
 
+        let check_fk = fk_checker.with_table_required(connection, "name_store_join", &data.id);
+
         let result = NameStoreJoinRow {
             id: data.id,
-            name_id: data.name_id,
-            store_id: data.store_id,
+            name_id: check_fk(data.name_id, "name_link_id", FkField::NameLink)?,
+            store_id: check_fk(data.store_id, "store_id", FkField::Store)?,
             // name_is_customer: data.name_is_customer.unwrap_or(name.is_customer),
             // name_is_supplier: data.name_is_supplier.unwrap_or(name.is_supplier),
             // TODO in mirror setup primary server sends name_store_join to central with previous sync
@@ -144,7 +153,12 @@ impl SyncTranslation for NameStoreJoinTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::NameStoreJoin(name_store_join_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let NameStoreJoin {
             name_store_join:
                 NameStoreJoinRow {
@@ -157,8 +171,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
             name,
         } = NameStoreJoinRepository::new(connection)
             .query_by_filter(
-                NameStoreJoinFilter::new()
-                    .id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                NameStoreJoinFilter::new().id(EqualFilter::equal_to(name_store_join_row.id)),
             )?
             .pop()
             .ok_or(anyhow::anyhow!("Name store join not found"))?;
@@ -199,7 +212,8 @@ mod tests {
         test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
     };
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
 
@@ -210,22 +224,42 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_name_store_join_translation",
-            MockDataInserts::none().names(),
+            MockDataInserts::none().names().stores(),
         )
         .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
         }
 
+        // The inactive (soft-delete) record translates to a delete only if the row
+        // already exists locally, so insert it first (it's ignored otherwise).
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one_without_changelog(&NameStoreJoinRow {
+                id: "BE65A4A05E4D47E88303D6105A7872CC".to_string(),
+                store_id: "store_b".to_string(),
+                name_id: "name_store_a".to_string(),
+                name_is_customer: false,
+                name_is_supplier: true,
+            })
+            .unwrap();
+
         for record in test_data::test_pull_upsert_inactive_records() {
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -248,25 +282,27 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(
-                    ChangelogFilter::new().table_name(ChangelogTableName::NameStoreJoin.equal_to()),
-                ),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::NameStoreJoin),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
         let translator = NameStoreJoinTranslation {};
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

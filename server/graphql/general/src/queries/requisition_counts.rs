@@ -90,6 +90,7 @@ pub fn requisition_counts(ctx: &Context<'_>, store_id: String) -> Result<Requisi
         &ResourceAccessRequest {
             resource: Resource::RequisitionStats,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 

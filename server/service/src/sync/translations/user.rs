@@ -28,11 +28,14 @@ pub struct LegacyUserTable {
     #[serde(rename = "active")]
     #[serde(default = "default_true")]
     pub is_active: bool,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub password_hash: Option<String>,
 }
 
 fn default_true() -> bool {
     true
 }
+
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -52,6 +55,7 @@ impl SyncTranslation for UserTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyUserTable {
@@ -64,7 +68,8 @@ impl SyncTranslation for UserTranslation {
             phone_number,
             job_title,
             is_active,
-        } = serde_json::from_str::<LegacyUserTable>(&sync_record.data)?;
+            password_hash,
+        } = sync_record.deserialize()?;
 
         let user_account = UserAccountRowRepository::new(connection).find_one_by_id(&id)?;
 
@@ -75,6 +80,8 @@ impl SyncTranslation for UserTranslation {
             ),
             None => ("".to_string(), None),
         };
+
+        let hashed_password = password_hash.map_or(hashed_password, |p| p);
 
         let result = UserAccountRow {
             id,
@@ -123,7 +130,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

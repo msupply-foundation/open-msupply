@@ -20,7 +20,7 @@ mod tests {
             synchroniser,
         } = create_site("site_info", vec![]).await;
 
-        synchroniser.sync(None).await.unwrap();
+        synchroniser.sync().await.unwrap();
 
         let repo = KeyValueStoreRepository::new(&connection);
 

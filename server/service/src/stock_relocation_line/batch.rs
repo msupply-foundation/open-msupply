@@ -82,7 +82,7 @@ mod test {
     use repository::{
         mock::{mock_location_1, MockDataInserts},
         test_db::setup_all,
-        StockLineRow, StockRelocationLineRowRepository, Upsert,
+        StockLineRow, StockLineRowRepository, StockRelocationLineRowRepository,
     };
     use util::uuid::uuid;
 
@@ -145,8 +145,9 @@ mod test {
     #[actix_rt::test]
     async fn batch_stock_relocation_line_success() {
         let (service_provider, ctx) = setup("batch_stock_relocation_line_success").await;
-        stock_line("a_sl").upsert(&ctx.connection).unwrap();
-        stock_line("b_sl").upsert(&ctx.connection).unwrap();
+        let sl_repo = StockLineRowRepository::new(&ctx.connection);
+        sl_repo.upsert_one(&stock_line("a_sl")).unwrap();
+        sl_repo.upsert_one(&stock_line("b_sl")).unwrap();
         let service = &service_provider.stock_relocation_service;
         let line_repo = StockRelocationLineRowRepository::new(&ctx.connection);
         let movement_id = new_movement(&service_provider, &ctx).await;

@@ -460,6 +460,9 @@ mod tests {
                 base_dir: base_dir.path().to_string_lossy().to_string(),
                 machine_uid: None,
                 override_is_central_server: false,
+                standalone_store_name: None,
+                standalone_admin_username: None,
+                standalone_admin_password: None,
                 workers: None,
             },
             database: db_settings,
@@ -468,6 +471,8 @@ mod tests {
             backup: None,
             mail: None,
             features: None,
+            changelog_partition: Default::default(),
+            changelog_dedup: None,
         };
         service_provider.settings = Box::new(SettingsService::new(Some(test_settings)));
 
