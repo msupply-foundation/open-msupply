@@ -48,6 +48,13 @@
   gap: var(--space-3);
 }
 
+.alertStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* alerts hug their content, as in the app */
+  gap: var(--space-2);
+}
+
 .outcome {
   margin-inline-start: var(--space-4);
   font-size: var(--text-sm);

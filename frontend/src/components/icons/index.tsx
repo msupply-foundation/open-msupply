@@ -141,6 +141,24 @@ export const MessageSquareIcon = (props: IconProps) => (
   </Stroke>
 )
 
+/* Exclamation-in-circle (the error Alert's icon — the current app's error
+   alerts fall through to MUI's built-in ErrorOutline; this is the stroke-set
+   equivalent, sibling of AlertTriangleIcon) */
+export const AlertCircleIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="8" x2="12" y2="12" />
+    <line x1="12" y1="16" x2="12.01" y2="16" />
+  </Stroke>
+)
+
+/* Filled circle-i (the current app's InfoIcon, verbatim incl. its 90×90 box) */
+export const InfoIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 90 90" {...props}>
+    <path d="M35.688,40.036h11.359c2.23,0,4.027,1.795,4.027,4.027v16.861h2.551c1.084,0,1.965,0.881,1.965,1.969v6.023  c0,1.084-0.881,1.965-1.965,1.971h-17.15c-1.088,0-1.97-0.883-1.97-1.971v-6.023c0-1.088,0.882-1.969,1.97-1.969h2.552V48.634  l-3.442-1.537c-0.656-0.293-1.079-0.945-1.079-1.664v-4.217C34.505,40.563,35.038,40.036,35.688,40.036z M45.053,20.673  c4.025,0,7.291,3.268,7.291,7.301c0,4.029-3.266,7.299-7.291,7.299c-4.026,0-7.292-3.27-7.292-7.299  C37.761,23.94,41.027,20.673,45.053,20.673z M45.047,9.854c-19.818,0-35.885,16.084-35.885,35.924  c0,19.842,16.066,35.924,35.885,35.924c19.818,0.004,35.886-16.082,35.886-35.924C80.934,25.938,64.865,9.854,45.047,9.854z" />
+  </Fill>
+)
+
 /* --- Navigation icons (from the current app; added as the menu bar needs them) --- */
 
 /* Inventory */

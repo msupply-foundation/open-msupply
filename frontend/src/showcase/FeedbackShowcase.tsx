@@ -1,4 +1,5 @@
 import { createSignal, For, type JSX } from 'solid-js'
+import { Alert } from '../components/ui/Alert'
 import { StatusChip } from '../components/ui/StatusChip'
 import { Dialog } from '../components/ui/Dialog'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
@@ -63,6 +64,33 @@ export const FeedbackShowcase = () => {
           <For each={STATUS_CHIPS}>
             {(chip) => <StatusChip label={chip.label} colour={chip.colour} />}
           </For>
+        </div>
+      </Card>
+
+      <Card
+        title="Alerts — error / warning / info / success"
+        lead={
+          <>
+            Hand-rolled, one <code>&lt;div&gt;</code> + CSS — the current
+            app's MUI Alert look (pale tinted panel, 10px radius, severity
+            icon) without the library. Panel and text colours are{' '}
+            <code>color-mix</code> derivations from the severity tokens over
+            themed surfaces, so dark mode needs no extra rules; each severity
+            keeps a distinct icon shape, so colour never stands alone.
+          </>
+        }
+      >
+        <div class={styles.alertStack}>
+          <Alert severity="error">
+            Cannot delete: this shipment has already been shipped.
+          </Alert>
+          <Alert severity="warning">
+            Quantity reduced to 12 packs — no more stock is available.
+          </Alert>
+          <Alert severity="info">
+            This shipment was created from requisition RQ-1024.
+          </Alert>
+          <Alert severity="success">All lines allocated.</Alert>
         </div>
       </Card>
 

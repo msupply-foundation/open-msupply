@@ -1,5 +1,6 @@
 import type { Component } from 'solid-js'
 import { SlidersIcon, CopyIcon, FileIcon, type IconProps } from '../components/icons'
+import { TypographyShowcase } from './TypographyShowcase'
 import { ButtonsShowcase } from './ButtonsShowcase'
 import { InputsShowcase } from './InputsShowcase'
 import { SelectorsShowcase } from './SelectorsShowcase'
@@ -50,6 +51,7 @@ const ComingSoon: Component = () => (
  * Section id doubles as the URL hash (#/buttons), so sections are linkable.
  */
 export const sections: SectionDef[] = [
+  { id: 'typography', label: 'Typography', component: TypographyShowcase, category: 'components' },
   { id: 'buttons', label: 'Buttons', component: ButtonsShowcase, category: 'components' },
   { id: 'inputs', label: 'Inputs', component: InputsShowcase, category: 'components' },
   { id: 'selectors', label: 'Selectors', component: SelectorsShowcase, category: 'components' },

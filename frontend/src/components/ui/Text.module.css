@@ -1,0 +1,35 @@
+/*
+ * The four type styles. Size + line-height + weight only — no `color`, so the
+ * container's colour cascades in (see Text.tsx). `margin: 0` because containers
+ * own spacing between blocks, not the text itself.
+ */
+
+.body {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--line-body);
+  font-weight: var(--weight-regular);
+}
+
+.bodySmall {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--line-tight);
+  font-weight: var(--weight-medium);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--text-md);
+  line-height: var(--line-tight);
+  font-weight: var(--weight-bold);
+}
+
+/* subtitle sizes in em on purpose — relative to the title it sits under, so it
+   scales with its context rather than the root (TEXT_SPEC_DRAFT.md, Q5). */
+.subtitle {
+  margin: 0;
+  font-size: 1.2em;
+  line-height: var(--line-tight);
+  font-weight: var(--weight-regular);
+}

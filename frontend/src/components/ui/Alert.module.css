@@ -1,0 +1,52 @@
+/*
+ * The current app's MUI Alert (standard variant + its 10px-radius override),
+ * re-derived from the severity tokens instead of MUI's lighten()/darken():
+ * panel = a pale tint of the severity over the surface, text = the severity
+ * mixed into the body text colour, icon = the severity itself. Because both
+ * mixes lean on themed tokens (--bg-white flips dark, --text-body flips
+ * light), the dark theme gets MUI's dark-alert behaviour — dark tinted panel,
+ * pale tinted text — with no dark-specific rules here. Mix ratios chosen to
+ * sit close to MUI's output while holding AA in both themes (worst case,
+ * warning on light: ≈7:1).
+ */
+
+.alert {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.375rem 1rem;
+  border-radius: 10px; /* the app's Alert override (MUI default is 4px) */
+  background: color-mix(in srgb, var(--alert-colour) 10%, var(--bg-white));
+  color: color-mix(in srgb, var(--alert-colour) 40%, var(--text-body));
+  font-size: var(--text-sm);
+  line-height: 1.43;
+}
+
+.alert[data-severity='error'] {
+  --alert-colour: var(--error-main);
+}
+
+.alert[data-severity='warning'] {
+  --alert-colour: var(--warning-main);
+}
+
+.alert[data-severity='info'] {
+  --alert-colour: var(--info-main);
+}
+
+.alert[data-severity='success'] {
+  --alert-colour: var(--success-main);
+}
+
+/* Block padding on icon and message (not centring) keeps the icon beside the
+   first line when the message wraps — MUI's geometry. */
+.icon {
+  display: flex;
+  flex-shrink: 0;
+  padding-block: 0.4375rem;
+  font-size: 1.25rem; /* the app passes fontSize="small" (20px) */
+  color: var(--alert-colour);
+}
+
+.message {
+  padding-block: 0.5rem;
+}
