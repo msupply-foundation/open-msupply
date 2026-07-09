@@ -16,7 +16,11 @@ const Card = (props: {
   </section>
 )
 
-/* The four variants, largest → smallest, each with its spec. */
+/*
+ * The three root-relative variants, largest → smallest. `subtitle` is left out
+ * on purpose — it sizes relative to its title, so it gets its own paired demo
+ * below rather than a misleading standalone row at the body base.
+ */
 const VARIANTS: {
   variant: TextVariant
   sample: string
@@ -26,11 +30,6 @@ const VARIANTS: {
     variant: 'heading',
     sample: 'Outbound shipment details',
     meta: 'heading · --text-md (1rem) · bold · renders <h2>, rank via level',
-  },
-  {
-    variant: 'subtitle',
-    sample: 'A subtitle sitting under a title',
-    meta: 'subtitle · 1.2em (relative to context) · regular',
   },
   {
     variant: 'body',
@@ -48,7 +47,7 @@ const VARIANTS: {
 export const TypographyShowcase = () => (
   <div class={styles.stack}>
     <Card
-      title="The four variants"
+      title="The type scale"
       lead={
         <>
           <code>&lt;Text&gt;</code> carries the app's whole type scale — a Solid
@@ -57,6 +56,8 @@ export const TypographyShowcase = () => (
           only: <strong>size + line-height + weight</strong>, and{' '}
           <strong>never colour</strong>. Weights come straight from what the
           showcase already uses — body is regular (400), headings bold (700).
+          The three root-relative variants are below; <code>subtitle</code> is
+          contextual and gets its own demo next.
         </>
       }
     >
@@ -72,6 +73,27 @@ export const TypographyShowcase = () => (
           )}
         </For>
       </dl>
+    </Card>
+
+    <Card
+      title="Subtitle pairs with a title"
+      lead={
+        <>
+          <code>subtitle</code> is a deck that sits under a title — a fixed step
+          smaller than the heading (<code>--text-sm</code>) and semibold (600),
+          matching the source app, which overrides <code>subtitle1</code> to 600
+          nearly everywhere. It's a plain rem step, not <code>em</code>: an{' '}
+          <code>em</code> can't track a sibling title, and the scale is flat, so
+          relative sizing bought nothing. To scale a pair as a unit, wrap them.
+        </>
+      }
+    >
+      <div class={styles.titleBlock}>
+        <Text variant="heading" level={2}>
+          Outbound shipment SH-0004
+        </Text>
+        <Text variant="subtitle">Buka Health Centre · created 12 Jun 2026</Text>
+      </div>
     </Card>
 
     <Card

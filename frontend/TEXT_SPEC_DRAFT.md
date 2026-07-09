@@ -86,17 +86,32 @@ variant is a **type style only** — size + line-height + weight, **no colour**
 | `body`        | body1    | `--text-sm` (0.875rem)| `--weight-regular` (400) | `<p>`       |
 | `bodySmall`   | body2    | `--text-xs` (0.75rem) | `--weight-medium` (500)  | `<p>`       |
 | `heading`     | h6       | `--text-md` (1rem)    | `--weight-bold` (700)    | `<h2>` (rank via `level`) |
-| `subtitle`    | subtitle1| `1.2em` (relative)    | `--weight-regular` (400) | `<p>` / `<span>` |
+| `subtitle`    | subtitle1| `--text-sm` (0.875rem)| `--weight-semibold` (600) | `<p>` / `<span>` |
 
 - **Base weight = 400 (Carl).** The showcase `body` text sets no weight and
   inherits the browser default (400) — see `index.css` `body` (font-family/size/
-  line-height/colour but no weight). So `body`/`subtitle` are `--weight-regular`.
+  line-height/colour but no weight). So `body` is `--weight-regular`.
 - **`heading` weight = 700 (resolved).** The showcase's own headings all use
   `--weight-bold`, matching the source app's ad-hoc `fontWeight: 700` overrides
   on `h6`. So `heading` defaults to bold, not the source `h6`'s bare 400.
-- **`subtitle` stays `em`, not rem (Q5 resolved).** `1.2em` is relative *to its
-  context* — sits next to/under a title and scales with it. Pinning it to a rem
-  token would break that relationship.
+- **`subtitle` = `--text-sm`, semibold 600 (Q5 twice-revised with Carl,
+  2026-07-09).** It's a *deck under a title*, a fixed step smaller than `heading`
+  and distinguished from `body` by weight. Weight is **semibold**, matching the
+  source app's near-universal `subtitle1 → 600` override (new
+  `--weight-semibold: 600` token). **Kept a fixed rem step, not `em`:** `em`
+  resolves against the *parent's* font-size, so a subtitle that is a *sibling*
+  of its title can't size relative to it (the intermediate `0.85em` version only
+  "worked" because the showcase container was set to the title's size — the
+  container, not the title, was the base). Since the scale is flat (one heading
+  size), relative sizing bought nothing real, so subtitle joins the rest of the
+  scale as a plain rem step (principle #6).
+  - **If a title+subtitle ever needs to scale as a unit**, wrap them and rescale
+    the wrapper. Note plain `font-size: 90%` on a container does NOT cascade to
+    rem-sized children (rem is always root-relative). The rem-correct knob is a
+    **`--text-scale` multiplier**: define size tokens as
+    `calc(<base> * var(--text-scale, 1))`, then a region sets `--text-scale: 0.9`
+    to shrink its subtree in one line. **Recorded fallback, not built** (YAGNI
+    until a real "this whole region is smaller" case appears — Carl, 2026-07-09).
 
 Deliberately **excluded** (stay component-owned, not `Text` variants):
 `th` (Table's own CSS), form `label`/helper (TextField's own CSS). **Resolved
@@ -172,10 +187,13 @@ The "each area manages its own" drift is already visible — `Select` and
 ### All resolved — BUILT (2026-07-09)
 
 Weights settled from showcase precedent: base/`body` = 400 (`--weight-regular`),
-`bodySmall` = 500, `heading` = 700, `subtitle` = 400.
+`bodySmall` = 500, `heading` = 700, `subtitle` = 600 (`--weight-semibold`).
+`subtitle` sized to `--text-sm` — a fixed step smaller than `heading`, kept in
+rem (not `em`) since siblings can't size off each other; region-scaling is a
+recorded `--text-scale` fallback.
 
-Shipped: `ui/Text` (+ `Text.module.css`), `--weight-regular`/`--line-tight`
-tokens, a "Typography" showcase section, and the `DECISIONS.md` entry
-(2026-07-09). **Follow-up still open:** fold the stray `Select`/`FilterBar`
+Shipped: `ui/Text` (+ `Text.module.css`), `--weight-regular`/`--weight-semibold`/
+`--line-tight` tokens, a "Typography" showcase section, and the `DECISIONS.md`
+entry (2026-07-09). **Follow-up still open:** fold the stray `Select`/`FilterBar`
 `line-height: 1.3` (×11) and `1.125rem`/`1.25rem` literals into
 `--line-tight` / size tokens — a visually-sensitive sweep left for its own pass.

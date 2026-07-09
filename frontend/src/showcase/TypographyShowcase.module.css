@@ -80,6 +80,14 @@
   color: var(--text-secondary);
 }
 
+/* --- Subtitle pairing -------------------------------------------------- */
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--text-body);
+}
+
 /* --- When to reach for it (two columns) ------------------------------- */
 .twoCol {
   display: flex;

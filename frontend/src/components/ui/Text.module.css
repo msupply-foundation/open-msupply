@@ -25,11 +25,15 @@
   font-weight: var(--weight-bold);
 }
 
-/* subtitle sizes in em on purpose — relative to the title it sits under, so it
-   scales with its context rather than the root (TEXT_SPEC_DRAFT.md, Q5). */
+/* subtitle is a deck that pairs with a title — a fixed step smaller than the
+   heading (a bit smaller, distinguished from body by weight), semibold to match
+   the source app, which overrides subtitle1 to 600 basically everywhere. Kept a
+   fixed rem step, not em: em can't track a sibling title, and the scale is flat
+   (one heading size), so relative sizing bought nothing — TEXT_SPEC_DRAFT.md Q5.
+   To scale a title+subtitle pair as a unit, wrap them and rescale (see spec). */
 .subtitle {
   margin: 0;
-  font-size: 1.2em;
+  font-size: var(--text-sm);
   line-height: var(--line-tight);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-semibold);
 }
