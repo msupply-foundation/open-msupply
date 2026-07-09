@@ -23,6 +23,18 @@ SERVER_PORT=${E2E_SERVER_PORT:-9920}
 FE_PORT=${E2E_FE_PORT:-3113}
 DB_NAME=e2e_playwright # -> server/e2e_playwright.sqlite (gitignored)
 
+# Neutralise any sync credentials in the developer's local.yaml. Empty core
+# fields make the merged sync settings count as "not configured", so the
+# server can't try to re-authenticate this throwaway site against a real
+# central on startup (which would panic or overwrite the restored settings).
+# All four must be set together or settings validation rejects the block.
+SYNC_OFF=(
+  APP__SYNC__URL=
+  APP__SYNC__USERNAME=
+  APP__SYNC__PASSWORD_SHA256=
+  APP__SYNC__INTERVAL_SECONDS=0
+)
+
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PW_DIR=$(cd "$SCRIPT_DIR/.." && pwd)          # client/playwright
 CLIENT_DIR=$(cd "$PW_DIR/.." && pwd)          # client
@@ -67,8 +79,8 @@ echo "Building server + CLI (sqlite; a no-op when already built)"
 
 echo "Restoring database from server/data/e2e"
 rm -f "$SERVER_DIR/$DB_NAME".sqlite*
-(cd "$SERVER_DIR" && MSUPPLY_NO_TEST_DB_TEMPLATE=1 \
-  APP__DATABASE__DATABASE_NAME="$DB_NAME" \
+(cd "$SERVER_DIR" && env MSUPPLY_NO_TEST_DB_TEMPLATE=1 \
+  APP__DATABASE__DATABASE_NAME="$DB_NAME" "${SYNC_OFF[@]}" \
   ./target/debug/remote_server_cli initialise-from-export -n e2e -r \
   > "$LOG_DIR/e2e-init.log" 2>&1) || {
   echo "initialise-from-export failed:" >&2
@@ -82,6 +94,7 @@ echo "Starting server on :$SERVER_PORT"
   APP__SERVER__PORT="$SERVER_PORT" \
   APP__SERVER__BASE_DIR=app_data/e2e_local \
   APP__LOGGING__MODE=Console \
+  "${SYNC_OFF[@]}" \
   ./target/debug/remote_server > "$LOG_DIR/e2e-server.log" 2>&1) &
 SERVER_PID=$!
 
