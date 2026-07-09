@@ -282,6 +282,7 @@ export const StockListView = () => {
         Cell: TextWithTooltipCell,
         size: 150,
         defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
       },
       {
         id: 'supplierName',
