@@ -2969,7 +2969,6 @@
   "warning.confirm-send-ancillary-items-stale_other": "{{count}} ضمیمه توکي کرښې زوړ مقدارونه لري. بیا هم واستوئ؟",
   "warning.field-not-parsed": "{{field}} نه تجزیه شوی",
   "warning.foreign-exchange-rate-different": "دا نرخ د اسعارو په څیر نه دی.",
-  "warning.high-number-records-to-sync": "ډیر شمیر ریکارډونه همغږي کیږي. دا ممکن د معمول څخه ډیر وخت ونیسي.",
   "warning.insufficient-recent-stocktake-items": "تاسو په تیرو {{maxAge}} ورځو کې لږ تر لږه {{ minItems }} توکي لرونکی سټاک ټیک نه دی بشپړ کړی. ستاسو د ذخیره کچه ممکن سمه نه وي. ایا تاسو ډاډه یاست چې تاسو غواړئ دوام ورکړئ؟",
   "warning.manual-store-requisition": "د دې پلورنځي لپاره د غوښتنې داخلول ممکن د نقلونو پایله ولري که چیرې پلورنځي داخلي امر هم وسپاري.",
   "warning.nothing-to-supply": "د عرضه کولو لپاره هیڅ شی نه دی پاتې!",
