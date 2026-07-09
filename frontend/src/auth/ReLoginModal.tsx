@@ -1,15 +1,20 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal, createUniqueId, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { authUser, login, reLoginRequired } from './authContext';
-import { FormField } from '../components/FormField';
+import { Dialog } from '../ui/elements/feedback/Dialog';
+import { TextField } from '../ui/elements/inputs/TextField';
+import { Button } from '../ui/elements/buttons/Button';
+import { Alert } from '../ui/elements/feedback/Alert';
 import { t } from '../intl';
-import styles from '../styles/shared.module.css';
+import styles from '../ui/styles/shared.module.css';
 
 type SubmitState = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'error'; message: string };
 
 // Spec (Authentication Logic): re-login modal on top of everything else, username
 // prefilled but editable — the re-login may be as a different user. Shown for
-// inactivity and unexpected logout; a successful login closes it reactively.
+// inactivity and unexpected logout; a successful login closes it reactively (this
+// component unmounts, which closes the dialog). Not dismissable — the session is
+// gone, so logging in is the only way forward.
 export const ReLoginModal: Component = () => (
   <Show when={reLoginRequired() && authUser()} keyed>
     {(user) => <ReLoginForm currentUsername={user.username} />}
@@ -26,6 +31,9 @@ const ReLoginForm: Component<{ currentUsername: string }> = (props) => {
     password: '',
   });
   const [submitState, setSubmitState] = createSignal<SubmitState>({ kind: 'idle' });
+  // The submit button lives in the dialog's actions slot, outside the <form> —
+  // the `form` attribute ties them together.
+  const formId = createUniqueId();
 
   const submitting = () => submitState().kind === 'submitting';
   const submitError = () => {
@@ -50,31 +58,47 @@ const ReLoginForm: Component<{ currentUsername: string }> = (props) => {
   };
 
   return (
-    <div class={styles.overlay}>
-      <form class={styles.modal} onSubmit={submit}>
-        <h2>{t('login.again')}</h2>
-        <FormField
-          id="relogin-username"
+    <Dialog
+      open
+      dismissable={false}
+      onClose={() => {}}
+      title={t('login.again')}
+      actions={
+        <Button type="submit" form={formId} disabled={submitting()}>
+          {submitting() ? t('login.submitting') : t('login.submit')}
+        </Button>
+      }
+    >
+      <form id={formId} class={styles.stack} onSubmit={(e) => void submit(e)}>
+        <TextField
           label={t('login.username')}
+          width="full"
+          name="username"
+          autocomplete="username"
           value={values().username}
-          onInput={(username) => setValues((previous) => ({ ...previous, username }))}
-          error={fieldErrors().username}
+          error={fieldErrors().username || undefined}
+          onInput={(e) => {
+            const username = e.currentTarget.value;
+            setValues((previous) => ({ ...previous, username }));
+          }}
         />
-        <FormField
-          id="relogin-password"
+        <TextField
           label={t('login.password')}
+          width="full"
           type="password"
+          name="password"
+          autocomplete="current-password"
           value={values().password}
-          onInput={(password) => setValues((previous) => ({ ...previous, password }))}
-          error={fieldErrors().password}
+          error={fieldErrors().password || undefined}
+          onInput={(e) => {
+            const password = e.currentTarget.value;
+            setValues((previous) => ({ ...previous, password }));
+          }}
         />
         <Show when={submitError()}>
-          <p class={styles.errorText}>{submitError()}</p>
+          <Alert severity="error">{submitError()}</Alert>
         </Show>
-        <button class={styles.button} type="submit" disabled={submitting()}>
-          {submitting() ? t('login.submitting') : t('login.submit')}
-        </button>
       </form>
-    </div>
+    </Dialog>
   );
 };

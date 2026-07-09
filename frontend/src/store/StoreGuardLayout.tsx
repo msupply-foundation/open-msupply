@@ -7,7 +7,7 @@ import { getPreviousStoreId, recordPreviousStoreId } from '../appData';
 import { refetchStoreContext, storeContext } from './storeContext';
 import { StoreSelectionScreen } from './StoreSelectionScreen';
 import { t } from '../intl';
-import styles from '../styles/shared.module.css';
+import styles from '../ui/styles/shared.module.css';
 
 // Reserved path for "no store in the URL": the segment never names a store, so the
 // ordinary resolution below presents the picker (or auto-enters a single store).

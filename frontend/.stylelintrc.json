@@ -6,7 +6,7 @@
       true,
       {
         "importFrom": [
-          "src/styles/tokens.css",
+          "src/ui/styles/tokens.css",
           {
             "customProperties": {
               "--kb-popper-content-available-height": "100vh",
@@ -16,6 +16,10 @@
           }
         ]
       }
+    ],
+    "selector-pseudo-class-no-unknown": [
+      true,
+      { "ignorePseudoClasses": ["global"] }
     ],
     "color-function-notation": null,
     "color-function-alias-notation": null,

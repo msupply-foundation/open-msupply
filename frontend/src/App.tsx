@@ -13,8 +13,8 @@ import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
 import { ReLoginModal } from './auth/ReLoginModal';
-import { UnexpectedErrorModal } from './components/UnexpectedErrorModal';
-import styles from './styles/shared.module.css';
+import { UnexpectedErrorModal } from './UnexpectedErrorModal';
+import styles from './ui/styles/shared.module.css';
 
 type Phase = 'loading' | 'initialisation' | 'operational';
 

@@ -1,8 +1,8 @@
 import type { Component } from 'solid-js';
 import { useLocation, useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
-import { AppShell } from '../components/layout/AppShell/AppShell';
-import { findLeafByPath, type NavLeaf } from '../components/layout/AppShell/navModel';
+import { AppShell } from '../ui/layout/AppShell/AppShell';
+import { findLeafByPath, type NavLeaf } from '../ui/layout/AppShell/navModel';
 import { authUser, logout } from '../auth/authContext';
 import { resolveStorePath } from '../store/StoreGuardLayout';
 

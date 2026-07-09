@@ -4,26 +4,26 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
 import { authUser } from '../../auth/authContext';
 import { localisedDate, t } from '../../intl';
-import { Page } from '../../components/layout/Page/Page';
-import { Header } from '../../components/layout/Header/Header';
-import { Breadcrumb } from '../../components/layout/Header/Breadcrumb';
-import { HeaderButtons } from '../../components/layout/Header/HeaderButtons';
-import { Toolbar } from '../../components/layout/Header/Toolbar';
-import { ContentFooter } from '../../components/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../components/layout/ContentFooter/ContentFooterActions';
-import { Button } from '../../components/ui/Button';
-import { DataTable, type Column, type SortState } from '../../components/ui/DataTable/DataTable';
+import { Page } from '../../ui/layout/Page/Page';
+import { Header } from '../../ui/layout/Header/Header';
+import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
+import { Toolbar } from '../../ui/layout/Header/Toolbar';
+import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions';
+import { Button } from '../../ui/elements/buttons/Button';
+import { DataTable, type Column, type SortState } from '../../ui/elements/table/DataTable';
 import {
   getUserTableConfig,
   parseGlobalTableConfig,
   resolveTableConfig,
   setUserTableConfig,
   type TableConfig,
-} from '../../components/ui/DataTable/tableConfig';
-import { StatusChip } from '../../components/ui/StatusChip';
-import { FilterBar } from '../../components/ui/FilterBar';
-import { Pagination } from '../../components/ui/Pagination/Pagination';
-import { PlusCircleIcon, TrashIcon } from '../../components/icons';
+} from '../../ui/elements/table/tableConfig';
+import { StatusChip } from '../../ui/elements/feedback/StatusChip';
+import { FilterBar } from '../../ui/elements/selectors/FilterBar';
+import { Pagination } from '../../ui/elements/table/Pagination';
+import { PlusCircleIcon, TrashIcon } from '../../ui/icons';
 import { useUrlQueryState } from '../../list/urlQueryState';
 import { stripEmpty } from '../../typeHelpers';
 import { Stocktakes } from './stocktakes.generated';

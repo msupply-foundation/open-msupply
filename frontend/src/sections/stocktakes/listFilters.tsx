@@ -1,6 +1,6 @@
 import { exhaustiveCheck } from '../../typeHelpers';
 import { t } from '../../intl';
-import { FilterSelect, FilterTextInput, type Filter } from '../../components/ui/FilterBar';
+import { FilterSelect, FilterTextInput, type Filter } from '../../ui/elements/selectors/FilterBar';
 import type { StocktakesVariables } from './stocktakes.generated';
 
 // The filter object exactly as GraphQL expects it (kdd/type-safety: no remapping —

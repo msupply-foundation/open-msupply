@@ -1,0 +1,39 @@
+/*
+ * The four type styles. Size + line-height + weight only — no `color`, so the
+ * container's colour cascades in (see Text.tsx). `margin: 0` because containers
+ * own spacing between blocks, not the text itself.
+ */
+
+.body {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--line-body);
+  font-weight: var(--weight-regular);
+}
+
+.bodySmall {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: var(--line-tight);
+  font-weight: var(--weight-medium);
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--text-md);
+  line-height: var(--line-tight);
+  font-weight: var(--weight-bold);
+}
+
+/* subtitle is a deck that pairs with a title — a fixed step smaller than the
+   heading (a bit smaller, distinguished from body by weight), semibold to match
+   the source app, which overrides subtitle1 to 600 basically everywhere. Kept a
+   fixed rem step, not em: em can't track a sibling title, and the scale is flat
+   (one heading size), so relative sizing bought nothing — TEXT_SPEC_DRAFT.md Q5.
+   To scale a title+subtitle pair as a unit, wrap them and rescale (see spec). */
+.subtitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--line-tight);
+  font-weight: var(--weight-semibold);
+}

@@ -1,0 +1,57 @@
+/*
+ * Native popover — the top layer handles stacking (no z-index, no portal).
+ * The UA centres [popover] like a dialog (fixed + inset 0 + margin auto);
+ * inset/margin are reset here and the component sets top/left from measured
+ * geometry (see Popover.tsx).
+ */
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.panel {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  max-width: 25rem;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-4);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel:popover-open {
+    animation: panel-in 120ms ease;
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

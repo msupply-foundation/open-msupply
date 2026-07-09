@@ -1,18 +1,18 @@
 import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
-import { TextField } from '../components/ui/TextField';
-import { Button } from '../components/ui/Button';
-import { Alert } from '../components/ui/Alert';
-import { ArrowRightIcon, MSupplyGuyLogo } from '../components/icons';
-import { LanguageSelector } from '../components/layout/AppShell/LanguageSelector';
+import { TextField } from '../ui/elements/inputs/TextField';
+import { Button } from '../ui/elements/buttons/Button';
+import { Alert } from '../ui/elements/feedback/Alert';
+import { ArrowRightIcon, MSupplyGuyLogo } from '../ui/icons';
+import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
 import styles from './Login.module.css';
 
 type SubmitState = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'error'; message: string };
 
 // The login screen: the design-system Login (gradient hero + form panel,
-// recreated from the current app — see DECISIONS.md 2026-07-08) composed with
+// recreated from the current app — see kdd/page-composition) composed with
 // the real auth flow (login()). The form controls are the library TextField /
 // Button; the submit failure surfaces in the library Alert; the footer language
 // selector drives real i18n. Success needs no callback — login() sets the user

@@ -1,8 +1,9 @@
 import { createSignal, For } from 'solid-js';
 import type { Component } from 'solid-js';
 import type { StoreSummary } from './StoreGuardLayout';
+import { TextField } from '../ui/elements/inputs/TextField';
 import { t } from '../intl';
-import styles from '../styles/shared.module.css';
+import styles from '../ui/styles/shared.module.css';
 
 const filterStores = (stores: StoreSummary[], searchTerm: string): StoreSummary[] => {
   const term = searchTerm.trim().toLowerCase();
@@ -27,10 +28,10 @@ export const StoreSelectionScreen: Component<{
   return (
     <div class={styles.page}>
       <div class={styles.card}>
-        <h1 class={styles.modalTitle}>{t('store.select')}</h1>
-        <input
-          class={styles.input}
-          placeholder={t('store.search')}
+        <h1>{t('store.select')}</h1>
+        <TextField
+          label={t('store.search')}
+          width="full"
           value={search()}
           onInput={e => setSearch(e.currentTarget.value)}
         />

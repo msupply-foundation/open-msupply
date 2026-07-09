@@ -1,6 +1,6 @@
 # Global table-config defaults, keyed by tableId, stored as a JSON blob in store
 # preferences (a Record<tableId, TableConfig>). Cross-cutting — every list table
-# reads it and narrows to its own tableId (see components/ui/DataTable/tableConfig.ts),
+# reads it and narrows to its own tableId (see ui/elements/table/tableConfig.ts),
 # so it lives in the shared api layer, not in any one vertical.
 #
 # Read-only here — this schema has no mutation to save it, so a user's own column

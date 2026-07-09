@@ -1,0 +1,95 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 60rem;
+}
+
+.card {
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  box-shadow: var(--shadow-1);
+  overflow: visible;
+}
+
+.cardHeader {
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-group-light);
+  border-bottom: 1px solid var(--color-border-value);
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
+.cardBody {
+  padding: var(--space-5);
+}
+
+.lead {
+  margin: 0 0 var(--space-4);
+  max-width: 44rem;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.lead code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+}
+
+/*
+ * A page-shaped frame around each demo so the bar reads as what it is — the
+ * bottom strip of a page — with a sliver of page body above it.
+ */
+.pageFrame {
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.pageBody {
+  block-size: 3.5rem;
+  background: var(--bg-white);
+}
+
+/* Fake selectable rows for the contextual demo. */
+.demoRows {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  list-style: none;
+  background: var(--bg-white);
+}
+
+.demoRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--text-body);
+  cursor: pointer;
+}
+
+.demoRow:hover {
+  background: var(--bg-group-light);
+}
+
+.demoCheckbox {
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin: 0;
+  accent-color: var(--primary-main);
+  cursor: pointer;
+}
+
+.count {
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
