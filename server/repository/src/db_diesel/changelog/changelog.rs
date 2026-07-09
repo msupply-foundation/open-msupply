@@ -53,6 +53,7 @@ diesel_string_enum! {
 }
 
 diesel_string_enum! {
+    db_case = snake_case;
     #[derive(Clone, Eq, Hash, strum::EnumIter, TS)]
     #[strum(serialize_all = "snake_case")]
     // The set of tables tracked by the changelog. How each one syncs is
@@ -698,23 +699,24 @@ mod print_query_tests {
     }
 
     /// Regression for issue #12361: a table name a newer central knows but this site
-    /// doesn't must deserialize to `Other(..)` instead of failing the whole batch parse,
-    /// and must round-trip back out unchanged so it reaches the sync buffer under its
-    /// real name.
+    /// doesn't must deserialize to `Other(..)` instead of failing the whole batch parse.
+    /// The captured name is normalized to the DB casing (`db_case = snake_case`), so the
+    /// sync buffer stores it under exactly the name the per-table pending query selects
+    /// once an upgrade makes the table known — stranded rows self-heal.
     #[test]
     fn changelog_table_name_unknown_falls_back_to_other() {
-        // serde (v7 wire) — unknown PascalCase name is captured verbatim.
+        // serde (v7 wire) — unknown PascalCase name is captured normalized to snake_case.
         // (The original example, "CustomField", became a real variant when the
         // custom-fields feature landed, so a fabricated name is used instead.)
         let parsed: ChangelogTableName = serde_json::from_str("\"TableFromTheFuture\"").unwrap();
         assert_eq!(
             parsed,
-            ChangelogTableName::Other("TableFromTheFuture".to_string())
+            ChangelogTableName::Other("table_from_the_future".to_string())
         );
         assert_eq!(
             serde_json::to_string(&parsed).unwrap(),
-            "\"TableFromTheFuture\"",
-            "Other round-trips back to its raw wire name"
+            "\"table_from_the_future\"",
+            "Other re-serialises in its normalized (DB-cased) form; re-capture is idempotent"
         );
 
         // strum (DB column / sync buffer `to_string()`) — same fallback, inner string
