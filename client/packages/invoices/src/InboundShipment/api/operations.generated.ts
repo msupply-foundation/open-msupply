@@ -342,6 +342,7 @@ export type InboundFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      totalBytes: number;
       status: Types.SyncFileReferenceNodeStatus;
       error?: string | null;
     }>;
@@ -710,6 +711,7 @@ export type InvoiceQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            totalBytes: number;
             status: Types.SyncFileReferenceNodeStatus;
             error?: string | null;
           }>;
@@ -985,6 +987,7 @@ export type InboundByNumberQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            totalBytes: number;
             status: Types.SyncFileReferenceNodeStatus;
             error?: string | null;
           }>;

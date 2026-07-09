@@ -4,6 +4,7 @@ fragment SyncFileReference on SyncFileReferenceNode {
   fileName
   recordId
   createdDatetime
+  totalBytes
   status
   error
 }

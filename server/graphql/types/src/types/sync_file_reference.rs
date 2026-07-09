@@ -47,6 +47,10 @@ impl SyncFileReferenceNode {
         &self.row().sync_file_reference_row.mime_type
     }
 
+    pub async fn total_bytes(&self) -> i32 {
+        self.row().sync_file_reference_row.total_bytes
+    }
+
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(
             self.row().sync_file_reference_row.created_datetime,
