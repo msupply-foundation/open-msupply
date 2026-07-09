@@ -103,6 +103,20 @@
   /* Scrim behind the mobile nav overlay / modals */
   --overlay-scrim: rgba(28, 28, 40, 0.45);
 
+  /* Stocktake-status colours (StatusChip dot + tint). NEW is the neutral grey;
+     FINALISED is the terminal "done" green (the RnD palette's verified hue).
+     Two values because stocktakes has two statuses — the wider shipment-status
+     palette lands when that vertical does. */
+  --status-new: var(--gray-main);
+  --status-finalised: #38a169;
+
+  /* Feedback severities (Alert). Error is --error-main above; info is the
+     action blue by definition (theme.ts palette.info); warning/success are
+     MUI's defaults, which the current app's theme doesn't override. */
+  --info-main: var(--secondary-main);
+  --warning-main: #ed6c02;
+  --success-main: #2e7d32;
+
   /* @theme-contract:end */
 
   /* --- Spacing (4px base → rem) --------------------------------------- */
@@ -240,4 +254,12 @@
   --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.45);
   --focus-ring-error: 0 0 0 0.1875rem rgba(255, 95, 95, 0.4);
   --overlay-scrim: rgba(0, 0, 0, 0.6);
+
+  /* Status + severity — own-hue values get the same lift as the rest of the
+     dark palette; aliases (--status-new, --info-main) track their targets. */
+  --status-new: var(--gray-main);
+  --status-finalised: #48c78e;
+  --info-main: var(--secondary-main);
+  --warning-main: #ff8f33;
+  --success-main: #4caf50;
 }

@@ -13,6 +13,7 @@ import { ContentFooterActions } from '../../components/layout/ContentFooter/Cont
 import { Button } from '../../components/ui/Button';
 import { Table, SortHeader } from '../../components/ui/Table';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { StatusChip } from '../../components/ui/StatusChip';
 import { FilterBar, type FilterValues } from '../../components/ui/FilterBar';
 import { Pagination } from '../../components/ui/Pagination/Pagination';
 import { PlusCircleIcon, TrashIcon } from '../../components/icons';
@@ -51,8 +52,12 @@ type StocktakesListState = {
 
 const DEFAULT_STATE: StocktakesListState = { filter: {}, offset: 0, first: DEFAULT_PAGE_SIZE };
 
-const statusLabel = (status: StocktakeRow['status']) =>
-  status === 'FINALISED' ? 'Finalised' : 'New';
+// Status → chip label + colour token (spread straight into StatusChip). NEW is
+// the neutral grey, FINALISED the terminal "done" green (tokens.css --status-*).
+const statusMeta = (status: StocktakeRow['status']) =>
+  status === 'FINALISED'
+    ? { label: 'Finalised', colour: 'var(--status-finalised)' }
+    : { label: 'New', colour: 'var(--status-new)' };
 
 const StocktakesList: Component = () => {
   // storeId is guaranteed present: this section renders only inside
@@ -209,7 +214,9 @@ const StocktakesList: Component = () => {
                       {row.stocktakeNumber}
                     </button>
                   </td>
-                  <td>{statusLabel(row.status)}</td>
+                  <td>
+                    <StatusChip {...statusMeta(row.status)} />
+                  </td>
                   <td data-muted>{row.description ?? '—'}</td>
                   <td data-muted>{row.comment ?? '—'}</td>
                   <td data-muted>{row.stocktakeDate ? localisedDate(row.stocktakeDate) : '—'}</td>

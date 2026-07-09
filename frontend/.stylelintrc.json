@@ -10,7 +10,8 @@
           {
             "customProperties": {
               "--kb-popper-content-available-height": "100vh",
-              "--ripple-color": "transparent"
+              "--ripple-color": "transparent",
+              "--chip-colour": "transparent"
             }
           }
         ]

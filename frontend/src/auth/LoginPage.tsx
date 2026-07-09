@@ -3,6 +3,7 @@ import type { Component } from 'solid-js';
 import { login } from './authContext';
 import { TextField } from '../components/ui/TextField';
 import { Button } from '../components/ui/Button';
+import { Alert } from '../components/ui/Alert';
 import { ArrowRightIcon, MSupplyGuyLogo } from '../components/icons';
 import { LanguageSelector } from '../components/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
@@ -13,10 +14,10 @@ type SubmitState = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'error'; 
 // The login screen: the design-system Login (gradient hero + form panel,
 // recreated from the current app — see DECISIONS.md 2026-07-08) composed with
 // the real auth flow (login()). The form controls are the library TextField /
-// Button; the footer language selector drives real i18n. Success needs no
-// callback — login() sets the user signal and the app (App.tsx) reacts,
-// continuing to the preserved destination URL (spec, Startup Flow). Document
-// dir/lang is owned once by App.tsx.
+// Button; the submit failure surfaces in the library Alert; the footer language
+// selector drives real i18n. Success needs no callback — login() sets the user
+// signal and the app (App.tsx) reacts, continuing to the preserved destination
+// URL (spec, Startup Flow). Document dir/lang is owned once by App.tsx.
 export const LoginPage: Component = () => {
   const [username, setUsername] = createSignal('');
   const [password, setPassword] = createSignal('');
@@ -81,9 +82,7 @@ export const LoginPage: Component = () => {
               onInput={(e) => setPassword(e.currentTarget.value)}
             />
             <Show when={submitError()}>
-              <p class={styles.error} role="alert">
-                {submitError()}
-              </p>
+              <Alert severity="error">{submitError()}</Alert>
             </Show>
             <div class={styles.buttonRow}>
               <Button

@@ -73,12 +73,6 @@
   aspect-ratio: 19 / 12; /* the original's 285×180 logo box */
 }
 
-.error {
-  margin: 0;
-  color: var(--error-main);
-  font-size: var(--text-sm);
-}
-
 .buttonRow {
   display: flex;
   justify-content: flex-end;
