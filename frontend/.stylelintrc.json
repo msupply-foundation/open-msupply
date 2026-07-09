@@ -6,7 +6,7 @@
       true,
       {
         "importFrom": [
-          "src/styles/tokens.css",
+          "src/ui/styles/tokens.css",
           {
             "customProperties": {
               "--kb-popper-content-available-height": "100vh",

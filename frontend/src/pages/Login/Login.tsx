@@ -1,9 +1,9 @@
 import { createEffect, createSignal, onCleanup } from 'solid-js'
-import { TextField } from '../../components/ui/TextField'
-import { Button } from '../../components/ui/Button'
-import { ArrowRightIcon, MSupplyGuyLogo } from '../../components/icons'
-import { LanguageSelector } from '../../components/layout/AppShell/LanguageSelector'
-import { isRtlLocale } from '../../components/layout/AppShell/languages'
+import { TextField } from '../../ui/elements/inputs/TextField'
+import { Button } from '../../ui/elements/buttons/Button'
+import { ArrowRightIcon, MSupplyGuyLogo } from '../../ui/icons'
+import { LanguageSelector } from '../../ui/layout/AppShell/LanguageSelector'
+import { isRtlLocale } from '../../ui/layout/AppShell/languages'
 import styles from './Login.module.css'
 
 /*

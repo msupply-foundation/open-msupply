@@ -1,5 +1,5 @@
 /*
- * Pages-compose-never-style check (see DECISIONS.md 2026-07-08).
+ * Pages-compose-never-style check (see src/ui/docs/DECISIONS.md 2026-07-08).
  *
  * Real pages (src/pages/) assemble library components; the Page frame owns
  * inter-region geometry and each region component owns its own look, so a
@@ -7,7 +7,7 @@
  * signal that a library component or token is missing. This script fails if
  * any CSS file exists under src/pages/ outside the allowlist.
  *
- * Allowlist: bespoke one-off surfaces argued case-by-case in DECISIONS.md
+ * Allowlist: bespoke one-off surfaces argued case-by-case in src/ui/docs/DECISIONS.md
  * (Login's gradient hero is the precedent). Add a page dir here ONLY with a
  * decision-log entry to point at.
  */
@@ -33,11 +33,11 @@ const offenders = cssFiles.filter(
 
 if (offenders.length) {
   console.error(
-    `pages own no CSS (DECISIONS.md 2026-07-08) — pages compose library components; ` +
+    `pages own no CSS (src/ui/docs/DECISIONS.md 2026-07-08) — pages compose library components; ` +
       `if a page needs styling, a library component or token is missing.\n` +
       `Offending file(s):\n  ${offenders.join('\n  ')}\n` +
       `(Bespoke one-off pages can be allowlisted in scripts/check-page-css.mjs ` +
-      `with a DECISIONS.md entry.)`
+      `with a src/ui/docs/DECISIONS.md entry.)`
   );
   process.exit(1);
 }

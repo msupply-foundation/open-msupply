@@ -1,25 +1,25 @@
 import { createSignal, For, Show } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
-import { Page } from '../../components/layout/Page/Page'
-import { Header } from '../../components/layout/Header/Header'
-import { Breadcrumb, type Crumb } from '../../components/layout/Header/Breadcrumb'
-import { HeaderButtons } from '../../components/layout/Header/HeaderButtons'
-import { ContentFooter } from '../../components/layout/ContentFooter/ContentFooter'
-import { ContentFooterActions } from '../../components/layout/ContentFooter/ContentFooterActions'
-import { SidePanel, SidePanelSection } from '../../components/layout/SidePanel/SidePanel'
-import { findNavParent } from '../../components/layout/AppShell/navModel'
-import { Button } from '../../components/ui/Button'
-import { Tabs, TabList, TabPanel, type TabDef } from '../../components/ui/Tabs'
-import { Table } from '../../components/ui/Table'
-import { EmptyState } from '../../components/ui/EmptyState'
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
-import { StatusChip } from '../../components/ui/StatusChip'
+import { Page } from '../../ui/layout/Page/Page'
+import { Header } from '../../ui/layout/Header/Header'
+import { Breadcrumb, type Crumb } from '../../ui/layout/Header/Breadcrumb'
+import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons'
+import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter'
+import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions'
+import { SidePanel, SidePanelSection } from '../../ui/layout/SidePanel/SidePanel'
+import { findNavParent } from '../../ui/layout/AppShell/navModel'
+import { Button } from '../../ui/elements/buttons/Button'
+import { Tabs, TabList, TabPanel, type TabDef } from '../../ui/elements/tabs/Tabs'
+import { Table } from '../../ui/elements/table/Table'
+import { EmptyState } from '../../ui/elements/feedback/EmptyState'
+import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog'
+import { StatusChip } from '../../ui/elements/feedback/StatusChip'
 import {
   PlusCircleIcon,
   ClockIcon,
   SaveIcon,
   XCircleIcon,
-} from '../../components/icons'
+} from '../../ui/icons'
 import { linesFor, SHIPMENTS, statusColour, statusLabel } from './demoData'
 
 const DETAIL_TABS: TabDef[] = [

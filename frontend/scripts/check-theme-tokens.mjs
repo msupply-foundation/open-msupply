@@ -1,5 +1,5 @@
 /*
- * Theme-contract check (see DECISIONS.md 2026-07-06).
+ * Theme-contract check (see src/ui/docs/DECISIONS.md 2026-07-06).
  *
  * tokens.css delimits a "theme contract" region inside :root with
  * `@theme-contract:start` / `@theme-contract:end` comment markers. This script
@@ -14,7 +14,7 @@
  */
 import { readFileSync } from 'node:fs';
 
-const TOKENS_FILE = 'src/styles/tokens.css';
+const TOKENS_FILE = 'src/ui/styles/tokens.css';
 const css = readFileSync(TOKENS_FILE, 'utf8');
 
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '');

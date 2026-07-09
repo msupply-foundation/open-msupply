@@ -1,14 +1,14 @@
 import { createSignal, type JSX } from 'solid-js'
 import { Dynamic } from 'solid-js/web'
-import { AppShell } from '../../components/layout/AppShell/AppShell'
-import { findNavParent, type NavLeaf } from '../../components/layout/AppShell/navModel'
-import { Page } from '../../components/layout/Page/Page'
-import { Header } from '../../components/layout/Header/Header'
-import { Breadcrumb, type Crumb } from '../../components/layout/Header/Breadcrumb'
-import { HeaderButtons } from '../../components/layout/Header/HeaderButtons'
-import { Button } from '../../components/ui/Button'
-import { EmptyState } from '../../components/ui/EmptyState'
-import { HomeIcon, PlusCircleIcon, DownloadIcon } from '../../components/icons'
+import { AppShell } from '../../ui/layout/AppShell/AppShell'
+import { findNavParent, type NavLeaf } from '../../ui/layout/AppShell/navModel'
+import { Page } from '../../ui/layout/Page/Page'
+import { Header } from '../../ui/layout/Header/Header'
+import { Breadcrumb, type Crumb } from '../../ui/layout/Header/Breadcrumb'
+import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons'
+import { Button } from '../../ui/elements/buttons/Button'
+import { EmptyState } from '../../ui/elements/feedback/EmptyState'
+import { HomeIcon, PlusCircleIcon, DownloadIcon } from '../../ui/icons'
 
 /*
  * The real app's home page scaffold, and the smallest example of the locked
