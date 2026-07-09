@@ -25,6 +25,12 @@ export default defineConfig({
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
     },
+    // Arrange store-local data via the API (idempotent; see data.setup.ts)
+    {
+      name: 'data-setup',
+      testMatch: /data\.setup\.ts/,
+      dependencies: ['setup'],
+    },
     // Main tests - run after setup, reuse auth state
     {
       name: 'chromium',
@@ -32,7 +38,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: authFile,
       },
-      dependencies: ['setup'],
+      dependencies: ['setup', 'data-setup'],
     },
   ],
 });
