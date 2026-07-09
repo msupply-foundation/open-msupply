@@ -6,7 +6,7 @@ use super::{
 };
 use crate::{cursor_controller::CursorController, sync::api::CentralSyncBatchV5};
 use repository::{
-    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncBufferRowRepository,
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncBufferRepository,
 };
 use thiserror::Error;
 
@@ -20,6 +20,8 @@ pub(crate) enum CentralPullError {
     ParsingRecordError(#[from] ParsingSyncRecordError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
+    #[error("Central server site id not configured (SettingsSyncCentralServerSiteId)")]
+    CentralServerSiteIdNotSet,
 }
 
 pub(crate) struct CentralDataSynchroniser {
@@ -38,21 +40,34 @@ impl CentralDataSynchroniser {
         let cursor_controller = CursorController::new(KeyType::CentralSyncPullCursor);
 
         let msupply_central_server_id = KeyValueStoreRepository::new(connection)
-            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?;
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+            .ok_or(CentralPullError::CentralServerSiteIdNotSet)?;
 
         log::info!(
             "Pulling central data with batch size {} and msupply_central_server_id {}",
             batch_size,
-            msupply_central_server_id.unwrap_or_default()
+            msupply_central_server_id
         );
 
         loop {
             let start_cursor = cursor_controller.get(connection)?;
 
-            let CentralSyncBatchV5 { max_cursor, data } = self
-                .sync_api_v5
-                .get_central_records(start_cursor, batch_size)
-                .await?;
+            // Retry while central is busy with another sync session for this site
+            // (legacy central gates sync per-site); wait for idle then re-request the
+            // same cursor.
+            let CentralSyncBatchV5 { max_cursor, data } = loop {
+                match self
+                    .sync_api_v5
+                    .get_central_records(start_cursor, batch_size)
+                    .await
+                {
+                    Ok(batch) => break batch,
+                    Err(error) if error.is_central_busy() => {
+                        self.sync_api_v5.wait_until_central_idle().await?;
+                    }
+                    Err(error) => return Err(error.into()),
+                }
+            };
             let batch_length = data.len();
 
             logger.progress(SyncStepProgress::PullCentral, max_cursor - start_cursor)?;
@@ -63,10 +78,10 @@ impl CentralDataSynchroniser {
                 msupply_central_server_id,
             )?;
 
-            // Upsert sync buffer rows in a transaction together with cursor update
+            // Insert sync buffer rows in a transaction together with cursor update
             connection
                 .transaction_sync(|t_con| {
-                    SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)?;
+                    SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
                     cursor_controller.update(t_con, last_cursor_in_batch)
                 })
                 .map_err(|e| e.to_inner_error())?;

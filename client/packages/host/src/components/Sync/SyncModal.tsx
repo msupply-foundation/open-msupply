@@ -51,7 +51,7 @@ const useHostSync = (enabled: boolean) => {
   const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
-  const { updateUser } = useAuthContext();
+  const { refreshUserCookie } = useAuthContext();
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
@@ -84,7 +84,9 @@ const useHostSync = (enabled: boolean) => {
         // This avoids surrounding UI components to jump around
         queryClient.invalidateQueries({ refetchType: 'none' });
         invalidateCustomTranslations();
-        updateUser();
+        // Pick up permission/user-detail changes that the just-completed sync
+        // brought in, so the UI reflects them without forcing a re-login.
+        refreshUserCookie();
       }
     }
   }, [syncStatus?.isSyncing]);
@@ -112,7 +114,7 @@ const useHostSync = (enabled: boolean) => {
   };
 };
 
-export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
+export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
   const { userHasPermission } = useAuthContext();
@@ -127,18 +129,23 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { updateUserIsLoading } = useAuthContext();
+  const { refreshUserCookie } = useAuthContext();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
 
-  const durationAsDate = new Date(
-    0,
-    0,
-    0,
-    0,
-    0,
-    syncStatus?.lastSuccessfulSync?.durationInSeconds || 0
+  const sync = async () => {
+    await onManualSync();
+    // Pick up permission/user-detail changes that sync just brought in,
+    // so the UI reflects them without forcing a re-login.
+    await refreshUserCookie();
+  };
+
+  const durationAsDate = DateUtils.secondsAsDate(
+    DateUtils.durationInSeconds(
+      syncStatus?.summary?.started,
+      syncStatus?.summary?.finished
+    )
   );
 
   const getSyncStatusMessage = (): string => {
@@ -182,10 +189,13 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
     });
   };
 
-  const modalWidth = Math.min(width, window.innerWidth - 50);
   return (
     <BasicModal
-      width={!isExtraSmallScreen ? modalWidth : 340}
+      // BasicModal clamps to the viewport itself (min(width, 100vw - 64px)),
+      // so pass the desired width straight through. Don't re-clamp here against
+      // a window.innerWidth snapshot - with no resize listener it gets stuck at
+      // a stale narrow value when the window grows back. See issue #12172.
+      width={!isExtraSmallScreen ? width : 340}
       open={open}
       onKeyDown={e => {
         if (e.key === 'Escape') onCancel();
@@ -216,7 +226,9 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           <Typography textAlign="center" marginBottom="10">
             {getSyncStatusMessage()}
           </Typography>
-          <SyncProgress syncStatus={syncStatus} isOperational={true} />
+          {syncStatus && (
+            <SyncProgress syncStatus={syncStatus} isOperational={true} />
+          )}
         </Box>
 
         {error && (
@@ -262,11 +274,11 @@ export const SyncModal = ({ onCancel, open, width = 800 }: SyncModalProps) => {
           <LoadingButton
             shouldShrink={false}
             autoFocus
-            isLoading={isLoading || updateUserIsLoading}
+            isLoading={isLoading}
             startIcon={<RadioIcon />}
             variant="contained"
             disabled={false}
-            onClick={onManualSync}
+            onClick={sync}
             label={t('button.sync-now')}
             sx={theme => ({
               marginRight: 1,

@@ -1,11 +1,12 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, StockRelocationLineRow, StockRelocationLineRowDelete,
-    StockRelocationLineRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StockRelocationLineRow, StockRelocationLineRowDelete,
+    StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
     item::ItemTranslation, location::LocationTranslation, stock_line::StockLineTranslation,
-    stock_relocation::StockRelocationTranslation, PullTranslateResult, PushTranslateResult,
+    stock_relocation::StockRelocationTranslation, FkField, PullTranslateResult,
+    PushTranslateResult,
 };
 
 use super::{SyncTranslation, ToSyncRecordTranslationType};
@@ -54,11 +55,42 @@ impl SyncTranslation for StockRelocationLineTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let row = serde_json::from_str::<StockRelocationLineRow>(&sync_record.data)?;
-        Ok(PullTranslateResult::upsert(row))
+        let row = serde_json::from_value::<StockRelocationLineRow>(sync_record.data.0.clone())?;
+
+        let check_required_fks =
+            fk_checker.with_table_required(connection, "stock_relocation_line", &row.id);
+        let check_fks = fk_checker.with_table(connection, "stock_relocation_line", &row.id);
+
+        // Required FKs (NOT NULL REFERENCES): error + system_log if the parent is missing.
+        // The stock_relocation parent itself is covered by pull_dependencies / integration order.
+        let stock_line_id = check_required_fks(row.stock_line_id, "stock_line_id", FkField::StockLine)?;
+        // Optional FKs (nullable REFERENCES): cleared to None + system_log if the parent is missing.
+        let destination_stock_line_id = check_fks(
+            row.destination_stock_line_id,
+            "destination_stock_line_id",
+            FkField::StockLine,
+        )?;
+        let source_location_id =
+            check_fks(row.source_location_id, "source_location_id", FkField::Location)?;
+        let destination_location_id = check_fks(
+            row.destination_location_id,
+            "destination_location_id",
+            FkField::Location,
+        )?;
+
+        let result = StockRelocationLineRow {
+            stock_line_id,
+            destination_stock_line_id,
+            source_location_id,
+            destination_location_id,
+            ..row
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -73,17 +105,13 @@ impl SyncTranslation for StockRelocationLineTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = StockRelocationLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or_else(|| {
-                anyhow::anyhow!(
-                    "Stock relocation line row ({}) not found",
-                    changelog.record_id
-                )
-            })?;
+        let Row::StockRelocationLine(row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -107,7 +135,8 @@ mod tests {
     use repository::{
         mock::{mock_location_1, mock_stock_line_a, mock_store_a, MockDataInserts},
         test_db::setup_all,
-        StockRelocationRow, StockRelocationRowRepository, Upsert,
+        StockRelocationLineRowRepository, StockRelocationRow, StockRelocationRowRepository,
+        SyncRecordData,
     };
 
     #[actix_rt::test]
@@ -137,7 +166,9 @@ mod tests {
             number_of_packs: 5.0,
             ..Default::default()
         };
-        line.upsert(&connection).unwrap();
+        StockRelocationLineRowRepository::new(&connection)
+            .upsert_one(&line)
+            .unwrap();
 
         let changelog = ChangelogRow {
             cursor: 1,
@@ -146,7 +177,11 @@ mod tests {
             ..Default::default()
         };
         let push = translator
-            .try_translate_to_upsert_sync_record(&connection, &changelog)
+            .try_translate_to_upsert_sync_record(
+                &connection,
+                &changelog,
+                Row::StockRelocationLine(line.clone()),
+            )
             .unwrap();
         let record_data = match push {
             PushTranslateResult::PushRecord(records) => records[0].record.record_data.clone(),
@@ -156,9 +191,10 @@ mod tests {
         let pull = translator
             .try_translate_from_upsert_sync_record(
                 &connection,
+                &crate::sync::translations::FkChecker::new(),
                 &SyncBufferRow {
                     record_id: line.id.clone(),
-                    data: record_data.to_string(),
+                    data: SyncRecordData(record_data),
                     ..Default::default()
                 },
             )

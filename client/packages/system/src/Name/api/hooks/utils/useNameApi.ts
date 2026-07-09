@@ -1,7 +1,7 @@
 import { useGql, useAuthContext } from '@openmsupply-client/common';
 import { getNameQueries, ListParams } from '../../api';
 import { getSdk } from '../../operations.generated';
-import { NAME_PROPERTIES_KEY } from '../..';
+import { NAME_PROPERTIES_KEY, NAME_PROPERTIES_V2_KEY } from '../..';
 
 export const useNameApi = () => {
   const { storeId } = useAuthContext();
@@ -14,6 +14,8 @@ export const useNameApi = () => {
       [...keys.base(), 'stores-list', params] as const,
     donors: () => [...keys.base(), storeId, 'donors'] as const,
     properties: () => [NAME_PROPERTIES_KEY] as const,
+    customFields: (scope: string) =>
+      [NAME_PROPERTIES_V2_KEY, scope] as const,
   };
   const { client } = useGql();
   const queries = getNameQueries(getSdk(client), storeId);

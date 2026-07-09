@@ -15,7 +15,7 @@ interface CustomerSearchInputExtraProps {
 
 export const CustomerSearchInput = ({
   onChange,
-  width = 250,
+  width,
   value,
   disabled = false,
   clearable = false,

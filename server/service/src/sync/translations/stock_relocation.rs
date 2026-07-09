@@ -1,10 +1,10 @@
 use super::{SyncTranslation, ToSyncRecordTranslationType};
 use crate::sync::translations::{
-    store::StoreTranslation, PullTranslateResult, PushTranslateResult,
+    store::StoreTranslation, FkField, PullTranslateResult, PushTranslateResult,
 };
 use repository::{
-    ChangelogRow, ChangelogTableName, StockRelocationRow, StockRelocationRowDelete,
-    StockRelocationRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, Row, StockRelocationRow, StockRelocationRowDelete,
+    StorageConnection, SyncBufferRow,
 };
 
 // Needs to be added to all_translators()
@@ -46,11 +46,21 @@ impl SyncTranslation for StockRelocationTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let row = serde_json::from_str::<StockRelocationRow>(&sync_record.data)?;
-        Ok(PullTranslateResult::upsert(row))
+        let row = serde_json::from_value::<StockRelocationRow>(sync_record.data.0.clone())?;
+
+        let check_required_fks =
+            fk_checker.with_table_required(connection, "stock_relocation", &row.id);
+
+        let result = StockRelocationRow {
+            store_id: check_required_fks(row.store_id, "store_id", FkField::Store)?,
+            ..row
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -65,14 +75,13 @@ impl SyncTranslation for StockRelocationTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = StockRelocationRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or_else(|| {
-                anyhow::anyhow!("Stock relocation row ({}) not found", changelog.record_id)
-            })?;
+        let Row::StockRelocation(row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
 
         Ok(PushTranslateResult::upsert(
             changelog,

@@ -25,6 +25,7 @@ pub fn insert_asset(
         &ResourceAccessRequest {
             resource: Resource::AddAsset,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

@@ -1,12 +1,13 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, PluginDataRow, PluginDataRowDelete, PluginDataRowRepository,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, PluginDataRow, PluginDataRowDelete, Row, StorageConnection,
+    SyncBufferRow,
 };
 
 use crate::sync::translations::store::StoreTranslation;
 
 use super::{
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 
 // Needs to be added to all_translators()
@@ -28,12 +29,20 @@ impl SyncTranslation for PluginDataTranslator {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            PluginDataRow,
-        >(&sync_record.data)?))
+        let row = serde_json::from_value::<PluginDataRow>(sync_record.data.0.clone())?;
+
+        let fk_check = fk_checker.with_table(connection, "plugin_data", &row.id);
+
+        let result = PluginDataRow {
+            store_id: fk_check(row.store_id, "store_id", FkField::Store)?,
+            ..row
+        };
+
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -58,15 +67,15 @@ impl SyncTranslation for PluginDataTranslator {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = PluginDataRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "plugin_data row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::PluginData(plugin_data_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = plugin_data_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -110,7 +119,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

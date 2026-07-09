@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository,
-    ClinicianRowRepositoryTrait, GenderType, StorageConnection, StoreRowRepository, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ClinicianRow, GenderType, Row, StorageConnection,
+    SyncBufferRow,
 };
 
-use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 use crate::sync::translations::store::StoreTranslation;
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option, ok_or_none};
 
@@ -78,6 +78,7 @@ impl SyncTranslation for ClinicianTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyClinicianRow {
@@ -95,17 +96,11 @@ impl SyncTranslation for ClinicianTranslation {
             is_active,
             store_id,
             oms_fields,
-        } = serde_json::from_str::<LegacyClinicianRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
 
-        let store_id = clear_invalid_fk(
-            connection,
-            "clinician",
-            &id,
-            "store_id",
-            store_id,
-            |c, id| StoreRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let fk_check = fk_checker.with_table(connection, "clinician", &id);
+
+        let store_id = fk_check(store_id, "store_id", FkField::Store)?;
 
         let gender = if let Some(fields) = oms_fields {
             fields.gender
@@ -135,9 +130,14 @@ impl SyncTranslation for ClinicianTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Clinician(clinician_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let ClinicianRow {
             id,
             code,
@@ -152,12 +152,7 @@ impl SyncTranslation for ClinicianTranslation {
             gender,
             is_active,
             store_id,
-        } = ClinicianRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Clinician row ({}) not found",
-                changelog.record_id
-            )))?;
+        } = clinician_row;
 
         let is_female = gender
             .as_ref()
@@ -201,13 +196,20 @@ mod tests {
         let translator = ClinicianTranslation {};
 
         // FK validation requires store_a to exist (test data references it)
-        let (_, connection, _, _) =
-            setup_all("test_clinician_translation", MockDataInserts::none().stores()).await;
+        let (_, connection, _, _) = setup_all(
+            "test_clinician_translation",
+            MockDataInserts::none().stores(),
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap_or_else(|_| {
                     panic!(
                         "try_translate_from_upsert_sync_record error {:?}",

@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
+    dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys},
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
@@ -8,7 +9,7 @@ use graphql_core::{
 };
 use graphql_types::types::{ItemConnector, ItemNodeType};
 use repository::{EqualFilter, ItemType, PaginationOption, StringFilter};
-use repository::{ItemFilter, ItemSort, ItemSortField};
+use repository::{ItemCondition, ItemFilter, ItemSort, ItemSortField};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     item::get_items,
@@ -65,6 +66,11 @@ pub struct ItemFilterInput {
     pub with_recent_consumption: Option<bool>,
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
     pub universal_code: Option<StringFilterInput>,
+
+    /// Dynamic filter condition AST, currently supporting property conditions
+    /// on keys visible for the "item" table scope, e.g.
+    /// `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+    pub dynamic_filter: Option<serde_json::Value>,
 }
 
 #[derive(Union)]
@@ -84,14 +90,36 @@ pub fn items(
         &ResourceAccessRequest {
             resource: Resource::QueryItems,
             store_id: Some(store_id.clone()),
+            require_central_standalone: false,
         },
     )?;
 
     let connection_manager = ctx.get_connection_manager();
+
+    let filter = filter
+        .map(|filter| -> Result<ItemFilter> {
+            let dynamic_filter: Option<ItemCondition::Inner> =
+                parse_dynamic_filter(filter.dynamic_filter.clone())?;
+            if let Some(condition) = &dynamic_filter {
+                let connection = connection_manager
+                    .connection()
+                    .map_err(StandardGraphqlError::from_repository_error)?;
+                validate_custom_field_filter_keys(
+                    &connection,
+                    "item",
+                    &condition.custom_field_conditions(),
+                )?;
+            }
+            let mut filter = filter.to_domain();
+            filter.dynamic_filter = dynamic_filter;
+            Ok(filter)
+        })
+        .transpose()?;
+
     let items = get_items(
         connection_manager,
         page.map(PaginationOption::from),
-        filter.map(|filter| filter.to_domain()),
+        filter,
         // Currently only one sort option is supported, use the first from the list.
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
@@ -125,6 +153,8 @@ impl ItemFilterInput {
             with_recent_consumption,
             products_at_risk_of_being_out_of_stock,
             universal_code,
+            // Parsed and validated in the resolver, not here (to_domain is infallible)
+            dynamic_filter: _,
         } = self;
 
         ItemFilter {
@@ -148,6 +178,10 @@ impl ItemFilterInput {
             with_recent_consumption,
             products_at_risk_of_being_out_of_stock,
             universal_code: universal_code.map(StringFilter::from),
+            // Parsed from the JSON `dynamicFilter` input in the resolver (a
+            // serde error there must surface as BadUserInput, so the infallible
+            // to_domain can't do it)
+            dynamic_filter: None,
         }
     }
 }

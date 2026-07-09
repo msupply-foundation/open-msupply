@@ -6,10 +6,8 @@ use crate::sync::translations::{
 
 use chrono::NaiveDate;
 use repository::{
-    campaign_row::CampaignRowRepository, item_variant::item_variant_row::ItemVariantRowRepository,
-    vvm_status::vvm_status_row::VVMStatusRowRepository, BarcodeRowRepository, ChangelogRow,
-    ChangelogTableName, EqualFilter, LocationRowRepository, ProgramRowRepository, StockLine,
-    StockLineFilter, StockLineRepository, StockLineRow, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, Row, StockLine, StockLineFilter,
+    StockLineRepository, StockLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{
@@ -17,7 +15,7 @@ use util::sync_serde::{
     zero_date_as_option,
 };
 
-use super::{utils::clear_invalid_fk, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 const RECORD_TABLE: &str = "stock_line";
 
@@ -111,6 +109,7 @@ impl SyncTranslation for StockLineTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyStockLineRow {
@@ -136,44 +135,7 @@ impl SyncTranslation for StockLineTranslation {
             oms_fields,
             total_volume,
             volume_per_pack,
-        } = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
-
-        let barcode_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "barcode_id",
-            barcode_id,
-            |c, id| BarcodeRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let location_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "location_id",
-            location_ID,
-            |c, id| LocationRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let item_variant_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "item_variant_id",
-            item_variant_id,
-            |c, id| ItemVariantRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let vvm_status_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "vvm_status_id",
-            vvm_status_id,
-            |c, id| VVMStatusRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        } = sync_record.deserialize()?;
 
         let StockLineRowOmsFields {
             campaign_id,
@@ -181,30 +143,14 @@ impl SyncTranslation for StockLineTranslation {
             manufacture_date,
         } = oms_fields.unwrap_or_default();
 
-        let campaign_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "campaign_id",
-            campaign_id,
-            |c, id| CampaignRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
-        let program_id = clear_invalid_fk(
-            connection,
-            RECORD_TABLE,
-            &ID,
-            "program_id",
-            program_id,
-            |c, id| ProgramRowRepository::new(c).check_exists_by_id(id),
-            true,
-        )?;
+        let fk_check = fk_checker.with_table(connection, RECORD_TABLE, &ID);
+        let check_fk = fk_checker.with_table_required(connection, RECORD_TABLE, &ID);
 
         let result = StockLineRow {
             id: ID,
-            store_id: store_ID,
-            item_id: item_ID,
-            location_id,
+            store_id: check_fk(store_ID, "store_id", FkField::Store)?,
+            item_id: check_fk(item_ID, "item_link_id", FkField::ItemLink)?,
+            location_id: fk_check(location_ID, "location_id", FkField::Location)?,
             batch,
             pack_size,
             cost_price_per_pack: cost_price,
@@ -214,14 +160,16 @@ impl SyncTranslation for StockLineTranslation {
             expiry_date,
             on_hold: hold,
             note,
-            supplier_id,
-            barcode_id,
-            item_variant_id,
-            donor_id,
-            manufacturer_id,
-            vvm_status_id,
-            campaign_id,
-            program_id,
+            // supplier/donor/manufacturer are name ids resolved to name_link on upsert; name_link.id
+            // == name.id by convention, so validating the name id against name_link is correct.
+            supplier_id: fk_check(supplier_id, "supplier_link_id", FkField::NameLink)?,
+            barcode_id: fk_check(barcode_id, "barcode_id", FkField::Barcode)?,
+            item_variant_id: fk_check(item_variant_id, "item_variant_id", FkField::ItemVariant)?,
+            donor_id: fk_check(donor_id, "donor_link_id", FkField::NameLink)?,
+            manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
+            vvm_status_id: fk_check(vvm_status_id, "vvm_status_id", FkField::VvmStatus)?,
+            campaign_id: fk_check(campaign_id, "campaign_id", FkField::Campaign)?,
+            program_id: fk_check(program_id, "program_id", FkField::Program)?,
             manufacture_date,
             total_volume,
             volume_per_pack,
@@ -234,10 +182,15 @@ impl SyncTranslation for StockLineTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::StockLine(stock_line_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Some(stock_line) = StockLineRepository::new(connection)
             .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
+                StockLineFilter::new().id(EqualFilter::equal_to(stock_line_row.id)),
                 None,
             )?
             .pop()
@@ -338,7 +291,8 @@ mod tests {
         mock::{MockData, MockDataInserts},
         system_log_row::{SystemLogRowRepository, SystemLogType},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, ContextRow, ProgramRow, SyncAction,
+        ChangelogCondition, ChangelogRepository, ContextRow, CursorAndLimit, FilterBuilder,
+        ProgramRow, RowOrDelete, SyncAction, SyncRecordData,
     };
     use serde_json::json;
 
@@ -351,7 +305,7 @@ mod tests {
         // so that FK validation in the translator doesn't null them out.
         let (_, connection, _, _) = setup_all_with_data(
             "test_stock_line_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
             MockData {
                 contexts: vec![ContextRow {
                     id: "test_ctx".to_string(),
@@ -379,7 +333,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -393,16 +351,20 @@ mod tests {
     #[actix_rt::test]
     async fn test_stock_line_clears_invalid_optional_fks_and_writes_system_log() {
         let translator = StockLineTranslation {};
+        // `all()` seeds the required store_a + item_a; the bogus optional FKs
+        // (missing_*/does_not_exist_*) stay unseeded so they clear + log.
         let (_, connection, _, _) = setup_all(
             "test_stock_line_clears_invalid_optional_fks_and_writes_system_log",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
 
         let sync_record = SyncBufferRow {
             table_name: "item_line".to_string(),
             record_id: "ITEM_LINE_FK_INVALID".to_string(),
-            data: r#"{
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
                 "ID": "ITEM_LINE_FK_INVALID",
                 "store_ID": "store_a",
                 "item_ID": "item_a",
@@ -426,14 +388,20 @@ mod tests {
                     "campaign_id": "missing_campaign",
                     "program_id": "does_not_exist_program"
                 }
-            }"#
-            .to_string(),
+            }"#,
+                )
+                .unwrap(),
+            ),
             action: SyncAction::Upsert,
             ..Default::default()
         };
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_record)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
             .unwrap();
 
         let expected = PullTranslateResult::upsert(StockLineRow {
@@ -465,9 +433,7 @@ mod tests {
         assert_eq!(result, expected);
 
         // One system_log entry per invalid FK
-        let logs = SystemLogRowRepository::new(&connection)
-            .find_all()
-            .unwrap();
+        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
         let fk_errors: Vec<_> = logs
             .iter()
             .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
@@ -507,24 +473,28 @@ mod tests {
         merge_all_item_links(&connection, &mock_data).unwrap();
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::StockLine.equal_to())),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::StockLine),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
         let translator = StockLineTranslation {};
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             // Translate and sort
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));

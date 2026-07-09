@@ -17,6 +17,7 @@ pub fn install_uploaded_plugin(ctx: &Context<'_>, file_id: String) -> Result<Plu
         &ResourceAccessRequest {
             resource: Resource::ConfigurePlugin,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 
