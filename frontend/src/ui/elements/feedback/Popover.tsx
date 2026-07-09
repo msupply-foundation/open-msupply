@@ -31,7 +31,7 @@ const EDGE = 8
 
 /*
  * Popover — native Popover API (`popover="auto"`), NO library (the RnD
- * prototype bought Radix Popover — see DECISIONS.md 2026-07-09). The platform
+ * prototype bought Radix Popover — see kdd/own-simple-buy-hard). The platform
  * covers what Radix was bought for: top layer (escapes scroll-container
  * clipping with no portal), light dismiss + Escape, focus handed back to the
  * invoker, and the invoker's aria-expanded (auto-wired via `popovertarget`;

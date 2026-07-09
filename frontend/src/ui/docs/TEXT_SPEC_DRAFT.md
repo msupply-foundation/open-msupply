@@ -1,8 +1,7 @@
 # Text handling — DRAFT spec
 
 > **Status: DRAFT for Carl's review.** Open questions resolved with Carl are
-> marked inline; a `DECISIONS.md` entry gets written once the whole thing is
-> agreed and about to become code.
+> marked inline; the decision is recorded in [`kdd/typography-text`](../../../kdd/typography-text/draft-kdd.md).
 
 ## Problem
 
@@ -193,7 +192,7 @@ rem (not `em`) since siblings can't size off each other; region-scaling is a
 recorded `--text-scale` fallback.
 
 Shipped: `ui/Text` (+ `Text.module.css`), `--weight-regular`/`--weight-semibold`/
-`--line-tight` tokens, a "Typography" showcase section, and the `DECISIONS.md`
-entry (2026-07-09). **Follow-up still open:** fold the stray `Select`/`FilterBar`
+`--line-tight` tokens, a "Typography" showcase section, and the
+[`kdd/typography-text`](../../../kdd/typography-text/draft-kdd.md) record. **Follow-up still open:** fold the stray `Select`/`FilterBar`
 `line-height: 1.3` (×11) and `1.125rem`/`1.25rem` literals into
 `--line-tight` / size tokens — a visually-sensitive sweep left for its own pass.

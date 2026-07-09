@@ -33,7 +33,7 @@ export interface DialogProps {
 
 /*
  * Modal dialog — native <dialog> + showModal(), NO library (unlike the RnD
- * prototype, which bought Radix Dialog — see DECISIONS.md 2026-07-09). The
+ * prototype, which bought Radix Dialog — see kdd/own-simple-buy-hard). The
  * platform now covers the whole contract Radix was bought for: top layer +
  * inert background (a real focus trap), focus restore to the trigger on
  * close, Escape (`cancel` event), role=dialog + aria-modal, and ::backdrop.

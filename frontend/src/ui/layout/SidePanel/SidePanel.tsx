@@ -21,7 +21,7 @@ export interface SidePanelProps {
  * the current app opens it as a toggled overlay drawer from an AppBar button
  * instead. That toggle needs a Drawer, which arrives with the Feedback work;
  * until then panel content is unreachable on narrow viewports. See
- * DECISIONS.md 2026-07-08.
+ * kdd/page-composition.
  */
 export const SidePanel = (props: SidePanelProps) => (
   <aside class={styles.panel} aria-label={props.label ?? 'Details'}>

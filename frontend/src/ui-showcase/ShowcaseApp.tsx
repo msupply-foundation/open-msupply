@@ -20,7 +20,7 @@ import styles from "./ShowcaseApp.module.css";
  * The active section lives in the URL hash (#/showcase/buttons) so views are
  * linkable — the MenuBar's onSelect just writes the hash and a hashchange
  * listener owns the state, no routing library (the app's real router is not
- * in play here; see src/ui/docs/DECISIONS.md).
+ * in play here; see kdd/showcase-harness).
  */
 
 /* The showcase's nav model: one expandable section per category. MenuBar

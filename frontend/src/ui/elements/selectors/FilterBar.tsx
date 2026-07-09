@@ -51,7 +51,7 @@ interface FilterBarProps {
  * round remove button, plus "Remove all filters" in the menu once any chip
  * is up.
  *
- * State model (see DECISIONS.md 2026-07-08): filter VALUES are a controlled
+ * State model (see kdd/page-composition): filter VALUES are a controlled
  * prop — the parent owns the object (a table consumes it today; a router
  * holds it in URL params once routing lands, which is where the prototype
  * kept it). Which chips are *shown* is presentation state — a chip can be

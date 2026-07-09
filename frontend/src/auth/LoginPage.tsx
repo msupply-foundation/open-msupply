@@ -12,7 +12,7 @@ import styles from './Login.module.css';
 type SubmitState = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'error'; message: string };
 
 // The login screen: the design-system Login (gradient hero + form panel,
-// recreated from the current app — see DECISIONS.md 2026-07-08) composed with
+// recreated from the current app — see kdd/page-composition) composed with
 // the real auth flow (login()). The form controls are the library TextField /
 // Button; the submit failure surfaces in the library Alert; the footer language
 // selector drives real i18n. Success needs no callback — login() sets the user

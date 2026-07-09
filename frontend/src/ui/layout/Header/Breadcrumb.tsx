@@ -32,7 +32,7 @@ export interface BreadcrumbProps {
  * <ol>, ancestor crumbs as links, the current page marked aria-current="page".
  * The leaf renders as the page's <h1> (the page title lives in the breadcrumb
  * tail, current-app style — so pages must not render another h1; see
- * DECISIONS.md 2026-07-08 shell integration). Separators are aria-hidden list
+ * kdd/page-composition, shell integration). Separators are aria-hidden list
  * items. Hand-rolled: links + separators carry no interaction contract worth
  * buying. Ported from the RnD prototype's Breadcrumbs.
  */

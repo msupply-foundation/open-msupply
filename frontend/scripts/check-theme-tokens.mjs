@@ -1,5 +1,5 @@
 /*
- * Theme-contract check (see src/ui/docs/DECISIONS.md 2026-07-06).
+ * Theme-contract check (see kdd/ui-styling).
  *
  * tokens.css delimits a "theme contract" region inside :root with
  * `@theme-contract:start` / `@theme-contract:end` comment markers. This script

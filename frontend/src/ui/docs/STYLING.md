@@ -67,7 +67,7 @@ Now `styles.buton` is a TypeScript error, in the editor and in `check`. Note tcm
 
 ## Page-CSS check (step 5)
 
-Pages compose, never style: any `.css` file under `src/pages/` fails the check, except top-level page dirs allowlisted in `scripts/check-page-css.mjs` (currently only `Login`, for its bespoke gradient hero). A page that "needs" CSS means a library component or token is missing — raise that instead. Allowlisting a new page requires a `DECISIONS.md` entry. See [PAGES.md](./PAGES.md).
+Pages compose, never style: any `.css` file under `src/pages/` fails the check, except top-level page dirs allowlisted in `scripts/check-page-css.mjs` (currently only `Login`, for its bespoke gradient hero). A page that "needs" CSS means a library component or token is missing — raise that instead. Allowlisting a new page requires a [`kdd/page-composition`](../../../kdd/page-composition/draft-kdd.md) entry. See [PAGES.md](./PAGES.md).
 
 ## What the checks do NOT catch
 

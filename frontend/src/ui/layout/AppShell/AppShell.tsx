@@ -76,7 +76,7 @@ const FooterCell = (props: {
  * overlay open, language) must survive navigation — so the shell mounts
  * ONCE per app host and pages swap inside it; per-page geometry (pinned
  * header, scrolling body, side panel, content footer) belongs to the <Page>
- * frame the page itself composes (see DECISIONS.md 2026-07-08). Until
+ * frame the page itself composes (see kdd/page-composition). Until
  * routing is decided the host owning `selected`/`onNavigate` is the router
  * stand-in; a root layout route takes both over later.
  *

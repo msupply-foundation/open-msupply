@@ -42,7 +42,7 @@ export interface PageProps {
  * between menu bar and app footer (the shell's content slot is a flex
  * column). The scrolling stays in the body region — header, panel and
  * footer never move. Pages compose this frame but own NO CSS of their own
- * (enforced by scripts/check-page-css.mjs) — see DECISIONS.md 2026-07-08.
+ * (enforced by scripts/check-page-css.mjs) — see kdd/page-composition.
  */
 export const Page = (props: PageProps) => (
   <div class={styles.page}>

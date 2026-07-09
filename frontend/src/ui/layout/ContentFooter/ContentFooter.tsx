@@ -23,7 +23,7 @@ export interface ContentFooterProps {
  * scroll region. A plain <div>, not <footer> — the shell's
  * orange bar is the page's one footer landmark; this is an action strip.
  * Adapted from the RnD prototype's ContentFooter, minus its selection store:
- * contextual content is the page's job (see DECISIONS.md 2026-07-08).
+ * contextual content is the page's job (see kdd/page-composition).
  */
 export const ContentFooter = (props: ContentFooterProps) => (
   <div class={styles.footer}>{props.children}</div>
