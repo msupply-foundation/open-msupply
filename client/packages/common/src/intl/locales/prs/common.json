@@ -2969,7 +2969,6 @@
   "warning.confirm-send-ancillary-items-stale_other": "{{count}} سطر قلم جانبی دارای مقادیر قدیمی هستند. آیا با این حال ارسال می‌کنید؟",
   "warning.field-not-parsed": "{{field}} تجزیه نشد",
   "warning.foreign-exchange-rate-different": "این نرخ با ارز یکسان نیست.",
-  "warning.high-number-records-to-sync": "تعداد زیادی از رکوردهای دیتا در حال همگام‌سازی هستند. این ممکن است بیشتر از حد معمول طول بکشد.",
   "warning.insufficient-recent-stocktake-items": "شما شمارش فزیکی حداقل {{ minItems }} واکسین و مواد خشک را در {{ maxAge }} روز گذشته تکمیل نکرده‌اید. موجودی ستاک شما ممکن است دقیق نباشد. آیا مطمئن هستید که می‌خواهید ادامه دهید؟",
   "warning.manual-store-requisition": "وارد کردن درخواست از این گدام ممکن است منجر به تکراری شدن شود اگر از این گدام نیز یک سفارش داخلی ارسال کند.",
   "warning.nothing-to-supply": "چیزی برای اکمال باقی نمانده!",
