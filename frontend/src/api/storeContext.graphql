@@ -1,0 +1,22 @@
+# Spec (Store Login, Guard 3): one query for store preferences and the user's
+# permissions in the store.
+query storeContext($storeId: String!) {
+  storePreferences(storeId: $storeId) {
+    id
+    packToOne
+    omProgramModule
+    vaccineModule
+  }
+  me {
+    ... on UserNode {
+      __typename
+      userId
+      permissions(storeId: $storeId) {
+        nodes {
+          storeId
+          permissions
+        }
+      }
+    }
+  }
+}

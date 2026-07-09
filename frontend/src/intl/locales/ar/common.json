@@ -1,0 +1,17 @@
+{
+  "app.loading": "جارٍ التحميل…",
+  "login.title": "تسجيل الدخول",
+  "login.username": "اسم المستخدم",
+  "login.password": "كلمة المرور",
+  "login.username-required": "اسم المستخدم مطلوب",
+  "login.password-required": "كلمة المرور مطلوبة",
+  "login.submitting": "جارٍ تسجيل الدخول…",
+  "login.submit": "تسجيل الدخول",
+  "login.failed-attempts_zero": "لا محاولات فاشلة",
+  "login.failed-attempts_one": "محاولة فاشلة واحدة",
+  "login.failed-attempts_two": "محاولتان فاشلتان",
+  "login.failed-attempts_few": "{{ count }} محاولات فاشلة",
+  "login.failed-attempts_many": "{{ count }} محاولة فاشلة",
+  "login.failed-attempts_other": "{{ count }} محاولة فاشلة",
+  "language.name": "العربية"
+}

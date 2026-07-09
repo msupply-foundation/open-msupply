@@ -11,11 +11,17 @@
  * (Login's gradient hero is the precedent). Add a page dir here ONLY with a
  * decision-log entry to point at.
  */
-import { readdirSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 const PAGES_DIR = 'src/pages';
 const ALLOW = new Set(['Login']); // top-level page dirs allowed to own CSS
+
+// No src/pages/ right now (verticals live in src/sections/) — nothing to check.
+if (!existsSync(PAGES_DIR)) {
+  console.log(`page CSS OK — no ${PAGES_DIR} directory yet`);
+  process.exit(0);
+}
 
 const cssFiles = [];
 const walk = (dir) => {

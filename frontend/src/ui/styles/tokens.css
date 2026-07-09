@@ -114,6 +114,9 @@
   --status-shipped: #1fb6b6;
   --status-delivered: #7c5cff;
   --status-verified: #38a169;
+  /* Stocktake terminal "done" status (integration branch) — reuses the
+     verified hue. */
+  --status-finalised: #38a169;
 
   /* Feedback severities (Alert). Error is --error-main above. Info is the
      action blue by definition (theme.ts palette.info = #3e7bfa). Warning and
@@ -274,6 +277,7 @@
   --status-shipped: #2ecbcb;
   --status-delivered: #9678ff;
   --status-verified: #48c78e;
+  --status-finalised: #48c78e;
 
   /* Feedback severities — same lift as the rest of the dark palette */
   --info-main: var(--secondary-main);

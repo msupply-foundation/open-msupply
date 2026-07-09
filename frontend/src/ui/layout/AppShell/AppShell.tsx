@@ -1,7 +1,6 @@
 import {
   createSignal,
   createEffect,
-  onCleanup,
   Show,
   type JSX,
   type Component,
@@ -17,9 +16,9 @@ import {
 import { useIsNavOverlay } from '../../utils/createMediaQuery'
 import { MenuBar, type MenuBarState } from './MenuBar'
 import { LanguageSelector } from './LanguageSelector'
-import { isRtlLocale } from './languages'
 import { ShellNavContext } from './shellContext'
 import { upperNav, lowerNav, type NavLeaf } from './navModel'
+import { locale, changeLanguage } from '../../../intl'
 import styles from './AppShell.module.css'
 
 export interface AppShellProps {
@@ -89,7 +88,6 @@ const FooterCell = (props: {
 export const AppShell = (props: AppShellProps) => {
   const [railCollapsed, setRailCollapsed] = createSignal(false)
   const [overlayOpen, setOverlayOpen] = createSignal(false)
-  const [language, setLanguage] = createSignal('en')
   const isOverlay = useIsNavOverlay()
 
   const nav: MenuBarState = {
@@ -106,16 +104,9 @@ export const AppShell = (props: AppShellProps) => {
     if (!isOverlay()) setOverlayOpen(false)
   })
 
-  // Picking an RTL language flips the whole document (document-level so
-  // portaled popups inherit dir — see DECISIONS.md 2026-07-08). In the real
-  // app the shell never unmounts; restoring LTR on unmount is plain effect
-  // hygiene for hosts that do unmount it.
-  createEffect(() => {
-    document.documentElement.dir = isRtlLocale(language()) ? 'rtl' : 'ltr'
-  })
-  onCleanup(() => {
-    document.documentElement.dir = 'ltr'
-  })
+  // Document direction (RTL for ar/prs/ps) is owned once by App.tsx, driven by
+  // the real i18n locale — not here — so there is a single dir effect. The
+  // footer LanguageSelector drives that locale via changeLanguage.
 
   return (
     <ShellNavContext.Provider
@@ -139,7 +130,7 @@ export const AppShell = (props: AppShellProps) => {
             <span class={styles.footerDivider} aria-hidden="true" />
             <FooterCell icon={UserIcon} label="demo" />
             <span class={styles.footerDivider} aria-hidden="true" />
-            <LanguageSelector language={language()} onSelect={setLanguage} />
+            <LanguageSelector language={locale()} onSelect={(v) => void changeLanguage(v)} />
             <FooterCell icon={CentralIcon} label="Central server" />
           </footer>
         </div>

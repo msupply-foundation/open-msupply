@@ -1,19 +1,28 @@
 import type { Component } from 'solid-js'
 import type { IconProps } from '../../icons'
 import {
-  StockIcon,
+  HomeIcon,
   TruckIcon,
+  StockIcon,
   CustomersIcon,
   ThermometerIcon,
   FileIcon,
-  ClockIcon,
-  ReportsIcon,
   ListIcon,
   SlidersIcon,
+  ReportsIcon,
   SettingsIcon,
-  RadioIcon,
   HelpIcon,
+  DownloadIcon,
 } from '../../icons'
+import { navConfig, type NavItem as NavConfigItem } from '../../../nav/navConfig'
+
+/*
+ * The menu-bar nav model. The destination tree + paths + labels are the single
+ * source of truth in src/nav/navConfig.ts (the router generates a route per
+ * destination from the same file); this layer adds the presentation the MenuBar
+ * needs — a section icon and the upper/lower grouping. `to` is store-relative
+ * (e.g. 'inventory/stocktakes'); the routed shell prefixes the active store id.
+ */
 
 export interface NavLeaf {
   id: string
@@ -30,95 +39,49 @@ export interface NavItem {
   children?: NavLeaf[]
 }
 
-/*
- * Models the current app's main menu for the shell demo. Two groups: the
- * scrolling upper list and the pinned lower cluster. Ported from the RnD
- * prototype's navModel (data only; icons come from our own icon set).
- */
-export const upperNav: NavItem[] = [
-  {
-    id: 'inventory',
-    label: 'Inventory',
-    to: '/inventory',
-    icon: StockIcon,
-    children: [
-      { id: 'stock', label: 'Stock', to: '/inventory/stock' },
-      { id: 'stocktakes', label: 'Stocktakes', to: '/inventory/stocktakes' },
-    ],
-  },
-  {
-    id: 'distribution',
-    label: 'Distribution',
-    to: '/distribution',
-    icon: TruckIcon,
-    children: [
-      { id: 'requisitions', label: 'Requisitions', to: '/distribution/customer-requisition' },
-      { id: 'outbound', label: 'Outbound Shipments', to: '/distribution/outbound-shipment' },
-      { id: 'returns', label: 'Customer Returns', to: '/distribution/customer-return' },
-      { id: 'customers', label: 'Customers', to: '/distribution/customers' },
-    ],
-  },
-  {
-    id: 'dispensary',
-    label: 'Dispensary',
-    to: '/dispensary',
-    icon: CustomersIcon,
-    children: [
-      { id: 'patients', label: 'Patients', to: '/dispensary/patients' },
-      { id: 'prescriptions', label: 'Prescriptions', to: '/dispensary/prescription' },
-    ],
-  },
-  {
-    id: 'cold-chain',
-    label: 'Cold chain',
-    to: '/cold-chain',
-    icon: ThermometerIcon,
-    children: [
-      { id: 'monitoring', label: 'Monitoring', to: '/cold-chain/monitoring' },
-      { id: 'equipment', label: 'Equipment', to: '/cold-chain/equipment' },
-    ],
-  },
-  {
-    id: 'programs',
-    label: 'Programs',
-    to: '/programs',
-    icon: FileIcon,
-    children: [{ id: 'immunisation', label: 'Immunisation', to: '/programs/immunisation' }],
-  },
-  { id: 'daily-tallies', label: 'Daily Tallies', to: '/daily-tallies', icon: ClockIcon },
-  { id: 'reports', label: 'Reports', to: '/reports', icon: ReportsIcon },
-]
+// Section icons, keyed by the top-level navConfig path. Cosmetic; one icon set
+// only (spec DIVERGENCES D4).
+const SECTION_ICONS: Record<string, Component<IconProps>> = {
+  dashboard: HomeIcon,
+  replenishment: DownloadIcon,
+  inventory: StockIcon,
+  distribution: TruckIcon,
+  dispensary: CustomersIcon,
+  'cold-chain': ThermometerIcon,
+  programs: FileIcon,
+  catalogue: ListIcon,
+  manage: SlidersIcon,
+  reports: ReportsIcon,
+  settings: SettingsIcon,
+  help: HelpIcon,
+}
 
-export const lowerNav: NavItem[] = [
-  {
-    id: 'catalogue',
-    label: 'Catalogue',
-    to: '/catalogue',
-    icon: ListIcon,
-    children: [
-      { id: 'items', label: 'Items', to: '/catalogue/items' },
-      { id: 'assets', label: 'Assets', to: '/catalogue/assets' },
-    ],
-  },
-  {
-    id: 'manage',
-    label: 'Manage',
-    to: '/manage',
-    icon: SlidersIcon,
-    children: [
-      { id: 'facilities', label: 'Facilities', to: '/manage/facilities' },
-      { id: 'master-lists', label: 'Master lists', to: '/manage/master-lists' },
-    ],
-  },
-  { id: 'settings', label: 'Settings', to: '/settings', icon: SettingsIcon },
-  { id: 'sync', label: 'Sync', to: '/sync', icon: RadioIcon },
-  { id: 'help', label: 'Help', to: '/help', icon: HelpIcon },
-]
+// Sections pinned to the block-end lower cluster (matching the current app);
+// everything else scrolls in the upper list.
+const LOWER_IDS = new Set(['catalogue', 'manage', 'reports', 'settings', 'help'])
 
-/**
- * The nav group a leaf belongs to, if any — drives the header breadcrumb root
- * (e.g. "Distribution / Outbound Shipments"). Top-level leaves (Reports…) and
- * pages outside the nav (Home) have no parent and get a single crumb.
- */
-export const findNavParent = (leafId: string): NavItem | undefined =>
-  [...upperNav, ...lowerNav].find((item) => item.children?.some((c) => c.id === leafId))
+const toNavItem = (item: NavConfigItem): NavItem => ({
+  id: item.path,
+  label: item.label,
+  to: item.path,
+  icon: SECTION_ICONS[item.path] ?? FileIcon,
+  children: item.children?.map((child) => ({
+    id: child.path,
+    label: child.label,
+    to: child.path,
+  })),
+})
+
+const items = navConfig.map(toNavItem)
+
+export const upperNav: NavItem[] = items.filter((item) => !LOWER_IDS.has(item.id))
+export const lowerNav: NavItem[] = items.filter((item) => LOWER_IDS.has(item.id))
+
+// Every selectable destination as a flat NavLeaf list (top-level leaves + all
+// children) — used to derive the menu highlight from the current route.
+export const navLeaves: NavLeaf[] = items.flatMap((item) =>
+  item.children ? item.children : [{ id: item.id, label: item.label, to: item.to }],
+)
+
+export const findLeafByPath = (relativePath: string): NavLeaf | undefined =>
+  navLeaves.find((leaf) => leaf.to === relativePath)

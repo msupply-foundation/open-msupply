@@ -1,0 +1,27 @@
+# Stocktakes list view. Filter / sort / pagination are carried as GraphQL input
+# types (StocktakeFilterInput, StocktakeSortInput, PaginationInput) so the URL
+# state maps straight onto them with no remapping (kdd/type-safety).
+query stocktakes(
+  $storeId: String!
+  $filter: StocktakeFilterInput
+  $sort: [StocktakeSortInput!]
+  $page: PaginationInput
+) {
+  stocktakes(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on StocktakeConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        stocktakeNumber
+        status
+        description
+        comment
+        createdDatetime
+        stocktakeDate
+        finalisedDatetime
+        isLocked
+      }
+    }
+  }
+}

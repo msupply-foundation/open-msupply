@@ -1,5 +1,5 @@
 import type { Component } from 'solid-js'
-import { SlidersIcon, CopyIcon, FileIcon, type IconProps } from '../ui/icons'
+import { SlidersIcon, CopyIcon, type IconProps } from '../ui/icons'
 import { TypographyShowcase } from './TypographyShowcase'
 import { ButtonsShowcase } from './ButtonsShowcase'
 import { InputsShowcase } from './InputsShowcase'
@@ -29,32 +29,6 @@ export const categories: { id: SectionCategory; label: string; icon: Component<I
   { id: 'components', label: 'Components', icon: SlidersIcon },
   { id: 'layout', label: 'Layout Elements', icon: CopyIcon },
 ]
-
-/*
- * The "Full page" menu group. Real pages are real app routes now (see
- * src/App.tsx), so these are plain links OUT of the showcase — picking one
- * writes the top-level hash and the app swaps the showcase for the page,
- * exactly as a build ships it; browser Back returns to the showcase. (This
- * supersedes the showcase-internal `kind: 'app'` full-bleed mode — the app
- * router now provides that takeover for free.)
- */
-export const pagesGroup: {
-  id: string
-  label: string
-  icon: Component<IconProps>
-  links: { id: string; label: string }[]
-} = {
-  id: 'pages',
-  label: 'Full page',
-  icon: FileIcon,
-  links: [
-    { id: 'home', label: 'Home' },
-    { id: 'login', label: 'Login' },
-    // The list/detail skeleton pages — the canonical page-pattern recipes
-    // (see docs/DECISIONS.md 2026-07-08).
-    { id: 'outbound-shipments', label: 'Outbound Shipments' },
-  ],
-}
 
 const ComingSoon: Component = () => (
   <p>Nothing here yet — components land here as they're built.</p>

@@ -1,5 +1,7 @@
 # Page cheat sheet
 
+> **Status (2026-07-09, integration merge):** the reference implementations this guide was written against (`src/pages/Home`, `Login`, `OutboundShipments`) were **deleted** when this branch merged into the team's app — its real verticals (`src/sections/`, stocktakes first) supersede them, routed by `@solidjs/router` with their own auth login page. The recipes below remain as prose: the composition rules, the region vocabulary, and the assembly order are unchanged and the stocktakes list is their live reference. Code snippets referencing `src/pages/` paths describe the retired skeletons.
+
 How to build a page in `src/pages/`. Copy the closest recipe and go: [`pages/Home`](./src/pages/Home/Home.tsx) (minimal), [`pages/OutboundShipments/ListView`](./src/pages/OutboundShipments/ListView.tsx) (list), [`pages/OutboundShipments/DetailView`](./src/pages/OutboundShipments/DetailView.tsx) (detail).
 
 ## The rules
