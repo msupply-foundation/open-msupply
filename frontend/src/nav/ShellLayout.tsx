@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../components/layout/AppShell/AppShell';
 import { findLeafByPath, type NavLeaf } from '../components/layout/AppShell/navModel';
+import { authUser, logout } from '../auth/authContext';
+import { resolveStorePath } from '../store/StoreGuardLayout';
 
 // The routed app shell: one <AppShell> for the whole in-store app, with the page
 // swapping inside it (props.children — the matched section route). This is the
@@ -33,8 +35,24 @@ export const ShellLayout: Component<RouteSectionProps> = (props) => {
 
   const onNavigate = (leaf: NavLeaf) => navigate(`/${params.storeId}/${leaf.to}`);
 
+  // The active store + signed-in user shown in the bottom bar. The store list and
+  // user come from the me/login response (authContext); the active store is the one
+  // named by the URL. Activating the store selector routes to the store-selection
+  // screen (spec SL-6 / AC-SL8); the user menu logs out (spec: explicit logout).
+  const activeStore = () =>
+    authUser()?.stores.nodes.find((s) => s.id === params.storeId);
+  const storeName = () => activeStore()?.name ?? '';
+  const username = () => authUser()?.username ?? '';
+
   return (
-    <AppShell selected={selected()} onNavigate={onNavigate}>
+    <AppShell
+      selected={selected()}
+      onNavigate={onNavigate}
+      storeName={storeName()}
+      onStoreClick={() => navigate(resolveStorePath)}
+      username={username()}
+      onLogout={() => void logout()}
+    >
       {props.children}
     </AppShell>
   );

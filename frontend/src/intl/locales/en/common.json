@@ -30,6 +30,8 @@
   "store.search": "Search stores",
   "store.loading": "Loading store…",
 
+  "user.logout": "Log out",
+
   "init.title": "Initialise",
   "init.url": "Central server URL",
   "init.site-name": "Site name",
@@ -56,8 +58,6 @@
   "sync.step.pull-central": "Pull central",
   "sync.step.pull-remote": "Pull remote",
 
-  "shell.footer.general": "General",
-  "shell.footer.edit": "Edit",
   "shell.footer.central-server": "Central server",
   "shell.expand-menu": "Expand menu",
   "shell.collapse-menu": "Collapse menu",

@@ -30,6 +30,8 @@
   "store.search": "Rechercher des magasins",
   "store.loading": "Chargement du magasin…",
 
+  "user.logout": "Se déconnecter",
+
   "init.title": "Initialiser",
   "init.url": "URL du serveur central",
   "init.site-name": "Nom du site",
@@ -56,8 +58,6 @@
   "sync.step.pull-central": "Réception centrale",
   "sync.step.pull-remote": "Réception distante",
 
-  "shell.footer.general": "Général",
-  "shell.footer.edit": "Modifier",
   "shell.footer.central-server": "Serveur central",
   "shell.expand-menu": "Développer le menu",
   "shell.collapse-menu": "Réduire le menu",

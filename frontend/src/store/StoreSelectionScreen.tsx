@@ -12,10 +12,12 @@ const filterStores = (stores: StoreSummary[], searchTerm: string): StoreSummary[
   );
 };
 
-// Spec (Store Login, Guard 2): the selection modal, presented whenever the URL does
-// not resolve to a store. Searchable; previously logged-in store and default store
-// are already ordered to the top by the caller.
-export const StoreSelectionModal: Component<{
+// Spec (startup S3, [D8]): the store-selection screen — a routed page at
+// /resolve-store, not an in-place modal. Reached by the guard pipeline whenever the
+// URL does not resolve a store, and by the bottom-bar store selector to switch store
+// (AC-SL8). Searchable; the caller has already ordered the previously logged-in and
+// default stores to the top.
+export const StoreSelectionScreen: Component<{
   stores: StoreSummary[];
   onSelect: (storeId: string) => void;
 }> = props => {
@@ -23,9 +25,9 @@ export const StoreSelectionModal: Component<{
   const visible = () => filterStores(props.stores, search());
 
   return (
-    <div class={styles.overlay}>
-      <div class={styles.modal}>
-        <h2>{t('store.select')}</h2>
+    <div class={styles.page}>
+      <div class={styles.card}>
+        <h1 class={styles.modalTitle}>{t('store.select')}</h1>
         <input
           class={styles.input}
           placeholder={t('store.search')}

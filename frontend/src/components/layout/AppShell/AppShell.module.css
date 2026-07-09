@@ -49,9 +49,12 @@
   line-height: 1.2; /* the 1.71 body line-height makes this dense bar too tall */
 }
 
-/* Push the last cell ("Central server") to the inline-end edge. */
-.footer > :last-child {
-  margin-inline-start: auto;
+/* Spacer between the store selector and the user/language/central cluster
+   (spec bottom bar). Grows to consume free space, pushing the cluster to the
+   inline-end edge. */
+.footerSpacer {
+  flex: 1 1 auto;
+  min-inline-size: var(--space-4);
 }
 
 .footerCell {

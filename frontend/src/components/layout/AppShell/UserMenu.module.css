@@ -1,0 +1,78 @@
+/*
+ * Signed-in-user cell + menu. Mirrors LanguageSelector: the trigger matches a
+ * footer cell (transparent, inherits the footer's white text); the menu content
+ * is portaled to <body> so it inherits `dir` from <html>.
+ */
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.trigger:hover {
+  background: color-mix(in srgb, currentcolor 15%, transparent);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid currentcolor;
+  outline-offset: -0.125rem;
+}
+
+.icon {
+  flex-shrink: 0;
+  inline-size: 1rem;
+  block-size: 1rem;
+  font-size: 1rem;
+  color: inherit;
+}
+
+.triggerText {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* --- Menu ------------------------------------------------------------- */
+.content {
+  z-index: 1100; /* above the ShowcaseLauncher (1000) */
+  min-inline-size: 11rem;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-4);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.heading {
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+.item[data-highlighted] {
+  background: var(--bg-group-main);
+}

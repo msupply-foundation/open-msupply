@@ -5,7 +5,7 @@ import type { RouteSectionProps } from '@solidjs/router';
 import { authUser } from '../auth/authContext';
 import { getPreviousStoreId, recordPreviousStoreId } from '../appData';
 import { refetchStoreContext, storeContext } from './storeContext';
-import { StoreSelectionModal } from './StoreSelectionModal';
+import { StoreSelectionScreen } from './StoreSelectionScreen';
 import { t } from '../intl';
 import styles from '../styles/shared.module.css';
 
@@ -22,10 +22,11 @@ export type StoreSummary = {
 
 // Spec (Store Login, Guards 2 and 3), applied as common logic to whatever first URL
 // segment we are looking at. The store to enter is the URL's store, or the only
-// store the user has; otherwise there is none and we show the picker in place (no
-// redirect). Entering records the store and fetches its context; the routed section
-// shows a loading state until that context is loaded for this store and user (so
-// re-authenticating as a different user re-loads even for the same store).
+// store the user has; otherwise there is none and we show the store-selection screen
+// ([D8]: a routed page at /resolve-store, not a modal). Entering records the store and
+// fetches its context; the routed section shows a loading state until that context is
+// loaded for this store and user (so re-authenticating as a different user re-loads
+// even for the same store).
 export const StoreGuardLayout: Component<RouteSectionProps> = (props) => {
   const params = useParams();
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ export const StoreGuardLayout: Component<RouteSectionProps> = (props) => {
     <Show
       when={storeToEnter()}
       fallback={
-        <StoreSelectionModal stores={pickerStores()} onSelect={(id) => navigate(`/${id}`)} />
+        <StoreSelectionScreen stores={pickerStores()} onSelect={(id) => navigate(`/${id}`)} />
       }
     >
       {(store) => (
