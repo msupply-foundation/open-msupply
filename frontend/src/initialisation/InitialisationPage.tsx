@@ -12,7 +12,9 @@ import {
 import { subscribe } from '../api/subscription';
 import { toSyncOverview, type SyncOverview } from './syncStatus';
 import { SyncProgress } from './SyncProgress';
-import { FormField } from '../ui/elements/inputs/FormField';
+import { TextField } from '../ui/elements/inputs/TextField';
+import { Button } from '../ui/elements/buttons/Button';
+import { Alert } from '../ui/elements/feedback/Alert';
 import { DEFAULT_SYNC_INTERVAL_SECONDS, SYNC_POLL_INTERVAL_MS } from '../config';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
@@ -157,41 +159,54 @@ export const InitialisationPage: Component<{ onComplete: () => void }> = props =
     <div class={styles.page}>
       <form class={styles.card} onSubmit={submit}>
         <h1>{t('init.title')}</h1>
-        <FormField
-          id="init-url"
+        <TextField
           label={t('init.url')}
+          width="full"
           value={values().url}
-          onInput={url => setValues(previous => ({ ...previous, url }))}
-          error={fieldErrors().url}
+          onInput={e => {
+            const url = e.currentTarget.value;
+            setValues(previous => ({ ...previous, url }));
+          }}
+          error={fieldErrors().url || undefined}
           disabled={initialising()}
         />
-        <FormField
-          id="init-site-name"
+        <TextField
           label={t('init.site-name')}
+          width="full"
           value={values().siteName}
-          onInput={siteName => setValues(previous => ({ ...previous, siteName }))}
-          error={fieldErrors().siteName}
+          onInput={e => {
+            const siteName = e.currentTarget.value;
+            setValues(previous => ({ ...previous, siteName }));
+          }}
+          error={fieldErrors().siteName || undefined}
           disabled={initialising()}
         />
-        <FormField
-          id="init-password"
+        <TextField
           label={t('init.password')}
+          width="full"
           type="password"
           value={values().password}
-          onInput={password => setValues(previous => ({ ...previous, password }))}
-          error={fieldErrors().password}
+          onInput={e => {
+            const password = e.currentTarget.value;
+            setValues(previous => ({ ...previous, password }));
+          }}
+          error={fieldErrors().password || undefined}
           disabled={initialising()}
         />
-        <FormField
-          id="init-interval-seconds"
+        <TextField
           label={t('init.interval')}
+          width="full"
+          inputmode="numeric"
           value={values().intervalSeconds}
-          onInput={intervalSeconds => setValues(previous => ({ ...previous, intervalSeconds }))}
-          error={fieldErrors().intervalSeconds}
+          onInput={e => {
+            const intervalSeconds = e.currentTarget.value;
+            setValues(previous => ({ ...previous, intervalSeconds }));
+          }}
+          error={fieldErrors().intervalSeconds || undefined}
           disabled={initialising()}
         />
         <Show when={syncError()}>
-          <p class={styles.errorText}>{syncError()}</p>
+          <Alert severity="error">{syncError()}</Alert>
         </Show>
         <Show when={busy()}>
           <SyncProgress overview={overview()} />
@@ -199,14 +214,12 @@ export const InitialisationPage: Component<{ onComplete: () => void }> = props =
         <Show
           when={showRetry()}
           fallback={
-            <button class={styles.button} type="submit" disabled={busy()}>
+            <Button type="submit" disabled={busy()}>
               {busy() ? t('init.submitting') : t('init.submit')}
-            </button>
+            </Button>
           }
         >
-          <button class={styles.button} type="button" onClick={() => void retry()}>
-            {t('init.retry')}
-          </button>
+          <Button onClick={() => void retry()}>{t('init.retry')}</Button>
         </Show>
       </form>
     </div>

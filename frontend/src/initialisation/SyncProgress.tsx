@@ -1,6 +1,7 @@
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import type { SyncOverview, SyncStep } from './syncStatus';
+import { Alert } from '../ui/elements/feedback/Alert';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
@@ -16,7 +17,7 @@ const stepStatus = (step: SyncStep): string => {
 export const SyncProgress: Component<{ overview: SyncOverview | undefined }> = props => (
   <Show when={props.overview} fallback={<p>{t('sync.waiting')}</p>} keyed>
     {overview => (
-      <div>
+      <div class={styles.stack}>
         <ul class={styles.list}>
           <For each={overview.steps}>
             {step => (
@@ -27,7 +28,7 @@ export const SyncProgress: Component<{ overview: SyncOverview | undefined }> = p
           </For>
         </ul>
         <Show when={overview.errorMessage}>
-          <p class={styles.errorText}>{overview.errorMessage}</p>
+          <Alert severity="error">{overview.errorMessage}</Alert>
         </Show>
       </div>
     )}

@@ -15,6 +15,13 @@ export interface DialogProps {
    * without reporting here.
    */
   onClose: () => void
+  /**
+   * `false` makes the dialog blocking: Escape is swallowed and scrim clicks
+   * ignored, so the only ways out are the actions (or the flow resolving
+   * `open`). For the modals a user must answer — re-login, store selection,
+   * the unexpected-error modal. Default: dismissable.
+   */
+  dismissable?: boolean
   /** Required for a11y — becomes the dialog's accessible name. */
   title: string
   icon?: JSX.Element
@@ -59,13 +66,19 @@ export const Dialog = (props: DialogProps) => {
       class={styles.dialog}
       aria-labelledby={titleId}
       aria-describedby={props.description ? descriptionId : undefined}
+      // Escape arrives as `cancel` before the dialog closes — a blocking
+      // dialog swallows it here, so the element never closes underneath the
+      // parent's `open` state.
+      onCancel={(event) => props.dismissable === false && event.preventDefault()}
       // Native close paths (Escape now; browser `closedby` UI later) land
       // here — report them so the parent's `open` stays the source of truth.
       onClose={() => props.open && props.onClose()}
       // A pointerdown whose target is the <dialog> itself hit the ::backdrop:
       // the inner .body covers the dialog box completely (the dialog has zero
       // padding for exactly this reason), so content clicks can't match.
-      onPointerDown={(event) => event.target === dialog && props.onClose()}
+      onPointerDown={(event) =>
+        event.target === dialog && props.dismissable !== false && props.onClose()
+      }
     >
       <div class={styles.body}>
         <header class={styles.header}>
