@@ -3107,7 +3107,6 @@
   "warning.confirm-send-ancillary-items-stale_other": "{{count}} ancillary item lines have outdated quantities. Send anyway?",
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.foreign-exchange-rate-different": "This rate is not the same as the currency.",
-  "warning.high-number-records-to-sync": "A high number of records are being synced. This may take longer than usual.",
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
