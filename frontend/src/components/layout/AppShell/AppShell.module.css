@@ -1,0 +1,103 @@
+/*
+ * AppShell layout — the app-level container. Flex row (menu bar + main), main
+ * is a flex column of the content slot (where the current page's <Page>
+ * frame renders and does its own scrolling) and the slim orange app footer.
+ * All dims/colours from tokens; RTL via logical properties. Intrinsic layout
+ * — the only breakpoint lives in JS (useIsNavOverlay), never here.
+ */
+
+.shell {
+  display: flex;
+  block-size: 100%;
+  background: var(--bg-white);
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+  overflow: hidden;
+}
+
+/* --- Content slot (the current page) ------------------------------------ */
+/* A flex column so the page's <Page> frame stretches to fill it; the frame
+   owns its own scrolling — the shell never scrolls. */
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow: hidden;
+  background: var(--bg-white);
+}
+
+/* --- Footer (the orange app status bar) -------------------------------- */
+.footer {
+  display: flex;
+  flex-wrap: wrap; /* cells wrap onto new rows when narrow — no breakpoint */
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-4);
+  row-gap: var(--space-1);
+  min-block-size: 2.25rem;
+  padding-block: var(--space-1);
+  padding-inline: var(--space-4);
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+  font-size: var(--text-xs);
+  line-height: 1.2; /* the 1.71 body line-height makes this dense bar too tall */
+}
+
+/* Push the last cell ("Central server") to the inline-end edge. */
+.footer > :last-child {
+  margin-inline-start: auto;
+}
+
+.footerCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+}
+
+button.footerCell {
+  cursor: pointer;
+}
+
+button.footerCell:hover {
+  background: color-mix(in srgb, var(--primary-contrast) 15%, transparent);
+}
+
+button.footerCell:focus-visible {
+  outline: 2px solid var(--primary-contrast);
+  outline-offset: -0.125rem;
+}
+
+.footerIcon {
+  flex-shrink: 0;
+  inline-size: 1rem;
+  block-size: 1rem;
+  font-size: 1rem;
+  color: inherit;
+}
+
+.footerCellText {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.footerDivider {
+  flex-shrink: 0;
+  inline-size: 1px;
+  block-size: 1.5rem;
+  background: color-mix(in srgb, var(--primary-contrast) 45%, transparent);
+}

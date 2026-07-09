@@ -1,0 +1,13 @@
+{
+  "app.loading": "Loading…",
+  "login.title": "Log in",
+  "login.username": "Username",
+  "login.password": "Password",
+  "login.username-required": "Username is required",
+  "login.password-required": "Password is required",
+  "login.submitting": "Logging in…",
+  "login.submit": "Log in",
+  "login.failed-attempts_one": "{{ count }} failed attempt",
+  "login.failed-attempts_other": "{{ count }} failed attempts",
+  "language.name": "English"
+}

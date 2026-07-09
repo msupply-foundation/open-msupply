@@ -1,0 +1,14 @@
+.empty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-4);
+  block-size: 100%;
+  min-block-size: 10rem;
+  text-align: center;
+}
+
+.message {
+  margin: 0;
+  color: var(--text-secondary);
+}

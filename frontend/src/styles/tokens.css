@@ -1,0 +1,243 @@
+/*
+ * Design tokens — the styling foundation (see /DECISIONS.md 2026-07-06 and the
+ * RnD prototype's DECISIONS.md #3).
+ *
+ * Faithful 1:1 port of the current app's MUI theme
+ *   client/packages/common/src/styles/theme.ts
+ * into plain CSS custom properties (colours copied, not invented), PLUS the
+ * company input design spec. Values carried unchanged from the RnD prototype's
+ * tokens.css; the only change here is the THEME CONTRACT structure below.
+ *
+ * SIZING IS IN rem (base 16px = 1rem), never px, so the whole UI scales from a
+ * single root font-size (see index.css). Exceptions kept in px on purpose:
+ * hairline borders (1px) and shadow offsets.
+ */
+
+:root {
+  /*
+   * ======================= THEME CONTRACT =======================
+   * Every token between the @theme-contract markers MUST be overridden by
+   * every [data-theme] block in this file, and theme blocks may ONLY override
+   * tokens declared here — enforced by scripts/check-theme-tokens.mjs (part of
+   * `npm run check`). Static tokens (spacing, sizing, typography) live below
+   * the contract and are never themed.
+   */
+  /* @theme-contract:start */
+
+  /* --- Primitive palette (theme.ts → palette) -------------------------- */
+  --primary-main: #e95c30; /* brand orange (TMF Orange) */
+  --primary-light: #ed7d59;
+  --primary-dark: #c43c11;
+  --primary-contrast: #fff;
+
+  --secondary-main: #3e7bfa; /* action blue (dialog primary button, info) */
+  --secondary-light: #5b8def;
+  --secondary-dark: #3568d4;
+
+  --error-main: #e63535;
+  --error-bg: #ffcdce;
+  --color-warning: #f2a001; /* theme.ts cceStatus/invoiceLineStatus amber */
+
+  --gray-main: #8f90a6;
+  --gray-light: #c7c9d9;
+  --gray-dark: #555770;
+  --gray-pale: #cdf; /* #ccddff */
+
+  --color-border-value: #e4e4eb;
+  --color-divider: #eaeaea;
+  --outline-main: #555770;
+  --input-border: #e4e4e7; /* input field edge (company spec default border) */
+
+  /* backgrounds (theme.ts → palette.background) */
+  --bg-white: #fff;
+  --bg-drawer: #f2f2f5;
+  --bg-menu: #f2f2f5;
+  --bg-toolbar: #fafafc;
+  --bg-row: #fafafc;
+  --bg-group-light: #fafafc;
+  --bg-group-main: #f2f2f5;
+  --bg-group-dark: #e2e2e9;
+  --bg-icon: #e5eeff;
+  --bg-input: #f2f2f5;
+  --bg-input-disabled: #fafafc;
+
+  /* Floating/elevated surfaces (buttons, menus, dialogs, popups). Same as the
+     content surface in light — the shadow does the lifting — but overridden
+     LIGHTER than content in dark, where lightness carries elevation. */
+  --surface-raised: var(--bg-white);
+
+  /* text (theme.ts → typography + palette.form) */
+  --text-body: #1c1c28; /* body1 / th */
+  --text-secondary: #555770; /* body2 / h6 / form.field */
+  --text-label: #28293d; /* form.label */
+  --button-text: #373740;
+
+  /* header / drawer mixins (theme.ts → mixins) */
+  --header-bg: #fafafc;
+  --header-border: #cbced4;
+  --drawer-selected-bg: #fff;
+  --drawer-hover-bg: #fafafc;
+
+  /* login page (theme.ts → mixins.gradient.primary, palette.background.login,
+     typography.login.color) */
+  --gradient-primary: linear-gradient(156deg, #f80 4%, #e63535 96%);
+  --bg-login: #f2f2f5;
+  --login-hero-text: #fafafa;
+
+  /* --- Elevation (theme.ts → createTheme shadow overrides) ------------ */
+  /* Shadow offsets stay in px (sub-pixel blur/spread) — intentional. */
+  --shadow-1: 0 0.5px 2px 0 rgba(96, 97, 112, 0.16),
+    0 0 1px 0 rgba(40, 41, 61, 0.08);
+  --shadow-2: 0 4px 8px 0 rgba(96, 97, 112, 0.16),
+    0 0 2px 0 rgba(40, 41, 61, 0.04);
+  --shadow-3: 0 8px 16px 0 rgba(96, 97, 112, 0.16),
+    0 2px 4px 0 rgba(40, 41, 61, 0.04);
+  --shadow-4: 0 12px 24px 0 rgba(96, 97, 112, 0.16),
+    0 4px 8px 0 rgba(40, 41, 61, 0.3);
+  --shadow-drawer: 4px 0 16px 0 rgba(96, 97, 112, 0.18);
+
+  /* 3px orange glow focus ring; error variant for invalid fields (red glow) */
+  --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.25);
+  --focus-ring-error: 0 0 0 0.1875rem rgba(230, 53, 53, 0.2);
+
+  /* Scrim behind the mobile nav overlay / modals */
+  --overlay-scrim: rgba(28, 28, 40, 0.45);
+
+  /* @theme-contract:end */
+
+  /* --- Spacing (4px base → rem) --------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  /* --- Radius --------------------------------------------------------- */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-pill: 1.25rem;
+  --radius-button: 1.5rem; /* 24px pill buttons */
+
+  /* --- Typography (theme.ts → typography) ----------------------------- */
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+  --text-xs: 0.75rem; /* 12px — body2 */
+  --text-sm: 0.875rem; /* 14px — body1 / th / input */
+  --text-md: 1rem; /* 16px — h6 */
+  --text-lg: 1.25rem; /* 20px */
+  --line-body: 1.71; /* body1 */
+  --weight-medium: 500;
+  --weight-bold: 700;
+
+  /* --- Layout dimensions (theme.ts → mixins / AppDrawer) -------------- */
+  --drawer-width: 16.25rem; /* 260px */
+  --drawer-closed-width: 5rem; /* 80px */
+  --logo-area-height: 5.625rem; /* 90px */
+  --nav-item-height: 2.5rem; /* 40px */
+  --nav-child-height: 1.875rem; /* 30px */
+  --table-data-row: 2.5rem; /* 40px */
+  --table-header-row: 3.75rem; /* 60px */
+  --footer-height: 2rem; /* 32px */
+  --touch-target: 3rem; /* 48px — spec target */
+
+  /* --- Inputs (company design spec) ----------------------------------- */
+  --input-height: 2.5rem; /* 40px default */
+  --input-height-sm: 2.25rem; /* 36px small */
+  --input-padding-x: 0.75rem; /* 12px horizontal */
+  --input-radius: 0.375rem; /* 6px */
+  --input-max-short: 25rem; /* 400px — codes, quantities */
+  --input-max-long: 37.5rem; /* 600px — names, descriptions */
+}
+
+/*
+ * Dark theme. Activated by `data-theme='dark'` on <html> (set by the theme
+ * toggle, and pre-paint by the inline script in index.html). Only token VALUES
+ * change here — every component reads tokens, so nothing else needs to know
+ * dark mode exists. Navy-tinted to match the palette's existing navy greys,
+ * with an INVERTED surface scale (elevated surfaces get lighter) and the
+ * "-dark" emphasis variants flipped to lighter shades, since brighter reads as
+ * more emphasis on a dark ground. Ported from the RnD prototype; see its
+ * DECISIONS.md (2026-07-01, theming).
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark; /* native scrollbars, form controls, autofill go dark */
+
+  /* Brand / primary — orange kept for brand integrity; -dark flips lighter */
+  --primary-main: #e95c30;
+  --primary-light: #f2916f;
+  --primary-dark: #f0805a;
+  --primary-contrast: #fff;
+
+  /* Secondary / action blue — lifted for contrast on dark */
+  --secondary-main: #5b8def;
+  --secondary-light: #7ba5f5;
+  --secondary-dark: #4a7ce8;
+
+  /* Feedback */
+  --error-main: #ff5f5f;
+  --error-bg: #4a1f22;
+  --color-warning: #ffb020;
+
+  /* Greys — light = subtle (near surface), dark = high-contrast (readable text) */
+  --gray-main: #9a9bb0;
+  --gray-light: #4a4b5c;
+  --gray-dark: #b8b9cc;
+  --gray-pale: #2a3550;
+
+  --color-border-value: #33333f;
+  --color-divider: #2c2c38;
+  --outline-main: #b8b9cc;
+  --input-border: #3d3e4c; /* field edge — a touch above border-value so inputs read */
+
+  /* Backgrounds — inverted scale: content is the LIGHTEST dark surface */
+  --bg-white: #21212b;
+  --bg-drawer: #191921;
+  --bg-menu: #191921;
+  --bg-toolbar: #1e1e27;
+  --bg-row: #1e1e27;
+  --bg-group-light: #1e1e27;
+  --bg-group-main: #262631;
+  --bg-group-dark: #33333f;
+  --bg-icon: #24304a;
+  --bg-input: #2a2a36;
+  --bg-input-disabled: #1c1c24;
+
+  /* Text — soft near-white, not pure white */
+  --text-body: #ececf2;
+  --text-secondary: #a8a9bd;
+  --text-label: #d6d6e0;
+  --button-text: #d0d0da;
+
+  /* Header / drawer */
+  --header-bg: #1a1a22;
+  --header-border: #33333f;
+  --drawer-selected-bg: #2a2a38;
+  --drawer-hover-bg: #21212b;
+
+  /* Login — the gradient hero panel is brand-invariant (like --primary-main,
+     orange kept for brand integrity), so gradient + hero text stay; only the
+     form panel background goes dark (matches the drawer surface). */
+  --gradient-primary: linear-gradient(156deg, #f80 4%, #e63535 96%);
+  --bg-login: #191921;
+  --login-hero-text: #fafafa;
+
+  /* Raised surfaces sit LIGHTER than the #21212b content — on dark, lightness
+     (not shadow) carries elevation, so buttons/menus/dialogs stand out. */
+  --surface-raised: #2b2b3a;
+
+  /* Elevation via near-BLACK shadows. The light theme's grey shadows are
+     lighter than a dark surface, so they read as a glow — black reads as depth.
+     Paired with the lighter raised surface above (surface separates, shadow
+     reinforces), mirroring how dark UIs convey elevation. */
+  --shadow-1: 0 0.5px 2px 0 rgba(0, 0, 0, 0.45), 0 0 1px 0 rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 4px 8px 0 rgba(0, 0, 0, 0.5), 0 0 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-3: 0 8px 16px 0 rgba(0, 0, 0, 0.55), 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  --shadow-4: 0 16px 28px 0 rgba(0, 0, 0, 0.6), 0 4px 10px 0 rgba(0, 0, 0, 0.45);
+  --shadow-drawer: 4px 0 20px 0 rgba(0, 0, 0, 0.55);
+
+  /* Stronger focus glows + darker scrim read better on dark */
+  --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.45);
+  --focus-ring-error: 0 0 0 0.1875rem rgba(255, 95, 95, 0.4);
+  --overlay-scrim: rgba(0, 0, 0, 0.6);
+}

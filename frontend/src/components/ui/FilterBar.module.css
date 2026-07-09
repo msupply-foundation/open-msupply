@@ -1,0 +1,211 @@
+/*
+ * Filter bar — port of the RnD prototype's FilterBar.module.css plus the
+ * relevant parts of its shared Menu.module.css. Radix state selectors become
+ * Kobalte's (`data-state='open'` → `data-expanded`, `data-state='checked'` →
+ * `data-checked`) and the prototype's hard-coded whites become contrast
+ * tokens. Menus are portaled to <body>, so they inherit `dir` and mirror in
+ * RTL.
+ */
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* "Filters" trigger + enum trigger — a light bordered box (a select-style
+   control, distinct from the pill action buttons). */
+.trigger,
+.enumTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 8.125rem;
+  height: var(--nav-item-height);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.trigger:hover,
+.enumTrigger:hover,
+.trigger[data-expanded],
+.enumTrigger[data-expanded] {
+  background: var(--bg-group-light);
+}
+
+.trigger:focus-visible,
+.enumTrigger:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+}
+
+.triggerChevron {
+  font-size: 1.125rem;
+  color: var(--gray-main);
+  flex-shrink: 0;
+}
+
+/* Count badge on the enum trigger */
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  margin-inline-start: var(--space-2);
+  padding: 0 0.3125rem;
+  border-radius: 0.5625rem;
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+/* Inline text filter chip */
+.textFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--nav-item-height);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+}
+
+/* Focus glow per the TextField input spec (the prototype only recoloured the
+   border). */
+.textFilter:focus-within {
+  border-color: var(--primary-main);
+  box-shadow: var(--focus-ring);
+}
+
+.textFilterIcon {
+  display: inline-flex;
+  font-size: 1rem;
+  color: var(--gray-main);
+  flex-shrink: 0;
+}
+
+.input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  min-width: 10rem;
+}
+
+.enumFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Round remove button on each chip */
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gray-main);
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.remove:hover {
+  background: var(--bg-group-main);
+  color: var(--text-body);
+}
+
+.remove:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -2px;
+}
+
+/* --- Menus (both dropdowns share these) --------------------------------- */
+
+.content {
+  z-index: 50;
+  min-inline-size: 12.5rem;
+  max-block-size: 21.25rem;
+  overflow-y: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-4);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  white-space: nowrap;
+}
+
+.item[data-highlighted] {
+  background: var(--bg-group-main);
+}
+
+.itemLabel {
+  flex: 1;
+}
+
+/* Kobalte's Separator renders an <hr> — flatten it to a token hairline. */
+.separator {
+  height: 1px;
+  margin: var(--space-1) 0;
+  border: none;
+  background: var(--color-divider);
+}
+
+/* Checkbox rows (enum menu) */
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  border: 1px solid var(--gray-light);
+  border-radius: var(--radius-sm);
+  color: var(--primary-contrast);
+}
+
+.checkboxItem[data-checked] .checkbox {
+  background: var(--primary-main);
+  border-color: var(--primary-main);
+}
+
+.indicator {
+  display: inline-flex;
+  font-size: 0.75rem;
+}
+
+@media (pointer: coarse) {
+  .item {
+    min-height: var(--touch-target);
+  }
+}

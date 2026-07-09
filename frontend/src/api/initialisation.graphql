@@ -1,0 +1,112 @@
+query initialisationStatus {
+  initialisationStatus {
+    status
+    siteName
+  }
+}
+
+mutation initialiseSite($input: SyncSettingsInput!) {
+  initialiseSite(input: $input) {
+    ... on SyncSettingsNode {
+      __typename
+      username
+    }
+    ... on SyncErrorNode {
+      __typename
+      fullError
+    }
+    ... on SyncErrorV7Node {
+      __typename
+      fullError
+    }
+  }
+}
+
+mutation manualSync {
+  manualSync
+}
+
+query latestSyncStatus {
+  latestSyncStatus {
+    ...SyncStatus
+  }
+}
+
+subscription syncInfoUpdated {
+  syncInfoUpdated {
+    syncStatus {
+      ...SyncStatus
+    }
+  }
+}
+
+fragment SyncStatus on FullSyncStatusNode {
+  ... on FullSyncStatusV7Node {
+    __typename
+    isSyncing
+    error {
+      fullError
+    }
+    pull {
+      started
+      finished
+      total
+      done
+    }
+    push {
+      started
+      finished
+      total
+      done
+    }
+    integration {
+      started
+      finished
+      total
+      done
+    }
+    lastSuccessfulSync {
+      started
+      finished
+    }
+  }
+  ... on FullSyncStatusV5V6Node {
+    __typename
+    isSyncing
+    error {
+      fullError
+    }
+    prepareInitial {
+      started
+      finished
+    }
+    pullCentral {
+      started
+      finished
+      total
+      done
+    }
+    pullRemote {
+      started
+      finished
+      total
+      done
+    }
+    push {
+      started
+      finished
+      total
+      done
+    }
+    integration {
+      started
+      finished
+      total
+      done
+    }
+    lastSuccessfulSync {
+      started
+      finished
+    }
+  }
+}

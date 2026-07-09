@@ -1,0 +1,69 @@
+query me {
+  me {
+    ... on UserNode {
+      __typename
+      ...UserInfo
+    }
+  }
+}
+
+query authToken($username: String!, $password: String!) {
+  authToken(username: $username, password: $password) {
+    ... on AuthToken {
+      __typename
+      user {
+        ...UserInfo
+      }
+    }
+    ... on AuthTokenError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+query refreshToken {
+  refreshToken {
+    ... on RefreshToken {
+      __typename
+      token
+    }
+    ... on RefreshTokenError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+query logout {
+  logout {
+    ... on Logout {
+      __typename
+      userId
+    }
+  }
+}
+
+# Spec (Store Login, Guard 1): both the me endpoint and a successful login return the
+# same shape — guaranteed by sharing this fragment.
+fragment UserInfo on UserNode {
+  __typename
+  userId
+  username
+  inactivityTimeoutSeconds
+  tokenRefreshIntervalSeconds
+  defaultStore {
+    id
+  }
+  stores {
+    nodes {
+      id
+      code
+      name
+    }
+  }
+}

@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>i18n Analysis — open-msupply-frontend</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fbfbfa; --surface: #ffffff; --surface-2: #f4f4f2;
+    --ink: #1a1a1a; --ink-soft: #4b5057; --ink-faint: #8b9099;
+    --line: #e4e4e0; --line-strong: #d0d0cb;
+    --accent: #3b5bdb; --accent-soft: #e8ecfb;
+    --good: #2f9e44; --warn: #e8890c; --heavy: #e03131;
+    --good-bg: #e9f6ec; --warn-bg: #fbeed9; --heavy-bg: #fbe4e4;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131417; --surface: #1b1d21; --surface-2: #232529;
+      --ink: #ececed; --ink-soft: #b3b6bc; --ink-faint: #7c8089;
+      --line: #2c2f34; --line-strong: #3a3e44;
+      --accent: #7e97ff; --accent-soft: #23283d;
+      --good: #5bc46f; --warn: #f0a94a; --heavy: #f2686b;
+      --good-bg: #16311c; --warn-bg: #3a2b12; --heavy-bg: #3a1b1c;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 30px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #fbfbfa; --surface: #ffffff; --surface-2: #f4f4f2;
+    --ink: #1a1a1a; --ink-soft: #4b5057; --ink-faint: #8b9099;
+    --line: #e4e4e0; --line-strong: #d0d0cb;
+    --accent: #3b5bdb; --accent-soft: #e8ecfb;
+    --good: #2f9e44; --warn: #e8890c; --heavy: #e03131;
+    --good-bg: #e9f6ec; --warn-bg: #fbeed9; --heavy-bg: #fbe4e4;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05);
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #131417; --surface: #1b1d21; --surface-2: #232529;
+    --ink: #ececed; --ink-soft: #b3b6bc; --ink-faint: #7c8089;
+    --line: #2c2f34; --line-strong: #3a3e44;
+    --accent: #7e97ff; --accent-soft: #23283d;
+    --good: #5bc46f; --warn: #f0a94a; --heavy: #f2686b;
+    --good-bg: #16311c; --warn-bg: #3a2b12; --heavy-bg: #3a1b1c;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 30px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 56px 24px 96px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+  h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; text-wrap: balance; margin: 0 0 16px; }
+  .lede { font-size: 17px; color: var(--ink-soft); max-width: 64ch; margin: 0 0 8px; }
+  .meta-line { font-family: var(--mono); font-size: 12.5px; color: var(--ink-faint); margin-top: 18px; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .meta-line b { color: var(--ink-soft); font-weight: 600; }
+  .docnav { display: flex; flex-wrap: wrap; gap: 8px; margin: 26px 0 0; }
+  .docnav a { font-family: var(--mono); font-size: 12px; text-decoration: none; color: var(--ink-soft); border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; background: var(--surface); }
+  .docnav a[aria-current] { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  section { margin-top: 52px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-soft); font-weight: 700; margin: 0 0 4px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  h3.blk { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; margin: 28px 0 6px; }
+  .section-note { font-size: 14.5px; color: var(--ink-soft); margin: 14px 0 22px; max-width: 68ch; }
+  p { max-width: 70ch; }
+  .prose { font-size: 15px; color: var(--ink-soft); }
+  .prose p { margin: 12px 0; }
+  .prose ul, .prose ol { margin: 12px 0; padding-left: 22px; }
+  .prose li { margin: 8px 0; }
+  .prose li b, .prose p b { color: var(--ink); font-weight: 600; }
+  .prose strong { color: var(--ink); }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  a { color: var(--accent); }
+  a:focus-visible, .docnav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); margin: 8px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 620px; background: var(--surface); }
+  thead th { text-align: left; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; padding: 13px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line-strong); white-space: nowrap; vertical-align: bottom; }
+  th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); }
+  tbody td { padding: 13px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface-2); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; box-shadow: var(--shadow); }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
+  .callout { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 12px; padding: 22px 24px; margin-top: 20px; }
+  .callout h3 { margin: 0 0 8px; font-size: 16px; font-weight: 800; color: var(--ink); }
+  .callout p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+  .callout strong { color: var(--ink); }
+  .pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill.good { color: var(--good); background: var(--good-bg); }
+  .pill.warn { color: var(--warn); background: var(--warn-bg); }
+  .pill.heavy { color: var(--heavy); background: var(--heavy-bg); }
+  .pill.base { color: var(--accent); background: var(--accent-soft); }
+  .kv { display: grid; grid-template-columns: 130px 1fr; gap: 4px 16px; font-size: 14px; margin: 8px 0 4px; }
+  .kv dt { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-faint); padding-top: 2px; }
+  .kv dd { margin: 0; color: var(--ink); }
+  footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+  pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; overflow-x: auto; margin: 14px 0; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  .tok-c { color: var(--ink-faint); font-style: italic; }
+</style></head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">i18n · Analysis</p>
+  <h1>Internationalisation for the SolidJS front end</h1>
+  <p class="lede">
+    What the existing open mSupply i18n subsystem does, how much of it the app actually uses, and where
+    <code>@solid-primitives/i18n</code> stops and our own code has to begin. This is the evidence behind the
+    decision to hand-roll the gap layer on top of the primitive.
+  </p>
+  <div class="meta-line">
+    <span><b>Status</b> Analysis — informs the KDD</span>
+    <span><b>Reference</b> open-msupply/client · packages/common/src/intl</span>
+    <span><b>Target</b> open-msupply-frontend (SolidJS)</span>
+  </div>
+  <nav class="docnav">
+    <a href="./analysis.html" aria-current="page">Analysis</a>
+    <a href="./decision.html">Decision (KDD)</a>
+    <a href="./implementation-plan.html">Implementation plan</a>
+  </nav>
+
+  <section>
+    <h2>The existing system</h2>
+    <div class="prose">
+      <p>
+        The React app's i18n lives in <code>packages/common/src/intl</code>. It is a full <strong>i18next</strong>
+        stack — not a thin wrapper — combining <code>i18next</code>, <code>react-i18next</code>,
+        <code>i18next-chained-backend</code>, <code>i18next-localstorage-backend</code>,
+        <code>i18next-http-backend</code>, and <code>i18next-browser-languagedetector</code>. Around that core sits a
+        formatting and metadata layer built on <code>Intl</code>, <code>date-fns</code>, <code>currency.js</code> and
+        <code>pluralize</code>.
+      </p>
+      <p>The concrete capabilities:</p>
+      <ul>
+        <li><b>Two namespaces</b> — <code>common</code> (≈3,000 keys, shipped as static JSON per language) and
+          <code>custom-translations</code> (fetched live from the Rust server at
+          <code>/custom-translations?lng={{lng}}</code>, so a deployment can override strings without a rebuild).</li>
+        <li><b>Chained caching</b> — localStorage first (7-day TTL, keyed by a build-time <code>LANG_VERSION</code> for
+          cache-busting), falling back to HTTP; a custom <code>GetBackendByNamespace</code> delegator routes each
+          namespace to its own backend.</li>
+        <li><b>Language detection</b> — querystring → cookie → localStorage → sessionStorage → a custom browser
+          detector → htmlTag; plus per-user locale persistence.</li>
+        <li><b>10 languages</b> — ar, en, es, fr, fr-DJ, ps, prs, pt, ru, tet; with <b>RTL</b> for ar/prs/ps.</li>
+        <li><b>Locale-aware numbers</b> — Arabic-Indic and extended-Arabic digit systems, wired into i18next's
+          <code>{{x, number}}</code> formatter (with a documented ICU workaround for Pashto).</li>
+        <li><b>Dates</b> (date-fns per locale: localised date/time, relative time, age), <b>currency</b>
+          (<code>currency.js</code>), <b>English pluralisation</b> (<code>pluralize</code>), server-error translation,
+          and localised full names.</li>
+        <li><b>Typed keys</b> — <code>LocaleKey</code> derived from <code>en/common.json</code>, giving a typed
+          <code>t(key)</code>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>What the app actually uses</h2>
+    <p class="section-note">
+      Ranked by real call sites across <code>packages/**/*.{ts,tsx}</code> (excluding tests, stories and the intl
+      package's own internals). Scope should follow usage, not the theoretical surface.
+    </p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Capability</th><th class="num">Call sites</th><th>In scope for the port?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>String translation</b> — <code>t(key)</code>, interpolation, typed keys</td><td class="num">~4,300</td><td><span class="pill base">core</span> primitive gives this</td></tr>
+          <tr><td><b>Intl utils</b> — current language, options, switch, RTL flag</td><td class="num">68</td><td><span class="pill good">yes</span> hand-rolled</td></tr>
+          <tr><td><b>Date / time formatting</b> — <code>useFormatDateTime</code></td><td class="num">61</td><td><span class="pill good">yes</span> hand-rolled (date-fns)</td></tr>
+          <tr><td><b>English pluralisation</b> — <code>getPlural</code></td><td class="num">45</td><td><span class="pill good">yes</span> hand-rolled</td></tr>
+          <tr><td><b>RTL direction</b> — <code>isRtl</code></td><td class="num">42</td><td><span class="pill good">yes</span> hand-rolled</td></tr>
+          <tr><td><b>Localised full name</b> — <code>getLocalisedFullName</code></td><td class="num">38</td><td><span class="pill good">yes</span> hand-rolled</td></tr>
+          <tr><td><b>Number formatting</b> — locale digits, parse, round</td><td class="num">33</td><td><span class="pill good">yes</span> hand-rolled (<code>Intl</code>)</td></tr>
+          <tr><td><b>Currency</b> — <code>useCurrency</code></td><td class="num">12</td><td><span class="pill warn">out</span> already a manual import</td></tr>
+          <tr><td><b>Language switching</b> + per-user persistence</td><td class="num">7</td><td><span class="pill good">yes</span> hand-rolled</td></tr>
+          <tr><td><b>Server-error translation</b></td><td class="num">6</td><td><span class="pill good">yes</span> hand-rolled</td></tr>
+          <tr><td><b>Custom (server) translations</b> + invalidate</td><td class="num">6</td><td><span class="pill good">yes</span> hand-rolled</td></tr>
+          <tr><td><b>MUI / MRT widget locales</b></td><td class="num">2 ea</td><td><span class="pill warn">out</span> excluded (no MUI/MRT)</td></tr>
+          <tr><td><b>Rich JSX interpolation</b> — <code>&lt;Trans&gt;</code></td><td class="num">0–4</td><td><span class="pill warn">out</span> excluded</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note" style="margin-top:18px;">
+      <b>String translation is ~99% of the usage.</b> Everything else is a formatting + infrastructure layer that is
+      largely <b>library-independent</b> — built on <code>Intl</code> and <code>date-fns</code>, it looks almost the same
+      whichever translation core we pick.
+    </p>
+  </section>
+
+  <section>
+    <h2>What the primitive gives — and where it stops</h2>
+    <p class="section-note">
+      <code>@solid-primitives/i18n</code> (2.2.1, ~27 KB unpacked, +0.47 KB gzip in a production build) is a set of
+      small composable primitives, not a framework. Here is the boundary.
+    </p>
+    <div class="cards">
+      <div class="card">
+        <h3 class="blk" style="margin-top:0;">Provided by the primitive</h3>
+        <div class="prose" style="font-size:14px;">
+          <ul>
+            <li><code>flatten(dict)</code> — flattens a nested dictionary to dotted keys.</li>
+            <li><code>translator(() =&gt; dict, resolveTemplate)</code> — a reactive lookup with
+              <code>{{token}}</code> interpolation.</li>
+            <li><code>resolveTemplate</code> — the interpolation resolver.</li>
+            <li><code>chainedTranslator</code> / <code>scopedTranslator</code> — typed access & module scoping.</li>
+            <li>Reactivity is native: the translator reads a signal, so any dictionary or locale change re-renders.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="blk" style="margin-top:0;">The gap we must build</h3>
+        <div class="prose" style="font-size:14px;">
+          <ul>
+            <li><b>Plural selection</b> for non-English (CLDR categories via <code>Intl.PluralRules</code>).</li>
+            <li><b>Namespaces</b> — <code>common</code> + <code>custom-translations</code>, with fallback.</li>
+            <li><b>Loading &amp; caching</b> — lazy per-language fetch, localStorage cache, <code>LANG_VERSION</code>
+              busting.</li>
+            <li><b>Live server overrides</b> — fetch <code>/custom-translations</code>, merge, invalidate.</li>
+            <li><b>Language detection</b> + per-user locale persistence + reactive switch.</li>
+            <li><b>Formatting &amp; metadata</b> — numbers/digits, dates, RTL, name order, server errors.</li>
+            <li><b>Typed <code>LocaleKey</code></b> derived from the source catalog.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <p class="section-note" style="margin-top:20px;">
+      The primitive covers the <b>~99% of usage</b> (string lookup + interpolation) in under half a kilobyte. The gap is
+      real but bounded, and — crucially — <b>most of it is the same code regardless of the translation core</b>. The one
+      place the primitive genuinely beats the alternatives is reactivity: it is signal-native, whereas
+      <code>react-i18next</code> has no SolidJS equivalent.
+    </p>
+  </section>
+
+  <section>
+    <h2>Why not the full i18next stack?</h2>
+    <div class="prose">
+      <p>
+        i18next would hand us namespaces, chained caching, the backend delegator, lazy loading and detection largely for
+        free — but at <strong>+13.6 KB gzip</strong>, roughly <strong>69% of the entire current app</strong> (19.8 KB
+        gzip baseline). It also brings no SolidJS binding, so its reactivity would need a hand-written shim anyway, and it
+        pulls a plugin ecosystem and configuration surface that runs against this project's stated
+        <em>simplification</em> and <em>click-through</em> principles (see <code>specs/technical-spec.md</code>).
+      </p>
+      <p>
+        The gap layer we would write on top of the primitive is <b>thinner than i18next's config surface</b>, fully
+        traceable, and costs almost nothing in bytes. The trade is that we own and test that layer — which the decision
+        record weighs explicitly.
+      </p>
+    </div>
+    <div class="callout">
+      <h3>Conclusion</h3>
+      <p>
+        Adopt <strong>@solid-primitives/i18n</strong> as the translation core and <strong>hand-roll the gap</strong>
+        between it and open mSupply's real needs. The heaviest usage is covered by the primitive for ~0.5 KB; the
+        remaining infrastructure and formatting layer is bounded, largely library-independent, and better owned than
+        imported at 27× the byte cost. Currency, MUI/MRT locales and <code>&lt;Trans&gt;</code> are out of scope.
+        → See the <a href="./decision.html">Decision record</a> and <a href="./implementation-plan.html">Implementation
+        plan</a>.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    open-msupply-frontend · i18n analysis · reference: open-msupply/client · usage from grep of packages/**/*.{ts,tsx}
+  </footer>
+
+</div></body>
+</html>

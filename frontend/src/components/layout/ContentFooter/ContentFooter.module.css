@@ -1,0 +1,20 @@
+/*
+ * Content footer strip. Same slotting contract as Header.module.css: one flat
+ * flex-wrap container, loose children flow from the inline-start edge and
+ * ContentFooterActions pins itself inline-end with an auto margin. Squeezed,
+ * the actions wrap onto their own line intrinsically — no breakpoints.
+ * flex-shrink: 0 keeps the bar its natural height inside the shell's main
+ * flex column (it must never be crushed by a tall body).
+ */
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding-block: var(--space-3);
+  padding-inline: var(--space-5);
+  background: var(--bg-white);
+  border-block-start: 1px solid var(--color-border-value);
+}

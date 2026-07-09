@@ -1,0 +1,13 @@
+{
+  "app.loading": "Chargement…",
+  "login.title": "Connexion",
+  "login.username": "Nom d'utilisateur",
+  "login.password": "Mot de passe",
+  "login.username-required": "Le nom d'utilisateur est requis",
+  "login.password-required": "Le mot de passe est requis",
+  "login.submitting": "Connexion…",
+  "login.submit": "Se connecter",
+  "login.failed-attempts_one": "{{ count }} tentative échouée",
+  "login.failed-attempts_other": "{{ count }} tentatives échouées",
+  "language.name": "Français"
+}
