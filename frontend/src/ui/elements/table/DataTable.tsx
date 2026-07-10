@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from 'solid-js';
+import { createEffect, createSignal, For, on, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import {
   createSolidTable,
@@ -7,15 +7,23 @@ import {
   getCoreRowModel,
   type Cell as TanCell,
   type ColumnDef,
+  type ColumnOrderState,
+  type ColumnPinningState,
+  type ColumnSizingState,
   type Row as TanRow,
   type RowData,
   type RowSelectionState,
   type SortingState,
   type Updater,
+  type VisibilityState,
 } from '@tanstack/solid-table';
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
+import type { TableConfig, TableConfigKey } from './tableConfig';
+import { pxToRem, remToPx } from '../../utils/rem';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
-import { MaximiseIcon, MinimiseIcon } from '../../icons';
+import { MaximiseIcon, MinimiseIcon, SettingsIcon } from '../../icons';
+import { Popover } from '../feedback/Popover';
+import { ColumnSettings } from './ColumnSettings';
 import { t } from '../../../intl';
 import styles from './DataTable.module.css';
 
@@ -29,6 +37,10 @@ declare module '@tanstack/solid-table' {
     /** Text alignment for the cell + header — a display-only convention TanStack has no
      *  concept of; read by the renderers below and applied via a data-align attribute. */
     align?: 'left' | 'right' | 'center';
+    /** Max number of lines this column's body cells may wrap to before truncating with an
+     *  ellipsis (default is single-line nowrap). e.g. 2 = up to two lines then clamp. A
+     *  display convention; applied via a --wrap-lines custom property on the cell. */
+    wrapLines?: number;
   }
 }
 
@@ -85,6 +97,16 @@ export type DataTableProps<T, K extends string> = {
   enableSelection?: boolean;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
+
+  // --- Column config (order/sizing/pinning/visibility), owned by the page. ---
+  // Controlled exactly like sort/selection (kdd/table-state): the page resolves the layers
+  // (default → global → user) into ONE `config` (see createTableConfig) and this table
+  // mirrors it into TanStack state; a column-state change calls setConfig with the RESOLVED
+  // next value for that one field (this table applies TanStack's functional updater against
+  // the current config first — see below — so the page just receives a value, like onSort).
+  // Both optional — omit them and the table just uses TanStack's own defaults from `columns`.
+  config?: TableConfig;
+  setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
 };
 
 export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX.Element {
@@ -125,6 +147,34 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
     props.onSelectionChange?.(Object.keys(next).filter((id) => next[id]));
   };
 
+  // --- Column config ⇄ the page's resolved config (order/sizing/pinning/visibility) ---
+  // Each field mirrors props.config into TanStack state, with TanStack's own empty default
+  // (an absent field means "TanStack decides" — declaration order, all visible, etc.). Each
+  // on*Change resolves TanStack's updater against the current value (same as sort/selection
+  // above) and hands the concrete value to setConfig — so the page receives a value, not an
+  // updater. Inlined per field (no generic helper) — four small, click-through handlers.
+  const columnOrder = (): ColumnOrderState => props.config?.columnOrder ?? [];
+  const columnPinning = (): ColumnPinningState => props.config?.columnPinning ?? {};
+  const columnVisibility = (): VisibilityState => props.config?.columnVisibility ?? {};
+
+  // Column sizing crosses a unit boundary: config/appData stores REM (so widths scale with
+  // the root font-size like the rest of the UI — see utils/rem), but TanStack works in PX.
+  // So the state getter converts the stored rem → px, and commits convert px → rem.
+  //
+  // Live resize (columnResizeMode 'onChange') would otherwise persist on every drag tick.
+  // Instead a TRANSIENT px signal overlays config DURING an active drag: onColumnSizingChange
+  // writes it (keeps the column moving live, no persistence), and an effect commits px→rem
+  // via setConfig once the drag ends, then clears it. Non-drag changes (the size input in
+  // ColumnSettings) come through setConfig directly and persist immediately.
+  const [transientSizing, setTransientSizing] = createSignal<ColumnSizingState | null>(null);
+  const configSizingPx = (): ColumnSizingState => {
+    const rem = props.config?.columnSizing ?? {};
+    return Object.fromEntries(Object.entries(rem).map(([id, r]) => [id, remToPx(r)]));
+  };
+  const pxToRemSizing = (px: ColumnSizingState): ColumnSizingState =>
+    Object.fromEntries(Object.entries(px).map(([id, p]) => [id, pxToRem(p)]));
+  const columnSizing = (): ColumnSizingState => transientSizing() ?? configSizingPx();
+
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
@@ -139,17 +189,61 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
       get rowSelection() {
         return rowSelection();
       },
+      get columnOrder() {
+        return columnOrder();
+      },
+      get columnSizing() {
+        return columnSizing();
+      },
+      get columnPinning() {
+        return columnPinning();
+      },
+      get columnVisibility() {
+        return columnVisibility();
+      },
     },
     manualSorting: true,
     enableSortingRemoval: false,
+    enableColumnResizing: true,
+    columnResizeMode: 'onChange',
     get enableRowSelection() {
       return props.enableSelection ?? false;
     },
     onSortingChange,
     onRowSelectionChange,
+    onColumnOrderChange: (u) => props.setConfig?.('columnOrder', functionalUpdate(u, columnOrder())),
+    // Sizing (px): during a live resize drag, park it in the transient signal (moves the
+    // column, no persistence); the effect below commits px→rem on drag end. Any other
+    // sizing change (the ColumnSettings size input) persists immediately as rem.
+    onColumnSizingChange: (u) => {
+      const nextPx = functionalUpdate(u, columnSizing());
+      if (table.getState().columnSizingInfo.isResizingColumn) {
+        setTransientSizing(nextPx);
+      } else {
+        props.setConfig?.('columnSizing', pxToRemSizing(nextPx));
+      }
+    },
+    onColumnPinningChange: (u) => props.setConfig?.('columnPinning', functionalUpdate(u, columnPinning())),
+    onColumnVisibilityChange: (u) =>
+      props.setConfig?.('columnVisibility', functionalUpdate(u, columnVisibility())),
     getRowId: (row) => props.rowKey(row),
     getCoreRowModel: getCoreRowModel(),
   });
+
+  // Commit a live resize once the drag ends: when isResizingColumn clears and we hold a
+  // transient px sizing, convert it to rem, persist via setConfig, and drop the transient
+  // (config, now updated, takes over as the source). Guarded by `on` so it only fires on
+  // the resizing-state transition, not on unrelated reactivity.
+  const isResizing = () => table.getState().columnSizingInfo.isResizingColumn;
+  createEffect(
+    on(isResizing, (resizing, wasResizing) => {
+      if (wasResizing && !resizing) {
+        const pending = transientSizing();
+        if (pending) props.setConfig?.('columnSizing', pxToRemSizing(pending));
+        setTransientSizing(null);
+      }
+    }),
+  );
 
   const leafColumnCount = () =>
     table.getVisibleLeafColumns().length + (props.enableSelection ? 1 : 0);
@@ -164,6 +258,20 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
       {/* Toolbar sits ABOVE the scroll area (not inside it), so it never scrolls with the
           table content and doesn't collide with the scroll region's rounded border. */}
       <div class={styles.toolbar}>
+        {/* Column settings — only when the page wired config controls (setConfig present);
+            otherwise there's nothing to configure. Trigger lives here beside full-screen
+            (OMS toolbar layout); the panel is the separate ColumnSettings, driven by the
+            same config/setConfig this table already mirrors. */}
+        <Show when={props.setConfig}>
+          <Popover
+            placement="bottom-end"
+            trigger={<SettingsIcon />}
+            triggerLabel={t('table.columns')}
+            triggerClass={styles.controlButton}
+          >
+            <ColumnSettings table={table} config={props.config} setConfig={props.setConfig} />
+          </Popover>
+        </Show>
         <button
           type="button"
           class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
@@ -231,6 +339,13 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
 const cellAlign = <T,>(cell: TanCell<T, unknown>): 'left' | 'right' | 'center' | undefined =>
   cell.column.columnDef.meta?.align;
 
+// The wrap-lines convention: how many lines a cell may wrap to before truncating. Absent
+// (or <= 1) means the default single-line nowrap. Returns the clamp count when > 1.
+const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
+  const lines = cell.column.columnDef.meta?.wrapLines;
+  return lines && lines > 1 ? lines : undefined;
+};
+
 // A body row: its cells, clickable when onRowClick is set.
 function TableRow<T>(props: {
   row: TanRow<T>;
@@ -256,7 +371,18 @@ function TableRow<T>(props: {
       </Show>
       <For each={props.row.getVisibleCells()}>
         {(cell) => (
-          <td class={styles.td} data-align={cellAlign(cell)}>
+          <td
+            class={styles.td}
+            data-align={cellAlign(cell)}
+            // data-wrap + --wrap-lines: when a column sets meta.wrapLines > 1, the cell
+            // clamps to that many lines then ellipsises (CSS line-clamp); otherwise the
+            // default single-line nowrap applies. min-width keeps the column-width floor.
+            data-wrap={cellWrapLines(cell) ? '' : undefined}
+            style={{
+              'min-width': `${cell.column.getSize()}px`,
+              ...(cellWrapLines(cell) ? { '--wrap-lines': String(cellWrapLines(cell)) } : {}),
+            }}
+          >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </td>
         )}
@@ -265,12 +391,14 @@ function TableRow<T>(props: {
   );
 }
 
-// A header cell: a sortable label. No per-column menu, no resize.
+// A header cell: a sortable label + a resize handle on the trailing edge.
 function HeaderCell<T>(props: {
   header: import('@tanstack/solid-table').Header<T, unknown>;
 }): JSX.Element {
   const column = () => props.header.column;
   const canSort = () => column().getCanSort();
+  const canResize = () => column().getCanResize();
+  const isResizing = () => column().getIsResizing();
   const align = () => column().columnDef.meta?.align;
   const indicator = () => {
     const sorted = column().getIsSorted();
@@ -278,14 +406,36 @@ function HeaderCell<T>(props: {
     return <span class={styles.sortIndicator}>{sorted === 'desc' ? '▼' : '▲'}</span>;
   };
   return (
-    <th class={styles.th} data-align={align()} data-testid={canSort() ? `column-${column().id}` : undefined}>
+    <th
+      class={styles.th}
+      data-align={align()}
+      data-testid={canSort() ? `column-${column().id}` : undefined}
+      // Auto table layout (columns flex to fill); getSize() is applied as a min-width FLOOR,
+      // so a configured size / a resize drag widens the column without losing the auto-fill.
+      style={{ 'min-width': `${column().getSize()}px` }}
+    >
       <span
         class={`${styles.thLabel} ${canSort() ? styles.thSortable : ''}`}
         onClick={canSort() ? column().getToggleSortingHandler() : undefined}
       >
-        {flexRender(column().columnDef.header, props.header.getContext())}
+        {/* Header text wraps up to 2 lines (.thText clamp); the sort indicator is a
+            separate non-shrinking sibling so it stays visible when the text wraps. */}
+        <span class={styles.thText}>
+          {flexRender(column().columnDef.header, props.header.getContext())}
+        </span>
         {indicator()}
       </span>
+      {/* Resize handle on the trailing edge. TanStack's getResizeHandler drives the drag
+          (mouse + touch); we style a thin divider and highlight it while resizing. */}
+      <Show when={canResize()}>
+        <span
+          class={`${styles.resizeHandle} ${isResizing() ? styles.resizeHandleActive : ''}`}
+          onMouseDown={props.header.getResizeHandler()}
+          onTouchStart={props.header.getResizeHandler()}
+          onClick={(event) => event.stopPropagation()}
+          aria-hidden="true"
+        />
+      </Show>
     </th>
   );
 }
