@@ -1,9 +1,8 @@
-import { createMemo, createResource, createSignal, Show } from 'solid-js';
+import { createMemo, createResource, createSignal, Match, Show, Switch } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
-import { authUser } from '../../auth/authContext';
-import { localisedDate, t } from '../../intl';
+import { t } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
@@ -13,36 +12,27 @@ import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../ui/elements/buttons/Button';
 import { DataTable, type Column, type SortState } from '../../ui/elements/table/DataTable';
-import {
-  getUserTableConfig,
-  parseGlobalTableConfig,
-  resolveTableConfig,
-  setUserTableConfig,
-  type TableConfig,
-} from '../../ui/elements/table/tableConfig';
+import { getBooleanCell, getDateCell, getNumberCell } from '../../ui/elements/table/tableHelpers';
 import { StatusChip } from '../../ui/elements/feedback/StatusChip';
+import { Dialog } from '../../ui/elements/feedback/Dialog';
+import { Alert } from '../../ui/elements/feedback/Alert';
 import { FilterBar } from '../../ui/elements/selectors/FilterBar';
 import { Pagination } from '../../ui/elements/table/Pagination';
-import { PlusCircleIcon, TrashIcon } from '../../ui/icons';
+import { CheckIcon, CloseIcon, PlusCircleIcon, TrashIcon, XCircleIcon } from '../../ui/icons';
 import { useUrlQueryState } from '../../list/urlQueryState';
 import { stripEmpty } from '../../typeHelpers';
-import { Stocktakes } from './stocktakes.generated';
+import { Stocktakes, DeleteStocktakes } from './stocktakes.generated';
 import type { StocktakesVariables, StocktakesResult } from './stocktakes.generated';
-import { GlobalTableConfigs } from '../../api/tableConfig.generated';
 import { filterFields, type StocktakeFilter } from './listFilters';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
-// filter/sort/pagination/view state come from the vertical; the UI is composed from
-// library components (Page / Header / FilterBar / DataTable / Pagination /
-// ContentFooter), so the page owns no CSS. The table itself is the shared
-// TanStack-driven DataTable (column config, selection, table/card view). Spec:
-// spec/stocktakes (S1) + spec/ui-standards/{list-views,tables}.
+// filter/sort/pagination state come from the vertical; the UI is composed from library
+// components (Page / Header / FilterBar / DataTable / Pagination / ContentFooter), so the
+// page owns no CSS. The table itself is the shared TanStack-driven DataTable (server sort,
+// selection, pagination, full-screen). Spec: spec/stocktakes (S1) +
+// spec/ui-standards/{list-views,tables}.
 
 const DEFAULT_PAGE_SIZE = 20;
-
-// One id per list table, keying both the user's saved config (app data) and the API
-// global default (see DataTable/tableConfig.ts). Matches Open mSupply's tableId.
-const TABLE_ID = 'stocktake-list';
 
 type StocktakeRow = StocktakesResult['stocktakes']['nodes'][number];
 
@@ -51,14 +41,13 @@ type StocktakeRow = StocktakesResult['stocktakes']['nodes'][number];
 type SortKey = NonNullable<StocktakesVariables['sort']>[number]['key'];
 
 // URL-backed state. Filter and sort are exactly the generated GraphQL shapes (no
-// remapping); pagination is offset + first, carried in the URL, and the view mode
-// (table vs card) is carried too so it is shareable/restorable.
+// remapping); pagination is offset + first, carried in the URL so it is
+// shareable/restorable.
 type StocktakesListState = {
   filter: StocktakeFilter;
   sort?: StocktakesVariables['sort'];
   offset: number;
   first: number;
-  view?: 'table' | 'card';
 };
 
 const DEFAULT_STATE: StocktakesListState = { filter: {}, offset: 0, first: DEFAULT_PAGE_SIZE };
@@ -100,7 +89,7 @@ const StocktakesList: Component = () => {
   // filter chip, which our filter builder maps to the same effective filter, does not
   // reflash the list. Reading data() during a refetch returns the previous value and
   // does not suspend the section's boundary, so interaction never remounts the table.
-  const [data] = createResource(
+  const [data, { refetch }] = createResource(
     () => JSON.stringify(variables()),
     async (serialised) => {
       const result = await graphqlFetch(Stocktakes, JSON.parse(serialised) as StocktakesVariables);
@@ -112,40 +101,64 @@ const StocktakesList: Component = () => {
   const rows = () => data()?.nodes ?? [];
   const totalCount = () => data()?.totalCount ?? 0;
 
-  // --- Column config (order / width / pinning / visibility), per user ---
-  // API global default for this table (read-only; no save-config mutation here).
-  const [globalDefault] = createResource(
-    () => params.storeId,
-    async (storeId) => {
-      const result = await graphqlFetch(GlobalTableConfigs, { storeId });
-      if (result.kind !== 'success') return undefined;
-      return parseGlobalTableConfig(result.data.preferences.globalTableConfigs, TABLE_ID);
-    },
-  );
-  const userId = () => authUser()?.userId ?? '';
-  const [userConfig, setUserConfig] = createSignal<TableConfig>(getUserTableConfig(userId(), TABLE_ID));
-  const tableConfig = () => resolveTableConfig(userConfig(), globalDefault());
-  const onConfigChange = (config: TableConfig) => {
-    setUserTableConfig(userId(), TABLE_ID, config);
-    setUserConfig(config);
-  };
-
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = state().sort?.[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
 
-  // Clicking a sortable header: sort ascending, or flip direction if it is already
-  // the key. Resets to the first page. Written as the GraphQL array shape.
-  const onSort = (key: SortKey) => {
-    const s = currentSort();
-    const desc = s?.key === key ? !s.desc : false;
+  // Clicking a sortable header: the DataTable (TanStack) computes the next direction
+  // and hands back key + desc; we just record it as the GraphQL sort array, resetting
+  // to the first page.
+  const onSort = (key: SortKey, desc: boolean) => {
     setState({ ...state(), sort: [{ key, desc }], offset: 0 });
   };
 
   const onFilterChange = (filter: StocktakeFilter) => {
     setState({ ...state(), filter, offset: 0 });
     setSelectedIds([]);
+  };
+
+  // --- Delete (batch) ---
+  // The backend is the source of truth for what can be deleted — we don't pre-check
+  // status client-side. Clicking Delete opens a plain "delete N?" confirm; confirming
+  // sends every selected id in one batch and the dialog walks a small state machine:
+  //   confirm → deleting → success | error
+  // The batch is atomic: if any stocktake can't be deleted (e.g. finalised →
+  // CannotEditStocktake) the whole batch fails and NOTHING is deleted, so on error we
+  // show OUR translated message (not the server's English `description`). While deleting,
+  // the dialog is not dismissable (blocking) and Cancel is hidden. Success reports the
+  // count; the list re-queries so the deleted rows disappear (kdd/state-management). The
+  // selected ids are snapshotted on open so a re-sort/refetch can't change what we submit.
+  type DeletePhase = 'confirm' | 'deleting' | 'success' | 'error';
+  type DeleteState = { ids: string[]; phase: DeletePhase };
+  const [deleteState, setDeleteState] = createSignal<DeleteState | null>(null);
+
+  const openDeleteDialog = () => setDeleteState({ ids: [...selectedIds()], phase: 'confirm' });
+
+  const runDelete = async () => {
+    const ids = deleteState()?.ids ?? [];
+    if (ids.length === 0) return setDeleteState(null);
+    setDeleteState({ ids, phase: 'deleting' });
+    const result = await graphqlFetch(DeleteStocktakes, {
+      storeId: params.storeId,
+      ids: ids.map((id) => ({ id })),
+    });
+    if (result.kind !== 'success') {
+      // transport/unexpected → the global error modal already surfaced it; drop back to
+      // the confirm state so the delete dialog isn't left stuck loading.
+      setDeleteState({ ids, phase: 'confirm' });
+      return;
+    }
+    const items = result.data.batchStocktake.deleteStocktakes ?? [];
+    const failed = items.some((i) => i.response.__typename === 'DeleteStocktakeError');
+    if (failed) {
+      setDeleteState({ ids, phase: 'error' });
+      return;
+    }
+    // Success: re-query so the deleted rows disappear behind the dialog, then report.
+    setSelectedIds([]);
+    void refetch();
+    setDeleteState({ ids, phase: 'success' });
   };
 
   const openRow = (row: StocktakeRow) =>
@@ -156,23 +169,52 @@ const StocktakesList: Component = () => {
   // switch. Passing columns()/crumbs() into a component prop lets Solid wrap it as
   // a getter, so the table headers and breadcrumb re-label when the locale changes.
   const columns = (): Column<StocktakeRow, SortKey>[] => [
-    { header: t('stocktake.column.number'), sortKey: 'stocktakeNumber', cell: (r) => r.stocktakeNumber },
-    { header: t('stocktake.column.status'), sortKey: 'status', cell: (r) => <StatusChip {...statusMeta(r.status)} /> },
-    { header: t('stocktake.column.description'), sortKey: 'description', cell: (r) => r.description ?? '—' },
-    { header: t('stocktake.column.comment'), sortKey: 'comment', cell: (r) => r.comment ?? '—' },
     {
-      header: t('stocktake.column.stocktake-date'),
-      sortKey: 'stocktakeDate',
-      cell: (r) => (r.stocktakeDate ? localisedDate(r.stocktakeDate) : '—'),
+      accessorKey: 'stocktakeNumber',
+      sortKey: 'stocktakeNumber',
+      header: t('stocktake.column.number'),
+      ...getNumberCell(),
     },
-    { header: t('stocktake.column.created'), sortKey: 'createdDatetime', cell: (r) => localisedDate(r.createdDatetime) },
-    { header: t('stocktake.column.locked'), cell: (r) => (r.isLocked ? t('common.yes') : t('common.no')) },
+    {
+      accessorKey: 'status',
+      sortKey: 'status',
+      header: t('stocktake.column.status'),
+      cell: (info) => <StatusChip {...statusMeta(info.getValue<StocktakeRow['status']>())} />,
+    },
+    {
+      accessorKey: 'description',
+      sortKey: 'description',
+      header: t('stocktake.column.description'),
+    },
+    {
+      accessorKey: 'comment',
+      sortKey: 'comment',
+      header: t('stocktake.column.comment'),
+    },
+    {
+      accessorKey: 'stocktakeDate',
+      sortKey: 'stocktakeDate',
+      header: t('stocktake.column.stocktake-date'),
+      ...getDateCell(),
+    },
+    {
+      accessorKey: 'createdDatetime',
+      sortKey: 'createdDatetime',
+      header: t('stocktake.column.created'),
+      ...getDateCell(),
+    },
+    {
+      accessorKey: 'isLocked',
+      header: t('stocktake.column.locked'),
+      ...getBooleanCell(),
+    },
   ];
 
   const crumbs = () => [{ label: t('nav.inventory') }, { label: t('nav.inventory.stocktakes') }];
 
   return (
     <Page
+      fillBody
       header={
         <Header>
           <Breadcrumb crumbs={crumbs()} />
@@ -193,16 +235,32 @@ const StocktakesList: Component = () => {
         </Header>
       }
       contentFooter={
-        <Show when={selectedIds().length > 0}>
+        // The page's one contextual footer band (matching Open mSupply): pagination
+        // normally, replaced by the selection action bar while rows are selected.
+        <Show
+          when={selectedIds().length > 0}
+          fallback={
+            <ContentFooter>
+              <Pagination
+                offset={state().offset}
+                pageSize={state().first}
+                total={totalCount()}
+                onOffsetChange={(offset) => setState({ ...state(), offset })}
+                onPageSizeChange={(first) => setState({ ...state(), first, offset: 0 })}
+              />
+            </ContentFooter>
+          }
+        >
           <ContentFooter>
+            {/* Matching Open mSupply's action bar: the count and the row action(s)
+                (Delete) group on the inline-start edge; Clear pins inline-end. */}
             <strong>{t('stocktake.selected', { count: selectedIds().length })}</strong>
+            <Button variant="secondary" icon={<TrashIcon />} onClick={openDeleteDialog}>
+              {t('common.delete')}
+            </Button>
             <ContentFooterActions>
-              <Button variant="secondary" onClick={() => setSelectedIds([])}>
+              <Button variant="secondary" icon={<CloseIcon />} onClick={() => setSelectedIds([])}>
                 {t('common.clear')}
-              </Button>
-              {/* Batch delete is deferred (mutation + confirmation dialog). */}
-              <Button variant="secondary" icon={<TrashIcon />} disabled title={t('common.coming-soon')}>
-                {t('common.delete')}
               </Button>
             </ContentFooterActions>
           </ContentFooter>
@@ -217,23 +275,69 @@ const StocktakesList: Component = () => {
         onSort={onSort}
         onRowClick={openRow}
         emptyMessage={t('stocktake.empty')}
-        config={tableConfig()}
-        onConfigChange={onConfigChange}
-        view={state().view ?? 'table'}
-        onViewChange={(view) => setState({ ...state(), view })}
         enableSelection
         selectedIds={selectedIds()}
         onSelectionChange={setSelectedIds}
-        // Rendered inside the table so it stays visible in full screen (the
-        // selection bulk-bar lives in the page's action footer per the spec).
-        footer={
-          <Pagination
-            offset={state().offset}
-            pageSize={state().first}
-            total={totalCount()}
-            onOffsetChange={(offset) => setState({ ...state(), offset })}
-            onPageSizeChange={(first) => setState({ ...state(), first, offset: 0 })}
-          />
+      />
+      {/* Delete: a plain "delete N?" confirm; if the atomic batch reports it can't (a
+          finalised stocktake in the selection), the same dialog switches to the
+          translated error with just a Close action (nothing was deleted). */}
+      <Dialog
+        open={deleteState() != null}
+        // Blocking while the mutation is in flight — no click-outside / Escape exit until
+        // it resolves; dismissable again on confirm / success / error.
+        dismissable={deleteState()?.phase !== 'deleting'}
+        onClose={() => setDeleteState(null)}
+        icon={<TrashIcon />}
+        title={t('stocktake.delete.title')}
+        description={
+          <Switch
+            fallback={t('stocktake.delete.confirm', { count: deleteState()?.ids.length ?? 0 })}
+          >
+            <Match when={deleteState()?.phase === 'error'}>
+              <Alert severity="error">{t('stocktake.delete.cannot-edit')}</Alert>
+            </Match>
+            <Match when={deleteState()?.phase === 'success'}>
+              {t('stocktake.delete.success', { count: deleteState()?.ids.length ?? 0 })}
+            </Match>
+          </Switch>
+        }
+        actions={
+          <Switch
+            fallback={
+              // confirm / deleting: Cancel (hidden while deleting) + the loading Delete.
+              <>
+                <Show when={deleteState()?.phase === 'confirm'}>
+                  <Button
+                    variant="secondary"
+                    icon={<XCircleIcon />}
+                    onClick={() => setDeleteState(null)}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                </Show>
+                <Button
+                  variant="secondary"
+                  icon={<TrashIcon />}
+                  loading={deleteState()?.phase === 'deleting'}
+                  onClick={() => void runDelete()}
+                >
+                  {t('stocktake.delete.action')}
+                </Button>
+              </>
+            }
+          >
+            <Match when={deleteState()?.phase === 'success'}>
+              <Button variant="secondary" icon={<CheckIcon />} onClick={() => setDeleteState(null)}>
+                {t('common.ok')}
+              </Button>
+            </Match>
+            <Match when={deleteState()?.phase === 'error'}>
+              <Button variant="secondary" icon={<XCircleIcon />} onClick={() => setDeleteState(null)}>
+                {t('common.cancel')}
+              </Button>
+            </Match>
+          </Switch>
         }
       />
     </Page>

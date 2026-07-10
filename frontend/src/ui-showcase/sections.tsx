@@ -5,6 +5,7 @@ import { ButtonsShowcase } from './ButtonsShowcase'
 import { InputsShowcase } from './InputsShowcase'
 import { SelectorsShowcase } from './SelectorsShowcase'
 import { FeedbackShowcase } from './FeedbackShowcase'
+import { TableShowcase } from './TableShowcase'
 import { HeaderShowcase } from './HeaderShowcase'
 import { TabBarShowcase } from './TabBarShowcase'
 import { ContentFooterShowcase } from './ContentFooterShowcase'
@@ -18,6 +19,10 @@ export type SectionDef = {
   component: Component
   /** Which menu-bar group the section lists under. */
   category: SectionCategory
+  /** When true, the section renders a full-height page (its own Page frame) that fills
+   *  the panel — the shell drops the section title + panel padding/scroll so the page
+   *  owns the whole region (e.g. the Table demo, which is a real list Page). */
+  fill?: boolean
 }
 
 /*
@@ -29,10 +34,6 @@ export const categories: { id: SectionCategory; label: string; icon: Component<I
   { id: 'components', label: 'Components', icon: SlidersIcon },
   { id: 'layout', label: 'Layout Elements', icon: CopyIcon },
 ]
-
-const ComingSoon: Component = () => (
-  <p>Nothing here yet — components land here as they're built.</p>
-)
 
 /*
  * The storybook's section registry. Adding a section = add an entry here;
@@ -47,7 +48,7 @@ export const sections: SectionDef[] = [
   { id: 'selectors', label: 'Selectors', component: SelectorsShowcase, category: 'components' },
   { id: 'tab-bar', label: 'Tab bar', component: TabBarShowcase, category: 'components' },
   { id: 'feedback', label: 'Feedback', component: FeedbackShowcase, category: 'components' },
-  { id: 'table', label: 'Table', component: ComingSoon, category: 'components' },
+  { id: 'table', label: 'Table', component: TableShowcase, category: 'components', fill: true },
   { id: 'header', label: 'Header', component: HeaderShowcase, category: 'layout' },
   { id: 'content-footer', label: 'Content footer', component: ContentFooterShowcase, category: 'layout' },
   { id: 'side-panel', label: 'Side panel', component: SidePanelShowcase, category: 'layout' },

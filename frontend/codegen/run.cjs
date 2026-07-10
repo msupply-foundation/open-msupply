@@ -23,7 +23,7 @@ const {
 
 const SCHEMA_URL = process.env.SCHEMA_URL || "http://localhost:8000/graphql";
 const SRC_DIR = path.resolve(__dirname, "..", "src");
-const PLUGIN_PATH = path.resolve(__dirname, "plugin.js");
+const PLUGIN_PATH = path.resolve(__dirname, "plugin.cjs");
 
 function walk(dir, acc = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

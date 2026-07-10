@@ -7,7 +7,7 @@
  */
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { generate, variablesType } = require("./helpers.js");
+const { generate, variablesType } = require("./helpers.cjs");
 
 test("an operation with no variables produces Record<string, never>", () => {
   const schema = `type Query { ping: Boolean! }`;

@@ -75,6 +75,15 @@
   background: var(--bg-white);
 }
 
+/* Fill variant: the section is a full-height page that owns the region. No padding or
+   panel scroll (the page owns its own scroll); a flex column so the Page frame fills. */
+.panelFill {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
 .sectionTitle {
   margin-block: 0 var(--space-4);
   font-size: var(--text-lg);

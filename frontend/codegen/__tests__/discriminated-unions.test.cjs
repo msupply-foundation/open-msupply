@@ -13,7 +13,7 @@
  */
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { generate, resultType, fragmentType } = require("./helpers.js");
+const { generate, resultType, fragmentType } = require("./helpers.cjs");
 
 const UNION_SCHEMA = `
   type Query { r: R! rs: [R!]! }

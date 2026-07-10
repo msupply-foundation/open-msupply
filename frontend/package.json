@@ -10,9 +10,9 @@
     "preview": "vite preview",
     "css:types": "tcm --pattern '**/*.module.css' src",
     "check": "tcm --pattern '**/*.module.css' src && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs",
-    "codegen": "node codegen/run.js",
+    "codegen": "node codegen/run.cjs",
     "test": "vitest run",
-    "test:codegen": "node --test \"codegen/__tests__/*.test.js\""
+    "test:codegen": "node --test \"codegen/__tests__/*.test.cjs\""
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",

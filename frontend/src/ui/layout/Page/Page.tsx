@@ -1,4 +1,5 @@
-import type { JSX } from 'solid-js'
+import { Show, type JSX } from 'solid-js'
+import { useFullScreen } from '../AppShell/shellContext'
 import styles from './Page.module.css'
 
 export interface PageProps {
@@ -25,6 +26,13 @@ export interface PageProps {
   sidePanel?: JSX.Element
   /** Page body, rendered in the scrolling region. */
   children: JSX.Element
+  /**
+   * Fill mode: the body becomes a non-scrolling flex column with no padding, so a single
+   * child that manages its own scroll (e.g. the DataTable, which fills the space and
+   * scrolls internally with sticky headers) claims the full region. Default (false) is
+   * the normal scrolling-body behaviour, where the body itself scrolls its content.
+   */
+  fillBody?: boolean
 }
 
 /*
@@ -44,13 +52,21 @@ export interface PageProps {
  * footer never move. Pages compose this frame but own NO CSS of their own
  * (enforced by scripts/check-page-css.mjs) — see kdd/page-composition.
  */
-export const Page = (props: PageProps) => (
-  <div class={styles.page}>
-    {props.header}
-    <div class={styles.middle}>
-      <div class={styles.body}>{props.children}</div>
-      {props.sidePanel}
+export const Page = (props: PageProps) => {
+  // In shell full-screen mode the page header hides too (only content + footer remain),
+  // matching Open mSupply. Outside a shell (no provider) useFullScreen() is undefined, so
+  // the header always shows there.
+  const fullScreen = useFullScreen()
+  return (
+    <div class={styles.page}>
+      <Show when={!fullScreen?.isFullScreen()}>{props.header}</Show>
+      <div class={styles.middle}>
+        <div class={`${styles.body} ${props.fillBody ? styles.bodyFill : ''}`}>
+          {props.children}
+        </div>
+        {props.sidePanel}
+      </div>
+      {props.contentFooter}
     </div>
-    {props.contentFooter}
-  </div>
-)
+  )
+}

@@ -1,33 +1,50 @@
 /*
- * DataTable — the shared, TanStack-driven data table (list + detail lines).
+ * DataTable — the shared, TanStack-driven data table (list views).
  *
- * ⚠️ PLACEHOLDER STYLING. The design system has finished designs for the table
- * BODY (rows, headers, selection, hover) — those follow the same tokens as the
- * old display-shell Table.module.css. But the table CHROME introduced with the
- * engine has NO design yet: the toolbar controls (full-screen / Columns / Settings
- * / Group-by), the Columns reorder-pin-visibility panel, the card-view layout, the
- * field-group bands, and the grouped-row headers. Everything below the "PLACEHOLDER"
- * marker is a functional, token-driven stand-in — glyph buttons, plain popovers,
- * simple cards — meant to be replaced once those surfaces are designed. It is
- * token-driven (so it themes) but it is not the final look.
+ * ⚠️ PLACEHOLDER STYLING for the chrome. The design system has finished designs for the
+ * table BODY (rows, headers, selection, hover) — those follow the same tokens as the old
+ * display-shell Table.module.css. But the toolbar (full-screen button) and the
+ * full-screen surface have NO design yet; everything below the "PLACEHOLDER" marker is a
+ * functional, token-driven stand-in meant to be replaced once designed.
  */
 
 /* --- Table body (designed) -------------------------------------------------- */
 
+/* The DataTable fills the space its container gives it (a flex child in the page body)
+   and owns its own scroll — so the column headers stay pinned and horizontal scroll is
+   available immediately, rather than the whole page body scrolling. */
+.root {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  min-inline-size: 0;
+}
+
+/* The bordered box starts here (the table itself), so the transparent toolbar above sits
+   OUTSIDE the border rather than being enclosed by it. */
 .tableScroll {
-  overflow-x: auto;
-  width: 100%;
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
   background: var(--bg-white);
 }
 
 .table {
+  width: 100%;
   border-collapse: collapse;
   font-size: var(--text-sm);
 }
 
+/* Column-header row stays pinned to the top of the scroll container while the body
+   scrolls. Sticky sits on the cells (more reliable than on <thead>); z-index keeps it
+   above the scrolling body rows. */
 .th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
   padding: var(--space-2) var(--space-3);
   border-block-end: 1px solid var(--color-divider);
   background: var(--bg-toolbar);
@@ -45,19 +62,33 @@
   white-space: nowrap;
 }
 
-.thInner {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
+/* Column alignment (Column meta.align), applied to header + body via a data-align
+   attribute. Body cells align with text-align; the header label is a flex row
+   (.thLabel), so it aligns with justify-content. Left is the default and needs no rule. */
+.th[data-align='right'],
+.td[data-align='right'] {
+  text-align: end;
+}
+
+.th[data-align='center'],
+.td[data-align='center'] {
+  text-align: center;
 }
 
 .thLabel {
-  flex: 1;
   display: flex;
   align-items: center;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+/* Header label is a flex row, so align it with justify-content (data-align lives on the
+   parent .th). Placed after the base .thLabel to keep specificity ascending. */
+.th[data-align='right'] .thLabel {
+  justify-content: flex-end;
+}
+
+.th[data-align='center'] .thLabel {
+  justify-content: center;
 }
 
 .thSortable {
@@ -89,60 +120,38 @@
 .selectCell {
   width: 2.25rem;
   padding: var(--space-2) var(--space-3);
+  /* Same row divider as the data cells (.td) so the checkbox column isn't the one column
+     without horizontal lines. */
+  border-block-end: 1px solid var(--color-divider);
   text-align: center;
 }
 
 /* ==========================================================================
- * PLACEHOLDER — the engine chrome below has no finished design yet.
+ * PLACEHOLDER — the toolbar + full-screen chrome below has no finished design yet.
  * ========================================================================== */
 
-/* Drag handle on the trailing edge of a header to resize the column. */
-.resizeHandle {
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 100%;
-  width: 0.3125rem;
-  cursor: col-resize;
-  user-select: none;
-  touch-action: none;
-}
-
-.resizeHandle:hover {
-  background: var(--gray-light);
-}
-
-/* A pinned column sticks to the left edge while the rest scrolls. */
-.pinnedLeft {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: var(--bg-white);
-  box-shadow: var(--shadow-2);
-}
-
-/* When full screen, the table area covers the viewport above everything. */
+/* When full screen, the table area covers the viewport above everything. Still a flex
+   column so the inner .root (and its scroll) fills it. */
 .fullScreen {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: var(--bg-white);
   padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
+  background: var(--bg-white);
 }
 
-/* --- The header controls (full screen, columns, settings, group-by) --- */
-
-.tableControls {
+/* A thin bar above the scroll area holding the full-screen toggle. It sits outside the
+   scroll region, so it never moves when the table scrolls (either axis). Transparent —
+   the header row below it is delineated by its own border, not a shared fill. */
+.toolbar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-1);
+  block-size: 2.25rem;
+  padding-inline: var(--space-1);
 }
 
-.controlButton {
+.fullScreenButton {
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
@@ -153,174 +162,12 @@
   border-radius: var(--radius-sm);
 }
 
-.controlButton:hover {
-  background: var(--bg-toolbar);
+.fullScreenButton:hover {
+  background: color-mix(in srgb, var(--text-body) 8%, transparent);
 }
 
 .controlButtonActive {
   background: color-mix(in srgb, var(--secondary-main) 14%, transparent);
   border-color: color-mix(in srgb, var(--secondary-main) 45%, transparent);
   color: var(--secondary-main);
-}
-
-.controlWrapper {
-  position: relative;
-  display: inline-block;
-}
-
-/* The Columns panel and Settings popover. */
-.columnsPanel {
-  position: absolute;
-  right: 0;
-  z-index: 20;
-  margin-top: var(--space-1);
-  background: var(--surface-raised);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-3);
-  min-width: 15rem;
-  padding: var(--space-1);
-}
-
-.columnsPanelRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--text-sm);
-}
-
-.columnsPanelName {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text-body);
-}
-
-.columnsPanelIconButton {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: var(--text-secondary);
-  padding: 0 var(--space-1);
-  font-size: var(--text-sm);
-}
-
-.columnsPanelIconButton:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.menuItem {
-  display: block;
-  width: 100%;
-  text-align: left;
-  border: none;
-  background: transparent;
-  color: var(--text-body);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-sm);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-}
-
-.menuItem:hover {
-  background: var(--bg-toolbar);
-}
-
-.menuItem:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-/* --- Card view (the DataTable's alternate body renderer) --- */
-
-.cardList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: var(--space-3);
-  padding: var(--space-1) 0;
-}
-
-.card {
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  background: var(--bg-white);
-}
-
-.cardClickable {
-  cursor: pointer;
-}
-
-.cardClickable:hover {
-  background: var(--bg-row);
-}
-
-.cardField {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.cardFieldLabel {
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-}
-
-.cardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
-
-/* A labelled field-group section inside a card (Column.group). */
-.cardGroup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding-top: var(--space-1);
-  border-top: 1px solid var(--color-divider);
-}
-
-.cardGroupHeading {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--secondary-main);
-}
-
-/* The table-view field-group band: a spanning header cell above the column headers. */
-.groupBandCell {
-  text-align: left;
-  padding: var(--space-1) var(--space-3);
-  border-block-end: 1px solid var(--color-divider);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--secondary-main);
-  white-space: nowrap;
-}
-
-/* A grouped-rows header row (group-by), spanning the table. */
-.groupHeaderRow {
-  background: var(--bg-group-main);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-}
-
-.groupToggle {
-  color: var(--text-secondary);
-  margin-inline-end: var(--space-2);
-  display: inline-block;
-  width: 0.75rem;
 }

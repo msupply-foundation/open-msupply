@@ -2,6 +2,7 @@ import { createSignal, createEffect, onCleanup, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { sections, categories } from "./sections";
 import { MenuBar, type MenuBarState } from "../ui/layout/AppShell/MenuBar";
+import { ShellFullScreenContext } from "../ui/layout/AppShell/shellContext";
 import type { NavItem, NavLeaf } from "../ui/layout/AppShell/navModel";
 import type { LocaleKey } from "../intl";
 import { useIsNavOverlay } from "../ui/utils/createMediaQuery";
@@ -55,6 +56,7 @@ export function ShowcaseApp() {
   // keeps for the real app (rail collapse, overlay open/close).
   const [railCollapsed, setRailCollapsed] = createSignal(false);
   const [overlayOpen, setOverlayOpen] = createSignal(false);
+  const [fullScreen, setFullScreen] = createSignal(false);
   const isOverlay = useIsNavOverlay();
   const nav: MenuBarState = {
     railCollapsed,
@@ -74,37 +76,50 @@ export function ShowcaseApp() {
   };
 
   return (
-    <div class={styles.shell}>
-      <MenuBar
-        nav={nav}
-        isOverlay={isOverlay()}
-        upper={showcaseNav}
-        selectedId={activeId()}
-        onSelect={select}
-      />
-      <div class={styles.main}>
-        <header class={styles.header}>
-          {/* No library Header here (that's a page-region component), so
-              the shell renders its own overlay hamburger. */}
-          <Show when={isOverlay()}>
-            <button
-              type="button"
-              class={styles.hamburger}
-              onClick={nav.openOverlay}
-              aria-label="Open section menu"
-              aria-expanded={overlayOpen()}
-            >
-              <MenuIcon />
-            </button>
+    // Provide the same shell-level full-screen context the real AppShell does, so a
+    // section that's a real page (Table) full-screens properly — the showcase chrome
+    // (menu + header strip) hides and the page's footer/pagination/selection stay.
+    <ShellFullScreenContext.Provider value={{ isFullScreen: fullScreen, setFullScreen }}>
+      <div class={styles.shell}>
+        <Show when={!fullScreen()}>
+          <MenuBar
+            nav={nav}
+            isOverlay={isOverlay()}
+            upper={showcaseNav}
+            selectedId={activeId()}
+            onSelect={select}
+          />
+        </Show>
+        <div class={styles.main}>
+          <Show when={!fullScreen()}>
+            <header class={styles.header}>
+              {/* No library Header here (that's a page-region component), so
+                  the shell renders its own overlay hamburger. */}
+              <Show when={isOverlay()}>
+                <button
+                  type="button"
+                  class={styles.hamburger}
+                  onClick={nav.openOverlay}
+                  aria-label="Open section menu"
+                  aria-expanded={overlayOpen()}
+                >
+                  <MenuIcon />
+                </button>
+              </Show>
+              <h1 class={styles.title}>Open mSupply — UI library</h1>
+              <ThemeToggle />
+            </header>
           </Show>
-          <h1 class={styles.title}>Open mSupply — UI library</h1>
-          <ThemeToggle />
-        </header>
-        <main class={styles.panel}>
-          <h2 class={styles.sectionTitle}>{active().label}</h2>
-          <Dynamic component={active().component} />
-        </main>
+          <main class={`${styles.panel} ${active().fill ? styles.panelFill : ''}`}>
+            {/* A fill section (e.g. Table) is a real full-height page that owns the whole
+                region — no section title, no panel padding/scroll. */}
+            <Show when={!active().fill}>
+              <h2 class={styles.sectionTitle}>{active().label}</h2>
+            </Show>
+            <Dynamic component={active().component} />
+          </main>
+        </div>
       </div>
-    </div>
+    </ShellFullScreenContext.Provider>
   );
 }

@@ -25,3 +25,31 @@ query stocktakes(
     }
   }
 }
+
+# Batch-delete stocktakes by id. The backend is the source of truth for what can be
+# deleted (e.g. a finalised stocktake can't) — we send every selected id and the batch
+# fails ATOMICALLY: if any item errors, nothing is deleted and each item's `response`
+# carries the outcome. We select the error union so the page can match on the error
+# __typename and show a translated message; a successful batch is reflected by re-querying
+# the list (kdd/state-management), no per-row confirmation.
+mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
+  batchStocktake(storeId: $storeId, input: { deleteStocktakes: $ids }) {
+    ... on BatchStocktakeResponse {
+      __typename
+      deleteStocktakes {
+        id
+        response {
+          __typename
+          ... on DeleteResponse {
+            id
+          }
+          ... on DeleteStocktakeError {
+            error {
+              __typename
+            }
+          }
+        }
+      }
+    }
+  }
+}

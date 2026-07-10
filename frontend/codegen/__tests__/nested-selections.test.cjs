@@ -7,7 +7,7 @@
  */
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { generate, resultType } = require("./helpers.js");
+const { generate, resultType } = require("./helpers.cjs");
 
 const SCHEMA = `
   type Query {
