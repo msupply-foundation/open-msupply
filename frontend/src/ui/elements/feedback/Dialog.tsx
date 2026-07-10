@@ -1,10 +1,12 @@
 import {
   createEffect,
+  createSignal,
   createUniqueId,
   onCleanup,
   Show,
   type JSX,
 } from 'solid-js'
+import { PortalMountContext } from '../../utils/portalMount'
 import styles from './Dialog.module.css'
 
 export interface DialogProps {
@@ -27,8 +29,27 @@ export interface DialogProps {
   icon?: JSX.Element
   description?: JSX.Element
   children?: JSX.Element
+  /**
+   * Bottom-pinned content sitting just above the actions (e.g. a status/estimate banner).
+   * When the dialog reserves height (minBodyHeightRem), the slack falls ABOVE this footer, so
+   * the footer + actions stay on the dialog's bottom edge instead of floating with the content.
+   */
+  footer?: JSX.Element
   /** Footer buttons (rendered inline-end). */
   actions?: JSX.Element
+  /**
+   * Width, in rem — for wider forms (e.g. the stocktake create modal). The dialog sits at this
+   * fixed width (clamped down to the viewport on narrow screens), so its box stays a steady size
+   * regardless of content — a form switching modes doesn't change width. Overrides the default
+   * (30rem) via a custom property; the page passes a number, not CSS, so it owns no stylesheet
+   * (principle #10).
+   */
+  widthRem?: number
+  /**
+   * Minimum body height, in rem — reserve space so a dialog whose content changes size (e.g.
+   * a form switching modes) doesn't jump. Same custom-property mechanism as widthRem.
+   */
+  minBodyHeightRem?: number
 }
 
 /*
@@ -50,6 +71,11 @@ export const Dialog = (props: DialogProps) => {
   let dialog!: HTMLDialogElement
   const titleId = createUniqueId()
   const descriptionId = createUniqueId()
+  // Popups (Select / Combobox) opened inside this dialog must MOUNT INTO it — a popup
+  // portaled to <body> would be `inert` (unclickable) and painted behind the top-layer
+  // dialog. We expose the dialog element via context; nested popups mount here. The dialog
+  // box is overflow:visible (the clip lives on the inner .body) so the popup isn't cut off.
+  const [dialogEl, setDialogEl] = createSignal<HTMLElement>()
 
   createEffect(() => {
     if (props.open && !dialog.open) dialog.showModal()
@@ -62,8 +88,17 @@ export const Dialog = (props: DialogProps) => {
 
   return (
     <dialog
-      ref={dialog}
+      ref={(el) => {
+        dialog = el
+        setDialogEl(el)
+      }}
       class={styles.dialog}
+      style={{
+        ...(props.widthRem ? { '--dialog-width': `${props.widthRem}rem` } : {}),
+        ...(props.minBodyHeightRem
+          ? { '--dialog-min-body-height': `${props.minBodyHeightRem}rem` }
+          : {}),
+      }}
       aria-labelledby={titleId}
       aria-describedby={props.description ? descriptionId : undefined}
       // Escape arrives as `cancel` before the dialog closes — a blocking
@@ -80,25 +115,30 @@ export const Dialog = (props: DialogProps) => {
         event.target === dialog && props.dismissable !== false && props.onClose()
       }
     >
-      <div class={styles.body}>
-        <header class={styles.header}>
-          <Show when={props.icon}>
-            <span class={styles.icon}>{props.icon}</span>
+      <PortalMountContext.Provider value={dialogEl}>
+        <div class={styles.body}>
+          <header class={styles.header}>
+            <Show when={props.icon}>
+              <span class={styles.icon}>{props.icon}</span>
+            </Show>
+            <h2 class={styles.title} id={titleId}>
+              {props.title}
+            </h2>
+          </header>
+          <Show when={props.description}>
+            <p class={styles.description} id={descriptionId}>
+              {props.description}
+            </p>
           </Show>
-          <h2 class={styles.title} id={titleId}>
-            {props.title}
-          </h2>
-        </header>
-        <Show when={props.description}>
-          <p class={styles.description} id={descriptionId}>
-            {props.description}
-          </p>
-        </Show>
-        {props.children}
-        <Show when={props.actions}>
-          <div class={styles.actions}>{props.actions}</div>
-        </Show>
-      </div>
+          {props.children}
+          <Show when={props.footer}>
+            <div class={styles.footer}>{props.footer}</div>
+          </Show>
+          <Show when={props.actions}>
+            <div class={styles.actions}>{props.actions}</div>
+          </Show>
+        </div>
+      </PortalMountContext.Provider>
     </dialog>
   )
 }

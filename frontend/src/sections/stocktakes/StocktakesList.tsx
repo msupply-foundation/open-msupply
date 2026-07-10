@@ -25,6 +25,7 @@ import { stripEmpty } from '../../typeHelpers';
 import { Stocktakes, DeleteStocktakes } from './stocktakes.generated';
 import type { StocktakesVariables, StocktakesResult } from './stocktakes.generated';
 import { filterFields, type StocktakeFilter } from './listFilters';
+import { CreateStocktakeModal } from './CreateStocktakeModal';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
 // filter/sort/pagination state come from the vertical; the UI is composed from library
@@ -51,7 +52,15 @@ type StocktakesListState = {
   first: number;
 };
 
-const DEFAULT_STATE: StocktakesListState = { filter: {}, offset: 0, first: DEFAULT_PAGE_SIZE };
+// Default sort: by stocktake number, newest (highest) first — matches Open mSupply's
+// default and puts the most recent stocktakes at the top. URL-backed, so a user's own
+// header click overrides it (and is shareable/restorable).
+const DEFAULT_STATE: StocktakesListState = {
+  filter: {},
+  sort: [{ key: 'stocktakeNumber', desc: true }],
+  offset: 0,
+  first: DEFAULT_PAGE_SIZE,
+};
 
 // Status → chip label + colour token (spread straight into StatusChip). NEW is
 // the neutral grey, FINALISED the terminal "done" green (tokens.css --status-*).
@@ -67,6 +76,10 @@ const StocktakesList: Component = () => {
   const navigate = useNavigate();
   const { state, setState } = useUrlQueryState<StocktakesListState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // The create modal owns its own form + create logic; the list just toggles it open. On a
+  // successful create it navigates away to the new stocktake's detail page, so the list needs
+  // no refetch here.
+  const [createOpen, setCreateOpen] = createSignal(false);
 
   // Column config (order/sizing/pinning/visibility), resolved default → global → user and
   // by breakpoint band (kdd/table-state). On COMPACT (narrow viewport) the default shows
@@ -246,9 +259,7 @@ const StocktakesList: Component = () => {
         <Header>
           <Breadcrumb crumbs={crumbs()} />
           <HeaderButtons>
-            {/* Create flow (modal) is deferred with the detail work — needs the
-                ⛔ Modal dialog. The button anchors the recipe shape for now. */}
-            <Button icon={<PlusCircleIcon />} disabled title={t('common.coming-soon')}>
+            <Button icon={<PlusCircleIcon />} onClick={() => setCreateOpen(true)}>
               {t('stocktake.new')}
             </Button>
           </HeaderButtons>
@@ -369,6 +380,7 @@ const StocktakesList: Component = () => {
           </Switch>
         }
       />
+      <CreateStocktakeModal open={createOpen()} onClose={() => setCreateOpen(false)} />
     </Page>
   );
 };

@@ -1,6 +1,8 @@
 import { createMemo, createSignal, Show, type JSX } from 'solid-js'
 import * as KCombobox from '@kobalte/core/combobox'
 import { ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons'
+import { usePortalMount } from '../../utils/portalMount'
+import { keepDialogOpenOnInside } from './dismissInsideGuard'
 import styles from './Combobox.module.css'
 
 interface ComboboxProps<T> {
@@ -25,6 +27,9 @@ interface ComboboxProps<T> {
   placeholder?: string
   helperText?: string
   loading?: boolean
+  disabled?: boolean
+  /** Visually hide the label (kept for a11y) — for use inside a FieldRow that shows it. */
+  hideLabel?: boolean
   class?: string
 }
 
@@ -48,6 +53,9 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   const [selected, setSelected] = createSignal<T | null>(null)
   const [inputValue, setInputValue] = createSignal('')
   let inputEl: HTMLInputElement | undefined
+  // Inside a Dialog, mount the listbox into the dialog element (top layer + non-inert);
+  // outside one this is undefined and Kobalte's default <body> portal is used.
+  const portalMount = usePortalMount()
 
   const matches = (item: T, input: string) =>
     props.filter
@@ -78,6 +86,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       onChange={handleChange}
       onInputChange={setInputValue}
       allowsEmptyCollection
+      disabled={props.disabled}
       placeholder={props.placeholder}
       itemComponent={itemProps => (
         <KCombobox.Item item={itemProps.item} class={styles.item}>
@@ -87,7 +96,11 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         </KCombobox.Item>
       )}
     >
-      <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+      {/* hideLabel keeps the label for a11y (aria-labelledby) but visually hidden — used
+          when a FieldRow already shows the label beside the control. */}
+      <KCombobox.Label class={props.hideLabel ? styles.labelHidden : styles.label}>
+        {props.label}
+      </KCombobox.Label>
       <KCombobox.Control class={styles.control}>
         <span class={styles.searchIcon} aria-hidden="true">
           <SearchIcon />
@@ -117,8 +130,14 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           {props.helperText}
         </KCombobox.Description>
       </Show>
-      <KCombobox.Portal>
-        <KCombobox.Content class={styles.content}>
+      <KCombobox.Portal mount={portalMount?.()}>
+        <KCombobox.Content
+          class={styles.content}
+          // Keep the listbox open when a pointerdown lands inside the dialog it's mounted in
+          // — Kobalte otherwise dismisses it before a mouse click commits (see
+          // dismissInsideGuard). A genuine click outside the dialog still closes it.
+          onInteractOutside={keepDialogOpenOnInside(portalMount?.())}
+        >
           <Show when={props.loading}>
             <div class={styles.status}>Loading…</div>
           </Show>

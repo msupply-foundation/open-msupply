@@ -14,6 +14,8 @@ export interface TextFieldProps
   size?: 'default' | 'small'
   /** Spec max-widths: short 25rem (codes/quantities), long 37.5rem (names), full = fill. */
   width?: 'short' | 'long' | 'full'
+  /** Visually hide the label (kept for a11y) — for use inside a FieldRow that shows it. */
+  hideLabel?: boolean
 }
 
 /*
@@ -36,6 +38,7 @@ export const TextField = (props: TextFieldProps) => {
     'required',
     'size',
     'width',
+    'hideLabel',
     'id',
     'class',
   ])
@@ -48,7 +51,7 @@ export const TextField = (props: TextFieldProps) => {
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
       data-width={local.width ?? 'short'}
     >
-      <label class={styles.label} for={inputId()}>
+      <label class={local.hideLabel ? styles.labelHidden : styles.label} for={inputId()}>
         {local.label}
         <Show when={local.required}>
           <span class={styles.required} aria-hidden="true">
