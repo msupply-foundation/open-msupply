@@ -203,6 +203,15 @@
   text-align: center;
 }
 
+/* Selected row — the SAME brand tint as a selected card (data-selected on the <tr>), so
+   selection reads identically in table and card view. The tint sits on the cells (which
+   paint over the row background). Placed AFTER the base .td / .selectCell rules so
+   specificity ascends (no-descending-specificity). */
+tr[data-selected] .td,
+tr[data-selected] .selectCell {
+  background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
+}
+
 /* ==========================================================================
  * PLACEHOLDER — the toolbar + full-screen chrome below has no finished design yet.
  * ========================================================================== */
@@ -252,4 +261,91 @@
   background: color-mix(in srgb, var(--secondary-main) 14%, transparent);
   border-color: color-mix(in srgb, var(--secondary-main) 45%, transparent);
   color: var(--secondary-main);
+}
+
+/* --- Card view (ui-standards § tables, mobile card layout) ------------------- */
+
+/* Cards flow in a WRAPPING row, each sized to its own content (width: max-content) rather
+   than a uniform grid track — a card with more/longer fields is wider than a sparse one.
+   They wrap to the next row when the row fills, and never exceed the viewport
+   (max-inline-size: 100% on the card). The scroll container (.tableScroll) handles overflow;
+   padding gives breathing room. */
+.cardGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.cardEmpty {
+  padding: var(--space-5);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  /* Basis = content width (`auto` sizes from the content — a card with more fields is
+     wider), but GROW to absorb the row's leftover space: several per row share the slack,
+     while a card alone on its row (narrow viewport) stretches to fill it. `auto` basis is
+     used over `max-content` for reliable cross-engine support. Never wider than the
+     viewport (the flex container bounds it). */
+  flex: 1 1 auto;
+  max-inline-size: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+
+/* Selected card — same brand tint the design system uses for row selection. */
+.card[data-selected] {
+  border-color: color-mix(in srgb, var(--primary-main) 45%, transparent);
+  background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
+}
+
+/* Top row: identity (title + secondary) on the left, badge pinned top-right. */
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.cardSelect {
+  margin-block-start: var(--space-1);
+  flex-shrink: 0;
+}
+
+.cardIdentity {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardPrimary {
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.cardSecondary {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.cardBadge {
+  flex-shrink: 0;
+}
+
+/* Secondary fields — a WRAPPING row of stacked label-above-value units (LabelledValue).
+   Not a fixed grid: each field takes its natural width and the row wraps to as many
+   columns as fit (ui-standards § tables; CLAUDE.md #7 intrinsic layout). column-gap
+   separates fields across; row-gap separates wrapped rows. */
+.cardFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
 }

@@ -84,6 +84,8 @@
   "table.toggle-full-screen": "تبديل ملء الشاشة",
   "table.full-screen": "ملء الشاشة",
   "table.columns": "الأعمدة",
+  "table.view-table": "عرض الجدول",
+  "table.view-cards": "عرض البطاقات",
   "table.reset-visibility": "إعادة تعيين الظهور",
   "table.reset-order": "إعادة تعيين الترتيب",
   "table.reset-size": "إعادة تعيين الحجم",
