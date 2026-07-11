@@ -555,27 +555,25 @@ export function DataTable<T, K extends string, G extends string = never>(
   const LEADING_COL_PX = 36; // 2.25rem at the 16px root
   const leadingWidth = () =>
     (props.enableSelection ? LEADING_COL_PX : 0) + (grouping().length > 0 ? LEADING_COL_PX : 0);
-  const leftPinned = () =>
-    table.getVisibleLeafColumns().filter((c) => c.getIsPinned() === 'left');
-  const rightPinned = () =>
-    table.getVisibleLeafColumns().filter((c) => c.getIsPinned() === 'right');
 
   // The sticky style for a data column's cell (header or body), or undefined when unpinned. Only
   // position + edge offset — z-index (the header-over-body / pinned-over-scrolling stacking) is
   // owned entirely by CSS (.td[data-pinned] vs .th[data-pinned]), so the SAME style is safe on a
   // header or a body cell without an inline z-index overriding the CSS layer.
+  //
+  // The edge offset is TanStack's own getStart('left') / getAfter('right') — the summed widths of
+  // the pinned columns before (left) / after (right) THIS one, on that side. Both index the column
+  // by its id (not object identity), so a cell-context column resolves correctly against the
+  // table's column list — the earlier indexOf(column) matched by reference and missed, summing the
+  // column's own width so a single right-pinned column floated one column-width off the edge. Left
+  // offsets add leadingWidth() for the (also-pinned) leading select/expander columns.
   const pinnedStyle = (column: TanColumn<T>): JSX.CSSProperties | undefined => {
     const side = column.getIsPinned();
     if (!side) return undefined;
     if (side === 'left') {
-      const before = leftPinned().slice(0, leftPinned().indexOf(column));
-      const offset = leadingWidth() + before.reduce((sum, c) => sum + c.getSize(), 0);
-      return { position: 'sticky', left: `${offset}px` };
+      return { position: 'sticky', left: `${leadingWidth() + column.getStart('left')}px` };
     }
-    const cols = rightPinned();
-    const after = cols.slice(cols.indexOf(column) + 1);
-    const offset = after.reduce((sum, c) => sum + c.getSize(), 0);
-    return { position: 'sticky', right: `${offset}px` };
+    return { position: 'sticky', right: `${column.getAfter('right')}px` };
   };
 
   // The leading select/expander columns are pinned-left too (offset 0 for the first, one column
