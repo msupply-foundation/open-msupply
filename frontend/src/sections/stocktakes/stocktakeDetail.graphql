@@ -1,8 +1,44 @@
-# A single stocktake with its lines, for the detail view. The stocktake-level fields feed
-# the page header (number / status / description / comment); the lines feed a basic table
-# (front-end sorted by our DataTable). Only the BASIC line fields are selected for now —
-# grouping, line editing, and the fuller line fragment are deferred. StocktakeResponse is
-# StocktakeNode | NodeError; the view promotes NodeError to the global error modal.
+# A single stocktake with its lines, for the detail view. The stocktake-level fields feed the
+# page header (number / status / description / comment); the lines feed the DataTable (front-end
+# sorted + grouped). StocktakeResponse is StocktakeNode | NodeError; the view promotes NodeError
+# to the global error modal.
+#
+# ONE fragment, both directions (kdd/state-management): the same StocktakeLine fragment is the
+# detail row AND what the batch mutation returns on insert/update, so a saved node splices back
+# into the rows with no remapping and no refetch.
+fragment StocktakeLine on StocktakeLineNode {
+  id
+  itemName
+  item {
+    id
+    code
+  }
+  batch
+  expiryDate
+  # manufactureDate lets the editor set/clear a manufacture date (OMS parity).
+  manufactureDate
+  snapshotNumberOfPacks
+  countedNumberOfPacks
+  packSize
+  sellPricePerPack
+  costPricePerPack
+  comment
+  note
+  # The line's location (a store-scoped lookup drives the picker; we show its code/name).
+  location {
+    id
+    code
+    name
+  }
+  # The inventory-adjustment reason (why counted differs from snapshot). reasonOption is the
+  # current field; inventoryAdjustmentReason is deprecated. Selected via reasonOptionId on save.
+  reasonOption {
+    id
+    type
+    reason
+  }
+}
+
 query stocktakeDetail($storeId: String!, $stocktakeId: String!) {
   stocktake(storeId: $storeId, id: $stocktakeId) {
     __typename
@@ -18,17 +54,7 @@ query stocktakeDetail($storeId: String!, $stocktakeId: String!) {
           __typename
           totalCount
           nodes {
-            id
-            itemName
-            item {
-              id
-              code
-            }
-            batch
-            expiryDate
-            snapshotNumberOfPacks
-            countedNumberOfPacks
-            comment
+            ...StocktakeLine
           }
         }
       }
@@ -37,6 +63,72 @@ query stocktakeDetail($storeId: String!, $stocktakeId: String!) {
       error {
         __typename
         description
+      }
+    }
+  }
+}
+
+# The one save call for the line editor: insert (new batches), update (edited existing lines),
+# delete (removed lines) in a single batchStocktake mutation. Insert/update success returns the
+# SAME StocktakeLine fragment as a detail row (spliced back with no refetch); delete returns the
+# id. Errors are per-line (each array element carries its own response union).
+mutation batchStocktakeLines(
+  $storeId: String!
+  $insert: [InsertStocktakeLineInput!]
+  $update: [UpdateStocktakeLineInput!]
+  $delete: [DeleteStocktakeLineInput!]
+) {
+  batchStocktake(
+    storeId: $storeId
+    input: {
+      insertStocktakeLines: $insert
+      updateStocktakeLines: $update
+      deleteStocktakeLines: $delete
+    }
+  ) {
+    insertStocktakeLines {
+      id
+      response {
+        __typename
+        ... on StocktakeLineNode {
+          ...StocktakeLine
+        }
+        ... on InsertStocktakeLineError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+    updateStocktakeLines {
+      id
+      response {
+        __typename
+        ... on StocktakeLineNode {
+          ...StocktakeLine
+        }
+        ... on UpdateStocktakeLineError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+    deleteStocktakeLines {
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeleteStocktakeLineError {
+          error {
+            __typename
+            description
+          }
+        }
       }
     }
   }

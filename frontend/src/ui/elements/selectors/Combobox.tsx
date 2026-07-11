@@ -1,4 +1,4 @@
-import { createMemo, createSignal, Show, type JSX } from 'solid-js'
+import { createEffect, createMemo, createSignal, on, Show, type JSX } from 'solid-js'
 import * as KCombobox from '@kobalte/core/combobox'
 import { ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons'
 import { usePortalMount } from '../../utils/portalMount'
@@ -16,6 +16,13 @@ interface ComboboxProps<T> {
    * itemToString — override when labels can collide.
    */
   itemToValue?: (item: T) => string
+  /**
+   * Controlled selection: the itemToValue key of the currently-selected item (or undefined for
+   * none). Pass it to keep the input in sync with external state — e.g. an editable cell showing
+   * a line's saved location. Omit for an uncontrolled combobox (the create/filter forms), where
+   * the selection lives only in the widget and is reported via onChange.
+   */
+  value?: string
   onChange?: (item: T | null) => void
   /** Rich per-option rendering; defaults to the plain itemToString label. */
   renderItem?: (item: T) => JSX.Element
@@ -53,6 +60,23 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   const [selected, setSelected] = createSignal<T | null>(null)
   const [inputValue, setInputValue] = createSignal('')
   let inputEl: HTMLInputElement | undefined
+
+  const keyOf = (item: T) => (props.itemToValue ?? props.itemToString)(item)
+
+  // Controlled selection: when `value` is provided, keep the internal `selected` item in sync with
+  // it (resolve the key against the current items). Skipped entirely when `value` is undefined —
+  // the widget then stays uncontrolled (create/filter forms). Guarded by `on(value, ...)` so it
+  // only reacts to the prop, not to the user's own selection.
+  createEffect(
+    on(
+      () => props.value,
+      value => {
+        if (value === undefined) return
+        const match = props.items.find(item => keyOf(item) === value) ?? null
+        if (match !== selected()) setSelected(() => match)
+      },
+    ),
+  )
   // Inside a Dialog, mount the listbox into the dialog element (top layer + non-inert);
   // outside one this is undefined and Kobalte's default <body> portal is used.
   const portalMount = usePortalMount()

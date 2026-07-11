@@ -1,4 +1,4 @@
-import { createMemo, createResource, createSignal, Show, Suspense } from 'solid-js';
+import { createEffect, createMemo, createResource, createSignal, on, Show, Suspense } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
@@ -19,19 +19,26 @@ import {
 import { getDateCell, getNumberCell } from '../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../api/createTableConfig';
 import { StocktakeDetail, type StocktakeDetailResult } from './stocktakeDetail.generated';
-import { StocktakeLineCardModal } from './StocktakeLineCardModal';
+import {
+  StocktakeLineEditModal,
+  type LineEditCommit,
+  type StocktakeLineEditItem,
+} from './StocktakeLineEditModal';
 
 // The stocktake detail view — the page a stocktake create / a list row-click lands on. The page
-// shell (breadcrumb back to the list + a title) plus a BASIC, front-end-sorted table of the
-// stocktake's lines (our DataTable). Clicking a row opens a READ-ONLY card-display modal for
-// that item's lines, demonstrating the DataTable's grouped card view.
+// shell (breadcrumb back to the list + a title) plus the stocktake's lines in the DataTable
+// (front-end sorted, optionally grouped by item, selectable). Clicking a row opens the line-edit
+// modal for that ITEM (all its batches); a save reflects in place with NO refetch — the mutation
+// returns the same StocktakeLine fragment, spliced straight back into the rows.
 //
-// Deliberately basic — line EDITING (the batchStocktake mutation, the on-row edit modal with a
-// draft store + editable cells, the no-refetch splice-back) is deferred to a later branch; here
-// everything is display-only.
+// A finalised or locked stocktake is read-only (matches OMS isStocktakeDisabled): row-click is
+// disabled. Stocktake-level edits (status change, on-hold, description) are deferred.
 
 type StocktakeNode = Extract<StocktakeDetailResult['stocktake'], { __typename: 'StocktakeNode' }>;
 type Line = StocktakeNode['lines']['nodes'][number];
+
+// A finalised or on-hold (locked) stocktake can't be edited (OMS isStocktakeDisabled).
+const isDisabled = (node: StocktakeNode) => node.status !== 'NEW' || node.isLocked;
 
 // The line fields the table can sort by (client-side). `code` reads the nested item.code.
 type SortKey = 'code' | 'itemName' | 'batch' | 'expiryDate' | 'snapshotNumberOfPacks' | 'countedNumberOfPacks';
@@ -64,9 +71,9 @@ const StocktakeDetailView: Component = () => {
   // Column config (order/sizing/visibility) + the row-grouping choice (config.groupBy) persist
   // per user/store for this table (kdd/table-state). Grouping by item collapses an item's batches.
   const tableConfig = createTableConfig({ tableId: 'stocktake-detail' });
-  // The item whose lines the card modal shows (null = closed). We snapshot the item id on click
-  // and derive its lines below, so a re-sort behind the open modal doesn't change its contents.
-  const [openItemId, setOpenItemId] = createSignal<string | null>(null);
+  // The item being edited (undefined = modal closed). Row-click sets it; the modal edits all of
+  // that item's lines and reports a commit we splice back in.
+  const [editItem, setEditItem] = createSignal<StocktakeLineEditItem | undefined>();
 
   // Fetch the stocktake. A NodeError (e.g. bad id) is promoted to the global unexpected-error
   // modal via mapSuccessToError, so it never reaches the view — we only narrow to the node.
@@ -82,15 +89,18 @@ const StocktakeDetailView: Component = () => {
     },
   );
 
-  const lines = (): Line[] => data()?.lines.nodes ?? [];
+  // Lines live in a LOCAL signal (seeded from the fetch) so a line-edit save reflects in place
+  // with no refetch: applyCommit splices the returned nodes straight in (kdd/state-management).
+  const [rows, setRows] = createSignal<Line[]>([]);
+  createEffect(on(data, (node) => setRows(node?.lines.nodes ?? [])));
 
   // Front-end sort (no pagination — the whole stocktake loads). A createMemo re-derives the
-  // ordered rows when key/direction change; the DataTable is display-only about order
-  // (manualSorting) — it renders exactly these rows and reports header clicks via onSort.
+  // ordered rows when key/direction or the underlying rows change; the DataTable is display-only
+  // about order (manualSorting) — it renders exactly these rows and reports header clicks via onSort.
   const sortedRows = createMemo<Line[]>(() => {
     const { key, desc } = sort();
     const dir = desc ? -1 : 1;
-    return [...lines()].sort((a, b) => {
+    return [...rows()].sort((a, b) => {
       const av = sortValue(a, key);
       const bv = sortValue(b, key);
       if (av < bv) return -1 * dir;
@@ -102,14 +112,26 @@ const StocktakeDetailView: Component = () => {
   // Header click: TanStack computed the next direction; just record it.
   const onSort = (key: SortKey, desc: boolean) => setSort({ key, desc });
 
-  // Row click → open the card modal for that line's ITEM (all its batches).
-  const openItem = (line: Line) => setOpenItemId(line.item.id);
-  const openLines = (): Line[] => {
-    const id = openItemId();
-    return id ? lines().filter((line) => line.item.id === id) : [];
+  // Row click → edit that line's ITEM (all its batches). The modal reads editItemLines below.
+  const openRow = (line: Line) =>
+    setEditItem({ id: line.item.id, code: line.item.code, name: line.itemName });
+  const editItemLines = createMemo<Line[]>(() => {
+    const item = editItem();
+    return item ? rows().filter((line) => line.item.id === item.id) : [];
+  });
+
+  // Reflect a save in place (no refetch): drop deleted ids, replace updated lines by id, append
+  // inserted lines — all the SAME StocktakeLine fragment, so no remapping. sortedRows re-derives.
+  const applyCommit = (commit: LineEditCommit) => {
+    setRows((current) => {
+      const deleted = new Set(commit.deletedIds);
+      const updatedById = new Map(commit.updated.map((line) => [line.id, line]));
+      const next = current
+        .filter((line) => !deleted.has(line.id))
+        .map((line) => updatedById.get(line.id) ?? line);
+      return [...next, ...commit.inserted];
+    });
   };
-  const openItemName = (): string | undefined =>
-    openLines()[0]?.itemName ?? undefined;
 
   // Crumbs are an accessor so t() re-translates on locale change; the middle crumb links back
   // to the list, the last crumb is the current page (rendered as the page <h1>).
@@ -205,7 +227,8 @@ const StocktakeDetailView: Component = () => {
               rowKey={(line) => line.id}
               sort={sort()}
               onSort={onSort}
-              onRowClick={openItem}
+              // Row click edits that item's lines — unless the stocktake is finalised/locked.
+              onRowClick={isDisabled(node) ? undefined : openRow}
               emptyMessage={t('stocktake.detail.empty')}
               // Row grouping: a toolbar toggle "group by item" (grouped by the code column — codes
               // are unique, so this groups by item identity). An item's batches collapse under one
@@ -219,11 +242,14 @@ const StocktakeDetailView: Component = () => {
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}
             />
-            <StocktakeLineCardModal
-              open={openItemId() != null}
-              onClose={() => setOpenItemId(null)}
-              itemName={openItemName()}
-              lines={openLines()}
+            <StocktakeLineEditModal
+              open={editItem() != null}
+              onClose={() => setEditItem(undefined)}
+              storeId={params.storeId}
+              stocktakeId={node.id}
+              item={editItem()}
+              lines={editItemLines()}
+              onCommitted={applyCommit}
             />
           </Page>
         )}
