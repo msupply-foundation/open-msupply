@@ -1,5 +1,5 @@
 import { createMemo, createSignal, Show, type JSX } from 'solid-js';
-import { createStore, produce, unwrap } from 'solid-js/store';
+import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../api/graphql';
 import { t } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
@@ -32,6 +32,11 @@ import {
   type StocktakeLineFragment,
   type BatchStocktakeLinesVariables,
 } from './stocktakeDetail.generated';
+import {
+  stocktakeLineErrorMessage,
+  stocktakeLineErrorField,
+  type LineErrorField,
+} from './stocktakeLineErrors';
 
 // The stocktake line-edit modal (kdd/edit-line-card-table + kdd/stocktake-line-editing). Opened
 // from a detail-view row; it edits ALL of that ITEM's lines (batches) at once — the item is fixed
@@ -112,6 +117,11 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string | undefined>();
   const [seededFor, setSeededFor] = createSignal<string>('');
+  // Per-line save errors from the server, keyed by line id: the mapped message + which field it
+  // touches (to highlight the cell). Set on a failed save, cleared for a line when it's edited.
+  const [lineErrors, setLineErrors] = createStore<
+    Record<string, { message: string; field: LineErrorField | undefined }>
+  >({});
 
   // Store-scoped reference data for the pickers — read without suspending (no remount).
   const locations = (): Location[] => locationsResource.noSuspense();
@@ -132,6 +142,7 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
       setDraft(props.lines.map((line) => ({ ...line })));
       setDeletedIds([]);
       setErrorMessage(undefined);
+      setLineErrors(reconcile({}));
     }
   };
 
@@ -145,9 +156,22 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
 
   // Edit ONE field of ONE line: locate it by id, write just that path in the store. Fine-grained
   // — only that cell reacts (the whole point of the store, vs. a map-the-array signal update).
+  // Editing a line clears its stale server error (the user is fixing it) — mirrors OMS.
   const update = <F extends keyof DraftLine>(id: string, field: F, value: DraftLine[F]) => {
     const index = draft.findIndex((line) => line.id === id);
     if (index >= 0) setDraft(index, field, value as never);
+    if (lineErrors[id]) setLineErrors(id, undefined!);
+  };
+
+  // The server error message to show on a given line's given field, or undefined. A line's error
+  // shows on the field it's about (counted / snapshot / reason); an error with no specific field
+  // (e.g. CannotEditStocktake) shows on `counted` as the row's general anchor.
+  const fieldError = (id: string, field: LineErrorField): string | undefined => {
+    const err = lineErrors[id];
+    if (!err) return undefined;
+    return err.field === field || (err.field === undefined && field === 'counted')
+      ? err.message
+      : undefined;
   };
 
   // Add a new batch (a fresh draft line for the item) — prepended, count blank.
@@ -310,15 +334,28 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
     if (result.kind !== 'success') return; // transport/NodeError → global modal already showed it
 
     const batch = result.data.batchStocktake;
-    // Any per-line error keeps the modal open with the first message (kdd/stocktake-line-editing).
-    const lineError =
-      [...(batch.insertStocktakeLines ?? []), ...(batch.updateStocktakeLines ?? [])].find(
-        (r) => r.response.__typename !== 'StocktakeLineNode',
-      ) ??
-      (batch.deleteStocktakeLines ?? []).find((r) => r.response.__typename !== 'DeleteResponse');
-    if (lineError && 'error' in lineError.response) {
-      setErrorMessage(lineError.response.error.description);
-      return;
+
+    // Collect EVERY per-line error (not just the first) → a map keyed by line id, each with a
+    // friendly mapped message + the field it touches. insert/update rows whose response isn't a
+    // StocktakeLineNode, and delete rows that aren't a DeleteResponse, carry an `error`.
+    const errors: Record<string, { message: string; field: LineErrorField | undefined }> = {};
+    for (const r of [...(batch.insertStocktakeLines ?? []), ...(batch.updateStocktakeLines ?? [])]) {
+      if (r.response.__typename !== 'StocktakeLineNode' && 'error' in r.response) {
+        const typename = r.response.error.__typename;
+        errors[r.id] = {
+          message: stocktakeLineErrorMessage(typename, r.response.error.description),
+          field: stocktakeLineErrorField(typename),
+        };
+      }
+    }
+    for (const r of batch.deleteStocktakeLines ?? []) {
+      if (r.response.__typename !== 'DeleteResponse' && 'error' in r.response) {
+        const typename = r.response.error.__typename;
+        errors[r.id] = {
+          message: stocktakeLineErrorMessage(typename, r.response.error.description),
+          field: undefined,
+        };
+      }
     }
 
     // Both insert + update arrays carry a per-row `response` that is a StocktakeLineNode on
@@ -337,7 +374,17 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
       .filter((r) => r.response.__typename === 'DeleteResponse')
       .map((r) => r.id);
 
-    props.onCommitted({ inserted, updated, deletedIds: deleted });
+    // Reflect the lines that DID save (partial success), even when others errored — the detail
+    // view splices these in; the failed ones stay in the modal for the user to fix.
+    if (inserted.length || updated.length || deleted.length) {
+      props.onCommitted({ inserted, updated, deletedIds: deleted });
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setLineErrors(reconcile(errors));
+      setErrorMessage(t('stocktake.line-edit.save-errors'));
+      return; // keep the modal open on the failed lines
+    }
     props.onClose();
   };
 
@@ -423,6 +470,7 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
             type="number"
             min="0"
             value={line.countedNumberOfPacks ?? ''}
+            error={fieldError(line.id, 'counted')}
             onInput={(e) =>
               update(line.id, 'countedNumberOfPacks', toNumberOrNull(e.currentTarget.value))
             }
@@ -536,6 +584,7 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
             itemToString={(r) => r.reason}
             itemToValue={(r) => r.id}
             value={line.reasonOption?.id}
+            helperText={fieldError(line.id, 'reason')}
             placeholder={
               needsReason(line)
                 ? t('stocktake.line-edit.reason-select')
