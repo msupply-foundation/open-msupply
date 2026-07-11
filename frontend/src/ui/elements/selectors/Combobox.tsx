@@ -1,6 +1,6 @@
 import { createEffect, createMemo, createSignal, on, Show, type JSX } from 'solid-js'
 import * as KCombobox from '@kobalte/core/combobox'
-import { ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons'
+import { AlertTriangleIcon, ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons'
 import { usePortalMount } from '../../utils/portalMount'
 import { keepDialogOpenOnInside } from './dismissInsideGuard'
 import styles from './Combobox.module.css'
@@ -33,6 +33,9 @@ interface ComboboxProps<T> {
   filter?: (item: T, input: string) => boolean
   placeholder?: string
   helperText?: string
+  /** Error message — presence switches the control to the error state (red border/glow +
+   *  aria-invalid), shown with an alert icon below the field. Mirrors TextField's `error`. */
+  error?: string
   loading?: boolean
   disabled?: boolean
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow that shows it. */
@@ -125,11 +128,15 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       <KCombobox.Label class={props.hideLabel ? styles.labelHidden : styles.label}>
         {props.label}
       </KCombobox.Label>
-      <KCombobox.Control class={styles.control}>
+      <KCombobox.Control class={styles.control} data-error={props.error ? '' : undefined}>
         <span class={styles.searchIcon} aria-hidden="true">
           <SearchIcon />
         </span>
-        <KCombobox.Input ref={inputEl} class={styles.input} />
+        <KCombobox.Input
+          ref={inputEl}
+          class={styles.input}
+          aria-invalid={props.error ? 'true' : undefined}
+        />
         <Show when={selected() !== null}>
           <button
             type="button"
@@ -149,9 +156,21 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           </KCombobox.Icon>
         </KCombobox.Trigger>
       </KCombobox.Control>
-      <Show when={props.helperText}>
-        <KCombobox.Description class={styles.helper}>
-          {props.helperText}
+      {/* Error message (with an alert icon) takes precedence over helperText — mirrors
+          TextField. Nothing is conveyed by colour alone (icon + text). */}
+      <Show
+        when={props.error}
+        fallback={
+          <Show when={props.helperText}>
+            <KCombobox.Description class={styles.helper}>
+              {props.helperText}
+            </KCombobox.Description>
+          </Show>
+        }
+      >
+        <KCombobox.Description class={styles.error}>
+          <AlertTriangleIcon class={styles.errorIcon} />
+          {props.error}
         </KCombobox.Description>
       </Show>
       <KCombobox.Portal mount={portalMount?.()}>

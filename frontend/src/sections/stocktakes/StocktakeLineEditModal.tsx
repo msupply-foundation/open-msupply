@@ -584,7 +584,7 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
             itemToString={(r) => r.reason}
             itemToValue={(r) => r.id}
             value={line.reasonOption?.id}
-            helperText={fieldError(line.id, 'reason')}
+            error={fieldError(line.id, 'reason')}
             placeholder={
               needsReason(line)
                 ? t('stocktake.line-edit.reason-select')
