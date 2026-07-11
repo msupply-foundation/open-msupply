@@ -24,6 +24,13 @@ export interface PageProps {
    * views); the body then takes the full width.
    */
   sidePanel?: JSX.Element
+  /**
+   * Whether the side panel is shown. Default true (a provided panel docks). Set from a
+   * page-owned signal + a header toggle button to make the panel openable/closable, as in
+   * Open mSupply (the "more"/details button). Toggling only shows/hides — the panel's own
+   * look + the geometry stay the frame's; the page owns just the boolean.
+   */
+  sidePanelOpen?: boolean
   /** Page body, rendered in the scrolling region. */
   children: JSX.Element
   /**
@@ -64,7 +71,9 @@ export const Page = (props: PageProps) => {
         <div class={`${styles.body} ${props.fillBody ? styles.bodyFill : ''}`}>
           {props.children}
         </div>
-        {props.sidePanel}
+        {/* Panel shows when provided AND open (default open). A page makes it toggleable by
+            passing a signal to sidePanelOpen and a header button that flips it. */}
+        <Show when={props.sidePanel && props.sidePanelOpen !== false}>{props.sidePanel}</Show>
       </div>
       {props.contentFooter}
     </div>

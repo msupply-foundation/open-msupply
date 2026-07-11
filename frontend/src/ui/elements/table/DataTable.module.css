@@ -231,10 +231,11 @@ tr[data-selected] .selectCell {
    the header row below it is delineated by its own border, not a shared fill. */
 .toolbar {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-end;
-  block-size: 2.25rem;
+  min-block-size: 2.25rem;
   padding-inline: var(--space-1);
+  border-block-end: 1px solid var(--color-border-value);
 }
 
 /* Shared look for the toolbar's icon controls (full-screen button + the settings popover
@@ -330,12 +331,6 @@ tr[data-selected] .selectCell {
   overflow-wrap: anywhere;
 }
 
-.cardSecondary {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  overflow-wrap: anywhere;
-}
-
 .cardBadge {
   flex-shrink: 0;
 }
@@ -348,4 +343,75 @@ tr[data-selected] .selectCell {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-5);
+}
+
+/* Group tabs (kdd/edit-line-card-table) — a row of tab buttons living INSIDE the control bar,
+   inline-start; `margin-inline-end: auto` pushes the icon controls (card-switch / settings /
+   full-screen) to the inline-end of the same bar. Switching sets the active field-group (a
+   secondary column filter); the active tab carries the brand underline (the app's tab idiom,
+   hand-rolled as a plain in-bar strip). */
+.groupTabs {
+  display: flex;
+  align-self: stretch;
+  align-items: stretch;
+  gap: var(--space-1);
+  margin-inline-end: auto;
+}
+
+.groupTab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-2);
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  border-block-end: 2px solid transparent;
+}
+
+.groupTab:hover {
+  color: var(--text-body);
+}
+
+.groupTab[data-active] {
+  color: var(--primary-main);
+  border-block-end-color: var(--primary-main);
+}
+
+.groupTab:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.groupTabIcon {
+  display: inline-flex;
+}
+
+.groupTabIcon svg {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+/* Card-view group marker (kdd/edit-line-card-table) — NOT a section header. The card's fields
+   flow as one list; each group contributes this as just another secondary element inline before
+   its fields: the 'secondary' text look (muted, --text-sm) with a bigger brand icon prepended.
+   It claims a full row of the wrapping cardFields flex so it reads as the lead-in to its fields,
+   but carries no divider/heading chrome. */
+/* Group icon — the icon-only marker that leads each group's cells in the secondary flow
+   (kdd/edit-line-card-table). It's just one more element in the .cardFields flex (no
+   flex-basis / row-claim), so the group's fields sit right after it, inline; a bigger,
+   brand-toned icon so the grouping reads at a glance. */
+.cardGroupIcon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--primary-main);
+}
+
+.cardGroupIcon svg {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
 }

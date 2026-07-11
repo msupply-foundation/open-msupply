@@ -50,6 +50,14 @@ export interface DialogProps {
    * a form switching modes) doesn't jump. Same custom-property mechanism as widthRem.
    */
   minBodyHeightRem?: number
+  /**
+   * Overall size. `'auto'` (default): the dialog sizes to its content (bounded by widthRem +
+   * the viewport cap). `'large'`: a workbench modal that fills nearly the whole viewport —
+   * full width and ~80% height — for content-heavy modals like the line-edit table. In large
+   * mode widthRem is ignored (the dialog goes full-bleed) and the body flexes so a scrolling
+   * child (a DataTable) fills the tall space.
+   */
+  size?: 'auto' | 'large'
 }
 
 /*
@@ -92,9 +100,12 @@ export const Dialog = (props: DialogProps) => {
         dialog = el
         setDialogEl(el)
       }}
-      class={styles.dialog}
+      class={props.size === 'large' ? `${styles.dialog} ${styles.large}` : styles.dialog}
       style={{
-        ...(props.widthRem ? { '--dialog-width': `${props.widthRem}rem` } : {}),
+        // widthRem is ignored in large mode (it goes full-bleed via the .large class).
+        ...(props.widthRem && props.size !== 'large'
+          ? { '--dialog-width': `${props.widthRem}rem` }
+          : {}),
         ...(props.minBodyHeightRem
           ? { '--dialog-min-body-height': `${props.minBodyHeightRem}rem` }
           : {}),
