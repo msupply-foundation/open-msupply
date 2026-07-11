@@ -1,11 +1,15 @@
 import { createSignal, Show, type JSX } from 'solid-js'
 import { Button } from '../ui/elements/buttons/Button'
+import { IconButton } from '../ui/elements/buttons/IconButton'
 import { SplitButton } from '../ui/elements/buttons/SplitButton'
 import {
   PlusCircleIcon,
   DownloadIcon,
   SaveIcon,
   TrashIcon,
+  CopyIcon,
+  SettingsIcon,
+  MaximiseIcon,
 } from '../ui/icons'
 import styles from './ButtonsShowcase.module.css'
 
@@ -77,6 +81,33 @@ export const ButtonsShowcase = () => {
             Delete
           </Button>
           <Button variant="secondary">Cancel</Button>
+        </div>
+      </Card>
+
+      <Card
+        title="Icon button — the icon IS the button"
+        lead={
+          <>
+            A compact icon-only control (<code>&lt;IconButton&gt;</code>) for table toolbar
+            controls, table row actions and panel actions — where a full labelled pill is too
+            big. Plain <code>&lt;button&gt;</code> + CSS; since there's no visible text a{' '}
+            <code>label</code> is required (drives aria-label + hover title).{' '}
+            <code>bordered</code> gives an outlined box (reads as a button in a row);{' '}
+            <code>variant="danger"</code> tones a destructive action; <code>size</code> is{' '}
+            <code>small</code> for dense rows. Tab for the focus ring.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          {/* Bare (toolbar-style) */}
+          <IconButton icon={<SettingsIcon />} label="Column settings" />
+          <IconButton icon={<MaximiseIcon />} label="Full screen" />
+          {/* Bordered row actions */}
+          <IconButton bordered size="small" icon={<CopyIcon />} label="Duplicate" />
+          <IconButton bordered size="small" variant="danger" icon={<TrashIcon />} label="Delete" />
+          {/* Bordered medium + disabled */}
+          <IconButton bordered icon={<SaveIcon />} label="Save" />
+          <IconButton bordered icon={<TrashIcon />} label="Delete" variant="danger" disabled />
         </div>
       </Card>
 

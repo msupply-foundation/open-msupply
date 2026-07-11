@@ -1,6 +1,13 @@
 import { createMemo, createSignal, For, Show } from 'solid-js';
-import { DataTable, type Column, type SortState } from '../ui/elements/table/DataTable';
+import {
+  DataTable,
+  type Column,
+  type SortState,
+  type TabAndGroup,
+  ALL_TABS,
+} from '../ui/elements/table/DataTable';
 import { getNumberCell } from '../ui/elements/table/tableHelpers';
+import { StockIcon, InfoIcon, TruckIcon } from '../ui/icons';
 import {
   resolveTableConfig,
   type Band,
@@ -77,6 +84,17 @@ type SortKey =
   | 'stock'
   | 'price';
 
+// The tabs/groups this table can tab through (kdd/edit-line-card-table). GroupKey is the typed
+// union a column's `tabsAndGroups` must match — a typo is a compile error. Each carries an icon
+// + translated label; drives the tab strip (table view) and the card group-rows (card view).
+// Columns tagged [ALL_TABS] (name, batch) are anchors: every tab, but NOT a card group.
+type GroupKey = 'details' | 'supply' | 'pricing';
+const TABS_AND_GROUPS: TabAndGroup<GroupKey>[] = [
+  { key: 'details', labelKey: 'table.demo-group.details', icon: () => <InfoIcon /> },
+  { key: 'supply', labelKey: 'table.demo-group.supply', icon: () => <TruckIcon /> },
+  { key: 'pricing', labelKey: 'table.demo-group.pricing', icon: () => <StockIcon /> },
+];
+
 // The columns the show/hide toggles cover. `id` is the TanStack column id (= accessorKey);
 // `label` is the header. Kept beside the column defs so the toggle set stays in step.
 const COLUMN_TOGGLES: { id: SortKey; label: string }[] = [
@@ -139,20 +157,37 @@ export const TableShowcase = () => {
   // meta.card assigns each column its region in card view (ui-standards § tables):
   // name = primary title, batch = the secondary code line, category = the top-right badge;
   // the rest fall to the grid (default). Table view is unaffected.
-  const columns = (): Column<Batch, SortKey>[] => [
-    { accessorKey: 'name', sortKey: 'name', header: 'Item', meta: { card: 'primary' } },
-    { accessorKey: 'batch', sortKey: 'batch', header: 'Batch', meta: { card: 'secondary' } },
-    { accessorKey: 'category', sortKey: 'category', header: 'Category', meta: { card: 'badge' } },
-    { accessorKey: 'supplier', sortKey: 'supplier', header: 'Supplier' },
-    { accessorKey: 'location', sortKey: 'location', header: 'Location', meta: { wrapLines: 2 } },
-    { accessorKey: 'expiry', sortKey: 'expiry', header: 'Expiry' },
-    { accessorKey: 'stock', sortKey: 'stock', header: 'In stock', ...getNumberCell() },
+  // Columns carry both axes: `meta.card` (card region) AND `groups` (tab/section membership).
+  // name + batch declare NO groups → anchors, shown in every tab. The rest split across the
+  // three groups. Switch the tab strip (or card view) to see the secondary column filter.
+  const columns = (): Column<Batch, SortKey, GroupKey>[] => [
+    // name + batch: ALL_TABS anchors (every tab; not a card group).
+    { c: { key: 'name' }, sortKey: 'name', header: 'Item', meta: { card: { region: 'primary' } }, tabsAndGroups: ALL_TABS },
+    { c: { key: 'batch' }, sortKey: 'batch', header: 'Batch', tabsAndGroups: ALL_TABS },
     {
-      accessorKey: 'price',
+      c: { key: 'category' },
+      sortKey: 'category',
+      header: 'Category',
+      meta: { card: { region: 'badge' } },
+      tabsAndGroups: ['details'],
+    },
+    { c: { key: 'expiry' }, sortKey: 'expiry', header: 'Expiry', tabsAndGroups: ['details'] },
+    { c: { key: 'supplier' }, sortKey: 'supplier', header: 'Supplier', tabsAndGroups: ['supply'] },
+    {
+      c: { key: 'location' },
+      sortKey: 'location',
+      header: 'Location',
+      meta: { wrapLines: 2 },
+      tabsAndGroups: ['supply'],
+    },
+    { c: { key: 'stock' }, sortKey: 'stock', header: 'In stock', ...getNumberCell(), tabsAndGroups: ['supply', 'pricing'] },
+    {
+      c: { key: 'price' },
       sortKey: 'price',
       header: 'Unit price',
       ...getNumberCell(),
       cell: (info) => `$${info.getValue<number>().toFixed(2)}`,
+      tabsAndGroups: ['pricing'],
     },
   ];
 
@@ -249,6 +284,7 @@ export const TableShowcase = () => {
         rowKey={(r) => r.id}
         sort={sort()}
         onSort={onSort}
+        tabsAndGroups={TABS_AND_GROUPS}
         emptyMessage="No items"
         enableSelection
         selectedIds={selectedIds()}
