@@ -9,6 +9,7 @@ import {
   getGroupedRowModel,
   type AggregationFn,
   type Cell as TanCell,
+  type Column as TanColumn,
   type ColumnDef,
   type IdentifiedColumnDef,
   type ColumnOrderState,
@@ -543,6 +544,45 @@ export function DataTable<T, K extends string, G extends string = never>(
     }
   };
 
+  // --- Column pinning: freeze a pinned column against the left/right edge on horizontal scroll ---
+  // TanStack tracks WHICH columns are pinned (columnPinning state, set via ColumnSettings); it's
+  // on us to make them sticky. For a cell we compute position:sticky + the inline-start/end offset
+  // = the summed widths of the pinned columns before (left) / after (right) it, plus the leading
+  // fixed columns (selection + expander) for left offsets. Returns undefined for an unpinned cell.
+  //
+  // The leading select/expander columns are 2.25rem each (see .selectCell/.expanderCell) and are
+  // themselves pinned-left (they must not scroll away either) — LEADING_WIDTH is their total.
+  const LEADING_COL_PX = 36; // 2.25rem at the 16px root
+  const leadingWidth = () =>
+    (props.enableSelection ? LEADING_COL_PX : 0) + (grouping().length > 0 ? LEADING_COL_PX : 0);
+  const leftPinned = () =>
+    table.getVisibleLeafColumns().filter((c) => c.getIsPinned() === 'left');
+  const rightPinned = () =>
+    table.getVisibleLeafColumns().filter((c) => c.getIsPinned() === 'right');
+
+  // The sticky style for a data column's cell (header or body), or undefined when unpinned.
+  const pinnedStyle = (column: TanColumn<T>): JSX.CSSProperties | undefined => {
+    const side = column.getIsPinned();
+    if (!side) return undefined;
+    if (side === 'left') {
+      const before = leftPinned().slice(0, leftPinned().indexOf(column));
+      const offset = leadingWidth() + before.reduce((sum, c) => sum + c.getSize(), 0);
+      return { position: 'sticky', left: `${offset}px`, 'z-index': 1 };
+    }
+    const cols = rightPinned();
+    const after = cols.slice(cols.indexOf(column) + 1);
+    const offset = after.reduce((sum, c) => sum + c.getSize(), 0);
+    return { position: 'sticky', right: `${offset}px`, 'z-index': 1 };
+  };
+
+  // The leading select/expander columns are pinned-left too (offset 0 for the first, one column
+  // width for the second) so they stay frozen alongside any left-pinned data columns.
+  const leadingPinnedStyle = (index: number): JSX.CSSProperties => ({
+    position: 'sticky',
+    left: `${index * LEADING_COL_PX}px`,
+    'z-index': 1,
+  });
+
   // Inside a shell, full-screen is handled by hiding shell/page chrome — the table stays
   // in normal flow so its footer (pagination/selection) stays visible below it. Only the
   // standalone fallback (no shell, e.g. showcase) needs the table's own fixed overlay.
@@ -672,7 +712,11 @@ export function DataTable<T, K extends string, G extends string = never>(
                       {/* Expander column header — the "expand/collapse ALL" double-chevron (Open
                           mSupply), reserving the chevron column when the table is grouped. */}
                       <Show when={grouping().length > 0}>
-                        <th class={`${styles.th} ${styles.expanderCell}`}>
+                        <th
+                          class={`${styles.th} ${styles.expanderCell}`}
+                          data-pinned="left"
+                          style={leadingPinnedStyle(0)}
+                        >
                           <button
                             type="button"
                             class={styles.groupExpander}
@@ -691,7 +735,11 @@ export function DataTable<T, K extends string, G extends string = never>(
                         </th>
                       </Show>
                       <Show when={props.enableSelection}>
-                        <th class={`${styles.th} ${styles.selectCell}`}>
+                        <th
+                          class={`${styles.th} ${styles.selectCell}`}
+                          data-pinned="left"
+                          style={leadingPinnedStyle(grouping().length > 0 ? 1 : 0)}
+                        >
                           <input
                             type="checkbox"
                             aria-label={t('table.select-all')}
@@ -710,7 +758,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                               header.column.columnDef as { tabsAndCardGroups?: Membership },
                             )}
                           >
-                            <HeaderCell header={header} />
+                            <HeaderCell header={header} pinnedStyle={pinnedStyle} />
                           </Show>
                         )}
                       </For>
@@ -737,6 +785,8 @@ export function DataTable<T, K extends string, G extends string = never>(
                         showExpander={grouping().length > 0}
                         onRowClick={props.onRowClick}
                         onToggleGroup={toggleGroupSelection}
+                        pinnedStyle={pinnedStyle}
+                        leadingPinnedStyle={leadingPinnedStyle}
                         cellVisible={(cell) =>
                           columnInActiveTab(cell.column.columnDef as { tabsAndCardGroups?: Membership })
                         }
@@ -773,6 +823,10 @@ function TableRow<T>(props: {
   onRowClick?: (row: T) => void;
   /** Select/deselect ALL of a group row's leaves in one emit (called for a grouped-row checkbox). */
   onToggleGroup: (row: TanRow<T>) => void;
+  /** Sticky-pin style for a pinned data column's cell (position/offset/z-index), else undefined. */
+  pinnedStyle: (column: TanColumn<T>) => JSX.CSSProperties | undefined;
+  /** Sticky-pin style for a leading (expander/select) cell at the given index (always pinned left). */
+  leadingPinnedStyle: (index: number) => JSX.CSSProperties;
   /** Display-time tab filter: render a cell only when this returns true (see columnInActiveTab). */
   cellVisible: (cell: TanCell<T, unknown>) => boolean;
 }): JSX.Element {
@@ -794,7 +848,7 @@ function TableRow<T>(props: {
       {/* Expander column (row grouping): its OWN leading column — the chevron on an expandable
           parent, blank otherwise (matches Open mSupply, which puts the chevrons before select). */}
       <Show when={props.showExpander}>
-        <td class={styles.expanderCell}>
+        <td class={styles.expanderCell} data-pinned="left" style={props.leadingPinnedStyle(0)}>
           <Show when={props.row.getCanExpand()}>
             <button
               type="button"
@@ -813,7 +867,11 @@ function TableRow<T>(props: {
         </td>
       </Show>
       <Show when={props.enableSelection}>
-        <td class={styles.selectCell}>
+        <td
+          class={styles.selectCell}
+          data-pinned="left"
+          style={props.leadingPinnedStyle(props.showExpander ? 1 : 0)}
+        >
           {/* A GROUP row's checkbox is driven by its LEAVES, not the group's own selected state
               (we never store a group's synthetic id): checked when all sub-rows are selected,
               else unchecked (no indeterminate). Clicking it selects ALL leaves when not all are
@@ -842,13 +900,16 @@ function TableRow<T>(props: {
             <td
               class={styles.td}
               data-align={cellAlign(cell)}
+              data-pinned={cell.column.getIsPinned() || undefined}
               // data-wrap + --wrap-lines: when a column sets meta.wrapLines > 1, the cell
               // clamps to that many lines then ellipsises (CSS line-clamp); otherwise the
               // default single-line nowrap applies. min-width keeps the column-width floor.
+              // A pinned column additionally gets sticky position + its edge offset.
               data-wrap={cellWrapLines(cell) ? '' : undefined}
               style={{
                 'min-width': `${cell.column.getSize()}px`,
                 ...(cellWrapLines(cell) ? { '--wrap-lines': String(cellWrapLines(cell)) } : {}),
+                ...props.pinnedStyle(cell.column),
               }}
             >
               {/* Just flexRender the column's cell — TanStack's merged default cell renders the
@@ -1023,12 +1084,15 @@ function CardView<T>(props: {
 // A header cell: a sortable label + a resize handle on the trailing edge.
 function HeaderCell<T>(props: {
   header: import('@tanstack/solid-table').Header<T, unknown>;
+  /** Sticky-pin style for a pinned column (position/left/right/z-index), else undefined. */
+  pinnedStyle: (column: TanColumn<T>) => JSX.CSSProperties | undefined;
 }): JSX.Element {
   const column = () => props.header.column;
   const canSort = () => column().getCanSort();
   const canResize = () => column().getCanResize();
   const isResizing = () => column().getIsResizing();
   const align = () => column().columnDef.meta?.align;
+  const pin = () => props.pinnedStyle(column());
   const indicator = () => {
     const sorted = column().getIsSorted();
     if (!sorted) return null;
@@ -1038,10 +1102,12 @@ function HeaderCell<T>(props: {
     <th
       class={styles.th}
       data-align={align()}
+      data-pinned={column().getIsPinned() || undefined}
       data-testid={canSort() ? `column-${column().id}` : undefined}
       // Auto table layout (columns flex to fill); getSize() is applied as a min-width FLOOR,
       // so a configured size / a resize drag widens the column without losing the auto-fill.
-      style={{ 'min-width': `${column().getSize()}px` }}
+      // A pinned column additionally gets sticky position + its edge offset.
+      style={{ 'min-width': `${column().getSize()}px`, ...pin() }}
     >
       <span
         class={`${styles.thLabel} ${canSort() ? styles.thSortable : ''}`}

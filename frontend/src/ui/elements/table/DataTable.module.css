@@ -223,6 +223,44 @@ tr[data-selected] .expanderCell {
   background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
 }
 
+/* Pinned columns (sticky offsets set inline via data-pinned + style — see DataTable.pinnedStyle).
+   A pinned cell needs an OPAQUE background so the horizontally-scrolling content doesn't show
+   through the frozen cell — including the leading select / expander cells (which otherwise have
+   no background of their own). An edge shadow on the inner side signals the freeze. */
+.td[data-pinned],
+.selectCell[data-pinned],
+.expanderCell[data-pinned] {
+  background: var(--bg-row);
+}
+
+/* Pinned HEADER cells: a solid surface (not the faint --bg-toolbar, which reads as translucent
+   over scrolling body cells) so nothing bleeds through, and z-index 2 so a pinned header beats
+   its horizontally-scrolling neighbours (the header row is already sticky-top at z-index 1). */
+.th[data-pinned] {
+  z-index: 2;
+  background: var(--bg-white);
+}
+
+.th[data-pinned='left'],
+.td[data-pinned='left'],
+.selectCell[data-pinned],
+.expanderCell[data-pinned] {
+  box-shadow: inset -1px 0 0 0 var(--color-divider);
+}
+
+.th[data-pinned='right'],
+.td[data-pinned='right'] {
+  box-shadow: inset 1px 0 0 0 var(--color-divider);
+}
+
+/* A selected pinned cell keeps the selection tint (over the opaque base) — placed AFTER the base
+   pinned + selected rules so specificity ascends (no-descending-specificity). */
+tr[data-selected] .td[data-pinned],
+tr[data-selected] .selectCell[data-pinned],
+tr[data-selected] .expanderCell[data-pinned] {
+  background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
+}
+
 /* ==========================================================================
  * PLACEHOLDER — the toolbar + full-screen chrome below has no finished design yet.
  * ========================================================================== */
