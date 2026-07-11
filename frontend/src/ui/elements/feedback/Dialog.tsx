@@ -38,6 +38,12 @@ export interface DialogProps {
   /** Footer buttons (rendered inline-end). */
   actions?: JSX.Element
   /**
+   * Content pinned to the inline-START of the actions row — same row as the buttons, opposite
+   * end. For a message that belongs beside the actions rather than above them (e.g. a validation
+   * hint), so it doesn't eat the body's vertical space. Only shown when `actions` is present.
+   */
+  actionsLead?: JSX.Element
+  /**
    * Width, in rem — for wider forms (e.g. the stocktake create modal). The dialog sits at this
    * fixed width (clamped down to the viewport on narrow screens), so its box stays a steady size
    * regardless of content — a form switching modes doesn't change width. Overrides the default
@@ -146,7 +152,13 @@ export const Dialog = (props: DialogProps) => {
             <div class={styles.footer}>{props.footer}</div>
           </Show>
           <Show when={props.actions}>
-            <div class={styles.actions}>{props.actions}</div>
+            <div class={styles.actions} data-has-lead={props.actionsLead ? '' : undefined}>
+              {/* Lead content sits at the inline-start; the buttons group at the inline-end. */}
+              <Show when={props.actionsLead}>
+                <div class={styles.actionsLead}>{props.actionsLead}</div>
+              </Show>
+              <div class={styles.actionsButtons}>{props.actions}</div>
+            </div>
           </Show>
         </div>
       </PortalMountContext.Provider>

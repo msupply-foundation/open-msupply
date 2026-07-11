@@ -125,12 +125,34 @@
 .actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: var(--space-3);
   /* Bottom-pin the actions when there's no footer above them (see .footer). With a footer,
      :not() drops the auto so the actions sit directly under it rather than adding a second gap. */
   margin-block-start: auto;
   padding-block-start: var(--space-2);
   flex-wrap: wrap;
+}
+
+/* With a lead (a message beside the buttons), split the row: lead at the inline-start, buttons
+   at the inline-end. Without it, the single buttons group stays inline-end (flex-end above). */
+.actions[data-has-lead] {
+  justify-content: space-between;
+}
+
+/* The lead content (e.g. a validation message) — takes the free inline-start space, wrapping if
+   long, so it doesn't push the buttons off. */
+.actionsLead {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+/* The buttons themselves stay grouped at the inline-end. */
+.actionsButtons {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 /* When a footer precedes the actions, the footer already absorbed the slack — don't add a

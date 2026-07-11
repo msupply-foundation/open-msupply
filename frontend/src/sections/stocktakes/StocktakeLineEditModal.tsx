@@ -678,7 +678,9 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
       size="large"
       title={props.item?.name ?? t('stocktake.line-edit.title')}
       description={props.item?.code}
-      footer={
+      // The save/validation message sits at the inline-start of the actions row (beside the
+      // buttons), so it doesn't eat the table's vertical space.
+      actionsLead={
         <Show when={footerError()}>{(message) => <Alert severity="error">{message()}</Alert>}</Show>
       }
       actions={
