@@ -5,7 +5,7 @@ import { t } from '../../../intl';
 import { ChevronDownIcon } from '../../icons';
 import { pxToRem } from '../../utils/rem';
 import type { TableConfig, TableConfigKey } from './tableConfig';
-import { ALL_TABS, type TabAndGroup } from './DataTable';
+import { ALL_TABS, type TabAndCardGroup } from './DataTable';
 import styles from './ColumnSettings.module.css';
 
 // The column-settings panel: a table with a row per column, each exposing visibility,
@@ -23,17 +23,17 @@ export function ColumnSettings<T>(props: {
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
   /** The table's tabs/groups (when grouped) — used to badge each row with the group(s) a
    *  column belongs to, so it's clear hiding/reordering is GLOBAL across tabs. */
-  tabsAndGroups?: TabAndGroup<string>[];
+  tabsAndCardGroups?: TabAndCardGroup<string>[];
 }): JSX.Element {
   // The tabs/groups a column id belongs to, for its settings-row icon badges. An ALL_TABS
   // column (batch, actions) belongs to EVERY tab → show all icons; an array names specific
   // groups → show those; absent → none.
-  const columnGroups = (id: string): TabAndGroup<string>[] => {
-    const groups = props.tabsAndGroups;
+  const columnGroups = (id: string): TabAndCardGroup<string>[] => {
+    const groups = props.tabsAndCardGroups;
     if (!groups) return [];
     const membership = (
-      props.table.getColumn(id)?.columnDef as { tabsAndGroups?: string[] | typeof ALL_TABS }
-    )?.tabsAndGroups;
+      props.table.getColumn(id)?.columnDef as { tabsAndCardGroups?: string[] | typeof ALL_TABS }
+    )?.tabsAndCardGroups;
     if (membership === ALL_TABS) return groups;
     if (!Array.isArray(membership)) return [];
     return groups.filter((g) => membership.includes(g.key));

@@ -3,7 +3,7 @@ import {
   DataTable,
   type Column,
   type SortState,
-  type TabAndGroup,
+  type TabAndCardGroup,
   ALL_TABS,
 } from '../ui/elements/table/DataTable';
 import { getNumberCell } from '../ui/elements/table/tableHelpers';
@@ -85,14 +85,14 @@ type SortKey =
   | 'price';
 
 // The tabs/groups this table can tab through (kdd/edit-line-card-table). GroupKey is the typed
-// union a column's `tabsAndGroups` must match — a typo is a compile error. Each carries an icon
+// union a column's `tabsAndCardGroups` must match — a typo is a compile error. Each carries an icon
 // + translated label; drives the tab strip (table view) and the card group-rows (card view).
 // Columns tagged [ALL_TABS] (name, batch) are anchors: every tab, but NOT a card group.
 type GroupKey = 'details' | 'supply' | 'pricing';
-const TABS_AND_GROUPS: TabAndGroup<GroupKey>[] = [
-  { key: 'details', labelKey: 'table.demo-group.details', icon: () => <InfoIcon /> },
-  { key: 'supply', labelKey: 'table.demo-group.supply', icon: () => <TruckIcon /> },
-  { key: 'pricing', labelKey: 'table.demo-group.pricing', icon: () => <StockIcon /> },
+const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
+  { key: 'details', labelKey: 'table.demo-card-group.details', icon: () => <InfoIcon /> },
+  { key: 'supply', labelKey: 'table.demo-card-group.supply', icon: () => <TruckIcon /> },
+  { key: 'pricing', labelKey: 'table.demo-card-group.pricing', icon: () => <StockIcon /> },
 ];
 
 // The columns the show/hide toggles cover. `id` is the TanStack column id (= accessorKey);
@@ -162,32 +162,32 @@ export const TableShowcase = () => {
   // three groups. Switch the tab strip (or card view) to see the secondary column filter.
   const columns = (): Column<Batch, SortKey, GroupKey>[] => [
     // name + batch: ALL_TABS anchors (every tab; not a card group).
-    { c: { key: 'name' }, sortKey: 'name', header: 'Item', meta: { card: { region: 'primary' } }, tabsAndGroups: ALL_TABS },
-    { c: { key: 'batch' }, sortKey: 'batch', header: 'Batch', tabsAndGroups: ALL_TABS },
+    { c: { key: 'name' }, sortKey: 'name', header: 'Item', meta: { card: { region: 'primary' } }, tabsAndCardGroups: ALL_TABS },
+    { c: { key: 'batch' }, sortKey: 'batch', header: 'Batch', tabsAndCardGroups: ALL_TABS },
     {
       c: { key: 'category' },
       sortKey: 'category',
       header: 'Category',
       meta: { card: { region: 'badge' } },
-      tabsAndGroups: ['details'],
+      tabsAndCardGroups: ['details'],
     },
-    { c: { key: 'expiry' }, sortKey: 'expiry', header: 'Expiry', tabsAndGroups: ['details'] },
-    { c: { key: 'supplier' }, sortKey: 'supplier', header: 'Supplier', tabsAndGroups: ['supply'] },
+    { c: { key: 'expiry' }, sortKey: 'expiry', header: 'Expiry', tabsAndCardGroups: ['details'] },
+    { c: { key: 'supplier' }, sortKey: 'supplier', header: 'Supplier', tabsAndCardGroups: ['supply'] },
     {
       c: { key: 'location' },
       sortKey: 'location',
       header: 'Location',
       meta: { wrapLines: 2 },
-      tabsAndGroups: ['supply'],
+      tabsAndCardGroups: ['supply'],
     },
-    { c: { key: 'stock' }, sortKey: 'stock', header: 'In stock', ...getNumberCell(), tabsAndGroups: ['supply', 'pricing'] },
+    { c: { key: 'stock' }, sortKey: 'stock', header: 'In stock', ...getNumberCell(), tabsAndCardGroups: ['supply', 'pricing'] },
     {
       c: { key: 'price' },
       sortKey: 'price',
       header: 'Unit price',
       ...getNumberCell(),
       cell: (info) => `$${info.getValue<number>().toFixed(2)}`,
-      tabsAndGroups: ['pricing'],
+      tabsAndCardGroups: ['pricing'],
     },
   ];
 
@@ -284,7 +284,7 @@ export const TableShowcase = () => {
         rowKey={(r) => r.id}
         sort={sort()}
         onSort={onSort}
-        tabsAndGroups={TABS_AND_GROUPS}
+        tabsAndCardGroups={TABS_AND_CARD_GROUPS}
         emptyMessage="No items"
         enableSelection
         selectedIds={selectedIds()}

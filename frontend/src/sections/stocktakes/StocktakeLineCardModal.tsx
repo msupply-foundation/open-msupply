@@ -4,7 +4,7 @@ import { Dialog } from '../../ui/elements/feedback/Dialog';
 import {
   DataTable,
   type Column,
-  type TabAndGroup,
+  type TabAndCardGroup,
   ALL_TABS,
 } from '../../ui/elements/table/DataTable';
 import { getDateCell, getNumberCell } from '../../ui/elements/table/tableHelpers';
@@ -25,7 +25,7 @@ type Line = StocktakeNode['lines']['nodes'][number];
 // The card sections for the grouped view. Batch is NOT a group — it's an ALL_TABS anchor (the
 // card title). The rest split across two sections.
 type GroupKey = 'batch' | 'other';
-const TABS_AND_GROUPS: TabAndGroup<GroupKey>[] = [
+const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
   { key: 'batch', labelKey: 'stocktake.column.batch', icon: () => <StockIcon /> },
   { key: 'other', labelKey: 'stocktake.detail.info-heading', icon: () => <InfoIcon /> },
 ];
@@ -53,33 +53,33 @@ export const StocktakeLineCardModal = (props: StocktakeLineCardModalProps): JSX.
     {
       c: { key: 'batch' },
       header: t('stocktake.column.batch'),
-      tabsAndGroups: ALL_TABS,
+      tabsAndCardGroups: ALL_TABS,
       meta: { card: { region: 'primary', showLabel: true } },
       cell: (info) => info.getValue<string | null>() ?? '—',
     },
     {
       c: { key: 'countedNumberOfPacks' },
       header: t('stocktake.column.counted'),
-      tabsAndGroups: ALL_TABS,
+      tabsAndCardGroups: ALL_TABS,
       ...getNumberCell({ card: { region: 'badge' } }),
       cell: (info) => info.getValue<number | null>() ?? '—',
     },
     {
       c: { key: 'expiryDate' },
       header: t('stocktake.column.expiry'),
-      tabsAndGroups: ['batch'],
+      tabsAndCardGroups: ['batch'],
       ...getDateCell(),
     },
     {
       c: { key: 'snapshotNumberOfPacks' },
       header: t('stocktake.column.snapshot'),
-      tabsAndGroups: ['batch'],
+      tabsAndCardGroups: ['batch'],
       ...getNumberCell(),
     },
     {
       c: { key: 'comment' },
       header: t('stocktake.detail.comment'),
-      tabsAndGroups: ['other'],
+      tabsAndCardGroups: ['other'],
       cell: (info) => info.getValue<string | null>() ?? '—',
     },
   ];
@@ -96,7 +96,7 @@ export const StocktakeLineCardModal = (props: StocktakeLineCardModalProps): JSX.
           columns={columns()}
           rows={props.lines}
           rowKey={(line) => line.id}
-          tabsAndGroups={TABS_AND_GROUPS}
+          tabsAndCardGroups={TABS_AND_CARD_GROUPS}
           showFullScreen={false}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}
