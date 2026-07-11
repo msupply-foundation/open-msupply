@@ -309,21 +309,10 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
     return (b.insert?.length ?? 0) + (b.update?.length ?? 0) + (b.delete?.length ?? 0) > 0;
   };
 
-  // Client-side validation: every line whose count changed stock must name a reason. Returns the
-  // first offending line's message (or undefined = ok) — surfaced in the footer, blocks Save.
-  const validationError = (): string | undefined => {
-    const missing = draft.some(
-      (line) => !deletedIds().includes(line.id) && needsReason(line) && !line.reasonOption,
-    );
-    return missing ? t('stocktake.line-edit.reason-required') : undefined;
-  };
-
+  // No pre-emptive client-side validation — we let the server decide (e.g. reason-required,
+  // below-zero) and surface its per-line errors on save (see below). This keeps one source of
+  // truth for what's valid.
   const save = async () => {
-    const invalid = validationError();
-    if (invalid) {
-      setErrorMessage(invalid);
-      return;
-    }
     setSaving(true);
     setErrorMessage(undefined);
     const result = await graphqlFetch(BatchStocktakeLines, {
@@ -432,7 +421,7 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
     {
       c: { key: 'manufactureDate' },
       header: t('stocktake.line-edit.manufacture-date'),
-      tabsAndCardGroups: ['batch'],
+      tabsAndCardGroups: ['other'],
       cell: (info) => {
         const line = info.row.original;
         return (
@@ -573,7 +562,7 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
       // user can pre-set it); a red hint is surfaced in the footer if it's missing when needed.
       c: { key: 'reasonOption' },
       header: t('stocktake.line-edit.reason'),
-      tabsAndCardGroups: ['other'],
+      tabsAndCardGroups: ['batch'],
       cell: (info) => {
         const line = info.row.original;
         return (
@@ -668,7 +657,7 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
     },
   ];
 
-  const footerError = () => errorMessage() ?? validationError();
+  const footerError = () => errorMessage();
 
   return (
     <Dialog

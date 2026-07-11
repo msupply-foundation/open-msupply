@@ -152,7 +152,6 @@
   "stocktake.line-edit.reason": "Motif",
   "stocktake.line-edit.reason-select": "Choisir un motif…",
   "stocktake.line-edit.reason-na": "—",
-  "stocktake.line-edit.reason-required": "Choisissez un motif d'ajustement pour chaque ligne comptée qui diffère de son instantané.",
   "stocktake.line-edit.note": "Note",
   "stocktake.line-edit.add-batch": "Ajouter un lot",
   "stocktake.line-edit.duplicate": "Dupliquer le lot",

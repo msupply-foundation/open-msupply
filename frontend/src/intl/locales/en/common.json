@@ -152,7 +152,6 @@
   "stocktake.line-edit.reason": "Reason",
   "stocktake.line-edit.reason-select": "Select a reason…",
   "stocktake.line-edit.reason-na": "—",
-  "stocktake.line-edit.reason-required": "Select an adjustment reason for every counted line that differs from its snapshot.",
   "stocktake.line-edit.note": "Note",
   "stocktake.line-edit.add-batch": "Add batch",
   "stocktake.line-edit.duplicate": "Duplicate batch",
