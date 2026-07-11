@@ -203,48 +203,48 @@ const StocktakesList: Component = () => {
   // a getter, so the table headers and breadcrumb re-label when the locale changes.
   const columns = (): Column<StocktakeRow, SortKey>[] => [
     {
-      accessorKey: 'stocktakeNumber',
+      c: { key: 'stocktakeNumber' },
       sortKey: 'stocktakeNumber',
       // Language-neutral '#' for the number column (universal symbol; no t() needed).
       header: '#',
       // getNumberCell merges extra meta — card:'primary' makes the number the card's title
       // (top-left); right-aligned in table view.
-      ...getNumberCell({ card: 'primary' }),
+      ...getNumberCell({ card: { region: 'primary' } }),
     },
     {
-      accessorKey: 'status',
+      c: { key: 'status' },
       sortKey: 'status',
       header: t('stocktake.column.status'),
       cell: (info) => <StatusChip {...statusMeta(info.getValue<StocktakeRow['status']>())} />,
       // Card view: the status chip is the top-right badge.
-      meta: { card: 'badge' },
+      meta: { card: { region: 'badge' } },
     },
     {
-      accessorKey: 'description',
+      c: { key: 'description' },
       sortKey: 'description',
       header: t('stocktake.column.description'),
-      // Card view: the description is the secondary line under the number title. Wraps to 2 lines.
-      meta: { wrapLines: 2, card: 'secondary' },
+      // Card view: the description flows in the secondary area. Wraps to 2 lines.
+      meta: { wrapLines: 2 },
     },
     {
-      accessorKey: 'comment',
+      c: { key: 'comment' },
       sortKey: 'comment',
       header: t('stocktake.column.comment'),
     },
     {
-      accessorKey: 'stocktakeDate',
+      c: { key: 'stocktakeDate' },
       sortKey: 'stocktakeDate',
       header: t('stocktake.column.stocktake-date'),
       ...getDateCell(),
     },
     {
-      accessorKey: 'createdDatetime',
+      c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: t('stocktake.column.created'),
       ...getDateCell(),
     },
     {
-      accessorKey: 'isLocked',
+      c: { key: 'isLocked' },
       header: t('stocktake.column.locked'),
       ...getBooleanCell(),
     },
