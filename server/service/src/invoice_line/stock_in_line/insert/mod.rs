@@ -53,6 +53,7 @@ pub struct InsertStockInLine {
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
     pub purchase_order_line_id: Option<String>,
+    pub reason_option_id: Option<String>,
 }
 
 type OutError = InsertStockInLineError;
@@ -156,7 +157,8 @@ mod test {
             mock_inbound_shipment_e, mock_item_a, mock_item_restricted_location_type_b,
             mock_location_with_restricted_location_type_a, mock_name_customer_a, mock_name_store_b,
             mock_outbound_shipment_e, mock_purchase_order_a, mock_purchase_order_a_line_1,
-            mock_store_a, mock_store_b, mock_user_account_a, mock_vaccine_item_a,
+            mock_shipment_variance_reason_option, mock_store_a, mock_store_b,
+            mock_user_account_a, mock_vaccine_item_a,
             mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
@@ -900,6 +902,43 @@ mod test {
         assert_eq!(
             invoice_line.stock_line_id, None,
             "Stock line should NOT be created for external inbound shipment when authorisation preference is enabled"
+        );
+    }
+
+    #[actix_rt::test]
+    async fn insert_stock_in_line_persists_reason() {
+        let (_, connection, connection_manager, _) =
+            setup_all("insert_stock_in_line_persists_reason", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        // A discrepancy reason set on a new line must persist on the first save
+        // (the insert path, not only a later update).
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "reason_line".to_string(),
+                invoice_id: mock_customer_return_a().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                reason_option_id: Some(mock_shipment_variance_reason_option().id),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("reason_line")
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            line.reason_option_id,
+            Some(mock_shipment_variance_reason_option().id)
         );
     }
 }

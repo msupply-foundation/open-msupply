@@ -3757,6 +3757,7 @@ export type InsertInboundShipmentLineInput = {
   packSize: Scalars['Float']['input'];
   programId?: InputMaybe<Scalars['String']['input']>;
   purchaseOrderLineId?: InputMaybe<Scalars['String']['input']>;
+  reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   sellPricePerPack: Scalars['Float']['input'];
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
