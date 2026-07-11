@@ -38,13 +38,17 @@
   font-size: var(--text-sm);
 }
 
-/* Column-header row stays pinned to the top of the scroll container while the body
-   scrolls. Sticky sits on the cells (more reliable than on <thead>); z-index keeps it
-   above the scrolling body rows. */
+/* Column-header row stays pinned to the top of the scroll container while the body scrolls.
+   Sticky sits on the cells (more reliable than on <thead>). Stacking order (kept strict so the
+   header always wins on vertical scroll and pinned columns win on horizontal scroll):
+     normal body cell   z auto (0)
+     pinned body cell   z 1   (above scrolling body cells)
+     normal header cell z 2   (above ALL body cells, incl. pinned ones)
+     pinned header cell z 3   (the sticky corner — above everything)  */
 .th {
   position: sticky;
   inset-block-start: 0;
-  z-index: 1;
+  z-index: 2;
   padding: var(--space-2) var(--space-3);
   border-block-end: 1px solid var(--color-divider);
   background: var(--bg-toolbar);
@@ -231,13 +235,16 @@ tr[data-selected] .expanderCell {
 .selectCell[data-pinned],
 .expanderCell[data-pinned] {
   background: var(--bg-row);
+  /* Above the normal scrolling body cells (z auto) on horizontal scroll, but BELOW the header
+     (z 2 / pinned header z 3) so the header never disappears under a sticky pinned column. */
+  z-index: 1;
 }
 
 /* Pinned HEADER cells: a solid surface (not the faint --bg-toolbar, which reads as translucent
-   over scrolling body cells) so nothing bleeds through, and z-index 2 so a pinned header beats
-   its horizontally-scrolling neighbours (the header row is already sticky-top at z-index 1). */
+   over scrolling body cells) so nothing bleeds through, and the highest z-index (3) so the sticky
+   top-left/right corner sits above both the normal header (2) and any pinned body cell (1). */
 .th[data-pinned] {
-  z-index: 2;
+  z-index: 3;
   background: var(--bg-white);
 }
 
