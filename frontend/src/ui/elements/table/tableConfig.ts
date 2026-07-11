@@ -22,6 +22,10 @@ export type TableConfig = {
   // NOT a TanStack column-state (no on*Change) — a view-level choice the DataTable reads
   // directly. Stored/resolved here so it's per-band and persists with the rest of config.
   viewMode?: ViewMode;
+  // Row grouping: the id of the column rows are grouped by, or undefined/absent = ungrouped.
+  // A view-level choice like viewMode (the DataTable reads it directly and writes it via
+  // setConfig), so grouping persists + layers + is per-band with the rest of the config.
+  groupBy?: string;
 };
 
 // The keys of TableConfig — the four things `setConfig` can write, one per TanStack
@@ -61,6 +65,7 @@ export const resolveTableConfig = (
     columnPinning: pick('columnPinning'),
     columnVisibility: pick('columnVisibility'),
     viewMode: pick('viewMode'),
+    groupBy: pick('groupBy'),
   };
 };
 

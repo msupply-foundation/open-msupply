@@ -5,12 +5,17 @@ import {
   flexRender,
   functionalUpdate,
   getCoreRowModel,
+  getExpandedRowModel,
+  getGroupedRowModel,
+  type AggregationFn,
   type Cell as TanCell,
   type ColumnDef,
   type IdentifiedColumnDef,
   type ColumnOrderState,
   type ColumnPinningState,
   type ColumnSizingState,
+  type ExpandedState,
+  type GroupingState,
   type Row as TanRow,
   type RowData,
   type RowSelectionState,
@@ -22,7 +27,17 @@ import { sortKeyToId, sortIdToKey } from './tableHelpers';
 import type { TableConfig, TableConfigKey, ViewMode } from './tableConfig';
 import { pxToRem, remToPx } from '../../utils/rem';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
-import { CardViewIcon, MaximiseIcon, MinimiseIcon, SettingsIcon, TableViewIcon } from '../../icons';
+import {
+  CardViewIcon,
+  ChevronDownIcon,
+  ChevronsDownIcon,
+  GroupedIcon,
+  MaximiseIcon,
+  MinimiseIcon,
+  SettingsIcon,
+  TableViewIcon,
+  UngroupedIcon,
+} from '../../icons';
 import { Popover } from '../feedback/Popover';
 import { LabelledValue } from '../typography/LabelledValue';
 import { ColumnSettings } from './ColumnSettings';
@@ -75,6 +90,46 @@ declare module '@tanstack/solid-table' {
 // full screen.
 
 export type SortState<K extends string> = { key: K; desc: boolean };
+
+// --- Row grouping aggregation (kdd/table-state) ---------------------------------------------
+// When rows are GROUPED (see rowGroup below) a parent row stands in for its leaves, and each
+// column decides what its parent cell shows via TanStack's own `aggregationFn` (set directly on
+// the column — we don't wrap it). TanStack ships 'sum' etc. by name; here we export ONE extra
+// custom AggregationFn a caller can hand to `aggregationFn`:
+//   • sharedOrMultiple — the shared leaf value if they all agree, else the MULTIPLE sentinel.
+// MULTIPLE is ONE typed, global constant so the "[multiple]" placeholder is spelled once; the
+// renderer shows it literally, matching Open mSupply. The cell helpers (tableHelpers) set a
+// sensible default aggregationFn (getNumberCell → 'sum').
+export const MULTIPLE = '[multiple]';
+
+// The shared-or-[multiple] aggregation: the one shared leaf value (all equal) → that value; any
+// disagreement → MULTIPLE. Use EXPLICITLY on a column that should show its shared value or nothing
+// (the default for text columns; dates use the date variant below). A plain TanStack AggregationFn
+// — pass it straight to a column's `aggregationFn`. Typed <any> like TanStack's own built-in
+// aggregation fns (their row type is invariant, so a fixed T wouldn't fit an any-T column).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const sharedOrMultiple: AggregationFn<any> = (columnId, leafRows) => {
+  const first = leafRows[0]?.getValue(columnId);
+  const allEqual = leafRows.every((r) => r.getValue(columnId) === first);
+  return allEqual ? first : MULTIPLE;
+};
+
+// The date variant of sharedOrMultiple: compares by epoch-ms (Date.getTime) rather than the raw
+// value, so equal dates in different representations (ISO string vs Date) still count as shared,
+// and it's a fast numeric compare. Returns the FIRST leaf's raw value (so the column's own date
+// cell still formats it) or MULTIPLE. The default for getDateCell.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const sharedOrMultipleDate: AggregationFn<any> = (columnId, leafRows) => {
+  const time = (v: unknown): number | undefined => {
+    if (v == null) return undefined;
+    const ms = new Date(v as string | number | Date).getTime();
+    return Number.isNaN(ms) ? undefined : ms;
+  };
+  const first = leafRows[0]?.getValue(columnId);
+  const firstTime = time(first);
+  const allEqual = leafRows.every((r) => time(r.getValue(columnId)) === firstTime);
+  return allEqual ? first : MULTIPLE;
+};
 
 // A column that belongs to EVERY tab but is not itself part of card grouping (a row-identity
 // anchor like the batch or the selection). Setting `tabsAndCardGroups: ALL_TABS` (the bare
@@ -150,6 +205,8 @@ export const toColumnDef = <T, K extends string, G extends string>(
   col: Column<T, K, G>,
 ): ColumnDef<T> => {
   const { c, ...rest } = col;
+  // `rest` already carries TanStack's own fields — including `aggregationFn`/`aggregatedCell` for
+  // row grouping (from ColumnDefBase) — so a caller sets those directly; nothing to remap.
   if (c.key !== undefined) return { ...rest, accessorKey: c.key, id: String(c.key) } as ColumnDef<T>;
   if (c.accessor !== undefined) return { ...rest, accessorFn: c.accessor, id: c.id } as ColumnDef<T>;
   return { ...rest, id: c.id } as ColumnDef<T>;
@@ -188,6 +245,24 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   // owns the active card group entirely (an internal signal, defaulting to the first): the caller
   // just declares `tabsAndCardGroups`. No active-card-group state leaks to the page.
   tabsAndCardGroups?: TabAndCardGroup<G>[];
+
+  // --- Row grouping (optional; kdd/table-state). A DIFFERENT concept from card groups: it ---
+  // collapses ROWS sharing a value under one expandable parent row (e.g. all a stocktake item's
+  // batches). Grouping/expansion/aggregation are TanStack's (getGroupedRowModel +
+  // getExpandedRowModel + per-column aggregationFn); we render what it computes. A group with
+  // only ONE leaf isn't expandable — it renders as a plain row (matches Open mSupply). Parent
+  // cells show a column's aggregate (opt-in via a column's aggregationFn) or blank.
+  //
+  // The grouping is STATIC — the consumer names ONE column to group by (`columnId`); the toolbar
+  // then shows a single folder-icon TOGGLE that turns grouping on/off. The on/off state is table
+  // CONFIG (config.groupBy = columnId when on, absent when off), so it persists + layers + is
+  // per-band exactly like viewMode — the page doesn't own it.
+  rowGroup?: {
+    /** The column id to group by when grouping is on. */
+    columnId: string;
+    /** i18n key for the toggle's label/tooltip (e.g. "Group by item"). */
+    labelKey: LocaleKey;
+  };
   /** Current sort, or undefined when unsorted. */
   sort?: SortState<K>;
   /** Header click for a sortable column. TanStack computes the next direction (the
@@ -251,12 +326,34 @@ export function DataTable<T, K extends string, G extends string = never>(
     if (key) props.onSort?.(key, sort.desc);
   };
 
-  // --- Selection ⇄ the page's selectedIds ---
+  // --- Selection ⇄ the page's selectedIds (controlled, like sort/config) ---
+  // We store ONLY real leaf-row ids — never a group's synthetic id. rowSelection is derived from
+  // props.selectedIds; a change is resolved against it and reported back, group ids stripped. A
+  // GROUP row's checkbox is NOT wired to its own selected state (see the checkbox below) — it's
+  // driven by getIsAllSubRowsSelected() and toggles its leaves directly, so it never depends on a
+  // stored group id. This sidesteps TanStack's grouped-selection desync (issue #4349): selecting
+  // a group, deselecting one leaf (group now unchecked), then clicking the group again cleanly
+  // re-selects ALL its leaves.
   const rowSelection = (): RowSelectionState =>
     Object.fromEntries((props.selectedIds ?? []).map((id) => [id, true]));
   const onRowSelectionChange = (u: Updater<RowSelectionState>) => {
     const next = functionalUpdate(u, rowSelection());
-    props.onSelectionChange?.(Object.keys(next).filter((id) => next[id]));
+    const rowsById = table.getCoreRowModel().rowsById;
+    const ids = Object.keys(next).filter(
+      (id) => next[id] && rowsById[id] && !rowsById[id].getIsGrouped(),
+    );
+    props.onSelectionChange?.(ids);
+  };
+  // Toggle a GROUP row's leaves in ONE emit (not per-leaf toggleSelected, which would fire N
+  // changes each computed against the same stale selection and clobber the others). If not all of
+  // the group's leaves are selected → add them all; else remove them all.
+  const toggleGroupSelection = (row: TanRow<T>) => {
+    const leafIds = row.getLeafRows().map((leaf) => leaf.id);
+    const current = new Set(props.selectedIds ?? []);
+    const selectAll = !row.getIsAllSubRowsSelected();
+    if (selectAll) leafIds.forEach((id) => current.add(id));
+    else leafIds.forEach((id) => current.delete(id));
+    props.onSelectionChange?.([...current]);
   };
 
   // --- Column config ⇄ the page's resolved config (order/sizing/pinning/visibility) ---
@@ -272,6 +369,16 @@ export function DataTable<T, K extends string, G extends string = never>(
   // View mode is a config field but NOT a TanStack state (no on*Change) — read it directly.
   // Defaults to 'table' when unset. The toolbar switcher writes it via setConfig per band.
   const viewMode = (): ViewMode => props.config?.viewMode ?? 'table';
+
+  // --- Row grouping state (kdd/table-state) ---
+  // `grouping` mirrors config.groupBy (table CONFIG, like viewMode) into TanStack's GroupingState
+  // (a single id, or empty when ungrouped). Expansion is the TABLE's own concern (which parents
+  // are open), so it's an internal signal — like the active tab. Changing the grouped column
+  // resets expansion (via the effect below) so stale expanded ids don't linger.
+  const groupBy = (): string | undefined => props.config?.groupBy;
+  const grouping = (): GroupingState => (groupBy() ? [groupBy() as string] : []);
+  const [expanded, setExpanded] = createSignal<ExpandedState>({});
+  createEffect(on(groupBy, () => setExpanded({})));
 
   // Column sizing crosses a unit boundary: config/appData stores REM (so widths scale with
   // the root font-size like the rest of the UI — see utils/rem), but TanStack works in PX.
@@ -349,6 +456,12 @@ export function DataTable<T, K extends string, G extends string = never>(
       get columnVisibility() {
         return columnVisibility();
       },
+      get grouping() {
+        return grouping();
+      },
+      get expanded() {
+        return expanded();
+      },
     },
     manualSorting: true,
     enableSortingRemoval: false,
@@ -374,8 +487,21 @@ export function DataTable<T, K extends string, G extends string = never>(
     onColumnPinningChange: (u) => props.setConfig?.('columnPinning', functionalUpdate(u, columnPinning())),
     onColumnVisibilityChange: (u) =>
       props.setConfig?.('columnVisibility', functionalUpdate(u, columnVisibility())),
+    // Row grouping: grouping is driven by the page (rowGroup.by) so it has no onGroupingChange —
+    // the Select writes rowGroup.onByChange directly. Expansion is table-owned. A group with a
+    // single leaf isn't expandable — it renders as a plain row (matches Open mSupply). The
+    // grouped column is NOT pulled into its own column (groupedColumnMode false) — the grouped
+    // value shows in that column's own cell on the parent row.
+    onExpandedChange: (u) => setExpanded(functionalUpdate(u, expanded())),
+    getRowCanExpand: (row) => row.getLeafRows().length > 1,
+    groupedColumnMode: false,
+    // We control expansion (state.expanded) — TanStack's auto-reset (default ON) would otherwise
+    // clear it on every row-model recompute, so a click's expand is undone on the next render.
+    autoResetExpanded: false,
     getRowId: (row) => props.rowKey(row),
     getCoreRowModel: getCoreRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
   });
 
   // Commit a live resize once the drag ends: when isResizingColumn clears and we hold a
@@ -393,9 +519,29 @@ export function DataTable<T, K extends string, G extends string = never>(
     }),
   );
 
-  // Count only the columns rendered in the active card group (+ the selection column), so the
-  // empty-state row's colSpan matches the actual header/body cell count.
-  const leafColumnCount = () => visibleTabColumns().length + (props.enableSelection ? 1 : 0);
+  // Count only the columns rendered in the active card group (+ the selection column + the
+  // expander column when grouped), so the empty-state row's colSpan matches the actual cell count.
+  const leafColumnCount = () =>
+    visibleTabColumns().length + (props.enableSelection ? 1 : 0) + (grouping().length > 0 ? 1 : 0);
+
+  // --- Expand ALL groups (the header double-chevron) ---
+  // TanStack's getToggleAllRowsExpandedHandler would also expand SINGLE-leaf groups (which can't
+  // really expand — they'd "expand to self"), so we drive expansion ourselves: the EXPANDABLE
+  // group rows only (getRowCanExpand, i.e. >1 leaf). "All expanded" = every expandable group is
+  // open; toggling collapses all (→ {}) or opens exactly those.
+  const expandableGroupRows = () =>
+    table.getGroupedRowModel().rows.filter((row) => row.getCanExpand());
+  const allGroupsExpanded = () => {
+    const groups = expandableGroupRows();
+    return groups.length > 0 && groups.every((row) => row.getIsExpanded());
+  };
+  const toggleAllGroups = () => {
+    if (allGroupsExpanded()) {
+      setExpanded({});
+    } else {
+      setExpanded(Object.fromEntries(expandableGroupRows().map((row) => [row.id, true])));
+    }
+  };
 
   // Inside a shell, full-screen is handled by hiding shell/page chrome — the table stays
   // in normal flow so its footer (pagination/selection) stays visible below it. Only the
@@ -432,6 +578,29 @@ export function DataTable<T, K extends string, G extends string = never>(
               )}
             </For>
           </div>
+        </Show>
+        {/* Group-by toggle — a single folder-icon button that turns the STATIC grouping (the
+            consumer's rowGroup.columnId) on/off. Only in table view (grouping is a table-view
+            concept) and when config + rowGroup are wired (the on/off state is config.groupBy —
+            persisted/layered like viewMode). The icon shows the ACTION the click performs: the
+            stacked-folders "ungroup" icon while grouped, the single-folder "group" icon while
+            ungrouped. */}
+        <Show when={props.rowGroup && props.setConfig && viewMode() === 'table'}>
+          <button
+            type="button"
+            class={`${styles.controlButton} ${grouping().length ? styles.controlButtonActive : ''}`}
+            aria-pressed={grouping().length > 0}
+            aria-label={t(props.rowGroup!.labelKey)}
+            title={t(props.rowGroup!.labelKey)}
+            data-testid="table-group-toggle"
+            onClick={() =>
+              props.setConfig?.('groupBy', groupBy() ? undefined : props.rowGroup!.columnId)
+            }
+          >
+            <Show when={grouping().length} fallback={<GroupedIcon />}>
+              <UngroupedIcon />
+            </Show>
+          </button>
         </Show>
         {/* View-mode switcher — shows the OTHER mode's icon (in table view, the card icon
             to switch to cards, and vice versa). Writes viewMode for the current band via
@@ -500,6 +669,27 @@ export function DataTable<T, K extends string, G extends string = never>(
                 <For each={table.getHeaderGroups()}>
                   {(headerGroup) => (
                     <tr>
+                      {/* Expander column header — the "expand/collapse ALL" double-chevron (Open
+                          mSupply), reserving the chevron column when the table is grouped. */}
+                      <Show when={grouping().length > 0}>
+                        <th class={`${styles.th} ${styles.expanderCell}`}>
+                          <button
+                            type="button"
+                            class={styles.groupExpander}
+                            data-expanded={allGroupsExpanded() ? '' : undefined}
+                            aria-expanded={allGroupsExpanded()}
+                            aria-label={
+                              allGroupsExpanded()
+                                ? t('table.collapse-all-groups')
+                                : t('table.expand-all-groups')
+                            }
+                            data-testid="table-expand-all"
+                            onClick={toggleAllGroups}
+                          >
+                            <ChevronsDownIcon />
+                          </button>
+                        </th>
+                      </Show>
                       <Show when={props.enableSelection}>
                         <th class={`${styles.th} ${styles.selectCell}`}>
                           <input
@@ -544,7 +734,9 @@ export function DataTable<T, K extends string, G extends string = never>(
                       <TableRow
                         row={row}
                         enableSelection={props.enableSelection ?? false}
+                        showExpander={grouping().length > 0}
                         onRowClick={props.onRowClick}
+                        onToggleGroup={toggleGroupSelection}
                         cellVisible={(cell) =>
                           columnInActiveTab(cell.column.columnDef as { tabsAndCardGroups?: Membership })
                         }
@@ -576,7 +768,11 @@ const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
 function TableRow<T>(props: {
   row: TanRow<T>;
   enableSelection: boolean;
+  /** When grouped, a leading expander column is present; parent (expandable) rows show a chevron. */
+  showExpander: boolean;
   onRowClick?: (row: T) => void;
+  /** Select/deselect ALL of a group row's leaves in one emit (called for a grouped-row checkbox). */
+  onToggleGroup: (row: TanRow<T>) => void;
   /** Display-time tab filter: render a cell only when this returns true (see columnInActiveTab). */
   cellVisible: (cell: TanCell<T, unknown>) => boolean;
 }): JSX.Element {
@@ -584,18 +780,58 @@ function TableRow<T>(props: {
     <tr
       data-testid="table-row"
       class={props.onRowClick ? styles.rowClickable : undefined}
-      // Selected rows get the same brand tint as selected cards (consistent selection
-      // signal across both views); styled on the cells (data-selected) in CSS.
-      data-selected={props.row.getIsSelected() ? '' : undefined}
+      // Selected rows get the same brand tint as selected cards (consistent selection signal
+      // across both views); styled on the cells (data-selected) in CSS. A GROUP row shows the
+      // tint when ALL its leaves are selected — mirroring its checkbox (its own id isn't stored,
+      // so getIsSelected() would stay false).
+      data-selected={
+        (props.row.getIsGrouped() ? props.row.getIsAllSubRowsSelected() : props.row.getIsSelected())
+          ? ''
+          : undefined
+      }
       onClick={() => props.onRowClick?.(props.row.original)}
     >
+      {/* Expander column (row grouping): its OWN leading column — the chevron on an expandable
+          parent, blank otherwise (matches Open mSupply, which puts the chevrons before select). */}
+      <Show when={props.showExpander}>
+        <td class={styles.expanderCell}>
+          <Show when={props.row.getCanExpand()}>
+            <button
+              type="button"
+              class={styles.groupExpander}
+              data-expanded={props.row.getIsExpanded() ? '' : undefined}
+              aria-expanded={props.row.getIsExpanded()}
+              aria-label={props.row.getIsExpanded() ? t('table.collapse-group') : t('table.expand-group')}
+              onClick={(event) => {
+                event.stopPropagation();
+                props.row.toggleExpanded();
+              }}
+            >
+              <ChevronDownIcon />
+            </button>
+          </Show>
+        </td>
+      </Show>
       <Show when={props.enableSelection}>
         <td class={styles.selectCell}>
+          {/* A GROUP row's checkbox is driven by its LEAVES, not the group's own selected state
+              (we never store a group's synthetic id): checked when all sub-rows are selected,
+              else unchecked (no indeterminate). Clicking it selects ALL leaves when not all are
+              selected, else deselects them — so select-group → deselect-one-leaf (group unchecks)
+              → click-group again cleanly re-selects all. A LEAF row uses the native handler. */}
           <input
             type="checkbox"
             aria-label={t('table.select-row')}
-            checked={props.row.getIsSelected()}
-            onChange={props.row.getToggleSelectedHandler()}
+            checked={
+              props.row.getIsGrouped()
+                ? props.row.getIsAllSubRowsSelected()
+                : props.row.getIsSelected()
+            }
+            onChange={
+              props.row.getIsGrouped()
+                ? () => props.onToggleGroup(props.row)
+                : props.row.getToggleSelectedHandler()
+            }
             onClick={(event) => event.stopPropagation()}
           />
         </td>
@@ -615,6 +851,12 @@ function TableRow<T>(props: {
                 ...(cellWrapLines(cell) ? { '--wrap-lines': String(cellWrapLines(cell)) } : {}),
               }}
             >
+              {/* Just flexRender the column's cell — TanStack's merged default cell renders the
+                  leaf value, the group value on a parent, and the aggregated value (via
+                  aggregatedCell). Unlike TanStack's own grouping example we DON'T render null for a
+                  placeholder (the grouped column on a CHILD row): flexRender gives the child's real
+                  value, so a grouped child keeps showing e.g. its code/name — a blank there would
+                  read as missing data (matches Open mSupply). The expander is its own column. */}
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </td>
           </Show>

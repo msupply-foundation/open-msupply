@@ -6,8 +6,18 @@ import { t } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
-import { DataTable, type Column, type SortState } from '../../ui/elements/table/DataTable';
+import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions';
+import { Button } from '../../ui/elements/buttons/Button';
+import { CloseIcon } from '../../ui/icons';
+import {
+  DataTable,
+  type Column,
+  type SortState,
+  sharedOrMultiple,
+} from '../../ui/elements/table/DataTable';
 import { getDateCell, getNumberCell } from '../../ui/elements/table/tableHelpers';
+import { createTableConfig } from '../../api/createTableConfig';
 import { StocktakeDetail, type StocktakeDetailResult } from './stocktakeDetail.generated';
 import { StocktakeLineCardModal } from './StocktakeLineCardModal';
 
@@ -50,6 +60,10 @@ const StocktakeDetailView: Component = () => {
   const params = useParams<{ storeId: string; stocktakeId: string }>();
   const navigate = useNavigate();
   const [sort, setSort] = createSignal<SortState<SortKey>>({ key: 'itemName', desc: false });
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // Column config (order/sizing/visibility) + the row-grouping choice (config.groupBy) persist
+  // per user/store for this table (kdd/table-state). Grouping by item collapses an item's batches.
+  const tableConfig = createTableConfig({ tableId: 'stocktake-detail' });
   // The item whose lines the card modal shows (null = closed). We snapshot the item id on click
   // and derive its lines below, so a re-sort behind the open modal doesn't change its contents.
   const [openItemId, setOpenItemId] = createSignal<string | null>(null);
@@ -111,6 +125,8 @@ const StocktakeDetailView: Component = () => {
   const columns = (): Column<Line, SortKey>[] => [
     {
       // Item code is nested (row.item.code) — no top-level key — so it's an accessor column.
+      // This is the GROUP-BY column (see rowGroup): item codes are unique, so grouping by the
+      // code groups by item identity, with no getGroupingValue mapping needed.
       c: { accessor: (line) => line.item.code, id: 'code' },
       sortKey: 'code',
       header: t('stocktake.column.item-code'),
@@ -120,8 +136,16 @@ const StocktakeDetailView: Component = () => {
       sortKey: 'itemName',
       header: t('stocktake.column.item-name'),
       meta: { card: { region: 'primary' } },
+      // Grouped parent → the shared name (all a code's rows are the same item), so the group
+      // shows both its code (the group key) and its name.
+      aggregationFn: sharedOrMultiple,
     },
-    { c: { key: 'batch' }, sortKey: 'batch', header: t('stocktake.column.batch') },
+    {
+      c: { key: 'batch' },
+      sortKey: 'batch',
+      header: t('stocktake.column.batch'),
+      aggregationFn: sharedOrMultiple,
+    },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
@@ -154,6 +178,26 @@ const StocktakeDetailView: Component = () => {
                 <Breadcrumb crumbs={crumbs(node)} />
               </Header>
             }
+            contentFooter={
+              // Selection action bar — appears while lines are selected. When grouped, ticking a
+              // group's checkbox selects all its batches (leaf lines). Actions on the selection
+              // (delete, adjust, …) are deferred with the rest of editing; for now it shows the
+              // count + Clear.
+              <Show when={selectedIds().length > 0}>
+                <ContentFooter>
+                  <strong>{t('stocktake.selected', { count: selectedIds().length })}</strong>
+                  <ContentFooterActions>
+                    <Button
+                      variant="secondary"
+                      icon={<CloseIcon />}
+                      onClick={() => setSelectedIds([])}
+                    >
+                      {t('common.clear')}
+                    </Button>
+                  </ContentFooterActions>
+                </ContentFooter>
+              </Show>
+            }
           >
             <DataTable
               columns={columns()}
@@ -163,6 +207,17 @@ const StocktakeDetailView: Component = () => {
               onSort={onSort}
               onRowClick={openItem}
               emptyMessage={t('stocktake.detail.empty')}
+              // Row grouping: a toolbar toggle "group by item" (grouped by the code column — codes
+              // are unique, so this groups by item identity). An item's batches collapse under one
+              // expandable parent that aggregates their columns (snapshot/counted sum; name/batch
+              // shared-or-[multiple]; expiry the date variant). The on/off state persists via
+              // config.groupBy.
+              rowGroup={{ columnId: 'code', labelKey: 'stocktake.column.item-name' }}
+              enableSelection
+              selectedIds={selectedIds()}
+              onSelectionChange={setSelectedIds}
+              config={tableConfig.config()}
+              setConfig={tableConfig.setConfig}
             />
             <StocktakeLineCardModal
               open={openItemId() != null}

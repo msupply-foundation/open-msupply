@@ -203,12 +203,23 @@
   text-align: center;
 }
 
+/* Row grouping (rowGroup): a dedicated leading EXPANDER column (before select) — like OMS, the
+   chevrons live in their own column, not embedded in the grouped value's cell. Defined here
+   (before the selected-row rule below) so specificity ascends (no-descending-specificity). */
+.expanderCell {
+  width: 2.25rem;
+  padding: var(--space-2) var(--space-1);
+  border-block-end: 1px solid var(--color-divider);
+  text-align: center;
+}
+
 /* Selected row — the SAME brand tint as a selected card (data-selected on the <tr>), so
    selection reads identically in table and card view. The tint sits on the cells (which
    paint over the row background). Placed AFTER the base .td / .selectCell rules so
    specificity ascends (no-descending-specificity). */
 tr[data-selected] .td,
-tr[data-selected] .selectCell {
+tr[data-selected] .selectCell,
+tr[data-selected] .expanderCell {
   background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
 }
 
@@ -414,4 +425,30 @@ tr[data-selected] .selectCell {
 .cardGroupIcon svg {
   inline-size: 1.5rem;
   block-size: 1.5rem;
+}
+
+/* The expander chevron button on an expandable parent row. The chevron is 1em, so font-size
+   sizes it; collapsed points right, expanded rotates the down-chevron to point down. */
+.groupExpander {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+
+.groupExpander[data-expanded] {
+  transform: rotate(0deg);
+}
+
+.groupExpander:hover {
+  color: var(--text-body);
 }

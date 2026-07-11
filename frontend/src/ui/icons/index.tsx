@@ -55,6 +55,31 @@ export const CloseIcon = (props: IconProps) => (
   </Fill>
 )
 
+// Row-grouping state icons (Tabler folder / folders). GroupedIcon = a single folder (rows are
+// grouped into one parent); UngroupedIcon = stacked folders (the "multiple", ungrouped state).
+// Used by the DataTable's group-by control (see rowGroup).
+export const GroupedIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" />
+  </Stroke>
+)
+
+export const UngroupedIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M9 4h3l2 2h5a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
+    <path d="M17 17v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h2" />
+  </Stroke>
+)
+
+// A double chevron (stacked). Points down as-is; the row-group "expand all" header control uses
+// it, flipped to point up (rotate 180deg) for "collapse all" — like Open mSupply.
+export const ChevronsDownIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M7 7l5 5l5 -5" />
+    <path d="M7 13l5 5l5 -5" />
+  </Stroke>
+)
+
 export const SearchIcon = (props: IconProps) => (
   <Fill viewBox="0 0 16 16" {...props}>
     <path d="M7 1.333a5.667 5.667 0 0 1 4.45 9.175l3.021 3.02a.667.667 0 0 1-.942.943l-3.02-3.02A5.667 5.667 0 1 1 7 1.333zm0 1.334a4.333 4.333 0 1 0 3.044 7.417l.018-.022A4.306 4.306 0 0 0 11.333 7 4.333 4.333 0 0 0 7 2.667z" />
