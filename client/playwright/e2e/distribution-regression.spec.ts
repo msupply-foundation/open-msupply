@@ -763,6 +763,12 @@ test.describe('Distribution: Outbound Shipments', () => {
       }
       await filterRequest;
 
+      // The status filter is a multi-select: picking an option leaves the
+      // dropdown open over the table, so close it before reading headers.
+      // (Harmless no-op on a single-select that already closed.)
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('listbox')).toBeHidden({ timeout: 3000 });
+
       // Every visible row should now have status "New".
       const statusColumn = await getColumnIndex(page, 'Status');
       await expect(async () => {
