@@ -220,7 +220,7 @@ fn build_v5_api_for_request(
         password_sha256: input.password_sha256.clone(),
         site_uuid: input.hardware_id.clone(),
         app_version: input.version.to_string(),
-        app_name: input.app_name.to_string(),
+        app_name: input.app_name.clone(),
         sync_version: SYNC_V5_VERSION.to_string(),
     };
 
