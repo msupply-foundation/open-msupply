@@ -18,6 +18,7 @@ use crate::{
         apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
     },
+    dynamic_query_filter::create_condition,
     item_store_join::item_store_join,
     repository_error::RepositoryError,
     EqualFilter, Pagination, Sort, StringFilter,
@@ -81,7 +82,21 @@ pub struct ItemFilter {
     #[ts(optional)]
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
     pub universal_code: Option<StringFilter>,
+
+    /// Client-provided dynamic filter AST (currently property conditions only).
+    /// ANDs with the other filters. Keys must be validated against the "item"
+    /// table scope's allowed property keys in the service layer.
+    #[ts(skip)]
+    pub dynamic_filter: Option<ItemCondition::Inner>,
 }
+
+// Dynamic query filter for the item table, applied to joined queries via an
+// `item::id.eq_any(subquery)` sub-select.
+create_condition!(
+    ItemCondition,
+    item::table,
+    (CustomField, custom_fields, item::custom_fields),
+);
 
 impl ItemFilter {
     pub fn new() -> ItemFilter {
@@ -162,6 +177,11 @@ impl ItemFilter {
         self.universal_code = Some(filter);
         self
     }
+
+    pub fn dynamic_filter(mut self, condition: ItemCondition::Inner) -> Self {
+        self.dynamic_filter = Some(condition);
+        self
+    }
 }
 
 type ItemAndUnit = (ItemRow, Option<UnitRow>);
@@ -224,11 +244,12 @@ impl<'a> ItemRepository<'a> {
                     apply_sort!(query, sort, item::type_);
                 }
             }
-        } else {
-            query = query.order(item::id.asc())
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let final_query = query
+            .then_order_by(item::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
@@ -264,6 +285,7 @@ impl<'a> ItemRepository<'a> {
                 is_program_item,
                 ignore_for_orders,
                 universal_code,
+                dynamic_filter,
                 // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
                 max_months_of_stock: _,
                 min_months_of_stock: _,
@@ -282,6 +304,16 @@ impl<'a> ItemRepository<'a> {
             apply_string_filter!(query, name, item::name);
             apply_equal_filter!(query, r#type, item::type_);
             apply_string_filter!(query, universal_code, item::universal_code);
+
+            // The condition compiles against the bare item table, so apply it
+            // to this joined query through a sub-select
+            if let Some(condition) = dynamic_filter {
+                let item_ids = item::table
+                    .filter(condition.to_boxed())
+                    .select(item::id)
+                    .into_boxed();
+                query = query.filter(item::id.eq_any(item_ids));
+            }
 
             if let Some(is_active) = is_active {
                 query = query.filter(item::is_active.eq(is_active));

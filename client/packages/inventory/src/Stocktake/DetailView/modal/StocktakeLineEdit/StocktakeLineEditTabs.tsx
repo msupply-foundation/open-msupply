@@ -53,7 +53,7 @@ export const StocktakeLineEditTabs: FC<
       <TabContext value={currentTab}>
         <TabKeybindings
           tabs={[Tabs.Batch, Tabs.Pricing, Tabs.Other]}
-          onAdd={onAddLine}
+          onAdd={isDisabled ? undefined : onAddLine}
           setCurrentTab={setCurrentTab}
         />
         <Box

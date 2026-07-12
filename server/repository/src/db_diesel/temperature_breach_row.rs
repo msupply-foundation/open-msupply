@@ -146,12 +146,11 @@ impl<'a> TemperatureBreachRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = temperature_breach::table
-            .filter(temperature_breach::id.eq(lookup_id))
-            .select(temperature_breach::id)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            temperature_breach::table.filter(temperature_breach::id.eq(lookup_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
     }
 
     pub fn find_many_by_id(

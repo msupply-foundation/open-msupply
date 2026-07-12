@@ -45,6 +45,7 @@ impl SyncTranslation for UserStorePermissionTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyUserStorePermissionTable {
@@ -229,7 +230,11 @@ mod tests {
             ..join
         };
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &buffer_row)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &buffer_row,
+            )
             .unwrap();
         let expected = PullTranslateResult::IntegrationOperations(vec![
             IntegrationOperation::upsert(expected_join),
@@ -283,7 +288,11 @@ mod tests {
         }));
 
         let result = translator
-            .try_translate_from_upsert_sync_record(&connection, &buffer_row)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &buffer_row,
+            )
             .unwrap();
         let expected = PullTranslateResult::IntegrationOperations(vec![
             IntegrationOperation::delete(UserStoreJoinRowDelete(join.id)),

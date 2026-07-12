@@ -119,11 +119,12 @@ impl<'a> RequisitionRepository<'a> {
                     apply_sort_no_case!(query, sort, program::name);
                 }
             }
-        } else {
-            query = query.order(requisition::id.asc())
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let final_query = query
+            .then_order_by(requisition::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 

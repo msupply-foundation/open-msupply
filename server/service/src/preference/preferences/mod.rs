@@ -74,6 +74,12 @@ pub mod global_table_configs;
 pub use global_table_configs::*;
 pub mod backdating;
 pub use backdating::*;
+pub mod receive_payments_from_prescriptions;
+pub use receive_payments_from_prescriptions::*;
+pub mod do_not_print_placeholder_line_labels;
+pub use do_not_print_placeholder_line_labels::*;
+pub mod blind_stocktake;
+pub use blind_stocktake::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -95,8 +101,10 @@ pub struct PreferenceProvider {
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub global_table_configs: GlobalTableConfigs,
     pub backdating: Backdating,
+    pub receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
 
     // Store preferences
+    pub blind_stocktake: BlindStocktake,
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub order_in_packs: OrderInPacks,
@@ -122,6 +130,7 @@ pub struct PreferenceProvider {
     pub store_custom_colour: StoreCustomColour,
     pub invoice_status_options: InvoiceStatusOptions,
     pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
+    pub do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
 }
 
 pub fn get_preference_provider() -> PreferenceProvider {
@@ -145,8 +154,10 @@ pub fn get_preference_provider() -> PreferenceProvider {
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         global_table_configs: GlobalTableConfigs,
         backdating: Backdating,
+        receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
 
         // Store preferences
+        blind_stocktake: BlindStocktake,
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         order_in_packs: OrderInPacks,
@@ -172,5 +183,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         warn_when_missing_recent_stocktake: WarnWhenMissingRecentStocktake,
         invoice_status_options: InvoiceStatusOptions,
         show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
+        do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
     }
 }

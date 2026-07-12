@@ -74,9 +74,13 @@ export const BatchTable = ({
   disabled = false,
   isInitialStocktake,
   isVaccineItem = false,
+  hideSnapshotStock = false,
+  hideReason = false,
 }: StocktakeLineEditTableProps & {
   isVaccineItem: boolean;
   isInitialStocktake: boolean;
+  hideSnapshotStock?: boolean;
+  hideReason?: boolean;
 }) => {
   const t = useTranslation();
   const { manageVvmStatusForStock, manageVaccinesInDoses } = usePreferences();
@@ -96,6 +100,7 @@ export const BatchTable = ({
           <CheckBoxCell
             isError={!!errors[row.original.id]}
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -147,6 +152,7 @@ export const BatchTable = ({
             <DateTimePickerInput
               value={value}
               disabled={disabled || !row.original.countThisLine}
+              disableFuture
               onChange={date =>
                 update({
                   id: row.original.id,
@@ -194,11 +200,14 @@ export const BatchTable = ({
       {
         accessorKey: 'snapshotNumberOfPacks',
         header: t('label.snapshot-num-of-packs'),
-        columnType: ColumnType.Number,
         size: 100,
+        includeColumn: !hideSnapshotStock,
         getIsError: rowData =>
           errors[rowData.id]?.__typename ===
           'SnapshotCountCurrentCountMismatchLine',
+        Cell: ({ cell }) => (
+          <NumberInputCell cell={cell} disabled updateFn={() => { }} />
+        ),
       },
       {
         accessorKey: 'countedNumberOfPacks',
@@ -249,6 +258,7 @@ export const BatchTable = ({
         id: 'inventoryAdjustmentReasonInput',
         header: t('label.reason'),
         accessorFn: row => row.reasonOption || '',
+        includeColumn: !hideReason,
         Cell: props => (
           <InventoryAdjustmentReasonInputCell
             updateFn={reasonOption =>
@@ -262,7 +272,13 @@ export const BatchTable = ({
         ),
       },
     ],
-    [showVVMStatusColumn, showDosesCountedColumn, errors]
+    [
+      showVVMStatusColumn,
+      showDosesCountedColumn,
+      hideSnapshotStock,
+      hideReason,
+      errors,
+    ]
   );
 
   const table = useSimpleMaterialTable({
@@ -310,6 +326,7 @@ export const PricingTable = ({
         Cell: ({ cell, row }) => (
           <CheckBoxCell
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -407,6 +424,7 @@ export const LocationTable = ({
         Cell: ({ cell, row }) => (
           <CheckBoxCell
             cell={cell}
+            disabled={disabled}
             updateFn={value =>
               update({ id: row.original.id, countThisLine: value })
             }
@@ -549,7 +567,7 @@ const getPackSizeChangePatch = (
   const shouldClearSellPrice =
     row.item.defaultPackSize !== newPackSize &&
     row.item.itemStoreProperties?.defaultSellPricePerPack ===
-      row.sellPricePerPack;
+    row.sellPricePerPack;
 
   return {
     id: row.id,
@@ -571,7 +589,7 @@ const getCountedPacksChangePatch = (
   const keepReason =
     typeof row.countedNumberOfPacks === 'number' &&
     countedPacks > row.snapshotNumberOfPacks ===
-      row.countedNumberOfPacks > row.snapshotNumberOfPacks;
+    row.countedNumberOfPacks > row.snapshotNumberOfPacks;
 
   return {
     id: row.id,

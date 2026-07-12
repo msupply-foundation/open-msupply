@@ -85,6 +85,14 @@ impl<'a> PeriodRowRepository<'a> {
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
+
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            period::table.filter(period::id.eq(lookup_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for PeriodRow {

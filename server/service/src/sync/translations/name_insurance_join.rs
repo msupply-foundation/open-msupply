@@ -1,21 +1,19 @@
 use chrono::NaiveDate;
 use repository::{
-    name_insurance_join_row::{
-        InsurancePolicyType, NameInsuranceJoinRow,
-    },
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
-    Row,
-
+    name_insurance_join_row::{InsurancePolicyType, NameInsuranceJoinRow},
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::sync_serde::{empty_str_as_option_string, object_fields_as_option};
 
 use crate::sync::translations::{
     insurance_provider::InsuranceProviderTranslator, name::NameTranslation,
-
 };
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType};
+use super::{
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
+};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyInsurancePolicyType {
@@ -88,7 +86,8 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameInsuranceJoinRow {
@@ -106,10 +105,16 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             oms_fields,
         } = sync_record.deserialize()?;
 
+        let check_fk = fk_checker.with_table_required(connection, "name_insurance_join", &ID);
+
         let result = NameInsuranceJoinRow {
             id: ID,
-            name_id: nameID,
-            insurance_provider_id: insuranceProviderID,
+            name_id: check_fk(nameID, "name_link_id", FkField::NameLink)?,
+            insurance_provider_id: check_fk(
+                insuranceProviderID,
+                "insurance_provider_id",
+                FkField::InsuranceProvider,
+            )?,
             policy_number_person: policyNumberPerson,
             policy_number_family: policyNumberFamily,
             policy_number: policyNumberFull,
@@ -186,14 +191,21 @@ impl SyncTranslation for NameInsuranceJoinTranslation {
             oms_fields,
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, InsuranceProviderRow,
+        InsuranceProviderRowRepository, NameLinkRow, NameLinkRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_name_insurance_join_translation() {
@@ -202,14 +214,35 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_name_insurance_join_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
+
+        // Seed the name_link + insurance_provider parents the join's required FKs point at.
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                name_id: "name_a".to_string(),
+            })
+            .unwrap();
+        InsuranceProviderRowRepository::new(&connection)
+            .upsert_one(&InsuranceProviderRow {
+                id: "INSURANCE_PROVIDER_1_ID".to_string(),
+                provider_name: "test".to_string(),
+                is_active: true,
+                prescription_validity_days: None,
+                comment: None,
+            })
+            .unwrap();
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

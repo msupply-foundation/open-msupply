@@ -13,6 +13,7 @@ const CustomerSearchComponent: FC<NameSearchProps> = props => {
   const t = useTranslation();
   const { height } = useWindowDimensions();
   const modalHeight = height * 0.8;
+  const isList = 'isList' in props;
 
   const input = (
     <CustomerSearchInput
@@ -20,14 +21,14 @@ const CustomerSearchComponent: FC<NameSearchProps> = props => {
       onChange={name => {
         if (name) props.onChange(name);
       }}
-      width={500}
+      width={isList ? undefined : 500}
       clearable={false}
       autoFocus
       openOnFocus
     />
   );
 
-  if ('isList' in props) {
+  if (isList) {
     return <Box padding={2}>{input}</Box>;
   }
 

@@ -11,20 +11,16 @@ import {
   useBreadcrumbs,
   useSimplifiedTabletUI,
   useUrlQuery,
-  useToggle,
   InvoiceLineStatusType,
   useAppTheme,
   useIsExtraSmallScreen,
   InboundNodeType,
   Box,
   AppFooterStatusPortal,
+  InvoiceNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import {
-  ActivityLogList,
-  DocumentsTable,
-  UploadDocumentModal,
-} from '@openmsupply-client/system';
+import { ActivityLogList, DocumentsTab } from '@openmsupply-client/system';
 
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -45,6 +41,7 @@ import { DetailsTab } from './Tabs/Details';
 import { ScanInputModal } from './ScanInputModal';
 import { MobileToolbar } from './MobileToolbar';
 import { getInboundColorAndIcon } from '../ListView/SupplierCell';
+import { InvoiceCustomFieldsTab } from '../../common';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -64,18 +61,16 @@ const DetailViewInner = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { urlQuery, updateQuery } = useUrlQuery();
-  const {
-    toggleOn: toggleUploadModal,
-    isOn: isUploadModalOpen,
-    toggleOff: toggleCloseUploadModal,
-  } = useToggle();
 
   const lineEditModal = useEditModal<InboundLineItem | ScannedItem>();
 
   const {
     query: { data, loading },
     isExternal,
+    isDisabled,
     invalidateQuery,
+    isAddOrDeleteLinesDisabled,
+    update: { update },
   } = useInboundShipment();
 
   // ScanInputModal needs the same line list that the table renders.
@@ -123,12 +118,6 @@ const DetailViewInner = () => {
     [lineEditModal, urlQuery, updateQuery]
   );
 
-  const openUploadModal = useCallback(() => {
-    toggleUploadModal();
-    if (urlQuery['tab'] !== InboundShipmentDetailTabs.Documents)
-      updateQuery({ tab: InboundShipmentDetailTabs.Documents });
-  }, [toggleUploadModal, urlQuery, updateQuery]);
-
   useEffect(() => {
     setCustomBreadcrumbs({
       1: (
@@ -169,15 +158,26 @@ const DetailViewInner = () => {
       : []),
     {
       Component: (
-        <DocumentsTable
+        <DocumentsTab
           documents={data?.documents.nodes ?? []}
           recordId={data?.id ?? ''}
           tableName="invoice"
-          openUploadModal={toggleUploadModal}
+          canUpload={!isAddOrDeleteLinesDisabled}
           invalidateQueries={invalidateQuery}
         />
       ),
       value: InboundShipmentDetailTabs.Documents,
+    },
+    {
+      Component: (
+        <InvoiceCustomFieldsTab
+          invoiceType={InvoiceNodeType.InboundShipment}
+          customFields={data?.customFields}
+          onSave={patch => update({ customFields: patch })}
+          disabled={isDisabled}
+        />
+      ),
+      value: InboundShipmentDetailTabs.CustomFields,
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
@@ -194,7 +194,6 @@ const DetailViewInner = () => {
           <AppBarButtons
             onAddItem={onAddItem}
             simplifiedTabletView={simplifiedTabletView}
-            openUploadModal={openUploadModal}
           />
 
           {isExtraSmallScreen ? <MobileToolbar /> : <Toolbar />}
@@ -212,14 +211,6 @@ const DetailViewInner = () => {
             lines={lines}
             invoiceId={data?.id ?? ''}
             shouldOpen={!lineEditModal.isOpen}
-          />
-
-          <UploadDocumentModal
-            isOn={isUploadModalOpen}
-            toggleOff={toggleCloseUploadModal}
-            recordId={data.id}
-            tableName="invoice"
-            invalidateQueries={invalidateQuery}
           />
         </>
       ) : (

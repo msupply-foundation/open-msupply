@@ -173,7 +173,7 @@ const useCreate = () => {
     onSuccess: () =>
       // Stock line list needs to be re-fetched to include the new stock line
       queryClient.invalidateQueries({
-        queryKey: [STOCK_LINE]
+        queryKey: [STOCK_LINE],
       }),
   });
 };
@@ -214,9 +214,7 @@ const useUpdate = (id: string) => {
         itemVariantId: setNullableInput('id', itemVariant),
         vvmStatusId,
         donorId: setNullableInput('id', donor),
-        manufacturerId: setNullableInput('manufacturerId', {
-          manufacturerId: manufacturer?.id ?? null,
-        }),
+        manufacturerId: setNullableInput('id', manufacturer),
         campaignId: setNullableInput('id', campaign),
         programId: setNullableInput('id', program),
         volumePerPack,
@@ -237,10 +235,10 @@ const useUpdate = (id: string) => {
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: [STOCK_LINE, id]
+        queryKey: [STOCK_LINE, id],
       });
       queryClient.invalidateQueries({
-        queryKey: [LOCATION]
+        queryKey: [LOCATION],
       }); // Invalidate location queries to update available volume
     },
   });

@@ -17,7 +17,6 @@ import {
   useAppTheme,
   useMediaQuery,
   useNotification,
-  useUrlQueryParams,
   useSimplifiedTabletUI,
   ButtonWithIcon,
   PlusCircleIcon,
@@ -62,6 +61,9 @@ interface StocktakeLineEditProps {
   onClose: () => void;
   isOpen: boolean;
   isInitialStocktake: boolean;
+  hideSnapshotStock: boolean;
+  hideReason: boolean;
+  getSortedItems: () => StocktakeLineFragment['item'][];
 }
 
 export const StocktakeLineEdit = ({
@@ -70,13 +72,15 @@ export const StocktakeLineEdit = ({
   onClose,
   isOpen,
   isInitialStocktake,
+  hideSnapshotStock,
+  hideReason,
+  getSortedItems,
 }: StocktakeLineEditProps) => {
   const theme = useAppTheme();
   const isMediumScreen = useMediaQuery(theme.breakpoints.down(Breakpoints.lg));
   const [currentItem, setCurrentItem] = useState(item);
 
-  const { isDisabled, items, totalLineCount, lines } =
-    useStocktakeOld.line.rows();
+  const { isDisabled, items, lines } = useStocktakeOld.line.rows();
   const {
     draftLines,
     update: updateLine,
@@ -84,7 +88,7 @@ export const StocktakeLineEdit = ({
     isSaving,
     save,
     nextItem,
-  } = useStocktakeLineEdit(currentItem, items, lines);
+  } = useStocktakeLineEdit(currentItem, getSortedItems, lines);
   const { unsetError } = useStocktakeLineErrorContext();
   const update: typeof updateLine = useCallback(
     patch => {
@@ -95,11 +99,6 @@ export const StocktakeLineEdit = ({
   );
   const t = useTranslation();
   const { error } = useNotification();
-  const {
-    updatePaginationQuery,
-    queryParams: { first, offset, page },
-  } = useUrlQueryParams();
-  const hasMorePages = totalLineCount > Number(first) + Number(offset);
   // Order by newly added batch since new batches are now
   // added to the top of the stocktake list instead of the bottom
   const reversedDraftLines = [...draftLines].reverse();
@@ -202,14 +201,6 @@ export const StocktakeLineEdit = ({
       case mode === ModalMode.Update && !!nextItem:
         setCurrentItem(nextItem);
         break;
-      case mode === ModalMode.Update && hasMorePages:
-        // we are at the end of the current paginated set of items
-        // fetch more pages and set the current item to null
-        // so that we can correctly set the current item when the
-        // lines query returns
-        updatePaginationQuery(page + 1);
-        setCurrentItem(null);
-        break;
       case mode === ModalMode.Create:
         setCurrentItem(null);
         break;
@@ -235,15 +226,6 @@ export const StocktakeLineEdit = ({
 
   const hasValidBatches = draftLines.length > 0;
 
-  useEffect(() => {
-    // if the pagination has been increased and items have been fetched
-    // and we are updating and the current item has been nulled
-    // then it is time to set the curren item again
-    if (mode === ModalMode.Update && !currentItem && !!items[0]?.item)
-      setCurrentItem(items[0]?.item);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items]);
-
   const tableContent = simplifiedTabletView ? (
     <>
       <BatchTable
@@ -252,6 +234,8 @@ export const StocktakeLineEdit = ({
         update={update}
         isInitialStocktake={isInitialStocktake}
         isVaccineItem={currentItem?.isVaccine ?? false}
+        hideSnapshotStock={hideSnapshotStock}
+        hideReason={hideReason}
       />
       <Box flex={1} justifyContent="flex-start" display="flex" margin={3}>
         <ButtonWithIcon
@@ -276,6 +260,8 @@ export const StocktakeLineEdit = ({
               update={update}
               isInitialStocktake={isInitialStocktake}
               isVaccineItem={currentItem?.isVaccine ?? false}
+              hideSnapshotStock={hideSnapshotStock}
+              hideReason={hideReason}
             />
           </StyledTabContainer>
         </StyledTabPanel>
@@ -313,7 +299,7 @@ export const StocktakeLineEdit = ({
       onCancel={onClose}
       mode={mode}
       isOpen={isOpen}
-      hasNext={!!nextItem || hasMorePages}
+      hasNext={!!nextItem}
       isValid={hasValidBatches && !isSaving}
     >
       {isSaving ? (

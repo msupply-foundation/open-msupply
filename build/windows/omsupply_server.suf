@@ -4563,20 +4563,17 @@ else
 	end
 end
 
-queryResult = Service.Query("Open mSupply Server", "omsupply-server");
-if (queryResult == SERVICE_NOT_FOUND) then
-	-- Delete unchoosen app file (.exe) by a user
-	if (omSupplyServerDatabase == "sqlite") then
-		Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
-		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"));
-		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-postgres.exe"));
-		File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-postgres.exe"));
-	else
-		Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
-		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"));
-		File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-sqlite.exe"));
-		File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-sqlite.exe"));
-	end
+-- Delete unchoosen app file (.exe) by a user
+if (omSupplyServerDatabase == "sqlite") then
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"));
+	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-postgres.exe"));
+	File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-postgres.exe"));
+else
+	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
+	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe"));
+	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-sqlite.exe"));
+	File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-sqlite.exe"));
 end
 
 -- set the startup to Automatic (Delayed Start) (not possible with a service startup type enum, it requires the flag to be set)
@@ -4764,18 +4761,18 @@ a2F0aG1hbmR1MzEy</CodeSignCertificatePasswordSHA256>
 <CodeSignDescriptionURL>https://msupply.foundation</CodeSignDescriptionURL>
 <UseCustomIcon>1</UseCustomIcon>
 <CustomIconFile>#PROJECTFILEDIR#\omSupply.ico</CustomIconFile>
-<ResourceFileVersion>9.5.1.0</ResourceFileVersion>
-<ResourceProductVersion>9.5.1.0</ResourceProductVersion>
-<ResourceCompanyName>Indigo Rose Corporation</ResourceCompanyName>
-<ResourceProductName>Setup Factory Runtime</ResourceProductName>
-<ResourceComments>Created with Setup Factory</ResourceComments>
+<ResourceFileVersion>replace canonical version</ResourceFileVersion>
+<ResourceProductVersion>replace canonical version</ResourceProductVersion>
+<ResourceCompanyName>mSupply Foundation</ResourceCompanyName>
+<ResourceProductName>Open mSupply</ResourceProductName>
+<ResourceComments/>
 <ResourceInternalName>sf_rt</ResourceInternalName>
-<ResourceFileDescription>Setup Application</ResourceFileDescription>
-<ResourceCopyright>Setup Engine Copyright � 1992-2016 Indigo Rose Corporation</ResourceCopyright>
-<ResourceTrademarks>Setup Factory is a trademark of Indigo Rose Corporation</ResourceTrademarks>
+<ResourceFileDescription>Open mSupply server installer</ResourceFileDescription>
+<ResourceCopyright/>
+<ResourceTrademarks/>
 <ResourcePrivateBuild/>
 <ResourceSpecialBuild/>
-<StampResources>0</StampResources>
+<StampResources>1</StampResources>
 <CompressionType CompressionSetting="LZMA_LOW" DictionarySize="24" WordSize="32" CPUThreads="2"/>
 <Vars/>
 </BuildConfig>

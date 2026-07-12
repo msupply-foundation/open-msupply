@@ -37,6 +37,8 @@ pub mod initialisation_status;
 pub mod migration_status;
 pub mod name_property;
 pub use self::name_property::*;
+pub mod custom_field;
+pub use self::custom_field::*;
 pub mod requisition_line_chart;
 pub mod response_requisition_line_stats;
 pub mod sync_settings;

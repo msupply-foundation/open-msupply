@@ -113,11 +113,12 @@ impl<'a> ClinicianRepository<'a> {
                 }
                 ClinicianSortField::Email => apply_sort_no_case!(query, sort, clinician::email),
             }
-        } else {
-            query = query.order(clinician::id.asc())
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let final_query = query
+            .then_order_by(clinician::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 

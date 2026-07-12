@@ -146,6 +146,7 @@ async fn request_and_set_site_auth_v7(
         &base_url,
         GetTokenInput {
             version: Version::from_package_json(),
+            app_name: crate::sync::api::APP_NAME.to_string(),
             name: settings.username.clone(),
             password_sha256: settings.password_sha256.clone(),
             hardware_id,

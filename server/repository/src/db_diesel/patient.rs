@@ -7,8 +7,8 @@ use crate::{
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, GenderType, NameRowType, Pagination, ProgramEnrolmentFilter,
-    ProgramEnrolmentRepository, Sort, StringFilter,
+    DateFilter, EqualFilter, GenderType, NameCondition, NameRowType, Pagination,
+    ProgramEnrolmentFilter, ProgramEnrolmentRepository, Sort, StringFilter,
 };
 
 use chrono::NaiveDate;
@@ -43,6 +43,11 @@ pub struct PatientFilter {
     /// - program_enrolment::program_enrolment_id
     pub identifier: Option<StringFilter>,
     pub program_enrolment_name: Option<StringFilter>,
+
+    /// Client-provided dynamic filter AST (currently property conditions only).
+    /// ANDs with the other filters. Keys must be validated against the "patient"
+    /// table scope's allowed property keys in the service layer.
+    pub dynamic_filter: Option<NameCondition::Inner>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -142,11 +147,12 @@ impl<'a> PatientRepository<'a> {
                     apply_sort!(query, sort, name::created_datetime)
                 }
             }
-        } else {
-            query = query.order(name::id.asc())
         }
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let final_query = query
+            .then_order_by(name::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
@@ -190,6 +196,7 @@ impl<'a> PatientRepository<'a> {
                 identifier,
                 program_enrolment_name,
                 next_of_kin_name,
+                dynamic_filter,
             } = f;
 
             // or filters need to be applied first
@@ -262,6 +269,12 @@ impl<'a> PatientRepository<'a> {
             apply_string_filter!(query, address2, name::address2);
             apply_string_filter!(query, country, name::country);
             apply_string_filter!(query, email, name::email);
+
+            // This query selects from the bare name table, so the condition
+            // (compiled against name::table) applies directly
+            if let Some(condition) = dynamic_filter {
+                query = query.filter(condition.to_boxed());
+            }
         };
 
         // Only return active (not deleted) patients
@@ -362,6 +375,11 @@ impl PatientFilter {
 
     pub fn program_enrolment_name(mut self, filter: StringFilter) -> Self {
         self.program_enrolment_name = Some(filter);
+        self
+    }
+
+    pub fn dynamic_filter(mut self, condition: NameCondition::Inner) -> Self {
+        self.dynamic_filter = Some(condition);
         self
     }
 }
