@@ -170,9 +170,14 @@ function cell(table: Locator, rowIndex: number, testId: string): Locator {
  * value for counted == snapshot comparisons.
  */
 async function snapshotText(table: Locator, rowIndex: number): Promise<string> {
-  return (
-    (await cell(table, rowIndex, CELL.snapshotPacks).textContent()) ?? ''
-  ).replace(/[,\s]/g, '');
+  // The snapshot cell renders as a disabled input (value, not text content);
+  // fall back to text for cells rendered as plain text.
+  const snapCell = cell(table, rowIndex, CELL.snapshotPacks);
+  const input = snapCell.locator('input');
+  const raw = (await input.count())
+    ? await input.inputValue()
+    : ((await snapCell.textContent()) ?? '');
+  return raw.replace(/[,\s]/g, '');
 }
 
 /** The snapshot pack count of a batch row as a number (may be decimal). */
@@ -235,11 +240,45 @@ async function waitForCountedLine(page: Page): Promise<void> {
 }
 
 /** Select the first available reason for a batch row (enabled once counted ≠ snapshot). */
+/**
+ * Commit a just-typed cell value. Cell edits commit on blur, so anything that
+ * reads the draft row (the OK save, the reason cell enabling) races an
+ * uncommitted value unless we blur explicitly first.
+ */
+async function commitCellEdit(page: Page): Promise<void> {
+  await page
+    .locator(':focus')
+    .blur({ timeout: 1000 })
+    .catch(() => {});
+}
+
+/**
+ * Fill a just-rendered editable cell and make sure the edit *survives*.
+ * Right after the line-edit modal opens, a late draft refresh can re-render
+ * the rows and silently wipe an edit that landed in the gap — so fill,
+ * commit, give the refresh a beat, and refill if the value was lost.
+ */
+async function fillCell(
+  page: Page,
+  input: Locator,
+  value: string
+): Promise<void> {
+  await expect(async () => {
+    await input.fill(value);
+    await commitCellEdit(page);
+    await page.waitForTimeout(300);
+    await expect(input).toHaveValue(value, { timeout: 1000 });
+  }).toPass({ timeout: 15000 });
+}
+
 async function pickFirstReason(
   page: Page,
   table: Locator,
   rowIndex: number
 ): Promise<void> {
+  // The reason cell only enables once the counted edit commits — clicking a
+  // disabled combobox never blurs the counted input, so commit it first.
+  await commitCellEdit(page);
   await cell(table, rowIndex, CELL.reason).getByRole('combobox').click();
   const option = page.getByRole('option').first();
   await expect(option).toBeVisible({ timeout: 5000 });
@@ -550,15 +589,19 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
       await pickFirstItem(page, modal, 'amox');
       const table = modal.locator('table');
 
-      // Snapshot cell has no input — it's rendered read-only.
+      // Snapshot is read-only: rendered either as plain text (no input) or as
+      // a disabled input, depending on the FE build.
       const snapCell = cell(table, 0, CELL.snapshotPacks);
-      await expect(snapCell.locator('input')).toHaveCount(0);
+      const snapInput = snapCell.locator('input');
+      if ((await snapInput.count()) > 0) {
+        await expect(snapInput.first()).toBeDisabled();
+      }
       const snapshot = await snapshotPacks(table, 0);
       expect(snapshot).toBeGreaterThan(0);
 
       // Enter a counted value different from the snapshot.
       const countedCell = cell(table, 0, CELL.countedPacks);
-      await countedCell.locator('input').fill(String(snapshot + 1));
+      await fillCell(page, countedCell.locator('input'), String(snapshot + 1));
 
       // Saving without a reason is blocked with the reason-required error.
       await modal.getByTestId('dialog-button-ok').click();
@@ -772,10 +815,10 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
         return texts;
       };
 
-      await counted.fill(String(snapshot + 1));
+      await fillCell(page, counted, String(snapshot + 1));
       const increaseReasons = await readReasons();
 
-      await counted.fill(String(snapshot - 1));
+      await fillCell(page, counted, String(snapshot - 1));
       const decreaseReasons = await readReasons();
 
       expect(increaseReasons.length).toBeGreaterThan(0);
@@ -953,7 +996,7 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
       // Name the new batch so we can re-identify its row in the detail table.
       const uniq = `pw-reduce-${Date.now()}`;
       const newRow = await addBlankBatch(modal, table);
-      await cell(table, newRow, CELL.batch).locator('input').fill(uniq);
+      await fillCell(page, cell(table, newRow, CELL.batch).locator('input'), uniq);
 
       await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
@@ -1051,7 +1094,7 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
       const { index } = await countableRow(table);
       const snapshot = await snapshotPacks(table, index);
       const countedCell = cell(table, index, CELL.countedPacks);
-      await countedCell.locator('input').fill(String(snapshot + 1));
+      await fillCell(page, countedCell.locator('input'), String(snapshot + 1));
       await pickFirstReason(page, table, index);
 
       await modal.getByTestId('dialog-button-ok').click();
@@ -1099,7 +1142,7 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
       // difference and no reason is required.
       const snapshot = await snapshotText(table, 0);
       const countedCell = cell(table, 0, CELL.countedPacks);
-      await countedCell.locator('input').fill(snapshot); // no difference
+      await fillCell(page, countedCell.locator('input'), snapshot); // no difference
       await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
       await waitForCountedLine(page);
@@ -1208,7 +1251,11 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
 
       // 2) Finalise a +INCREASE adjustment on that batch.
       const countedCell = cell(table, index, CELL.countedPacks);
-      await countedCell.locator('input').fill(String(baseline + INCREASE));
+      await fillCell(
+        page,
+        countedCell.locator('input'),
+        String(baseline + INCREASE)
+      );
       await pickFirstReason(page, table, index);
       await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
