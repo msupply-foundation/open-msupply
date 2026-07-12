@@ -12,7 +12,7 @@ public class RemoteServer {
     }
 
     public void start(int port, String filesDir, String cacheDir, String androidId) {
-        android.util.Log.i("OMSSpike", "Starting OMS Rust server on port " + port);
+        android.util.Log.i("OpenMSupply", "Starting OMS Rust server on port " + port);
         startServer(port, filesDir, cacheDir, androidId);
     }
 

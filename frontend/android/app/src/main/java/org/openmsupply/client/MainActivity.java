@@ -23,7 +23,7 @@ public class MainActivity extends BridgeActivity {
         bridge.setWebViewClient(new BridgeWebViewClient(bridge) {
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                android.util.Log.w("OMSSpike", "Proceeding through SSL error for: " + error.getUrl());
+                android.util.Log.w("OpenMSupply", "Proceeding through SSL error for: " + error.getUrl());
                 handler.proceed();
             }
         });
@@ -59,7 +59,7 @@ public class MainActivity extends BridgeActivity {
                 }
             }
         } catch (java.io.IOException e) {
-            android.util.Log.e("OMSSpike", "Failed to copy asset " + assetPath, e);
+            android.util.Log.e("OpenMSupply", "Failed to copy asset " + assetPath, e);
         }
     }
 
