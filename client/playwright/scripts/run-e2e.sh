@@ -70,18 +70,24 @@ for port in "$SERVER_PORT" $((SERVER_PORT + 1)) "$FE_PORT"; do
 done
 
 # Fresh-checkout bootstrap: JS deps and the Playwright browser. Both are
-# fast no-ops when already present.
+# fast no-ops when already present. Linux needs the browser's system deps.
 [[ -d "$CLIENT_DIR/node_modules" ]] || (cd "$CLIENT_DIR" && yarn install)
-(cd "$CLIENT_DIR" && npx playwright install chromium)
+if [[ "$(uname)" == "Linux" ]]; then
+  (cd "$CLIENT_DIR" && npx playwright install --with-deps chromium)
+else
+  (cd "$CLIENT_DIR" && npx playwright install chromium)
+fi
 
 echo "Building server + CLI (sqlite; a no-op when already built)"
 (cd "$SERVER_DIR" && cargo build --bin remote_server --bin remote_server_cli)
+# Honour CARGO_TARGET_DIR (CI shares a persistent target dir across jobs).
+BIN_DIR="${CARGO_TARGET_DIR:-$SERVER_DIR/target}/debug"
 
 echo "Restoring database from server/data/e2e"
 rm -f "$SERVER_DIR/$DB_NAME".sqlite*
 (cd "$SERVER_DIR" && env MSUPPLY_NO_TEST_DB_TEMPLATE=1 \
   APP__DATABASE__DATABASE_NAME="$DB_NAME" "${SYNC_OFF[@]}" \
-  ./target/debug/remote_server_cli initialise-from-export -n e2e -r \
+  "$BIN_DIR/remote_server_cli" initialise-from-export -n e2e -r \
   > "$LOG_DIR/e2e-init.log" 2>&1) || {
   echo "initialise-from-export failed:" >&2
   tail -20 "$LOG_DIR/e2e-init.log" >&2
@@ -95,7 +101,7 @@ echo "Starting server on :$SERVER_PORT"
   APP__SERVER__BASE_DIR=app_data/e2e_local \
   APP__LOGGING__MODE=Console \
   "${SYNC_OFF[@]}" \
-  ./target/debug/remote_server > "$LOG_DIR/e2e-server.log" 2>&1) &
+  "$BIN_DIR/remote_server" > "$LOG_DIR/e2e-server.log" 2>&1) &
 SERVER_PID=$!
 
 echo -n "Waiting for server"
@@ -133,6 +139,7 @@ WORKERS=(--workers 1)
 for arg in "$@"; do [[ "$arg" == --workers* ]] && WORKERS=(); done
 
 cd "$CLIENT_DIR"
+# ${arr[@]+...} keeps empty-array expansion safe under bash 3.2's `set -u`.
 BASE_URL="http://localhost:$FE_PORT" \
 API_URL="http://localhost:$SERVER_PORT" \
-  yarn e2e "$@" "${WORKERS[@]}"
+  yarn e2e "$@" ${WORKERS[@]+"${WORKERS[@]}"}
