@@ -11,7 +11,10 @@ import {
 import { StocktakeLineFragment } from '../api';
 import { StocktakeLineError, useStocktakeLineErrorContext } from '../context';
 
-export const useStocktakeColumns = () => {
+export const useStocktakeColumns = ({
+  hideSnapshotStock = false,
+  hideReason = false,
+}: { hideSnapshotStock?: boolean; hideReason?: boolean } = {}) => {
   const t = useTranslation();
   const { manageVaccinesInDoses, allowTrackingOfStockByDonor } =
     usePreferences();
@@ -117,6 +120,7 @@ export const useStocktakeColumns = () => {
         columnType: ColumnType.Number,
         enableSorting: true,
         aggregationFn: 'sum',
+        includeColumn: !hideSnapshotStock,
         getIsError: row =>
           getIsError('SnapshotCountCurrentCountMismatchLine', row),
       },
@@ -155,6 +159,7 @@ export const useStocktakeColumns = () => {
         header: t('label.difference'),
         columnType: ColumnType.Number,
         aggregationFn: 'sum',
+        includeColumn: !hideSnapshotStock,
         Cell: ({ cell, row }) => (
           <UnitsAndDosesCell
             cell={cell}
@@ -172,6 +177,7 @@ export const useStocktakeColumns = () => {
         header: t('label.reason'),
         accessorFn: row => row.reasonOption?.reason,
         enableSorting: true,
+        includeColumn: !hideReason,
       },
       {
         id: 'donor',
@@ -188,6 +194,15 @@ export const useStocktakeColumns = () => {
         defaultHideOnMobile: true,
       },
       {
+        id: 'campaign',
+        header: t('label.campaign-only'),
+        accessorFn: row => row.campaign?.name ?? '',
+        enableSorting: true,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        defaultHideOnMobile: true,
+      },
+      {
         accessorKey: 'comment',
         header: t('label.comment'),
         columnType: ColumnType.Comment,
@@ -199,6 +214,8 @@ export const useStocktakeColumns = () => {
     t,
     manageVaccinesInDoses,
     allowTrackingOfStockByDonor,
+    hideSnapshotStock,
+    hideReason,
     getIsError,
     getRowHasError,
     plugins.stocktakeLine?.tableColumn,

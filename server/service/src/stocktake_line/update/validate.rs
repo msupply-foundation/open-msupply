@@ -2,13 +2,17 @@ use crate::{
     campaign::check_campaign_exists_including_deleted,
     check_location_exists, check_location_type_is_valid, check_vvm_status_exists,
     common::{check_program_exists, check_stock_line_exists, CommonStockLineError},
+    preference::{BlindStocktake, Preference, PreferenceError},
     stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::{
         check_active_adjustment_reasons, check_reason_is_valid,
         check_snapshot_matches_current_count, check_stock_line_reduced_below_zero,
         check_stocktake_line_exist, stocktake_reduction_amount,
     },
-    validate::{check_other_party, check_store_id_matches, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_date_is_not_in_future, check_other_party, check_store_id_matches,
+        CheckOtherPartyType, OtherPartyErrors,
+    },
     NullableUpdate,
 };
 use repository::{RepositoryError, StocktakeLine, StorageConnection};
@@ -41,6 +45,15 @@ pub fn validate(
 
     if !check_store_id_matches(store_id, &stocktake.store_id) {
         return Err(InvalidStore);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(manufacture_date),
+    }) = &input.manufacture_date
+    {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
     }
 
     let stock_line = match &stocktake_line_row.stock_line_id {
@@ -96,10 +109,16 @@ pub fn validate(
 
     let stocktake_reduction_amount =
         stocktake_reduction_amount(&input.counted_number_of_packs, stocktake_line_row);
+    // Blind stocktakes hide theoretical stock and the reason field while counting,
+    // so an adjustment reason can't be required at line-save time.
+    let is_blind_stocktake = BlindStocktake
+        .load(connection, Some(store_id.to_string()))
+        .map_err(PreferenceError::into_repository_error)?;
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
         && input.reason_option_id.is_none()
         && stocktake_reduction_amount != 0.0
         && !stocktake.is_initial_stocktake
+        && !is_blind_stocktake
     {
         return Err(AdjustmentReasonNotProvided);
     }

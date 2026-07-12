@@ -15,6 +15,7 @@
 - **Client:** React app with Yarn 4 workspaces, Material-UI, GraphQL client
 - **Server:** Rust with actix-web, async-graphql, PostgreSQL/SQLite support
 - **Database:** SQLite (dev) or PostgreSQL (prod), migrations in server/repository
+- **Migrations:** New fragments live in `server/repository/src/migrations/vMAJOR_MINOR_00/` matching the current `package.json` version (and the `vX.Y.0-RC` branch). Fragments in older folders are skipped on a newer DB (gate is `db_version <= migration.version()`), so a fragment placed in the wrong folder silently fails to run.
 - **API:** GraphQL endpoint at `/graphql`, schema generated from Rust code
 
 ## Code Style

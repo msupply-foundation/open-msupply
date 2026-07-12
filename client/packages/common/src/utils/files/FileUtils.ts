@@ -192,11 +192,19 @@ const getFilename = (type?: string, title?: string, storeCode?: string) => {
   }
 
   const today = Formatter.toIsoString(new Date()); // to match backend datetime
-  const parts = [today, storeCode, title || 'export'].filter(Boolean);
+  const safeStoreCode = storeCode ? sanitizeForFilename(storeCode) : undefined;
+  const parts = [today, safeStoreCode, title || 'export'].filter(Boolean);
   const filename = `${parts.join('_')}.${extension}`;
 
   return filename;
 };
+
+// mSupply doesn't restrict the characters allowed in a store code, so anything
+// the user gives us has to be neutralised before it becomes part of a path or
+// download attribute. Mirrors the server's `sanitize_filename` helper.
+export const sanitizeForFilename = (value: string): string =>
+  // eslint-disable-next-line no-control-regex
+  value.replace(/[<>:"/\\|?*\x00-\x1F]/g, '');
 
 const asBase64 = async (blob: Blob): Promise<string> => {
   const reader = new FileReader();

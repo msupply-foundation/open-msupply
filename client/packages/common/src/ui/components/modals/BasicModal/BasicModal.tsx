@@ -36,6 +36,10 @@ export const BasicModal = ({
           borderRadius: fullScreen ? undefined : '20px',
           minHeight: `${height}px`,
           minWidth: `min(${width}px, calc(100vw - 64px))`,
+          ...(fullScreen && {
+            paddingTop: 'var(--inset-top)',
+            paddingBottom: 'var(--inset-bottom)',
+          }),
           ...sx,
         },
         ...PaperProps,

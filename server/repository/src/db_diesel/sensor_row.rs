@@ -109,6 +109,14 @@ impl<'a> SensorRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            sensor::table.filter(sensor::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     fn _mark_deleted(&self, sensor_id: &str) -> Result<(), RepositoryError> {
         diesel::update(sensor::table)
             .filter(sensor::id.eq(sensor_id))

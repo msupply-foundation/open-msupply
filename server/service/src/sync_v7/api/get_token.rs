@@ -8,6 +8,9 @@ use util::{with_retries, RetrySeconds};
 #[serde(rename_all = "camelCase")]
 pub struct GetTokenInput {
     pub version: Version,
+    /// The remote's client-application name (e.g. "Open mSupply Desktop"), reported
+    /// like `version` so central can record it on the site row. See #11784.
+    pub app_name: String,
     pub name: String,
     pub password_sha256: String,
     pub hardware_id: String,

@@ -22,8 +22,18 @@ impl ItemsStockOnHandLoaderInput {
     }
 }
 
+/// Both stock-on-hand figures from the (single batched) stock_on_hand view query.
+/// `available` excludes held/reserved packs; `total` is all packs. Exposing both
+/// lets `ItemNode.stockOnHand` be served from this loader instead of the much more
+/// expensive item-stats path (which runs the AMC backend plugin).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ItemStockOnHand {
+    pub available_stock_on_hand: u32,
+    pub total_stock_on_hand: u32,
+}
+
 impl Loader<ItemsStockOnHandLoaderInput> for ItemsStockOnHandLoader {
-    type Value = u32;
+    type Value = ItemStockOnHand;
     type Error = async_graphql::Error;
 
     async fn load(
@@ -53,7 +63,10 @@ impl Loader<ItemsStockOnHandLoaderInput> for ItemsStockOnHandLoader {
                         &stock_on_hand.store_id,
                         &stock_on_hand.item_id,
                     ),
-                    stock_on_hand.available_stock_on_hand as u32,
+                    ItemStockOnHand {
+                        available_stock_on_hand: stock_on_hand.available_stock_on_hand as u32,
+                        total_stock_on_hand: stock_on_hand.total_stock_on_hand as u32,
+                    },
                 )
             })
             .collect())

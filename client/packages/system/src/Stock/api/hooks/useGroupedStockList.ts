@@ -5,7 +5,7 @@ import {
   keepPreviousData,
   useQuery,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../operations.generated';
+import { StockLineListRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
@@ -21,7 +21,7 @@ type GroupedFilterBy = Pick<
 export type GroupedStockListParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<StockLineRowFragment>;
+  sortBy?: SortBy<StockLineListRowFragment>;
   filterBy?: GroupedFilterBy;
 };
 
@@ -54,7 +54,7 @@ export const useGroupedStockList = (
   ];
 
   const queryFn = async (): Promise<{
-    nodes: StockLineRowFragment[];
+    nodes: StockLineListRowFragment[];
     totalCount: number;
   }> => {
     // hasPacksInStore: true is the parity-guaranteeing predicate — items
@@ -82,7 +82,7 @@ export const useGroupedStockList = (
 
     // Flatten: items with nested stock lines → flat stock line array.
     // MRT's column grouping handles the visual grouping + aggregation.
-    const nodes: StockLineRowFragment[] = [];
+    const nodes: StockLineListRowFragment[] = [];
     for (const item of items.nodes) {
       for (const stockLine of item.availableBatches.nodes) {
         nodes.push(stockLine);
@@ -103,7 +103,7 @@ export const useGroupedStockList = (
 };
 
 const toItemSortField = (
-  sortBy: SortBy<StockLineRowFragment>
+  sortBy: SortBy<StockLineListRowFragment>
 ): ItemSortFieldInput => {
   const sortFieldMap: Record<string, ItemSortFieldInput> = {
     name: ItemSortFieldInput.Name,

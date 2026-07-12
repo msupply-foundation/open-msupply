@@ -46,8 +46,12 @@ pub trait PreferenceServiceTrait: Sync + Send {
             display_population_based_forecasting,
             global_table_configs: _, // Not included in preference descriptions UI
             backdating,
+            // Hidden from the preferences edit UI until prescription payment
+            // functionality is implemented (#6179)
+            receive_payments_from_prescriptions: _,
 
             // Store preferences
+            blind_stocktake,
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
@@ -68,6 +72,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             warn_when_missing_recent_stocktake,
             store_custom_colour,
             invoice_status_options,
+            do_not_print_placeholder_line_labels,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -100,8 +105,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(is_gaps, &mut prefs, &input)?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(backdating, &mut prefs, &input)?;
+        // TODO: receive_payments_from_prescriptions intentionally omitted, hidden from
+        // the edit UI until prescription payment functionality exists
 
         // Store preferences
+        append_if_type(blind_stocktake, &mut prefs, &input)?;
         append_if_type(order_in_packs, &mut prefs, &input)?;
         append_if_type(use_procurement_functionality, &mut prefs, &input)?;
         append_if_type(sort_by_vvm_status_then_expiry, &mut prefs, &input)?;
@@ -146,6 +154,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(store_custom_colour, &mut prefs, &input)?;
         append_if_type(warn_when_missing_recent_stocktake, &mut prefs, &input)?;
         append_if_type(invoice_status_options, &mut prefs, &input)?;
+        append_if_type(do_not_print_placeholder_line_labels, &mut prefs, &input)?;
 
         Ok(prefs)
     }

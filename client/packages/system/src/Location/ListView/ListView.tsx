@@ -10,7 +10,6 @@ import {
   ColumnDef,
   ColumnType,
   MaterialTable,
-  CheckCell,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocationList } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -107,7 +106,7 @@ export const LocationListView = () => {
       {
         accessorKey: 'onHold',
         header: t('label.on-hold'),
-        Cell: CheckCell,
+        columnType: ColumnType.Boolean,
         size: 110,
         enableColumnFilter: true,
         filterVariant: 'select',
@@ -142,6 +141,8 @@ export const LocationListView = () => {
           isOpen={isOpen}
           onClose={onClose}
           location={entity}
+          sortBy={sortBy}
+          filterBy={filterBy}
         />
       )}
       <AppBarButtons onCreate={() => onOpen()} sortBy={sortBy} />

@@ -84,6 +84,14 @@ impl<'a> IndicatorColumnRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            indicator_column::table.filter(indicator_column::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_many_by_indicator_ids(
         &self,
         ids: &[String],
