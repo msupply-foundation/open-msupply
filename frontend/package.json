@@ -12,9 +12,13 @@
     "check": "tcm --pattern '**/*.module.css' src && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs",
     "codegen": "node codegen/run.js",
     "test": "vitest run",
-    "test:codegen": "node --test \"codegen/__tests__/*.test.js\""
+    "test:codegen": "node --test \"codegen/__tests__/*.test.js\"",
+    "dev-android": "./scripts/dev-android.sh",
+    "build-android": "./scripts/build-android.sh"
   },
   "dependencies": {
+    "@capacitor/camera": "^8.2.0",
+    "@capacitor/core": "^8.4.1",
     "@fontsource-variable/inter": "^5.2.8",
     "@kobalte/core": "^0.13.12",
     "@solid-primitives/i18n": "^2.2.1",
@@ -24,6 +28,8 @@
     "solid-js": "^1.9.13"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
     "@graphql-codegen/cli": "^5.0.3",
     "@types/node": "^24.13.2",
     "concurrently": "^9.2.3",
