@@ -218,8 +218,8 @@ export const InboundLineEditCards = ({
                 helperText={
                   isPlaceholder
                     ? t('error.field-must-be-specified', {
-                      field: t('label.packs-received'),
-                    })
+                        field: t('label.packs-received'),
+                      })
                     : undefined
                 }
               />
@@ -258,7 +258,7 @@ export const InboundLineEditCards = ({
                   const shouldClearSellPrice =
                     item?.defaultPackSize !== line.packSize &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
-                    line.sellPricePerPack;
+                      line.sellPricePerPack;
 
                   updateDraftLine({
                     volumePerPack:
@@ -370,7 +370,7 @@ export const InboundLineEditCards = ({
         accessorFn: row =>
           row.shippedNumberOfPacks == null
             ? null
-            : row.shippedNumberOfPacks - row.numberOfPacks,
+            : Math.abs(row.shippedNumberOfPacks - row.numberOfPacks),
       },
       ...(plugins.inboundShipmentLine?.editViewField ?? []).map(
         ({ header, Component }, index): ColumnDef<DraftInboundLine> => ({
@@ -481,7 +481,10 @@ export const InboundLineEditCards = ({
                 disabled={isDisabled || !isManualShipment}
                 decimalsLimit={5}
                 updateFn={value =>
-                  updateDraftLine({ id: row.original.id, costPricePerPack: value })
+                  updateDraftLine({
+                    id: row.original.id,
+                    costPricePerPack: value,
+                  })
                 }
               />
             </span>
@@ -837,9 +840,9 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-      stockLineDetails: <StockIcon />,
-      moreInfo: <InfoIcon />,
-    };
+        stockLineDetails: <StockIcon />,
+        moreInfo: <InfoIcon />,
+      };
 
   return (
     <>
