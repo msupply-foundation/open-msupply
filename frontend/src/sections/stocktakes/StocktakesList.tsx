@@ -235,7 +235,7 @@ const StocktakesList: Component = () => {
       accessorKey: 'stocktakeDate',
       sortKey: 'stocktakeDate',
       header: t('stocktake.column.stocktake-date'),
-      ...getDateCell(),
+      ...getDateCell({ card: 'primary' }),
     },
     {
       accessorKey: 'createdDatetime',

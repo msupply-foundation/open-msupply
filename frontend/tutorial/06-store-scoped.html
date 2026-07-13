@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>6 · Store-scoped caches</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="tutorial.js"></script>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> FE Patterns</div>
+    <nav>
+      <a href="index.html"><span class="num">·</span>Overview</a>
+      <a href="01-graphql-codegen.html"><span class="num">1</span>Codegen &amp; graphqlFetch</a>
+      <a href="02-init-auth-error.html"><span class="num">2</span>Init, auth &amp; errors</a>
+      <a href="03-store-login-state.html"><span class="num">3</span>Store &amp; global state</a>
+      <a href="04-list-table-url.html"><span class="num">4</span>Lists: table &amp; URL</a>
+      <a href="05-createresource.html"><span class="num">5</span>createResource</a>
+      <a class="current" href="06-store-scoped.html"><span class="num">6</span>Store-scoped caches</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <p class="eyebrow">Chapter 6</p>
+      <h1>Store-scoped global caches</h1>
+      <p class="lede">
+        The finale ties chapters 3 and 5 together. Some lookups — master lists, locations,
+        categories — are needed all over the app, always for the current store, and read by many
+        components at once. <code>createStoreScopedResource</code> is the reusable factory for
+        exactly that: a lazy, store-keyed, de-duplicated global cache.
+      </p>
+
+      <div class="box">
+        <p class="box-title">A note on the name</p>
+        <p style="margin-bottom:0">
+          You may have heard this called "storeScopedContext." There is no such symbol — the
+          real thing is <code>createStoreScopedResource</code>. It's a resource, not a context;
+          "scoping to the current store" is done by depending on the module-level
+          <code>currentStoreId()</code> accessor from chapter 3.
+        </p>
+      </div>
+
+      <h2>What it gives you, for free</h2>
+      <p>
+        It builds a <code>createResource</code> inside a lazy <code>createRoot</code> singleton.
+        That single construction buys three behaviours:
+      </p>
+      <ul>
+        <li><strong>Lazy</strong> — the resource is created on the <em>first read</em>. A screen that never reads the cache never creates or fetches it.</li>
+        <li><strong>Store-aware</strong> — the resource's source is <code>currentStoreId</code>, so it refetches automatically whenever the store changes. The key <em>is</em> the store id — no hand-rolled comparison.</li>
+        <li><strong>De-duplicated</strong> — one shared singleton plus <code>createResource</code>'s own single-flight means N consumers (say 30 table cells reading the same cache) cause <strong>one</strong> request, not 30. No debounce needed.</li>
+      </ul>
+
+      <span class="filename">src/api/storeScopedResource.ts (the core)</span>
+<pre><code><span class="kw">export function</span> <span class="fn">createStoreScopedResource</span>&lt;<span class="ty">T</span>&gt;(
+  storeId: () =&gt; <span class="ty">string</span> | <span class="kw">undefined</span>,               <span class="cm">// e.g. currentStoreId</span>
+  fetcher: (storeId: <span class="ty">string</span>) =&gt; <span class="ty">Promise</span>&lt;<span class="ty">T</span>[] | <span class="kw">undefined</span>&gt;,
+): <span class="ty">StoreScopedResource</span>&lt;<span class="ty">T</span>&gt; {
+  <span class="kw">let</span> instance;                                        <span class="cm">// lazy singleton</span>
+  <span class="kw">const</span> build = () =&gt; <span class="fn">createRoot</span>(() =&gt; {              <span class="cm">// root → clean disposal</span>
+    <span class="kw">const</span> [resource, { refetch }] = <span class="fn">createResource</span>(
+      storeId,                                        <span class="cm">// source → refetch on store change</span>
+      <span class="kw">async</span> (id) =&gt; (<span class="kw">await</span> <span class="fn">fetcher</span>(id)) ?? [],
+    );
+    <span class="kw">return</span> { suspends, noSuspense, loading, refetch };
+  });
+  <span class="kw">return</span> {
+    suspends:   () =&gt; (instance ??= <span class="fn">build</span>()).<span class="fn">suspends</span>(),   <span class="cm">// first read arms the fetch</span>
+    noSuspense: () =&gt; (instance ??= <span class="fn">build</span>()).<span class="fn">noSuspense</span>(),
+    loading:    () =&gt; (instance ??= <span class="fn">build</span>()).<span class="fn">loading</span>(),
+    refetch:    () =&gt; (instance ??= <span class="fn">build</span>()).<span class="fn">refetch</span>(),
+  };
+}</code></pre>
+
+      <h2>The two named reads (chapter 5, generalised)</h2>
+      <p>
+        The factory <strong>never exposes the raw resource.</strong> Instead the consumer chooses
+        its read behaviour by <em>name</em> — so you can't accidentally suspend. This is chapter
+        5's rule baked into the API surface.
+      </p>
+      <span class="filename">src/api/storeScopedResource.ts</span>
+<pre><code>suspends: () =&gt; <span class="fn">resource</span>() ?? [],          <span class="cm">// SUSPENDS on first pending read — use only</span>
+                                          <span class="cm">// where a &lt;Suspense&gt; fallback is the UX you want</span>
+
+noSuspense: () =&gt;                          <span class="cm">// NEVER suspends. gate on .state, not .latest.</span>
+  resource.state === <span class="st">"ready"</span> || resource.state === <span class="st">"refreshing"</span>
+    ? resource.latest                     <span class="cm">// keeps the prior list during a refetch (no flash)</span>
+    : [],</code></pre>
+      <div class="box">
+        <p class="box-title">Same subtlety as chapter 5</p>
+        <p style="margin-bottom:0">
+          <code>noSuspense</code> gates on <code>resource.state</code>, <strong>not</strong>
+          <code>resource.latest</code> — because <code>.latest</code> still suspends on the first
+          pending read. Naming the two reads means a consumer decides suspend-or-not explicitly,
+          rather than having to remember the behaviour of a single <code>data()</code>.
+        </p>
+      </div>
+
+      <h2>A real consumer</h2>
+      <p>
+        Every cache is a module-scope singleton so the dedup is real — every consumer reads the
+        <em>same</em> instance. Master lists are a one-liner:
+      </p>
+      <span class="filename">src/api/masterListsResource.ts</span>
+<pre><code><span class="kw">export const</span> masterListsResource = <span class="fn">createStoreScopedResource</span>&lt;<span class="ty">MasterList</span>&gt;(
+  currentStoreId,
+  <span class="kw">async</span> (storeId) =&gt; {
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">graphqlFetch</span>(MasterLists, { storeId });
+    <span class="kw">return</span> result.kind === <span class="st">"success"</span> ? result.data.masterLists.nodes : <span class="kw">undefined</span>;
+  },
+);</code></pre>
+      <p>Consumed in the create modal — note the <code>.noSuspense()</code> read, inside a form:</p>
+<pre><code>&lt;<span class="ty">Combobox</span>
+  items={masterListsResource.<span class="fn">noSuspense</span>()}   <span class="cm">// never suspends the open modal</span>
+  loading={masterListsResource.<span class="fn">loading</span>()}
+  … /&gt;</code></pre>
+
+      <div class="box build">
+        <p class="box-title">Build step · widgets</p>
+        <p style="margin-bottom:0">
+          Add <code>widgetCategoriesResource = createStoreScopedResource(currentStoreId, …)</code>
+          in <code>src/api/</code>. Read <code>.noSuspense()</code> from several places in your
+          widgets UI at once and confirm — in the network tab — that they cause a
+          <strong>single</strong> request per store, and that switching stores refetches exactly
+          once. That's the whole vertical: codegen → fetch → auth/store gating → URL-driven list
+          → non-suspending resources → shared store-scoped caches.
+        </p>
+      </div>
+
+      <h2>Where to go next</h2>
+      <p>
+        These build directly on the six patterns but were out of scope here. Each has a KDD
+        that reads like a mini-chapter:
+      </p>
+      <ul>
+        <li>
+          <strong>Two-tier table config persistence</strong> — <code>createTableConfig</code>
+          resolves column layout across three layers (default → global via GraphQL → user via
+          <code>localStorage</code>) per breakpoint, and is itself a
+          <code>createStoreScopedResource</code> consumer.
+          → <a href="../kdd/table-state/draft-kdd.md">kdd/table-state</a>,
+          <a href="../src/api/createTableConfig.ts">createTableConfig.ts</a>.
+        </li>
+        <li>
+          <strong>Editable collections without remounts</strong> — hold editable rows in a
+          <code>createStore</code> and update <em>one leaf field of one row by id</em>, so the
+          <code>&lt;input&gt;</code> keeps focus while you type.
+          → <a href="../kdd/no-remounts/draft-kdd.md">kdd/no-remounts</a>,
+          <a href="../kdd/stocktake-line-editing/draft-kdd.md">kdd/stocktake-line-editing</a>.
+        </li>
+        <li>
+          <strong>i18n reactivity</strong> — why columns and breadcrumbs are accessors
+          (<code>() =&gt; [...]</code>): so <code>t()</code>-driven labels re-translate on a
+          language switch.
+          → <a href="../kdd/i18n/draft-kdd.md">kdd/i18n</a>.
+        </li>
+      </ul>
+
+      <div class="box">
+        <p class="box-title">The whole model, in one breath</p>
+        <p style="margin-bottom:0">
+          A codegen plugin makes typed documents; one never-throwing <code>graphqlFetch</code>
+          runs them and handles errors globally; global state is module-level signals plus
+          explicit refetches; the URL drives list variables; resources refetch on change without
+          ever suspending a live screen; and shared lookups are lazy, store-keyed, deduplicated
+          caches. No provider tree, no client cache, no cache keys — just SolidJS reactivity and
+          a handful of deliberate rules.
+        </p>
+      </div>
+
+      <div class="box real">
+        <p class="box-title">Real code</p>
+        <p style="margin-bottom:0">
+          <a href="../src/api/storeScopedResource.ts">storeScopedResource.ts</a> ·
+          <a href="../src/api/masterListsResource.ts">masterListsResource.ts</a> ·
+          <a href="../src/api/locationsResource.ts">locationsResource.ts</a> ·
+          <a href="../src/api/createTableConfig.ts">createTableConfig.ts</a>.
+          Why: <a href="../kdd/state-management/draft-kdd.md">state-management</a>,
+          <a href="../kdd/no-remounts/draft-kdd.md">no-remounts</a>.
+        </p>
+      </div>
+
+      <div class="pager">
+        <a class="prev" href="05-createresource.html">
+          <span class="dir">← Prev</span><span class="ttl">createResource</span>
+        </a>
+        <a class="next" href="index.html">
+          <span class="dir">Done ↺</span><span class="ttl">Back to overview</span>
+        </a>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
