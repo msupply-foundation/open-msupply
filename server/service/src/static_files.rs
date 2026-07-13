@@ -221,7 +221,11 @@ fn find_file_in_dir(id: &str, file_dir: &PathBuf) -> Result<Option<PathBuf>, Err
     for path in paths {
         let entry = path?;
         let entry_path = entry.path();
-        let metadata = entry.metadata()?;
+        let metadata = match entry.metadata() {
+            Ok(metadata) => metadata,
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(err) => return Err(err),
+        };
         if !metadata.is_file() {
             continue;
         }
@@ -241,7 +245,11 @@ fn delete_temporary_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Resu
     for path in paths {
         let entry = path?;
         let entry_path = entry.path();
-        let metadata = entry.metadata()?;
+        let metadata = match entry.metadata() {
+            Ok(metadata) => metadata,
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(err) => return Err(err),
+        };
         if !metadata.is_file() {
             continue;
         }

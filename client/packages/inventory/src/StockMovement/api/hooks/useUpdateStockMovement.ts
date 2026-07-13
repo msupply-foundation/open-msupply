@@ -13,11 +13,7 @@ export const useUpdateStockMovement = () => {
       storeId,
       input,
     });
-    const response = result.updateStockRelocation;
-    if (response.__typename === 'UpdateStockRelocationError') {
-      throw new Error(response.error.description);
-    }
-    return response;
+    return result.updateStockRelocation;
   };
 
   const { mutateAsync, isPending, error } = useMutation({

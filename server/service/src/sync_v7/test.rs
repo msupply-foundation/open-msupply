@@ -365,13 +365,16 @@ mod test_sync_v7_client_api {
         let buffers = SyncBufferRepository::new(&connection).get_all().unwrap();
         assert_eq!(buffers.len(), 2);
 
-        // Unknown record is buffered under its real (unchanged) table name and never
-        // integrated — no translator matches it and it isn't in INTEGRATION_ORDER.
+        // Unknown record is buffered under its table name *normalized to the DB casing*
+        // (`db_case = snake_case` on ChangelogTableName) and never integrated — it isn't
+        // in INTEGRATION_ORDER. Because the buffered name matches the strum form the
+        // per-table pending query selects by, the row integrates naturally once an
+        // upgrade makes the table known.
         let unknown = buffers
             .iter()
             .find(|b| b.record_id == "future_table_1")
             .expect("unknown record should be in the sync buffer");
-        assert_eq!(unknown.table_name, "TableFromTheFuture");
+        assert_eq!(unknown.table_name, "table_from_the_future");
         assert!(
             unknown.integration_datetime.is_none(),
             "unknown table should be left unintegrated, not errored or integrated"

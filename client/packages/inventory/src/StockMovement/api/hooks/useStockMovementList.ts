@@ -61,20 +61,8 @@ const toSortField = (
   switch (key) {
     case 'status':
       return StockRelocationSortFieldInput.Status;
-    case 'numberOfPacks':
-      return StockRelocationSortFieldInput.NumberOfPacks;
-    case 'itemCode':
-      return StockRelocationSortFieldInput.ItemCode;
-    case 'itemName':
-      return StockRelocationSortFieldInput.ItemName;
-    case 'batch':
-      return StockRelocationSortFieldInput.Batch;
-    case 'expiryDate':
-      return StockRelocationSortFieldInput.ExpiryDate;
-    case 'fromLocation':
-      return StockRelocationSortFieldInput.FromLocation;
-    case 'toLocation':
-      return StockRelocationSortFieldInput.ToLocation;
+    case 'stockMovementNumber':
+      return StockRelocationSortFieldInput.StockMovementNumber;
     case 'finalisedDatetime':
       return StockRelocationSortFieldInput.FinalisedDatetime;
     case 'createdDatetime':

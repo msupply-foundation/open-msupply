@@ -1,98 +1,11 @@
+use super::{SyncTranslation, ToSyncRecordTranslationType};
 use crate::sync::translations::{
-    location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    store::StoreTranslation, FkField, PullTranslateResult, PushTranslateResult,
 };
-use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, Row, StockRelocationRow, StockRelocationRowDelete,
-    StockRelocationStatus, StorageConnection, SyncBufferRow,
+    StorageConnection, SyncBufferRow,
 };
-use serde::{Deserialize, Serialize};
-use util::sync_serde::{
-    date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-    empty_str_as_option_string, object_fields_as_option, zero_date_as_option,
-};
-
-#[derive(Deserialize, Serialize, Debug, Clone, Default)]
-pub struct LegacyReplenishmentRowOmsFields {
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub created_datetime: Option<NaiveDateTime>,
-    #[serde(default)]
-    #[serde(deserialize_with = "empty_str_as_option")]
-    pub finalised_datetime: Option<NaiveDateTime>,
-    #[serde(default)]
-    pub to_pack_size: Option<f64>,
-}
-
-#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
-pub enum LegacyReplenishmentStatus {
-    #[serde(rename = "sg")]
-    Sg,
-    #[serde(rename = "fn")]
-    #[serde(alias = "FN")]
-    Fn,
-    /// Bucket to catch all other variants
-    #[serde(other)]
-    Others,
-}
-
-fn stock_relocation_status(status: &LegacyReplenishmentStatus) -> StockRelocationStatus {
-    match status {
-        LegacyReplenishmentStatus::Sg => StockRelocationStatus::New,
-        LegacyReplenishmentStatus::Fn => StockRelocationStatus::Finalised,
-        LegacyReplenishmentStatus::Others => StockRelocationStatus::New,
-    }
-}
-
-fn legacy_stock_relocation_status(status: &StockRelocationStatus) -> LegacyReplenishmentStatus {
-    match status {
-        StockRelocationStatus::New => LegacyReplenishmentStatus::Sg,
-        StockRelocationStatus::Finalised => LegacyReplenishmentStatus::Fn,
-    }
-}
-
-#[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct LegacyReplenishmentRow {
-    #[serde(rename = "ID")]
-    pub id: String,
-    #[serde(rename = "store_ID")]
-    pub store_id: String,
-    #[serde(rename = "user_ID_created_by")]
-    pub user_id: String,
-
-    #[serde(rename = "from_item_line_ID")]
-    pub from_stock_line_id: String,
-    #[serde(default)]
-    pub from_number_of_packs: f64,
-    #[serde(rename = "from_location_ID")]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    #[serde(default)]
-    pub from_location_id: Option<String>,
-
-    #[serde(rename = "to_item_line_ID")]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    #[serde(default)]
-    pub to_stock_line_id: Option<String>,
-    #[serde(rename = "to_location_ID")]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    #[serde(default)]
-    pub to_location_id: Option<String>,
-
-    #[serde(serialize_with = "date_to_isostring")]
-    pub date_created: NaiveDate,
-    #[serde(deserialize_with = "zero_date_as_option")]
-    #[serde(serialize_with = "date_option_to_isostring")]
-    #[serde(default)]
-    pub date_finalised: Option<NaiveDate>,
-
-    pub status: LegacyReplenishmentStatus,
-
-    #[serde(default)]
-    #[serde(deserialize_with = "object_fields_as_option")]
-    pub oms_fields: Option<LegacyReplenishmentRowOmsFields>,
-}
 
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -103,20 +16,32 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 pub(super) struct StockRelocationTranslation;
 
 impl SyncTranslation for StockRelocationTranslation {
-    fn table_name(&self) -> &str {
-        "replenishment"
+    fn table_name(&self) -> &'static str {
+        "stock_relocation"
     }
 
-    fn pull_dependencies(&self) -> Vec<&str> {
-        vec![
-            StockLineTranslation.table_name(),
-            LocationTranslation.table_name(),
-            StoreTranslation.table_name(),
-        ]
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![StoreTranslation.table_name()]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
         Some(ChangelogTableName::StockRelocation)
+    }
+
+    fn should_translate_to_sync_record(
+        &self,
+        row: &ChangelogRow,
+        r#type: &ToSyncRecordTranslationType,
+    ) -> bool {
+        match r#type {
+            ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
+                self.change_log_type().as_ref() == Some(&row.table_name)
+            }
+            ToSyncRecordTranslationType::PushToOmSupplyCentral => {
+                self.change_log_type().as_ref() == Some(&row.table_name)
+            }
+            _ => false,
+        }
     }
 
     fn try_translate_from_upsert_sync_record(
@@ -125,55 +50,14 @@ impl SyncTranslation for StockRelocationTranslation {
         fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let LegacyReplenishmentRow {
-            id,
-            store_id,
-            user_id,
-            from_stock_line_id,
-            from_number_of_packs,
-            from_location_id,
-            to_stock_line_id,
-            to_location_id,
-            date_created,
-            date_finalised,
-            status,
-            oms_fields,
-        } = serde_json::from_value::<LegacyReplenishmentRow>(sync_record.data.0.clone())?;
-
-        let oms_fields = oms_fields.unwrap_or_default();
-        let created_datetime = oms_fields
-            .created_datetime
-            .unwrap_or_else(|| date_created.and_hms_opt(0, 0, 0).unwrap_or_default());
-        let finalised_datetime = oms_fields
-            .finalised_datetime
-            .or_else(|| date_finalised.and_then(|date| date.and_hms_opt(0, 0, 0)));
+        let row = serde_json::from_value::<StockRelocationRow>(sync_record.data.0.clone())?;
 
         let check_required_fks =
-            fk_checker.with_table_required(connection, "stock_relocation", &id);
-        let check_fks = fk_checker.with_table(connection, "stock_relocation", &id);
-
-        // Required FKs (NOT NULL REFERENCES): error + system_log if the parent is missing.
-        let from_stock_line_id =
-            check_required_fks(from_stock_line_id, "from_stock_line_id", FkField::StockLine)?;
-        let store_id = check_required_fks(store_id, "store_id", FkField::Store)?;
-        // Optional FKs (nullable REFERENCES): cleared to None + system_log if the parent is missing.
-        let from_location_id = check_fks(from_location_id, "from_location_id", FkField::Location)?;
-        let to_stock_line_id = check_fks(to_stock_line_id, "to_stock_line_id", FkField::StockLine)?;
-        let to_location_id = check_fks(to_location_id, "to_location_id", FkField::Location)?;
+            fk_checker.with_table_required(connection, "stock_relocation", &row.id);
 
         let result = StockRelocationRow {
-            id,
-            created_datetime,
-            finalised_datetime,
-            from_stock_line_id,
-            from_location_id,
-            from_number_of_packs,
-            to_stock_line_id,
-            to_location_id,
-            to_pack_size: oms_fields.to_pack_size,
-            status: stock_relocation_status(&status),
-            store_id,
-            user_id,
+            store_id: check_required_fks(row.store_id, "store_id", FkField::Store)?,
+            ..row
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -195,48 +79,14 @@ impl SyncTranslation for StockRelocationTranslation {
         changelog: &ChangelogRow,
         row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let Row::StockRelocation(stock_relocation_row) = row else {
+        let Row::StockRelocation(row) = row else {
             return Ok(PushTranslateResult::NotMatched);
-        };
-
-        let StockRelocationRow {
-            id,
-            created_datetime,
-            finalised_datetime,
-            from_stock_line_id,
-            from_location_id,
-            from_number_of_packs,
-            to_stock_line_id,
-            to_location_id,
-            to_pack_size,
-            status,
-            store_id,
-            user_id,
-        } = stock_relocation_row;
-
-        let legacy_row = LegacyReplenishmentRow {
-            id,
-            store_id,
-            user_id,
-            from_stock_line_id,
-            from_number_of_packs,
-            from_location_id,
-            to_stock_line_id,
-            to_location_id,
-            date_created: date_from_date_time(&created_datetime),
-            date_finalised: finalised_datetime.map(|datetime| date_from_date_time(&datetime)),
-            status: legacy_stock_relocation_status(&status),
-            oms_fields: Some(LegacyReplenishmentRowOmsFields {
-                created_datetime: Some(created_datetime),
-                finalised_datetime,
-                to_pack_size,
-            }),
         };
 
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(legacy_row)?,
+            serde_json::to_value(&row)?,
         ))
     }
 
@@ -252,119 +102,30 @@ impl SyncTranslation for StockRelocationTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{
-        mock::{mock_stock_line_a, MockDataInserts},
-        system_log_row::{SystemLogRowRepository, SystemLogType},
-        test_db::setup_all,
-        StockLineRow, StockLineRowRepository, SyncAction, SyncRecordData,
-    };
+    use chrono::NaiveDate;
+    use repository::StockRelocationStatus;
 
-    #[actix_rt::test]
-    async fn test_stock_relocation_translation() {
-        use crate::sync::test::test_data::stock_relocation as test_data;
-        let translator = StockRelocationTranslation {};
-
-        let (_, connection, _, _) =
-            setup_all("test_stock_relocation_translation", MockDataInserts::all()).await;
-
-        // Seed the stock_line parents the records' required/optional FKs point at
-        // (these ids aren't part of the mock dataset).
-        for stock_line_id in ["stock_line_a", "stock_line_b", "stock_line_c"] {
-            StockLineRowRepository::new(&connection)
-                .upsert_one(&StockLineRow {
-                    id: stock_line_id.to_string(),
-                    ..mock_stock_line_a()
-                })
-                .unwrap();
-        }
-
-        for record in test_data::test_pull_upsert_records() {
-            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            let translation_result = translator
-                .try_translate_from_upsert_sync_record(
-                    &connection,
-                    &crate::sync::translations::FkChecker::new(),
-                    &record.sync_buffer_row,
-                )
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_delete_records() {
-            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            let translation_result = translator
-                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-    }
-
-    #[actix_rt::test]
-    async fn test_stock_relocation_clears_invalid_optional_fks_and_writes_system_log() {
-        let translator = StockRelocationTranslation {};
-        let (_, connection, _, _) = setup_all(
-            "test_stock_relocation_clears_invalid_optional_fks_and_writes_system_log",
-            MockDataInserts::all(),
-        )
-        .await;
-
-        // Seed the required stock_line parent (store_a is mock); the bogus optional FKs
-        // (does_not_exist_*) stay unseeded so they clear + log.
-        StockLineRowRepository::new(&connection)
-            .upsert_one(&StockLineRow {
-                id: "stock_line_a".to_string(),
-                ..mock_stock_line_a()
-            })
-            .unwrap();
-
-        let sync_record = SyncBufferRow {
-            table_name: "replenishment".to_string(),
-            record_id: "STOCK_RELOCATION_FK_INVALID".to_string(),
-            data: SyncRecordData(
-                serde_json::from_str(
-                    r#"{
-                "ID": "STOCK_RELOCATION_FK_INVALID",
-                "store_ID": "store_a",
-                "user_ID_created_by": "user_account_a",
-                "from_item_line_ID": "stock_line_a",
-                "from_number_of_packs": 5,
-                "from_location_ID": "does_not_exist_location",
-                "to_item_line_ID": "does_not_exist_stock_line",
-                "to_location_ID": "does_not_exist_location_2",
-                "date_created": "2024-01-15",
-                "date_finalised": "0000-00-00",
-                "status": "sg"
-            }"#,
-                )
+    #[test]
+    fn stock_relocation_oms_wire_round_trip() {
+        let row = StockRelocationRow {
+            id: "stock_relocation_1".to_string(),
+            store_id: "store_a".to_string(),
+            stock_movement_number: 1,
+            status: StockRelocationStatus::Confirmed,
+            created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_opt(9, 0, 0)
                 .unwrap(),
-            ),
-            action: SyncAction::Upsert,
-            ..Default::default()
+            created_by: "user_account_a".to_string(),
+            confirmed_datetime: NaiveDate::from_ymd_opt(2024, 1, 2)
+                .unwrap()
+                .and_hms_opt(9, 0, 0),
+            finalised_datetime: None,
+            comment: Some("relocate to cold room".to_string()),
         };
 
-        let result = translator
-            .try_translate_from_upsert_sync_record(
-                &connection,
-                &crate::sync::translations::FkChecker::new(),
-                &sync_record,
-            )
-            .unwrap();
-        let debug = format!("{result:?}");
-        for field in [
-            "from_location_id: None",
-            "to_stock_line_id: None",
-            "to_location_id: None",
-        ] {
-            assert!(debug.contains(field), "expected {field}; got:\n{debug}");
-        }
-
-        let logs = SystemLogRowRepository::new(&connection).find_all().unwrap();
-        let fk_errors: Vec<_> = logs
-            .iter()
-            .filter(|l| l.r#type == SystemLogType::SyncTranslationFkError && l.is_error)
-            .collect();
-        assert_eq!(fk_errors.len(), 3, "got {fk_errors:?}");
+        let json = serde_json::to_value(&row).unwrap();
+        let parsed: StockRelocationRow = serde_json::from_value(json).unwrap();
+        assert_eq!(parsed, row);
     }
 }

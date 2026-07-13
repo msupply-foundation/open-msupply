@@ -69,6 +69,17 @@ jobs:
           distribution: 'temurin'
           java-version-file: client/.java-version
 
+      - name: Regenerate Capacitor plugin config
+        # capacitor.settings.gradle is a generated file that points each plugin
+        # at a node_modules path baked in for one specific Yarn hoist layout.
+        # The workspace root moved to the repo root, so packages now hoist to the
+        # repo-root node_modules and the committed paths no longer resolve
+        # (Gradle: "No variants exist"). `cap update` rewrites those paths to
+        # match wherever Yarn actually installed the plugins on this runner. It
+        # does not copy web assets, so it can run before the web bundle exists.
+        working-directory: ./client/packages/android
+        run: npx cap update android
+
       - name: Build Android App
         uses: borales/actions-yarn@v4
         with:
