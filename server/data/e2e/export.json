@@ -77136,6 +77136,67 @@
   },
   {
    "cursor": 2077,
+   "record_id": "e2e_service_item",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "item",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_service_item",
+    "code": "service",
+    "name": "Service charge",
+    "type": "Service",
+    "is_active": true,
+    "is_vaccine": false,
+    "default_pack_size": 1.0,
+    "vaccine_doses": 0,
+    "ven_category": "NotAssigned",
+    "volume_per_pack": 0.0,
+    "unit_id": null,
+    "strength": null,
+    "universal_code": null,
+    "restricted_location_type_id": null,
+    "legacy_record": "{}"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2078,
+   "record_id": "e2e_mll_service",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "master_list_line",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_mll_service",
+    "item_id": "e2e_service_item",
+    "master_list_id": "87027C44835B48E6989376F42A58F7E3",
+    "price_per_unit": 0.0
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2079,
    "record_id": "e2e_perm_admin_ServerAdmin",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77161,7 +77222,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2078,
+   "cursor": 2080,
    "record_id": "e2e_perm_admin_StoreAccess",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77187,7 +77248,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2079,
+   "cursor": 2081,
    "record_id": "e2e_perm_admin_LocationMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77213,7 +77274,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2080,
+   "cursor": 2082,
    "record_id": "e2e_perm_admin_SensorMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77239,7 +77300,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2081,
+   "cursor": 2083,
    "record_id": "e2e_perm_admin_SensorQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77265,7 +77326,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2082,
+   "cursor": 2084,
    "record_id": "e2e_perm_admin_TemperatureBreachQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77291,7 +77352,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2083,
+   "cursor": 2085,
    "record_id": "e2e_perm_admin_TemperatureLogQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77317,7 +77378,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2084,
+   "cursor": 2086,
    "record_id": "e2e_perm_admin_StockLineQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77343,7 +77404,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2085,
+   "cursor": 2087,
    "record_id": "e2e_perm_admin_StockLineMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77369,7 +77430,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2086,
+   "cursor": 2088,
    "record_id": "e2e_perm_admin_CreateRepack",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77395,7 +77456,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2087,
+   "cursor": 2089,
    "record_id": "e2e_perm_admin_StocktakeQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77421,7 +77482,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2088,
+   "cursor": 2090,
    "record_id": "e2e_perm_admin_StocktakeMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77447,7 +77508,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2089,
+   "cursor": 2091,
    "record_id": "e2e_perm_admin_InventoryAdjustmentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77473,7 +77534,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2090,
+   "cursor": 2092,
    "record_id": "e2e_perm_admin_RequisitionQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77499,7 +77560,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2091,
+   "cursor": 2093,
    "record_id": "e2e_perm_admin_RequisitionMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77525,7 +77586,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2092,
+   "cursor": 2094,
    "record_id": "e2e_perm_admin_RequisitionSend",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77551,7 +77612,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2093,
+   "cursor": 2095,
    "record_id": "e2e_perm_admin_RequisitionCreateOutboundShipment",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77577,7 +77638,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2094,
+   "cursor": 2096,
    "record_id": "e2e_perm_admin_RnrFormQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77603,7 +77664,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2095,
+   "cursor": 2097,
    "record_id": "e2e_perm_admin_RnrFormMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77629,7 +77690,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2096,
+   "cursor": 2098,
    "record_id": "e2e_perm_admin_OutboundShipmentQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77655,7 +77716,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2097,
+   "cursor": 2099,
    "record_id": "e2e_perm_admin_OutboundShipmentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77681,7 +77742,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2098,
+   "cursor": 2100,
    "record_id": "e2e_perm_admin_InboundShipmentQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77707,7 +77768,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2099,
+   "cursor": 2101,
    "record_id": "e2e_perm_admin_InboundShipmentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77733,7 +77794,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2100,
+   "cursor": 2102,
    "record_id": "e2e_perm_admin_InboundShipmentVerify",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77759,7 +77820,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2101,
+   "cursor": 2103,
    "record_id": "e2e_perm_admin_SupplierReturnQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77785,7 +77846,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2102,
+   "cursor": 2104,
    "record_id": "e2e_perm_admin_SupplierReturnMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77811,7 +77872,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2103,
+   "cursor": 2105,
    "record_id": "e2e_perm_admin_CustomerReturnQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77837,7 +77898,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2104,
+   "cursor": 2106,
    "record_id": "e2e_perm_admin_CustomerReturnMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77863,7 +77924,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2105,
+   "cursor": 2107,
    "record_id": "e2e_perm_admin_PrescriptionQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77889,7 +77950,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2106,
+   "cursor": 2108,
    "record_id": "e2e_perm_admin_PrescriptionMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77915,7 +77976,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2107,
+   "cursor": 2109,
    "record_id": "e2e_perm_admin_CancelFinalisedInvoices",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77941,7 +78002,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2108,
+   "cursor": 2110,
    "record_id": "e2e_perm_admin_PurchaseOrderQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77967,7 +78028,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2109,
+   "cursor": 2111,
    "record_id": "e2e_perm_admin_PurchaseOrderMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -77993,7 +78054,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2110,
+   "cursor": 2112,
    "record_id": "e2e_perm_admin_PurchaseOrderAuthorise",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78019,7 +78080,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2111,
+   "cursor": 2113,
    "record_id": "e2e_perm_admin_PurchaseOrderFinalise",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78045,7 +78106,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2112,
+   "cursor": 2114,
    "record_id": "e2e_perm_admin_InboundShipmentExternalQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78071,7 +78132,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2113,
+   "cursor": 2115,
    "record_id": "e2e_perm_admin_InboundShipmentExternalMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78097,7 +78158,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2114,
+   "cursor": 2116,
    "record_id": "e2e_perm_admin_InboundShipmentExternalVerify",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78123,7 +78184,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2115,
+   "cursor": 2117,
    "record_id": "e2e_perm_admin_InboundShipmentExternalAuthorise",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78149,7 +78210,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2116,
+   "cursor": 2118,
    "record_id": "e2e_perm_admin_Report",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78175,7 +78236,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2117,
+   "cursor": 2119,
    "record_id": "e2e_perm_admin_LogQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78201,7 +78262,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2118,
+   "cursor": 2120,
    "record_id": "e2e_perm_admin_ItemMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78227,7 +78288,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2119,
+   "cursor": 2121,
    "record_id": "e2e_perm_admin_ItemNamesCodesAndUnitsMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78253,7 +78314,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2120,
+   "cursor": 2122,
    "record_id": "e2e_perm_admin_PatientQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78279,7 +78340,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2121,
+   "cursor": 2123,
    "record_id": "e2e_perm_admin_PatientMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78305,7 +78366,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2122,
+   "cursor": 2124,
    "record_id": "e2e_perm_admin_DocumentQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78331,7 +78392,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2123,
+   "cursor": 2125,
    "record_id": "e2e_perm_admin_DocumentMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78357,7 +78418,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2124,
+   "cursor": 2126,
    "record_id": "e2e_perm_admin_ColdChainApi",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78383,7 +78444,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2125,
+   "cursor": 2127,
    "record_id": "e2e_perm_admin_AssetQuery",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78409,7 +78470,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2126,
+   "cursor": 2128,
    "record_id": "e2e_perm_admin_AssetMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78435,7 +78496,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2127,
+   "cursor": 2129,
    "record_id": "e2e_perm_admin_AssetMutateViaDataMatrix",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78461,7 +78522,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2128,
+   "cursor": 2130,
    "record_id": "e2e_perm_admin_AssetCatalogueItemMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78487,7 +78548,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2129,
+   "cursor": 2131,
    "record_id": "e2e_perm_admin_AssetStatusMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78513,7 +78574,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2130,
+   "cursor": 2132,
    "record_id": "e2e_perm_admin_NamePropertiesMutate",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78539,7 +78600,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2131,
+   "cursor": 2133,
    "record_id": "e2e_perm_admin_EditCentralData",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78565,7 +78626,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2132,
+   "cursor": 2134,
    "record_id": "e2e_perm_admin_ViewAndEditVvmStatus",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
@@ -78591,7 +78652,7 @@
    "is_integrated": false
   },
   {
-   "cursor": 2133,
+   "cursor": 2135,
    "record_id": "e2e_perm_admin_MutateClinician",
    "received_datetime": "2026-07-09T00:00:00",
    "integration_started_datetime": null,
