@@ -78,7 +78,10 @@ impl LegacyCustomFieldsBuilder {
     /// Insert a REAL-typed value, omitting `0.0`/absent (indistinguishable from
     /// the 4D Real default / "not set").
     pub(crate) fn real(mut self, key: &str, value: Option<f64>) -> Self {
-        if let Some(num) = value.filter(|v| *v != 0.0).and_then(serde_json::Number::from_f64) {
+        if let Some(num) = value
+            .filter(|v| *v != 0.0)
+            .and_then(serde_json::Number::from_f64)
+        {
             self.map
                 .insert(key.to_string(), serde_json::Value::Number(num));
         }
@@ -496,20 +499,6 @@ impl FkChecker {
     }
 }
 
-pub(crate) fn clear_invalid_location_id(
-    connection: &StorageConnection,
-    location_id: Option<String>,
-) -> Result<Option<String>, RepositoryError> {
-    let location_id = if let Some(id) = location_id {
-        LocationRowRepository::new(connection)
-            .find_one_by_id(&id)?
-            .map(|it| it.id)
-    } else {
-        None
-    };
-    Ok(location_id)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -582,8 +571,7 @@ mod tests {
     #[test]
     fn merge_legacy_custom_fields_none_when_empty() {
         // Owned-only blob with nothing derived collapses back to NULL.
-        let result =
-            merge_legacy_custom_fields(Some(json!({ "custom_2": "x" })), None, OWNED);
+        let result = merge_legacy_custom_fields(Some(json!({ "custom_2": "x" })), None, OWNED);
         assert_eq!(result, None);
         // Both absent stays NULL.
         assert_eq!(merge_legacy_custom_fields(None, None, OWNED), None);
@@ -592,8 +580,7 @@ mod tests {
     #[test]
     fn merge_legacy_custom_fields_from_null_existing() {
         // First import on a fresh row.
-        let result =
-            merge_legacy_custom_fields(None, Some(json!({ "custom_1": "a" })), OWNED);
+        let result = merge_legacy_custom_fields(None, Some(json!({ "custom_1": "a" })), OWNED);
         assert_eq!(result, Some(json!({ "custom_1": "a" })));
     }
 }

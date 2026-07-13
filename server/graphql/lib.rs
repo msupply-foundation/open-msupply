@@ -39,6 +39,7 @@ use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::custom_field::{CustomFieldConfigQueries, CustomFieldMutations};
+use graphql_general::help_document::{HelpDocumentMutations, HelpDocumentQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
     InitialisationMutations, InitialisationQueries, InitialisationSubscriptions, MigrationQueries,
@@ -139,6 +140,10 @@ impl CentralServerMutationNode {
         CustomFieldMutations
     }
 
+    async fn help_document(&self) -> HelpDocumentMutations {
+        HelpDocumentMutations
+    }
+
     async fn reports(&self) -> CentralReportMutations {
         CentralReportMutations
     }
@@ -228,6 +233,7 @@ pub struct Queries(
     pub CampaignQueries,
     pub PurchaseOrderQueries,
     pub PurchaseOrderLineQueries,
+    pub HelpDocumentQueries,
 );
 
 impl Queries {
@@ -265,6 +271,7 @@ impl Queries {
             CampaignQueries,
             PurchaseOrderQueries,
             PurchaseOrderLineQueries,
+            HelpDocumentQueries,
         )
     }
 }

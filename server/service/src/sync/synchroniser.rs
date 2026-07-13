@@ -399,6 +399,9 @@ pub(crate) fn run_post_sync_triggers(
         .trigger_processor(ProcessorType::AssignRequisitionNumber);
 
     ctx.processors_trigger
+        .trigger_processor(ProcessorType::AssignPrescriptionNumber);
+
+    ctx.processors_trigger
         .trigger_processor(ProcessorType::Plugins);
 
     ctx.processors_trigger

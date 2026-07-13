@@ -179,6 +179,10 @@ pub enum Resource {
     VerifyInboundShipmentExternal,
 
     MutateSites,
+
+    // Help documents
+    QueryHelpDocuments,
+    MutateHelpDocuments,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -840,6 +844,17 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutateCustomFieldConfig,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+
+    // Help documents (uploaded centrally, listed on the Help page on every site).
+    // Read is open to any authenticated user; write is ServerAdmin only.
+    map.insert(
+        Resource::QueryHelpDocuments,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateHelpDocuments,
         PermissionDSL::HasPermission(PermissionType::ServerAdmin),
     );
 
