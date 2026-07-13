@@ -70,6 +70,26 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     );
 }
 
+/// Rejects the upload with a 413 (naming the offending file, since the
+/// frontend shows the response body) if any file exceeds MAX_SYNC_FILE_SIZE_BYTES.
+fn check_file_sizes(files: &[TempFile]) -> Result<(), actix_web::Error> {
+    for f in files {
+        if f.size > MAX_SYNC_FILE_SIZE_BYTES {
+            let file_name = f.file_name.as_deref().unwrap_or("file");
+            return Err(InternalError::new(
+                format!(
+                    "'{}' exceeds the maximum file size of {}MB",
+                    file_name,
+                    MAX_SYNC_FILE_SIZE_BYTES / (1024 * 1024)
+                ),
+                StatusCode::PAYLOAD_TOO_LARGE,
+            )
+            .into());
+        }
+    }
+    Ok(())
+}
+
 /// Returns an error response if the record is a purchase order in Sent or Finalised status,
 /// meaning documents cannot be uploaded or deleted.
 fn check_purchase_order_document_editable(
@@ -209,20 +229,7 @@ async fn upload_sync_file(
 
     check_purchase_order_document_editable(&service_provider, &path_inner.0, &path_inner.1)?;
 
-    for f in file.iter() {
-        if f.size > MAX_SYNC_FILE_SIZE_BYTES {
-            let file_name = f.file_name.as_deref().unwrap_or("file");
-            return Err(InternalError::new(
-                format!(
-                    "'{}' exceeds the maximum file size of {}MB",
-                    file_name,
-                    MAX_SYNC_FILE_SIZE_BYTES / (1024 * 1024)
-                ),
-                StatusCode::PAYLOAD_TOO_LARGE,
-            )
-            .into());
-        }
-    }
+    check_file_sizes(&file)?;
 
     let mut static_file_ids: Vec<String> = vec![];
 
@@ -382,4 +389,41 @@ async fn download_sync_file_inner(
         .await?;
 
     Ok((NamedFile::open(file.path)?, file.name))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use actix_web::body::to_bytes;
+
+    fn temp_file(name: &str, size: usize) -> TempFile {
+        TempFile {
+            file: tempfile::NamedTempFile::new().unwrap(),
+            content_type: None,
+            file_name: Some(name.to_string()),
+            size,
+        }
+    }
+
+    #[actix_rt::test]
+    async fn check_file_sizes_enforces_per_file_limit() {
+        // At the limit: accepted
+        assert!(check_file_sizes(&[temp_file("ok.pdf", MAX_SYNC_FILE_SIZE_BYTES)]).is_ok());
+
+        // One byte over: rejected, even when other files in the batch are fine
+        let error = check_file_sizes(&[
+            temp_file("ok.pdf", 1),
+            temp_file("big.pdf", MAX_SYNC_FILE_SIZE_BYTES + 1),
+        ])
+        .unwrap_err();
+
+        // The frontend relies on the status and shows the body verbatim
+        let response = error.error_response();
+        assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
+        let body = to_bytes(response.into_body()).await.unwrap();
+        assert_eq!(
+            std::str::from_utf8(&body).unwrap(),
+            "'big.pdf' exceeds the maximum file size of 50MB"
+        );
+    }
 }
