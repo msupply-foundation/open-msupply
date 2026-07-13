@@ -328,6 +328,53 @@ export const ArrowRightIcon = (props: IconProps) => (
   </Fill>
 )
 
+/* Pagination pager arrows — ported verbatim from the current app's MUI icons
+   (FirstPage / NavigateBefore / NavigateNext / LastPage) so the pager pixel-matches
+   Open mSupply. Material-style filled paths; data-flip-rtl mirrors them in RTL. */
+export const FirstPageIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z" />
+  </Fill>
+)
+
+export const NavigateBeforeIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+  </Fill>
+)
+
+export const NavigateNextIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+  </Fill>
+)
+
+export const LastPageIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z" />
+  </Fill>
+)
+
+/* Full screen: corner arrows out (maximise) / in (minimise). Ported from the current
+   app's Maximise/Minimise SvgIcons — used by the DataTable full-screen toggle. */
+export const MaximiseIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <polyline points="15 3 21 3 21 9" />
+    <polyline points="9 21 3 21 3 15" />
+    <line x1="21" y1="3" x2="14" y2="10" />
+    <line x1="3" y1="21" x2="10" y2="14" />
+  </Stroke>
+)
+
+export const MinimiseIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <polyline points="4 14 10 14 10 20" />
+    <polyline points="20 10 14 10 14 4" />
+    <line x1="14" y1="10" x2="21" y2="3" />
+    <line x1="3" y1="21" x2="10" y2="14" />
+  </Stroke>
+)
+
 /*
  * The open-mSupply logo (MSupplyGuy). Keeps its own brand gradient (orange →
  * red) rather than `currentColor`, exactly like the original. viewBox and paths

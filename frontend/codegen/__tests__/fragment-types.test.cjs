@@ -8,7 +8,7 @@
  */
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { generate, resultType, fragmentType } = require("./helpers.js");
+const { generate, resultType, fragmentType } = require("./helpers.cjs");
 
 test("each fragment is emitted as an exported <Name>Fragment type", () => {
   const schema = `type Query { u: User! } type User { id: ID! name: String! }`;

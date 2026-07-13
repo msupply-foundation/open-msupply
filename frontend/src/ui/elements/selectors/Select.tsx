@@ -22,6 +22,9 @@ interface SelectProps {
   placeholder?: string
   helperText?: string
   disabled?: boolean
+  /** Control size. 'md' (default) is the form-field size; 'sm' is a compact variant
+   *  for dense contexts like a toolbar or the pagination rows-per-page control. */
+  size?: 'md' | 'sm'
   class?: string
 }
 
@@ -49,6 +52,7 @@ export const Select = (props: SelectProps) => {
   return (
     <KSelect.Root<SelectOption>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
+      data-size={props.size ?? 'md'}
       options={props.options}
       optionValue="value"
       optionTextValue="label"

@@ -96,3 +96,34 @@ export type StocktakesResult = {
 export const Stocktakes = {
   query: "query stocktakes($storeId: String!, $filter: StocktakeFilterInput, $sort: [StocktakeSortInput!], $page: PaginationInput) {\n  stocktakes(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on StocktakeConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        stocktakeNumber\n        status\n        description\n        comment\n        createdDatetime\n        stocktakeDate\n        finalisedDatetime\n        isLocked\n      }\n    }\n  }\n}",
 } as TypedDocument<StocktakesResult, StocktakesVariables>;
+
+export type DeleteStocktakesVariables = {
+  storeId: string;
+  ids?: Array<{
+    id: string;
+  }> | null;
+};
+
+export type DeleteStocktakesResult = {
+  batchStocktake: {
+  __typename: "BatchStocktakeResponse";
+  deleteStocktakes: Array<{
+  id: string;
+  response: ({
+  __typename: "DeleteResponse";
+} & {
+  id: string;
+}) | ({
+  __typename: "DeleteStocktakeError";
+} & {
+  error: {
+  __typename: string;
+};
+});
+}> | null;
+};
+};
+
+export const DeleteStocktakes = {
+  query: "mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {\n  batchStocktake(storeId: $storeId, input: {deleteStocktakes: $ids}) {\n    ... on BatchStocktakeResponse {\n      __typename\n      deleteStocktakes {\n        id\n        response {\n          __typename\n          ... on DeleteResponse {\n            id\n          }\n          ... on DeleteStocktakeError {\n            error {\n              __typename\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<DeleteStocktakesResult, DeleteStocktakesVariables>;

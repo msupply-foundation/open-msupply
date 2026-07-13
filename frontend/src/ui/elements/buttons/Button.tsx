@@ -14,6 +14,9 @@ export interface ButtonProps
   variant?: 'primary' | 'secondary'
   /** Which side of the label the icon sits on (mirrors in RTL). */
   iconPosition?: 'start' | 'end'
+  /** Busy state: shows a spinner in place of the icon, disables the button and marks it
+   *  aria-busy (so a click can't re-fire an in-flight action). */
+  loading?: boolean
 }
 
 /*
@@ -29,9 +32,11 @@ export const Button = (props: ButtonProps) => {
     'icon',
     'variant',
     'iconPosition',
+    'loading',
     'children',
     'class',
     'type',
+    'disabled',
     'onPointerDown',
   ])
   const ripple = createRipple()
@@ -42,15 +47,19 @@ export const Button = (props: ButtonProps) => {
       class={local.class ? `${styles.button} ${local.class}` : styles.button}
       data-variant={local.variant ?? 'primary'}
       data-icon-position={local.iconPosition ?? 'start'}
+      disabled={local.disabled || local.loading}
+      aria-busy={local.loading || undefined}
       onPointerDown={event => {
+        if (local.loading) return
         ripple.onPointerDown(event)
         if (typeof local.onPointerDown === 'function')
           local.onPointerDown(event)
       }}
       {...rest}
     >
-      <Show when={local.icon}>
-        <span class={styles.icon}>{local.icon}</span>
+      {/* Spinner replaces the icon while loading. */}
+      <Show when={local.loading} fallback={<Show when={local.icon}><span class={styles.icon}>{local.icon}</span></Show>}>
+        <span class={styles.spinner} aria-hidden="true" />
       </Show>
       <Show when={local.children}>
         <span class={styles.label}>{local.children}</span>

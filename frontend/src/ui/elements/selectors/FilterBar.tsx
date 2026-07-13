@@ -39,6 +39,32 @@ export type Filter<F> = {
   }) => JSX.Element
 }
 
+/**
+ * A filter definition WITHOUT its key — the key is supplied by the map position in
+ * `constructFilters`, so it isn't repeated in the value. (`Filter<F>` minus `key`.)
+ */
+export type FilterDef<F> = Omit<Filter<F>, 'key'>
+
+/**
+ * Builds a list page's Filters from an EXHAUSTIVE, keyed map of definitions.
+ *
+ * `defs` is a `Record` over EVERY key of the filter object `F`: each key maps to a
+ * `FilterDef` to expose that filter, or `null` to dismiss it (not user-facing). Because
+ * the parameter type requires all of `F`'s keys, codegen adding a filter to `F` breaks
+ * compilation here until the new key is given a def or a `null` — nothing is exposed or
+ * forgotten by accident, and this single map is BOTH the definitions and the completeness
+ * proof (no parallel switch, no separate key list). Definitions are emitted in the map's
+ * key order (the toolbar's display order) with the `null` ones dropped, and the owning
+ * key is stitched back onto each surviving def to yield the ready-to-render `Filter<F>[]`.
+ */
+// Trailing comma on <F,> disambiguates the generic from a JSX tag in this .tsx file.
+export const constructFilters = <F,>(
+  defs: { [K in keyof F & string]: FilterDef<F> | null },
+): Filter<F>[] =>
+  (Object.entries(defs) as [keyof F & string, FilterDef<F> | null][])
+    .filter((entry): entry is [keyof F & string, FilterDef<F>] => entry[1] !== null)
+    .map(([key, def]) => ({ key, ...def }))
+
 interface FilterBarProps<F extends object> {
   /** The filters a user can add — drives the add-filter menu and the chips. */
   filters: Filter<F>[]

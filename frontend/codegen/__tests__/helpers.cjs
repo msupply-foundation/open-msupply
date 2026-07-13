@@ -19,7 +19,7 @@
  */
 const { buildSchema, parse } = require("graphql");
 const ts = require("typescript");
-const plugin = require("../plugin.js");
+const plugin = require("../plugin.cjs");
 
 const HEADER =
   "/* eslint-disable */\n" +
