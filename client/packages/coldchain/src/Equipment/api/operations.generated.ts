@@ -72,6 +72,8 @@ export type AssetFragment = {
       fileName: string;
       id: string;
       mimeType?: string | null;
+      createdDatetime: string;
+      totalBytes: number;
     }>;
   };
   locations: {
@@ -152,6 +154,8 @@ export type ColdchainAssetLogFragment = {
       fileName: string;
       id: string;
       mimeType?: string | null;
+      createdDatetime: string;
+      totalBytes: number;
     }>;
   };
 };
@@ -251,6 +255,8 @@ export type AssetByIdQuery = {
           fileName: string;
           id: string;
           mimeType?: string | null;
+          createdDatetime: string;
+          totalBytes: number;
         }>;
       };
       locations: {
@@ -347,6 +353,8 @@ export type AssetFromGs1DataQuery = {
             fileName: string;
             id: string;
             mimeType?: string | null;
+            createdDatetime: string;
+            totalBytes: number;
           }>;
         };
         locations: {
@@ -446,6 +454,8 @@ export type AssetLogsQuery = {
           fileName: string;
           id: string;
           mimeType?: string | null;
+          createdDatetime: string;
+          totalBytes: number;
         }>;
       };
     }>;
@@ -604,6 +614,8 @@ export const AssetFragmentDoc = gql`
         fileName
         id
         mimeType
+        createdDatetime
+        totalBytes
       }
     }
     locations {
@@ -693,6 +705,8 @@ export const ColdchainAssetLogFragmentDoc = gql`
         fileName
         id
         mimeType
+        createdDatetime
+        totalBytes
       }
     }
   }

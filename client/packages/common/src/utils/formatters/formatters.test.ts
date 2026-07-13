@@ -61,6 +61,18 @@ describe('Formatter', () => {
     expect(Formatter.tax(12.5)).toBe('(12.50%)');
   });
 
+  it('fileSize', () => {
+    expect(Formatter.fileSize(null)).toBe('');
+    expect(Formatter.fileSize(undefined)).toBe('');
+    expect(Formatter.fileSize(-1)).toBe('');
+    expect(Formatter.fileSize(0)).toBe('0 B');
+    expect(Formatter.fileSize(999)).toBe('999 B');
+    expect(Formatter.fileSize(2048)).toBe('2 KB');
+    expect(Formatter.fileSize(2 * 1024 * 1024)).toBe('2.0 MB');
+    expect(Formatter.fileSize(52428800)).toBe('50.0 MB');
+    expect(Formatter.fileSize(3 * 1024 * 1024 * 1024)).toBe('3.0 GB');
+  });
+
   it('sentenceCase', () => {
     expect(Formatter.sentenceCase('hello world')).toBe('Hello World');
     expect(Formatter.sentenceCase('SHOUTY')).toBe('Shouty');
