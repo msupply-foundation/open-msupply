@@ -45,7 +45,11 @@ export const EnumFilter: FC<{
         value={selectedValues}
         sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}
         renderOption={option => (
-          <MenuItem key={option.value} value={option.value}>
+          <MenuItem
+            key={option.value}
+            value={option.value}
+            data-testid={`filter-option-${option.value}`}
+          >
             <Checkbox checked={selectedValues.includes(String(option.value))} />
             <ListItemText primary={option.label} />
           </MenuItem>

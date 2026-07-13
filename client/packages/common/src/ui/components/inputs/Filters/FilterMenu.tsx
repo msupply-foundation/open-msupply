@@ -134,6 +134,11 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
                   ? option.value.name
                   : option.value.urlParameter
               }
+              testId={`filter-option-${
+                option.value.type === 'group'
+                  ? option.value.name.toLowerCase().replace(/\s+/g, '-')
+                  : option.value.urlParameter
+              }`}
               onClick={() => handleSelect(option.value)}
               label={option.label}
             />
@@ -155,11 +160,13 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
 const FilterMenuItem = ({
   onClick,
   label,
+  testId,
 }: {
   onClick: () => void;
   label: string;
+  testId?: string;
 }) => (
-  <DropdownMenuItem onClick={onClick} sx={{ fontSize: 14 }}>
+  <DropdownMenuItem data-testid={testId} onClick={onClick} sx={{ fontSize: 14 }}>
     {label}
   </DropdownMenuItem>
 );

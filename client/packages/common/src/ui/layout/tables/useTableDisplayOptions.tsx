@@ -256,6 +256,11 @@ export const useTableDisplayOptions = <T extends MRT_RowData>({
       const isFocused = row.id === focusedRowId;
 
       const defaultProps: MRT_TableOptions<T>['muiTableBodyRowProps'] = {
+        // Renderer-agnostic row hook for the e2e suites (survives a move away
+        // from <table> markup, e.g. virtualised lists). MUI forwards data-*
+        // attributes even though TableRowProps doesn't declare them (the
+        // spread-of-cast dodges the excess-property check).
+        ...({ 'data-testid': 'table-row' } as object),
         ...(onRowClick
           ? {
               onClick: (e: React.MouseEvent<HTMLTableRowElement>) => {

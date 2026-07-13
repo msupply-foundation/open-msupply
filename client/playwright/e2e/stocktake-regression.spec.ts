@@ -14,12 +14,10 @@
  * Selector philosophy — data-testid first.
  * Every interaction point is located by a `data-testid` documented in
  * ../TESTIDS.md, so the suite is independent of copy, styling, and component
- * internals — any front-end that renders those ids can run it unchanged. The
- * few non-testid locators left are also documented there:
- *   - `#stock-item-search-input`: DOM id on the item-search input
- *   - `role=option`:              entries in autocomplete popups
- *   - `tbody tr`:                 table rows (cells within a row carry
- *                                 `cell-<columnId>` testids)
+ * internals — any front-end that renders those ids can run it unchanged.
+ * Rows are `table-row`; cells within a row carry `cell-<columnId>`. The only
+ * non-testid locators left (documented there): `role=option` entries in
+ * autocomplete popups, and `aria-selected` as tab state.
  *
  * Out of scope here (flagged non-automatable / data-dependent in the cases, or
  * covered by other suites): master-list / location / VVM / expiring-before
@@ -121,8 +119,9 @@ async function openAddItem(page: Page): Promise<Locator> {
 
 /** The item-search input inside the line-edit modal. */
 function itemSearchInput(modal: Locator): Locator {
-  return modal.locator('#stock-item-search-input');
+  return modal.getByTestId('item-search-input');
 }
+
 
 /**
  * Type into the item search, pick the first matching option, and wait for the
@@ -153,7 +152,7 @@ async function pickFirstItem(
   await page.mouse.move(0, 0);
   // Selecting an item loads its stock lines into the Batch tab table.
   await expect(modal.getByTestId('tab-batch')).toBeVisible({ timeout: 5000 });
-  await expect(modal.locator('tbody tr').first()).toBeVisible({
+  await expect(modal.getByTestId('table-row').first()).toBeVisible({
     timeout: 5000,
   });
   return code;
@@ -161,7 +160,7 @@ async function pickFirstItem(
 
 /** The cell at (rowIndex, cell testid) of a line-edit table. */
 function cell(table: Locator, rowIndex: number, testId: string): Locator {
-  return table.locator('tbody tr').nth(rowIndex).getByTestId(testId);
+  return table.getByTestId('table-row').nth(rowIndex).getByTestId(testId);
 }
 
 /**
@@ -181,7 +180,10 @@ async function snapshotText(table: Locator, rowIndex: number): Promise<string> {
 }
 
 /** The snapshot pack count of a batch row as a number (may be decimal). */
-async function snapshotPacks(table: Locator, rowIndex: number): Promise<number> {
+async function snapshotPacks(
+  table: Locator,
+  rowIndex: number
+): Promise<number> {
   return parseFloat(await snapshotText(table, rowIndex));
 }
 
@@ -193,14 +195,15 @@ async function snapshotPacks(table: Locator, rowIndex: number): Promise<number> 
 async function countableRow(
   table: Locator
 ): Promise<{ index: number; batch: string }> {
-  const rowCount = await table.locator('tbody tr').count();
+  const rowCount = await table.getByTestId('table-row').count();
   for (let i = 0; i < rowCount; i++) {
     const batch = (
       (await cell(table, i, CELL.batch).locator('input').inputValue()) ?? ''
     ).trim();
     if (!batch) continue;
     const snap = await snapshotText(table, i);
-    if (/^\d+$/.test(snap) && parseInt(snap, 10) > 0) return { index: i, batch };
+    if (/^\d+$/.test(snap) && parseInt(snap, 10) > 0)
+      return { index: i, batch };
   }
   return { index: 0, batch: '' };
 }
@@ -211,12 +214,12 @@ async function countableRow(
  * backing stock line, so it can be freely edited and reduced.
  */
 async function addBlankBatch(modal: Locator, table: Locator): Promise<number> {
-  const before = await table.locator('tbody tr').count();
+  const before = await table.getByTestId('table-row').count();
   await modal.getByTestId('add-batch-button').click();
-  await expect(table.locator('tbody tr')).toHaveCount(before + 1, {
+  await expect(table.getByTestId('table-row')).toHaveCount(before + 1, {
     timeout: 5000,
   });
-  const rowCount = await table.locator('tbody tr').count();
+  const rowCount = await table.getByTestId('table-row').count();
   for (let i = 0; i < rowCount; i++) {
     const batch = (
       (await cell(table, i, CELL.batch).locator('input').inputValue()) ?? ''
@@ -319,55 +322,45 @@ async function deleteCurrentStocktake(page: Page): Promise<void> {
 test.describe('Inventory: Stocktakes — creation & list', () => {
   test.describe.configure({ mode: DESCRIBE_MODE });
 
-  test(
-    'list view renders core controls',
-    // No `covers` — the case has no behaviour for the list view itself; this
-    // is the entry-point smoke test the detail behaviours depend on.
-    async ({ page }) => {
-      // Entry point for the whole case: the list must offer creation + the
-      // standard table controls before any of the detail behaviours apply.
-      await page.goto('/inventory/stocktakes', {
-        waitUntil: 'domcontentloaded',
-      });
-      await expect(page.getByTestId('new-stocktake-button')).toBeVisible({
-        timeout: 25000,
-      });
-      await expect(page.getByTestId('header-status').first()).toBeVisible();
-      await expect(page.getByTestId('table-pagination')).toBeVisible();
-    }
-  );
+  test('list view renders core controls', // is the entry-point smoke test the detail behaviours depend on. // No `covers` — the case has no behaviour for the list view itself; this
+  async ({ page }) => {
+    // Entry point for the whole case: the list must offer creation + the
+    // standard table controls before any of the detail behaviours apply.
+    await page.goto('/inventory/stocktakes', {
+      waitUntil: 'domcontentloaded',
+    });
+    await expect(page.getByTestId('new-stocktake-button')).toBeVisible({
+      timeout: 25000,
+    });
+    await expect(page.getByTestId('header-status').first()).toBeVisible();
+    await expect(page.getByTestId('table-pagination')).toBeVisible();
+  });
 
-  test(
-    'create modal offers full / filtered / blank with sub-options',
-    // No `covers` — this only asserts the initialisation options exist. The
-    // behaviours (.4 items-with-stock loads lines, .5 all-items includes
-    // zero-stock items) are about what each mode LOADS; .4 is covered by the
-    // "Full ... loads lines" test below, .5 has no deterministic test yet.
-    async ({ page }) => {
-      const modal = await openCreateModal(page);
+  test('create modal offers full / filtered / blank with sub-options', // behaviours (.4 items-with-stock loads lines, .5 all-items includes // No `covers` — this only asserts the initialisation options exist. The
+  // zero-stock items) are about what each mode LOADS; .4 is covered by the
+  // "Full ... loads lines" test below, .5 has no deterministic test yet.
+  async ({ page }) => {
+    const modal = await openCreateModal(page);
 
-      // Three initialisation modes.
-      await expect(modal.getByTestId('stocktake-type-full')).toBeVisible();
-      await expect(modal.getByTestId('stocktake-type-filtered')).toBeVisible();
-      await expect(modal.getByTestId('stocktake-type-blank')).toBeVisible();
+    // Three initialisation modes.
+    await expect(modal.getByTestId('stocktake-type-full')).toBeVisible();
+    await expect(modal.getByTestId('stocktake-type-filtered')).toBeVisible();
+    await expect(modal.getByTestId('stocktake-type-blank')).toBeVisible();
 
-      // Full mode (the default) exposes the "with stock on hand" vs "all
-      // items" choice and an estimated-line count.
-      await expect(
-        modal.getByTestId('stocktake-items-with-soh')
-      ).toBeVisible();
-      await expect(modal.getByTestId('stocktake-all-items')).toBeVisible();
-      await expect(modal.getByTestId('stocktake-line-estimate')).toBeVisible();
+    // Full mode (the default) exposes the "with stock on hand" vs "all
+    // items" choice and an estimated-line count.
+    await expect(modal.getByTestId('stocktake-items-with-soh')).toBeVisible();
+    await expect(modal.getByTestId('stocktake-all-items')).toBeVisible();
+    await expect(modal.getByTestId('stocktake-line-estimate')).toBeVisible();
 
-      // Switching to Blank swaps the estimate for the blank-stocktake notice.
-      await modal.getByTestId('stocktake-type-blank').click();
-      await expect(modal.getByTestId('blank-stocktake-notice')).toBeVisible();
+    // Switching to Blank swaps the estimate for the blank-stocktake notice.
+    await modal.getByTestId('stocktake-type-blank').click();
+    await expect(modal.getByTestId('blank-stocktake-notice')).toBeVisible();
 
-      // Cancel — don't create anything from this smoke test.
-      await modal.getByTestId('dialog-button-cancel').click();
-      await expect(modal).toBeHidden();
-    }
-  );
+    // Cancel — don't create anything from this smoke test.
+    await modal.getByTestId('dialog-button-cancel').click();
+    await expect(modal).toBeHidden();
+  });
 
   test(
     'Blank stocktake opens with no pre-loaded lines',
@@ -387,7 +380,7 @@ test.describe('Inventory: Stocktakes — creation & list', () => {
     async ({ page }) => {
       await createStocktake(page, 'full');
       // At least one stock line loaded (a store with stock always has some).
-      await expect(page.locator('tbody tr').first()).toBeVisible({
+      await expect(page.getByTestId('table-row').first()).toBeVisible({
         timeout: 15000,
       });
       await expect(page.getByTestId('nothing-here')).toHaveCount(0);
@@ -558,12 +551,8 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
 
       // Pricing tab exposes editable pack sell/cost price columns.
       await modal.getByTestId('tab-pricing').click();
-      await expect(
-        modal.getByTestId('header-sellPricePerPack')
-      ).toBeVisible();
-      await expect(
-        modal.getByTestId('header-costPricePerPack')
-      ).toBeVisible();
+      await expect(modal.getByTestId('header-sellPricePerPack')).toBeVisible();
+      await expect(modal.getByTestId('header-costPricePerPack')).toBeVisible();
 
       // Other tab exposes location / manufacturer columns.
       await modal.getByTestId('tab-other').click();
@@ -627,9 +616,9 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
       await pickFirstItem(page, modal, 'amox');
       const table = modal.locator('table');
 
-      const before = await table.locator('tbody tr').count();
+      const before = await table.getByTestId('table-row').count();
       await modal.getByTestId('add-batch-button').click();
-      await expect(table.locator('tbody tr')).toHaveCount(before + 1, {
+      await expect(table.getByTestId('table-row')).toHaveCount(before + 1, {
         timeout: 5000,
       });
 
@@ -703,7 +692,12 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
       // as openAddItem) — let it fire and dismiss it so Cancel is clickable.
       await page.waitForTimeout(700);
       const options = page.getByRole('option');
-      if (await options.first().isVisible().catch(() => false)) {
+      if (
+        await options
+          .first()
+          .isVisible()
+          .catch(() => false)
+      ) {
         await itemSearchInput(modal).press('Escape');
         await expect(options.first()).toBeHidden({ timeout: 3000 });
       }
@@ -712,7 +706,7 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
 
       // The first item's line was saved before the form reset.
       await expect(page.getByTestId('nothing-here')).toHaveCount(0);
-      await expect(page.locator('tbody tr').first()).toBeVisible({
+      await expect(page.getByTestId('table-row').first()).toBeVisible({
         timeout: 10000,
       });
       await deleteCurrentStocktake(page);
@@ -780,7 +774,7 @@ test.describe('Inventory: Stocktakes — add item & line editing', () => {
       // Save; the pack size lands in the detail line list on the named row.
       await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
-      const savedRow = page.locator('tbody tr').filter({ hasText: uniq });
+      const savedRow = page.getByTestId('table-row').filter({ hasText: uniq });
       await expect(savedRow).toBeVisible({ timeout: 10000 });
       await expect(savedRow.getByTestId(CELL.packSize)).toHaveText(/^5$/);
 
@@ -864,7 +858,7 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
 
       // Select ALL lines (the item can have several batches) via the header
       // select-all checkbox, then delete via the bulk-action footer.
-      await expect(page.locator('tbody tr').first()).toBeVisible();
+      await expect(page.getByTestId('table-row').first()).toBeVisible();
       await page.getByTestId('select-all-rows-checkbox').click();
       await expect(page.getByTestId('selected-rows-count')).toBeVisible({
         timeout: 3000,
@@ -890,8 +884,8 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
       await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
 
-      await expect(page.locator('tbody tr').first()).toBeVisible();
-      const rows = await page.locator('tbody tr').count();
+      await expect(page.getByTestId('table-row').first()).toBeVisible();
+      const rows = await page.getByTestId('table-row').count();
       await page.getByTestId('select-all-rows-checkbox').click();
       await expect(page.getByTestId('selected-rows-count')).toBeVisible({
         timeout: 3000,
@@ -903,7 +897,7 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
       await confirm.getByTestId('dialog-button-cancel').click();
       await expect(confirm).toBeHidden({ timeout: 5000 });
 
-      await expect(page.locator('tbody tr')).toHaveCount(rows);
+      await expect(page.getByTestId('table-row')).toHaveCount(rows);
       await deleteCurrentStocktake(page);
     }
   );
@@ -917,7 +911,7 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
       await pickFirstItem(page, modal, 'amox');
       await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
-      await expect(page.locator('tbody tr').first()).toBeVisible();
+      await expect(page.getByTestId('table-row').first()).toBeVisible();
 
       // Clicking a header opens its column menu; sort from there.
       await page.getByTestId('header-batch').click();
@@ -996,13 +990,17 @@ test.describe('Inventory: Stocktakes — line management & log', () => {
       // Name the new batch so we can re-identify its row in the detail table.
       const uniq = `pw-reduce-${Date.now()}`;
       const newRow = await addBlankBatch(modal, table);
-      await fillCell(page, cell(table, newRow, CELL.batch).locator('input'), uniq);
+      await fillCell(
+        page,
+        cell(table, newRow, CELL.batch).locator('input'),
+        uniq
+      );
 
       await modal.getByTestId('dialog-button-ok').click();
       await expect(modal).toBeHidden({ timeout: 5000 });
 
       // Select just that row and reduce it.
-      const row = page.locator('tbody tr').filter({ hasText: uniq });
+      const row = page.getByTestId('table-row').filter({ hasText: uniq });
       await expect(row).toBeVisible({ timeout: 10000 });
       await row.getByTestId('select-row-checkbox').click();
       await expect(page.getByTestId('selected-rows-count')).toBeVisible({
@@ -1111,9 +1109,9 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
       await expect(page.getByTestId('stocktake-status-alert')).toContainText(
         /finalised/i
       );
-      await expect(
-        page.getByTestId('status-change-button-main')
-      ).toHaveCount(0);
+      await expect(page.getByTestId('status-change-button-main')).toHaveCount(
+        0
+      );
       // Finalised stocktakes cannot be deleted — leave it in place.
     }
   );
@@ -1159,11 +1157,11 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
 
       // Line fields are read-only too: open the first line's edit modal and
       // check batch / pack size / counted / expiry are all disabled.
-      await page.locator('tbody tr').first().click();
+      await page.getByTestId('table-row').first().click();
       const editModal = page.getByTestId('add-item-modal');
       await expect(editModal).toBeVisible({ timeout: 10000 });
       const editTable = editModal.locator('table');
-      await expect(editTable.locator('tbody tr').first()).toBeVisible({
+      await expect(editTable.getByTestId('table-row').first()).toBeVisible({
         timeout: 10000,
       });
       await expect(
@@ -1183,14 +1181,14 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
 
       // Deleting lines is blocked: the attempt is refused (no confirmation
       // dialog) and the rows stay.
-      const rowCount = await page.locator('tbody tr').count();
+      const rowCount = await page.getByTestId('table-row').count();
       await page.getByTestId('select-all-rows-checkbox').click();
       await expect(page.getByTestId('selected-rows-count')).toBeVisible({
         timeout: 3000,
       });
       await page.getByTestId('delete-lines-button').click();
       await expect(page.getByTestId('confirmation-modal')).toHaveCount(0);
-      await expect(page.locator('tbody tr')).toHaveCount(rowCount);
+      await expect(page.getByTestId('table-row')).toHaveCount(rowCount);
     }
   );
 
@@ -1274,7 +1272,7 @@ test.describe('Inventory: Stocktakes — finalisation & stock effects', () => {
       const table2 = modal.locator('table');
 
       // Find the row with the same batch number and assert its snapshot rose.
-      const rows = table2.locator('tbody tr');
+      const rows = table2.getByTestId('table-row');
       const rowCount = await rows.count();
       let matched = -1;
       for (let i = 0; i < rowCount; i++) {

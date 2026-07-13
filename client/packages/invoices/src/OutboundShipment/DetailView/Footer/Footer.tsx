@@ -62,6 +62,7 @@ export const StatusFooter = (): ReactElement | null => {
 
       <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
         <ButtonWithIcon
+          data-testid="close-button"
           shrinkThreshold="lg"
           Icon={<XCircleIcon />}
           label={t('button.close')}
