@@ -49,6 +49,7 @@ interface UseDraftLocationControl {
   onChangeLocation: () => void;
   onSave: () => Promise<void>;
   isLoading: boolean;
+  hasNext: boolean;
 }
 
 const useDraftLocation = (
@@ -60,7 +61,7 @@ const useDraftLocation = (
   const [location, setLocation] = useState<LocationRowFragment>(() =>
     createNewLocation(seed)
   );
-  const { nextLocation } = useLocationList(
+  const { nextLocation, hasNext } = useLocationList(
     {
       sortBy,
       filterBy,
@@ -98,6 +99,7 @@ const useDraftLocation = (
     onChangeLocation,
     onSave,
     isLoading: isUpdating || isCreating,
+    hasNext,
   };
 };
 
@@ -112,7 +114,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation();
   const { error } = useNotification();
-  const { draft, onUpdate, onChangeLocation, onSave, isLoading } =
+  const { draft, onUpdate, onChangeLocation, onSave, isLoading, hasNext } =
     useDraftLocation(location, mode, sortBy, filterBy);
   const isInvalid = !draft.code.trim() || !draft.name.trim();
 
@@ -141,7 +143,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
       nextButton={
         <DialogButton
           variant="next-and-ok"
-          disabled={isInvalid}
+          disabled={isInvalid || (!hasNext && mode === ModalMode.Update)}
           onClick={async () => {
             if (await handleSave()) onChangeLocation();
             return true;
