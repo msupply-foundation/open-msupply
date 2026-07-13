@@ -5,6 +5,7 @@ import {
   MasterListRowFragment,
   RequestFragment,
   RequestLineFragment,
+  StockLineListRowFragment,
   StockLineRowFragment,
 } from '@openmsupply-client/system';
 import {
@@ -15,7 +16,7 @@ import {
 import { PrescriptionPaymentComponentProps } from './prescriptionTypes';
 import { DraftRequestLine } from 'packages/requisitions/src/RequestRequisition/DetailView/RequestLineEdit';
 import { StocktakeLineFragment } from '@openmsupply-client/inventory';
-import { UserPermission } from '../types/schema';
+import { InvoiceNodeStatus, UserPermission } from '../types/schema';
 
 // Plugins import any icon they want from `@openmsupply-client/common` (e.g.
 // `StockIcon`) and pass it directly. The host renders it themed to match the
@@ -56,6 +57,14 @@ export type ShipmentLinePluginState = {
 export type Plugins = {
   prescriptionPaymentForm?: React.ComponentType<PrescriptionPaymentComponentProps>[];
   inboundShipmentAppBar?: React.ComponentType<{ shipment: InboundFragment }>[];
+  inboundShipment?: {
+    // Runs before an inbound shipment status change. Each validator returns a
+    // user-facing message to BLOCK the transition, or null to allow it.
+    validateStatusChange?: ((
+      shipment: InboundFragment,
+      targetStatus: InvoiceNodeStatus
+    ) => string | null)[];
+  };
   inboundShipmentLine?: {
     editViewField: {
       header: string;
@@ -72,6 +81,7 @@ export type Plugins = {
       header: string;
       Component: React.ComponentType<{
         line: StockOutLineFragment;
+        update: (patch: Partial<StockOutLineFragment>) => void;
         events: UsePluginEvents<ShipmentLinePluginState>;
         isExternal: boolean;
       }>;
@@ -96,9 +106,9 @@ export type Plugins = {
   };
   stockLine?: {
     tableStateLoader: React.ComponentType<{
-      stockLines: StockLineRowFragment[];
+      stockLines: StockLineListRowFragment[];
     }>[];
-    tableColumn: ColumnDef<StockLineRowFragment>[];
+    tableColumn: ColumnDef<StockLineListRowFragment>[];
     editViewField: React.ComponentType<{
       stockLine: StockLineRowFragment;
       events: UsePluginEvents<{ isDirty: boolean }>;

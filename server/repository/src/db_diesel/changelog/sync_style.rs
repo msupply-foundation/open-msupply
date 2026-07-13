@@ -311,6 +311,12 @@ impl ChangelogTableName {
                 transport: V6,
                 multi_device_site: true,
             },
+            HelpDocument => SyncStyle {
+                authoring: vec![Central],
+                distribution: vec![D::Central],
+                transport: V6,
+                multi_device_site: true,
+            },
             ItemVariant => SyncStyle {
                 authoring: vec![Central],
                 distribution: vec![D::Central],

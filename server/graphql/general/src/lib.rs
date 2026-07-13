@@ -1,5 +1,6 @@
 pub mod campaign;
 pub mod custom_field;
+pub mod help_document;
 mod mutations;
 mod queries;
 mod subscriptions;
