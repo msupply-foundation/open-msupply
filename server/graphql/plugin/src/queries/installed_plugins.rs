@@ -51,6 +51,7 @@ pub fn installed_plugins(ctx: &Context<'_>) -> Result<InstalledPluginConnector> 
         &ResourceAccessRequest {
             resource: Resource::ConfigurePlugin,
             store_id: None,
+            require_central_standalone: false,
         },
     )?;
 

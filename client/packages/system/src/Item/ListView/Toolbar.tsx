@@ -5,8 +5,10 @@ import {
   FilterMenu,
   Box,
   usePreferences,
+  buildCustomFieldFilterDefinitions,
   useAuthContext,
 } from '@openmsupply-client/common';
+import { useItemCustomFields } from '../api';
 import { useMasterLists } from '../../MasterList';
 
 export const Toolbar: FC = () => {
@@ -14,8 +16,9 @@ export const Toolbar: FC = () => {
   const { store } = useAuthContext();
   const {
     numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts:
-    numMonthsConsumption,
+      numMonthsConsumption,
   } = usePreferences();
+  const { data: properties } = useItemCustomFields();
   const { data: masterLists } = useMasterLists({
     queryParams: {
       filterBy: { existsForStoreId: { equalTo: store?.id } },
@@ -94,23 +97,29 @@ export const Toolbar: FC = () => {
               : []),
             ...(numMonthsConsumption
               ? [
-                {
-                  type: 'enum' as const,
-                  name: t('label.products-at-risk-of-being-out-of-stock'),
-                  urlParameter: 'productsAtRiskOfBeingOutOfStock',
-                  options: [
-                    {
-                      label: t('label.show-products-at-risk'),
-                      value: 'true',
-                    },
-                    {
-                      label: t('label.show-products-not-at-risk'),
-                      value: 'false',
-                    },
-                  ],
-                },
-              ]
+                  {
+                    type: 'enum' as const,
+                    name: t('label.products-at-risk-of-being-out-of-stock'),
+                    urlParameter: 'productsAtRiskOfBeingOutOfStock',
+                    options: [
+                      {
+                        label: t('label.show-products-at-risk'),
+                        value: 'true',
+                      },
+                      {
+                        label: t('label.show-products-not-at-risk'),
+                        value: 'false',
+                      },
+                    ],
+                  },
+                ]
               : []),
+            ...buildCustomFieldFilterDefinitions(properties ?? [], {
+              min: t('label.min'),
+              max: t('label.max'),
+              fromDate: t('label.from-date'),
+              toDate: t('label.to-date'),
+            }),
           ]}
         />
       </Box>

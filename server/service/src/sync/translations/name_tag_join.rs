@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::sync::translations::{name::NameTranslation, name_tag::NameTagTranslation};
 
-use super::{PullTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -34,22 +34,25 @@ impl SyncTranslation for NameTagJoinTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameTagJoinRow {
             ID,
             name_ID,
             name_tag_ID,
-        } = serde_json::from_str::<LegacyNameTagJoinRow>(&sync_record.data)?;
+        } = sync_record.deserialize()?;
         if name_ID.is_empty() {
             return Ok(PullTranslateResult::Ignored("Name id is empty".to_string()));
         }
 
+        let check_fk = fk_checker.with_table_required(connection, "name_tag_join", &ID);
+
         let result = NameTagJoinRow {
             id: ID,
-            name_id: name_ID,
-            name_tag_id: name_tag_ID,
+            name_id: check_fk(name_ID, "name_link_id", FkField::NameLink)?,
+            name_tag_id: check_fk(name_tag_ID, "name_tag_id", FkField::NameTag)?,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -69,7 +72,9 @@ impl SyncTranslation for NameTagJoinTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, NameTagRow, NameTagRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_name_tag_join_translation() {
@@ -77,12 +82,29 @@ mod tests {
         let translator = NameTagJoinTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_name_tag_join_translation", MockDataInserts::none()).await;
+            setup_all("test_name_tag_join_translation", MockDataInserts::all()).await;
+
+        // Seed the name_tag parents the join's required FKs point at.
+        for name_tag_id in [
+            "1A3B380E37F741729DAC4761AF3549F9",
+            "59F2635D22B346ADA0088D6261926465",
+        ] {
+            NameTagRowRepository::new(&connection)
+                .upsert_one(&NameTagRow {
+                    id: name_tag_id.to_string(),
+                    name: "test".to_string(),
+                })
+                .unwrap();
+        }
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

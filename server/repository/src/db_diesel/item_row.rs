@@ -1,8 +1,11 @@
-use crate::{Delete, Upsert};
+use crate::{
+    db_diesel::changelog::ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    RowActionType, SourceSiteId, Upsert,
+};
 
 use super::{
     clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
-    location_type_row::location_type, unit_row::unit, ItemLinkRow,
+    location_type_row::location_type, custom_fields_json::JsonValue, unit_row::unit, ItemLinkRow,
     ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
@@ -29,6 +32,7 @@ table! {
         restricted_location_type_id ->  Nullable<Text>,
         volume_per_pack -> Double,
         universal_code -> Nullable<Text>,
+        custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
     }
 }
 
@@ -53,7 +57,7 @@ pub enum ItemType {
     NonStock,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum VENCategory {
     V,
@@ -63,7 +67,7 @@ pub enum VENCategory {
     NotAssigned,
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = item)]
 pub struct ItemRow {
@@ -84,6 +88,19 @@ pub struct ItemRow {
     pub restricted_location_type_id: Option<String>,
     pub volume_per_pack: f64,
     pub universal_code: Option<String>,
+    /// Properties v2 values keyed by `custom_field.key`. Imported from legacy
+    /// mSupply `[item]user_field_1..7` via the v5 sync translator; central-only
+    /// and never edited in OMS. See docs/content/server/service/properties/_index.md.
+    pub custom_fields: Option<JsonValue>,
+}
+
+impl ItemRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Item
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
 }
 
 impl Default for ItemRow {
@@ -104,6 +121,7 @@ impl Default for ItemRow {
             restricted_location_type_id: None,
             volume_per_pack: 0.0,
             universal_code: None,
+            custom_fields: None,
         }
     }
 }
@@ -129,7 +147,7 @@ impl<'a> ItemRowRepository<'a> {
         ItemRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item)
             .values(item_row)
             .on_conflict(id)
@@ -139,6 +157,17 @@ impl<'a> ItemRowRepository<'a> {
 
         insert_or_ignore_item_link(self.connection, item_row)?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+        self._upsert_one(item_row)?;
+        let changelog = ItemRow::generate_changelog(
+            item_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub async fn insert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
@@ -178,6 +207,14 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, item_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            item.filter(id.eq(item_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_one_by_item_link_id(
         &self,
         item_link_id: &str,
@@ -208,20 +245,48 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
+    fn _mark_deleted(&self, item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(item.filter(id.eq(item_id)))
             .set(is_active.eq(false))
             .execute(self.connection.lock().connection())?;
         Ok(())
+    }
+
+    pub fn mark_deleted(&self, item_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(item_id)?;
+        // Soft delete keeps the row, so emit Upsert so receivers re-query and see is_active=false.
+        let changelog = ItemRow::generate_changelog(
+            item_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct ItemRowDelete(pub String);
 impl Delete for ItemRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemRowRepository::new(con).delete(&self.0)?;
-        Ok(None) // Table not in Changelog
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = ItemRowRepository::new(con);
+        repo._mark_deleted(&self.0)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ItemRow::generate_changelog(
+                self.0.clone(),
+                con,
+                // Soft delete: keep row, emit Upsert so receivers see is_active=false.
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -236,11 +301,24 @@ impl Delete for ItemRowDelete {
 }
 
 impl Upsert for ItemRow {
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        ItemRowRepository::new(con).upsert_one(self)?;
-        Ok(None) // Table not in Changelog
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ItemRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ItemRow::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
     }
-
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
@@ -306,5 +384,34 @@ mod test {
             .unwrap()
             .unwrap();
         assert_eq!(updated_item.restricted_location_type_id, None);
+    }
+
+    // Round-trip the properties-v2 JSONB column through ItemRow on both PG
+    // (native Jsonb) and SQLite (TEXT Json) — mirrors `name_row_properties_round_trip`.
+    #[actix_rt::test]
+    async fn item_row_properties_round_trip() {
+        let (_, connection, _, _) =
+            setup_all("item_row_properties_round_trip", MockDataInserts::none()).await;
+
+        let repo = ItemRowRepository::new(&connection);
+
+        let properties = serde_json::json!({
+            "user_field_1": "Cold chain",
+            "user_field_5": 12.5,
+            "user_field_7": true,
+        });
+        let row = ItemRow {
+            id: "item_properties_round_trip".to_string(),
+            name: "name".to_string(),
+            code: "code".to_string(),
+            r#type: ItemType::Stock,
+            custom_fields: Some(properties.clone()),
+            ..Default::default()
+        };
+
+        repo.upsert_one(&row).unwrap();
+
+        let fetched = repo.find_one_by_id(&row.id).unwrap().unwrap();
+        assert_eq!(fetched.custom_fields, Some(properties));
     }
 }

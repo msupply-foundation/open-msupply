@@ -38,6 +38,7 @@ use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, Se
 use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::campaign::{CampaignMutations, CampaignQueries};
+use graphql_general::custom_field::{CustomFieldConfigQueries, CustomFieldMutations};
 use graphql_general::help_document::{HelpDocumentMutations, HelpDocumentQueries};
 use graphql_general::{
     CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
@@ -60,6 +61,7 @@ use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
+use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
@@ -138,8 +140,16 @@ impl CentralServerMutationNode {
         HelpDocumentMutations
     }
 
+    async fn custom_field(&self) -> CustomFieldMutations {
+        CustomFieldMutations
+    }
+
     async fn reports(&self) -> CentralReportMutations {
         CentralReportMutations
+    }
+
+    async fn site(&self) -> CentralSiteMutations {
+        CentralSiteMutations
     }
 }
 
@@ -153,6 +163,14 @@ impl CentralServerQueryNode {
 
     async fn sync_message(&self) -> SyncMessageQueries {
         SyncMessageQueries
+    }
+
+    async fn site(&self) -> CentralSiteQueries {
+        CentralSiteQueries
+    }
+
+    async fn custom_field(&self) -> CustomFieldConfigQueries {
+        CustomFieldConfigQueries
     }
 }
 

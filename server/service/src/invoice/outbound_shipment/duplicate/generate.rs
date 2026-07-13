@@ -41,6 +41,7 @@ pub fn generate(
         colour: source_invoice.colour.clone(),
         comment: Some(comment),
         default_donor_id: source_invoice.default_donor_id.clone(),
+        custom_fields: source_invoice.custom_fields.clone(),
         // Hold unchecked, linked requisition & purchase order not copied
         on_hold: false,
         requisition_id: None,
@@ -79,6 +80,7 @@ pub fn generate(
         linked_invoice_id: None,
         original_shipment_id: None,
         is_cancellation: false,
+        legacy_goods_received_id: None,
     };
 
     let source_lines =
@@ -158,6 +160,7 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
             purchase_order_line_id: line.purchase_order_line_id,
             linked_invoice_id: line.linked_invoice_id,
             linked_invoice_line_id: line.linked_invoice_line_id,
+            legacy_goods_received_line_id: None,
         };
     }
 
@@ -206,5 +209,6 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
         purchase_order_line_id: None,
         linked_invoice_id: None,
         linked_invoice_line_id: None,
+        legacy_goods_received_line_id: None,
     }
 }

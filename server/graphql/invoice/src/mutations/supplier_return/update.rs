@@ -23,6 +23,10 @@ pub struct UpdateInput {
     on_hold: Option<bool>,
     their_reference: Option<String>,
     transport_reference: Option<String>,
+    /// Patch of customFields key -> value (JSON object) merged into the
+    /// invoice's custom properties; a `null` value clears that key, keys absent
+    /// from the patch are left unchanged.
+    custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -43,6 +47,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         &ResourceAccessRequest {
             resource: Resource::MutateSupplierReturn,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -73,7 +78,8 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
         | ServiceError::CannotIssueSupplierReturnWithNoLines
-        | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::ReturnDoesNotExist
+        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
 
         ServiceError::InvoiceLineHasNoStockLine(_)
         | ServiceError::UpdatedReturnDoesNotExist
@@ -93,6 +99,7 @@ impl UpdateInput {
             on_hold,
             their_reference,
             transport_reference,
+            custom_fields,
         }: UpdateInput = self;
 
         ServiceInput {
@@ -103,6 +110,7 @@ impl UpdateInput {
             on_hold,
             their_reference,
             transport_reference,
+            custom_fields: custom_fields.map(|json| json.0),
         }
     }
 }

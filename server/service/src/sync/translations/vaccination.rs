@@ -1,17 +1,16 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, VaccinationRow,
-    VaccinationRowRepository,
+    ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncBufferRow, VaccinationRow,
 };
 
 use crate::sync::translations::{
     clinician::ClinicianTranslation, document::DocumentTranslation,
     invoice_line::InvoiceLineTranslation, name::NameTranslation, store::StoreTranslation,
-    user::UserTranslation,
+    user::UserTranslation, vaccine_course_dose::VaccineCourseDoseTranslation,
 };
 
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 /// FK columns renamed during the name_link / entity-link abstraction. Central emits both the
@@ -44,15 +43,29 @@ impl SyncTranslation for VaccinationTranslation {
             StoreTranslation.table_name(),
             InvoiceLineTranslation.table_name(),
             NameTranslation.table_name(),
+            VaccineCourseDoseTranslation.table_name(),
         ]
     }
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let row = from_renamed_keys_str::<VaccinationRow>(&sync_record.data, RENAMED_KEYS)?;
+        let mut row = from_renamed_keys_str::<VaccinationRow>(
+            &sync_record.data.0.to_string(),
+            RENAMED_KEYS,
+        )?;
+
+        let check_fk = fk_checker.with_table_required(connection, "vaccination", &row.id);
+
+        row.vaccine_course_dose_id = check_fk(
+            row.vaccine_course_dose_id,
+            "vaccine_course_dose_id",
+            FkField::VaccineCourseDose,
+        )?;
+
         Ok(PullTranslateResult::upsert(row))
     }
 
@@ -78,15 +91,15 @@ impl SyncTranslation for VaccinationTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = VaccinationRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Vaccination row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::Vaccination(vaccination_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = vaccination_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -99,7 +112,11 @@ impl SyncTranslation for VaccinationTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_vaccine_course_a_dose_a, MockDataInserts},
+        test_db::setup_all,
+        VaccineCourseDoseRow, VaccineCourseDoseRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_vaccination_form_translation() {
@@ -109,10 +126,22 @@ mod tests {
         let (_, connection, _, _) =
             setup_all("test_vaccination_translation", MockDataInserts::all()).await;
 
+        // Seed the vaccine_course_dose parent the vaccination's required FK points at.
+        VaccineCourseDoseRowRepository::new(&connection)
+            .upsert_one(&VaccineCourseDoseRow {
+                id: "test_vaccine_course_dose".to_string(),
+                ..mock_vaccine_course_a_dose_a()
+            })
+            .unwrap();
+
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

@@ -1,13 +1,14 @@
 use repository::{
     barcode::{Barcode, BarcodeFilter, BarcodeRepository},
-    BarcodeRow, ChangelogRow, ChangelogTableName, EqualFilter, StorageConnection, SyncBufferRow,
+    BarcodeRow, ChangelogRow, ChangelogTableName, EqualFilter, Row, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::sync::translations::item::ItemTranslation;
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -50,10 +51,11 @@ impl SyncTranslation for BarcodeTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyBarcodeRow>(&sync_record.data)?;
+        let data = sync_record.deserialize::<LegacyBarcodeRow>()?;
 
         let LegacyBarcodeRow {
             id,
@@ -64,11 +66,14 @@ impl SyncTranslation for BarcodeTranslation {
             parent_id,
         } = data;
 
+        let fk_check = fk_checker.with_table(connection, "barcode", &id);
+        let check_fk = fk_checker.with_table_required(connection, "barcode", &id);
+
         let result = BarcodeRow {
             id,
             gtin,
-            item_id,
-            manufacturer_id: manufacturer_id,
+            item_id: check_fk(item_id, "item_id", FkField::Item)?,
+            manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
             pack_size,
             parent_id,
         };
@@ -80,7 +85,12 @@ impl SyncTranslation for BarcodeTranslation {
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Barcode(barcode_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
         let Barcode {
             barcode_row:
                 BarcodeRow {
@@ -93,9 +103,7 @@ impl SyncTranslation for BarcodeTranslation {
                 },
             manufacturer_name_row,
         } = BarcodeRepository::new(connection)
-            .query_by_filter(
-                BarcodeFilter::new().id(EqualFilter::equal_to(changelog.record_id.to_string())),
-            )?
+            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(barcode_row.id)))?
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Barcode not found"))?;
 
@@ -124,7 +132,8 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+        mock::MockDataInserts, test_db::setup_all, ChangelogCondition, ChangelogRepository,
+        CursorAndLimit, FilterBuilder, RowOrDelete,
     };
     use serde_json::json;
 
@@ -134,12 +143,16 @@ mod tests {
         let translator = BarcodeTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_barcode_translation", MockDataInserts::none()).await;
+            setup_all("test_barcode_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -153,23 +166,27 @@ mod tests {
 
         merge_all_name_links(&connection, &mock_data).unwrap();
 
-        let repo = ChangelogRepository::new(&connection);
-        let changelogs = repo
-            .changelogs(
-                0,
-                1_000_000,
-                Some(ChangelogFilter::new().table_name(ChangelogTableName::Barcode.equal_to())),
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Barcode),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
             )
             .unwrap();
 
         let translator = BarcodeTranslation;
-        for changelog in changelogs {
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
             assert!(translator.should_translate_to_sync_record(
                 &changelog,
                 &ToSyncRecordTranslationType::PushToLegacyCentral
             ));
             let translated = translator
-                .try_translate_to_upsert_sync_record(&connection, &changelog)
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
                 .unwrap();
 
             assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
