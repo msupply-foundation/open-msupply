@@ -60,6 +60,8 @@ export const DocumentsTab = ({
     id: document.id,
     name: document.fileName,
     recordId: document.recordId,
+    createdDatetime: document.createdDatetime,
+    totalBytes: document.totalBytes,
     canDelete: deletableDocumentIds
       ? deletableDocumentIds.has(document.id)
       : true,
@@ -99,7 +101,7 @@ export const DocumentsTab = ({
         <FileList
           assetId={recordId}
           tableName={tableName}
-          heading={t('heading.download-documents')}
+          heading={t('heading.uploaded-documents')}
           files={files}
           removeFile={removeFile}
           noFilesMessage={t('messages.no-documents-uploaded')}

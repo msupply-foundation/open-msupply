@@ -58,6 +58,8 @@ fragment Asset on AssetNode {
       fileName
       id
       mimeType
+      createdDatetime
+      totalBytes
     }
   }
   locations {
@@ -146,6 +148,8 @@ fragment ColdchainAssetLog on AssetLogNode {
       fileName
       id
       mimeType
+      createdDatetime
+      totalBytes
     }
   }
 }

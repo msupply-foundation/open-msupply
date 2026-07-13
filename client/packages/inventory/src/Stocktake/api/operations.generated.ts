@@ -234,6 +234,7 @@ export type StocktakeFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      totalBytes: number;
       status: Types.SyncFileReferenceNodeStatus;
       error?: string | null;
     }>;
@@ -406,6 +407,7 @@ export type StocktakeQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            totalBytes: number;
             status: Types.SyncFileReferenceNodeStatus;
             error?: string | null;
           }>;
@@ -550,6 +552,7 @@ export type StocktakeByNumberQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            totalBytes: number;
             status: Types.SyncFileReferenceNodeStatus;
             error?: string | null;
           }>;
