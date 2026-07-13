@@ -41,6 +41,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
         <ModalLabel label={t('label.item', { count: 1 })} />
         <Grid flex={1} padding={1}>
           <StockItemSearchInput
+            key={item?.id}
             autoFocus={!item}
             openOnFocus={!item}
             disabled={disabled}
