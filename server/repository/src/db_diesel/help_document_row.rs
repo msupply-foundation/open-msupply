@@ -1,7 +1,6 @@
-use super::StorageConnection;
+use super::{ChangelogRepository, StorageConnection};
 use crate::{
-    repository_error::RepositoryError, ChangelogRepository, ChangelogSyncType, RowActionType,
-    SourceSiteId, Upsert,
+    repository_error::RepositoryError, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -37,7 +36,7 @@ impl<'a> HelpDocumentRowRepository<'a> {
         HelpDocumentRowRepository { connection }
     }
 
-    pub fn _upsert_one(&self, row: &HelpDocumentRow) -> Result<(), RepositoryError> {
+    pub(crate) fn _upsert_one(&self, row: &HelpDocumentRow) -> Result<(), RepositoryError> {
         diesel::insert_into(help_document::table)
             .values(row)
             .on_conflict(help_document::id)
@@ -67,10 +66,9 @@ impl<'a> HelpDocumentRowRepository<'a> {
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<HelpDocumentRow>, RepositoryError> {
-        let result = help_document::table
+        Ok(help_document::table
             .filter(help_document::id.eq_any(ids))
-            .load(self.connection.lock().connection())?;
-        Ok(result)
+            .load(self.connection.lock().connection())?)
     }
 
     pub fn mark_deleted(&self, id: &str) -> Result<(), RepositoryError> {

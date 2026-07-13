@@ -1,0 +1,76 @@
+{
+  // Copy this file to loadtest.config.jsonc (untracked) and edit. Any value here can be
+  // overridden at run time with an env var, e.g. -e VU_MULTIPLIER=2.
+  // // line and /* */ block comments are supported; JSON still forbids trailing commas.
+
+  // Target server. GraphQL endpoint is {baseUrl}/graphql. (env: BASE_URL)
+  "baseUrl": "http://localhost:8000",
+
+  // Login pool. Each VU logs in as a random user from this list (see reloginEveryOps). (env: USERS as JSON)
+  "users": [
+    { "username": "admin", "password": "pass" }
+    // { "username": "user2", "password": "pass2" },
+  ],
+
+  // Store to drive. null = the user's default store. (env: STORE_ID)
+  "storeId": null,
+
+  // Scale the worker mix (8/6/5/4/4/2/1). null = 1×. (env: VU_MULTIPLIER)
+  "vuMultiplier": null,
+
+  // Ramp to steady state, then hold there. (env: RAMP_DURATION / HOLD_DURATION)
+  "rampDuration": "5m",
+  "holdDuration": "15m",
+
+  // Sync driver (manualSync — the changelog lock path). (env: SYNC_ENABLED / SYNC_INTERVAL)
+  "syncEnabled": true,
+  "syncInterval": null, // seconds between manualSync triggers; null = 60
+  "syncFetchPatientId": null, // optional arg to manualSync (env: SYNC_FETCH_PATIENT_ID)
+
+  // Open-model syncInfo storm (stress mode, off by default). Fires the changelog_deduped COUNT at a
+  // FIXED arrival rate with NO backpressure — unlike dashboardPoller (closed-loop), this lets ~10s
+  // counts pile up and exhaust the DB connection pool, reproducing the subscription fan-out that
+  // collapsed the real test. Ramps 0 -> syncStormRate (syncInfo req/sec) over rampDuration, then holds
+  // — the same rampup as every other worker class. Raise syncStormRate until throughput tips over.
+  // (env: SYNC_STORM_ENABLED / SYNC_STORM_RATE / SYNC_STORM_MAX_VUS)
+  "syncStormEnabled": false,
+  "syncStormRate": 40,
+  "syncStormMaxVus": 300,
+
+  // Persistent graphql-ws subscribers (the path real clients prefer; off by default). Each VU holds
+  // one websocket subscribed to syncInfoUpdated → count = concurrent connected clients. Exercises the
+  // shared/debounced subscription worker, broadcast fan-out and the subscription trigger channel.
+  // holdSeconds = hold time before reconnect (reproduces reconnect churn). (env: SYNC_SUBSCRIBER_ENABLED
+  // / SYNC_SUBSCRIBER_COUNT / SYNC_SUBSCRIBER_HOLD_SECONDS)
+  "syncSubscriberEnabled": false,
+  "syncSubscriberCount": 50,
+  "syncSubscriberHoldSeconds": 300,
+
+  // Think-time jitter between read actions (browse/poll), ms. (env: THINK_MIN_MS / THINK_MAX_MS)
+  "thinkMinMs": 1000,
+  "thinkMaxMs": 5000,
+
+  // Longer think-time for workflow steps (human filling/editing a form), ms. Keeps the read/write
+  // mix realistic (~95/5). (env: WORKFLOW_THINK_MIN_MS / WORKFLOW_THINK_MAX_MS)
+  "workflowThinkMinMs": 5000,
+  "workflowThinkMaxMs": 15000,
+
+  // How many ids to discover per pool in setup(). (env: POOL_SIZE)
+  "poolSize": 200,
+
+  // Each VU logs in as a random user, then re-authenticates as another random user after about this
+  // many ops (jittered ±50%). null = 200, matching the ~1 login / 175 queries (authToken 0.57%) the
+  // real 20-user capture saw. Set 0 to log in once per VU and never re-login. (env: RELOGIN_EVERY_OPS)
+  "reloginEveryOps": null,
+
+  // Where summaries are written. (env: OUTPUT_DIR)
+  "outputDir": "./output",
+
+  // Apply strict per-op latency thresholds that gate pass/fail. null = false. (env: STRICT_THRESHOLDS)
+  "strictThresholds": null,
+
+  // Marker stamped on the reference/comment/note of every created record, so the data this script
+  // makes can be found and cleaned up later (e.g. delete requisitions/shipments/stocktakes whose
+  // theirReference/comment == this). (env: TAG)
+  "tag": "k6-loadtest"
+}

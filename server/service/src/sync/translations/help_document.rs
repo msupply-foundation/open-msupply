@@ -32,9 +32,7 @@ impl SyncTranslation for HelpDocumentTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_value::<
             HelpDocumentRow,
-        >(
-            sync_record.data.0.clone()
-        )?))
+        >(sync_record.data.0.clone())?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {

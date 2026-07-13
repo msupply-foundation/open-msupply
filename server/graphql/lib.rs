@@ -136,12 +136,12 @@ impl CentralServerMutationNode {
         CampaignMutations
     }
 
-    async fn custom_field(&self) -> CustomFieldMutations {
-        CustomFieldMutations
-    }
-
     async fn help_document(&self) -> HelpDocumentMutations {
         HelpDocumentMutations
+    }
+
+    async fn custom_field(&self) -> CustomFieldMutations {
+        CustomFieldMutations
     }
 
     async fn reports(&self) -> CentralReportMutations {

@@ -177,12 +177,11 @@ pub enum Resource {
     QueryInboundShipmentExternal,
     AuthoriseInboundShipmentExternal,
     VerifyInboundShipmentExternal,
-
-    MutateSites,
-
     // Help documents
     QueryHelpDocuments,
     MutateHelpDocuments,
+
+    MutateSites,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -836,17 +835,6 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(Resource::QueryCampaigns, PermissionDSL::HasStoreAccess);
 
-    // Custom field config is a central-server admin screen — restricted to
-    // server admins (the client nav is gated the same way, see ManageNav).
-    map.insert(
-        Resource::QueryCustomFieldConfig,
-        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
-    );
-    map.insert(
-        Resource::MutateCustomFieldConfig,
-        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
-    );
-
     // Help documents (uploaded centrally, listed on the Help page on every site).
     // Read is open to any authenticated user; write is ServerAdmin only.
     map.insert(
@@ -855,6 +843,17 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutateHelpDocuments,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+
+    // Custom field config is a central-server admin screen — restricted to
+    // server admins (the client nav is gated the same way, see ManageNav).
+    map.insert(
+        Resource::QueryCustomFieldConfig,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+    map.insert(
+        Resource::MutateCustomFieldConfig,
         PermissionDSL::HasPermission(PermissionType::ServerAdmin),
     );
 
