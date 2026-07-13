@@ -5,6 +5,7 @@ fragment SyncSettings on SyncSettingsNode {
   username
   centralServerSiteId
   syncSiteId
+  batchSize
 }
 
 query syncSettings {

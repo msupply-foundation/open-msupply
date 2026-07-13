@@ -48,7 +48,7 @@ const SyncSettingsForm = ({
     value: number | string
   ) => setSyncSettings({ ...settings, [property]: value });
 
-  const { url, username, password, intervalSeconds } = settings;
+  const { url, username, password, intervalSeconds, batchSize } = settings;
   const onChangeSyncInterval = (seconds: number | undefined): void => {
     if (seconds === undefined) return;
 
@@ -56,6 +56,14 @@ const SyncSettingsForm = ({
       'intervalSeconds',
       NumUtils.constrain(Math.round(seconds), 1, Number.MAX_SAFE_INTEGER)
     );
+  };
+
+  const onChangeBatchSize = (value: number | undefined): void => {
+    setSyncSettings({
+      ...settings,
+      batchSize:
+        value === undefined || value <= 0 ? null : Math.round(value),
+    });
   };
 
   return (
@@ -106,6 +114,17 @@ const SyncSettingsForm = ({
             value={intervalSeconds}
             onChange={onChangeSyncInterval}
             disabled={isDisabled}
+          />
+        }
+      />
+      <Setting
+        title={t('label.sync-batch-size')}
+        component={
+          <NumericTextInput
+            value={batchSize ?? undefined}
+            onChange={onChangeBatchSize}
+            disabled={isDisabled}
+            min={1}
           />
         }
       />

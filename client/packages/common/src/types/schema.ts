@@ -10891,6 +10891,12 @@ export type SyncRequestDescriptionNode =
   | TableNameDescription;
 
 export type SyncSettingsInput = {
+  /**
+   * Optional override for the sync batch size. When set, the value is
+   * applied uniformly to remote_pull, remote_push and central_pull,
+   * letting low-bandwidth sites pick a smaller batch.
+   */
+  batchSize?: InputMaybe<Scalars['Int']['input']>;
   /** Sync interval */
   intervalSeconds: Scalars['Int']['input'];
   /** Plain text password */
@@ -10901,6 +10907,12 @@ export type SyncSettingsInput = {
 
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
+  /**
+   * Configured sync batch size. Returns Some only when all three underlying
+   * values are equal and differ from the defaults, so the UI can pre-fill
+   * its single input. Non-uniform legacy values are reported as None.
+   */
+  batchSize?: Maybe<Scalars['Int']['output']>;
   centralServerSiteId: Scalars['Int']['output'];
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
