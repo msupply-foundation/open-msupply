@@ -370,7 +370,7 @@ export const InboundLineEditCards = ({
         accessorFn: row =>
           row.shippedNumberOfPacks == null
             ? null
-            : Math.abs(row.shippedNumberOfPacks - row.numberOfPacks),
+            : row.numberOfPacks - row.shippedNumberOfPacks,
       },
       ...(plugins.inboundShipmentLine?.editViewField ?? []).map(
         ({ header, Component }, index): ColumnDef<DraftInboundLine> => ({
