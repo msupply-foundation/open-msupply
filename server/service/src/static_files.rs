@@ -253,8 +253,9 @@ fn delete_temporary_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Resu
         if !metadata.is_file() {
             continue;
         }
-        // creation time is not available on some file systems...
-        let file_time = metadata.modified()?;
+        let Ok(file_time) = metadata.modified() else {
+            continue;
+        };
         if SystemTime::now()
             .duration_since(file_time)
             .unwrap_or(Duration::from_secs(0))

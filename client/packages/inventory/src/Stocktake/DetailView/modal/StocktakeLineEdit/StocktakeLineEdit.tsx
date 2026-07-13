@@ -208,9 +208,6 @@ export const StocktakeLineEdit = ({
         onClose();
         break;
     }
-
-    // Returning true here triggers the slide animation
-    return true;
   };
 
   const onOk = async () => {

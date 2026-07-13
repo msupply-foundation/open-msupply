@@ -211,6 +211,7 @@ export const SupplierReturnEditModal = ({
       >
         {returnId && (
           <ItemSelector
+            key={itemId}
             disabled={!!itemId}
             itemId={itemId}
             onChangeItemId={setItemId}

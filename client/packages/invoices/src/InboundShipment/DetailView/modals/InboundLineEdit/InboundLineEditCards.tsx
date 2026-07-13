@@ -246,8 +246,8 @@ export const InboundLineEditCards = ({
                 helperText={
                   isPlaceholder
                     ? t('error.field-must-be-specified', {
-                      field: t('label.packs-received'),
-                    })
+                        field: t('label.packs-received'),
+                      })
                     : undefined
                 }
               />
@@ -404,7 +404,7 @@ export const InboundLineEditCards = ({
         accessorFn: row =>
           row.shippedNumberOfPacks == null
             ? null
-            : row.shippedNumberOfPacks - row.numberOfPacks,
+            : row.numberOfPacks - row.shippedNumberOfPacks,
       },
       ...(plugins.inboundShipmentLine?.editViewField ?? []).map(
         ({ header, Component }, index): ColumnDef<DraftInboundLine> => ({
@@ -882,9 +882,9 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-      stockLineDetails: <StockIcon />,
-      moreInfo: <InfoIcon />,
-    };
+        stockLineDetails: <StockIcon />,
+        moreInfo: <InfoIcon />,
+      };
 
   return (
     <>
