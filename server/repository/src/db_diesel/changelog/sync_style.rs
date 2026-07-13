@@ -155,10 +155,12 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: false,
             },
-            StockRelocation => SyncStyle {
+            // OMS-native (no legacy 4D counterpart since the v2.21 stock-movement rewrite):
+            // store-owned documents synced over v6, like RnrForm.
+            StockRelocation | StockRelocationLine => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],
-                transport: V5,
+                transport: V6,
                 multi_device_site: false,
             },
             Stocktake => SyncStyle {

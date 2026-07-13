@@ -96,6 +96,7 @@ pub mod standard_reports;
 pub mod static_files;
 pub mod stock_line;
 pub mod stock_relocation;
+pub mod stock_relocation_line;
 pub mod stocktake;
 pub mod stocktake_line;
 pub mod store;

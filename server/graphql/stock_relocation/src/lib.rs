@@ -1,43 +1,22 @@
-use async_graphql::{Context, ErrorExtensions, Object, Result};
-use graphql_core::{
-    pagination::PaginationInput, standard_graphql_error::StandardGraphqlError, ContextExt,
-};
+use async_graphql::{Context, Object, Result};
+use graphql_core::pagination::PaginationInput;
 
 pub mod mutations;
 pub mod queries;
 pub mod types;
 
-/// Feature flag gating the stock movement (stock relocation) feature.
-/// Matches the `stock_movement` key under `features` in the server config
-/// (see also the client `useFeatureFlags` hook).
-const STOCK_MOVEMENT_FEATURE: &str = "stock_movement";
-
-/// Returns an error unless the stock movement feature is enabled in server settings.
-fn check_stock_movement_enabled(ctx: &Context<'_>) -> Result<()> {
-    let enabled = ctx
-        .get_settings()
-        .features
-        .as_ref()
-        .and_then(|features| features.get(STOCK_MOVEMENT_FEATURE).copied())
-        .unwrap_or(false);
-
-    if enabled {
-        Ok(())
-    } else {
-        Err(StandardGraphqlError::Forbidden(
-            "Stock movement feature is not enabled".to_string(),
-        )
-        .extend())
-    }
-}
+use graphql_types::types::DraftStockRelocationLineNode;
 
 use mutations::{
-    delete_stock_relocation, insert_stock_relocation, update_stock_relocation, DeleteInput,
-    DeleteStockRelocationResponse, InsertInput, InsertResponse, UpdateInput, UpdateResponse,
+    batch_stock_relocation_line, delete_stock_relocation, delete_stock_relocations,
+    insert_stock_relocation, update_stock_relocation, BatchLineInput, BatchLineResponse,
+    DeleteInput, DeleteResponses, DeleteStockRelocationResponse, InsertInput, InsertResponse,
+    UpdateInput, UpdateResponse,
 };
 use queries::{
-    get_stock_relocation, get_stock_relocations, StockRelocationFilterInput,
-    StockRelocationResponse, StockRelocationSortInput, StockRelocationsResponse,
+    get_stock_relocation, get_stock_relocation_draft_lines, get_stock_relocations,
+    StockRelocationDraftLinesInput, StockRelocationFilterInput, StockRelocationResponse,
+    StockRelocationSortInput, StockRelocationsResponse,
 };
 
 #[derive(Default, Clone)]
@@ -51,7 +30,6 @@ impl StockRelocationQueries {
         store_id: String,
         id: String,
     ) -> Result<StockRelocationResponse> {
-        check_stock_movement_enabled(ctx)?;
         get_stock_relocation(ctx, &store_id, &id)
     }
 
@@ -63,8 +41,16 @@ impl StockRelocationQueries {
         filter: Option<StockRelocationFilterInput>,
         sort: Option<Vec<StockRelocationSortInput>>,
     ) -> Result<StockRelocationsResponse> {
-        check_stock_movement_enabled(ctx)?;
         get_stock_relocations(ctx, &store_id, page, filter, sort)
+    }
+
+    pub async fn stock_relocation_draft_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: StockRelocationDraftLinesInput,
+    ) -> Result<Vec<DraftStockRelocationLineNode>> {
+        get_stock_relocation_draft_lines(ctx, &store_id, input)
     }
 }
 
@@ -79,7 +65,6 @@ impl StockRelocationMutations {
         store_id: String,
         input: InsertInput,
     ) -> Result<InsertResponse> {
-        check_stock_movement_enabled(ctx)?;
         insert_stock_relocation(ctx, &store_id, input)
     }
 
@@ -89,7 +74,6 @@ impl StockRelocationMutations {
         store_id: String,
         input: UpdateInput,
     ) -> Result<UpdateResponse> {
-        check_stock_movement_enabled(ctx)?;
         update_stock_relocation(ctx, &store_id, input)
     }
 
@@ -99,7 +83,24 @@ impl StockRelocationMutations {
         store_id: String,
         input: DeleteInput,
     ) -> Result<DeleteStockRelocationResponse> {
-        check_stock_movement_enabled(ctx)?;
         delete_stock_relocation(ctx, &store_id, input)
+    }
+
+    pub async fn delete_stock_relocations(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        ids: Vec<String>,
+    ) -> Result<DeleteResponses> {
+        delete_stock_relocations(ctx, &store_id, ids)
+    }
+
+    pub async fn batch_stock_relocation_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: BatchLineInput,
+    ) -> Result<BatchLineResponse> {
+        batch_stock_relocation_line(ctx, &store_id, input)
     }
 }

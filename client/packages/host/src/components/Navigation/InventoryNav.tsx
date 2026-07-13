@@ -7,7 +7,6 @@ import {
   RouteBuilder,
   AppNavLink,
   AppNavSection,
-  useFeatureFlags,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -18,7 +17,6 @@ export const InventoryNav: FC = () => {
     RouteBuilder.create(AppRoute.Inventory).addWildCard().build()
   );
   const t = useTranslation();
-  const { stockMovement } = useFeatureFlags();
   const pluginLinks = usePluginNavLinksForCategory(AppRoute.Inventory);
 
   return (
@@ -50,14 +48,12 @@ export const InventoryNav: FC = () => {
               .build()}
             text={t('stocktakes')}
           />
-          {stockMovement && (
-            <AppNavLink
-              to={RouteBuilder.create(AppRoute.Inventory)
-                .addPart(AppRoute.StockMovement)
-                .build()}
-              text={t('stock-movement')}
-            />
-          )}
+          <AppNavLink
+            to={RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.StockMovement)
+              .build()}
+            text={t('stock-movement')}
+          />
           {pluginLinks}
         </List>
       </Collapse>

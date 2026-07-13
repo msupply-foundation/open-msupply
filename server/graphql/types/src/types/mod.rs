@@ -153,6 +153,8 @@ pub use self::vvm_status::*;
 mod campaign;
 pub mod draft_stock_out_line;
 pub use self::draft_stock_out_line::*;
+pub mod draft_stock_relocation_line;
+pub use self::draft_stock_relocation_line::*;
 
 pub mod vvm_status_log;
 pub use self::vvm_status_log::*;

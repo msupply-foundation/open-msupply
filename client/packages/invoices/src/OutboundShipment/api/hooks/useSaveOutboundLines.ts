@@ -28,10 +28,12 @@ export const useSaveOutboundLines = (outboundId: string) => {
             campaignId: line.campaign?.id,
             programId: line.program?.id,
             vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : null,
-            // Default received to issued when unset, so only an explicit
-            // edit creates a variance.
-            receivedNumberOfPacks:
-              line.receivedNumberOfPacks ?? line.numberOfPacks,
+            // Persist received as-is (null until the destination reports it), so
+            // it isn't faked as the issued quantity before receipt.
+            receivedNumberOfPacks: line.receivedNumberOfPacks,
+            // Carry the discrepancy reason on the same save path so it isn't
+            // cleared by this batch update.
+            reasonOptionId: line.reasonOption?.id ?? null,
           })),
           placeholderQuantity,
         },

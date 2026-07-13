@@ -6,34 +6,108 @@ type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StockMovementRowFragment = {
   __typename: 'StockRelocationNode';
   id: string;
-  createdDatetime: string;
-  finalisedDatetime?: string | null;
+  stockMovementNumber: number;
   status: Types.StockRelocationNodeStatus;
+  comment?: string | null;
+  createdDatetime: string;
+  confirmedDatetime?: string | null;
+  finalisedDatetime?: string | null;
+  lineCount: number;
+  user?: { __typename: 'UserNode'; username: string } | null;
+};
+
+export type StockMovementLineFragment = {
+  __typename: 'StockRelocationLineNode';
+  id: string;
+  stockRelocationId: string;
+  stockLineId: string;
   numberOfPacks: number;
-  fromPackSize: number;
-  availableNumberOfPacks: number;
-  toPackSize?: number | null;
-  onHold: boolean;
-  restrictedLocationTypeId?: string | null;
-  itemCode: string;
-  itemName: string;
-  batch?: string | null;
-  expiryDate?: string | null;
-  fromStockLineId: string;
-  toStockLineId?: string | null;
-  fromLocation?: {
+  stockLine?: {
+    __typename: 'StockLineNode';
+    id: string;
+    itemId: string;
+    batch?: string | null;
+    expiryDate?: string | null;
+    packSize: number;
+    availableNumberOfPacks: number;
+    totalNumberOfPacks: number;
+    item: {
+      __typename: 'ItemNode';
+      id: string;
+      code: string;
+      name: string;
+      unitName?: string | null;
+    };
+  } | null;
+  sourceLocation?: {
     __typename: 'LocationNode';
     id: string;
     code: string;
     name: string;
-    onHold: boolean;
   } | null;
-  toLocation?: {
+  destinationLocation?: {
     __typename: 'LocationNode';
     id: string;
     code: string;
     name: string;
   } | null;
+};
+
+export type StockMovementFragment = {
+  __typename: 'StockRelocationNode';
+  id: string;
+  stockMovementNumber: number;
+  status: Types.StockRelocationNodeStatus;
+  comment?: string | null;
+  createdDatetime: string;
+  confirmedDatetime?: string | null;
+  finalisedDatetime?: string | null;
+  lineCount: number;
+  user?: {
+    __typename: 'UserNode';
+    username: string;
+    email?: string | null;
+  } | null;
+  lines: {
+    __typename: 'StockRelocationLineConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'StockRelocationLineNode';
+      id: string;
+      stockRelocationId: string;
+      stockLineId: string;
+      numberOfPacks: number;
+      stockLine?: {
+        __typename: 'StockLineNode';
+        id: string;
+        itemId: string;
+        batch?: string | null;
+        expiryDate?: string | null;
+        packSize: number;
+        availableNumberOfPacks: number;
+        totalNumberOfPacks: number;
+        item: {
+          __typename: 'ItemNode';
+          id: string;
+          code: string;
+          name: string;
+          unitName?: string | null;
+        };
+      } | null;
+      sourceLocation?: {
+        __typename: 'LocationNode';
+        id: string;
+        code: string;
+        name: string;
+      } | null;
+      destinationLocation?: {
+        __typename: 'LocationNode';
+        id: string;
+        code: string;
+        name: string;
+      } | null;
+    }>;
+  };
 };
 
 export type StockRelocationsQueryVariables = Types.Exact<{
@@ -53,36 +127,83 @@ export type StockRelocationsQuery = {
     nodes: Array<{
       __typename: 'StockRelocationNode';
       id: string;
-      createdDatetime: string;
-      finalisedDatetime?: string | null;
+      stockMovementNumber: number;
       status: Types.StockRelocationNodeStatus;
-      numberOfPacks: number;
-      fromPackSize: number;
-      availableNumberOfPacks: number;
-      toPackSize?: number | null;
-      onHold: boolean;
-      restrictedLocationTypeId?: string | null;
-      itemCode: string;
-      itemName: string;
-      batch?: string | null;
-      expiryDate?: string | null;
-      fromStockLineId: string;
-      toStockLineId?: string | null;
-      fromLocation?: {
-        __typename: 'LocationNode';
-        id: string;
-        code: string;
-        name: string;
-        onHold: boolean;
-      } | null;
-      toLocation?: {
-        __typename: 'LocationNode';
-        id: string;
-        code: string;
-        name: string;
-      } | null;
+      comment?: string | null;
+      createdDatetime: string;
+      confirmedDatetime?: string | null;
+      finalisedDatetime?: string | null;
+      lineCount: number;
+      user?: { __typename: 'UserNode'; username: string } | null;
     }>;
   };
+};
+
+export type StockRelocationQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  id: Types.Scalars['String']['input'];
+}>;
+
+export type StockRelocationQuery = {
+  __typename: 'Queries';
+  stockRelocation:
+    | { __typename: 'RecordNotFound'; description: string }
+    | {
+        __typename: 'StockRelocationNode';
+        id: string;
+        stockMovementNumber: number;
+        status: Types.StockRelocationNodeStatus;
+        comment?: string | null;
+        createdDatetime: string;
+        confirmedDatetime?: string | null;
+        finalisedDatetime?: string | null;
+        lineCount: number;
+        user?: {
+          __typename: 'UserNode';
+          username: string;
+          email?: string | null;
+        } | null;
+        lines: {
+          __typename: 'StockRelocationLineConnector';
+          totalCount: number;
+          nodes: Array<{
+            __typename: 'StockRelocationLineNode';
+            id: string;
+            stockRelocationId: string;
+            stockLineId: string;
+            numberOfPacks: number;
+            stockLine?: {
+              __typename: 'StockLineNode';
+              id: string;
+              itemId: string;
+              batch?: string | null;
+              expiryDate?: string | null;
+              packSize: number;
+              availableNumberOfPacks: number;
+              totalNumberOfPacks: number;
+              item: {
+                __typename: 'ItemNode';
+                id: string;
+                code: string;
+                name: string;
+                unitName?: string | null;
+              };
+            } | null;
+            sourceLocation?: {
+              __typename: 'LocationNode';
+              id: string;
+              code: string;
+              name: string;
+            } | null;
+            destinationLocation?: {
+              __typename: 'LocationNode';
+              id: string;
+              code: string;
+              name: string;
+            } | null;
+          }>;
+        };
+      };
 };
 
 export type InsertStockRelocationMutationVariables = Types.Exact<{
@@ -92,27 +213,7 @@ export type InsertStockRelocationMutationVariables = Types.Exact<{
 
 export type InsertStockRelocationMutation = {
   __typename: 'Mutations';
-  insertStockRelocation:
-    | {
-        __typename: 'InsertStockRelocationError';
-        error:
-          | {
-              __typename: 'LocationOnHold';
-              locationId: string;
-              description: string;
-            }
-          | {
-              __typename: 'NotEnoughStock';
-              stockLineId: string;
-              description: string;
-            }
-          | {
-              __typename: 'StockLineOnHold';
-              stockLineId: string;
-              description: string;
-            };
-      }
-    | { __typename: 'InsertStockRelocationNode'; ids: Array<string> };
+  insertStockRelocation: { __typename: 'StockRelocationNode'; id: string };
 };
 
 export type UpdateStockRelocationMutationVariables = Types.Exact<{
@@ -124,13 +225,75 @@ export type UpdateStockRelocationMutation = {
   __typename: 'Mutations';
   updateStockRelocation:
     | {
+        __typename: 'StockRelocationNode';
+        id: string;
+        stockMovementNumber: number;
+        status: Types.StockRelocationNodeStatus;
+        comment?: string | null;
+        createdDatetime: string;
+        confirmedDatetime?: string | null;
+        finalisedDatetime?: string | null;
+        lineCount: number;
+        user?: {
+          __typename: 'UserNode';
+          username: string;
+          email?: string | null;
+        } | null;
+        lines: {
+          __typename: 'StockRelocationLineConnector';
+          totalCount: number;
+          nodes: Array<{
+            __typename: 'StockRelocationLineNode';
+            id: string;
+            stockRelocationId: string;
+            stockLineId: string;
+            numberOfPacks: number;
+            stockLine?: {
+              __typename: 'StockLineNode';
+              id: string;
+              itemId: string;
+              batch?: string | null;
+              expiryDate?: string | null;
+              packSize: number;
+              availableNumberOfPacks: number;
+              totalNumberOfPacks: number;
+              item: {
+                __typename: 'ItemNode';
+                id: string;
+                code: string;
+                name: string;
+                unitName?: string | null;
+              };
+            } | null;
+            sourceLocation?: {
+              __typename: 'LocationNode';
+              id: string;
+              code: string;
+              name: string;
+            } | null;
+            destinationLocation?: {
+              __typename: 'LocationNode';
+              id: string;
+              code: string;
+              name: string;
+            } | null;
+          }>;
+        };
+      }
+    | {
         __typename: 'UpdateStockRelocationError';
         error:
-          | { __typename: 'LocationOnHold'; description: string }
-          | { __typename: 'NotEnoughStock'; description: string }
-          | { __typename: 'StockLineOnHold'; description: string };
-      }
-    | { __typename: 'UpdateStockRelocationNode'; id: string };
+          | {
+              __typename: 'LocationOnHold';
+              locationId: string;
+              description: string;
+            }
+          | {
+              __typename: 'NotEnoughStock';
+              stockLineId: string;
+              description: string;
+            };
+      };
 };
 
 export type DeleteStockRelocationMutationVariables = Types.Exact<{
@@ -143,37 +306,271 @@ export type DeleteStockRelocationMutation = {
   deleteStockRelocation: { __typename: 'DeleteResponse'; id: string };
 };
 
+export type DeleteStockRelocationsMutationVariables = Types.Exact<{
+  ids:
+    | Array<Types.Scalars['String']['input']>
+    | Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DeleteStockRelocationsMutation = {
+  __typename: 'Mutations';
+  deleteStockRelocations: {
+    __typename: 'DeleteStockRelocationsNode';
+    ids: Array<string>;
+  };
+};
+
+export type StockMovementDraftLineFragment = {
+  __typename: 'DraftStockRelocationLineNode';
+  id: string;
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  restrictedLocationTypeId?: string | null;
+  stockLineId: string;
+  batch?: string | null;
+  expiryDate?: string | null;
+  packSize: number;
+  availableNumberOfPacks: number;
+  totalNumberOfPacks: number;
+  onHold: boolean;
+  numberOfPacks?: number | null;
+  sourceLocation?: {
+    __typename: 'LocationNode';
+    id: string;
+    code: string;
+    name: string;
+    onHold: boolean;
+  } | null;
+  destinationLocation?: {
+    __typename: 'LocationNode';
+    id: string;
+    name: string;
+    onHold: boolean;
+    code: string;
+    volume: number;
+    volumeUsed: number;
+    locationType?: {
+      __typename: 'LocationTypeNode';
+      id: string;
+      name: string;
+      maxTemperature: number;
+      minTemperature: number;
+    } | null;
+    stock: { __typename: 'StockLineConnector'; totalCount: number };
+  } | null;
+};
+
+export type StockRelocationDraftLinesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.StockRelocationDraftLinesInput;
+}>;
+
+export type StockRelocationDraftLinesQuery = {
+  __typename: 'Queries';
+  stockRelocationDraftLines: Array<{
+    __typename: 'DraftStockRelocationLineNode';
+    id: string;
+    itemId: string;
+    itemCode: string;
+    itemName: string;
+    restrictedLocationTypeId?: string | null;
+    stockLineId: string;
+    batch?: string | null;
+    expiryDate?: string | null;
+    packSize: number;
+    availableNumberOfPacks: number;
+    totalNumberOfPacks: number;
+    onHold: boolean;
+    numberOfPacks?: number | null;
+    sourceLocation?: {
+      __typename: 'LocationNode';
+      id: string;
+      code: string;
+      name: string;
+      onHold: boolean;
+    } | null;
+    destinationLocation?: {
+      __typename: 'LocationNode';
+      id: string;
+      name: string;
+      onHold: boolean;
+      code: string;
+      volume: number;
+      volumeUsed: number;
+      locationType?: {
+        __typename: 'LocationTypeNode';
+        id: string;
+        name: string;
+        maxTemperature: number;
+        minTemperature: number;
+      } | null;
+      stock: { __typename: 'StockLineConnector'; totalCount: number };
+    } | null;
+  }>;
+};
+
+export type BatchStockRelocationLineMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchStockRelocationLineInput;
+}>;
+
+export type BatchStockRelocationLineMutation = {
+  __typename: 'Mutations';
+  batchStockRelocationLine: {
+    __typename: 'BatchStockRelocationLineResponse';
+    upsert?: Array<{
+      __typename: 'UpsertStockRelocationLineResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'StockRelocationLineNode' }
+        | {
+            __typename: 'UpsertStockRelocationLineError';
+            error:
+              | {
+                  __typename: 'LocationOnHold';
+                  locationId: string;
+                  description: string;
+                }
+              | {
+                  __typename: 'NotEnoughStock';
+                  stockLineId: string;
+                  description: string;
+                };
+          };
+    }> | null;
+    delete?: Array<{
+      __typename: 'DeleteStockRelocationLineResponseWithId';
+      id: string;
+      response: { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+  };
+};
+
 export const StockMovementRowFragmentDoc = gql`
   fragment StockMovementRow on StockRelocationNode {
     __typename
     id
-    createdDatetime
-    finalisedDatetime
+    stockMovementNumber
     status
+    comment
+    createdDatetime
+    confirmedDatetime
+    finalisedDatetime
+    lineCount
+    user {
+      __typename
+      username
+    }
+  }
+`;
+export const StockMovementLineFragmentDoc = gql`
+  fragment StockMovementLine on StockRelocationLineNode {
+    __typename
+    id
+    stockRelocationId
+    stockLineId
     numberOfPacks
-    fromPackSize
-    availableNumberOfPacks
-    toPackSize
-    onHold
-    restrictedLocationTypeId
+    stockLine {
+      __typename
+      id
+      itemId
+      batch
+      expiryDate
+      packSize
+      availableNumberOfPacks
+      totalNumberOfPacks
+      item {
+        __typename
+        id
+        code
+        name
+        unitName
+      }
+    }
+    sourceLocation {
+      __typename
+      id
+      code
+      name
+    }
+    destinationLocation {
+      __typename
+      id
+      code
+      name
+    }
+  }
+`;
+export const StockMovementFragmentDoc = gql`
+  fragment StockMovement on StockRelocationNode {
+    __typename
+    id
+    stockMovementNumber
+    status
+    comment
+    createdDatetime
+    confirmedDatetime
+    user {
+      __typename
+      username
+      email
+    }
+    finalisedDatetime
+    lineCount
+    lines {
+      __typename
+      totalCount
+      nodes {
+        ...StockMovementLine
+      }
+    }
+  }
+  ${StockMovementLineFragmentDoc}
+`;
+export const StockMovementDraftLineFragmentDoc = gql`
+  fragment StockMovementDraftLine on DraftStockRelocationLineNode {
+    __typename
+    id
+    itemId
     itemCode
     itemName
+    restrictedLocationTypeId
+    stockLineId
     batch
     expiryDate
-    fromStockLineId
-    toStockLineId
-    fromLocation {
+    packSize
+    availableNumberOfPacks
+    totalNumberOfPacks
+    onHold
+    numberOfPacks
+    sourceLocation {
       __typename
       id
       code
       name
       onHold
     }
-    toLocation {
+    destinationLocation {
       __typename
       id
-      code
       name
+      onHold
+      code
+      volume
+      volumeUsed
+      locationType {
+        id
+        name
+        maxTemperature
+        minTemperature
+      }
+      stock {
+        ... on StockLineConnector {
+          totalCount
+        }
+      }
     }
   }
 `;
@@ -202,6 +599,21 @@ export const StockRelocationsDocument = gql`
   }
   ${StockMovementRowFragmentDoc}
 `;
+export const StockRelocationDocument = gql`
+  query stockRelocation($storeId: String!, $id: String!) {
+    stockRelocation(storeId: $storeId, id: $id) {
+      __typename
+      ... on StockRelocationNode {
+        ...StockMovement
+      }
+      ... on RecordNotFound {
+        __typename
+        description
+      }
+    }
+  }
+  ${StockMovementFragmentDoc}
+`;
 export const InsertStockRelocationDocument = gql`
   mutation insertStockRelocation(
     $input: InsertStockRelocationInput!
@@ -209,25 +621,8 @@ export const InsertStockRelocationDocument = gql`
   ) {
     insertStockRelocation(input: $input, storeId: $storeId) {
       __typename
-      ... on InsertStockRelocationNode {
-        __typename
-        ids
-      }
-      ... on InsertStockRelocationError {
-        __typename
-        error {
-          __typename
-          description
-          ... on StockLineOnHold {
-            stockLineId
-          }
-          ... on LocationOnHold {
-            locationId
-          }
-          ... on NotEnoughStock {
-            stockLineId
-          }
-        }
+      ... on StockRelocationNode {
+        id
       }
     }
   }
@@ -239,19 +634,25 @@ export const UpdateStockRelocationDocument = gql`
   ) {
     updateStockRelocation(input: $input, storeId: $storeId) {
       __typename
-      ... on UpdateStockRelocationNode {
-        __typename
-        id
+      ... on StockRelocationNode {
+        ...StockMovement
       }
       ... on UpdateStockRelocationError {
         __typename
         error {
           __typename
           description
+          ... on NotEnoughStock {
+            stockLineId
+          }
+          ... on LocationOnHold {
+            locationId
+          }
         }
       }
     }
   }
+  ${StockMovementFragmentDoc}
 `;
 export const DeleteStockRelocationDocument = gql`
   mutation deleteStockRelocation(
@@ -263,6 +664,69 @@ export const DeleteStockRelocationDocument = gql`
       ... on DeleteResponse {
         __typename
         id
+      }
+    }
+  }
+`;
+export const DeleteStockRelocationsDocument = gql`
+  mutation deleteStockRelocations($ids: [String!]!, $storeId: String!) {
+    deleteStockRelocations(ids: $ids, storeId: $storeId) {
+      __typename
+      ... on DeleteStockRelocationsNode {
+        __typename
+        ids
+      }
+    }
+  }
+`;
+export const StockRelocationDraftLinesDocument = gql`
+  query stockRelocationDraftLines(
+    $storeId: String!
+    $input: StockRelocationDraftLinesInput!
+  ) {
+    stockRelocationDraftLines(storeId: $storeId, input: $input) {
+      __typename
+      ...StockMovementDraftLine
+    }
+  }
+  ${StockMovementDraftLineFragmentDoc}
+`;
+export const BatchStockRelocationLineDocument = gql`
+  mutation batchStockRelocationLine(
+    $storeId: String!
+    $input: BatchStockRelocationLineInput!
+  ) {
+    batchStockRelocationLine(storeId: $storeId, input: $input) {
+      __typename
+      upsert {
+        __typename
+        id
+        response {
+          __typename
+          ... on UpsertStockRelocationLineError {
+            __typename
+            error {
+              __typename
+              description
+              ... on NotEnoughStock {
+                stockLineId
+              }
+              ... on LocationOnHold {
+                locationId
+              }
+            }
+          }
+        }
+      }
+      delete {
+        __typename
+        id
+        response {
+          __typename
+          ... on DeleteResponse {
+            id
+          }
+        }
       }
     }
   }
@@ -301,6 +765,24 @@ export function getSdk(
             signal,
           }),
         'stockRelocations',
+        'query',
+        variables
+      );
+    },
+    stockRelocation(
+      variables: StockRelocationQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<StockRelocationQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StockRelocationQuery>({
+            document: StockRelocationDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'stockRelocation',
         'query',
         variables
       );
@@ -355,6 +837,60 @@ export function getSdk(
             signal,
           }),
         'deleteStockRelocation',
+        'mutation',
+        variables
+      );
+    },
+    deleteStockRelocations(
+      variables: DeleteStockRelocationsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteStockRelocationsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteStockRelocationsMutation>({
+            document: DeleteStockRelocationsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteStockRelocations',
+        'mutation',
+        variables
+      );
+    },
+    stockRelocationDraftLines(
+      variables: StockRelocationDraftLinesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<StockRelocationDraftLinesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StockRelocationDraftLinesQuery>({
+            document: StockRelocationDraftLinesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'stockRelocationDraftLines',
+        'query',
+        variables
+      );
+    },
+    batchStockRelocationLine(
+      variables: BatchStockRelocationLineMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<BatchStockRelocationLineMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<BatchStockRelocationLineMutation>({
+            document: BatchStockRelocationLineDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'batchStockRelocationLine',
         'mutation',
         variables
       );

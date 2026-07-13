@@ -231,6 +231,33 @@ impl StockRelocationRow {
     }
 }
 
+impl StockRelocationLineRow {
+    pub(crate) fn generate_changelog(
+        row_or_id: RowOrId<StockRelocationLineRow>,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &StockRelocationLineRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
+        let stock_relocation_changelog = StockRelocationRow::generate_changelog(
+            RowOrId::Id(&row.stock_relocation_id),
+            con,
+            action,
+            source_site_id,
+        )?;
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::StockRelocationLine,
+            record_id: row.id.clone(),
+            ..stock_relocation_changelog
+        })
+    }
+}
+
 impl StocktakeRow {
     pub(crate) fn generate_changelog(
         row_or_id: RowOrId<StocktakeRow>,
