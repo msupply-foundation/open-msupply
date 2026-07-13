@@ -33,6 +33,7 @@ export const useLocationList = (
   return {
     query: { data, isLoading, isError, isFetching },
     nextLocation: next,
+    hasNext: next !== null,
   };
 };
 
@@ -75,9 +76,8 @@ const getNextLocation = (
   currentLocation?: LocationRowFragment | null
 ) => {
   const idx = data?.findIndex(l => l.id === currentLocation?.id);
-  if (idx == undefined) return null;
-  const next = data[(idx + 1) % data.length];
-
+  if (idx == undefined || idx === -1) return null;
+  const next = data[idx + 1];
   return next ?? null;
 };
 
