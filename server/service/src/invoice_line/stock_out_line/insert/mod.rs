@@ -42,6 +42,8 @@ pub struct InsertStockOutLine {
     pub item_variant_id: Option<NullableUpdate<String>>,
     pub donor_id: Option<NullableUpdate<String>>,
     pub manufacturer_id: Option<NullableUpdate<String>>,
+    pub received_number_of_packs: Option<f64>,
+    pub reason_option_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
