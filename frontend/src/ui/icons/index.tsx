@@ -375,6 +375,26 @@ export const MinimiseIcon = (props: IconProps) => (
   </Stroke>
 )
 
+// Table/rows view — the "switch to table" control (a framed grid of rows/cols).
+export const TableViewIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+    <line x1="3" y1="15" x2="21" y2="15" />
+    <line x1="12" y1="3" x2="12" y2="21" />
+  </Stroke>
+)
+
+// Card/grid view — the "switch to cards" control (2×2 rounded squares).
+export const CardViewIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <rect x="4" y="4" width="6" height="6" rx="1" />
+    <rect x="14" y="4" width="6" height="6" rx="1" />
+    <rect x="4" y="14" width="6" height="6" rx="1" />
+    <rect x="14" y="14" width="6" height="6" rx="1" />
+  </Stroke>
+)
+
 /*
  * The open-mSupply logo (MSupplyGuy). Keeps its own brand gradient (orange →
  * red) rather than `currentColor`, exactly like the original. viewBox and paths

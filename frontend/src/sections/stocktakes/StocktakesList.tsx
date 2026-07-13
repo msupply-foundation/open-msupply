@@ -79,6 +79,9 @@ const StocktakesList: Component = () => {
     tableId: 'stocktakes',
     defaultConfig: {
       compact: {
+        // On a narrow viewport, default to CARD view (ui-standards § tables auto-below-600)
+        // and hide the denser columns; the user can switch back to table via the toolbar.
+        viewMode: 'card',
         columnVisibility: { comment: false, createdDatetime: false, isLocked: false },
       },
     },
@@ -191,19 +194,24 @@ const StocktakesList: Component = () => {
       sortKey: 'stocktakeNumber',
       // Language-neutral '#' for the number column (universal symbol; no t() needed).
       header: '#',
-      ...getNumberCell(),
+      // getNumberCell merges extra meta — card:'primary' makes the number the card's title
+      // (top-left); right-aligned in table view.
+      ...getNumberCell({ card: 'primary' }),
     },
     {
       accessorKey: 'status',
       sortKey: 'status',
       header: t('stocktake.column.status'),
       cell: (info) => <StatusChip {...statusMeta(info.getValue<StocktakeRow['status']>())} />,
+      // Card view: the status chip is the top-right badge.
+      meta: { card: 'badge' },
     },
     {
       accessorKey: 'description',
       sortKey: 'description',
       header: t('stocktake.column.description'),
-      meta: { wrapLines: 2 },
+      // Card view: the description is the secondary line under the number title. Wraps to 2 lines.
+      meta: { wrapLines: 2, card: 'secondary' },
     },
     {
       accessorKey: 'comment',

@@ -136,10 +136,13 @@ export const TableShowcase = () => {
     setOffset(0);
   };
 
+  // meta.card assigns each column its region in card view (ui-standards § tables):
+  // name = primary title, batch = the secondary code line, category = the top-right badge;
+  // the rest fall to the grid (default). Table view is unaffected.
   const columns = (): Column<Batch, SortKey>[] => [
-    { accessorKey: 'name', sortKey: 'name', header: 'Item' },
-    { accessorKey: 'batch', sortKey: 'batch', header: 'Batch' },
-    { accessorKey: 'category', sortKey: 'category', header: 'Category' },
+    { accessorKey: 'name', sortKey: 'name', header: 'Item', meta: { card: 'primary' } },
+    { accessorKey: 'batch', sortKey: 'batch', header: 'Batch', meta: { card: 'secondary' } },
+    { accessorKey: 'category', sortKey: 'category', header: 'Category', meta: { card: 'badge' } },
     { accessorKey: 'supplier', sortKey: 'supplier', header: 'Supplier' },
     { accessorKey: 'location', sortKey: 'location', header: 'Location', meta: { wrapLines: 2 } },
     { accessorKey: 'expiry', sortKey: 'expiry', header: 'Expiry' },

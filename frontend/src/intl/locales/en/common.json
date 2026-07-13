@@ -80,6 +80,8 @@
   "table.toggle-full-screen": "Toggle full screen",
   "table.full-screen": "Full screen",
   "table.columns": "Columns",
+  "table.view-table": "Table view",
+  "table.view-cards": "Card view",
   "table.reset-visibility": "Reset visibility",
   "table.reset-order": "Reset order",
   "table.reset-size": "Reset size",

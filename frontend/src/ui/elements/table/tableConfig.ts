@@ -10,11 +10,18 @@ import type {
 // remapping), so a stored config feeds `state.*` directly and a `on*Change` writes
 // straight back. `visibility` is sparse "show" semantics: a column absent from the map
 // is visible; only `false` hides it (kdd/table-state — lean on TanStack's own model).
+// How the table renders: the classic `table`, or `card` (each row a card — see
+// ui-standards § tables / a column's meta.card region). Persisted + layered like the rest.
+export type ViewMode = 'table' | 'card';
+
 export type TableConfig = {
   columnOrder?: ColumnOrderState;
   columnSizing?: ColumnSizingState;
   columnPinning?: ColumnPinningState;
   columnVisibility?: VisibilityState;
+  // NOT a TanStack column-state (no on*Change) — a view-level choice the DataTable reads
+  // directly. Stored/resolved here so it's per-band and persists with the rest of config.
+  viewMode?: ViewMode;
 };
 
 // The keys of TableConfig — the four things `setConfig` can write, one per TanStack
@@ -53,6 +60,7 @@ export const resolveTableConfig = (
     columnSizing: pick('columnSizing'),
     columnPinning: pick('columnPinning'),
     columnVisibility: pick('columnVisibility'),
+    viewMode: pick('viewMode'),
   };
 };
 
