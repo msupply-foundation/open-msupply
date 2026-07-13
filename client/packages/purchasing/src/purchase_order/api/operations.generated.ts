@@ -143,6 +143,7 @@ export type PurchaseOrderFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      totalBytes: number;
       status: Types.SyncFileReferenceNodeStatus;
       error?: string | null;
     }>;
@@ -386,6 +387,7 @@ export type PurchaseOrderByIdQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            totalBytes: number;
             status: Types.SyncFileReferenceNodeStatus;
             error?: string | null;
           }>;

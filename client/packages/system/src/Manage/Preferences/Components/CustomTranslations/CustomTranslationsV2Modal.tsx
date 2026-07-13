@@ -22,7 +22,12 @@ import {
   UploadIcon,
   CopyIcon,
 } from '@common/icons';
-import { useIntl, useIntlUtils, useTranslation } from '@common/intl';
+import {
+  DESKTOP_TRANSLATIONS_NAMESPACE,
+  useIntl,
+  useIntlUtils,
+  useTranslation,
+} from '@common/intl';
 import { useDialog, useNotification, useToggle } from '@common/hooks';
 import {
   mapTranslationsToArray,
@@ -43,6 +48,7 @@ import {
   Translation,
 } from './helpers';
 import { TranslationsTable } from './TranslationsInputTable';
+import { useNamespaceTranslationOptions } from './useNamespaceTranslationOptions';
 import { useUpsertCustomTranslationsV2 } from '../../api';
 import { useInstalledPlugins } from '../../../Plugins/api';
 
@@ -143,16 +149,24 @@ export const CustomTranslationsV2Modal = ({
   const isLegacy = namespace === LEGACY_NAMESPACE;
   const legacyHasData = !!legacyV1 && Object.keys(legacyV1).length > 0;
 
+  const { options: addOptions, getDefaultForKey } =
+    useNamespaceTranslationOptions(namespace, nested);
+
   const viewFor = (
     ns: string,
     nestedSrc: CustomTranslationsV2,
     legacySrc: Record<string, string>
   ): Translation[] =>
-    ns === LEGACY_NAMESPACE
-      ? mapTranslationsToArray(legacySrc, t, { includeUnknownKeys: true })
-      : mapTranslationsToArray(nestedSrc[editingLanguage]?.[ns] ?? {}, t, {
-          includeUnknownKeys: true,
-        });
+    mapTranslationsToArray(
+      ns === LEGACY_NAMESPACE
+        ? legacySrc
+        : (nestedSrc[editingLanguage]?.[ns] ?? {}),
+      t,
+      {
+        includeUnknownKeys: true,
+        getDefault: key => getDefaultForKey(ns, key),
+      }
+    );
 
   const [translations, setTranslations] = useState<Translation[]>(
     viewFor(DEFAULT_CUSTOM_TRANSLATION_NAMESPACE, value, {})
@@ -195,13 +209,16 @@ export const CustomTranslationsV2Modal = ({
     return options;
   }, [installedPlugins, nested, legacyHasData, t]);
 
-  const handleNamespaceChange = (newNamespace: string) => {
+  const handleNamespaceChange = async (newNamespace: string) => {
     if (newNamespace === namespace) return;
     // Save the current edits before switching namespace
     const committed = commitCurrentView();
     if (isLegacy) setLegacyDirty(true);
     setNested(committed.nested);
     setLegacyV1(committed.legacyV1);
+    if (newNamespace === DESKTOP_TRANSLATIONS_NAMESPACE) {
+      await i18n.loadNamespaces(DESKTOP_TRANSLATIONS_NAMESPACE);
+    }
     setNamespace(newNamespace);
     setTranslations(
       viewFor(newNamespace, committed.nested, committed.legacyV1)
@@ -281,7 +298,10 @@ export const CustomTranslationsV2Modal = ({
           const importedArray = mapTranslationsToArray(
             parsed as Record<string, string>,
             t,
-            { includeUnknownKeys: true }
+            {
+              includeUnknownKeys: true,
+              getDefault: key => getDefaultForKey(namespace, key),
+            }
           );
           if (isLegacy) setLegacyDirty(true);
           setTranslations(prev =>
@@ -303,6 +323,9 @@ export const CustomTranslationsV2Modal = ({
     if (!legacyV1) return;
     const importedArray = mapTranslationsToArray(legacyV1, t, {
       includeUnknownKeys: true,
+      // Legacy v1 keys are always common keys, whatever namespace is selected
+      getDefault: key =>
+        getDefaultForKey(DEFAULT_CUSTOM_TRANSLATION_NAMESPACE, key),
     });
     setTranslations(prev =>
       mergeTranslations(prev, importedArray, 'keep-existing')
@@ -414,8 +437,8 @@ export const CustomTranslationsV2Modal = ({
             {isLegacy
               ? t('messages.custom-translations-legacy-banner')
               : t('messages.custom-translations-editing-language', {
-                  language: editingLanguageLabel,
-                })}
+                language: editingLanguageLabel,
+              })}
           </Alert>
           <Box display="flex" gap={1} alignItems="center">
             <Box display="flex" gap={1} alignItems="center">
@@ -462,6 +485,7 @@ export const CustomTranslationsV2Modal = ({
               translations={translations}
               setTranslations={setTranslations}
               showValidationErrors={showValidationErrors}
+              addOptions={addOptions}
             />
           </Box>
         </Box>

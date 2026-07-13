@@ -2,74 +2,32 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
-use repository::StockRelocationRow;
+use repository::{StockRelocation, StockRelocationRow};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::stock_relocation::insert::{
     InsertStockRelocation as ServiceInput, InsertStockRelocationError as ServiceError,
-    InsertStockRelocationLine as ServiceLine,
 };
 
-use super::{LocationOnHold, NotEnoughStock, StockLineOnHold};
-
-#[derive(InputObject)]
-pub struct InsertStockRelocationLineInput {
-    pub id: String,
-    pub from_stock_line_id: String,
-    pub from_number_of_packs: f64,
-    pub to_location_id: Option<String>,
-    pub to_pack_size: f64,
-}
+use crate::types::StockRelocationNode;
 
 #[derive(InputObject)]
 #[graphql(name = "InsertStockRelocationInput")]
 pub struct InsertInput {
-    pub lines: Vec<InsertStockRelocationLineInput>,
+    pub id: String,
+    pub comment: Option<String>,
 }
 
 impl InsertInput {
     pub fn to_domain(self) -> ServiceInput {
-        let InsertInput { lines } = self;
-        ServiceInput {
-            lines: lines
-                .into_iter()
-                .map(|line| ServiceLine {
-                    id: line.id,
-                    from_stock_line_id: line.from_stock_line_id,
-                    from_number_of_packs: line.from_number_of_packs,
-                    to_location_id: line.to_location_id,
-                    to_pack_size: line.to_pack_size,
-                })
-                .collect(),
-        }
+        let InsertInput { id, comment } = self;
+        ServiceInput { id, comment }
     }
-}
-
-#[derive(SimpleObject)]
-pub struct InsertStockRelocationNode {
-    /// Ids of the created stock_relocation records.
-    pub ids: Vec<String>,
-}
-
-#[derive(SimpleObject)]
-#[graphql(name = "InsertStockRelocationError")]
-pub struct InsertError {
-    pub error: InsertErrorInterface,
 }
 
 #[derive(Union)]
 #[graphql(name = "InsertStockRelocationResponse")]
 pub enum InsertResponse {
-    Response(InsertStockRelocationNode),
-    Error(InsertError),
-}
-
-#[derive(Interface)]
-#[graphql(name = "InsertStockRelocationErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
-pub enum InsertErrorInterface {
-    StockLineOnHold(StockLineOnHold),
-    LocationOnHold(LocationOnHold),
-    NotEnoughStock(NotEnoughStock),
+    Response(StockRelocationNode),
 }
 
 pub fn insert_stock_relocation(
@@ -95,315 +53,22 @@ pub fn insert_stock_relocation(
     )
 }
 
-fn map_response(from: Result<Vec<StockRelocationRow>, ServiceError>) -> Result<InsertResponse> {
+fn map_response(from: Result<StockRelocationRow, ServiceError>) -> Result<InsertResponse> {
     match from {
-        Ok(rows) => Ok(InsertResponse::Response(InsertStockRelocationNode {
-            ids: rows.into_iter().map(|row| row.id).collect(),
-        })),
-        Err(error) => Ok(InsertResponse::Error(InsertError {
-            error: map_error(error)?,
-        })),
-    }
-}
-
-fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
-    let formatted_error = format!("{error:#?}");
-
-    let graphql_error = match error {
-        ServiceError::StockLineOnHold(stock_line_id) => {
-            return Ok(InsertErrorInterface::StockLineOnHold(StockLineOnHold {
-                stock_line_id,
-            }))
-        }
-        ServiceError::LocationOnHold(location_id) => {
-            return Ok(InsertErrorInterface::LocationOnHold(LocationOnHold {
-                location_id,
-            }))
-        }
-        ServiceError::NotEnoughStock(stock_line_id) => {
-            return Ok(InsertErrorInterface::NotEnoughStock(NotEnoughStock {
-                stock_line_id,
-            }))
-        }
-
-        ServiceError::StockLineDoesNotExist
-        | ServiceError::NotThisStoreStockLine
-        | ServiceError::ToLocationDoesNotExist
-        | ServiceError::NotThisStoreLocation
-        | ServiceError::IncorrectLocationType
-        | ServiceError::InvalidNumberOfPacks
-        | ServiceError::InvalidPackSize => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
-    };
-
-    Err(graphql_error.extend())
-}
-
-#[cfg(test)]
-mod test {
-    use async_graphql::EmptyMutation;
-    use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
-    };
-    use repository::{mock::MockDataInserts, StockRelocationRow, StorageConnectionManager};
-    use serde_json::json;
-    use service::{
-        service_provider::{ServiceContext, ServiceProvider},
-        stock_relocation::{
-            insert::{
-                InsertStockRelocation as ServiceInput, InsertStockRelocationError as ServiceError,
-                InsertStockRelocationLine as ServiceLine,
+        Ok(stock_relocation_row) => Ok(InsertResponse::Response(StockRelocationNode::from_domain(
+            StockRelocation {
+                stock_relocation_row,
             },
-            StockRelocationServiceTrait,
-        },
-    };
-
-    use crate::StockRelocationMutations;
-
-    type InsertMethod =
-        dyn Fn(ServiceInput) -> Result<Vec<StockRelocationRow>, ServiceError> + Sync + Send;
-
-    pub struct TestService(pub Box<InsertMethod>);
-
-    impl StockRelocationServiceTrait for TestService {
-        fn insert_stock_relocation(
-            &self,
-            _: &ServiceContext,
-            _: &str,
-            input: ServiceInput,
-        ) -> Result<Vec<StockRelocationRow>, ServiceError> {
-            self.0(input)
-        }
+        ))),
+        Err(error) => Err(map_error(error)),
     }
+}
 
-    fn service_provider(
-        test_service: TestService,
-        connection_manager: &StorageConnectionManager,
-    ) -> ServiceProvider {
-        let mut service_provider = ServiceProvider::new(connection_manager.clone());
-        service_provider.stock_relocation_service = Box::new(test_service);
-        service_provider
+fn map_error(error: ServiceError) -> async_graphql::Error {
+    let formatted_error = format!("{error:#?}");
+    match error {
+        ServiceError::StockRelocationAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
     }
-
-    fn empty_variables() -> serde_json::Value {
-        json!({
-          "input": {
-            "lines": []
-          },
-          "storeId": "n/a"
-        })
-    }
-
-    #[actix_rt::test]
-    async fn test_graphql_insert_stock_relocation_errors() {
-        let (_, _, connection_manager, settings) = setup_graphql_test(
-            EmptyMutation,
-            StockRelocationMutations,
-            "test_graphql_insert_stock_relocation_errors",
-            MockDataInserts::none(),
-        )
-        .await;
-
-        let mutation = r#"
-        mutation ($input: InsertStockRelocationInput!, $storeId: String!) {
-            insertStockRelocation(storeId: $storeId, input: $input) {
-              ... on InsertStockRelocationError {
-                error {
-                  __typename
-                  ... on StockLineOnHold { stockLineId }
-                  ... on LocationOnHold { locationId }
-                  ... on NotEnoughStock { stockLineId }
-                }
-              }
-            }
-          }
-        "#;
-
-        let test_service = TestService(Box::new(|_| {
-            Err(ServiceError::StockLineOnHold("stock_line_a".to_string()))
-        }));
-        let expected = json!({
-            "insertStockRelocation": {
-              "error": {
-                "__typename": "StockLineOnHold",
-                "stockLineId": "stock_line_a"
-              }
-            }
-        });
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(empty_variables()),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        let test_service = TestService(Box::new(|_| {
-            Err(ServiceError::LocationOnHold("location_a".to_string()))
-        }));
-        let expected = json!({
-            "insertStockRelocation": {
-              "error": {
-                "__typename": "LocationOnHold",
-                "locationId": "location_a"
-              }
-            }
-        });
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(empty_variables()),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        let test_service = TestService(Box::new(|_| {
-            Err(ServiceError::NotEnoughStock("stock_line_a".to_string()))
-        }));
-        let expected = json!({
-            "insertStockRelocation": {
-              "error": {
-                "__typename": "NotEnoughStock",
-                "stockLineId": "stock_line_a"
-              }
-            }
-        });
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(empty_variables()),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        let test_service = TestService(Box::new(|_| Err(ServiceError::StockLineDoesNotExist)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        let test_service = TestService(Box::new(|_| {
-            Err(ServiceError::DatabaseError(
-                repository::RepositoryError::NotFound,
-            ))
-        }));
-        let expected_message = "Internal error";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-    }
-
-    #[actix_rt::test]
-    async fn test_graphql_insert_stock_relocation_success() {
-        let (_, _, connection_manager, settings) = setup_graphql_test(
-            EmptyMutation,
-            StockRelocationMutations,
-            "test_graphql_insert_stock_relocation_success",
-            MockDataInserts::none(),
-        )
-        .await;
-
-        let mutation = r#"
-        mutation ($storeId: String!, $input: InsertStockRelocationInput!) {
-            insertStockRelocation(storeId: $storeId, input: $input) {
-                ... on InsertStockRelocationNode {
-                    ids
-                }
-            }
-          }
-        "#;
-
-        let test_service = TestService(Box::new(|input| {
-            assert_eq!(
-                input,
-                ServiceInput {
-                    lines: vec![ServiceLine {
-                        id: "relocation_1".to_string(),
-                        from_stock_line_id: "stock_line_a".to_string(),
-                        from_number_of_packs: 5.0,
-                        to_location_id: Some("to_location".to_string()),
-                        to_pack_size: 2.0,
-                    }],
-                }
-            );
-            Ok(vec![StockRelocationRow {
-                id: "relocation_1".to_string(),
-                ..Default::default()
-            }])
-        }));
-
-        let variables = json!({
-          "storeId": "n/a",
-          "input": {
-            "lines": [{
-              "id": "relocation_1",
-              "fromStockLineId": "stock_line_a",
-              "fromNumberOfPacks": 5,
-              "toLocationId": "to_location",
-              "toPackSize": 2
-            }]
-          }
-        });
-
-        let expected = json!({
-            "insertStockRelocation": {
-              "ids": ["relocation_1"]
-            }
-        });
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(variables),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-    }
-
-    #[actix_rt::test]
-    async fn test_graphql_stock_relocation_feature_disabled() {
-        let (_, _, connection_manager, mut settings) = setup_graphql_test(
-            EmptyMutation,
-            StockRelocationMutations,
-            "test_graphql_stock_relocation_feature_disabled",
-            MockDataInserts::none(),
-        )
-        .await;
-
-        // Disable the stock movement feature: the resolver should refuse the
-        // request regardless of the underlying service.
-        settings.settings.features =
-            Some(std::collections::HashMap::from([(
-                "stock_movement".to_string(),
-                false,
-            )]));
-
-        let mutation = r#"
-        mutation ($input: InsertStockRelocationInput!, $storeId: String!) {
-            insertStockRelocation(storeId: $storeId, input: $input) {
-              ... on InsertStockRelocationNode { ids }
-            }
-          }
-        "#;
-
-        let test_service = TestService(Box::new(|_| Ok(vec![])));
-        let expected_message = "Forbidden";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-    }
+    .extend()
 }

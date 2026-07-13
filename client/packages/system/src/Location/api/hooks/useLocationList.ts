@@ -33,6 +33,7 @@ export const useLocationList = (
   return {
     query: { data, isLoading, isError, isFetching },
     nextLocation: next,
+    hasNext: next !== null,
   };
 };
 
@@ -74,11 +75,9 @@ const getNextLocation = (
   data: LocationRowFragment[],
   currentLocation?: LocationRowFragment | null
 ) => {
-  const idx = data?.findIndex(l => l.id === currentLocation?.id);
-  if (idx == undefined) return null;
-  const next = data[(idx + 1) % data.length];
-
-  return next ?? null;
+  const idx = data.findIndex(l => l.id === currentLocation?.id);
+  if (idx === -1) return null;
+  return data[idx + 1] ?? null;
 };
 
 const toSortInput = (sortBy?: SortBy<LocationRowFragment>) =>

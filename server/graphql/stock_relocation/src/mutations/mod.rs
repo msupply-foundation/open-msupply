@@ -2,24 +2,19 @@ use async_graphql::*;
 
 pub mod delete;
 pub mod insert;
+pub mod line;
 pub mod update;
 
-pub use delete::{delete_stock_relocation, DeleteInput, DeleteStockRelocationResponse};
+pub use delete::{
+    delete_stock_relocation, delete_stock_relocations, DeleteInput, DeleteResponses,
+    DeleteStockRelocationResponse,
+};
 pub use insert::{insert_stock_relocation, InsertInput, InsertResponse};
+pub use line::{
+    batch_stock_relocation_line, BatchLineInput, BatchLineResponse, DeleteLineResponse,
+    UpsertLineInput, UpsertLineResponse,
+};
 pub use update::{update_stock_relocation, UpdateInput, UpdateResponse};
-
-pub struct StockLineOnHold {
-    pub stock_line_id: String,
-}
-#[Object]
-impl StockLineOnHold {
-    pub async fn description(&self) -> &str {
-        "Stock line is on hold and cannot be moved."
-    }
-    pub async fn stock_line_id(&self) -> &str {
-        &self.stock_line_id
-    }
-}
 
 pub struct LocationOnHold {
     pub location_id: String,

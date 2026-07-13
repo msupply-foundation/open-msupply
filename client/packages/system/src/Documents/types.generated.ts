@@ -9,6 +9,7 @@ export type SyncFileReferenceFragment = {
   fileName: string;
   recordId: string;
   createdDatetime: string;
+  totalBytes: number;
   status: Types.SyncFileReferenceNodeStatus;
   error?: string | null;
 };
@@ -27,6 +28,7 @@ export const SyncFileReferenceFragmentDoc = gql`
     fileName
     recordId
     createdDatetime
+    totalBytes
     status
     error
   }

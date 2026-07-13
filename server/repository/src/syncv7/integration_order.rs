@@ -108,6 +108,7 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::AssetLog,
     ChangelogTableName::InvoiceLine,
     ChangelogTableName::LocationMovement,
+    ChangelogTableName::StockRelocationLine,
     ChangelogTableName::Stocktake,
     ChangelogTableName::TemperatureBreach,
     ChangelogTableName::StocktakeLine,

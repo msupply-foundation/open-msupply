@@ -155,10 +155,10 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: false,
             },
-            StockRelocation => SyncStyle {
+            StockRelocation | StockRelocationLine => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],
-                transport: V5,
+                transport: V7_ONLY,
                 multi_device_site: false,
             },
             Stocktake => SyncStyle {

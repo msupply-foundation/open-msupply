@@ -3,16 +3,34 @@ import {
   AppBarButtonsPortal,
   Grid,
   ButtonWithIcon,
-  ModalMode,
   PlusCircleIcon,
-  useToggle,
   useTranslation,
+  useNavigate,
+  RouteBuilder,
+  useNotification,
 } from '@openmsupply-client/common';
-import { StockMovementModal } from './StockMovementModal';
+import { AppRoute } from '@openmsupply-client/config';
+import { useInsertStockMovement } from '../api';
 
 export const AppBarButtons = () => {
   const t = useTranslation();
-  const modalController = useToggle();
+  const navigate = useNavigate();
+  const { error } = useNotification();
+  const { insert, isSaving } = useInsertStockMovement();
+
+  const onCreate = async () => {
+    try {
+      const id = await insert(undefined);
+      navigate(
+        RouteBuilder.create(AppRoute.Inventory)
+          .addPart(AppRoute.StockMovement)
+          .addPart(id)
+          .build()
+      );
+    } catch (e) {
+      error((e as Error).message)();
+    }
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -20,15 +38,9 @@ export const AppBarButtons = () => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('label.new-stock-movement')}
-          onClick={modalController.toggleOn}
+          disabled={isSaving}
+          onClick={onCreate}
         />
-        {modalController.isOn && (
-          <StockMovementModal
-            open={modalController.isOn}
-            mode={ModalMode.Create}
-            onClose={modalController.toggleOff}
-          />
-        )}
       </Grid>
     </AppBarButtonsPortal>
   );

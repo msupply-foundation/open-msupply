@@ -66,6 +66,7 @@ export const stockLinesToCsv = (
     t('label.num-packs'),
     t('label.available-in-packs'),
     t('label.pack-cost-price'),
+    t('label.campaign-only'),
     t('label.supplier'),
   ];
 
@@ -81,6 +82,7 @@ export const stockLinesToCsv = (
     node.totalNumberOfPacks,
     node.availableNumberOfPacks,
     node.costPricePerPack,
+    node.campaign?.name,
     node.supplierName,
   ]);
   return Formatter.csv({ fields, data });

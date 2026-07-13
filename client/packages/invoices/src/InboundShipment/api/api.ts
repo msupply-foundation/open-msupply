@@ -144,6 +144,7 @@ export const inboundParsers = {
       volumePerPack: line.volumePerPack,
       shippedPackSize: line.shippedPackSize,
       purchaseOrderLineId: line.purchaseOrderLine?.id,
+      reasonOptionId: line.reasonOption?.id ?? null,
     };
   },
   toInsertLineFromInternalOrder: (line: {

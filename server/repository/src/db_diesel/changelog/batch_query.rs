@@ -36,6 +36,7 @@ pub enum Row {
     Sensor(SensorRow),
     StockLine(StockLineRow),
     StockRelocation(StockRelocationRow),
+    StockRelocationLine(StockRelocationLineRow),
     Stocktake(StocktakeRow),
     StocktakeLine(StocktakeLineRow),
     TemperatureBreach(TemperatureBreachRow),
@@ -364,6 +365,11 @@ fn fetch_rows_for_table(
             ChangelogTableName::StockRelocation => {
                 for r in StockRelocationRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::StockRelocation(r));
+                }
+            }
+            ChangelogTableName::StockRelocationLine => {
+                for r in StockRelocationLineRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::StockRelocationLine(r));
                 }
             }
             ChangelogTableName::Stocktake => {
