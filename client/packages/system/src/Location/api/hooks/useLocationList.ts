@@ -75,10 +75,9 @@ const getNextLocation = (
   data: LocationRowFragment[],
   currentLocation?: LocationRowFragment | null
 ) => {
-  const idx = data?.findIndex(l => l.id === currentLocation?.id);
-  if (idx == undefined || idx === -1) return null;
-  const next = data[idx + 1];
-  return next ?? null;
+  const idx = data.findIndex(l => l.id === currentLocation?.id);
+  if (idx === -1) return null;
+  return data[idx + 1] ?? null;
 };
 
 const toSortInput = (sortBy?: SortBy<LocationRowFragment>) =>
