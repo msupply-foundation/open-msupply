@@ -90,14 +90,46 @@ ALL_PERMISSIONS = [
 ]
 
 
+# The "District Store" master list, joined to GRY — puts injected items in
+# the store's visible catalogue.
+GRY_MASTER_LIST_ID = '87027C44835B48E6989376F42A58F7E3'
+
+
 def injected_rows(next_cursor):
-    """Rows a v7 pull doesn't deliver: login wiring for Admin on GRY."""
+    """Rows a v7 pull doesn't deliver: login wiring for Admin on GRY, plus
+    synthetic central-owned nouns the suites need (a default service item —
+    the service-charges UI requires an item of type Service, preferring code
+    'service')."""
     rows = [
         ('user_store_join', 'e2e_usj_admin_gry', {
             'id': 'e2e_usj_admin_gry',
             'user_id': ADMIN_USER_ID,
             'store_id': GRY_STORE_ID,
             'is_default': True,
+        }),
+        ('item', 'e2e_service_item', {
+            'id': 'e2e_service_item',
+            'code': 'service',
+            'name': 'Service charge',
+            'type': 'Service',
+            'is_active': True,
+            'is_vaccine': False,
+            'default_pack_size': 1.0,
+            'vaccine_doses': 0,
+            'ven_category': 'NotAssigned',
+            'volume_per_pack': 0.0,
+            'unit_id': None,
+            'strength': None,
+            'universal_code': None,
+            'restricted_location_type_id': None,
+            # Only replayed toward legacy sync, which the e2e datafile never does.
+            'legacy_record': '{}',
+        }),
+        ('master_list_line', 'e2e_mll_service', {
+            'id': 'e2e_mll_service',
+            'item_id': 'e2e_service_item',
+            'master_list_id': GRY_MASTER_LIST_ID,
+            'price_per_unit': 0.0,
         }),
     ]
     # user_permission.store_id is NOT NULL — even ServerAdmin is store-scoped here.
@@ -111,12 +143,15 @@ def injected_rows(next_cursor):
         })
         for perm in ALL_PERMISSIONS
     ]
+    # Store-scoped tables (user_store_join, user_permission) must carry the
+    # store id on the buffer row; central-data tables (item,
+    # master_list_line) must NOT — the v7 validator rejects the mismatched
+    # sync style either way.
+    CENTRAL_TABLES = {'item', 'master_list_line'}
     return [
-        # v7 validation requires a store_id on the buffer row itself, so
-        # stamp them all with GRY.
         buffer_row(next_cursor + i, record_id, INJECT_STAMP, table, data,
                    source_site_id=6,
-                   store_id=GRY_STORE_ID)
+                   store_id=None if table in CENTRAL_TABLES else GRY_STORE_ID)
         for i, (table, record_id, data) in enumerate(rows)
     ]
 

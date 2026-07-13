@@ -122,41 +122,6 @@ setup('Seed stock via API', async ({ request }) => {
     'no visible items in the store — the seed datafile is missing item/master-list data'
   ).toBeGreaterThan(0);
 
-  // One outbound shipment so list-driven distribution tests (search by
-  // customer name, row-dependent assertions) have a row to work with.
-  const invoices = await gql(
-    `query($storeId: String!) {
-       invoices(storeId: $storeId, page: { first: 1 },
-                filter: { type: { equalTo: OUTBOUND_SHIPMENT } }) {
-         ... on InvoiceConnector { totalCount }
-       }
-     }`,
-    { storeId },
-    token
-  );
-  if (invoices.invoices.totalCount === 0) {
-    const customers = await gql(
-      `query($storeId: String!) {
-         names(storeId: $storeId, page: { first: 1 },
-               filter: { isCustomer: true, isVisible: true }) {
-           ... on NameConnector { nodes { id } }
-         }
-       }`,
-      { storeId },
-      token
-    );
-    const customerId = customers.names.nodes[0]?.id;
-    expect(customerId, 'no customer visible to the store').toBeTruthy();
-    const shipment = await gql(
-      `mutation($storeId: String!, $input: InsertOutboundShipmentInput!) {
-         insertOutboundShipment(storeId: $storeId, input: $input) { __typename }
-       }`,
-      { storeId, input: { id: crypto.randomUUID(), otherPartyId: customerId } },
-      token
-    );
-    expect(shipment.insertOutboundShipment.__typename).toBe('InvoiceNode');
-  }
-
   const amoxIds = new Set(amox.items.nodes.map((n: { id: string }) => n.id));
   for (const item of nodes) {
     // Multi-batch items are needed by the sort/batch-picker tests; give the
@@ -185,5 +150,113 @@ setup('Seed stock via API', async ({ request }) => {
       );
       expect(result.insertStockLine.__typename).toBe('StockLineNode');
     }
+  }
+
+  // Distribution arrange — all verbs, created through the API:
+  //  - >21 shipments so the pagination tests have a page 2
+  //  - one shipment carrying a reference (reference-filter test)
+  //  - the newest one Shipped with a line (Shipped-status tests need it on
+  //    the first page, which is sorted newest-first)
+  const TARGET_SHIPMENTS = 22;
+  const invoices = await gql(
+    `query($storeId: String!) {
+       invoices(storeId: $storeId, page: { first: 1 },
+                filter: { type: { equalTo: OUTBOUND_SHIPMENT } }) {
+         ... on InvoiceConnector { totalCount }
+       }
+     }`,
+    { storeId },
+    token
+  );
+  if (invoices.invoices.totalCount < TARGET_SHIPMENTS) {
+    const customers = await gql(
+      `query($storeId: String!) {
+         names(storeId: $storeId, page: { first: 1 },
+               filter: { isCustomer: true, isVisible: true }) {
+           ... on NameConnector { nodes { id } }
+         }
+       }`,
+      { storeId },
+      token
+    );
+    const customerId = customers.names.nodes[0]?.id;
+    expect(customerId, 'no customer visible to the store').toBeTruthy();
+
+    const insertShipment = async (): Promise<string> => {
+      const result = await gql(
+        `mutation($storeId: String!, $input: InsertOutboundShipmentInput!) {
+           insertOutboundShipment(storeId: $storeId, input: $input) {
+             __typename
+             ... on InvoiceNode { id }
+           }
+         }`,
+        {
+          storeId,
+          input: { id: crypto.randomUUID(), otherPartyId: customerId },
+        },
+        token
+      );
+      expect(result.insertOutboundShipment.__typename).toBe('InvoiceNode');
+      return result.insertOutboundShipment.id;
+    };
+    const updateShipment = async (input: Record<string, unknown>) => {
+      const result = await gql(
+        `mutation($storeId: String!, $input: UpdateOutboundShipmentInput!) {
+           updateOutboundShipment(storeId: $storeId, input: $input) {
+             __typename
+           }
+         }`,
+        { storeId, input },
+        token
+      );
+      expect(result.updateOutboundShipment.__typename).toBe('InvoiceNode');
+    };
+
+    const toCreate = TARGET_SHIPMENTS - invoices.invoices.totalCount;
+    let refShipmentId: string | undefined;
+    for (let i = 0; i < toCreate; i++) refShipmentId = await insertShipment();
+
+    // A reference on the last plain shipment, for the reference filter.
+    if (refShipmentId) {
+      await updateShipment({
+        id: refShipmentId,
+        theirReference: 'e2e-reference',
+      });
+    }
+
+    // Newest shipment: one line of seeded stock, then straight to Shipped.
+    const stock = await gql(
+      `query($storeId: String!) {
+         stockLines(storeId: $storeId, page: { first: 1 },
+                    filter: { hasPacksInStore: true }) {
+           ... on StockLineConnector { nodes { id } }
+         }
+       }`,
+      { storeId },
+      token
+    );
+    const stockLineId = stock.stockLines.nodes[0]?.id;
+    expect(stockLineId, 'no stock line to ship').toBeTruthy();
+
+    const shippedId = await insertShipment();
+    const line = await gql(
+      `mutation($storeId: String!, $input: InsertOutboundShipmentLineInput!) {
+         insertOutboundShipmentLine(storeId: $storeId, input: $input) {
+           __typename
+         }
+       }`,
+      {
+        storeId,
+        input: {
+          id: crypto.randomUUID(),
+          invoiceId: shippedId,
+          stockLineId,
+          numberOfPacks: 1,
+        },
+      },
+      token
+    );
+    expect(line.insertOutboundShipmentLine.__typename).toBe('InvoiceLineNode');
+    await updateShipment({ id: shippedId, status: 'SHIPPED' });
   }
 });
