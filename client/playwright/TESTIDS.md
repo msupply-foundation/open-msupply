@@ -77,12 +77,22 @@ From common components used by every list view:
 
 | test id | element |
 | --- | --- |
+| `table-row` | every table body row (renderer-agnostic replacement for `tbody tr`) |
+| `pagination-next` / `-previous` / `-page-<n>` | pagination controls |
+| `rows-per-page-select` | rows-per-page selector in the pagination footer |
 | `filters-menu` | the "Filters" dropdown that reveals filter inputs |
+| `filter-option-<urlParameter>` | an entry in the Filters dropdown (group entries use the kebab-cased group name) |
 | `filter-input-<urlParameter>` | a revealed filter input — parameter verbatim (`filter-input-otherPartyName`, `filter-input-invoiceNumber`, `filter-input-status`, `filter-input-theirReference`) |
+| `filter-option-<VALUE>` | an option inside a multi-select enum filter — raw enum value (`filter-option-NEW`) |
+| `<splitButtonId>-option-<VALUE>` | an option in a split button's dropdown menu (`status-change-button-option-SHIPPED`) |
 | `export-csv-main` / `-dropdown` | Export CSV split button |
 | `delete-lines-button` | bulk Delete action in the selection footer (list views and detail line tables) |
 | `nothing-here-create-button` | "Create a new one" button inside the empty state |
+| `item-search-input` | the item-search input in line add/edit modals |
+| `customer-search-input` | the customer input inside `customer-search-modal` |
 | `colour-picker-button` | colour-selector trigger (list rows and detail side panel) |
+| `colour-swatch-<name>` | a swatch inside the colour-picker popover (`colour-swatch-green`) |
+| `close-button` | detail-view Close (back to list) |
 
 ## Distribution
 
@@ -113,10 +123,5 @@ Also relied on by the suites:
 
 | hook | element |
 | --- | --- |
-| `#stock-item-search-input` | DOM id on the item-search input |
-| `role=option` / `role=menuitem` | entries in autocomplete and menu popups (item search, reason pickers, filter/status menus) |
-| `tbody tr` | table rows (cells within carry `cell-<columnId>`) |
-| `aria-selected` on `tab-*` | active-tab state |
-| `Go to next page` / `Go to page N` (aria) | MUI pagination buttons inside `table-pagination` |
-| `Close` (aria, exact) | detail-view close button |
-| `aria-label="<colour>"` | swatches inside the colour-picker popover |
+| `role=option` | entries in autocomplete popups (item search, customer search, reason pickers) — standard ARIA any accessible FE renders |
+| `aria-selected` on `tab-*` | active-tab state (the tab itself is located by testid) |

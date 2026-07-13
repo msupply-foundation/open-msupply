@@ -15,10 +15,9 @@
  * Every interaction point is located by a `data-testid` documented in
  * ../TESTIDS.md, so the suite is independent of copy, styling, and component
  * internals — any front-end that renders those ids can run it unchanged.
- * Deliberate exceptions (also documented there): `role=option`/`role=menuitem`
- * entries in popups, `tbody tr` row scoping, the aria-labelled MUI pagination
- * buttons inside `table-pagination`, the detail-view "Close" button, and
- * toast/content text assertions (which assert values, not locations).
+ * Deliberate exceptions (also documented there): `role=option` entries in
+ * autocomplete popups, and toast/content text assertions (which assert
+ * values, not locations).
  *
  * KNOWN LIMITATION — large datasets: the tests that add a shipment line
  * (DIST-03.* line management and DIST-04.* processing workflow, via
@@ -75,7 +74,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         waitUntil: 'networkidle',
       });
 
-      const firstRow = page.locator('tbody tr').first();
+      const firstRow = page.getByTestId('table-row').first();
       await expect(firstRow).toBeVisible();
 
       // The Name (customer) cell also contains a "Select a colour" button before
@@ -90,7 +89,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // "Name" to reveal the name filter input.
       await page.getByTestId('filters-menu').click();
       // Items are role="menuitem" in this MUI Select, not "option".
-      await page.getByRole('menuitem', { name: 'Name', exact: true }).click();
+      await page.getByTestId('filter-option-otherPartyName').click();
 
       const searchBox = page.getByTestId('filter-input-otherPartyName');
       await expect(searchBox).toBeVisible();
@@ -142,7 +141,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.getByTestId('new-shipment-button').click();
       const customerDialog = page.getByTestId('customer-search-modal');
       await expect(customerDialog).toBeVisible();
-      await customerDialog.locator('input[role="combobox"]').first().click();
+      await customerDialog.getByTestId('customer-search-input').click();
       await page.locator('[role="option"]').first().click();
       await page.waitForURL(/\/distribution\/outbound-shipment\/[^/]+/, {
         timeout: 10000,
@@ -165,7 +164,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         waitUntil: 'networkidle',
       });
       const targetRow = page
-        .locator('tbody tr')
+        .getByTestId('table-row')
         .filter({
           has: page.getByTestId('cell-invoiceNumber').filter({
             hasText: numberCell(invoiceNumber),
@@ -192,7 +191,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // The row should be gone. Re-query the list to verify.
       await page.waitForLoadState('networkidle');
       await expect(
-        page.locator('tbody tr').filter({
+        page.getByTestId('table-row').filter({
           has: page.getByTestId('cell-invoiceNumber').filter({
             hasText: numberCell(invoiceNumber),
           }),
@@ -246,7 +245,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.getByTestId('new-shipment-button').click();
       const customerDialog = page.getByTestId('customer-search-modal');
       await expect(customerDialog).toBeVisible();
-      await customerDialog.locator('input[role="combobox"]').first().click();
+      await customerDialog.getByTestId('customer-search-input').click();
       await page.locator('[role="option"]').first().click();
       await page.waitForURL(/\/distribution\/outbound-shipment\/[^/]+/, {
         timeout: 10000,
@@ -340,7 +339,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // ColorMenu swatches render as MUI SvgIcons (CircleIcon) with role="button"
       // and aria-label set to the colour name. The Popover renders into a portal,
       // so look for the swatch from the page root, not the sidebar locator.
-      const greenSwatch = page.locator('[role="button"][aria-label="green"]');
+      const greenSwatch = page.getByTestId('colour-swatch-green');
       await expect(greenSwatch).toBeVisible({ timeout: 3000 });
 
       const updateRequest = page.waitForRequest(
@@ -384,7 +383,9 @@ test.describe('Distribution: Outbound Shipments', () => {
       );
 
       await addCharge.click();
-      await expect(modal.locator('tbody tr')).toHaveCount(1, { timeout: 3000 });
+      await expect(modal.getByTestId('table-row')).toHaveCount(1, {
+        timeout: 3000,
+      });
 
       // Save via OK. The save batches into updateOutboundShipment with an
       // insertOutboundShipmentServiceLines payload.
@@ -403,7 +404,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await sidebar.getByTestId('edit-service-charges-button').click();
       const reopened = page.getByTestId('service-charges-modal');
       await expect(reopened).toBeVisible();
-      await expect(reopened.locator('tbody tr')).toHaveCount(1, {
+      await expect(reopened.getByTestId('table-row')).toHaveCount(1, {
         timeout: 3000,
       });
     }
@@ -422,7 +423,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.getByTestId('new-shipment-button').click();
       const customerDialog = page.getByTestId('customer-search-modal');
       await expect(customerDialog).toBeVisible();
-      await customerDialog.locator('input[role="combobox"]').first().click();
+      await customerDialog.getByTestId('customer-search-input').click();
       await page.locator('[role="option"]').first().click();
       await page.waitForURL(/\/distribution\/outbound-shipment\/[^/]+/, {
         timeout: 10000,
@@ -520,10 +521,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         waitUntil: 'networkidle',
       });
 
-      const rowsCombobox = page
-        .getByTestId('table-pagination')
-        .getByRole('combobox')
-        .first();
+      const rowsCombobox = page.getByTestId('rows-per-page-select');
       await expect(rowsCombobox).toBeVisible();
 
       // Open the dropdown and pick a different size.
@@ -552,7 +550,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // Grab a real invoice number from the first row to search for.
       const firstNumber = (
         (await page
-          .locator('tbody tr')
+          .getByTestId('table-row')
           .first()
           .getByTestId('cell-invoiceNumber')
           .textContent()) ?? ''
@@ -564,9 +562,7 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       // Open Filters → pick Invoice number → enter the number.
       await page.getByTestId('filters-menu').click();
-      await page
-        .getByRole('menuitem', { name: 'Invoice number', exact: true })
-        .click();
+      await page.getByTestId('filter-option-invoiceNumber').click();
 
       const numberInput = page.getByTestId('filter-input-invoiceNumber');
       await expect(numberInput).toBeVisible();
@@ -583,9 +579,11 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       // Invoice numbers are unique — filter should leave exactly one row.
       // Use toHaveCount which polls until the UI re-renders.
-      await expect(page.locator('tbody tr')).toHaveCount(1, { timeout: 5000 });
+      await expect(page.getByTestId('table-row')).toHaveCount(1, {
+        timeout: 5000,
+      });
       await expect(
-        page.locator('tbody tr').first().getByTestId('cell-invoiceNumber')
+        page.getByTestId('table-row').first().getByTestId('cell-invoiceNumber')
       ).toContainText(firstNumber);
     }
   );
@@ -599,7 +597,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       // Need >20 shipments for page 2 to exist. The footer shows "Showing 1-20 of N".
-      const nextPage = page.getByRole('button', { name: 'Go to next page' });
+      const nextPage = page.getByTestId('pagination-next');
       // isEnabled waits for the element to exist — bound it, or a missing
       // control turns this skip guard into a test timeout.
       const hasNextPage = await nextPage
@@ -613,7 +611,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // Capture the first row's invoice number on page 1.
       const firstRowNumberPage1 = (
         (await page
-          .locator('tbody tr')
+          .getByTestId('table-row')
           .first()
           .getByTestId('cell-invoiceNumber')
           .textContent()) ?? ''
@@ -623,14 +621,12 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.waitForLoadState('networkidle');
 
       // The "Go to previous page" button should be enabled (we're past page 1).
-      await expect(
-        page.getByRole('button', { name: 'Go to previous page' })
-      ).toBeEnabled();
+      await expect(page.getByTestId('pagination-previous')).toBeEnabled();
 
       // The first row's invoice number should be different from page 1.
       const firstRowNumberPage2 = (
         (await page
-          .locator('tbody tr')
+          .getByTestId('table-row')
           .first()
           .getByTestId('cell-invoiceNumber')
           .textContent()) ?? ''
@@ -650,7 +646,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       // Find a row that has non-empty reference.
-      const rows = page.locator('tbody tr');
+      const rows = page.getByTestId('table-row');
       const rowCount = await rows.count();
       let referenceText: string | null = null;
       for (let i = 0; i < rowCount; i++) {
@@ -671,9 +667,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       );
 
       await page.getByTestId('filters-menu').click();
-      await page
-        .getByRole('menuitem', { name: 'Reference', exact: true })
-        .click();
+      await page.getByTestId('filter-option-theirReference').click();
 
       const refInput = page.getByTestId('filter-input-theirReference');
       await expect(refInput).toBeVisible();
@@ -703,7 +697,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       await page.getByTestId('filters-menu').click();
-      await page.getByRole('menuitem', { name: 'Status', exact: true }).click();
+      await page.getByTestId('filter-option-status').click();
 
       // A second select appears for the Status value. Open it and pick "New".
       const statusFilter = page.getByTestId('filter-input-status');
@@ -719,13 +713,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         { timeout: 5000 }
       );
 
-      // MUI Select options use role="option" (or "menuitem" for some variants).
-      const newOption = page.getByRole('option', { name: 'New', exact: true });
-      if (await newOption.isVisible({ timeout: 500 }).catch(() => false)) {
-        await newOption.click();
-      } else {
-        await page.getByRole('menuitem', { name: 'New', exact: true }).click();
-      }
+      await page.getByTestId('filter-option-NEW').click();
       await filterRequest;
 
       // The status filter is a multi-select: picking an option leaves the
@@ -757,9 +745,9 @@ test.describe('Distribution: Outbound Shipments', () => {
         waitUntil: 'networkidle',
       });
 
-      const page2Button = page.getByRole('button', { name: 'Go to page 2' });
-      // MUI renders no "Go to page 2" button at all when there's only one
-      // page — bound the wait, or the skip guard eats the test timeout.
+      const page2Button = page.getByTestId('pagination-page-2');
+      // No page-2 item renders at all when there's only one page — bound the
+      // wait, or the skip guard eats the test timeout.
       const hasPage2 = await page2Button
         .isEnabled({ timeout: 3000 })
         .catch(() => false);
@@ -767,7 +755,7 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       const firstNumberOnPage1 = (
         (await page
-          .locator('tbody tr')
+          .getByTestId('table-row')
           .first()
           .getByTestId('cell-invoiceNumber')
           .textContent()) ?? ''
@@ -777,12 +765,10 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.waitForLoadState('networkidle');
 
       // We're on page 2: previous-page now enabled and the first-row Number differs.
-      await expect(
-        page.getByRole('button', { name: 'Go to previous page' })
-      ).toBeEnabled();
+      await expect(page.getByTestId('pagination-previous')).toBeEnabled();
       const firstNumberOnPage2 = (
         (await page
-          .locator('tbody tr')
+          .getByTestId('table-row')
           .first()
           .getByTestId('cell-invoiceNumber')
           .textContent()) ?? ''
@@ -791,11 +777,9 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       // Page-1 button takes us back; previous-page disables again.
       // (MUI can render the page-1 control more than once — take the first.)
-      await page.getByRole('button', { name: 'Go to page 1' }).first().click();
+      await page.getByTestId('pagination-page-1').first().click();
       await page.waitForLoadState('networkidle');
-      await expect(
-        page.getByRole('button', { name: 'Go to previous page' })
-      ).toBeDisabled();
+      await expect(page.getByTestId('pagination-previous')).toBeDisabled();
     }
   );
 
@@ -813,12 +797,12 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       // Tick the row checkboxes for the two newest rows (sorted by Number desc).
       await page
-        .locator('tbody tr')
+        .getByTestId('table-row')
         .nth(0)
         .getByTestId('select-row-checkbox')
         .check();
       await page
-        .locator('tbody tr')
+        .getByTestId('table-row')
         .nth(1)
         .getByTestId('select-row-checkbox')
         .check();
@@ -850,7 +834,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       // Find a row whose Status cell is "Shipped".
-      const rows = page.locator('tbody tr');
+      const rows = page.getByTestId('table-row');
       const rowCount = await rows.count();
       let shippedRow = -1;
       let invoiceNumber = '';
@@ -895,7 +879,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // Row still present — Shipped shipments are not deletable per the md
       // ("You can only delete outbound shipments with statuses New, Allocated or Picked").
       await expect(
-        page.locator('tbody tr').filter({
+        page.getByTestId('table-row').filter({
           has: page.getByTestId('cell-invoiceNumber').filter({
             hasText: new RegExp(`^${invoiceNumber}$`),
           }),
@@ -950,10 +934,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         // The Close button (top of the right-side actions area) exits the
         // detail view back to the Outbound Shipments list. Asserting on the
         // list-only "New Shipment" toolbar button auto-waits for navigation.
-        await page
-          .getByRole('button', { name: 'Close', exact: true })
-          .first()
-          .click();
+        await page.getByTestId('close-button').click();
         await expect(page.getByTestId('new-shipment-button')).toBeVisible({
           timeout: 5000,
         });
@@ -973,7 +954,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       const addItemModal = page.getByTestId('add-item-modal');
       await expect(addItemModal).toBeVisible();
 
-      const combobox = addItemModal.locator('input[role="combobox"]').first();
+      const combobox = addItemModal.getByTestId('item-search-input');
       await combobox.click();
       const firstOption = page.locator('[role="option"]').first();
       await expect(firstOption).toBeVisible({ timeout: 5000 });
@@ -1015,13 +996,13 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       // Click the line row to open the edit modal (same testid as Add Item — the
       // dialog component is the same OutboundLineEdit, opened in edit mode).
-      await page.locator('tbody tr').first().click();
+      await page.getByTestId('table-row').first().click();
 
       const editModal = page.getByTestId('add-item-modal');
       await expect(editModal).toBeVisible();
 
       // Item field should be disabled.
-      const itemCombobox = editModal.locator('input[role="combobox"]').first();
+      const itemCombobox = editModal.getByTestId('item-search-input');
       await expect(itemCombobox).toBeDisabled();
 
       await editModal.getByTestId('dialog-button-cancel').click();
@@ -1049,9 +1030,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // The Add Item dialog has the known React-state race after auto-allocate
       // (see happy-path test). Retry the click until the item field clears,
       // which is how OK & Next signals "ready for the next line".
-      const itemCombobox = addItemModal
-        .locator('input[role="combobox"]')
-        .first();
+      const itemCombobox = addItemModal.getByTestId('item-search-input');
       for (let attempt = 0; attempt < 4; attempt++) {
         await okAndNext.hover();
         await okAndNext.click();
@@ -1072,7 +1051,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await addItemModal.getByTestId('dialog-button-cancel').click();
 
       // One line should now be on the shipment.
-      await expect(page.locator('tbody tr').first()).toBeVisible();
+      await expect(page.getByTestId('table-row').first()).toBeVisible();
     }
   );
 
@@ -1090,7 +1069,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await addLineToShipment(page);
 
       // There should be exactly one tbody row (the group header for the one item).
-      const rows = page.locator('tbody tr');
+      const rows = page.getByTestId('table-row');
       await expect(rows.first()).toBeVisible();
 
       // Click the row's checkbox (MUI Checkbox renders <input type=checkbox>
@@ -1133,7 +1112,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         waitUntil: 'networkidle',
       });
 
-      const rows = page.locator('tbody tr');
+      const rows = page.getByTestId('table-row');
       const rowCount = await rows.count();
       let shippedRow = -1;
       for (let i = 0; i < rowCount; i++) {
@@ -1155,7 +1134,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       // Wait for the line table to load. Try to click the first line row.
-      const lineRow = page.locator('tbody tr').first();
+      const lineRow = page.getByTestId('table-row').first();
       await expect(lineRow).toBeVisible({ timeout: 10000 });
       await lineRow.click();
 
@@ -1186,10 +1165,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // Pick "Shipped" from the menu — this only SELECTS Shipped as the
       // next-action; the main split-button label updates to "Confirm Shipped"
       // but the action doesn't fire until we click the main button.
-      await page
-        .getByRole('menuitem', { name: /Shipped/i })
-        .first()
-        .click();
+      await page.getByTestId('status-change-button-option-SHIPPED').click();
       await page.mouse.move(0, 0);
       const confirmMain = page.getByTestId('status-change-button-main');
       await expect(confirmMain).toContainText(/Confirm Shipped/i);
@@ -1366,9 +1342,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // Pick the first available customer from the autocomplete options.
       // Selecting a customer auto-creates the shipment and navigates to detail
       // (wiki: "Once you press Enter, your Outbound Shipment is automatically created").
-      const customerInput = customerDialog
-        .locator('input[type="text"], input[role="combobox"]')
-        .first();
+      const customerInput = customerDialog.getByTestId('customer-search-input');
       await customerInput.click();
       const firstCustomerOption = page.locator('[role="option"]').first();
       await expect(firstCustomerOption).toBeVisible({ timeout: 5000 });
@@ -1421,7 +1395,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       }
 
       // The shipment should now have exactly one line row
-      await expect(page.locator('tbody tr').first()).toBeVisible();
+      await expect(page.getByTestId('table-row').first()).toBeVisible();
 
       // ─── Status transitions ──────────────────────────────────────────────────
       // The footer "Confirm" button cycles through Allocated → Picked → Shipped.
@@ -1455,7 +1429,7 @@ test.describe('Distribution: Customer Returns', () => {
       // CustomerSearchModal mounts — pick the first customer in the autocomplete.
       const customerDialog = page.getByTestId('customer-search-modal');
       await expect(customerDialog).toBeVisible();
-      await customerDialog.locator('input[role="combobox"]').first().click();
+      await customerDialog.getByTestId('customer-search-input').click();
       await page.locator('[role="option"]').first().click();
 
       // Navigation to /distribution/customer-return/<id>.
@@ -1593,7 +1567,7 @@ async function createNewShipment(page: Page): Promise<string> {
   await page.getByTestId('new-shipment-button').click();
   const customerDialog = page.getByTestId('customer-search-modal');
   await expect(customerDialog).toBeVisible();
-  await customerDialog.locator('input[role="combobox"]').first().click();
+  await customerDialog.getByTestId('customer-search-input').click();
   await page.locator('[role="option"]').first().click();
   await page.waitForURL(/\/distribution\/outbound-shipment\/[^/]+/, {
     timeout: 10000,
@@ -1639,7 +1613,7 @@ async function pickItemWithStock(
   dialog: import('@playwright/test').Locator
 ) {
   const MAX_TRIES = 30;
-  const combobox = dialog.locator('input[role="combobox"]').first();
+  const combobox = dialog.getByTestId('item-search-input');
 
   for (let i = 0; i < MAX_TRIES; i++) {
     await combobox.click();

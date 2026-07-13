@@ -160,6 +160,9 @@ export const SplitButton = <T,>({
         {options.map(option => (
           <MenuItem
             key={option.label}
+            {...(testId
+              ? { 'data-testid': `${testId}-option-${String(option.value)}` }
+              : {})}
             disabled={option?.isDisabled}
             selected={option.value === selectedOption.value}
             onClick={() => {
