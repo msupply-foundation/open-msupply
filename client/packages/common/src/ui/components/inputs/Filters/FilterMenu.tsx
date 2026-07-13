@@ -225,11 +225,7 @@ const getFilterComponent = (
       );
     case 'enum':
       return (
-        <EnumFilter
-          key={filter.urlParameter}
-          filterDefinition={filter}
-          remove={() => removeFilter(filter)}
-        />
+        <EnumFilter key={filter.urlParameter} filterDefinition={filter} />
       );
     case 'hierarchicalEnum':
       return (

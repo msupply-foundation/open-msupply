@@ -244,7 +244,7 @@ impl StockRelocationLineRow {
                 .find_one_by_id(row_id)?
                 .ok_or(RepositoryError::NotFound)?,
         };
-        let relocation_changelog = StockRelocationRow::generate_changelog(
+        let stock_relocation_changelog = StockRelocationRow::generate_changelog(
             RowOrId::Id(&row.stock_relocation_id),
             con,
             action,
@@ -253,7 +253,7 @@ impl StockRelocationLineRow {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::StockRelocationLine,
             record_id: row.id.clone(),
-            ..relocation_changelog
+            ..stock_relocation_changelog
         })
     }
 }
@@ -1342,6 +1342,23 @@ impl FrontendPluginRow {
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::FrontendPlugin,
+            record_id,
+            row_action: action,
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl HelpDocumentRow {
+    pub(crate) fn generate_changelog(
+        record_id: String,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::HelpDocument,
             record_id,
             row_action: action,
             source_site_id: source_site_id.get_id(con)?,

@@ -4,6 +4,7 @@ export * from './useHistoricalStockLines';
 export * from './useItemApi';
 export * from './useStockItemsWithStats';
 export * from './useStockItems';
+export * from './useItemPrice';
 export * from './useItemStockOnHand';
 export * from './useItemApi';
 export * from './useItemVariant';

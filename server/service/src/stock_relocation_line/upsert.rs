@@ -151,9 +151,7 @@ mod test {
     async fn upsert_stock_relocation_line_success() {
         let (service_provider, ctx) = setup("upsert_stock_relocation_line_success").await;
         StockLineRowRepository::new(&ctx.connection)
-
             .upsert_one(&stock_line("held_sl", true))
-
             .unwrap();
 
         let movement_id = new_movement(&service_provider, &ctx);
@@ -197,9 +195,7 @@ mod test {
     async fn upsert_line_validation_errors() {
         let (service_provider, ctx) = setup("upsert_line_validation_errors").await;
         StockLineRowRepository::new(&ctx.connection)
-
             .upsert_one(&stock_line("ok_sl", false))
-
             .unwrap();
         let movement_id = new_movement(&service_provider, &ctx);
 
