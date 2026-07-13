@@ -1,26 +1,17 @@
 use super::{
-    item_row::{item, ItemRow},
-    location::{LocationFilter, LocationRepository},
-    location_row::location,
-    stock_line_row::{stock_line, StockLineRow},
     stock_relocation_row::{stock_relocation, StockRelocationRow, StockRelocationStatus},
+    user_row::user_account,
     DBType, RepositoryError, StorageConnection,
 };
 use crate::diesel_macros::{
-    apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
 };
-use crate::{EqualFilter, Pagination, Sort, StringFilter};
-use diesel::{
-    dsl::{sql, IntoBoxed},
-    prelude::*,
-    sql_types::{Nullable, Text},
-};
+use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct StockRelocation {
     pub stock_relocation_row: StockRelocationRow,
-    pub from_stock_line_row: StockLineRow,
-    pub item_row: ItemRow,
 }
 
 #[derive(Clone, Default)]
@@ -28,9 +19,9 @@ pub struct StockRelocationFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<StockRelocationStatus>>,
-    pub item_code_or_name: Option<StringFilter>,
-    pub from_location_code: Option<StringFilter>,
-    pub to_location_code: Option<StringFilter>,
+    pub stock_movement_number: Option<EqualFilter<i64>>,
+    pub created_datetime: Option<DatetimeFilter>,
+    pub username: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -38,18 +29,10 @@ pub enum StockRelocationSortField {
     CreatedDatetime,
     FinalisedDatetime,
     Status,
-    NumberOfPacks,
-    ItemCode,
-    ItemName,
-    Batch,
-    ExpiryDate,
-    FromLocation,
-    ToLocation,
+    StockMovementNumber,
 }
 
 pub type StockRelocationSort = Sort<StockRelocationSortField>;
-
-type StockRelocationJoin = (StockRelocationRow, (StockLineRow, ItemRow));
 
 pub struct StockRelocationRepository<'a> {
     connection: &'a StorageConnection,
@@ -74,13 +57,6 @@ impl<'a> StockRelocationRepository<'a> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
-    pub fn query_one(
-        &self,
-        filter: StockRelocationFilter,
-    ) -> Result<Option<StockRelocation>, RepositoryError> {
-        Ok(self.query_by_filter(filter)?.pop())
-    }
-
     pub fn query(
         &self,
         pagination: Pagination,
@@ -100,35 +76,9 @@ impl<'a> StockRelocationRepository<'a> {
                 StockRelocationSortField::Status => {
                     apply_sort!(query, sort, stock_relocation::status)
                 }
-                StockRelocationSortField::NumberOfPacks => {
-                    apply_sort!(query, sort, stock_relocation::from_number_of_packs)
+                StockRelocationSortField::StockMovementNumber => {
+                    apply_sort!(query, sort, stock_relocation::stock_movement_number)
                 }
-                StockRelocationSortField::ItemCode => {
-                    apply_sort_no_case!(query, sort, item::code)
-                }
-                StockRelocationSortField::ItemName => {
-                    apply_sort_no_case!(query, sort, item::name)
-                }
-                StockRelocationSortField::Batch => {
-                    apply_sort_no_case!(query, sort, stock_line::batch)
-                }
-                StockRelocationSortField::ExpiryDate => {
-                    apply_sort!(query, sort, stock_line::expiry_date)
-                }
-                StockRelocationSortField::FromLocation => apply_sort!(
-                    query,
-                    sort,
-                    sql::<Nullable<Text>>(
-                        "(SELECT lower(code) FROM location WHERE location.id = stock_relocation.from_location_id)"
-                    )
-                ),
-                StockRelocationSortField::ToLocation => apply_sort!(
-                    query,
-                    sort,
-                    sql::<Nullable<Text>>(
-                        "(SELECT lower(code) FROM location WHERE location.id = stock_relocation.to_location_id)"
-                    )
-                ),
             }
         } else {
             query = query.order(stock_relocation::created_datetime.desc())
@@ -137,73 +87,52 @@ impl<'a> StockRelocationRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<StockRelocationJoin>(self.connection.lock().connection())?;
+            .load::<StockRelocationRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 
-    pub fn create_filtered_query(
-        filter: Option<StockRelocationFilter>,
-    ) -> BoxedStockRelocationQuery {
-        let mut query = query().into_boxed();
+    fn create_filtered_query(filter: Option<StockRelocationFilter>) -> BoxedStockRelocationQuery {
+        let mut query = stock_relocation::table.into_boxed();
 
         if let Some(f) = filter {
             let StockRelocationFilter {
                 id,
                 store_id,
                 status,
-                item_code_or_name,
-                from_location_code,
-                to_location_code,
+                stock_movement_number,
+                created_datetime,
+                username,
             } = f;
-
-            if item_code_or_name.is_some() {
-                apply_string_filter!(query, item_code_or_name.clone(), item::code);
-                apply_string_or_filter!(query, item_code_or_name, item::name);
-            }
-
-            // Filter by location code via subquery (not join): two location FKs would need
-            // aliases, which break auto_type.
-            if let Some(from_location_code) = from_location_code {
-                let location_ids = LocationRepository::create_filtered_query(Some(
-                    LocationFilter::new().code(from_location_code),
-                ))
-                .select(location::id.nullable());
-                query = query.filter(stock_relocation::from_location_id.eq_any(location_ids));
-            }
-            if let Some(to_location_code) = to_location_code {
-                let location_ids = LocationRepository::create_filtered_query(Some(
-                    LocationFilter::new().code(to_location_code),
-                ))
-                .select(location::id.nullable());
-                query = query.filter(stock_relocation::to_location_id.eq_any(location_ids));
-            }
 
             apply_equal_filter!(query, id, stock_relocation::id);
             apply_equal_filter!(query, store_id, stock_relocation::store_id);
             apply_equal_filter!(query, status, stock_relocation::status);
+            apply_equal_filter!(
+                query,
+                stock_movement_number,
+                stock_relocation::stock_movement_number
+            );
+            apply_date_time_filter!(query, created_datetime, stock_relocation::created_datetime);
+            if let Some(username) = username {
+                let mut sub_query = user_account::table.select(user_account::id).into_boxed();
+                apply_string_filter!(sub_query, Some(username), user_account::username);
+
+                query = query.filter(stock_relocation::created_by.eq_any(sub_query));
+            }
         }
 
         query
     }
 }
 
-fn to_domain(
-    (stock_relocation_row, (from_stock_line_row, item_row)): StockRelocationJoin,
-) -> StockRelocation {
+fn to_domain(stock_relocation_row: StockRelocationRow) -> StockRelocation {
     StockRelocation {
         stock_relocation_row,
-        from_stock_line_row,
-        item_row,
     }
 }
 
-#[diesel::dsl::auto_type]
-fn query() -> _ {
-    stock_relocation::table.inner_join(stock_line::table.inner_join(item::table))
-}
-
-type BoxedStockRelocationQuery = IntoBoxed<'static, query, DBType>;
+type BoxedStockRelocationQuery = IntoBoxed<'static, stock_relocation::table, DBType>;
 
 impl StockRelocationFilter {
     pub fn new() -> StockRelocationFilter {
@@ -214,34 +143,13 @@ impl StockRelocationFilter {
         self.id = Some(filter);
         self
     }
-    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.store_id = Some(filter);
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
         self
     }
-    pub fn status(mut self, filter: EqualFilter<StockRelocationStatus>) -> Self {
-        self.status = Some(filter);
+    pub fn username(mut self, filter: StringFilter) -> Self {
+        self.username = Some(filter);
         self
-    }
-    pub fn item_code_or_name(mut self, filter: StringFilter) -> Self {
-        self.item_code_or_name = Some(filter);
-        self
-    }
-    pub fn from_location_code(mut self, filter: StringFilter) -> Self {
-        self.from_location_code = Some(filter);
-        self
-    }
-    pub fn to_location_code(mut self, filter: StringFilter) -> Self {
-        self.to_location_code = Some(filter);
-        self
-    }
-}
-
-impl StockRelocationStatus {
-    pub fn equal_to(&self) -> EqualFilter<Self> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            ..Default::default()
-        }
     }
 }
 
@@ -250,26 +158,22 @@ mod test {
     use chrono::NaiveDate;
 
     use crate::{
-        mock::{mock_location_1, mock_location_2, mock_stock_line_a, MockDataInserts},
-        test_db::setup_all,
-        EqualFilter, StockRelocationFilter, StockRelocationRepository, StockRelocationRow,
-        StockRelocationRowRepository, StockRelocationSort, StockRelocationSortField,
-        StockRelocationStatus, StringFilter,
+        mock::MockDataInserts, test_db::setup_all, EqualFilter, StockRelocationFilter,
+        StockRelocationRepository, StockRelocationRow, StockRelocationRowRepository,
+        StockRelocationSort, StockRelocationSortField, StockRelocationStatus,
     };
 
     fn relocation(id: &str) -> StockRelocationRow {
         StockRelocationRow {
             id: id.to_string(),
+            store_id: "store_a".to_string(),
+            stock_movement_number: 1,
+            status: StockRelocationStatus::Finalised,
             created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
-            from_stock_line_id: mock_stock_line_a().id,
-            from_location_id: Some(mock_location_1().id),
-            from_number_of_packs: 5.0,
-            status: StockRelocationStatus::Finalised,
-            store_id: "store_a".to_string(),
-            user_id: "user_account_a".to_string(),
+            created_by: "user_account_a".to_string(),
             ..Default::default()
         }
     }
@@ -287,29 +191,29 @@ mod test {
         let repo = StockRelocationRepository::new(&connection);
 
         let result = repo
-            .query_one(
+            .query_by_filter(
                 StockRelocationFilter::new()
                     .id(EqualFilter::equal_to("stock_relocation_1".to_string())),
             )
             .unwrap()
+            .pop()
             .unwrap();
         assert_eq!(result.stock_relocation_row, row);
-        assert_eq!(result.from_stock_line_row.id, mock_stock_line_a().id);
-        assert_eq!(result.item_row.id, mock_stock_line_a().item_id);
 
         assert_eq!(
-            repo.count(Some(
-                StockRelocationFilter::new()
-                    .store_id(EqualFilter::equal_to("store_a".to_string()))
-                    .status(StockRelocationStatus::Finalised.equal_to())
-            ))
+            repo.count(Some(StockRelocationFilter {
+                store_id: Some(EqualFilter::equal_to("store_a".to_string())),
+                status: Some(EqualFilter::equal_to(StockRelocationStatus::Finalised)),
+                ..Default::default()
+            }))
             .unwrap(),
             1
         );
         assert_eq!(
-            repo.query_by_filter(
-                StockRelocationFilter::new().item_code_or_name(StringFilter::like("item_a"))
-            )
+            repo.query_by_filter(StockRelocationFilter {
+                stock_movement_number: Some(EqualFilter::equal_to(1)),
+                ..Default::default()
+            })
             .unwrap()
             .len(),
             1
@@ -328,37 +232,5 @@ mod test {
         assert!(sorted
             .iter()
             .any(|r| r.stock_relocation_row.id == "stock_relocation_1"));
-
-        StockRelocationRowRepository::new(&connection)
-            .upsert_one(&StockRelocationRow {
-                from_location_id: Some(mock_location_2().id),
-                ..relocation("stock_relocation_2")
-            })
-            .unwrap();
-        let from_location_ids = |desc: bool| {
-            repo.query(
-                crate::Pagination::all(),
-                Some(
-                    StockRelocationFilter::new()
-                        .store_id(EqualFilter::equal_to("store_a".to_string())),
-                ),
-                Some(StockRelocationSort {
-                    key: StockRelocationSortField::FromLocation,
-                    desc: Some(desc),
-                }),
-            )
-            .unwrap()
-            .into_iter()
-            .map(|r| r.stock_relocation_row.id)
-            .collect::<Vec<_>>()
-        };
-        assert_eq!(
-            from_location_ids(false),
-            vec!["stock_relocation_1", "stock_relocation_2"]
-        );
-        assert_eq!(
-            from_location_ids(true),
-            vec!["stock_relocation_2", "stock_relocation_1"]
-        );
     }
 }

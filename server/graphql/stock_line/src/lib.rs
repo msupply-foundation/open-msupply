@@ -34,6 +34,7 @@ pub enum StockLineSortFieldInput {
     CostPricePerPack,
     SellPricePerPack,
     VvmStatusThenExpiry,
+    Campaign,
 }
 #[derive(InputObject)]
 pub struct StockLineSortInput {

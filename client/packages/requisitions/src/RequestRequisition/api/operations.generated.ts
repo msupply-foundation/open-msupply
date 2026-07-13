@@ -35,6 +35,7 @@ export type RequestRowFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      totalBytes: number;
       status: Types.SyncFileReferenceNodeStatus;
       error?: string | null;
     }>;
@@ -143,6 +144,7 @@ export type RequestByNumberQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            totalBytes: number;
             status: Types.SyncFileReferenceNodeStatus;
             error?: string | null;
           }>;
@@ -344,6 +346,7 @@ export type RequestByIdQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            totalBytes: number;
             status: Types.SyncFileReferenceNodeStatus;
             error?: string | null;
           }>;
@@ -555,6 +558,7 @@ export type RequestsQuery = {
           fileName: string;
           recordId: string;
           createdDatetime: string;
+          totalBytes: number;
           status: Types.SyncFileReferenceNodeStatus;
           error?: string | null;
         }>;

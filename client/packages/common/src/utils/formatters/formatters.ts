@@ -43,6 +43,14 @@ export const Formatter = {
     const date = dateString ? new Date(dateString) : null;
     return date && isValid(date) ? format(date, 'dd/MM/yyyy') : '';
   },
+  fileSize: (bytes?: number | null): string => {
+    if (bytes == null || bytes < 0) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    if (bytes < 1024 * 1024 * 1024)
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  },
   milliseconds: (milliseconds: number): string => {
     const minute = Math.floor((milliseconds % 3600000) / 60000);
     const second = Math.floor(((milliseconds % 360000) % 60000) / 1000);
