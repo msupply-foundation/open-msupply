@@ -1,10 +1,30 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 60rem;
+}
+
 .card {
   border: 1px solid var(--color-border-value);
   border-radius: var(--radius-md);
   background: var(--bg-white);
   box-shadow: var(--shadow-1);
   overflow: hidden;
-  max-width: 60rem;
+}
+
+/* A dialog/panel-like frame around the FieldRow + InsetPanel demos, so the inline label
+   columns and the recessed panel read the way they do in a real modal. */
+.formPreview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 34rem;
+}
+
+/* Sub-group spacing under the radio-group demo (the include-all choice below the type). */
+.radioSubgroup {
+  margin-block-start: var(--space-4);
 }
 
 .cardHeader {

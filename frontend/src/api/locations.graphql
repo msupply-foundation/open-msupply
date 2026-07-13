@@ -1,0 +1,15 @@
+# Locations for the current store — an app-wide lookup backed by a store-scoped cache
+# (locationsResource): fetched once per store, shared by every consumer (the stocktake
+# create form's location picker, and future verticals). code + name label the option.
+query locations($storeId: String!) {
+  locations(storeId: $storeId) {
+    ... on LocationConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+      }
+    }
+  }
+}

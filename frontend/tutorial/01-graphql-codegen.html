@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>1 · Codegen &amp; graphqlFetch</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="tutorial.js"></script>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> FE Patterns</div>
+    <nav>
+      <a href="index.html"><span class="num">·</span>Overview</a>
+      <a class="current" href="01-graphql-codegen.html"><span class="num">1</span>Codegen &amp; graphqlFetch</a>
+      <a href="02-init-auth-error.html"><span class="num">2</span>Init, auth &amp; errors</a>
+      <a href="03-store-login-state.html"><span class="num">3</span>Store &amp; global state</a>
+      <a href="04-list-table-url.html"><span class="num">4</span>Lists: table &amp; URL</a>
+      <a href="05-createresource.html"><span class="num">5</span>createResource</a>
+      <a href="06-store-scoped.html"><span class="num">6</span>Store-scoped caches</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <p class="eyebrow">Chapter 1</p>
+      <h1>Codegen &amp; the never-throwing fetch</h1>
+      <p class="lede">
+        The data spine. A <code>.graphql</code> file becomes a fully typed document with a
+        query string and no runtime library; one function, <code>graphqlFetch</code>, runs it
+        and returns a discriminated result you match on — it never throws.
+      </p>
+
+      <h2>Why home-baked, not Apollo/urql</h2>
+      <p>
+        The app deliberately keeps its own light GraphQL layer. Operations are plain
+        <code>.graphql</code> documents, a custom codegen plugin turns each into a typed
+        document (a query <em>string</em> plus phantom types), and a single hand-written
+        <code>graphqlFetch</code> posts it over <code>fetch</code>. The <code>graphql</code>
+        package is build-time only and never reaches the browser.
+      </p>
+      <div class="box kdd">
+        <p class="box-title">Why (KDD)</p>
+        <p style="margin-bottom:0">
+          A cost study measured four alternatives. Our string-document approach ships the
+          smallest bundle (9&nbsp;KB gzip vs ~18&nbsp;KB for urql) with zero per-request CPU
+          overhead — normalising caches and request dedup are the reasons to reach for a client
+          library, and this app doesn't need them (SolidJS reactivity composes the state).
+          See <a href="../kdd/graphql-client/draft-kdd.md">kdd/graphql-client</a>.
+        </p>
+      </div>
+
+      <h2>Step 1 — Author a document</h2>
+      <p>
+        Every operation lives in a <code>.graphql</code> file, co-located with the code that
+        uses it. Here's the shape of a real one (the stocktakes list query), which our
+        <code>widgets</code> query will imitate:
+      </p>
+      <span class="filename">src/sections/stocktakes/stocktakes.graphql</span>
+<pre><code><span class="cm"># Filter / sort / pagination are GraphQL input types so URL state maps</span>
+<span class="cm"># straight onto them with no remapping (kdd/type-safety).</span>
+<span class="kw">query</span> <span class="fn">stocktakes</span>(
+  $storeId: String!
+  $filter: StocktakeFilterInput
+  $sort: [StocktakeSortInput!]
+  $page: PaginationInput
+) {
+  stocktakes(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... <span class="kw">on</span> <span class="ty">StocktakeConnector</span> {
+      __typename
+      totalCount
+      nodes { id stocktakeNumber status description comment stocktakeDate isLocked }
+    }
+  }
+}</code></pre>
+
+      <div class="box build">
+        <p class="box-title">Build step · widgets</p>
+        <p style="margin-bottom:0">
+          Create <code>src/sections/widgets/widgets.graphql</code> with a
+          <code>query widgets($storeId: String!, $filter: WidgetFilterInput, …)</code> that
+          selects a <code>WidgetConnector</code> with <code>totalCount</code> and
+          <code>nodes { id name category status }</code>. Same shape as above.
+        </p>
+      </div>
+
+      <h2>Step 2 — Run codegen</h2>
+      <p>
+        There is <strong>no <code>codegen.yml</code></strong>. A hand-written Node runner walks
+        every <code>src/**/*.graphql</code>, introspects the live schema, runs the custom
+        plugin, and writes a co-located <code>&lt;name&gt;.generated.ts</code> next to each
+        source file.
+      </p>
+      <span class="filename">codegen/run.cjs (abridged)</span>
+<pre><code><span class="kw">const</span> SCHEMA_URL = process.env.SCHEMA_URL || <span class="st">"http://localhost:8000/graphql"</span>;
+
+<span class="cm">// Introspect the live schema, then for each .graphql file emit a sibling .generated.ts</span>
+<span class="kw">for</span> (<span class="kw">const</span> file <span class="kw">of</span> walk(SRC_DIR)) {
+  <span class="kw">const</span> outPath = file.replace(<span class="st">/\.graphql$/</span>, <span class="st">".generated.ts"</span>);
+  <span class="kw">const</span> output = <span class="kw">await</span> <span class="fn">codegen</span>({
+    schema: schemaAst,
+    documents: [{ location: file, document: <span class="fn">parse</span>(content) }],
+    plugins: [{ custom: {} }],
+    pluginMap: { custom: <span class="fn">require</span>(PLUGIN_PATH) },  <span class="cm">// codegen/plugin.cjs</span>
+  });
+  fs.<span class="fn">writeFileSync</span>(outPath, output);
+}</code></pre>
+      <p>Run it with the npm script:</p>
+<pre><code>node codegen/run.cjs        <span class="cm"># or: SCHEMA_URL=… node codegen/run.cjs</span>
+<span class="cm"># package.json → "codegen": "node codegen/run.cjs"</span></code></pre>
+
+      <h2>Step 3 — What the plugin generates</h2>
+      <p>
+        The custom plugin (<code>codegen/plugin.cjs</code>) walks each selection set
+        <em>against the schema</em>, so nullability and scalars are accurate. Per operation it
+        emits three things: a <code>Variables</code> type, a <code>Result</code> type, and a
+        <code>const</code> holding the query string typed as a <code>TypedDocument</code>. Per
+        fragment it emits a reusable <code>&lt;Name&gt;Fragment</code> type. Here is a real
+        before/after.
+      </p>
+
+      <span class="filename">src/api/auth.graphql (input)</span>
+<pre><code><span class="kw">query</span> <span class="fn">authToken</span>($username: String!, $password: String!) {
+  authToken(username: $username, password: $password) {
+    ... <span class="kw">on</span> <span class="ty">AuthToken</span>      { __typename user { ...UserInfo } }
+    ... <span class="kw">on</span> <span class="ty">AuthTokenError</span> { __typename error { description } }
+  }
+}
+<span class="kw">fragment</span> <span class="ty">UserInfo</span> <span class="kw">on</span> <span class="ty">UserNode</span> { __typename userId username … }</code></pre>
+
+      <span class="filename">src/api/auth.generated.ts (output — abridged)</span>
+<pre><code><span class="kw">import type</span> { <span class="ty">TypedDocument</span> } <span class="kw">from</span> <span class="st">"./graphql"</span>;
+
+<span class="cm">// Fragment → a reusable type, referenced wherever it's spread.</span>
+<span class="kw">export type</span> <span class="ty">UserInfoFragment</span> = { __typename: <span class="st">"UserNode"</span>; userId: <span class="ty">string</span>; … };
+
+<span class="kw">export type</span> <span class="ty">AuthTokenVariables</span> = { username: <span class="ty">string</span>; password: <span class="ty">string</span> };
+
+<span class="cm">// Inline fragments on a union → a DISCRIMINATED union, __typename in each branch.</span>
+<span class="kw">export type</span> <span class="ty">AuthTokenResult</span> = {
+  authToken:
+    | ({ __typename: <span class="st">"AuthToken"</span>; user: <span class="ty">UserInfoFragment</span> })
+    | ({ __typename: <span class="st">"AuthTokenError"</span>; error: { description: <span class="ty">string</span> } });
+};
+
+<span class="cm">// The document itself: the query as a plain string, typed via `as`.</span>
+<span class="kw">export const</span> <span class="fn">AuthToken</span> = {
+  query: <span class="st">"query authToken($username: String!, …) { … }"</span>,
+} <span class="kw">as</span> <span class="ty">TypedDocument</span>&lt;<span class="ty">AuthTokenResult</span>, <span class="ty">AuthTokenVariables</span>&gt;;</code></pre>
+
+      <div class="box">
+        <p class="box-title">The key trick: TypedDocument carries types with no runtime cost</p>
+        <p style="margin-bottom:0">
+          The document is just an object with a <code>query</code> string. Its result and
+          variables types ride along as <strong>phantom fields</strong> — declared in the type,
+          never assigned at runtime — so the string knows exactly what it takes and returns.
+        </p>
+      </div>
+      <span class="filename">src/api/graphql.ts</span>
+<pre><code><span class="kw">export interface</span> <span class="ty">TypedDocument</span>&lt;<span class="ty">TResult</span>, <span class="ty">TVariables</span>&gt; {
+  query: <span class="ty">string</span>;
+  __result?: <span class="ty">TResult</span>;      <span class="cm">// phantom — carries the result type only</span>
+  __variables?: <span class="ty">TVariables</span>;  <span class="cm">// phantom — carries the variables type only</span>
+}</code></pre>
+
+      <h2>Step 4 — Run it: <code>graphqlFetch</code></h2>
+      <p>
+        One async function ties a typed document to its variables. It infers both from the
+        passed document, so a query can only be called with its own variables and yields its own
+        result. It <strong>never throws</strong> — it returns a discriminated
+        <code>GraphqlResult</code> you match on, Rust-style.
+      </p>
+      <span class="filename">src/api/graphql.ts</span>
+<pre><code><span class="kw">export type</span> <span class="ty">GraphqlResult</span>&lt;<span class="ty">TResult</span>&gt; =
+  | { kind: <span class="st">"success"</span>; data: <span class="ty">TResult</span> }
+  | { kind: <span class="st">"unauthenticated"</span> }
+  | { kind: <span class="st">"unexpectedError"</span> }
+  | { kind: <span class="st">"graphqlError"</span>; message: <span class="ty">string</span>; errors: <span class="ty">GraphqlErrorItem</span>[] };
+
+<span class="kw">export async function</span> <span class="fn">graphqlFetch</span>&lt;<span class="ty">TResult</span>, <span class="ty">TVariables</span>&gt;(
+  document: <span class="ty">TypedDocument</span>&lt;<span class="ty">TResult</span>, <span class="ty">TVariables</span>&gt;,
+  variables: <span class="ty">TVariables</span>,
+  options: <span class="ty">FetchOptions</span>&lt;<span class="ty">TResult</span>&gt; = {},
+): <span class="ty">Promise</span>&lt;<span class="ty">GraphqlResult</span>&lt;<span class="ty">TResult</span>&gt;&gt;</code></pre>
+
+      <table class="data">
+        <thead><tr><th>Result kind</th><th>When</th><th>What the caller does</th></tr></thead>
+        <tbody>
+          <tr><td><code>success</code></td><td>data came back</td><td>use <code>result.data</code> (fully typed)</td></tr>
+          <tr><td><code>unauthenticated</code></td><td>a <code>Unauthenticated</code> GraphQL error</td><td>nothing — the global re-login flow is tripped for you</td></tr>
+          <tr><td><code>unexpectedError</code></td><td>connection fail, bad HTTP, unusable body, or (by default) any GraphQL error</td><td>nothing — the <strong>global error modal</strong> is tripped; stay in your loading phase</td></tr>
+          <tr><td><code>graphqlError</code></td><td><em>only</em> if you passed <code>returnGraphqlErrors</code></td><td>handle the error yourself</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+        Notice what the default gives you: <strong>every call site is just a happy path.</strong>
+        You check for <code>success</code> and return early otherwise; the error is already on
+        global state and a modal is already showing. Auth is cookie-based — the fetch sends
+        <code>credentials: "same-origin"</code> with no token header.
+      </p>
+
+      <span class="filename">how a fetcher reads at the call site</span>
+<pre><code><span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">graphqlFetch</span>(<span class="fn">Widgets</span>, { storeId, filter, sort, page });
+<span class="kw">if</span> (result.kind !== <span class="st">"success"</span>) <span class="kw">return</span> <span class="kw">undefined</span>;  <span class="cm">// handled globally</span>
+<span class="kw">return</span> result.data.widgets;                       <span class="cm">// typed as WidgetConnector</span></code></pre>
+
+      <h3>Two opt-in escape hatches</h3>
+      <p>Occasionally the default isn't what you want. Two flags cover those cases:</p>
+      <ul>
+        <li>
+          <code>returnGraphqlErrors: true</code> — hand GraphQL errors back to you as
+          <code>{ kind: "graphqlError" }</code> instead of promoting them to the global modal.
+        </li>
+        <li>
+          <code>mapSuccessToError</code> — inspect a <em>well-formed</em> payload and promote a
+          bad in-band value to the global modal. The transport succeeded, but a union branch
+          "that should never happen" came back. Real example, the detail view:
+        </li>
+      </ul>
+<pre><code><span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">graphqlFetch</span>(<span class="fn">StocktakeDetail</span>, variables, {
+  <span class="fn">mapSuccessToError</span>: (d) =&gt;
+    d.stocktake.__typename === <span class="st">"NodeError"</span> ? d.stocktake.error.description : <span class="kw">undefined</span>,
+});
+<span class="cm">// A NodeError (e.g. bad id) becomes an unexpectedError and never reaches the view.</span></code></pre>
+
+      <div class="box build">
+        <p class="box-title">Build step · widgets</p>
+        <p style="margin-bottom:0">
+          Run <code>node codegen/run.cjs</code> and confirm <code>widgets.generated.ts</code>
+          appears with <code>WidgetsVariables</code>, <code>WidgetsResult</code>, and the
+          <code>Widgets</code> document. Then write a tiny fetcher that calls
+          <code>graphqlFetch(Widgets, …)</code> and returns <code>undefined</code> on anything
+          but <code>success</code>. You now have a typed, never-throwing data source — the
+          foundation every later chapter builds on.
+        </p>
+      </div>
+
+      <div class="box real">
+        <p class="box-title">Real code</p>
+        <p style="margin-bottom:0">
+          <a href="../codegen/run.cjs">codegen/run.cjs</a> ·
+          <a href="../codegen/plugin.cjs">codegen/plugin.cjs</a> ·
+          <a href="../src/api/graphql.ts">src/api/graphql.ts</a> ·
+          <a href="../src/api/auth.graphql">src/api/auth.graphql</a> →
+          <a href="../src/api/auth.generated.ts">auth.generated.ts</a>.
+          The plugin has a large test suite under <a href="../codegen/__tests__/">codegen/__tests__/</a>
+          that reads like a spec.
+        </p>
+      </div>
+
+      <div class="pager">
+        <a class="prev" href="index.html">
+          <span class="dir">← Prev</span><span class="ttl">Overview</span>
+        </a>
+        <a class="next" href="02-init-auth-error.html">
+          <span class="dir">Next →</span><span class="ttl">Init, auth &amp; errors</span>
+        </a>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

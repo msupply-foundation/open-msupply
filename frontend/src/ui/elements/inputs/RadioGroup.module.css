@@ -1,0 +1,81 @@
+/*
+ * RadioGroup — native <input type="radio"> styled with `accent-color` so the checked
+ * dot/ring is the brand orange (matching the current app), label to the right. The
+ * <fieldset> is reset (UA gives it a border + padding + margin) so it lays out like any
+ * other group. The only px is the focus-ring width (allowed by the sizing rule).
+ */
+.root {
+  /* fieldset reset (UA gives it border/padding/margin), then our group layout. */
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.groupLabel {
+  /* legend reset + our label style */
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.items[data-orientation='horizontal'] {
+  flex-direction: row;
+  gap: var(--space-4);
+}
+
+/* One option: the native radio + its label, in a row. */
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.item[data-disabled] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* The native control — accent-color paints the checked dot + ring in the brand tone. Sized
+   a touch larger than default for a comfortable target; margin aligns it to the first line. */
+.input {
+  flex-shrink: 0;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  margin: 0.0625rem 0 0;
+  accent-color: var(--primary-main);
+  cursor: inherit;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.description {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}

@@ -7,13 +7,25 @@
  */
 
 .dialog {
-  width: min(30rem, calc(100vw - 2rem));
+  /* Defaults for the caller-overridable custom properties (widthRem / minBodyHeightRem).
+     Declared HERE (not on .body) so an inline override on the <dialog> inherits down to
+     .body — a default on .body would shadow the inherited value. */
+  --dialog-width: 30rem;
+  --dialog-min-body-height: 0;
+
+  /* Fixed width (steady box), clamped down to the viewport on narrow screens. */
+  width: min(var(--dialog-width), calc(100vw - 2rem));
   padding: 0;
   border: none;
   border-radius: 1rem;
   background: var(--surface-raised);
   color: var(--text-body);
   box-shadow: var(--shadow-4);
+  /* Popups (Select/Combobox listboxes) that open inside a dialog mount into this element so
+     they're non-inert + in the top layer; `visible` (not the UA/hidden default) lets those
+     floating panels extend past the dialog box instead of being clipped. The body's padding
+     keeps ordinary content clear of the rounded corners, so nothing else bleeds out. */
+  overflow: visible;
 }
 
 .dialog::backdrop {
@@ -29,6 +41,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  /* Reserve a minimum height (Dialog's minBodyHeightRem) so a dialog whose content changes
+     size doesn't jump; inherits the default (0) or the caller's inline override from .dialog. */
+  min-block-size: var(--dialog-min-body-height);
   padding: var(--space-6);
 }
 
@@ -59,12 +74,29 @@
   color: var(--text-body);
 }
 
+/* The footer (bottom-pinned content, e.g. a status banner) sits at the bottom of the body:
+   `auto` sends the reserved slack ABOVE it. With no height reserved it collapses to nothing.
+   When a footer is present the actions follow it naturally; when absent, .actions carries the
+   same `auto` so it bottom-pins on its own. */
+.footer {
+  margin-block-start: auto;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-3);
-  margin-top: var(--space-2);
+  /* Bottom-pin the actions when there's no footer above them (see .footer). With a footer,
+     :not() drops the auto so the actions sit directly under it rather than adding a second gap. */
+  margin-block-start: auto;
+  padding-block-start: var(--space-2);
   flex-wrap: wrap;
+}
+
+/* When a footer precedes the actions, the footer already absorbed the slack — don't add a
+   second auto-gap between them. */
+.footer + .actions {
+  margin-block-start: 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -1,6 +1,8 @@
 import { Show, type JSX } from 'solid-js'
 import * as KSelect from '@kobalte/core/select'
+import { keepDialogOpenOnInside } from './dismissInsideGuard'
 import { CheckIcon, ChevronDownIcon } from '../../icons'
+import { usePortalMount } from '../../utils/portalMount'
 import styles from './Select.module.css'
 
 export interface SelectOption {
@@ -44,6 +46,9 @@ interface SelectProps {
  * option object).
  */
 export const Select = (props: SelectProps) => {
+  // Inside a Dialog, mount the listbox into the dialog element (top layer + non-inert);
+  // outside one this is undefined and Kobalte's default <body> portal is used.
+  const portalMount = usePortalMount()
   const findOption = (value: string | undefined) =>
     value === undefined
       ? undefined
@@ -99,8 +104,14 @@ export const Select = (props: SelectProps) => {
           {props.helperText}
         </KSelect.Description>
       </Show>
-      <KSelect.Portal>
-        <KSelect.Content class={styles.content}>
+      <KSelect.Portal mount={portalMount?.()}>
+        <KSelect.Content
+          class={styles.content}
+          // Keep the listbox open when a pointerdown lands inside the dialog it's mounted in
+          // — Kobalte otherwise dismisses it before a mouse click commits (see
+          // dismissInsideGuard). A genuine click outside the dialog still closes it.
+          onInteractOutside={keepDialogOpenOnInside(portalMount?.())}
+        >
           <KSelect.Listbox class={styles.listbox} />
         </KSelect.Content>
       </KSelect.Portal>

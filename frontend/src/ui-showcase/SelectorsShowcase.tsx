@@ -2,6 +2,9 @@ import { createSignal, type JSX } from 'solid-js'
 import { Select } from '../ui/elements/selectors/Select'
 import { Combobox } from '../ui/elements/selectors/Combobox'
 import { MultiSelect } from '../ui/elements/selectors/MultiSelect'
+import { Dialog } from '../ui/elements/feedback/Dialog'
+import { Button } from '../ui/elements/buttons/Button'
+import { PlusCircleIcon, XCircleIcon } from '../ui/icons'
 import {
   FilterBar,
   FilterSelect,
@@ -126,6 +129,10 @@ export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated')
   const [picked, setPicked] = createSignal<DemoItem | null>(null)
   const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]])
+  // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not behind it).
+  const [dialogOpen, setDialogOpen] = createSignal(false)
+  const [dialogItem, setDialogItem] = createSignal<DemoItem | null>(null)
+  const [dialogStatus, setDialogStatus] = createSignal('new')
   // Seeded non-empty to show chips restoring from an existing filter (a key being
   // present is what shows its chip — here status starts on 'new').
   const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' })
@@ -221,6 +228,75 @@ export const SelectorsShowcase = () => {
           placeholder="Search to add items…"
           helperText={`${multi().length} selected`}
         />
+      </Card>
+
+      <Card
+        title="Selectors in a dialog — portal-into-dialog"
+        lead={
+          <>
+            The case that needs care: a <strong>Combobox / Select opened inside a
+            modal dialog</strong>. A listbox portaled to <code>&lt;body&gt;</code>{' '}
+            would render <em>behind</em> the top-layer <code>&lt;dialog&gt;</code>{' '}
+            and be inert — so our selectors portal <em>into</em> the dialog
+            instead, with a dismiss guard so a click on an option{' '}
+            <strong>selects</strong> it rather than being read as a click-outside
+            that closes the popup. Open the dialog and pick an item{' '}
+            <strong>by clicking</strong> — it commits, and the listbox layers above
+            the dialog.
+          </>
+        }
+      >
+        <Button icon={<PlusCircleIcon />} onClick={() => setDialogOpen(true)}>
+          Open dialog with pickers
+        </Button>
+        <p class={styles.filterReadout}>
+          {dialogItem()
+            ? `Picked: ${dialogItem()!.code} — ${dialogItem()!.name} (${dialogStatus()})`
+            : '(nothing picked yet)'}
+        </p>
+        <Dialog
+          open={dialogOpen()}
+          onClose={() => setDialogOpen(false)}
+          icon={<PlusCircleIcon />}
+          title="Add a line"
+          description="Both pickers below open their listbox inside this dialog — click an option to select it."
+          widthRem={34}
+          actions={
+            <>
+              <Button
+                variant="secondary"
+                icon={<XCircleIcon />}
+                onClick={() => setDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button icon={<PlusCircleIcon />} onClick={() => setDialogOpen(false)}>
+                Add
+              </Button>
+            </>
+          }
+        >
+          <Combobox<DemoItem>
+            label="Item"
+            items={ITEMS}
+            itemToString={(item) => item.name}
+            itemToValue={(item) => item.code}
+            filter={itemFilter}
+            renderItem={renderItem}
+            onChange={setDialogItem}
+            placeholder="Search by item code or name…"
+          />
+          <Select
+            label="Status"
+            value={dialogStatus()}
+            onValueChange={setDialogStatus}
+            options={INVOICE_STATUSES.map((s) => ({
+              value: s.value,
+              label: s.label,
+              adornment: <Dot color={s.color} />,
+            }))}
+          />
+        </Dialog>
       </Card>
 
       <Card
