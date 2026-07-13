@@ -2931,6 +2931,7 @@ dependencies = [
  "num-traits",
  "pq-sys",
  "r2d2",
+ "serde_json",
  "sqlite-wasm-rs",
  "time",
 ]
@@ -4435,6 +4436,7 @@ dependencies = [
  "graphql_reports",
  "graphql_requisition",
  "graphql_requisition_line",
+ "graphql_site",
  "graphql_stock_line",
  "graphql_stock_relocation",
  "graphql_stocktake",
@@ -5027,6 +5029,26 @@ dependencies = [
  "serde_json",
  "service",
  "tokio",
+ "util",
+]
+
+[[package]]
+name = "graphql_site"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
+ "serde_json",
+ "service",
  "util",
 ]
 
@@ -8867,6 +8889,7 @@ dependencies = [
  "diesel-derive-enum",
  "futures-util",
  "glob",
+ "heck 0.5.0",
  "libsqlite3-sys",
  "log",
  "pretty_assertions",
@@ -8879,6 +8902,7 @@ dependencies = [
  "strum 0.28.0",
  "thiserror 2.0.18",
  "tokio",
+ "topological-sort",
  "ts-rs",
  "urlencoding",
  "util",
@@ -9835,6 +9859,12 @@ dependencies = [
  "cpufeatures 0.2.17",
  "digest",
 ]
+
+[[package]]
+name = "sha1_smol"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbfa15b3dddfee50a0fff136974b3e1bde555604ba463834a7eb7deb6417705d"
 
 [[package]]
 name = "sha2"
@@ -11531,6 +11561,7 @@ dependencies = [
  "getrandom 0.4.2",
  "js-sys",
  "serde_core",
+ "sha1_smol",
  "wasm-bindgen",
 ]
 

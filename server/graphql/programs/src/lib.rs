@@ -3,7 +3,6 @@ use chrono::DateTime;
 use chrono::Utc;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::validate_auth;
-use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::types::contact_trace::ContactTraceFilterInput;
 use graphql_types::types::contact_trace::ContactTraceResponse;
@@ -44,6 +43,9 @@ use mutations::patient::insert::InsertPatientResponse;
 use mutations::patient::update::update_patient;
 use mutations::patient::update::UpdatePatientInput;
 use mutations::patient::update::UpdatePatientResponse;
+use mutations::patient::update_custom_fields::update_patient_custom_fields;
+use mutations::patient::update_custom_fields::UpdatePatientCustomFieldsInput;
+use mutations::patient::update_custom_fields::UpdatePatientCustomFieldsResponse;
 use mutations::program_enrolment::insert::insert_program_enrolment;
 use mutations::program_enrolment::insert::InsertProgramEnrolmentInput;
 use mutations::program_enrolment::insert::InsertProgramEnrolmentResponse;
@@ -172,17 +174,14 @@ impl ProgramsQueries {
             &ResourceAccessRequest {
                 resource: Resource::QueryPatient,
                 store_id: Some(store_id.clone()),
+                require_central_standalone: false,
             },
         )?;
 
         let service_provider = ctx.service_provider();
         let context = service_provider.basic_context()?;
 
-        let sync_settings = service_provider.settings.sync_settings(&context)?.ok_or(
-            StandardGraphqlError::InternalError("Missing sync settings".to_string()).extend(),
-        )?;
-
-        let result = patient_search_central(&sync_settings, input.to_domain()).await;
+        let result = patient_search_central(service_provider, &context, input.to_domain()).await;
         map_central_patient_search_result(result)
     }
 
@@ -357,6 +356,17 @@ impl ProgramsMutations {
         input: UpdatePatientInput,
     ) -> Result<UpdatePatientResponse> {
         update_patient(ctx, store_id, input)
+    }
+
+    /// Update a patient's new-system custom property values (`custom_fields`).
+    /// Accepts a key->value patch; merges it into the patient's existing blob.
+    pub async fn update_patient_custom_fields(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdatePatientCustomFieldsInput,
+    ) -> Result<UpdatePatientCustomFieldsResponse> {
+        update_patient_custom_fields(ctx, store_id, input)
     }
 
     /// Inserts a new program patient, i.e. a patient that can contain additional information stored

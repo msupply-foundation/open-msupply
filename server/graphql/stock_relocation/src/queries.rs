@@ -77,6 +77,7 @@ pub fn get_stock_relocation(
         &ResourceAccessRequest {
             resource: Resource::QueryStockLine,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -108,6 +109,7 @@ pub fn get_stock_relocations(
         &ResourceAccessRequest {
             resource: Resource::QueryStockLine,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -148,6 +150,7 @@ pub fn get_stock_relocation_draft_lines(
         &ResourceAccessRequest {
             resource: Resource::QueryStockLine,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

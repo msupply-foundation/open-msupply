@@ -61,18 +61,29 @@ impl LedgerFixDriver {
 }
 
 async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
-    let ctx = service_provider.basic_context().unwrap();
+    // Runs on the main loop, so never panic: a transient pool-exhaustion failure here would crash
+    // the server. Log and skip; the loop retries next interval.
+    let ctx = match service_provider.basic_context() {
+        Ok(ctx) => ctx,
+        Err(error) => {
+            log::error!(
+                "Ledger fix: skipping run, could not acquire DB context (DB unavailable?): {error:?}"
+            );
+            return;
+        }
+    };
 
     let stock_line_ids = match find_stock_line_ledger_discrepancies(&ctx.connection, None) {
         Ok(stock_line_ids) => stock_line_ids,
         Err(e) => {
-            system_error_log(
+            if let Err(log_error) = system_error_log(
                 &ctx.connection,
                 SystemLogType::LedgerFixError,
                 &e,
                 "Error while finding stock line ledger discrepancies",
-            )
-            .unwrap();
+            ) {
+                log::error!("Ledger fix: failed to write system log: {log_error:?}");
+            }
             return;
         }
     };
@@ -83,7 +94,9 @@ async fn ledger_fix(service_provider: Arc<ServiceProvider>) {
         stock_line_ids
     );
 
-    system_log(&ctx.connection, SystemLogType::LedgerFixError, &error_msg).unwrap()
+    if let Err(log_error) = system_log(&ctx.connection, SystemLogType::LedgerFixError, &error_msg) {
+        log::error!("Ledger fix: failed to write system log: {log_error:?}");
+    }
 }
 
 impl LedgerFixTrigger {
@@ -105,8 +118,16 @@ impl LedgerFixTrigger {
 async fn delay(service_provider: Arc<ServiceProvider>, duration: Duration) -> bool {
     tokio::time::sleep(duration).await;
 
-    let last_ledger_fix_run = get_last_ledger_fix_run(&service_provider)
-        .expect("Repository error while getting last ledger fix run");
+    let last_ledger_fix_run = match get_last_ledger_fix_run(&service_provider) {
+        Ok(value) => value,
+        Err(error) => {
+            // Don't panic the main loop on a transient DB error - skip and retry next interval.
+            log::error!(
+                "Ledger fix: skipping run, could not read last run (DB unavailable?): {error:?}"
+            );
+            return false;
+        }
+    };
 
     // Do ledger fix if date is not set yet
     let Some(last_ledger_fix_run) = last_ledger_fix_run else {
@@ -122,7 +143,7 @@ async fn delay(service_provider: Arc<ServiceProvider>, duration: Duration) -> bo
 fn get_last_ledger_fix_run(
     service_provider: &ServiceProvider,
 ) -> Result<Option<NaiveDateTime>, RepositoryError> {
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = service_provider.basic_context()?;
     let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
     // Get and parse last ledger fix run, if not set or filed to parse return epoch
@@ -145,14 +166,20 @@ fn get_last_ledger_fix_run(
 }
 
 fn set_last_ledger_fix_run(service_provider: &ServiceProvider) {
-    let ctx = service_provider.basic_context().unwrap();
+    let ctx = match service_provider.basic_context() {
+        Ok(ctx) => ctx,
+        Err(error) => {
+            log::error!("Ledger fix: could not record last run, DB context unavailable: {error:?}");
+            return;
+        }
+    };
     let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
     let now = Utc::now().naive_utc();
     let now_string =
         serde_json::to_string(&now).expect("Failed to serialize last ledger fix run datetime");
 
-    key_value_store
-        .set_string(KeyType::LastLedgerFixRun, Some(now_string))
-        .expect("Database error while setting last ledger fix run");
+    if let Err(error) = key_value_store.set_string(KeyType::LastLedgerFixRun, Some(now_string)) {
+        log::error!("Ledger fix: failed to persist last run datetime: {error:?}");
+    }
 }

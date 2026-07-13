@@ -1,6 +1,6 @@
 use repository::{
-    campaign::campaign_row::{CampaignRow, CampaignRowRepository},
-    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
+    campaign::campaign_row::CampaignRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
 };
 
 use crate::sync::translations::{
@@ -25,11 +25,14 @@ impl SyncTranslation for CampaignTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        Ok(PullTranslateResult::upsert(serde_json::from_str::<
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
             CampaignRow,
-        >(&sync_record.data)?))
+        >(
+            sync_record.data.0.clone()
+        )?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -52,15 +55,15 @@ impl SyncTranslation for CampaignTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _connection: &StorageConnection,
         changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = CampaignRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Campaign row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Row::Campaign(campaign_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = campaign_row;
 
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -73,7 +76,7 @@ impl SyncTranslation for CampaignTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{mock::MockDataInserts, test_db::setup_all, SyncRecordData};
 
     #[actix_rt::test]
     async fn test_campaign_pull_translation() {
@@ -92,13 +95,17 @@ mod tests {
         let sync_buffer_row = SyncBufferRow {
             table_name: translator.table_name().to_string(),
             record_id: test_campaign.id.clone(),
-            data: serde_json::to_string(&test_campaign).unwrap(),
+            data: SyncRecordData(serde_json::to_value(&test_campaign).unwrap()),
             ..Default::default()
         };
 
         assert!(translator.should_translate_from_sync_record(&sync_buffer_row));
         let translation_result = translator
-            .try_translate_from_upsert_sync_record(&connection, &sync_buffer_row)
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_buffer_row,
+            )
             .unwrap();
 
         match translation_result {

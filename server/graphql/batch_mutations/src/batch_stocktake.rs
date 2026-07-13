@@ -81,6 +81,7 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
         &ResourceAccessRequest {
             resource: Resource::MutateStocktake,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

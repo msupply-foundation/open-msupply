@@ -13,9 +13,6 @@ lerna-debug.log*
 **/storybook-static/*
 **/assets/public/*
 
-# Dependency directories
-node_modules/
-
 # TypeScript cache
 *.tsbuildinfo
 .DS_Store

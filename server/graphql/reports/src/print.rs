@@ -70,6 +70,7 @@ pub async fn generate_report(
         &ResourceAccessRequest {
             resource: Resource::Report,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 
@@ -154,6 +155,7 @@ pub async fn generate_report_definition(
         &ResourceAccessRequest {
             resource: Resource::ReportDev,
             store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
         },
     )?;
 

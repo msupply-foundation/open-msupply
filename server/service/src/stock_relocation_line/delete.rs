@@ -63,7 +63,7 @@ mod test {
     use repository::{
         mock::{mock_location_1, MockDataInserts},
         test_db::setup_all,
-        StockLineRow, StockRelocationLineRowRepository, Upsert,
+        StockLineRow, StockLineRowRepository, StockRelocationLineRowRepository,
     };
     use util::uuid::uuid;
 
@@ -131,7 +131,9 @@ mod test {
     #[actix_rt::test]
     async fn delete_line_success() {
         let (service_provider, ctx) = setup("delete_line_success").await;
-        stock_line("del_sl").upsert(&ctx.connection).unwrap();
+        StockLineRowRepository::new(&ctx.connection)
+            .upsert_one(&stock_line("del_sl"))
+            .unwrap();
         let movement_id = new_movement(&service_provider, &ctx).await;
         let line_id = add_line(&ctx, &movement_id, "del_sl").await;
 
@@ -148,8 +150,9 @@ mod test {
         use crate::stock_relocation::update::UpdateStockRelocation;
 
         let (service_provider, ctx) = setup("delete_line_errors").await;
-        stock_line("del_sl").upsert(&ctx.connection).unwrap();
-        stock_line("fin_sl").upsert(&ctx.connection).unwrap();
+        let sl_repo = StockLineRowRepository::new(&ctx.connection);
+        sl_repo.upsert_one(&stock_line("del_sl")).unwrap();
+        sl_repo.upsert_one(&stock_line("fin_sl")).unwrap();
         let service = &service_provider.stock_relocation_service;
         let movement_id = new_movement(&service_provider, &ctx).await;
         let line_id = add_line(&ctx, &movement_id, "del_sl").await;

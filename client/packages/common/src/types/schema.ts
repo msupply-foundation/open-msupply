@@ -315,6 +315,27 @@ export enum AdjustmentTypeInput {
   Reduction = 'REDUCTION',
 }
 
+export type AdminPasswordRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AdminPasswordRequired';
+  description: Scalars['String']['output'];
+};
+
+export type AdminUserCreationFailed =
+  InitialiseAsCentralServerErrorInterface & {
+    __typename: 'AdminUserCreationFailed';
+    description: Scalars['String']['output'];
+  };
+
+export type AdminUsernameRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AdminUsernameRequired';
+  description: Scalars['String']['output'];
+};
+
+export type AllStoreDataDescription = {
+  __typename: 'AllStoreDataDescription';
+  storeName: Scalars['String']['output'];
+};
+
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
   error: AllocateOutboundShipmentUnallocatedLineErrorInterface;
@@ -350,6 +371,11 @@ export type AllocateProgramNumberInput = {
 };
 
 export type AllocateProgramNumberResponse = NumberNode;
+
+export type AlreadyInitialised = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'AlreadyInitialised';
+  description: Scalars['String']['output'];
+};
 
 export type AncillaryCycleDetected = UpsertAncillaryItemErrorInterface & {
   __typename: 'AncillaryCycleDetected';
@@ -824,6 +850,17 @@ export type AssetTypesResponse = AssetTypeConnector;
 
 export type AssetsResponse = AssetConnector;
 
+export type AssignStoresToSiteInput = {
+  siteId: Scalars['Int']['input'];
+  storeIds: Array<Scalars['String']['input']>;
+};
+
+export type AssignStoresToSiteNode = {
+  __typename: 'AssignStoresToSiteNode';
+  siteId: Scalars['Int']['output'];
+  storeIds: Array<Scalars['String']['output']>;
+};
+
 export type AuthToken = {
   __typename: 'AuthToken';
   /** Bearer token */
@@ -1223,6 +1260,11 @@ export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CannotDeleteCentralSite = DeleteSiteErrorInterface & {
+  __typename: 'CannotDeleteCentralSite';
+  description: Scalars['String']['output'];
+};
+
 export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
   DeleteInboundShipmentErrorInterface &
@@ -1370,9 +1412,12 @@ export type CentralGeneralMutationsConfigureNamePropertiesArgs = {
 export type CentralPatientNode = {
   __typename: 'CentralPatientNode';
   code: Scalars['String']['output'];
+  code2?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   firstName: Scalars['String']['output'];
+  gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
+  isDeceased: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
 };
 
@@ -1447,6 +1492,7 @@ export type CentralServerMutationNode = {
   assetCatalogue: AssetCatalogueMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
+  customField: CustomFieldMutations;
   demographic: DemographicMutations;
   general: CentralGeneralMutations;
   helpDocument: HelpDocumentMutations;
@@ -1455,18 +1501,77 @@ export type CentralServerMutationNode = {
   plugins: CentralPluginMutations;
   preferences: PreferenceMutations;
   reports: CentralReportMutations;
+  site: CentralSiteMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
+  customField: CustomFieldConfigQueries;
   plugin: CentralPluginQueries;
+  site: CentralSiteQueries;
   syncMessage: SyncMessageQueries;
+};
+
+export type CentralSiteMutations = {
+  __typename: 'CentralSiteMutations';
+  assignStoresToSite: AssignStoresToSiteNode;
+  clearSiteHardwareId: ClearSiteHardwareIdNode;
+  clearSiteToken: ClearSiteTokenNode;
+  deleteSite: DeleteSiteResponse;
+  setSiteMultiDevice: SetSiteMultiDeviceNode;
+  upsertSite: UpsertSiteResponse;
+};
+
+export type CentralSiteMutationsAssignStoresToSiteArgs = {
+  input: AssignStoresToSiteInput;
+};
+
+export type CentralSiteMutationsClearSiteHardwareIdArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsClearSiteTokenArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsDeleteSiteArgs = {
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsSetSiteMultiDeviceArgs = {
+  isMultiDevice: Scalars['Boolean']['input'];
+  siteId: Scalars['Int']['input'];
+};
+
+export type CentralSiteMutationsUpsertSiteArgs = {
+  input: UpsertSiteInput;
+};
+
+export type CentralSiteQueries = {
+  __typename: 'CentralSiteQueries';
+  sites: SitesResponse;
+};
+
+export type CentralSiteQueriesSitesArgs = {
+  filter?: InputMaybe<SiteFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<SiteSortInput>>;
 };
 
 export type CentralSyncRequired = AuthTokenErrorInterface & {
   __typename: 'CentralSyncRequired';
   description: Scalars['String']['output'];
+};
+
+export type ClearSiteHardwareIdNode = {
+  __typename: 'ClearSiteHardwareIdNode';
+  id: Scalars['Int']['output'];
+};
+
+export type ClearSiteTokenNode = {
+  __typename: 'ClearSiteTokenNode';
+  id: Scalars['Int']['output'];
 };
 
 export type ClinicianConnector = {
@@ -1528,6 +1633,11 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
+export type CodeRequired = UpsertSiteErrorInterface & {
+  __typename: 'CodeRequired';
+  description: Scalars['String']['output'];
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -1541,8 +1651,7 @@ export type ConfigureNamePropertyInput = {
 };
 
 export type ConnectionError = CentralPatientSearchErrorInterface &
-  LinkPatientPatientToStoreErrorInterface &
-  UpdateUserErrorInterface & {
+  LinkPatientPatientToStoreErrorInterface & {
     __typename: 'ConnectionError';
     description: Scalars['String']['output'];
   };
@@ -1742,6 +1851,123 @@ export type CurrencySortInput = {
   /** Sort query result by `key` */
   key: CurrencySortFieldInput;
 };
+
+export type CustomFieldConfigQueries = {
+  __typename: 'CustomFieldConfigQueries';
+  /**
+   * Admin/config read of a scope's custom fields, **including `HIDDEN`**
+   * ones — unlike the display `customFields` query, which filters hidden
+   * fields out. Drives the "Configure property visibility" admin page.
+   * Central-server only.
+   */
+  customFieldScopeConfig: CustomFieldsResponse;
+};
+
+export type CustomFieldConfigQueriesCustomFieldScopeConfigArgs = {
+  scope: Scalars['String']['input'];
+};
+
+export type CustomFieldConnector = {
+  __typename: 'CustomFieldConnector';
+  nodes: Array<CustomFieldNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type CustomFieldFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  key?: InputMaybe<EqualFilterStringInput>;
+  /**
+   * Restricts to custom_fields shown on this scope
+   * (`custom_field_scope.display_mode != HIDDEN`). Use e.g.
+   * `{ equalTo: "customer" }` or `{ equalTo: "supplier" }` to fetch the
+   * definitions that drive the matching name list views / modal. When a
+   * single `equalTo` scope is given, each returned node carries its
+   * `displayMode` for that scope.
+   */
+  scope?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type CustomFieldMutations = {
+  __typename: 'CustomFieldMutations';
+  /**
+   * Update the display mode (HIDDEN / VISIBLE / PROMINENT) of custom fields
+   * on a single scope. Only updates existing scope mappings (every
+   * field/scope pair is seeded from sync). Central-server only.
+   */
+  updateScopes: CustomFieldsResponse;
+};
+
+export type CustomFieldMutationsUpdateScopesArgs = {
+  input: UpdateCustomFieldScopesInput;
+};
+
+export type CustomFieldNode = {
+  __typename: 'CustomFieldNode';
+  /**
+   * How prominently this custom_field is shown on the queried scope
+   * (`null` when the query wasn't scoped to a single `scope`). Clients
+   * promote `PROMINENT` custom_fields to the record's primary surface, e.g. the
+   * invoice detail-view toolbar.
+   */
+  displayMode?: Maybe<CustomFieldNodeDisplayMode>;
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  kind: CustomFieldNodeKind;
+  name: Scalars['String']['output'];
+  /**
+   * Options for OPTION-type custom_fields. Empty list for any other value
+   * type. Resolved via dataloader so a list of N custom_fields triggers a
+   * single batched lookup.
+   */
+  options: Array<CustomFieldOptionNode>;
+  valueType: CustomFieldNodeValueType;
+};
+
+export enum CustomFieldNodeDisplayMode {
+  /** Not shown on this scope. */
+  Hidden = 'HIDDEN',
+  /**
+   * A mode configured on a newer central that this site doesn't yet recognise
+   * (the repository enum's `Other(String)` catch-all). Mapped manually rather
+   * than via `#[graphql(remote)]` because the GraphQL enum can't carry the
+   * captured string payload. Treated as non-hidden (shown) on read.
+   */
+  Other = 'OTHER',
+  /**
+   * Visible, and additionally promoted to the scope's primary surface (e.g.
+   * the invoice detail-view toolbar).
+   */
+  Prominent = 'PROMINENT',
+  /** Shown wherever the scope lists its custom_fields (e.g. the CustomFields tab). */
+  Visible = 'VISIBLE',
+}
+
+export enum CustomFieldNodeKind {
+  /** Synced from legacy mSupply. */
+  Legacy = 'LEGACY',
+  /** Configured natively in open-mSupply. */
+  Standard = 'STANDARD',
+}
+
+export enum CustomFieldNodeValueType {
+  Boolean = 'BOOLEAN',
+  Date = 'DATE',
+  Integer = 'INTEGER',
+  Option = 'OPTION',
+  Real = 'REAL',
+  Text = 'TEXT',
+}
+
+export type CustomFieldOptionNode = {
+  __typename: 'CustomFieldOptionNode';
+  customFieldId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  parentOptionId?: Maybe<Scalars['String']['output']>;
+};
+
+export type CustomFieldsResponse = CustomFieldConnector;
 
 export type CustomerIndicatorInformationNode = {
   __typename: 'CustomerIndicatorInformationNode';
@@ -2319,6 +2545,22 @@ export type DeleteRnRFormInput = {
 };
 
 export type DeleteRnRFormResponse = DeleteResponse;
+
+export type DeleteSiteError = {
+  __typename: 'DeleteSiteError';
+  error: DeleteSiteErrorInterface;
+};
+
+export type DeleteSiteErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteSiteNode = {
+  __typename: 'DeleteSiteNode';
+  id: Scalars['Int']['output'];
+};
+
+export type DeleteSiteResponse = DeleteSiteError | DeleteSiteNode;
 
 export type DeleteStockRelocationInput = {
   id: Scalars['String']['input'];
@@ -3225,8 +3467,14 @@ export type FrontendPluginMetadataNode = {
   path: Scalars['String']['output'];
 };
 
-export type FullSyncStatusNode = {
-  __typename: 'FullSyncStatusNode';
+/**
+ * Discriminated union covering both v5_v6 and v7 sync statuses.
+ * The frontend dispatches on `__typename`.
+ */
+export type FullSyncStatusNode = FullSyncStatusV5V6Node | FullSyncStatusV7Node;
+
+export type FullSyncStatusV5V6Node = {
+  __typename: 'FullSyncStatusV5V6Node';
   error?: Maybe<SyncErrorNode>;
   errorThreshold: Scalars['Int']['output'];
   integration?: Maybe<SyncStatusWithProgressNode>;
@@ -3239,6 +3487,28 @@ export type FullSyncStatusNode = {
   push?: Maybe<SyncStatusWithProgressNode>;
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
+  warningThreshold: Scalars['Int']['output'];
+};
+
+export type FullSyncStatusV7Node = {
+  __typename: 'FullSyncStatusV7Node';
+  error?: Maybe<SyncErrorV7Node>;
+  errorThreshold: Scalars['Int']['output'];
+  integration?: Maybe<SyncStatusWithProgressV7Node>;
+  isSyncing: Scalars['Boolean']['output'];
+  lastSuccessfulSync?: Maybe<SyncStatusNode>;
+  /**
+   * Localisable description payloads for every sync_request linked to
+   * this run via `reference_id`. Empty for the main sync (no
+   * reference_id) and for runs whose reference_id no longer matches any
+   * sync_request row. Each variant carries the parameters the front-end
+   * needs to render a localised string.
+   */
+  linkedDescriptions: Array<SyncRequestDescriptionNode>;
+  pull?: Maybe<SyncStatusWithProgressV7Node>;
+  push?: Maybe<SyncStatusWithProgressV7Node>;
+  summary: SyncStatusV7Node;
+  waitingForIntegration?: Maybe<SyncStatusV7Node>;
   warningThreshold: Scalars['Int']['output'];
 };
 
@@ -3415,7 +3685,29 @@ export enum InitialisationStatusType {
   PreInitialisation = 'PRE_INITIALISATION',
 }
 
-export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
+export type InitialiseAsCentralServerError = {
+  __typename: 'InitialiseAsCentralServerError';
+  error: InitialiseAsCentralServerErrorInterface;
+};
+
+export type InitialiseAsCentralServerErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InitialiseAsCentralServerInputNode = {
+  adminPassword: Scalars['String']['input'];
+  adminUsername: Scalars['String']['input'];
+  storeName: Scalars['String']['input'];
+};
+
+export type InitialiseAsCentralServerResponse =
+  | InitialiseAsCentralServerError
+  | StandaloneCentralInitialisedNode;
+
+export type InitialiseSiteResponse =
+  | SyncErrorNode
+  | SyncErrorV7Node
+  | SyncSettingsNode;
 
 export type InsertAssetCatalogueItemError = {
   __typename: 'InsertAssetCatalogueItemError';
@@ -4587,11 +4879,10 @@ export type InternalError = DeleteHelpDocumentErrorInterface &
     fullError: Scalars['String']['output'];
   };
 
-export type InvalidCredentials = AuthTokenErrorInterface &
-  UpdateUserErrorInterface & {
-    __typename: 'InvalidCredentials';
-    description: Scalars['String']['output'];
-  };
+export type InvalidCredentials = AuthTokenErrorInterface & {
+  __typename: 'InvalidCredentials';
+  description: Scalars['String']['output'];
+};
 
 export type InvalidStockSelection = UpdatePrescriptionErrorInterface & {
   __typename: 'InvalidStockSelection';
@@ -4675,6 +4966,14 @@ export type InvoiceFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   createdOrBackdatedDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the requested invoice type's scope, e.g.
+   * `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`.
+   * Requires the query's `type` argument to pin a single supported invoice
+   * type (the custom fields scope is per type).
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   invoiceNumberOrStatus?: InputMaybe<StringFilterInput>;
@@ -4846,6 +5145,15 @@ export type InvoiceNode = {
   createdDatetime: Scalars['DateTime']['output'];
   currency?: Maybe<CurrencyNode>;
   currencyRate: Scalars['Float']['output'];
+  /**
+   * Properties v2 values for this invoice. The raw `invoice.custom_fields`
+   * JSONB blob is filtered server-side to keys that are (a) defined in
+   * `custom_field` and not soft-deleted, (b) marked visible for this invoice
+   * type's scope (e.g. `"inbound_shipment"`) via `custom_field_scope`. Stray
+   * keys never reach the client. `None` for types with no custom fields scope
+   * (repack, inventory adjustments).
+   */
+  customFields?: Maybe<Scalars['JSON']['output']>;
   defaultDonor?: Maybe<NameNode>;
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   diagnosis?: Maybe<DiagnosisNode>;
@@ -5074,6 +5382,12 @@ export type ItemFilterInput = {
   categoryName?: InputMaybe<Scalars['String']['input']>;
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the "item" table scope, e.g.
+   * `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   /** Items with available stock on hand, regardless of item visibility. This filter is ignored if `is_visible_or_on_hand` is true */
   hasStockOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -5158,6 +5472,14 @@ export type ItemNode = {
   availableStockOnHand: Scalars['Int']['output'];
   categories: Array<ItemCategoryNode>;
   code: Scalars['String']['output'];
+  /**
+   * Properties v2 values for this item. The raw `item.custom_fields` JSONB
+   * blob is filtered server-side to keys that are (a) defined in
+   * `custom_field` and not soft-deleted, (b) marked visible for the `item`
+   * table via `custom_field_scope`. Stray keys never reach the client.
+   * Imported from legacy mSupply `[item]user_field_1..7`; read-only.
+   */
+  customFields?: Maybe<Scalars['JSON']['output']>;
   ddd: Scalars['String']['output'];
   defaultPackSize: Scalars['Float']['output'];
   doses: Scalars['Int']['output'];
@@ -5713,11 +6035,6 @@ export type MigrationStatusNode = {
   version?: Maybe<Scalars['String']['output']>;
 };
 
-export type MissingCredentials = UpdateUserErrorInterface & {
-  __typename: 'MissingCredentials';
-  description: Scalars['String']['output'];
-};
-
 export type Mutations = {
   __typename: 'Mutations';
   /** Add requisition lines from master item master list */
@@ -5776,6 +6093,7 @@ export type Mutations = {
   duplicateInboundShipment: DuplicateInboundShipmentResponse;
   duplicateOutboundShipment: DuplicateOutboundShipmentResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
+  initialiseAsCentralServer: InitialiseAsCentralServerResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
@@ -5868,6 +6186,11 @@ export type Mutations = {
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
   /** Updates a new patient (without document data) */
   updatePatient: UpdatePatientResponse;
+  /**
+   * Update a patient's new-system custom property values (`custom_fields`).
+   * Accepts a key->value patch; merges it into the patient's existing blob.
+   */
+  updatePatientCustomFields: UpdatePatientCustomFieldsResponse;
   updatePluginData: UpdatePluginDataResponse;
   updatePrescription: UpdatePrescriptionResponse;
   updatePrescriptionLine: UpdatePrescriptionLineResponse;
@@ -5896,7 +6219,6 @@ export type Mutations = {
   updateSupplierReturnOtherParty: UpdateSupplierReturnOtherPartyResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
-  updateUser: UpdateUserResponse;
   updateVaccination: UpdateVaccinationResponse;
   updateVvmStatusLog: UpdateVvmStatusResponse;
   /** Set requested for each line in request requisition to calculated */
@@ -6136,6 +6458,10 @@ export type MutationsDuplicateOutboundShipmentArgs = {
 export type MutationsFinaliseRnrFormArgs = {
   input: FinaliseRnRFormInput;
   storeId: Scalars['String']['input'];
+};
+
+export type MutationsInitialiseAsCentralServerArgs = {
+  input: InitialiseAsCentralServerInputNode;
 };
 
 export type MutationsInitialiseSiteArgs = {
@@ -6531,6 +6857,11 @@ export type MutationsUpdatePatientArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdatePatientCustomFieldsArgs = {
+  input: UpdatePatientCustomFieldsInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUpdatePluginDataArgs = {
   input: UpdatePluginDataInput;
   storeId: Scalars['String']['input'];
@@ -6673,6 +7004,13 @@ export type NameFilterInput = {
   /** Search filter across name or code */
   codeOrName?: InputMaybe<StringFilterInput>;
   country?: InputMaybe<StringFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the "customer" or "supplier" table scope (the union,
+   * since names lists mix both), e.g.
+   * `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   email?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
@@ -6714,6 +7052,21 @@ export type NameNode = {
   createdDatetime?: Maybe<Scalars['DateTime']['output']>;
   currency?: Maybe<CurrencyNode>;
   customData?: Maybe<Scalars['JSON']['output']>;
+  /**
+   * Properties v2 values for this name. The raw `name.custom_fields` JSONB
+   * blob is filtered server-side to keys that are (a) defined in
+   * `custom_field` and not soft-deleted, (b) marked visible for one of this
+   * name's table scopes via `custom_field_scope`. Stray keys never reach the
+   * client.
+   *
+   * A name has no single scope: "customer"/"supplier" are independent role
+   * flags (not mutually exclusive) and "patient" is a type, so the visible
+   * set is the **union** over every scope the name qualifies for —
+   * `"patient"` if it's a patient, `"customer"` if `is_customer`,
+   * `"supplier"` if `is_supplier`. A name that matches none of these (e.g. a
+   * manufacturer/donor/store-only name) has no scope and surfaces nothing.
+   */
+  customFields?: Maybe<Scalars['JSON']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
@@ -6761,6 +7114,11 @@ export type NamePropertyNode = {
 };
 
 export type NamePropertyResponse = NamePropertyConnector;
+
+export type NameRequired = UpsertSiteErrorInterface & {
+  __typename: 'NameRequired';
+  description: Scalars['String']['output'];
+};
 
 export enum NameSortFieldInput {
   Code = 'code',
@@ -6851,6 +7209,11 @@ export type NotEnoughStockForReduction =
 
 export type NotMostRecentGivenDose = UpdateVaccinationErrorInterface & {
   __typename: 'NotMostRecentGivenDose';
+  description: Scalars['String']['output'];
+};
+
+export type NotSupportedOnAndroid = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'NotSupportedOnAndroid';
   description: Scalars['String']['output'];
 };
 
@@ -7030,6 +7393,11 @@ export type PaginationInput = {
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type PasswordRequired = UpsertSiteErrorInterface & {
+  __typename: 'PasswordRequired';
+  description: Scalars['String']['output'];
+};
+
 export type PatientConnector = {
   __typename: 'PatientConnector';
   nodes: Array<PatientNode>;
@@ -7044,6 +7412,12 @@ export type PatientFilterInput = {
   country?: InputMaybe<StringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
   dateOfDeath?: InputMaybe<DateFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting property conditions
+   * on keys visible for the "patient" table scope, e.g.
+   * `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   email?: InputMaybe<StringFilterInput>;
   firstName?: InputMaybe<StringFilterInput>;
   gender?: InputMaybe<EqualFilterGenderType>;
@@ -7066,6 +7440,12 @@ export type PatientNode = {
   contactTraces: ContactTraceResponse;
   country?: Maybe<Scalars['String']['output']>;
   createdDatetime?: Maybe<Scalars['DateTime']['output']>;
+  /**
+   * Patient custom property values (`name.custom_fields`), filtered to keys
+   * defined and visible for the `patient` table scope. Mirrors
+   * `NameNode.custom_fields` but always uses the `"patient"` scope.
+   */
+  customFields?: Maybe<Scalars['JSON']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
   document?: Maybe<DocumentNode>;
@@ -7279,6 +7659,7 @@ export enum PreferenceKey {
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
+  DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
   ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
   ExpiredStockPreventIssue = 'expiredStockPreventIssue',
   ExternalInboundShipmentLinesMustBeAuthorised = 'externalInboundShipmentLinesMustBeAuthorised',
@@ -7296,6 +7677,7 @@ export enum PreferenceKey {
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
+  ReceivePaymentsFromPrescriptions = 'receivePaymentsFromPrescriptions',
   RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
@@ -7352,6 +7734,7 @@ export type PreferencesNode = {
   daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
+  doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
   expiredStockPreventIssue: Scalars['Boolean']['output'];
   externalInboundShipmentLinesMustBeAuthorised: Scalars['Boolean']['output'];
@@ -7369,6 +7752,7 @@ export type PreferencesNode = {
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
+  receivePaymentsFromPrescriptions: Scalars['Boolean']['output'];
   requisitionAutoFinalise: Scalars['Boolean']['output'];
   secondThresholdForExpiringItems: Scalars['Int']['output'];
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
@@ -7936,6 +8320,12 @@ export type Queries = {
   contacts: ContactsResponse;
   csvToExcel: PrintReportResponse;
   currencies: CurrenciesResponse;
+  /**
+   * Properties v2 definitions. Used by list views, detail views and modals
+   * to learn what columns/fields to render. Filter by `scope` to restrict
+   * to a record kind (`{ equalTo: "customer" }`).
+   */
+  customFields: CustomFieldsResponse;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
   demographicProjectionByBaseYear: DemographicProjectionResponse;
@@ -7999,6 +8389,7 @@ export type Queries = {
   invoiceLines: InvoiceLinesResponse;
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
+  isCentralStandalone: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
   itemLedger: ItemLedgerResponse;
   itemPrice: ItemPriceResponse;
@@ -8015,7 +8406,6 @@ export type Queries = {
    */
   itemsByStockLineFilter: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
-  lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   ledger: LedgerResponse;
   /** Query omSupply "location_type" entries */
@@ -8263,6 +8653,10 @@ export type QueriesCsvToExcelArgs = {
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
+};
+
+export type QueriesCustomFieldsArgs = {
+  filter?: InputMaybe<CustomFieldFilterInput>;
 };
 
 export type QueriesDemographicIndicatorsArgs = {
@@ -9776,6 +10170,11 @@ export type SetPrescribedQuantityWithId = {
   response: SetPrescribedQuantityResponse;
 };
 
+export type SetSiteMultiDeviceNode = {
+  __typename: 'SetSiteMultiDeviceNode';
+  id: Scalars['Int']['output'];
+};
+
 export type ShippingMethodConnector = {
   __typename: 'ShippingMethodConnector';
   nodes: Array<ShippingMethodNode>;
@@ -9796,6 +10195,63 @@ export type ShippingMethodNode = {
 
 export type ShippingMethodsResponse = ShippingMethodConnector;
 
+export type SiteConnector = {
+  __typename: 'SiteConnector';
+  nodes: Array<SiteNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SiteFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterNumberInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type SiteHasStores = DeleteSiteErrorInterface & {
+  __typename: 'SiteHasStores';
+  description: Scalars['String']['output'];
+};
+
+export type SiteNode = {
+  __typename: 'SiteNode';
+  /**
+   * Client application of the remote site (e.g. "open mSupply"). Tracked from
+   * v7 sync activity; null for sites that have not synced over v7.
+   */
+  appName?: Maybe<Scalars['String']['output']>;
+  /** Remote site's application version, as last reported during v7 sync. */
+  appVersion?: Maybe<Scalars['String']['output']>;
+  code: Scalars['String']['output'];
+  /** First time the remote completed an initialising pull. */
+  firstSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  hardwareId?: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  isMultiDevice: Scalars['Boolean']['output'];
+  /** Last time the remote made any authenticated v7 request. */
+  lastConnectionDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  /** Last time the remote fully pulled from this central server. */
+  lastSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  name: Scalars['String']['output'];
+  /**
+   * Which sync flow the site runs. Hardware-id / token clearing is only
+   * permitted for v7 sites. See issue #11784.
+   */
+  syncVersion: SyncVersionNode;
+};
+
+export enum SiteSortFieldInput {
+  Code = 'code',
+  Id = 'id',
+  Name = 'name',
+}
+
+export type SiteSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: SiteSortFieldInput;
+};
+
+export type SitesResponse = SiteConnector;
+
 export type SnapshotCountCurrentCountMismatch =
   UpdateStocktakeErrorInterface & {
     __typename: 'SnapshotCountCurrentCountMismatch';
@@ -9809,6 +10265,11 @@ export type SnapshotCountCurrentCountMismatchLine =
     description: Scalars['String']['output'];
     stocktakeLine: StocktakeLineNode;
   };
+
+export type StandaloneCentralInitialisedNode = {
+  __typename: 'StandaloneCentralInitialisedNode';
+  success: Scalars['Boolean']['output'];
+};
 
 export type StockCounts = {
   __typename: 'StockCounts';
@@ -10234,6 +10695,11 @@ export enum StoreModeNodeType {
   Store = 'STORE',
 }
 
+export type StoreNameRequired = InitialiseAsCentralServerErrorInterface & {
+  __typename: 'StoreNameRequired';
+  description: Scalars['String']['output'];
+};
+
 export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String']['output'];
@@ -10421,6 +10887,12 @@ export type SyncErrorNode = {
   variant: SyncErrorVariant;
 };
 
+export type SyncErrorV7Node = {
+  __typename: 'SyncErrorV7Node';
+  fullError: Scalars['String']['output'];
+  variant: SyncErrorVariantV7;
+};
+
 export enum SyncErrorVariant {
   ApiVersionIncompatible = 'API_VERSION_INCOMPATIBLE',
   CentralV6NotConfigured = 'CENTRAL_V6_NOT_CONFIGURED',
@@ -10436,6 +10908,33 @@ export enum SyncErrorVariant {
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
   Unknown = 'UNKNOWN',
   V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE',
+  V7UpgradeFailed = 'V7_UPGRADE_FAILED',
+}
+
+export enum SyncErrorVariantV7 {
+  Authentication = 'AUTHENTICATION',
+  ConnectionError = 'CONNECTION_ERROR',
+  DatabaseError = 'DATABASE_ERROR',
+  FailedToGetHardwareId = 'FAILED_TO_GET_HARDWARE_ID',
+  GetCurrentSiteIdError = 'GET_CURRENT_SITE_ID_ERROR',
+  HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
+  IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
+  InvalidSiteNameOrPassword = 'INVALID_SITE_NAME_OR_PASSWORD',
+  MissingAuthHeader = 'MISSING_AUTH_HEADER',
+  NotACentralServer = 'NOT_A_CENTRAL_SERVER',
+  Other = 'OTHER',
+  ParsingError = 'PARSING_ERROR',
+  RecordNotFound = 'RECORD_NOT_FOUND',
+  RequestSiteAuthError = 'REQUEST_SITE_AUTH_ERROR',
+  SiteIdMismatch = 'SITE_ID_MISMATCH',
+  SiteIdNotSet = 'SITE_ID_NOT_SET',
+  SiteIsNotV7 = 'SITE_IS_NOT_V7',
+  SiteLockError = 'SITE_LOCK_ERROR',
+  SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
+  SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
+  TokenAlreadyAllocated = 'TOKEN_ALREADY_ALLOCATED',
+  TokenNotFound = 'TOKEN_NOT_FOUND',
+  WaitingForCentralV7Upgrade = 'WAITING_FOR_CENTRAL_V7_UPGRADE',
 }
 
 export type SyncFileReferenceConnector = {
@@ -10548,6 +11047,10 @@ export type SyncMessageSortInput = {
   key: SyncMessageSortFieldInput;
 };
 
+export type SyncRequestDescriptionNode =
+  | AllStoreDataDescription
+  | TableNameDescription;
+
 export type SyncSettingsInput = {
   /** Sync interval */
   intervalSeconds: Scalars['Int']['input'];
@@ -10559,8 +11062,10 @@ export type SyncSettingsInput = {
 
 export type SyncSettingsNode = {
   __typename: 'SyncSettingsNode';
+  centralServerSiteId: Scalars['Int']['output'];
   /** How frequently central data is synced */
   intervalSeconds: Scalars['Int']['output'];
+  syncSiteId?: Maybe<Scalars['Int']['output']>;
   /** Central server url */
   url: Scalars['String']['output'];
   /** Central server username */
@@ -10569,7 +11074,12 @@ export type SyncSettingsNode = {
 
 export type SyncStatusNode = {
   __typename: 'SyncStatusNode';
-  durationInSeconds: Scalars['Int']['output'];
+  finished?: Maybe<Scalars['DateTime']['output']>;
+  started: Scalars['DateTime']['output'];
+};
+
+export type SyncStatusV7Node = {
+  __typename: 'SyncStatusV7Node';
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
 };
@@ -10580,6 +11090,24 @@ export type SyncStatusWithProgressNode = {
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
   total?: Maybe<Scalars['Int']['output']>;
+};
+
+export type SyncStatusWithProgressV7Node = {
+  __typename: 'SyncStatusWithProgressV7Node';
+  done?: Maybe<Scalars['Int']['output']>;
+  finished?: Maybe<Scalars['DateTime']['output']>;
+  started: Scalars['DateTime']['output'];
+  total?: Maybe<Scalars['Int']['output']>;
+};
+
+export enum SyncVersionNode {
+  V5V6 = 'V5V6',
+  V7 = 'V7',
+}
+
+export type TableNameDescription = {
+  __typename: 'TableNameDescription';
+  tableName: Scalars['String']['output'];
 };
 
 export type TaxInput = {
@@ -10769,7 +11297,8 @@ export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface &
   UpdateLocationErrorInterface &
   UpdateSensorErrorInterface &
   UpsertCampaignErrorInterface &
-  UpsertItemVariantErrorInterface & {
+  UpsertItemVariantErrorInterface &
+  UpsertSiteErrorInterface & {
     __typename: 'UniqueValueViolation';
     description: Scalars['String']['output'];
     field: UniqueValueKey;
@@ -10818,6 +11347,17 @@ export type UpdateContactTraceInput = {
 
 export type UpdateContactTraceResponse = ContactTraceNode;
 
+export type UpdateCustomFieldScopeInput = {
+  customFieldId: Scalars['String']['input'];
+  displayMode: CustomFieldNodeDisplayMode;
+};
+
+export type UpdateCustomFieldScopesInput = {
+  /** The scope being configured, e.g. `"item"` or `"inbound_shipment"`. */
+  scope: Scalars['String']['input'];
+  updates: Array<UpdateCustomFieldScopeInput>;
+};
+
 export type UpdateCustomerReturnError = {
   __typename: 'UpdateCustomerReturnError';
   error: UpdateCustomerReturnErrorInterface;
@@ -10830,6 +11370,12 @@ export type UpdateCustomerReturnErrorInterface = {
 export type UpdateCustomerReturnInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Patch of customFields key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
@@ -10949,6 +11495,12 @@ export type UpdateInboundShipmentInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
+  /**
+   * Patch of customFields key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   defaultDonor?: InputMaybe<UpdateDonorInput>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
@@ -11140,6 +11692,12 @@ export type UpdateOutboundShipmentInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   currencyRate?: InputMaybe<Scalars['Float']['input']>;
+  /**
+   * Patch of customFields key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   expectedDeliveryDate?: InputMaybe<NullableDateUpdate>;
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
@@ -11269,6 +11827,18 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
 };
 
 /**
+ * Patch of patient `custom_fields` values. `customFields` must be a JSON object
+ * of `key -> value`; a `null` value clears that key. Keys absent from the patch
+ * are left unchanged.
+ */
+export type UpdatePatientCustomFieldsInput = {
+  customFields: Scalars['JSON']['input'];
+  id: Scalars['String']['input'];
+};
+
+export type UpdatePatientCustomFieldsResponse = PatientNode;
+
+/**
  * All fields in the input object will be used to update the patient record.
  * This means that the caller also has to provide the fields that are not going to change.
  * For example, if the last_name is not provided, the last_name in the patient record will be cleared.
@@ -11317,6 +11887,12 @@ export type UpdatePrescriptionInput = {
   clinicianId?: InputMaybe<NullableStringUpdate>;
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Patch of customFields key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   diagnosisId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   insuranceDiscountAmount?: InputMaybe<Scalars['Float']['input']>;
@@ -11792,6 +12368,12 @@ export enum UpdateStocktakeStatusInput {
 export type UpdateSupplierReturnInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Patch of customFields key -> value (JSON object) merged into the
+   * invoice's custom properties; a `null` value clears that key, keys absent
+   * from the patch are left unchanged.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<UpdateSupplierReturnStatusInput>;
@@ -11827,7 +12409,10 @@ export enum UpdateSupplierReturnStatusInput {
   Shipped = 'SHIPPED',
 }
 
-export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
+export type UpdateSyncSettingsResponse =
+  | SyncErrorNode
+  | SyncErrorV7Node
+  | SyncSettingsNode;
 
 export type UpdateTemperatureBreachInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -11836,22 +12421,6 @@ export type UpdateTemperatureBreachInput = {
 };
 
 export type UpdateTemperatureBreachResponse = TemperatureBreachNode;
-
-export type UpdateUserError = {
-  __typename: 'UpdateUserError';
-  error: UpdateUserErrorInterface;
-};
-
-export type UpdateUserErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type UpdateUserNode = {
-  __typename: 'UpdateUserNode';
-  lastSuccessfulSync?: Maybe<Scalars['DateTime']['output']>;
-};
-
-export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
 export type UpdateVvmStatusLogInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -12040,6 +12609,7 @@ export type UpsertPreferencesInput = {
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
+  doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
   expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
   expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   externalInboundShipmentLinesMustBeAuthorised?: InputMaybe<
@@ -12067,6 +12637,7 @@ export type UpsertPreferencesInput = {
   preventTransfersMonthsBeforeInitialisation?: InputMaybe<
     Scalars['Int']['input']
   >;
+  receivePaymentsFromPrescriptions?: InputMaybe<Scalars['Boolean']['input']>;
   requisitionAutoFinalise?: InputMaybe<Array<BoolStorePrefInput>>;
   secondThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   selectDestinationStoreForAnInternalOrder?: InputMaybe<
@@ -12111,6 +12682,24 @@ export type UpsertStockRelocationLineResponseWithId = {
   id: Scalars['String']['output'];
   response: UpsertStockRelocationLineResponse;
 };
+
+export type UpsertSiteError = {
+  __typename: 'UpsertSiteError';
+  error: UpsertSiteErrorInterface;
+};
+
+export type UpsertSiteErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpsertSiteInput = {
+  code?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  password?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpsertSiteResponse = SiteNode | UpsertSiteError;
 
 export type UpsertVaccineCourseDoseInput = {
   customAgeLabel?: InputMaybe<Scalars['String']['input']>;

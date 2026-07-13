@@ -5,6 +5,7 @@ import {
   InputWithLabelRow,
   BasicTextInput,
   Grid,
+  InvoiceNodeType,
   useTranslation,
   useNavigate,
   RouteBuilder,
@@ -12,6 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { SupplierReturnFragment, useReturns } from '../api';
 import { SupplierSearchInput } from '@openmsupply-client/system';
+import { InvoiceToolbarCustomFields } from '../../common';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const Toolbar: FC = () => {
@@ -21,7 +23,7 @@ export const Toolbar: FC = () => {
 
   const { bufferedState, setBufferedState } =
     useReturns.document.supplierReturn();
-  const { otherParty, theirReference, id, originalShipment } =
+  const { otherParty, theirReference, customFields, id, originalShipment } =
     bufferedState ?? { id: '' };
   const { mutateAsync: updateOtherParty } =
     useReturns.document.updateOtherParty();
@@ -36,15 +38,9 @@ export const Toolbar: FC = () => {
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
-      <Grid
-        container
-        flexDirection="row"
-        display="flex"
-        flex={1}
-        alignItems="flex-end"
-      >
-        <Grid display="flex" flex={1}>
-          <Box display="flex" flex={1} flexDirection="column" gap={1}>
+      <Grid container spacing={2} width="100%" alignItems="flex-start">
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
                 label={t('label.supplier-name')}
@@ -87,6 +83,16 @@ export const Toolbar: FC = () => {
               }
             />
             <DisabledStoreNotice otherParty={otherParty} />
+          </Box>
+        </Grid>
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
+            <InvoiceToolbarCustomFields
+              invoiceType={InvoiceNodeType.SupplierReturn}
+              customFields={customFields}
+              onUpdate={patch => update({ customFields: patch })}
+              disabled={isDisabled}
+            />
           </Box>
         </Grid>
       </Grid>
