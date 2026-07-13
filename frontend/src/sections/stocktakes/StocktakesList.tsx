@@ -13,6 +13,7 @@ import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFoote
 import { Button } from '../../ui/elements/buttons/Button';
 import { DataTable, type Column, type SortState } from '../../ui/elements/table/DataTable';
 import { getBooleanCell, getDateCell, getNumberCell } from '../../ui/elements/table/tableHelpers';
+import { createTableConfig } from '../../api/createTableConfig';
 import { StatusChip } from '../../ui/elements/feedback/StatusChip';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
@@ -66,6 +67,22 @@ const StocktakesList: Component = () => {
   const navigate = useNavigate();
   const { state, setState } = useUrlQueryState<StocktakesListState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+
+  // Column config (order/sizing/pinning/visibility), resolved default → global → user and
+  // by breakpoint band (kdd/table-state). On COMPACT (narrow viewport) the default shows
+  // only #, status, description and stocktake date — comment/created/locked start hidden
+  // to fit; on base (wide) all columns show (no default override). Bands don't share, so
+  // the compact default doesn't touch base. "Show" semantics: only the hidden columns are
+  // listed, as false. (User edits persist to app data; the store's global config can
+  // override.)
+  const tableConfig = createTableConfig({
+    tableId: 'stocktakes',
+    defaultConfig: {
+      compact: {
+        columnVisibility: { comment: false, createdDatetime: false, isLocked: false },
+      },
+    },
+  });
 
   // GraphQL variables, derived straight from URL state + the store in the path.
   // stripEmpty drops added-but-empty filter chips (held as null keys) and any empty
@@ -172,7 +189,8 @@ const StocktakesList: Component = () => {
     {
       accessorKey: 'stocktakeNumber',
       sortKey: 'stocktakeNumber',
-      header: t('stocktake.column.number'),
+      // Language-neutral '#' for the number column (universal symbol; no t() needed).
+      header: '#',
       ...getNumberCell(),
     },
     {
@@ -185,6 +203,7 @@ const StocktakesList: Component = () => {
       accessorKey: 'description',
       sortKey: 'description',
       header: t('stocktake.column.description'),
+      meta: { wrapLines: 2 },
     },
     {
       accessorKey: 'comment',
@@ -226,11 +245,7 @@ const StocktakesList: Component = () => {
             </Button>
           </HeaderButtons>
           <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={state().filter}
-              onChange={onFilterChange}
-            />
+            <FilterBar filters={filterFields()} filter={state().filter} onChange={onFilterChange} />
           </Toolbar>
         </Header>
       }
@@ -278,6 +293,8 @@ const StocktakesList: Component = () => {
         enableSelection
         selectedIds={selectedIds()}
         onSelectionChange={setSelectedIds}
+        config={tableConfig.config()}
+        setConfig={tableConfig.setConfig}
       />
       {/* Delete: a plain "delete N?" confirm; if the atomic batch reports it can't (a
           finalised stocktake in the selection), the same dialog switches to the
@@ -333,7 +350,11 @@ const StocktakesList: Component = () => {
               </Button>
             </Match>
             <Match when={deleteState()?.phase === 'error'}>
-              <Button variant="secondary" icon={<XCircleIcon />} onClick={() => setDeleteState(null)}>
+              <Button
+                variant="secondary"
+                icon={<XCircleIcon />}
+                onClick={() => setDeleteState(null)}
+              >
                 {t('common.cancel')}
               </Button>
             </Match>

@@ -1,6 +1,15 @@
-import { createMemo, createSignal, Show } from 'solid-js';
+import { createMemo, createSignal, For, Show } from 'solid-js';
 import { DataTable, type Column, type SortState } from '../ui/elements/table/DataTable';
 import { getNumberCell } from '../ui/elements/table/tableHelpers';
+import {
+  resolveTableConfig,
+  type Band,
+  type LayeredConfig,
+  type TableConfig,
+  type TableConfigKey,
+} from '../ui/elements/table/tableConfig';
+import { createMediaQuery } from '../ui/utils/createMediaQuery';
+import { mediaQuery } from '../ui/styles/breakpoints';
 import { Pagination } from '../ui/elements/table/Pagination';
 import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
@@ -68,11 +77,46 @@ type SortKey =
   | 'stock'
   | 'price';
 
+// The columns the show/hide toggles cover. `id` is the TanStack column id (= accessorKey);
+// `label` is the header. Kept beside the column defs so the toggle set stays in step.
+const COLUMN_TOGGLES: { id: SortKey; label: string }[] = [
+  { id: 'name', label: 'Item' },
+  { id: 'batch', label: 'Batch' },
+  { id: 'category', label: 'Category' },
+  { id: 'supplier', label: 'Supplier' },
+  { id: 'location', label: 'Location' },
+  { id: 'expiry', label: 'Expiry' },
+  { id: 'stock', label: 'In stock' },
+  { id: 'price', label: 'Unit price' },
+];
+
 export const TableShowcase = () => {
   const [sort, setSort] = createSignal<SortState<SortKey>>({ key: 'name', desc: false });
   const [offset, setOffset] = createSignal(0);
   const [pageSize, setPageSize] = createSignal(20);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+
+  // Local column config, standing in for createTableConfig (which needs store context /
+  // appData the standalone showcase doesn't have). This is a mini-createTableConfig: a
+  // LayeredConfig with a `base` and a `compact` band, resolved against the ACTUAL viewport
+  // via createMediaQuery — exactly like the real thing. The two toolbar checkbox rows edit
+  // each band independently; resize below 600px and the table follows the compact row,
+  // demonstrating that bands don't share.
+  const [layered, setLayered] = createSignal<LayeredConfig>({});
+  const isCompact = createMediaQuery(mediaQuery.compact);
+  const activeBand = (): Band => (isCompact() ? 'compact' : 'base');
+
+  // Resolved config for the active band → DataTable's `config`. Only the user layer here.
+  const tableConfig = () => resolveTableConfig(activeBand(), { user: layered() });
+
+  // setConfig writes the ACTIVE band (DataTable already resolved TanStack's updater to a
+  // value). The checkbox rows below instead target a SPECIFIC band via setBandConfig, so
+  // you can edit compact while viewing base.
+  const setConfig = <K extends TableConfigKey>(key: K, value: TableConfig[K]) =>
+    setBandConfig(activeBand(), key, value);
+
+  const setBandConfig = <K extends TableConfigKey>(band: Band, key: K, value: TableConfig[K]) =>
+    setLayered((current) => ({ ...current, [band]: { ...current[band], [key]: value } }));
 
   // Stand in for the server: sort the whole dataset, then slice the current page.
   const sorted = createMemo(() => {
@@ -97,7 +141,7 @@ export const TableShowcase = () => {
     { accessorKey: 'batch', sortKey: 'batch', header: 'Batch' },
     { accessorKey: 'category', sortKey: 'category', header: 'Category' },
     { accessorKey: 'supplier', sortKey: 'supplier', header: 'Supplier' },
-    { accessorKey: 'location', sortKey: 'location', header: 'Location' },
+    { accessorKey: 'location', sortKey: 'location', header: 'Location', meta: { wrapLines: 2 } },
     { accessorKey: 'expiry', sortKey: 'expiry', header: 'Expiry' },
     { accessorKey: 'stock', sortKey: 'stock', header: 'In stock', ...getNumberCell() },
     {
@@ -121,7 +165,44 @@ export const TableShowcase = () => {
             </Button>
           </HeaderButtons>
           <Toolbar>
-            <span>Filters would go here (this is the DataTable demo page).</span>
+            {/* Column show/hide per BAND — one row for base, one for compact. Each row
+                edits its own band's columnVisibility ("show" semantics: checked = visible;
+                unchecking writes `false`). The table resolves the row matching the current
+                viewport (resize below 600px → it follows the compact row), so the two rows
+                stay independent — bands don't share. The active band is marked. */}
+            <For each={['base', 'compact'] as Band[]}>
+              {(band) => (
+                <div style={{ display: 'flex', gap: 'var(--space-3)', 'align-items': 'center' }}>
+                  <strong style={{ 'min-width': '5rem' }}>
+                    {band === 'base' ? 'Base' : 'Compact'}
+                    {activeBand() === band ? ' (active)' : ''}
+                  </strong>
+                  <For each={COLUMN_TOGGLES}>
+                    {(col) => {
+                      // Reflect THIS band's stored value, not the resolved config.
+                      const visible = () => layered()[band]?.columnVisibility?.[col.id] !== false;
+                      return (
+                        <label
+                          style={{ display: 'inline-flex', gap: 'var(--space-1)', 'align-items': 'center' }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={visible()}
+                            onChange={(e) =>
+                              setBandConfig(band, 'columnVisibility', {
+                                ...layered()[band]?.columnVisibility,
+                                [col.id]: e.currentTarget.checked,
+                              })
+                            }
+                          />
+                          {col.label}
+                        </label>
+                      );
+                    }}
+                  </For>
+                </div>
+              )}
+            </For>
           </Toolbar>
         </Header>
       }
@@ -169,6 +250,8 @@ export const TableShowcase = () => {
         enableSelection
         selectedIds={selectedIds()}
         onSelectionChange={setSelectedIds}
+        config={tableConfig()}
+        setConfig={setConfig}
       />
     </Page>
   );
