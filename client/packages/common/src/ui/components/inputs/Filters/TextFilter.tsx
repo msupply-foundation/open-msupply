@@ -41,6 +41,9 @@ export const TextFilter: FC<{
 
   return (
     <BasicTextInput
+      inputProps={{
+        'data-testid': `filter-input-${filterDefinition.urlParameter}`,
+      }}
       slotProps={{
         input: {
           endAdornment: (
