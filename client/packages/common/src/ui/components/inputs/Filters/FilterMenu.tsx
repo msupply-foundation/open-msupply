@@ -122,7 +122,11 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
     >
       {/* 13px margin to make menu match the individual filter inputs */}
       {showFilterMenu && (
-        <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>
+        <DropdownMenu
+          testId="filters-menu"
+          label={t('label.filters')}
+          sx={{ marginTop: '13px' }}
+        >
           {filterOptions.map(option => (
             <FilterMenuItem
               key={
@@ -224,9 +228,7 @@ const getFilterComponent = (
         />
       );
     case 'enum':
-      return (
-        <EnumFilter key={filter.urlParameter} filterDefinition={filter} />
-      );
+      return <EnumFilter key={filter.urlParameter} filterDefinition={filter} />;
     case 'hierarchicalEnum':
       return (
         <HierarchicalEnumFilter

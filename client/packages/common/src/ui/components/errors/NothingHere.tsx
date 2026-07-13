@@ -22,6 +22,7 @@ export const NothingHere: React.FC<NothingHereProps> = ({
 
   const CreateButton = !!onCreate ? (
     <Button
+      data-testid="nothing-here-create-button"
       sx={{
         textTransform: 'none',
         color: 'secondary.main',

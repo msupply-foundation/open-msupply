@@ -71,12 +71,41 @@ Line-edit ("Add item") modal:
 | `cell-snapshotNumberOfPacks` | snapshot cell (read-only — no input) |
 | `cell-inventoryAdjustmentReasonInput` | reason cell (contains a `role=combobox`) |
 
+## Shared ids (continued): filters, export, selection footer
+
+From common components used by every list view:
+
+| test id | element |
+| --- | --- |
+| `filters-menu` | the "Filters" dropdown that reveals filter inputs |
+| `filter-input-<urlParameter>` | a revealed filter input — parameter verbatim (`filter-input-otherPartyName`, `filter-input-invoiceNumber`, `filter-input-status`, `filter-input-theirReference`) |
+| `export-csv-main` / `-dropdown` | Export CSV split button |
+| `delete-lines-button` | bulk Delete action in the selection footer (list views and detail line tables) |
+| `nothing-here-create-button` | "Create a new one" button inside the empty state |
+| `colour-picker-button` | colour-selector trigger (list rows and detail side panel) |
+
 ## Distribution
 
-`customer-search-modal`, `add-item-modal`, `on-hold-button`,
-`status-change-button-main` / `-dropdown`, `comment-field`,
-`customer-reference-field`, `transport-reference-field` — see
-`e2e/distribution-regression.spec.ts`.
+List views (column ids for `header-` / `cell-`: `otherPartyName`, `status`,
+`invoiceNumber`, `createdDatetime`, `theirReference`, `comment`):
+
+| test id | element |
+| --- | --- |
+| `new-shipment-button` / `new-return-button` / `new-requisition-button` | "New …" buttons on the three list views |
+| `customer-search-modal` | customer picker modal (new shipment / return) |
+| `create-requisition-modal` | new-requisition modal (Program/General tabs) |
+
+Outbound detail view:
+
+| test id | element |
+| --- | --- |
+| `add-item-button` | "Add item" (toolbar); on requisitions it's a split button — `add-item-button-main` / `-dropdown` |
+| `add-item-modal` | the line add/edit modal |
+| `status-change-button-main` / `-dropdown` | Confirm-status split button (outbound + customer-return footers) |
+| `on-hold-button` | Hold toggle (contains the checkbox `<input>`) |
+| `comment-field`, `customer-reference-field`, `transport-reference-field` | side-panel / toolbar inputs |
+| `edit-service-charges-button` | pencil action in the Invoice details panel |
+| `service-charges-modal`, `add-charge-button` | service charges modal + its add action |
 
 ## Non-testid hooks
 
@@ -85,6 +114,9 @@ Also relied on by the suites:
 | hook | element |
 | --- | --- |
 | `#stock-item-search-input` | DOM id on the item-search input |
-| `role=option` | entries in autocomplete popups (item search, reason pickers) |
+| `role=option` / `role=menuitem` | entries in autocomplete and menu popups (item search, reason pickers, filter/status menus) |
 | `tbody tr` | table rows (cells within carry `cell-<columnId>`) |
 | `aria-selected` on `tab-*` | active-tab state |
+| `Go to next page` / `Go to page N` (aria) | MUI pagination buttons inside `table-pagination` |
+| `Close` (aria, exact) | detail-view close button |
+| `aria-label="<colour>"` | swatches inside the colour-picker popover |

@@ -126,6 +126,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: onDelete,
+      testId: 'delete-lines-button',
     },
     {
       label: t('button.allocate-lines'),

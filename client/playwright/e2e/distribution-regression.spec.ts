@@ -11,6 +11,15 @@
  * This spec is intentionally independent of smoke-all-sections.spec.ts.
  * Goal: cover the behaviours listed in the DIST cases, even if duplicated elsewhere.
  *
+ * Selector philosophy — data-testid first (aligned with the stocktake suite).
+ * Every interaction point is located by a `data-testid` documented in
+ * ../TESTIDS.md, so the suite is independent of copy, styling, and component
+ * internals — any front-end that renders those ids can run it unchanged.
+ * Deliberate exceptions (also documented there): `role=option`/`role=menuitem`
+ * entries in popups, `tbody tr` row scoping, the aria-labelled MUI pagination
+ * buttons inside `table-pagination`, the detail-view "Close" button, and
+ * toast/content text assertions (which assert values, not locations).
+ *
  * KNOWN LIMITATION — large datasets: the tests that add a shipment line
  * (DIST-03.* line management and DIST-04.* processing workflow, via
  * addLineToShipment/pickItemWithStock) drive the Add Item picker, which is
@@ -52,13 +61,9 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.goto('/distribution/outbound-shipment', {
         waitUntil: 'networkidle',
       });
-      await expect(
-        page.getByRole('button', { name: /New Shipment/i })
-      ).toBeVisible();
-      await expect(
-        page.getByRole('columnheader', { name: /Status/i }).first()
-      ).toBeVisible();
-      await expect(page.getByText(/Rows per page/i).first()).toBeVisible();
+      await expect(page.getByTestId('new-shipment-button')).toBeVisible();
+      await expect(page.getByTestId('header-status')).toBeVisible();
+      await expect(page.getByTestId('table-pagination')).toBeVisible();
     }
   );
 
@@ -75,20 +80,19 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       // The Name (customer) cell also contains a "Select a colour" button before
       // the text, so we strip that label out.
-      const nameColumn = await getColumnIndex(page, 'Name');
-      const customerCell = firstRow.locator('td').nth(nameColumn);
+      const customerCell = firstRow.getByTestId('cell-otherPartyName');
       const customerName = ((await customerCell.textContent()) ?? '')
         .replace(/Select a colour/i, '')
         .trim();
       expect(customerName.length).toBeGreaterThan(0);
 
       // Search isn't visible by default — open the Filters dropdown and pick
-      // "Name" to reveal a "Search by name" textbox.
-      await page.getByRole('combobox', { name: /Filters/i }).click();
+      // "Name" to reveal the name filter input.
+      await page.getByTestId('filters-menu').click();
       // Items are role="menuitem" in this MUI Select, not "option".
       await page.getByRole('menuitem', { name: 'Name', exact: true }).click();
 
-      const searchBox = page.getByPlaceholder(/Search by name/i);
+      const searchBox = page.getByTestId('filter-input-otherPartyName');
       await expect(searchBox).toBeVisible();
 
       const term = customerName.split(/\s+/)[0]!;
@@ -113,7 +117,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // table re-rendering as filter results stream in.
       await expect(async () => {
         const names = await page
-          .locator(`tbody tr td:nth-child(${nameColumn + 1})`)
+          .getByTestId('cell-otherPartyName')
           .allTextContents();
         expect(names.length).toBeGreaterThan(0);
         for (const raw of names) {
@@ -135,7 +139,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.goto('/distribution/outbound-shipment', {
         waitUntil: 'networkidle',
       });
-      await page.getByRole('button', { name: /New Shipment/i }).click();
+      await page.getByTestId('new-shipment-button').click();
       const customerDialog = page.getByTestId('customer-search-modal');
       await expect(customerDialog).toBeVisible();
       await customerDialog.locator('input[role="combobox"]').first().click();
@@ -163,22 +167,18 @@ test.describe('Distribution: Outbound Shipments', () => {
       const targetRow = page
         .locator('tbody tr')
         .filter({
-          has: page.locator('td', {
+          has: page.getByTestId('cell-invoiceNumber').filter({
             hasText: numberCell(invoiceNumber),
           }),
         })
         .first();
       await expect(targetRow).toBeVisible();
 
-      // Tick the row checkbox (cell index 0).
-      await targetRow.locator('input[type="checkbox"]').check();
+      await targetRow.getByTestId('select-row-checkbox').check();
 
       // A bulk-action footer appears at the bottom of the list once a row is
-      // selected. Click its Delete button. (The md mentions a "Select dropdown"
-      // but the UI uses a footer pattern instead.)
-      const deleteAction = page
-        .getByRole('button', { name: /Delete/i })
-        .first();
+      // selected. Click its Delete action.
+      const deleteAction = page.getByTestId('delete-lines-button');
       await expect(deleteAction).toBeVisible({ timeout: 3000 });
       await deleteAction.click();
 
@@ -192,13 +192,11 @@ test.describe('Distribution: Outbound Shipments', () => {
       // The row should be gone. Re-query the list to verify.
       await page.waitForLoadState('networkidle');
       await expect(
-        page
-          .locator('tbody tr')
-          .filter({
-            has: page.locator('td', {
-              hasText: numberCell(invoiceNumber),
-            }),
-          })
+        page.locator('tbody tr').filter({
+          has: page.getByTestId('cell-invoiceNumber').filter({
+            hasText: numberCell(invoiceNumber),
+          }),
+        })
       ).toHaveCount(0, { timeout: 5000 });
     }
   );
@@ -211,9 +209,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         waitUntil: 'networkidle',
       });
 
-      const exportButton = page
-        .getByRole('button', { name: /Export/i })
-        .first();
+      const exportButton = page.getByTestId('export-csv-main');
       await expect(exportButton).toBeVisible();
 
       const downloadPromise = page.waitForEvent('download', { timeout: 10000 });
@@ -247,7 +243,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.goto('/distribution/outbound-shipment', {
         waitUntil: 'networkidle',
       });
-      await page.getByRole('button', { name: /New Shipment/i }).click();
+      await page.getByTestId('new-shipment-button').click();
       const customerDialog = page.getByTestId('customer-search-modal');
       await expect(customerDialog).toBeVisible();
       await customerDialog.locator('input[role="combobox"]').first().click();
@@ -268,9 +264,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         const operator = process.env['PW_USERNAME'] ?? 'admin';
         await expect(sidebar.getByText(operator)).toBeVisible();
         await expect(sidebar.getByText('Created')).toBeVisible();
-        await expect(
-          sidebar.getByRole('button', { name: /Select a colour/i })
-        ).toBeVisible();
+        await expect(sidebar.getByTestId('colour-picker-button')).toBeVisible();
         await expect(sidebar.getByText('Comment')).toBeVisible();
       });
 
@@ -289,7 +283,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         await expect(sidebar.getByText('Items sell price')).toBeVisible();
         await expect(sidebar.getByText('Grand total')).toBeVisible();
         await expect(
-          sidebar.getByRole('button', { name: /Edit service charges/i })
+          sidebar.getByTestId('edit-service-charges-button')
         ).toBeVisible();
       });
 
@@ -339,9 +333,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await openSidebar(page);
 
       const sidebar = page.getByTestId('detail-panel');
-      const colourButton = sidebar.getByRole('button', {
-        name: /Select a colour/i,
-      });
+      const colourButton = sidebar.getByTestId('colour-picker-button');
       await expect(colourButton).toBeVisible();
       await colourButton.click();
 
@@ -372,19 +364,17 @@ test.describe('Distribution: Outbound Shipments', () => {
       await openSidebar(page);
 
       const sidebar = page.getByTestId('detail-panel');
-      const editButton = sidebar.getByRole('button', {
-        name: /Edit service charges/i,
-      });
+      const editButton = sidebar.getByTestId('edit-service-charges-button');
       await expect(editButton).toBeVisible();
       await editButton.click();
 
-      const modal = page.getByRole('dialog', { name: /Service charges/i });
+      const modal = page.getByTestId('service-charges-modal');
       await expect(modal).toBeVisible();
 
       // Add charge is disabled when no default service item is configured for
       // the store (OutboundServiceLineEdit: `disabled={isDisabled || !defaultServiceItem}`).
       // Skip rather than fail — the datafile, not the code, controls this.
-      const addCharge = modal.getByRole('button', { name: /Add charge/i });
+      const addCharge = modal.getByTestId('add-charge-button');
       const addEnabled = await addCharge
         .isEnabled({ timeout: 3000 })
         .catch(() => false);
@@ -410,10 +400,8 @@ test.describe('Distribution: Outbound Shipments', () => {
       await expect(modal).toBeHidden();
 
       // Re-open the modal — the saved row should still be there.
-      await sidebar
-        .getByRole('button', { name: /Edit service charges/i })
-        .click();
-      const reopened = page.getByRole('dialog', { name: /Service charges/i });
+      await sidebar.getByTestId('edit-service-charges-button').click();
+      const reopened = page.getByTestId('service-charges-modal');
       await expect(reopened).toBeVisible();
       await expect(reopened.locator('tbody tr')).toHaveCount(1, {
         timeout: 3000,
@@ -431,7 +419,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.goto('/distribution/outbound-shipment', {
         waitUntil: 'networkidle',
       });
-      await page.getByRole('button', { name: /New Shipment/i }).click();
+      await page.getByTestId('new-shipment-button').click();
       const customerDialog = page.getByTestId('customer-search-modal');
       await expect(customerDialog).toBeVisible();
       await customerDialog.locator('input[role="combobox"]').first().click();
@@ -441,10 +429,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       // Add a line with stock — same flow as the happy path.
-      await page
-        .getByRole('button', { name: /Add Item/i })
-        .first()
-        .click();
+      await page.getByTestId('add-item-button').click();
       const addItemDialog = page.getByTestId('add-item-modal');
       await expect(addItemDialog).toBeVisible();
       await pickItemWithStock(page, addItemDialog);
@@ -465,13 +450,13 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       // Advance: Allocated → Picked.
       await clickConfirmAndWait(page, /Confirm Allocated/i);
-      await expect(
-        page.getByRole('button', { name: /Confirm Picked/i })
-      ).toBeVisible();
+      await expect(page.getByTestId('status-change-button-main')).toContainText(
+        /Confirm Picked/i
+      );
       await clickConfirmAndWait(page, /Confirm Picked/i);
-      await expect(
-        page.getByRole('button', { name: /Confirm Shipped/i })
-      ).toBeVisible();
+      await expect(page.getByTestId('status-change-button-main')).toContainText(
+        /Confirm Shipped/i
+      );
 
       // Enable Hold via confirmation dialog. Wait for the checkbox to reflect
       // the new state so the next click sees onHold=true in React state.
@@ -498,7 +483,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // accept the hold check fires the info toast (server-side rejection
       // because onHold=true on the saved record).
       await page.mouse.move(0, 0);
-      await page.getByRole('button', { name: /Confirm Shipped/i }).click();
+      await page.getByTestId('status-change-button-main').click();
 
       const confirmStatus = page.getByTestId('confirmation-modal');
       if (await confirmStatus.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -518,13 +503,10 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       await toastPromise;
 
-      // Status didn't advance — button is still Confirm Shipped, Delivered never appears.
-      await expect(
-        page.getByRole('button', { name: /Confirm Shipped/i })
-      ).toBeVisible();
-      await expect(
-        page.getByRole('button', { name: /Confirm Delivered/i })
-      ).toHaveCount(0);
+      // Status didn't advance — the confirm button still offers Shipped.
+      await expect(page.getByTestId('status-change-button-main')).toContainText(
+        /Confirm Shipped/i
+      );
     }
   );
 
@@ -538,9 +520,10 @@ test.describe('Distribution: Outbound Shipments', () => {
         waitUntil: 'networkidle',
       });
 
-      const rowsCombobox = page.getByRole('combobox', {
-        name: /Rows per page/i,
-      });
+      const rowsCombobox = page
+        .getByTestId('table-pagination')
+        .getByRole('combobox')
+        .first();
       await expect(rowsCombobox).toBeVisible();
 
       // Open the dropdown and pick a different size.
@@ -567,13 +550,11 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       // Grab a real invoice number from the first row to search for.
-      const numberColumn = await getColumnIndex(page, 'Number');
       const firstNumber = (
         (await page
           .locator('tbody tr')
           .first()
-          .locator('td')
-          .nth(numberColumn)
+          .getByTestId('cell-invoiceNumber')
           .textContent()) ?? ''
       ).trim();
       // The cell is formatted with a thousands separator (e.g. "2,210"); the
@@ -582,16 +563,12 @@ test.describe('Distribution: Outbound Shipments', () => {
       expect(searchNumber).toMatch(/^\d+$/);
 
       // Open Filters → pick Invoice number → enter the number.
-      await page.getByRole('combobox', { name: /Filters/i }).click();
+      await page.getByTestId('filters-menu').click();
       await page
         .getByRole('menuitem', { name: 'Invoice number', exact: true })
         .click();
 
-      // The field has accessible name "Invoice number" (no placeholder).
-      const numberInput = page.getByRole('textbox', {
-        name: 'Invoice number',
-        exact: true,
-      });
+      const numberInput = page.getByTestId('filter-input-invoiceNumber');
       await expect(numberInput).toBeVisible();
 
       // Wait for the debounced filter request before asserting on rows.
@@ -608,7 +585,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // Use toHaveCount which polls until the UI re-renders.
       await expect(page.locator('tbody tr')).toHaveCount(1, { timeout: 5000 });
       await expect(
-        page.locator('tbody tr').first().locator('td').nth(numberColumn)
+        page.locator('tbody tr').first().getByTestId('cell-invoiceNumber')
       ).toContainText(firstNumber);
     }
   );
@@ -633,15 +610,12 @@ test.describe('Distribution: Outbound Shipments', () => {
         'Fewer than 21 shipments in the list — skipping pagination test'
       );
 
-      const numberColumn = await getColumnIndex(page, 'Number');
-
       // Capture the first row's invoice number on page 1.
       const firstRowNumberPage1 = (
         (await page
           .locator('tbody tr')
           .first()
-          .locator('td')
-          .nth(numberColumn)
+          .getByTestId('cell-invoiceNumber')
           .textContent()) ?? ''
       ).trim();
 
@@ -658,8 +632,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         (await page
           .locator('tbody tr')
           .first()
-          .locator('td')
-          .nth(numberColumn)
+          .getByTestId('cell-invoiceNumber')
           .textContent()) ?? ''
       ).trim();
       expect(firstRowNumberPage2).not.toBe(firstRowNumberPage1);
@@ -677,7 +650,6 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       // Find a row that has non-empty reference.
-      const referenceColumn = await getColumnIndex(page, 'Reference');
       const rows = page.locator('tbody tr');
       const rowCount = await rows.count();
       let referenceText: string | null = null;
@@ -685,8 +657,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         const ref = (
           (await rows
             .nth(i)
-            .locator('td')
-            .nth(referenceColumn)
+            .getByTestId('cell-theirReference')
             .textContent()) ?? ''
         ).trim();
         if (ref.length > 0) {
@@ -699,15 +670,12 @@ test.describe('Distribution: Outbound Shipments', () => {
         'No shipment with a reference in the visible page — skipping'
       );
 
-      await page.getByRole('combobox', { name: /Filters/i }).click();
+      await page.getByTestId('filters-menu').click();
       await page
         .getByRole('menuitem', { name: 'Reference', exact: true })
         .click();
 
-      const refInput = page.getByRole('textbox', {
-        name: 'Reference',
-        exact: true,
-      });
+      const refInput = page.getByTestId('filter-input-theirReference');
       await expect(refInput).toBeVisible();
 
       const filterRequest = page.waitForRequest(
@@ -721,7 +689,7 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       // Every visible row's Reference cell should contain the searched text.
       await expect(
-        rows.first().locator('td').nth(referenceColumn)
+        rows.first().getByTestId('cell-theirReference')
       ).toContainText(referenceText!);
     }
   );
@@ -734,14 +702,11 @@ test.describe('Distribution: Outbound Shipments', () => {
         waitUntil: 'networkidle',
       });
 
-      await page.getByRole('combobox', { name: /Filters/i }).click();
+      await page.getByTestId('filters-menu').click();
       await page.getByRole('menuitem', { name: 'Status', exact: true }).click();
 
-      // A second combobox appears for the Status value. Open it and pick "New".
-      const statusFilter = page.getByRole('combobox', {
-        name: 'Status',
-        exact: true,
-      });
+      // A second select appears for the Status value. Open it and pick "New".
+      const statusFilter = page.getByTestId('filter-input-status');
       await expect(statusFilter).toBeVisible();
       await statusFilter.click();
 
@@ -770,10 +735,9 @@ test.describe('Distribution: Outbound Shipments', () => {
       await expect(page.getByRole('listbox')).toBeHidden({ timeout: 3000 });
 
       // Every visible row should now have status "New".
-      const statusColumn = await getColumnIndex(page, 'Status');
       await expect(async () => {
         const statuses = await page
-          .locator(`tbody tr td:nth-child(${statusColumn + 1})`)
+          .getByTestId('cell-status')
           .allTextContents();
         expect(statuses.length).toBeGreaterThan(0);
         for (const raw of statuses) {
@@ -801,13 +765,11 @@ test.describe('Distribution: Outbound Shipments', () => {
         .catch(() => false);
       test.skip(!hasPage2, 'Fewer than 21 shipments — skipping');
 
-      const numberColumn = await getColumnIndex(page, 'Number');
       const firstNumberOnPage1 = (
         (await page
           .locator('tbody tr')
           .first()
-          .locator('td')
-          .nth(numberColumn)
+          .getByTestId('cell-invoiceNumber')
           .textContent()) ?? ''
       ).trim();
 
@@ -822,8 +784,7 @@ test.describe('Distribution: Outbound Shipments', () => {
         (await page
           .locator('tbody tr')
           .first()
-          .locator('td')
-          .nth(numberColumn)
+          .getByTestId('cell-invoiceNumber')
           .textContent()) ?? ''
       ).trim();
       expect(firstNumberOnPage2).not.toBe(firstNumberOnPage1);
@@ -854,22 +815,19 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page
         .locator('tbody tr')
         .nth(0)
-        .locator('input[type="checkbox"]')
+        .getByTestId('select-row-checkbox')
         .check();
       await page
         .locator('tbody tr')
         .nth(1)
-        .locator('input[type="checkbox"]')
+        .getByTestId('select-row-checkbox')
         .check();
 
       // Footer should say "2 Selected".
-      await expect(page.getByText(/2 Selected/i)).toBeVisible();
+      await expect(page.getByTestId('selected-rows-count')).toContainText('2');
 
       // Click Delete in the bulk-action footer.
-      await page
-        .getByRole('button', { name: /^Delete$/i })
-        .first()
-        .click();
+      await page.getByTestId('delete-lines-button').click();
 
       const confirmDialog = page.getByTestId('confirmation-modal');
       await expect(confirmDialog).toBeVisible({ timeout: 3000 });
@@ -879,7 +837,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await expect(confirmDialog).toBeHidden();
 
       // Selection footer should be gone (no more selected rows).
-      await expect(page.getByText(/2 Selected/i)).toHaveCount(0);
+      await expect(page.getByTestId('selected-rows-count')).toHaveCount(0);
     }
   );
 
@@ -892,22 +850,21 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       // Find a row whose Status cell is "Shipped".
-      const statusColumn = await getColumnIndex(page, 'Status');
-      const numberColumn = await getColumnIndex(page, 'Number');
       const rows = page.locator('tbody tr');
       const rowCount = await rows.count();
       let shippedRow = -1;
       let invoiceNumber = '';
       for (let i = 0; i < rowCount; i++) {
         const status = (
-          (await rows.nth(i).locator('td').nth(statusColumn).textContent()) ??
-          ''
+          (await rows.nth(i).getByTestId('cell-status').textContent()) ?? ''
         ).trim();
         if (status.toLowerCase() === 'shipped') {
           shippedRow = i;
           invoiceNumber = (
-            (await rows.nth(i).locator('td').nth(numberColumn).textContent()) ??
-            ''
+            (await rows
+              .nth(i)
+              .getByTestId('cell-invoiceNumber')
+              .textContent()) ?? ''
           ).trim();
           break;
         }
@@ -917,8 +874,8 @@ test.describe('Distribution: Outbound Shipments', () => {
         'No Shipped shipment in the visible page — skipping'
       );
 
-      await rows.nth(shippedRow).locator('input[type="checkbox"]').check();
-      await expect(page.getByText(/1 Selected/i)).toBeVisible();
+      await rows.nth(shippedRow).getByTestId('select-row-checkbox').check();
+      await expect(page.getByTestId('selected-rows-count')).toContainText('1');
 
       // Listen for the rejection toast BEFORE clicking — it appears briefly
       // and auto-dismisses. The app skips the "Are you sure?" dialog entirely
@@ -931,23 +888,18 @@ test.describe('Distribution: Outbound Shipments', () => {
         timeout: 5000,
       });
 
-      await page
-        .getByRole('button', { name: /^Delete$/i })
-        .first()
-        .click();
+      await page.getByTestId('delete-lines-button').click();
 
       await toastPromise;
 
       // Row still present — Shipped shipments are not deletable per the md
       // ("You can only delete outbound shipments with statuses New, Allocated or Picked").
       await expect(
-        page
-          .locator('tbody tr')
-          .filter({
-            has: page.locator('td', {
-              hasText: new RegExp(`^${invoiceNumber}$`),
-            }),
-          })
+        page.locator('tbody tr').filter({
+          has: page.getByTestId('cell-invoiceNumber').filter({
+            hasText: new RegExp(`^${invoiceNumber}$`),
+          }),
+        })
       ).toHaveCount(1);
     }
   );
@@ -985,12 +937,13 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       await test.step('Log tab loads without error', async () => {
-        await page.getByRole('tab', { name: 'Log' }).click();
+        await page.getByTestId('tab-log').click();
         // Tab panel content should render — just smoke-check that the page
         // didn't crash and the tab shows as selected.
-        await expect(
-          page.getByRole('tab', { name: 'Log', selected: true })
-        ).toBeVisible();
+        await expect(page.getByTestId('tab-log')).toHaveAttribute(
+          'aria-selected',
+          'true'
+        );
       });
 
       await test.step('Close button returns to the list', async () => {
@@ -1001,9 +954,7 @@ test.describe('Distribution: Outbound Shipments', () => {
           .getByRole('button', { name: 'Close', exact: true })
           .first()
           .click();
-        await expect(
-          page.getByRole('button', { name: /New Shipment/i })
-        ).toBeVisible({
+        await expect(page.getByTestId('new-shipment-button')).toBeVisible({
           timeout: 5000,
         });
       });
@@ -1018,10 +969,7 @@ test.describe('Distribution: Outbound Shipments', () => {
     async ({ page }) => {
       await createNewShipment(page);
 
-      await page
-        .getByRole('button', { name: /Add Item/i })
-        .first()
-        .click();
+      await page.getByTestId('add-item-button').click();
       const addItemModal = page.getByTestId('add-item-modal');
       await expect(addItemModal).toBeVisible();
 
@@ -1088,10 +1036,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       // (approx — no dedicated 'line added' behaviour; nearest is Add Item).
       await createNewShipment(page);
 
-      await page
-        .getByRole('button', { name: /Add Item/i })
-        .first()
-        .click();
+      await page.getByTestId('add-item-button').click();
       const addItemModal = page.getByTestId('add-item-modal');
       await expect(addItemModal).toBeVisible();
 
@@ -1153,31 +1098,25 @@ test.describe('Distribution: Outbound Shipments', () => {
       // checkbox sits beneath an overlay).
       const rowCheckbox = rows
         .first()
-        .locator('input[type="checkbox"]')
+        .getByTestId('select-row-checkbox')
         .first();
       await rowCheckbox.click({ force: true });
 
-      // The actions footer mounts only when selection > 0. Look for the
-      // "Selected" count and the Delete action together.
-      await expect(page.getByText(/1\s+Selected/i)).toBeVisible({
+      // The actions footer mounts only when selection > 0.
+      await expect(page.getByTestId('selected-rows-count')).toContainText('1', {
         timeout: 3000,
       });
 
-      // The Delete in the footer is labelled "Delete" (button.delete-lines).
-      await page
-        .getByRole('button', { name: /^Delete$/i })
-        .first()
-        .click();
+      await page.getByTestId('delete-lines-button').click();
 
       const confirmModal = page.getByTestId('confirmation-modal');
       await expect(confirmModal).toBeVisible({ timeout: 3000 });
       await page.getByTestId('confirmation-modal-ok').click();
       await expect(confirmModal).toBeHidden();
 
-      // After delete: lines table shows the empty-state row ("Nothing here").
-      // tbody still has rows (the empty state itself), so check for that text
-      // rather than row count.
-      await expect(page.getByText(/Nothing here/i)).toBeVisible({
+      // After delete: lines table shows the empty state. tbody still has rows
+      // (the empty state itself), so check for that rather than row count.
+      await expect(page.getByTestId('nothing-here')).toBeVisible({
         timeout: 5000,
       });
     }
@@ -1194,14 +1133,12 @@ test.describe('Distribution: Outbound Shipments', () => {
         waitUntil: 'networkidle',
       });
 
-      const statusColumn = await getColumnIndex(page, 'Status');
       const rows = page.locator('tbody tr');
       const rowCount = await rows.count();
       let shippedRow = -1;
       for (let i = 0; i < rowCount; i++) {
         const status = (
-          (await rows.nth(i).locator('td').nth(statusColumn).textContent()) ??
-          ''
+          (await rows.nth(i).getByTestId('cell-status').textContent()) ?? ''
         )
           .trim()
           .toLowerCase();
@@ -1254,7 +1191,9 @@ test.describe('Distribution: Outbound Shipments', () => {
         .first()
         .click();
       await page.mouse.move(0, 0);
-      await page.getByRole('button', { name: /Confirm Shipped/i }).click();
+      const confirmMain = page.getByTestId('status-change-button-main');
+      await expect(confirmMain).toContainText(/Confirm Shipped/i);
+      await confirmMain.click();
 
       // A "Confirm status as Shipped?" dialog appears — accept it.
       const confirmStatus = page.getByTestId('confirmation-modal');
@@ -1272,14 +1211,13 @@ test.describe('Distribution: Outbound Shipments', () => {
         }
       }
 
-      // Status advanced past Picked directly to Shipped: the next confirm
-      // button should be Confirm Delivered (or none if Shipped is the last
-      // store-owned status).
+      // Status advanced past Picked directly to Shipped: no confirm button
+      // offering Allocated or Picked remains (on Shipped the status button
+      // can disappear entirely — count, don't assert existence).
       await expect(
-        page.getByRole('button', { name: /Confirm Allocated/i })
-      ).toHaveCount(0);
-      await expect(
-        page.getByRole('button', { name: /Confirm Picked/i })
+        page
+          .getByTestId('status-change-button-main')
+          .filter({ hasText: /Confirm (Allocated|Picked)/i })
       ).toHaveCount(0);
     }
   );
@@ -1291,9 +1229,9 @@ test.describe('Distribution: Outbound Shipments', () => {
       await createNewShipment(page);
       await addLineToShipment(page);
       await clickConfirmAndWait(page, /Confirm Allocated/i);
-      await expect(
-        page.getByRole('button', { name: /Confirm Picked/i })
-      ).toBeVisible();
+      await expect(page.getByTestId('status-change-button-main')).toContainText(
+        /Confirm Picked/i
+      );
 
       // Enable Hold.
       const holdButton = page.getByTestId('on-hold-button');
@@ -1315,7 +1253,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       });
 
       await page.mouse.move(0, 0);
-      await page.getByRole('button', { name: /Confirm Picked/i }).click();
+      await page.getByTestId('status-change-button-main').click();
 
       const confirmStatus = page.getByTestId('confirmation-modal');
       if (await confirmStatus.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -1334,12 +1272,9 @@ test.describe('Distribution: Outbound Shipments', () => {
       }
 
       await toastPromise;
-      await expect(
-        page.getByRole('button', { name: /Confirm Picked/i })
-      ).toBeVisible();
-      await expect(
-        page.getByRole('button', { name: /Confirm Shipped/i })
-      ).toHaveCount(0);
+      await expect(page.getByTestId('status-change-button-main')).toContainText(
+        /Confirm Picked/i
+      );
     }
   );
 
@@ -1350,9 +1285,9 @@ test.describe('Distribution: Outbound Shipments', () => {
       await createNewShipment(page);
       await addLineToShipment(page);
       await clickConfirmAndWait(page, /Confirm Allocated/i);
-      await expect(
-        page.getByRole('button', { name: /Confirm Picked/i })
-      ).toBeVisible();
+      await expect(page.getByTestId('status-change-button-main')).toContainText(
+        /Confirm Picked/i
+      );
 
       const holdButton = page.getByTestId('on-hold-button');
       const holdCheckbox = holdButton.locator('input[type="checkbox"]');
@@ -1375,9 +1310,9 @@ test.describe('Distribution: Outbound Shipments', () => {
 
       // Now status advance should work.
       await clickConfirmAndWait(page, /Confirm Picked/i);
-      await expect(
-        page.getByRole('button', { name: /Confirm Shipped/i })
-      ).toBeVisible();
+      await expect(page.getByTestId('status-change-button-main')).toContainText(
+        /Confirm Shipped/i
+      );
     }
   );
 
@@ -1419,12 +1354,10 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.goto('/distribution/outbound-shipment', {
         waitUntil: 'networkidle',
       });
-      await expect(
-        page.getByRole('button', { name: /New Shipment/i })
-      ).toBeVisible();
+      await expect(page.getByTestId('new-shipment-button')).toBeVisible();
 
       // ─── Create a new shipment ───────────────────────────────────────────────
-      await page.getByRole('button', { name: /New Shipment/i }).click();
+      await page.getByTestId('new-shipment-button').click();
 
       // Customer selection modal
       const customerDialog = page.getByTestId('customer-search-modal');
@@ -1445,10 +1378,7 @@ test.describe('Distribution: Outbound Shipments', () => {
       await page.waitForURL(/\/distribution\/outbound-shipment\/[^/]+/, {
         timeout: 10000,
       });
-      // Two "Add item" buttons exist (toolbar + empty-state row) — use the toolbar one.
-      const addItemButton = page
-        .getByRole('button', { name: /Add Item/i })
-        .first();
+      const addItemButton = page.getByTestId('add-item-button');
       await expect(addItemButton).toBeVisible();
 
       // ─── Add a line: pick first item, accept default issue quantity ──────────
@@ -1520,7 +1450,7 @@ test.describe('Distribution: Customer Returns', () => {
         waitUntil: 'networkidle',
       });
 
-      await page.getByRole('button', { name: /New return/i }).click();
+      await page.getByTestId('new-return-button').click();
 
       // CustomerSearchModal mounts — pick the first customer in the autocomplete.
       const customerDialog = page.getByTestId('customer-search-modal');
@@ -1539,13 +1469,9 @@ test.describe('Distribution: Customer Returns', () => {
       await expect(
         page.getByText(/This return was created manually/i)
       ).toBeVisible({ timeout: 10000 });
-      await expect(
-        page
-          .getByRole('button', {
-            name: /^Confirm (Received|Delivered|Verified)/i,
-          })
-          .first()
-      ).toBeVisible();
+      await expect(page.getByTestId('status-change-button-main')).toContainText(
+        /Confirm (Received|Delivered|Verified)/i
+      );
     }
   );
 
@@ -1560,13 +1486,9 @@ test.describe('Distribution: Customer Returns', () => {
         waitUntil: 'networkidle',
       });
 
-      await expect(
-        page.getByRole('button', { name: /New return/i })
-      ).toBeVisible();
-      await expect(
-        page.getByRole('columnheader', { name: /Status/i }).first()
-      ).toBeVisible();
-      await expect(page.getByText(/Rows per page/i).first()).toBeVisible();
+      await expect(page.getByTestId('new-return-button')).toBeVisible();
+      await expect(page.getByTestId('header-status')).toBeVisible();
+      await expect(page.getByTestId('table-pagination')).toBeVisible();
     }
   );
 });
@@ -1582,13 +1504,9 @@ test.describe('Distribution: Customer Requisitions', () => {
         waitUntil: 'networkidle',
       });
 
-      await expect(
-        page.getByRole('button', { name: /New requisition/i })
-      ).toBeVisible();
-      await expect(
-        page.getByRole('columnheader', { name: /Status/i }).first()
-      ).toBeVisible();
-      await expect(page.getByText(/Rows per page/i).first()).toBeVisible();
+      await expect(page.getByTestId('new-requisition-button')).toBeVisible();
+      await expect(page.getByTestId('header-status')).toBeVisible();
+      await expect(page.getByTestId('table-pagination')).toBeVisible();
     }
   );
 
@@ -1601,16 +1519,14 @@ test.describe('Distribution: Customer Requisitions', () => {
         waitUntil: 'networkidle',
       });
 
-      await page.getByRole('button', { name: /New requisition/i }).click();
+      await page.getByTestId('new-requisition-button').click();
 
       // CreateRequisitionModal opens. If any customer has program-requisition
       // settings the dialog shows two tabs (Program + General); otherwise it's
       // just the General customer-search. Switch to General if the Program tab
       // is the default — General auto-creates when a customer is picked, no
       // Create button required.
-      const newRequisitionModal = page.getByRole('dialog', {
-        name: /New requisition/i,
-      });
+      const newRequisitionModal = page.getByTestId('create-requisition-modal');
       await expect(newRequisitionModal).toBeVisible({ timeout: 5000 });
 
       const generalTab = newRequisitionModal.getByRole('tab', {
@@ -1632,11 +1548,9 @@ test.describe('Distribution: Customer Requisitions', () => {
         timeout: 10000,
       });
 
-      // Manual requisition: Add Item button should be ENABLED (auto-generated
-      // ones have it disabled per wiki).
-      await expect(
-        page.getByRole('button', { name: /Add item/i }).first()
-      ).toBeEnabled({
+      // Manual requisition: Add Item (the main half of the split button)
+      // should be ENABLED (auto-generated ones have it disabled per wiki).
+      await expect(page.getByTestId('add-item-button-main')).toBeEnabled({
         timeout: 10000,
       });
     }
@@ -1676,7 +1590,7 @@ async function createNewShipment(page: Page): Promise<string> {
   await page.goto('/distribution/outbound-shipment', {
     waitUntil: 'networkidle',
   });
-  await page.getByRole('button', { name: /New Shipment/i }).click();
+  await page.getByTestId('new-shipment-button').click();
   const customerDialog = page.getByTestId('customer-search-modal');
   await expect(customerDialog).toBeVisible();
   await customerDialog.locator('input[role="combobox"]').first().click();
@@ -1692,10 +1606,7 @@ async function createNewShipment(page: Page): Promise<string> {
  * and confirm. Caller must already be on the shipment detail view.
  */
 async function addLineToShipment(page: Page) {
-  await page
-    .getByRole('button', { name: /Add Item/i })
-    .first()
-    .click();
+  await page.getByTestId('add-item-button').click();
   const addItemDialog = page.getByTestId('add-item-modal');
   await expect(addItemDialog).toBeVisible();
   await pickItemWithStock(page, addItemDialog);
@@ -1766,28 +1677,6 @@ async function pickItemWithStock(
 }
 
 /**
- * Resolve a column's zero-based index by its header text. Lets tests refer to
- * columns by name so reordering them in the UI doesn't break assertions.
- *
- * Headers in this app render as e.g. "Name Sort by Name ascending Column
- * Actions" (label + sort hint + column-actions menu), so we match on the
- * start of the header rather than exact equality.
- */
-async function getColumnIndex(page: Page, headerText: string): Promise<number> {
-  const headers = page.getByRole('columnheader');
-  const count = await headers.count();
-  if (count === 0) throw new Error('No column headers found in table');
-  const needle = headerText.toLowerCase();
-  for (let i = 0; i < count; i++) {
-    const text = ((await headers.nth(i).textContent()) ?? '')
-      .trim()
-      .toLowerCase();
-    if (text === needle || text.startsWith(needle)) return i;
-  }
-  throw new Error(`Column header "${headerText}" not found`);
-}
-
-/**
  * Fill a debounced text field on the shipment detail view, wait for the
  * updateOutboundShipment mutation to fire, then reload via the shipment URL
  * and assert the value persisted.
@@ -1817,11 +1706,15 @@ async function assertFieldPersistsAcrossReload(
  * Click a footer confirm button and wait for the resulting network/render to settle.
  * Some confirm actions show a confirmation dialog — accept it if present.
  */
-async function clickConfirmAndWait(page: Page, nameRegex: RegExp) {
+async function clickConfirmAndWait(page: Page, labelRegex: RegExp) {
   // Move mouse away from the status sequence first — hovering it shows a
   // status-history tooltip that overlays the Confirm button and blocks clicks.
   await page.mouse.move(0, 0);
-  await page.getByRole('button', { name: nameRegex }).first().click();
+  // The confirm control is the status split-button; assert its label names
+  // the expected transition before clicking.
+  const confirmButton = page.getByTestId('status-change-button-main');
+  await expect(confirmButton).toContainText(labelRegex);
+  await confirmButton.click();
 
   // If a confirmation dialog appears, click its OK button.
   const confirmOk = page.getByTestId('confirmation-modal-ok');
