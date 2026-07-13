@@ -69,6 +69,14 @@ jobs:
           echo "E2E_FE_PORT=$(( 3200 + OFFSET ))" >> "$GITHUB_ENV"
 
       - name: Run deterministic suites
+        env:
+          # Provenance stamped into the Playwright report (playwright.config.ts
+          # `metadata`). The PR head SHA — not github.sha, which is the ephemeral
+          # merge commit — so the report names a commit that stays resolvable.
+          # Falls back to plain ref/sha for workflow_dispatch runs.
+          E2E_META_PR: ${{ github.event.pull_request.number }}
+          E2E_META_BRANCH: ${{ github.head_ref || github.ref_name }}
+          E2E_META_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: cd client && yarn e2e:local stocktake-regression distribution-regression
 
       - name: Upload Playwright report (html + results.json)
