@@ -198,8 +198,8 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_item_a, mock_name_store_b, mock_outbound_shipment_a, mock_stock_line_a,
-            mock_shipment_variance_reason_option, mock_stock_line_b,
+            mock_item_a, mock_name_store_b, mock_outbound_shipment_a,
+            mock_shipment_variance_reason_option, mock_stock_line_a, mock_stock_line_b,
             mock_stock_line_vaccine_item_a, mock_store_a, mock_store_b,
             mock_transferred_inbound_shipment_a, mock_user_account_a, MockData, MockDataInserts,
         },
@@ -486,10 +486,6 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        // First save of a brand-new line that carries a received qty and a
-        // discrepancy reason. The insert path drops these, so they must be
-        // applied via the follow-up update — otherwise they'd only persist on a
-        // second save.
         service_provider
             .invoice_line_service
             .save_stock_out_item_lines(
