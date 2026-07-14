@@ -25,7 +25,9 @@ export const ManageService: FC = () => {
   const reportsRoute = RouteBuilder.create(AppRoute.Reports).build();
   const syncMessageRoute = RouteBuilder.create(AppRoute.SyncMessage).build();
   const pluginsRoute = RouteBuilder.create(AppRoute.Plugins).build();
-  const helpDocumentsRoute = RouteBuilder.create(AppRoute.HelpDocuments).build();
+  const helpDocumentsRoute = RouteBuilder.create(
+    AppRoute.HelpDocuments
+  ).build();
   const sitesRoute = RouteBuilder.create(AppRoute.Sites).build();
 
   return (
