@@ -19,6 +19,9 @@ export interface PopoverProps {
   /** Preferred side/alignment; flips to the other side rather than overflow.
       start/end are logical (mirror in RTL). Default 'bottom'. */
   placement?: PopoverPlacement
+  /** Open on hover (and focus) as well as click — for content bubbles whose trigger IS the
+      content (a status row), where hover reads more naturally than a click. Click still works. */
+  openOnHover?: boolean
   class?: string
   children: JSX.Element
 }
@@ -124,6 +127,30 @@ export const Popover = (props: PopoverProps) => {
 
   onCleanup(stopTracking)
 
+  // Hover-open: show on pointer-enter / focus of the trigger, hide once the pointer has left BOTH
+  // the trigger and the panel (a small delay lets the pointer travel across the gap). Click still
+  // toggles (native popovertarget). Keyboard focus opens it too, so it's not hover-only (a11y).
+  let hideTimer: ReturnType<typeof setTimeout> | undefined
+  const show = () => {
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = undefined }
+    if (!panel.matches(':popover-open')) panel.showPopover()
+  }
+  const scheduleHide = () => {
+    if (hideTimer) clearTimeout(hideTimer)
+    hideTimer = setTimeout(() => {
+      if (panel.matches(':popover-open')) panel.hidePopover()
+    }, 120)
+  }
+  onCleanup(() => { if (hideTimer) clearTimeout(hideTimer) })
+  const hoverHandlers = props.openOnHover
+    ? {
+        onMouseEnter: show,
+        onMouseLeave: scheduleHide,
+        onFocus: show,
+        onBlur: scheduleHide,
+      }
+    : {}
+
   return (
     <>
       <button
@@ -136,6 +163,7 @@ export const Popover = (props: PopoverProps) => {
             : styles.trigger
         }
         aria-label={props.triggerLabel}
+        {...hoverHandlers}
       >
         {props.trigger}
       </button>
@@ -144,6 +172,8 @@ export const Popover = (props: PopoverProps) => {
         id={panelId}
         popover="auto"
         class={props.class ? `${styles.panel} ${props.class}` : styles.panel}
+        onMouseEnter={props.openOnHover ? show : undefined}
+        onMouseLeave={props.openOnHover ? scheduleHide : undefined}
       >
         {props.children}
       </div>

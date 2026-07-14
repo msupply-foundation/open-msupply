@@ -128,6 +128,14 @@
   font-weight: var(--weight-bold);
 }
 
+/* A disabled entry (a past/current status shown for context) — greyed, not selectable. Placed
+   after the current rule so it wins for a current-and-disabled item (no-descending-specificity). */
+.item[data-disabled] {
+  color: var(--gray-light);
+  font-weight: var(--weight-regular);
+  cursor: default;
+}
+
 @media (pointer: coarse) {
   .item {
     min-height: var(--touch-target);

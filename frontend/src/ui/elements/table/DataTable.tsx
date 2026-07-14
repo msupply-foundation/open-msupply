@@ -550,9 +550,11 @@ export function DataTable<T, K extends string, G extends string = never>(
   // = the summed widths of the pinned columns before (left) / after (right) it, plus the leading
   // fixed columns (selection + expander) for left offsets. Returns undefined for an unpinned cell.
   //
-  // The leading select/expander columns are 2.25rem each (see .selectCell/.expanderCell) and are
-  // themselves pinned-left (they must not scroll away either) — LEADING_WIDTH is their total.
-  const LEADING_COL_PX = 36; // 2.25rem at the 16px root
+  // The leading select/expander columns are a FIXED 2.75rem box each (see .selectCell/
+  // .expanderCell — hard min/max so content can't widen them) and are themselves pinned-left (they
+  // must not scroll away either). LEADING_COL_PX MUST equal that box width, or the first data
+  // column scrolls through a seam between the leading columns. LEADING_WIDTH is their total.
+  const LEADING_COL_PX = 44; // 2.75rem at the 16px root — keep in sync with .selectCell/.expanderCell
   const leadingWidth = () =>
     (props.enableSelection ? LEADING_COL_PX : 0) + (grouping().length > 0 ? LEADING_COL_PX : 0);
 
