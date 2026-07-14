@@ -276,7 +276,10 @@ mod prefix_store_code_test {
 
     #[test]
     fn prefixes_store_code_when_present() {
-        assert_eq!(prefix_store_code(Some("GEN"), "Stock Report"), "GEN_Stock Report");
+        assert_eq!(
+            prefix_store_code(Some("GEN"), "Stock Report"),
+            "GEN_Stock Report"
+        );
     }
 
     #[test]

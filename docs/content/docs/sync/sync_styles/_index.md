@@ -127,8 +127,8 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 | `AssetLog` | Anyone | Remote | v6 | Yes |
 | `RnrForm` | RemoteOwned | RemoteOwned | v6 | — |
 | `RnrFormLine` | RemoteOwned | RemoteOwned | v6 | — |
-| `StockRelocation` | RemoteOwned | RemoteOwned | v6 | — |
-| `StockRelocationLine` | RemoteOwned | RemoteOwned | v6 | — |
+| `StockRelocation` | RemoteOwned | RemoteOwned | v7-only | — |
+| `StockRelocationLine` | RemoteOwned | RemoteOwned | v7-only | — |
 | `Encounter` | Remote + Patient | Remote + Patient | v6 | — |
 | `Vaccination` | Remote + Patient | Remote + Patient | v6 | — |
 | `ContactTrace` | Remote + Patient | Remote + Patient | v6 | — |
