@@ -5,12 +5,11 @@ import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { InsetPanel } from '../../ui/elements/inputs/InsetPanel';
 import { Button } from '../../ui/elements/buttons/Button';
-import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { RadioGroup } from '../../ui/elements/inputs/RadioGroup';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { FieldRow } from '../../ui/elements/inputs/FieldRow';
-import { masterListsResource, type MasterList } from '../../api/masterListsResource';
-import { locationsResource, type Location } from '../../api/locationsResource';
+import { masterListsResource, MasterListSelect } from '../../domain/masterList';
+import { locationsResource, LocationSelect } from '../../domain/location';
 import { PlusCircleIcon, XCircleIcon } from '../../ui/icons';
 import { t } from '../../intl';
 import { dayBefore } from '../../intl/dateArithmetic';
@@ -271,16 +270,13 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
           <InsetPanel hint={t('stocktake.create.filtered-hint')}>
             {/* Master list row + the include-all sub-choice beneath it (OMS layout). */}
             <FieldRow label={t('stocktake.filter.master-list')}>
-              <Combobox<MasterList>
+              <MasterListSelect
                 label={t('stocktake.filter.master-list')}
                 hideLabel
-                items={masterListsResource.noSuspense()}
-                itemToString={(m) => m.name}
-                itemToValue={(m) => m.id}
-                loading={masterListsResource.loading()}
                 disabled={creating()}
                 placeholder={t('filter.any')}
-                onChange={(m) => setForm({ ...form(), masterListId: m?.id ?? '' })}
+                value={form().masterListId || undefined}
+                onChange={(id) => setForm({ ...form(), masterListId: id ?? '' })}
               />
             </FieldRow>
             {/* Include-all radios: empty-label FieldRow puts them in the control column, and
@@ -296,15 +292,12 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
               />
             </FieldRow>
             <FieldRow label={t('stocktake.filter.location')}>
-              <Combobox<Location>
+              <LocationSelect
                 label={t('stocktake.filter.location')}
                 hideLabel
-                items={locationsResource.noSuspense()}
-                itemToString={(l) => `${l.code} — ${l.name}`}
-                itemToValue={(l) => l.id}
-                loading={locationsResource.loading()}
                 disabled={creating()}
                 placeholder={t('filter.any')}
+                value={form().locationId || undefined}
                 onChange={(l) => setForm({ ...form(), locationId: l?.id ?? '' })}
               />
             </FieldRow>

@@ -7,7 +7,6 @@ import { Alert } from '../../ui/elements/feedback/Alert';
 import { Button } from '../../ui/elements/buttons/Button';
 import { IconButton } from '../../ui/elements/buttons/IconButton';
 import { TextField } from '../../ui/elements/inputs/TextField';
-import { Combobox } from '../../ui/elements/selectors/Combobox';
 import {
   DataTable,
   type Column,
@@ -16,8 +15,8 @@ import {
 } from '../../ui/elements/table/DataTable';
 import { getNumberCell } from '../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../api/createTableConfig';
-import { locationsResource, type Location } from '../../api/locationsResource';
-import { reasonOptionsResource, type ReasonOption } from '../../api/reasonOptionsResource';
+import { LocationSelect } from '../../domain/location';
+import { ReasonSelect } from '../../domain/reasonOptions';
 import {
   PlusCircleIcon,
   StockIcon,
@@ -131,14 +130,6 @@ const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
   { key: 'other', labelKey: 'stocktake.line-edit.tab-other', icon: () => <MessageSquareIcon /> },
 ];
 
-// The inventory-adjustment reason types the stocktake editor offers (a stocktake only ever makes
-// an inventory adjustment — positive when counted > snapshot, negative when <). Other reason
-// types (wastage, returns…) don't apply here, so we filter the global list to these.
-const ADJUSTMENT_REASON_TYPES = new Set<ReasonOption['type']>([
-  'POSITIVE_INVENTORY_ADJUSTMENT',
-  'NEGATIVE_INVENTORY_ADJUSTMENT',
-]);
-
 interface StocktakeLineEditModalProps {
   open: boolean;
   onClose: () => void;
@@ -180,11 +171,6 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
   const [lineErrors, setLineErrors] = createStore<
     Record<string, { message: string; field: LineErrorField | undefined }>
   >({});
-
-  // Store-scoped reference data for the pickers — read without suspending (no remount).
-  const locations = (): Location[] => locationsResource.noSuspense();
-  const reasons = (): ReasonOption[] =>
-    reasonOptionsResource.noSuspense().filter((r) => ADJUSTMENT_REASON_TYPES.has(r.type));
 
   // Column config → lights up the toolbar's card-switch + column-settings controls. Card view
   // renders the batches as cards (grouped into sections), the dual of the tabs.
@@ -693,21 +679,14 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
       cell: (info) => {
         const line = info.row.original;
         return (
-          <Combobox
+          <LocationSelect
             label={t('stocktake.line-edit.location')}
             hideLabel
-            items={locations()}
-            itemToString={(l) => l.code}
-            itemToValue={(l) => l.id}
             disabled={!line.countThisLine}
             value={line.location?.id}
             placeholder={t('stocktake.line-edit.location-none')}
             onChange={(l) =>
-              update(
-                line.id,
-                'location',
-                l ? { id: l.id, code: l.code, name: l.name } : null,
-              )
+              update(line.id, 'location', l ? { id: l.id, code: l.code, name: l.name } : null)
             }
           />
         );
@@ -722,12 +701,10 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
       cell: (info) => {
         const line = info.row.original;
         return (
-          <Combobox
+          <ReasonSelect
+            kind="adjustment"
             label={t('stocktake.line-edit.reason')}
             hideLabel
-            items={reasons()}
-            itemToString={(r) => r.reason}
-            itemToValue={(r) => r.id}
             disabled={!line.countThisLine}
             value={line.reasonOption?.id}
             error={fieldError(line.id, 'reason')}

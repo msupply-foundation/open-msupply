@@ -1,7 +1,7 @@
-import { graphqlFetch } from './graphql';
+import { graphqlFetch } from '../../api/graphql';
 import { ReasonOptions, type ReasonOptionsResult } from './reasonOptions.generated';
-import { createStoreScopedResource } from './storeScopedResource';
-import { currentStoreId } from '../store/storeContext';
+import { createStoreScopedResource } from '../../api/storeScopedResource';
+import { currentStoreId } from '../../store/storeContext';
 
 // One reason option (id + type + reason label).
 export type ReasonOption = ReasonOptionsResult['reasonOptions']['nodes'][number];

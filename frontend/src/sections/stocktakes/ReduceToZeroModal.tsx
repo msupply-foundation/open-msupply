@@ -2,19 +2,16 @@ import { createSignal, type Component } from 'solid-js';
 import { t } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Button } from '../../ui/elements/buttons/Button';
-import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { FieldRow } from '../../ui/elements/inputs/FieldRow';
 import { CheckIcon, XCircleIcon } from '../../ui/icons';
-import { reasonOptionsResource, type ReasonOption } from '../../api/reasonOptionsResource';
+import { ReasonSelect } from '../../domain/reasonOptions';
 
 // Reduce-to-0 selection action (OMS): set the counted quantity of every selected line to 0. Since
 // that's an inventory reduction, an adjustment reason is offered (a negative-adjustment reason) —
 // like OMS, which requires it when the store's reason options include one. We surface the picker
-// and pass the chosen reason on; the server enforces whether it's mandatory (an unmet requirement
-// comes back as AdjustmentReasonNotProvided → the error dialog), so we don't pre-validate here.
-
-// Reduce-to-0 is always a reduction, so only negative inventory-adjustment reasons apply.
-const REDUCTION_REASON_TYPES = new Set<ReasonOption['type']>(['NEGATIVE_INVENTORY_ADJUSTMENT']);
+// (ReasonSelect kind="reduction") and pass the chosen reason id on; the server enforces whether
+// it's mandatory (an unmet requirement comes back as AdjustmentReasonNotProvided → the error
+// dialog), so we don't pre-validate here.
 
 export interface ReduceToZeroModalProps {
   open: boolean;
@@ -25,8 +22,6 @@ export interface ReduceToZeroModalProps {
 
 export const ReduceToZeroModal: Component<ReduceToZeroModalProps> = (props) => {
   const [reasonId, setReasonId] = createSignal<string | null>(null);
-  const reasons = (): ReasonOption[] =>
-    reasonOptionsResource.noSuspense().filter((r) => REDUCTION_REASON_TYPES.has(r.type));
 
   return (
     <Dialog
@@ -53,12 +48,10 @@ export const ReduceToZeroModal: Component<ReduceToZeroModalProps> = (props) => {
       }
     >
       <FieldRow label={t('stocktake.line-edit.reason')}>
-        <Combobox
+        <ReasonSelect
+          kind="reduction"
           label={t('stocktake.line-edit.reason')}
           hideLabel
-          items={reasons()}
-          itemToString={(r) => r.reason}
-          itemToValue={(r) => r.id}
           value={reasonId() ?? undefined}
           placeholder={t('stocktake.line-edit.reason-select')}
           onChange={(r) => setReasonId(r?.id ?? null)}

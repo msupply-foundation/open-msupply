@@ -1,7 +1,7 @@
-import { graphqlFetch } from './graphql';
-import { MasterLists, type MasterListsResult } from './masterLists.generated';
-import { createStoreScopedResource } from './storeScopedResource';
-import { currentStoreId } from '../store/storeContext';
+import { graphqlFetch } from '../../api/graphql';
+import { MasterLists, type MasterListsResult } from './masterList.generated';
+import { createStoreScopedResource } from '../../api/storeScopedResource';
+import { currentStoreId } from '../../store/storeContext';
 
 // One master-list node (id + name) — what a picker needs.
 export type MasterList = MasterListsResult['masterLists']['nodes'][number];

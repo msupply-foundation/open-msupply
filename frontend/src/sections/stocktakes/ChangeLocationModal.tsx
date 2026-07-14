@@ -2,10 +2,9 @@ import { createSignal, type Component } from 'solid-js';
 import { t } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Button } from '../../ui/elements/buttons/Button';
-import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { FieldRow } from '../../ui/elements/inputs/FieldRow';
 import { CheckIcon, XCircleIcon } from '../../ui/icons';
-import { locationsResource, type Location } from '../../api/locationsResource';
+import { LocationSelect } from '../../domain/location';
 
 // Change-location selection action (OMS): pick one location and apply it to every selected line.
 // A location Combobox in a Dialog; confirming emits the chosen location id (or null to clear).
@@ -20,7 +19,6 @@ export interface ChangeLocationModalProps {
 
 export const ChangeLocationModal: Component<ChangeLocationModalProps> = (props) => {
   const [locationId, setLocationId] = createSignal<string | null>(null);
-  const locations = (): Location[] => locationsResource.noSuspense();
 
   return (
     <Dialog
@@ -47,12 +45,9 @@ export const ChangeLocationModal: Component<ChangeLocationModalProps> = (props) 
       }
     >
       <FieldRow label={t('stocktake.line-edit.location')}>
-        <Combobox
+        <LocationSelect
           label={t('stocktake.line-edit.location')}
           hideLabel
-          items={locations()}
-          itemToString={(l) => `${l.code} — ${l.name}`}
-          itemToValue={(l) => l.id}
           value={locationId() ?? undefined}
           placeholder={t('stocktake.line-edit.location-none')}
           onChange={(l) => setLocationId(l?.id ?? null)}
