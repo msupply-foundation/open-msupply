@@ -81,6 +81,7 @@ export type Plugins = {
       header: string;
       Component: React.ComponentType<{
         line: StockOutLineFragment;
+        update: (patch: Partial<StockOutLineFragment>) => void;
         events: UsePluginEvents<ShipmentLinePluginState>;
         isExternal: boolean;
       }>;

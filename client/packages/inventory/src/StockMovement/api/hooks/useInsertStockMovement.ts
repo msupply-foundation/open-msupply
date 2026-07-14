@@ -1,41 +1,17 @@
-import {
-  FnUtils,
-  InsertStockRelocationInput,
-  useMutation,
-} from '@openmsupply-client/common';
+import { FnUtils, useMutation } from '@openmsupply-client/common';
 import { STOCK_MOVEMENT } from './keys';
 import { useStockMovementGraphQL } from '../useStockMovementGraphQL';
-
-export type DraftStockMovementLine = {
-  fromStockLineId: string;
-  fromNumberOfPacks: number;
-  toLocationId?: string | null;
-  toPackSize: number;
-};
-
-export type DraftStockMovement = {
-  lines: DraftStockMovementLine[];
-};
 
 export const useInsertStockMovement = () => {
   const { stockMovementApi, storeId, queryClient } = useStockMovementGraphQL();
 
-  const mutationFn = async (draft: DraftStockMovement) => {
-    const input: InsertStockRelocationInput = {
-      lines: draft.lines.map(line => ({
-        id: FnUtils.generateUUID(),
-        fromStockLineId: line.fromStockLineId,
-        fromNumberOfPacks: line.fromNumberOfPacks,
-        toLocationId: line.toLocationId,
-        toPackSize: line.toPackSize,
-      })),
-    };
-
+  const mutationFn = async (comment?: string) => {
+    const id = FnUtils.generateUUID();
     const result = await stockMovementApi.insertStockRelocation({
       storeId,
-      input,
+      input: { id, comment },
     });
-    return result.insertStockRelocation;
+    return result.insertStockRelocation.id;
   };
 
   const { mutateAsync, isPending, error } = useMutation({

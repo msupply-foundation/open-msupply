@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.21.0",
+  "version": "2.21.1",
   "code": "stock-take-detail-view",
   "context": "STOCKTAKE",
   "name": "Stocktake",

@@ -134,7 +134,7 @@ export const useInboundShipmentColumns = (
         accessorFn: row =>
           row.shippedNumberOfPacks == null
             ? null
-            : row.shippedNumberOfPacks - row.numberOfPacks,
+            : row.numberOfPacks - row.shippedNumberOfPacks,
         header: t('label.difference'),
         description: t('description.difference-packs'),
         columnType: ColumnType.Number,

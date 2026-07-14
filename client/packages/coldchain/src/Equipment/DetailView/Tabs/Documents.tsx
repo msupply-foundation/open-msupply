@@ -96,10 +96,12 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
         <FileList
           assetId={draft.id}
           tableName={TABLE_NAME}
-          heading={t('heading.download-documents')}
+          heading={t('heading.uploaded-documents')}
           files={draft.documents.nodes.map(document => ({
             id: document.id,
             name: document.fileName,
+            createdDatetime: document.createdDatetime,
+            totalBytes: document.totalBytes,
           }))}
           removeFile={removeFile}
           noFilesMessage={t('messages.no-documents-uploaded')}
