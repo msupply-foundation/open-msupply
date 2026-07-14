@@ -203,6 +203,7 @@ pub trait ReportServiceTrait: Sync + Send {
                 document,
                 report_name,
                 &report.excel_template_buffer,
+                store_code,
             ),
             Some(PrintFormat::Pdf) | None => {
                 generate_html_report_to_pdf(base_dir, document, report_name, &current_language)
@@ -1125,7 +1126,7 @@ mod report_generation_test {
 mod report_filter_test {
 
     use repository::{
-        migrations::Version, mock::MockDataInserts, test_db::setup_all, EqualFilter, ReportFilter,
+        migrations::Version, mock::MockDataInserts, test_db::setup_all, ReportFilter,
         ReportRepository, StringFilter,
     };
 

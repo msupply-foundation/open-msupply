@@ -79,6 +79,7 @@ const toSortField = (
     sellPricePerPack: StockLineSortFieldInput.SellPricePerPack,
     expiryDate: StockLineSortFieldInput.ExpiryDate,
     manufactureDate: StockLineSortFieldInput.ManufactureDate,
+    campaign: StockLineSortFieldInput.Campaign,
   };
 
   return sortFieldMap[sortBy.key] ?? StockLineSortFieldInput.ItemName;

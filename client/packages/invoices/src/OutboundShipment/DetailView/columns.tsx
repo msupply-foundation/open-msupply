@@ -110,7 +110,8 @@ export const useOutboundColumns = () => {
       },
       {
         id: 'receivedNumberOfPacks',
-        accessorFn: row => row.receivedNumberOfPacks ?? row.numberOfPacks,
+        // Null until the destination reports what it received — shown as a dash.
+        accessorFn: row => row.receivedNumberOfPacks,
         header: t('label.packs-received'),
         description: t('description.packs-received'),
         columnType: ColumnType.Number,
