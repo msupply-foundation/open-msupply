@@ -77,49 +77,49 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   {
     key: 'otherPartyName',
     label: () => 'Name',
-    render: ({ filter, setPartialFilter }) => (
+    render: (props) => (
       <FilterTextInput
         label="Name"
         placeholder="Search by name"
-        value={filter().otherPartyName ?? ''}
-        onInput={value => setPartialFilter({ otherPartyName: value || null })}
+        value={props.filter().otherPartyName ?? ''}
+        onInput={value => props.setPartialFilter({ otherPartyName: value || null })}
       />
     ),
   },
   {
     key: 'invoiceNumber',
     label: () => 'Invoice number',
-    render: ({ filter, setPartialFilter }) => (
+    render: (props) => (
       <FilterTextInput
         label="Invoice number"
-        value={filter().invoiceNumber ?? ''}
-        onInput={value => setPartialFilter({ invoiceNumber: value || null })}
+        value={props.filter().invoiceNumber ?? ''}
+        onInput={value => props.setPartialFilter({ invoiceNumber: value || null })}
       />
     ),
   },
   {
     key: 'theirReference',
     label: () => 'Reference',
-    render: ({ filter, setPartialFilter }) => (
+    render: (props) => (
       <FilterTextInput
         label="Reference"
-        value={filter().theirReference ?? ''}
-        onInput={value => setPartialFilter({ theirReference: value || null })}
+        value={props.filter().theirReference ?? ''}
+        onInput={value => props.setPartialFilter({ theirReference: value || null })}
       />
     ),
   },
   {
     key: 'status',
     label: () => 'Status',
-    render: ({ filter, setPartialFilter }) => (
+    render: (props) => (
       <FilterSelect
         label="Status"
-        value={filter().status ?? ''}
+        value={props.filter().status ?? ''}
         options={[
           { value: '', label: 'Any' },
           ...INVOICE_STATUSES.map(s => ({ value: s.value, label: s.label })),
         ]}
-        onChange={value => setPartialFilter({ status: value || null })}
+        onChange={value => props.setPartialFilter({ status: value || null })}
       />
     ),
   },
