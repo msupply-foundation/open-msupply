@@ -326,6 +326,7 @@ mod test {
                 barcode_row: None,
                 item_variant_row: None,
                 vvm_status_row: None,
+                campaign_row: None,
             })
         }));
 

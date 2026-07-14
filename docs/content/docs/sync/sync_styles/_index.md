@@ -114,7 +114,6 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 | `PurchaseOrder` | RemoteOwned | RemoteOwned | v5 | — |
 | `PurchaseOrderLine` | RemoteOwned | RemoteOwned | v5 | — |
 | `StockLine` | RemoteOwned | RemoteOwned | v5 | — |
-| `StockRelocation` | RemoteOwned | RemoteOwned | v5 | — |
 | `Stocktake` | RemoteOwned | RemoteOwned | v5 | — |
 | `StocktakeLine` | RemoteOwned | RemoteOwned | v5 | — |
 | `VVMStatusLog` | RemoteOwned | RemoteOwned | v5 | — |
@@ -128,6 +127,8 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 | `AssetLog` | Anyone | Remote | v6 | Yes |
 | `RnrForm` | RemoteOwned | RemoteOwned | v6 | — |
 | `RnrFormLine` | RemoteOwned | RemoteOwned | v6 | — |
+| `StockRelocation` | RemoteOwned | RemoteOwned | v7-only | — |
+| `StockRelocationLine` | RemoteOwned | RemoteOwned | v7-only | — |
 | `Encounter` | Remote + Patient | Remote + Patient | v6 | — |
 | `Vaccination` | Remote + Patient | Remote + Patient | v6 | — |
 | `ContactTrace` | Remote + Patient | Remote + Patient | v6 | — |
@@ -258,7 +259,7 @@ When a record is mutated, a changelog row is generated. The patterns differ by w
 | Store + transfer-store | `Invoice`, `Requisition`, `RnrForm`, `NameStoreJoin` | The row's own store, plus the store backing a referenced name (resolved from the name's home store). Used for both store-owner routing and Transfer routing. `Invoice` additionally tags prescriptions with the patient id so they also route via Patient. |
 | Store only | `StockLine`, `StockRelocation`, `Stocktake`, `Location`, `PurchaseOrder`, `Preference`, `Sensor`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`, `LocationMovement`, `ActivityLog`, `ContactForm`, `Asset`, `PluginData`, `VaccineCourseStoreConfig`, `ClinicianStoreJoin`, `IndicatorValue`, `ItemStoreJoin`, `UserPermission`, `UserStoreJoin` | Just the row's own store. |
 | Destination store | `SyncMessage` | The message's destination store (when set) is copied to the changelog's `store_id`, which makes the hybrid Remote + broadcast routing work — Remote for messages addressed to a specific store, broadcast for fanout messages. |
-| Line inherits parent | `InvoiceLine` ← `Invoice`, `StocktakeLine` ← `Stocktake`, `RequisitionLine` ← `Requisition`, `RnrFormLine` ← `RnrForm` | The line's changelog is built from the parent's, then `table_name` and `record_id` are overridden to point at the line. Guarantees parent and line stay aligned for store / transfer-store / patient / source-site, so they route together. |
+| Line inherits parent | `InvoiceLine` ← `Invoice`, `StocktakeLine` ← `Stocktake`, `RequisitionLine` ← `Requisition`, `RnrFormLine` ← `RnrForm`, `StockRelocationLine` ← `StockRelocation` | The line's changelog is built from the parent's, then `table_name` and `record_id` are overridden to point at the line. Guarantees parent and line stay aligned for store / transfer-store / patient / source-site, so they route together. |
 | Line emits parent **and** child | `PurchaseOrderLine` → `PurchaseOrder` (upsert) + `PurchaseOrderLine` | Mutating a line also emits a changelog for the parent, so the parent re-syncs and is always at least as fresh as its children on the receiver. The parent entry is always an upsert, even when the line is a delete. |
 | Patient + store | `Encounter`, `Vaccination`, `ContactTrace` | Carries both, so the Remote clause delivers to the owning site and the Patient clause fans out to every other site that knows the patient. |
 | Patient only | `Document`, `NameInsuranceJoin`, `ProgramEnrolment`, `ProgramEvent` | The changelog row has no store; routing is purely by Patient. The record follows the patient across stores. |

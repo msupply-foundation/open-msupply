@@ -136,6 +136,13 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
+    let stock_relocation_lines_loader = DataLoader::new(
+        StockRelocationLinesByRelocationIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    );
+
     let requisitions_by_id_loader = DataLoader::new(
         RequisitionsByIdLoader {
             service_provider: service_provider.clone(),
@@ -291,6 +298,7 @@ pub async fn get_loaders(
     loaders.insert(purchase_order_by_id_loader);
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
+    loaders.insert(stock_relocation_lines_loader);
     loaders.insert(requisition_line_supply_status_loader);
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);

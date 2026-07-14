@@ -1,0 +1,60 @@
+<table class="header_image_section" style="width: 100%;height: 98%;">
+  <tr>
+    {% if data.store.logo %}
+    <th style="text-align:start;width:10%;height:70%;">
+      <img class="logo" src="{{ data.store.logo }}" />
+    </th>
+    {% endif %}
+    <th style="text-align:start;width:30%;">
+      <span style="font-weight:bold;">{{ data.store.storeName }}</span><br>
+      <span style="font-size:6pt;">{{ data.store.name.address1 }}</span><br>
+      <span style="font-size:6pt;">{{ data.store.name.address2 }}</span><br>
+      <span style="font-size:6pt;">
+        {{t(k="label.phone",f="Telephone")}}: {{ data.store.name.phone }}
+      </span><br>
+      <span style="font-size:6pt;">
+        {{t(k="label.email",f="Email")}}: {{ data.store.name.email }}
+      </span>
+      <br>
+      <br>
+    </th>
+    <th style="text-align:end;width:60%;font-size:24pt;">
+      {{ t(k="label.stock-movement", f="Stock movement") }}<br>
+    </th>
+  </tr>
+</table>
+
+<table class="header_details_section">
+  <tr>
+    <td class="header_details_label">{{t(k="label.reference",f="Reference")}}</td>
+    <td class="header_details_value">{{ data.stockRelocation.stockMovementNumber }}</td>
+    <td class="header_details_label">{{t(k="label.date-created",f="Date created")}}</td>
+    <td class="header_details_value">
+      {{ data.stockRelocation.createdDatetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}
+    </td>
+  </tr>
+  <tr>
+    <td class="header_details_label">{{t(k="label.status",f="Status")}}</td>
+    <td class="header_details_value">
+      {% if data.stockRelocation.status == "NEW" %}{{t(k="label.new",f="New")}}
+      {% elif data.stockRelocation.status == "CONFIRMED" %}{{t(k="label.confirmed",f="Confirmed")}}
+      {% else %}{{t(k="label.finalised",f="Finalised")}}{% endif %}
+    </td>
+    <td class="header_details_label">{{t(k="label.printed",f="Printed")}}</td>
+    <td class="header_details_value">{{ now() | date(format="%d/%m/%Y") }}</td>
+  </tr>
+  <tr>
+    <td class="header_details_label">{{t(k="label.created-by",f="Created by")}}</td>
+    <td class="header_details_value">
+      {% if data.stockRelocation.user %}{{ data.stockRelocation.user.username }}{% endif %}
+    </td>
+    <td class="header_details_label"></td>
+    <td class="header_details_value"></td>
+  </tr>
+  {% if data.stockRelocation.comment %}
+  <tr>
+    <td class="header_details_label">{{t(k="label.comment",f="Comment")}}</td>
+    <td class="header_details_value" colspan="3">{{ data.stockRelocation.comment }}</td>
+  </tr>
+  {% endif %}
+</table>

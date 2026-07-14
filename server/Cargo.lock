@@ -9772,6 +9772,7 @@ dependencies = [
  "serde_json",
  "service",
  "simple-log",
+ "tempfile",
  "thiserror 2.0.18",
  "tokio",
  "util",
