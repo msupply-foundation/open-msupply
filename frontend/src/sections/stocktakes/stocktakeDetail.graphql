@@ -3,6 +3,29 @@
 # sorted + grouped). StocktakeResponse is StocktakeNode | NodeError; the view promotes NodeError
 # to the global error modal.
 #
+# The stocktake-level fields the detail view reads AND edits: the header (number/status/
+# description), the status footer (status/isLocked/finalisedDatetime), and the Additional-info
+# side panel (comment/countedBy/verifiedBy/stocktakeDate). The SAME fragment is what
+# updateStocktake returns, so a stocktake-level save reflects in place with no refetch
+# (kdd/state-management) — the one exception being `lines`, fetched only by the detail query.
+fragment StocktakeInfo on StocktakeNode {
+  id
+  stocktakeNumber
+  status
+  description
+  comment
+  isLocked
+  countedBy
+  verifiedBy
+  stocktakeDate
+  finalisedDatetime
+  # Read-only "Entered by" / "Created" in the Additional-info side panel.
+  createdDatetime
+  user {
+    username
+  }
+}
+
 # ONE fragment, both directions (kdd/state-management): the same StocktakeLine fragment is the
 # detail row AND what the batch mutation returns on insert/update, so a saved node splices back
 # into the rows with no remapping and no refetch.
@@ -12,6 +35,11 @@ fragment StocktakeLine on StocktakeLineNode {
   item {
     id
     code
+  }
+  # The stock line this stocktake line counts (if any) — used to dedupe against the item's other
+  # batches offered for opt-in in the editor, so a batch already on the stocktake isn't listed twice.
+  stockLine {
+    id
   }
   batch
   expiryDate
@@ -43,12 +71,7 @@ query stocktakeDetail($storeId: String!, $stocktakeId: String!) {
   stocktake(storeId: $storeId, id: $stocktakeId) {
     __typename
     ... on StocktakeNode {
-      id
-      stocktakeNumber
-      status
-      description
-      comment
-      isLocked
+      ...StocktakeInfo
       lines {
         ... on StocktakeLineConnector {
           __typename
@@ -128,6 +151,69 @@ mutation batchStocktakeLines(
             __typename
             description
           }
+        }
+      }
+    }
+  }
+}
+
+# Stocktake-level edits: the debounced field saves (description / comment / countedBy /
+# verifiedBy / stocktakeDate), the on-hold toggle (isLocked), and Finalise (status: FINALISED).
+# One mutation for all of them — success returns the StocktakeInfo fragment, spliced back with no
+# refetch. The FINALISE path can fail with line-level validation: SnapshotCountCurrentCountMismatch
+# carries the mismatched stocktakeLine ids (so the error-summary dialog can offer "filter to the
+# error lines"); StockLinesReducedBelowZero / StocktakeIsLocked / CannotEditStocktake are
+# stocktake-wide messages (the dialog shows the message with no line filter).
+mutation updateStocktake($storeId: String!, $input: UpdateStocktakeInput!) {
+  updateStocktake(storeId: $storeId, input: $input) {
+    __typename
+    ... on StocktakeNode {
+      ...StocktakeInfo
+    }
+    ... on UpdateStocktakeError {
+      error {
+        __typename
+        description
+        ... on SnapshotCountCurrentCountMismatch {
+          lines {
+            description
+            stocktakeLine {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# All of an item's stock lines in the store (its "available batches"), for the line-edit modal:
+# the modal offers EVERY batch of the item — including ones in other locations that a
+# location-filtered stocktake didn't auto-include — so the user can opt them into the count
+# (matching OMS). hasPacksInStore drops empty stock lines. The fields mirror what seeds a draft
+# line (snapshot = totalNumberOfPacks); location is the full node so the picker shows code/name.
+query stockLinesByItem($storeId: String!, $itemId: String!) {
+  stockLines(
+    storeId: $storeId
+    filter: { itemId: { equalTo: $itemId }, hasPacksInStore: true }
+  ) {
+    ... on StockLineConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        batch
+        expiryDate
+        manufactureDate
+        packSize
+        costPricePerPack
+        sellPricePerPack
+        totalNumberOfPacks
+        note
+        location {
+          id
+          code
+          name
         }
       }
     }
