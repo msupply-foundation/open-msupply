@@ -5,7 +5,8 @@ import { useStocktakeOld } from '..';
 import { isStocktakeDisabled } from '../../../../utils';
 import { useStocktakeLines } from './useStocktakeLines';
 import { useMemo } from 'react';
-import { useItemUtils } from '@openmsupply-client/common';
+import { useItemUtils, useUrlQuery } from '@openmsupply-client/common';
+import { useCampaigns } from '@openmsupply-client/system/src/Manage/Campaigns/api';
 
 const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
   Object.entries(ArrayUtils.groupBy(lines, 'itemId')).map(([itemId, lines]) => {
@@ -23,12 +24,30 @@ export const useStocktakeRows = (itemId?: string) => {
     itemId
   );
 
-  const { itemFilter, setItemFilter, matchItem } = useItemUtils();
+  const { itemFilter, matchItem } = useItemUtils();
+  const { urlQuery } = useUrlQuery();
+  const campaignFilter = (urlQuery['campaignId'] as string) ?? '';
   const lines = lineData?.nodes;
 
+  // Source options from all campaigns (value = id), matching the Stock list
+  // view; filtering itself is still done client-side over the loaded lines.
+  const {
+    query: { data: campaigns },
+  } = useCampaigns({
+    sortBy: { key: 'name', direction: 'asc', isDesc: false },
+    first: 1000,
+  });
+
+  const campaignOptions = useMemo(
+    () => campaigns?.nodes?.map(c => ({ label: c.name, value: c.id })) ?? [],
+    [campaigns]
+  );
+
   const filteredLines = useMemo(() => {
-    return lines?.filter(item => matchItem(itemFilter, item.item));
-  }, [lines, itemFilter]);
+    return lines
+      ?.filter(item => matchItem(itemFilter, item.item))
+      .filter(line => !campaignFilter || line.campaign?.id === campaignFilter);
+  }, [lines, itemFilter, campaignFilter]);
 
   const items = useMemo(
     () => getStocktakeItems(filteredLines ?? []),
@@ -44,7 +63,6 @@ export const useStocktakeRows = (itemId?: string) => {
     items,
     lines: filteredLines ?? [],
     totalLineCount,
-    itemFilter,
-    setItemFilter,
+    campaignOptions,
   };
 };

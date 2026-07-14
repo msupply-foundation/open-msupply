@@ -1,4 +1,5 @@
 pub mod campaign;
+pub mod help_document;
 mod mutations;
 mod queries;
 mod subscriptions;

@@ -33,10 +33,10 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
-          disabled={isDisabled}
-          label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
+          label={t('button.add-item')}
           onClick={() => onAddItem(true)}
+          disabled={isDisabled}
         />
         <ReportSelector
           context={ReportContext.Stocktake}

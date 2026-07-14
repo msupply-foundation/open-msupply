@@ -16,7 +16,7 @@ import {
   ExpiryDateCell,
   UnitsAndDosesCell,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../api';
+import { StockLineListRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockList } from '../api/hooks/useStockList';
 import { useGroupedStockList } from '../api/hooks/useGroupedStockList';
@@ -57,6 +57,7 @@ export const StockListView = () => {
         key: 'masterList.id',
         condition: 'equalTo',
       },
+      { key: 'campaignId', condition: 'equalTo' },
     ],
   });
 
@@ -102,7 +103,7 @@ export const StockListView = () => {
   const isError = isGrouped ? groupedResult.isError : ungroupedResult.isError;
 
   const mrtColumns = useMemo(
-    (): ColumnDef<StockLineRowFragment>[] => [
+    (): ColumnDef<StockLineListRowFragment>[] => [
       {
         id: 'code',
         accessorKey: 'item.code',
@@ -275,6 +276,14 @@ export const StockListView = () => {
         defaultHideOnMobile: true,
       },
       {
+        id: 'campaign',
+        header: t('label.campaign-only'),
+        accessorFn: row => row.campaign?.name ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+      },
+      {
         id: 'supplierName',
         header: t('label.supplier'),
         accessorFn: row =>
@@ -289,7 +298,7 @@ export const StockListView = () => {
     [isGrouped, manageVvmStatusForStock, plugins.stockLine?.tableColumn, t]
   );
 
-  const { table } = usePaginatedMaterialTable<StockLineRowFragment>({
+  const { table } = usePaginatedMaterialTable<StockLineListRowFragment>({
     tableId: 'stock-list',
     isLoading: isFetching,
     isError,

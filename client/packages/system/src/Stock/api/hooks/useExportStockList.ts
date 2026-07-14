@@ -3,7 +3,7 @@ import {
   StockLineSortFieldInput,
   useQuery,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../operations.generated';
+import { StockLineListRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
@@ -12,7 +12,7 @@ export const useExportStockList = (filterBy: FilterBy | null) => {
 
   const queryKey = [STOCK, storeId, LIST];
   const queryFn = async (): Promise<{
-    nodes: StockLineRowFragment[];
+    nodes: StockLineListRowFragment[];
     totalCount: number;
   }> => {
     const result = await stockApi.stockLines({

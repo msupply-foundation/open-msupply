@@ -106,21 +106,7 @@ fragment ItemStockOnHand on ItemNode {
     defaultSellPricePerPack
     ignoreForOrders
   }
-  stats(storeId: $storeId) {
-    stockOnHand
-  }
-}
-fragment ItemRowWithStats on ItemNode {
-  ...ItemStockOnHand
-  stats(storeId: $storeId) {
-    __typename
-    averageMonthlyConsumption
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-    monthsOfStockOnHand
-    totalConsumption
-    stockOnHand
-  }
+  stockOnHand(storeId: $storeId)
 }
 
 fragment LocationType on LocationTypeNode {
@@ -196,6 +182,7 @@ fragment ItemVariant on ItemVariantNode {
   manufacturerId
   manufacturer(storeId: $storeId) {
     ...NameRow
+    isVisible
   }
   locationTypeId
   locationType {
@@ -267,30 +254,6 @@ fragment Item on ItemNode {
   itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
     ignoreForOrders
-  }
-}
-
-query itemsWithStockLines(
-  $first: Int
-  $offset: Int
-  $key: ItemSortFieldInput!
-  $desc: Boolean
-  $filter: ItemFilterInput
-  $storeId: String!
-) {
-  items(
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-    storeId: $storeId
-  ) {
-    ... on ItemConnector {
-      __typename
-      nodes {
-        ...Item
-      }
-      totalCount
-    }
   }
 }
 
@@ -401,6 +364,7 @@ query itemById($storeId: String!, $itemId: String!) {
       nodes {
         __typename
         ...Item
+        stockOnHand(storeId: $storeId)
         stats(storeId: $storeId) {
           __typename
           averageMonthlyConsumption
