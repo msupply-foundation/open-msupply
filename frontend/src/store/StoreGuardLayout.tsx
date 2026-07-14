@@ -64,7 +64,12 @@ export const StoreGuardLayout: Component<RouteSectionProps> = (props) => {
     <Show
       when={storeToEnter()}
       fallback={
-        <StoreSelectionModal stores={pickerStores()} onSelect={(id) => navigate(`/${id}`)} />
+        <StoreSelectionModal
+          stores={pickerStores()}
+          defaultStoreId={user()?.defaultStore?.id}
+          lastUsedStoreId={user() ? getPreviousStoreId(user()!.userId) : undefined}
+          onSelect={(id) => navigate(`/${id}`)}
+        />
       }
     >
       {(store) => (

@@ -5,6 +5,7 @@ import { ButtonsShowcase } from './ButtonsShowcase'
 import { InputsShowcase } from './InputsShowcase'
 import { SelectorsShowcase } from './SelectorsShowcase'
 import { FeedbackShowcase } from './FeedbackShowcase'
+import { StoreLoginShowcase } from './StoreLoginShowcase'
 import { HeaderShowcase } from './HeaderShowcase'
 import { TabBarShowcase } from './TabBarShowcase'
 import { ContentFooterShowcase } from './ContentFooterShowcase'
@@ -47,6 +48,7 @@ export const sections: SectionDef[] = [
   { id: 'selectors', label: 'Selectors', component: SelectorsShowcase, category: 'components' },
   { id: 'tab-bar', label: 'Tab bar', component: TabBarShowcase, category: 'components' },
   { id: 'feedback', label: 'Feedback', component: FeedbackShowcase, category: 'components' },
+  { id: 'store-login', label: 'Store login', component: StoreLoginShowcase, category: 'components' },
   { id: 'table', label: 'Table', component: ComingSoon, category: 'components' },
   { id: 'header', label: 'Header', component: HeaderShowcase, category: 'layout' },
   { id: 'content-footer', label: 'Content footer', component: ContentFooterShowcase, category: 'layout' },

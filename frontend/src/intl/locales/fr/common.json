@@ -27,7 +27,12 @@
   "error.go-to-dashboard": "Aller au tableau de bord",
 
   "store.select": "Sélectionner un magasin",
+  "store.select-instructions": "Choisissez le magasin dans lequel travailler. Vous pouvez changer de magasin à tout moment depuis la barre inférieure.",
   "store.search": "Rechercher des magasins",
+  "store.no-results": "Aucun magasin ne correspond à votre recherche.",
+  "store.default": "Par défaut",
+  "store.last-used": "Dernier utilisé",
+  "store.continue": "Continuer",
   "store.loading": "Chargement du magasin…",
 
   "init.title": "Initialiser",
