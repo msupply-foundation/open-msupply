@@ -2980,7 +2980,7 @@
   "status.unserviceable": "Unserviceable",
   "status.verified": "Verified",
   "stock": "Stock",
-  "stock-movement": "Stock movement",
+  "stock-movement": "Stock movements",
   "stocktake.all-master-list-items": "All items (include out of stock items)",
   "stocktake.comment-and-template": "{{start}} and {{end}}",
   "stocktake.comment-initial-stocktake-template": "Initial stocktake created using all items",
