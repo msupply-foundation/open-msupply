@@ -11,7 +11,6 @@ import {
   useBreadcrumbs,
   useSimplifiedTabletUI,
   useUrlQuery,
-  useToggle,
   InvoiceLineStatusType,
   useAppTheme,
   useIsExtraSmallScreen,
@@ -20,11 +19,7 @@ import {
   AppFooterStatusPortal,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import {
-  ActivityLogList,
-  DocumentsTable,
-  UploadDocumentModal,
-} from '@openmsupply-client/system';
+import { ActivityLogList, DocumentsTab } from '@openmsupply-client/system';
 
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -64,11 +59,6 @@ const DetailViewInner = () => {
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const { urlQuery, updateQuery } = useUrlQuery();
-  const {
-    toggleOn: toggleUploadModal,
-    isOn: isUploadModalOpen,
-    toggleOff: toggleCloseUploadModal,
-  } = useToggle();
 
   const lineEditModal = useEditModal<InboundLineItem | ScannedItem>();
 
@@ -76,6 +66,7 @@ const DetailViewInner = () => {
     query: { data, loading },
     isExternal,
     invalidateQuery,
+    isAddOrDeleteLinesDisabled,
   } = useInboundShipment();
 
   // ScanInputModal needs the same line list that the table renders.
@@ -123,12 +114,6 @@ const DetailViewInner = () => {
     [lineEditModal, urlQuery, updateQuery]
   );
 
-  const openUploadModal = useCallback(() => {
-    toggleUploadModal();
-    if (urlQuery['tab'] !== InboundShipmentDetailTabs.Documents)
-      updateQuery({ tab: InboundShipmentDetailTabs.Documents });
-  }, [toggleUploadModal, urlQuery, updateQuery]);
-
   useEffect(() => {
     setCustomBreadcrumbs({
       1: (
@@ -169,11 +154,11 @@ const DetailViewInner = () => {
       : []),
     {
       Component: (
-        <DocumentsTable
+        <DocumentsTab
           documents={data?.documents.nodes ?? []}
           recordId={data?.id ?? ''}
           tableName="invoice"
-          openUploadModal={toggleUploadModal}
+          canUpload={!isAddOrDeleteLinesDisabled}
           invalidateQueries={invalidateQuery}
         />
       ),
@@ -194,7 +179,6 @@ const DetailViewInner = () => {
           <AppBarButtons
             onAddItem={onAddItem}
             simplifiedTabletView={simplifiedTabletView}
-            openUploadModal={openUploadModal}
           />
 
           {isExtraSmallScreen ? <MobileToolbar /> : <Toolbar />}
@@ -212,14 +196,6 @@ const DetailViewInner = () => {
             lines={lines}
             invoiceId={data?.id ?? ''}
             shouldOpen={!lineEditModal.isOpen}
-          />
-
-          <UploadDocumentModal
-            isOn={isUploadModalOpen}
-            toggleOff={toggleCloseUploadModal}
-            recordId={data.id}
-            tableName="invoice"
-            invalidateQueries={invalidateQuery}
           />
         </>
       ) : (

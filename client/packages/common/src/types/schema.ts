@@ -1418,10 +1418,15 @@ export type CentralPluginQueriesUploadedPluginInfoArgs = {
 export type CentralReportMutations = {
   __typename: 'CentralReportMutations';
   installUploadedReports: Array<Scalars['String']['output']>;
+  updateReport: UpdateReportNode;
 };
 
 export type CentralReportMutationsInstallUploadedReportsArgs = {
   fileId: Scalars['String']['input'];
+};
+
+export type CentralReportMutationsUpdateReportArgs = {
+  input: UpdateReportInput;
 };
 
 export type CentralServerMutationNode = {
@@ -1432,6 +1437,7 @@ export type CentralServerMutationNode = {
   campaign: CampaignMutations;
   demographic: DemographicMutations;
   general: CentralGeneralMutations;
+  helpDocument: HelpDocumentMutations;
   itemVariant: ItemVariantMutations;
   logReason: AssetLogReasonMutations;
   plugins: CentralPluginMutations;
@@ -1795,6 +1801,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   DeleteAssetErrorInterface &
   DeleteAssetLogReasonErrorInterface &
   DeleteCampaignErrorInterface &
+  DeleteHelpDocumentErrorInterface &
   DeleteLocationErrorInterface &
   InsertAssetCatalogueItemErrorInterface &
   InsertAssetErrorInterface &
@@ -1802,6 +1809,7 @@ export type DatabaseError = DeleteAssetCatalogueItemErrorInterface &
   InsertAssetLogReasonErrorInterface &
   InsertDemographicIndicatorErrorInterface &
   InsertDemographicProjectionErrorInterface &
+  InsertHelpDocumentErrorInterface &
   InsertLocationErrorInterface &
   NodeErrorInterface &
   RefreshTokenErrorInterface &
@@ -1929,6 +1937,23 @@ export type DeleteCustomerReturnResponse =
 export type DeleteErrorInterface = {
   description: Scalars['String']['output'];
 };
+
+export type DeleteHelpDocumentError = {
+  __typename: 'DeleteHelpDocumentError';
+  error: DeleteHelpDocumentErrorInterface;
+};
+
+export type DeleteHelpDocumentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteHelpDocumentInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeleteHelpDocumentResponse =
+  | DeleteHelpDocumentError
+  | DeleteResponse;
 
 export type DeleteInboundShipmentError = {
   __typename: 'DeleteInboundShipmentError';
@@ -3217,6 +3242,46 @@ export type Gs1DataElement = {
   data: Scalars['String']['input'];
 };
 
+export type HelpDocumentConnector = {
+  __typename: 'HelpDocumentConnector';
+  nodes: Array<HelpDocumentNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type HelpDocumentFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type HelpDocumentMutations = {
+  __typename: 'HelpDocumentMutations';
+  deleteHelpDocument: DeleteHelpDocumentResponse;
+  insertHelpDocument: InsertHelpDocumentResponse;
+};
+
+export type HelpDocumentMutationsDeleteHelpDocumentArgs = {
+  input: DeleteHelpDocumentInput;
+};
+
+export type HelpDocumentMutationsInsertHelpDocumentArgs = {
+  input: InsertHelpDocumentInput;
+};
+
+export type HelpDocumentNode = {
+  __typename: 'HelpDocumentNode';
+  createdDatetime: Scalars['DateTime']['output'];
+  /**
+   * Files attached to this help document via sync_file_reference. Typically one,
+   * but the field returns a connector so the schema doesn't force the contract.
+   * Batched through the shared loader (keyed by record_id) to avoid an N+1 when
+   * listing — same path as purchase order / requisition attachments.
+   */
+  files: SyncFileReferenceConnector;
+  id: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
+
+export type HelpDocumentsResponse = HelpDocumentConnector;
+
 export type IdResponse = {
   __typename: 'IdResponse';
   id: Scalars['String']['output'];
@@ -3568,6 +3633,24 @@ export enum InsertFromResponseStatusInput {
   Draft = 'DRAFT',
   Sent = 'SENT',
 }
+
+export type InsertHelpDocumentError = {
+  __typename: 'InsertHelpDocumentError';
+  error: InsertHelpDocumentErrorInterface;
+};
+
+export type InsertHelpDocumentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertHelpDocumentInput = {
+  id: Scalars['String']['input'];
+  title: Scalars['String']['input'];
+};
+
+export type InsertHelpDocumentResponse =
+  | HelpDocumentNode
+  | InsertHelpDocumentError;
 
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
@@ -4456,12 +4539,14 @@ export type IntegerStorePrefInput = {
   value: Scalars['Int']['input'];
 };
 
-export type InternalError = InsertAssetCatalogueItemErrorInterface &
+export type InternalError = DeleteHelpDocumentErrorInterface &
+  InsertAssetCatalogueItemErrorInterface &
   InsertAssetErrorInterface &
   InsertAssetLogErrorInterface &
   InsertAssetLogReasonErrorInterface &
   InsertDemographicIndicatorErrorInterface &
   InsertDemographicProjectionErrorInterface &
+  InsertHelpDocumentErrorInterface &
   InsertLocationErrorInterface &
   RefreshTokenErrorInterface &
   ScannedDataParseErrorInterface &
@@ -5068,6 +5153,13 @@ export type ItemNode = {
   restrictedLocationType?: Maybe<LocationTypeNode>;
   restrictedLocationTypeId?: Maybe<Scalars['String']['output']>;
   stats: ItemStatsNode;
+  /**
+   * Total stock on hand (all packs, not just available) for this item + store.
+   * Backed by the same batched `ItemsStockOnHandLoader` as `availableStockOnHand`,
+   * so unlike `stats { stockOnHand }` it does not trigger the item-stats / AMC
+   * backend-plugin path.
+   */
+  stockOnHand: Scalars['Int']['output'];
   strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
@@ -5104,6 +5196,10 @@ export type ItemNodeProgramsArgs = {
 export type ItemNodeStatsArgs = {
   amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
   periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
+  storeId: Scalars['String']['input'];
+};
+
+export type ItemNodeStockOnHandArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -7141,6 +7237,7 @@ export enum PreferenceKey {
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   Backdating = 'backdating',
+  BlindStocktake = 'blindStocktake',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
@@ -7213,6 +7310,7 @@ export type PreferencesNode = {
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   backdating: BackdatingNode;
+  blindStocktake: Scalars['Boolean']['output'];
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
@@ -7847,6 +7945,7 @@ export type Queries = {
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
   getVvmStatusLogByStockLine: VvmstatusLogResponse;
   hasCustomerProgramRequisitionSettings: Scalars['Boolean']['output'];
+  helpDocuments: HelpDocumentsResponse;
   /** Query for "historical_stock_line" entries */
   historicalStockLines: StockLinesResponse;
   inboundShipmentCounts: InboundInvoiceCounts;
@@ -8121,6 +8220,7 @@ export type QueriesContactsArgs = {
 export type QueriesCsvToExcelArgs = {
   csvData: Scalars['String']['input'];
   filename: Scalars['String']['input'];
+  sheetName?: InputMaybe<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -8246,6 +8346,11 @@ export type QueriesGetVvmStatusLogByStockLineArgs = {
 export type QueriesHasCustomerProgramRequisitionSettingsArgs = {
   customerNameIds: Array<Scalars['String']['input']>;
   storeId: Scalars['String']['input'];
+};
+
+export type QueriesHelpDocumentsArgs = {
+  filter?: InputMaybe<HelpDocumentFilterInput>;
+  page?: InputMaybe<PaginationInput>;
 };
 
 export type QueriesHistoricalStockLinesArgs = {
@@ -8798,6 +8903,7 @@ export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface &
   InsertAssetLogReasonErrorInterface &
   InsertDemographicIndicatorErrorInterface &
   InsertDemographicProjectionErrorInterface &
+  InsertHelpDocumentErrorInterface &
   InsertLocationErrorInterface &
   InsertVaccineCourseErrorInterface &
   UpdateDemographicIndicatorErrorInterface &
@@ -8828,6 +8934,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteCampaignErrorInterface &
   DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
+  DeleteHelpDocumentErrorInterface &
   DeleteInboundShipmentErrorInterface &
   DeleteInboundShipmentLineErrorInterface &
   DeleteInboundShipmentServiceLineErrorInterface &
@@ -8984,6 +9091,7 @@ export enum ReportContext {
 }
 
 export type ReportFilterInput = {
+  code?: InputMaybe<StringFilterInput>;
   context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
@@ -9708,6 +9816,7 @@ export type StockLineConnector = {
 };
 
 export type StockLineFilterInput = {
+  campaignId?: InputMaybe<EqualFilterStringInput>;
   code?: InputMaybe<StringFilterInput>;
   expiryDate?: InputMaybe<DateFilterInput>;
   hasPacksInStore?: InputMaybe<Scalars['Boolean']['input']>;
@@ -10008,6 +10117,7 @@ export type StocktakeNode = {
   countedBy?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
+  documents: SyncFileReferenceConnector;
   finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   inventoryAddition?: Maybe<InvoiceNode>;
@@ -11317,6 +11427,17 @@ export type UpdatePurchaseOrderLineResponse =
 
 export type UpdatePurchaseOrderResponse = IdResponse | UpdatePurchaseOrderError;
 
+export type UpdateReportInput = {
+  id: Scalars['String']['input'];
+  isActive: Scalars['Boolean']['input'];
+};
+
+export type UpdateReportNode = {
+  __typename: 'UpdateReportNode';
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+};
+
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';
   error: UpdateRequestRequisitionErrorInterface;
@@ -11865,6 +11986,7 @@ export type UpsertPreferencesInput = {
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   backdating?: InputMaybe<BackdatingInput>;
+  blindStocktake?: InputMaybe<Array<BoolStorePrefInput>>;
   canCreateInternalOrderFromARequisition?: InputMaybe<
     Array<BoolStorePrefInput>
   >;
