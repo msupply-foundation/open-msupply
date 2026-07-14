@@ -16,6 +16,7 @@ pub enum PrefKey {
     AllowTrackingOfStockByDonor,
     AuthorisePurchaseOrder,
     CustomTranslations,
+    CustomTranslationsV2,
     GenderOptions,
     PreventTransfersMonthsBeforeInitialisation,
     ShowContactTracing,
@@ -32,6 +33,7 @@ pub enum PrefKey {
     Backdating,
 
     // Store preferences
+    BlindStocktake,
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
@@ -72,6 +74,7 @@ pub enum PreferenceValueType {
     MultiChoice,
     // specific type to CustomTranslations preference
     CustomTranslations,
+    CustomTranslationsV2,
     WarnWhenMissingRecentStocktakeData,
     BackdatingData,
     String,
@@ -208,6 +211,20 @@ pub struct PreferenceDescription {
     /// WARNING: Type loss - holds any kind of pref value (for edit UI).
     /// Use the PreferenceProvider to load the strictly typed value.
     pub value: serde_json::Value,
+}
+
+impl PreferenceError {
+    /// Collapse to a `RepositoryError` for call sites that surface
+    /// `RepositoryError` (most service validation). A failed preference load
+    /// almost always means the database is unavailable, in which case the
+    /// inner error is preserved; other variants are wrapped as a DB error so
+    /// the failure is propagated loudly rather than silently defaulted.
+    pub fn into_repository_error(self) -> RepositoryError {
+        match self {
+            PreferenceError::DatabaseError(error) => error,
+            other => RepositoryError::as_db_error("failed to load preference", other),
+        }
+    }
 }
 
 impl From<RepositoryError> for PreferenceError {

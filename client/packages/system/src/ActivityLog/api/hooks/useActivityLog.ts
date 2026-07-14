@@ -37,8 +37,8 @@ export function useActivityLog(
       sort: sortBy ? getSortInput(sortBy) : undefined,
       filter,
     });
-    const { nodes, totalCount } = query?.activityLogs;
-    return { nodes, totalCount };
+    const { nodes, totalCount } = query?.activityLogs ?? {};
+    return { nodes: nodes ?? [], totalCount: totalCount ?? 0 };
   };
 
   const query = useQuery({

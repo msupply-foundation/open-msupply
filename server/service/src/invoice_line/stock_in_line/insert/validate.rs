@@ -1,13 +1,17 @@
+use crate::common::check_program_exists;
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        stock_in_line::{check_pack_size, check_program_visible_to_store},
+        stock_in_line::{check_lines_locked_by_authorisation, check_pack_size},
         validate::{check_item_exists, check_line_exists, check_number_of_packs},
     },
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
+        OtherPartyErrors,
+    },
     NullableUpdate,
 };
 use repository::{InvoiceRow, ItemRow, PurchaseOrderLineRowRepository, StorageConnection};
@@ -77,6 +81,12 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(OtherPartyStoreDisabled);
+    }
+    if check_lines_locked_by_authorisation(connection, &invoice)? {
+        return Err(CannotAddLinesToAuthorisedReceivedInvoice);
+    }
 
     if let Some(donor_id) = &input.donor_id {
         match check_other_party(connection, store_id, donor_id, CheckOtherPartyType::Donor) {
@@ -111,8 +121,10 @@ pub fn validate(
         };
     };
 
-    if !check_program_visible_to_store(connection, store_id, &input.program_id)? {
-        return Err(ProgramNotVisible);
+    if let Some(program_id) = &input.program_id {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(ProgramDoesNotExist);
+        }
     }
 
     // External inbound shipments (with purchase_order_id) require a purchase_order_line_id

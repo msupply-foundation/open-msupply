@@ -5,7 +5,6 @@ import {
   AlertIcon,
   AuthError,
   Grid,
-  LocalStorage,
   Location,
   RouteBuilder,
   matchPath,
@@ -40,7 +39,14 @@ export const ErrorAlert = () => {
       RouteBuilder.create(AppRoute.Initialise).addWildCard().build(),
       location.pathname
     ) ||
-    matchPath(RouteBuilder.create(AppRoute.Android).build(), location.pathname)
+    matchPath(
+      RouteBuilder.create(AppRoute.Android).build(),
+      location.pathname
+    ) ||
+    matchPath(
+      RouteBuilder.create(AppRoute.Discovery).addWildCard().build(),
+      location.pathname
+    )
   ) {
     return null;
   }
@@ -125,24 +131,6 @@ const translateErrorMessage = (
       return {
         title: t('auth.alert-title'),
         message: t('auth.permission-denied'),
-      };
-    case AuthError.ServerError:
-      const error = LocalStorage.getItem('/error/server');
-      const message =
-        error === null ? (
-          t('auth.server-error')
-        ) : (
-          <>
-            {t('auth.server-error')}
-            <Typography color="error" paddingBottom={2} paddingTop={2}>
-              {error}
-            </Typography>
-          </>
-        );
-
-      return {
-        title: t('heading.server-error'),
-        message,
       };
     default:
       return undefined;

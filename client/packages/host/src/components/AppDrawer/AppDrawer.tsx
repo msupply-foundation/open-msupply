@@ -30,6 +30,8 @@ import {
   ManageNav,
   ProgramsNav,
   CatalogueNav,
+  PluginCategoryNav,
+  usePluginNewCategories,
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
 import { SyncNavLink } from './SyncNavLink';
@@ -145,6 +147,7 @@ export const AppDrawer: React.FC = () => {
   const drawer = useDrawer();
   const { store } = useAuthContext();
   const { fullScreen } = useHostContext();
+  const pluginCategories = usePluginNewCategories();
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -209,6 +212,9 @@ export const AppDrawer: React.FC = () => {
           <DispensaryNav store={store} />
           <ColdChainNav store={store} />
           <ProgramsNav store={store} />
+          {pluginCategories.map(category => (
+            <PluginCategoryNav key={category.key} category={category} />
+          ))}
           <AppNavLink
             to={AppRoute.Reports}
             icon={<ReportsIcon fontSize="small" color="primary" />}

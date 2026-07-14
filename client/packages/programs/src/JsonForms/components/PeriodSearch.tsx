@@ -121,7 +121,7 @@ const UIComponent = (props: ControlProps) => {
           isOptionEqualToValue={(option, value) => option.id === value.id}
           clearable={props.uischema.options?.['clearable'] ?? false}
           disabled={shouldFindByProgram ? !programId : false}
-          onPageChange={pageNumber => fetchNextPage({ pageParam: pageNumber })}
+          onPageChange={() => fetchNextPage()}
           paginationDebounce={300}
         />
       }

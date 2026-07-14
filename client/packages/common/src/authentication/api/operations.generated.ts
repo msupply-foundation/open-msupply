@@ -29,6 +29,7 @@ export type UserStoreNodeFragment = {
     monthsItemsExpire: number;
     stocktakeFrequency: number;
     extraFieldsInRequisition: boolean;
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
     manuallyLinkInternalOrderToInboundShipment: boolean;
     useConsumptionAndStockFromCustomersForInternalOrders: boolean;
     editPrescribedQuantityOnPrescription: boolean;
@@ -98,6 +99,7 @@ export type MeQuery = {
         monthsItemsExpire: number;
         stocktakeFrequency: number;
         extraFieldsInRequisition: boolean;
+        keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
         manuallyLinkInternalOrderToInboundShipment: boolean;
         useConsumptionAndStockFromCustomersForInternalOrders: boolean;
         editPrescribedQuantityOnPrescription: boolean;
@@ -132,6 +134,7 @@ export type MeQuery = {
           monthsItemsExpire: number;
           stocktakeFrequency: number;
           extraFieldsInRequisition: boolean;
+          keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
           manuallyLinkInternalOrderToInboundShipment: boolean;
           useConsumptionAndStockFromCustomersForInternalOrders: boolean;
           editPrescribedQuantityOnPrescription: boolean;
@@ -240,6 +243,7 @@ export type PreferencesQuery = {
     adjustForNumberOfDaysOutOfStock: boolean;
     allowTrackingOfStockByDonor: boolean;
     authorisePurchaseOrder: boolean;
+    blindStocktake: boolean;
     canCreateInternalOrderFromARequisition: boolean;
     customTranslations: any;
     daysInMonth: number;
@@ -325,6 +329,7 @@ export const UserStoreNodeFragmentDoc = gql`
       monthsItemsExpire
       stocktakeFrequency
       extraFieldsInRequisition
+      keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
       manuallyLinkInternalOrderToInboundShipment
       useConsumptionAndStockFromCustomersForInternalOrders
       editPrescribedQuantityOnPrescription
@@ -507,6 +512,7 @@ export const PreferencesDocument = gql`
       adjustForNumberOfDaysOutOfStock
       allowTrackingOfStockByDonor
       authorisePurchaseOrder
+      blindStocktake
       canCreateInternalOrderFromARequisition
       customTranslations
       daysInMonth

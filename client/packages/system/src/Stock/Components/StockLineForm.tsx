@@ -153,46 +153,48 @@ export const StockLineForm = ({
           flexWrap="nowrap"
           maxWidth={900}
         >
-          {!isNewModal && (
-            <Box paddingBottom={1}>
-              <TextWithLabelRow
-                label={`${t('label.item')}`}
-                text={''}
-                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
-                textProps={{ sx: { pl: 1 } }}
-              />
-              <Box
-                sx={{
-                  paddingLeft: '110px',
-                  marginTop: '-24px',
-                  marginBottom: '8px',
-                }}
-              >
-                <Link
-                  to={RouteBuilder.create(AppRoute.Catalogue)
-                    .addPart(AppRoute.Items)
-                    .addPart(draft.itemId)
-                    .build()}
+          <Box paddingBottom={1}>
+            {!isNewModal && (
+              <>
+                <TextWithLabelRow
+                  label={`${t('label.item')}`}
+                  text={''}
+                  labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+                  textProps={{ sx: { pl: 1 } }}
+                />
+                <Box
+                  sx={{
+                    paddingLeft: '110px',
+                    marginTop: '-24px',
+                    marginBottom: '8px',
+                  }}
                 >
-                  {draft.item.name}
-                </Link>
-              </Box>
-              <TextWithLabelRow
-                label={`${t('label.code')}`}
-                text={draft.item.code}
-                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
-                textProps={{ sx: { pl: 1 } }}
-              />
-              <TextWithLabelRow
-                label={`${t('label.unit')}`}
-                text={draft.item.unitName ?? ''}
-                labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
-                textProps={{ sx: { pl: 1 } }}
-              />
-            </Box>
-          )}
+                  <Link
+                    to={RouteBuilder.create(AppRoute.Catalogue)
+                      .addPart(AppRoute.Items)
+                      .addPart(draft.itemId)
+                      .build()}
+                  >
+                    {draft.item.name}
+                  </Link>
+                </Box>
+                <TextWithLabelRow
+                  label={`${t('label.code')}`}
+                  text={draft.item.code}
+                  labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+                  textProps={{ sx: { pl: 1 } }}
+                />
+              </>
+            )}
+            <TextWithLabelRow
+              label={`${t('label.unit')}`}
+              text={draft.item.unitName ?? ''}
+              labelProps={{ sx: { fontWeight: 'bold', width: '100px' } }}
+              textProps={{ sx: { pl: 1 } }}
+            />
+          </Box>
           <Box>
-            <Grid container gap={isNewModal ? undefined : 10}>
+            <Grid container gap={isNewModal ? 2 : 10}>
               <Grid container flex={1} flexDirection="column" gap={1}>
                 <StyledInputRow
                   label={t('label.pack-quantity')}
@@ -416,6 +418,7 @@ export const StockLineForm = ({
                     <Checkbox
                       checked={draft.onHold}
                       onChange={(_, onHold) => onUpdate({ onHold })}
+                      sx={{ pr: 0 }}
                     />
                   }
                 />
@@ -491,13 +494,12 @@ export const StockLineForm = ({
                 {showVVMStatus && (
                   <StyledInputRow
                     label={t('label.vvm-status')}
-                    labelWidth={isNewModal ? '212px' : null}
                     Input={
                       <VVMStatusSearchInput
                         selected={draft?.vvmStatus ?? null}
                         onChange={vvmStatus => onUpdate({ vvmStatus })}
                         disabled={!isNewModal}
-                        width={!isNewModal ? 160 : undefined}
+                        width={160}
                         useDefault={isNewModal}
                       />
                     }

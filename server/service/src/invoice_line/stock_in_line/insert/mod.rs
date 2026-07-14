@@ -53,6 +53,7 @@ pub struct InsertStockInLine {
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
     pub purchase_order_line_id: Option<String>,
+    pub reason_option_id: Option<String>,
 }
 
 type OutError = InsertStockInLineError;
@@ -109,6 +110,8 @@ pub enum InsertStockInLineError {
     DonorNotVisible,
     SelectedDonorPartyIsNotADonor,
     CannotEditFinalised,
+    OtherPartyStoreDisabled,
+    CannotAddLinesToAuthorisedReceivedInvoice,
     LocationDoesNotExist,
     ItemVariantDoesNotExist,
     ItemNotFound,
@@ -119,7 +122,7 @@ pub enum InsertStockInLineError {
     ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
-    ProgramNotVisible,
+    ProgramDoesNotExist,
     IncorrectLocationType,
     PurchaseOrderLineIdRequired,
     PurchaseOrderLineDoesNotExist,
@@ -154,7 +157,8 @@ mod test {
             mock_inbound_shipment_e, mock_item_a, mock_item_restricted_location_type_b,
             mock_location_with_restricted_location_type_a, mock_name_customer_a, mock_name_store_b,
             mock_outbound_shipment_e, mock_purchase_order_a, mock_purchase_order_a_line_1,
-            mock_store_a, mock_store_b, mock_user_account_a, mock_vaccine_item_a,
+            mock_shipment_variance_reason_option, mock_store_a, mock_store_b,
+            mock_user_account_a, mock_vaccine_item_a,
             mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
@@ -479,7 +483,7 @@ mod test {
             Err(ServiceError::ManufacturerIsNotAManufacturer)
         );
 
-        // ProgramNotVisible
+        // ProgramDoesNotExist
         assert_eq!(
             insert_stock_in_line(
                 &context,
@@ -490,13 +494,117 @@ mod test {
                     item_id: mock_item_a().id,
                     invoice_id: mock_inbound_shipment_e().id,
                     r#type: StockInType::InboundShipment,
-                    program_id: Some(mock_immunisation_program_a().id), // Not master list visible to store_b
+                    program_id: Some("does-not-exist".to_string()),
                     ..Default::default()
                 },
                 None
             ),
-            Err(ServiceError::ProgramNotVisible)
+            Err(ServiceError::ProgramDoesNotExist)
         );
+
+        // Program exists but is not visible to this store — accepted (see #11600).
+        // This represents stock that flowed in via an upstream shipment carrying a
+        // program_id the customer store doesn't have visible.
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "stock_in_line_with_invisible_program".to_string(),
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                item_id: mock_item_a().id,
+                invoice_id: mock_inbound_shipment_e().id,
+                r#type: StockInType::InboundShipment,
+                program_id: Some(mock_immunisation_program_a().id),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn insert_stock_in_line_authorised_received_invoice() {
+        fn authorised_received_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "authorised_received_inbound".to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                purchase_order_id: Some(mock_purchase_order_a().id),
+                ..Default::default()
+            }
+        }
+
+        // Received inbound in the same store but not linked to a purchase
+        // order, so not subject to line authorisation
+        fn received_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "received_inbound_without_auth".to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::Received,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_stock_in_line_authorised_received_invoice",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![authorised_received_inbound(), received_inbound()],
+                preferences: vec![PreferenceRow {
+                    id: "ext_auth_pref_received_insert_test".to_string(),
+                    key: "external_inbound_shipment_lines_must_be_authorised".to_string(),
+                    value: "true".to_string(),
+                    store_id: Some(mock_store_a().id),
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        // Lines cannot be added once an authorised shipment is received
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new_line_authorised_received".to_string(),
+                    invoice_id: authorised_received_inbound().id,
+                    item_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    r#type: StockInType::InboundShipment,
+                    purchase_order_line_id: Some(mock_purchase_order_a_line_1().id),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::CannotAddLinesToAuthorisedReceivedInvoice)
+        );
+
+        // A received shipment not subject to line authorisation still accepts
+        // new lines
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "new_line_received_no_auth".to_string(),
+                invoice_id: received_inbound().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
     }
 
     #[actix_rt::test]
@@ -542,7 +650,7 @@ mod test {
         assert_eq!(inbound_line, {
             let mut expected = inbound_line.clone();
             expected.id = "new_invoice_line_id".to_string();
-            expected.item_link_id = mock_item_a().id;
+            expected.item_id = mock_item_a().id;
             expected.pack_size = 1.0;
             expected.number_of_packs = 1.0;
             expected
@@ -590,7 +698,7 @@ mod test {
         assert_eq!(inbound_line, {
             let mut expected = inbound_line.clone();
             expected.id = "new_invoice_line_pack_to_one".to_string();
-            expected.item_link_id = mock_item_a().id;
+            expected.item_id = mock_item_a().id;
             expected.pack_size = 1.0;
             expected.number_of_packs = 200.0;
             expected.sell_price_per_pack = 10.0;
@@ -794,6 +902,43 @@ mod test {
         assert_eq!(
             invoice_line.stock_line_id, None,
             "Stock line should NOT be created for external inbound shipment when authorisation preference is enabled"
+        );
+    }
+
+    #[actix_rt::test]
+    async fn insert_stock_in_line_persists_reason() {
+        let (_, connection, connection_manager, _) =
+            setup_all("insert_stock_in_line_persists_reason", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        // A discrepancy reason set on a new line must persist on the first save
+        // (the insert path, not only a later update).
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "reason_line".to_string(),
+                invoice_id: mock_customer_return_a().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                reason_option_id: Some(mock_shipment_variance_reason_option().id),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("reason_line")
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            line.reason_option_id,
+            Some(mock_shipment_variance_reason_option().id)
         );
     }
 }

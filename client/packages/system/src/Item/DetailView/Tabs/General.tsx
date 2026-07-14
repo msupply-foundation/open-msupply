@@ -68,19 +68,21 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
             inputProps={{ value: item?.type, disabled: isDisabled }}
           />
           <DetailInputWithLabelRow
-            label={t('label.doses')}
-            Input={
-              <NumericTextInput
-                value={item?.doses}
-                disabled={isDisabled}
-                fullWidth
-              />
-            }
-          />
-          <DetailInputWithLabelRow
             label={t('label.is-vaccine')}
             Input={<Checkbox disabled={isDisabled} checked={item?.isVaccine} />}
           />
+          {item?.isVaccine && (
+            <DetailInputWithLabelRow
+              label={t('label.doses')}
+              Input={
+                <NumericTextInput
+                  value={item?.doses}
+                  disabled={isDisabled}
+                  fullWidth
+                />
+              }
+            />
+          )}
         </DetailSection>
         <DetailSection title={t('title.categories')}>
           <DetailInputWithLabelRow
@@ -151,6 +153,7 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
               <NumericTextInput
                 value={item?.volumePerPack}
                 disabled={isDisabled}
+                decimalLimit={5}
                 fullWidth
               />
             }
@@ -161,6 +164,7 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
               <NumericTextInput
                 value={item?.volumePerOuterPack}
                 disabled={isDisabled}
+                decimalLimit={5}
                 fullWidth
               />
             }
@@ -171,6 +175,7 @@ export const GeneralTab = ({ item, isLoading }: GeneralTabProps) => {
               <NumericTextInput
                 value={item?.weight}
                 disabled={isDisabled}
+                decimalLimit={5}
                 fullWidth
               />
             }

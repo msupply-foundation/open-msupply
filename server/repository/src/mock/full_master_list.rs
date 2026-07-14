@@ -31,7 +31,7 @@ pub fn mock_master_list_item_query_test1() -> FullMockMasterList {
         }],
         lines: vec![MasterListLineRow {
             id: "item_query_test1".to_string(),
-            item_link_id: "item_query_test1".to_string(),
+            item_id: "item_query_test1".to_string(),
             master_list_id: "item_query_test1".to_string(),
             ..Default::default()
         }],
@@ -81,7 +81,7 @@ pub fn mock_master_list_program() -> FullMockMasterList {
         ],
         lines: vec![MasterListLineRow {
             id: "program_item".to_string(),
-            item_link_id: "item_query_test1".to_string(),
+            item_id: "item_query_test1".to_string(),
             master_list_id: "master_list_program".to_string(),
             ..Default::default()
         }],
@@ -112,7 +112,7 @@ pub fn mock_master_list_program_b() -> FullMockMasterList {
         ],
         lines: vec![MasterListLineRow {
             id: "program_b_item".to_string(),
-            item_link_id: "item_query_test1".to_string(),
+            item_id: "item_query_test1".to_string(),
             master_list_id: "master_list_program_b".to_string(),
             ..Default::default()
         }],
@@ -133,13 +133,13 @@ pub fn mock_master_list_master_list_line_filter_test() -> FullMockMasterList {
         lines: vec![
             MasterListLineRow {
                 id: "master_list_line_filter_test_1".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 master_list_id: "master_list_master_list_line_filter_test".to_string(),
                 ..Default::default()
             },
             MasterListLineRow {
                 id: "master_list_line_filter_test_2".to_string(),
-                item_link_id: "item_b".to_string(),
+                item_id: "item_b".to_string(),
                 master_list_id: "master_list_master_list_line_filter_test".to_string(),
                 ..Default::default()
             },
@@ -162,14 +162,14 @@ pub fn mock_master_list_default_price_list() -> FullMockMasterList {
         lines: vec![
             MasterListLineRow {
                 id: "master_list_line_default_price_1".to_string(),
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 master_list_id: "master_list_default_price_list".to_string(),
                 price_per_unit: Some(1.0),
                 ..Default::default()
             },
             MasterListLineRow {
                 id: "master_list_line_default_price_2".to_string(),
-                item_link_id: "item_b".to_string(),
+                item_id: "item_b".to_string(),
                 master_list_id: "master_list_default_price_list".to_string(),
                 price_per_unit: Some(2.001),
                 ..Default::default()

@@ -34,7 +34,7 @@ export const useEquipmentDetailView = () => {
   const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
   const { data, isLoading } = useAssets.document.get();
-  const { mutateAsync: update, isLoading: isSaving } =
+  const { mutateAsync: update, isPending: isSaving } =
     useAssets.document.update();
   const {
     query: { data: locationData, isLoading: isLoadingLocations },

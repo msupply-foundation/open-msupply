@@ -8,7 +8,10 @@ import {
   useDeleteConfirmation,
   useTranslation,
   InvoiceNodeStatus,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { useReturns } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
@@ -19,6 +22,7 @@ export const SidePanelComponent = () => {
   const t = useTranslation();
   const { data } = useReturns.document.customerReturn();
   const { mutateAsync } = useReturns.document.deleteCustomer();
+  const navigate = useNavigate();
 
   const isTransfer = !!data?.linkedShipment?.id;
 
@@ -26,6 +30,11 @@ export const SidePanelComponent = () => {
   const deleteAction = async () => {
     if (!data) return;
     await mutateAsync(data.id);
+    navigate(
+      RouteBuilder.create(AppRoute.Distribution)
+        .addPart(AppRoute.CustomerReturn)
+        .build()
+    );
   };
 
   const onDelete = useDeleteConfirmation({

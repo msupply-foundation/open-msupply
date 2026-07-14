@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from '@common/intl';
-import { AuthCookie } from '../AuthContext';
+import { AuthCookie, setAuthCookie } from '../AuthContext';
 import {
   useGetUserPermissions,
   useLastSuccessfulUserSync,
@@ -19,7 +19,7 @@ export const useUpdateUserInfo = (
   const t = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const { data: lastSuccessfulSync } = useLastSuccessfulUserSync();
-  const { mutateAsync: updateUser, isLoading } = useUpdateUser();
+  const { mutateAsync: updateUser, isPending: isLoading } = useUpdateUser();
   const getUserPermissions = useGetUserPermissions();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
 
@@ -52,6 +52,7 @@ export const useUpdateUserInfo = (
               jobTitle: userDetails?.jobTitle,
             },
           };
+          setAuthCookie(authCookie);
           setCookie(authCookie);
           return;
         }

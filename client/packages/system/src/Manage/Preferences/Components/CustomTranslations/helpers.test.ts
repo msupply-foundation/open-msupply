@@ -8,6 +8,15 @@ import {
   hasInvalidBrackets,
   checkInvalidVariables as checkInvalidVariables,
   mergeTranslations,
+  mergeNestedTranslations,
+  mergeFlatMaps,
+  setNamespaceTranslations,
+  collectNamespaces,
+  translationsToFlatMap,
+  isNestedTranslations,
+  buildExportObject,
+  splitImportObject,
+  CustomTranslationsV2,
 } from './helpers';
 
 describe('custom translations helpers', () => {
@@ -49,6 +58,31 @@ describe('custom translations helpers', () => {
       const result = mapTranslationsToArray(translations, t);
       expect(result).toEqual([
         { id: 'button.ok', key: 'button.ok', default: 'OK', custom: 'Okay' },
+      ]);
+    });
+    it('resolves defaults through getDefault when provided (namespaced keys)', () => {
+      const translations = { 'Daily Tally': 'دفتر روزانه' };
+      const result = mapTranslationsToArray(translations, t, {
+        includeUnknownKeys: true,
+        getDefault: key => key,
+      });
+      expect(result).toEqual([
+        {
+          id: 'Daily Tally',
+          key: 'Daily Tally',
+          default: 'Daily Tally',
+          custom: 'دفتر روزانه',
+        },
+      ]);
+    });
+    it('applies the unknown-key filter using getDefault', () => {
+      const desktopBundle: Record<string, string> = { help: 'Help' };
+      const translations = { help: 'Potions', unknown: 'Dropped' };
+      const result = mapTranslationsToArray(translations, t, {
+        getDefault: key => desktopBundle[key] ?? '',
+      });
+      expect(result).toEqual([
+        { id: 'help', key: 'help', default: 'Help', custom: 'Potions' },
       ]);
     });
   });
@@ -287,7 +321,10 @@ describe('custom translations helpers', () => {
 
     describe('replace mode', () => {
       it('replaces all existing translations with imported ones', () => {
-        const imported = [tr('button.ok', 'Sure', 'OK'), tr('label.new', 'New!', 'New')];
+        const imported = [
+          tr('button.ok', 'Sure', 'OK'),
+          tr('label.new', 'New!', 'New'),
+        ];
         const result = mergeTranslations(existing, imported, 'replace');
         expect(result).toEqual(imported);
       });
@@ -307,8 +344,8 @@ describe('custom translations helpers', () => {
     describe('keep-existing mode', () => {
       it('adds new keys without modifying existing ones', () => {
         const imported = [
-          tr('button.ok', 'Sure', 'OK'),     // exists — should be skipped
-          tr('label.new', 'Nouveau', 'New'),  // new — should be added
+          tr('button.ok', 'Sure', 'OK'), // exists — should be skipped
+          tr('label.new', 'Nouveau', 'New'), // new — should be added
         ];
         const result = mergeTranslations(existing, imported, 'keep-existing');
         expect(result).toEqual([
@@ -348,15 +385,15 @@ describe('custom translations helpers', () => {
     describe('overwrite mode', () => {
       it('overwrites existing keys and adds new ones', () => {
         const imported = [
-          tr('button.ok', 'Sure', 'OK'),     // exists — should be overwritten
-          tr('label.new', 'Nouveau', 'New'),  // new — should be added
+          tr('button.ok', 'Sure', 'OK'), // exists — should be overwritten
+          tr('label.new', 'Nouveau', 'New'), // new — should be added
         ];
         const result = mergeTranslations(existing, imported, 'overwrite');
         expect(result).toEqual([
-          tr('button.ok', 'Sure', 'OK'),       // overwritten
+          tr('button.ok', 'Sure', 'OK'), // overwritten
           tr('button.cancel', 'Annuler', 'Cancel'), // untouched
-          tr('label.name', 'Nom', 'Name'),     // untouched
-          tr('label.new', 'Nouveau', 'New'),   // added
+          tr('label.name', 'Nom', 'Name'), // untouched
+          tr('label.new', 'Nouveau', 'New'), // added
         ]);
       });
 
@@ -371,10 +408,20 @@ describe('custom translations helpers', () => {
 
       it('only updates the custom field, preserving other properties', () => {
         const existingWithMeta: Translation[] = [
-          { id: 'button.ok', key: 'button.ok', default: 'OK', custom: 'Okay', isNew: true },
+          {
+            id: 'button.ok',
+            key: 'button.ok',
+            default: 'OK',
+            custom: 'Okay',
+            isNew: true,
+          },
         ];
         const imported = [tr('button.ok', 'Sure', 'OK')];
-        const result = mergeTranslations(existingWithMeta, imported, 'overwrite');
+        const result = mergeTranslations(
+          existingWithMeta,
+          imported,
+          'overwrite'
+        );
         expect(result[0]).toEqual({
           id: 'button.ok',
           key: 'button.ok',
@@ -403,6 +450,162 @@ describe('custom translations helpers', () => {
         ];
         const result = mergeTranslations(existing, imported, 'overwrite');
         expect(result.map(t => t.custom)).toEqual(['Sure', 'Nope', 'Nombre']);
+      });
+    });
+  });
+
+  describe('v2 (per-language / per-namespace) helpers', () => {
+    const sample = (): CustomTranslationsV2 => ({
+      fr: {
+        common: { 'button.ok': 'Oui', 'button.cancel': 'Annuler' },
+        report: { 'report.title': 'Rapport' },
+      },
+      en: { common: { 'button.ok': 'OK' } },
+    });
+
+    describe('collectNamespaces', () => {
+      it('returns the unique namespaces across all languages', () => {
+        expect(collectNamespaces(sample()).sort()).toEqual([
+          'common',
+          'report',
+        ]);
+      });
+      it('returns empty for an empty structure', () => {
+        expect(collectNamespaces({})).toEqual([]);
+      });
+    });
+
+    describe('setNamespaceTranslations', () => {
+      it('sets a language + namespace map', () => {
+        const result = setNamespaceTranslations({}, 'fr', 'common', {
+          'button.ok': 'Oui',
+        });
+        expect(result).toEqual({ fr: { common: { 'button.ok': 'Oui' } } });
+      });
+      it('removes the namespace (and language) when given an empty map', () => {
+        const start: CustomTranslationsV2 = {
+          fr: { common: { 'button.ok': 'Oui' } },
+        };
+        const result = setNamespaceTranslations(start, 'fr', 'common', {});
+        expect(result).toEqual({});
+      });
+      it('keeps other namespaces when removing one', () => {
+        const result = setNamespaceTranslations(sample(), 'fr', 'report', {});
+        expect(result.fr).toEqual({
+          common: { 'button.ok': 'Oui', 'button.cancel': 'Annuler' },
+        });
+      });
+      it('does not mutate the input', () => {
+        const start = sample();
+        setNamespaceTranslations(start, 'fr', 'common', {});
+        expect(start.fr?.common).toBeDefined();
+      });
+    });
+
+    describe('mergeNestedTranslations', () => {
+      it('replace mode returns the imported structure', () => {
+        const imported: CustomTranslationsV2 = { es: { common: { a: 'b' } } };
+        expect(mergeNestedTranslations(sample(), imported, 'replace')).toEqual(
+          imported
+        );
+      });
+      it('keep-existing keeps existing keys, adds new ones', () => {
+        const imported: CustomTranslationsV2 = {
+          fr: { common: { 'button.ok': 'CHANGED', 'button.new': 'Nouveau' } },
+        };
+        const result = mergeNestedTranslations(
+          sample(),
+          imported,
+          'keep-existing'
+        );
+        expect(result.fr?.common?.['button.ok']).toBe('Oui'); // kept
+        expect(result.fr?.common?.['button.new']).toBe('Nouveau'); // added
+      });
+      it('overwrite replaces overlapping keys and merges the rest', () => {
+        const imported: CustomTranslationsV2 = {
+          fr: { common: { 'button.ok': 'CHANGED' } },
+          es: { common: { hola: 'Hola' } },
+        };
+        const result = mergeNestedTranslations(sample(), imported, 'overwrite');
+        expect(result.fr?.common?.['button.ok']).toBe('CHANGED');
+        expect(result.fr?.common?.['button.cancel']).toBe('Annuler'); // untouched
+        expect(result.es?.common?.hola).toBe('Hola'); // new language
+        expect(result.en?.common?.['button.ok']).toBe('OK'); // untouched language
+      });
+    });
+
+    describe('mergeFlatMaps', () => {
+      const existing = { a: '1', b: '2' };
+      it('replace returns a copy of imported', () => {
+        expect(mergeFlatMaps(existing, { c: '3' }, 'replace')).toEqual({
+          c: '3',
+        });
+      });
+      it('keep-existing keeps existing values', () => {
+        expect(
+          mergeFlatMaps(existing, { a: 'X', c: '3' }, 'keep-existing')
+        ).toEqual({ a: '1', b: '2', c: '3' });
+      });
+      it('overwrite replaces overlapping values', () => {
+        expect(
+          mergeFlatMaps(existing, { a: 'X', c: '3' }, 'overwrite')
+        ).toEqual({ a: 'X', b: '2', c: '3' });
+      });
+    });
+
+    describe('translationsToFlatMap', () => {
+      it('keeps entries equal to the default and drops empty, sorted by key', () => {
+        const rows: Translation[] = [
+          { id: 'b', key: 'b', default: 'B', custom: 'B' }, // equals default - KEPT
+          { id: 'a', key: 'a', default: 'A', custom: 'Aa' },
+          { id: 'c', key: 'c', default: 'C', custom: '' }, // empty - dropped
+        ];
+        expect(translationsToFlatMap(rows)).toEqual({ a: 'Aa', b: 'B' });
+      });
+    });
+
+    describe('isNestedTranslations', () => {
+      it('is true for a nested structure', () => {
+        expect(isNestedTranslations({ fr: { common: { a: 'b' } } })).toBe(true);
+      });
+      it('is false for a flat map', () => {
+        expect(isNestedTranslations({ 'button.ok': 'Oui' })).toBe(false);
+      });
+    });
+
+    describe('buildExportObject', () => {
+      it('omits the _v1 key when v1 is empty', () => {
+        const out = buildExportObject(sample(), {});
+        expect(out['_v1']).toBeUndefined();
+        expect(out['fr']).toBeDefined();
+      });
+      it('includes the legacy v1 map under _v1', () => {
+        const out = buildExportObject(sample(), { 'button.ok': 'Legacy' });
+        expect(out['_v1']).toEqual({ 'button.ok': 'Legacy' });
+      });
+    });
+
+    describe('splitImportObject', () => {
+      it('splits a structured file with _v1 and languages', () => {
+        const result = splitImportObject({
+          _v1: { 'button.ok': 'Legacy' },
+          fr: { common: { 'button.ok': 'Oui' } },
+        });
+        expect(result.isStructured).toBe(true);
+        expect(result.legacyV1).toEqual({ 'button.ok': 'Legacy' });
+        expect(result.v2).toEqual({ fr: { common: { 'button.ok': 'Oui' } } });
+      });
+      it('treats a plain flat file as not structured', () => {
+        const result = splitImportObject({ 'button.ok': 'Oui' });
+        expect(result.isStructured).toBe(false);
+        expect(result.v2).toBeUndefined();
+        expect(result.legacyV1).toBeUndefined();
+      });
+      it('handles a _v1-only file', () => {
+        const result = splitImportObject({ _v1: { 'button.ok': 'Legacy' } });
+        expect(result.isStructured).toBe(true);
+        expect(result.legacyV1).toEqual({ 'button.ok': 'Legacy' });
+        expect(result.v2).toBeUndefined();
       });
     });
   });

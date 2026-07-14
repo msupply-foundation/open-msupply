@@ -18,8 +18,11 @@ search_placeholder = "Search docs..."
 internal_level = "warn"
 
 [markdown]
-highlight_code = true
 insert_anchor_links = "none"
+
+[markdown.highlighting]
+light_theme = "github-light"
+dark_theme = "github-dark"
 
 [search]
 include_title = true

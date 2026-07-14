@@ -25,7 +25,7 @@ export const AppBarButtonsComponent = ({
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const navigate = useNavigate();
-  const { fetchAsync, isLoading } = useAssetCatalogueListAll();
+  const { fetchAsync, isPending: isLoading } = useAssetCatalogueListAll();
 
   const path = RouteBuilder.create(AppRoute.Catalogue)
     .addPart(AppRoute.Assets)

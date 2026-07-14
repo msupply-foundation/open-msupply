@@ -1,7 +1,7 @@
 use super::update::update_sensor_logs_for_breach;
 use anyhow::Context;
 use chrono::{Local, LocalResult, NaiveDateTime, TimeZone};
-use repository::{DatetimeFilter, EqualFilter};
+use repository::{DatetimeFilter, EqualFilter, StringFilter};
 use repository::{
     RepositoryError, Sensor, SensorFilter, SensorRepository, SensorRow, SensorRowRepository,
     SensorType, StorageConnection, TemperatureBreach, TemperatureBreachConfig,
@@ -38,7 +38,7 @@ fn get_matching_sensor_serial(
     serial: &str,
 ) -> Result<Vec<Sensor>, RepositoryError> {
     SensorRepository::new(connection)
-        .query_by_filter(SensorFilter::new().serial(EqualFilter::equal_to(serial.to_owned())))
+        .query_by_filter(SensorFilter::new().serial(StringFilter::equal_to(serial)))
 }
 
 fn get_matching_sensor_log(

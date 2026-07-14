@@ -34,7 +34,7 @@ export const AppBarButtonsComponent = ({
   const navigate = useNavigate();
 
   const { mutateAsync: onCreate } = useReturns.document.insertSupplierReturn();
-  const { fetchAsync, isLoading } = useReturns.document.listAllSupplier({
+  const { fetchAsync, isPending: isLoading } = useReturns.document.listAllSupplier({
     key: 'createdDateTime',
     direction: 'desc',
     isDesc: true,

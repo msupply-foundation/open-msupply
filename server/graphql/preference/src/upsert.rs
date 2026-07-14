@@ -68,6 +68,9 @@ pub struct UpsertPreferencesInput {
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
     pub custom_translations: Option<BTreeMap<String, String>>,
+    /// v2 custom translations, shape: `language -> namespace -> key -> value`.
+    /// Passed as a JSON value to avoid nested-map InputObject friction.
+    pub custom_translations_v2: Option<serde_json::Value>,
     pub gender_options: Option<Vec<GenderTypeNode>>,
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
@@ -84,6 +87,7 @@ pub struct UpsertPreferencesInput {
     pub backdating: Option<BackdatingInput>,
 
     // Store preferences
+    pub blind_stocktake: Option<Vec<BoolStorePrefInput>>,
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
     pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
@@ -139,6 +143,7 @@ impl UpsertPreferencesInput {
             allow_tracking_of_stock_by_donor,
             authorise_purchase_order,
             custom_translations,
+            custom_translations_v2,
             prevent_transfers_months_before_initialisation,
             gender_options,
             show_contact_tracing,
@@ -154,6 +159,7 @@ impl UpsertPreferencesInput {
             global_table_configs,
             backdating,
             // Store preferences
+            blind_stocktake,
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
@@ -182,6 +188,9 @@ impl UpsertPreferencesInput {
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
             authorise_purchase_order: *authorise_purchase_order,
             custom_translations: custom_translations.clone(),
+            custom_translations_v2: custom_translations_v2
+                .clone()
+                .and_then(|v| serde_json::from_value(v).ok()),
             gender_options: gender_options
                 .as_ref()
                 .map(|i| i.iter().map(|i| GenderType::from(*i)).collect()),
@@ -205,6 +214,9 @@ impl UpsertPreferencesInput {
                 max_days: b.max_days,
             }),
             // Store preferences
+            blind_stocktake: blind_stocktake
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             manage_vaccines_in_doses: manage_vaccines_in_doses
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),

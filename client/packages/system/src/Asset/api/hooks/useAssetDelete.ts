@@ -16,12 +16,14 @@ export const useAssetDelete = () => {
 
   const {
     mutateAsync: deleteMutation,
-    isLoading,
+    isPending: isLoading,
     error,
   } = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([ASSET]);
+      queryClient.invalidateQueries({
+        queryKey: [ASSET]
+      });
     },
   });
 

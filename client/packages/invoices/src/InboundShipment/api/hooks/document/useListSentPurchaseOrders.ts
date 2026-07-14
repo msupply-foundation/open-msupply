@@ -7,15 +7,15 @@ export const useListSentPurchaseOrders = (
 ) => {
   const api = useInboundApi();
 
-  return useQuery(
-    api.keys.listSendPurchaseOrders(),
-    async () => {
+  return useQuery({
+    queryKey: api.keys.listSendPurchaseOrders(),
+    queryFn: async () => {
       const result = await api.get.listSentPurchaseOrders(filterBy);
       if (!result) {
         throw new Error('Failed to fetch purchase orders');
       }
       return result;
     },
-    { enabled }
-  );
+    enabled,
+  });
 };

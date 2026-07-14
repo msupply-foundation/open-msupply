@@ -134,7 +134,10 @@ impl Processor for AddPatientVisibilityForCentral {
         Ok(Some(result))
     }
 
-    fn changelogs_filter(&self, _ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
+    async fn changelogs_filter(
+        &self,
+        _ctx: &ServiceContext,
+    ) -> Result<ChangelogFilter, ProcessorError> {
         let filter = ChangelogFilter::new().table_name(EqualFilter {
             equal_any: Some(vec![
                 ChangelogTableName::Name,

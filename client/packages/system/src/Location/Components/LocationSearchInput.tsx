@@ -30,6 +30,7 @@ interface LocationSearchInputProps {
   /** Alternative to `clearable`, ideal for tables where the X takes up valuable real estate */
   includeRemoveOption?: boolean;
   placeholder?: string;
+  getDisabledReason?: (location: LocationRowFragment) => string | undefined;
 }
 
 interface LocationOption {
@@ -37,6 +38,8 @@ interface LocationOption {
   value: string | null;
   code?: string;
   volumeUsed: string;
+  disabled?: boolean;
+  reason?: string;
 }
 
 const getOptionLabel = (option: LocationOption) =>
@@ -60,6 +63,7 @@ const optionRenderer = (
       }}
     >
       {getOptionLabel(location)}
+      {location.reason ? ` (${location.reason})` : ''}
     </span>
     <Typography
       component="span"
@@ -90,6 +94,7 @@ export const LocationSearchInput = ({
   clearable = false,
   includeRemoveOption = !clearable,
   placeholder,
+  getDisabledReason,
 }: LocationSearchInputProps) => {
   const t = useTranslation();
   const theme = useTheme();
@@ -175,29 +180,34 @@ export const LocationSearchInput = ({
     });
   };
 
-  const options: LocationOption[] = filteredLocations.map(l => ({
-    value: l.id,
-    label: formatLocationLabel(l),
-    code: l.code,
-    volumeUsed: getVolumeUsedLabel(l),
-  }));
+  const options: LocationOption[] = filteredLocations.map(l => {
+    const reason = getDisabledReason?.(l);
+    return {
+      value: l.id,
+      label: formatLocationLabel(l),
+      code: l.code,
+      volumeUsed: getVolumeUsedLabel(l),
+      disabled: !!reason,
+      reason,
+    };
+  });
 
   // Define separately - even if the selected location doesn't match current
   // filter, we still want to show it as the selected option
   // Same goes if the location is not valid given the location type restriction
   const selectedLocationOption: LocationOption | null = selectedLocation
     ? {
-        value: selectedLocation.id,
-        label: formatLocationLabel(selectedLocation),
-        code: selectedLocation.code,
-        volumeUsed: getVolumeUsedLabel(selectedLocation),
-      }
+      value: selectedLocation.id,
+      label: formatLocationLabel(selectedLocation),
+      code: selectedLocation.code,
+      volumeUsed: getVolumeUsedLabel(selectedLocation),
+    }
     : null;
 
   const isInvalidLocation = !!selectedLocation
     ? checkInvalidLocationLines(restrictedToLocationTypeId ?? null, [
-        { location: selectedLocation },
-      ])
+      { location: selectedLocation },
+    ])
     : null;
 
   const errorStyles = {
@@ -225,6 +235,7 @@ export const LocationSearchInput = ({
       noOptionsText={t('messages.no-locations')}
       renderOption={optionRenderer}
       getOptionLabel={getOptionLabel}
+      getOptionDisabled={option => !!option.disabled}
       placeholder={placeholder}
       isOptionEqualToValue={(option, value) => option.value === value?.value}
       slots={{

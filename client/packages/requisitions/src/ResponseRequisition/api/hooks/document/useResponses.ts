@@ -6,8 +6,11 @@ export const useResponses = (queryParams: ListParams) => {
   const api = useResponseApi();
 
   return {
-    ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.list(queryParams)
-    ),
+    ...useQuery({
+      queryKey: api.keys.paramList(queryParams),
+
+      queryFn: () =>
+        api.get.list(queryParams)
+    }),
   };
 };

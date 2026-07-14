@@ -15,7 +15,6 @@ import {
   useNotification,
   useDisabledNotificationToast,
   InvoiceLineStatusType,
-  InvoiceNodeStatus,
   ModalMode,
   useSimplifiedTabletUI,
   Box,
@@ -23,6 +22,8 @@ import {
   PlusCircleIcon,
   TableContainer,
   PurchaseOrderLineStatusNode,
+  usePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
 import { InboundLineEditForm } from './InboundLineEditForm';
 import {
@@ -82,18 +83,20 @@ export const InboundLineEdit = ({
 }: InboundLineEditProps) => {
   const t = useTranslation();
   const { error } = useNotification();
+  const pluginEvents = usePluginEvents<ShipmentLinePluginState>({});
+  const hasInvalidPluginLines = Object.values(
+    pluginEvents.state.invalidLines ?? {}
+  ).some(Boolean);
 
   const {
     query: { data },
     hasAuthorisePermission,
     isExternal,
+    isAddOrDeleteLinesDisabled,
   } = useInboundShipment();
   const permissionDeniedNotification = useDisabledNotificationToast(
     t('auth.permission-denied')
   );
-  const isReceived =
-    data?.status === InvoiceNodeStatus.Received ||
-    data?.status === InvoiceNodeStatus.Verified;
   const purchaseOrder = data?.purchaseOrder;
   const hasPurchaseOrder = !!purchaseOrder;
 
@@ -139,9 +142,7 @@ export const InboundLineEdit = ({
   }, [selectedPOLine, availablePOLines]);
 
   // Derive the item from selected PO line (external) or props (internal)
-  const currentItemFromPOLine = selectedPOLine
-    ? selectedPOLine.item
-    : null;
+  const currentItemFromPOLine = selectedPOLine ? selectedPOLine.item : null;
 
   // --- Item state (internal mode) ---
   const [currentItem, setCurrentItem] = useState<ItemRowFragment | null>(item);
@@ -174,7 +175,7 @@ export const InboundLineEdit = ({
     duplicateDraftLine,
     updateDraftLine,
     removeDraftLine,
-    isLoading,
+    isPending: isLoading,
     saveLines,
   } = hasPurchaseOrder ? poLineDraft : itemDraft;
 
@@ -184,6 +185,24 @@ export const InboundLineEdit = ({
   const simplifiedTabletView = useSimplifiedTabletUI();
   const [packRoundingMessage, setPackRoundingMessage] = useState('');
   const lastCardRef = useRef<HTMLDivElement>(null);
+
+  const scrollToLatestCard = useCallback(() => {
+    const scroll = () => {
+      lastCardRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest',
+      });
+    };
+
+    // Wait for state updates and card layout to settle before scrolling.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scroll);
+    });
+
+    // Fallback for slower renders where nested RAF can still be early.
+    setTimeout(scroll, 80);
+  }, []);
 
   // --- Item variant logic (both modes) ---
   const [variantAction, setVariantAction] = useState<'add' | 'first' | null>(
@@ -202,41 +221,61 @@ export const InboundLineEdit = ({
   }, [effectiveItem?.id]);
 
   useEffect(() => {
-    if (mode !== ModalMode.Create) return;
     if (!hasVariants || draftLines.length === 0) return;
     if (variantShownForItem === effectiveItem?.id) return;
 
+    // Pop the panel for fresh items (Create) and for master-list-seeded
+    // placeholder lines the user is opening for the first time.
+    const allFreshPlaceholders = draftLines.every(
+      line =>
+        isInboundPlaceholderRow(line) &&
+        !line.itemVariantId &&
+        !line.isUpdated &&
+        !line.linkedInvoiceId
+    );
+    if (mode !== ModalMode.Create && !allFreshPlaceholders) return;
+
     setVariantShownForItem(effectiveItem?.id ?? null);
     setVariantAction('first');
-  }, [
-    mode,
-    hasVariants,
-    draftLines.length,
-    effectiveItem?.id,
-    variantShownForItem,
-  ]);
+  }, [mode, hasVariants, draftLines, effectiveItem?.id, variantShownForItem]);
 
   const onVariantSelected = useCallback(
     (variant: ItemVariantFragment) => {
-      const packSize = draftLines[0]?.item.defaultPackSize ?? 1;
-      const variantPatch = {
-        itemVariantId: variant.id,
-        itemVariant: variant,
-        manufacturer: variant.manufacturer ?? null,
-        volumePerPack:
-          getVolumePerPackFromVariant({
-            packSize,
-            itemVariant: variant,
-          }) ?? 0,
-      };
-
       if (variantAction === 'first' && draftLines.length > 0) {
+        const target = draftLines[0]!;
+        // Master-list placeholders come in with packSize=1; reset to the
+        // item default so the variant's volume-per-pack lines up with the
+        // line's pack size. Don't clobber packSize on lines the user has
+        // already shaped.
+        const isFresh =
+          isInboundPlaceholderRow(target) && !target.itemVariantId;
+        const packSize = isFresh
+          ? (target.item.defaultPackSize ?? target.packSize)
+          : target.packSize;
         updateDraftLine({
-          id: draftLines[0]!.id,
-          ...variantPatch,
+          id: target.id,
+          itemVariantId: variant.id,
+          itemVariant: variant,
+          manufacturer: variant.manufacturer ?? null,
+          ...(isFresh && { packSize }),
+          volumePerPack:
+            getVolumePerPackFromVariant({
+              packSize,
+              itemVariant: variant,
+            }) ?? 0,
         });
       } else {
-        addDraftLine(variantPatch);
+        const packSize = draftLines[0]?.item.defaultPackSize ?? 1;
+        addDraftLine({
+          itemVariantId: variant.id,
+          itemVariant: variant,
+          manufacturer: variant.manufacturer ?? null,
+          volumePerPack:
+            getVolumePerPackFromVariant({
+              packSize,
+              itemVariant: variant,
+            }) ?? 0,
+        });
       }
       setVariantAction(null);
     },
@@ -249,14 +288,9 @@ export const InboundLineEdit = ({
     } else {
       addDraftLine();
       setPackRoundingMessage('');
-      setTimeout(() => {
-        lastCardRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }, 0);
+      scrollToLatestCard();
     }
-  }, [hasVariants, addDraftLine]);
+  }, [hasVariants, addDraftLine, scrollToLatestCard]);
 
   // Check if saving these lines requires authorise permission.
   // Only lines the user actually changed (isUpdated/isCreated) matter.
@@ -287,15 +321,19 @@ export const InboundLineEdit = ({
   };
 
   // --- Next/OK disabled logic ---
-  const okNextDisabled = hasPurchaseOrder
-    ? (mode === ModalMode.Update && !nextPOLine) || !selectedPOLine
-    : (mode === ModalMode.Update && nextDisabled) || !currentItem;
+  const okNextDisabled =
+    (hasPurchaseOrder
+      ? (mode === ModalMode.Update && !nextPOLine) || !selectedPOLine
+      : (mode === ModalMode.Update && nextDisabled) || !currentItem) ||
+    hasInvalidPluginLines;
 
-  const okDisabled = hasPurchaseOrder
-    ? !selectedPOLine ||
+  const okDisabled =
+    (hasPurchaseOrder
+      ? !selectedPOLine ||
       draftLines.length === 0 ||
       manualLinesWithZeroNumberOfPacks
-    : !currentItem || manualLinesWithZeroNumberOfPacks;
+      : !currentItem || manualLinesWithZeroNumberOfPacks) ||
+    hasInvalidPluginLines;
 
   const cards = (
     <InboundLineEditCards
@@ -304,7 +342,6 @@ export const InboundLineEdit = ({
       duplicateDraftLine={duplicateDraftLine}
       removeDraftLine={removeDraftLine}
       isDisabled={isDisabled}
-      isReceived={isReceived}
       foreignCurrency={foreignCurrency}
       isExternalSupplier={isExternalSupplier}
       item={effectiveItem}
@@ -314,6 +351,7 @@ export const InboundLineEdit = ({
       restrictedToLocationTypeId={effectiveItem?.restrictedLocationTypeId}
       lastCardRef={lastCardRef}
       scrollToLineId={scrollToLineId}
+      pluginEvents={pluginEvents}
     />
   );
 
@@ -346,11 +384,11 @@ export const InboundLineEdit = ({
       title={
         mode === ModalMode.Create
           ? t('heading.add-item')
-          : t('heading.edit-item')
+          : t('heading.edit-line')
       }
       headerActions={
         <ButtonWithIcon
-          disabled={isDisabled || isReceived}
+          disabled={isDisabled || isAddOrDeleteLinesDisabled}
           color="primary"
           variant="outlined"
           onClick={handleAddBatch}
@@ -408,7 +446,7 @@ export const InboundLineEdit = ({
       }
       height={700}
       width={1200}
-      contentProps={{ sx: { overflow: 'visible' } }}
+      contentProps={{ sx: { overflowY: 'auto' } }}
       enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
     >
       {isLoading ? (
@@ -449,12 +487,7 @@ export const InboundLineEdit = ({
                 if (variantAction === 'add') {
                   addDraftLine();
                   setPackRoundingMessage('');
-                  setTimeout(() => {
-                    lastCardRef.current?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'nearest',
-                    });
-                  }, 0);
+                  scrollToLatestCard();
                 }
                 setVariantAction(null);
               }}

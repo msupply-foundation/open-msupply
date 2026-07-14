@@ -1,7 +1,6 @@
 use super::{
-    campaign_row::campaign, item_link_row::item_link, item_variant::item_variant_row::item_variant,
-    location_row::location, name_row::name, store_row::store,
-    StorageConnection,
+    campaign_row::campaign, item_row::item, item_variant::item_variant_row::item_variant,
+    location_row::location, name_row::name, store_row::store, StorageConnection,
 };
 
 use crate::{
@@ -21,7 +20,6 @@ define_linked_tables! {
     struct: StockLineRow,
     repo: StockLineRowRepository,
     shared: {
-        item_link_id -> Text,
         store_id -> Text,
         location_id -> Nullable<Text>,
         batch -> Nullable<Text>,
@@ -43,6 +41,7 @@ define_linked_tables! {
         manufacture_date -> Nullable<Date>,
     },
     links: {
+        item_link_id -> item_id,
     },
     optional_links: {
         supplier_link_id -> supplier_id,
@@ -51,7 +50,7 @@ define_linked_tables! {
     }
 }
 
-joinable!(stock_line -> item_link (item_link_id));
+joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> item_variant (item_variant_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
@@ -59,14 +58,12 @@ joinable!(stock_line -> barcode (barcode_id));
 joinable!(stock_line -> vvm_status (vvm_status_id));
 joinable!(stock_line -> campaign (campaign_id));
 joinable!(stock_line -> name (supplier_id));
-allow_tables_to_appear_in_same_query!(stock_line, item_link);
 allow_tables_to_appear_in_same_query!(stock_line, item_variant);
 
 #[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(table_name = stock_line)]
 pub struct StockLineRow {
     pub id: String,
-    pub item_link_id: String,
     pub store_id: String,
     pub location_id: Option<String>,
     pub batch: Option<String>,
@@ -86,7 +83,8 @@ pub struct StockLineRow {
     pub total_volume: f64,
     pub volume_per_pack: f64,
     pub manufacture_date: Option<NaiveDate>,
-    // Resolved from name_link - must be last to match view column order
+    // Resolved from link tables - must be last to match view column order
+    pub item_id: String,
     pub supplier_id: Option<String>,
     pub donor_id: Option<String>,
     pub manufacturer_id: Option<String>,
@@ -142,6 +140,15 @@ impl<'a> StockLineRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = stock_line::table
+            .filter(stock_line::id.eq(lookup_id))
+            .select(stock_line::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
     }
 
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<StockLineRow>, RepositoryError> {

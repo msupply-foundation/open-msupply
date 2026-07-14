@@ -118,6 +118,8 @@ impl InsertInput {
             item_variant_id: None,
             donor_id: None,
             manufacturer_id: None,
+            received_number_of_packs: None,
+            reason_option_id: None,
         }
     }
 }
@@ -134,7 +136,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 ForeignKey::InvoiceId,
             )))
         }
-        CannotEditFinalised => {
+        CannotEditFinalised | OtherPartyStoreDisabled => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
                 simple_generic_errors::CannotEditInvoice {},
             ))

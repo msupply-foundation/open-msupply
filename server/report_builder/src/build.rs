@@ -4,7 +4,7 @@ use service::report::definition::{
     ReportDefinitionIndex, ReportOutputType, SQLQuery, TeraTemplate,
 };
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     fs,
     path::{Path, PathBuf},
 };
@@ -101,7 +101,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         // Convert data is generated outside of this method call
         ..Default::default()
     };
-    let mut entries: HashMap<String, ReportDefinitionEntry> = HashMap::new();
+    let mut entries: BTreeMap<String, ReportDefinitionEntry> = BTreeMap::new();
 
     // main template
     let template_file = files

@@ -6,11 +6,9 @@ export const useLatestPatientEncounter = (
   encounterType: string | undefined
 ) => {
   const api = usePatientApi();
-  return useQuery(
-    api.keys.latestPatientEncounter(patientId || '', encounterType),
-    () => api.latestPatientEncounter(patientId || '', encounterType),
-    {
-      enabled: !!patientId,
-    }
-  );
+  return useQuery({
+    queryKey: api.keys.latestPatientEncounter(patientId || '', encounterType),
+    queryFn: () => api.latestPatientEncounter(patientId || '', encounterType),
+    enabled: !!patientId
+  });
 };

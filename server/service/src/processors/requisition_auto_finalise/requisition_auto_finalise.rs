@@ -164,7 +164,10 @@ impl Processor for RequisitionAutoFinaliseProcessor {
         )))
     }
 
-    fn changelogs_filter(&self, ctx: &ServiceContext) -> Result<ChangelogFilter, ProcessorError> {
+    async fn changelogs_filter(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<ChangelogFilter, ProcessorError> {
         let active_stores = ActiveStoresOnSite::get(&ctx.connection)
             .map_err(ProcessorError::GetActiveStoresOnSiteError)?;
 

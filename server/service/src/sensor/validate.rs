@@ -1,4 +1,4 @@
-use repository::EqualFilter;
+use repository::{EqualFilter, StringFilter};
 use repository::{
     RepositoryError, SensorFilter, SensorRepository, SensorRow, SensorRowRepository,
     StorageConnection,
@@ -14,7 +14,7 @@ pub fn check_sensor_serial_is_unique(
         Some(serial) => {
             let sensors = SensorRepository::new(connection).query_by_filter(
                 SensorFilter::new()
-                    .serial(EqualFilter::equal_to(serial.to_owned()))
+                    .serial(StringFilter::equal_to(&serial))
                     .id(EqualFilter::not_equal_to(id.to_string()))
                     .store_id(EqualFilter::equal_to("store_a".to_string())),
             )?;

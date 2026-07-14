@@ -1,7 +1,7 @@
 use super::{
-    item_link_row::item_link, master_list_line_row::master_list_line,
-    master_list_name_join::master_list_name_join, master_list_row::master_list, name_row::name,
-    program_row::program, store_row::store, DBType, MasterListRow, StorageConnection,
+    master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
+    master_list_row::master_list, name_row::name, program_row::program, store_row::store, DBType,
+    MasterListRow, StorageConnection,
 };
 
 use crate::{
@@ -136,11 +136,10 @@ impl<'a> MasterListRepository<'a> {
             if f.item_id.is_some() {
                 let mut master_list_line_query = master_list_line::table
                     .select(master_list_line::master_list_id)
-                    .left_join(item_link::table)
                     .distinct()
                     .into_boxed::<DBType>();
 
-                apply_equal_filter!(master_list_line_query, f.item_id, item_link::item_id);
+                apply_equal_filter!(master_list_line_query, f.item_id, master_list_line::item_id);
 
                 query = query.filter(master_list::id.eq_any(master_list_line_query));
             }
@@ -173,14 +172,15 @@ impl<'a> MasterListRepository<'a> {
                     apply_sort!(query, sort, master_list::discount_percentage);
                 }
             }
-        } else {
-            query = query.order(master_list::id.asc())
         }
 
         // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
         let result = query
+            .then_order_by(master_list::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<MasterListRow>(self.connection.lock().connection())?;

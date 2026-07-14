@@ -57,8 +57,8 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
 const useCreate = (stockLineId: string) => {
   const { stockApi, storeId, queryClient } = useStockGraphQL();
 
-  return useMutation(
-    async ({
+  return useMutation({
+    mutationFn: async ({
       adjustment,
       adjustmentType,
       reason,
@@ -76,10 +76,11 @@ const useCreate = (stockLineId: string) => {
         },
       });
     },
-    {
-      onSuccess: () =>
-        // Stock line needs to be re-fetched to refresh quantity
-        queryClient.invalidateQueries([STOCK_LINE]),
-    }
-  );
+
+    onSuccess: () =>
+      // Stock line needs to be re-fetched to refresh quantity
+      queryClient.invalidateQueries({
+        queryKey: [STOCK_LINE]
+      })
+  });
 };

@@ -183,12 +183,35 @@ export const SupplierReturnEditModal = ({
           : OkButton
       }
       nextButton={!isNewReturn ? OkAndNextButton : undefined}
-      height={600}
+      height={650}
       width={1200}
+      sx={{
+        '& .MuiDialogTitle-root': { py: 1.25 },
+        '& .MuiDialogActions-root': { marginTop: '4px', marginBottom: '4px' },
+      }}
+      contentProps={{
+        sx: {
+          overflowY: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          paddingTop: '2px',
+          paddingBottom: 0,
+        },
+      }}
     >
-      <Box ref={alertRef}>
+      <Box
+        ref={alertRef}
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
         {returnId && (
           <ItemSelector
+            key={itemId}
             disabled={!!itemId}
             itemId={itemId}
             onChangeItemId={setItemId}

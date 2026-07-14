@@ -41,6 +41,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
         <ModalLabel label={t('label.item', { count: 1 })} />
         <Grid flex={1} padding={1}>
           <StockItemSearchInput
+            key={item?.id}
             autoFocus={!item}
             openOnFocus={!item}
             disabled={disabled}
@@ -54,7 +55,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
         </Grid>
       </ModalRow>
       {item && (
-        <ModalRow margin={3}>
+        <ModalRow margin={2}>
           <ModalLabel label={t('label.unit')} />
           <BasicTextInput
             disabled
@@ -64,7 +65,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
         </ModalRow>
       )}
       {hasInvalidLocationLines && (
-        <ModalRow margin={3}>
+        <ModalRow margin={2}>
           <Alert
             severity="warning"
             sx={{ maxWidth: 800, margin: '0 auto', mt: 0.5 }}

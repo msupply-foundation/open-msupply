@@ -24,6 +24,18 @@ type HostContext = {
 
   setFullScreen: (fullScreen: boolean) => void;
   fullScreen: boolean;
+
+  // Number of `AppFooterPortal` instances currently mounted with non-empty
+  // `Content`. Used by `AppFooterStatusPortal` to step aside whenever any
+  // actions footer is present, so a parent can register a default (e.g.
+  // status crumbs) and a child tab can override with its own content. The
+  // mount count is a coarse signal — a portal mounted with an empty fragment
+  // still increments the count, so a child that wants the parent status
+  // footer to show through must return null instead of rendering an empty
+  // `AppFooterPortal` (see `system/src/Documents/Footer.tsx`).
+  footerActionsCount: number;
+  incrementFooterActions: () => void;
+  decrementFooterActions: () => void;
 };
 
 export const useHostContext = create<HostContext>(set => ({
@@ -60,4 +72,16 @@ export const useHostContext = create<HostContext>(set => ({
   setFullScreen: (fullScreen: boolean) =>
     set(state => ({ ...state, fullScreen })),
   fullScreen: false,
+
+  footerActionsCount: 0,
+  incrementFooterActions: () =>
+    set(state => ({
+      ...state,
+      footerActionsCount: state.footerActionsCount + 1,
+    })),
+  decrementFooterActions: () =>
+    set(state => ({
+      ...state,
+      footerActionsCount: Math.max(0, state.footerActionsCount - 1),
+    })),
 }));

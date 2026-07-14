@@ -249,7 +249,7 @@ mod test {
             InvoiceLineRow {
                 id: "some_invoice_line_id_a".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: "item_a".to_string(),
+                item_id: "item_a".to_string(),
                 location_id: None,
                 stock_line_id: Some("stock_line_ci_d_siline_a".to_string()),
                 batch: Some("stock_line_ci_d_siline_a".to_string()),
@@ -261,7 +261,7 @@ mod test {
             InvoiceLineRow {
                 id: "some_invoice_line_id_b".to_string(),
                 invoice_id: invoice().id,
-                item_link_id: "item_b".to_string(),
+                item_id: "item_b".to_string(),
                 location_id: None,
                 stock_line_id: Some("item_b_line_a".to_string()),
                 batch: Some("item_b_line_a".to_string()),

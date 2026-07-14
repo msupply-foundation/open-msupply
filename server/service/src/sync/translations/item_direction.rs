@@ -39,7 +39,7 @@ impl SyncTranslation for ItemDirectionTranslation {
 
         let result = ItemDirectionRow {
             id: data.ID,
-            item_link_id: data.item_ID,
+            item_id: data.item_ID,
             directions: data.directions,
             priority: data.priority,
         };

@@ -39,7 +39,7 @@ export const useDraftInboundLines = (
       : getInboundStockLines(data.lines.nodes);
   }, [data, itemId]);
 
-  const { mutateAsync, isLoading } = useSaveInboundLines(isExternal);
+  const { mutateAsync, isPending } = useSaveInboundLines(isExternal);
   const { mutateAsync: deleteMutation } = useDeleteInboundLines(isExternal);
 
   const { isDirty, setIsDirty } = useConfirmOnLeaving(
@@ -205,7 +205,7 @@ export const useDraftInboundLines = (
     duplicateDraftLine,
     updateDraftLine,
     removeDraftLine,
-    isLoading,
+    isPending,
     saveLines,
     saveSingleLine,
   };

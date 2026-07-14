@@ -19,6 +19,7 @@ import {
   BarcodeScanner,
   ScannerType,
   ConnectionResult,
+  DEFAULT_LOCAL_SERVER,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
@@ -33,6 +34,7 @@ const importDesktopTranslations = async (locale: string) =>
   import(`../../common/src/intl/locales/${locale}/desktop.json`);
 
 const SERVICE_TYPE = 'omsupply';
+const PREVIOUS_SERVER_KEY = 'previous_server';
 const PROTOCOL_KEY = 'protocol';
 const CLIENT_VERSION_KEY = 'client_version';
 const HARDWARE_ID_KEY = 'hardware_id';
@@ -142,7 +144,27 @@ const store = new ElectronStore() as unknown as {
   set: (key: string, value: string | null) => void;
 };
 
+const storePreviousServer = (server: FrontEndHost) =>
+  store.set(PREVIOUS_SERVER_KEY, JSON.stringify(server));
+
+const getStoredPreviousServer = (): FrontEndHost | null => {
+  const stored = store.get(PREVIOUS_SERVER_KEY, null);
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    console.error('Corrupt previous_server in electron-store, clearing:', e);
+    store.set(PREVIOUS_SERVER_KEY, null);
+    return null;
+  }
+};
+
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
+
+// Set by the standalone Setup Factory installer's desktop shortcut.
+// When true, the Electron client always connects to its bundled local server
+// via 127.0.0.1 and auto-connects on startup if no server is configured.
+const isStandalone = process.argv.includes('--standalone');
 
 let connectedServer: FrontEndHost | null = null;
 let discoveredServers: FrontEndHost[] = [];
@@ -164,39 +186,59 @@ const START_URL = getDebugHost()
   ? `${getDebugHost()}/discovery`
   : MAIN_WINDOW_WEBPACK_ENTRY;
 
+const buildStartUrl = (extra: Record<string, string> = {}) => {
+  const params = new URLSearchParams(extra);
+  if (isStandalone) params.set('standalone', 'true');
+  const qs = params.toString();
+  return qs ? `${START_URL}?${qs}` : START_URL;
+};
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   // eslint-disable-line global-require
   app.quit();
 }
 
-// run a check to see if the server is available before attempting to connect
-const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
-  return new Promise<ConnectionResult>(resolve => {
+const HEALTH_CHECK_TIMEOUT = 1500;
+
+// Pure health check — no side effects, no auto-navigation.
+const isServerAlive = (server: FrontEndHost): Promise<boolean> =>
+  new Promise(resolve => {
     const lib = server.protocol === 'https' ? https : http;
-    const options = {
-      rejectUnauthorized: false,
-    };
-    const request = lib.get(frontEndHostUrl(server), options, response => {
-      if (response.statusCode === 200) {
-        connectToServer(window, server);
-        resolve({ success: true });
-      }
-      resolve({ success: false, error: `Status: ${response.statusMessage}` });
-    });
-    // handle the error to prevent an alert in the desktop app
+    const request = lib.get(
+      frontEndHostUrl(server),
+      { rejectUnauthorized: false },
+      response => resolve(response.statusCode === 200)
+    );
     request.on('error', e => {
       console.error('Error received connecting to server:', e);
-      resolve({ success: false, error: e.message });
+      resolve(false);
+    });
+    request.setTimeout(HEALTH_CHECK_TIMEOUT, () => {
+      request.destroy();
+      resolve(false);
     });
   });
+
+// Health check + navigate. Used by the CONNECT_TO_SERVER IPC handler.
+const tryToConnectToServer = async (
+  window: BrowserWindow,
+  server: FrontEndHost
+): Promise<ConnectionResult> => {
+  if (await isServerAlive(server)) {
+    connectToServer(window, server);
+    return { success: true };
+  }
+  return { success: false, error: 'Server not reachable' };
 };
 
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
-  // translate loopback addresses to allow for clients, such as CCA to connect
-  // to the API by IP address
-  if (server.isLocal && isLoopback(server.ip)) {
-    server.ip = getIpAddress('public');
+  if (!isStandalone && server.isLocal && isLoopback(server.ip)) {
+    // Non-standalone desktop: translate loopback to public IP so the QR code
+    // and SiteInfo show an externally-reachable URL for clients like CCA.
+    // Skipped in standalone mode so autoconnect to loopback survives network
+    // changes (issue #10036) and discovery picks keep their announced IP.
+    server = { ...server, ip: getIpAddress('public') };
   }
   discovery.stop();
   connectedServer = server;
@@ -205,7 +247,7 @@ const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   window.loadURL(url);
 };
 
-const start = (): void => {
+const start = async (): Promise<void> => {
   // Create the browser window.
   const window = new BrowserWindow({
     height: 800,
@@ -238,9 +280,6 @@ const start = (): void => {
       configureMenus(window, mergedTranslations);
     });
 
-  // and load discovery (with autoconnect=true by default)
-  window.loadURL(START_URL);
-
   ipcMain.on(IPC_MESSAGES.START_SERVER_DISCOVERY, () => {
     discovery.stop();
     discoveredServers = [];
@@ -248,12 +287,16 @@ const start = (): void => {
   });
 
   ipcMain.on(IPC_MESSAGES.GO_BACK_TO_DISCOVERY, () => {
-    window.loadURL(`${START_URL}?autoconnect=false`);
+    window.loadURL(buildStartUrl({ autoconnect: 'false' }));
   });
 
   ipcMain.handle(
     IPC_MESSAGES.CONNECT_TO_SERVER,
-    async (_event, server: FrontEndHost) => tryToConnectToServer(window, server)
+    async (_event, server: FrontEndHost) => {
+      const result = await tryToConnectToServer(window, server);
+      if (result.success) storePreviousServer(server);
+      return result;
+    }
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
@@ -324,6 +367,23 @@ const start = (): void => {
     });
   });
 
+  // Clear auth state when the window is closed
+  // so the user must log in again on next launch.
+  // This runs while the app is still fully alive, which is more reliable
+  // than clearing during the will-quit phase.
+  let isClosing = false;
+  window.on('close', event => {
+    if (!isClosing) {
+      isClosing = true;
+      event.preventDefault();
+      session.defaultSession
+        .clearStorageData({ storages: ['cookies'] })
+        .finally(() => {
+          window.destroy();
+        });
+    }
+  });
+
   window.webContents.on(
     'did-fail-load',
     (_event, _errorCode, errorDescription, validatedURL) => {
@@ -336,6 +396,24 @@ const start = (): void => {
       );
     }
   );
+
+  // Attempt to connect directly to a known server before loading any URL so the
+  // discovery screen is never shown to returning users or standalone installs.
+  // IPC handlers must all be registered above before this point.
+  const serverToTry = isStandalone
+    ? DEFAULT_LOCAL_SERVER
+    : getStoredPreviousServer();
+
+  if (serverToTry) {
+    const result = await tryToConnectToServer(window, serverToTry);
+    if (!result.success) {
+      window.loadURL(buildStartUrl({ autoconnect: 'false' }));
+    }
+    // success: connectToServer already called window.loadURL(serverUrl)
+  } else {
+    // No reachable known server — show discovery
+    window.loadURL(buildStartUrl(isStandalone ? { autoconnect: 'false' } : {}));
+  }
 };
 
 const isLoopback = (ip: string) =>
@@ -347,13 +425,6 @@ app.on('ready', start);
 
 app.on('window-all-closed', () => {
   app.quit();
-});
-
-app.on('will-quit', event => {
-  event.preventDefault();
-  session.defaultSession
-    .clearStorageData({ storages: ['cookies'] })
-    .finally(() => app.exit());
 });
 
 process.on('uncaughtException', error => {

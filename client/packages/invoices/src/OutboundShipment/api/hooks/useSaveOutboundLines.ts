@@ -6,8 +6,8 @@ export const useSaveOutboundLines = (outboundId: string) => {
   const { keys, sdk, storeId } = useOutboundApi();
   const queryClient = useQueryClient();
 
-  return useMutation(
-    async ({
+  return useMutation({
+    mutationFn: async ({
       itemId,
       lines,
       placeholderQuantity,
@@ -28,15 +28,22 @@ export const useSaveOutboundLines = (outboundId: string) => {
             campaignId: line.campaign?.id,
             programId: line.program?.id,
             vvmStatusId: 'vvmStatus' in line ? line.vvmStatus?.id : null,
+            // Persist received as-is (null until the destination reports it), so
+            // it isn't faked as the issued quantity before receipt.
+            receivedNumberOfPacks: line.receivedNumberOfPacks,
+            // Carry the discrepancy reason on the same save path so it isn't
+            // cleared by this batch update.
+            reasonOptionId: line.reasonOption?.id ?? null,
           })),
           placeholderQuantity,
         },
       });
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(keys.detail(outboundId));
-      },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: keys.detail(outboundId)
+      });
     }
-  );
+  });
 };

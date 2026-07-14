@@ -9,10 +9,8 @@
   ```yaml
     # Add any other settings you need here, e.g. database connection, sync settings etc
 
-    feature_flags:
-      table_usability_improvements: true
-      load_remote_plugins_in_dev: true
-      create_stocktake_modal_usability_improvements: true
+    features:
+      my_feature: true
   ```
 */
 
@@ -28,7 +26,7 @@ export const useFeatureFlags = () => {
     queryFn: async () => (await api.featureFlags()).featureFlags,
 
     // Only invalidates on app restart
-    cacheTime: Infinity,
+    gcTime: Infinity,
     staleTime: Infinity,
   });
 

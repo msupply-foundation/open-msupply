@@ -75,16 +75,24 @@ export const ListView = () => {
         ),
       },
       {
+        accessorKey: 'theirReference',
+        header: t('label.reference'),
+        enableSorting: true,
+        size: 250,
+      },
+      {
         id: 'status',
         header: t('label.status'),
         enableSorting: true,
         accessorFn: row => getRequisitionTranslator(t)(row.status),
+        size: 90,
       },
       {
         accessorKey: 'requisitionNumber',
         header: t('label.number'),
         enableSorting: true,
         columnType: ColumnType.Number,
+        size: 65,
       },
       {
         accessorKey: 'createdDatetime',

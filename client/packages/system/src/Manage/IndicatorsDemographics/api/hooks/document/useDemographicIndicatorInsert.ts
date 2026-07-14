@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDemographicsApi } from '../utils/useDemographicApi';
 import { InsertDemographicIndicatorInput } from '@common/types';
 
@@ -7,14 +7,12 @@ export const useDemographicIndicatorInsert = () => {
   const api = useDemographicsApi();
 
   const invalidateQueries = () =>
-    queryClient.invalidateQueries(api.keys.baseIndicator());
-  const { mutateAsync: insertDemographicIndicator } = useMutation(
-    async (demographicIndicator: InsertDemographicIndicatorInput) =>
+    queryClient.invalidateQueries({ queryKey: api.keys.baseIndicator() });
+  const { mutateAsync: insertDemographicIndicator } = useMutation({
+    mutationFn: async (demographicIndicator: InsertDemographicIndicatorInput) =>
       await api.insertIndicator(demographicIndicator),
-    {
-      onError: () => {},
-    }
-  );
+    onError: () => {},
+  });
 
   return { insertDemographicIndicator, invalidateQueries };
 };

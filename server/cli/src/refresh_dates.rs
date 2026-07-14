@@ -63,6 +63,11 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("purchase_order", "sent_datetime"),
         ("purchase_order", "request_approval_datetime"),
         ("purchase_order", "finalised_datetime"),
+        ("stock_relocation", "created_datetime"),
+        ("stock_relocation", "confirmed_datetime"),
+        ("stock_relocation", "finalised_datetime"),
+        ("plugin_data", "datetime"),
+        ("help_document", "created_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -440,7 +445,7 @@ mod tests {
         fn stock_line1() -> StockLineRow {
             StockLineRow {
                 id: "stock_line1".to_string(),
-                item_link_id: mock_item_link_from_item(&mock_item_a()).id,
+                item_id: mock_item_link_from_item(&mock_item_a()).id,
                 store_id: mock_store_a().id,
                 expiry_date: Some(NaiveDate::from_ymd_opt(2023, 2, 1).unwrap()),
                 ..Default::default()

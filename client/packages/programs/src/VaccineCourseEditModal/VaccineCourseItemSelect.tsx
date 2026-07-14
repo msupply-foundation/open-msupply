@@ -13,6 +13,8 @@ import {
 interface VaccineItemSelectProps {
   onChange: (newData: Partial<DraftVaccineCourse>) => void;
   draft: DraftVaccineCourse;
+  error?: boolean;
+  required?: boolean;
 }
 
 const renderOption: AutocompleteOptionRenderer<DraftVaccineCourseItem> = (
@@ -37,6 +39,8 @@ const renderOption: AutocompleteOptionRenderer<DraftVaccineCourseItem> = (
 export const VaccineItemSelect = ({
   onChange,
   draft,
+  error,
+  required,
 }: VaccineItemSelectProps) => {
   const { data } = useItemsByFilter({
     filterBy: {
@@ -70,7 +74,7 @@ export const VaccineItemSelect = ({
       }
       options={options}
       renderOption={renderOption}
-      inputProps={{ fullWidth: true }}
+      inputProps={{ fullWidth: true, error, required }}
     />
   );
 };

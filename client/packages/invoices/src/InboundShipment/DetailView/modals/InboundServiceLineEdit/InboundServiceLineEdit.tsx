@@ -41,6 +41,9 @@ export const InboundServiceLineEdit = ({
     tableId: 'inbound-detail-service-line',
     columns,
     data: linesFiltered,
+    // Modal table state should not be synced to URL (would otherwise clobber
+    // the parent detail view's sort/filter URL params on open/close).
+    localStateOnly: true,
   });
 
   return (

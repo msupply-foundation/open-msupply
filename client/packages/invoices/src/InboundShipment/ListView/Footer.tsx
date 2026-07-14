@@ -3,11 +3,16 @@ import {
   Action,
   ActionsFooter,
   DeleteIcon,
+  CopyIcon,
   useTranslation,
   AppFooterPortal,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { InboundRowFragment, useInboundList } from '../api';
+import {
+  InboundRowFragment,
+  useInboundList,
+  useDuplicateInbound,
+} from '../api';
 import { canDeleteInbound } from '../../utils';
 
 export const FooterComponent = ({
@@ -22,6 +27,7 @@ export const FooterComponent = ({
   const {
     delete: { deleteInbounds },
   } = useInboundList();
+  const { duplicateInbound, hasMutatePermission } = useDuplicateInbound();
 
   const deleteAction = async () => {
     await deleteInbounds(selectedRows);
@@ -42,11 +48,25 @@ export const FooterComponent = ({
     },
   });
 
+  const source = selectedRows[0];
+  const onlyOneSelected = selectedRows.length === 1;
+  const canDuplicate =
+    onlyOneSelected && !!source && hasMutatePermission(!!source.purchaseOrder);
+
   const actions: Action[] = [
     {
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
+    },
+    {
+      label: t('button.make-a-copy'),
+      icon: <CopyIcon />,
+      onClick: () => source && duplicateInbound(source, resetRowSelection),
+      disabled: !canDuplicate,
+      tooltip: onlyOneSelected
+        ? undefined
+        : t('messages.select-single-shipment-to-copy'),
     },
   ];
 

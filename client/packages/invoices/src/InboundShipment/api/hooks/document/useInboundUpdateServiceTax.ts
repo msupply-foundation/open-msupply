@@ -10,18 +10,19 @@ export const useUpdateInboundServiceTax = (isExternal: boolean) => {
   const queryClient = useQueryClient();
   const api = useInboundApi();
 
-  return useMutation(
-    (input: {
+  return useMutation({
+    mutationFn: (input: {
       lines: InboundLineFragment[];
       taxPercentage: number;
       type: InvoiceLineNodeType.StockIn | InvoiceLineNodeType.Service;
     }) => {
       return api.updateServiceTax({ ...input, isExternal });
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(api.keys.base());
-      },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
     }
-  );
+  });
 };

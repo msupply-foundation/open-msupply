@@ -16,15 +16,13 @@ pub async fn get_database(
     use actix_web::http::header::DispositionType;
     use std::path::Path;
 
-    if cfg!(feature = "postgres") {
-        return Ok(
-            HttpResponse::InternalServerError().body("Postgres Databases export not supported")
-        );
-    }
-
     let auth_result = validate_request(request.clone(), &service_provider, &auth_data);
     if auth_result.is_err() {
         return Ok(HttpResponse::Unauthorized().body("Access Denied"));
+    }
+
+    if cfg!(feature = "postgres") {
+        return get_postgres_database(&request, &settings);
     }
 
     // Vacuum the database first
@@ -37,10 +35,85 @@ pub async fn get_database(
         .set_content_disposition(ContentDisposition {
             disposition: DispositionType::Inline,
             parameters: vec![DispositionParam::Filename(
-                settings.database.database_name.clone(),
+                Path::new(&settings.database.connection_string())
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string(),
             )],
         })
         .into_response(&request);
+
+    Ok(response)
+}
+
+fn get_postgres_database(
+    request: &HttpRequest,
+    settings: &Settings,
+) -> Result<HttpResponse, Error> {
+    use actix_files as fs;
+    use actix_web::http::header::ContentDisposition;
+    use actix_web::http::header::DispositionParam;
+    use actix_web::http::header::DispositionType;
+    use std::io;
+    use std::path::PathBuf;
+    use std::process::Command;
+
+    let pg_bin_dir = settings
+        .backup
+        .as_ref()
+        .and_then(|b| b.pg_bin_dir.clone())
+        .unwrap_or_default();
+
+    let pg_dump_cmd = PathBuf::from(&pg_bin_dir).join("pg_dump");
+
+    let export_dir = PathBuf::from(&settings.server.base_dir);
+    std::fs::create_dir_all(&export_dir).map_err(|e| {
+        actix_web::error::ErrorInternalServerError(format!(
+            "Failed to create export directory: {e}"
+        ))
+    })?;
+    let export_path = export_dir.join("db_export.dump");
+
+    let result = Command::new(pg_dump_cmd.to_str().unwrap_or("pg_dump"))
+        .args([
+            "--format",
+            "custom",
+            "--dbname",
+            &settings.database.connection_string(),
+            "--file",
+            export_path.to_str().unwrap_or_default(),
+        ])
+        .output()
+        .map_err(|e| match e.kind() {
+            io::ErrorKind::NotFound if pg_bin_dir.is_empty() => {
+                actix_web::error::ErrorInternalServerError(
+                    "pg_dump not found in PATH. Ensure PostgreSQL client tools are installed.",
+                )
+            }
+            io::ErrorKind::NotFound => actix_web::error::ErrorInternalServerError(format!(
+                "pg_dump not found in configured pg_bin_dir: {pg_bin_dir}"
+            )),
+            _ => actix_web::error::ErrorInternalServerError(format!(
+                "Failed to run pg_dump: {e}"
+            )),
+        })?;
+
+    if !result.status.success() {
+        let stderr = String::from_utf8_lossy(&result.stderr);
+        return Ok(HttpResponse::InternalServerError()
+            .body(format!("pg_dump failed: {stderr}")));
+    }
+
+    let response = fs::NamedFile::open(&export_path)?
+        .set_content_disposition(ContentDisposition {
+            disposition: DispositionType::Attachment,
+            parameters: vec![DispositionParam::Filename(format!(
+                "{}.dump",
+                settings.database.database_name
+            ))],
+        })
+        .into_response(request);
 
     Ok(response)
 }

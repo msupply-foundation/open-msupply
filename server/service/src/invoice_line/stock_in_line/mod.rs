@@ -1,6 +1,9 @@
+use crate::preference::{ExternalInboundShipmentLinesMustBeAuthorised, Preference, PreferenceError};
 use repository::InvoiceRow;
 use repository::InvoiceStatus;
 use repository::InvoiceType;
+use repository::RepositoryError;
+use repository::StorageConnection;
 
 pub mod generate;
 pub mod validate;
@@ -31,6 +34,29 @@ impl StockInType {
             StockInType::InboundShipment => InvoiceType::InboundShipment,
         }
     }
+}
+
+/// An external inbound shipment subject to line authorisation can only be
+/// received once every line is approved or rejected, so its set of lines is
+/// locked from then on — lines cannot be added or deleted, though other line
+/// details remain editable.
+pub fn check_lines_locked_by_authorisation(
+    connection: &StorageConnection,
+    invoice: &InvoiceRow,
+) -> Result<bool, RepositoryError> {
+    // Only external inbound shipments (linked to a purchase order) are
+    // subject to line authorisation
+    if invoice.purchase_order_id.is_none()
+        || !matches!(
+            invoice.status,
+            InvoiceStatus::Received | InvoiceStatus::Verified
+        )
+    {
+        return Ok(false);
+    }
+    ExternalInboundShipmentLinesMustBeAuthorised
+        .load(connection, Some(invoice.store_id.clone()))
+        .map_err(PreferenceError::into_repository_error)
 }
 
 pub fn should_update_stock(invoice: &InvoiceRow) -> bool {

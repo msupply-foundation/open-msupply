@@ -106,21 +106,7 @@ fragment ItemStockOnHand on ItemNode {
     defaultSellPricePerPack
     ignoreForOrders
   }
-  stats(storeId: $storeId) {
-    stockOnHand
-  }
-}
-fragment ItemRowWithStats on ItemNode {
-  ...ItemStockOnHand
-  stats(storeId: $storeId) {
-    __typename
-    averageMonthlyConsumption
-    availableStockOnHand
-    availableMonthsOfStockOnHand
-    monthsOfStockOnHand
-    totalConsumption
-    stockOnHand
-  }
+  stockOnHand(storeId: $storeId)
 }
 
 fragment LocationType on LocationTypeNode {
@@ -159,6 +145,29 @@ fragment BundledItem on BundledItemNode {
   }
 }
 
+fragment AncillaryItemRow on ItemNode {
+  __typename
+  id
+  name
+  code
+  unitName
+}
+
+fragment AncillaryItem on AncillaryItemNode {
+  __typename
+  id
+  itemQuantity
+  ancillaryQuantity
+  itemId
+  ancillaryItemId
+  item {
+    ...AncillaryItemRow
+  }
+  ancillaryItem {
+    ...AncillaryItemRow
+  }
+}
+
 fragment ItemVariant on ItemVariantNode {
   __typename
   id
@@ -173,6 +182,7 @@ fragment ItemVariant on ItemVariantNode {
   manufacturerId
   manufacturer(storeId: $storeId) {
     ...NameRow
+    isVisible
   }
   locationTypeId
   locationType {
@@ -235,36 +245,15 @@ fragment Item on ItemNode {
   variants {
     ...ItemVariant
   }
+  ancillaryItems {
+    ...AncillaryItem
+  }
   itemDirections {
     ...ItemDirection
   }
   itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
     ignoreForOrders
-  }
-}
-
-query itemsWithStockLines(
-  $first: Int
-  $offset: Int
-  $key: ItemSortFieldInput!
-  $desc: Boolean
-  $filter: ItemFilterInput
-  $storeId: String!
-) {
-  items(
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-    storeId: $storeId
-  ) {
-    ... on ItemConnector {
-      __typename
-      nodes {
-        ...Item
-      }
-      totalCount
-    }
   }
 }
 
@@ -326,6 +315,10 @@ fragment ItemsWithStats on ItemNode {
   isVaccine
   doses
   availableStockOnHand(storeId: $storeId)
+  masterLists(storeId: $storeId) {
+    id
+    name
+  }
   stats(storeId: $storeId) {
     __typename
     averageMonthlyConsumption
@@ -371,6 +364,7 @@ query itemById($storeId: String!, $itemId: String!) {
       nodes {
         __typename
         ...Item
+        stockOnHand(storeId: $storeId)
         stats(storeId: $storeId) {
           __typename
           averageMonthlyConsumption
@@ -505,6 +499,49 @@ mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
   }
 }
 
+mutation upsertAncillaryItem(
+  $storeId: String!
+  $input: UpsertAncillaryItemInput!
+) {
+  centralServer {
+    ancillaryItem {
+      upsertAncillaryItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on AncillaryItemNode {
+          ...AncillaryItem
+        }
+        ... on UpsertAncillaryItemError {
+          error {
+            __typename
+            description
+            ... on AncillaryMaxDepthExceeded {
+              max
+              actual
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteAncillaryItem(
+  $storeId: String!
+  $input: DeleteAncillaryItemInput!
+) {
+  centralServer {
+    ancillaryItem {
+      deleteAncillaryItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
 fragment ItemLedger on ItemLedgerNode {
   id
   balance
@@ -516,6 +553,7 @@ fragment ItemLedger on ItemLedgerNode {
   invoiceId
   invoiceStatus
   invoiceType
+  isExternal
   name
   packSize
   movementInUnits

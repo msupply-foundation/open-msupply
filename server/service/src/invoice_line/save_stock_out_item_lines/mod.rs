@@ -40,6 +40,8 @@ pub struct SaveStockOutInvoiceLine {
     pub campaign_id: Option<String>,
     pub program_id: Option<String>,
     pub vvm_status_id: Option<String>,
+    pub received_number_of_packs: Option<f64>,
+    pub reason_option_id: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -159,7 +161,6 @@ pub fn save_stock_out_item_lines(
 
             if let Some(note) = input.note {
                 let repo = InvoiceLineRowRepository::new(connection);
-                // Pretty sure that item_id is ok as item_link_id here, as we're saving a new record?
                 repo.update_note_by_invoice_and_item_id(
                     &input.invoice_id,
                     &input.item_id,
@@ -197,8 +198,9 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_item_a, mock_name_store_b, mock_outbound_shipment_a, mock_stock_line_a,
-            mock_stock_line_b, mock_stock_line_vaccine_item_a, mock_store_a, mock_store_b,
+            mock_item_a, mock_name_store_b, mock_outbound_shipment_a,
+            mock_shipment_variance_reason_option, mock_stock_line_a, mock_stock_line_b,
+            mock_stock_line_vaccine_item_a, mock_store_a, mock_store_b,
             mock_transferred_inbound_shipment_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
@@ -237,7 +239,7 @@ mod test {
             InvoiceLineRow {
                 id: "wrong_store_shipment_line".to_string(),
                 invoice_id: wrong_store().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 ..Default::default()
             }
         }
@@ -330,6 +332,8 @@ mod test {
                             campaign_id: None,
                             program_id: None,
                             vvm_status_id: None,
+                            received_number_of_packs: None,
+                            reason_option_id: None,
                         }],
                         ..Default::default()
                     }
@@ -361,7 +365,7 @@ mod test {
             InvoiceLineRow {
                 id: "line_to_update".to_string(),
                 invoice_id: outbound_to_edit().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 stock_line_id: Some(mock_stock_line_a().id),
                 number_of_packs: 5.0,
                 ..Default::default()
@@ -371,7 +375,7 @@ mod test {
             InvoiceLineRow {
                 id: "line_to_delete".to_string(),
                 invoice_id: outbound_to_edit().id,
-                item_link_id: mock_item_a().id,
+                item_id: mock_item_a().id,
                 number_of_packs: 5.0,
                 ..Default::default()
             }
@@ -452,5 +456,67 @@ mod test {
         assert!(!updated_lines
             .iter()
             .any(|line| line.id == line_to_delete().id));
+    }
+
+    #[actix_rt::test]
+    async fn test_save_outbound_new_line_persists_received_and_reason() {
+        fn outbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "outbound_variance".to_string(),
+                store_id: mock_store_b().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "test_save_outbound_new_line_persists_received_and_reason",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![outbound()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        service_provider
+            .invoice_line_service
+            .save_stock_out_item_lines(
+                &context,
+                SaveStockOutItemLines {
+                    invoice_id: outbound().id,
+                    item_id: mock_item_a().id,
+                    lines: vec![SaveStockOutInvoiceLine {
+                        id: "new_variance_line".to_string(),
+                        number_of_packs: 5.0,
+                        stock_line_id: mock_stock_line_a().id,
+                        received_number_of_packs: Some(3.0),
+                        reason_option_id: Some(mock_shipment_variance_reason_option().id),
+                        ..Default::default()
+                    }],
+                    placeholder_quantity: None,
+                    prescribed_quantity: None,
+                    note: None,
+                },
+            )
+            .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("new_variance_line")
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(line.received_number_of_packs, Some(3.0));
+        assert_eq!(
+            line.reason_option_id,
+            Some(mock_shipment_variance_reason_option().id)
+        );
     }
 }

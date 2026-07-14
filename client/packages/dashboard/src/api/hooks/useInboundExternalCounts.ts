@@ -5,17 +5,15 @@ import { useApi } from './useApi';
 export const useInboundExternalCounts = (enabled = true) => {
   const { storeId, api } = useApi();
 
-  const { data, ...rest } = useQuery(
-    [DASHBOARD, INBOUND, 'external', storeId],
-    () =>
+  const { data, ...rest } = useQuery({
+    queryKey: [DASHBOARD, INBOUND, 'external', storeId],
+    queryFn: () =>
       api.inboundExternalCounts({
         storeId,
       }),
-    {
-      retry: false,
-      enabled,
-    }
-  );
+    retry: false,
+    enabled,
+  });
 
   if (!data?.inboundShipmentExternalCounts) {
     return { stats: undefined, ...rest };

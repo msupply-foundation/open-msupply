@@ -4,6 +4,7 @@ import {
   usePreferences,
   ColumnDef,
   ColumnType,
+  ExpiryDateCell,
   weightedAverageByUnits,
 } from '@openmsupply-client/common';
 import { PrescriptionLineFragment } from '../api/operations.generated';
@@ -53,6 +54,7 @@ export const usePrescriptionColumn = () => {
         header: t('label.expiry-date'),
         size: 110,
         columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
         defaultHideOnMobile: true,
         enableColumnFilter: true,
         enableSorting: true,

@@ -1,5 +1,5 @@
 import React from 'react';
-import Dropzone, { Accept } from 'react-dropzone';
+import Dropzone, { Accept, FileRejection } from 'react-dropzone';
 import {
   useTranslation,
   alpha,
@@ -15,15 +15,21 @@ import {
 interface UploadDragAndDropProps {
   accept?: Accept;
   color?: 'primary' | 'secondary' | 'gray';
+  /** Maximum size per file in bytes; larger files are rejected. */
+  maxSize?: number;
   multiple: boolean;
   onUpload: <T extends File>(files: T[]) => void;
+  /** Called with files rejected by `accept`/`maxSize` so they can be surfaced to the user. */
+  onRejected?: (rejections: FileRejection[]) => void;
 }
 
 export const UploadDragAndDrop = ({
   accept,
   color = 'secondary',
+  maxSize,
   multiple,
   onUpload,
+  onRejected,
 }: UploadDragAndDropProps) => {
   const t = useTranslation();
   const isExtraSmallScreen = useIsExtraSmallScreen();
@@ -57,8 +63,12 @@ export const UploadDragAndDrop = ({
       })}
     >
       <Dropzone
-        onDrop={acceptedFiles => onUpload(acceptedFiles)}
+        onDrop={(acceptedFiles, fileRejections) => {
+          if (fileRejections.length > 0) onRejected?.(fileRejections);
+          if (acceptedFiles.length > 0) onUpload(acceptedFiles);
+        }}
         accept={accept}
+        maxSize={maxSize}
         multiple={multiple}
       >
         {({ getRootProps, getInputProps }) => (

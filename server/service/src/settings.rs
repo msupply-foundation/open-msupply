@@ -41,10 +41,41 @@ pub struct ServerSettings {
     // Option to set server mode as central server, should only be used in testing, demo and development
     #[serde(default)]
     pub override_is_central_server: bool,
+    /// Number of actix-web worker threads. Defaults to the number of logical CPUs.
+    /// Increase if 408 timeouts are observed under load.
+    pub workers: Option<usize>,
 }
 
 fn default_base_dir() -> String {
     "app_data".to_string()
+}
+
+/// Builds a `Settings` value suitable for tests, given the `DatabaseSettings`
+/// produced by the test setup. `features` enables feature flags that gate
+/// functionality under test (e.g. `stock_movement`).
+pub fn test_settings(
+    database: DatabaseSettings,
+    features: Option<HashMap<String, bool>>,
+) -> Settings {
+    Settings {
+        server: ServerSettings {
+            port: 0,
+            danger_allow_http: false,
+            debug_no_access_control: true,
+            discovery: DiscoveryMode::Disabled,
+            cors_origins: vec![],
+            base_dir: "test_output".to_string(),
+            machine_uid: None,
+            override_is_central_server: false,
+            workers: None,
+        },
+        database,
+        sync: None,
+        logging: None,
+        backup: None,
+        mail: None,
+        features,
+    }
 }
 
 impl ServerSettings {

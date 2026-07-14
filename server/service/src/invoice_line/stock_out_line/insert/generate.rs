@@ -110,6 +110,8 @@ fn generate_batch_update(
         stock_line_id: _,
         total_before_tax: _,
         tax_percentage: _,
+        received_number_of_packs: _,
+        reason_option_id: _,
     }: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
@@ -177,6 +179,8 @@ fn generate_line(
         cost_price_per_pack: _,
         sell_price_per_pack: _,
         vvm_status_id: _,
+        received_number_of_packs,
+        reason_option_id,
     }: InsertStockOutLine,
     ItemRow {
         id: item_id,
@@ -227,7 +231,7 @@ fn generate_line(
     Ok(InvoiceLineRow {
         id,
         invoice_id,
-        item_link_id: item_id,
+        item_id,
         location_id,
         pack_size,
         batch,
@@ -258,8 +262,10 @@ fn generate_line(
             .then_some(number_of_packs),
         shipped_pack_size: (r#type == StockOutType::OutboundShipment).then_some(pack_size),
         linked_invoice_id: None,
-        reason_option_id: None,
+        reason_option_id,
         status: None,
+        received_number_of_packs,
+        linked_invoice_line_id: None,
     })
 }
 

@@ -67,6 +67,11 @@ fn check_snapshot_matches_current_count(
 ) -> Option<Vec<StocktakeLine>> {
     let mut mismatches = Vec::new();
     for line in stocktake_lines {
+        // Skip uncounted lines as they won't have a snapshot count
+        // to compare against when the stocktake is finalised
+        if line.line.counted_number_of_packs.is_none() {
+            continue;
+        }
         let stock_line = match &line.stock_line {
             Some(stock_line) => stock_line,
             None => continue,

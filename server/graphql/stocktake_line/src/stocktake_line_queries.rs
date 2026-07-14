@@ -260,7 +260,7 @@ mod test {
                         batch: Some("batch".to_string()),
                         expiry_date: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
                         stocktake_id: "stocktake_id".to_string(),
-                        item_link_id: mock_stocktake_line_a().item_link_id,
+                        item_id: mock_stocktake_line_a().item_id,
                         ..Default::default()
                     },
                     item: mock_item_a(),

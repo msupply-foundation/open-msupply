@@ -16,7 +16,6 @@ pub fn validate(
     input: &UpdatePurchaseOrderInput,
     store_id: &str,
     connection: &StorageConnection,
-    user_has_auth_permission: Option<bool>,
 ) -> Result<(PurchaseOrder, Option<PurchaseOrderStatus>), UpdatePurchaseOrderError> {
     let purchase_order = PurchaseOrderRepository::new(connection)
         .query_by_filter(
@@ -35,20 +34,12 @@ pub fn validate(
         return Err(UpdatePurchaseOrderError::CannotEditSentPurchaseOrder);
     }
 
-    // Check auth is required before changing to Request Approval
+    // If RequestApproval is asked for but the store doesn't require authorisation,
+    // skip straight to Confirmed.
     if input.status == Some(PurchaseOrderStatus::RequestApproval) {
         let requires_auth = check_requires_auth(connection, store_id)?;
         if !requires_auth {
-            // If no authorisation required, return status Confirmed
             return Ok((purchase_order, Some(PurchaseOrderStatus::Confirmed)));
-        }
-    }
-
-    // Check user has permission to authorise purchase order, if authorisation is required
-    if input.status == Some(PurchaseOrderStatus::Confirmed) {
-        let requires_auth = check_requires_auth(connection, store_id)?;
-        if requires_auth && user_has_auth_permission != Some(true) {
-            return Err(UpdatePurchaseOrderError::UserUnableToAuthorisePurchaseOrder);
         }
     }
 
@@ -131,9 +122,9 @@ fn check_items_orderable(
     let item_store_join_repo = ItemStoreJoinRowRepository::new(connection);
 
     for line in purchase_order_lines {
-        let item_link_id = &line.item_row.id;
+        let item_id = &line.item_row.id;
         let item_store_join =
-            item_store_join_repo.find_one_by_item_and_store_id(item_link_id, store_id)?;
+            item_store_join_repo.find_one_by_item_and_store_id(item_id, store_id)?;
 
         if let Some(item_store_join) = item_store_join {
             if item_store_join.ignore_for_orders {

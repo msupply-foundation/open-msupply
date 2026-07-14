@@ -42,6 +42,7 @@ export const OutboundShipmentListView = () => {
       { key: 'createdDatetime', condition: 'between' },
       { key: 'shippedDatetime', condition: 'between' },
       { key: 'invoiceNumber', condition: 'equalTo', isNumber: true },
+      { key: 'invoiceNumberOrStatus', condition: 'like' },
     ],
   });
   const queryParams = { ...filter, sortBy, first, offset };

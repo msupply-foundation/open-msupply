@@ -12,14 +12,14 @@ export const useLocation = () => {
   // CREATE
   const {
     mutateAsync: createMutation,
-    isLoading: isCreating,
+    isPending: isCreating,
     error: createError,
   } = useCreateLocation();
 
   // UPDATE
   const {
     mutateAsync: update,
-    isLoading: isUpdating,
+    isPending: isUpdating,
     error: updateError,
   } = useUpdateLocation();
 
@@ -67,7 +67,9 @@ const useCreateLocation = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LOCATION]);
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      });
     },
     onError: e => {
       console.error(e);
@@ -109,7 +111,9 @@ const useUpdateLocation = () => {
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LOCATION]);
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      });
     },
     onError: e => {
       console.error(e);
@@ -131,7 +135,9 @@ const useDeleteLocation = () => {
   const { mutateAsync: deleteMutation } = useMutation({
     mutationFn,
     onSuccess: () => {
-      queryClient.invalidateQueries([LOCATION]);
+      queryClient.invalidateQueries({
+        queryKey: [LOCATION]
+      });
     },
   });
 

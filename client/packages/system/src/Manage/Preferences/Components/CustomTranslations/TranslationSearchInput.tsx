@@ -1,10 +1,7 @@
 import React, { useMemo } from 'react';
 import {
   Autocomplete,
-  DEFAULT_TRANSLATIONS_NAMESPACE,
-  LocaleKey,
   RegexUtils,
-  useIntl,
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -13,6 +10,7 @@ import { findMatchingPluralisationKeys } from './helpers';
 interface TranslationSearchInputProps {
   onChange: (option: TranslationOption[]) => void;
   existingKeys: string[];
+  options: TranslationOption[];
 }
 
 export interface TranslationOption {
@@ -23,29 +21,15 @@ export interface TranslationOption {
 export const TranslationSearchInput = ({
   onChange,
   existingKeys,
+  options,
 }: TranslationSearchInputProps) => {
   const t = useTranslation();
-  const { i18n } = useIntl();
   const theme = useTheme();
 
-  const nonTranslatedOptions = useMemo(() => {
-    // English common is the base for translations, will always be available and have all keys
-    const baseOptions =
-      i18n?.store?.data['en']?.[DEFAULT_TRANSLATIONS_NAMESPACE] ?? {};
-    const keys = Object.keys(baseOptions);
-
-    return (
-      keys
-        // Autocomplete should only show keys that don't already have custom translations
-        .filter(k => !existingKeys.includes(k))
-        .map(k => ({
-          key: k,
-          // Use defaultT rather than direct from baseOption, so shows in users language
-          default: t(k as LocaleKey, { ns: DEFAULT_TRANSLATIONS_NAMESPACE }),
-        }))
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [existingKeys.length]);
+  const nonTranslatedOptions = useMemo(
+    () => options.filter(o => !existingKeys.includes(o.key)),
+    [options, existingKeys]
+  );
 
   const handleSelect = (option: TranslationOption | null) => {
     if (!option) return;
@@ -66,7 +50,7 @@ export const TranslationSearchInput = ({
       renderOption={(props, option) => (
         <li {...props} key={option.key} style={{ display: 'flex', gap: '8px' }}>
           <span style={{ color: 'grey' }}>{option.key}</span>
-          {option.default}
+          {option.default !== option.key && option.default}
         </li>
       )}
       filterOptions={(options, { inputValue }) =>
@@ -81,7 +65,7 @@ export const TranslationSearchInput = ({
       }
       textSx={{ backgroundColor: theme.palette.background.drawer }}
       fullWidth
-      placeholder={`${t('messages.search')}...`}
+      placeholder={t('placeholder.add-translation')}
     />
   );
 };

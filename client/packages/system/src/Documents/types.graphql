@@ -4,6 +4,9 @@ fragment SyncFileReference on SyncFileReferenceNode {
   fileName
   recordId
   createdDatetime
+  totalBytes
+  status
+  error
 }
 
 # Populate the generated file so type checks are met

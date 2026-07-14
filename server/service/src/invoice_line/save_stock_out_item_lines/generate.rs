@@ -85,6 +85,8 @@ pub fn generate(
                  campaign_id,
                  program_id,
                  vvm_status_id,
+                 received_number_of_packs,
+                 reason_option_id,
              }| InsertStockOutLine {
                 id,
                 invoice_id: invoice_id.clone(),
@@ -94,6 +96,8 @@ pub fn generate(
                 vvm_status_id,
                 campaign_id: Some(NullableUpdate { value: campaign_id }),
                 program_id: Some(NullableUpdate { value: program_id }),
+                received_number_of_packs,
+                reason_option_id,
                 // Default (use None so the stock line values are used)
                 batch: None,
                 pack_size: None,
@@ -125,6 +129,8 @@ pub fn generate(
                  campaign_id,
                  program_id,
                  vvm_status_id,
+                 received_number_of_packs,
+                 reason_option_id,
              }| UpdateStockOutLine {
                 id,
                 stock_line_id: Some(stock_line_id),
@@ -133,6 +139,12 @@ pub fn generate(
                 campaign_id,
                 program_id,
                 vvm_status_id,
+                received_number_of_packs: Some(crate::NullableUpdate {
+                    value: received_number_of_packs,
+                }),
+                reason_option_id: Some(crate::NullableUpdate {
+                    value: reason_option_id,
+                }),
                 // Default
                 prescribed_quantity: None,
                 total_before_tax: None,

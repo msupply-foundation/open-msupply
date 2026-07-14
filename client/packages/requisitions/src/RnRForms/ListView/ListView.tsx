@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   useUrlQueryParams,
   useNavigate,
@@ -63,6 +63,11 @@ export const RnRFormListView = () => {
     []
   );
 
+  const enableRowSelection = useCallback(
+    (row: { original: RnRFormFragment }) => !isRnRFormDisabled(row.original),
+    []
+  );
+
   const { table, selectedRows } = usePaginatedMaterialTable<RnRFormFragment>({
     tableId: 'rnr-form-list',
     columns,
@@ -72,7 +77,7 @@ export const RnRFormListView = () => {
     isError,
     onRowClick: row => navigate(row.id),
     getIsRestrictedRow: row => isRnRFormDisabled(row.original),
-    enableRowSelection: row => !isRnRFormDisabled(row.original),
+    enableRowSelection,
     noDataElement: <NothingHere body={t('error.no-rnr-forms')} onCreate={onOpen} />,
   });
 

@@ -5,6 +5,7 @@ use crate::{
         common::{check_item_exists_in_requisition, check_requisition_line_exists},
         request_requisition_line::{insert::OutError, InsertRequestRequisitionLine},
     },
+    validate::check_other_party_store_is_disabled,
 };
 use repository::{RequisitionRow, RequisitionStatus, RequisitionType, StorageConnection};
 
@@ -33,6 +34,10 @@ pub fn validate(
     }
 
     if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
+    }
+
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
         return Err(OutError::CannotEditRequisition);
     }
 

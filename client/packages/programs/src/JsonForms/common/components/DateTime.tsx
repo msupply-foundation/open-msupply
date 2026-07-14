@@ -79,7 +79,7 @@ const UIComponent = (props: ControlProps) => {
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],
     disabled: !props.enabled,
-    error: formatErrors(zErrors || error || props.errors),
+    errorText: formatErrors(zErrors || error || props.errors) || undefined,
     dateAsEndOfDay: !!props.uischema.options?.['dateAsEndOfDay'],
     disableFuture: !!props.uischema.options?.['disableFuture'],
     ...(options?.monthOnly
