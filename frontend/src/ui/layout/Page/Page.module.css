@@ -1,12 +1,21 @@
 /*
- * Page frame — geometry only (see Page.tsx). A flex column of header /
- * middle / content footer, where middle is a flex row of the scrolling body
- * and the optional docked side panel. The header and footer components carry
- * their own flex-shrink: 0, so only the middle row flexes; overflow: hidden
- * here plus overflow: auto on the body keeps every pinned region pinned.
+ * Page frame — geometry only (see Page.tsx). A flex ROW at the top level: the main column beside
+ * the full-height details panel, so the panel spans the WHOLE page height (alongside the header
+ * and footer) and pushes them all when open. The main column is header / middle / content footer
+ * stacked; header + footer carry their own flex-shrink: 0, so only the middle row flexes.
+ * overflow: hidden here plus overflow: auto on the body keeps every pinned region pinned.
  */
 
 .page {
+  display: flex;
+  flex: 1;
+  min-block-size: 0;
+  min-inline-size: 0;
+  overflow: hidden;
+}
+
+/* The main column — everything except the details panel: header, scrolling middle, footer. */
+.main {
   display: flex;
   flex: 1;
   flex-direction: column;
