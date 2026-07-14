@@ -12,6 +12,8 @@
     "check": "tcm --pattern '**/*.module.css' src && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "codegen": "node codegen/run.cjs",
     "test": "vitest run",
     "test:codegen": "node --test \"codegen/__tests__/*.test.cjs\""
