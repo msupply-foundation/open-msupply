@@ -1,8 +1,8 @@
-import js from '@eslint/js'
-import tseslint from 'typescript-eslint'
-import solid from 'eslint-plugin-solid/configs/typescript'
-import commentLength from 'eslint-plugin-comment-length'
-import globals from 'globals'
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import solid from 'eslint-plugin-solid/configs/typescript';
+import commentLength from 'eslint-plugin-comment-length';
+import globals from 'globals';
 
 /*
  * Comment line-length cap. `overflow-only` wraps ONLY lines that exceed the
@@ -15,7 +15,34 @@ const commentLengthOptions = {
   maxLength: 80,
   ignoreUrls: true,
   ignoreCommentsWithCode: true,
-}
+};
+
+/*
+ * Framework-agnostic rules carried over from the original OMS ESLint config
+ * (its React / JSDoc / Storybook rules don't apply here). `^_` marks an
+ * intentionally-unused binding; camelCase identifiers; prefer-const; and a
+ * space after comment markers (something Prettier doesn't enforce).
+ */
+const sharedRules = {
+  '@typescript-eslint/no-unused-vars': [
+    'error',
+    {
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_',
+      caughtErrorsIgnorePattern: '^_',
+    },
+  ],
+  'prefer-const': [
+    'error',
+    { destructuring: 'any', ignoreReadBeforeAssign: true },
+  ],
+  camelcase: 'error',
+  'spaced-comment': [
+    'error',
+    'always',
+    { markers: ['#', '/'], exceptions: ['-'] },
+  ],
+};
 
 /*
  * Flat config (ESLint 9). Two scopes:
@@ -47,6 +74,11 @@ export default tseslint.config(
       globals: globals.browser,
       parserOptions: { ecmaVersion: 2023, sourceType: 'module' },
     },
+    rules: {
+      ...sharedRules,
+      // Browser app code ships no stray logs; info/warn/error are intentional.
+      'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
+    },
   },
 
   // Build config + node scripts.
@@ -56,6 +88,8 @@ export default tseslint.config(
     languageOptions: {
       globals: globals.node,
     },
+    // No no-console here: these Node scripts legitimately print to stdout.
+    rules: sharedRules,
   },
 
   // Comment line-length cap (all linted files). Warn + auto-fix; see options
@@ -64,8 +98,14 @@ export default tseslint.config(
     files: ['src/**/*.{ts,tsx}', '*.config.{ts,js}', 'scripts/**/*.mjs'],
     plugins: { 'comment-length': commentLength },
     rules: {
-      'comment-length/limit-single-line-comments': ['warn', commentLengthOptions],
-      'comment-length/limit-multi-line-comments': ['warn', commentLengthOptions],
+      'comment-length/limit-single-line-comments': [
+        'warn',
+        commentLengthOptions,
+      ],
+      'comment-length/limit-multi-line-comments': [
+        'warn',
+        commentLengthOptions,
+      ],
     },
-  },
-)
+  }
+);
