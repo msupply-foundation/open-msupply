@@ -42,6 +42,7 @@ pub struct InsertInput {
     pub volume_per_pack: Option<f64>,
     pub shipped_pack_size: Option<f64>,
     pub purchase_order_line_id: Option<String>,
+    pub reason_option_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -74,11 +75,11 @@ pub fn insert(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    map_response(
-        service_provider
-            .invoice_line_service
-            .insert_stock_in_line(&service_context, input.to_domain(), Some(r#type.to_domain())),
-    )
+    map_response(service_provider.invoice_line_service.insert_stock_in_line(
+        &service_context,
+        input.to_domain(),
+        Some(r#type.to_domain()),
+    ))
 }
 
 #[derive(Interface)]
@@ -116,6 +117,7 @@ impl InsertInput {
             volume_per_pack,
             shipped_pack_size,
             purchase_order_line_id,
+            reason_option_id,
         } = self;
 
         ServiceInput {
@@ -146,6 +148,7 @@ impl InsertInput {
             shipped_pack_size,
             note,
             purchase_order_line_id,
+            reason_option_id,
             // Default
             stock_line_id: None,
             barcode: None,
@@ -177,7 +180,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             )))
         }
 
-        ServiceError::CannotEditFinalised => {
+        ServiceError::CannotEditFinalised
+        | ServiceError::OtherPartyStoreDisabled
+        | ServiceError::CannotAddLinesToAuthorisedReceivedInvoice => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
@@ -198,7 +203,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::ManufacturerDoesNotExist
         | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
-        | ServiceError::ProgramNotVisible
+        | ServiceError::ProgramDoesNotExist
         | ServiceError::PurchaseOrderLineIdRequired
         | ServiceError::PurchaseOrderLineDoesNotExist
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),

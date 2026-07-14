@@ -45,6 +45,9 @@ query StocktakeDetailQuery(
             reason
           }
         }
+        campaign {
+          name
+        }
         comment
       }
     }
@@ -63,5 +66,8 @@ query StocktakeDetailQuery(
         phone
       }
     }
+  }
+  preferences(storeId: $storeId) {
+    blindStocktake
   }
 }

@@ -2,21 +2,26 @@ import {
   ItemSortFieldInput,
   SortBy,
   StockLineFilterInput,
+  keepPreviousData,
   useQuery,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../operations.generated';
+import { StockLineListRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
-// Only a subset of stock-line filters can be translated to item-level filters.
-// Stock-line-specific filters (location, expiry, VVM, masterList) don't apply
-// when paginating by item — the Toolbar hides them in grouped mode.
-type GroupedFilterBy = Pick<StockLineFilterInput, 'search' | 'name' | 'code'>;
+// Only a subset of stock-line filters apply in grouped mode — the Toolbar
+// hides location/expiry/VVM filters when grouping is active. masterList is an
+// item-level filter so it stays available; the rest is what the Toolbar
+// exposes when grouped.
+type GroupedFilterBy = Pick<
+  StockLineFilterInput,
+  'search' | 'name' | 'code' | 'masterList'
+>;
 
 export type GroupedStockListParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<StockLineRowFragment>;
+  sortBy?: SortBy<StockLineListRowFragment>;
   filterBy?: GroupedFilterBy;
 };
 
@@ -49,17 +54,21 @@ export const useGroupedStockList = (
   ];
 
   const queryFn = async (): Promise<{
-    nodes: StockLineRowFragment[];
+    nodes: StockLineListRowFragment[];
     totalCount: number;
   }> => {
-    const filter = {
-      hasStockOnHand: true,
-      ...(filterBy?.search ? { codeOrName: filterBy.search } : {}),
-      ...(filterBy?.name ? { codeOrName: filterBy.name } : {}),
+    // hasPacksInStore: true is the parity-guaranteeing predicate — items
+    // appear here iff at least one of their stock lines would appear in the
+    // non-aggregated `stockLines` query (which uses the same predicate).
+    const filter: StockLineFilterInput = {
+      hasPacksInStore: true,
+      ...(filterBy?.search ? { search: filterBy.search } : {}),
+      ...(filterBy?.name ? { name: filterBy.name } : {}),
       ...(filterBy?.code ? { code: filterBy.code } : {}),
+      ...(filterBy?.masterList ? { masterList: filterBy.masterList } : {}),
     };
 
-    const query = await stockApi.stockItemsGrouped({
+    const query = await stockApi.itemsByStockLineFilter({
       storeId,
       first,
       offset,
@@ -68,12 +77,12 @@ export const useGroupedStockList = (
       filter,
     });
 
-    const items = query?.items;
+    const items = query?.itemsByStockLineFilter;
     if (!items || !('nodes' in items)) return { nodes: [], totalCount: 0 };
 
     // Flatten: items with nested stock lines → flat stock line array.
     // MRT's column grouping handles the visual grouping + aggregation.
-    const nodes: StockLineRowFragment[] = [];
+    const nodes: StockLineListRowFragment[] = [];
     for (const item of items.nodes) {
       for (const stockLine of item.availableBatches.nodes) {
         nodes.push(stockLine);
@@ -86,7 +95,7 @@ export const useGroupedStockList = (
   const query = useQuery({
     queryKey,
     queryFn,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     enabled: options?.enabled,
   });
 
@@ -94,7 +103,7 @@ export const useGroupedStockList = (
 };
 
 const toItemSortField = (
-  sortBy: SortBy<StockLineRowFragment>
+  sortBy: SortBy<StockLineListRowFragment>
 ): ItemSortFieldInput => {
   const sortFieldMap: Record<string, ItemSortFieldInput> = {
     name: ItemSortFieldInput.Name,

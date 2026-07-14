@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 // See README.md for description of when this API version needs to be updated
-pub(crate) static SYNC_V5_VERSION: u32 = 14; // bumped for v2.13.0 OG version 8.06
+pub(crate) static SYNC_V5_VERSION: u32 = 15; // bumped for 2.20.0 OG v9.0.X?
 pub(crate) static SYNC_V6_VERSION: u32 = 5; // bumped for 2.9.02 (adding new types to system log)
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Default)]
@@ -14,6 +14,10 @@ pub struct SyncSettings {
     // Number of records to pull or push in one API call
     #[serde(default)]
     pub batch_size: BatchSize,
+    /// Disable the outer transaction wrapping integration. Set to true if PostgreSQL runs out of
+    /// shared memory (max_locks_per_transaction) during large initial syncs.
+    #[serde(default)]
+    pub disable_integration_transaction: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

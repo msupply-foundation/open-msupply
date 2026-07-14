@@ -96,7 +96,12 @@ export type StockLineRowFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
@@ -110,6 +115,80 @@ export type StockLineRowFragment = {
       volumePerUnit?: number | null;
     }>;
   } | null;
+};
+
+export type StockLineListRowFragment = {
+  __typename: 'StockLineNode';
+  availableNumberOfPacks: number;
+  batch?: string | null;
+  costPricePerPack: number;
+  expiryDate?: string | null;
+  manufactureDate?: string | null;
+  id: string;
+  itemId: string;
+  locationId?: string | null;
+  vvmStatusId?: string | null;
+  locationName?: string | null;
+  onHold: boolean;
+  packSize: number;
+  sellPricePerPack: number;
+  storeId: string;
+  totalNumberOfPacks: number;
+  supplierName?: string | null;
+  volumePerPack: number;
+  totalVolume: number;
+  barcode?: string | null;
+  location?: {
+    __typename: 'LocationNode';
+    id: string;
+    name: string;
+    onHold: boolean;
+    code: string;
+    volume: number;
+    volumeUsed: number;
+    locationType?: {
+      __typename: 'LocationTypeNode';
+      id: string;
+      name: string;
+      maxTemperature: number;
+      minTemperature: number;
+    } | null;
+    stock: { __typename: 'StockLineConnector'; totalCount: number };
+  } | null;
+  item: {
+    __typename: 'ItemNode';
+    code: string;
+    name: string;
+    unitName?: string | null;
+    isVaccine: boolean;
+    doses: number;
+    restrictedLocationTypeId?: string | null;
+    defaultPackSize: number;
+    masterLists?: Array<{ __typename: 'MasterListNode'; name: string }> | null;
+  };
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    priority: number;
+    unusable: boolean;
+    description: string;
+  } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
+  } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
 };
 
 export type RepackStockLineFragment = {
@@ -303,33 +382,7 @@ export type StockLinesQuery = {
           __typename: 'MasterListNode';
           name: string;
         }> | null;
-        itemStoreProperties?: {
-          __typename: 'ItemStorePropertiesNode';
-          defaultSellPricePerPack: number;
-        } | null;
       };
-      vvmStatusLogs?: {
-        __typename: 'VvmstatusLogConnector';
-        nodes: Array<{
-          __typename: 'VvmstatusLogNode';
-          id: string;
-          createdDatetime: string;
-          comment?: string | null;
-          user?: {
-            __typename: 'UserNode';
-            firstName?: string | null;
-            lastName?: string | null;
-            username: string;
-          } | null;
-          status?: {
-            __typename: 'VvmstatusNode';
-            id: string;
-            description: string;
-            code: string;
-            priority: number;
-          } | null;
-        }>;
-      } | null;
       vvmStatus?: {
         __typename: 'VvmstatusNode';
         id: string;
@@ -337,7 +390,6 @@ export type StockLinesQuery = {
         unusable: boolean;
         description: string;
       } | null;
-      donor?: { __typename: 'NameNode'; id: string } | null;
       manufacturer?: {
         __typename: 'NameNode';
         code: string;
@@ -346,23 +398,17 @@ export type StockLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
-      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
         __typename: 'CampaignNode';
         id: string;
         name: string;
-      } | null;
-      itemVariant?: {
-        __typename: 'ItemVariantNode';
-        id: string;
-        packagingVariants: Array<{
-          __typename: 'PackagingVariantNode';
-          id: string;
-          packSize?: number | null;
-          volumePerUnit?: number | null;
-        }>;
       } | null;
     }>;
   };
@@ -472,7 +518,12 @@ export type StockLineQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
       program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
       campaign?: {
@@ -636,7 +687,12 @@ export type UpdateStockLineMutation = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         program?: {
           __typename: 'ProgramNode';
@@ -974,7 +1030,12 @@ export type InsertStockLineMutation = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         program?: {
           __typename: 'ProgramNode';
@@ -1051,18 +1112,18 @@ export type UpdateVvmStatusLogMutation = {
   updateVvmStatusLog: { __typename: 'IdResponse'; id: string };
 };
 
-export type StockItemsGroupedQueryVariables = Types.Exact<{
+export type ItemsByStockLineFilterQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.ItemSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.ItemFilterInput>;
+  filter?: Types.InputMaybe<Types.StockLineFilterInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
-export type StockItemsGroupedQuery = {
+export type ItemsByStockLineFilterQuery = {
   __typename: 'Queries';
-  items: {
+  itemsByStockLineFilter: {
     __typename: 'ItemConnector';
     totalCount: number;
     nodes: Array<{
@@ -1124,33 +1185,7 @@ export type StockItemsGroupedQuery = {
               __typename: 'MasterListNode';
               name: string;
             }> | null;
-            itemStoreProperties?: {
-              __typename: 'ItemStorePropertiesNode';
-              defaultSellPricePerPack: number;
-            } | null;
           };
-          vvmStatusLogs?: {
-            __typename: 'VvmstatusLogConnector';
-            nodes: Array<{
-              __typename: 'VvmstatusLogNode';
-              id: string;
-              createdDatetime: string;
-              comment?: string | null;
-              user?: {
-                __typename: 'UserNode';
-                firstName?: string | null;
-                lastName?: string | null;
-                username: string;
-              } | null;
-              status?: {
-                __typename: 'VvmstatusNode';
-                id: string;
-                description: string;
-                code: string;
-                priority: number;
-              } | null;
-            }>;
-          } | null;
           vvmStatus?: {
             __typename: 'VvmstatusNode';
             id: string;
@@ -1158,7 +1193,6 @@ export type StockItemsGroupedQuery = {
             unusable: boolean;
             description: string;
           } | null;
-          donor?: { __typename: 'NameNode'; id: string } | null;
           manufacturer?: {
             __typename: 'NameNode';
             code: string;
@@ -1171,27 +1205,13 @@ export type StockItemsGroupedQuery = {
               __typename: 'StoreNode';
               id: string;
               code: string;
+              isDisabled: boolean;
             } | null;
-          } | null;
-          program?: {
-            __typename: 'ProgramNode';
-            id: string;
-            name: string;
           } | null;
           campaign?: {
             __typename: 'CampaignNode';
             id: string;
             name: string;
-          } | null;
-          itemVariant?: {
-            __typename: 'ItemVariantNode';
-            id: string;
-            packagingVariants: Array<{
-              __typename: 'PackagingVariantNode';
-              id: string;
-              packSize?: number | null;
-              volumePerUnit?: number | null;
-            }>;
           } | null;
         }>;
       };
@@ -1298,6 +1318,60 @@ export const StockLineRowFragmentDoc = gql`
   ${VvmStatusLogRowFragmentDoc}
   ${NameRowFragmentDoc}
 `;
+export const StockLineListRowFragmentDoc = gql`
+  fragment StockLineListRow on StockLineNode {
+    availableNumberOfPacks
+    batch
+    costPricePerPack
+    expiryDate
+    manufactureDate
+    id
+    itemId
+    locationId
+    vvmStatusId
+    locationName
+    onHold
+    packSize
+    sellPricePerPack
+    storeId
+    totalNumberOfPacks
+    supplierName
+    volumePerPack
+    totalVolume
+    barcode
+    location {
+      ...LocationRow
+    }
+    item {
+      code
+      name
+      unitName
+      masterLists(storeId: $storeId) {
+        name
+      }
+      isVaccine
+      doses
+      restrictedLocationTypeId
+      defaultPackSize
+    }
+    vvmStatus {
+      __typename
+      id
+      priority
+      unusable
+      description
+    }
+    manufacturer(storeId: $storeId) {
+      ...NameRow
+    }
+    campaign {
+      id
+      name
+    }
+  }
+  ${LocationRowFragmentDoc}
+  ${NameRowFragmentDoc}
+`;
 export const RepackStockLineFragmentDoc = gql`
   fragment RepackStockLine on RepackStockLineNode {
     location {
@@ -1385,13 +1459,13 @@ export const StockLinesDocument = gql`
         __typename
         nodes {
           __typename
-          ...StockLineRow
+          ...StockLineListRow
         }
         totalCount
       }
     }
   }
-  ${StockLineRowFragmentDoc}
+  ${StockLineListRowFragmentDoc}
 `;
 export const StockLineDocument = gql`
   query stockLine($id: String!, $storeId: String!) {
@@ -1611,16 +1685,16 @@ export const UpdateVvmStatusLogDocument = gql`
     }
   }
 `;
-export const StockItemsGroupedDocument = gql`
-  query stockItemsGrouped(
+export const ItemsByStockLineFilterDocument = gql`
+  query itemsByStockLineFilter(
     $first: Int
     $offset: Int
     $key: ItemSortFieldInput!
     $desc: Boolean
-    $filter: ItemFilterInput
+    $filter: StockLineFilterInput
     $storeId: String!
   ) {
-    items(
+    itemsByStockLineFilter(
       storeId: $storeId
       page: { first: $first, offset: $offset }
       sort: { key: $key, desc: $desc }
@@ -1638,7 +1712,7 @@ export const StockItemsGroupedDocument = gql`
             totalCount
             nodes {
               __typename
-              ...StockLineRow
+              ...StockLineListRow
             }
           }
         }
@@ -1646,7 +1720,7 @@ export const StockItemsGroupedDocument = gql`
       }
     }
   }
-  ${StockLineRowFragmentDoc}
+  ${StockLineListRowFragmentDoc}
 `;
 
 export type SdkFunctionWrapper = <T>(
@@ -1920,20 +1994,20 @@ export function getSdk(
         variables
       );
     },
-    stockItemsGrouped(
-      variables: StockItemsGroupedQueryVariables,
+    itemsByStockLineFilter(
+      variables: ItemsByStockLineFilterQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<StockItemsGroupedQuery> {
+    ): Promise<ItemsByStockLineFilterQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<StockItemsGroupedQuery>({
-            document: StockItemsGroupedDocument,
+          client.request<ItemsByStockLineFilterQuery>({
+            document: ItemsByStockLineFilterDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'stockItemsGrouped',
+        'itemsByStockLineFilter',
         'query',
         variables
       );

@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use super::{get_preference_provider, Preference, PreferenceProvider, UpsertPreferenceError};
 use crate::{
-    preference::{BackdatingData, WarnWhenMissingRecentStocktakeData},
+    preference::{BackdatingData, CustomTranslationsV2Value, WarnWhenMissingRecentStocktakeData},
     service_provider::ServiceContext,
 };
 use repository::{GenderType, InvoiceStatus, StorageConnection, TransactionError};
@@ -13,12 +13,15 @@ pub struct StorePrefUpdate<T> {
     pub value: T,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub struct UpsertPreferences {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
+    /// Legacy v1 custom translations (flat, applied to all languages). Edited
+    /// directly via the "legacy" namespace in the v2 editor; not auto-derived.
     pub custom_translations: Option<BTreeMap<String, String>>,
+    pub custom_translations_v2: Option<CustomTranslationsV2Value>,
     pub gender_options: Option<Vec<GenderType>>,
     pub prevent_transfers_months_before_initialisation: Option<i32>,
     pub show_contact_tracing: Option<bool>,
@@ -35,6 +38,7 @@ pub struct UpsertPreferences {
     pub backdating: Option<BackdatingData>,
 
     // Store preferences
+    pub blind_stocktake: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vaccines_in_doses: Option<Vec<StorePrefUpdate<bool>>>,
     pub manage_vvm_status_for_stock: Option<Vec<StorePrefUpdate<bool>>>,
     pub order_in_packs: Option<Vec<StorePrefUpdate<bool>>>,
@@ -69,6 +73,7 @@ pub fn upsert_preferences(
         allow_tracking_of_stock_by_donor: allow_tracking_of_stock_by_donor_input,
         authorise_purchase_order: authorise_purchase_order_input,
         custom_translations: custom_translations_input,
+        custom_translations_v2: custom_translations_v2_input,
         gender_options: gender_options_input,
         prevent_transfers_months_before_initialisation:
             prevent_transfers_months_before_initialisation_input,
@@ -85,6 +90,7 @@ pub fn upsert_preferences(
         backdating: backdating_input,
 
         // Store preferences
+        blind_stocktake: blind_stocktake_input,
         manage_vaccines_in_doses: manage_vaccines_in_doses_input,
         manage_vvm_status_for_stock: manage_vvm_status_for_stock_input,
         order_in_packs: order_in_packs_input,
@@ -119,6 +125,7 @@ pub fn upsert_preferences(
         allow_tracking_of_stock_by_donor,
         authorise_purchase_order,
         custom_translations,
+        custom_translations_v2,
         gender_options,
         prevent_transfers_months_before_initialisation,
         show_contact_tracing,
@@ -134,6 +141,7 @@ pub fn upsert_preferences(
         backdating,
 
         // Store preferences
+        blind_stocktake,
         manage_vaccines_in_doses,
         manage_vvm_status_for_stock,
         order_in_packs,
@@ -175,6 +183,13 @@ pub fn upsert_preferences(
 
             if let Some(input) = custom_translations_input {
                 custom_translations.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = custom_translations_v2_input {
+                // v2 is saved independently of v1. The legacy v1 map is only
+                // changed via the direct `custom_translations` input above
+                // (the "legacy" namespace in the editor).
+                custom_translations_v2.upsert(connection, input, None)?;
             }
 
             if let Some(input) = prevent_transfers_months_before_initialisation_input {
@@ -229,6 +244,10 @@ pub fn upsert_preferences(
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
+            if let Some(inputs) = blind_stocktake_input {
+                upsert_store_input(connection, blind_stocktake, inputs)?;
+            }
+
             if let Some(inputs) = manage_vaccines_in_doses_input {
                 upsert_store_input(connection, manage_vaccines_in_doses, inputs)?;
             }
@@ -361,4 +380,79 @@ fn upsert_store_input<P: Preference>(
         preference.upsert(connection, update.value, Some(update.store_id))?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::preference::{CustomTranslations, CustomTranslationsV2};
+    use crate::service_provider::ServiceProvider;
+    use crate::sync::test_util_set_is_central_server;
+    use repository::mock::MockDataInserts;
+    use repository::test_db::setup_all;
+
+    #[actix_rt::test]
+    async fn upsert_v2_does_not_touch_v1() {
+        let (_, _, connection_manager, _) =
+            setup_all("upsert_v2_does_not_touch_v1", MockDataInserts::none()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        test_util_set_is_central_server(true);
+
+        // Seed an existing v1 (legacy) map.
+        let v1 =
+            BTreeMap::from([("button.close".to_string(), "Legacy Close".to_string())]);
+        CustomTranslations
+            .upsert(&ctx.connection, v1.clone(), None)
+            .unwrap();
+
+        // Saving v2 must NOT modify v1 (no auto-derivation).
+        let v2: CustomTranslationsV2Value = serde_json::from_value(serde_json::json!({
+            "fr": { "common": { "button.close": "Fermer (custom)" } }
+        }))
+        .unwrap();
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                custom_translations_v2: Some(v2.clone()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        assert_eq!(CustomTranslationsV2.load(&ctx.connection, None).unwrap(), v2);
+        // v1 is untouched
+        assert_eq!(CustomTranslations.load(&ctx.connection, None).unwrap(), v1);
+
+        // The legacy v1 map is edited directly via the custom_translations input.
+        let new_v1 =
+            BTreeMap::from([("button.save".to_string(), "Legacy Save".to_string())]);
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                custom_translations: Some(new_v1.clone()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            CustomTranslations.load(&ctx.connection, None).unwrap(),
+            new_v1
+        );
+
+        // ...and can be cleared by sending an empty map.
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                custom_translations: Some(BTreeMap::new()),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(CustomTranslations
+            .load(&ctx.connection, None)
+            .unwrap()
+            .is_empty());
+    }
 }

@@ -75,6 +75,62 @@ fragment StockLineRow on StockLineNode {
   }
 }
 
+# Lean fragment for the paginated stock list (ungrouped + grouped) and CSV
+# export. Carries only the fields those views render (including campaign, for
+# the campaign column). The full StockLineRow fragment above is kept for the
+# detail/edit queries (stockLine, insert/update) which also need vvmStatusLogs,
+# itemVariant, donor, program and itemStoreProperties.
+fragment StockLineListRow on StockLineNode {
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  manufactureDate
+  id
+  itemId
+  locationId
+  vvmStatusId
+  locationName
+  onHold
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+  supplierName
+  volumePerPack
+  totalVolume
+  barcode
+  location {
+    ...LocationRow
+  }
+  item {
+    code
+    name
+    unitName
+    masterLists(storeId: $storeId) {
+      name
+    }
+    isVaccine
+    doses
+    restrictedLocationTypeId
+    defaultPackSize
+  }
+  vvmStatus {
+    __typename
+    id
+    priority
+    unusable
+    description
+  }
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
+  campaign {
+    id
+    name
+  }
+}
+
 fragment RepackStockLine on RepackStockLineNode {
   location {
     ...LocationRow
@@ -163,7 +219,7 @@ query stockLines(
       __typename
       nodes {
         __typename
-        ...StockLineRow
+        ...StockLineListRow
       }
       totalCount
     }
@@ -375,15 +431,15 @@ mutation updateVvmStatusLog(
   }
 }
 
-query stockItemsGrouped(
+query itemsByStockLineFilter(
   $first: Int
   $offset: Int
   $key: ItemSortFieldInput!
   $desc: Boolean
-  $filter: ItemFilterInput
+  $filter: StockLineFilterInput
   $storeId: String!
 ) {
-  items(
+  itemsByStockLineFilter(
     storeId: $storeId
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
@@ -401,7 +457,7 @@ query stockItemsGrouped(
           totalCount
           nodes {
             __typename
-            ...StockLineRow
+            ...StockLineListRow
           }
         }
       }

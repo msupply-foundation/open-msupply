@@ -76,6 +76,15 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, currency_id: &str) -> Result<bool, RepositoryError> {
+        let id: Option<String> = currency::table
+            .filter(currency::id.eq(currency_id))
+            .select(currency::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(id.is_some())
+    }
+
     pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {
         diesel::update(currency::table.filter(currency::id.eq(currency_id)))
             .set(currency::is_active.eq(false))

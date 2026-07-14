@@ -5,6 +5,8 @@ pub mod abbreviation_row;
 pub mod activity_log;
 pub mod activity_log_row;
 pub mod adjustment;
+pub mod ancillary_item;
+pub mod ancillary_item_row;
 pub mod assets;
 pub mod backend_plugin_row;
 pub mod barcode;
@@ -48,6 +50,8 @@ mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
 pub mod frontend_plugin_row;
+pub mod help_document;
+pub mod help_document_row;
 pub mod indicator_column;
 mod indicator_column_row;
 pub mod indicator_line;
@@ -138,6 +142,9 @@ pub mod stock_line_ledger_discrepancy;
 mod stock_line_row;
 pub mod stock_movement;
 pub mod stock_on_hand;
+pub mod stock_relocation;
+pub mod stock_relocation_line_row;
+pub mod stock_relocation_row;
 pub mod stocktake;
 pub mod stocktake_line;
 mod stocktake_line_row;
@@ -151,6 +158,7 @@ pub mod sync_file_reference;
 pub mod sync_file_reference_row;
 pub mod sync_log;
 mod sync_log_row;
+pub mod sync_message;
 pub mod sync_message_row;
 pub mod system_log_row;
 pub mod temperature_breach;
@@ -178,6 +186,8 @@ pub mod warning_row;
 pub use abbreviation_row::*;
 pub use activity_log_row::*;
 pub use adjustment::*;
+pub use ancillary_item::*;
+pub use ancillary_item_row::*;
 pub use assets::*;
 pub use backend_plugin_row::*;
 pub use barcode_row::*;
@@ -209,6 +219,8 @@ pub use filter_sort_pagination::*;
 pub use form_schema::*;
 pub use form_schema_row::*;
 pub use frontend_plugin_row::*;
+pub use help_document::*;
+pub use help_document_row::*;
 pub use indicator_column_row::*;
 pub use indicator_line_row::*;
 pub use indicator_value_row::*;
@@ -285,6 +297,9 @@ pub use stock_line::*;
 pub use stock_line_row::*;
 pub use stock_movement::*;
 pub use stock_on_hand::*;
+pub use stock_relocation::*;
+pub use stock_relocation_line_row::*;
+pub use stock_relocation_row::*;
 pub use stocktake::*;
 pub use stocktake_line::*;
 pub use stocktake_line_row::*;
@@ -298,6 +313,7 @@ pub use sync_file_reference::*;
 pub use sync_file_reference_row::*;
 pub use sync_log::*;
 pub use sync_log_row::*;
+pub use sync_message::*;
 pub use sync_message_row::*;
 pub use temperature_breach::*;
 pub use temperature_breach_config::*;
@@ -401,9 +417,47 @@ impl From<DieselError> for RepositoryError {
 fn get_connection(
     pool: &Pool<ConnectionManager<DBBackendConnection>>,
 ) -> Result<DBConnection, RepositoryError> {
-    pool.get().map_err(|error| RepositoryError::DBError {
-        msg: "Failed to open Connection".to_string(),
-        extra: format!("{error:?}"),
+    let state = pool.state();
+    let available = state.idle_connections;
+    let total = state.connections;
+    let max = pool.max_size();
+
+    if available == 0 {
+        log::warn!(
+            "DB pool exhausted: {}/{} connections in use, max={}",
+            total - available,
+            total,
+            max,
+        );
+    }
+
+    let start = std::time::Instant::now();
+    let result = pool.get();
+    let wait_ms = start.elapsed().as_millis();
+
+    if wait_ms > 500 {
+        log::warn!(
+            "DB pool: waited {}ms for connection (available={}, total={}, max={})",
+            wait_ms,
+            available,
+            total,
+            max,
+        );
+    }
+
+    result.map_err(|error| {
+        log::error!(
+            "DB pool: failed to get connection after {}ms (available={}, total={}, max={}): {:?}",
+            wait_ms,
+            available,
+            total,
+            max,
+            error,
+        );
+        RepositoryError::DBError {
+            msg: "Failed to open Connection".to_string(),
+            extra: format!("{:?}", error),
+        }
     })
 }
 

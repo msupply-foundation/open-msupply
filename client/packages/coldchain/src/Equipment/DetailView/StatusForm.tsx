@@ -14,9 +14,8 @@ import {
   useIsExtraSmallScreen,
   UploadFile,
 } from '@openmsupply-client/common';
-import { FileList } from '../Components';
 import { statusColourMap } from '../utils';
-import { useAssetLogReasonList } from '@openmsupply-client/system';
+import { FileList, useAssetLogReasonList } from '@openmsupply-client/system';
 import { TakePhotoButton } from './TakePhotoButton';
 
 interface StatusForm {
@@ -58,7 +57,7 @@ const Row = ({
     );
 
   return (
-    <Box paddingTop={1.5}>
+    <Box paddingTop={1.5} paddingX={2}>
       <Typography
         sx={{
           fontSize: '1em',

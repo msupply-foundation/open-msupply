@@ -20,6 +20,13 @@ export const Formatter = {
     if (date && isValid(date)) return date.toISOString();
     else return null;
   },
+  // RFC3339 datetime that preserves the local UTC offset (e.g. 2024-12-10T00:00:00+13:00),
+  // unlike toIsoString which always emits UTC ("Z"). Use when the server needs the calendar
+  // date as the user sees it (e.g. backdating, where the audit log records the picked date).
+  localIsoString: (date?: Date | null): string | null => {
+    if (date && isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ssxxx");
+    else return null;
+  },
   dateTime: (date?: Date | null): string =>
     date && isValid(date)
       ? format(date, "dd/MM/yyyy' 'HH:mm:ss")
@@ -35,6 +42,14 @@ export const Formatter = {
   csvDateString: (dateString?: string | null | undefined): string => {
     const date = dateString ? new Date(dateString) : null;
     return date && isValid(date) ? format(date, 'dd/MM/yyyy') : '';
+  },
+  fileSize: (bytes?: number | null): string => {
+    if (bytes == null || bytes < 0) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    if (bytes < 1024 * 1024 * 1024)
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   },
   milliseconds: (milliseconds: number): string => {
     const minute = Math.floor((milliseconds % 3600000) / 60000);

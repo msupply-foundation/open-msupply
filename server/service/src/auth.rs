@@ -168,11 +168,15 @@ pub enum Resource {
     QueryPurchaseOrder,
     MutatePurchaseOrder,
     AuthorisePurchaseOrder,
+    FinalisePurchaseOrder,
     // Inbound Shipment External
     MutateInboundShipmentExternal,
     QueryInboundShipmentExternal,
     AuthoriseInboundShipmentExternal,
     VerifyInboundShipmentExternal,
+    // Help documents
+    QueryHelpDocuments,
+    MutateHelpDocuments,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -826,6 +830,17 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(Resource::QueryCampaigns, PermissionDSL::HasStoreAccess);
 
+    // Help documents (uploaded centrally, listed on the Help page on every site).
+    // Read is open to any authenticated user; write is ServerAdmin only.
+    map.insert(
+        Resource::QueryHelpDocuments,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateHelpDocuments,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+
     map.insert(
         Resource::QueryPurchaseOrder,
         PermissionDSL::HasPermission(PermissionType::PurchaseOrderQuery),
@@ -842,6 +857,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
+        ]),
+    );
+    map.insert(
+        Resource::FinalisePurchaseOrder,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PurchaseOrderFinalise),
         ]),
     );
 

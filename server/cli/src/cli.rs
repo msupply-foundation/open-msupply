@@ -12,7 +12,8 @@ use report_builder::{
 use repository::{
     get_storage_connection_manager, migrations::migrate, schema_from_row, test_db, ContextType,
     EqualFilter, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
-    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
+    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, StringFilter,
+    SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -49,8 +50,10 @@ use cli::LoadTest;
 use cli::{
     all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
     generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
-    install_plugin_bundle, GenerateAndInstallPluginBundle, GeneratePluginBundle,
-    InstallPluginBundle, RefreshDatesRepository, ReportError, TestCredentials, TestData,
+    install_plugin_bundle, list_installed_plugins, uninstall_plugin,
+    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
+    ListInstalledPlugins, RefreshDatesRepository, ReportError, TestCredentials, TestData,
+    UninstallPlugin,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -180,6 +183,10 @@ enum Action {
     InstallPluginBundle(InstallPluginBundle),
     /// Will generate and then install  plugin bundle
     GenerateAndInstallPluginBundle(GenerateAndInstallPluginBundle),
+    /// Uninstall a single plugin row by id (use list-installed-plugins to discover ids)
+    UninstallPlugin(UninstallPlugin),
+    /// List installed plugins as JSON (stdout)
+    ListInstalledPlugins(ListInstalledPlugins),
     UpsertReports {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long, num_args=0..)]
@@ -448,6 +455,7 @@ async fn main() -> anyhow::Result<()> {
                 &ctx.connection,
                 Some(&mut logger),
                 SyncBufferSource::Central(0),
+                true,
             )?;
 
             info!("Initialising users");
@@ -570,14 +578,14 @@ async fn main() -> anyhow::Result<()> {
                 None => vec![standard_reports_dir, standard_forms_dir],
             };
 
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
             for file_path in file_list {
                 let json_file = fs::File::open(file_path.clone())
                     .unwrap_or_else(|_| panic!("{} not found for report", file_path.display()));
                 let reports_data: ReportsData = serde_json::from_reader(json_file)
                     .expect("json incorrectly formatted for report");
-
-                let connection_manager = get_storage_connection_manager(&settings.database);
-                let con = connection_manager.connection()?;
 
                 StandardReports::upsert_reports(reports_data, &con, overwrite)?;
             }
@@ -667,6 +675,12 @@ async fn main() -> anyhow::Result<()> {
         Action::GenerateAndInstallPluginBundle(arguments) => {
             generate_and_install_plugin_bundle(arguments).await?;
         }
+        Action::UninstallPlugin(arguments) => {
+            uninstall_plugin(arguments).await?;
+        }
+        Action::ListInstalledPlugins(arguments) => {
+            list_installed_plugins(arguments).await?;
+        }
         Action::ShowReport {
             path,
             config,
@@ -749,7 +763,7 @@ async fn main() -> anyhow::Result<()> {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let mut filter = ReportFilter::new().code(EqualFilter::equal_to(code.to_owned()));
+            let mut filter = ReportFilter::new().code(StringFilter::equal_to(&code));
             if let Some(value) = is_custom {
                 filter = filter.is_custom(value);
             }

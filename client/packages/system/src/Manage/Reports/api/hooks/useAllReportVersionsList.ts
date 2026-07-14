@@ -8,6 +8,7 @@ import {
   useNotification,
   LIST_KEY,
   useMutation,
+  keepPreviousData,
   isEnumValue,
 } from '@openmsupply-client/common';
 import { ALLREPORTVERSIONS } from './keys';
@@ -32,13 +33,21 @@ export const useCentralReports = ({
   // INSTALL
   const {
     mutateAsync: installMutation,
-    isLoading: installLoading,
+    isPending: installLoading,
     error: installError,
   } = useInstallUploadedReports();
+
+  // UPDATE
+  const {
+    mutateAsync: updateMutation,
+    isPending: updateLoading,
+    error: updateError,
+  } = useUpdateReport();
 
   return {
     query: { data, isFetching, isError },
     install: { installMutation, installLoading, installError },
+    update: { updateMutation, updateLoading, updateError },
   };
 };
 
@@ -109,11 +118,7 @@ const useGetList = (queryParams?: ReportListParams) => {
   return useQuery({
     queryKey,
     queryFn,
-    onError: (e: Error) => {
-      if (/HasPermission\(Report\)/.test(e.message)) return null;
-      return [];
-    },
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -127,9 +132,33 @@ const useInstallUploadedReports = () => {
 
   const mutation = useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([ALLREPORTVERSIONS]),
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: [ALLREPORTVERSIONS]
+    }),
     onError: e => console.error(e),
   });
 
   return mutation;
+};
+
+const useUpdateReport = () => {
+  const { reportApi, queryClient } = useCentralServerReportsGraphqQL();
+
+  const mutationFn = async ({
+    id,
+    isActive,
+  }: {
+    id: string;
+    isActive: boolean;
+  }) => {
+    const result = await reportApi.updateReport({ input: { id, isActive } });
+    return result?.centralServer?.reports.updateReport;
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [ALLREPORTVERSIONS] }),
+    onError: e => console.error(e),
+  });
 };

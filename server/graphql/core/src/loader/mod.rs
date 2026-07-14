@@ -1,3 +1,4 @@
+mod ancillary_item;
 mod asset;
 mod asset_catalogue_item;
 mod asset_category;
@@ -52,6 +53,7 @@ mod rnr_form_line;
 mod sensor;
 mod shipping_method;
 mod stock_line;
+mod stock_relocation_lines;
 mod stocktake_lines;
 mod store;
 mod sync_file_reference;
@@ -68,6 +70,7 @@ mod vvm_status;
 mod vvm_status_log;
 mod warning;
 
+pub use ancillary_item::*;
 pub use asset::*;
 pub use asset_catalogue_item::*;
 pub use asset_category::*;
@@ -122,6 +125,7 @@ pub use rnr_form_line::*;
 pub use sensor::*;
 pub use shipping_method::*;
 pub use stock_line::*;
+pub use stock_relocation_lines::*;
 pub use stocktake_lines::*;
 pub use store::*;
 pub use sync_file_reference::*;

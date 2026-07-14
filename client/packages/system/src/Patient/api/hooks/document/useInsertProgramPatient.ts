@@ -4,7 +4,11 @@ import { usePatientApi } from '../utils/usePatientApi';
 export const useInsertProgramPatient = () => {
   const queryClient = useQueryClient();
   const api = usePatientApi();
-  return useMutation(api.insertProgramPatient, {
-    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
+  return useMutation({
+    mutationFn: api.insertProgramPatient,
+
+    onSuccess: () => queryClient.invalidateQueries({
+      queryKey: api.keys.base()
+    })
   });
 };

@@ -10,6 +10,9 @@ pub use self::item_variant::*;
 pub mod bundled_item;
 pub use self::bundled_item::*;
 
+pub mod ancillary_item;
+pub use self::ancillary_item::*;
+
 pub mod item_stats;
 pub use self::item_stats::*;
 
@@ -147,6 +150,8 @@ pub use self::vvm_status::*;
 mod campaign;
 pub mod draft_stock_out_line;
 pub use self::draft_stock_out_line::*;
+pub mod draft_stock_relocation_line;
+pub use self::draft_stock_relocation_line::*;
 
 pub mod vvm_status_log;
 pub use self::vvm_status_log::*;
@@ -165,6 +170,9 @@ pub use self::shipping_method::*;
 
 pub mod pref_nodes;
 pub use self::pref_nodes::*;
+
+pub mod help_document;
+pub use self::help_document::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

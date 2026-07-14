@@ -4,7 +4,7 @@ use crate::{
         location_type_row::location_type, name_link_row::name_link, name_row::name,
     },
     diesel_macros::define_linked_tables,
-    item_link, user_account, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
+    user_account, ChangeLogInsertRow, ChangelogRepository, ChangelogTableName,
     RepositoryError, RowActionType, StorageConnection, Upsert,
 };
 
@@ -19,24 +19,24 @@ define_linked_tables! {
     repo: ItemVariantRowRepository,
     shared: {
         name -> Text,
-        item_link_id -> Text,
         location_type_id -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
         vvm_type -> Nullable<Text>,
         created_datetime -> Timestamp,
         created_by -> Nullable<Text>,
     },
-    links: {},
+    links: {
+        item_link_id -> item_id,
+    },
     optional_links: {
         manufacturer_link_id -> manufacturer_id,
     }
 }
 
-joinable!(item_variant -> item_link (item_link_id));
+joinable!(item_variant -> item (item_id));
 joinable!(item_variant -> location_type (location_type_id));
 joinable!(item_variant -> name (manufacturer_id));
 joinable!(item_variant_with_links -> name_link (manufacturer_link_id));
-allow_tables_to_appear_in_same_query!(item_variant, item_link);
 allow_tables_to_appear_in_same_query!(item_variant, item);
 allow_tables_to_appear_in_same_query!(item_variant, user_account);
 allow_tables_to_appear_in_same_query!(item_variant, name);
@@ -49,7 +49,6 @@ allow_tables_to_appear_in_same_query!(item_variant, location);
 pub struct ItemVariantRow {
     pub id: String,
     pub name: String,
-    pub item_link_id: String,
     #[serde(rename = "cold_storage_type_id")] // To prevent breaking change in v6 sync API
     pub location_type_id: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
@@ -57,7 +56,10 @@ pub struct ItemVariantRow {
     pub created_datetime: NaiveDateTime,
     #[serde(default)]
     pub created_by: Option<String>,
-    // Resolved from name_link - must be last to match view column order
+    // Resolved from link tables - must be last to match view column order.
+    // Serialise as `item_id` / `manufacturer_id`; the sync translator also emits the legacy
+    // `*_link_id` aliases for cross-version compatibility (see `RenamedKeys`).
+    pub item_id: String,
     pub manufacturer_id: Option<String>,
 }
 
@@ -99,6 +101,15 @@ impl<'a> ItemVariantRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    pub fn check_exists_by_id(&self, item_variant_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = item_variant::table
+            .filter(item_variant::id.eq(item_variant_id))
+            .select(item_variant::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
     }
 
     pub fn find_one_by_name(

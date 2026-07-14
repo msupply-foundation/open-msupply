@@ -59,16 +59,16 @@ mod json_translate_test {
                 "key": "T#approval-status.pending",
                 "untranslated_key": "untranslated_value"
             },
-            "list": ["T#button.add-form", "no-translation"]
+            "list": ["T#button.new-form", "no-translation"]
         });
 
         let expected = serde_json::json!({
-            "key": "Authentication Error",
+            "key": "Authentication error",
             "nested": {
                 "key": "Pending",
                 "untranslated_key": "untranslated_value"
             },
-            "list": ["Add Form", "no-translation"]
+            "list": ["New form", "no-translation"]
         });
 
         let localisations = service_provider

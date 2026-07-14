@@ -113,7 +113,6 @@ export const StoreWastagePanel = ({
   const inputProps = {
     endAdornment: '%',
     decimalLimit: 1,
-    max: 100,
     width: 100,
     sx: { ml: 1 },
   };
@@ -170,8 +169,7 @@ export const StoreWastagePanel = ({
                   stores.length < totalCount &&
                   !isFetchingNextPage
                 ) {
-                  const nextPage = data?.pages?.length ?? 0;
-                  fetchNextPage({ pageParam: nextPage });
+                  fetchNextPage();
                 }
               }}
             >
@@ -197,6 +195,7 @@ export const StoreWastagePanel = ({
                           value === undefined ? null : value
                         )
                       }
+                      max={100}
                       {...inputProps}
                     />
                     <NumericTextInput

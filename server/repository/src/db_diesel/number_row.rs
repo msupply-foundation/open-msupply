@@ -42,6 +42,7 @@ pub enum NumberRowType {
     Program(String),
     PurchaseOrder,
     PurchaseOrderLine(String),
+    StockRelocation,
 }
 
 impl fmt::Display for NumberRowType {
@@ -63,6 +64,7 @@ impl fmt::Display for NumberRowType {
             NumberRowType::PurchaseOrderLine(custom_string) => {
                 write!(f, "PURCHASEORDERLINE_{custom_string}") // Since we split this on _ we can't use that in the main part of the name
             }
+            NumberRowType::StockRelocation => write!(f, "STOCK_RELOCATION"),
         }
     }
 }
@@ -83,6 +85,7 @@ impl TryFrom<String> for NumberRowType {
             "SUPPLIER_RETURN" => Ok(NumberRowType::SupplierReturn),
             "CUSTOMER_RETURN" => Ok(NumberRowType::CustomerReturn),
             "PURCHASE_ORDER" => Ok(NumberRowType::PurchaseOrder),
+            "STOCK_RELOCATION" => Ok(NumberRowType::StockRelocation),
             _ => match s.split_once('_') {
                 Some((prefix, custom_string)) => match prefix {
                     "PROGRAM" => Ok(NumberRowType::Program(custom_string.to_string())),
@@ -254,6 +257,7 @@ mod number_row_mapping_test {
             NumberRowType::PurchaseOrderLine("EXAMPLE_TEST".to_string()),
             NumberRowType::SupplierReturn,
             NumberRowType::CustomerReturn,
+            NumberRowType::StockRelocation,
         ] {
             match number_row_type {
                 NumberRowType::InboundShipment => {
@@ -344,6 +348,13 @@ mod number_row_mapping_test {
                         )
                         .unwrap()
                             == NumberRowType::PurchaseOrderLine(s)
+                    )
+                }
+                NumberRowType::StockRelocation => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::StockRelocation.to_string())
+                            .unwrap()
+                            == NumberRowType::StockRelocation
                     )
                 }
             }

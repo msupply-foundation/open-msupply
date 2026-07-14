@@ -4,6 +4,16 @@ use graphql_core::simple_generic_errors::NodeError;
 use repository::sync_file_reference::SyncFileReference;
 use service::{usize_to_u32, ListResult};
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::sync_file_reference_row::SyncFileStatus")]
+pub enum SyncFileReferenceNodeStatus {
+    New,
+    InProgress,
+    Done,
+    Error,
+    PermanentFailure,
+}
+
 #[derive(PartialEq, Debug)]
 pub struct SyncFileReferenceNode {
     pub sync_file_reference: SyncFileReference,
@@ -37,11 +47,23 @@ impl SyncFileReferenceNode {
         &self.row().sync_file_reference_row.mime_type
     }
 
+    pub async fn total_bytes(&self) -> i32 {
+        self.row().sync_file_reference_row.total_bytes
+    }
+
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(
             self.row().sync_file_reference_row.created_datetime,
             Utc,
         )
+    }
+
+    pub async fn error(&self) -> &Option<String> {
+        &self.row().sync_file_reference_row.error
+    }
+
+    pub async fn status(&self) -> SyncFileReferenceNodeStatus {
+        SyncFileReferenceNodeStatus::from(self.row().sync_file_reference_row.status.clone())
     }
 }
 

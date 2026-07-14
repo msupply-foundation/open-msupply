@@ -80,6 +80,12 @@ export type RequestLineFragment = {
     doses: number;
     availableStockOnHand: number;
   };
+  ancillaryParents: Array<{
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    code: string;
+  }>;
   reason?: {
     __typename: 'ReasonOptionNode';
     id: string;
@@ -109,6 +115,37 @@ export type RequestFragment = {
   programName?: string | null;
   orderType?: string | null;
   isEmergency: boolean;
+  ancillaryState: {
+    __typename: 'AncillaryStateResponse';
+    state: Types.AncillaryStateNode;
+    count: number;
+    toAdd: Array<{
+      __typename: 'AncillaryDeltaNode';
+      itemId: string;
+      requiredQuantity: number;
+      currentQuantity?: number | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+        unitName?: string | null;
+      };
+    }>;
+    toUpdate: Array<{
+      __typename: 'AncillaryDeltaNode';
+      itemId: string;
+      requiredQuantity: number;
+      currentQuantity?: number | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+        unitName?: string | null;
+      };
+    }>;
+  };
   documents: {
     __typename: 'SyncFileReferenceConnector';
     nodes: Array<{
@@ -117,6 +154,9 @@ export type RequestFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      totalBytes: number;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   user?: {
@@ -169,6 +209,12 @@ export type RequestFragment = {
         doses: number;
         availableStockOnHand: number;
       };
+      ancillaryParents: Array<{
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+      }>;
       reason?: {
         __typename: 'ReasonOptionNode';
         id: string;
@@ -199,7 +245,12 @@ export type RequestFragment = {
     isOnHold: boolean;
     name: string;
     margin?: number | null;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
   destinationCustomer?: {
     __typename: 'NameNode';
@@ -209,7 +260,12 @@ export type RequestFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   linkedRequisition?: {
     __typename: 'RequisitionNode';
@@ -296,6 +352,11 @@ export const RequestLineFragmentDoc = gql`
     item {
       ...ItemWithAvailableStock
     }
+    ancillaryParents {
+      id
+      name
+      code
+    }
     reason {
       ...ReasonOptionRow
     }
@@ -315,6 +376,32 @@ export const RequestFragmentDoc = gql`
     createdDatetime
     sentDatetime
     finalisedDatetime
+    ancillaryState {
+      state
+      count
+      toAdd {
+        itemId
+        requiredQuantity
+        currentQuantity
+        item {
+          id
+          name
+          code
+          unitName
+        }
+      }
+      toUpdate {
+        itemId
+        requiredQuantity
+        currentQuantity
+        item {
+          id
+          name
+          code
+          unitName
+        }
+      }
+    }
     requisitionNumber
     colour
     theirReference
@@ -370,6 +457,7 @@ export const RequestFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     destinationCustomer(storeId: $storeId) {
@@ -382,6 +470,7 @@ export const RequestFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     linkedRequisition {

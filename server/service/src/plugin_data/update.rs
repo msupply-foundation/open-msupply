@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use repository::{
     EqualFilter, PluginData, PluginDataFilter, PluginDataRepository, PluginDataRow,
     PluginDataRowRepository, RepositoryError,
@@ -23,6 +24,8 @@ pub struct UpdatePluginData {
     pub related_record_id: Option<String>,
     pub data_identifier: String,
     pub data: String,
+    /// Optional plugin-controlled timestamp.
+    pub datetime: Option<NaiveDateTime>,
 }
 
 pub fn update(
@@ -54,6 +57,22 @@ fn validate(
     let plugin_data = check_plugin_data_exists(ctx, &input.id)?
         .ok_or(UpdatePluginDataError::PluginDataDoesNotExist)?;
 
+    // Global rows (store_id = NULL) are central-only.
+    if plugin_data.store_id.is_none() && !CentralServerConfig::is_central_server() {
+        return Err(UpdatePluginDataError::InternalError(
+            "Central Data can only be modified from Central Server".to_string(),
+        ));
+    }
+
+    // A store may only modify its own rows.
+    if let Some(store_id) = &plugin_data.store_id {
+        if &ctx.store_id != store_id {
+            return Err(UpdatePluginDataError::InternalError(
+                "Store ID doesn't match logged in store_id".to_string(),
+            ));
+        }
+    }
+
     if input.related_record_id != plugin_data.related_record_id {
         return Err(UpdatePluginDataError::RelatedRecordDoesNotMatch);
     }
@@ -62,12 +81,6 @@ fn validate(
     }
     if input.plugin_code != plugin_data.plugin_code {
         return Err(UpdatePluginDataError::PluginCodeDoesNotMatch);
-    }
-
-    if plugin_data.store_id.is_none() && !CentralServerConfig::is_central_server() {
-        return Err(UpdatePluginDataError::InternalError(
-            "Central Data can only be modified from Central Server".to_string(),
-        ));
     }
 
     Ok(plugin_data)
@@ -94,12 +107,15 @@ fn generate(
         data_identifier: _,
         data,
         store_id: _,
+        datetime,
     }: UpdatePluginData,
     existing: PluginDataRow,
 ) -> Result<PluginDataRow, RepositoryError> {
+    // `datetime` is plugin-controlled and replaced on update.
     Ok(PluginDataRow {
         id,
         data,
+        datetime,
         ..existing
     })
 }
@@ -141,6 +157,7 @@ mod test {
                 data_identifier: "StockLine".to_string(),
                 store_id: Some(mock_store_a().id.clone()),
                 data: "test".to_string(),
+                datetime: None,
             }
         }
 
@@ -171,12 +188,13 @@ mod test {
                     related_record_id: Some("related_record_id".to_string()),
                     data_identifier: "StockLine".to_string(),
                     data: "hogwarts".to_string(),
+                    datetime: None,
                 },
             )
             .unwrap();
 
         let plugin_data = service
-            .get_plugin_data(&context, None, None)
+            .get_plugin_data(&context, None, None, None)
             .unwrap()
             .rows
             .pop()
@@ -187,5 +205,68 @@ mod test {
         expected.data = "hogwarts".to_string();
 
         assert_eq!(plugin_data, expected);
+    }
+
+    #[actix_rt::test]
+    async fn update_plugin_data_wrong_store() {
+        use crate::plugin_data::UpdatePluginDataError;
+        use repository::{mock::mock_store_b, PluginDataRowRepository};
+
+        // Row owned by store B.
+        fn plugin_data_donor() -> PluginDataRow {
+            PluginDataRow {
+                id: "plugin_data".to_string(),
+                plugin_code: "plugin_code".to_string(),
+                related_record_id: Some("related_record_id".to_string()),
+                data_identifier: "StockLine".to_string(),
+                store_id: Some(mock_store_b().id.clone()),
+                data: "test".to_string(),
+                datetime: None,
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_plugin_data_wrong_store",
+            MockDataInserts::all(),
+            MockData {
+                plugin_data: vec![plugin_data_donor()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        // Logged into store A, attempting to update store B's row.
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.plugin_data_service;
+
+        let result = service.update(
+            &context,
+            UpdatePluginData {
+                id: "plugin_data".to_string(),
+                store_id: Some(mock_store_b().id.clone()),
+                plugin_code: "plugin_code".to_string(),
+                related_record_id: Some("related_record_id".to_string()),
+                data_identifier: "StockLine".to_string(),
+                data: "tampered".to_string(),
+                datetime: None,
+            },
+        );
+
+        assert_eq!(
+            result,
+            Err(UpdatePluginDataError::InternalError(
+                "Store ID doesn't match logged in store_id".to_string()
+            ))
+        );
+
+        // The row must be unchanged.
+        let unchanged = PluginDataRowRepository::new(&connection)
+            .find_one_by_id("plugin_data")
+            .unwrap()
+            .unwrap();
+        assert_eq!(unchanged.data, "test");
     }
 }

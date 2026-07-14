@@ -1,6 +1,9 @@
+mod bandwidth_harness;
 mod central;
 mod central_server_configurations;
+mod driver_harness;
 mod errors;
+mod file_sync_pause;
 mod omsupply_central;
 mod remote;
 mod site_info;
@@ -17,7 +20,6 @@ use crate::{
 use central_server_configurations::{ConfigureCentralServer, SiteConfiguration};
 use repository::{mock::MockDataInserts, ChangelogRepository, StorageConnection};
 use serde::Serialize;
-use serde_json::json;
 use std::{error::Error, future::Future};
 
 pub(super) struct FullSiteConfig {
@@ -141,7 +143,7 @@ pub(crate) fn integrate_with_is_sync_reset(
     integrations: Vec<IntegrationOperation>,
 ) -> Vec<IntegrationOperation> {
     let changelog_repo = ChangelogRepository::new(&connection);
-    let cursor = changelog_repo.latest_cursor().unwrap();
+    let cursor = changelog_repo.absolute_latest_cursor().unwrap();
     // Need to reset is_sync_update since we've inserted test data with sync methods
     // they need to sync to central (if is_sync_update is set to true they will not sync to central)
     let integrations: Vec<(Option<_>, IntegrationOperation)> =

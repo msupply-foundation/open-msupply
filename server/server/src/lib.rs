@@ -57,6 +57,7 @@ use service::{
 
 use actix_web::{web, web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Instant;
 use util::format_error;
 
 mod authentication;
@@ -134,13 +135,13 @@ pub async fn start_server(
     // Wire transaction notifications to the subscription worker.
     // Fired after outermost transaction commits.
     let commit_trigger = subscription_trigger.clone();
-    connection_manager.set_on_commit(std::sync::Arc::new(move |notification| {
-        match notification {
+    connection_manager.set_on_commit(std::sync::Arc::new(
+        move |notification| match notification {
             repository::TransactionNotification::ChangelogInsert => {
                 commit_trigger.send(SubscriptionTrigger::PushQueueChanged);
             }
-        }
-    }));
+        },
+    ));
     let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
     let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
     let (ledger_fix_trigger, ledger_fix_driver) = LedgerFixDriver::init();
@@ -154,10 +155,16 @@ pub async fn start_server(
         ledger_fix_trigger,
         site_is_initialise_trigger,
         settings.mail.clone(),
+        Some(settings.clone()),
         subscription_trigger,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
+    let cert_start = Instant::now();
     let certificates = Certificates::try_load(&settings.server).unwrap();
+    info!(
+        "Certificates loaded in {} ms",
+        cert_start.elapsed().as_millis()
+    );
     let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
     let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
     let token_secret_copy = token_secret.clone();
@@ -315,6 +322,10 @@ pub async fn start_server(
     })
     .disable_signals();
 
+    if let Some(workers) = settings.server.workers {
+        http_server = http_server.workers(workers);
+    }
+
     http_server = match certificates.config() {
         Some(config) => http_server
             .bind_rustls_0_23(settings.server.address(), config)
@@ -431,7 +442,6 @@ pub async fn start_server(
         .sync_status_service
         .is_initialised(&service_context)
         .unwrap()
-        || !force_trigger_sync_on_startup
     {
         graphql_schema
             .set_operational_status(OperationalStatus::Operational)

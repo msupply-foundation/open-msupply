@@ -3,15 +3,16 @@ import {
   StockLineFilterInput,
   StockLineSortFieldInput,
   useQuery,
+  keepPreviousData,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../operations.generated';
+import { StockLineListRowFragment } from '../operations.generated';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { LIST, STOCK } from './keys';
 
 export type StockListParams = {
   first?: number;
   offset?: number;
-  sortBy?: SortBy<StockLineRowFragment>;
+  sortBy?: SortBy<StockLineListRowFragment>;
   filterBy?: StockLineFilterInput;
 };
 
@@ -34,7 +35,7 @@ export const useStockList = (
 
   const queryKey = [STOCK, storeId, LIST, sortBy, first, offset, filterBy];
   const queryFn = async (): Promise<{
-    nodes: StockLineRowFragment[];
+    nodes: StockLineListRowFragment[];
     totalCount: number;
   }> => {
     const filter = {
@@ -57,26 +58,28 @@ export const useStockList = (
     queryKey,
     queryFn,
 
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     enabled: options?.enabled,
   });
   return query;
 };
 
 const toSortField = (
-  sortBy: SortBy<StockLineRowFragment>
+  sortBy: SortBy<StockLineListRowFragment>
 ): StockLineSortFieldInput => {
   const sortFieldMap: Record<string, StockLineSortFieldInput> = {
     batch: StockLineSortFieldInput.Batch,
-    itemCode: StockLineSortFieldInput.ItemCode,
+    code: StockLineSortFieldInput.ItemCode,
     name: StockLineSortFieldInput.ItemName,
     packSize: StockLineSortFieldInput.PackSize,
     supplierName: StockLineSortFieldInput.SupplierName,
-    numberOfPacks: StockLineSortFieldInput.NumberOfPacks,
-    location: StockLineSortFieldInput.LocationCode,
+    totalNumberOfPacks: StockLineSortFieldInput.NumberOfPacks,
+    'location.code': StockLineSortFieldInput.LocationCode,
     costPricePerPack: StockLineSortFieldInput.CostPricePerPack,
+    sellPricePerPack: StockLineSortFieldInput.SellPricePerPack,
     expiryDate: StockLineSortFieldInput.ExpiryDate,
     manufactureDate: StockLineSortFieldInput.ManufactureDate,
+    campaign: StockLineSortFieldInput.Campaign,
   };
 
   return sortFieldMap[sortBy.key] ?? StockLineSortFieldInput.ItemName;

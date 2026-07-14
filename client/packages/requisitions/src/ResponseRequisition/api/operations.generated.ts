@@ -176,6 +176,9 @@ export type ResponseFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      totalBytes: number;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   user?: {
@@ -279,7 +282,12 @@ export type ResponseFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   };
   destinationCustomer?: {
     __typename: 'NameNode';
@@ -289,7 +297,12 @@ export type ResponseFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
   period?: {
@@ -339,6 +352,9 @@ export type ResponseByNumberQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            totalBytes: number;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         user?: {
@@ -442,7 +458,12 @@ export type ResponseByNumberQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         destinationCustomer?: {
           __typename: 'NameNode';
@@ -452,7 +473,12 @@ export type ResponseByNumberQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         program?: {
           __typename: 'ProgramNode';
@@ -510,6 +536,9 @@ export type ResponseByIdQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            totalBytes: number;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         user?: {
@@ -613,7 +642,12 @@ export type ResponseByIdQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         };
         destinationCustomer?: {
           __typename: 'NameNode';
@@ -623,7 +657,12 @@ export type ResponseByIdQuery = {
           isSupplier: boolean;
           isOnHold: boolean;
           name: string;
-          store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
         } | null;
         program?: {
           __typename: 'ProgramNode';
@@ -671,6 +710,9 @@ export type ResponseRowFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      totalBytes: number;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   period?: {
@@ -723,6 +765,9 @@ export type ResponsesQuery = {
           fileName: string;
           recordId: string;
           createdDatetime: string;
+          totalBytes: number;
+          status: Types.SyncFileReferenceNodeStatus;
+          error?: string | null;
         }>;
       };
       period?: {
@@ -1281,6 +1326,7 @@ export const ResponseFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     destinationCustomer(storeId: $storeId) {
@@ -1294,6 +1340,7 @@ export const ResponseFragmentDoc = gql`
       store {
         id
         code
+        isDisabled
       }
     }
     programName

@@ -9,6 +9,9 @@ export type SyncFileReferenceFragment = {
   fileName: string;
   recordId: string;
   createdDatetime: string;
+  totalBytes: number;
+  status: Types.SyncFileReferenceNodeStatus;
+  error?: string | null;
 };
 
 export type DummyQueryVariables = Types.Exact<{ [key: string]: never }>;
@@ -25,6 +28,9 @@ export const SyncFileReferenceFragmentDoc = gql`
     fileName
     recordId
     createdDatetime
+    totalBytes
+    status
+    error
   }
 `;
 export const DummyDocument = gql`

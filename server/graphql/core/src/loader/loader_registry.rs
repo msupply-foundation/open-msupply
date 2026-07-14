@@ -45,6 +45,13 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
+    let store_logo_loader = DataLoader::new(
+        StoreLogoLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    );
+
     let invoice_by_id_loader = DataLoader::new(
         InvoiceByIdLoader {
             service_provider: service_provider.clone(),
@@ -124,6 +131,13 @@ pub async fn get_loaders(
 
     let stocktake_line_loader = DataLoader::new(
         StocktakeLineByStocktakeIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        tokio::spawn,
+    );
+
+    let stock_relocation_lines_loader = DataLoader::new(
+        StockRelocationLinesByRelocationIdLoader {
             connection_manager: connection_manager.clone(),
         },
         tokio::spawn,
@@ -265,6 +279,7 @@ pub async fn get_loaders(
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
+    loaders.insert(store_logo_loader);
     loaders.insert(invoice_by_id_loader);
     loaders.insert(invoice_by_requisition_id_loader);
     loaders.insert(invoice_line_by_invoice_id_loader);
@@ -283,6 +298,7 @@ pub async fn get_loaders(
     loaders.insert(purchase_order_by_id_loader);
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
+    loaders.insert(stock_relocation_lines_loader);
     loaders.insert(requisition_line_supply_status_loader);
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);
@@ -456,6 +472,18 @@ pub async fn get_loaders(
     ));
     loaders.insert(DataLoader::new(
         BundledItemByPrincipalItemVariantIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AncillaryItemsByItemIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        tokio::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AncillaryItemsByAncillaryIdLoader {
             service_provider: service_provider.clone(),
         },
         tokio::spawn,

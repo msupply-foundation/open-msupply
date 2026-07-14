@@ -84,6 +84,15 @@ impl<'a> BarcodeRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let result: Option<String> = barcode::table
+            .filter(barcode::id.eq(lookup_id))
+            .select(barcode::id)
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.is_some())
+    }
+
     pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<BarcodeRow>, RepositoryError> {
         let result = barcode::table
             .filter(barcode::item_id.eq(item_id))

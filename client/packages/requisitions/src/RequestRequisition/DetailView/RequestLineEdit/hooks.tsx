@@ -49,6 +49,7 @@ const createDraftFromItem = (
     additionInUnits: 0,
     daysOutOfStock: 0,
     expiringUnits: 0,
+    ancillaryParents: [],
   };
 };
 
@@ -72,7 +73,7 @@ export const useDraftRequisitionLine = (
   const [isReasonsError, setIsReasonsError] = useState(false);
   const { lines } = useRequest.line.list(item?.id);
   const { data } = useRequest.document.get();
-  const { mutateAsync: saveMutation, isLoading } = useRequest.line.save();
+  const { mutateAsync: saveMutation, isPending: isLoading } = useRequest.line.save();
 
   const [draft, setDraft] = useState<DraftRequestLine | null>(null);
   useEffect(() => {
@@ -142,26 +143,21 @@ export const useDraftRequisitionLine = (
 };
 
 export const useNextRequestLine = (
-  lines?: RequestLineFragment[],
+  getSortedItems: () => RequestLineFragment['item'][],
   currentItem?: ItemWithAvailableStockFragment | null
 ) => {
-  if (!lines || !currentItem) {
+  const [items] = useState(getSortedItems);
+
+  if (!items || !currentItem) {
     return { hasNext: false, next: null };
   }
 
-  const nextState: {
-    hasNext: boolean;
-    next: null | ItemWithAvailableStockFragment;
-  } = { hasNext: true, next: null };
-  const idx = lines.findIndex(l => l.item.id === currentItem?.id);
-  const next = lines[idx + 1];
+  const idx = items.findIndex(item => item?.id === currentItem?.id);
+  const next = items[idx + 1];
 
-  if (!next) {
-    nextState.hasNext = false;
-    return nextState;
+  if (idx === -1 || !next) {
+    return { hasNext: false, next: null };
   }
 
-  nextState.next = next.item;
-
-  return nextState;
+  return { hasNext: true, next };
 };

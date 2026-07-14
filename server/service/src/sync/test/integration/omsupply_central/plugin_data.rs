@@ -44,7 +44,8 @@ impl SyncRecordTester for PluginDataCentral {
                     "pluginCode": plugin_row.plugin_code,
                     "relatedRecordId": plugin_row.related_record_id,
                     "dataIdentifier": plugin_row.data_identifier,
-                    "data": plugin_row.data
+                    "data": plugin_row.data,
+                    "datetime": plugin_row.datetime,
                 }}),
             }],
             ..Default::default()

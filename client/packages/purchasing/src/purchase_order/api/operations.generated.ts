@@ -102,7 +102,12 @@ export type PurchaseOrderFragment = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
       purchaseOrder?: {
         __typename: 'PurchaseOrderNode';
@@ -137,6 +142,9 @@ export type PurchaseOrderFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      totalBytes: number;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
     }>;
   };
   currency?: {
@@ -188,7 +196,12 @@ export type PurchaseOrderLineFragment = {
     isSupplier: boolean;
     isOnHold: boolean;
     name: string;
-    store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
   } | null;
   purchaseOrder?: {
     __typename: 'PurchaseOrderNode';
@@ -335,6 +348,7 @@ export type PurchaseOrderByIdQuery = {
                 __typename: 'StoreNode';
                 id: string;
                 code: string;
+                isDisabled: boolean;
               } | null;
             } | null;
             purchaseOrder?: {
@@ -370,6 +384,9 @@ export type PurchaseOrderByIdQuery = {
             fileName: string;
             recordId: string;
             createdDatetime: string;
+            totalBytes: number;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
           }>;
         };
         currency?: {
@@ -505,7 +522,12 @@ export type PurchaseOrderLinesQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
       purchaseOrder?: {
         __typename: 'PurchaseOrderNode';
@@ -583,7 +605,12 @@ export type PurchaseOrderLineQuery = {
         isSupplier: boolean;
         isOnHold: boolean;
         name: string;
-        store?: { __typename: 'StoreNode'; id: string; code: string } | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
       } | null;
       purchaseOrder?: {
         __typename: 'PurchaseOrderNode';

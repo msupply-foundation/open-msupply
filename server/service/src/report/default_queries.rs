@@ -210,6 +210,9 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
         location {
           code
         }
+        campaign {
+          name
+        }
       }
       totalCount
     }
@@ -239,6 +242,9 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
         description
       }
     }
+  }
+  preferences(storeId: $storeId) {
+    blindStocktake
   }
 }"#;
 

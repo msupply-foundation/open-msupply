@@ -18,6 +18,9 @@ import {
   CurrencyValueCell,
   ExpiryDateCell,
   NumberInputCell,
+  usePluginProvider,
+  UsePluginEvents,
+  ShipmentLinePluginState,
 } from '@openmsupply-client/common';
 import {
   CurrencyRowFragment,
@@ -29,6 +32,7 @@ import {
   canAutoAllocate,
   getDoseQuantity,
   DraftStockOutLineFragment,
+  StockOutLineFragment,
   DraftItem,
   AllocateInOption,
   AllocateInType,
@@ -51,6 +55,9 @@ export const useOutboundLineEditColumns = ({
   isExternalSupplier,
   allocateIn,
   setVvmStatus,
+  setReceivedNumberOfPacks,
+  updateLine,
+  pluginEvents,
   getIsDisabled,
 }: {
   getIsDisabled: (row: DraftStockOutLineFragment) => boolean;
@@ -60,10 +67,14 @@ export const useOutboundLineEditColumns = ({
   isExternalSupplier: boolean;
   allocateIn: AllocateInOption;
   setVvmStatus: (id: string, vvmStatus?: VvmStatusFragment | null) => void;
+  setReceivedNumberOfPacks: (id: string, value: number | null) => void;
+  updateLine: (id: string, patch: Partial<DraftStockOutLineFragment>) => void;
+  pluginEvents: UsePluginEvents<ShipmentLinePluginState>;
 }) => {
   const { store } = useAuthContext();
   const t = useTranslation();
   const { getPlural } = useIntlUtils();
+  const { plugins } = usePluginProvider();
 
   const unit = Formatter.sentenceCase(item?.unitName ?? t('label.unit'));
   const pluralisedUnitName = getPlural(unit, 2);
@@ -159,6 +170,16 @@ export const useOutboundLineEditColumns = ({
         Cell: TextWithTooltipCell,
       },
       {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        size: 120,
+        defaultHidden: true,
+        defaultHideOnMobile: true,
+        accessorFn: rowData =>
+          rowData.manufacturer?.name ?? UNDEFINED_STRING_VALUE,
+        Cell: TextWithTooltipCell,
+      },
+      {
         accessorKey: 'sellPricePerPack',
         header: t('label.pack-sell-price'),
         columnType: ColumnType.Currency,
@@ -175,7 +196,10 @@ export const useOutboundLineEditColumns = ({
         includeColumn:
           isExternalSupplier && !!store?.preferences.issueInForeignCurrency,
         Cell: props => (
-          <CurrencyValueCell {...props} currencyCode={currency?.code as Currencies} />
+          <CurrencyValueCell
+            {...props}
+            currencyCode={currency?.code as Currencies}
+          />
         ),
         accessorFn: rowData =>
           currency ? rowData.sellPricePerPack / currency.rate : undefined,
@@ -270,6 +294,66 @@ export const useOutboundLineEditColumns = ({
         defaultHideOnMobile: true,
       },
       {
+        id: 'receivedNumberOfPacks',
+        // Empty until the destination reports what it received; the user enters
+        // the received quantity to record a variance.
+        accessorFn: row => row.receivedNumberOfPacks,
+        header: t('label.packs-received'),
+        description: t('description.packs-received'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        includeColumn: isExternalSupplier,
+        Cell: ({ cell, row }) => (
+          <NumberInputCell
+            cell={cell}
+            updateFn={value => {
+              const newValue = Number.isNaN(value) ? null : value;
+              setReceivedNumberOfPacks(row.original.id, newValue);
+            }}
+            disabled={getIsDisabled(row.original)}
+            min={0}
+          />
+        ),
+      },
+      {
+        id: 'difference',
+        accessorFn: row =>
+          row.receivedNumberOfPacks == null
+            ? null
+            : row.receivedNumberOfPacks - row.numberOfPacks,
+        header: t('label.difference'),
+        description: t('description.difference-packs'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        size: 100,
+        includeColumn: isExternalSupplier,
+      },
+      ...(plugins.outboundShipmentLine?.editViewField ?? []).map(
+        (
+          { header, Component },
+          index
+        ): ColumnDef<DraftStockOutLineFragment> => ({
+          id: `plugin-field-${index}`,
+          header,
+          size: 180,
+          defaultHideOnMobile: true,
+          includeColumn: isExternalSupplier,
+          Cell: ({ row }) => (
+            <Component
+              line={row.original as unknown as StockOutLineFragment}
+              update={patch =>
+                updateLine(
+                  row.original.id,
+                  patch as Partial<DraftStockOutLineFragment>
+                )
+              }
+              events={pluginEvents}
+              isExternal={isExternalSupplier}
+            />
+          ),
+        })
+      ),
+      {
         id: 'volume',
         header: t('label.volume'),
         size: 100,
@@ -286,7 +370,8 @@ export const useOutboundLineEditColumns = ({
       },
     ];
     return cols;
-  }, [allocateIn.type]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allocateIn.type, plugins.outboundShipmentLine?.editViewField]);
 
   return columns;
 };

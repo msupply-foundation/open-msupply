@@ -4,6 +4,7 @@ import { LOCATION } from './keys';
 import {
   SortBy,
   useQuery,
+  keepPreviousData,
   LIST_KEY,
   LocationFilterInput,
   LocationSortFieldInput,
@@ -32,6 +33,7 @@ export const useLocationList = (
   return {
     query: { data, isLoading, isError, isFetching },
     nextLocation: next,
+    hasNext: next !== null,
   };
 };
 
@@ -64,7 +66,7 @@ const useGetList = (enabled?: boolean, queryParams?: ListParams) => {
     queryKey: [...queryKey, enabled],
     queryFn,
     enabled,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
   return query;
 };
@@ -73,11 +75,9 @@ const getNextLocation = (
   data: LocationRowFragment[],
   currentLocation?: LocationRowFragment | null
 ) => {
-  const idx = data?.findIndex(l => l.id === currentLocation?.id);
-  if (idx == undefined) return null;
-  const next = data[(idx + 1) % data.length];
-
-  return next ?? null;
+  const idx = data.findIndex(l => l.id === currentLocation?.id);
+  if (idx === -1) return null;
+  return data[idx + 1] ?? null;
 };
 
 const toSortInput = (sortBy?: SortBy<LocationRowFragment>) =>

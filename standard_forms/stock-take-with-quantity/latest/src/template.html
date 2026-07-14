@@ -2,6 +2,21 @@
     {% include "style.css" %}
 </style>
 
+{# Blind stock take: this count sheet's whole purpose is the snapshot
+(theoretical) quantity, so blanking that column leaves a meaningless report.
+Instead, while counting (status NEW) show a notice — like the variance form —
+and reveal the full sheet once the stock take is finalised. #}
+{% set is_blind = data.preferences.blindStocktake | default(value=false) %}
+{% set is_new = data.stocktake.status == "NEW" %}
+
+{% if is_blind and is_new %}
+<p class="blind-notice">{{t(k="report.stocktake-with-quantity-hidden-blind", f="Snapshot quantities are hidden during a blind stock take. This report will be available once the stock take is finalised.")}}</p>
+{% else %}
+{# Only show the campaign column when at least one line has a campaign #}
+{% set_global has_campaign = false %}
+{% for line in data.stocktakeLines.nodes %}
+{% if line.campaign.name %}{% set_global has_campaign = true %}{% endif %}
+{% endfor %}
 <table class="body_section">
     <thead>
         <tr class="body_column_label">
@@ -11,6 +26,9 @@
             <th>{{t(k="label.batch", f="batch")}}</th>
             <th>{{t(k="label.expiry", f="Expiry")}}</th>
             <th>{{t(k="report.pack-size",f="Pack size")}}</th>
+            {% if has_campaign %}
+            <th>{{t(k="label.campaign-only",f="Campaign")}}</th>
+            {% endif %}
             <th>{{t(k="report.quan",f="Quan")}}</th>
             <th>{{t(k="report.actual-stock",f="Actual Stock")}}</th>
         </tr>
@@ -27,8 +45,12 @@
             {% endif %}
         </td>
         <td>{{ line.packSize }}</td>
+        {% if has_campaign %}
+        <td>{{ line.campaign.name | default(value='') }}</td>
+        {% endif %}
         <td>{{ line.snapshotNumberOfPacks | round(precision=2) }}</td>
         <td>.....................</td>
     </tr>
     {%- endfor %}
 </table>
+{% endif %}
