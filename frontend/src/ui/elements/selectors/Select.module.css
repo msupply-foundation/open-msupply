@@ -158,3 +158,22 @@
     min-height: var(--touch-target);
   }
 }
+
+/* Compact variant (size="sm"): redefine the size tokens the trigger/label/icon already
+   read, so the whole control scales down from one place. Placed after the base rules so
+   specificity ascends. */
+.field[data-size='sm'] {
+  --input-height: 1.75rem;
+  --input-padding-x: var(--space-2);
+
+  gap: var(--space-1);
+}
+
+.field[data-size='sm'] .label,
+.field[data-size='sm'] .trigger {
+  font-size: var(--text-xs);
+}
+
+.field[data-size='sm'] .triggerIcon {
+  font-size: 1rem;
+}

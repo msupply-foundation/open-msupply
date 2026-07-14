@@ -9,9 +9,9 @@
  */
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { generate, tsSyntaxErrors } = require("./helpers.js");
-const { EXAMPLE_SCHEMA } = require("./fixtures/exampleSchema.js");
-const { STOCKTAKE_LINES_QUERY } = require("./fixtures/stocktakeLines.query.js");
+const { generate, tsSyntaxErrors } = require("./helpers.cjs");
+const { EXAMPLE_SCHEMA } = require("./fixtures/exampleSchema.cjs");
+const { STOCKTAKE_LINES_QUERY } = require("./fixtures/stocktakeLines.query.cjs");
 
 const CASES = [
   {

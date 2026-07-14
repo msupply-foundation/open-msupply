@@ -1,0 +1,43 @@
+# A single stocktake with its lines, for the detail view. The stocktake-level fields feed
+# the page header (number / status / description / comment); the lines feed a basic table
+# (front-end sorted by our DataTable). Only the BASIC line fields are selected for now —
+# grouping, line editing, and the fuller line fragment are deferred. StocktakeResponse is
+# StocktakeNode | NodeError; the view promotes NodeError to the global error modal.
+query stocktakeDetail($storeId: String!, $stocktakeId: String!) {
+  stocktake(storeId: $storeId, id: $stocktakeId) {
+    __typename
+    ... on StocktakeNode {
+      id
+      stocktakeNumber
+      status
+      description
+      comment
+      isLocked
+      lines {
+        ... on StocktakeLineConnector {
+          __typename
+          totalCount
+          nodes {
+            id
+            itemName
+            item {
+              id
+              code
+            }
+            batch
+            expiryDate
+            snapshotNumberOfPacks
+            countedNumberOfPacks
+            comment
+          }
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

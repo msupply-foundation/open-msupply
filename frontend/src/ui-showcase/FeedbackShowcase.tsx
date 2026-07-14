@@ -125,14 +125,19 @@ export const FeedbackShowcase = () => {
       </Card>
 
       <Card
-        title="Dialog — custom content and actions"
+        title="Dialog — custom content, footer and actions"
         lead={
           <>
             The base <code>&lt;Dialog&gt;</code> takes a required{' '}
-            <code>title</code> (its accessible name), optional icon /
-            description, free-form children and an <code>actions</code> row.
-            The browser moves focus to the first focusable control — here the
-            input — and Tab cycles inside while the page behind is inert.
+            <code>title</code> (its accessible name), optional icon / description,
+            free-form children, an optional bottom-pinned <code>footer</code> band
+            and an <code>actions</code> row. <code>widthRem</code> sets a steady
+            width and <code>minBodyHeightRem</code> reserves height so the box
+            doesn't jump as content changes — the slack falls above the footer, so
+            footer + actions stay on the bottom edge. The browser moves focus to
+            the first control and Tab cycles inside while the page behind is inert.
+            (Opening a Combobox / Select <em>inside</em> a dialog needs extra care —
+            see the "in a dialog" card under Selectors.)
           </>
         }
       >
@@ -142,8 +147,12 @@ export const FeedbackShowcase = () => {
         <Dialog
           open={dialogOpen()}
           onClose={() => setDialogOpen(false)}
+          icon={<PlusCircleIcon />}
           title="New shipment"
-          description="Pick the customer this shipment is for."
+          description="Give the shipment a reference."
+          widthRem={34}
+          minBodyHeightRem={16}
+          footer={<Alert severity="info">A new draft shipment will be created.</Alert>}
           actions={
             <>
               <Button
@@ -153,17 +162,13 @@ export const FeedbackShowcase = () => {
               >
                 Cancel
               </Button>
-              <Button
-                variant="secondary"
-                icon={<PlusCircleIcon />}
-                onClick={() => setDialogOpen(false)}
-              >
+              <Button icon={<PlusCircleIcon />} onClick={() => setDialogOpen(false)}>
                 Create
               </Button>
             </>
           }
         >
-          <TextField label="Customer" placeholder="Search by name or code…" />
+          <TextField label="Reference" placeholder="e.g. PO-1042" />
         </Dialog>
       </Card>
 

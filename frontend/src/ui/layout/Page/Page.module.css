@@ -28,3 +28,13 @@
   overflow: auto;
   background: var(--bg-white);
 }
+
+/* Fill mode (Page fillBody): the body stops scrolling and becomes a flex column with no
+   padding, so a single self-scrolling child (e.g. the DataTable) fills the region and
+   owns its own scroll + sticky headers. */
+.bodyFill {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}

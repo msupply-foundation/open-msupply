@@ -17,9 +17,9 @@ const assert = require("node:assert/strict");
 const path = require("node:path");
 const { codegen } = require("@graphql-codegen/core");
 const { parse, printSchema, buildSchema } = require("graphql");
-const { EXAMPLE_SCHEMA } = require("./fixtures/exampleSchema.js");
+const { EXAMPLE_SCHEMA } = require("./fixtures/exampleSchema.cjs");
 
-const PLUGIN_PATH = path.resolve(__dirname, "..", "plugin.js");
+const PLUGIN_PATH = path.resolve(__dirname, "..", "plugin.cjs");
 
 /** Same plumbing as codegen/run.js main(), minus the HTTP fetch. */
 async function runThroughCore({ schema, query }) {

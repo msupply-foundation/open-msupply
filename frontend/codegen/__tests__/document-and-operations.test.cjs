@@ -15,7 +15,7 @@
  */
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { generate, resultType, documentString, documentConst } = require("./helpers.js");
+const { generate, resultType, documentString, documentConst } = require("./helpers.cjs");
 
 test("the Document string is the pretty-printed operation text", () => {
   const schema = `type Query { thing: Thing! } type Thing { id: ID! name: String }`;

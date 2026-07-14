@@ -8,6 +8,22 @@ export interface ShellNav {
 }
 
 /*
+ * Full-screen mode, owned by the shell (like Open mSupply's host-level fullScreen):
+ * a table's toggle button flips it, and the shell + page chrome react — the menu bar,
+ * the orange app footer, and the page header all hide, so the content region (the table
+ * and its pagination/selection footer) fills the viewport. A shared flag rather than
+ * table-internal state, so every chrome region can respond.
+ */
+export interface ShellFullScreen {
+  isFullScreen: Accessor<boolean>
+  setFullScreen: (value: boolean) => void
+}
+
+export const ShellFullScreenContext = createContext<ShellFullScreen>()
+
+export const useFullScreen = () => useContext(ShellFullScreenContext)
+
+/*
  * Bridge between AppShell and the page's Header: the shell owns the nav
  * overlay state, but the hamburger that opens it belongs visually inside
  * the header strip. AppShell provides this context; Header consumes it and

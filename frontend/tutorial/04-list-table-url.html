@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>4 · Lists: table &amp; URL</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="tutorial.js"></script>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> FE Patterns</div>
+    <nav>
+      <a href="index.html"><span class="num">·</span>Overview</a>
+      <a href="01-graphql-codegen.html"><span class="num">1</span>Codegen &amp; graphqlFetch</a>
+      <a href="02-init-auth-error.html"><span class="num">2</span>Init, auth &amp; errors</a>
+      <a href="03-store-login-state.html"><span class="num">3</span>Store &amp; global state</a>
+      <a class="current" href="04-list-table-url.html"><span class="num">4</span>Lists: table &amp; URL</a>
+      <a href="05-createresource.html"><span class="num">5</span>createResource</a>
+      <a href="06-store-scoped.html"><span class="num">6</span>Store-scoped caches</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <p class="eyebrow">Chapter 4</p>
+      <h1>The list screen: URL state, table, variables</h1>
+      <p class="lede">
+        The reference list screen is <code>StocktakesList.tsx</code>. Its filter, sort, and
+        pagination live in <strong>one JSON URL parameter</strong>; a <code>DataTable</code>
+        renders the rows but owns none of that state; and a single memo turns URL state into
+        typed GraphQL variables. Every type is a generated GraphQL type — no parallel models.
+      </p>
+
+      <h2>The whole loop, at a glance</h2>
+      <div class="flow">
+        <div class="step"><code>?query=</code> URL</div>
+        <div class="arrow">→</div>
+        <div class="step"><code>useUrlQueryState</code></div>
+        <div class="arrow">→</div>
+        <div class="step"><code>variables</code> memo</div>
+        <div class="arrow">→</div>
+        <div class="step"><code>graphqlFetch</code></div>
+        <div class="arrow">→</div>
+        <div class="step">rows → <code>DataTable</code></div>
+      </div>
+      <p>
+        A header click / filter edit / page change writes back into the URL, which flows around
+        the loop again. The URL is the single source of truth for list state — so a list is
+        shareable and back-button-correct.
+      </p>
+
+      <h2>URL as state, in one JSON param</h2>
+      <p>
+        Rather than spread <code>?sort=name&amp;dir=asc&amp;page=2&amp;filter.status=…</code>
+        across many named params, all list state is one JSON blob under <code>?query=</code>.
+        <code>useUrlQueryState&lt;T&gt;</code> is generic over that shape; each list supplies its
+        own <code>T</code> and a default.
+      </p>
+      <span class="filename">src/list/urlQueryState.ts</span>
+<pre><code><span class="kw">export function</span> <span class="fn">useUrlQueryState</span>&lt;<span class="ty">T</span> <span class="kw">extends</span> <span class="ty">object</span>&gt;(defaultState: <span class="ty">T</span>) {
+  <span class="kw">const</span> [searchParams, setSearchParams] = <span class="fn">useSearchParams</span>&lt;{ query: <span class="ty">string</span> }&gt;();
+
+  <span class="kw">const</span> state = (): <span class="ty">T</span> =&gt; {
+    <span class="kw">const</span> raw = searchParams.query;
+    <span class="kw">if</span> (!raw) <span class="kw">return</span> defaultState;
+    <span class="kw">try</span> { <span class="kw">return</span> { ...defaultState, ...(<span class="fn">JSON.parse</span>(raw) <span class="kw">as</span> <span class="ty">Partial</span>&lt;<span class="ty">T</span>&gt;) }; } <span class="cm">// merge over default</span>
+    <span class="kw">catch</span> { <span class="kw">return</span> defaultState; }
+  };
+
+  <span class="kw">const</span> setState = (next: <span class="ty">T</span>, options?) =&gt; {
+    <span class="kw">const</span> serialised = <span class="fn">JSON.stringify</span>(next);
+    <span class="cm">// A state equal to the default → drop the param, so a pristine list has a clean URL.</span>
+    <span class="kw">const</span> query = serialised === <span class="fn">JSON.stringify</span>(defaultState) ? <span class="kw">null</span> : serialised;
+    <span class="fn">setSearchParams</span>({ query }, { replace: !options?.push });
+  };
+  <span class="kw">return</span> { state, setState };
+}</code></pre>
+      <div class="box">
+        <p class="box-title">Two deliberate choices</p>
+        <ul style="margin-bottom:0">
+          <li><strong>Merge over the default</strong> so a partial or older URL still yields full state.</li>
+          <li><strong>No validation against <code>T</code>.</strong> A hand-edited bad URL flows through to a GraphQL error, surfaced by the global modal — the right outcome for a malformed link, and far less machinery than guarding every field.</li>
+        </ul>
+      </div>
+
+      <p>The list's state type <em>is</em> the generated GraphQL shapes — no remapping:</p>
+      <span class="filename">src/sections/stocktakes/StocktakesList.tsx</span>
+<pre><code><span class="kw">type</span> <span class="ty">StocktakesListState</span> = {
+  filter: <span class="ty">StocktakeFilter</span>;                     <span class="cm">// = NonNullable&lt;Variables["filter"]&gt;</span>
+  sort?: <span class="ty">StocktakesVariables</span>[<span class="st">"sort"</span>];         <span class="cm">// the generated sort input array</span>
+  offset: <span class="ty">number</span>;
+  first: <span class="ty">number</span>;
+};
+<span class="kw">const</span> { state, setState } = <span class="fn">useUrlQueryState</span>&lt;<span class="ty">StocktakesListState</span>&gt;(DEFAULT_STATE);</code></pre>
+
+      <h2>From URL state to GraphQL variables</h2>
+      <p>
+        One memo assembles the store (from the path) and the URL state into the generated
+        <code>Variables</code> shape. <code>stripEmpty</code> drops "added but empty" filter
+        chips so they don't perturb the query.
+      </p>
+<pre><code><span class="kw">const</span> variables = <span class="fn">createMemo</span>&lt;<span class="ty">StocktakesVariables</span>&gt;(() =&gt; ({
+  storeId: params.storeId,
+  filter: <span class="fn">stripEmpty</span>(state().filter),
+  sort: state().sort,
+  page: { first: state().first, offset: state().offset },
+}));</code></pre>
+      <p>The three interactions all funnel back through <code>setState</code>:</p>
+<pre><code><span class="kw">const</span> onSort = (key, desc) =&gt; <span class="fn">setState</span>({ ...state(), sort: [{ key, desc }], offset: <span class="em">0</span> });
+<span class="kw">const</span> onFilterChange = (filter) =&gt; <span class="fn">setState</span>({ ...state(), filter, offset: <span class="em">0</span> });
+<span class="cm">// pagination: onOffsetChange / onPageSizeChange → setState({ …, offset / first })</span>
+<span class="cm">// note: sort and filter both RESET offset to 0.</span></code></pre>
+
+      <h3>Filters are exhaustive and type-driven</h3>
+      <p>
+        The filter definitions are a <code>Record</code> keyed by <em>every</em> field of the
+        generated filter input — each field maps to a control (expose it) or <code>null</code>
+        (dismiss it). If the schema gains a filter, codegen adds the key and this map
+        <strong>stops compiling</strong> until you decide expose-or-dismiss. Nothing is exposed
+        by accident.
+      </p>
+      <span class="filename">src/sections/stocktakes/listFilters.tsx (shape)</span>
+<pre><code><span class="kw">const</span> FILTERS = <span class="fn">constructFilters</span>&lt;<span class="ty">StocktakeFilter</span>&gt;({
+  status:      { label: () =&gt; <span class="fn">t</span>(<span class="st">"…"</span>), render: … },   <span class="cm">// exposed, in display order</span>
+  description: { label: () =&gt; <span class="fn">t</span>(<span class="st">"…"</span>), render: … },
+  <span class="cm">// … dismissed (not user-facing): the type forces every key to appear …</span>
+  stocktakeDate: <span class="kw">null</span>,
+  id: <span class="kw">null</span>, userId: <span class="kw">null</span>, programId: <span class="kw">null</span>,
+});</code></pre>
+
+      <h2>The DataTable owns display, not state</h2>
+      <p>
+        <code>DataTable</code> is headless <a href="https://tanstack.com/table">TanStack
+        Table</a> under a hand-rolled semantic <code>&lt;table&gt;</code>. It routes as much
+        <em>state logic</em> through TanStack as TanStack genuinely owns (the sort-toggle cycle,
+        select-all/indeterminate bookkeeping, column accounting) — but the <strong>state itself
+        is controlled and page-owned.</strong> The table mirrors your props in and calls back
+        out; it never persists anything.
+      </p>
+      <div class="box kdd">
+        <p class="box-title">Why (KDD)</p>
+        <p style="margin-bottom:0">
+          A table is the one sanctioned config-driven exception (N columns × M rows is genuinely
+          tabular). "Buy the hard" — TanStack does the gnarly interaction logic; we own markup,
+          CSS, and all the persisted state. See
+          <a href="../kdd/table-state/draft-kdd.md">kdd/table-state</a>.
+        </p>
+      </div>
+
+      <p>Columns are an <code>accessorKey</code>-first extension of TanStack's <code>ColumnDef</code>:</p>
+      <span class="filename">src/ui/elements/table/DataTable.tsx</span>
+<pre><code><span class="cm">// The ONE typed extension: sortKey — the GraphQL sort field, typed to a real union K.</span>
+<span class="kw">export type</span> <span class="ty">Column</span>&lt;<span class="ty">T</span>, <span class="ty">K</span> <span class="kw">extends</span> <span class="ty">string</span>&gt; = <span class="ty">ColumnDef</span>&lt;<span class="ty">T</span>&gt; &amp; { sortKey?: <span class="ty">K</span> };
+<span class="kw">export type</span> <span class="ty">SortState</span>&lt;<span class="ty">K</span> <span class="kw">extends</span> <span class="ty">string</span>&gt; = { key: <span class="ty">K</span>; desc: <span class="ty">boolean</span> };</code></pre>
+      <div class="box">
+        <p class="box-title">The extension rule</p>
+        <p style="margin-bottom:0">
+          A <strong>display-only flag</strong> (text alignment, wrap-lines, card region) goes in
+          TanStack's <code>meta</code> bag — augmented once, typed everywhere. A convention that
+          must carry a <strong>table-specific type</strong> (the sort-key union <code>K</code>)
+          becomes a real field on <code>Column&lt;T,K&gt;</code> — because module augmentation of
+          <code>ColumnMeta</code> can't carry <code>K</code> (it would degrade to
+          <code>string</code> and break end-to-end typing).
+        </p>
+      </div>
+
+      <p>Column values are derived from the generated result type — the row <em>is</em> a node:</p>
+<pre><code><span class="kw">type</span> <span class="ty">StocktakeRow</span> = <span class="ty">StocktakesResult</span>[<span class="st">"stocktakes"</span>][<span class="st">"nodes"</span>][<span class="ty">number</span>];
+<span class="cm">// Sortable columns can only name a REAL sort key — the generated union:</span>
+<span class="kw">type</span> <span class="ty">SortKey</span> = <span class="ty">NonNullable</span>&lt;<span class="ty">StocktakesVariables</span>[<span class="st">"sort"</span>]&gt;[<span class="ty">number</span>][<span class="st">"key"</span>];
+
+<span class="kw">const</span> columns = (): <span class="ty">Column</span>&lt;<span class="ty">StocktakeRow</span>, <span class="ty">SortKey</span>&gt;[] =&gt; [
+  { accessorKey: <span class="st">"stocktakeNumber"</span>, sortKey: <span class="st">"stocktakeNumber"</span>, header: <span class="st">"#"</span>, ...<span class="fn">getNumberCell</span>() },
+  { accessorKey: <span class="st">"status"</span>, sortKey: <span class="st">"status"</span>, header: <span class="fn">t</span>(<span class="st">"…"</span>),
+    cell: (info) =&gt; &lt;<span class="ty">StatusChip</span> {...<span class="fn">statusMeta</span>(info.<span class="fn">getValue</span>())} /&gt; },
+  <span class="cm">// …</span>
+];</code></pre>
+      <p>
+        (Columns are an <em>accessor</em> <code>() =&gt; [...]</code>, not a plain array, so the
+        <code>t()</code>-driven headers re-translate on a language switch — read reactively when
+        passed as a prop.)
+      </p>
+
+      <p>The table is wired controlled — state in via props, changes out via callbacks:</p>
+<pre><code>&lt;<span class="ty">DataTable</span>
+  columns={<span class="fn">columns</span>()}
+  rows={<span class="fn">rows</span>()}
+  rowKey={(r) =&gt; r.id}
+  sort={<span class="fn">currentSort</span>()}          onSort={onSort}          <span class="cm">// URL owns sort</span>
+  selectedIds={<span class="fn">selectedIds</span>()}   onSelectionChange={setSelectedIds}  <span class="cm">// page signal</span>
+  onRowClick={openRow}
+/&gt;</code></pre>
+
+      <div class="box">
+        <p class="box-title">Pagination stays out of the table</p>
+        <p style="margin-bottom:0">
+          <code>DataTable</code> has no pagination row model. The <code>Pagination</code>
+          component is pure presentation over the page-owned <code>offset</code>/<code>first</code>/<code>total</code>
+          — the arithmetic is trivial and the state is the URL's. The KDD explicitly rejects
+          wiring TanStack's pagination model in.
+        </p>
+      </div>
+
+      <div class="box build">
+        <p class="box-title">Build step · widgets</p>
+        <p style="margin-bottom:0">
+          Build <code>WidgetsList</code>: define <code>WidgetsListState</code> from the generated
+          types, call <code>useUrlQueryState</code>, write the <code>variables</code> memo, and
+          render a <code>DataTable</code> with <code>columns</code> typed
+          <code>Column&lt;WidgetRow, WidgetSortKey&gt;</code>. Wire <code>onSort</code>,
+          filters, and <code>Pagination</code> back through <code>setState</code>. You now have a
+          shareable, URL-driven list — <em>except</em> it can't fetch yet. That's chapter 5.
+        </p>
+      </div>
+
+      <div class="box real">
+        <p class="box-title">Real code</p>
+        <p style="margin-bottom:0">
+          <a href="../src/list/urlQueryState.ts">src/list/urlQueryState.ts</a> ·
+          <a href="../src/ui/elements/table/DataTable.tsx">DataTable.tsx</a> ·
+          <a href="../src/sections/stocktakes/StocktakesList.tsx">StocktakesList.tsx</a> ·
+          <a href="../src/sections/stocktakes/listFilters.tsx">listFilters.tsx</a> ·
+          <a href="../src/typeHelpers.ts">typeHelpers.ts</a> (<code>stripEmpty</code>).
+          Why: <a href="../kdd/url-structure/draft-kdd.md">url-structure</a>,
+          <a href="../kdd/table-state/draft-kdd.md">table-state</a>,
+          <a href="../kdd/type-safety/draft-kdd.md">type-safety</a>.
+        </p>
+      </div>
+
+      <div class="pager">
+        <a class="prev" href="03-store-login-state.html">
+          <span class="dir">← Prev</span><span class="ttl">Store &amp; global state</span>
+        </a>
+        <a class="next" href="05-createresource.html">
+          <span class="dir">Next →</span><span class="ttl">createResource</span>
+        </a>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

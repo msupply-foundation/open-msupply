@@ -1,0 +1,19 @@
+/*
+ * InsetPanel — a recessed grey group panel (the current app's dialog "options" block).
+ * A subtle tinted fill + rounded corners; the hint reads as muted helper text above the
+ * content. Colours are tokens; the only px is the border-radius.
+ */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--bg-group-light);
+}
+
+.hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}

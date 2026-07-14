@@ -14,7 +14,7 @@
  */
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { generate, resultType, fragmentType } = require("./helpers.js");
+const { generate, resultType, fragmentType } = require("./helpers.cjs");
 
 test("a fragment is emitted as its own <Name>Fragment type", () => {
   const schema = `

@@ -25,4 +25,24 @@ const refetch = async (storeId: string | undefined) => {
   setStoreContext(result.data);
 };
 
-export { storeContext, refetch as refetchStoreContext };
+// The id of the store the user has currently ENTERED (Guard 3 loaded). Reactive and
+// module-level, so store-scoped global caches (createStoreScopedResource) can depend
+// on it without a component. Derived from storeContext — which the store guard only
+// populates once the store is resolved and authorised from the URL — so it is
+// URL-driven in effect (kdd/url-structure), and never reports a store whose lookups
+// aren't yet valid to fetch. Undefined between store switches (guard shows its loading
+// state).
+const currentStoreId = () => storeContext()?.storePreferences.id;
+
+// The id of the currently authenticated user (Guard 3 loaded). Reactive and module-level
+// for the same reason as currentStoreId — so global caches keyed by user (the user layer
+// of table config, kdd/table-state) can depend on it without a component. `me` is the
+// UserNode union member, so read is `me?.userId`; undefined between store switches.
+const currentUserId = () => storeContext()?.me?.userId;
+
+export {
+  storeContext,
+  refetch as refetchStoreContext,
+  currentStoreId,
+  currentUserId,
+};
