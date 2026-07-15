@@ -201,6 +201,7 @@ export type PreferencesQuery = {
     adjustForNumberOfDaysOutOfStock: boolean;
     allowTrackingOfStockByDonor: boolean;
     authorisePurchaseOrder: boolean;
+    blindStocktake: boolean;
     canCreateInternalOrderFromARequisition: boolean;
     customTranslations: any;
     daysInMonth: number;
@@ -231,7 +232,6 @@ export type PreferencesQuery = {
     invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
     itemMarginOverridesSupplierMargin: boolean;
     showIndicativePriceInRequisitions: boolean;
-    doNotPrintPlaceholderLineLabels: boolean;
     isGaps: boolean;
     globalTableConfigs: any;
     warnWhenMissingRecentStocktake: {
@@ -401,6 +401,7 @@ export const PreferencesDocument = gql`
       adjustForNumberOfDaysOutOfStock
       allowTrackingOfStockByDonor
       authorisePurchaseOrder
+      blindStocktake
       canCreateInternalOrderFromARequisition
       customTranslations
       daysInMonth
@@ -436,7 +437,6 @@ export const PreferencesDocument = gql`
       invoiceStatusOptions
       itemMarginOverridesSupplierMargin
       showIndicativePriceInRequisitions
-      doNotPrintPlaceholderLineLabels
       isGaps
       globalTableConfigs
       backdating {

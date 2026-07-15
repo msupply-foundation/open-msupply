@@ -1,6 +1,6 @@
+use service::backend_plugin::{plugin_provider::PluginInstance, types::schedule};
 use chrono::{Duration, NaiveDateTime, Utc};
 use repository::PluginType;
-use service::backend_plugin::{plugin_provider::PluginInstance, types::schedule};
 use std::collections::HashMap;
 use tokio::task::JoinHandle;
 use util::format_error;
@@ -19,10 +19,9 @@ impl SchedulePluginRunner {
         Default::default()
     }
 
-    async fn run(&mut self) -> usize {
+    async fn run(&mut self) {
         let plugins = PluginInstance::get_all(PluginType::Schedule);
         let now = Utc::now().naive_utc();
-        let mut ran = 0;
 
         for plugin in plugins {
             let due = self
@@ -34,8 +33,6 @@ impl SchedulePluginRunner {
             if !due {
                 continue;
             }
-
-            ran += 1;
 
             // `call_async` runs the plugin (the whole boajs interpreter, plus any
             // `fetch`/`use_graphql` http calls it makes) on the blocking pool, so it doesn't
@@ -50,8 +47,6 @@ impl SchedulePluginRunner {
 
             self.next_run.insert(plugin.code.clone(), next);
         }
-
-        ran
     }
 }
 
@@ -62,10 +57,8 @@ pub fn spawn() -> JoinHandle<()> {
             tokio::time::interval(std::time::Duration::from_secs(SCHEDULE_PLUGIN_POLL_SECS));
         loop {
             interval.tick().await;
-            let ran = runner.run().await;
-            if ran > 0 {
-                log::debug!("Schedule plugin runner ran {ran} plugin(s)");
-            }
+            runner.run().await;
+            log::info!("Schedule plugin runner complete");
         }
     })
 }

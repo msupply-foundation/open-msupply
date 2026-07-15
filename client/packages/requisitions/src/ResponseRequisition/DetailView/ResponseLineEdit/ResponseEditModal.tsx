@@ -13,7 +13,7 @@ import {
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { ItemWithStatsFragment } from '@openmsupply-client/system';
-import { ResponseFragment, useResponse } from '../../api';
+import { ResponseFragment, ResponseLineFragment, useResponse } from '../../api';
 import { ResponseLineEdit } from './ResponseLineEdit';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 import { ResponseStoreStats } from '../ResponseStats/ResponseStoreStats';
@@ -27,6 +27,9 @@ interface ResponseLineEditModalProps {
   mode: ModalMode | null;
   isOpen: boolean;
   onClose: () => void;
+  // Items in the order they're currently displayed in the table, so
+  // "OK & Next" follows the user's sort.
+  getSortedItems: () => ResponseLineFragment['item'][];
 }
 
 export const ResponseLineEditModal = ({
@@ -36,6 +39,7 @@ export const ResponseLineEditModal = ({
   mode,
   isOpen,
   onClose,
+  getSortedItems,
 }: ResponseLineEditModalProps) => {
   const { error } = useNotification();
   const deleteLine = useResponse.line.deleteLine();
@@ -61,7 +65,7 @@ export const ResponseLineEditModal = ({
   const { draft, update, save, isLoading, isReasonsError } =
     useDraftRequisitionLine(currentItem);
   const draftIdRef = useRef<string | undefined>(draft?.id);
-  const { hasNext, next } = useNextResponseLine(lines, currentItem);
+  const { hasNext, next } = useNextResponseLine(getSortedItems, currentItem);
   const nextDisabled =
     (!hasNext && mode === ModalMode.Update) || !currentItem || isEditingSupply;
 

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::sync::translations::item::ItemTranslation;
 use util::sync_serde::empty_str_as_option_string;
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -51,7 +51,8 @@ impl SyncTranslation for BarcodeTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyBarcodeRow>()?;
@@ -65,11 +66,14 @@ impl SyncTranslation for BarcodeTranslation {
             parent_id,
         } = data;
 
+        let fk_check = fk_checker.with_table(connection, "barcode", &id);
+        let check_fk = fk_checker.with_table_required(connection, "barcode", &id);
+
         let result = BarcodeRow {
             id,
             gtin,
-            item_id,
-            manufacturer_id: manufacturer_id,
+            item_id: check_fk(item_id, "item_id", FkField::Item)?,
+            manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
             pack_size,
             parent_id,
         };
@@ -139,12 +143,16 @@ mod tests {
         let translator = BarcodeTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_barcode_translation", MockDataInserts::none()).await;
+            setup_all("test_barcode_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

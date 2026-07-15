@@ -4,20 +4,58 @@
 // Implementation: ChangelogCondition in server/repository/src/db_diesel/changelog/changelog.rs
 
 // The set of operators available on every filterable field.
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
+//
+// NOTE: the serde shape of this enum is a wire format shared by sync v7
+// (serialized ChangelogCondition/SyncRequestCondition trees) and the client's
+// `dynamicFilter` GraphQL input. Adding variants is safe for existing
+// serialized data, but a SENDER must not emit a new variant to a peer that
+// may predate it (an older site fails to deserialize the whole tree) — sync
+// currently constructs conditions locally only, so this only matters if a
+// central server ever starts sending condition trees to remotes.
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(bound = "T: Clone + serde::Serialize + serde::de::DeserializeOwned")]
 pub enum GeneralFilter<T: Clone + serde::Serialize + serde::de::DeserializeOwned> {
     Equal(T),
     NotEqual(T),
     GreaterThan(T),
     LowerThan(T),
+    GreaterThanOrEqual(T),
+    LowerThanOrEqual(T),
     In(Vec<T>),
+    /// Case-insensitive substring match (same semantics as apply_string_filter!).
+    /// Only meaningful for text fields; on non-text fields it matches nothing.
+    Like(T),
     IsNull,
     IsNotNull,
 }
 
 // Compiles a single GeneralFilter operator against a Diesel column expression to a boxed nullable Bool.
+// This variant is for text fields: Like compiles to a real (i)like. Non-text
+// fields use general_filter_no_like! where Like matches nothing.
 macro_rules! general_filter {
+    ($filter:ident, $dsl_field:expr ) => {{
+        match $filter {
+            crate::dynamic_query_filter::GeneralFilter::Like(value) => {
+                let pattern = format!("%{}%", value);
+                // in sqlite like is case insensitive (but only works with ASCII chars)
+                #[cfg(not(feature = "postgres"))]
+                {
+                    Box::new($dsl_field.like(pattern).nullable())
+                }
+                // Use case insensitive like on postgres
+                #[cfg(feature = "postgres")]
+                {
+                    Box::new($dsl_field.ilike(pattern).nullable())
+                }
+            }
+            other => crate::dynamic_query_filter::general_filter_no_like!(other, $dsl_field),
+        }
+    }};
+}
+
+// As general_filter!, for fields where (i)like does not type-check
+// (numbers, dates, enums): Like compiles to FALSE (matches nothing).
+macro_rules! general_filter_no_like {
     ($filter:ident, $dsl_field:expr ) => {{
         match $filter {
             crate::dynamic_query_filter::GeneralFilter::Equal(value) => {
@@ -34,6 +72,15 @@ macro_rules! general_filter {
             }
             crate::dynamic_query_filter::GeneralFilter::LowerThan(value) => {
                 Box::new($dsl_field.lt(value).nullable())
+            }
+            crate::dynamic_query_filter::GeneralFilter::GreaterThanOrEqual(value) => {
+                Box::new($dsl_field.ge(value).nullable())
+            }
+            crate::dynamic_query_filter::GeneralFilter::LowerThanOrEqual(value) => {
+                Box::new($dsl_field.le(value).nullable())
+            }
+            crate::dynamic_query_filter::GeneralFilter::Like(_) => {
+                Box::new(false.into_sql::<diesel::sql_types::Bool>().nullable())
             }
             crate::dynamic_query_filter::GeneralFilter::IsNull => {
                 Box::new($dsl_field.is_null().nullable())
@@ -67,6 +114,15 @@ pub trait FilterBuilder<T: Clone + serde::Serialize + serde::de::DeserializeOwne
     }
     fn lower_than(value: T) -> Self::Condition {
         Self::make_condition(GeneralFilter::LowerThan(value))
+    }
+    fn greater_than_or_equal(value: T) -> Self::Condition {
+        Self::make_condition(GeneralFilter::GreaterThanOrEqual(value))
+    }
+    fn lower_than_or_equal(value: T) -> Self::Condition {
+        Self::make_condition(GeneralFilter::LowerThanOrEqual(value))
+    }
+    fn like(value: T) -> Self::Condition {
+        Self::make_condition(GeneralFilter::Like(value))
     }
     fn any(values: Vec<T>) -> Self::Condition {
         Self::make_condition(GeneralFilter::In(values))
@@ -108,6 +164,7 @@ macro_rules! create_condition {
             variants: [],
             items: [],
             arms: [],
+            cf_arms: [],
         );
     };
 
@@ -120,6 +177,7 @@ macro_rules! create_condition {
         variants: [ $($variants:tt)* ],
         items: [ $($items:tt)* ],
         arms: [ $($arms:tt)* ],
+        cf_arms: [ $($cf_arms:tt)* ],
     ) => {
         create_condition!(@build
             mod_name: $mod_name, source: $source,
@@ -144,6 +202,11 @@ macro_rules! create_condition {
                     Some(Box::new(($body).nullable()))
                 },
             ],
+            cf_arms: [
+                $($cf_arms)*
+                // Subquery variants carry a value, not a filter — never a custom field.
+                Inner::$variant(_) => vec![],
+            ],
         );
     };
 
@@ -154,6 +217,7 @@ macro_rules! create_condition {
         variants: [ $($variants:tt)* ],
         items: [ $($items:tt)* ],
         arms: [ $($arms:tt)* ],
+        cf_arms: [ $($cf_arms:tt)* ],
     ) => {
         create_condition!(@build
             mod_name: $mod_name, source: $source,
@@ -171,6 +235,10 @@ macro_rules! create_condition {
                     Some(create_condition!(@filter_macro $filter_kind, f, $dsl_expr))
                 },
             ],
+            cf_arms: [
+                $($cf_arms)*
+                Inner::$variant(f) => create_condition!(@collect $filter_kind, f),
+            ],
         );
     };
 
@@ -181,12 +249,13 @@ macro_rules! create_condition {
         variants: [ $($variants:tt)* ],
         items: [ $($items:tt)* ],
         arms: [ $($arms:tt)* ],
+        cf_arms: [ $($cf_arms:tt)* ],
     ) => {
         #[allow(non_snake_case, non_camel_case_types)]
         pub mod $mod_name {
             use super::*;
 
-            #[derive(Clone, serde::Serialize, serde::Deserialize)]
+            #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
             #[allow(non_snake_case)]
             pub enum Inner {
                 $($variants)*
@@ -200,6 +269,19 @@ macro_rules! create_condition {
                 // Compile the filter AST into a boxed Diesel WHERE expression. An empty/no-op filter compiles to TRUE.
                 pub fn to_boxed(self) -> BoxedCondition {
                     self.to_boxed_condition().unwrap_or_else(|| Box::new(true.into_sql::<diesel::sql_types::Bool>().nullable()))
+                }
+
+                /// All property conditions in the tree, for key validation
+                /// against the table scope's allowed keys.
+                pub fn custom_field_conditions(&self) -> Vec<&crate::db_diesel::json_custom_field_filter::CustomFieldCondition> {
+                    match self {
+                        $($cf_arms)*
+                        Inner::And(conditions) | Inner::Or(conditions) => conditions
+                            .iter()
+                            .flat_map(|condition| condition.custom_field_conditions())
+                            .collect(),
+                        Inner::True | Inner::False => vec![],
+                    }
                 }
             }
 
@@ -224,7 +306,8 @@ macro_rules! create_condition {
                 Inner::False
             }
 
-
+            // Note: BoxableExpression has Send as a supertrait, so this is usable
+            // inside boxed queries and subqueries (whose WHERE clauses require Send)
             type BoxedCondition = Box<dyn BoxableExpression<$source, crate::DBType, SqlType = diesel::sql_types::Nullable<diesel::sql_types::Bool>>>;
 
             impl Inner {
@@ -259,11 +342,16 @@ macro_rules! create_condition {
     };
 
     // Internal arms below resolve the `kind` token. To add a new shorthand (e.g. `bool`),
-    // add matching arms to @filter_type, @impl_trait, and @filter_macro.
+    // add matching arms to @filter_type, @impl_trait, @filter_macro and @collect.
+    // Note: literal-token arms (number, string, properties) must stay above the
+    // generic `$custom_type:ty` fallbacks, or the fallback swallows them.
 
-    // Map filter kind to filter type
+    // Map filter kind to filter type.
+    // `properties` is special: the dsl expression is a JSON properties column and
+    // the variant holds key + typed filter (see json_custom_field_filter.rs).
     (@filter_type number) => { crate::dynamic_query_filter::GeneralFilter<i32> };
     (@filter_type string) => { crate::dynamic_query_filter::GeneralFilter<String> };
+    (@filter_type custom_fields) => { crate::db_diesel::json_custom_field_filter::CustomFieldCondition };
     (@filter_type $custom_type:ty) => { crate::dynamic_query_filter::GeneralFilter<$custom_type> };
 
     // Implement FilterBuilder trait for number fields
@@ -286,6 +374,23 @@ macro_rules! create_condition {
         }
     };
 
+    // Property fields don't fit FilterBuilder (a condition is key + typed
+    // filter, not a single value) — generate an inherent constructor instead:
+    // `Module::CustomField::condition("key", CustomFieldValueFilter::Text(GeneralFilter::Like(..)))`
+    (@impl_trait $variant:ident, custom_fields) => {
+        impl $variant {
+            pub fn condition(
+                key: impl Into<String>,
+                filter: crate::db_diesel::json_custom_field_filter::CustomFieldValueFilter,
+            ) -> Inner {
+                Inner::$variant(crate::db_diesel::json_custom_field_filter::CustomFieldCondition {
+                    key: key.into(),
+                    filter,
+                })
+            }
+        }
+    };
+
     // Implement FilterBuilder trait for custom type fields
     (@impl_trait $variant:ident, $custom_type:ty) => {
         impl crate::dynamic_query_filter::FilterBuilder<$custom_type> for $variant {
@@ -300,10 +405,21 @@ macro_rules! create_condition {
     (@filter_macro string, $f:ident, $dsl_expr:expr) => {
         crate::dynamic_query_filter::general_filter!($f, $dsl_expr)
     };
-    (@filter_macro $custom_type:ty, $f:ident, $dsl_expr:expr) => {
-        crate::dynamic_query_filter::general_filter!($f, $dsl_expr)
+    (@filter_macro custom_fields, $f:ident, $dsl_expr:expr) => {
+        crate::db_diesel::json_custom_field_filter::custom_field_condition_to_boxed($dsl_expr, $f)
     };
+    (@filter_macro $custom_type:ty, $f:ident, $dsl_expr:expr) => {
+        crate::dynamic_query_filter::general_filter_no_like!($f, $dsl_expr)
+    };
+
+    // custom_field_conditions() collection: only `properties` variants contribute
+    (@collect custom_fields, $f:ident) => { vec![$f] };
+    (@collect $custom_type:ty, $f:ident) => {{
+        let _ = $f;
+        vec![]
+    }};
 }
 
 pub(crate) use create_condition;
 pub(crate) use general_filter;
+pub(crate) use general_filter_no_like;

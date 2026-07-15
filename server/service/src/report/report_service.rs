@@ -11,7 +11,7 @@ use std::{
     time::SystemTime,
 };
 use thiserror::Error;
-use util::{format_error, uuid::uuid};
+use util::{format_error, sanitize_filename, uuid::uuid};
 
 use crate::{
     boajs::{call_method, BoaJsError},
@@ -73,6 +73,14 @@ pub enum InstallReportError {
     InvalidFile,
     #[error("File not found")]
     FileNotFound,
+}
+
+#[derive(Debug, Error)]
+pub enum UpdateReportError {
+    #[error(transparent)]
+    RepositoryError(RepositoryError),
+    #[error("Report not found")]
+    ReportNotFound,
 }
 
 #[derive(Debug, Clone)]
@@ -172,6 +180,7 @@ pub trait ReportServiceTrait: Sync + Send {
         format: Option<PrintFormat>,
         localisations: &Localisations,
         current_language: Option<String>,
+        store_code: Option<&str>,
     ) -> Result<String, ReportError> {
         let document = generate_report(
             report,
@@ -181,25 +190,24 @@ pub trait ReportServiceTrait: Sync + Send {
             current_language.clone(),
         )?;
 
+        // Prefix the store code so multi-store users can tell exported files
+        // apart without opening them (mirrors the list-view export behaviour).
+        let report_name = prefix_store_code(store_code, &report.name);
+
         match format {
-            Some(PrintFormat::Html) => generate_html_report_to_html(
-                base_dir,
-                document,
-                report.name.clone(),
-                &current_language,
-            ),
+            Some(PrintFormat::Html) => {
+                generate_html_report_to_html(base_dir, document, report_name, &current_language)
+            }
             Some(PrintFormat::Excel) => export_html_report_to_excel(
                 base_dir,
                 document,
-                report.name.clone(),
+                report_name,
                 &report.excel_template_buffer,
+                store_code,
             ),
-            Some(PrintFormat::Pdf) | None => generate_html_report_to_pdf(
-                base_dir,
-                document,
-                report.name.clone(),
-                &current_language,
-            ),
+            Some(PrintFormat::Pdf) | None => {
+                generate_html_report_to_pdf(base_dir, document, report_name, &current_language)
+            }
         }
     }
 
@@ -216,13 +224,14 @@ pub trait ReportServiceTrait: Sync + Send {
 
         // default overwrite as true
         // TODO add user input to customise overwrite
-        let reports =
-            StandardReports::upsert_reports(report_json, &ctx.connection, true).map_err(|_error| {
+        let reports = StandardReports::upsert_reports(report_json, &ctx.connection, true).map_err(
+            |_error| {
                 InstallReportError::RepositoryError(RepositoryError::DBError {
                     msg: String::from("Failed to upsert report"),
                     extra: String::new(),
                 })
-            })?;
+            },
+        )?;
 
         Ok(reports.iter().map(|r| r.id.clone()).collect())
     }
@@ -235,6 +244,55 @@ pub trait ReportServiceTrait: Sync + Send {
         sheet_name: Option<&str>,
     ) -> Result<String, ReportError> {
         csv_to_excel(base_dir, csv_data, filename, sheet_name)
+    }
+
+    fn update_report(
+        &self,
+        ctx: &ServiceContext,
+        id: &str,
+        is_active: bool,
+    ) -> Result<repository::ReportRow, UpdateReportError> {
+        update_report(ctx, id, is_active)
+    }
+}
+
+/// Prepend the (sanitised) store code to a report name so it lands in the
+/// download filename, e.g. `Stock Report` -> `GEN_Stock Report`. The timestamp
+/// is added later by the format-specific filename builders. Falls back to the
+/// bare report name when no store code is available.
+fn prefix_store_code(store_code: Option<&str>, report_name: &str) -> String {
+    match store_code
+        .map(|code| sanitize_filename(code.to_string()))
+        .filter(|code| !code.is_empty())
+    {
+        Some(code) => format!("{code}_{report_name}"),
+        None => report_name.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod prefix_store_code_test {
+    use super::prefix_store_code;
+
+    #[test]
+    fn prefixes_store_code_when_present() {
+        assert_eq!(
+            prefix_store_code(Some("GEN"), "Stock Report"),
+            "GEN_Stock Report"
+        );
+    }
+
+    #[test]
+    fn omits_prefix_when_no_store_code() {
+        assert_eq!(prefix_store_code(None, "Stock Report"), "Stock Report");
+        // An empty (or whitespace-only after sanitising) code adds no prefix.
+        assert_eq!(prefix_store_code(Some(""), "Stock Report"), "Stock Report");
+    }
+
+    #[test]
+    fn sanitises_forbidden_characters_in_store_code() {
+        // Path-hostile characters must not leak into the download filename.
+        assert_eq!(prefix_store_code(Some("A/B:C"), "report"), "ABC_report");
     }
 }
 
@@ -433,6 +491,24 @@ fn query_all_report_versions(
         ),
         rows: reports,
     })
+}
+
+fn update_report(
+    ctx: &ServiceContext,
+    id: &str,
+    is_active: bool,
+) -> Result<repository::ReportRow, UpdateReportError> {
+    let repo = ReportRowRepository::new(&ctx.connection);
+    let mut row = repo
+        .find_one_by_id(id)
+        .map_err(UpdateReportError::RepositoryError)?
+        .ok_or(UpdateReportError::ReportNotFound)?;
+
+    row.is_active = is_active;
+    repo.upsert_one(&row)
+        .map_err(UpdateReportError::RepositoryError)?;
+
+    Ok(row)
 }
 
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {
@@ -1052,13 +1128,11 @@ mod report_generation_test {
 
 #[cfg(test)]
 mod report_filter_test {
-
-    use repository::{
-        migrations::Version, mock::MockDataInserts, test_db::setup_all, EqualFilter, ReportFilter,
-        ReportRepository,
-    };
-
     use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
+    use repository::{
+        migrations::Version, mock::MockDataInserts, test_db::setup_all, ReportFilter,
+        ReportRepository, StringFilter,
+    };
 
     // adding tests to generate reports
 
@@ -1074,7 +1148,7 @@ mod report_filter_test {
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
-        let filter = ReportFilter::new().code(EqualFilter::equal_to("standard_report".to_string()));
+        let filter = ReportFilter::new().code(StringFilter::equal_to("standard_report"));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)
             .unwrap();
@@ -1142,9 +1216,7 @@ mod report_filter_test {
         let ctx = service_provider.basic_context().unwrap();
 
         // test standard reports
-        let filter = ReportFilter::new().code(EqualFilter::equal_to(
-            "report_with_custom_option".to_string(),
-        ));
+        let filter = ReportFilter::new().code(StringFilter::equal_to("report_with_custom_option"));
         let reports = ReportRepository::new(&ctx.connection)
             .query_meta_data(Some(filter), None)
             .unwrap();

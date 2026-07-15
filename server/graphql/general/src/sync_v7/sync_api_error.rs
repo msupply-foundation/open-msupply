@@ -31,6 +31,7 @@ pub enum SyncErrorVariantV7 {
     GetCurrentSiteIdError,
     SiteIdMismatch,
     SiteIsNotV7,
+    WaitingForCentralV7Upgrade,
     RequestSiteAuthError,
     Other,
 }
@@ -58,6 +59,9 @@ impl SyncErrorV7Node {
             SyncError::GetCurrentSiteIdError(_) => SyncErrorVariantV7::GetCurrentSiteIdError,
             SyncError::SiteIdMismatch { .. } => SyncErrorVariantV7::SiteIdMismatch,
             SyncError::SiteIsNotV7 => SyncErrorVariantV7::SiteIsNotV7,
+            SyncError::WaitingForCentralV7Upgrade => {
+                SyncErrorVariantV7::WaitingForCentralV7Upgrade
+            }
             SyncError::RequestSiteAuthError(_) => SyncErrorVariantV7::RequestSiteAuthError,
             SyncError::Other(_) => SyncErrorVariantV7::Other,
         };

@@ -117,6 +117,7 @@ export const inboundParsers = {
         'defaultDonorUpdate' in patch ? patch.defaultDonorUpdate : undefined,
       receivedDatetime:
         'receivedDatetime' in patch ? patch.receivedDatetime : undefined,
+      customFields: 'customFields' in patch ? patch.customFields : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -143,6 +144,7 @@ export const inboundParsers = {
       volumePerPack: line.volumePerPack,
       shippedPackSize: line.shippedPackSize,
       purchaseOrderLineId: line.purchaseOrderLine?.id,
+      reasonOptionId: line.reasonOption?.id ?? null,
     };
   },
   toInsertLineFromInternalOrder: (line: {

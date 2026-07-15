@@ -3,7 +3,7 @@ use chrono::Utc;
 use graphql_core::generic_inputs::PrintReportSortInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
-use repository::query_json;
+use repository::{query_json, StoreRowRepository};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition, SQLQuery};
 use service::report::report_service::{ReportError, ResolvedReportQuery};
@@ -113,6 +113,10 @@ pub async fn generate_report(
             }))
         }
     };
+    // Look up the current store's code so it can be included in the download
+    // filename (best effort — a missing store just omits the prefix).
+    let store_code = store_code(&service_context, &store_id)?;
+
     // generate the report with the fetched data
     let file_id = match service.generate_html_report(
         &ctx.get_settings().server.base_dir,
@@ -122,6 +126,7 @@ pub async fn generate_report(
         format.map(PrintFormat::to_domain),
         localisations,
         current_language,
+        store_code.as_deref(),
     ) {
         Ok(file_id) => file_id,
         Err(err) => {
@@ -200,6 +205,8 @@ pub async fn generate_report_definition(
         }
     };
 
+    let store_code = store_code(&service_context, &store_id)?;
+
     // generate the report with the fetched data
     let file_id = match service.generate_html_report(
         &ctx.get_settings().server.base_dir,
@@ -209,6 +216,7 @@ pub async fn generate_report_definition(
         format.map(PrintFormat::to_domain),
         localisations,
         current_language,
+        store_code.as_deref(),
     ) {
         Ok(file_id) => file_id,
         Err(err) => {
@@ -219,6 +227,17 @@ pub async fn generate_report_definition(
     };
 
     Ok(PrintReportResponse::Response(PrintReportNode { file_id }))
+}
+
+/// Fetch the store's code for use in report download filenames.
+fn store_code(
+    service_context: &service::service_provider::ServiceContext,
+    store_id: &str,
+) -> Result<Option<String>> {
+    let store = StoreRowRepository::new(&service_context.connection)
+        .find_one_by_id(store_id)
+        .map_err(|err| StandardGraphqlError::InternalError(format!("{err:#?}")).extend())?;
+    Ok(store.map(|store| store.code))
 }
 
 enum FetchResult {

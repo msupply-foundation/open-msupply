@@ -2,7 +2,7 @@ import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
 import { Formatter } from '@common/utils';
 import { AssetPropertyFragment, MasterListRowFragment } from '.';
 import { LocationRowFragment } from './Location/api';
-import { StockLineRowFragment } from './Stock/api';
+import { StockLineListRowFragment } from './Stock/api';
 import { InvoiceNodeType, PropertyNode } from '@common/types';
 
 export const locationsToCsv = (
@@ -50,7 +50,7 @@ export const masterListsToCsv = (
 };
 
 export const stockLinesToCsv = (
-  stockLines: StockLineRowFragment[],
+  stockLines: StockLineListRowFragment[],
   t: TypedTFunction<LocaleKey>,
   manageVvmStatusForStock: boolean
 ) => {
@@ -66,6 +66,7 @@ export const stockLinesToCsv = (
     t('label.num-packs'),
     t('label.available-in-packs'),
     t('label.pack-cost-price'),
+    t('label.campaign-only'),
     t('label.supplier'),
   ];
 
@@ -81,6 +82,7 @@ export const stockLinesToCsv = (
     node.totalNumberOfPacks,
     node.availableNumberOfPacks,
     node.costPricePerPack,
+    node.campaign?.name,
     node.supplierName,
   ]);
   return Formatter.csv({ fields, data });

@@ -32,6 +32,7 @@ export type SyncMessageRowFragment = {
       fileName: string;
       recordId: string;
       createdDatetime: string;
+      totalBytes: number;
       status: Types.SyncFileReferenceNodeStatus;
       error?: string | null;
     }>;
@@ -84,6 +85,7 @@ export type SyncMessagesQuery = {
               fileName: string;
               recordId: string;
               createdDatetime: string;
+              totalBytes: number;
               status: Types.SyncFileReferenceNodeStatus;
               error?: string | null;
             }>;
@@ -135,6 +137,7 @@ export type SyncMessageByIdQuery = {
                 fileName: string;
                 recordId: string;
                 createdDatetime: string;
+                totalBytes: number;
                 status: Types.SyncFileReferenceNodeStatus;
                 error?: string | null;
               }>;

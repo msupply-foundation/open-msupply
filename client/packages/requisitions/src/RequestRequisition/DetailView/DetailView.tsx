@@ -10,15 +10,10 @@ import {
   useAuthContext,
   useBreadcrumbs,
   useEditModal,
-  useToggle,
   useUrlQuery,
   AppFooterStatusPortal,
 } from '@openmsupply-client/common';
-import {
-  ActivityLogList,
-  DocumentsTable,
-  UploadDocumentModal,
-} from '@openmsupply-client/system';
+import { ActivityLogList, DocumentsTab } from '@openmsupply-client/system';
 import { useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -39,11 +34,6 @@ export const DetailView = () => {
 
   const { data, isLoading, invalidateQueries } = useRequest.document.get();
   const isDisabled = useRequest.utils.isDisabled();
-  const {
-    toggleOn: toggleUploadModal,
-    isOn: isUploadModalOpen,
-    toggleOff: toggleCloseUploadModal,
-  } = useToggle();
   const { data: programIndicators, isLoading: isProgramIndicatorsLoading } =
     useRequest.document.indicators(
       store?.nameId ?? '',
@@ -76,14 +66,6 @@ export const DetailView = () => {
     lineEditModal.onOpen();
   }, [lineEditModal, urlQuery, updateQuery]);
 
-  const onOpenUploadModal = useCallback(() => {
-    toggleUploadModal();
-    const currentTab = urlQuery['tab'] ?? InternalOrderDetailTabs.Details;
-    if (currentTab !== InternalOrderDetailTabs.Documents) {
-      updateQuery({ tab: InternalOrderDetailTabs.Documents });
-    }
-  }, [toggleUploadModal, urlQuery, updateQuery]);
-
   if (isLoading) return <DetailViewSkeleton />;
   if (!data)
     return (
@@ -108,11 +90,12 @@ export const DetailView = () => {
     },
     {
       Component: (
-        <DocumentsTable
+        <DocumentsTab
           recordId={data?.id ?? ''}
           documents={data?.documents?.nodes ?? []}
           tableName="requisition"
           invalidateQueries={invalidateQueries}
+          canUpload={!isDisabled}
           deletableDocumentIds={deletableDocumentIds}
         />
       ),
@@ -148,7 +131,6 @@ export const DetailView = () => {
       <AppBarButtons
         isDisabled={!data || isDisabled}
         onAddItem={onAddItem}
-        openUploadModal={onOpenUploadModal}
         showIndicators={showIndicatorTab}
       />
       <Toolbar />
@@ -158,25 +140,9 @@ export const DetailView = () => {
       {/* Fallback status footer for tabs that don't own the lines table.
         The Details tab's `Footer` mounts an `AppFooterPortal` only when rows
         are selected; otherwise this portal shows the status crumbs. */}
-      <AppFooterStatusPortal
-        Content={
-          <StatusFooter
-            indicators={showIndicatorTab ? programIndicators?.nodes : undefined}
-          />
-        }
-      />
+      <AppFooterStatusPortal Content={<StatusFooter />} />
 
       <SidePanel />
-
-      {isUploadModalOpen && (
-        <UploadDocumentModal
-          isOn={isUploadModalOpen}
-          toggleOff={toggleCloseUploadModal}
-          recordId={data?.id ?? ''}
-          tableName="requisition"
-          invalidateQueries={invalidateQueries}
-        />
-      )}
     </RequestRequisitionLineErrorProvider>
   );
 };

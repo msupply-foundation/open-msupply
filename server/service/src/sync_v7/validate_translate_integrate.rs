@@ -19,10 +19,12 @@ const PROGRESS_INTERVAL: i64 = 1000;
 pub(crate) enum SyncContext {
     Central {
         source_site_active_store_ids: Vec<String>,
+        is_multi_device: bool,
     },
     Remote {
         is_initialising: bool,
         active_stores: ActiveStoresOnSite,
+        is_multi_device: bool,
     },
     /// Records arrived via a patient-lookup pull. They belong to other sites'
     /// stores.
@@ -125,6 +127,7 @@ fn translate_delete(
         ChangelogTableName::Site => Box::new(SiteRowDelete(id)),
         ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
         ChangelogTableName::StockRelocation => Box::new(StockRelocationRowDelete(id)),
+        ChangelogTableName::StockRelocationLine => Box::new(StockRelocationLineRowDelete(id)),
         ChangelogTableName::Stocktake => Box::new(StocktakeRowDelete(id)),
         ChangelogTableName::StocktakeLine => Box::new(StocktakeLineRowDelete(id)),
         ChangelogTableName::UserAccount => Box::new(UserAccountRowDelete(id)),
@@ -160,6 +163,7 @@ fn translate_delete(
         | ChangelogTableName::Document
         | ChangelogTableName::DocumentRegistry
         | ChangelogTableName::Encounter
+        | ChangelogTableName::HelpDocument
         | ChangelogTableName::IndicatorColumn
         | ChangelogTableName::IndicatorLine
         | ChangelogTableName::InsuranceProvider
@@ -182,6 +186,9 @@ fn translate_delete(
         | ChangelogTableName::ProgramEvent
         | ChangelogTableName::ProgramIndicator
         | ChangelogTableName::Property
+        | ChangelogTableName::CustomField
+        | ChangelogTableName::CustomFieldOption
+        | ChangelogTableName::CustomFieldScope
         | ChangelogTableName::ReasonOption
         | ChangelogTableName::ShippingMethod
         | ChangelogTableName::Store
@@ -198,6 +205,12 @@ fn translate_delete(
         | ChangelogTableName::VaccineCourseItem
         | ChangelogTableName::VaccineCourseStoreConfig => {
             return Err(Error::DeleteTranslatorNotFound(table_name.clone()));
+        }
+        // A table this site doesn't recognise (e.g. added on a newer central). Such
+        // records aren't part of `INTEGRATION_ORDER` so they never reach here, but treat
+        // it as an unknown table rather than a missing delete translator if one does.
+        ChangelogTableName::Other(unknown) => {
+            return Err(Error::UnknownTableName(unknown.clone()));
         }
     };
 
@@ -228,11 +241,19 @@ fn validate_translate_integrate_one(
     match sync_context {
         SyncContext::Central {
             source_site_active_store_ids: source_site_store_ids,
-        } => validate_on_central(row, &table_name, source_site_store_ids)?,
+            is_multi_device,
+        } => validate_on_central(row, &table_name, source_site_store_ids, *is_multi_device)?,
         SyncContext::Remote {
             is_initialising,
             active_stores,
-        } => validate_on_remote(row, &table_name, active_stores, *is_initialising)?,
+            is_multi_device,
+        } => validate_on_remote(
+            row,
+            &table_name,
+            active_stores,
+            *is_initialising,
+            *is_multi_device,
+        )?,
         SyncContext::PatientLookup { .. } => {}
     };
 
@@ -378,6 +399,7 @@ fn validate_translate_integrate_inner<'a>(
         if had_store_records {
             if let SyncContext::Remote {
                 is_initialising: _,
+                is_multi_device: _,
                 active_stores,
             } = &mut sync_context
             {

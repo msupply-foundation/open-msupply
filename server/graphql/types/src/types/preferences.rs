@@ -112,6 +112,10 @@ impl PreferencesNode {
     }
 
     // Store preferences
+    pub async fn blind_stocktake(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.blind_stocktake)
+    }
+
     pub async fn manage_vaccines_in_doses(&self) -> Result<bool> {
         self.load_preference(&self.preferences.manage_vaccines_in_doses)
     }
@@ -301,6 +305,7 @@ pub enum PreferenceKey {
     Backdating,
     ReceivePaymentsFromPrescriptions,
     // Store preferences
+    BlindStocktake,
     ManageVaccinesInDoses,
     ManageVvmStatusForStock,
     OrderInPacks,
