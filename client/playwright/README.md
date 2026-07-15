@@ -3,6 +3,15 @@
 - **Docs site**: https://dev-docs.msupply.foundation/client/playwright/
 - **Source**: [docs/content/client/playwright/_index.md](../../docs/content/client/playwright/_index.md)
 
+> **The deterministic regression suites (stocktake, distribution) are defined
+> in [open-msupply-frontend](https://github.com/msupply-foundation/open-msupply-frontend)
+> under `e2e/`** — one suite definition, anchored to the `data-testid` contract
+> (`e2e/TESTIDS.md` there), verifies both this front end and the rewrite.
+> `yarn e2e:local` below still boots this repo's stack and runs them, but it
+> needs a checkout of that repo alongside this one (`FE_SUITES_DIR` overrides
+> the `../open-msupply-frontend` default). The specs that remain in this
+> directory are the smoke and custom-translations tests.
+
 ## About Playwright
 
 [Playwright](https://playwright.dev) is an open-source end-to-end testing framework by Microsoft. It supports testing across Chromium, Firefox, and WebKit browsers, and can run tests headlessly or with a visible browser. Key capabilities include:
@@ -53,8 +62,8 @@ so "passes locally" means something.
 Two rules keep it deterministic:
 
 - **Suites must not assume datafile state.** Store-local data (stock, documents)
-  is arranged through the GraphQL API in [e2e/data.setup.ts](e2e/data.setup.ts)
-  — extend that, don't add rows to the reference datafile.
+  is arranged through the GraphQL API in `e2e/specs/data.setup.ts` (in the
+  suites repo) — extend that, don't add rows to the reference datafile.
 - **Reference data (items, reasons, master lists) lives in the datafile.** The
   remote API can't create it; see the
   [regeneration recipe](../../server/data/e2e/README.md) when it needs to change.
@@ -73,8 +82,10 @@ All commands run from the `client/` directory.
 # Run all tests (headless)
 yarn e2e
 
-# Regression suites — always single-worker (see note above)
-yarn e2e stocktake-regression distribution-regression --workers 1
+# Regression suites — run from an open-msupply-frontend checkout (see note
+# at the top); always single-worker (see note above)
+(cd ../../open-msupply-frontend && BASE_URL=http://localhost:3003 \
+  pnpm e2e stocktake-regression distribution-regression --workers 1)
 
 # Run only the smoke tests
 yarn e2e smoke

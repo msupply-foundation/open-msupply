@@ -8,12 +8,19 @@
 #
 # What it does: builds the (sqlite) server + CLI, restores a throwaway
 # database from server/data/e2e, boots the server and a webpack dev server
-# on dedicated ports, waits for both, runs Playwright, tears everything
-# down. Store-local data (stock) is arranged by e2e/data.setup.ts through
-# the API — the datafile deliberately contains none (see
-# server/data/e2e/README.md).
+# on dedicated ports, waits for both, runs the deterministic regression
+# suites, tears everything down. Store-local data (stock) is arranged by
+# the suites' data.setup.ts through the API — the datafile deliberately
+# contains none (see server/data/e2e/README.md).
+#
+# The suites themselves are DEFINED IN open-msupply-frontend (e2e/ there —
+# the cross-FE test-id contract, e2e/TESTIDS.md, lets one suite definition
+# verify both front ends), so this script needs a checkout of that repo
+# alongside the server + front end it builds here.
 #
 # Knobs (all optional):
+#   FE_SUITES_DIR     open-msupply-frontend checkout (default:
+#                     ../open-msupply-frontend next to this repo)
 #   E2E_SERVER_PORT   backend port  (default 9920; discovery uses port+1)
 #   E2E_FE_PORT       front-end port (default 3113)
 #   KEEP_SERVER=1     leave the server + FE running after the tests
@@ -39,7 +46,19 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 PW_DIR=$(cd "$SCRIPT_DIR/.." && pwd)          # client/playwright
 CLIENT_DIR=$(cd "$PW_DIR/.." && pwd)          # client
 SERVER_DIR=$(cd "$CLIENT_DIR/../server" && pwd)
-LOG_DIR="$PW_DIR/test-results"
+
+FE_SUITES_DIR=${FE_SUITES_DIR:-$CLIENT_DIR/../../open-msupply-frontend}
+if [[ ! -d "$FE_SUITES_DIR/e2e/specs" ]]; then
+  echo "FE_SUITES_DIR ($FE_SUITES_DIR) is not an open-msupply-frontend checkout" >&2
+  echo "  git clone https://github.com/msupply-foundation/open-msupply-frontend" >&2
+  echo "  then set FE_SUITES_DIR if it isn't ../open-msupply-frontend" >&2
+  exit 1
+fi
+FE_SUITES_DIR=$(cd "$FE_SUITES_DIR" && pwd)
+# Stack logs go in the suites repo (so CI uploads one coherent artifact)
+# but in their own dir — Playwright wipes its outputDir (e2e/test-results)
+# at run start, which would eat logs written before it.
+LOG_DIR="$FE_SUITES_DIR/e2e/stack-logs"
 mkdir -p "$LOG_DIR"
 
 SERVER_PID=""
@@ -69,13 +88,15 @@ for port in "$SERVER_PORT" $((SERVER_PORT + 1)) "$FE_PORT"; do
   fi
 done
 
-# Fresh-checkout bootstrap: JS deps and the Playwright browser. Both are
-# fast no-ops when already present. Linux needs the browser's system deps.
+# Fresh-checkout bootstrap: JS deps for this FE (webpack dev server) and
+# for the suites repo, plus the suites' Playwright browser. All are fast
+# no-ops when already present. Linux needs the browser's system deps.
 [[ -d "$CLIENT_DIR/node_modules" ]] || (cd "$CLIENT_DIR" && yarn install)
+[[ -d "$FE_SUITES_DIR/node_modules" ]] || (cd "$FE_SUITES_DIR" && pnpm install --frozen-lockfile)
 if [[ "$(uname)" == "Linux" ]]; then
-  (cd "$CLIENT_DIR" && npx playwright install --with-deps chromium)
+  (cd "$FE_SUITES_DIR" && pnpm exec playwright install --with-deps chromium)
 else
-  (cd "$CLIENT_DIR" && npx playwright install chromium)
+  (cd "$FE_SUITES_DIR" && pnpm exec playwright install chromium)
 fi
 
 echo "Building server + CLI (sqlite; a no-op when already built)"
@@ -138,8 +159,12 @@ done
 WORKERS=(--workers 1)
 for arg in "$@"; do [[ "$arg" == --workers* ]] && WORKERS=(); done
 
-cd "$CLIENT_DIR"
+cd "$FE_SUITES_DIR"
 # ${arr[@]+...} keeps empty-array expansion safe under bash 3.2's `set -u`.
+# E2E_META_APP_VERSION: the suites config stamps the app-under-test version
+# into the report — that's this repo's client, not the suites repo.
 BASE_URL="http://localhost:$FE_PORT" \
 API_URL="http://localhost:$SERVER_PORT" \
-  yarn e2e "$@" ${WORKERS[@]+"${WORKERS[@]}"}
+E2E_META_APP_VERSION=$(node -p "require('$CLIENT_DIR/package.json').version") \
+  pnpm exec playwright test --config e2e/playwright.config.ts \
+  "$@" ${WORKERS[@]+"${WORKERS[@]}"}
