@@ -7,27 +7,47 @@ import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFo
 import { ArrowRightIcon, InfoIcon, CheckIcon } from '../../../ui/icons';
 import { ActionModal, type ActionResult } from '../../../domain/action';
 import { STATUS_FLOW, STATUS_LABELS, statusIndex } from '../stocktakeStatus';
+import { finaliseStocktake } from '../stocktakeUpdate';
 import type { StocktakeInfoFragment } from '../stocktakeDetail.generated';
 
 export interface FinaliseActionProps {
+  storeId: string;
   node: StocktakeInfoFragment;
   /** True while status is not NEW or the stocktake is on hold — the edit lock (OMS isDisabled). */
   disabled: boolean;
   /** No countable lines → finalise can't run yet (OMS no-lines guard). */
   canFinalise: boolean;
-  /** Finalise the stocktake — the only status write (NEW → FINALISED; no other transition). Its
-   *  ActionResult drives the modal's success | error phase (an error carries the offending lines). */
-  run: () => Promise<ActionResult>;
+  /** The stocktake was finalised — the view merges the returned info over its node (in place, no
+   *  refetch). Fires the moment the mutation succeeds, so the UI updates behind the success message. */
+  onApplied: (node: StocktakeInfoFragment) => void;
+  /** A finalise rejection carrying offending lines — stamp them (inline + errors chip). */
+  onError: (message: string, lineIds: string[]) => void;
   /** Error phase's "Show error lines": apply the errors filter to the offending lines. */
   onShowErrors: (lineIds: string[]) => void;
 }
 
 // The Finalise action — a self-contained peer of the bulk selection actions (kdd/action-modal), but
 // its trigger is the status stepper's SplitButton rather than a plain button. It owns the button,
-// the confirm → working → success | error ActionModal (a finalise rejection carries per-line errors,
-// so the error phase offers "Show error lines"), AND a no-lines info dialog. The status footer hosts
-// it beside the StatusIndicator; the view supplies `run` (→ finaliseStocktake) and the callbacks.
+// the finalise mutation (finaliseStocktake — the ONLY status write, NEW → FINALISED, no un-finalise),
+// the confirm → working → success | error ActionModal (a rejection carries per-line errors, so the
+// error phase offers "Show error lines"), AND a no-lines info dialog. Like the bulk actions, the view
+// keeps ownership of the stocktake state and applies the result via callbacks: onApplied (the saved
+// node) on success, onError (the offending lines) on a rejection. A transport failure is silent
+// (handled globally in graphqlFetch) → the modal resolves `ok` and just closes.
 export const FinaliseAction: Component<FinaliseActionProps> = (props) => {
+  const run = async (): Promise<ActionResult> => {
+    const result = await finaliseStocktake(props.storeId, props.node.id);
+    if (result.kind === 'saved') {
+      props.onApplied(result.node);
+      return { kind: 'ok' };
+    }
+    if (result.kind === 'error') {
+      props.onError(result.message, result.lineIds);
+      return { kind: 'error', message: result.message, lineIds: result.lineIds };
+    }
+    return { kind: 'ok' };
+  };
+
   // pendingStatus drives the confirm modal (set by the split button); noLinesOpen the info dialog.
   const [pendingStatus, setPendingStatus] = createSignal<string | undefined>();
   const [noLinesOpen, setNoLinesOpen] = createSignal(false);
@@ -86,7 +106,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = (props) => {
         title={t('stocktake.finalise.confirm-title')}
         confirmLabel={t('stocktake.detail.finalise')}
         confirmIcon={<ArrowRightIcon />}
-        run={props.run}
+        run={run}
         successMessage={t('stocktake.finalise.success')}
         onShowErrors={props.onShowErrors}
       >

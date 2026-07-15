@@ -42,13 +42,12 @@ import {
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
-import { type ActionResult } from '../../domain/action';
 import {
   DeleteLinesAction,
   ChangeLocationAction,
   ReduceToZeroAction,
 } from './actions';
-import { saveStocktakeFields, finaliseStocktake } from './stocktakeUpdate';
+import { saveStocktakeFields } from './stocktakeUpdate';
 import { lineMatchesFilter, type StocktakeLineFilter } from './stocktakeLineFilter';
 import { createDebouncedEdit } from '../../domain/debouncedEdit';
 import type { StocktakeEditFields } from './stocktakeEdit';
@@ -298,27 +297,13 @@ const StocktakeDetailView: Component = () => {
   });
   const setHold = (hold: boolean) => void saveField({ isLocked: hold });
 
-  // Finalise — the ACTION with user-facing errors, and the ONLY status write (a stocktake goes
-  // NEW → FINALISED, no intermediate / no un-finalise, and UpdateStocktakeInput.status only accepts
-  // FINALISED). The footer's ActionModal drives it (confirm → working → success | error): this is
-  // its run(). A saved node replaces `info` in place → `ok`; a rejection (snapshot mismatch / lock)
-  // stamps the per-line errors and returns `error` so the modal shows the message + "Show error
-  // lines"; a transport failure is silent (global modal) → `ok` (the modal just closes).
-  const finalise = async (): Promise<ActionResult> => {
-    const node = current();
-    if (!node) return { kind: 'ok' };
-    const result = await finaliseStocktake(params.storeId, node.id);
-    if (result.kind === 'saved') {
-      // updateStocktake returns info fields only — merge over the current node to keep its lines.
-      mutate((prev: StocktakeNode | undefined) => (prev ? { ...prev, ...result.node } : prev));
-      return { kind: 'ok' };
-    }
-    if (result.kind === 'error') {
-      stampLineErrors(result.message, result.lineIds);
-      return { kind: 'error', message: result.message, lineIds: result.lineIds };
-    }
-    return { kind: 'ok' };
-  };
+  // Finalise is owned by FinaliseAction (the status footer's action component — it calls
+  // finaliseStocktake and routes a rejection through onError/onShowErrors). On success it hands the
+  // saved node back here: finaliseStocktake returns the StocktakeInfo fragment (status/dates), which
+  // we merge over the current node to keep its lines, reflecting the FINALISED state in place with
+  // no refetch (kdd/state-management). NEW → FINALISED is the only status write.
+  const onFinalised = (saved: StocktakeInfoFragment) =>
+    mutate((prev: StocktakeNode | undefined) => (prev ? { ...prev, ...saved } : prev));
 
   // --- Selection actions ---
   // Each action (Delete / Change location / Reduce to 0) is its own self-contained component in
@@ -516,11 +501,13 @@ const StocktakeDetailView: Component = () => {
                 when={selectedIds().length > 0}
                 fallback={
                   <StocktakeStatusFooter
+                    storeId={params.storeId}
                     node={node()}
                     disabled={isDisabled(node())}
                     canFinalise={canFinalise()}
                     onSetHold={setHold}
-                    run={finalise}
+                    onFinalised={onFinalised}
+                    onError={stampLineErrors}
                     onShowErrors={showErrorLines}
                   />
                 }

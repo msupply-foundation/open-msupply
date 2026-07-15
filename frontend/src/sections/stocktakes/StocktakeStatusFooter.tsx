@@ -4,7 +4,6 @@ import { CheckboxButton } from '../../ui/elements/buttons/CheckboxButton';
 import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
-import { type ActionResult } from '../../domain/action';
 import { FinaliseAction } from './actions';
 import { STATUS_LABELS, statusIndex } from './stocktakeStatus';
 import type { StocktakeInfoFragment } from './stocktakeDetail.generated';
@@ -19,6 +18,7 @@ import type { StocktakeInfoFragment } from './stocktakeDetail.generated';
 // (matching OMS, which swaps the whole footer).
 
 export interface StocktakeStatusFooterProps {
+  storeId: string;
   node: StocktakeInfoFragment;
   /** True while status is not NEW or the stocktake is on hold — the edit lock (OMS isDisabled). */
   disabled: boolean;
@@ -26,8 +26,10 @@ export interface StocktakeStatusFooterProps {
   canFinalise: boolean;
   /** Toggle the on-hold lock (writes isLocked). */
   onSetHold: (hold: boolean) => void;
-  /** Finalise the stocktake — passed straight to FinaliseAction's ActionModal run(). */
-  run: () => Promise<ActionResult>;
+  /** The stocktake was finalised — merge the returned info over the node (in place, no refetch). */
+  onFinalised: (node: StocktakeInfoFragment) => void;
+  /** A finalise rejection carrying offending lines — stamp them (inline + errors chip). */
+  onError: (message: string, lineIds: string[]) => void;
   /** Error phase's "Show error lines": apply the errors filter to the offending lines. */
   onShowErrors: (lineIds: string[]) => void;
 }
@@ -60,10 +62,12 @@ export const StocktakeStatusFooter: Component<StocktakeStatusFooterProps> = (pro
 
       {/* Finalise — the status-change split button + its modals, self-contained (kdd/action-modal). */}
       <FinaliseAction
+        storeId={props.storeId}
         node={props.node}
         disabled={props.disabled}
         canFinalise={props.canFinalise}
-        run={props.run}
+        onApplied={props.onFinalised}
+        onError={props.onError}
         onShowErrors={props.onShowErrors}
       />
 
