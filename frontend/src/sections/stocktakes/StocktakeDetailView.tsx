@@ -42,7 +42,7 @@ import {
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
-import { StocktakeErrorDialog, type StocktakeErrorInfo } from './StocktakeErrorDialog';
+import { type ActionResult } from '../../domain/action';
 import {
   DeleteLinesAction,
   ChangeLocationAction,
@@ -140,19 +140,17 @@ const StocktakeDetailView: Component = () => {
   const params = useParams<{ storeId: string; stocktakeId: string }>();
   const navigate = useNavigate();
   // Sort + filter (incl. search) are URL-backed (shareable, survive reload/back-nav) in one
-  // `?query=` param. sort()/filter()/setSort/setFilter are thin accessors over that single state.
-  const { state, setState } = useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
-  const sort = () => state().sort;
-  const filter = () => state().filter;
-  const setSort = (next: SortState<SortKey>) => setState({ ...state(), sort: next });
-  const setFilter = (next: StocktakeLineFilter) => setState({ ...state(), filter: next });
+  // `?query=` param. sort()/filter()/setSort/setFilter are thin accessors over that single query.
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const sort = () => query().sort;
+  const filter = () => query().filter;
+  const setSort = (next: SortState<SortKey>) => setQuery({ ...query(), sort: next });
+  const setFilter = (next: StocktakeLineFilter) => setQuery({ ...query(), filter: next });
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The details panel is an overlay — it starts CLOSED (like OMS) and the header info button
   // opens it; its own close button (top inline-end) or the toggle closes it.
   const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
-  // The error-summary dialog (a failed finalise / bulk delete). undefined = closed.
-  const [errorInfo, setErrorInfo] = createSignal<StocktakeErrorInfo | undefined>();
   // Per-line errors from the last failed finalise/save, keyed by line id → message. Rendered
   // inline under the Snapshot cell of the offending rows (a snapshot/current-count mismatch is a
   // "recount this line" message that belongs on the snapshot). Cleared when a fresh fetch lands.
@@ -257,13 +255,6 @@ const StocktakeDetailView: Component = () => {
   const stampLineErrors = (message: string, lineIds: string[]) =>
     setLineErrors(new Map(lineIds.map((id) => [id, message])));
 
-  // Finalise's failure: stamp the lines AND open the summary dialog (the footer Finalise isn't an
-  // SelectionActionModal, so it uses the standalone dialog).
-  const recordError = (error: StocktakeErrorInfo) => {
-    stampLineErrors(error.message, error.lineIds);
-    setErrorInfo(error);
-  };
-
   const current = () => info();
 
   // A stocktake-level field save: patch → updateStocktake, replace `info` in place on success. No
@@ -300,17 +291,23 @@ const StocktakeDetailView: Component = () => {
 
   // Finalise — the ACTION with user-facing errors, and the ONLY status write (a stocktake goes
   // NEW → FINALISED, no intermediate / no un-finalise, and UpdateStocktakeInput.status only accepts
-  // FINALISED). A saved node replaces `info` in place; a rejection (snapshot mismatch / lock) opens
-  // the error-summary dialog; a transport failure is silent (global modal).
-  const finalise = async () => {
+  // FINALISED). The footer's ActionModal drives it (confirm → working → success | error): this is
+  // its run(). A saved node replaces `info` in place → `ok`; a rejection (snapshot mismatch / lock)
+  // stamps the per-line errors and returns `error` so the modal shows the message + "Show error
+  // lines"; a transport failure is silent (global modal) → `ok` (the modal just closes).
+  const finalise = async (): Promise<ActionResult> => {
     const node = current();
-    if (!node) return;
+    if (!node) return { kind: 'ok' };
     const result = await finaliseStocktake(params.storeId, node.id);
     if (result.kind === 'saved') {
       setInfo(result.node);
-    } else if (result.kind === 'error') {
-      recordError({ message: result.message, lineIds: result.lineIds });
+      return { kind: 'ok' };
     }
+    if (result.kind === 'error') {
+      stampLineErrors(result.message, result.lineIds);
+      return { kind: 'error', message: result.message, lineIds: result.lineIds };
+    }
+    return { kind: 'ok' };
   };
 
   // --- Selection actions ---
@@ -337,7 +334,6 @@ const StocktakeDetailView: Component = () => {
   const showErrorLines = (lineIds: string[]) => {
     setFilter({ errorIds: lineIds });
     setSelectedIds([]);
-    setErrorInfo(undefined);
   };
 
   // Crumbs are an accessor so t() re-translates on locale change.
@@ -522,7 +518,8 @@ const StocktakeDetailView: Component = () => {
                     disabled={isDisabled(node())}
                     canFinalise={canFinalise()}
                     onSetHold={setHold}
-                    onFinalise={finalise}
+                    run={finalise}
+                    onShowErrors={showErrorLines}
                   />
                 }
               >
@@ -593,11 +590,6 @@ const StocktakeDetailView: Component = () => {
               item={editItem()}
               lines={editItemLines()}
               onCommitted={applyCommit}
-            />
-            <StocktakeErrorDialog
-              error={errorInfo()}
-              onClose={() => setErrorInfo(undefined)}
-              onShowErrors={showErrorLines}
             />
           </Page>
         )}

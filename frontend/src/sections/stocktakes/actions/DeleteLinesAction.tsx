@@ -2,7 +2,7 @@ import { createSignal, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { TrashIcon } from '../../../ui/icons';
-import { SelectionActionModal, type SelectionActionResult } from '../../../domain/selection';
+import { ActionModal, type ActionResult } from '../../../domain/action';
 import { deleteStocktakeLines } from '../stocktakeLineUpdate';
 
 export interface DeleteLinesActionProps {
@@ -20,12 +20,12 @@ export interface DeleteLinesActionProps {
 }
 
 // The Delete-lines selection action: its footer button + confirm → working → success | error modal
-// (SelectionActionModal). Owns its open state; the view owns rows/selection and applies the result
+// (ActionModal). Owns its open state; the view owns rows/selection and applies the result
 // via the callbacks. A partial failure stamps the errors and offers "Show error lines".
 export const DeleteLinesAction: Component<DeleteLinesActionProps> = (props) => {
   const [open, setOpen] = createSignal(false);
 
-  const run = async (): Promise<SelectionActionResult> => {
+  const run = async (): Promise<ActionResult> => {
     const result = await deleteStocktakeLines(props.storeId, props.selectedIds());
     if (result.kind === 'failed') return { kind: 'ok' };
     props.onDeleted(result.deletedIds);
@@ -46,7 +46,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = (props) => {
       >
         {t('common.delete')}
       </Button>
-      <SelectionActionModal
+      <ActionModal
         open={open()}
         onClose={() => setOpen(false)}
         icon={<TrashIcon />}
@@ -58,7 +58,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = (props) => {
         onShowErrors={props.onShowErrors}
       >
         {t('stocktake.lines.delete-confirm', { count: props.selectedIds().length })}
-      </SelectionActionModal>
+      </ActionModal>
     </>
   );
 };

@@ -219,6 +219,8 @@
   "stocktake.on-hold.unset": "This will re-enable changes to the stocktake.",
   "stocktake.finalise.confirm-title": "Are you sure?",
   "stocktake.finalise.confirm": "Confirm status as finalised? A finalised stocktake can no longer be edited.",
+  "stocktake.finalise.success": "Stocktake finalised.",
+  "stocktake.finalise.no-lines-title": "Nothing counted yet",
   "stocktake.finalise.no-lines": "Can't finalise — there are no counted lines.",
   "stocktake.update-error.snapshot-mismatch": "Stock changed since the count started, so some lines no longer match their snapshot.",
   "stocktake.update-error.reduced-below-zero": "Some lines would reduce stock below zero.",

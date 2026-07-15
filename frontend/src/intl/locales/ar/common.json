@@ -212,6 +212,8 @@
   "stocktake.on-hold.unset": "سيعيد هذا تفعيل التعديلات على الجرد.",
   "stocktake.finalise.confirm-title": "هل أنت متأكد؟",
   "stocktake.finalise.confirm": "تأكيد الحالة كمنتهية؟ لا يمكن تعديل الجرد المنتهي بعد ذلك.",
+  "stocktake.finalise.success": "تم إنهاء الجرد.",
+  "stocktake.finalise.no-lines-title": "لم يتم عدّ أي شيء بعد",
   "stocktake.finalise.no-lines": "لا يمكن الإنهاء — لا توجد أسطر معدودة.",
   "stocktake.update-error.snapshot-mismatch": "تغيّر المخزون منذ بدء العد، لذا لم تعد بعض الأسطر مطابقة للقطتها.",
   "stocktake.update-error.reduced-below-zero": "ستؤدي بعض الأسطر إلى خفض المخزون دون الصفر.",

@@ -74,7 +74,7 @@ const StocktakesList: Component = () => {
   // StoreGuardLayout, which requires a resolved store before routing.
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { state, setState } = useUrlQueryState<StocktakesListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<StocktakesListState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The create modal owns its own form + create logic; the list just toggles it open. On a
   // successful create it navigates away to the new stocktake's detail page, so the list needs
@@ -106,9 +106,9 @@ const StocktakesList: Component = () => {
   // only live filters: adding an empty chip does not reflash the list.
   const variables = createMemo<StocktakesVariables>(() => ({
     storeId: params.storeId,
-    filter: stripEmpty(state().filter),
-    sort: state().sort,
-    page: { first: state().first, offset: state().offset },
+    filter: stripEmpty(query().filter),
+    sort: query().sort,
+    page: { first: query().first, offset: query().offset },
   }));
 
   // Global resource-style fetch (kdd/state-management): the fetcher passes codegen
@@ -135,7 +135,7 @@ const StocktakesList: Component = () => {
   const totalCount = () => data()?.totalCount ?? 0;
 
   const currentSort = (): SortState<SortKey> | undefined => {
-    const s = state().sort?.[0];
+    const s = query().sort?.[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
 
@@ -143,11 +143,11 @@ const StocktakesList: Component = () => {
   // and hands back key + desc; we just record it as the GraphQL sort array, resetting
   // to the first page.
   const onSort = (key: SortKey, desc: boolean) => {
-    setState({ ...state(), sort: [{ key, desc }], offset: 0 });
+    setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
   };
 
   const onFilterChange = (filter: StocktakeFilter) => {
-    setState({ ...state(), filter, offset: 0 });
+    setQuery({ ...query(), filter, offset: 0 });
     setSelectedIds([]);
   };
 
@@ -264,7 +264,7 @@ const StocktakesList: Component = () => {
             </Button>
           </HeaderButtons>
           <Toolbar>
-            <FilterBar filters={filterFields()} filter={state().filter} onChange={onFilterChange} />
+            <FilterBar filters={filterFields()} filter={query().filter} onChange={onFilterChange} />
           </Toolbar>
         </Header>
       }
@@ -276,11 +276,11 @@ const StocktakesList: Component = () => {
           fallback={
             <ContentFooter>
               <Pagination
-                offset={state().offset}
-                pageSize={state().first}
+                offset={query().offset}
+                pageSize={query().first}
                 total={totalCount()}
-                onOffsetChange={(offset) => setState({ ...state(), offset })}
-                onPageSizeChange={(first) => setState({ ...state(), first, offset: 0 })}
+                onOffsetChange={(offset) => setQuery({ ...query(), offset })}
+                onPageSizeChange={(first) => setQuery({ ...query(), first, offset: 0 })}
               />
             </ContentFooter>
           }

@@ -3,7 +3,7 @@ import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { CheckIcon, MapPinIcon } from '../../../ui/icons';
-import { SelectionActionModal, type SelectionActionResult } from '../../../domain/selection';
+import { ActionModal, type ActionResult } from '../../../domain/action';
 import { LocationSelect } from '../../../domain/location';
 import type { StocktakeLineFragment } from '../stocktakeDetail.generated';
 import { updateStocktakeLines } from '../stocktakeLineUpdate';
@@ -24,7 +24,7 @@ export const ChangeLocationAction: Component<ChangeLocationActionProps> = (props
   const [open, setOpen] = createSignal(false);
   const [locationId, setLocationId] = createSignal<string | null>(null);
 
-  const run = async (): Promise<SelectionActionResult> => {
+  const run = async (): Promise<ActionResult> => {
     const result = await updateStocktakeLines(
       props.storeId,
       props.selectedIds().map((id) => ({ id, location: { value: locationId() } })),
@@ -51,7 +51,7 @@ export const ChangeLocationAction: Component<ChangeLocationActionProps> = (props
       >
         {t('stocktake.lines.change-location')}
       </Button>
-      <SelectionActionModal
+      <ActionModal
         open={open()}
         onClose={() => setOpen(false)}
         icon={<MapPinIcon />}
@@ -72,7 +72,7 @@ export const ChangeLocationAction: Component<ChangeLocationActionProps> = (props
             onChange={(l) => setLocationId(l?.id ?? null)}
           />
         </FieldRow>
-      </SelectionActionModal>
+      </ActionModal>
     </>
   );
 };

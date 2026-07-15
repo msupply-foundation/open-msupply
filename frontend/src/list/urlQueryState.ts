@@ -18,27 +18,27 @@ import type { Accessor } from 'solid-js';
 // would be a lot of machinery to hide an error that should be shown.
 //
 // Click-through (kdd/explicit-composition): a page calls `useUrlQueryState`, reads the
-// current value via the returned accessor, and updates it by calling `setState`
+// current value via the returned `query` accessor, and updates it by calling `setQuery`
 // directly — no subscribers, no shared store.
 
 const QUERY_PARAM = 'query';
 
 export type UrlQueryState<T> = {
-  /** Current parsed state, merged over the supplied default. Reactive. */
-  state: Accessor<T>;
+  /** Current parsed query state, merged over the supplied default. Reactive. */
+  query: Accessor<T>;
   /**
-   * Replace the state. Passing the default (or an object that serialises to it)
+   * Replace the query state. Passing the default (or an object that serialises to it)
    * clears the param so a pristine list has a clean URL. Navigation is a replace
    * by default (filter/sort/page changes are not distinct history entries);
    * pass { push: true } to add a history entry.
    */
-  setState: (next: T, options?: { push?: boolean }) => void;
+  setQuery: (next: T, options?: { push?: boolean }) => void;
 };
 
 export function useUrlQueryState<T extends object>(defaultState: T): UrlQueryState<T> {
   const [searchParams, setSearchParams] = useSearchParams<{ query: string }>();
 
-  const state = (): T => {
+  const query = (): T => {
     const raw = searchParams.query;
     if (!raw) return defaultState;
     try {
@@ -49,12 +49,12 @@ export function useUrlQueryState<T extends object>(defaultState: T): UrlQuerySta
     }
   };
 
-  const setState = (next: T, options?: { push?: boolean }) => {
+  const setQuery = (next: T, options?: { push?: boolean }) => {
     const serialised = JSON.stringify(next);
     // A state equal to the default is represented by the absence of the param.
-    const query = serialised === JSON.stringify(defaultState) ? null : serialised;
-    setSearchParams({ [QUERY_PARAM]: query }, { replace: !options?.push });
+    const serialisedOrNull = serialised === JSON.stringify(defaultState) ? null : serialised;
+    setSearchParams({ [QUERY_PARAM]: serialisedOrNull }, { replace: !options?.push });
   };
 
-  return { state, setState };
+  return { query, setQuery };
 }

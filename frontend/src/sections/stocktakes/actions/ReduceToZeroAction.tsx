@@ -3,7 +3,7 @@ import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { CheckIcon, MinusCircleIcon } from '../../../ui/icons';
-import { SelectionActionModal, type SelectionActionResult } from '../../../domain/selection';
+import { ActionModal, type ActionResult } from '../../../domain/action';
 import { ReasonSelect } from '../../../domain/reasonOptions';
 import type { StocktakeLineFragment } from '../stocktakeDetail.generated';
 import { updateStocktakeLines } from '../stocktakeLineUpdate';
@@ -25,7 +25,7 @@ export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = (props) =>
   const [open, setOpen] = createSignal(false);
   const [reasonId, setReasonId] = createSignal<string | null>(null);
 
-  const run = async (): Promise<SelectionActionResult> => {
+  const run = async (): Promise<ActionResult> => {
     const result = await updateStocktakeLines(
       props.storeId,
       props.selectedIds().map((id) => ({ id, countedNumberOfPacks: 0, reasonOptionId: reasonId() })),
@@ -52,7 +52,7 @@ export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = (props) =>
       >
         {t('stocktake.lines.reduce-to-zero')}
       </Button>
-      <SelectionActionModal
+      <ActionModal
         open={open()}
         onClose={() => setOpen(false)}
         icon={<MinusCircleIcon />}
@@ -74,7 +74,7 @@ export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = (props) =>
             onChange={(r) => setReasonId(r?.id ?? null)}
           />
         </FieldRow>
-      </SelectionActionModal>
+      </ActionModal>
     </>
   );
 };
