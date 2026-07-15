@@ -181,8 +181,11 @@ const StocktakeDetailView: Component = () => {
   const [editItem, setEditItem] = createSignal<StocktakeLineEditItem | undefined>();
 
   // Fetch the stocktake. A NodeError (e.g. bad id) is promoted to the global unexpected-error
-  // modal via mapSuccessToError, so it never reaches the view — we only narrow to the node.
-  const [data] = createResource(
+  // modal via mapSuccessToError, so it never reaches the view — we only narrow to the node. The
+  // resource IS the local state: every save writes back with `mutate` (no refetch), so `info` and
+  // `rows` are just accessors over data() rather than separate signals kept in sync by an effect
+  // (kdd/state-management).
+  const [data, { mutate }] = createResource(
     () => ({ storeId: params.storeId, stocktakeId: params.stocktakeId }),
     async (variables) => {
       const result = await graphqlFetch(StocktakeDetail, variables, {
@@ -194,16 +197,17 @@ const StocktakeDetailView: Component = () => {
     },
   );
 
-  // Stocktake-level info + lines both live in LOCAL signals (seeded from the fetch) so every save
-  // reflects in place with no refetch: updateStocktake returns the StocktakeInfo fragment (→ info)
-  // and the line batch mutation returns line fragments (→ rows) (kdd/state-management).
-  const [info, setInfo] = createSignal<StocktakeInfoFragment | undefined>();
-  const [rows, setRows] = createSignal<Line[]>([]);
-  createEffect(on(data, (node) => {
-    setInfo(node ?? undefined);
-    setRows(node?.lines.nodes ?? []);
-    setLineErrors(new Map()); // a fresh fetch clears stale per-line errors
-  }));
+  // Stocktake-level info + the lines both come straight from the fetched node. Saves reflect in
+  // place with no refetch by mutating the resource: updateStocktake returns the StocktakeInfo
+  // fragment (merged over the node, keeping its lines) and the line batch mutation returns line
+  // fragments (spliced into node.lines.nodes).
+  const info = (): StocktakeInfoFragment | undefined => data();
+  const rows = (): Line[] => data()?.lines.nodes ?? [];
+
+  // A fresh fetch clears stale per-line errors. lineErrors is independently mutated by save
+  // failures (stampLineErrors), so it stays its own signal — this effect only resets it when new
+  // data lands (the one reaction we still need now that info/rows are derived).
+  createEffect(on(data, () => setLineErrors(new Map())));
 
   // Filter → sort. The filter runs first (client-side over the loaded rows), then the sort memo
   // orders what survives. The DataTable is display-only about order (manualSorting).
@@ -241,13 +245,15 @@ const StocktakeDetailView: Component = () => {
   // line-edit modal passes a full LineEditCommit; the selection actions pass a partial (delete-only
   // or update-only), so every path reduces to one splice with consistent semantics.
   const applyCommit = (commit: Partial<LineEditCommit>) => {
-    setRows((current) => {
+    mutate((node: StocktakeNode | undefined) => {
+      if (!node) return node;
       const deleted = new Set(commit.deletedIds);
       const updatedById = new Map((commit.updated ?? []).map((line) => [line.id, line]));
-      const next = current
+      const nodes = node.lines.nodes
         .filter((line) => !deleted.has(line.id))
-        .map((line) => updatedById.get(line.id) ?? line);
-      return [...next, ...(commit.inserted ?? [])];
+        .map((line) => updatedById.get(line.id) ?? line)
+        .concat(commit.inserted ?? []);
+      return { ...node, lines: { ...node.lines, nodes } };
     });
   };
 
@@ -277,7 +283,8 @@ const StocktakeDetailView: Component = () => {
     const node = current();
     if (!node) return;
     const saved = await saveStocktakeFields(params.storeId, { id: node.id, ...patch });
-    if (saved) setInfo(saved);
+    // updateStocktake returns info fields only — merge over the current node to keep its lines.
+    if (saved) mutate((prev: StocktakeNode | undefined) => (prev ? { ...prev, ...saved } : prev));
   };
 
   // ONE debounced-edit buffer for every as-you-type text field on the stocktake (the toolbar's
@@ -309,7 +316,7 @@ const StocktakeDetailView: Component = () => {
     if (!node) return;
     const result = await finaliseStocktake(params.storeId, node.id);
     if (result.kind === 'saved') {
-      setInfo(result.node);
+      mutate((prev: StocktakeNode | undefined) => (prev ? { ...prev, ...result.node } : prev));
     } else if (result.kind === 'error') {
       recordError({ message: result.message, lineIds: result.lineIds });
     }
