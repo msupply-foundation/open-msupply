@@ -1,4 +1,4 @@
-import { createResource, createSignal, Match, Show, Switch } from 'solid-js';
+import { createMemo, createResource, createSignal, Match, Show, Switch } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
@@ -12,6 +12,7 @@ import { masterListsResource, MasterListSelect } from '../../domain/masterList';
 import { locationsResource, LocationSelect } from '../../domain/location';
 import { PlusCircleIcon, XCircleIcon } from '../../ui/icons';
 import { t } from '../../intl';
+import { shallowEqual } from '../../typeHelpers';
 import { dayBefore } from '../../intl/dateArithmetic';
 import {
   InsertStocktake,
@@ -96,9 +97,24 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
     };
   };
 
+  // Source for the estimate = the count-affecting fields (kdd/no-remounts). createResource has
+  // no `equals` option — it dedupes its source with ===, and a fresh array/object every setForm
+  // would refetch on each edit. So the shallow compare lives on a createMemo (which DOES take
+  // `equals`): the memo only emits a new value when a field actually changes, and the resource
+  // watches the memo. Enumerated (not JSON.stringify(form)) so the dependency is explicit — every
+  // field here is read by stockFilter/the fetcher. null (blank) has no count to fetch.
+  const countKey = createMemo(
+    () => {
+      if (isBlank()) return null;
+      const { type, masterListId, locationId, expiryDate, includeAllItems } = form();
+      return [type, masterListId, locationId, expiryDate, includeAllItems] as const;
+    },
+    undefined,
+    { equals: shallowEqual },
+  );
+
   const [estimate] = createResource(
-    // Source = the form as a stable string (kdd/no-remounts): equal content → no refetch.
-    () => (isBlank() ? null : JSON.stringify(form())),
+    countKey,
     async () => {
       const { includeAllItems, masterListId } = form();
       const stock = await graphqlFetch(StockLineCount, {

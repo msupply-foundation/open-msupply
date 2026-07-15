@@ -5,6 +5,16 @@ export const exhaustiveCheck = (value: never): never => {
   throw new Error(`Unhandled variant: ${JSON.stringify(value)}`);
 };
 
+// Element-by-element (===) comparison of two arrays, treating null as a value (both
+// null → equal). Meant as the `equals` for a createMemo whose output is a tuple of
+// reactive inputs: createResource dedupes its source by reference and has no `equals`
+// option, so a memo with this comparator gives it a source that only changes when a
+// field actually changes (kdd/no-remounts). Same-reference and same-length are the
+// fast paths; different length or any element mismatch → not equal.
+export const shallowEqual = <T extends readonly unknown[]>(a: T | null, b: T | null): boolean =>
+  a === b ||
+  (a !== null && b !== null && a.length === b.length && a.every((v, i) => v === b[i]));
+
 // Drop keys whose value is null/undefined or an empty operator object ({}), keeping
 // the same type. A generated GraphQL filter carries these two "not applied" markers:
 // FilterBar holds an added-but-empty chip as a `null` key, and a hand-edited URL can
