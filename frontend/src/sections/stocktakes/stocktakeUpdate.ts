@@ -1,37 +1,75 @@
 import { graphqlFetch } from '../../api/graphql';
 import { t, type LocaleKey } from '../../intl';
 import {
-  BatchStocktakeLines,
   UpdateStocktake,
   type StocktakeInfoFragment,
-  type StocktakeLineFragment,
-  type BatchStocktakeLinesVariables,
   type UpdateStocktakeVariables,
 } from './stocktakeDetail.generated';
-import { stocktakeLineErrorMessage } from './stocktakeLineErrors';
 
-// The one entry point for stocktake-LEVEL edits (the debounced field saves, the on-hold toggle,
-// and Finalise). It wraps the updateStocktake mutation into a never-throwing discriminated result
-// the view acts on directly (kdd/state-management), mirroring how the line editor consumes
-// batchStocktake. A `saved` carries the SAME StocktakeInfo fragment the detail query read, so the
-// caller splices it straight back with no refetch.
+// Stocktake-LEVEL edits via the updateStocktake mutation, split by how their errors are handled —
+// because the two callers are genuinely different (kdd/state-management):
 //
-//  - `saved`  — the stocktake node after the edit.
-//  - `error`  — the server rejected it (an UpdateStocktakeError). `message` is a friendly,
-//               translated string; `lineIds` is the set of offending stocktake-line ids when the
-//               error carries them (a snapshot/current-count mismatch), so the error-summary
-//               dialog can offer "filter to just the error lines".
-//  - `failed` — a transport / unexpected error; the global error modal has already shown it, so
-//               the caller stays silent.
-export type StocktakeUpdateResult =
+//  - saveStocktakeFields — the as-you-type field saves (description / comment / counted-by /
+//    verified-by) AND the on-hold toggle. On a NEW, non-locked stocktake these don't produce a
+//    domain error the user must act on; the UI already disables the fields once the stocktake is
+//    finalised/locked, so a CannotEditStocktake here would be an unexpected race. So ANY server
+//    rejection is routed to the GLOBAL unexpected-error modal (via mapSuccessToError) — no local
+//    error plumbing, no line-id mapping. A save returns the fresh node (spliced back, no refetch).
+//
+//  - finaliseStocktake — the ACTION with rich, user-facing errors. Finalise is the only update that
+//    validates finalise-time invariants and can come back SnapshotCountCurrentCountMismatch carrying
+//    the offending line ids (spec/stocktakes/contract.md), which the view surfaces in the error
+//    dialog with "show error lines". So it keeps the discriminated error result + message mapping.
+//
+// Line-level bulk ops (Delete / Change-location / Reduce-to-0) live in stocktakeLineUpdate.ts — a
+// different mutation (batchStocktake) with its own error source.
+
+type UpdateStocktakeInput = UpdateStocktakeVariables['input'];
+
+// --- Field / on-hold saves — errors go global ------------------------------------------------
+
+// Save whichever stocktake fields changed. `input` is id + the changed fields (undefined fields are
+// left untouched by the server). Returns the saved node, or undefined when the fetch failed OR the
+// server rejected it — in the reject case mapSuccessToError has already promoted it to the global
+// error modal, so the caller just stays put. There is deliberately no error branch here.
+export const saveStocktakeFields = async (
+  storeId: string,
+  input: UpdateStocktakeInput,
+): Promise<StocktakeInfoFragment | undefined> => {
+  const result = await graphqlFetch(
+    UpdateStocktake,
+    { storeId, input },
+    {
+      // An UpdateStocktakeError on a plain field save is unexpected (the UI guards the disabled
+      // case) → promote its description to the global unexpected-error modal.
+      mapSuccessToError: (data) =>
+        data.updateStocktake.__typename === 'UpdateStocktakeError'
+          ? data.updateStocktake.error.description
+          : undefined,
+    },
+  );
+  if (result.kind !== 'success') return undefined;
+  const response = result.data.updateStocktake;
+  return response.__typename === 'StocktakeNode' ? response : undefined;
+};
+
+// --- Finalise — the action with user-facing domain errors ------------------------------------
+
+//  - `saved`  — the stocktake node after finalising.
+//  - `error`  — the server rejected finalise (an UpdateStocktakeError). `message` is a friendly,
+//               translated string; `lineIds` is the offending stocktake-line ids when the error
+//               carries them (the snapshot/current-count mismatch), so the error-summary dialog can
+//               offer "filter to just the error lines".
+//  - `failed` — a transport / unexpected error; the global error modal has already shown it, so the
+//               caller stays silent.
+export type StocktakeFinaliseResult =
   | { kind: 'saved'; node: StocktakeInfoFragment }
   | { kind: 'error'; typename: string; message: string; lineIds: string[] }
   | { kind: 'failed' };
 
-// The finalise/on-hold error typenames (UpdateStocktakeErrorInterface implementers) → our own
-// translated copy. An unmapped typename falls back to the server description (same convention as
-// stocktakeLineErrors). Only the finalise path produces these — the plain field saves never fail
-// this way on a NEW stocktake.
+// The finalise error typenames (UpdateStocktakeErrorInterface implementers) → our own translated
+// copy. An unmapped typename falls back to the server description (same convention as
+// stocktakeLineErrors).
 const ERROR_MESSAGE_KEYS: Record<string, LocaleKey> = {
   SnapshotCountCurrentCountMismatch: 'stocktake.update-error.snapshot-mismatch',
   StockLinesReducedBelowZero: 'stocktake.update-error.reduced-below-zero',
@@ -44,12 +82,14 @@ const errorMessage = (typename: string, fallback: string): string => {
   return key ? t(key) : fallback;
 };
 
-// Run a stocktake-level update. `input` is the UpdateStocktakeInput sans nothing — id + whichever
-// fields changed (undefined fields are left untouched by the server).
-export const runStocktakeUpdate = async (
-  variables: UpdateStocktakeVariables,
-): Promise<StocktakeUpdateResult> => {
-  const result = await graphqlFetch(UpdateStocktake, variables);
+// Finalise the stocktake (status → FINALISED). Unlike the field saves, its domain errors are
+// surfaced to the user, so it returns the discriminated result rather than routing to the global
+// modal.
+export const finaliseStocktake = async (
+  storeId: string,
+  id: string,
+): Promise<StocktakeFinaliseResult> => {
+  const result = await graphqlFetch(UpdateStocktake, { storeId, input: { id, status: 'FINALISED' } });
   if (result.kind !== 'success') return { kind: 'failed' };
 
   const response = result.data.updateStocktake;
@@ -67,80 +107,4 @@ export const runStocktakeUpdate = async (
     message: errorMessage(error.__typename, error.description),
     lineIds,
   };
-};
-
-// A bulk line delete (a selection action). Returns which ids actually deleted plus, if any line
-// couldn't be deleted, an `error` describing the failed lines (for the error-summary dialog — the
-// failed ids become the "show error lines" filter). Deletes are otherwise applied in place by the
-// caller with no refetch.
-export type StocktakeLinesDeleteResult =
-  | { kind: 'deleted'; deletedIds: string[] }
-  | { kind: 'partial'; deletedIds: string[]; error: { message: string; lineIds: string[] } }
-  | { kind: 'failed' };
-
-export const deleteStocktakeLines = async (
-  storeId: string,
-  ids: string[],
-): Promise<StocktakeLinesDeleteResult> => {
-  const result = await graphqlFetch(BatchStocktakeLines, {
-    storeId,
-    delete: ids.map((id) => ({ id })),
-  });
-  if (result.kind !== 'success') return { kind: 'failed' };
-
-  const responses = result.data.batchStocktake.deleteStocktakeLines ?? [];
-  const deletedIds: string[] = [];
-  const failedIds: string[] = [];
-  let message = '';
-  for (const r of responses) {
-    if (r.response.__typename === 'DeleteResponse') {
-      deletedIds.push(r.id);
-    } else if ('error' in r.response) {
-      failedIds.push(r.id);
-      message = stocktakeLineErrorMessage(r.response.error.__typename, r.response.error.description);
-    }
-  }
-
-  if (failedIds.length > 0) {
-    return { kind: 'partial', deletedIds, error: { message, lineIds: failedIds } };
-  }
-  return { kind: 'deleted', deletedIds };
-};
-
-// A bulk line UPDATE (the selection actions Change-location and Reduce-to-0). The caller supplies
-// the per-line patches (same UpdateStocktakeLineInput shape the line editor uses); success returns
-// the updated StocktakeLine fragments (spliced back in place, no refetch), and any line that fails
-// becomes the error dialog's "show error lines" set. Change-location sets location:{value:id};
-// Reduce-to-0 sets countedNumberOfPacks: 0.
-type LineUpdateInput = NonNullable<BatchStocktakeLinesVariables['update']>[number];
-
-export type StocktakeLinesUpdateResult =
-  | { kind: 'updated'; updated: StocktakeLineFragment[] }
-  | { kind: 'partial'; updated: StocktakeLineFragment[]; error: { message: string; lineIds: string[] } }
-  | { kind: 'failed' };
-
-export const updateStocktakeLines = async (
-  storeId: string,
-  updates: LineUpdateInput[],
-): Promise<StocktakeLinesUpdateResult> => {
-  const result = await graphqlFetch(BatchStocktakeLines, { storeId, update: updates });
-  if (result.kind !== 'success') return { kind: 'failed' };
-
-  const responses = result.data.batchStocktake.updateStocktakeLines ?? [];
-  const updated: StocktakeLineFragment[] = [];
-  const failedIds: string[] = [];
-  let message = '';
-  for (const r of responses) {
-    if (r.response.__typename === 'StocktakeLineNode') {
-      updated.push(r.response);
-    } else if ('error' in r.response) {
-      failedIds.push(r.id);
-      message = stocktakeLineErrorMessage(r.response.error.__typename, r.response.error.description);
-    }
-  }
-
-  if (failedIds.length > 0) {
-    return { kind: 'partial', updated, error: { message, lineIds: failedIds } };
-  }
-  return { kind: 'updated', updated };
 };
