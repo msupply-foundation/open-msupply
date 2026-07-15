@@ -53,6 +53,12 @@ jobs:
           repository: ${{ env.FE_SUITES_REPO }}
           ref: ${{ env.FE_SUITES_REF }}
           path: .fe-suites
+          # open-msupply-frontend is private, and the default GITHUB_TOKEN
+          # only reads THIS repo — set the FE_SUITES_TOKEN secret to a
+          # fine-grained PAT with Contents:read on open-msupply-frontend
+          # (same pattern as TMFTESTING_PAT). Falls back to the default
+          # token so the failure mode stays a clear 'repository not found'.
+          token: ${{ secrets.FE_SUITES_TOKEN || github.token }}
 
       - name: Read Rust toolchain channel
         # Scope the toolchain to this job only via RUSTUP_TOOLCHAIN; do NOT set
