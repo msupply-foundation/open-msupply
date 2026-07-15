@@ -19,6 +19,7 @@ import { Toolbar } from '../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../ui/elements/buttons/Button';
+import { EmptyState } from '../../ui/elements/feedback/EmptyState';
 import { InfoIcon, MinusCircleIcon } from '../../ui/icons';
 import {
   DataTable,
@@ -42,13 +43,12 @@ import {
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
-import { StocktakeErrorDialog, type StocktakeErrorInfo } from './StocktakeErrorDialog';
 import {
   DeleteLinesAction,
   ChangeLocationAction,
   ReduceToZeroAction,
 } from './actions';
-import { saveStocktakeFields, finaliseStocktake } from './stocktakeUpdate';
+import { saveStocktakeFields } from './stocktakeUpdate';
 import { stocktakeLineErrorMessage, type LineErrors } from './stocktakeLineErrors';
 import { lineMatchesFilter, type StocktakeLineFilter } from './stocktakeLineFilter';
 import { createDebouncedEdit } from '../../domain/debouncedEdit';
@@ -141,23 +141,20 @@ const StocktakeDetailView: Component = () => {
   const params = useParams<{ storeId: string; stocktakeId: string }>();
   const navigate = useNavigate();
   // Sort + filter (incl. search) are URL-backed (shareable, survive reload/back-nav) in one
-  // `?query=` param. sort()/filter()/setSort/setFilter are thin accessors over that single state.
-  const { state, setState } = useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
-  const sort = () => state().sort;
-  const filter = () => state().filter;
-  const setSort = (next: SortState<SortKey>) => setState({ ...state(), sort: next });
-  const setFilter = (next: StocktakeLineFilter) => setState({ ...state(), filter: next });
+  // `?query=` param. sort()/filter()/setSort/setFilter are thin accessors over that single query.
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const sort = () => query().sort;
+  const filter = () => query().filter;
+  const setSort = (next: SortState<SortKey>) => setQuery({ ...query(), sort: next });
+  const setFilter = (next: StocktakeLineFilter) => setQuery({ ...query(), filter: next });
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The details panel is an overlay — it starts CLOSED (like OMS) and the header info button
   // opens it; its own close button (top inline-end) or the toggle closes it.
   const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
-  // The error-summary dialog (a failed finalise / bulk delete). undefined = closed.
-  const [errorInfo, setErrorInfo] = createSignal<StocktakeErrorInfo | undefined>();
   // Per-line errors from the last failed finalise/bulk action, keyed by line id → the error's
-  // __typename (the shared LineErrors shape — same as the edit modal). The Snapshot column RENDERS
-  // it (typename → message) via stocktakeLineErrorMessage; this holds no pre-rendered text. Cleared
-  // when a fresh fetch lands.
+  // __typename (the shared LineErrors shape). The Snapshot column RENDERS it (typename → message)
+  // via stocktakeLineErrorMessage; this holds no pre-rendered text. Cleared when a fresh fetch lands.
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
   // Column config (order/sizing/visibility) + the row-grouping choice persist per user/store.
   // The extra editable columns (pricing / pack size / manufacture / location / reason / note)
@@ -183,8 +180,11 @@ const StocktakeDetailView: Component = () => {
   const [editItem, setEditItem] = createSignal<StocktakeLineEditItem | undefined>();
 
   // Fetch the stocktake. A NodeError (e.g. bad id) is promoted to the global unexpected-error
-  // modal via mapSuccessToError, so it never reaches the view — we only narrow to the node.
-  const [data] = createResource(
+  // modal via mapSuccessToError, so it never reaches the view — we only narrow to the node. The
+  // resource IS the local state: every save writes back with `mutate` (no refetch), so `info` and
+  // `rows` are just accessors over data() rather than separate signals kept in sync by an effect
+  // (kdd/state-management).
+  const [data, { mutate }] = createResource(
     () => ({ storeId: params.storeId, stocktakeId: params.stocktakeId }),
     async (variables) => {
       const result = await graphqlFetch(StocktakeDetail, variables, {
@@ -196,16 +196,17 @@ const StocktakeDetailView: Component = () => {
     },
   );
 
-  // Stocktake-level info + lines both live in LOCAL signals (seeded from the fetch) so every save
-  // reflects in place with no refetch: updateStocktake returns the StocktakeInfo fragment (→ info)
-  // and the line batch mutation returns line fragments (→ rows) (kdd/state-management).
-  const [info, setInfo] = createSignal<StocktakeInfoFragment | undefined>();
-  const [rows, setRows] = createSignal<Line[]>([]);
-  createEffect(on(data, (node) => {
-    setInfo(node ?? undefined);
-    setRows(node?.lines.nodes ?? []);
-    setLineErrors(new Map()); // a fresh fetch clears stale per-line errors
-  }));
+  // Stocktake-level info + the lines both come straight from the fetched node. Saves reflect in
+  // place with no refetch by mutating the resource: updateStocktake returns the StocktakeInfo
+  // fragment (merged over the node, keeping its lines) and the line batch mutation returns line
+  // fragments (spliced into node.lines.nodes).
+  const info = (): StocktakeInfoFragment | undefined => data();
+  const rows = (): Line[] => data()?.lines.nodes ?? [];
+
+  // A fresh fetch clears stale per-line errors. lineErrors is independently mutated by save
+  // failures (stampLineErrors), so it stays its own signal — this effect only resets it when new
+  // data lands (the one reaction we still need now that info/rows are derived).
+  createEffect(on(data, () => setLineErrors(new Map())));
 
   // Filter → sort. The filter runs first (client-side over the loaded rows), then the sort memo
   // orders what survives. The DataTable is display-only about order (manualSorting).
@@ -238,35 +239,35 @@ const StocktakeDetailView: Component = () => {
     return item ? rows().filter((line) => line.item.id === item.id) : [];
   });
 
-  // Reflect a line-edit save in place (no refetch): drop deleted ids, replace updated lines by id,
-  // append inserted lines — all the SAME StocktakeLine fragment.
-  const applyCommit = (commit: LineEditCommit) => {
-    setRows((current) => {
+  // Reflect a line change in place (no refetch): drop deleted ids, replace updated lines by id,
+  // append inserted lines — all the SAME StocktakeLine fragment. The ONE way rows() mutates: the
+  // line-edit modal passes a full LineEditCommit; the selection actions pass a partial (delete-only
+  // or update-only), so every path reduces to one splice with consistent semantics.
+  const applyCommit = (commit: Partial<LineEditCommit>) => {
+    mutate((node: StocktakeNode | undefined) => {
+      if (!node) return node;
       const deleted = new Set(commit.deletedIds);
-      const updatedById = new Map(commit.updated.map((line) => [line.id, line]));
-      const next = current
+      const updatedById = new Map((commit.updated ?? []).map((line) => [line.id, line]));
+      const nodes = node.lines.nodes
         .filter((line) => !deleted.has(line.id))
-        .map((line) => updatedById.get(line.id) ?? line);
-      return [...next, ...commit.inserted];
+        .map((line) => updatedById.get(line.id) ?? line)
+        .concat(commit.inserted ?? []);
+      return { ...node, lines: { ...node.lines, nodes } };
     });
   };
 
   // --- Stocktake-level saves (updateStocktake, spliced back with no refetch) ---
 
-  // Replace the per-line error map (lineId → typename). The bulk actions hand this straight through
-  // from the batch outcome; it drives the inline Snapshot-cell message (rendered there) and the
-  // errors filter chip (via hasErrors). Cleared with an empty map on a fresh fetch.
+  // Replace the per-line error map (lineId → typename); the bulk actions hand this straight through
+  // from the batch outcome. Drives the inline Snapshot-cell message (rendered there) + the errors
+  // filter chip (via hasErrors). Cleared with an empty map on a fresh fetch.
   const stampLineErrors = (errors: LineErrors) => setLineErrors(new Map(errors));
 
-  // Finalise's failure: stamp the lines AND open the summary dialog (the footer Finalise isn't an
-  // SelectionActionModal, so it uses the standalone dialog). Finalise is a stocktake-LEVEL mutation,
-  // so its only line-carrying rejection is the snapshot/current-count mismatch — re-map each
-  // offending id to the LINE-level typename (SnapshotCountCurrentCountMismatchLine) so the Snapshot
+  // Finalise is a stocktake-LEVEL mutation, so its only line-carrying rejection is the snapshot/
+  // current-count mismatch — re-map each offending id to the LINE-level typename so the Snapshot
   // column renders the same "recount this line" message as a batch save would.
-  const recordError = (error: StocktakeErrorInfo) => {
-    setLineErrors(new Map(error.lineIds.map((id) => [id, 'SnapshotCountCurrentCountMismatchLine'])));
-    setErrorInfo(error);
-  };
+  const stampFinaliseErrors = (lineIds: string[]) =>
+    setLineErrors(new Map(lineIds.map((id) => [id, 'SnapshotCountCurrentCountMismatchLine'])));
 
   const current = () => info();
 
@@ -279,7 +280,8 @@ const StocktakeDetailView: Component = () => {
     const node = current();
     if (!node) return;
     const saved = await saveStocktakeFields(params.storeId, { id: node.id, ...patch });
-    if (saved) setInfo(saved);
+    // updateStocktake returns info fields only — merge over the current node to keep its lines.
+    if (saved) mutate((prev: StocktakeNode | undefined) => (prev ? { ...prev, ...saved } : prev));
   };
 
   // ONE debounced-edit buffer for every as-you-type text field on the stocktake (the toolbar's
@@ -302,33 +304,22 @@ const StocktakeDetailView: Component = () => {
   });
   const setHold = (hold: boolean) => void saveField({ isLocked: hold });
 
-  // Finalise — the ACTION with user-facing errors, and the ONLY status write (a stocktake goes
-  // NEW → FINALISED, no intermediate / no un-finalise, and UpdateStocktakeInput.status only accepts
-  // FINALISED). A saved node replaces `info` in place; a rejection (snapshot mismatch / lock) opens
-  // the error-summary dialog; a transport failure is silent (global modal).
-  const finalise = async () => {
-    const node = current();
-    if (!node) return;
-    const result = await finaliseStocktake(params.storeId, node.id);
-    if (result.kind === 'saved') {
-      setInfo(result.node);
-    } else if (result.kind === 'error') {
-      recordError({ message: result.message, lineIds: result.lineIds });
-    }
-  };
+  // Finalise is owned by FinaliseAction (the status footer's action component — it calls
+  // finaliseStocktake and routes a rejection through onError/onShowErrors). On success it hands the
+  // saved node back here: finaliseStocktake returns the StocktakeInfo fragment (status/dates), which
+  // we merge over the current node to keep its lines, reflecting the FINALISED state in place with
+  // no refetch (kdd/state-management). NEW → FINALISED is the only status write.
+  const onFinalised = (saved: StocktakeInfoFragment) =>
+    mutate((prev: StocktakeNode | undefined) => (prev ? { ...prev, ...saved } : prev));
 
   // --- Selection actions ---
   // Each action (Delete / Change location / Reduce to 0) is its own self-contained component in
   // actions/ (button + modal + run); the view keeps ownership of rows/selection/errors and applies
-  // each result via these callbacks (no refetch). Delete drops the deleted lines; the updates
+  // each result through applyCommit (no refetch) — delete drops the deleted lines, the updates
   // splice the returned lines back; a partial failure stamps the per-line errors.
   //
-  // The actions apply their result through the SAME applyCommit as the line-edit modal (insert /
-  // update / delete spliced in place, no refetch) and stamp any per-line errors through
-  // stampLineErrors — one commit + error path for every batchStocktake caller.
-  //
-  // The apply callbacks DON'T clear the selection — the action components host their modal inside
-  // the selection footer, so clearing here would unmount the modal mid-success-phase. Selection is
+  // applyCommit DOESN'T clear the selection — the action components host their modal inside the
+  // selection footer, so clearing here would unmount the modal mid-success-phase. Selection is
   // cleared when the modal closes, by which point the success/error phase has been seen.
 
   // "Show error lines" (the action modals' error phase + the finalise error dialog): wipe every
@@ -337,7 +328,6 @@ const StocktakeDetailView: Component = () => {
   const showErrorLines = (lineIds: string[]) => {
     setFilter({ errorIds: lineIds });
     setSelectedIds([]);
-    setErrorInfo(undefined);
   };
 
   // Crumbs are an accessor so t() re-translates on locale change.
@@ -463,7 +453,12 @@ const StocktakeDetailView: Component = () => {
   ];
 
   return (
-    <Suspense>
+    // Local Suspense boundary: the FIRST read of data() (info()/rows()) suspends until the fetch
+    // lands. Catching it here — rather than letting it bubble to AppShell's section <Suspense> —
+    // keeps first-load from tripping the section fallback and remounting the view (kdd/no-remounts).
+    // Its fallback is a centred "Loading…" (EmptyState). Every later save is a mutate(), which never
+    // suspends, so this fallback shows only on the initial fetch.
+    <Suspense fallback={<EmptyState message={t('common.loading')} />}>
       {/* NON-keyed Show: the subtree stays mounted while info() is truthy. It must NOT be `keyed`
           — a keyed Show re-runs (tears down + rebuilds) its child whenever the `when` value's
           IDENTITY changes, and every stocktake-level save sets a fresh node object (setInfo), so
@@ -520,11 +515,14 @@ const StocktakeDetailView: Component = () => {
                 when={selectedIds().length > 0}
                 fallback={
                   <StocktakeStatusFooter
+                    storeId={params.storeId}
                     node={node()}
                     disabled={isDisabled(node())}
                     canFinalise={canFinalise()}
                     onSetHold={setHold}
-                    onFinalise={finalise}
+                    onFinalised={onFinalised}
+                    onError={(_message, lineIds) => stampFinaliseErrors(lineIds)}
+                    onShowErrors={showErrorLines}
                   />
                 }
               >
@@ -595,11 +593,6 @@ const StocktakeDetailView: Component = () => {
               item={editItem()}
               lines={editItemLines()}
               onCommitted={applyCommit}
-            />
-            <StocktakeErrorDialog
-              error={errorInfo()}
-              onClose={() => setErrorInfo(undefined)}
-              onShowErrors={showErrorLines}
             />
           </Page>
         )}

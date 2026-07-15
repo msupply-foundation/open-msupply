@@ -5,15 +5,16 @@ import { Alert } from '../../ui/elements/feedback/Alert';
 import { Button } from '../../ui/elements/buttons/Button';
 import { CheckIcon, XCircleIcon, SearchIcon } from '../../ui/icons';
 
-// The result a SelectionActionModal's run() reports back, which drives the phase:
+// The result an ActionModal's run() reports back, which drives the phase:
 //  - ok       → the success phase (message + OK).
 //  - error    → the error phase: the server-mapped message, a Cancel, and — when it carries
 //               offending line ids — a "Show error lines" button that hands them to onShowErrors.
-export type SelectionActionResult =
+export type ActionResult =
   | { kind: 'ok' }
   | { kind: 'error'; message: string; lineIds: string[] };
 
 // confirm → working → success | error. Matches the stocktakes-list delete dialog (kdd/action-modal).
+// Shared by every action (bulk selection actions + finalise) — the phase machine is action-agnostic.
 // One discriminated signal, not a phase enum + a loose error payload: the error's message + lineIds
 // live ON the error state, so they can't drift out of sync with the phase (no empty Alert, no stale
 // ids). Illegal states — an 'error' with no message, a 'success' carrying lineIds — are unrepresentable.
@@ -23,7 +24,7 @@ type State =
   | { phase: 'success' }
   | { phase: 'error'; message: string; lineIds: string[] };
 
-export interface SelectionActionModalProps {
+export interface ActionModalProps {
   open: boolean;
   /** Every close path — Cancel / OK / scrim / Escape. Blocked while working. */
   onClose: () => void;
@@ -34,8 +35,8 @@ export interface SelectionActionModalProps {
   /** The confirm button: its label + icon. */
   confirmLabel: string;
   confirmIcon?: JSX.Element;
-  /** Runs the action; its SelectionActionResult drives the phase (working → success | error). */
-  run: () => Promise<SelectionActionResult>;
+  /** Runs the action; its ActionResult drives the phase (working → success | error). */
+  run: () => Promise<ActionResult>;
   /** Success-phase message. */
   successMessage: string;
   /** Error phase's "Show error lines": apply the errors filter to the offending lines. */
@@ -43,16 +44,19 @@ export interface SelectionActionModalProps {
 }
 
 /*
- * SelectionActionModal — a confirm → working → success | error state machine over <Dialog>, the
- * shared shape for a bulk action on a selection (the stocktake detail-view delete lines / change
- * location / reduce to 0). A domain widget (kdd/domain-modules): it knows the app's selection-
- * action shape but is composed from the pure ui/ Dialog. Same UX as the stocktakes-list delete
- * dialog: the confirm body (with any picker) shows first; the confirm button goes into a loading
- * state while run() is in flight (the dialog is blocking then — no scrim/Escape exit); then it
- * lands on a success message, or an error phase showing the server-mapped description with Cancel
- * + "Show error lines" (which applies the errors filter so the user lands on the offending rows).
- * run() returns a SelectionActionResult; a transport/unexpected failure is handled globally
- * (graphqlFetch), so run() resolves to `ok` there and the modal simply closes — no stuck loading.
+ * ActionModal — a confirm → working → success | error state machine over <Dialog>, the shared
+ * shape for any action that confirms, runs a mutation, and may report per-line errors: the
+ * stocktake detail-view bulk actions (delete lines / change location / reduce to 0) AND the
+ * finalise action. Not selection-specific despite its origins — the machine knows nothing about
+ * selection; a caller supplies the confirm body, run(), and success message. A domain widget
+ * (kdd/domain-modules): it knows the app's action-result shape but is composed from the pure ui/
+ * Dialog. Same UX as the stocktakes-list delete dialog: the confirm body (with any picker) shows
+ * first; the confirm button goes into a loading state while run() is in flight (the dialog is
+ * blocking then — no scrim/Escape exit); then it lands on a success message, or an error phase
+ * showing the server-mapped description with Cancel + "Show error lines" (which applies the errors
+ * filter so the user lands on the offending rows). run() returns an ActionResult; a transport/
+ * unexpected failure is handled globally (graphqlFetch), so run() resolves to `ok` there and the
+ * modal simply closes — no stuck loading.
  *
  * Mount-on-open: the stateful machine lives in <Content>, mounted only while `open`. Closing
  * unmounts it, so the phase state is fresh on every open by construction — no manual reset, and a
@@ -60,13 +64,13 @@ export interface SelectionActionModalProps {
  * so there is no stale-result race to guard against. Dialog has no exit animation, so unmounting
  * immediately cuts nothing.
  */
-export const SelectionActionModal = (props: SelectionActionModalProps): JSX.Element => (
+export const ActionModal = (props: ActionModalProps): JSX.Element => (
   <Show when={props.open}>
     <Content {...props} />
   </Show>
 );
 
-const Content = (props: SelectionActionModalProps): JSX.Element => {
+const Content = (props: ActionModalProps): JSX.Element => {
   const [state, setState] = createSignal<State>({ phase: 'confirm' });
   const phase = () => state().phase;
 

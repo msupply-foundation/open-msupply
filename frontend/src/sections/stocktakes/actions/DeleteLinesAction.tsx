@@ -2,10 +2,10 @@ import { createSignal, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { TrashIcon } from '../../../ui/icons';
-import { SelectionActionModal, type SelectionActionResult } from '../../../domain/selection';
+import { ActionModal, type ActionResult } from '../../../domain/action';
 import { runBatchStocktakeLines, type LineEditCommit } from '../stocktakeLineUpdate';
 import type { LineErrors } from '../stocktakeLineErrors';
-import { lineSelectionActionResult } from './lineSelectionActionResult';
+import { lineActionResult } from './lineActionResult';
 
 export interface DeleteLinesActionProps {
   storeId: string;
@@ -22,12 +22,12 @@ export interface DeleteLinesActionProps {
 }
 
 // The Delete-lines selection action: its footer button + confirm → working → success | error modal
-// (SelectionActionModal). Owns its open state; the view owns rows/selection and applies the result
-// via the callbacks. A partial failure stamps the errors and offers "Show error lines".
+// (ActionModal). Owns its open state; the view owns rows/selection and applies the result via the
+// callbacks (onCommit + onErrors). A partial failure stamps the errors and offers "Show error lines".
 export const DeleteLinesAction: Component<DeleteLinesActionProps> = (props) => {
   const [open, setOpen] = createSignal(false);
 
-  const run = async (): Promise<SelectionActionResult> => {
+  const run = async (): Promise<ActionResult> => {
     const outcome = await runBatchStocktakeLines(props.storeId, {
       delete: props.selectedIds().map((id) => ({ id })),
     });
@@ -35,7 +35,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = (props) => {
       props.onCommit(outcome.commit);
       props.onErrors(outcome.errors);
     }
-    return lineSelectionActionResult(outcome);
+    return lineActionResult(outcome);
   };
 
   return (
@@ -48,7 +48,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = (props) => {
       >
         {t('common.delete')}
       </Button>
-      <SelectionActionModal
+      <ActionModal
         open={open()}
         onClose={() => setOpen(false)}
         icon={<TrashIcon />}
@@ -60,7 +60,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = (props) => {
         onShowErrors={props.onShowErrors}
       >
         {t('stocktake.lines.delete-confirm', { count: props.selectedIds().length })}
-      </SelectionActionModal>
+      </ActionModal>
     </>
   );
 };

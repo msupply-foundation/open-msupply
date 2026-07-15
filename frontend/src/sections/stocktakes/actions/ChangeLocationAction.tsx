@@ -3,11 +3,11 @@ import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { CheckIcon, MapPinIcon } from '../../../ui/icons';
-import { SelectionActionModal, type SelectionActionResult } from '../../../domain/selection';
+import { ActionModal, type ActionResult } from '../../../domain/action';
 import { LocationSelect } from '../../../domain/location';
 import { runBatchStocktakeLines, type LineEditCommit } from '../stocktakeLineUpdate';
 import type { LineErrors } from '../stocktakeLineErrors';
-import { lineSelectionActionResult } from './lineSelectionActionResult';
+import { lineActionResult } from './lineActionResult';
 
 export interface ChangeLocationActionProps {
   storeId: string;
@@ -26,7 +26,7 @@ export const ChangeLocationAction: Component<ChangeLocationActionProps> = (props
   const [open, setOpen] = createSignal(false);
   const [locationId, setLocationId] = createSignal<string | null>(null);
 
-  const run = async (): Promise<SelectionActionResult> => {
+  const run = async (): Promise<ActionResult> => {
     const outcome = await runBatchStocktakeLines(props.storeId, {
       update: props.selectedIds().map((id) => ({ id, location: { value: locationId() } })),
     });
@@ -34,7 +34,7 @@ export const ChangeLocationAction: Component<ChangeLocationActionProps> = (props
       props.onCommit(outcome.commit);
       props.onErrors(outcome.errors);
     }
-    return lineSelectionActionResult(outcome);
+    return lineActionResult(outcome);
   };
 
   return (
@@ -50,7 +50,7 @@ export const ChangeLocationAction: Component<ChangeLocationActionProps> = (props
       >
         {t('stocktake.lines.change-location')}
       </Button>
-      <SelectionActionModal
+      <ActionModal
         open={open()}
         onClose={() => setOpen(false)}
         icon={<MapPinIcon />}
@@ -71,7 +71,7 @@ export const ChangeLocationAction: Component<ChangeLocationActionProps> = (props
             onChange={(l) => setLocationId(l?.id ?? null)}
           />
         </FieldRow>
-      </SelectionActionModal>
+      </ActionModal>
     </>
   );
 };
