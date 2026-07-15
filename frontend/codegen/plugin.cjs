@@ -29,7 +29,36 @@ const {
   isEnumType,
   isObjectType,
   print,
+  validate,
+  specifiedRules,
+  NoUnusedFragmentsRule,
 } = require("graphql");
+
+/**
+ * Validate the documents against the schema before generating: a document the
+ * server would reject at request time must fail codegen, with the file and
+ * field named in the error.
+ *
+ * Mirrors graphql-tools' validateGraphQlDocuments (what @graphql-codegen/cli
+ * runs): all documents are validated together so fragments defined in one
+ * document resolve in another, and NoUnusedFragments is dropped so a shared
+ * fragment-only document is legal.
+ */
+function validateDocuments(schema, documents) {
+  const combined = {
+    kind: Kind.DOCUMENT,
+    definitions: documents.flatMap((doc) => doc.document.definitions),
+  };
+  const rules = specifiedRules.filter((rule) => rule !== NoUnusedFragmentsRule);
+  const errors = validate(schema, combined, rules);
+  if (errors.length > 0) {
+    const locations = documents.map((doc) => doc.location).filter(Boolean);
+    throw new Error(
+      `GraphQL validation failed${locations.length ? ` (${locations.join(", ")})` : ""}:\n` +
+        errors.map((e) => `  - ${e.message}`).join("\n")
+    );
+  }
+}
 
 /** Map GraphQL scalar names to TS types. Unknown scalars fall back to string. */
 const SCALAR_MAP = {
@@ -100,7 +129,8 @@ function renderFields(objectFields, parentType, schema, fragments) {
       continue;
     }
     // Unions have no fields of their own (only __typename is selectable at the
-    // top level), so guard getFields — a stray field here is simply skipped.
+    // top level), so guard getFields. Unknown fields can't reach here — they
+    // fail validateDocuments before generation starts.
     const fieldDef = parentType.getFields ? parentType.getFields()[fieldName] : undefined;
     if (!fieldDef) continue;
     const alias = sel.alias ? sel.alias.value : fieldName;
@@ -335,6 +365,8 @@ function collectFragments(selectionSet, fragments, acc) {
 
 module.exports = {
   plugin(schema, documents, config) {
+    // Refuse to generate from documents the server would reject at runtime.
+    validateDocuments(schema, documents);
     // Import path for TypedDocument, relative to where this .generated.ts lands
     // (run.js computes it per file). Defaults to co-location with graphql.ts.
     const graphqlImport = (config && config.graphqlImport) || "./graphql";
