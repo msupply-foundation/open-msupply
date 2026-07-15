@@ -1,4 +1,13 @@
-import { createEffect, createSignal, For, Match, onCleanup, onMount, Show, Switch } from 'solid-js';
+import {
+  createEffect,
+  createSignal,
+  For,
+  Match,
+  onCleanup,
+  onMount,
+  Show,
+  Switch,
+} from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import { Navigate, Route, Router } from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
@@ -81,22 +90,39 @@ export const App: Component = () => {
                   (empty) entry page until a real section is registered above. */}
               <Route path="/:storeId" component={StoreGuardLayout}>
                 <Route path="/" component={ShellLayout}>
-                  <Route path="/" component={() => <EntryPage labelKey="nav.dashboard" />} />
+                  {/* The store root IS the dashboard — land on its named URL (as the
+                      current app does) so the location always shows the section. */}
+                  <Route
+                    path="/"
+                    component={() => <Navigate href="dashboard" />}
+                  />
                   <For each={Object.entries(sectionRoutes)}>
-                    {([path, routes]) => <Route path={`/${path}`}>{routes()}</Route>}
+                    {([path, routes]) => (
+                      <Route path={`/${path}`}>{routes()}</Route>
+                    )}
                   </For>
-                  <For each={navDestinations.filter((dest) => !sectionRoutes[dest.path])}>
-                    {(dest) => (
+                  <For
+                    each={navDestinations.filter(
+                      dest => !sectionRoutes[dest.path]
+                    )}
+                  >
+                    {dest => (
                       <Route
                         path={`/${dest.path}`}
                         component={() => <EntryPage labelKey={dest.labelKey} />}
                       />
                     )}
                   </For>
-                  <Route path="*" component={() => <EntryPage labelKey="app.not-found" />} />
+                  <Route
+                    path="*"
+                    component={() => <EntryPage labelKey="app.not-found" />}
+                  />
                 </Route>
               </Route>
-              <Route path="*" component={() => <Navigate href={resolveStorePath} />} />
+              <Route
+                path="*"
+                component={() => <Navigate href={resolveStorePath} />}
+              />
             </Router>
             <ReLoginModal />
           </Show>
