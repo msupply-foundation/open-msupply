@@ -41,6 +41,24 @@ describe('graphqlFetch', () => {
     expect(unexpectedError()).toBe('Something failed, Also this');
   });
 
+  it('surfaces extensions.details in the description when it adds detail', async () => {
+    mockFetch({
+      data: null,
+      errors: [
+        { message: 'Bad user input', extensions: { details: 'DatabaseError("connection reset")' } },
+        // details equal to the message add nothing → not repeated.
+        { message: 'Plain', extensions: { details: 'Plain' } },
+        // non-string / empty details are ignored → bare message.
+        { message: 'NoDetail', extensions: { code: 500 } },
+      ],
+    });
+    const result = await graphqlFetch(document, {});
+    expect(result).toEqual({ kind: 'unexpectedError' });
+    expect(unexpectedError()).toBe(
+      'Bad user input: DatabaseError("connection reset"), Plain, NoDetail'
+    );
+  });
+
   it('returns graphqlError without tripping the global signal when opted in', async () => {
     mockFetch({ data: null, errors: [{ message: 'Something failed' }] });
     const result = await graphqlFetch(document, {}, { returnGraphqlErrors: true });

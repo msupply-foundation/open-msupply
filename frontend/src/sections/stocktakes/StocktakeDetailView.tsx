@@ -19,7 +19,7 @@ import { Toolbar } from '../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../ui/elements/buttons/Button';
-import { CheckIcon, InfoIcon, MapPinIcon, MinusCircleIcon, TrashIcon } from '../../ui/icons';
+import { InfoIcon, MinusCircleIcon } from '../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -32,11 +32,7 @@ import {
   StocktakeDetail,
   type StocktakeDetailResult,
   type StocktakeInfoFragment,
-  type BatchStocktakeLinesVariables,
 } from './stocktakeDetail.generated';
-
-// One per-line update (the shape updateStocktakeLines takes) — change-location / reduce-to-0.
-type LineUpdate = NonNullable<BatchStocktakeLinesVariables['update']>[number];
 import {
   StocktakeLineEditModal,
   type LineEditCommit,
@@ -46,12 +42,13 @@ import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
 import { StocktakeErrorDialog, type StocktakeErrorInfo } from './StocktakeErrorDialog';
-import { ActionModal, type ActionResult } from './ActionModal';
-import { runStocktakeUpdate, deleteStocktakeLines, updateStocktakeLines } from './stocktakeUpdate';
+import {
+  DeleteLinesAction,
+  ChangeLocationAction,
+  ReduceToZeroAction,
+} from './actions';
+import { runStocktakeUpdate } from './stocktakeUpdate';
 import { lineMatchesFilter, type StocktakeLineFilter } from './stocktakeLineFilter';
-import { FieldRow } from '../../ui/elements/inputs/FieldRow';
-import { LocationSelect } from '../../domain/location';
-import { ReasonSelect } from '../../domain/reasonOptions';
 import { useUrlQueryState } from '../../list/urlQueryState';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an editable
@@ -157,13 +154,6 @@ const StocktakeDetailView: Component = () => {
   // inline under the Snapshot cell of the offending rows (a snapshot/current-count mismatch is a
   // "recount this line" message that belongs on the snapshot). Cleared when a fresh fetch lands.
   const [lineErrors, setLineErrors] = createSignal<Map<string, string>>(new Map());
-  // The three selection-action modals (each an ActionModal: confirm → working → success | error).
-  // false = closed. Change-location / reduce-to-0 also hold their picker's chosen value.
-  const [deleteOpen, setDeleteOpen] = createSignal(false);
-  const [locationOpen, setLocationOpen] = createSignal(false);
-  const [reduceOpen, setReduceOpen] = createSignal(false);
-  const [pickedLocationId, setPickedLocationId] = createSignal<string | null>(null);
-  const [pickedReasonId, setPickedReasonId] = createSignal<string | null>(null);
   // Column config (order/sizing/visibility) + the row-grouping choice persist per user/store.
   // The extra editable columns (pricing / pack size / manufacture / location / reason / note)
   // start HIDDEN by default so the table isn't overwhelming — the user reveals them via the
@@ -265,7 +255,7 @@ const StocktakeDetailView: Component = () => {
     setLineErrors(new Map(lineIds.map((id) => [id, message])));
 
   // Finalise's failure: stamp the lines AND open the summary dialog (the footer Finalise isn't an
-  // ActionModal, so it uses the standalone dialog).
+  // SelectionActionModal, so it uses the standalone dialog).
   const recordError = (error: StocktakeErrorInfo) => {
     stampLineErrors(error.message, error.lineIds);
     setErrorInfo(error);
@@ -303,49 +293,23 @@ const StocktakeDetailView: Component = () => {
     if (node && status === 'FINALISED') void applyUpdate({ id: node.id, status });
   };
 
-  // --- Selection actions (each an ActionModal `run` → ActionResult) ---
-  // These both apply the successful part in place (no refetch) AND report ok/error so the modal
-  // can show its working → success | error phases. A transport/unexpected failure is handled
-  // globally (graphqlFetch), so run() reports `ok` there and the modal just closes.
-
-  // Delete the selected lines.
-  const runDeleteLines = async (): Promise<ActionResult> => {
-    const result = await deleteStocktakeLines(params.storeId, selectedIds());
-    if (result.kind === 'failed') return { kind: 'ok' };
-    const deleted = new Set(result.deletedIds);
-    setRows((rows) => rows.filter((line) => !deleted.has(line.id)));
-    setSelectedIds((selected) => selected.filter((id) => !deleted.has(id)));
-    if (result.kind === 'partial') {
-      stampLineErrors(result.error.message, result.error.lineIds);
-      return { kind: 'error', message: result.error.message, lineIds: result.error.lineIds };
-    }
-    return { kind: 'ok' };
+  // --- Selection actions ---
+  // Each action (Delete / Change location / Reduce to 0) is its own self-contained component in
+  // actions/ (button + modal + run); the view keeps ownership of rows/selection/errors and applies
+  // each result via these callbacks (no refetch). Delete drops the deleted lines; the updates
+  // splice the returned lines back; a partial failure stamps the per-line errors.
+  //
+  // The apply callbacks DON'T clear the selection — the action components host their modal inside
+  // the selection footer, so clearing here would unmount the modal mid-success-phase. Selection is
+  // cleared when the modal closes (onDone), by which point the success/error phase has been seen.
+  const applyDeleted = (deletedIds: string[]) => {
+    const gone = new Set(deletedIds);
+    setRows((rows) => rows.filter((line) => !gone.has(line.id)));
   };
-
-  // Apply a bulk line update to the selection (change-location / reduce-to-0). Splices the updated
-  // fragments back in place; `patch(id)` builds the per-line UpdateStocktakeLineInput.
-  const runLineUpdate = async (patch: (id: string) => LineUpdate): Promise<ActionResult> => {
-    const result = await updateStocktakeLines(params.storeId, selectedIds().map(patch));
-    if (result.kind === 'failed') return { kind: 'ok' };
-    const updatedById = new Map(result.updated.map((line) => [line.id, line]));
-    setRows((rows) => rows.map((line) => updatedById.get(line.id) ?? line));
-    setSelectedIds([]);
-    if (result.kind === 'partial') {
-      stampLineErrors(result.error.message, result.error.lineIds);
-      return { kind: 'error', message: result.error.message, lineIds: result.error.lineIds };
-    }
-    return { kind: 'ok' };
+  const applyUpdated = (lines: Line[]) => {
+    const byId = new Map(lines.map((line) => [line.id, line]));
+    setRows((rows) => rows.map((line) => byId.get(line.id) ?? line));
   };
-
-  // Change location: set location.id on every selected line.
-  const runChangeLocation = (locationId: string | null) =>
-    runLineUpdate((id) => ({ id, location: { value: locationId } }));
-
-  // Reduce to 0: set countedNumberOfPacks = 0 on every selected line, with the chosen adjustment
-  // reason. The server enforces whether a reason is required; an unmet requirement comes back as
-  // the error phase (→ Show error lines).
-  const runReduceToZero = (reasonOptionId: string | null) =>
-    runLineUpdate((id) => ({ id, countedNumberOfPacks: 0, reasonOptionId }));
 
   // "Show error lines" (the action modals' error phase + the finalise error dialog): wipe every
   // other filter and keep ONLY the error lines (OMS "add filter for errors"). Clears the selection
@@ -546,36 +510,32 @@ const StocktakeDetailView: Component = () => {
                   {/* Count + actions on the inline-start (OMS layout): Delete, Change location,
                       Reduce to 0. All disabled while the stocktake is finalised / on hold. */}
                   <strong>{t('stocktake.lines.selected', { count: selectedIds().length })}</strong>
-                  <Button
-                    variant="secondary"
-                    icon={<TrashIcon />}
+                  {/* Each action owns its own button + confirm/working/success/error modal + run;
+                      the view supplies storeId/selection and applies results via callbacks. */}
+                  <DeleteLinesAction
+                    storeId={params.storeId}
+                    selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    {t('common.delete')}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    icon={<MapPinIcon />}
+                    onDeleted={applyDeleted}
+                    onError={stampLineErrors}
+                    onShowErrors={showErrorLines}
+                  />
+                  <ChangeLocationAction
+                    storeId={params.storeId}
+                    selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onClick={() => {
-                      setPickedLocationId(null);
-                      setLocationOpen(true);
-                    }}
-                  >
-                    {t('stocktake.lines.change-location')}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    icon={<MinusCircleIcon />}
+                    onUpdated={applyUpdated}
+                    onError={stampLineErrors}
+                    onShowErrors={showErrorLines}
+                  />
+                  <ReduceToZeroAction
+                    storeId={params.storeId}
+                    selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onClick={() => {
-                      setPickedReasonId(null);
-                      setReduceOpen(true);
-                    }}
-                  >
-                    {t('stocktake.lines.reduce-to-zero')}
-                  </Button>
+                    onUpdated={applyUpdated}
+                    onError={stampLineErrors}
+                    onShowErrors={showErrorLines}
+                  />
                   {/* Clear selection pinned to the inline-end. */}
                   <ContentFooterActions>
                     <Button
@@ -619,66 +579,6 @@ const StocktakeDetailView: Component = () => {
               onClose={() => setErrorInfo(undefined)}
               onShowErrors={showErrorLines}
             />
-            {/* The three bulk selection actions — each a confirm → working → success | error
-                ActionModal (kdd/action-modal); an error phase offers "Show error lines". */}
-            <ActionModal
-              open={deleteOpen()}
-              onClose={() => setDeleteOpen(false)}
-              icon={<TrashIcon />}
-              title={t('stocktake.lines.delete-title')}
-              confirmLabel={t('common.delete')}
-              confirmIcon={<TrashIcon />}
-              run={runDeleteLines}
-              successMessage={t('stocktake.lines.delete-success')}
-              onShowErrors={showErrorLines}
-            >
-              {t('stocktake.lines.delete-confirm', { count: selectedIds().length })}
-            </ActionModal>
-            <ActionModal
-              open={locationOpen()}
-              onClose={() => setLocationOpen(false)}
-              icon={<MapPinIcon />}
-              title={t('stocktake.lines.change-location')}
-              confirmLabel={t('common.apply')}
-              confirmIcon={<CheckIcon />}
-              run={() => runChangeLocation(pickedLocationId())}
-              successMessage={t('stocktake.lines.change-location-success')}
-              onShowErrors={showErrorLines}
-            >
-              <p>{t('stocktake.lines.change-location-message')}</p>
-              <FieldRow label={t('stocktake.line-edit.location')}>
-                <LocationSelect
-                  label={t('stocktake.line-edit.location')}
-                  hideLabel
-                  value={pickedLocationId() ?? undefined}
-                  placeholder={t('stocktake.line-edit.location-none')}
-                  onChange={(l) => setPickedLocationId(l?.id ?? null)}
-                />
-              </FieldRow>
-            </ActionModal>
-            <ActionModal
-              open={reduceOpen()}
-              onClose={() => setReduceOpen(false)}
-              icon={<MinusCircleIcon />}
-              title={t('stocktake.lines.reduce-to-zero-title')}
-              confirmLabel={t('common.apply')}
-              confirmIcon={<CheckIcon />}
-              run={() => runReduceToZero(pickedReasonId())}
-              successMessage={t('stocktake.lines.reduce-to-zero-success')}
-              onShowErrors={showErrorLines}
-            >
-              <p>{t('stocktake.lines.reduce-to-zero-message')}</p>
-              <FieldRow label={t('stocktake.line-edit.reason')}>
-                <ReasonSelect
-                  kind="reduction"
-                  label={t('stocktake.line-edit.reason')}
-                  hideLabel
-                  value={pickedReasonId() ?? undefined}
-                  placeholder={t('stocktake.line-edit.reason-select')}
-                  onChange={(r) => setPickedReasonId(r?.id ?? null)}
-                />
-              </FieldRow>
-            </ActionModal>
           </Page>
         )}
       </Show>
