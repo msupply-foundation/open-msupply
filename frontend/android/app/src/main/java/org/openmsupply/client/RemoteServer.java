@@ -5,7 +5,8 @@ package org.openmsupply.client;
 // qualified name (Java_org_openmsupply_client_RemoteServer_startServer).
 public class RemoteServer {
     // The library is optional: the dev loop (host backend) doesn't bundle it,
-    // only embedded-server builds do (scripts/fetch-server-lib.sh).
+    // only embedded-server builds do (.so manually sourced into jniLibs —
+    // see kdd/android/android-spec.md).
     private static final boolean loaded = tryLoad();
 
     private static boolean tryLoad() {

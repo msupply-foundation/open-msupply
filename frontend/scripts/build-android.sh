@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # One-command debug APK build (kdd/android key desire 3): web bundle → APK
-# assets → gradle assemble. Fetches the prebuilt server lib if missing —
-# no Rust/NDK toolchain involved.
+# assets → gradle assemble. No Rust/NDK toolchain involved.
+#
+# ⚠ The embedded server is NOT fetched: an actual (shippable) APK needs
+# libremote_server_android.so sourced into android/app/src/main/jniLibs/
+# arm64-v8a/ before building (gitignored; whatever sits there gets bundled,
+# absence = app runs host/remote-backend only). Automated fetching of the
+# pinned artifact is a planned follow-up — see kdd/android/android-spec.md.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -13,7 +18,6 @@ if [ -z "${JAVA_HOME:-}" ] && ! java -version >/dev/null 2>&1; then
   done
 fi
 
-./scripts/fetch-server-lib.sh
 pnpm build
 pnpm exec cap sync android
 (cd android && ./gradlew assembleDebug)

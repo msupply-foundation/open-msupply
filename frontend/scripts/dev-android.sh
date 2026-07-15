@@ -31,12 +31,9 @@ fi
 
 # The dev loop doesn't need the on-device server (host backend is the default,
 # kdd/android desire 2B) — the app runs fine without the library bundled.
-# EMBEDDED_SERVER=1 opts in to fetching + booting it (Fork 4); build-android.sh
-# always bundles it. NB: once fetched, the lib stays in jniLibs (gitignored)
-# and keeps being bundled until you delete it.
-if [ "${EMBEDDED_SERVER:-}" = "1" ]; then
-  ./scripts/fetch-server-lib.sh
-fi
+# Embedded-server work: source libremote_server_android.so into
+# android/app/src/main/jniLibs/arm64-v8a/ yourself (gitignored; a fetch
+# script is a planned follow-up) — whatever sits there gets bundled.
 
 ADB="${ANDROID_HOME:-$HOME/Library/Android/sdk}/platform-tools/adb"
 DEVICES="$($ADB devices | awk 'NR>1 && $2=="device" {print $1}')"

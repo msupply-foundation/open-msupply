@@ -28,8 +28,8 @@ public class MainActivity extends BridgeActivity {
             }
         });
 
-        // Embedded server, only when its library is bundled (fetch-server-lib.sh
-        // — the host-backend dev loop runs without it).
+        // Embedded server, only when its library is bundled (manually sourced
+        // into jniLibs — the host-backend dev loop runs without it).
         if (server.isAvailable()) {
             // Fork 5B: the shell provides the UI. Copy the APK's bundled web
             // assets to filesDir/frontend, which the (embed-free) server serves
