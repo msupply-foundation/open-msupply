@@ -1,10 +1,10 @@
 import { createSignal, type Component } from 'solid-js';
-import { t } from '../../../intl';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { TrashIcon } from '../../../ui/icons';
-import { ActionModal, type ActionResult } from '../../../domain/action';
-import { runBatchStocktakeLines, type LineEditCommit } from '../stocktakeLineUpdate';
-import type { LineErrors } from '../stocktakeLineErrors';
+import { t } from '../../../../intl';
+import { Button } from '../../../../ui/elements/buttons/Button';
+import { TrashIcon } from '../../../../ui/icons';
+import { ActionModal, type ActionResult } from '../../../../domain/action';
+import { runBatchStocktakeLines, type LineEditCommit } from '../lines/stocktakeLineUpdate';
+import type { LineErrors } from '../lines/stocktakeLineErrors';
 import { lineActionResult } from './lineActionResult';
 
 export interface DeleteLinesActionProps {

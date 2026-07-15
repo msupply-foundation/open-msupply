@@ -1,10 +1,10 @@
-import { graphqlFetch } from '../../api/graphql';
-import { t, type LocaleKey } from '../../intl';
+import { graphqlFetch } from '../../../api/graphql';
+import { t, type LocaleKey } from '../../../intl';
 import {
   UpdateStocktake,
   type StocktakeInfoFragment,
   type UpdateStocktakeVariables,
-} from './stocktakeDetail.generated';
+} from './lines/stocktakeDetail.generated';
 
 // Stocktake-LEVEL edits via the updateStocktake mutation, split by how their errors are handled —
 // because the two callers are genuinely different (kdd/state-management):

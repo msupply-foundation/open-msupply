@@ -1,31 +1,30 @@
-import { createMemo, createResource, createSignal, Match, Show, Switch } from 'solid-js';
+import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../api/graphql';
-import { t } from '../../intl';
-import { Page } from '../../ui/layout/Page/Page';
-import { Header } from '../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
-import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../ui/layout/Header/Toolbar';
-import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions';
-import { Button } from '../../ui/elements/buttons/Button';
-import { DataTable, type Column, type SortState } from '../../ui/elements/table/DataTable';
-import { getBooleanCell, getDateCell, getNumberCell } from '../../ui/elements/table/tableHelpers';
-import { createTableConfig } from '../../api/createTableConfig';
-import { StatusChip } from '../../ui/elements/feedback/StatusChip';
-import { Dialog } from '../../ui/elements/feedback/Dialog';
-import { Alert } from '../../ui/elements/feedback/Alert';
-import { FilterBar } from '../../ui/elements/selectors/FilterBar';
-import { Pagination } from '../../ui/elements/table/Pagination';
-import { CheckIcon, CloseIcon, PlusCircleIcon, TrashIcon, XCircleIcon } from '../../ui/icons';
-import { useUrlQueryState } from '../../list/urlQueryState';
-import { stripEmpty } from '../../typeHelpers';
-import { Stocktakes, DeleteStocktakes } from './stocktakes.generated';
+import { graphqlFetch } from '../../../api/graphql';
+import { t } from '../../../intl';
+import { Page } from '../../../ui/layout/Page/Page';
+import { Header } from '../../../ui/layout/Header/Header';
+import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
+import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { DataTable, type Column, type SortState } from '../../../ui/elements/table/DataTable';
+import { getBooleanCell, getDateCell, getNumberCell } from '../../../ui/elements/table/tableHelpers';
+import { createTableConfig } from '../../../api/createTableConfig';
+import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
+import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
+import { Pagination } from '../../../ui/elements/table/Pagination';
+import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
+import { useUrlQueryState } from '../../../list/urlQueryState';
+import { stripEmpty } from '../../../typeHelpers';
+import { Stocktakes } from './stocktakes.generated';
 import type { StocktakesVariables, StocktakesResult } from './stocktakes.generated';
 import { filterFields, type StocktakeFilter } from './listFilters';
 import { CreateStocktakeModal } from './CreateStocktakeModal';
+import { DeleteStocktakesAction } from './DeleteStocktakesAction';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
 // filter/sort/pagination state come from the vertical; the UI is composed from library
@@ -151,47 +150,12 @@ const StocktakesList: Component = () => {
     setSelectedIds([]);
   };
 
-  // --- Delete (batch) ---
-  // The backend is the source of truth for what can be deleted — we don't pre-check
-  // status client-side. Clicking Delete opens a plain "delete N?" confirm; confirming
-  // sends every selected id in one batch and the dialog walks a small state machine:
-  //   confirm → deleting → success | error
-  // The batch is atomic: if any stocktake can't be deleted (e.g. finalised →
-  // CannotEditStocktake) the whole batch fails and NOTHING is deleted, so on error we
-  // show OUR translated message (not the server's English `description`). While deleting,
-  // the dialog is not dismissable (blocking) and Cancel is hidden. Success reports the
-  // count; the list re-queries so the deleted rows disappear (kdd/state-management). The
-  // selected ids are snapshotted on open so a re-sort/refetch can't change what we submit.
-  type DeletePhase = 'confirm' | 'deleting' | 'success' | 'error';
-  type DeleteState = { ids: string[]; phase: DeletePhase };
-  const [deleteState, setDeleteState] = createSignal<DeleteState | null>(null);
-
-  const openDeleteDialog = () => setDeleteState({ ids: [...selectedIds()], phase: 'confirm' });
-
-  const runDelete = async () => {
-    const ids = deleteState()?.ids ?? [];
-    if (ids.length === 0) return setDeleteState(null);
-    setDeleteState({ ids, phase: 'deleting' });
-    const result = await graphqlFetch(DeleteStocktakes, {
-      storeId: params.storeId,
-      ids: ids.map((id) => ({ id })),
-    });
-    if (result.kind !== 'success') {
-      // transport/unexpected → the global error modal already surfaced it; drop back to
-      // the confirm state so the delete dialog isn't left stuck loading.
-      setDeleteState({ ids, phase: 'confirm' });
-      return;
-    }
-    const items = result.data.batchStocktake.deleteStocktakes ?? [];
-    const failed = items.some((i) => i.response.__typename === 'DeleteStocktakeError');
-    if (failed) {
-      setDeleteState({ ids, phase: 'error' });
-      return;
-    }
-    // Success: re-query so the deleted rows disappear behind the dialog, then report.
+  // Delete lives in its own DeleteStocktakesAction (button + confirm/deleting/success/error dialog +
+  // the atomic batch mutation). On success it calls back here to clear the selection and re-query so
+  // the deleted rows disappear (kdd/state-management).
+  const onDeleted = () => {
     setSelectedIds([]);
     void refetch();
-    setDeleteState({ ids, phase: 'success' });
   };
 
   const openRow = (row: StocktakeRow) =>
@@ -289,9 +253,11 @@ const StocktakesList: Component = () => {
             {/* Matching Open mSupply's action bar: the count and the row action(s)
                 (Delete) group on the inline-start edge; Clear pins inline-end. */}
             <strong>{t('stocktake.selected', { count: selectedIds().length })}</strong>
-            <Button variant="secondary" icon={<TrashIcon />} onClick={openDeleteDialog}>
-              {t('common.delete')}
-            </Button>
+            <DeleteStocktakesAction
+              storeId={params.storeId}
+              selectedIds={selectedIds}
+              onDeleted={onDeleted}
+            />
             <ContentFooterActions>
               <Button variant="secondary" icon={<CloseIcon />} onClick={() => setSelectedIds([])}>
                 {t('common.clear')}
@@ -314,71 +280,6 @@ const StocktakesList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
-      />
-      {/* Delete: a plain "delete N?" confirm; if the atomic batch reports it can't (a
-          finalised stocktake in the selection), the same dialog switches to the
-          translated error with just a Close action (nothing was deleted). */}
-      <Dialog
-        open={deleteState() != null}
-        // Blocking while the mutation is in flight — no click-outside / Escape exit until
-        // it resolves; dismissable again on confirm / success / error.
-        dismissable={deleteState()?.phase !== 'deleting'}
-        onClose={() => setDeleteState(null)}
-        icon={<TrashIcon />}
-        title={t('stocktake.delete.title')}
-        description={
-          <Switch
-            fallback={t('stocktake.delete.confirm', { count: deleteState()?.ids.length ?? 0 })}
-          >
-            <Match when={deleteState()?.phase === 'error'}>
-              <Alert severity="error">{t('stocktake.delete.cannot-edit')}</Alert>
-            </Match>
-            <Match when={deleteState()?.phase === 'success'}>
-              {t('stocktake.delete.success', { count: deleteState()?.ids.length ?? 0 })}
-            </Match>
-          </Switch>
-        }
-        actions={
-          <Switch
-            fallback={
-              // confirm / deleting: Cancel (hidden while deleting) + the loading Delete.
-              <>
-                <Show when={deleteState()?.phase === 'confirm'}>
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
-                    onClick={() => setDeleteState(null)}
-                  >
-                    {t('common.cancel')}
-                  </Button>
-                </Show>
-                <Button
-                  variant="secondary"
-                  icon={<TrashIcon />}
-                  loading={deleteState()?.phase === 'deleting'}
-                  onClick={() => void runDelete()}
-                >
-                  {t('stocktake.delete.action')}
-                </Button>
-              </>
-            }
-          >
-            <Match when={deleteState()?.phase === 'success'}>
-              <Button variant="secondary" icon={<CheckIcon />} onClick={() => setDeleteState(null)}>
-                {t('common.ok')}
-              </Button>
-            </Match>
-            <Match when={deleteState()?.phase === 'error'}>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
-                onClick={() => setDeleteState(null)}
-              >
-                {t('common.cancel')}
-              </Button>
-            </Match>
-          </Switch>
-        }
       />
       <CreateStocktakeModal open={createOpen()} onClose={() => setCreateOpen(false)} />
     </Page>

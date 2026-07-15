@@ -1,6 +1,6 @@
-import { tPlural } from '../../../intl';
-import type { ActionResult } from '../../../domain/action';
-import type { BatchStocktakeLinesOutcome } from '../stocktakeLineUpdate';
+import { tPlural } from '../../../../intl';
+import type { ActionResult } from '../../../../domain/action';
+import type { BatchStocktakeLinesOutcome } from '../lines/stocktakeLineUpdate';
 
 // Map a batch outcome to the ActionResult an ActionModal drives on, shared by the line actions
 // (Delete / Change-location / Reduce-to-0) — they differ only in the input they build and what they

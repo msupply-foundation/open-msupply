@@ -5,8 +5,8 @@ import { Route } from '@solidjs/router';
 // App.tsx. The list view is the reference list screen; the detail view (a stocktake's lines)
 // is reached by a list row-click or after creating a stocktake. Both are lazy so the section
 // is its own bundle.
-const StocktakesList = lazy(() => import('./StocktakesList'));
-const StocktakeDetailView = lazy(() => import('./StocktakeDetailView'));
+const StocktakesList = lazy(() => import('./list/StocktakesList'));
+const StocktakeDetailView = lazy(() => import('./detail/StocktakeDetailView'));
 
 export const stocktakesRoutes = () => (
   <>

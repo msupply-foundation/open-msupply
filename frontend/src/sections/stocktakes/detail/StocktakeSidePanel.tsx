@@ -1,11 +1,11 @@
 import { type Component } from 'solid-js';
-import { t } from '../../intl';
-import { localisedDate } from '../../intl/formatDateTime';
-import { SidePanelSection } from '../../ui/layout/SidePanel/SidePanel';
-import { TextField } from '../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../ui/elements/inputs/FieldRow';
-import { Text } from '../../ui/elements/typography/Text';
-import type { StocktakeInfoFragment } from './stocktakeDetail.generated';
+import { t } from '../../../intl';
+import { localisedDate } from '../../../intl/formatDateTime';
+import { SidePanelSection } from '../../../ui/layout/SidePanel/SidePanel';
+import { TextField } from '../../../ui/elements/inputs/TextField';
+import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { Text } from '../../../ui/elements/typography/Text';
+import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
 import type { StocktakeFieldEdit } from './stocktakeEdit';
 
 // The Additional-info side panel (Open mSupply's SidePanel → AdditionalInfoSection): read-only

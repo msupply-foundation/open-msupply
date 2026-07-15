@@ -1,14 +1,14 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { t } from '../../../intl';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { ArrowRightIcon, InfoIcon, CheckIcon } from '../../../ui/icons';
-import { ActionModal, type ActionResult } from '../../../domain/action';
+import { t } from '../../../../intl';
+import { Button } from '../../../../ui/elements/buttons/Button';
+import { SplitButton } from '../../../../ui/elements/buttons/SplitButton';
+import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { ContentFooterActions } from '../../../../ui/layout/ContentFooter/ContentFooterActions';
+import { ArrowRightIcon, InfoIcon, CheckIcon } from '../../../../ui/icons';
+import { ActionModal, type ActionResult } from '../../../../domain/action';
 import { STATUS_FLOW, STATUS_LABELS, statusIndex } from '../stocktakeStatus';
 import { finaliseStocktake } from '../stocktakeUpdate';
-import type { StocktakeInfoFragment } from '../stocktakeDetail.generated';
+import type { StocktakeInfoFragment } from '../lines/stocktakeDetail.generated';
 
 export interface FinaliseActionProps {
   storeId: string;

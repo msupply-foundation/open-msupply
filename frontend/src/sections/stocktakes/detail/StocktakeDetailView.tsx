@@ -9,37 +9,37 @@ import {
 } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../api/graphql';
-import { t } from '../../intl';
-import { Page } from '../../ui/layout/Page/Page';
-import { Header } from '../../ui/layout/Header/Header';
-import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
-import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../ui/layout/Header/Toolbar';
-import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
-import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions';
-import { Button } from '../../ui/elements/buttons/Button';
-import { EmptyState } from '../../ui/elements/feedback/EmptyState';
-import { InfoIcon, MinusCircleIcon } from '../../ui/icons';
+import { graphqlFetch } from '../../../api/graphql';
+import { t } from '../../../intl';
+import { Page } from '../../../ui/layout/Page/Page';
+import { Header } from '../../../ui/layout/Header/Header';
+import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
+import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
+import { InfoIcon, MinusCircleIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
   type SortState,
   sharedOrMultiple,
-} from '../../ui/elements/table/DataTable';
-import { getDateCell, getNumberCell } from '../../ui/elements/table/tableHelpers';
-import { createTableConfig } from '../../api/createTableConfig';
+} from '../../../ui/elements/table/DataTable';
+import { getDateCell, getNumberCell } from '../../../ui/elements/table/tableHelpers';
+import { createTableConfig } from '../../../api/createTableConfig';
 import {
   StocktakeDetail,
   type StocktakeDetailResult,
   type StocktakeInfoFragment,
   type UpdateStocktakeVariables,
-} from './stocktakeDetail.generated';
+} from './lines/stocktakeDetail.generated';
 import {
   StocktakeLineEditModal,
   type LineEditCommit,
   type StocktakeLineEditItem,
-} from './StocktakeLineEditModal';
+} from './edit-modal/StocktakeLineEditModal';
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
@@ -49,11 +49,11 @@ import {
   ReduceToZeroAction,
 } from './actions';
 import { saveStocktakeFields } from './stocktakeUpdate';
-import { stocktakeLineErrorMessage, type LineErrors } from './stocktakeLineErrors';
+import { stocktakeLineErrorMessage, type LineErrors } from './lines/stocktakeLineErrors';
 import { lineMatchesFilter, type StocktakeLineFilter } from './stocktakeLineFilter';
-import { createDebouncedEdit } from '../../domain/debouncedEdit';
+import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import type { StocktakeEditFields } from './stocktakeEdit';
-import { useUrlQueryState } from '../../list/urlQueryState';
+import { useUrlQueryState } from '../../../list/urlQueryState';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an editable
 // description + filters), the lines in the DataTable (front-end sorted / grouped / filtered /

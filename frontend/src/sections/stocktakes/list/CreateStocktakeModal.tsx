@@ -1,19 +1,19 @@
 import { createMemo, createResource, createSignal, Match, Show, Switch } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../api/graphql';
-import { Dialog } from '../../ui/elements/feedback/Dialog';
-import { Alert } from '../../ui/elements/feedback/Alert';
-import { InsetPanel } from '../../ui/elements/inputs/InsetPanel';
-import { Button } from '../../ui/elements/buttons/Button';
-import { RadioGroup } from '../../ui/elements/inputs/RadioGroup';
-import { TextField } from '../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../ui/elements/inputs/FieldRow';
-import { masterListsResource, MasterListSelect } from '../../domain/masterList';
-import { locationsResource, LocationSelect } from '../../domain/location';
-import { PlusCircleIcon, XCircleIcon } from '../../ui/icons';
-import { t } from '../../intl';
-import { shallowEqual } from '../../typeHelpers';
-import { dayBefore } from '../../intl/dateArithmetic';
+import { graphqlFetch } from '../../../api/graphql';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { Alert } from '../../../ui/elements/feedback/Alert';
+import { InsetPanel } from '../../../ui/elements/inputs/InsetPanel';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { RadioGroup } from '../../../ui/elements/inputs/RadioGroup';
+import { TextField } from '../../../ui/elements/inputs/TextField';
+import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { masterListsResource, MasterListSelect } from '../../../domain/masterList';
+import { locationsResource, LocationSelect } from '../../../domain/location';
+import { PlusCircleIcon, XCircleIcon } from '../../../ui/icons';
+import { t } from '../../../intl';
+import { shallowEqual } from '../../../typeHelpers';
+import { dayBefore } from '../../../intl/dateArithmetic';
 import {
   InsertStocktake,
   type InsertStocktakeVariables,

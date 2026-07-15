@@ -1,12 +1,12 @@
 import { createSignal, type Component } from 'solid-js';
-import { t } from '../../../intl';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
-import { CheckIcon, MapPinIcon } from '../../../ui/icons';
-import { ActionModal, type ActionResult } from '../../../domain/action';
-import { LocationSelect } from '../../../domain/location';
-import { runBatchStocktakeLines, type LineEditCommit } from '../stocktakeLineUpdate';
-import type { LineErrors } from '../stocktakeLineErrors';
+import { t } from '../../../../intl';
+import { Button } from '../../../../ui/elements/buttons/Button';
+import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
+import { CheckIcon, MapPinIcon } from '../../../../ui/icons';
+import { ActionModal, type ActionResult } from '../../../../domain/action';
+import { LocationSelect } from '../../../../domain/location';
+import { runBatchStocktakeLines, type LineEditCommit } from '../lines/stocktakeLineUpdate';
+import type { LineErrors } from '../lines/stocktakeLineErrors';
 import { lineActionResult } from './lineActionResult';
 
 export interface ChangeLocationActionProps {

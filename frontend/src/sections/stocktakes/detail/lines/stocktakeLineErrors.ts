@@ -1,5 +1,5 @@
-import { t, type LocaleKey } from '../../intl';
-import { exhaustiveCheck } from '../../typeHelpers';
+import { t, type LocaleKey } from '../../../../intl';
+import { exhaustiveCheck } from '../../../../typeHelpers';
 import type { BatchStocktakeLinesResult } from './stocktakeDetail.generated';
 
 // Structured stocktake-line errors → friendly, translated messages (mirrors Open mSupply's

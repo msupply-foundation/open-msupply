@@ -1,4 +1,4 @@
-import type { StocktakeLineFragment } from './stocktakeDetail.generated';
+import type { StocktakeLineFragment } from './lines/stocktakeDetail.generated';
 
 // Client-side filtering of the already-loaded stocktake lines (the whole stocktake loads at once,
 // so there's no server round-trip — matching Open mSupply, which filters the loaded rows in

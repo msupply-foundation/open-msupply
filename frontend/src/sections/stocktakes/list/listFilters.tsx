@@ -1,10 +1,10 @@
-import { t } from '../../intl';
+import { t } from '../../../intl';
 import {
   FilterSelect,
   FilterTextInput,
   constructFilters,
   type Filter,
-} from '../../ui/elements/selectors/FilterBar';
+} from '../../../ui/elements/selectors/FilterBar';
 import type { StocktakesVariables } from './stocktakes.generated';
 
 // The filter object exactly as GraphQL expects it (kdd/type-safety: no remapping —

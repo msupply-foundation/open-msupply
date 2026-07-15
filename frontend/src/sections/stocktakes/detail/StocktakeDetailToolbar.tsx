@@ -1,15 +1,15 @@
 import { Show, type Component } from 'solid-js';
-import { t } from '../../intl';
-import { TextField } from '../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../ui/elements/inputs/FieldRow';
-import { Alert } from '../../ui/elements/feedback/Alert';
+import { t } from '../../../intl';
+import { TextField } from '../../../ui/elements/inputs/TextField';
+import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { Alert } from '../../../ui/elements/feedback/Alert';
 import {
   FilterBar,
   FilterTextInput,
-} from '../../ui/elements/selectors/FilterBar';
+} from '../../../ui/elements/selectors/FilterBar';
 import { stocktakeDetailFilters } from './stocktakeDetailFilters';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
-import type { StocktakeInfoFragment } from './stocktakeDetail.generated';
+import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
 import type { StocktakeFieldEdit } from './stocktakeEdit';
 
 // The detail view's toolbar (Open mSupply's Toolbar): the editable stocktake description, a

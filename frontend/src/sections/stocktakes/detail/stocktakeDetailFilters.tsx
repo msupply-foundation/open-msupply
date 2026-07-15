@@ -1,10 +1,10 @@
-import { t } from '../../intl';
+import { t } from '../../../intl';
 import {
   constructFilters,
   FilterDate,
   FilterTextInput,
   type Filter,
-} from '../../ui/elements/selectors/FilterBar';
+} from '../../../ui/elements/selectors/FilterBar';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 
 // The detail-view filter chips, built once via constructFilters over the client-side

@@ -1,12 +1,12 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { t } from '../../intl';
-import { CheckboxButton } from '../../ui/elements/buttons/CheckboxButton';
-import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
-import { StatusIndicator } from '../../ui/elements/feedback/StatusIndicator';
-import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
+import { t } from '../../../intl';
+import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
+import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { FinaliseAction } from './actions';
 import { STATUS_LABELS, statusIndex } from './stocktakeStatus';
-import type { StocktakeInfoFragment } from './stocktakeDetail.generated';
+import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
 
 // The stocktake-level footer (Open mSupply's StocktakeDetailView footer, no rows selected): the
 // on-hold checkbox toggle, the status indicator, and the finalise action. On-hold uses a plain

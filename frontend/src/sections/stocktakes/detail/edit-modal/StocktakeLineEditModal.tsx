@@ -1,23 +1,23 @@
 import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
-import { graphqlFetch } from '../../api/graphql';
-import { toNumberOrNull } from '../../typeHelpers';
-import { t } from '../../intl';
-import { Dialog } from '../../ui/elements/feedback/Dialog';
-import { Alert } from '../../ui/elements/feedback/Alert';
-import { Button } from '../../ui/elements/buttons/Button';
-import { IconButton } from '../../ui/elements/buttons/IconButton';
-import { TextField } from '../../ui/elements/inputs/TextField';
+import { graphqlFetch } from '../../../../api/graphql';
+import { toNumberOrNull } from '../../../../typeHelpers';
+import { t } from '../../../../intl';
+import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { Alert } from '../../../../ui/elements/feedback/Alert';
+import { Button } from '../../../../ui/elements/buttons/Button';
+import { IconButton } from '../../../../ui/elements/buttons/IconButton';
+import { TextField } from '../../../../ui/elements/inputs/TextField';
 import {
   DataTable,
   type Column,
   type TabAndCardGroup,
   ALL_TABS,
-} from '../../ui/elements/table/DataTable';
-import { getNumberCell } from '../../ui/elements/table/tableHelpers';
-import { createTableConfig } from '../../api/createTableConfig';
-import { LocationSelect } from '../../domain/location';
-import { ReasonSelect } from '../../domain/reasonOptions';
+} from '../../../../ui/elements/table/DataTable';
+import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
+import { createTableConfig } from '../../../../api/createTableConfig';
+import { LocationSelect } from '../../../../domain/location';
+import { ReasonSelect } from '../../../../domain/reasonOptions';
 import {
   PlusCircleIcon,
   StockIcon,
@@ -26,22 +26,22 @@ import {
   XCircleIcon,
   TrashIcon,
   CopyIcon,
-} from '../../ui/icons';
+} from '../../../../ui/icons';
 import {
   StockLinesByItem,
   type StocktakeLineFragment,
   type StockLinesByItemResult,
-} from './stocktakeDetail.generated';
+} from '../lines/stocktakeDetail.generated';
 import {
   runBatchStocktakeLines,
   type BatchStocktakeLinesInput,
   type LineEditCommit,
-} from './stocktakeLineUpdate';
+} from '../lines/stocktakeLineUpdate';
 import {
   stocktakeLineErrorMessage,
   stocktakeLineErrorField,
   type LineErrorField,
-} from './stocktakeLineErrors';
+} from '../lines/stocktakeLineErrors';
 
 // The stocktake line-edit modal (kdd/edit-line-card-table + kdd/stocktake-line-editing). Opened
 // from a detail-view row; it edits ALL of that ITEM's lines (batches) at once — the item is fixed
