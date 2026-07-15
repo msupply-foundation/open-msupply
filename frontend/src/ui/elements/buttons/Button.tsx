@@ -1,21 +1,22 @@
-import { children, Show, splitProps, type JSX } from 'solid-js';
-import { createRipple } from '../../utils/createRipple';
-import { Ripple } from './Ripple';
-import styles from './Button.module.css';
+import { children, Show, splitProps, type JSX } from 'solid-js'
+import { createRipple } from '../../utils/createRipple'
+import { Ripple } from './Ripple'
+import styles from './Button.module.css'
 
-export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
-  icon?: JSX.Element;
+export interface ButtonProps
+  extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
+  icon?: JSX.Element
   /**
    * Semantic tone: 'primary' (default — the brand tone) or 'secondary' (the
    * action tone; footer edit actions). Never named after a colour — the
    * variant maps to palette tokens in the CSS (Carl, 2026-07-09).
    */
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary'
   /** Which side of the label the icon sits on (mirrors in RTL). */
-  iconPosition?: 'start' | 'end';
+  iconPosition?: 'start' | 'end'
   /** Busy state: shows a spinner in place of the icon, disables the button and marks it
    *  aria-busy (so a click can't re-fire an in-flight action). */
-  loading?: boolean;
+  loading?: boolean
 }
 
 /*
@@ -37,13 +38,13 @@ export const Button = (props: ButtonProps) => {
     'type',
     'disabled',
     'onPointerDown',
-  ]);
-  const ripple = createRipple();
+  ])
+  const ripple = createRipple()
   // JSX-element props are lazy getters: each is read twice below (the <Show>
   // test + the insertion), and raw reads would create the passed element twice
   // per evaluation — resolve once (kdd/solid-reactivity-pitfalls §3).
-  const icon = children(() => local.icon);
-  const label = children(() => local.children);
+  const icon = children(() => local.icon)
+  const label = children(() => local.children)
 
   return (
     <button
@@ -54,22 +55,15 @@ export const Button = (props: ButtonProps) => {
       disabled={local.disabled || local.loading}
       aria-busy={local.loading || undefined}
       onPointerDown={event => {
-        if (local.loading) return;
-        ripple.onPointerDown(event);
+        if (local.loading) return
+        ripple.onPointerDown(event)
         if (typeof local.onPointerDown === 'function')
-          local.onPointerDown(event);
+          local.onPointerDown(event)
       }}
       {...rest}
     >
       {/* Spinner replaces the icon while loading. */}
-      <Show
-        when={local.loading}
-        fallback={
-          <Show when={icon()}>
-            <span class={styles.icon}>{icon()}</span>
-          </Show>
-        }
-      >
+      <Show when={local.loading} fallback={<Show when={icon()}><span class={styles.icon}>{icon()}</span></Show>}>
         <span class={styles.spinner} aria-hidden="true" />
       </Show>
       <Show when={label()}>
@@ -77,5 +71,5 @@ export const Button = (props: ButtonProps) => {
       </Show>
       <Ripple ripples={ripple.ripples()} onDone={ripple.dismiss} />
     </button>
-  );
-};
+  )
+}

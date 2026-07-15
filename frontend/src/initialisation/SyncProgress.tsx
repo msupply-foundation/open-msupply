@@ -18,9 +18,7 @@ const stepStatus = (step: SyncStep): string => {
 // tick, so nothing here may key on object identity: non-keyed <Show> plus
 // position-keyed <Index> update the existing DOM in place instead of remounting
 // the whole list each tick.
-export const SyncProgress: Component<{
-  overview: SyncOverview | undefined;
-}> = props => (
+export const SyncProgress: Component<{ overview: SyncOverview | undefined }> = props => (
   <Show when={props.overview} fallback={<p>{t('sync.waiting')}</p>}>
     {overview => (
       <div class={styles.stack}>
