@@ -6,6 +6,10 @@ the fix, and the one-line reason. Sourced from the official SolidJS tutorial
 (https://www.solidjs.com/tutorial/), condensed; remount-specific rules live in
 [`kdd/no-remounts`](../kdd/no-remounts/draft-kdd.md).
 
+To review your uncommitted changes against this list, run the
+[`check-reactivity`](../.claude/skills/check-reactivity/SKILL.md) skill
+(`/check-reactivity` in Claude Code).
+
 **The mental model behind all of these:** a component function runs **once**.
 There is no re-render. The compiler wraps JSX expressions (and prop values) in
 tiny effects; only code inside a _tracking scope_ — a JSX expression, `createEffect`,
