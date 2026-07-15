@@ -47,18 +47,25 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      # open-msupply-frontend is private and the default GITHUB_TOKEN only
+      # reads THIS repo — a GitHub App scoped to reading that repo mints a
+      # short-lived token per run (no PAT to expire or rotate).
+      - name: Mint token for the suites repo
+        uses: actions/create-github-app-token@v2
+        id: fe-token
+        with:
+          app-id: ${{ vars.FE_APP_ID }}
+          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply-frontend
+
       - name: Check out open-msupply-frontend (suite definitions)
         uses: actions/checkout@v4
         with:
           repository: ${{ env.FE_SUITES_REPO }}
           ref: ${{ env.FE_SUITES_REF }}
           path: .fe-suites
-          # open-msupply-frontend is private, and the default GITHUB_TOKEN
-          # only reads THIS repo — set the FE_SUITES_TOKEN secret to a
-          # fine-grained PAT with Contents:read on open-msupply-frontend
-          # (same pattern as TMFTESTING_PAT). Falls back to the default
-          # token so the failure mode stays a clear 'repository not found'.
-          token: ${{ secrets.FE_SUITES_TOKEN || github.token }}
+          token: ${{ steps.fe-token.outputs.token }}
 
       - name: Read Rust toolchain channel
         # Scope the toolchain to this job only via RUSTUP_TOOLCHAIN; do NOT set
