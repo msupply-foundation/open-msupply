@@ -22,6 +22,7 @@ export type InsertStocktakeVariables = {
 export type InsertStocktakeResult = {
   insertStocktake: ({
   __typename: "StocktakeNode";
+} & {
   id: string;
 });
 };
@@ -183,6 +184,7 @@ export type StockLineCountVariables = {
 export type StockLineCountResult = {
   stockLines: ({
   __typename: "StockLineConnector";
+} & {
   totalCount: number;
 });
 };
@@ -249,6 +251,7 @@ export type NoStockItemCountVariables = {
 export type NoStockItemCountResult = {
   items: ({
   __typename: "ItemConnector";
+} & {
   totalCount: number;
 });
 };

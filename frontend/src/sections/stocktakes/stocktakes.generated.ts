@@ -78,6 +78,7 @@ export type StocktakesVariables = {
 export type StocktakesResult = {
   stocktakes: ({
   __typename: "StocktakeConnector";
+} & {
   totalCount: number;
   nodes: Array<{
   id: string;

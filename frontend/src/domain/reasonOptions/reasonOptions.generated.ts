@@ -7,6 +7,7 @@ export type ReasonOptionsVariables = Record<string, never>;
 export type ReasonOptionsResult = {
   reasonOptions: ({
   __typename: "ReasonOptionConnector";
+} & {
   nodes: Array<{
   id: string;
   type: "POSITIVE_INVENTORY_ADJUSTMENT" | "NEGATIVE_INVENTORY_ADJUSTMENT" | "OPEN_VIAL_WASTAGE" | "RETURN_REASON" | "REQUISITION_LINE_VARIANCE" | "CLOSED_VIAL_WASTAGE" | "SHIPMENT_VARIANCE";

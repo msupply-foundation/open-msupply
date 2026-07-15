@@ -3,7 +3,9 @@ import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { TrashIcon } from '../../../ui/icons';
 import { SelectionActionModal, type SelectionActionResult } from '../../../domain/selection';
-import { deleteStocktakeLines } from '../stocktakeLineUpdate';
+import { runBatchStocktakeLines, type LineEditCommit } from '../stocktakeLineUpdate';
+import type { LineErrors } from '../stocktakeLineErrors';
+import { lineSelectionActionResult } from './lineSelectionActionResult';
 
 export interface DeleteLinesActionProps {
   storeId: string;
@@ -11,10 +13,10 @@ export interface DeleteLinesActionProps {
   selectedIds: () => string[];
   /** Disabled while the stocktake is finalised / on hold. */
   disabled: boolean;
-  /** The lines that were deleted — the view drops them from its rows + selection (no refetch). */
-  onDeleted: (deletedIds: string[]) => void;
-  /** A partial failure — stamp the per-line error (inline + errors chip). */
-  onError: (message: string, lineIds: string[]) => void;
+  /** Apply what committed in place (the deleted ids drop from rows + selection, no refetch). */
+  onCommit: (commit: LineEditCommit) => void;
+  /** Stamp the per-line errors (lineId → typename) so the failed rows show them. */
+  onErrors: (errors: LineErrors) => void;
   /** Apply the errors-only filter to the offending lines (the error phase's "Show error lines"). */
   onShowErrors: (lineIds: string[]) => void;
 }
@@ -26,14 +28,14 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = (props) => {
   const [open, setOpen] = createSignal(false);
 
   const run = async (): Promise<SelectionActionResult> => {
-    const result = await deleteStocktakeLines(props.storeId, props.selectedIds());
-    if (result.kind === 'failed') return { kind: 'ok' };
-    props.onDeleted(result.deletedIds);
-    if (result.kind === 'partial') {
-      props.onError(result.error.message, result.error.lineIds);
-      return { kind: 'error', message: result.error.message, lineIds: result.error.lineIds };
+    const outcome = await runBatchStocktakeLines(props.storeId, {
+      delete: props.selectedIds().map((id) => ({ id })),
+    });
+    if (outcome) {
+      props.onCommit(outcome.commit);
+      props.onErrors(outcome.errors);
     }
-    return { kind: 'ok' };
+    return lineSelectionActionResult(outcome);
   };
 
   return (

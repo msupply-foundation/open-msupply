@@ -36,8 +36,9 @@ fragment StocktakeLine on StocktakeLineNode {
     id
     code
   }
-  # The stock line this stocktake line counts (if any) — used to dedupe against the item's other
-  # batches offered for opt-in in the editor, so a batch already on the stocktake isn't listed twice.
+  # The stock line this stocktake line counts (if any). The editor passes these ids as
+  # excludeStockLineIds to stockLinesByItem, so a batch already on the stocktake isn't offered
+  # for opt-in twice.
   stockLine {
     id
   }
@@ -117,9 +118,24 @@ mutation batchStocktakeLines(
           ...StocktakeLine
         }
         ... on InsertStocktakeLineError {
+          # Inline fragments on each concrete error type so codegen narrows error.__typename to a
+          # discriminated union (not a bare string). These are the InsertStocktakeLineErrorInterface
+          # implementers; `description` stays as the fallback for any we don't map.
           error {
             __typename
             description
+            ... on StockLineReducedBelowZero {
+              __typename
+            }
+            ... on AdjustmentReasonNotProvided {
+              __typename
+            }
+            ... on AdjustmentReasonNotValid {
+              __typename
+            }
+            ... on CannotEditStocktake {
+              __typename
+            }
           }
         }
       }
@@ -132,9 +148,26 @@ mutation batchStocktakeLines(
           ...StocktakeLine
         }
         ... on UpdateStocktakeLineError {
+          # UpdateStocktakeLineErrorInterface implementers (adds the snapshot mismatch that only
+          # update/finalise raise). See the insert selection for why the inline fragments are here.
           error {
             __typename
             description
+            ... on StockLineReducedBelowZero {
+              __typename
+            }
+            ... on AdjustmentReasonNotProvided {
+              __typename
+            }
+            ... on AdjustmentReasonNotValid {
+              __typename
+            }
+            ... on SnapshotCountCurrentCountMismatchLine {
+              __typename
+            }
+            ... on CannotEditStocktake {
+              __typename
+            }
           }
         }
       }
@@ -147,9 +180,13 @@ mutation batchStocktakeLines(
           id
         }
         ... on DeleteStocktakeLineError {
+          # DeleteStocktakeLineErrorInterface has one implementer. See the insert selection above.
           error {
             __typename
             description
+            ... on CannotEditStocktake {
+              __typename
+            }
           }
         }
       }
@@ -187,15 +224,21 @@ mutation updateStocktake($storeId: String!, $input: UpdateStocktakeInput!) {
   }
 }
 
-# All of an item's stock lines in the store (its "available batches"), for the line-edit modal:
-# the modal offers EVERY batch of the item — including ones in other locations that a
-# location-filtered stocktake didn't auto-include — so the user can opt them into the count
-# (matching OMS). hasPacksInStore drops empty stock lines. The fields mirror what seeds a draft
-# line (snapshot = totalNumberOfPacks); location is the full node so the picker shows code/name.
-query stockLinesByItem($storeId: String!, $itemId: String!) {
+# The item's stock lines in the store NOT already on the stocktake (its "available batches" to
+# opt into the count), for the line-edit modal: the modal offers EVERY other batch of the item —
+# including ones in other locations that a location-filtered stocktake didn't auto-include —
+# matching OMS. `excludeStockLineIds` are the stock lines the stocktake already counts, filtered
+# out server-side (id notEqualAll) so they aren't offered twice. hasPacksInStore drops empty
+# stock lines. The fields mirror what seeds a draft line (snapshot = totalNumberOfPacks);
+# location is the full node so the picker shows code/name.
+query stockLinesByItem($storeId: String!, $itemId: String!, $excludeStockLineIds: [String!]) {
   stockLines(
     storeId: $storeId
-    filter: { itemId: { equalTo: $itemId }, hasPacksInStore: true }
+    filter: {
+      itemId: { equalTo: $itemId }
+      hasPacksInStore: true
+      id: { notEqualAll: $excludeStockLineIds }
+    }
   ) {
     ... on StockLineConnector {
       __typename

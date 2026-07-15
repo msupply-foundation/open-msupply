@@ -155,7 +155,6 @@
   "stocktake.line-edit.location-none": "No location",
   "stocktake.line-edit.reason": "Reason",
   "stocktake.line-edit.reason-select": "Select a reason…",
-  "stocktake.line-edit.reason-na": "—",
   "stocktake.line-edit.note": "Note",
   "stocktake.line-edit.count-this-line": "Count this line",
   "stocktake.line-edit.add-batch": "Add batch",

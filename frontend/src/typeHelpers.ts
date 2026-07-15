@@ -1,3 +1,11 @@
+// Parse a number input's string to Float | null (blank → null), leaving other fields intact.
+export const toNumberOrNull = (value: string): number | null => {
+  const trimmed = value.trim();
+  if (trimmed === '') return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : null;
+};
+
 // Compile-time exhaustiveness for discriminated unions: call in the default arm
 // of a switch. If a new variant is added, the narrowed type is no longer `never`
 // and the call stops compiling at exactly the switch that needs updating.

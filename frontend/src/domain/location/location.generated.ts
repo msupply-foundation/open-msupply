@@ -9,6 +9,7 @@ export type LocationsVariables = {
 export type LocationsResult = {
   locations: ({
   __typename: "LocationConnector";
+} & {
   nodes: Array<{
   id: string;
   code: string;

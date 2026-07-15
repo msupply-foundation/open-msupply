@@ -5,16 +5,18 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { CheckIcon, MapPinIcon } from '../../../ui/icons';
 import { SelectionActionModal, type SelectionActionResult } from '../../../domain/selection';
 import { LocationSelect } from '../../../domain/location';
-import type { StocktakeLineFragment } from '../stocktakeDetail.generated';
-import { updateStocktakeLines } from '../stocktakeLineUpdate';
+import { runBatchStocktakeLines, type LineEditCommit } from '../stocktakeLineUpdate';
+import type { LineErrors } from '../stocktakeLineErrors';
+import { lineSelectionActionResult } from './lineSelectionActionResult';
 
 export interface ChangeLocationActionProps {
   storeId: string;
   selectedIds: () => string[];
   disabled: boolean;
-  /** The updated lines — the view splices them back into its rows (no refetch). */
-  onUpdated: (lines: StocktakeLineFragment[]) => void;
-  onError: (message: string, lineIds: string[]) => void;
+  /** Apply what committed in place (no refetch). */
+  onCommit: (commit: LineEditCommit) => void;
+  /** Stamp the per-line errors (lineId → typename) so the failed rows show them. */
+  onErrors: (errors: LineErrors) => void;
   onShowErrors: (lineIds: string[]) => void;
 }
 
@@ -25,17 +27,14 @@ export const ChangeLocationAction: Component<ChangeLocationActionProps> = (props
   const [locationId, setLocationId] = createSignal<string | null>(null);
 
   const run = async (): Promise<SelectionActionResult> => {
-    const result = await updateStocktakeLines(
-      props.storeId,
-      props.selectedIds().map((id) => ({ id, location: { value: locationId() } })),
-    );
-    if (result.kind === 'failed') return { kind: 'ok' };
-    props.onUpdated(result.updated);
-    if (result.kind === 'partial') {
-      props.onError(result.error.message, result.error.lineIds);
-      return { kind: 'error', message: result.error.message, lineIds: result.error.lineIds };
+    const outcome = await runBatchStocktakeLines(props.storeId, {
+      update: props.selectedIds().map((id) => ({ id, location: { value: locationId() } })),
+    });
+    if (outcome) {
+      props.onCommit(outcome.commit);
+      props.onErrors(outcome.errors);
     }
-    return { kind: 'ok' };
+    return lineSelectionActionResult(outcome);
   };
 
   return (

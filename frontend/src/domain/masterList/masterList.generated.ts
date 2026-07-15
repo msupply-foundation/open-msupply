@@ -9,6 +9,7 @@ export type MasterListsVariables = {
 export type MasterListsResult = {
   masterLists: ({
   __typename: "MasterListConnector";
+} & {
   nodes: Array<{
   id: string;
   name: string;

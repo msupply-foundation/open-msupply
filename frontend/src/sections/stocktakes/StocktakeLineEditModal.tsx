@@ -1,6 +1,7 @@
-import { createMemo, createResource, createSignal, Show, type JSX } from 'solid-js';
+import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../api/graphql';
+import { toNumberOrNull } from '../../typeHelpers';
 import { t } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
@@ -27,12 +28,15 @@ import {
   CopyIcon,
 } from '../../ui/icons';
 import {
-  BatchStocktakeLines,
   StockLinesByItem,
   type StocktakeLineFragment,
   type StockLinesByItemResult,
-  type BatchStocktakeLinesVariables,
 } from './stocktakeDetail.generated';
+import {
+  runBatchStocktakeLines,
+  type BatchStocktakeLinesInput,
+  type LineEditCommit,
+} from './stocktakeLineUpdate';
 import {
   stocktakeLineErrorMessage,
   stocktakeLineErrorField,
@@ -51,13 +55,10 @@ import {
 // sell/cost price, location, adjustment reason (required once counted differs from snapshot),
 // note + comment. Snapshot packs is the system count (read-only).
 
-// The outcome the detail view applies in place (no refetch): the server's own inserted/updated
-// nodes (same StocktakeLineFragment as a detail row) + the ids that were deleted.
-export type LineEditCommit = {
-  inserted: StocktakeLineFragment[];
-  updated: StocktakeLineFragment[];
-  deletedIds: string[];
-};
+// LineEditCommit (what the detail view applies in place) now lives with the shared batch layer
+// (stocktakeLineUpdate) — it's the common return of every batchStocktake call, not modal-specific.
+// Re-exported (imported above) so existing importers keep resolving it from this module.
+export type { LineEditCommit };
 
 export type StocktakeLineEditItem = { id: string; code: string; name: string };
 
@@ -70,10 +71,14 @@ export type StocktakeLineEditItem = { id: string; code: string; name: string };
 //                 the item's not-yet-counted batches start false (opt-in). It's the routing gate
 //                 (see buildBatch) and gates the row's other editable cells — matching OMS's
 //                 client-only countThisLine flag (never sent to the server).
+//  - deleted      soft-delete flag: the row is hidden from the table and, if it's an existing
+//                 line, sent as a delete on save. (isNew rows splice out of the store instead —
+//                 they never reach the server, so they leave no trace to flag.)
 type DraftLine = StocktakeLineFragment & {
   isNew?: boolean;
   stockLineId?: string;
   countThisLine: boolean;
+  deleted?: boolean;
 };
 
 // One of the item's stock lines (from stockLinesByItem).
@@ -82,42 +87,53 @@ type ItemStockLine = Extract<
   { __typename: 'StockLineConnector' }
 >['nodes'][number];
 
-// Seed the draft: the stocktake's existing lines for this item (already counted-in →
-// countThisLine true), PLUS the item's other stock lines that AREN'T on the stocktake yet
-// (offered for opt-in → countThisLine false). The latter are drafts (isNew) linked to their
-// stockLineId; ticking one inserts it, matching OMS. A stock line already represented by a
-// stocktake line (by stockLineId) is skipped so it isn't offered twice.
-const seedDraft = (
+// Fetch the item's other batches (not already on the stocktake) and build the draft rows. The
+// draft is the stocktake's EXISTING lines for this item (already counted-in → countThisLine true),
+// PLUS those fetched stock lines (offered for opt-in → countThisLine false, isNew, linked to their
+// stockLineId; ticking one inserts it, matching OMS). The fetch excludes batches already on the
+// stocktake server-side (excludeStockLineIds = the existing lines' stockLine ids), so a stock line
+// isn't offered twice. Called once when the modal mounts (see the content component's onMount);
+// in future also when the selected lines change. A failed/empty fetch just yields the existing
+// lines. This is the ONE place the draft is seeded — no reactive reseeding to track.
+const fetchAndSeed = async (
+  storeId: string,
+  item: StocktakeLineEditItem,
   existing: StocktakeLineFragment[],
-  stockLines: ItemStockLine[],
-): DraftLine[] => {
-  const onStocktake = new Set(
-    existing.map((line) => line.stockLine?.id).filter((id): id is string => id != null),
-  );
+): Promise<DraftLine[]> => {
+  const result = await graphqlFetch(StockLinesByItem, {
+    storeId,
+    itemId: item.id,
+    excludeStockLineIds: existing
+      .map((line) => line.stockLine?.id)
+      .filter((id): id is string => id != null),
+  });
+  const stockLines: ItemStockLine[] =
+    result.kind === 'success' && result.data.stockLines.__typename === 'StockLineConnector'
+      ? result.data.stockLines.nodes
+      : [];
+
   const fromExisting: DraftLine[] = existing.map((line) => ({ ...line, countThisLine: true }));
-  const fromStock: DraftLine[] = stockLines
-    .filter((sl) => !onStocktake.has(sl.id))
-    .map((sl) => ({
-      id: crypto.randomUUID(),
-      isNew: true,
-      stockLineId: sl.id,
-      countThisLine: false,
-      stockLine: { id: sl.id },
-      itemName: existing[0]?.itemName ?? '',
-      item: existing[0]?.item ?? { id: '', code: '' },
-      batch: sl.batch,
-      expiryDate: sl.expiryDate,
-      manufactureDate: sl.manufactureDate,
-      snapshotNumberOfPacks: sl.totalNumberOfPacks,
-      countedNumberOfPacks: null,
-      packSize: sl.packSize,
-      sellPricePerPack: sl.sellPricePerPack,
-      costPricePerPack: sl.costPricePerPack,
-      comment: null,
-      note: sl.note,
-      location: sl.location,
-      reasonOption: null,
-    }));
+  const fromStock: DraftLine[] = stockLines.map((sl) => ({
+    id: crypto.randomUUID(),
+    isNew: true,
+    stockLineId: sl.id,
+    countThisLine: false,
+    stockLine: { id: sl.id },
+    itemName: item.name,
+    item: { id: item.id, code: item.code },
+    batch: sl.batch,
+    expiryDate: sl.expiryDate,
+    manufactureDate: sl.manufactureDate,
+    snapshotNumberOfPacks: sl.totalNumberOfPacks,
+    countedNumberOfPacks: null,
+    packSize: sl.packSize,
+    sellPricePerPack: sl.sellPricePerPack,
+    costPricePerPack: sl.costPricePerPack,
+    comment: null,
+    note: sl.note,
+    location: sl.location,
+    reasonOption: null,
+  }));
   return [...fromExisting, ...fromStock];
 };
 
@@ -143,76 +159,67 @@ interface StocktakeLineEditModalProps {
   onCommitted: (commit: LineEditCommit) => void;
 }
 
-// Parse a number input's string to Float | null (blank → null), leaving other fields intact.
-const toNumberOrNull = (value: string): number | null => {
-  const trimmed = value.trim();
-  if (trimmed === '') return null;
-  const n = Number(trimmed);
-  return Number.isFinite(n) ? n : null;
-};
+// The parent-facing wrapper: mount the editor ONLY while open, and only with an item. `<Show>`
+// tears the content down on close and rebuilds it on the next open, so the content component owns
+// no open/closed state — it fetches + seeds once, on mount (kdd/explicit-composition). This keeps
+// the driving of the editor explicit (open by passing an item, close via onClose) rather than the
+// content reacting to prop changes.
+export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.Element => (
+  <Show when={props.open && props.item} keyed>
+    {(item) => (
+      <StocktakeLineEditContent
+        onClose={props.onClose}
+        storeId={props.storeId}
+        stocktakeId={props.stocktakeId}
+        item={item}
+        lines={props.lines}
+        onCommitted={props.onCommitted}
+      />
+    )}
+  </Show>
+);
 
-// A line needs an adjustment reason once its counted differs from the snapshot (the count changed
-// stock, so the backend requires a reason). Uncounted (null) or equal → no reason needed.
-const needsReason = (line: DraftLine): boolean =>
-  line.countedNumberOfPacks != null && line.countedNumberOfPacks !== line.snapshotNumberOfPacks;
+interface StocktakeLineEditContentProps {
+  onClose: () => void;
+  storeId: string;
+  stocktakeId: string;
+  /** The item whose lines are edited (fixed for the content's lifetime — it remounts per open). */
+  item: StocktakeLineEditItem;
+  /** That item's existing lines, to seed the draft. */
+  lines: StocktakeLineFragment[];
+  /** Fired after a successful save so the detail view reflects it in place (no refetch). */
+  onCommitted: (commit: LineEditCommit) => void;
+}
 
-export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.Element => {
+const StocktakeLineEditContent = (props: StocktakeLineEditContentProps): JSX.Element => {
   // Draft state as a STORE (not a signal), so editing one field of one line writes just that
   // path — setDraft(index, field, value) — and only that cell's subscribers update, rather than
-  // rebuilding the whole array on every keystroke (kdd/state-management). Soft-deleted ids are a
-  // separate signal; the store holds the full draft (incl. isNew lines).
+  // rebuilding the whole array on every keystroke (kdd/state-management). A soft-deleted row
+  // carries a `deleted` flag on the line itself (no separate id set); the store holds the full
+  // draft (incl. isNew and deleted lines).
   const [draft, setDraft] = createStore<DraftLine[]>([]);
-  const [deletedIds, setDeletedIds] = createSignal<string[]>([]);
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string | undefined>();
-  const [seededFor, setSeededFor] = createSignal<string>('');
-  // Per-line save errors from the server, keyed by line id: the mapped message + which field it
-  // touches (to highlight the cell). Set on a failed save, cleared for a line when it's edited.
-  const [lineErrors, setLineErrors] = createStore<
-    Record<string, { message: string; field: LineErrorField | undefined }>
-  >({});
+  // Per-line save errors from the server, keyed by line id → the error's __typename (the shared
+  // LineErrors shape, kept raw). The COLUMN renders it (message + which cell to mark) via
+  // stocktakeLineError* — this store holds no pre-rendered text. Set on a failed save, cleared for
+  // a line when it's edited. A store (not a signal) so each cell's error reacts independently.
+  const [lineErrors, setLineErrors] = createStore<Record<string, string>>({});
 
   // Column config → lights up the toolbar's card-switch + column-settings controls. Card view
   // renders the batches as cards (grouped into sections), the dual of the tabs.
   const tableConfig = createTableConfig({ tableId: 'stocktake-line-edit' });
 
-  // The item's ALL stock lines (its available batches), fetched when the modal opens. These
-  // include batches NOT on the stocktake — e.g. batches in other locations a location-filtered
-  // stocktake didn't auto-include — which we offer for opt-in counting (matching OMS). Keyed on
-  // the open item so it refetches per item; undefined while loading / closed.
-  const [itemStockLines] = createResource(
-    () => (props.open && props.item ? { storeId: props.storeId, itemId: props.item.id } : undefined),
-    async (variables) => {
-      const result = await graphqlFetch(StockLinesByItem, variables);
-      if (result.kind !== 'success') return [];
-      const connector = result.data.stockLines;
-      return connector.__typename === 'StockLineConnector' ? connector.nodes : [];
-    },
-  );
-
-  // Seed on open / item change, AND again once the item's stock lines resolve (so the opt-in
-  // batches appear). A plain derived reseed (not an effect): the key folds in the item + whether
-  // stock lines have loaded, so it re-seeds exactly when either changes. Replace the whole store
-  // on reseed; per-field writes below keep subsequent edits fine-grained.
-  const ensureSeeded = () => {
-    const stockLines = itemStockLines() ?? [];
-    const key = props.open ? `${props.item?.id ?? ''}:${itemStockLines.loading ? 'loading' : 'ready'}` : '';
-    if (key !== seededFor()) {
-      setSeededFor(key);
-      setDraft(seedDraft(props.lines, stockLines));
-      setDeletedIds([]);
-      setErrorMessage(undefined);
-      setLineErrors(reconcile({}));
-    }
-  };
-
-  // The rows the table shows: the draft minus soft-deleted lines. ensureSeeded() runs here so
-  // opening the modal seeds before the first render reads rows.
-  const rows = createMemo<DraftLine[]>(() => {
-    ensureSeeded();
-    const deleted = new Set(deletedIds());
-    return draft.filter((line) => !deleted.has(line.id));
+  // Seed once, on mount: fetch the item's opt-in batches and build the draft (fetchAndSeed). The
+  // modal only mounts while open (see the wrapper), so this replaces the old open/item-keyed
+  // resource + reseed machinery — the draft starts empty and fills when the fetch resolves. In
+  // future this same call re-runs when the selected lines change.
+  onMount(() => {
+    void fetchAndSeed(props.storeId, props.item, props.lines).then((seeded) => setDraft(seeded));
   });
+
+  // The rows the table shows: the draft minus soft-deleted lines.
+  const rows = (): DraftLine[] => draft.filter((line) => !line.deleted);
 
   // Edit ONE field of ONE line: locate it by id, write just that path in the store. Fine-grained
   // — only that cell reacts (the whole point of the store, vs. a map-the-array signal update).
@@ -223,21 +230,23 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
     if (lineErrors[id]) setLineErrors(id, undefined!);
   };
 
-  // The server error message to show on a given line's given field, or undefined. A line's error
-  // shows on the field it's about (counted / snapshot / reason); an error with no specific field
-  // (e.g. CannotEditStocktake) shows on `counted` as the row's general anchor.
+  // The server error message to show on a given line's given field, or undefined — the COLUMN's
+  // render-time view of the raw typename store. The typename maps to the field it's about (counted /
+  // snapshot / reason); an error with no specific field (e.g. CannotEditStocktake) shows on
+  // `counted` as the row's general anchor. The message maps the typename (server description as
+  // fallback); we have no per-line description here, so the fallback is the typename itself.
   const fieldError = (id: string, field: LineErrorField): string | undefined => {
-    const err = lineErrors[id];
-    if (!err) return undefined;
-    return err.field === field || (err.field === undefined && field === 'counted')
-      ? err.message
+    const typename = lineErrors[id];
+    if (!typename) return undefined;
+    const errorField = stocktakeLineErrorField(typename);
+    return errorField === field || (errorField === undefined && field === 'counted')
+      ? stocktakeLineErrorMessage(typename, typename)
       : undefined;
   };
 
   // Add a new batch (a fresh draft line for the item) — prepended, count blank.
   const addBatch = () => {
     const item = props.item;
-    if (!item) return;
     setDraft(
       produce((lines) =>
         lines.unshift({
@@ -264,8 +273,8 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
     );
   };
 
-  // Soft-delete a row. A never-saved (isNew) line splices out of the store; an existing line goes
-  // to the deleted set (so the save sends a delete for it).
+  // Soft-delete a row. A never-saved (isNew) line splices out of the store; an existing line is
+  // flagged deleted (hidden from the table; the save sends a delete for it).
   const removeLine = (line: DraftLine) => {
     if (line.isNew) {
       setDraft(
@@ -275,7 +284,8 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
         }),
       );
     } else {
-      setDeletedIds((current) => [...current, line.id]);
+      const index = draft.findIndex((l) => l.id === line.id);
+      if (index >= 0) setDraft(index, 'deleted', true);
     }
   };
 
@@ -302,101 +312,72 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
   // NullableStringUpdate) — sending the key means "set to value", omitting it means "leave
   // unchanged". INSERT takes the same fields UNWRAPPED. Getting this right is why expiry/location
   // edits to existing lines actually persist.
-  const buildBatch = (): Omit<BatchStocktakeLinesVariables, 'storeId'> => {
-    const seedById = new Map(props.lines.map((line) => [line.id, line]));
-    const insert: NonNullable<BatchStocktakeLinesVariables['insert']> = [];
-    const update: NonNullable<BatchStocktakeLinesVariables['update']> = [];
-    const extraDeletes: string[] = [];
+  const buildBatch = (): BatchStocktakeLinesInput => {
+    const insert: NonNullable<BatchStocktakeLinesInput['insert']> = [];
+    const update: NonNullable<BatchStocktakeLinesInput['update']> = [];
+    // Deletes = soft-deleted existing rows (the trash action) + existing rows the user unchecked
+    // (countThisLine off). Both remove an existing stocktake line; never delete an isNew draft
+    // (those splice out of the store and never reached the server).
+    const deletes: string[] = [];
     for (const line of draft) {
-      if (deletedIds().includes(line.id)) continue;
+      // Soft-deleted: an existing row → delete it; an isNew row shouldn't be here (it splices out).
+      if (line.deleted) {
+        if (!line.isNew) deletes.push(line.id);
+        continue;
+      }
 
       // countThisLine is the routing gate (matching OMS):
       //  - unchecked + NEW (an opt-in batch or a fresh add) → drop (never on the stocktake).
       //  - unchecked + EXISTING → delete (untick removes the line from the stocktake).
       if (!line.countThisLine) {
-        if (!line.isNew) extraDeletes.push(line.id);
+        if (!line.isNew) deletes.push(line.id);
         continue;
       }
 
       if (line.isNew) {
-        // Checked + new → insert. The server requires EXACTLY ONE of stockLineId / itemId
-        // (StockLineXOrItem): an opt-in batch links its existing stockLineId (the server fills
-        // batch/pack details from the stock line — so we don't also send itemId or those fields);
-        // a manually-added batch sends itemId + the entered fields instead.
-        insert.push(
-          line.stockLineId
-            ? {
-                id: line.id,
-                stocktakeId: props.stocktakeId,
-                stockLineId: line.stockLineId,
-                countedNumberOfPacks: line.countedNumberOfPacks,
-                comment: line.comment,
-                reasonOptionId: line.reasonOption?.id ?? null,
-              }
-            : {
-                id: line.id,
-                stocktakeId: props.stocktakeId,
-                itemId: line.item.id,
-                batch: line.batch,
-                expiryDate: line.expiryDate,
-                manufactureDate: line.manufactureDate,
-                countedNumberOfPacks: line.countedNumberOfPacks,
-                packSize: line.packSize,
-                sellPricePerPack: line.sellPricePerPack,
-                costPricePerPack: line.costPricePerPack,
-                comment: line.comment,
-                note: line.note,
-                location: { value: line.location?.id ?? null },
-                reasonOptionId: line.reasonOption?.id ?? null,
-              },
-        );
-        continue;
-      }
-      // Checked + existing: only include if a field actually changed (don't send no-op updates).
-      const seed = seedById.get(line.id);
-      const changed =
-        !seed ||
-        seed.batch !== line.batch ||
-        seed.expiryDate !== line.expiryDate ||
-        seed.manufactureDate !== line.manufactureDate ||
-        seed.countedNumberOfPacks !== line.countedNumberOfPacks ||
-        seed.packSize !== line.packSize ||
-        seed.sellPricePerPack !== line.sellPricePerPack ||
-        seed.costPricePerPack !== line.costPricePerPack ||
-        seed.comment !== line.comment ||
-        seed.note !== line.note ||
-        (seed.location?.id ?? null) !== (line.location?.id ?? null) ||
-        (seed.reasonOption?.id ?? null) !== (line.reasonOption?.id ?? null);
-      if (changed) {
-        update.push({
+        // Checked + new → insert. The ONLY difference between an opt-in batch and a manually-added
+        // one is which identity it carries: the server requires EXACTLY ONE of stockLineId / itemId
+        // (StockLineXOrItem). Both carry the full set of entered fields — an opt-in batch's batch/
+        // expiry/pack/price/location/note edits must persist too (AC-F7: a counted line can update
+        // those in place), so we send them either way rather than letting the stock line's originals
+        // stand.
+        insert.push({
           id: line.id,
+          stocktakeId: props.stocktakeId,
+          ...(line.stockLineId ? { stockLineId: line.stockLineId } : { itemId: line.item.id }),
           batch: line.batch,
-          // Wrapped nullable fields ({ value }): set-or-clear on update.
-          expiryDate: { value: line.expiryDate },
-          manufactureDate: { value: line.manufactureDate },
-          location: { value: line.location?.id ?? null },
+          expiryDate: line.expiryDate,
+          manufactureDate: line.manufactureDate,
           countedNumberOfPacks: line.countedNumberOfPacks,
           packSize: line.packSize,
           sellPricePerPack: line.sellPricePerPack,
           costPricePerPack: line.costPricePerPack,
           comment: line.comment,
           note: line.note,
+          location: { value: line.location?.id ?? null },
           reasonOptionId: line.reasonOption?.id ?? null,
         });
+        continue;
       }
+      // Checked + existing → update. We always send it (no dirty-check): the server applies the
+      // full field set and returns the line, so a no-op update is harmless.
+      update.push({
+        id: line.id,
+        batch: line.batch,
+        // Wrapped nullable fields ({ value }): set-or-clear on update.
+        expiryDate: { value: line.expiryDate },
+        manufactureDate: { value: line.manufactureDate },
+        location: { value: line.location?.id ?? null },
+        countedNumberOfPacks: line.countedNumberOfPacks,
+        packSize: line.packSize,
+        sellPricePerPack: line.sellPricePerPack,
+        costPricePerPack: line.costPricePerPack,
+        comment: line.comment,
+        note: line.note,
+        reasonOptionId: line.reasonOption?.id ?? null,
+      });
     }
-    // Deletes = soft-deleted existing rows (the trash action) + existing rows the user unchecked
-    // (countThisLine off). Both remove an existing stocktake line; never delete an isNew draft.
-    const del = [
-      ...deletedIds().filter((id) => !draft.find((l) => l.id === id)?.isNew),
-      ...extraDeletes,
-    ].map((id) => ({ id }));
-    return { insert, update, delete: del };
-  };
-
-  const hasChanges = () => {
-    const b = buildBatch();
-    return (b.insert?.length ?? 0) + (b.update?.length ?? 0) + (b.delete?.length ?? 0) > 0;
+    return { insert, update, delete: deletes.map((id) => ({ id })) };
   };
 
   // No pre-emptive client-side validation — we let the server decide (e.g. reason-required,
@@ -405,62 +386,20 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
   const save = async () => {
     setSaving(true);
     setErrorMessage(undefined);
-    const result = await graphqlFetch(BatchStocktakeLines, {
-      storeId: props.storeId,
-      ...buildBatch(),
-    });
+    const outcome = await runBatchStocktakeLines(props.storeId, buildBatch());
     setSaving(false);
-    if (result.kind !== 'success') return; // transport/NodeError → global modal already showed it
+    if (!outcome) return; // transport/NodeError → global modal already showed it
 
-    const batch = result.data.batchStocktake;
-
-    // Collect EVERY per-line error (not just the first) → a map keyed by line id, each with a
-    // friendly mapped message + the field it touches. insert/update rows whose response isn't a
-    // StocktakeLineNode, and delete rows that aren't a DeleteResponse, carry an `error`.
-    const errors: Record<string, { message: string; field: LineErrorField | undefined }> = {};
-    for (const r of [...(batch.insertStocktakeLines ?? []), ...(batch.updateStocktakeLines ?? [])]) {
-      if (r.response.__typename !== 'StocktakeLineNode' && 'error' in r.response) {
-        const typename = r.response.error.__typename;
-        errors[r.id] = {
-          message: stocktakeLineErrorMessage(typename, r.response.error.description),
-          field: stocktakeLineErrorField(typename),
-        };
-      }
-    }
-    for (const r of batch.deleteStocktakeLines ?? []) {
-      if (r.response.__typename !== 'DeleteResponse' && 'error' in r.response) {
-        const typename = r.response.error.__typename;
-        errors[r.id] = {
-          message: stocktakeLineErrorMessage(typename, r.response.error.description),
-          field: undefined,
-        };
-      }
+    // Reflect the lines that DID save (partial success), even when others errored — the detail view
+    // splices these in; the failed ones stay in the modal for the user to fix.
+    const { commit, errors } = outcome;
+    if (commit.inserted.length || commit.updated.length || commit.deletedIds.length) {
+      props.onCommitted(commit);
     }
 
-    // Both insert + update arrays carry a per-row `response` that is a StocktakeLineNode on
-    // success; pull out the success nodes. Typed structurally so it takes either array.
-    const successNodes = (
-      arr: { response: { __typename: string } }[],
-    ): StocktakeLineFragment[] =>
-      arr
-        .map((r) => r.response)
-        .filter((r): r is StocktakeLineFragment & { __typename: 'StocktakeLineNode' } =>
-          r.__typename === 'StocktakeLineNode',
-        ) as StocktakeLineFragment[];
-    const inserted = successNodes(batch.insertStocktakeLines ?? []);
-    const updated = successNodes(batch.updateStocktakeLines ?? []);
-    const deleted = (batch.deleteStocktakeLines ?? [])
-      .filter((r) => r.response.__typename === 'DeleteResponse')
-      .map((r) => r.id);
-
-    // Reflect the lines that DID save (partial success), even when others errored — the detail
-    // view splices these in; the failed ones stay in the modal for the user to fix.
-    if (inserted.length || updated.length || deleted.length) {
-      props.onCommitted({ inserted, updated, deletedIds: deleted });
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setLineErrors(reconcile(errors));
+    if (errors.size > 0) {
+      // The store holds RAW typenames (lineId → typename); the columns render them (see fieldError).
+      setLineErrors(reconcile(Object.fromEntries(errors)));
       setErrorMessage(t('stocktake.line-edit.save-errors'));
       return; // keep the modal open on the failed lines
     }
@@ -693,8 +632,8 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
       },
     },
     {
-      // The adjustment reason — required once counted differs from snapshot. Shown always (so a
-      // user can pre-set it); a red hint is surfaced in the footer if it's missing when needed.
+      // The adjustment reason. The backend decides when it's required (counted differs from
+      // snapshot) and rejects the save with a field error, which we surface via `fieldError`.
       c: { key: 'reasonOption' },
       header: t('stocktake.line-edit.reason'),
       tabsAndCardGroups: ['batch'],
@@ -708,11 +647,7 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
             disabled={!line.countThisLine}
             value={line.reasonOption?.id}
             error={fieldError(line.id, 'reason')}
-            placeholder={
-              needsReason(line)
-                ? t('stocktake.line-edit.reason-select')
-                : t('stocktake.line-edit.reason-na')
-            }
+            placeholder={t('stocktake.line-edit.reason-select')}
             onChange={(r) =>
               update(
                 line.id,
@@ -796,13 +731,15 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
   const footerError = () => errorMessage();
 
   return (
+    // Always open: the wrapper mounts this content only while the modal should be open, and
+    // unmounting it (on close) cleanly closes the underlying <dialog> (see Dialog's onCleanup).
     <Dialog
-      open={props.open}
+      open
       onClose={props.onClose}
       dismissable={!saving()}
       size="large"
-      title={props.item?.name ?? t('stocktake.line-edit.title')}
-      description={props.item?.code}
+      title={props.item.name}
+      description={props.item.code}
       // The save/validation message sits at the inline-start of the actions row (beside the
       // buttons), so it doesn't eat the table's vertical space.
       actionsLead={
@@ -816,12 +753,7 @@ export const StocktakeLineEditModal = (props: StocktakeLineEditModalProps): JSX.
           <Button variant="secondary" icon={<XCircleIcon />} onClick={props.onClose}>
             {t('common.cancel')}
           </Button>
-          <Button
-            icon={<StockIcon />}
-            loading={saving()}
-            disabled={!hasChanges()}
-            onClick={() => void save()}
-          >
+          <Button icon={<StockIcon />} loading={saving()} onClick={() => void save()}>
             {t('common.save')}
           </Button>
         </>
