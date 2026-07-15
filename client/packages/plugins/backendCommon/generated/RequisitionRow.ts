@@ -26,6 +26,7 @@ export type RequisitionRow = {
   order_type: string | null;
   is_emergency: boolean;
   created_from_requisition_id: string | null;
+  name_store_id: string | null;
   name_id: string;
   destination_customer_id: string | null;
 };

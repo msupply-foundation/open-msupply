@@ -5,6 +5,7 @@ pub mod api;
 pub mod api_v6;
 pub(crate) mod central_data_synchroniser;
 pub(crate) mod central_data_synchroniser_v6;
+pub(crate) mod central_mapping_custom_fields;
 pub mod file_sync_driver;
 pub mod file_synchroniser;
 mod integrate_document;
@@ -63,21 +64,6 @@ impl ActiveStoresOnSite {
             .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to(site_id)))?;
 
         Ok(ActiveStoresOnSite { site_id, stores })
-    }
-
-    pub(crate) fn site_id(&self) -> i32 {
-        self.site_id
-    }
-
-    pub(crate) fn name_ids(&self) -> Vec<String> {
-        self.stores.iter().map(|r| r.name_row.id.clone()).collect()
-    }
-
-    pub(crate) fn get_store_id_for_name_id(&self, name_id: &str) -> Option<String> {
-        self.stores
-            .iter()
-            .find(|r| r.name_row.id == name_id)
-            .map(|r| r.store_row.id.clone())
     }
 
     pub(crate) fn store_ids(&self) -> Vec<String> {

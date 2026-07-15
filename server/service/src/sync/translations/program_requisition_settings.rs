@@ -4,7 +4,6 @@ use repository::{
     ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowDelete,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, StorageConnection,
     SyncBufferRow,
-
 };
 
 use serde::Deserialize;
@@ -12,13 +11,11 @@ use std::collections::HashMap;
 
 use crate::sync::translations::{
     name_tag::NameTagTranslation, period_schedule::PeriodScheduleTranslation,
-
 };
 use util::sync_serde::{empty_str_as_option, empty_str_or_i32, object_fields_as_option};
 
 use super::{
     master_list::MasterListTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
-
 };
 
 #[allow(non_snake_case)]
@@ -91,6 +88,7 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyListMasterRow>()?;
@@ -308,7 +306,11 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(

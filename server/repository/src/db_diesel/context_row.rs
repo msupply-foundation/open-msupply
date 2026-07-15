@@ -71,6 +71,14 @@ impl<'a> ContextRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn check_exists_by_id(&self, row_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            context::dsl::context.filter(context::dsl::id.eq(row_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ContextRow>, RepositoryError> {
         Ok(context::dsl::context
             .filter(context::dsl::id.eq_any(ids))

@@ -8,11 +8,14 @@ import {
   usePaginatedMaterialTable,
   MaterialTable,
   ColumnDef,
+  buildPropertyColumns,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { Details } from '../Details';
 import { useName, NameRowFragment } from '../api';
 import { NameRenderer } from '../Components';
+import { Toolbar } from './Toolbar';
 
 interface NameListProps {
   type: 'customer' | 'supplier';
@@ -21,10 +24,13 @@ interface NameListProps {
 export const NameListView = ({ type }: NameListProps): ReactElement => {
   const t = useTranslation();
   const navigate = useNavigate();
+  const { localisedDate } = useFormatDateTime();
   const { Modal, showDialog, hideDialog } = useDialog();
   const [selectedId, setSelectedId] = useState<string>('');
 
   const { data, isError, isFetching } = useName.document.list(type);
+  // `type` ("customer" | "supplier") is also the custom-field scope.
+  const { data: properties } = useName.document.customFields(type);
 
   const columns = useMemo(
     (): ColumnDef<NameRowFragment>[] => [
@@ -44,8 +50,9 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
         header: t('label.name'),
         enableSorting: true,
       },
+      ...buildPropertyColumns<NameRowFragment>(properties ?? [], localisedDate),
     ],
-    []
+    [properties, localisedDate, t]
   );
 
   const Transition = React.forwardRef(
@@ -74,7 +81,9 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
     onRowClick: handleRowClick,
   });
 
-  return <>
+  return (
+    <>
+      <Toolbar scope={type} />
       <MaterialTable table={table} />
       {type === 'customer' && (
         <Modal
@@ -87,5 +96,6 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
           <Details nameId={selectedId} />
         </Modal>
       )}
-  </>;
+    </>
+  );
 };

@@ -157,6 +157,7 @@ pub fn generate(
             shipped_number_of_packs: None,
             shipped_pack_size: None,
             purchase_order_line_id: None,
+            reason_option_id: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
             r#type: StockOutType::InventoryReduction,
@@ -182,6 +183,8 @@ pub fn generate(
             item_variant_id: None,
             donor_id: None,
             manufacturer_id: None,
+            received_number_of_packs: None,
+            reason_option_id: None,
         }),
     };
 

@@ -38,7 +38,6 @@ const { parse, print, visit } = clientRequire('graphql');
 const OPERATIONS = [
   // --- polling ---
   'me',
-  'lastSuccessfulUserSync',
   'isCentralServer',
   'preferences',
   'initialisationStatus',
@@ -54,7 +53,8 @@ const OPERATIONS = [
   'requisitionCounts',
   'stockCounts',
   'internalOrderCounts',
-  'inboundCounts',
+  'inboundInternalCounts',
+  'inboundExternalCounts',
   'outboundCounts',
   // --- app-boot / per-navigation bundle (real clients emit these on login + store init; ~10% of the
   //     real 20-user capture, and entirely absent before). Several hit resolvers no other op touches. ---

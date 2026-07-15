@@ -3,6 +3,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+use chrono::Utc;
 use repository::{
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
@@ -98,22 +99,36 @@ pub async fn get_token(
 
         ctx.connection
             .transaction_sync(|connection| {
-                if !relax_checks && site.token.is_some() {
+                // Multi device is the per-site equivalent of the relax flag — both
+                // bypass the single-device guards.
+                let skip_guards = relax_checks || site.is_multi_device;
+
+                if !skip_guards && site.token.is_some() {
                     return Err(SyncError::TokenAlreadyAllocated);
                 }
 
                 let hardware_id = match &site.hardware_id {
-                    Some(existing) if !relax_checks && existing != &input.hardware_id => {
+                    Some(existing) if !skip_guards && existing != &input.hardware_id => {
                         return Err(SyncError::HardwareIdMismatch);
                     }
                     _ => input.hardware_id.clone(),
                 };
 
-                let token = util::uuid::uuid();
+                // Multi device sites share a token: reuse the existing one, otherwise mint a new one.
+                let token = match (site.is_multi_device, site.token.clone()) {
+                    (true, Some(existing)) => existing,
+                    _ => util::uuid::uuid(),
+                };
 
+                // Capture site metadata at token allocation (the start of a sync
+                // session). app_name/app_version are reported by the remote and
+                // identify it; last_connection is its most recent request. #11784
                 SiteRowRepository::new(connection).upsert(&SiteRow {
                     hardware_id: Some(hardware_id),
                     token: Some(token.clone()),
+                    app_name: Some(input.app_name.clone()),
+                    app_version: Some(input.version.to_string()),
+                    last_connection_datetime: Some(Utc::now().naive_utc()),
                     ..site.clone()
                 })?;
 
@@ -133,11 +148,22 @@ pub async fn get_token(
     .map_err(join_error)?
 }
 
-/// If the site already shows v7 locally, returns it unchanged. Otherwise asks
-/// the legacy server: if `site_info` reports v7, or v7_url_and_upgrade succeeds
-/// (covers fresh remotes that haven't had a final v5+v6 sync yet), updates the
-/// local row to v7 and returns it. Returns SiteIsNotV7 only when the legacy
-/// server still says v5/v6 *and* v7_url_and_upgrade refuses.
+/// Gate that only lets a site through `get_token` once COMS itself shows it as
+/// v7 — which happens exclusively via sync (the legacy server sets
+/// `site.sync_version = "v7"`, that row syncs COGS->COMS and is integrated by
+/// `SiteTranslation`). COMS never flips its own site row here.
+///
+/// - Already v7 on COMS: returns it unchanged. This is the only success path, and
+///   it is reached only after the updated `site` row has synced *and integrated*
+///   into COMS. Because COMS integrates a sync cycle's pulled records in order,
+///   by that point the site's store records (pulled earlier) are integrated too —
+///   so the site has complete data before it can pull over v7.
+/// - Not yet v7 on COMS: still asks the legacy server to transition the site
+///   (`v7_url_and_upgrade`). The legacy server refuses with `stores_not_migrated`
+///   until every store's data has been moved to COMS — that error is propagated
+///   unchanged so ROMS retries. On success the legacy server has flipped to v7,
+///   but COMS must wait for that to arrive via sync, so we return
+///   `WaitingForCentralV7Upgrade` rather than upgrading locally.
 ///
 /// Acquires a connection per DB touch rather than holding one across the legacy
 /// server roundtrip, so a pool slot isn't tied up during the network call.
@@ -153,33 +179,28 @@ async fn ensure_site_is_v7(
     let ctx = service_provider.basic_context()?;
     let api_v5 = build_v5_api_for_request(&ctx.connection, input)?;
 
-    let info = api_v5.get_site_info().await.map_err(|error| {
+    // Ask the legacy server to transition the site to v7. This is idempotent:
+    // it returns `stores_not_migrated` until all the site's stores have been
+    // moved to COMS, and on success flips the legacy `site.sync_version` to v7.
+    api_v5.v7_url_and_upgrade().await.map_err(|error| {
         if error.is_connection() {
             SyncError::ConnectionError {
                 url: api_v5.url.to_string(),
                 e: format_error(&error),
             }
         } else {
+            // Includes `stores_not_migrated` while a fleet is mid-migration —
+            // ROMS surfaces it and retries on the next sync.
             SyncError::other(error)
         }
     })?;
 
-    // TODO revisit, do we really want to call v7_url_and_upgrade again ?
-    if info.sync_version != SyncVersion::V7 {
-        // Fresh remote that hasn't been transitioned yet on the legacy server.
-        // v7_url_and_upgrade flips sync_version=V7 server-side on success.
-        api_v5
-            .v7_url_and_upgrade()
-            .await
-            .map_err(SyncError::other)?;
-    };
-
-    let updated = SiteRow {
-        sync_version: SyncVersion::V7,
-        ..site
-    };
-    SiteRowRepository::new(&ctx.connection).upsert(&updated)?;
-    Ok(updated)
+    // The legacy server has accepted the upgrade, but COMS must not flip its own
+    // site row: the v7 status has to arrive via sync (and integration) so that we
+    // don't let ROMS initialise before this site's data is fully integrated on
+    // COMS. ROMS retries; the early return above succeeds once the v7 `site` row
+    // has synced + integrated.
+    Err(SyncError::WaitingForCentralV7Upgrade)
 }
 
 /// Build a SyncApiV5 using the requesting site's credentials, the
@@ -199,7 +220,7 @@ fn build_v5_api_for_request(
         password_sha256: input.password_sha256.clone(),
         site_uuid: input.hardware_id.clone(),
         app_version: input.version.to_string(),
-        app_name: "Open mSupply Central".to_string(),
+        app_name: input.app_name.clone(),
         sync_version: SYNC_V5_VERSION.to_string(),
     };
 
@@ -246,8 +267,10 @@ fn validate(
     let site =
         get_site_by_token(&ctx.connection, &common.token)?.ok_or(SyncError::TokenNotFound)?;
 
-    // The token above already identified the site; the hardware-id match is the relaxable part.
-    if !ctx.relax_hardware_id_token_checks {
+    // The token above already identified the site; the hardware-id match is the
+    // relaxable part — bypassed by the relax flag or a multi device site.
+    let skip_hardware_id_check = ctx.relax_hardware_id_token_checks || site.is_multi_device;
+    if !skip_hardware_id_check {
         match site.hardware_id.as_deref() {
             Some(id) if id == common.hardware_id => {}
             _ => return Err(SyncError::HardwareIdMismatch),
@@ -265,6 +288,23 @@ fn validate(
         return Err(SyncError::SiteLockError(lock));
     }
 
+    // Record that the remote made an authenticated request (throttled to once a
+    // minute). Runs here so it covers every v7 endpoint. Best-effort: never fail
+    // a sync request because metadata bookkeeping failed. #11784
+    if let Err(e) = crate::site::sync_metadata::record_site_connection(
+        &ctx.connection,
+        &site,
+        Some(common.app_name.clone()),
+        Some(common.version.to_string()),
+        Utc::now().naive_utc(),
+    ) {
+        log::warn!(
+            "Failed to record last_connection for site {}: {:?}",
+            site.id,
+            e
+        );
+    }
+
     Ok((site, ctx))
 }
 
@@ -280,6 +320,7 @@ pub async fn site_status(
         Ok(status::Output {
             site_id: site.id,
             central_site_id,
+            is_multi_device_site: site.is_multi_device,
         })
     })
     .await
@@ -295,7 +336,11 @@ pub async fn pull(
     tokio::task::spawn_blocking(move || {
         let (site, ctx) = validate(&service_provider, &common)?;
 
-        let base = ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None);
+        let base = if site.is_multi_device {
+            ChangelogFilter::multi_device_all_data_for_site(site.id, input.is_initialising, None)
+        } else {
+            ChangelogFilter::all_data_for_site(site.id, input.is_initialising, None)
+        };
         let filter = match input.filter {
             Some(extra) => ChangelogCondition::And(vec![base, extra]),
             None => base,
@@ -315,6 +360,20 @@ pub async fn pull(
             batch.records.len(),
             batch.remaining
         );
+
+        // A pull batch with nothing remaining means the remote has fully caught
+        // up: record last_sync (and first_sync on the initial sync). Best-effort.
+        // #11784
+        if batch.remaining == 0 {
+            if let Err(e) = crate::site::sync_metadata::record_site_full_pull(
+                &ctx.connection,
+                site.id,
+                input.is_initialising,
+                Utc::now().naive_utc(),
+            ) {
+                log::warn!("Failed to record last_sync for site {}: {:?}", site.id, e);
+            }
+        }
 
         Ok(batch)
     })
@@ -510,6 +569,11 @@ fn integrate_for_site(
     let source_site_active_store_ids =
         ActiveStoresOnSite::store_ids_for_site(&ctx.connection, site_id)?;
 
+    let is_multi_device = SiteRowRepository::new(&ctx.connection)
+        .find_one_by_id(site_id)?
+        .map(|site| site.is_multi_device)
+        .unwrap_or(false);
+
     validate_translate_integrate(
         &ctx.connection,
         None,
@@ -517,6 +581,7 @@ fn integrate_for_site(
         None,
         SyncContext::Central {
             source_site_active_store_ids,
+            is_multi_device,
         },
         false,
     )?;
@@ -551,9 +616,10 @@ mod tests {
         sync::test_util_set_is_central_server,
         test_helpers::{setup_all_and_service_provider, ServiceTestContext},
     };
+    use httpmock::MockServer;
     use repository::{
         migrations::Version, mock::MockDataInserts, test_db::setup_all, KeyType,
-        KeyValueStoreRepository,
+        KeyValueStoreRepository, SyncVersion,
     };
 
     const SITE_NAME: &str = "test_site";
@@ -569,8 +635,10 @@ mod tests {
             name: SITE_NAME.to_string(),
             hashed_password: bcrypt::hash(PASSWORD_SHA256, bcrypt::DEFAULT_COST).unwrap(),
             hardware_id: None,
+            is_multi_device: false,
             token,
             sync_version: repository::SyncVersion::V7,
+            ..Default::default()
         };
         SiteRowRepository::new(connection).upsert(&site).unwrap();
         KeyValueStoreRepository::new(connection)
@@ -585,6 +653,7 @@ mod tests {
     fn input() -> GetTokenInput {
         GetTokenInput {
             version: Version::from_package_json(),
+            app_name: "Open mSupply Desktop".to_string(),
             name: SITE_NAME.to_string(),
             password_sha256: PASSWORD_SHA256.to_string(),
             hardware_id: HARDWARE_ID.to_string(),
@@ -605,6 +674,7 @@ mod tests {
             token: site_info.token,
             hardware_id: HARDWARE_ID.to_string(),
             version: Version::from_package_json(),
+            app_name: "Open mSupply Desktop".to_string(),
         };
         (context, common)
     }
@@ -723,6 +793,7 @@ mod tests {
             token: allocated.token.clone(),
             hardware_id: HARDWARE_ID.to_string(),
             version: Version::from_package_json(),
+            app_name: "Open mSupply Desktop".to_string(),
         };
 
         let (site, _) = validate(&sp, &common).unwrap();
@@ -818,6 +889,7 @@ mod tests {
             token: allocated.token.clone(),
             hardware_id: "wrong_hw".to_string(),
             version: Version::from_package_json(),
+            app_name: "Open mSupply Desktop".to_string(),
         };
 
         // A mismatched hardware id is normally rejected.
@@ -838,6 +910,210 @@ mod tests {
             &Common {
                 token: "wrong_token".to_string(),
                 ..wrong_hw
+            },
+        )
+        .err()
+        .unwrap();
+        assert!(matches!(err, SyncError::TokenNotFound));
+    }
+
+    /// Inserts a non-v7 (V5_V6) site and points the local legacy sync URL at
+    /// `legacy_url`, mirroring a COMS that hasn't yet received the v7 `site` row
+    /// from COGS via sync. Returns the inserted site.
+    fn non_v7_site(connection: &StorageConnection, legacy_url: &str) -> SiteRow {
+        let site = SiteRow {
+            id: 1,
+            og_id: Some("og-1".to_string()),
+            code: "test_code".to_string(),
+            name: SITE_NAME.to_string(),
+            hashed_password: bcrypt::hash(PASSWORD_SHA256, bcrypt::DEFAULT_COST).unwrap(),
+            hardware_id: None,
+            is_multi_device: false,
+            token: None,
+            sync_version: SyncVersion::V5V6,
+            ..Default::default()
+        };
+        SiteRowRepository::new(connection).upsert(&site).unwrap();
+        KeyValueStoreRepository::new(connection)
+            .set_string(KeyType::SettingsSyncUrl, Some(legacy_url.to_string()))
+            .unwrap();
+        site
+    }
+
+    /// Upserts the `test_site` then flips it to multi device with the given token.
+    fn multi_device_site(connection: &StorageConnection, token: Option<String>) -> SiteRow {
+        let site = test_site(connection, None);
+        let site = SiteRow {
+            is_multi_device: true,
+            token,
+            ..site
+        };
+        SiteRowRepository::new(connection).upsert(&site).unwrap();
+        site
+    }
+
+    #[actix_rt::test]
+    async fn ensure_site_is_v7_returns_ok_when_already_v7_without_calling_legacy() {
+        let ServiceTestContext {
+            connection,
+            service_provider,
+            ..
+        } = setup_all_and_service_provider("ensure_site_is_v7_already_v7", MockDataInserts::none())
+            .await;
+        test_util_set_is_central_server(true);
+
+        // test_site inserts a v7 site. No legacy sync URL is set, so any attempt
+        // to reach COGS would error — proving the v7 short-circuit doesn't call it.
+        let site = test_site(&connection, None);
+
+        let result = ensure_site_is_v7(&service_provider, site, &input())
+            .await
+            .unwrap();
+        assert_eq!(result.sync_version, SyncVersion::V7);
+    }
+
+    #[actix_rt::test]
+    async fn ensure_site_is_v7_waits_for_central_after_legacy_upgrade() {
+        let mock_server = MockServer::start();
+        mock_server.mock(|when, then| {
+            when.method(httpmock::Method::GET)
+                .path("/sync/v5/v7_url_and_upgrade");
+            then.status(200)
+                .body(r#"{ "v7Url": "http://oms-central:8000" }"#);
+        });
+
+        let ServiceTestContext {
+            connection,
+            service_provider,
+            ..
+        } = setup_all_and_service_provider(
+            "ensure_site_is_v7_waits_for_central",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+
+        let site = non_v7_site(&connection, &mock_server.base_url());
+
+        // The legacy server accepted the upgrade, but COMS must wait for the v7
+        // `site` row to arrive via sync rather than flipping it locally.
+        let err = ensure_site_is_v7(&service_provider, site, &input())
+            .await
+            .unwrap_err();
+        assert!(matches!(err, SyncError::WaitingForCentralV7Upgrade));
+
+        // The local site row must be untouched (still V5_V6).
+        let stored = SiteRowRepository::new(&connection)
+            .find_one_by_id(1)
+            .unwrap()
+            .unwrap();
+        assert_eq!(stored.sync_version, SyncVersion::V5V6);
+    }
+
+    #[actix_rt::test]
+    async fn ensure_site_is_v7_propagates_stores_not_migrated() {
+        let mock_server = MockServer::start();
+        mock_server.mock(|when, then| {
+            when.method(httpmock::Method::GET)
+                .path("/sync/v5/v7_url_and_upgrade");
+            then.status(503).body(
+                r#"{ "error": { "code": "stores_not_migrated", "message": "not ready", "data": null } }"#,
+            );
+        });
+
+        let ServiceTestContext {
+            connection,
+            service_provider,
+            ..
+        } = setup_all_and_service_provider(
+            "ensure_site_is_v7_stores_not_migrated",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+
+        let site = non_v7_site(&connection, &mock_server.base_url());
+
+        // When the legacy server still reports stores as not migrated, the error
+        // is propagated (NOT the waiting error) so ROMS retries on next sync.
+        let err = ensure_site_is_v7(&service_provider, site, &input())
+            .await
+            .unwrap_err();
+        assert!(!matches!(err, SyncError::WaitingForCentralV7Upgrade));
+
+        // The local site row must remain V5_V6.
+        let stored = SiteRowRepository::new(&connection)
+            .find_one_by_id(1)
+            .unwrap()
+            .unwrap();
+        assert_eq!(stored.sync_version, SyncVersion::V5V6);
+    }
+
+    #[actix_rt::test]
+    async fn get_token_multi_device_reuses_shared_token() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "get_token_multi_device_reuses_shared_token",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
+
+        // A shared token is already allocated; a multi device site reuses it
+        // rather than rejecting with TokenAlreadyAllocated.
+        multi_device_site(&connection, Some("shared-token".to_string()));
+        let sp = Arc::new(ServiceProvider::new(connection_manager));
+
+        let output = get_token(sp.clone(), input()).await.unwrap();
+        assert_eq!(output.token, "shared-token");
+
+        // A second device (different hardware id, same credentials) gets the same
+        // token — no TokenAlreadyAllocated, no HardwareIdMismatch.
+        let mut second_device = input();
+        second_device.hardware_id = "hw-id-second".to_string();
+        let output_2 = get_token(sp, second_device).await.unwrap();
+        assert_eq!(output_2.token, "shared-token");
+    }
+
+    #[actix_rt::test]
+    async fn validate_multi_device_skips_hardware_id_check() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "validate_multi_device_skips_hardware_id_check",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
+            .unwrap();
+
+        multi_device_site(&connection, Some("shared-token".to_string()));
+        let sp = Arc::new(ServiceProvider::new(connection_manager));
+
+        // Any hardware id is accepted for a multi device site, as long as the
+        // token identifies the site.
+        let (site, _) = validate(
+            &sp,
+            &Common {
+                token: "shared-token".to_string(),
+                hardware_id: "any-device".to_string(),
+                version: Version::from_package_json(),
+                app_name: "Open mSupply Desktop".to_string(),
+            },
+        )
+        .unwrap();
+        assert_eq!(site.id, 1);
+
+        // The token still identifies the site, so an unknown token is rejected.
+        let err = validate(
+            &sp,
+            &Common {
+                token: "wrong-token".to_string(),
+                hardware_id: "any-device".to_string(),
+                version: Version::from_package_json(),
+                app_name: "Open mSupply Desktop".to_string(),
             },
         )
         .err()

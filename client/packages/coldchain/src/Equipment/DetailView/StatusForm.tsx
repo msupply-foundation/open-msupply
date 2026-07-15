@@ -14,9 +14,8 @@ import {
   useIsExtraSmallScreen,
   UploadFile,
 } from '@openmsupply-client/common';
-import { FileList } from '../Components';
 import { statusColourMap } from '../utils';
-import { useAssetLogReasonList } from '@openmsupply-client/system';
+import { FileList, useAssetLogReasonList } from '@openmsupply-client/system';
 import { TakePhotoButton } from './TakePhotoButton';
 
 interface StatusForm {

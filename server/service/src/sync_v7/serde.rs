@@ -5,7 +5,10 @@ use repository::{
 use serde::de::DeserializeOwned;
 
 use crate::sync_v7::{
-    translations::{invoice_line::translate_invoice_line, store::translate_store},
+    translations::{
+        invoice_line::translate_invoice_line, store::translate_store,
+        temperature_log::translate_temperature_log,
+    },
     validate_translate_integrate::{create_changelog, SyncContext},
 };
 
@@ -61,12 +64,17 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::BundledItem(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Campaign(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Demographic(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::HelpDocument(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::FormSchema(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::FrontendPlugin(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::HelpDocument(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::ItemVariant(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::NameProperty(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::PackagingVariant(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Property(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::CustomField(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::CustomFieldOption(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::CustomFieldScope(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Report(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::VaccineCourse(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::VaccineCourseDose(r) => serde_json::to_value(r).map_err(map_serde_err),
@@ -82,6 +90,7 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::SyncMessage(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Vaccination(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::StockRelocation(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::StockRelocationLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::SyncFileReference(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::PluginData(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Preference(r) => serde_json::to_value(r).map_err(map_serde_err),
@@ -149,6 +158,9 @@ pub(crate) fn deserialize(
                 sync_context,
             )
         }
+        ChangelogTableName::TemperatureLog => {
+            return translate_temperature_log(connection, changelog_insert, data)
+        }
         // Basic
         ChangelogTableName::Unit => from_value::<UnitRow>(data),
         ChangelogTableName::Currency => from_value::<CurrencyRow>(data),
@@ -157,6 +169,7 @@ pub(crate) fn deserialize(
         ChangelogTableName::Item => from_value::<ItemRow>(data),
         ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
         ChangelogTableName::StockRelocation => from_value::<StockRelocationRow>(data),
+        ChangelogTableName::StockRelocationLine => from_value::<StockRelocationLineRow>(data),
         ChangelogTableName::Invoice => from_value::<InvoiceRow>(data),
         ChangelogTableName::ActivityLog => from_value::<ActivityLogRow>(data),
         ChangelogTableName::Barcode => from_value::<BarcodeRow>(data),
@@ -175,7 +188,6 @@ pub(crate) fn deserialize(
         ChangelogTableName::Stocktake => from_value::<StocktakeRow>(data),
         ChangelogTableName::StocktakeLine => from_value::<StocktakeLineRow>(data),
         ChangelogTableName::TemperatureBreach => from_value::<TemperatureBreachRow>(data),
-        ChangelogTableName::TemperatureLog => from_value::<TemperatureLogRow>(data),
         ChangelogTableName::VVMStatusLog => from_value::<VVMStatusLogRow>(data),
         ChangelogTableName::Requisition => from_value::<RequisitionRow>(data),
         ChangelogTableName::RequisitionLine => from_value::<RequisitionLineRow>(data),
@@ -190,13 +202,18 @@ pub(crate) fn deserialize(
         ChangelogTableName::BundledItem => from_value::<BundledItemRow>(data),
         ChangelogTableName::Campaign => from_value::<CampaignRow>(data),
         ChangelogTableName::Demographic => from_value::<DemographicRow>(data),
+        ChangelogTableName::HelpDocument => from_value::<HelpDocumentRow>(data),
         ChangelogTableName::FormSchema => from_value::<FormSchemaRow>(data),
         ChangelogTableName::FrontendPlugin => from_value::<FrontendPluginRow>(data),
+        ChangelogTableName::HelpDocument => from_value::<HelpDocumentRow>(data),
         ChangelogTableName::ItemVariant => from_value::<ItemVariantRow>(data),
         ChangelogTableName::NameOmsFields => from_value::<NameOmsFieldsRow>(data),
         ChangelogTableName::NameProperty => from_value::<NamePropertyRow>(data),
         ChangelogTableName::PackagingVariant => from_value::<PackagingVariantRow>(data),
         ChangelogTableName::Property => from_value::<PropertyRow>(data),
+        ChangelogTableName::CustomField => from_value::<CustomFieldRow>(data),
+        ChangelogTableName::CustomFieldOption => from_value::<CustomFieldOptionRow>(data),
+        ChangelogTableName::CustomFieldScope => from_value::<CustomFieldScopeRow>(data),
         ChangelogTableName::Report => from_value::<ReportRow>(data),
         ChangelogTableName::VaccineCourse => from_value::<VaccineCourseRow>(data),
         ChangelogTableName::VaccineCourseDose => from_value::<VaccineCourseDoseRow>(data),
@@ -257,6 +274,15 @@ pub(crate) fn deserialize(
         ChangelogTableName::Preference => from_value::<PreferenceRow>(data),
         ChangelogTableName::ContactForm => from_value::<ContactFormRow>(data),
         ChangelogTableName::SystemLog => from_value::<SystemLogRow>(data),
+        // A table this site doesn't recognise (e.g. added on a newer central). There is
+        // no row type to deserialize into. In practice such records never reach here —
+        // they aren't part of `INTEGRATION_ORDER`, so they stay unintegrated in the sync
+        // buffer — but return an error rather than silently succeeding if one does.
+        ChangelogTableName::Other(unknown) => {
+            return Err(SyncRecordSerializeError::SerdeError(format!(
+                "No translator for unrecognised table `{unknown}`"
+            )))
+        }
     }?;
 
     Ok(vec![(upsert, changelog_insert)])

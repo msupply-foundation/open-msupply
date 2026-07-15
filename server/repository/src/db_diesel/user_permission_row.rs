@@ -19,7 +19,8 @@ table! {
 }
 
 diesel_string_enum! {
-    #[derive(Clone, Eq, Hash, Serialize, Deserialize, EnumIter)]
+    db_case = SCREAMING_SNAKE_CASE;
+    #[derive(Clone, Eq, Hash, EnumIter)]
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     pub enum PermissionType {
         ServerAdmin,

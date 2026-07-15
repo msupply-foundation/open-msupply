@@ -36,9 +36,11 @@ pub enum KeyType {
     ContactFormProcessorCursor,
     LoadPluginProcessorCursor,
     AssignRequisitionNumberProcessorCursor,
+    AssignPrescriptionNumberProcessorCursor,
     RequisitionAutoFinaliseProcessorCursor,
     SupportUploadFilesProcessorCursor,
     MergeSyncMessageProcessorCursor,
+    ChangelogDedupCursor,
     // Nested key value store to store dynamic cursor values as JSON text
     DynamicCursor,
 
@@ -46,12 +48,17 @@ pub enum KeyType {
     SettingsSyncUsername,
     SettingsSyncPasswordSha256,
     SettingsSyncIntervalSeconds,
+    SettingsSyncBatchSizeRemotePull,
+    SettingsSyncBatchSizeRemotePush,
+    SettingsSyncBatchSizeCentralPull,
     SettingsSyncCentralServerSiteId,
     SettingsSyncSiteId,
     SettingsSyncSiteUuid,
     SettingsSyncIsDisabled,
     SettingsSyncV7Token,
     SettingsSyncVersion,
+    SettingsTokenSecret,
+    SettingsSyncSiteIsMultiDevice,
 
     DatabaseVersion,
 

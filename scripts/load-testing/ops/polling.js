@@ -6,7 +6,6 @@ import { operations } from '../operations.generated.js';
 const C = 'polling';
 
 export const me = ctx => gqlRequest(ctx, operations.me, C, {});
-export const lastSuccessfulUserSync = ctx => gqlRequest(ctx, operations.lastSuccessfulUserSync, C, {});
 export const isCentralServer = ctx => gqlRequest(ctx, operations.isCentralServer, C, {});
 export const initialisationStatus = ctx => gqlRequest(ctx, operations.initialisationStatus, C, {});
 // syncInfo carries `numberOfRecordsInPushQueue` → a COUNT over changelog_deduped. The real client
@@ -26,7 +25,10 @@ export const itemCounts = ctx =>
 export const requisitionCounts = ctx => gqlRequest(ctx, operations.requisitionCounts, C, { storeId: ctx.storeId });
 export const stockCounts = ctx => gqlRequest(ctx, operations.stockCounts, C, { storeId: ctx.storeId });
 export const internalOrderCounts = ctx => gqlRequest(ctx, operations.internalOrderCounts, C, { storeId: ctx.storeId });
-export const inboundCounts = ctx => gqlRequest(ctx, operations.inboundCounts, C, { storeId: ctx.storeId });
+export const inboundInternalCounts = ctx =>
+  gqlRequest(ctx, operations.inboundInternalCounts, C, { storeId: ctx.storeId });
+export const inboundExternalCounts = ctx =>
+  gqlRequest(ctx, operations.inboundExternalCounts, C, { storeId: ctx.storeId });
 export const outboundCounts = ctx => gqlRequest(ctx, operations.outboundCounts, C, { storeId: ctx.storeId });
 
 // App-boot / per-navigation bundle: the client fires these on login and when entering a store, on top

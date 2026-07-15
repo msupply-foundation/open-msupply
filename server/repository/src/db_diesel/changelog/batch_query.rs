@@ -36,6 +36,7 @@ pub enum Row {
     Sensor(SensorRow),
     StockLine(StockLineRow),
     StockRelocation(StockRelocationRow),
+    StockRelocationLine(StockRelocationLineRow),
     Stocktake(StocktakeRow),
     StocktakeLine(StocktakeLineRow),
     TemperatureBreach(TemperatureBreachRow),
@@ -57,10 +58,14 @@ pub enum Row {
     Demographic(DemographicRow),
     FormSchema(FormSchemaRow),
     FrontendPlugin(FrontendPluginRow),
+    HelpDocument(HelpDocumentRow),
     ItemVariant(ItemVariantRow),
     NameProperty(NamePropertyRow),
     PackagingVariant(PackagingVariantRow),
     Property(PropertyRow),
+    CustomField(CustomFieldRow),
+    CustomFieldOption(CustomFieldOptionRow),
+    CustomFieldScope(CustomFieldScopeRow),
     Report(ReportRow),
     VaccineCourse(VaccineCourseRow),
     VaccineCourseDose(VaccineCourseDoseRow),
@@ -362,6 +367,11 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::StockRelocation(r));
                 }
             }
+            ChangelogTableName::StockRelocationLine => {
+                for r in StockRelocationLineRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::StockRelocationLine(r));
+                }
+            }
             ChangelogTableName::Stocktake => {
                 for r in StocktakeRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::Stocktake(r));
@@ -467,6 +477,11 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::FrontendPlugin(r));
                 }
             }
+            ChangelogTableName::HelpDocument => {
+                for r in HelpDocumentRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::HelpDocument(r));
+                }
+            }
             ChangelogTableName::ItemVariant => {
                 for r in ItemVariantRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::ItemVariant(r));
@@ -485,6 +500,21 @@ fn fetch_rows_for_table(
             ChangelogTableName::Property => {
                 for r in PropertyRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::Property(r));
+                }
+            }
+            ChangelogTableName::CustomField => {
+                for r in CustomFieldRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomField(r));
+                }
+            }
+            ChangelogTableName::CustomFieldOption => {
+                for r in CustomFieldOptionRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomFieldOption(r));
+                }
+            }
+            ChangelogTableName::CustomFieldScope => {
+                for r in CustomFieldScopeRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CustomFieldScope(r));
                 }
             }
             ChangelogTableName::Report => {
@@ -792,6 +822,12 @@ fn fetch_rows_for_table(
                 for r in AssetTypeRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::AssetCatalogueType(r));
                 }
+            }
+            // A table this server doesn't recognise — there is no row repository to
+            // fetch from. This shouldn't occur for a server's own changelog, but if it
+            // does we skip it (leaving the id unfetched) rather than panicking.
+            ChangelogTableName::Other(table_name) => {
+                log::warn!("Cannot fetch rows for unrecognised changelog table `{table_name}`");
             }
         }
     }

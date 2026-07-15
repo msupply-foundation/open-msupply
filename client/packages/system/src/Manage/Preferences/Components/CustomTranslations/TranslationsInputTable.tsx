@@ -24,10 +24,12 @@ export const TranslationsTable = ({
   translations,
   setTranslations,
   showValidationErrors,
+  addOptions,
 }: {
   translations: Translation[];
   setTranslations: React.Dispatch<React.SetStateAction<Translation[]>>;
   showValidationErrors: boolean;
+  addOptions: TranslationOption[];
 }) => {
   const t = useTranslation();
 
@@ -170,7 +172,11 @@ export const TranslationsTable = ({
   return (
     <>
       <Box display="flex" flexDirection="column" gap={1} marginBottom="8px">
-        <TranslationSearchInput onChange={onAdd} existingKeys={existingKeys} />
+        <TranslationSearchInput
+          onChange={onAdd}
+          existingKeys={existingKeys}
+          options={addOptions}
+        />
         <BasicTextInput
           fullWidth
           value={filterInput}
