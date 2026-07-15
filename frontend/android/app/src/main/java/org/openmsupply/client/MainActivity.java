@@ -28,18 +28,22 @@ public class MainActivity extends BridgeActivity {
             }
         });
 
-        // Fork 5B: the shell provides the UI. Copy the APK's bundled web
-        // assets to filesDir/frontend, which the (embed-free) server serves
-        // via its frontend_dir setting. Spike: copies every launch.
-        copyAssetDir("public", new java.io.File(getFilesDir(), "frontend"));
+        // Embedded server, only when its library is bundled (fetch-server-lib.sh
+        // — the host-backend dev loop runs without it).
+        if (server.isAvailable()) {
+            // Fork 5B: the shell provides the UI. Copy the APK's bundled web
+            // assets to filesDir/frontend, which the (embed-free) server serves
+            // via its frontend_dir setting. Spike: copies every launch.
+            copyAssetDir("public", new java.io.File(getFilesDir(), "frontend"));
 
-        String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-        server.start(
-            SERVER_PORT,
-            getFilesDir().getAbsolutePath(),
-            getCacheDir().getAbsolutePath(),
-            androidId
-        );
+            String androidId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+            server.start(
+                SERVER_PORT,
+                getFilesDir().getAbsolutePath(),
+                getCacheDir().getAbsolutePath(),
+                androidId
+            );
+        }
     }
 
     private void copyAssetDir(String assetPath, java.io.File dest) {

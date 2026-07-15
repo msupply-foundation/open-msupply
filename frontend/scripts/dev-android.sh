@@ -29,10 +29,14 @@ if [ -z "${JAVA_HOME:-}" ] && ! java -version >/dev/null 2>&1; then
   done
 fi
 
-# Spike-only: fetch + boot the embedded server unconditionally to demonstrate
-# Fork 4. The real dev loop doesn't need the on-device server (host backend is
-# the default, kdd/android desire 2B) — make this lazy/opt-in when productised.
-./scripts/fetch-server-lib.sh
+# The dev loop doesn't need the on-device server (host backend is the default,
+# kdd/android desire 2B) — the app runs fine without the library bundled.
+# EMBEDDED_SERVER=1 opts in to fetching + booting it (Fork 4); build-android.sh
+# always bundles it. NB: once fetched, the lib stays in jniLibs (gitignored)
+# and keeps being bundled until you delete it.
+if [ "${EMBEDDED_SERVER:-}" = "1" ]; then
+  ./scripts/fetch-server-lib.sh
+fi
 
 ADB="${ANDROID_HOME:-$HOME/Library/Android/sdk}/platform-tools/adb"
 DEVICES="$($ADB devices | awk 'NR>1 && $2=="device" {print $1}')"
