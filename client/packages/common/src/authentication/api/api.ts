@@ -108,6 +108,12 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         const result = await sdk.me({});
         return result.me;
       } catch (e) {
+        // No/expired session is a normal state — the GqlContext middleware has
+        // already flagged it as Unauthenticated and the app routes to login.
+        // Escalating it to ServerError here armed the fatal "Server error"
+        // dialog on every anonymous boot, and setLoginError's ServerError
+        // guard then kept it alive across a successful login.
+        if ((e as Error).message === AuthError.Unauthenticated) throw e;
         console.error(e);
         LocalStorage.setItem('/error/auth', AuthError.ServerError);
         LocalStorage.setItem('/error/server', (e as Error).message);
