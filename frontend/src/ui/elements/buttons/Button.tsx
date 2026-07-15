@@ -41,7 +41,7 @@ export const Button = (props: ButtonProps) => {
   const ripple = createRipple();
   // JSX-element props are lazy getters: each is read twice below (the <Show>
   // test + the insertion), and raw reads would create the passed element twice
-  // per evaluation — resolve once (kdd/jsx-prop-single-read).
+  // per evaluation — resolve once (kdd/solid-reactivity-pitfalls §3).
   const icon = children(() => local.icon);
   const label = children(() => local.children);
 
