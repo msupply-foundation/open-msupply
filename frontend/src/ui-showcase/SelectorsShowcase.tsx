@@ -355,12 +355,13 @@ export const SelectorsShowcase = () => {
         title="Colour tag — dot + swatch picker"
         lead={
           <>
-            User-set colour on a record for visual grouping only. The
+            User-set colour on a record for visual grouping only. The{' '}
             <code>ColourTagDot</code> is read-only and hides the dot for
-            uneditable records; the <code>ColourTagPicker</code> is a dot with a
-            `Popover` that opens the swatches. The dashed ring circle indicates
-            that no tag is set. The colour palette is currently baked into the
-            component since all current colour tag usages use the same palette.
+            uneditable records; the <code>ColourTagPicker</code> is a dot with a{' '}
+            <code>&lt;Popover&gt;</code> that opens the swatches. The dashed
+            ring circle indicates that no tag is set. The colour palette is
+            currently baked into the component since all current colour tag
+            usages use the same palette.
           </>
         }
       >
@@ -369,7 +370,7 @@ export const SelectorsShowcase = () => {
             {colour => <ColourTagDot colour={colour.value} />}
           </For>
           <span class={styles.tagRowLabel}>
-            <code>ColourTagDot</code> — the read-only face (non-Draft rows,
+            <code>ColourTagDot</code> — the read-only face (uneditable rows,
             read-only panels)
           </span>
         </div>
@@ -391,7 +392,8 @@ export const SelectorsShowcase = () => {
           />
           <span class={styles.tagRowLabel}>
             Side panel variant: use <code>placement="bottom-end"</code> so the
-            `Popover` grows back into the viewport from the panel's edge.{' '}
+            <code>&lt;Popover&gt;</code> grows back into the viewport from the
+            panel's edge.{' '}
           </span>
         </div>
       </Card>
