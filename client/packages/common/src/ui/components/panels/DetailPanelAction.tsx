@@ -7,6 +7,7 @@ export interface DetailPanelActionProps {
   onClick: () => void;
   title: string;
   disabled?: boolean;
+  testId?: string;
 }
 
 export const DetailPanelAction: FC<DetailPanelActionProps> = ({
@@ -14,6 +15,7 @@ export const DetailPanelAction: FC<DetailPanelActionProps> = ({
   onClick,
   title,
   disabled,
+  testId,
 }) => {
   return (
     <Box sx={{ marginLeft: '11px' }}>
@@ -22,6 +24,7 @@ export const DetailPanelAction: FC<DetailPanelActionProps> = ({
         startIcon={icon}
         label={title}
         disabled={disabled}
+        testId={testId}
       />
     </Box>
   );

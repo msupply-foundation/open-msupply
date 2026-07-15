@@ -65,12 +65,93 @@ pub fn get_invoice_by_number(
 mod test_query {
     use repository::{
         db_diesel::InvoiceType,
-        mock::{mock_unique_number_inbound_shipment, MockDataInserts},
-        test_db::setup_all,
-        InvoiceFilter,
+        mock::{
+            mock_name_a, mock_store_a, mock_unique_number_inbound_shipment, MockData,
+            MockDataInserts,
+        },
+        test_db::{setup_all, setup_all_with_data},
+        InvoiceFilter, InvoiceRow, StringFilter,
     };
 
     use crate::service_provider::ServiceProvider;
+
+    #[actix_rt::test]
+    async fn get_invoices_filter_by_name() {
+        let (_, _, connection_manager, _) =
+            setup_all("get_invoices_filter_by_name", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.invoice_service;
+
+        // mock_name_store_a has name "Store A" and several outbound shipments
+        // are linked to it. Sub-string match on "tore A" exercises the same
+        // StringFilter::like path the e2e "Search by name" filter takes.
+        let result = service
+            .get_invoices(
+                &context,
+                None,
+                None,
+                Some(InvoiceFilter::new().name(StringFilter::like("tore A"))),
+                None,
+            )
+            .unwrap();
+
+        assert!(
+            !result.rows.is_empty(),
+            "Expected at least one invoice matching name 'tore A'"
+        );
+        for invoice in result.rows {
+            assert!(
+                invoice.other_party_name().to_lowercase().contains("tore a"),
+                "Expected name to contain 'tore a', got '{}'",
+                invoice.other_party_name()
+            );
+        }
+    }
+
+    #[actix_rt::test]
+    async fn get_invoices_filter_by_their_reference() {
+        // Existing mock outbound shipments all have empty their_reference, so
+        // seed a dedicated invoice with a unique reference to filter against.
+        fn invoice_with_reference() -> InvoiceRow {
+            InvoiceRow {
+                id: "filter_by_reference_target".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                their_reference: Some("UNIQUE-REF-XYZ".to_string()),
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "get_invoices_filter_by_their_reference",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice_with_reference()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.invoice_service;
+
+        let result = service
+            .get_invoices(
+                &context,
+                None,
+                None,
+                Some(InvoiceFilter::new().their_reference(StringFilter::like("UNIQUE-REF"))),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows[0].invoice_row.id, invoice_with_reference().id);
+    }
 
     #[actix_rt::test]
     async fn get_invoice_by_number() {

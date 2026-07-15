@@ -64,6 +64,7 @@ export const AppBarButtonsComponent = ({ onAddItem }: AppBarButtonProps) => {
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          data-testid="add-item-button"
           disabled={isDisabled}
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}

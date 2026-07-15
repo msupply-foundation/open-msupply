@@ -27,6 +27,7 @@ export const OnHoldButtonComponent = memo(() => {
       selected={onHold}
       onClick={() => getConfirmation()}
       label={t('label.hold')}
+      data-testid="on-hold-button"
     />
   );
 });

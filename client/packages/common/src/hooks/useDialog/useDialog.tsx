@@ -50,6 +50,7 @@ export interface ModalProps {
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
   disableEnforceFocus?: boolean;
+  testId?: string;
 }
 
 export interface DialogProps {
@@ -165,6 +166,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     deleteButton,
     headerActions,
     disableEnforceFocus = false,
+    testId,
   }: ModalProps) => {
     const t = useTranslation();
     // The slide animation is triggered by cloning the next button and wrapping the passed
@@ -309,6 +311,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         disableEscapeKeyDown={false}
         fullScreen={defaultFullscreen}
         disableEnforceFocus={disableEnforceFocus}
+        {...(testId ? { 'data-testid': testId } : {})}
       >
         {defaultFullscreen && (
           <IconButton
