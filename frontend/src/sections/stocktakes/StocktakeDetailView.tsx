@@ -179,8 +179,11 @@ const StocktakeDetailView: Component = () => {
   const [editItem, setEditItem] = createSignal<StocktakeLineEditItem | undefined>();
 
   // Fetch the stocktake. A NodeError (e.g. bad id) is promoted to the global unexpected-error
-  // modal via mapSuccessToError, so it never reaches the view — we only narrow to the node.
-  const [data] = createResource(
+  // modal via mapSuccessToError, so it never reaches the view — we only narrow to the node. The
+  // resource IS the local state: every save writes back with `mutate` (no refetch), so `info` and
+  // `rows` are just accessors over data() rather than separate signals kept in sync by an effect
+  // (kdd/state-management).
+  const [data, { mutate }] = createResource(
     () => ({ storeId: params.storeId, stocktakeId: params.stocktakeId }),
     async (variables) => {
       const result = await graphqlFetch(StocktakeDetail, variables, {
@@ -192,16 +195,17 @@ const StocktakeDetailView: Component = () => {
     },
   );
 
-  // Stocktake-level info + lines both live in LOCAL signals (seeded from the fetch) so every save
-  // reflects in place with no refetch: updateStocktake returns the StocktakeInfo fragment (→ info)
-  // and the line batch mutation returns line fragments (→ rows) (kdd/state-management).
-  const [info, setInfo] = createSignal<StocktakeInfoFragment | undefined>();
-  const [rows, setRows] = createSignal<Line[]>([]);
-  createEffect(on(data, (node) => {
-    setInfo(node ?? undefined);
-    setRows(node?.lines.nodes ?? []);
-    setLineErrors(new Map()); // a fresh fetch clears stale per-line errors
-  }));
+  // Stocktake-level info + the lines both come straight from the fetched node. Saves reflect in
+  // place with no refetch by mutating the resource: updateStocktake returns the StocktakeInfo
+  // fragment (merged over the node, keeping its lines) and the line batch mutation returns line
+  // fragments (spliced into node.lines.nodes).
+  const info = (): StocktakeInfoFragment | undefined => data();
+  const rows = (): Line[] => data()?.lines.nodes ?? [];
+
+  // A fresh fetch clears stale per-line errors. lineErrors is independently mutated by save
+  // failures (stampLineErrors), so it stays its own signal — this effect only resets it when new
+  // data lands (the one reaction we still need now that info/rows are derived).
+  createEffect(on(data, () => setLineErrors(new Map())));
 
   // Filter → sort. The filter runs first (client-side over the loaded rows), then the sort memo
   // orders what survives. The DataTable is display-only about order (manualSorting).
@@ -234,16 +238,20 @@ const StocktakeDetailView: Component = () => {
     return item ? rows().filter((line) => line.item.id === item.id) : [];
   });
 
-  // Reflect a line-edit save in place (no refetch): drop deleted ids, replace updated lines by id,
-  // append inserted lines — all the SAME StocktakeLine fragment.
-  const applyCommit = (commit: LineEditCommit) => {
-    setRows((current) => {
+  // Reflect a line change in place (no refetch): drop deleted ids, replace updated lines by id,
+  // append inserted lines — all the SAME StocktakeLine fragment. The ONE way rows() mutates: the
+  // line-edit modal passes a full LineEditCommit; the selection actions pass a partial (delete-only
+  // or update-only), so every path reduces to one splice with consistent semantics.
+  const applyCommit = (commit: Partial<LineEditCommit>) => {
+    mutate((node: StocktakeNode | undefined) => {
+      if (!node) return node;
       const deleted = new Set(commit.deletedIds);
-      const updatedById = new Map(commit.updated.map((line) => [line.id, line]));
-      const next = current
+      const updatedById = new Map((commit.updated ?? []).map((line) => [line.id, line]));
+      const nodes = node.lines.nodes
         .filter((line) => !deleted.has(line.id))
-        .map((line) => updatedById.get(line.id) ?? line);
-      return [...next, ...commit.inserted];
+        .map((line) => updatedById.get(line.id) ?? line)
+        .concat(commit.inserted ?? []);
+      return { ...node, lines: { ...node.lines, nodes } };
     });
   };
 
@@ -266,7 +274,8 @@ const StocktakeDetailView: Component = () => {
     const node = current();
     if (!node) return;
     const saved = await saveStocktakeFields(params.storeId, { id: node.id, ...patch });
-    if (saved) setInfo(saved);
+    // updateStocktake returns info fields only — merge over the current node to keep its lines.
+    if (saved) mutate((prev: StocktakeNode | undefined) => (prev ? { ...prev, ...saved } : prev));
   };
 
   // ONE debounced-edit buffer for every as-you-type text field on the stocktake (the toolbar's
@@ -300,7 +309,8 @@ const StocktakeDetailView: Component = () => {
     if (!node) return { kind: 'ok' };
     const result = await finaliseStocktake(params.storeId, node.id);
     if (result.kind === 'saved') {
-      setInfo(result.node);
+      // updateStocktake returns info fields only — merge over the current node to keep its lines.
+      mutate((prev: StocktakeNode | undefined) => (prev ? { ...prev, ...result.node } : prev));
       return { kind: 'ok' };
     }
     if (result.kind === 'error') {
@@ -313,20 +323,12 @@ const StocktakeDetailView: Component = () => {
   // --- Selection actions ---
   // Each action (Delete / Change location / Reduce to 0) is its own self-contained component in
   // actions/ (button + modal + run); the view keeps ownership of rows/selection/errors and applies
-  // each result via these callbacks (no refetch). Delete drops the deleted lines; the updates
+  // each result through applyCommit (no refetch) — delete drops the deleted lines, the updates
   // splice the returned lines back; a partial failure stamps the per-line errors.
   //
-  // The apply callbacks DON'T clear the selection — the action components host their modal inside
-  // the selection footer, so clearing here would unmount the modal mid-success-phase. Selection is
+  // applyCommit DOESN'T clear the selection — the action components host their modal inside the
+  // selection footer, so clearing here would unmount the modal mid-success-phase. Selection is
   // cleared when the modal closes, by which point the success/error phase has been seen.
-  const applyDeleted = (deletedIds: string[]) => {
-    const gone = new Set(deletedIds);
-    setRows((rows) => rows.filter((line) => !gone.has(line.id)));
-  };
-  const applyUpdated = (lines: Line[]) => {
-    const byId = new Map(lines.map((line) => [line.id, line]));
-    setRows((rows) => rows.map((line) => byId.get(line.id) ?? line));
-  };
 
   // "Show error lines" (the action modals' error phase + the finalise error dialog): wipe every
   // other filter and keep ONLY the error lines (OMS "add filter for errors"). Clears the selection
@@ -533,7 +535,7 @@ const StocktakeDetailView: Component = () => {
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onDeleted={applyDeleted}
+                    onDeleted={(deletedIds: string[]) => applyCommit({ deletedIds })}
                     onError={stampLineErrors}
                     onShowErrors={showErrorLines}
                   />
@@ -541,7 +543,7 @@ const StocktakeDetailView: Component = () => {
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onUpdated={applyUpdated}
+                    onUpdated={(updated: LineEditCommit['updated']) => applyCommit({ updated })}
                     onError={stampLineErrors}
                     onShowErrors={showErrorLines}
                   />
@@ -549,7 +551,7 @@ const StocktakeDetailView: Component = () => {
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onUpdated={applyUpdated}
+                    onUpdated={(updated: LineEditCommit['updated']) => applyCommit({ updated })}
                     onError={stampLineErrors}
                     onShowErrors={showErrorLines}
                   />
