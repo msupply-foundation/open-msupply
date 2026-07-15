@@ -49,7 +49,7 @@ import {
   ReduceToZeroAction,
 } from './actions';
 import { saveStocktakeFields } from './stocktakeUpdate';
-import { stocktakeLineErrorMessage, type LineErrors } from './lines/stocktakeLineErrors';
+import type { LineErrors } from './lines/stocktakeLineErrors';
 import { lineMatchesFilter, type StocktakeLineFilter } from './stocktakeLineFilter';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import type { StocktakeEditFields } from './stocktakeEdit';
@@ -153,8 +153,9 @@ const StocktakeDetailView: Component = () => {
   // opens it; its own close button (top inline-end) or the toggle closes it.
   const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
   // Per-line errors from the last failed finalise/bulk action, keyed by line id → the error's
-  // __typename (the shared LineErrors shape). The Snapshot column RENDERS it (typename → message)
-  // via stocktakeLineErrorMessage; this holds no pre-rendered text. Cleared when a fresh fetch lands.
+  // __typename (the shared LineErrors shape, kept raw). The Snapshot column renders it inline
+  // (<Show when={… === 'SnapshotCountCurrentCountMismatchLine'}>); no pre-rendered text lives here.
+  // Cleared when a fresh fetch lands.
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
   // Column config (order/sizing/visibility) + the row-grouping choice persist per user/store.
   // The extra editable columns (pricing / pack size / manufacture / location / reason / note)
@@ -375,13 +376,12 @@ const StocktakeDetailView: Component = () => {
       // stylesheet, so the dynamic sub-text is styled inline from the design tokens).
       cell: (info) => {
         const value = info.getValue<number | null | undefined>();
-        // Render the line's error typename to a message here at the column (fallback: the typename).
-        const typename = lineErrors().get(info.row.original.id);
-        const error = typename ? stocktakeLineErrorMessage(typename, typename) : undefined;
         return (
           <span style={{ display: 'inline-flex', 'flex-direction': 'column', 'align-items': 'flex-end' }}>
             <span>{value ?? ''}</span>
-            <Show when={error}>
+            {/* The snapshot/current-count mismatch is the "recount this line" error about the snapshot;
+                other line errors surface in the edit modal, not on this read-only list. */}
+            <Show when={lineErrors().get(info.row.original.id) === 'SnapshotCountCurrentCountMismatchLine'}>
               <span
                 style={{
                   color: 'var(--error-main)',
@@ -390,7 +390,7 @@ const StocktakeDetailView: Component = () => {
                   'text-align': 'end',
                 }}
               >
-                {error}
+                {t('stocktake.line-error.snapshot-mismatch')}
               </span>
             </Show>
           </span>
