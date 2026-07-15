@@ -14,7 +14,10 @@ interface SplitButtonProps {
   /** Leading icon for the main action. */
   icon?: JSX.Element;
   options: SplitButtonOption[];
-  /** Controlled selected value; omit for uncontrolled (defaults to first option). */
+  /**
+   * Controlled selected value; omit for uncontrolled (defaults to first
+   * option).
+   */
   value?: string;
   defaultValue?: string;
   /** Fired when the selection changes via the menu. */

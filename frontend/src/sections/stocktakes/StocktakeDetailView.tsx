@@ -16,11 +16,12 @@ import {
   type StocktakeDetailResult,
 } from './stocktakeDetail.generated';
 
-// The stocktake detail view — the page a stocktake create / a list row-click lands on. For
-// now it's the page shell (breadcrumb back to the list + a title) plus a BASIC table of the
-// stocktake's lines (our DataTable, display only). Ported from andrei-17-card-view, minus —
-// deliberately, for later — grouping, the no-refetch batch-reflection of edits, the on-row
-// line-edit modal, and per-user column config on this table.
+// The stocktake detail view — the page a stocktake create / a list row-click
+// lands on. For now it's the page shell (breadcrumb back to the list + a title)
+// plus a BASIC table of the stocktake's lines (our DataTable, display only).
+// Ported from andrei-17-card-view, minus — deliberately, for later — grouping,
+// the no-refetch batch-reflection of edits, the on-row line-edit modal, and
+// per-user column config on this table.
 
 type StocktakeNode = Extract<
   StocktakeDetailResult['stocktake'],
@@ -28,9 +29,10 @@ type StocktakeNode = Extract<
 >;
 type Line = StocktakeNode['lines']['nodes'][number];
 
-// The basic table is display-only for now (front-end sort/grouping deferred), but Column<T,K>
-// needs a real string K for the cell helpers' sortKey type to resolve — so K is the line
-// fields, even though no `sort`/`onSort` is wired yet.
+// The basic table is display-only for now (front-end sort/grouping deferred),
+// but Column<T,K> needs a real string K for the cell helpers' sortKey type to
+// resolve — so K is the line fields, even though no `sort`/`onSort` is wired
+// yet.
 type SortKey =
   | 'item'
   | 'itemName'
@@ -43,8 +45,9 @@ const StocktakeDetailView: Component = () => {
   const params = useParams<{ storeId: string; stocktakeId: string }>();
   const navigate = useNavigate();
 
-  // Fetch the stocktake. A NodeError (e.g. bad id) is promoted to the global unexpected-error
-  // modal via mapSuccessToError, so it never reaches the view — we only narrow to the node.
+  // Fetch the stocktake. A NodeError (e.g. bad id) is promoted to the global
+  // unexpected-error modal via mapSuccessToError, so it never reaches the view
+  // — we only narrow to the node.
   const [data] = createResource(
     () => ({ storeId: params.storeId, stocktakeId: params.stocktakeId }),
     async variables => {
@@ -61,8 +64,9 @@ const StocktakeDetailView: Component = () => {
     }
   );
 
-  // Crumbs are an accessor so t() re-translates on locale change; the middle crumb links back
-  // to the list, the last crumb is the current page (rendered as the page <h1>).
+  // Crumbs are an accessor so t() re-translates on locale change; the middle
+  // crumb links back to the list, the last crumb is the current page (rendered
+  // as the page <h1>).
   const crumbs = (node: StocktakeNode) => [
     { label: t('nav.inventory') },
     {

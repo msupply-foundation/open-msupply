@@ -18,10 +18,11 @@ const filterStores = (
   );
 };
 
-// Spec (Store Login, Guard 2): the selection modal, presented whenever the URL does
-// not resolve to a store. Searchable; previously logged-in store and default store
-// are already ordered to the top by the caller. Not dismissable — there is no store
-// behind it to fall back to; picking one is the only way forward.
+// Spec (Store Login, Guard 2): the selection modal, presented whenever the URL
+// does not resolve to a store. Searchable; previously logged-in store and
+// default store are already ordered to the top by the caller. Not dismissable —
+// there is no store behind it to fall back to; picking one is the only way
+// forward.
 export const StoreSelectionModal: Component<{
   stores: StoreSummary[];
   onSelect: (storeId: string) => void;

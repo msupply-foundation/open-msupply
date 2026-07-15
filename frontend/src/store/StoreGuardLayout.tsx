@@ -9,9 +9,10 @@ import { StoreSelectionModal } from './StoreSelectionModal';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
-// Reserved path for "no store in the URL": the segment never names a store, so the
-// ordinary resolution below presents the picker (or auto-enters a single store).
-// URLs without a store segment redirect here, and store switching navigates here.
+// Reserved path for "no store in the URL": the segment never names a store, so
+// the ordinary resolution below presents the picker (or auto-enters a single
+// store). URLs without a store segment redirect here, and store switching
+// navigates here.
 export const resolveStorePath = '/resolve-store';
 
 export type StoreSummary = {
@@ -20,12 +21,13 @@ export type StoreSummary = {
   name: string;
 };
 
-// Spec (Store Login, Guards 2 and 3), applied as common logic to whatever first URL
-// segment we are looking at. The store to enter is the URL's store, or the only
-// store the user has; otherwise there is none and we show the picker in place (no
-// redirect). Entering records the store and fetches its context; the routed section
-// shows a loading state until that context is loaded for this store and user (so
-// re-authenticating as a different user re-loads even for the same store).
+// Spec (Store Login, Guards 2 and 3), applied as common logic to whatever
+// first URL segment we are looking at. The store to enter is the URL's store,
+// or the only store the user has; otherwise there is none and we show the
+// picker in place (no redirect). Entering records the store and fetches its
+// context; the routed section shows a loading state until that context is
+// loaded for this store and user (so re-authenticating as a different user
+// re-loads even for the same store).
 export const StoreGuardLayout: Component<RouteSectionProps> = props => {
   const params = useParams();
   const navigate = useNavigate();
@@ -49,7 +51,8 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     const currentUser = user();
     if (!store || !currentUser) return;
     recordPreviousStoreId(currentUser.userId, store.id);
-    // Auto-selected store (the URL segment did not name it): navigate to /{store-id}.
+    // Auto-selected store (the URL segment did not name it): navigate to
+    // /{store-id}.
     if (params.storeId !== store.id)
       navigate(`/${store.id}`, { replace: true });
     if (!contextLoaded(store.id)) void refetchStoreContext(store.id);

@@ -2,7 +2,9 @@ import type { JSX } from 'solid-js';
 import styles from './Toolbar.module.css';
 
 export interface ToolbarProps {
-  /** Per-page toolbar content (filters, tabs, totals…). The page owns it all. */
+  /**
+   * Per-page toolbar content (filters, tabs, totals…). The page owns it all.
+   */
   children?: JSX.Element;
 }
 

@@ -31,13 +31,14 @@ const Card = (props: {
 );
 
 /*
- * Storybook of the input + form-layout elements: the TextField (company input design spec),
- * the RadioGroup (native single-choice), and the two form-composition pieces that pair with
- * them inside a dialog/panel — FieldRow (inline label + control) and InsetPanel (grouping).
+ * Storybook of the input + form-layout elements: the TextField (company input
+ * design spec), the RadioGroup (native single-choice), and the two
+ * form-composition pieces that pair with them inside a dialog/panel — FieldRow
+ * (inline label + control) and InsetPanel (grouping).
  */
 export const InputsShowcase = () => {
-  // RadioGroup demo: a stocktake-type choice, plus an indented include-all sub-choice — the
-  // exact shape the create-stocktake modal uses.
+  // RadioGroup demo: a stocktake-type choice, plus an indented include-all
+  // sub-choice — the exact shape the create-stocktake modal uses.
   const [stocktakeType, setStocktakeType] = createSignal('full');
   const [includeAll, setIncludeAll] = createSignal('soh');
 
@@ -202,7 +203,8 @@ export const InputsShowcase = () => {
               indentRem={0.2}
               options={[
                 { value: 'soh', label: 'Items with stock on hand' },
-                // Disabled to show the per-option disabled state (as the modal greys "All items").
+                // Disabled to show the per-option disabled state (as the modal
+                // greys "All items").
                 {
                   value: 'all',
                   label: 'All items',

@@ -24,8 +24,12 @@ interface SelectProps {
   placeholder?: string;
   helperText?: string;
   disabled?: boolean;
-  /** Control size. 'md' (default) is the form-field size; 'sm' is a compact variant
-   *  for dense contexts like a toolbar or the pagination rows-per-page control. */
+  /**
+   * Control size. 'md' (default) is the form-field size; 'sm' is a compact
+   * variant
+   *  for dense contexts like a toolbar or the pagination rows-per-page
+   *  control.
+   */
   size?: 'md' | 'sm';
   class?: string;
 }
@@ -46,8 +50,9 @@ interface SelectProps {
  * option object).
  */
 export const Select = (props: SelectProps) => {
-  // Inside a Dialog, mount the listbox into the dialog element (top layer + non-inert);
-  // outside one this is undefined and Kobalte's default <body> portal is used.
+  // Inside a Dialog, mount the listbox into the dialog element (top layer +
+  // non-inert); outside one this is undefined and Kobalte's default <body>
+  // portal is used.
   const portalMount = usePortalMount();
   const findOption = (value: string | undefined) =>
     value === undefined
@@ -107,9 +112,10 @@ export const Select = (props: SelectProps) => {
       <KSelect.Portal mount={portalMount?.()}>
         <KSelect.Content
           class={styles.content}
-          // Keep the listbox open when a pointerdown lands inside the dialog it's mounted in
-          // — Kobalte otherwise dismisses it before a mouse click commits (see
-          // dismissInsideGuard). A genuine click outside the dialog still closes it.
+          // Keep the listbox open when a pointerdown lands inside the dialog
+          // it's mounted in — Kobalte otherwise dismisses it before a mouse
+          // click commits (see dismissInsideGuard). A genuine click outside the
+          // dialog still closes it.
           onInteractOutside={keepDialogOpenOnInside(portalMount?.())}
         >
           <KSelect.Listbox class={styles.listbox} />

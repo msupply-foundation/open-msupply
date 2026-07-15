@@ -2,13 +2,14 @@
 // Nav components). One source of truth: the left menu renders from it, and the
 // router generates a route per destination from it.
 //
-// Paths are relative to the store root (/{storeId}). A section's own `path` is a
-// landing destination; its `children` are the inner sub-menu entries.
+// Paths are relative to the store root (/{storeId}). A section's own `path` is
+// a landing destination; its `children` are the inner sub-menu entries.
 //
 // Labels are i18n keys, not English (kdd/type-safety: LocaleKey is derived from
-// the catalog, so a typo or an un-added key stops compiling). Every renderer that
-// shows a destination — MenuBar, Breadcrumb, EntryPage title — resolves the key
-// with t() at render time, so the menu re-translates on a language switch.
+// the catalog, so a typo or an un-added key stops compiling). Every renderer
+// that shows a destination — MenuBar, Breadcrumb, EntryPage title — resolves
+// the key with t() at render time, so the menu re-translates on a language
+// switch.
 
 import type { LocaleKey } from '../intl';
 

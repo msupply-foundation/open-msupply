@@ -21,9 +21,9 @@ const dateFnsLocale = (l?: SupportedLocale): Locale =>
 const toDate = (value: Date | string | number): Date =>
   value instanceof Date ? value : new Date(value);
 
-// Locale-aware date/time formatting bound to the current locale. Plain functions
-// in the app's direct-call style; each reads locale() so use within an effect
-// stays reactive.
+// Locale-aware date/time formatting bound to the current locale. Plain
+// functions in the app's direct-call style; each reads locale() so use within
+// an effect stays reactive.
 export const localisedDate = (value: Date | string | number): string =>
   format(toDate(value), 'P', { locale: dateFnsLocale() });
 

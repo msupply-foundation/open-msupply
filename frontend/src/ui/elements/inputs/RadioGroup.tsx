@@ -20,23 +20,26 @@ interface RadioGroupProps {
   /** Lay the options out in a row instead of the default column. */
   orientation?: 'vertical' | 'horizontal';
   /**
-   * Inline-start indent, in rem — to line the options up under a sibling control's text (e.g.
-   * the include-all radios sitting beneath a Combobox whose leading icon insets its text).
+   * Inline-start indent, in rem — to line the options up under a sibling
+   * control's text (e.g. the include-all radios sitting beneath a Combobox
+   * whose leading icon insets its text).
    */
   indentRem?: number;
   class?: string;
 }
 
 /*
- * Radio group — built on the plain browser <input type="radio"> (NO headless library). A
- * radio group is the "own the simple" case: a shared `name` gives the browser single-select
- * grouping, roving arrow-key focus, and the radiogroup/radio ARIA for free — nothing to buy.
- * We style the native control with `accent-color` (the brand orange dot/ring) and lay out the
- * label beside it; the <fieldset>/<legend> carry the group semantics. Matches the current
+ * Radio group — built on the plain browser <input type="radio"> (NO headless
+ * library). A radio group is the "own the simple" case: a shared `name` gives
+ * the browser single-select grouping, roving arrow-key focus, and the
+ * radiogroup/radio ARIA for free — nothing to buy. We style the native control
+ * with `accent-color` (the brand orange dot/ring) and lay out the label beside
+ * it; the <fieldset>/<legend> carry the group semantics. Matches the current
  * app's radios.
  */
 export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
-  // One shared name per group instance so the native radios single-select together.
+  // One shared name per group instance so the native radios single-select
+  // together.
   const name = createUniqueId();
   return (
     <fieldset

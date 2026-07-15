@@ -20,7 +20,9 @@ export interface PaginationProps {
   total: number;
   /** Requests a new offset — the parent owns the page state (URL params). */
   onOffsetChange: (offset: number) => void;
-  /** Requests a new page size. When given, a rows-per-page selector is shown; the
+  /**
+   * Requests a new page size. When given, a rows-per-page selector is shown;
+   * the
    *  parent resets to the first page on change. Omit to hide the selector. */
   onPageSizeChange?: (pageSize: number) => void;
   /** Selectable rows-per-page options (default 20 / 50 / 100). */
@@ -28,16 +30,17 @@ export interface PaginationProps {
 }
 
 /*
- * List pagination, styled to match the current Open mSupply app: a "Showing X-Y of Z"
- * summary on the inline-start edge, then a rows-per-page selector and a numbered page
- * pager (first / previous / 1 2 3 … N / next / last) on the inline-end edge
- * (spec/ui-standards/tables › pagination).
+ * List pagination, styled to match the current Open mSupply app: a "Showing
+ * X-Y of Z" summary on the inline-start edge, then a rows-per-page selector
+ * and a numbered page pager (first / previous / 1 2 3 … N / next / last) on
+ * the inline-end edge (spec/ui-standards/tables › pagination).
  *
- * Hand-rolled over native <button>s (role + keyboard + disabled for free); the summary
- * is a live region so a screen reader hears the page change. The parent owns
- * offset/pageSize (destined for URL params); this component is pure presentation over
- * them. The pager arrows (first / prev / next / last) are ported verbatim from the
- * current app's MUI icons so they pixel-match; RTL mirrors via the icons' data-flip-rtl.
+ * Hand-rolled over native <button>s (role + keyboard + disabled for free); the
+ * summary is a live region so a screen reader hears the page change. The
+ * parent owns offset/pageSize (destined for URL params); this component is
+ * pure presentation over them. The pager arrows (first / prev / next / last)
+ * are ported verbatim from the current app's MUI icons so they pixel-match;
+ * RTL mirrors via the icons' data-flip-rtl.
  */
 export const Pagination = (props: PaginationProps) => {
   const from = () => (props.total === 0 ? 0 : props.offset + 1);
@@ -53,9 +56,10 @@ export const Pagination = (props: PaginationProps) => {
     props.onOffsetChange((clamped - 1) * props.pageSize);
   };
 
-  // The page numbers to show, with ellipsis gaps. Always show first + last; show a window
-  // of pages around the current one. Gaps are the literal '…' (not a page). Mirrors the
-  // MRT pager OMS renders: e.g. 1 2 3 4 5 … 21, or 1 … 9 10 11 … 21.
+  // The page numbers to show, with ellipsis gaps. Always show first + last;
+  // show a window of pages around the current one. Gaps are the literal '…'
+  // (not a page). Mirrors the MRT pager OMS renders: e.g. 1 2 3 4 5 … 21, or 1
+  // … 9 10 11 … 21.
   const pageItems = (): (number | 'gap-start' | 'gap-end')[] => {
     const count = pageCount();
     const current = currentPage();

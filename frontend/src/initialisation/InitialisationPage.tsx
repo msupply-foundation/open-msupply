@@ -95,8 +95,8 @@ export const InitialisationPage: Component<{
   onMount(() => {
     void graphqlFetch(InitialisationStatus, {}).then(result => {
       if (result.kind !== 'success') return;
-      // Already initialising (e.g. page reload mid-initialisation): lock inputs,
-      // show the known site name, watch progress.
+      // Already initialising (e.g. page reload mid-initialisation): lock
+      // inputs, show the known site name, watch progress.
       const { initialisationStatus } = result.data;
       if (initialisationStatus.status === 'INITIALISING') {
         setValues(previous => ({
@@ -143,8 +143,8 @@ export const InitialisationPage: Component<{
         intervalSeconds: Number(values().intervalSeconds),
       },
     });
-    // Failures are handled globally; stay in the initialising phase. The expected
-    // sync errors below come back as union variants on success.
+    // Failures are handled globally; stay in the initialising phase. The
+    // expected sync errors below come back as union variants on success.
     if (result.kind !== 'success') return;
     const { initialiseSite } = result.data;
     if (initialiseSite.__typename === 'SyncSettingsNode') {

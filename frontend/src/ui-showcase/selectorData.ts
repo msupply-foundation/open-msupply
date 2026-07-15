@@ -1,8 +1,8 @@
 /*
- * Sample data for the Selectors showcase — shaped like the real outbound-shipment
- * domain (items with a code, name, pack size and available stock) so the
- * autocomplete demonstrates the actual item picker, not a toy string list.
- * Carried over from the RnD prototype's selectorData.ts.
+ * Sample data for the Selectors showcase — shaped like the real
+ * outbound-shipment domain (items with a code, name, pack size and available
+ * stock) so the autocomplete demonstrates the actual item picker, not a toy
+ * string list. Carried over from the RnD prototype's selectorData.ts.
  */
 
 export interface DemoItem {
@@ -105,7 +105,9 @@ export const ITEMS: DemoItem[] = [
   },
 ];
 
-/** Fixed list, but each option carries a status colour — needs a styled popup. */
+/**
+ * Fixed list, but each option carries a status colour — needs a styled popup.
+ */
 export interface StatusOption {
   value: string;
   label: string;

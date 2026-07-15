@@ -30,24 +30,28 @@ export interface DialogProps {
   description?: JSX.Element;
   children?: JSX.Element;
   /**
-   * Bottom-pinned content sitting just above the actions (e.g. a status/estimate banner).
-   * When the dialog reserves height (minBodyHeightRem), the slack falls ABOVE this footer, so
-   * the footer + actions stay on the dialog's bottom edge instead of floating with the content.
+   * Bottom-pinned content sitting just above the actions (e.g. a
+   * status/estimate banner). When the dialog reserves height
+   * (minBodyHeightRem), the slack falls ABOVE this footer, so the footer +
+   * actions stay on the dialog's bottom edge instead of floating with the
+   * content.
    */
   footer?: JSX.Element;
   /** Footer buttons (rendered inline-end). */
   actions?: JSX.Element;
   /**
-   * Width, in rem — for wider forms (e.g. the stocktake create modal). The dialog sits at this
-   * fixed width (clamped down to the viewport on narrow screens), so its box stays a steady size
-   * regardless of content — a form switching modes doesn't change width. Overrides the default
-   * (30rem) via a custom property; the page passes a number, not CSS, so it owns no stylesheet
-   * (principle #10).
+   * Width, in rem — for wider forms (e.g. the stocktake create modal). The
+   * dialog sits at this fixed width (clamped down to the viewport on narrow
+   * screens), so its box stays a steady size regardless of content — a form
+   * switching modes doesn't change width. Overrides the default (30rem) via a
+   * custom property; the page passes a number, not CSS, so it owns no
+   * stylesheet (principle #10).
    */
   widthRem?: number;
   /**
-   * Minimum body height, in rem — reserve space so a dialog whose content changes size (e.g.
-   * a form switching modes) doesn't jump. Same custom-property mechanism as widthRem.
+   * Minimum body height, in rem — reserve space so a dialog whose content
+   * changes size (e.g. a form switching modes) doesn't jump. Same
+   * custom-property mechanism as widthRem.
    */
   minBodyHeightRem?: number;
 }
@@ -71,10 +75,11 @@ export const Dialog = (props: DialogProps) => {
   let dialog!: HTMLDialogElement;
   const titleId = createUniqueId();
   const descriptionId = createUniqueId();
-  // Popups (Select / Combobox) opened inside this dialog must MOUNT INTO it — a popup
-  // portaled to <body> would be `inert` (unclickable) and painted behind the top-layer
-  // dialog. We expose the dialog element via context; nested popups mount here. The dialog
-  // box is overflow:visible (the clip lives on the inner .body) so the popup isn't cut off.
+  // Popups (Select / Combobox) opened inside this dialog must MOUNT INTO it —
+  // a popup portaled to <body> would be `inert` (unclickable) and painted
+  // behind the top-layer dialog. We expose the dialog element via context;
+  // nested popups mount here. The dialog box is overflow:visible (the clip
+  // lives on the inner .body) so the popup isn't cut off.
   const [dialogEl, setDialogEl] = createSignal<HTMLElement>();
 
   createEffect(() => {

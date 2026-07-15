@@ -80,9 +80,10 @@ export function ShowcaseApp() {
   };
 
   return (
-    // Provide the same shell-level full-screen context the real AppShell does, so a
-    // section that's a real page (Table) full-screens properly — the showcase chrome
-    // (menu + header strip) hides and the page's footer/pagination/selection stay.
+    // Provide the same shell-level full-screen context the real AppShell does,
+    // so a section that's a real page (Table) full-screens properly — the
+    // showcase chrome (menu + header strip) hides and the page's
+    // footer/pagination/selection stay.
     <ShellFullScreenContext.Provider
       value={{ isFullScreen: fullScreen, setFullScreen }}
     >

@@ -46,8 +46,8 @@ export const loadDictionary = async (
 
   // Flatten the bundled catalog (a no-op for already-flat catalogs, but correct
   // if nested ones are added), then let custom translations override. Trusted
-  // cast: our catalogs are string maps, so flatten's `unknown` values are strings
-  // (kdd/type-safety: `as` permitted where we own the implementation).
+  // cast: our catalogs are string maps, so flatten's `unknown` values are
+  // strings (kdd/type-safety: `as` permitted where we own the implementation).
   const flat: FlatDict = {
     ...(i18n.flatten(common) as FlatDict),
     ...custom,

@@ -4,8 +4,8 @@ import { locale } from './intl';
 const MAX_FRACTION_DIGITS = 10;
 
 // Intl.NumberFormat keyed by the locale's number override (so digit systems —
-// e.g. Arabic-Indic for `ar` — render correctly rather than defaulting to Latin).
-// This is the single place NumberFormat is constructed for the app.
+// e.g. Arabic-Indic for `ar` — render correctly rather than defaulting to
+// Latin). This is the single place NumberFormat is constructed for the app.
 export const intlNumberFormat = (
   locale: SupportedLocale,
   options?: Intl.NumberFormatOptions

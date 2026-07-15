@@ -5,7 +5,8 @@ import { Alert } from '../ui/elements/feedback/Alert';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
-// Spec (Initialization Logic): common component listing the sync steps and their progress.
+// Spec (Initialization Logic): common component listing the sync steps and
+// their progress.
 const stepStatus = (step: SyncStep): string => {
   if (step.finished) return t('sync.status.done');
   if (!step.started) return t('sync.status.pending');

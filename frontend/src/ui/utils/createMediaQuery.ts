@@ -17,5 +17,7 @@ export const createMediaQuery = (query: string): (() => boolean) => {
   return matches;
 };
 
-/** True when the viewport is narrow enough that the nav should be an overlay. */
+/**
+ * True when the viewport is narrow enough that the nav should be an overlay.
+ */
 export const useIsNavOverlay = () => createMediaQuery(mediaQuery.navOverlay);

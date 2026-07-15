@@ -25,12 +25,13 @@ import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterAc
 import { Button } from '../ui/elements/buttons/Button';
 import { CloseIcon, PlusCircleIcon, TrashIcon } from '../ui/icons';
 
-// A realistic list-page demo for the showcase: the SAME assembly as a real vertical
-// (StocktakesList) — a Page frame with a header, a table that fills the body and scrolls
-// internally, and a contextual footer that swaps pagination ↔ selection actions. No
-// backend: sort / pagination / selection are driven by local signals over a static
-// dataset, sorted + sliced here to stand in for the server contract (DataTable stays
-// manualSorting — it renders whatever page of rows it's handed).
+// A realistic list-page demo for the showcase: the SAME assembly as a real
+// vertical (StocktakesList) — a Page frame with a header, a table that fills
+// the body and scrolls internally, and a contextual footer that swaps
+// pagination ↔ selection actions. No backend: sort / pagination / selection are
+// driven by local signals over a static dataset, sorted + sliced here to stand
+// in for the server contract (DataTable stays manualSorting — it renders
+// whatever page of rows it's handed).
 type Batch = {
   id: string;
   name: string;
@@ -93,8 +94,9 @@ type SortKey =
   | 'stock'
   | 'price';
 
-// The columns the show/hide toggles cover. `id` is the TanStack column id (= accessorKey);
-// `label` is the header. Kept beside the column defs so the toggle set stays in step.
+// The columns the show/hide toggles cover. `id` is the TanStack column id (=
+// accessorKey); `label` is the header. Kept beside the column defs so the
+// toggle set stays in step.
 const COLUMN_TOGGLES: { id: SortKey; label: string }[] = [
   { id: 'name', label: 'Item' },
   { id: 'batch', label: 'Batch' },
@@ -115,23 +117,25 @@ export const TableShowcase = () => {
   const [pageSize, setPageSize] = createSignal(20);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
 
-  // Local column config, standing in for createTableConfig (which needs store context /
-  // appData the standalone showcase doesn't have). This is a mini-createTableConfig: a
-  // LayeredConfig with a `base` and a `compact` band, resolved against the ACTUAL viewport
-  // via createMediaQuery — exactly like the real thing. The two toolbar checkbox rows edit
-  // each band independently; resize below 600px and the table follows the compact row,
-  // demonstrating that bands don't share.
+  // Local column config, standing in for createTableConfig (which needs store
+  // context / appData the standalone showcase doesn't have). This is a
+  // mini-createTableConfig: a LayeredConfig with a `base` and a `compact` band,
+  // resolved against the ACTUAL viewport via createMediaQuery — exactly like
+  // the real thing. The two toolbar checkbox rows edit each band independently;
+  // resize below 600px and the table follows the compact row, demonstrating
+  // that bands don't share.
   const [layered, setLayered] = createSignal<LayeredConfig>({});
   const isCompact = createMediaQuery(mediaQuery.compact);
   const activeBand = (): Band => (isCompact() ? 'compact' : 'base');
 
-  // Resolved config for the active band → DataTable's `config`. Only the user layer here.
+  // Resolved config for the active band → DataTable's `config`. Only the user
+  // layer here.
   const tableConfig = () =>
     resolveTableConfig(activeBand(), { user: layered() });
 
-  // setConfig writes the ACTIVE band (DataTable already resolved TanStack's updater to a
-  // value). The checkbox rows below instead target a SPECIFIC band via setBandConfig, so
-  // you can edit compact while viewing base.
+  // setConfig writes the ACTIVE band (DataTable already resolved TanStack's
+  // updater to a value). The checkbox rows below instead target a SPECIFIC band
+  // via setBandConfig, so you can edit compact while viewing base.
   const setConfig = <K extends TableConfigKey>(key: K, value: TableConfig[K]) =>
     setBandConfig(activeBand(), key, value);
 
@@ -145,7 +149,8 @@ export const TableShowcase = () => {
       [band]: { ...current[band], [key]: value },
     }));
 
-  // Stand in for the server: sort the whole dataset, then slice the current page.
+  // Stand in for the server: sort the whole dataset, then slice the current
+  // page.
   const sorted = createMemo(() => {
     const { key, desc } = sort();
     return [...DATA].sort((a, b) => {
@@ -165,9 +170,10 @@ export const TableShowcase = () => {
     setOffset(0);
   };
 
-  // meta.card assigns each column its region in card view (ui-standards § tables):
-  // name = primary title, batch = the secondary code line, category = the top-right badge;
-  // the rest fall to the grid (default). Table view is unaffected.
+  // meta.card assigns each column its region in card view (ui-standards §
+  // tables): name = primary title, batch = the secondary code line, category =
+  // the top-right badge; the rest fall to the grid (default). Table view is
+  // unaffected.
   const columns = (): Column<Batch, SortKey>[] => [
     {
       accessorKey: 'name',
@@ -242,7 +248,8 @@ export const TableShowcase = () => {
                   </strong>
                   <For each={COLUMN_TOGGLES}>
                     {col => {
-                      // Reflect THIS band's stored value, not the resolved config.
+                      // Reflect THIS band's stored value, not the resolved
+                      // config.
                       const visible = () =>
                         layered()[band]?.columnVisibility?.[col.id] !== false;
                       return (
@@ -275,8 +282,9 @@ export const TableShowcase = () => {
         </Header>
       }
       contentFooter={
-        // The one contextual footer band: pagination normally, replaced by the selection
-        // action bar while rows are selected — the same swap the real page does.
+        // The one contextual footer band: pagination normally, replaced by the
+        // selection action bar while rows are selected — the same swap the real
+        // page does.
         <Show
           when={selectedIds().length > 0}
           fallback={

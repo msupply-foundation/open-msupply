@@ -12,7 +12,8 @@ export interface TextProps extends JSX.HTMLAttributes<HTMLElement> {
    * Heading rank (`<h1>`–`<h6>`), for `variant="heading"` only. Decoupled from
    * the visual size (WCAG 2.2 / principle #9): pick the level that keeps the
    * document outline correct, not the one that "looks the right size". Ignored
-   * once `as` is set. Defaults to 2 (a heading is usually the top of its region).
+   * once `as` is set. Defaults to 2 (a heading is usually the top of its
+   * region).
    */
   level?: HeadingLevel;
   /** Render a different element without changing the visual style. */
@@ -39,9 +40,9 @@ const DEFAULT_ELEMENT: Record<TextVariant, string> = {
  *    it, not because a variant is colour-locked). Colour lives with the context
  *    that owns the contrast/meaning responsibility.
  *  - Reach for it only where an area COMPOSES a variable arrangement of text
- *    (a SidePanel, a cell's main + subtext). A single fixed text role — a Button
- *    label, a table header `th` — stays styled by its own component and takes
- *    raw text; don't wrap that in <Text>.
+ *    (a SidePanel, a cell's main + subtext). A single fixed text role — a
+ *    Button label, a table header `th` — stays styled by its own component and
+ *    takes raw text; don't wrap that in <Text>.
  */
 export const Text = (props: TextProps) => {
   const [local, rest] = splitProps(props, [

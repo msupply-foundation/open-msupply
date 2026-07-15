@@ -7,22 +7,25 @@ import { pxToRem } from '../../utils/rem';
 import type { TableConfig, TableConfigKey } from './tableConfig';
 import styles from './ColumnSettings.module.css';
 
-// The column-settings panel: a table with a row per column, each exposing visibility,
-// order (up/down), pin, and width (in rem). It's a thin renderer over TanStack's own
-// per-column getters/handlers (kdd/table-state — the brains are TanStack's; we only draw
-// the UI): getIsVisible/getCanHide, getCanPin/getIsPinned/pin, getSize/getCanResize. The
-// three resets call table.reset*, which reverts to the resolved lower config layers.
+// The column-settings panel: a table with a row per column, each exposing
+// visibility, order (up/down), pin, and width (in rem). It's a thin renderer
+// over TanStack's own per-column getters/handlers (kdd/table-state — the brains
+// are TanStack's; we only draw the UI): getIsVisible/getCanHide,
+// getCanPin/getIsPinned/pin, getSize/getCanResize. The three resets call
+// table.reset*, which reverts to the resolved lower config layers.
 //
-// Writes go through setConfig (the same controlled path DataTable uses), so persistence +
-// layering + the px↔rem boundary still apply. Sizes are shown/stored in REM (config truth);
-// TanStack works in px, so we convert at this boundary too.
+// Writes go through setConfig (the same controlled path DataTable uses), so
+// persistence + layering + the px↔rem boundary still apply. Sizes are
+// shown/stored in REM (config truth); TanStack works in px, so we convert at
+// this boundary too.
 export function ColumnSettings<T>(props: {
   table: Table<T>;
   config?: TableConfig;
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
 }): JSX.Element {
-  // Leaf columns in their current effective display order (columnOrder if set, else def
-  // order). Reordering swaps a column with its neighbour in this id list.
+  // Leaf columns in their current effective display order (columnOrder if set,
+  // else def order). Reordering swaps a column with its neighbour in this id
+  // list.
   const orderedIds = () => props.table.getAllLeafColumns().map(c => c.id);
 
   const move = (id: string, delta: -1 | 1) => {
@@ -35,15 +38,17 @@ export function ColumnSettings<T>(props: {
     props.setConfig?.('columnOrder', next);
   };
 
-  // Header text for the row label. TanStack headers can be a string or a function/JSX; we
-  // only render the string case here (our columns use string headers) and fall back to the
-  // column id otherwise, so the panel always has a readable label.
+  // Header text for the row label. TanStack headers can be a string or a
+  // function/JSX; we only render the string case here (our columns use string
+  // headers) and fall back to the column id otherwise, so the panel always has
+  // a readable label.
   const label = (id: string) => {
     const header = props.table.getColumn(id)?.columnDef.header;
     return typeof header === 'string' ? header : id;
   };
 
-  // Current stored width in rem for a column, or undefined when unset (default width).
+  // Current stored width in rem for a column, or undefined when unset (default
+  // width).
   const widthRem = (id: string): number | undefined =>
     props.config?.columnSizing?.[id];
 

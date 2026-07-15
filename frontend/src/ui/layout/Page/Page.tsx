@@ -27,10 +27,11 @@ export interface PageProps {
   /** Page body, rendered in the scrolling region. */
   children: JSX.Element;
   /**
-   * Fill mode: the body becomes a non-scrolling flex column with no padding, so a single
-   * child that manages its own scroll (e.g. the DataTable, which fills the space and
-   * scrolls internally with sticky headers) claims the full region. Default (false) is
-   * the normal scrolling-body behaviour, where the body itself scrolls its content.
+   * Fill mode: the body becomes a non-scrolling flex column with no padding,
+   * so a single child that manages its own scroll (e.g. the DataTable, which
+   * fills the space and scrolls internally with sticky headers) claims the
+   * full region. Default (false) is the normal scrolling-body behaviour, where
+   * the body itself scrolls its content.
    */
   fillBody?: boolean;
 }
@@ -53,9 +54,9 @@ export interface PageProps {
  * (enforced by scripts/check-page-css.mjs) — see kdd/page-composition.
  */
 export const Page = (props: PageProps) => {
-  // In shell full-screen mode the page header hides too (only content + footer remain),
-  // matching Open mSupply. Outside a shell (no provider) useFullScreen() is undefined, so
-  // the header always shows there.
+  // In shell full-screen mode the page header hides too (only content + footer
+  // remain), matching Open mSupply. Outside a shell (no provider)
+  // useFullScreen() is undefined, so the header always shows there.
   const fullScreen = useFullScreen();
   return (
     <div class={styles.page}>

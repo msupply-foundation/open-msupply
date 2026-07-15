@@ -13,7 +13,9 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
   variant?: 'primary' | 'secondary';
   /** Which side of the label the icon sits on (mirrors in RTL). */
   iconPosition?: 'start' | 'end';
-  /** Busy state: shows a spinner in place of the icon, disables the button and marks it
+  /**
+   * Busy state: shows a spinner in place of the icon, disables the button and
+   * marks it
    *  aria-busy (so a click can't re-fire an in-flight action). */
   loading?: boolean;
 }

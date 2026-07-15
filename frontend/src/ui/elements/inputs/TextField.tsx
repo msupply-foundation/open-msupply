@@ -14,9 +14,15 @@ export interface TextFieldProps extends Omit<
   required?: boolean;
   /** Spec: 2.5rem (40px) default, 2.25rem (36px) small. */
   size?: 'default' | 'small';
-  /** Spec max-widths: short 25rem (codes/quantities), long 37.5rem (names), full = fill. */
+  /**
+   * Spec max-widths: short 25rem (codes/quantities), long 37.5rem (names),
+   * full = fill.
+   */
   width?: 'short' | 'long' | 'full';
-  /** Visually hide the label (kept for a11y) — for use inside a FieldRow that shows it. */
+  /**
+   * Visually hide the label (kept for a11y) — for use inside a FieldRow that
+   * shows it.
+   */
   hideLabel?: boolean;
 }
 

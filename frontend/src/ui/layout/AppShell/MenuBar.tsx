@@ -36,7 +36,10 @@ const EndChevron = () => (
   <ChevronDownIcon class={styles.endChevron} aria-hidden="true" />
 );
 
-/* Top-level leaf link: icon + empty chevron slot (so labels align with sections). */
+/**
+ * Top-level leaf link: icon + empty chevron slot (so labels align with
+ * sections).
+ */
 const TopLeaf = (props: {
   item: NavItem;
   selected: boolean;
@@ -62,7 +65,9 @@ const TopLeaf = (props: {
   </li>
 );
 
-/* Expandable parent: icon + collapse chevron (between icon and label) + label. */
+/**
+ * Expandable parent: icon + collapse chevron (between icon and label) + label.
+ */
 const NavSection = (props: {
   item: NavItem;
   selectedId: string;
@@ -182,11 +187,12 @@ const NavLists = (props: {
 
 /*
  * One menu bar, two layout modes — never a duplicate mobile nav component.
- *   - docked  (>= navOverlay): part of the flex row; logo toggles the icon rail.
- *   - overlay (<  navOverlay): off-canvas panel + scrim, opened by the header's
- *     hamburger; the SAME NavLists, closing on navigate or scrim tap.
- * Which mode renders is a "which element" decision — the one place a breakpoint
- * is allowed (via useIsNavOverlay in AppShell).
+ *   - docked  (>= navOverlay): part of the flex row; logo toggles the icon
+ *     rail.
+ * - overlay (<  navOverlay): off-canvas panel + scrim, opened by the header's
+ *     hamburger; the SAME NavLists, closing on navigate or scrim tap. Which
+ *     mode renders is a "which element" decision — the one place a breakpoint
+ *     is allowed (via useIsNavOverlay in AppShell).
  */
 export const MenuBar = (props: MenuBarProps) => {
   const select = (leaf: NavLeaf) => {

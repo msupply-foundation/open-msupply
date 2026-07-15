@@ -13,11 +13,11 @@ type SubmitState =
   | { kind: 'submitting' }
   | { kind: 'error'; message: string };
 
-// Spec (Authentication Logic): re-login modal on top of everything else, username
-// prefilled but editable — the re-login may be as a different user. Shown for
-// inactivity and unexpected logout; a successful login closes it reactively (this
-// component unmounts, which closes the dialog). Not dismissable — the session is
-// gone, so logging in is the only way forward.
+// Spec (Authentication Logic): re-login modal on top of everything else,
+// username prefilled but editable — the re-login may be as a different user.
+// Shown for inactivity and unexpected logout; a successful login closes it
+// reactively (this component unmounts, which closes the dialog). Not
+// dismissable — the session is gone, so logging in is the only way forward.
 export const ReLoginModal: Component = () => (
   <Show when={reLoginRequired() && authUser()} keyed>
     {user => <ReLoginForm currentUsername={user.username} />}
@@ -61,8 +61,8 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
     const result = await login(values().username, values().password);
     if (result.kind === 'error')
       setSubmitState({ kind: 'error', message: result.message });
-    // 'success' closes the modal reactively; 'pending' is globally handled — stay
-    // in the loading phase.
+    // 'success' closes the modal reactively; 'pending' is globally handled —
+    // stay in the loading phase.
   };
 
   return (

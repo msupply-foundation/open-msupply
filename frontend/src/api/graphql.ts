@@ -3,15 +3,17 @@
  * (`as` permitted; see kdd/type-safety).
  *
  * Pairs with the codegen output (codegen/plugin.js): each generated operation
- * exposes a `query` string plus phantom Result / Variables types. `graphqlFetch`
- * ties them together so the call site is fully typed with no runtime dependency.
+ * exposes a `query` string plus phantom Result / Variables types.
+ * `graphqlFetch` ties them together so the call site is fully typed with no
+ * runtime dependency.
  *
  * `graphqlFetch` never throws: it returns a discriminated `GraphqlResult` that
  * call sites match on `kind`, Rust-style.
  */
 import { createSignal } from 'solid-js';
-// Deliberate import cycle (authContext also imports graphqlFetch): both sides only
-// use the other inside function bodies, never during module initialisation.
+// Deliberate import cycle (authContext also imports graphqlFetch): both sides
+// only use the other inside function bodies, never during module
+// initialisation.
 import { reportUnauthenticated } from '../auth/authContext';
 import { GRAPHQL_URL } from '../config';
 
@@ -39,10 +41,10 @@ export type GraphqlFailure =
   // Spec (Unexpected logout): also sets the global unauthenticated signal.
   | { kind: 'unauthenticated' }
   // Anything the flow does not handle itself: connection failures, unusable
-  // responses, and — unless returnGraphqlErrors is set — GraphQL errors. Also sets
-  // the global unexpected-error signal (modal); consumers treat this as a
-  // continuation of their loading phase. The error description lives on the global
-  // signal, not on the result.
+  // responses, and — unless returnGraphqlErrors is set — GraphQL errors. Also
+  // sets the global unexpected-error signal (modal); consumers treat this as a
+  // continuation of their loading phase. The error description lives on the
+  // global signal, not on the result.
   | { kind: 'unexpectedError' }
   // GraphQL errors from the response, returned only when the caller opts in via
   // returnGraphqlErrors to handle them itself.
@@ -52,17 +54,18 @@ export type GraphqlResult<TResult> =
   { kind: 'success'; data: TResult } | GraphqlFailure;
 
 type FetchOptions<TResult> = {
-  // Return the response's GraphQL errors as a graphqlError result for the caller to
-  // handle, instead of the default global unexpected-error treatment.
+  // Return the response's GraphQL errors as a graphqlError result for the
+  // caller to handle, instead of the default global unexpected-error treatment.
   returnGraphqlErrors?: boolean;
-  // Inspect an otherwise-successful payload and optionally promote it to the global
-  // unexpected-error modal. The transport succeeded and the response is well-formed,
-  // but a value INSIDE it represents a failure the caller would rather treat as
-  // unexpected (e.g. a union `NodeError` branch that "should never happen" for a
-  // valid request). Return a description to trip the modal and turn the result into
-  // { kind: 'unexpectedError' }; return undefined to let the success through
-  // unchanged. Same effect as an infra failure — the caller simply sees a
-  // non-success and stays in its loading phase (spec: Unexpected API Errors).
+  // Inspect an otherwise-successful payload and optionally promote it to the
+  // global unexpected-error modal. The transport succeeded and the response is
+  // well-formed, but a value INSIDE it represents a failure the caller would
+  // rather treat as unexpected (e.g. a union `NodeError` branch that "should
+  // never happen" for a valid request). Return a description to trip the modal
+  // and turn the result into { kind: 'unexpectedError' }; return undefined to
+  // let the success through unchanged. Same effect as an infra failure — the
+  // caller simply sees a non-success and stays in its loading phase (spec:
+  // Unexpected API Errors).
   mapSuccessToError?: (data: TResult) => string | undefined;
   endpoint?: string;
 };
@@ -70,11 +73,12 @@ type FetchOptions<TResult> = {
 export const isUnauthenticated = (errors: GraphqlErrorItem[]): boolean =>
   errors.some(e => e.message === 'Unauthenticated');
 
-// Spec (Unexpected API Errors): one global failure state for any request that fails
-// outside the expected, structured union results — connection failures, unusable
-// responses, and unexpected GraphQL errors. A modal shows the description on top of
-// everything; its only action reloads the whole app, so nothing clears it during
-// normal use. The flow that made the request stays in its loading phase.
+// Spec (Unexpected API Errors): one global failure state for any request that
+// fails outside the expected, structured union results — connection failures,
+// unusable responses, and unexpected GraphQL errors. A modal shows the
+// description on top of everything; its only action reloads the whole app, so
+// nothing clears it during normal use. The flow that made the request stays in
+// its loading phase.
 const [unexpectedError, setUnexpectedError] = createSignal<string | undefined>(
   undefined
 );
@@ -138,8 +142,9 @@ export async function graphqlFetch<TResult, TVariables>(
   if (body.data == null) {
     return unexpected('Response contained neither data nor errors');
   }
-  // A well-formed success: give the caller a last chance to promote a bad payload
-  // value to the global unexpected-error modal (e.g. a union NodeError branch).
+  // A well-formed success: give the caller a last chance to promote a bad
+  // payload value to the global unexpected-error modal (e.g. a union NodeError
+  // branch).
   const mapped = options.mapSuccessToError?.(body.data);
   if (mapped !== undefined) {
     return unexpected(mapped);

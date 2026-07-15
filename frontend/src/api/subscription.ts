@@ -1,9 +1,9 @@
-// Trusted layer: our own GraphQL implementation. `as` assertions are permitted here
-// (see kdd/type-safety).
+// Trusted layer: our own GraphQL implementation. `as` assertions are permitted
+// here (see kdd/type-safety).
 //
-// Minimal graphql-transport-ws client. Spec (Initialization Logic): we first try the
-// subscription; any failure calls onFailure exactly once so the caller can fall back
-// to polling.
+// Minimal graphql-transport-ws client. Spec (Initialization Logic): we first
+// try the subscription; any failure calls onFailure exactly once so the caller
+// can fall back to polling.
 import type { TypedDocument } from './graphql';
 import { GRAPHQL_WS_PATH } from '../config';
 

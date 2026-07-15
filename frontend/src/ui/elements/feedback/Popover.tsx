@@ -5,9 +5,13 @@ export type PopoverPlacement =
   'bottom' | 'bottom-start' | 'bottom-end' | 'top' | 'top-start' | 'top-end';
 
 export interface PopoverProps {
-  /** Trigger content (an icon, some text) — rendered inside the invoker button. */
+  /**
+   * Trigger content (an icon, some text) — rendered inside the invoker button.
+   */
   trigger: JSX.Element;
-  /** Accessible name for the trigger — required when the trigger is icon-only. */
+  /**
+   * Accessible name for the trigger — required when the trigger is icon-only.
+   */
   triggerLabel?: string;
   /** Extends the bare trigger button's styling. */
   triggerClass?: string;

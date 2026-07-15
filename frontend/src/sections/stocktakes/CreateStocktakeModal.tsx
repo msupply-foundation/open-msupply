@@ -25,20 +25,21 @@ import {
   type StockLineCountVariables,
 } from './createStocktake.generated';
 
-// The stocktake-creation modal — a consumer of our Dialog shell (kdd/explicit-composition):
-// it owns the form + create logic, handing the shell its title, actions, and open/close.
-// Rebuilt on this branch's components (Dialog / Combobox / Select / TextField), ported from
-// andrei-17-card-view.
+// The stocktake-creation modal — a consumer of our Dialog shell
+// (kdd/explicit-composition): it owns the form + create logic, handing the
+// shell its title, actions, and open/close. Rebuilt on this branch's components
+// (Dialog / Combobox / Select / TextField), ported from andrei-17-card-view.
 //
-// Three create modes (single radio; exactly one active), each mapping onto its own subset of
-// InsertStocktakeInput (built in buildInput — the generated type, no intermediate shape):
-//   full     — every item; those with stock on hand, or all master-list items
-//   filtered — items matching a master list / location / expiry cut-off
-//   blank    — no lines; the user adds them by hand
+// Three create modes (single radio; exactly one active), each mapping onto its
+// own subset of InsertStocktakeInput (built in buildInput — the generated type,
+// no intermediate shape): full     — every item; those with stock on hand, or
+// all master-list items filtered — items matching a master list / location /
+// expiry cut-off blank    — no lines; the user adds them by hand
 
 type StocktakeType = 'full' | 'filtered' | 'blank';
 
-// includeAllItems is shared by full + filtered (same meaning: include items with no stock).
+// includeAllItems is shared by full + filtered (same meaning: include items
+// with no stock).
 type FormState = {
   type: StocktakeType;
   masterListId: string;
@@ -77,7 +78,8 @@ export const CreateStocktakeModal = (props: {
   const [form, setForm] = createSignal<FormState>(EMPTY_FORM);
   const [creating, setCreating] = createSignal(false);
 
-  // Reset to a clean form whenever the caller closes us, so re-opening starts fresh.
+  // Reset to a clean form whenever the caller closes us, so re-opening starts
+  // fresh.
   const close = () => {
     setForm(EMPTY_FORM);
     props.onClose();
@@ -85,17 +87,18 @@ export const CreateStocktakeModal = (props: {
 
   const isBlank = () => form().type === 'blank';
 
-  // Estimated line count, from ONE resource keyed on the whole form (blank needs no count).
-  // The resource's INPUT switches on the current state: it always counts the stock lines
-  // matching the filters, and ADDS the item count only when including all items. It's an
-  // ESTIMATE, so we don't over-refine it — the item count is scoped to real, countable items
-  // (isVisible + isActive + type STOCK), matching the master list when set. Filters are built
-  // straight from the form as the generated input types (kdd/type-safety).
+  // Estimated line count, from ONE resource keyed on the whole form (blank
+  // needs no count). The resource's INPUT switches on the current state: it
+  // always counts the stock lines matching the filters, and ADDS the item count
+  // only when including all items. It's an ESTIMATE, so we don't over-refine it
+  // — the item count is scoped to real, countable items (isVisible + isActive +
+  // type STOCK), matching the master list when set. Filters are built straight
+  // from the form as the generated input types (kdd/type-safety).
   const stockFilter = (): StockLineCountVariables['filter'] => {
     const { masterListId, locationId, expiryDate } = form();
     return {
-      // Count only stock lines that actually hold packs — an empty/zero line isn't part of the
-      // stocktake estimate (matches OMS).
+      // Count only stock lines that actually hold packs — an empty/zero line
+      // isn't part of the stocktake estimate (matches OMS).
       hasPacksInStore: true,
       masterList: masterListId ? { id: { equalTo: masterListId } } : undefined,
       locationId: locationId ? { equalTo: locationId } : undefined,
@@ -106,7 +109,8 @@ export const CreateStocktakeModal = (props: {
   };
 
   const [estimate] = createResource(
-    // Source = the form as a stable string (kdd/no-remounts): equal content → no refetch.
+    // Source = the form as a stable string (kdd/no-remounts): equal content →
+    // no refetch.
     () => (isBlank() ? null : JSON.stringify(form())),
     async () => {
       const { includeAllItems, masterListId } = form();
@@ -133,19 +137,22 @@ export const CreateStocktakeModal = (props: {
     }
   );
 
-  // Is a count fetch in flight? (Drives the "counting…" hint in the estimate message.)
+  // Is a count fetch in flight? (Drives the "counting…" hint in the estimate
+  // message.)
   const countLoading = () => estimate.loading;
 
-  // Read WITHOUT suspending: this modal renders under AppShell's <Suspense> (lazy section
-  // chunks), and a pending resource read there trips the fallback → remounts the section →
-  // resets the form. Gate on resource.state, never `.latest` (which suspends the first read)
-  // — see kdd/state-management (no remounts).
+  // Read WITHOUT suspending: this modal renders under AppShell's <Suspense>
+  // (lazy section chunks), and a pending resource read there trips the fallback
+  // → remounts the section → resets the form. Gate on resource.state, never
+  // `.latest` (which suspends the first read) — see kdd/state-management (no
+  // remounts).
   const estimatedLines = (): number =>
     estimate.state === 'ready' || estimate.state === 'refreshing'
       ? (estimate.latest ?? 0)
       : 0;
 
-  // A short human comment describing the filtered selection (empty for full/blank).
+  // A short human comment describing the filtered selection (empty for
+  // full/blank).
   const generatedComment = (): string | undefined => {
     const { type, masterListId, locationId, expiryDate } = form();
     if (type !== 'filtered') return undefined;
@@ -171,8 +178,9 @@ export const CreateStocktakeModal = (props: {
       : undefined;
   };
 
-  // Map the form onto InsertStocktakeInput. Each type contributes only its own fields; the id
-  // is client-generated so the create can navigate to the new stocktake.
+  // Map the form onto InsertStocktakeInput. Each type contributes only its own
+  // fields; the id is client-generated so the create can navigate to the new
+  // stocktake.
   const buildInput = (): InsertStocktakeVariables['input'] => {
     const { type, masterListId, locationId, expiryDate, includeAllItems } =
       form();
@@ -199,8 +207,9 @@ export const CreateStocktakeModal = (props: {
       storeId: params.storeId,
       input: buildInput(),
     });
-    // Failures are handled globally (unexpected-error modal); on anything but success we stay
-    // open in the creating state. On success, navigate to the new stocktake's detail route.
+    // Failures are handled globally (unexpected-error modal); on anything but
+    // success we stay open in the creating state. On success, navigate to the
+    // new stocktake's detail route.
     if (result.kind === 'success') {
       const id = result.data.insertStocktake.id;
       close();
@@ -209,13 +218,15 @@ export const CreateStocktakeModal = (props: {
     setCreating(false);
   };
 
-  // Changing type resets the type-specific inputs (a stale master list can't leak in).
+  // Changing type resets the type-specific inputs (a stale master list can't
+  // leak in).
   const setType = (type: StocktakeType) => setForm({ ...EMPTY_FORM, type });
 
-  // Include-all choice: stock-on-hand items only, or every (master-list) item (a zero line
-  // for the rest). "All items" is DISABLED when a location or expiry is set — out-of-stock
-  // items aren't in any location and have no expiry, so including them is incompatible with
-  // those filters (matches OMS: it greys out "All items" rather than hiding the choice).
+  // Include-all choice: stock-on-hand items only, or every (master-list) item
+  // (a zero line for the rest). "All items" is DISABLED when a location or
+  // expiry is set — out-of-stock items aren't in any location and have no
+  // expiry, so including them is incompatible with those filters (matches OMS:
+  // it greys out "All items" rather than hiding the choice).
   const allItemsDisabled = () =>
     Boolean(form().locationId || form().expiryDate);
   const includeAllOptions = () => [
@@ -226,7 +237,8 @@ export const CreateStocktakeModal = (props: {
       disabled: allItemsDisabled(),
     },
   ];
-  // If "All items" was chosen and then becomes disabled (location/expiry set), fall back.
+  // If "All items" was chosen and then becomes disabled (location/expiry set),
+  // fall back.
   const includeAllValue = () =>
     form().includeAllItems && !allItemsDisabled() ? 'all' : 'soh';
 
@@ -235,16 +247,19 @@ export const CreateStocktakeModal = (props: {
       open={props.open}
       title={t('stocktake.create.title')}
       icon={<PlusCircleIcon />}
-      // Blocking while the mutation is in flight (no scrim/Escape exit until it resolves).
+      // Blocking while the mutation is in flight (no scrim/Escape exit until
+      // it resolves).
       dismissable={!creating()}
       onClose={close}
       widthRem={42}
-      // Reserve the tallest mode's height (filtered, ~38rem) so switching type never resizes the
-      // dialog — full/blank pad up to the filtered height, so there's no jump in any direction.
+      // Reserve the tallest mode's height (filtered, ~38rem) so switching type
+      // never resizes the dialog — full/blank pad up to the filtered height, so
+      // there's no jump in any direction.
       minBodyHeightRem={39}
-      // Bottom-pinned status banner (OMS): blue "N lines estimated" (or Counting…) for
-      // full/filtered; green "blank stocktake" confirmation for blank. Lives in the footer so
-      // it hugs the actions at the dialog's bottom edge instead of floating with the form.
+      // Bottom-pinned status banner (OMS): blue "N lines estimated" (or
+      // Counting…) for full/filtered; green "blank stocktake" confirmation for
+      // blank. Lives in the footer so it hugs the actions at the dialog's
+      // bottom edge instead of floating with the form.
       footer={
         <Show
           when={!isBlank()}

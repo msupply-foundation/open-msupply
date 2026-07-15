@@ -9,7 +9,9 @@ interface ComboboxProps<T> {
   label: string;
   /** The full option set; filtered locally as the user types. */
   items: T[];
-  /** The plain-text label of an item — used for the input, filtering and a11y. */
+  /**
+   * The plain-text label of an item — used for the input, filtering and a11y.
+   */
   itemToString: (item: T) => string;
   /**
    * Unique string key per item (list identity + form value). Defaults to
@@ -28,7 +30,10 @@ interface ComboboxProps<T> {
   helperText?: string;
   loading?: boolean;
   disabled?: boolean;
-  /** Visually hide the label (kept for a11y) — for use inside a FieldRow that shows it. */
+  /**
+   * Visually hide the label (kept for a11y) — for use inside a FieldRow that
+   * shows it.
+   */
   hideLabel?: boolean;
   class?: string;
 }
@@ -53,8 +58,9 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   const [selected, setSelected] = createSignal<T | null>(null);
   const [inputValue, setInputValue] = createSignal('');
   let inputEl: HTMLInputElement | undefined;
-  // Inside a Dialog, mount the listbox into the dialog element (top layer + non-inert);
-  // outside one this is undefined and Kobalte's default <body> portal is used.
+  // Inside a Dialog, mount the listbox into the dialog element (top layer +
+  // non-inert); outside one this is undefined and Kobalte's default <body>
+  // portal is used.
   const portalMount = usePortalMount();
 
   const matches = (item: T, input: string) =>
@@ -135,9 +141,10 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       <KCombobox.Portal mount={portalMount?.()}>
         <KCombobox.Content
           class={styles.content}
-          // Keep the listbox open when a pointerdown lands inside the dialog it's mounted in
-          // — Kobalte otherwise dismisses it before a mouse click commits (see
-          // dismissInsideGuard). A genuine click outside the dialog still closes it.
+          // Keep the listbox open when a pointerdown lands inside the dialog
+          // it's mounted in — Kobalte otherwise dismisses it before a mouse
+          // click commits (see dismissInsideGuard). A genuine click outside the
+          // dialog still closes it.
           onInteractOutside={keepDialogOpenOnInside(portalMount?.())}
         >
           <Show when={props.loading}>
