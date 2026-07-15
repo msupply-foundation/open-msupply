@@ -314,14 +314,17 @@ const StocktakeDetailView: Component = () => {
   // "Show error lines" (the action modals' error phase + the finalise error dialog): wipe every
   // other filter and keep ONLY the error lines (OMS "add filter for errors"). Clears the selection
   // so the footer returns to the status view.
-  //
-  // The ONE error path for every failed line action (bulk + finalise): stamp the per-line errors
-  // (lineId → typename — drives the inline Snapshot-cell message + the errors filter chip) AND jump
-  // to the offending rows. The actions call this directly on a partial failure (there's no error
-  // phase / "show errors" button — the errors surface on the rows, like the line-edit modal).
-  const showError = (errors: LineErrors) => {
-    setLineErrors(new Map(errors));
-    setFilter({ errorIds: [...errors.keys()] });
+
+  // Stamp the per-line errors (lineId → typename) — drives the inline Snapshot-cell message + the
+  // errors filter chip (via hasErrors). An action calls this the moment a save partially fails, so
+  // the offending rows show their error even before the user chooses to filter to them.
+  const stampErrors = (errors: LineErrors) => setLineErrors(new Map(errors));
+
+  // "Show error lines" — filter to ONLY the stamped error lines (OMS "add filter for errors") and
+  // clear the selection so the footer returns to the status view. Takes no args: it reads the ids
+  // off the already-stamped lineErrors map (the action stamped them on failure).
+  const showErrors = () => {
+    setFilter({ errorIds: [...lineErrors().keys()] });
     setSelectedIds([]);
   };
 
@@ -520,8 +523,9 @@ const StocktakeDetailView: Component = () => {
                     // current-count mismatch — map each offending id to that LINE-level typename so
                     // the Snapshot column shows the same "recount this line" message a batch would.
                     onError={(lineIds) =>
-                      showError(new Map(lineIds.map((id) => [id, 'SnapshotCountCurrentCountMismatchLine'])))
+                      stampErrors(new Map(lineIds.map((id) => [id, 'SnapshotCountCurrentCountMismatchLine'])))
                     }
+                    onShowErrors={showErrors}
                   />
                 }
               >
@@ -529,29 +533,33 @@ const StocktakeDetailView: Component = () => {
                   {/* Count + actions on the inline-start (OMS layout): Delete, Change location,
                       Reduce to 0. All disabled while the stocktake is finalised / on hold. */}
                   <strong>{t('stocktake.lines.selected', { count: selectedIds().length })}</strong>
-                  {/* Each action owns its own button + confirm/working modal + run; the view supplies
-                      storeId/selection and applies the result via callbacks — onCommit splices what
-                      saved, onError stamps the failed lines + jumps to them (no error phase). */}
+                  {/* Each action owns its own button + confirm → working → success | error modal +
+                      run; the view supplies storeId/selection and applies the result via callbacks —
+                      onCommit splices what saved, onError stamps the failed lines (rows show them),
+                      onShowErrors filters to those lines (the error phase's "Show error lines"). */}
                   <DeleteLinesAction
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
                     onCommit={applyCommit}
-                    onError={showError}
+                    onError={stampErrors}
+                    onShowErrors={showErrors}
                   />
                   <ChangeLocationAction
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
                     onCommit={applyCommit}
-                    onError={showError}
+                    onError={stampErrors}
+                    onShowErrors={showErrors}
                   />
                   <ReduceToZeroAction
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
                     onCommit={applyCommit}
-                    onError={showError}
+                    onError={stampErrors}
+                    onShowErrors={showErrors}
                   />
                   {/* Clear selection pinned to the inline-end. */}
                   <ContentFooterActions>
