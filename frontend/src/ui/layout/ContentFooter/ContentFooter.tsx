@@ -1,5 +1,5 @@
-import type { JSX } from 'solid-js'
-import styles from './ContentFooter.module.css'
+import type { JSX } from 'solid-js';
+import styles from './ContentFooter.module.css';
 
 export interface ContentFooterProps {
   /**
@@ -9,7 +9,10 @@ export interface ContentFooterProps {
    * page swaps its children (detail actions ↔ selection actions) rather
    * than the layout knowing about selection.
    */
-  children?: JSX.Element
+  children?: JSX.Element;
+  /** `data-testid` for the bar (locale-stable test hook, e2e/TESTIDS.md —
+   *  e.g. `actions-footer` when composed as the selection action bar). */
+  testId?: string;
 }
 
 /*
@@ -26,5 +29,7 @@ export interface ContentFooterProps {
  * contextual content is the page's job (see kdd/page-composition).
  */
 export const ContentFooter = (props: ContentFooterProps) => (
-  <div class={styles.footer}>{props.children}</div>
-)
+  <div class={styles.footer} data-testid={props.testId}>
+    {props.children}
+  </div>
+);

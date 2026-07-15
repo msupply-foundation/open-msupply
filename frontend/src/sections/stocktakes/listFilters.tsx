@@ -42,9 +42,10 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
   // ─ user-facing, in display order ─────────────────────────────────────────────
   status: {
     label: () => t('stocktake.filter.status'),
-    render: (props) => (
+    render: props => (
       <FilterSelect
         label={t('stocktake.filter.status')}
+        testId={props.testId}
         value={props.filter().status?.equalTo ?? ''}
         options={[
           { value: '', label: t('filter.any') },
@@ -54,54 +55,76 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
         // The server honours status.equalTo, NOT equalAny (equalAny is in the
         // schema input but the resolver ignores it). '' clears (→ null so the chip stays);
         // otherwise value is one of the enum literals, so no cast is needed.
-        onChange={(value) => props.setPartialFilter({ status: value ? { equalTo: value } : null })}
+        onChange={value =>
+          props.setPartialFilter({ status: value ? { equalTo: value } : null })
+        }
       />
     ),
   },
   description: {
     label: () => t('stocktake.filter.description'),
-    render: (props) => (
+    render: props => (
       <FilterTextInput
         label={t('stocktake.filter.description')}
+        testId={props.testId}
         placeholder={t('stocktake.filter.contains')}
         value={props.filter().description?.like ?? ''}
         // Blank box → null, never { like: '' }: an empty `like` would wrongly
         // match (the server treats "" as a real substring).
-        onInput={(value) => props.setPartialFilter({ description: value ? { like: value } : null })}
+        onInput={value =>
+          props.setPartialFilter({
+            description: value ? { like: value } : null,
+          })
+        }
       />
     ),
   },
   comment: {
     label: () => t('stocktake.filter.comment'),
-    render: (props) => (
+    render: props => (
       <FilterTextInput
         label={t('stocktake.filter.comment')}
+        testId={props.testId}
         placeholder={t('stocktake.filter.contains')}
         value={props.filter().comment?.like ?? ''}
-        onInput={(value) => props.setPartialFilter({ comment: value ? { like: value } : null })}
+        onInput={value =>
+          props.setPartialFilter({ comment: value ? { like: value } : null })
+        }
       />
     ),
   },
   isLocked: {
     label: () => t('stocktake.filter.locked'),
-    render: (props) => (
+    render: props => (
       <FilterSelect
         label={t('stocktake.filter.locked')}
-        value={props.filter().isLocked == null ? '' : props.filter().isLocked ? 'true' : 'false'}
+        testId={props.testId}
+        value={
+          props.filter().isLocked == null
+            ? ''
+            : props.filter().isLocked
+              ? 'true'
+              : 'false'
+        }
         options={[
           { value: '', label: t('filter.any') },
           { value: 'true', label: t('common.yes') },
           { value: 'false', label: t('common.no') },
         ]}
-        onChange={(value) => props.setPartialFilter({ isLocked: value === '' ? null : value === 'true' })}
+        onChange={value =>
+          props.setPartialFilter({
+            isLocked: value === '' ? null : value === 'true',
+          })
+        }
       />
     ),
   },
   stocktakeNumber: {
     label: () => t('stocktake.filter.number'),
-    render: (props) => (
+    render: props => (
       <FilterTextInput
         label={t('stocktake.filter.number')}
+        testId={props.testId}
         placeholder={t('stocktake.filter.equals')}
         // stocktakeNumber is an integer; the control edits a string. Show it as text,
         // and parse on input below. `?? ''` keeps the box blank when unset.
@@ -109,7 +132,7 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
         // Server honours stocktakeNumber.equalTo (verified). Parse the string to an int;
         // a blank or non-numeric box clears to null (chip stays, no filter applied) —
         // never { equalTo: NaN }, which would serialise to null and silently mismatch.
-        onInput={(value) => {
+        onInput={value => {
           const n = Number.parseInt(value, 10);
           props.setPartialFilter({
             stocktakeNumber: Number.isNaN(n) ? null : { equalTo: n },

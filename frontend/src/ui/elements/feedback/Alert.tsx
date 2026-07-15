@@ -1,15 +1,15 @@
-import { type Component, type JSX } from 'solid-js'
-import { Dynamic } from 'solid-js/web'
+import { type Component, type JSX } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import {
   AlertCircleIcon,
   AlertTriangleIcon,
   CheckIcon,
   InfoIcon,
   type IconProps,
-} from '../../icons'
-import styles from './Alert.module.css'
+} from '../../icons';
+import styles from './Alert.module.css';
 
-export type AlertSeverity = 'error' | 'warning' | 'info' | 'success'
+export type AlertSeverity = 'error' | 'warning' | 'info' | 'success';
 
 /* Same icon choices as the current app's Alert wrapper: its own triangle /
    circle-i / check per severity, and error falling through to the MUI default
@@ -19,12 +19,14 @@ const ICONS: Record<AlertSeverity, Component<IconProps>> = {
   warning: AlertTriangleIcon,
   info: InfoIcon,
   success: CheckIcon,
-}
+};
 
 export interface AlertProps {
-  severity: AlertSeverity
-  children: JSX.Element
-  class?: string
+  severity: AlertSeverity;
+  children: JSX.Element;
+  class?: string;
+  /** `data-testid` for the alert panel (locale-stable test hook, e2e/TESTIDS.md). */
+  testId?: string;
 }
 
 /*
@@ -40,6 +42,7 @@ export const Alert = (props: AlertProps) => (
   <div
     class={props.class ? `${styles.alert} ${props.class}` : styles.alert}
     data-severity={props.severity}
+    data-testid={props.testId}
     role="alert"
   >
     <span class={styles.icon} aria-hidden="true">
@@ -47,4 +50,4 @@ export const Alert = (props: AlertProps) => (
     </span>
     <div class={styles.message}>{props.children}</div>
   </div>
-)
+);

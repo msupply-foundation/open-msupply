@@ -1,10 +1,10 @@
-import type { JSX } from 'solid-js'
-import styles from './EmptyState.module.css'
+import type { JSX } from 'solid-js';
+import styles from './EmptyState.module.css';
 
 export interface EmptyStateProps {
-  message: string
+  message: string;
   /** Optional call to action below the message (e.g. a "New …" Button). */
-  children?: JSX.Element
+  children?: JSX.Element;
 }
 
 /*
@@ -14,8 +14,8 @@ export interface EmptyStateProps {
  * panel), so the message sits centred in the available space.
  */
 export const EmptyState = (props: EmptyStateProps) => (
-  <div class={styles.empty}>
+  <div class={styles.empty} data-testid="nothing-here">
     <p class={styles.message}>{props.message}</p>
     {props.children}
   </div>
-)
+);

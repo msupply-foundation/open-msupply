@@ -1,9 +1,9 @@
-import { For, Show } from 'solid-js'
-import type { JSX } from 'solid-js'
-import * as DropdownMenu from '@kobalte/core/dropdown-menu'
-import { CheckIcon, ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons'
-import { t } from '../../../intl'
-import styles from './FilterBar.module.css'
+import { For, Show } from 'solid-js';
+import type { JSX } from 'solid-js';
+import * as DropdownMenu from '@kobalte/core/dropdown-menu';
+import { CheckIcon, ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons';
+import { t } from '../../../intl';
+import styles from './FilterBar.module.css';
 
 /*
  * A filter, generic over a list page's GraphQL filter object type `F`.
@@ -24,26 +24,29 @@ import styles from './FilterBar.module.css'
  * component inside `render`, not a new case in a config-driven switch here.
  */
 export type Filter<F> = {
-  key: keyof F & string
+  key: keyof F & string;
   /**
    * Chip / menu label. An ACCESSOR, not a string, so the filter array can be a
    * stable module const (built once, identities never churn — <For> reuses rows)
    * while the label still re-translates on a locale switch when read in JSX.
    */
-  label: () => string
+  label: () => string;
   render: (props: {
-    filter: () => F
-    setFilter: (next: F) => void
+    filter: () => F;
+    setFilter: (next: F) => void;
     /** Merge a patch into the filter — the common case, since a field writes only its own key. */
-    setPartialFilter: (patch: Partial<F>) => void
-  }) => JSX.Element
-}
+    setPartialFilter: (patch: Partial<F>) => void;
+    /** `filter-input-<key>` (e2e/TESTIDS.md) — pass to the control so the id
+     *  lands on the actual input, where the deterministic suites expect it. */
+    testId: string;
+  }) => JSX.Element;
+};
 
 /**
  * A filter definition WITHOUT its key — the key is supplied by the map position in
  * `constructFilters`, so it isn't repeated in the value. (`Filter<F>` minus `key`.)
  */
-export type FilterDef<F> = Omit<Filter<F>, 'key'>
+export type FilterDef<F> = Omit<Filter<F>, 'key'>;
 
 /**
  * Builds a list page's Filters from an EXHAUSTIVE, keyed map of definitions.
@@ -58,19 +61,21 @@ export type FilterDef<F> = Omit<Filter<F>, 'key'>
  * key is stitched back onto each surviving def to yield the ready-to-render `Filter<F>[]`.
  */
 // Trailing comma on <F,> disambiguates the generic from a JSX tag in this .tsx file.
-export const constructFilters = <F,>(
-  defs: { [K in keyof F & string]: FilterDef<F> | null },
-): Filter<F>[] =>
+export const constructFilters = <F,>(defs: {
+  [K in keyof F & string]: FilterDef<F> | null;
+}): Filter<F>[] =>
   (Object.entries(defs) as [keyof F & string, FilterDef<F> | null][])
-    .filter((entry): entry is [keyof F & string, FilterDef<F>] => entry[1] !== null)
-    .map(([key, def]) => ({ key, ...def }))
+    .filter(
+      (entry): entry is [keyof F & string, FilterDef<F>] => entry[1] !== null
+    )
+    .map(([key, def]) => ({ key, ...def }));
 
 interface FilterBarProps<F extends object> {
   /** The filters a user can add — drives the add-filter menu and the chips. */
-  filters: Filter<F>[]
+  filters: Filter<F>[];
   /** Controlled filter object — the caller's generated GraphQL filter shape. */
-  filter: F
-  onChange: (filter: F) => void
+  filter: F;
+  onChange: (filter: F) => void;
 }
 
 /*
@@ -91,29 +96,31 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
   // be rebuilt to re-translate) — identities don't churn, so <For> reuses chip rows
   // across filter edits instead of remounting them (kdd/state-management: no remounts).
   // Hence no memo; read props.filters directly.
-  const isActive = (f: Filter<F>) => f.key in props.filter
-  const active = () => props.filters.filter(isActive)
-  const available = () => props.filters.filter(f => !isActive(f))
+  const isActive = (f: Filter<F>) => f.key in props.filter;
+  const active = () => props.filters.filter(isActive);
+  const available = () => props.filters.filter(f => !isActive(f));
 
-  const setFilter = (next: F) => props.onChange(next)
-  const setPartialFilter = (patch: Partial<F>) => props.onChange({ ...props.filter, ...patch })
+  const setFilter = (next: F) => props.onChange(next);
+  const setPartialFilter = (patch: Partial<F>) =>
+    props.onChange({ ...props.filter, ...patch });
 
-  const addFilter = (f: Filter<F>) => props.onChange({ ...props.filter, [f.key]: null })
+  const addFilter = (f: Filter<F>) =>
+    props.onChange({ ...props.filter, [f.key]: null });
 
   const removeFilter = (f: Filter<F>) => {
-    const next = { ...props.filter }
-    delete next[f.key]
-    props.onChange(next)
-  }
+    const next = { ...props.filter };
+    delete next[f.key];
+    props.onChange(next);
+  };
 
   // Clear only the keys this bar manages (delete, don't replace with {}): any
   // programmatic filter key the caller set outside the bar is left intact, and it
   // stays typed as F with no `as`.
   const resetAll = () => {
-    const next = { ...props.filter }
-    for (const f of props.filters) delete next[f.key]
-    props.onChange(next)
-  }
+    const next = { ...props.filter };
+    for (const f of props.filters) delete next[f.key];
+    props.onChange(next);
+  };
 
   return (
     <div class={styles.bar}>
@@ -127,7 +134,12 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
         {f => (
           <div class={styles.chip}>
             <span class={styles.chipLabel}>{f.label()}</span>
-            {f.render({ filter: () => props.filter, setFilter, setPartialFilter })}
+            {f.render({
+              filter: () => props.filter,
+              setFilter,
+              setPartialFilter,
+              testId: `filter-input-${f.key}`,
+            })}
             <button
               type="button"
               class={styles.remove}
@@ -140,16 +152,16 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
         )}
       </For>
     </div>
-  )
-}
+  );
+};
 
 const FiltersMenu = <F extends object>(props: {
-  available: Filter<F>[]
-  onAdd: (f: Filter<F>) => void
-  onReset?: () => void
+  available: Filter<F>[];
+  onAdd: (f: Filter<F>) => void;
+  onReset?: () => void;
 }) => (
   <DropdownMenu.Root placement="bottom-start" gutter={4}>
-    <DropdownMenu.Trigger class={styles.trigger}>
+    <DropdownMenu.Trigger class={styles.trigger} data-testid="filters-menu">
       <span>{t('filter.filters')}</span>
       <ChevronDownIcon class={styles.triggerChevron} />
     </DropdownMenu.Trigger>
@@ -157,7 +169,11 @@ const FiltersMenu = <F extends object>(props: {
       <DropdownMenu.Content class={styles.content}>
         <For each={props.available}>
           {f => (
-            <DropdownMenu.Item class={styles.item} onSelect={() => props.onAdd(f)}>
+            <DropdownMenu.Item
+              class={styles.item}
+              data-testid={`filter-option-${f.key}`}
+              onSelect={() => props.onAdd(f)}
+            >
               <span class={styles.itemLabel}>{f.label()}</span>
             </DropdownMenu.Item>
           )}
@@ -166,14 +182,17 @@ const FiltersMenu = <F extends object>(props: {
           <DropdownMenu.Separator class={styles.separator} />
         </Show>
         <Show when={props.onReset}>
-          <DropdownMenu.Item class={styles.item} onSelect={() => props.onReset?.()}>
+          <DropdownMenu.Item
+            class={styles.item}
+            onSelect={() => props.onReset?.()}
+          >
             <span class={styles.itemLabel}>{t('filter.remove-all')}</span>
           </DropdownMenu.Item>
         </Show>
       </DropdownMenu.Content>
     </DropdownMenu.Portal>
   </DropdownMenu.Root>
-)
+);
 
 /*
  * Styled controls a field composes inside its `render`. They are dumb and reusable:
@@ -182,10 +201,12 @@ const FiltersMenu = <F extends object>(props: {
 
 /** A search-style text box (no chip chrome — FilterBar draws the label + remove). */
 export const FilterTextInput = (props: {
-  value: string
-  onInput: (value: string) => void
-  placeholder?: string
-  label: string
+  value: string;
+  onInput: (value: string) => void;
+  placeholder?: string;
+  label: string;
+  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  testId?: string;
 }) => (
   <span class={styles.textFilter}>
     <span class={styles.textFilterIcon}>
@@ -194,13 +215,14 @@ export const FilterTextInput = (props: {
     <input
       class={styles.input}
       type="text"
+      data-testid={props.testId}
       value={props.value}
       placeholder={props.placeholder}
       aria-label={props.label}
       onInput={e => props.onInput(e.currentTarget.value)}
     />
   </span>
-)
+);
 
 /**
  * A single-select dropdown. Generic over its option-value union `V`, so `onChange`
@@ -209,15 +231,21 @@ export const FilterTextInput = (props: {
  * change). Include a '' option to offer a "clear" choice.
  */
 export const FilterSelect = <V extends string>(props: {
-  value: V | ''
-  options: readonly { value: V | ''; label: string }[]
-  onChange: (value: V | '') => void
-  label: string
+  value: V | '';
+  options: readonly { value: V | ''; label: string }[];
+  onChange: (value: V | '') => void;
+  label: string;
+  /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
+  testId?: string;
 }) => {
-  const current = () => props.options.find(o => o.value === props.value)
+  const current = () => props.options.find(o => o.value === props.value);
   return (
     <DropdownMenu.Root placement="bottom-start" gutter={4}>
-      <DropdownMenu.Trigger class={styles.enumTrigger} aria-label={props.label}>
+      <DropdownMenu.Trigger
+        class={styles.enumTrigger}
+        data-testid={props.testId}
+        aria-label={props.label}
+      >
         <span>{current()?.label ?? ''}</span>
         <ChevronDownIcon class={styles.triggerChevron} />
       </DropdownMenu.Trigger>
@@ -226,8 +254,8 @@ export const FilterSelect = <V extends string>(props: {
           <DropdownMenu.RadioGroup
             value={props.value}
             onChange={emitted => {
-              const chosen = props.options.find(o => o.value === emitted)
-              if (chosen) props.onChange(chosen.value)
+              const chosen = props.options.find(o => o.value === emitted);
+              if (chosen) props.onChange(chosen.value);
             }}
           >
             <For each={props.options}>
@@ -235,6 +263,9 @@ export const FilterSelect = <V extends string>(props: {
                 <DropdownMenu.RadioItem
                   value={option.value}
                   class={`${styles.item} ${styles.checkboxItem}`}
+                  data-testid={
+                    option.value ? `filter-option-${option.value}` : undefined
+                  }
                   closeOnSelect={false}
                 >
                   <span class={styles.checkbox}>
@@ -250,5 +281,5 @@ export const FilterSelect = <V extends string>(props: {
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
-  )
-}
+  );
+};
