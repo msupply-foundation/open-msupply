@@ -112,6 +112,7 @@
   "common.ok": "موافق",
   "common.cancel": "إلغاء",
   "common.close": "إغلاق",
+  "common.loading": "جارٍ التحميل…",
   "common.save": "حفظ",
   "common.action": "إجراء",
   "common.delete": "حذف",

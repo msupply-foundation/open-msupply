@@ -108,6 +108,7 @@
   "common.ok": "OK",
   "common.cancel": "Cancel",
   "common.close": "Close",
+  "common.loading": "Loading…",
   "common.apply": "Apply",
   "common.more": "More",
   "status.history": "Status history",

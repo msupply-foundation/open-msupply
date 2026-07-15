@@ -108,6 +108,7 @@
   "common.ok": "OK",
   "common.cancel": "Annuler",
   "common.close": "Fermer",
+  "common.loading": "Chargement…",
   "common.save": "Enregistrer",
   "common.action": "Action",
   "common.delete": "Supprimer",

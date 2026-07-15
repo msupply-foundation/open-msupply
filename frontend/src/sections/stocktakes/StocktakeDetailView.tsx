@@ -19,6 +19,7 @@ import { Toolbar } from '../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../ui/elements/buttons/Button';
+import { EmptyState } from '../../ui/elements/feedback/EmptyState';
 import { InfoIcon, MinusCircleIcon } from '../../ui/icons';
 import {
   DataTable,
@@ -444,7 +445,12 @@ const StocktakeDetailView: Component = () => {
   ];
 
   return (
-    <Suspense>
+    // Local Suspense boundary: the FIRST read of data() (info()/rows()) suspends until the fetch
+    // lands. Catching it here — rather than letting it bubble to AppShell's section <Suspense> —
+    // keeps first-load from tripping the section fallback and remounting the view (kdd/no-remounts).
+    // Its fallback is a centred "Loading…" (EmptyState). Every later save is a mutate(), which never
+    // suspends, so this fallback shows only on the initial fetch.
+    <Suspense fallback={<EmptyState message={t('common.loading')} />}>
       {/* NON-keyed Show: the subtree stays mounted while info() is truthy. It must NOT be `keyed`
           — a keyed Show re-runs (tears down + rebuilds) its child whenever the `when` value's
           IDENTITY changes, and every stocktake-level save sets a fresh node object (setInfo), so
