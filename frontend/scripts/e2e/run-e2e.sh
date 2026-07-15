@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# One-command hermetic e2e run: the deterministic regression suites from
-# open-msupply (test-id contract, see client/playwright/TESTIDS.md there)
-# driven against THIS front end.
+# One-command hermetic e2e run: the deterministic regression suites
+# (e2e/ — test-id contract, see e2e/TESTIDS.md) driven against THIS
+# front end.
 #
 #   scripts/e2e/run-e2e.sh                          # whole suite
 #   scripts/e2e/run-e2e.sh stocktake-regression     # one suite
@@ -11,13 +11,14 @@
 # open-msupply checkout, restores a throwaway database from its committed
 # reference datafile (server/data/e2e), boots the server and this repo's
 # vite dev server (GraphQL proxied to the throwaway backend), waits for
-# both, runs the open-msupply Playwright suites with BASE_URL pointing at
-# this front end, tears everything down. Store-local data (stock) is
-# arranged by the suites' data.setup.ts through the API.
+# both, runs the e2e/ Playwright suites with BASE_URL pointing at this
+# front end, tears everything down. Store-local data (stock) is arranged
+# by e2e/specs/data.setup.ts through the API.
 #
-# The open-msupply checkout must be on the `e2e-fe-auth` branch: the e2e
-# reference datafile + suites, merged with the cookie-session auth
-# contract (fe-auth-contract) this front end logs in with.
+# The open-msupply checkout (server + reference datafile only — the
+# suites live here) must be on the `e2e-fe-auth` branch: the e2e datafile
+# + CLI support, merged with the cookie-session auth contract
+# (fe-auth-contract) this front end logs in with.
 #
 # Knobs (all optional):
 #   OMS_DIR           open-msupply checkout (default: ../open-msupply)
@@ -33,7 +34,7 @@ DB_NAME=e2e_newfe # -> $OMS_DIR/server/e2e_newfe.sqlite (gitignored there)
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 FE_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
 OMS_DIR=${OMS_DIR:-$FE_DIR/../open-msupply}
-if [[ ! -d "$OMS_DIR/server/data/e2e" || ! -d "$OMS_DIR/client/playwright" ]]; then
+if [[ ! -d "$OMS_DIR/server/data/e2e" ]]; then
   echo "OMS_DIR ($OMS_DIR) is not an open-msupply checkout on the e2e-fe-auth branch" >&2
   echo "  git clone https://github.com/msupply-foundation/open-msupply --branch e2e-fe-auth" >&2
   echo "  (or: git -C <checkout> switch e2e-fe-auth) — then set OMS_DIR if it isn't ../open-msupply" >&2
@@ -41,9 +42,9 @@ if [[ ! -d "$OMS_DIR/server/data/e2e" || ! -d "$OMS_DIR/client/playwright" ]]; t
 fi
 OMS_DIR=$(cd "$OMS_DIR" && pwd)
 SERVER_DIR="$OMS_DIR/server"
-OMS_CLIENT_DIR="$OMS_DIR/client"
-# Reports/logs land where the suites' playwright.config.ts puts them.
-LOG_DIR="$OMS_CLIENT_DIR/playwright/test-results"
+# Stack logs get their own dir — Playwright wipes its outputDir
+# (e2e/test-results) at run start, which would eat logs written before it.
+LOG_DIR="$FE_DIR/e2e/stack-logs"
 mkdir -p "$LOG_DIR"
 
 # Neutralise any sync credentials in the developer's local.yaml. Empty core
@@ -84,15 +85,13 @@ for port in "$SERVER_PORT" $((SERVER_PORT + 1)) "$FE_PORT"; do
   fi
 done
 
-# Fresh-checkout bootstrap: JS deps in both repos and the Playwright
-# browser. All are fast no-ops when already present. Linux needs the
-# browser's system deps.
+# Fresh-checkout bootstrap: JS deps and the Playwright browser. Both are
+# fast no-ops when already present. Linux needs the browser's system deps.
 [[ -d "$FE_DIR/node_modules" ]] || (cd "$FE_DIR" && pnpm install --frozen-lockfile)
-[[ -d "$OMS_CLIENT_DIR/node_modules" || -d "$OMS_DIR/node_modules" ]] || (cd "$OMS_DIR" && yarn install)
 if [[ "$(uname)" == "Linux" ]]; then
-  (cd "$OMS_CLIENT_DIR" && npx playwright install --with-deps chromium)
+  (cd "$FE_DIR" && pnpm exec playwright install --with-deps chromium)
 else
-  (cd "$OMS_CLIENT_DIR" && npx playwright install chromium)
+  (cd "$FE_DIR" && pnpm exec playwright install chromium)
 fi
 
 echo "Building server + CLI (sqlite; a no-op when already built)"
@@ -156,8 +155,9 @@ done
 WORKERS=(--workers 1)
 for arg in "$@"; do [[ "$arg" == --workers* ]] && WORKERS=(); done
 
-cd "$OMS_CLIENT_DIR"
+cd "$FE_DIR"
 # ${arr[@]+...} keeps empty-array expansion safe under bash 3.2's `set -u`.
 BASE_URL="http://localhost:$FE_PORT" \
 API_URL="http://localhost:$SERVER_PORT" \
-  yarn e2e "$@" ${WORKERS[@]+"${WORKERS[@]}"}
+  pnpm exec playwright test --config e2e/playwright.config.ts \
+  "$@" ${WORKERS[@]+"${WORKERS[@]}"}
