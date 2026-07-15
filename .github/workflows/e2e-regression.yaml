@@ -4,6 +4,11 @@ name: E2E regression (hermetic)
 # (server/data/e2e) — the whole stack is booted by the same script devs use
 # locally (`yarn e2e:local`), so results here should match local runs exactly.
 #
+# The suites are DEFINED IN open-msupply-frontend (e2e/ there): the cross-FE
+# test-id contract (e2e/TESTIDS.md) lets one suite definition verify both the
+# current app and the rewrite, so this workflow checks that repo out and runs
+# its suites against the front end built here.
+#
 # NON-BLOCKING while the suite builds trust: not in branch protection yet.
 # Flake policy before gating: one retry max, quarantine-or-fix same day.
 
@@ -14,6 +19,13 @@ on:
       - "server/**"
       - ".github/workflows/e2e-regression.yaml"
   workflow_dispatch:
+
+env:
+  # Where the suite definitions live. Pinned to the open-msupply-frontend#167
+  # branch until that PR (which moves the suites there) merges — then flip
+  # this to main.
+  FE_SUITES_REPO: msupply-foundation/open-msupply-frontend
+  FE_SUITES_REF: e2e-regression-ci
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -35,6 +47,13 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Check out open-msupply-frontend (suite definitions)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.FE_SUITES_REPO }}
+          ref: ${{ env.FE_SUITES_REF }}
+          path: .fe-suites
+
       - name: Read Rust toolchain channel
         # Scope the toolchain to this job only via RUSTUP_TOOLCHAIN; do NOT set
         # a global rustup default/override on the shared self-hosted runner.
@@ -51,14 +70,17 @@ jobs:
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
 
-      - name: Enable Corepack
+      - name: Enable Corepack (yarn here, pnpm in the suites repo)
         run: corepack enable
 
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Install suite dependencies
+        run: cd .fe-suites && pnpm install --frozen-lockfile
+
       - name: Install Playwright browser
-        run: cd client && npx playwright install chromium
+        run: cd .fe-suites && pnpm exec playwright install chromium
 
       - name: Pick ports
         # The runner box can host concurrent jobs — derive a port pair per run
@@ -70,10 +92,12 @@ jobs:
 
       - name: Run deterministic suites
         env:
-          # Provenance stamped into the Playwright report (playwright.config.ts
-          # `metadata`). The PR head SHA — not github.sha, which is the ephemeral
-          # merge commit — so the report names a commit that stays resolvable.
-          # Falls back to plain ref/sha for workflow_dispatch runs.
+          FE_SUITES_DIR: ${{ github.workspace }}/.fe-suites
+          # Provenance stamped into the Playwright report (the suites'
+          # e2e/playwright.config.ts `metadata`). The PR head SHA — not
+          # github.sha, which is the ephemeral merge commit — so the report
+          # names a commit that stays resolvable. Falls back to plain ref/sha
+          # for workflow_dispatch runs.
           E2E_META_PR: ${{ github.event.pull_request.number }}
           E2E_META_BRANCH: ${{ github.head_ref || github.ref_name }}
           E2E_META_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -84,7 +108,7 @@ jobs:
         if: (!cancelled())
         with:
           name: e2e-playwright-report
-          path: client/playwright/playwright-report
+          path: .fe-suites/e2e/playwright-report
           if-no-files-found: warn
           retention-days: 7
 
@@ -93,6 +117,8 @@ jobs:
         if: (!cancelled())
         with:
           name: e2e-test-results
-          path: client/playwright/test-results
+          path: |
+            .fe-suites/e2e/test-results
+            .fe-suites/e2e/stack-logs
           if-no-files-found: ignore
           retention-days: 7
