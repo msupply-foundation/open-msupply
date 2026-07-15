@@ -1,5 +1,5 @@
-import type { JSX } from 'solid-js'
-import styles from './ContentFooter.module.css'
+import type { JSX } from 'solid-js';
+import styles from './ContentFooter.module.css';
 
 export interface ContentFooterProps {
   /**
@@ -9,7 +9,7 @@ export interface ContentFooterProps {
    * page swaps its children (detail actions ↔ selection actions) rather
    * than the layout knowing about selection.
    */
-  children?: JSX.Element
+  children?: JSX.Element;
 }
 
 /*
@@ -27,4 +27,4 @@ export interface ContentFooterProps {
  */
 export const ContentFooter = (props: ContentFooterProps) => (
   <div class={styles.footer}>{props.children}</div>
-)
+);

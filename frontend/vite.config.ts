@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite'
-import solid from 'vite-plugin-solid'
+import { defineConfig } from 'vite';
+import solid from 'vite-plugin-solid';
 
 /*
  * Dev server proxies GraphQL + custom translations to the mSupply backend
@@ -11,7 +11,9 @@ import solid from 'vite-plugin-solid'
 export default defineConfig(({ mode }) => ({
   plugins: [solid()],
   define: {
-    LANG_VERSION: JSON.stringify(mode === 'production' ? String(Date.now()) : 'dev'),
+    LANG_VERSION: JSON.stringify(
+      mode === 'production' ? String(Date.now()) : 'dev'
+    ),
   },
   server: {
     port: Number(process.env.DEV_SERVER_PORT) || 3005,
@@ -27,4 +29,4 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-}))
+}));

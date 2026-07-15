@@ -15,11 +15,16 @@ import { SyncProgress } from './SyncProgress';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
-import { DEFAULT_SYNC_INTERVAL_SECONDS, SYNC_POLL_INTERVAL_MS } from '../config';
+import {
+  DEFAULT_SYNC_INTERVAL_SECONDS,
+  SYNC_POLL_INTERVAL_MS,
+} from '../config';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
-export const InitialisationPage: Component<{ onComplete: () => void }> = props => {
+export const InitialisationPage: Component<{
+  onComplete: () => void;
+}> = props => {
   const [values, setValues] = createSignal({
     url: '',
     siteName: '',
@@ -75,7 +80,8 @@ export const InitialisationPage: Component<{ onComplete: () => void }> = props =
         poller = window.setInterval(() => {
           void graphqlFetch(LatestSyncStatus, {}).then(result => {
             // Transient poll failures are ignored; the next tick retries.
-            if (result.kind === 'success') handleStatus(result.data.latestSyncStatus);
+            if (result.kind === 'success')
+              handleStatus(result.data.latestSyncStatus);
           });
         }, SYNC_POLL_INTERVAL_MS);
       },
@@ -93,7 +99,10 @@ export const InitialisationPage: Component<{ onComplete: () => void }> = props =
       // show the known site name, watch progress.
       const { initialisationStatus } = result.data;
       if (initialisationStatus.status === 'INITIALISING') {
-        setValues(previous => ({ ...previous, siteName: initialisationStatus.siteName ?? '' }));
+        setValues(previous => ({
+          ...previous,
+          siteName: initialisationStatus.siteName ?? '',
+        }));
         setInitialising(true);
         watchProgress();
       }
@@ -105,8 +114,10 @@ export const InitialisationPage: Component<{ onComplete: () => void }> = props =
     const interval = Number(current.intervalSeconds);
     const errors = {
       url: current.url.trim() === '' ? t('init.url-required') : '',
-      siteName: current.siteName.trim() === '' ? t('init.site-name-required') : '',
-      password: current.password.trim() === '' ? t('init.password-required') : '',
+      siteName:
+        current.siteName.trim() === '' ? t('init.site-name-required') : '',
+      password:
+        current.password.trim() === '' ? t('init.password-required') : '',
       intervalSeconds:
         current.intervalSeconds.trim() === ''
           ? t('init.interval-required')

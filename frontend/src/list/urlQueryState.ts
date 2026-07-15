@@ -35,7 +35,9 @@ export type UrlQueryState<T> = {
   setState: (next: T, options?: { push?: boolean }) => void;
 };
 
-export function useUrlQueryState<T extends object>(defaultState: T): UrlQueryState<T> {
+export function useUrlQueryState<T extends object>(
+  defaultState: T
+): UrlQueryState<T> {
   const [searchParams, setSearchParams] = useSearchParams<{ query: string }>();
 
   const state = (): T => {
@@ -52,7 +54,8 @@ export function useUrlQueryState<T extends object>(defaultState: T): UrlQuerySta
   const setState = (next: T, options?: { push?: boolean }) => {
     const serialised = JSON.stringify(next);
     // A state equal to the default is represented by the absence of the param.
-    const query = serialised === JSON.stringify(defaultState) ? null : serialised;
+    const query =
+      serialised === JSON.stringify(defaultState) ? null : serialised;
     setSearchParams({ [QUERY_PARAM]: query }, { replace: !options?.push });
   };
 

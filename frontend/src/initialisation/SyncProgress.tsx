@@ -14,7 +14,9 @@ const stepStatus = (step: SyncStep): string => {
   return t('sync.status.in-progress');
 };
 
-export const SyncProgress: Component<{ overview: SyncOverview | undefined }> = props => (
+export const SyncProgress: Component<{
+  overview: SyncOverview | undefined;
+}> = props => (
   <Show when={props.overview} fallback={<p>{t('sync.waiting')}</p>} keyed>
     {overview => (
       <div class={styles.stack}>

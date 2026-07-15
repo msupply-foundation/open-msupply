@@ -30,7 +30,9 @@ const merge = (locale: SupportedLocale, dict: FlatDict): void => {
  * await it and keep showing a loading state until it lands. It never throws —
  * a total failure leaves an empty dictionary and t() falls back to keys.
  */
-export const loadDictionary = async (locale: SupportedLocale): Promise<void> => {
+export const loadDictionary = async (
+  locale: SupportedLocale
+): Promise<void> => {
   const cached = readCache(locale);
   if (cached) {
     merge(locale, cached);

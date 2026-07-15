@@ -1,6 +1,12 @@
 import { createSignal } from 'solid-js';
 import { graphqlFetch, msSinceLastGqlCall } from '../api/graphql';
-import { AuthToken, Logout, Me, RefreshToken, type UserInfoFragment } from '../api/auth.generated';
+import {
+  AuthToken,
+  Logout,
+  Me,
+  RefreshToken,
+  type UserInfoFragment,
+} from '../api/auth.generated';
 import { refetchStoreContext } from '../store/storeContext';
 import { ACTIVITY_CHECK_INTERVAL_MS } from '../config';
 
@@ -58,7 +64,10 @@ export type LoginResult =
   // loading phase.
   | { kind: 'pending' };
 
-export const login = async (username: string, password: string): Promise<LoginResult> => {
+export const login = async (
+  username: string,
+  password: string
+): Promise<LoginResult> => {
   const result = await graphqlFetch(AuthToken, { username, password });
   if (result.kind !== 'success') {
     return { kind: 'pending' };
@@ -96,14 +105,25 @@ export const startActivityTracking = (): (() => void) => {
   const recordActivity = () => {
     lastActivityAt = Date.now();
   };
-  const events = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'];
-  events.forEach(e => window.addEventListener(e, recordActivity, { passive: true }));
+  const events = [
+    'pointerdown',
+    'pointermove',
+    'keydown',
+    'wheel',
+    'touchstart',
+  ];
+  events.forEach(e =>
+    window.addEventListener(e, recordActivity, { passive: true })
+  );
 
   const interval = window.setInterval(() => {
     const currentUser = user();
     if (!currentUser || reLoginRequired()) return;
     // Spec (Authentication Logic): both durations come from the me/login response.
-    if (Date.now() - lastActivityAt > currentUser.inactivityTimeoutSeconds * 1000) {
+    if (
+      Date.now() - lastActivityAt >
+      currentUser.inactivityTimeoutSeconds * 1000
+    ) {
       setInactivityExpired(true);
       return;
     }

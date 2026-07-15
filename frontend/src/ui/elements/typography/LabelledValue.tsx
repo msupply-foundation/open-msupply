@@ -23,7 +23,10 @@ export interface LabelledValueProps extends JSX.HTMLAttributes<HTMLDivElement> {
 export const LabelledValue = (props: LabelledValueProps) => {
   const [local, rest] = splitProps(props, ['label', 'children', 'class']);
   return (
-    <div class={local.class ? `${styles.field} ${local.class}` : styles.field} {...rest}>
+    <div
+      class={local.class ? `${styles.field} ${local.class}` : styles.field}
+      {...rest}
+    >
       <Text variant="bodySmall" as="span" class={styles.label}>
         {local.label}
       </Text>

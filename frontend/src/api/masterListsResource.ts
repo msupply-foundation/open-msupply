@@ -12,8 +12,10 @@ export type MasterList = MasterListsResult['masterLists']['nodes'][number];
 // first load never trips a <Suspense> boundary (kdd/state-management: no remounts).
 export const masterListsResource = createStoreScopedResource<MasterList>(
   currentStoreId,
-  async (storeId) => {
+  async storeId => {
     const result = await graphqlFetch(MasterLists, { storeId });
-    return result.kind === 'success' ? result.data.masterLists.nodes : undefined;
-  },
+    return result.kind === 'success'
+      ? result.data.masterLists.nodes
+      : undefined;
+  }
 );

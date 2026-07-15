@@ -23,7 +23,7 @@ export function ColumnSettings<T>(props: {
 }): JSX.Element {
   // Leaf columns in their current effective display order (columnOrder if set, else def
   // order). Reordering swaps a column with its neighbour in this id list.
-  const orderedIds = () => props.table.getAllLeafColumns().map((c) => c.id);
+  const orderedIds = () => props.table.getAllLeafColumns().map(c => c.id);
 
   const move = (id: string, delta: -1 | 1) => {
     const ids = orderedIds();
@@ -44,7 +44,8 @@ export function ColumnSettings<T>(props: {
   };
 
   // Current stored width in rem for a column, or undefined when unset (default width).
-  const widthRem = (id: string): number | undefined => props.config?.columnSizing?.[id];
+  const widthRem = (id: string): number | undefined =>
+    props.config?.columnSizing?.[id];
 
   const setWidthRem = (id: string, rem: number | undefined) => {
     const current = { ...(props.config?.columnSizing ?? {}) };
@@ -57,13 +58,25 @@ export function ColumnSettings<T>(props: {
     <div class={styles.panel}>
       {/* Reset actions — each reverts one facet to the resolved config/default via TanStack. */}
       <div class={styles.actions}>
-        <button type="button" class={styles.action} onClick={() => props.table.resetColumnVisibility()}>
+        <button
+          type="button"
+          class={styles.action}
+          onClick={() => props.table.resetColumnVisibility()}
+        >
           {t('table.reset-visibility')}
         </button>
-        <button type="button" class={styles.action} onClick={() => props.table.resetColumnOrder()}>
+        <button
+          type="button"
+          class={styles.action}
+          onClick={() => props.table.resetColumnOrder()}
+        >
           {t('table.reset-order')}
         </button>
-        <button type="button" class={styles.action} onClick={() => props.table.resetColumnSizing()}>
+        <button
+          type="button"
+          class={styles.action}
+          onClick={() => props.table.resetColumnSizing()}
+        >
           {t('table.reset-size')}
         </button>
       </div>
@@ -117,7 +130,11 @@ export function ColumnSettings<T>(props: {
                         type="button"
                         class={`${styles.pinButton} ${column().getIsPinned() === 'left' ? styles.pinActive : ''}`}
                         aria-label={t('table.pin-left')}
-                        onClick={() => column().pin(column().getIsPinned() === 'left' ? false : 'left')}
+                        onClick={() =>
+                          column().pin(
+                            column().getIsPinned() === 'left' ? false : 'left'
+                          )
+                        }
                       >
                         {t('table.pin-left-short')}
                       </button>
@@ -125,7 +142,11 @@ export function ColumnSettings<T>(props: {
                         type="button"
                         class={`${styles.pinButton} ${column().getIsPinned() === 'right' ? styles.pinActive : ''}`}
                         aria-label={t('table.pin-right')}
-                        onClick={() => column().pin(column().getIsPinned() === 'right' ? false : 'right')}
+                        onClick={() =>
+                          column().pin(
+                            column().getIsPinned() === 'right' ? false : 'right'
+                          )
+                        }
                       >
                         {t('table.pin-right-short')}
                       </button>
@@ -145,7 +166,7 @@ export function ColumnSettings<T>(props: {
                         aria-label={t('table.column-width')}
                         value={widthRem(id) ?? ''}
                         placeholder={String(pxToRem(column().getSize()))}
-                        onChange={(event) => {
+                        onChange={event => {
                           const raw = event.currentTarget.value.trim();
                           if (raw === '') return setWidthRem(id, undefined);
                           const rem = Number.parseFloat(raw);

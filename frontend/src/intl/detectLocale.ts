@@ -13,14 +13,16 @@ const readUserLocales = (): Record<string, string> => {
   }
 };
 
-export const getUserLocale = (username: string): SupportedLocale | undefined => {
+export const getUserLocale = (
+  username: string
+): SupportedLocale | undefined => {
   const stored = readUserLocales()[username];
   return stored && isSupported(stored) ? stored : undefined;
 };
 
 export const persistUserLocale = (
   username: string,
-  locale: SupportedLocale,
+  locale: SupportedLocale
 ): void => {
   try {
     const all = readUserLocales();

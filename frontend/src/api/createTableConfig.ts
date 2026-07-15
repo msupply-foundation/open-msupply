@@ -46,13 +46,16 @@ export type TableConfigController = {
 // 0-or-1 element list to fit the resource's T[] shape.
 const globalConfigsResource = createStoreScopedResource<GlobalTableConfigsMap>(
   currentStoreId,
-  async (storeId) => {
+  async storeId => {
     const result = await graphqlFetch(GlobalTableConfigs, { storeId });
     if (result.kind !== 'success') return undefined;
-    return [parseGlobalTableConfigs(result.data.preferences.globalTableConfigs)];
-  },
+    return [
+      parseGlobalTableConfigs(result.data.preferences.globalTableConfigs),
+    ];
+  }
 );
-const globalConfigs = (): GlobalTableConfigsMap => globalConfigsResource.noSuspense()[0] ?? {};
+const globalConfigs = (): GlobalTableConfigsMap =>
+  globalConfigsResource.noSuspense()[0] ?? {};
 
 export function createTableConfig(options: {
   tableId: string;
@@ -79,12 +82,19 @@ export function createTableConfig(options: {
   };
 
   const config = createMemo(() =>
-    resolveTableConfig(band(), { default: defaultConfig, global: global(), user: user() }),
+    resolveTableConfig(band(), {
+      default: defaultConfig,
+      global: global(),
+      user: user(),
+    })
   );
 
   // DataTable already resolved TanStack's functional updater against the current value, so
   // `value` is concrete — we just persist it into the user layer at the current band.
-  const setConfig = <K extends TableConfigKey>(key: K, value: TableConfig[K]) => {
+  const setConfig = <K extends TableConfigKey>(
+    key: K,
+    value: TableConfig[K]
+  ) => {
     const userId = currentUserId();
     if (!userId) return; // no user → nowhere to persist; ignore (shouldn't happen in-app)
     const currentBand = band();
@@ -94,7 +104,7 @@ export function createTableConfig(options: {
       [currentBand]: { ...existing[currentBand], [key]: value },
     };
     setUserTableConfig(userId, tableId, nextConfig);
-    bumpUser((v) => v + 1);
+    bumpUser(v => v + 1);
   };
 
   return { config, setConfig };

@@ -9,7 +9,10 @@ import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { RadioGroup } from '../../ui/elements/inputs/RadioGroup';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { FieldRow } from '../../ui/elements/inputs/FieldRow';
-import { masterListsResource, type MasterList } from '../../api/masterListsResource';
+import {
+  masterListsResource,
+  type MasterList,
+} from '../../api/masterListsResource';
 import { locationsResource, type Location } from '../../api/locationsResource';
 import { PlusCircleIcon, XCircleIcon } from '../../ui/icons';
 import { t } from '../../intl';
@@ -64,7 +67,10 @@ const TYPE_OPTIONS: readonly {
   { value: 'blank', labelKey: 'stocktake.create.type-blank' },
 ];
 
-export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void }) => {
+export const CreateStocktakeModal = (props: {
+  open: boolean;
+  onClose: () => void;
+}) => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
 
@@ -93,7 +99,9 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
       hasPacksInStore: true,
       masterList: masterListId ? { id: { equalTo: masterListId } } : undefined,
       locationId: locationId ? { equalTo: locationId } : undefined,
-      expiryDate: expiryDate ? { beforeOrEqualTo: dayBefore(expiryDate) } : undefined,
+      expiryDate: expiryDate
+        ? { beforeOrEqualTo: dayBefore(expiryDate) }
+        : undefined,
     };
   };
 
@@ -106,7 +114,8 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
         storeId: params.storeId,
         filter: stockFilter(),
       });
-      const stockCount = stock.kind === 'success' ? stock.data.stockLines.totalCount : 0;
+      const stockCount =
+        stock.kind === 'success' ? stock.data.stockLines.totalCount : 0;
       if (!includeAllItems) return stockCount;
       const noStock = await graphqlFetch(NoStockItemCount, {
         storeId: params.storeId,
@@ -117,8 +126,11 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
           type: { equalTo: 'STOCK' },
         },
       });
-      return stockCount + (noStock.kind === 'success' ? noStock.data.items.totalCount : 0);
-    },
+      return (
+        stockCount +
+        (noStock.kind === 'success' ? noStock.data.items.totalCount : 0)
+      );
+    }
   );
 
   // Is a count fetch in flight? (Drives the "counting…" hint in the estimate message.)
@@ -129,26 +141,41 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
   // resets the form. Gate on resource.state, never `.latest` (which suspends the first read)
   // — see kdd/state-management (no remounts).
   const estimatedLines = (): number =>
-    estimate.state === 'ready' || estimate.state === 'refreshing' ? (estimate.latest ?? 0) : 0;
+    estimate.state === 'ready' || estimate.state === 'refreshing'
+      ? (estimate.latest ?? 0)
+      : 0;
 
   // A short human comment describing the filtered selection (empty for full/blank).
   const generatedComment = (): string | undefined => {
     const { type, masterListId, locationId, expiryDate } = form();
     if (type !== 'filtered') return undefined;
     const parts: string[] = [];
-    const masterList = masterListsResource.noSuspense().find((m) => m.id === masterListId);
-    const location = locationsResource.noSuspense().find((l) => l.id === locationId);
+    const masterList = masterListsResource
+      .noSuspense()
+      .find(m => m.id === masterListId);
+    const location = locationsResource
+      .noSuspense()
+      .find(l => l.id === locationId);
     if (masterList)
-      parts.push(t('stocktake.create.comment-master-list', { name: masterList.name }));
-    if (location) parts.push(t('stocktake.create.comment-location', { code: location.code }));
-    if (expiryDate) parts.push(t('stocktake.create.comment-expiry', { date: expiryDate }));
-    return parts.length ? t('stocktake.create.comment', { parts: parts.join(', ') }) : undefined;
+      parts.push(
+        t('stocktake.create.comment-master-list', { name: masterList.name })
+      );
+    if (location)
+      parts.push(
+        t('stocktake.create.comment-location', { code: location.code })
+      );
+    if (expiryDate)
+      parts.push(t('stocktake.create.comment-expiry', { date: expiryDate }));
+    return parts.length
+      ? t('stocktake.create.comment', { parts: parts.join(', ') })
+      : undefined;
   };
 
   // Map the form onto InsertStocktakeInput. Each type contributes only its own fields; the id
   // is client-generated so the create can navigate to the new stocktake.
   const buildInput = (): InsertStocktakeVariables['input'] => {
-    const { type, masterListId, locationId, expiryDate, includeAllItems } = form();
+    const { type, masterListId, locationId, expiryDate, includeAllItems } =
+      form();
     const base = { id: crypto.randomUUID(), comment: generatedComment() };
     switch (type) {
       case 'full':
@@ -189,13 +216,19 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
   // for the rest). "All items" is DISABLED when a location or expiry is set — out-of-stock
   // items aren't in any location and have no expiry, so including them is incompatible with
   // those filters (matches OMS: it greys out "All items" rather than hiding the choice).
-  const allItemsDisabled = () => Boolean(form().locationId || form().expiryDate);
+  const allItemsDisabled = () =>
+    Boolean(form().locationId || form().expiryDate);
   const includeAllOptions = () => [
     { value: 'soh', label: t('stocktake.create.items-with-stock') },
-    { value: 'all', label: t('stocktake.create.items-all'), disabled: allItemsDisabled() },
+    {
+      value: 'all',
+      label: t('stocktake.create.items-all'),
+      disabled: allItemsDisabled(),
+    },
   ];
   // If "All items" was chosen and then becomes disabled (location/expiry set), fall back.
-  const includeAllValue = () => (form().includeAllItems && !allItemsDisabled() ? 'all' : 'soh');
+  const includeAllValue = () =>
+    form().includeAllItems && !allItemsDisabled() ? 'all' : 'soh';
 
   return (
     <Dialog
@@ -215,11 +248,18 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
       footer={
         <Show
           when={!isBlank()}
-          fallback={<Alert severity="success">{t('stocktake.create.estimate-none')}</Alert>}
+          fallback={
+            <Alert severity="success">
+              {t('stocktake.create.estimate-none')}
+            </Alert>
+          }
         >
           <Alert severity="info">
             <span data-testid="stocktake-estimate">
-              <Show when={!countLoading()} fallback={t('stocktake.create.estimate-loading')}>
+              <Show
+                when={!countLoading()}
+                fallback={t('stocktake.create.estimate-loading')}
+              >
                 {t('stocktake.create.estimate', { count: estimatedLines() })}
               </Show>
             </span>
@@ -249,9 +289,12 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
       {/* The three type radios, tight together at the top. */}
       <RadioGroup
         value={form().type}
-        onChange={(value) => setType(value as StocktakeType)}
+        onChange={value => setType(value as StocktakeType)}
         disabled={creating()}
-        options={TYPE_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
+        options={TYPE_OPTIONS.map(o => ({
+          value: o.value,
+          label: t(o.labelKey),
+        }))}
       />
 
       {/* A grey inset panel per mode, each with its own hint line (matches OMS). */}
@@ -262,7 +305,9 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
               options={includeAllOptions()}
               value={includeAllValue()}
               disabled={creating()}
-              onChange={(value) => setForm({ ...form(), includeAllItems: value === 'all' })}
+              onChange={value =>
+                setForm({ ...form(), includeAllItems: value === 'all' })
+              }
             />
           </InsetPanel>
         </Match>
@@ -275,12 +320,14 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
                 label={t('stocktake.filter.master-list')}
                 hideLabel
                 items={masterListsResource.noSuspense()}
-                itemToString={(m) => m.name}
-                itemToValue={(m) => m.id}
+                itemToString={m => m.name}
+                itemToValue={m => m.id}
                 loading={masterListsResource.loading()}
                 disabled={creating()}
                 placeholder={t('filter.any')}
-                onChange={(m) => setForm({ ...form(), masterListId: m?.id ?? '' })}
+                onChange={m =>
+                  setForm({ ...form(), masterListId: m?.id ?? '' })
+                }
               />
             </FieldRow>
             {/* Include-all radios: empty-label FieldRow puts them in the control column, and
@@ -292,7 +339,9 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
                 value={includeAllValue()}
                 disabled={creating()}
                 indentRem={0.2}
-                onChange={(value) => setForm({ ...form(), includeAllItems: value === 'all' })}
+                onChange={value =>
+                  setForm({ ...form(), includeAllItems: value === 'all' })
+                }
               />
             </FieldRow>
             <FieldRow label={t('stocktake.filter.location')}>
@@ -300,12 +349,12 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
                 label={t('stocktake.filter.location')}
                 hideLabel
                 items={locationsResource.noSuspense()}
-                itemToString={(l) => `${l.code} — ${l.name}`}
-                itemToValue={(l) => l.id}
+                itemToString={l => `${l.code} — ${l.name}`}
+                itemToValue={l => l.id}
                 loading={locationsResource.loading()}
                 disabled={creating()}
                 placeholder={t('filter.any')}
-                onChange={(l) => setForm({ ...form(), locationId: l?.id ?? '' })}
+                onChange={l => setForm({ ...form(), locationId: l?.id ?? '' })}
               />
             </FieldRow>
             <FieldRow label={t('stocktake.create.expiring-before')}>
@@ -315,14 +364,18 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
                 type="date"
                 disabled={creating()}
                 value={form().expiryDate}
-                onInput={(e) => setForm({ ...form(), expiryDate: e.currentTarget.value })}
+                onInput={e =>
+                  setForm({ ...form(), expiryDate: e.currentTarget.value })
+                }
               />
             </FieldRow>
           </InsetPanel>
         </Match>
 
         <Match when={form().type === 'blank'}>
-          <InsetPanel hint={t('stocktake.create.blank-hint')}>{null}</InsetPanel>
+          <InsetPanel hint={t('stocktake.create.blank-hint')}>
+            {null}
+          </InsetPanel>
         </Match>
       </Switch>
     </Dialog>

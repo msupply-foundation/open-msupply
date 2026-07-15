@@ -1,18 +1,13 @@
-import { createSignal, Show, type JSX } from 'solid-js'
-import { Button } from '../ui/elements/buttons/Button'
-import { SplitButton } from '../ui/elements/buttons/SplitButton'
-import {
-  PlusCircleIcon,
-  DownloadIcon,
-  SaveIcon,
-  TrashIcon,
-} from '../ui/icons'
-import styles from './ButtonsShowcase.module.css'
+import { createSignal, Show, type JSX } from 'solid-js';
+import { Button } from '../ui/elements/buttons/Button';
+import { SplitButton } from '../ui/elements/buttons/SplitButton';
+import { PlusCircleIcon, DownloadIcon, SaveIcon, TrashIcon } from '../ui/icons';
+import styles from './ButtonsShowcase.module.css';
 
 const Card = (props: {
-  title: string
-  lead: JSX.Element
-  children: JSX.Element
+  title: string;
+  lead: JSX.Element;
+  children: JSX.Element;
 }) => (
   <section class={styles.card}>
     <header class={styles.cardHeader}>{props.title}</header>
@@ -21,15 +16,15 @@ const Card = (props: {
       {props.children}
     </div>
   </section>
-)
+);
 
 const EXPORT_OPTIONS = [
   { value: 'csv', label: 'Export CSV' },
   { value: 'excel', label: 'Export Excel' },
-]
+];
 
 export const ButtonsShowcase = () => {
-  const [lastExport, setLastExport] = createSignal<string | null>(null)
+  const [lastExport, setLastExport] = createSignal<string | null>(null);
 
   return (
     <div class={styles.stack}>
@@ -62,10 +57,10 @@ export const ButtonsShowcase = () => {
         lead={
           <>
             The same button, <code>variant="secondary"</code>: the action tone
-            (blue in the current theme) for the app's edit/footer actions
-            (Save, Delete, Cancel…). Fills with its tone on hover; the focus
-            ring follows it too. Variants are named semantically — never after
-            a colour — the palette lives only in the tokens.
+            (blue in the current theme) for the app's edit/footer actions (Save,
+            Delete, Cancel…). Fills with its tone on hover; the focus ring
+            follows it too. Variants are named semantically — never after a
+            colour — the palette lives only in the tokens.
           </>
         }
       >
@@ -86,7 +81,9 @@ export const ButtonsShowcase = () => {
           <>
             A primary action glued to a dropdown caret — no "split button"
             primitive exists, so we compose a plain <code>&lt;button&gt;</code>
-            (runs the selected action) with a Kobalte <code>DropdownMenu</code>{' '}
+            (runs the selected action) with a Kobalte <code>
+              DropdownMenu
+            </code>{' '}
             (the caret's menu buys the focus/keyboard/ARIA contract). Picking a
             format selects it <em>and</em> runs it, like the app's export
             selector. Each half ripples and fills independently.
@@ -102,7 +99,10 @@ export const ButtonsShowcase = () => {
           />
         </div>
         <p class={styles.note}>
-          <Show when={lastExport()} fallback="Click the button or pick a format…">
+          <Show
+            when={lastExport()}
+            fallback="Click the button or pick a format…"
+          >
             {value => (
               <>
                 Last export ran as <strong>{value().toUpperCase()}</strong>.
@@ -112,5 +112,5 @@ export const ButtonsShowcase = () => {
         </p>
       </Card>
     </div>
-  )
-}
+  );
+};

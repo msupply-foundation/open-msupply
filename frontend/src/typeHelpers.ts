@@ -18,7 +18,8 @@ export const stripEmpty = <T extends object>(obj: T): T => {
   for (const key of Object.keys(result) as (keyof T)[]) {
     const value = result[key];
     if (value == null) delete result[key];
-    else if (typeof value === 'object' && Object.keys(value).length === 0) delete result[key];
+    else if (typeof value === 'object' && Object.keys(value).length === 0)
+      delete result[key];
   }
   return result;
 };

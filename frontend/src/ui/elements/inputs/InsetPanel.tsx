@@ -1,11 +1,11 @@
-import { Show, type JSX } from 'solid-js'
-import styles from './InsetPanel.module.css'
+import { Show, type JSX } from 'solid-js';
+import styles from './InsetPanel.module.css';
 
 export interface InsetPanelProps {
   /** Optional muted hint line above the panel's content (e.g. "Select filters below…"). */
-  hint?: JSX.Element
-  children: JSX.Element
-  class?: string
+  hint?: JSX.Element;
+  children: JSX.Element;
+  class?: string;
 }
 
 /*
@@ -21,4 +21,4 @@ export const InsetPanel = (props: InsetPanelProps): JSX.Element => (
     </Show>
     {props.children}
   </div>
-)
+);

@@ -1,24 +1,24 @@
-import { createMemo, createSignal, For, Show, type JSX } from 'solid-js'
-import * as KCombobox from '@kobalte/core/combobox'
-import { CheckIcon, ChevronDownIcon, CloseIcon } from '../../icons'
-import styles from './MultiSelect.module.css'
+import { createMemo, createSignal, For, Show, type JSX } from 'solid-js';
+import * as KCombobox from '@kobalte/core/combobox';
+import { CheckIcon, ChevronDownIcon, CloseIcon } from '../../icons';
+import styles from './MultiSelect.module.css';
 
 interface MultiSelectProps<T> {
-  label: string
-  items: T[]
-  itemToString: (item: T) => string
+  label: string;
+  items: T[];
+  itemToString: (item: T) => string;
   /**
    * Unique string key per item (list identity + form value). Defaults to
    * itemToString — override when labels can collide.
    */
-  itemToValue?: (item: T) => string
+  itemToValue?: (item: T) => string;
   /** Controlled selection — the parent owns the array. */
-  selectedItems: T[]
-  onChange: (items: T[]) => void
-  renderItem?: (item: T) => JSX.Element
-  placeholder?: string
-  helperText?: string
-  class?: string
+  selectedItems: T[];
+  onChange: (items: T[]) => void;
+  renderItem?: (item: T) => JSX.Element;
+  placeholder?: string;
+  helperText?: string;
+  class?: string;
 }
 
 /*
@@ -37,17 +37,17 @@ interface MultiSelectProps<T> {
  * picked items from the list instead.
  */
 export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
-  const [inputValue, setInputValue] = createSignal('')
+  const [inputValue, setInputValue] = createSignal('');
 
   const matches = (item: T, input: string) =>
     props
       .itemToString(item)
       .toLocaleLowerCase()
-      .includes(input.toLocaleLowerCase())
+      .includes(input.toLocaleLowerCase());
 
   const noMatches = createMemo(() =>
     props.items.every(item => !matches(item, inputValue()))
-  )
+  );
 
   return (
     <KCombobox.Root<T>
@@ -62,7 +62,9 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       onChange={items => props.onChange(items)}
       onInputChange={setInputValue}
       allowsEmptyCollection
-      placeholder={props.selectedItems.length === 0 ? props.placeholder : undefined}
+      placeholder={
+        props.selectedItems.length === 0 ? props.placeholder : undefined
+      }
       itemComponent={itemProps => (
         <KCombobox.Item item={itemProps.item} class={styles.item}>
           <span class={styles.itemBody}>
@@ -125,5 +127,5 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
         </KCombobox.Content>
       </KCombobox.Portal>
     </KCombobox.Root>
-  )
-}
+  );
+};

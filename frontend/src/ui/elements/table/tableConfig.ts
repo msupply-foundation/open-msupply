@@ -48,7 +48,7 @@ export const resolveTableConfig = (
     default?: LayeredConfig;
     global?: LayeredConfig;
     user?: LayeredConfig;
-  },
+  }
 ): TableConfig => {
   const user = layers.user?.[band];
   const global = layers.global?.[band];
@@ -73,7 +73,9 @@ export type GlobalTableConfigs = Record<string, LayeredConfig>;
 // free-form JSON from the server; on anything unexpected we fall back to an empty map
 // rather than throwing — each table then uses user/default/TanStack fallback. Trusted-layer
 // cast: the blob's shape is the server's contract, and bad JSON degrades to `{}`.
-export const parseGlobalTableConfigs = (json: string | undefined): GlobalTableConfigs => {
+export const parseGlobalTableConfigs = (
+  json: string | undefined
+): GlobalTableConfigs => {
   if (!json) return {};
   try {
     return (JSON.parse(json) as GlobalTableConfigs) ?? {};

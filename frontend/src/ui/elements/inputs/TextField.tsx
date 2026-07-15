@@ -1,21 +1,23 @@
-import { createUniqueId, Show, splitProps, type JSX } from 'solid-js'
-import { AlertTriangleIcon } from '../../icons'
-import styles from './TextField.module.css'
+import { createUniqueId, Show, splitProps, type JSX } from 'solid-js';
+import { AlertTriangleIcon } from '../../icons';
+import styles from './TextField.module.css';
 
-export interface TextFieldProps
-  extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size'> {
-  label: string
+export interface TextFieldProps extends Omit<
+  JSX.InputHTMLAttributes<HTMLInputElement>,
+  'size'
+> {
+  label: string;
   /** Shown below the field when there's no error. */
-  helperText?: string
+  helperText?: string;
   /** Error message — presence switches the field to the error state. */
-  error?: string
-  required?: boolean
+  error?: string;
+  required?: boolean;
   /** Spec: 2.5rem (40px) default, 2.25rem (36px) small. */
-  size?: 'default' | 'small'
+  size?: 'default' | 'small';
   /** Spec max-widths: short 25rem (codes/quantities), long 37.5rem (names), full = fill. */
-  width?: 'short' | 'long' | 'full'
+  width?: 'short' | 'long' | 'full';
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow that shows it. */
-  hideLabel?: boolean
+  hideLabel?: boolean;
 }
 
 /*
@@ -41,17 +43,20 @@ export const TextField = (props: TextFieldProps) => {
     'hideLabel',
     'id',
     'class',
-  ])
-  const autoId = createUniqueId()
-  const inputId = () => local.id ?? autoId
-  const messageId = () => `${inputId()}-message`
+  ]);
+  const autoId = createUniqueId();
+  const inputId = () => local.id ?? autoId;
+  const messageId = () => `${inputId()}-message`;
 
   return (
     <div
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
       data-width={local.width ?? 'short'}
     >
-      <label class={local.hideLabel ? styles.labelHidden : styles.label} for={inputId()}>
+      <label
+        class={local.hideLabel ? styles.labelHidden : styles.label}
+        for={inputId()}
+      >
         {local.label}
         <Show when={local.required}>
           <span class={styles.required} aria-hidden="true">
@@ -87,5 +92,5 @@ export const TextField = (props: TextFieldProps) => {
         </p>
       </Show>
     </div>
-  )
-}
+  );
+};

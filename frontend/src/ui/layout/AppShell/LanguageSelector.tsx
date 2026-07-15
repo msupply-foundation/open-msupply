@@ -1,19 +1,19 @@
-import { For, Show } from 'solid-js'
-import * as DropdownMenu from '@kobalte/core/dropdown-menu'
-import { TranslateIcon } from '../../icons'
-import { languageOptions, LOCALE_META, t } from '../../../intl'
-import styles from './LanguageSelector.module.css'
+import { For, Show } from 'solid-js';
+import * as DropdownMenu from '@kobalte/core/dropdown-menu';
+import { TranslateIcon } from '../../icons';
+import { languageOptions, LOCALE_META, t } from '../../../intl';
+import styles from './LanguageSelector.module.css';
 
 interface LanguageSelectorProps {
-  language: string
-  onSelect: (value: string) => void
+  language: string;
+  onSelect: (value: string) => void;
 }
 
 // The options come from the intl module's single source of truth
 // (SUPPORTED_LOCALES) — the only locales with a dictionary that changeLanguage
 // will actually switch to. Offering more here silently no-ops on select.
 const labelFor = (value: string) =>
-  languageOptions.find((o) => o.value === value)?.label ?? value
+  languageOptions.find(o => o.value === value)?.label ?? value;
 
 /*
  * Footer language selector. Kobalte DropdownMenu (headless) gives us the
@@ -33,10 +33,12 @@ export const LanguageSelector = (props: LanguageSelectorProps) => (
       <DropdownMenu.Content class={styles.content}>
         <div class={styles.heading}>{t('language.select')}</div>
         <For each={languageOptions}>
-          {(option) => (
+          {option => (
             <DropdownMenu.Item
               class={styles.item}
-              data-current={option.value === props.language ? 'true' : undefined}
+              data-current={
+                option.value === props.language ? 'true' : undefined
+              }
               onSelect={() => props.onSelect(option.value)}
             >
               <span class={styles.itemLabel}>{option.label}</span>
@@ -49,4 +51,4 @@ export const LanguageSelector = (props: LanguageSelectorProps) => (
       </DropdownMenu.Content>
     </DropdownMenu.Portal>
   </DropdownMenu.Root>
-)
+);

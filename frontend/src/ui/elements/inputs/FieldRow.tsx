@@ -1,12 +1,12 @@
-import { type JSX } from 'solid-js'
-import styles from './FieldRow.module.css'
+import { type JSX } from 'solid-js';
+import styles from './FieldRow.module.css';
 
 export interface FieldRowProps {
   /** The field label, shown inline-start (bold), aligned against the control on the right. */
-  label: JSX.Element
+  label: JSX.Element;
   /** The control (a Combobox, TextField, etc.), taking the inline-end space. */
-  children: JSX.Element
-  class?: string
+  children: JSX.Element;
+  class?: string;
 }
 
 /*
@@ -23,4 +23,4 @@ export const FieldRow = (props: FieldRowProps): JSX.Element => (
     <span class={styles.label}>{props.label}</span>
     <div class={styles.control}>{props.children}</div>
   </div>
-)
+);

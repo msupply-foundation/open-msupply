@@ -26,19 +26,22 @@ export type StoreSummary = {
 // redirect). Entering records the store and fetches its context; the routed section
 // shows a loading state until that context is loaded for this store and user (so
 // re-authenticating as a different user re-loads even for the same store).
-export const StoreGuardLayout: Component<RouteSectionProps> = (props) => {
+export const StoreGuardLayout: Component<RouteSectionProps> = props => {
   const params = useParams();
   const navigate = useNavigate();
   const user = () => authUser();
   const stores = () => user()?.stores.nodes ?? [];
 
   const storeToEnter = () =>
-    stores().find((s) => s.id === params.storeId) ??
+    stores().find(s => s.id === params.storeId) ??
     (stores().length === 1 ? stores()[0] : undefined);
 
   const contextLoaded = (storeId: string) => {
     const context = storeContext();
-    return context?.storePreferences.id === storeId && context.me.userId === user()?.userId;
+    return (
+      context?.storePreferences.id === storeId &&
+      context.me.userId === user()?.userId
+    );
   };
 
   createEffect(() => {
@@ -47,7 +50,8 @@ export const StoreGuardLayout: Component<RouteSectionProps> = (props) => {
     if (!store || !currentUser) return;
     recordPreviousStoreId(currentUser.userId, store.id);
     // Auto-selected store (the URL segment did not name it): navigate to /{store-id}.
-    if (params.storeId !== store.id) navigate(`/${store.id}`, { replace: true });
+    if (params.storeId !== store.id)
+      navigate(`/${store.id}`, { replace: true });
     if (!contextLoaded(store.id)) void refetchStoreContext(store.id);
   });
 
@@ -55,19 +59,25 @@ export const StoreGuardLayout: Component<RouteSectionProps> = (props) => {
   const pickerStores = () => {
     const currentUser = user();
     if (!currentUser) return [];
-    const pinned = [getPreviousStoreId(currentUser.userId), currentUser.defaultStore?.id];
-    const top = stores().filter((s) => pinned.includes(s.id));
-    return [...top, ...stores().filter((s) => !top.includes(s))];
+    const pinned = [
+      getPreviousStoreId(currentUser.userId),
+      currentUser.defaultStore?.id,
+    ];
+    const top = stores().filter(s => pinned.includes(s.id));
+    return [...top, ...stores().filter(s => !top.includes(s))];
   };
 
   return (
     <Show
       when={storeToEnter()}
       fallback={
-        <StoreSelectionModal stores={pickerStores()} onSelect={(id) => navigate(`/${id}`)} />
+        <StoreSelectionModal
+          stores={pickerStores()}
+          onSelect={id => navigate(`/${id}`)}
+        />
       }
     >
-      {(store) => (
+      {store => (
         <Show
           when={contextLoaded(store().id)}
           fallback={

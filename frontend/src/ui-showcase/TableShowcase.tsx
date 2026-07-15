@@ -1,5 +1,9 @@
 import { createMemo, createSignal, For, Show } from 'solid-js';
-import { DataTable, type Column, type SortState } from '../ui/elements/table/DataTable';
+import {
+  DataTable,
+  type Column,
+  type SortState,
+} from '../ui/elements/table/DataTable';
 import { getNumberCell } from '../ui/elements/table/tableHelpers';
 import {
   resolveTableConfig,
@@ -51,8 +55,20 @@ const NAMES = [
   'Loratadine 10mg',
   'Diazepam 5mg',
 ];
-const CATEGORIES = ['Antibiotic', 'Analgesic', 'Antacid', 'Antihistamine', 'Diuretic'];
-const SUPPLIERS = ['Acme Pharma', 'MediCorp', 'HealthSupply Co', 'Global Meds', 'CarePoint'];
+const CATEGORIES = [
+  'Antibiotic',
+  'Analgesic',
+  'Antacid',
+  'Antihistamine',
+  'Diuretic',
+];
+const SUPPLIERS = [
+  'Acme Pharma',
+  'MediCorp',
+  'HealthSupply Co',
+  'Global Meds',
+  'CarePoint',
+];
 
 // Deterministic 60-row dataset (enough to paginate + scroll).
 const DATA: Batch[] = Array.from({ length: 60 }, (_, i) => ({
@@ -91,7 +107,10 @@ const COLUMN_TOGGLES: { id: SortKey; label: string }[] = [
 ];
 
 export const TableShowcase = () => {
-  const [sort, setSort] = createSignal<SortState<SortKey>>({ key: 'name', desc: false });
+  const [sort, setSort] = createSignal<SortState<SortKey>>({
+    key: 'name',
+    desc: false,
+  });
   const [offset, setOffset] = createSignal(0);
   const [pageSize, setPageSize] = createSignal(20);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
@@ -107,7 +126,8 @@ export const TableShowcase = () => {
   const activeBand = (): Band => (isCompact() ? 'compact' : 'base');
 
   // Resolved config for the active band → DataTable's `config`. Only the user layer here.
-  const tableConfig = () => resolveTableConfig(activeBand(), { user: layered() });
+  const tableConfig = () =>
+    resolveTableConfig(activeBand(), { user: layered() });
 
   // setConfig writes the ACTIVE band (DataTable already resolved TanStack's updater to a
   // value). The checkbox rows below instead target a SPECIFIC band via setBandConfig, so
@@ -115,8 +135,15 @@ export const TableShowcase = () => {
   const setConfig = <K extends TableConfigKey>(key: K, value: TableConfig[K]) =>
     setBandConfig(activeBand(), key, value);
 
-  const setBandConfig = <K extends TableConfigKey>(band: Band, key: K, value: TableConfig[K]) =>
-    setLayered((current) => ({ ...current, [band]: { ...current[band], [key]: value } }));
+  const setBandConfig = <K extends TableConfigKey>(
+    band: Band,
+    key: K,
+    value: TableConfig[K]
+  ) =>
+    setLayered(current => ({
+      ...current,
+      [band]: { ...current[band], [key]: value },
+    }));
 
   // Stand in for the server: sort the whole dataset, then slice the current page.
   const sorted = createMemo(() => {
@@ -125,7 +152,9 @@ export const TableShowcase = () => {
       const av = a[key];
       const bv = b[key];
       const cmp =
-        typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv));
+        typeof av === 'number' && typeof bv === 'number'
+          ? av - bv
+          : String(av).localeCompare(String(bv));
       return desc ? -cmp : cmp;
     });
   });
@@ -140,19 +169,44 @@ export const TableShowcase = () => {
   // name = primary title, batch = the secondary code line, category = the top-right badge;
   // the rest fall to the grid (default). Table view is unaffected.
   const columns = (): Column<Batch, SortKey>[] => [
-    { accessorKey: 'name', sortKey: 'name', header: 'Item', meta: { card: 'primary' } },
-    { accessorKey: 'batch', sortKey: 'batch', header: 'Batch', meta: { card: 'secondary' } },
-    { accessorKey: 'category', sortKey: 'category', header: 'Category', meta: { card: 'badge' } },
+    {
+      accessorKey: 'name',
+      sortKey: 'name',
+      header: 'Item',
+      meta: { card: 'primary' },
+    },
+    {
+      accessorKey: 'batch',
+      sortKey: 'batch',
+      header: 'Batch',
+      meta: { card: 'secondary' },
+    },
+    {
+      accessorKey: 'category',
+      sortKey: 'category',
+      header: 'Category',
+      meta: { card: 'badge' },
+    },
     { accessorKey: 'supplier', sortKey: 'supplier', header: 'Supplier' },
-    { accessorKey: 'location', sortKey: 'location', header: 'Location', meta: { wrapLines: 2 } },
+    {
+      accessorKey: 'location',
+      sortKey: 'location',
+      header: 'Location',
+      meta: { wrapLines: 2 },
+    },
     { accessorKey: 'expiry', sortKey: 'expiry', header: 'Expiry' },
-    { accessorKey: 'stock', sortKey: 'stock', header: 'In stock', ...getNumberCell() },
+    {
+      accessorKey: 'stock',
+      sortKey: 'stock',
+      header: 'In stock',
+      ...getNumberCell(),
+    },
     {
       accessorKey: 'price',
       sortKey: 'price',
       header: 'Unit price',
       ...getNumberCell(),
-      cell: (info) => `$${info.getValue<number>().toFixed(2)}`,
+      cell: info => `$${info.getValue<number>().toFixed(2)}`,
     },
   ];
 
@@ -174,24 +228,35 @@ export const TableShowcase = () => {
                 viewport (resize below 600px → it follows the compact row), so the two rows
                 stay independent — bands don't share. The active band is marked. */}
             <For each={['base', 'compact'] as Band[]}>
-              {(band) => (
-                <div style={{ display: 'flex', gap: 'var(--space-3)', 'align-items': 'center' }}>
+              {band => (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 'var(--space-3)',
+                    'align-items': 'center',
+                  }}
+                >
                   <strong style={{ 'min-width': '5rem' }}>
                     {band === 'base' ? 'Base' : 'Compact'}
                     {activeBand() === band ? ' (active)' : ''}
                   </strong>
                   <For each={COLUMN_TOGGLES}>
-                    {(col) => {
+                    {col => {
                       // Reflect THIS band's stored value, not the resolved config.
-                      const visible = () => layered()[band]?.columnVisibility?.[col.id] !== false;
+                      const visible = () =>
+                        layered()[band]?.columnVisibility?.[col.id] !== false;
                       return (
                         <label
-                          style={{ display: 'inline-flex', gap: 'var(--space-1)', 'align-items': 'center' }}
+                          style={{
+                            display: 'inline-flex',
+                            gap: 'var(--space-1)',
+                            'align-items': 'center',
+                          }}
                         >
                           <input
                             type="checkbox"
                             checked={visible()}
-                            onChange={(e) =>
+                            onChange={e =>
                               setBandConfig(band, 'columnVisibility', {
                                 ...layered()[band]?.columnVisibility,
                                 [col.id]: e.currentTarget.checked,
@@ -221,7 +286,7 @@ export const TableShowcase = () => {
                 pageSize={pageSize()}
                 total={DATA.length}
                 onOffsetChange={setOffset}
-                onPageSizeChange={(size) => {
+                onPageSizeChange={size => {
                   setPageSize(size);
                   setOffset(0);
                 }}
@@ -231,11 +296,20 @@ export const TableShowcase = () => {
         >
           <ContentFooter>
             <strong>{selectedIds().length} selected</strong>
-            <Button variant="secondary" icon={<TrashIcon />} disabled title="Demo only">
+            <Button
+              variant="secondary"
+              icon={<TrashIcon />}
+              disabled
+              title="Demo only"
+            >
               Delete
             </Button>
             <ContentFooterActions>
-              <Button variant="secondary" icon={<CloseIcon />} onClick={() => setSelectedIds([])}>
+              <Button
+                variant="secondary"
+                icon={<CloseIcon />}
+                onClick={() => setSelectedIds([])}
+              >
                 Clear
               </Button>
             </ContentFooterActions>
@@ -246,7 +320,7 @@ export const TableShowcase = () => {
       <DataTable
         columns={columns()}
         rows={rows()}
-        rowKey={(r) => r.id}
+        rowKey={r => r.id}
         sort={sort()}
         onSort={onSort}
         emptyMessage="No items"

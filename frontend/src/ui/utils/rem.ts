@@ -14,4 +14,5 @@ export const pxToRem = (px: number): number =>
   Math.round((px / rootFontSizePx()) * 100) / 100;
 
 /** rem → px, rounded to a whole pixel (what TanStack column sizing expects). */
-export const remToPx = (rem: number): number => Math.round(rem * rootFontSizePx());
+export const remToPx = (rem: number): number =>
+  Math.round(rem * rootFontSizePx());

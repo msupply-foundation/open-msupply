@@ -1,4 +1,12 @@
-import { createEffect, createSignal, For, Match, on, Show, Switch } from 'solid-js';
+import {
+  createEffect,
+  createSignal,
+  For,
+  Match,
+  on,
+  Show,
+  Switch,
+} from 'solid-js';
 import type { JSX } from 'solid-js';
 import {
   createSolidTable,
@@ -21,7 +29,13 @@ import { sortKeyToId, sortIdToKey } from './tableHelpers';
 import type { TableConfig, TableConfigKey, ViewMode } from './tableConfig';
 import { pxToRem, remToPx } from '../../utils/rem';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
-import { CardViewIcon, MaximiseIcon, MinimiseIcon, SettingsIcon, TableViewIcon } from '../../icons';
+import {
+  CardViewIcon,
+  MaximiseIcon,
+  MinimiseIcon,
+  SettingsIcon,
+  TableViewIcon,
+} from '../../icons';
 import { Popover } from '../feedback/Popover';
 import { LabelledValue } from '../typography/LabelledValue';
 import { ColumnSettings } from './ColumnSettings';
@@ -116,7 +130,9 @@ export type DataTableProps<T, K extends string> = {
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
 };
 
-export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX.Element {
+export function DataTable<T, K extends string>(
+  props: DataTableProps<T, K>
+): JSX.Element {
   // Full screen is a shell-level mode (menu bar, app footer and page header all hide, so
   // the table + its footer fill the viewport — see AppShell/Page). The button just flips
   // the shared shell flag. Outside a shell (e.g. the component showcase) there's no
@@ -125,7 +141,9 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
   const [localFullScreen, setLocalFullScreen] = createSignal(false);
   const fullScreen = () => shellFullScreen?.isFullScreen() ?? localFullScreen();
   const setFullScreen = (value: boolean) =>
-    shellFullScreen ? shellFullScreen.setFullScreen(value) : setLocalFullScreen(value);
+    shellFullScreen
+      ? shellFullScreen.setFullScreen(value)
+      : setLocalFullScreen(value);
 
   // --- Sort (manual: the page provides ordered rows and owns the sort state) ---
   // Controlled: the SortingState mirrors the page's props.sort, and a header click
@@ -138,7 +156,14 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
   // to read the concrete next state. TanStack has already computed the next direction, so
   // we pass its desc straight through rather than re-deriving the asc/desc cycle.
   const sorting = (): SortingState =>
-    props.sort ? [{ id: sortKeyToId(props.columns, props.sort.key), desc: props.sort.desc }] : [];
+    props.sort
+      ? [
+          {
+            id: sortKeyToId(props.columns, props.sort.key),
+            desc: props.sort.desc,
+          },
+        ]
+      : [];
   const onSortingChange = (updater: Updater<SortingState>) => {
     const sort = functionalUpdate(updater, sorting())[0];
     if (!sort) return;
@@ -148,10 +173,10 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
 
   // --- Selection ⇄ the page's selectedIds ---
   const rowSelection = (): RowSelectionState =>
-    Object.fromEntries((props.selectedIds ?? []).map((id) => [id, true]));
+    Object.fromEntries((props.selectedIds ?? []).map(id => [id, true]));
   const onRowSelectionChange = (u: Updater<RowSelectionState>) => {
     const next = functionalUpdate(u, rowSelection());
-    props.onSelectionChange?.(Object.keys(next).filter((id) => next[id]));
+    props.onSelectionChange?.(Object.keys(next).filter(id => next[id]));
   };
 
   // --- Column config ⇄ the page's resolved config (order/sizing/pinning/visibility) ---
@@ -161,8 +186,10 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
   // above) and hands the concrete value to setConfig — so the page receives a value, not an
   // updater. Inlined per field (no generic helper) — four small, click-through handlers.
   const columnOrder = (): ColumnOrderState => props.config?.columnOrder ?? [];
-  const columnPinning = (): ColumnPinningState => props.config?.columnPinning ?? {};
-  const columnVisibility = (): VisibilityState => props.config?.columnVisibility ?? {};
+  const columnPinning = (): ColumnPinningState =>
+    props.config?.columnPinning ?? {};
+  const columnVisibility = (): VisibilityState =>
+    props.config?.columnVisibility ?? {};
 
   // View mode is a config field but NOT a TanStack state (no on*Change) — read it directly.
   // Defaults to 'table' when unset. The toolbar switcher writes it via setConfig per band.
@@ -177,14 +204,18 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
   // writes it (keeps the column moving live, no persistence), and an effect commits px→rem
   // via setConfig once the drag ends, then clears it. Non-drag changes (the size input in
   // ColumnSettings) come through setConfig directly and persist immediately.
-  const [transientSizing, setTransientSizing] = createSignal<ColumnSizingState | null>(null);
+  const [transientSizing, setTransientSizing] =
+    createSignal<ColumnSizingState | null>(null);
   const configSizingPx = (): ColumnSizingState => {
     const rem = props.config?.columnSizing ?? {};
-    return Object.fromEntries(Object.entries(rem).map(([id, r]) => [id, remToPx(r)]));
+    return Object.fromEntries(
+      Object.entries(rem).map(([id, r]) => [id, remToPx(r)])
+    );
   };
   const pxToRemSizing = (px: ColumnSizingState): ColumnSizingState =>
     Object.fromEntries(Object.entries(px).map(([id, p]) => [id, pxToRem(p)]));
-  const columnSizing = (): ColumnSizingState => transientSizing() ?? configSizingPx();
+  const columnSizing = (): ColumnSizingState =>
+    transientSizing() ?? configSizingPx();
 
   const table = createSolidTable<T>({
     get data() {
@@ -222,11 +253,12 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
     },
     onSortingChange,
     onRowSelectionChange,
-    onColumnOrderChange: (u) => props.setConfig?.('columnOrder', functionalUpdate(u, columnOrder())),
+    onColumnOrderChange: u =>
+      props.setConfig?.('columnOrder', functionalUpdate(u, columnOrder())),
     // Sizing (px): during a live resize drag, park it in the transient signal (moves the
     // column, no persistence); the effect below commits px→rem on drag end. Any other
     // sizing change (the ColumnSettings size input) persists immediately as rem.
-    onColumnSizingChange: (u) => {
+    onColumnSizingChange: u => {
       const nextPx = functionalUpdate(u, columnSizing());
       if (table.getState().columnSizingInfo.isResizingColumn) {
         setTransientSizing(nextPx);
@@ -234,10 +266,14 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
         props.setConfig?.('columnSizing', pxToRemSizing(nextPx));
       }
     },
-    onColumnPinningChange: (u) => props.setConfig?.('columnPinning', functionalUpdate(u, columnPinning())),
-    onColumnVisibilityChange: (u) =>
-      props.setConfig?.('columnVisibility', functionalUpdate(u, columnVisibility())),
-    getRowId: (row) => props.rowKey(row),
+    onColumnPinningChange: u =>
+      props.setConfig?.('columnPinning', functionalUpdate(u, columnPinning())),
+    onColumnVisibilityChange: u =>
+      props.setConfig?.(
+        'columnVisibility',
+        functionalUpdate(u, columnVisibility())
+      ),
+    getRowId: row => props.rowKey(row),
     getCoreRowModel: getCoreRowModel(),
   });
 
@@ -253,7 +289,7 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
         if (pending) props.setConfig?.('columnSizing', pxToRemSizing(pending));
         setTransientSizing(null);
       }
-    }),
+    })
   );
 
   const leafColumnCount = () =>
@@ -276,10 +312,23 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
           <button
             type="button"
             class={styles.controlButton}
-            aria-label={viewMode() === 'card' ? t('table.view-table') : t('table.view-cards')}
-            title={viewMode() === 'card' ? t('table.view-table') : t('table.view-cards')}
+            aria-label={
+              viewMode() === 'card'
+                ? t('table.view-table')
+                : t('table.view-cards')
+            }
+            title={
+              viewMode() === 'card'
+                ? t('table.view-table')
+                : t('table.view-cards')
+            }
             data-testid="table-view-switch"
-            onClick={() => props.setConfig?.('viewMode', viewMode() === 'card' ? 'table' : 'card')}
+            onClick={() =>
+              props.setConfig?.(
+                'viewMode',
+                viewMode() === 'card' ? 'table' : 'card'
+              )
+            }
           >
             {viewMode() === 'card' ? <TableViewIcon /> : <CardViewIcon />}
           </button>
@@ -295,7 +344,11 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
             triggerLabel={t('table.columns')}
             triggerClass={styles.controlButton}
           >
-            <ColumnSettings table={table} config={props.config} setConfig={props.setConfig} />
+            <ColumnSettings
+              table={table}
+              config={props.config}
+              setConfig={props.setConfig}
+            />
           </Popover>
         </Show>
         <button
@@ -323,7 +376,7 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
             <table class={styles.table}>
               <thead>
                 <For each={table.getHeaderGroups()}>
-                  {(headerGroup) => (
+                  {headerGroup => (
                     <tr>
                       <Show when={props.enableSelection}>
                         <th class={`${styles.th} ${styles.selectCell}`}>
@@ -337,7 +390,7 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
                         </th>
                       </Show>
                       <For each={headerGroup.headers}>
-                        {(header) => <HeaderCell header={header} />}
+                        {header => <HeaderCell header={header} />}
                       </For>
                     </tr>
                   )}
@@ -355,7 +408,7 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
                   }
                 >
                   <For each={table.getRowModel().rows}>
-                    {(row) => (
+                    {row => (
                       <TableRow
                         row={row}
                         enableSelection={props.enableSelection ?? false}
@@ -374,8 +427,9 @@ export function DataTable<T, K extends string>(props: DataTableProps<T, K>): JSX
 }
 
 // The alignment convention carried on a column's meta (set by the cell helpers).
-const cellAlign = <T,>(cell: TanCell<T, unknown>): 'left' | 'right' | 'center' | undefined =>
-  cell.column.columnDef.meta?.align;
+const cellAlign = <T,>(
+  cell: TanCell<T, unknown>
+): 'left' | 'right' | 'center' | undefined => cell.column.columnDef.meta?.align;
 
 // The wrap-lines convention: how many lines a cell may wrap to before truncating. Absent
 // (or <= 1) means the default single-line nowrap. Returns the clamp count when > 1.
@@ -406,12 +460,12 @@ function TableRow<T>(props: {
             aria-label={t('table.select-row')}
             checked={props.row.getIsSelected()}
             onChange={props.row.getToggleSelectedHandler()}
-            onClick={(event) => event.stopPropagation()}
+            onClick={event => event.stopPropagation()}
           />
         </td>
       </Show>
       <For each={props.row.getVisibleCells()}>
-        {(cell) => (
+        {cell => (
           <td
             class={styles.td}
             data-align={cellAlign(cell)}
@@ -421,7 +475,9 @@ function TableRow<T>(props: {
             data-wrap={cellWrapLines(cell) ? '' : undefined}
             style={{
               'min-width': `${cell.column.getSize()}px`,
-              ...(cellWrapLines(cell) ? { '--wrap-lines': String(cellWrapLines(cell)) } : {}),
+              ...(cellWrapLines(cell)
+                ? { '--wrap-lines': String(cellWrapLines(cell)) }
+                : {}),
             }}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -434,12 +490,16 @@ function TableRow<T>(props: {
 
 // The card region a cell renders into (viewMode 'card'). Default 'grid' for un-annotated
 // columns, per ui-standards § tables.
-const cellCardRegion = <T,>(cell: TanCell<T, unknown>): 'primary' | 'secondary' | 'badge' | 'grid' =>
+const cellCardRegion = <T,>(
+  cell: TanCell<T, unknown>
+): 'primary' | 'secondary' | 'badge' | 'grid' =>
   cell.column.columnDef.meta?.card ?? 'grid';
 
 // The column's header text, for the grid label. Headers may be a string or JSX/function;
 // only the string case yields a readable label (our columns use strings), else no label.
-const columnHeaderText = <T,>(cell: TanCell<T, unknown>): string | undefined => {
+const columnHeaderText = <T,>(
+  cell: TanCell<T, unknown>
+): string | undefined => {
   const header = cell.column.columnDef.header;
   return typeof header === 'string' ? header : undefined;
 };
@@ -458,14 +518,19 @@ function CardView<T>(props: {
   return (
     <Show
       when={rows().length > 0}
-      fallback={<div class={styles.cardEmpty}>{props.emptyMessage ?? t('table.no-results')}</div>}
+      fallback={
+        <div class={styles.cardEmpty}>
+          {props.emptyMessage ?? t('table.no-results')}
+        </div>
+      }
     >
       <div class={styles.cardGrid}>
         <For each={rows()}>
-          {(row) => {
+          {row => {
             const cells = () => row.getVisibleCells();
-            const inRegion = (region: 'primary' | 'secondary' | 'badge' | 'grid') =>
-              cells().filter((c) => cellCardRegion(c) === region);
+            const inRegion = (
+              region: 'primary' | 'secondary' | 'badge' | 'grid'
+            ) => cells().filter(c => cellCardRegion(c) === region);
             return (
               <div
                 class={`${styles.card} ${props.onRowClick ? styles.rowClickable : ''}`}
@@ -480,29 +545,38 @@ function CardView<T>(props: {
                       aria-label={t('table.select-row')}
                       checked={row.getIsSelected()}
                       onChange={row.getToggleSelectedHandler()}
-                      onClick={(event) => event.stopPropagation()}
+                      onClick={event => event.stopPropagation()}
                     />
                   </Show>
                   <div class={styles.cardIdentity}>
                     <For each={inRegion('primary')}>
-                      {(cell) => (
+                      {cell => (
                         <div class={styles.cardPrimary}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </div>
                       )}
                     </For>
                     <For each={inRegion('secondary')}>
-                      {(cell) => (
+                      {cell => (
                         <div class={styles.cardSecondary}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </div>
                       )}
                     </For>
                   </div>
                   <For each={inRegion('badge')}>
-                    {(cell) => (
+                    {cell => (
                       <div class={styles.cardBadge}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </div>
                     )}
                   </For>
@@ -513,9 +587,12 @@ function CardView<T>(props: {
                       CLAUDE.md #7). */}
                   <div class={styles.cardFields}>
                     <For each={inRegion('grid')}>
-                      {(cell) => (
+                      {cell => (
                         <LabelledValue label={columnHeaderText(cell)}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </LabelledValue>
                       )}
                     </For>
@@ -542,7 +619,9 @@ function HeaderCell<T>(props: {
   const indicator = () => {
     const sorted = column().getIsSorted();
     if (!sorted) return null;
-    return <span class={styles.sortIndicator}>{sorted === 'desc' ? '▼' : '▲'}</span>;
+    return (
+      <span class={styles.sortIndicator}>{sorted === 'desc' ? '▼' : '▲'}</span>
+    );
   };
   return (
     <th
@@ -571,7 +650,7 @@ function HeaderCell<T>(props: {
           class={`${styles.resizeHandle} ${isResizing() ? styles.resizeHandleActive : ''}`}
           onMouseDown={props.header.getResizeHandler()}
           onTouchStart={props.header.getResizeHandler()}
-          onClick={(event) => event.stopPropagation()}
+          onClick={event => event.stopPropagation()}
           aria-hidden="true"
         />
       </Show>

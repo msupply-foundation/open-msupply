@@ -6,23 +6,23 @@ import {
   onCleanup,
   onMount,
   type JSX,
-} from 'solid-js'
-import * as KTabs from '@kobalte/core/tabs'
-import styles from './Tabs.module.css'
+} from 'solid-js';
+import * as KTabs from '@kobalte/core/tabs';
+import styles from './Tabs.module.css';
 
 export interface TabDef {
-  value: string
-  label: string
+  value: string;
+  label: string;
 }
 
 interface TabsProps {
   /** Controlled active tab value. */
-  value?: string
-  onValueChange?: (value: string) => void
+  value?: string;
+  onValueChange?: (value: string) => void;
   /** Uncontrolled alternative: the tab active on first render. */
-  defaultValue?: string
-  class?: string
-  children: JSX.Element
+  defaultValue?: string;
+  class?: string;
+  children: JSX.Element;
 }
 
 /*
@@ -59,7 +59,7 @@ export const Tabs = (props: TabsProps) => (
   >
     {props.children}
   </KTabs.Root>
-)
+);
 
 /*
  * TabList renders a single underline indicator that SLIDES between labels.
@@ -77,40 +77,44 @@ export const Tabs = (props: TabsProps) => (
  * Header.module.css.
  */
 export const TabList = (props: { tabs: TabDef[] }) => {
-  const context = KTabs.useTabsContext()
-  let listEl: HTMLDivElement | undefined
-  const [pos, setPos] = createSignal<{ left: number; width: number }>()
+  const context = KTabs.useTabsContext();
+  let listEl: HTMLDivElement | undefined;
+  const [pos, setPos] = createSignal<{ left: number; width: number }>();
 
   // Query the DOM rather than trusting context.selectedTab(): if the tabs
   // array is swapped the context can briefly hold a detached element.
   const measure = () => {
-    if (!listEl?.isConnected) return
-    const active = listEl.querySelector<HTMLElement>("[role='tab'][data-selected]")
-    if (active) setPos({ left: active.offsetLeft, width: active.offsetWidth })
-  }
+    if (!listEl?.isConnected) return;
+    const active = listEl.querySelector<HTMLElement>(
+      "[role='tab'][data-selected]"
+    );
+    if (active) setPos({ left: active.offsetLeft, width: active.offsetWidth });
+  };
 
   onMount(() => {
     // Kobalte sets selectedTab in an effect of its own; measure after it.
-    queueMicrotask(measure)
+    queueMicrotask(measure);
     // Labels reflow when the webfont lands (the prototype's underline sat
     // 1px off until the first interaction) — measure again then.
-    document.fonts?.ready.then(measure)
+    document.fonts?.ready.then(measure);
     // Re-measure whenever the strip's own box changes — a ResizeObserver on
     // the list, not a window resize listener: a window listener fires BEFORE
     // sibling which-element swaps it triggers (e.g. the AppShell menu bar
     // docking/undocking at the nav-overlay breakpoint), so it would measure
     // the pre-reflow layout and strand the underline. The observer fires
     // after any reflow of the strip, whatever caused it.
-    const observer = new ResizeObserver(measure)
-    if (listEl) observer.observe(listEl)
-    onCleanup(() => observer.disconnect())
-  })
-  createEffect(on([context.selectedTab, () => props.tabs], measure, { defer: true }))
+    const observer = new ResizeObserver(measure);
+    if (listEl) observer.observe(listEl);
+    onCleanup(() => observer.disconnect());
+  });
+  createEffect(
+    on([context.selectedTab, () => props.tabs], measure, { defer: true })
+  );
 
   return (
     <KTabs.List ref={listEl} class={styles.list} data-tab-bar="">
       <For each={props.tabs}>
-        {(tab) => (
+        {tab => (
           <KTabs.Trigger value={tab.value} class={styles.trigger}>
             {tab.label}
           </KTabs.Trigger>
@@ -121,16 +125,19 @@ export const TabList = (props: { tabs: TabDef[] }) => {
         aria-hidden="true"
         style={
           pos()
-            ? { transform: `translateX(${pos()!.left}px)`, width: `${pos()!.width}px` }
+            ? {
+                transform: `translateX(${pos()!.left}px)`,
+                width: `${pos()!.width}px`,
+              }
             : { opacity: 0 }
         }
       />
     </KTabs.List>
-  )
-}
+  );
+};
 
 export const TabPanel = (props: { value: string; children: JSX.Element }) => {
-  const context = KTabs.useTabsContext()
+  const context = KTabs.useTabsContext();
   return (
     // aria-labelledby is passed explicitly: Kobalte fills its trigger-id map
     // in an effect that runs after the initially selected panel renders, so
@@ -144,5 +151,5 @@ export const TabPanel = (props: { value: string; children: JSX.Element }) => {
     >
       {props.children}
     </KTabs.Content>
-  )
-}
+  );
+};

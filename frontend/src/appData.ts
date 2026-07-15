@@ -26,20 +26,29 @@ const readAppData = (): AppData => {
 export const getPreviousStoreId = (userId: string): string | undefined =>
   readAppData().previousStoreIdByUserId?.[userId];
 
-export const recordPreviousStoreId = (userId: string, storeId: string): void => {
+export const recordPreviousStoreId = (
+  userId: string,
+  storeId: string
+): void => {
   const data = readAppData();
   localStorage.setItem(
     APP_DATA_KEY,
     JSON.stringify({
       ...data,
-      previousStoreIdByUserId: { ...data.previousStoreIdByUserId, [userId]: storeId },
-    }),
+      previousStoreIdByUserId: {
+        ...data.previousStoreIdByUserId,
+        [userId]: storeId,
+      },
+    })
   );
 };
 
 // The user's saved column config for a table (the writable layer). `{}` when the user
 // has never customised it — resolution then falls through to global/default/TanStack.
-export const getUserTableConfig = (userId: string, tableId: string): LayeredConfig =>
+export const getUserTableConfig = (
+  userId: string,
+  tableId: string
+): LayeredConfig =>
   readAppData().tableConfigByUserId?.[userId]?.[tableId] ?? {};
 
 // Persist the user's config for a table. An empty config removes the entry (rather than
@@ -47,7 +56,7 @@ export const getUserTableConfig = (userId: string, tableId: string): LayeredConf
 export const setUserTableConfig = (
   userId: string,
   tableId: string,
-  config: LayeredConfig,
+  config: LayeredConfig
 ): void => {
   const data = readAppData();
   const forUser = { ...data.tableConfigByUserId?.[userId] };
@@ -58,12 +67,12 @@ export const setUserTableConfig = (
     JSON.stringify({
       ...data,
       tableConfigByUserId: { ...data.tableConfigByUserId, [userId]: forUser },
-    }),
+    })
   );
 };
 
 // A LayeredConfig is empty when no band holds any (non-empty) TableConfig field.
 const isEmptyLayeredConfig = (config: LayeredConfig): boolean =>
   Object.values(config).every(
-    (band) => !band || Object.values(band).every((field) => field == null),
+    band => !band || Object.values(band).every(field => field == null)
   );

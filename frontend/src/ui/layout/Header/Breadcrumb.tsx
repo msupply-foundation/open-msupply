@@ -1,30 +1,30 @@
-import { For, Show, type JSX } from 'solid-js'
-import { t } from '../../../intl'
-import styles from './Breadcrumb.module.css'
+import { For, Show, type JSX } from 'solid-js';
+import { t } from '../../../intl';
+import styles from './Breadcrumb.module.css';
 
 export interface Crumb {
-  label: string
+  label: string;
   /**
    * Link target for ancestor crumbs (navigate back up the trail). The last
    * crumb is the current page and always renders as plain text, so its `to`
    * is ignored. Until routing is decided these are plain hrefs (the
    * showcase uses hash links); a router makes them real routes later.
    */
-  to?: string
+  to?: string;
   /**
    * Interim navigation for pages that swap views with local state (list ↔
    * detail) while routing is undecided: renders the crumb as a link and runs
    * the callback instead of following `to`. A router replaces these with
    * real routed hrefs later.
    */
-  onClick?: () => void
+  onClick?: () => void;
 }
 
 export interface BreadcrumbProps {
   /** Leading section icon, painted brand orange (e.g. the nav group's icon). */
-  icon?: JSX.Element
+  icon?: JSX.Element;
   /** The trail, root first, current page last. The page owns this data. */
-  crumbs: Crumb[]
+  crumbs: Crumb[];
 }
 
 /*
@@ -37,7 +37,7 @@ export interface BreadcrumbProps {
  * buying. Ported from the RnD prototype's Breadcrumbs.
  */
 export const Breadcrumb = (props: BreadcrumbProps) => {
-  const isLast = (index: number) => index === props.crumbs.length - 1
+  const isLast = (index: number) => index === props.crumbs.length - 1;
 
   return (
     <nav class={styles.breadcrumb} aria-label={t('breadcrumb.label')}>
@@ -74,9 +74,9 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
                     href={crumb.to ?? '#'}
                     onClick={
                       crumb.onClick &&
-                      ((e) => {
-                        e.preventDefault()
-                        crumb.onClick!()
+                      (e => {
+                        e.preventDefault();
+                        crumb.onClick!();
                       })
                     }
                   >
@@ -89,5 +89,5 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
         </For>
       </ol>
     </nav>
-  )
-}
+  );
+};

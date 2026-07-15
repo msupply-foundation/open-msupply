@@ -29,13 +29,17 @@ export function subscribe<TResult, TVariables>(
 
   try {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    ws = new WebSocket(`${protocol}//${location.host}${GRAPHQL_WS_PATH}`, 'graphql-transport-ws');
+    ws = new WebSocket(
+      `${protocol}//${location.host}${GRAPHQL_WS_PATH}`,
+      'graphql-transport-ws'
+    );
   } catch {
     handlers.onFailure();
     return () => {};
   }
 
-  ws.onopen = () => ws.send(JSON.stringify({ type: 'connection_init', payload: {} }));
+  ws.onopen = () =>
+    ws.send(JSON.stringify({ type: 'connection_init', payload: {} }));
   ws.onerror = fail;
   ws.onclose = fail;
   ws.onmessage = event => {
@@ -56,7 +60,8 @@ export function subscribe<TResult, TVariables>(
         );
         break;
       case 'next':
-        if (message.payload?.data != null) handlers.onData(message.payload.data as TResult);
+        if (message.payload?.data != null)
+          handlers.onData(message.payload.data as TResult);
         break;
       case 'ping':
         ws.send(JSON.stringify({ type: 'pong' }));

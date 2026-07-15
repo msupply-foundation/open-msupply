@@ -8,7 +8,7 @@ const cache = new Map<string, Intl.PluralRules>();
 
 export const pluralCategory = (
   locale: SupportedLocale,
-  count: number,
+  count: number
 ): Intl.LDMLPluralRule => {
   // Use the number locale (bare language part) so plural rules match the
   // language, not any numbering-system tag.

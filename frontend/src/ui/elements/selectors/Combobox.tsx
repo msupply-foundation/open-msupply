@@ -1,36 +1,36 @@
-import { createMemo, createSignal, Show, type JSX } from 'solid-js'
-import * as KCombobox from '@kobalte/core/combobox'
-import { ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons'
-import { usePortalMount } from '../../utils/portalMount'
-import { keepDialogOpenOnInside } from './dismissInsideGuard'
-import styles from './Combobox.module.css'
+import { createMemo, createSignal, Show, type JSX } from 'solid-js';
+import * as KCombobox from '@kobalte/core/combobox';
+import { ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons';
+import { usePortalMount } from '../../utils/portalMount';
+import { keepDialogOpenOnInside } from './dismissInsideGuard';
+import styles from './Combobox.module.css';
 
 interface ComboboxProps<T> {
-  label: string
+  label: string;
   /** The full option set; filtered locally as the user types. */
-  items: T[]
+  items: T[];
   /** The plain-text label of an item — used for the input, filtering and a11y. */
-  itemToString: (item: T) => string
+  itemToString: (item: T) => string;
   /**
    * Unique string key per item (list identity + form value). Defaults to
    * itemToString — override when labels can collide.
    */
-  itemToValue?: (item: T) => string
-  onChange?: (item: T | null) => void
+  itemToValue?: (item: T) => string;
+  onChange?: (item: T | null) => void;
   /** Rich per-option rendering; defaults to the plain itemToString label. */
-  renderItem?: (item: T) => JSX.Element
+  renderItem?: (item: T) => JSX.Element;
   /**
    * Override the default locale-aware substring filter. Per-item predicate
    * (Kobalte's model), unlike the prototype's whole-list filter.
    */
-  filter?: (item: T, input: string) => boolean
-  placeholder?: string
-  helperText?: string
-  loading?: boolean
-  disabled?: boolean
+  filter?: (item: T, input: string) => boolean;
+  placeholder?: string;
+  helperText?: string;
+  loading?: boolean;
+  disabled?: boolean;
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow that shows it. */
-  hideLabel?: boolean
-  class?: string
+  hideLabel?: boolean;
+  class?: string;
 }
 
 /*
@@ -50,12 +50,12 @@ interface ComboboxProps<T> {
  * already handled by Kobalte itself (Escape clears it, blur reverts it).
  */
 export const Combobox = <T,>(props: ComboboxProps<T>) => {
-  const [selected, setSelected] = createSignal<T | null>(null)
-  const [inputValue, setInputValue] = createSignal('')
-  let inputEl: HTMLInputElement | undefined
+  const [selected, setSelected] = createSignal<T | null>(null);
+  const [inputValue, setInputValue] = createSignal('');
+  let inputEl: HTMLInputElement | undefined;
   // Inside a Dialog, mount the listbox into the dialog element (top layer + non-inert);
   // outside one this is undefined and Kobalte's default <body> portal is used.
-  const portalMount = usePortalMount()
+  const portalMount = usePortalMount();
 
   const matches = (item: T, input: string) =>
     props.filter
@@ -63,16 +63,16 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       : props
           .itemToString(item)
           .toLocaleLowerCase()
-          .includes(input.toLocaleLowerCase())
+          .includes(input.toLocaleLowerCase());
 
   const noMatches = createMemo(() =>
     props.items.every(item => !matches(item, inputValue()))
-  )
+  );
 
   const handleChange = (item: T | null) => {
-    setSelected(() => item)
-    props.onChange?.(item)
-  }
+    setSelected(() => item);
+    props.onChange?.(item);
+  };
 
   return (
     <KCombobox.Root<T>
@@ -98,7 +98,9 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
     >
       {/* hideLabel keeps the label for a11y (aria-labelledby) but visually hidden — used
           when a FieldRow already shows the label beside the control. */}
-      <KCombobox.Label class={props.hideLabel ? styles.labelHidden : styles.label}>
+      <KCombobox.Label
+        class={props.hideLabel ? styles.labelHidden : styles.label}
+      >
         {props.label}
       </KCombobox.Label>
       <KCombobox.Control class={styles.control}>
@@ -112,8 +114,8 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             class={styles.clear}
             aria-label="Clear selection"
             onClick={() => {
-              handleChange(null)
-              inputEl?.focus()
+              handleChange(null);
+              inputEl?.focus();
             }}
           >
             <CloseIcon />
@@ -148,5 +150,5 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         </KCombobox.Content>
       </KCombobox.Portal>
     </KCombobox.Root>
-  )
-}
+  );
+};

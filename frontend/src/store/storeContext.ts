@@ -1,6 +1,9 @@
 import { createSignal } from 'solid-js';
 import { graphqlFetch } from '../api/graphql';
-import { StoreContext, type StoreContextResult } from '../api/storeContext.generated';
+import {
+  StoreContext,
+  type StoreContextResult,
+} from '../api/storeContext.generated';
 
 // Spec (Store Login, Guard 3): store preferences + permissions as global state.
 // Callers invoke refetchStoreContext directly — on store entry, and from whatever

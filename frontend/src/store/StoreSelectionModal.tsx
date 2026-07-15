@@ -6,11 +6,15 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
-const filterStores = (stores: StoreSummary[], searchTerm: string): StoreSummary[] => {
+const filterStores = (
+  stores: StoreSummary[],
+  searchTerm: string
+): StoreSummary[] => {
   const term = searchTerm.trim().toLowerCase();
   if (term === '') return stores;
   return stores.filter(
-    s => s.name.toLowerCase().includes(term) || s.code.toLowerCase().includes(term)
+    s =>
+      s.name.toLowerCase().includes(term) || s.code.toLowerCase().includes(term)
   );
 };
 
@@ -26,7 +30,12 @@ export const StoreSelectionModal: Component<{
   const visible = () => filterStores(props.stores, search());
 
   return (
-    <Dialog open dismissable={false} onClose={() => {}} title={t('store.select')}>
+    <Dialog
+      open
+      dismissable={false}
+      onClose={() => {}}
+      title={t('store.select')}
+    >
       <TextField
         label={t('store.search')}
         width="full"

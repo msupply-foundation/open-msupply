@@ -13,10 +13,10 @@ export const breakpoints = {
   navOverlay: 1024,
   /** Below this = phone-ish; index.css drops the root font-size here. */
   compact: 600,
-} as const
+} as const;
 
 /** matchMedia query strings built from the values above. */
 export const mediaQuery = {
   navOverlay: `(max-width: ${breakpoints.navOverlay - 1}px)`,
   compact: `(max-width: ${breakpoints.compact - 1}px)`,
-} as const
+} as const;

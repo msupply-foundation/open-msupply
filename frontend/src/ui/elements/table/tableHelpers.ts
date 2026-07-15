@@ -23,23 +23,29 @@ type Meta = ColumnMeta<never, unknown>;
 const EMPTY_CELL = '—';
 
 // Numbers: right-aligned, value rendered as-is by accessorKey (no cell needed).
-export const getNumberCell = <T, K extends string>(meta?: Meta): Partial<Column<T, K>> => ({
+export const getNumberCell = <T, K extends string>(
+  meta?: Meta
+): Partial<Column<T, K>> => ({
   meta: { align: 'right', ...meta },
 });
 
 // Dates: format the resolved value via localisedDate, blank → em dash.
-export const getDateCell = <T, K extends string>(meta?: Meta): Partial<Column<T, K>> => ({
+export const getDateCell = <T, K extends string>(
+  meta?: Meta
+): Partial<Column<T, K>> => ({
   meta: { ...meta },
-  cell: (info) => {
+  cell: info => {
     const value = info.getValue<string | Date | null | undefined>();
     return value ? localisedDate(value) : EMPTY_CELL;
   },
 });
 
 // Booleans: resolved value → localised Yes/No.
-export const getBooleanCell = <T, K extends string>(meta?: Meta): Partial<Column<T, K>> => ({
+export const getBooleanCell = <T, K extends string>(
+  meta?: Meta
+): Partial<Column<T, K>> => ({
   meta: { ...meta },
-  cell: (info) => (info.getValue<boolean>() ? t('common.yes') : t('common.no')),
+  cell: info => (info.getValue<boolean>() ? t('common.yes') : t('common.no')),
 });
 
 // =================================================================================
@@ -54,18 +60,23 @@ export const getBooleanCell = <T, K extends string>(meta?: Meta): Partial<Column
 
 // The effective id of a column, mirroring how TanStack derives it: an explicit `id`,
 // else the `accessorKey`.
-export const resolvedId = <T, K extends string>(col: Column<T, K>): string | undefined =>
+export const resolvedId = <T, K extends string>(
+  col: Column<T, K>
+): string | undefined =>
   col.id ?? ('accessorKey' in col ? String(col.accessorKey) : undefined);
 
 // sortKey (K) → the resolved column id TanStack expects in SortingState. Falls back to
 // the key itself when no column declares it (id === sortKey is the common case).
-export const sortKeyToId = <T, K extends string>(columns: Column<T, K>[], key: K): string => {
-  const col = columns.find((c) => c.sortKey === key);
+export const sortKeyToId = <T, K extends string>(
+  columns: Column<T, K>[],
+  key: K
+): string => {
+  const col = columns.find(c => c.sortKey === key);
   return (col && resolvedId(col)) ?? key;
 };
 
 // A resolved column id → its sortKey (K), or undefined for an unsortable column.
 export const sortIdToKey = <T, K extends string>(
   columns: Column<T, K>[],
-  id: string,
-): K | undefined => columns.find((c) => resolvedId(c) === id)?.sortKey;
+  id: string
+): K | undefined => columns.find(c => resolvedId(c) === id)?.sortKey;

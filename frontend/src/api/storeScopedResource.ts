@@ -52,7 +52,7 @@ export function createStoreScopedResource<T>(
   // The current store id (module-level reactive accessor, e.g. currentStoreId).
   storeId: () => string | undefined,
   // Fetches the list for a store; returns undefined on failure (handled globally).
-  fetcher: (storeId: string) => Promise<T[] | undefined>,
+  fetcher: (storeId: string) => Promise<T[] | undefined>
 ): StoreScopedResource<T> {
   // Lazy singleton: one instance built on first use, shared by every consumer.
   let instance: StoreScopedResource<T> | undefined;
@@ -61,7 +61,7 @@ export function createStoreScopedResource<T>(
     createRoot(() => {
       const [resource, { refetch }] = createResource(
         storeId,
-        async (id) => (await fetcher(id)) ?? [],
+        async id => (await fetcher(id)) ?? []
       );
       return {
         // Idiomatic resource read — suspends an ancestor <Suspense> on the first

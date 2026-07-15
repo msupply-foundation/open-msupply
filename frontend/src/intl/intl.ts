@@ -1,6 +1,11 @@
 import { createSignal } from 'solid-js';
 import * as i18n from '@solid-primitives/i18n';
-import { DEFAULT_LOCALE, type FlatDict, type LocaleKey, type SupportedLocale } from './locales';
+import {
+  DEFAULT_LOCALE,
+  type FlatDict,
+  type LocaleKey,
+  type SupportedLocale,
+} from './locales';
 import { pluralCategory } from './plural';
 
 // Global i18n state, in the codebase's plain-signal style (cf. storeContext):
@@ -25,7 +30,7 @@ const translate = i18n.translator(activeDict, i18n.resolveTemplate);
 /** Translate a key, interpolating {{ tokens }}. Falls back to the key itself. */
 export const t = (
   key: LocaleKey,
-  vars?: Record<string, string | number>,
+  vars?: Record<string, string | number>
 ): string => translate(key, vars) ?? key;
 
 /**
@@ -36,19 +41,15 @@ export const t = (
 export const tPlural = (
   key: LocaleKey,
   count: number,
-  vars?: Record<string, string | number>,
+  vars?: Record<string, string | number>
 ): string => {
   const category = pluralCategory(locale(), count);
   const pluralKey = `${key}_${category}` as LocaleKey;
   // Fall back to _other if the specific category is missing from the catalog.
-  const resolved = translate(pluralKey) ?? translate(`${key}_other` as LocaleKey);
+  const resolved =
+    translate(pluralKey) ?? translate(`${key}_other` as LocaleKey);
   if (resolved === undefined) return key;
   return i18n.resolveTemplate(resolved, { count, ...vars });
 };
 
-export {
-  locale,
-  setLocale,
-  dictionaries,
-  setDictionaries,
-};
+export { locale, setLocale, dictionaries, setDictionaries };

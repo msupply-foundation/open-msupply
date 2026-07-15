@@ -10,8 +10,8 @@ export type Location = LocationsResult['locations']['nodes'][number];
 // lazy, deduped, module-scope singleton, read via `.noSuspense()`.
 export const locationsResource = createStoreScopedResource<Location>(
   currentStoreId,
-  async (storeId) => {
+  async storeId => {
     const result = await graphqlFetch(Locations, { storeId });
     return result.kind === 'success' ? result.data.locations.nodes : undefined;
-  },
+  }
 );

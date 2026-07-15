@@ -48,7 +48,8 @@ export type GraphqlFailure =
   // returnGraphqlErrors to handle them itself.
   | { kind: 'graphqlError'; message: string; errors: GraphqlErrorItem[] };
 
-export type GraphqlResult<TResult> = { kind: 'success'; data: TResult } | GraphqlFailure;
+export type GraphqlResult<TResult> =
+  { kind: 'success'; data: TResult } | GraphqlFailure;
 
 type FetchOptions<TResult> = {
   // Return the response's GraphQL errors as a graphqlError result for the caller to
@@ -74,7 +75,9 @@ export const isUnauthenticated = (errors: GraphqlErrorItem[]): boolean =>
 // responses, and unexpected GraphQL errors. A modal shows the description on top of
 // everything; its only action reloads the whole app, so nothing clears it during
 // normal use. The flow that made the request stays in its loading phase.
-const [unexpectedError, setUnexpectedError] = createSignal<string | undefined>(undefined);
+const [unexpectedError, setUnexpectedError] = createSignal<string | undefined>(
+  undefined
+);
 export { unexpectedError };
 // For tests only — the app recovers via full reload.
 export const clearUnexpectedError = (): void => {
@@ -85,7 +88,10 @@ export const clearUnexpectedError = (): void => {
 let lastCallAt = Date.now();
 export const msSinceLastGqlCall = (): number => Date.now() - lastCallAt;
 
-type ResponseBody<TResult> = { data?: TResult | null; errors?: GraphqlErrorItem[] };
+type ResponseBody<TResult> = {
+  data?: TResult | null;
+  errors?: GraphqlErrorItem[];
+};
 
 export async function graphqlFetch<TResult, TVariables>(
   document: TypedDocument<TResult, TVariables>,

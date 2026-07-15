@@ -22,5 +22,6 @@ export type InteractOutsideEvent = {
 export const keepDialogOpenOnInside =
   (mount: HTMLElement | undefined) => (event: InteractOutsideEvent) => {
     const target = event.detail.originalEvent.target;
-    if (mount && target instanceof Node && mount.contains(target)) event.preventDefault();
+    if (mount && target instanceof Node && mount.contains(target))
+      event.preventDefault();
   };

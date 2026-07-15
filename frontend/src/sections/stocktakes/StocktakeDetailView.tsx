@@ -7,8 +7,14 @@ import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
 import { DataTable, type Column } from '../../ui/elements/table/DataTable';
-import { getDateCell, getNumberCell } from '../../ui/elements/table/tableHelpers';
-import { StocktakeDetail, type StocktakeDetailResult } from './stocktakeDetail.generated';
+import {
+  getDateCell,
+  getNumberCell,
+} from '../../ui/elements/table/tableHelpers';
+import {
+  StocktakeDetail,
+  type StocktakeDetailResult,
+} from './stocktakeDetail.generated';
 
 // The stocktake detail view — the page a stocktake create / a list row-click lands on. For
 // now it's the page shell (breadcrumb back to the list + a title) plus a BASIC table of the
@@ -16,13 +22,22 @@ import { StocktakeDetail, type StocktakeDetailResult } from './stocktakeDetail.g
 // deliberately, for later — grouping, the no-refetch batch-reflection of edits, the on-row
 // line-edit modal, and per-user column config on this table.
 
-type StocktakeNode = Extract<StocktakeDetailResult['stocktake'], { __typename: 'StocktakeNode' }>;
+type StocktakeNode = Extract<
+  StocktakeDetailResult['stocktake'],
+  { __typename: 'StocktakeNode' }
+>;
 type Line = StocktakeNode['lines']['nodes'][number];
 
 // The basic table is display-only for now (front-end sort/grouping deferred), but Column<T,K>
 // needs a real string K for the cell helpers' sortKey type to resolve — so K is the line
 // fields, even though no `sort`/`onSort` is wired yet.
-type SortKey = 'item' | 'itemName' | 'batch' | 'expiryDate' | 'snapshotNumberOfPacks' | 'countedNumberOfPacks';
+type SortKey =
+  | 'item'
+  | 'itemName'
+  | 'batch'
+  | 'expiryDate'
+  | 'snapshotNumberOfPacks'
+  | 'countedNumberOfPacks';
 
 const StocktakeDetailView: Component = () => {
   const params = useParams<{ storeId: string; stocktakeId: string }>();
@@ -32,14 +47,18 @@ const StocktakeDetailView: Component = () => {
   // modal via mapSuccessToError, so it never reaches the view — we only narrow to the node.
   const [data] = createResource(
     () => ({ storeId: params.storeId, stocktakeId: params.stocktakeId }),
-    async (variables) => {
+    async variables => {
       const result = await graphqlFetch(StocktakeDetail, variables, {
-        mapSuccessToError: (d) =>
-          d.stocktake.__typename === 'NodeError' ? d.stocktake.error.description : undefined,
+        mapSuccessToError: d =>
+          d.stocktake.__typename === 'NodeError'
+            ? d.stocktake.error.description
+            : undefined,
       });
       if (result.kind !== 'success') return undefined;
-      return result.data.stocktake.__typename === 'StocktakeNode' ? result.data.stocktake : undefined;
-    },
+      return result.data.stocktake.__typename === 'StocktakeNode'
+        ? result.data.stocktake
+        : undefined;
+    }
   );
 
   // Crumbs are an accessor so t() re-translates on locale change; the middle crumb links back
@@ -54,18 +73,34 @@ const StocktakeDetailView: Component = () => {
   ];
 
   const columns = (): Column<Line, SortKey>[] => [
-    { accessorKey: 'item', header: t('stocktake.column.item-code'), cell: (info) => info.row.original.item.code },
+    {
+      accessorKey: 'item',
+      header: t('stocktake.column.item-code'),
+      cell: info => info.row.original.item.code,
+    },
     { accessorKey: 'itemName', header: t('stocktake.column.item-name') },
     { accessorKey: 'batch', header: t('stocktake.column.batch') },
-    { accessorKey: 'expiryDate', header: t('stocktake.column.expiry'), ...getDateCell() },
-    { accessorKey: 'snapshotNumberOfPacks', header: t('stocktake.column.snapshot'), ...getNumberCell() },
-    { accessorKey: 'countedNumberOfPacks', header: t('stocktake.column.counted'), ...getNumberCell() },
+    {
+      accessorKey: 'expiryDate',
+      header: t('stocktake.column.expiry'),
+      ...getDateCell(),
+    },
+    {
+      accessorKey: 'snapshotNumberOfPacks',
+      header: t('stocktake.column.snapshot'),
+      ...getNumberCell(),
+    },
+    {
+      accessorKey: 'countedNumberOfPacks',
+      header: t('stocktake.column.counted'),
+      ...getNumberCell(),
+    },
   ];
 
   return (
     <Suspense>
       <Show when={data()} keyed>
-        {(node) => (
+        {node => (
           <Page
             fillBody
             header={
@@ -77,7 +112,7 @@ const StocktakeDetailView: Component = () => {
             <DataTable
               columns={columns()}
               rows={node.lines.nodes}
-              rowKey={(line) => line.id}
+              rowKey={line => line.id}
               emptyMessage={t('stocktake.detail.empty')}
             />
           </Page>

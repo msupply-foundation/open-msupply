@@ -11,7 +11,8 @@ import { createContext, useContext, type Accessor } from 'solid-js';
 //
 // A dialog provides its element here; portaled popups read it and mount in. Outside a
 // dialog the context is undefined and popups keep their default <body> portal.
-export const PortalMountContext = createContext<Accessor<HTMLElement | undefined>>();
+export const PortalMountContext =
+  createContext<Accessor<HTMLElement | undefined>>();
 
 /** The element portaled popups should mount into (a containing dialog), or undefined. */
 export const usePortalMount = () => useContext(PortalMountContext);

@@ -1,22 +1,22 @@
-import { splitProps, type JSX } from 'solid-js'
-import { Dynamic } from 'solid-js/web'
-import styles from './Text.module.css'
+import { splitProps, type JSX } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import styles from './Text.module.css';
 
-export type TextVariant = 'body' | 'bodySmall' | 'heading' | 'subtitle'
-export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6
+export type TextVariant = 'body' | 'bodySmall' | 'heading' | 'subtitle';
+export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface TextProps extends JSX.HTMLAttributes<HTMLElement> {
   /** The type style — size + line-height + weight only. Never colour. */
-  variant?: TextVariant
+  variant?: TextVariant;
   /**
    * Heading rank (`<h1>`–`<h6>`), for `variant="heading"` only. Decoupled from
    * the visual size (WCAG 2.2 / principle #9): pick the level that keeps the
    * document outline correct, not the one that "looks the right size". Ignored
    * once `as` is set. Defaults to 2 (a heading is usually the top of its region).
    */
-  level?: HeadingLevel
+  level?: HeadingLevel;
   /** Render a different element without changing the visual style. */
-  as?: string
+  as?: string;
 }
 
 /* Default element per variant. `heading` is overridden by `level` below. */
@@ -25,7 +25,7 @@ const DEFAULT_ELEMENT: Record<TextVariant, string> = {
   bodySmall: 'p',
   heading: 'h2',
   subtitle: 'p',
-}
+};
 
 /*
  * Text — the shared type primitive. Deliberately hand-rolled, pure CSS: there's
@@ -44,17 +44,25 @@ const DEFAULT_ELEMENT: Record<TextVariant, string> = {
  *    raw text; don't wrap that in <Text>.
  */
 export const Text = (props: TextProps) => {
-  const [local, rest] = splitProps(props, ['variant', 'level', 'as', 'class', 'children'])
-  const variant = (): TextVariant => local.variant ?? 'body'
+  const [local, rest] = splitProps(props, [
+    'variant',
+    'level',
+    'as',
+    'class',
+    'children',
+  ]);
+  const variant = (): TextVariant => local.variant ?? 'body';
   const element = () =>
     local.as ??
-    (variant() === 'heading' ? `h${local.level ?? 2}` : DEFAULT_ELEMENT[variant()])
+    (variant() === 'heading'
+      ? `h${local.level ?? 2}`
+      : DEFAULT_ELEMENT[variant()]);
   const cls = () =>
-    local.class ? `${styles[variant()]} ${local.class}` : styles[variant()]
+    local.class ? `${styles[variant()]} ${local.class}` : styles[variant()];
 
   return (
     <Dynamic component={element()} class={cls()} {...rest}>
       {local.children}
     </Dynamic>
-  )
-}
+  );
+};

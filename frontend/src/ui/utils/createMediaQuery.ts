@@ -1,5 +1,5 @@
-import { createSignal, onCleanup } from 'solid-js'
-import { mediaQuery } from '../styles/breakpoints'
+import { createSignal, onCleanup } from 'solid-js';
+import { mediaQuery } from '../styles/breakpoints';
 
 /*
  * matchMedia as a Solid signal. This is the ONLY responsive mechanism that
@@ -9,13 +9,13 @@ import { mediaQuery } from '../styles/breakpoints'
  * no effect/cleanup ceremony at the call site (this owns the listener).
  */
 export const createMediaQuery = (query: string): (() => boolean) => {
-  const mql = window.matchMedia(query)
-  const [matches, setMatches] = createSignal(mql.matches)
-  const onChange = (e: MediaQueryListEvent) => setMatches(e.matches)
-  mql.addEventListener('change', onChange)
-  onCleanup(() => mql.removeEventListener('change', onChange))
-  return matches
-}
+  const mql = window.matchMedia(query);
+  const [matches, setMatches] = createSignal(mql.matches);
+  const onChange = (e: MediaQueryListEvent) => setMatches(e.matches);
+  mql.addEventListener('change', onChange);
+  onCleanup(() => mql.removeEventListener('change', onChange));
+  return matches;
+};
 
 /** True when the viewport is narrow enough that the nav should be an overlay. */
-export const useIsNavOverlay = () => createMediaQuery(mediaQuery.navOverlay)
+export const useIsNavOverlay = () => createMediaQuery(mediaQuery.navOverlay);

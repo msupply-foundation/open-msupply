@@ -1,30 +1,30 @@
-import { createUniqueId, For, Show, type JSX } from 'solid-js'
-import styles from './RadioGroup.module.css'
+import { createUniqueId, For, Show, type JSX } from 'solid-js';
+import styles from './RadioGroup.module.css';
 
 export interface RadioOption {
-  value: string
-  label: string
+  value: string;
+  label: string;
   /** Optional muted second line under the label. */
-  description?: string
-  disabled?: boolean
+  description?: string;
+  disabled?: boolean;
 }
 
 interface RadioGroupProps {
   /** Group label — a <legend> for the fieldset (visually a small heading). */
-  label?: string
-  options: RadioOption[]
-  value?: string
-  onChange?: (value: string) => void
+  label?: string;
+  options: RadioOption[];
+  value?: string;
+  onChange?: (value: string) => void;
   /** Disable the whole group (every option). */
-  disabled?: boolean
+  disabled?: boolean;
   /** Lay the options out in a row instead of the default column. */
-  orientation?: 'vertical' | 'horizontal'
+  orientation?: 'vertical' | 'horizontal';
   /**
    * Inline-start indent, in rem — to line the options up under a sibling control's text (e.g.
    * the include-all radios sitting beneath a Combobox whose leading icon insets its text).
    */
-  indentRem?: number
-  class?: string
+  indentRem?: number;
+  class?: string;
 }
 
 /*
@@ -37,18 +37,25 @@ interface RadioGroupProps {
  */
 export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
   // One shared name per group instance so the native radios single-select together.
-  const name = createUniqueId()
+  const name = createUniqueId();
   return (
     <fieldset
       class={props.class ? `${styles.root} ${props.class}` : styles.root}
-      style={props.indentRem ? { 'padding-inline-start': `${props.indentRem}rem` } : undefined}
+      style={
+        props.indentRem
+          ? { 'padding-inline-start': `${props.indentRem}rem` }
+          : undefined
+      }
     >
       <Show when={props.label}>
         <legend class={styles.groupLabel}>{props.label}</legend>
       </Show>
-      <div class={styles.items} data-orientation={props.orientation ?? 'vertical'}>
+      <div
+        class={styles.items}
+        data-orientation={props.orientation ?? 'vertical'}
+      >
         <For each={props.options}>
-          {(option) => (
+          {option => (
             <label
               class={styles.item}
               data-disabled={props.disabled || option.disabled ? '' : undefined}
@@ -73,5 +80,5 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
         </For>
       </div>
     </fieldset>
-  )
-}
+  );
+};

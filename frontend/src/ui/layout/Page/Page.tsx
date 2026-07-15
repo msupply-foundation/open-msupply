@@ -1,6 +1,6 @@
-import { Show, type JSX } from 'solid-js'
-import { useFullScreen } from '../AppShell/shellContext'
-import styles from './Page.module.css'
+import { Show, type JSX } from 'solid-js';
+import { useFullScreen } from '../AppShell/shellContext';
+import styles from './Page.module.css';
 
 export interface PageProps {
   /**
@@ -10,29 +10,29 @@ export interface PageProps {
    * ShellNavContext), so a page without a header has no way into the menu
    * on narrow viewports.
    */
-  header?: JSX.Element
+  header?: JSX.Element;
   /**
    * The page's pinned action bar — a composed <ContentFooter>…</ContentFooter>
    * (or a <Show> around one, for bars that only exist contextually, e.g. with
    * a table selection). Pinned below the scrolling body; never scrolls.
    */
-  contentFooter?: JSX.Element
+  contentFooter?: JSX.Element;
   /**
    * The docked details panel — a composed <SidePanel>…</SidePanel>, docked
    * inline-end beside the body with its own scroll, spanning from below the
    * header to above the content footer. Omit it on pages without one (list
    * views); the body then takes the full width.
    */
-  sidePanel?: JSX.Element
+  sidePanel?: JSX.Element;
   /** Page body, rendered in the scrolling region. */
-  children: JSX.Element
+  children: JSX.Element;
   /**
    * Fill mode: the body becomes a non-scrolling flex column with no padding, so a single
    * child that manages its own scroll (e.g. the DataTable, which fills the space and
    * scrolls internally with sticky headers) claims the full region. Default (false) is
    * the normal scrolling-body behaviour, where the body itself scrolls its content.
    */
-  fillBody?: boolean
+  fillBody?: boolean;
 }
 
 /*
@@ -56,7 +56,7 @@ export const Page = (props: PageProps) => {
   // In shell full-screen mode the page header hides too (only content + footer remain),
   // matching Open mSupply. Outside a shell (no provider) useFullScreen() is undefined, so
   // the header always shows there.
-  const fullScreen = useFullScreen()
+  const fullScreen = useFullScreen();
   return (
     <div class={styles.page}>
       <Show when={!fullScreen?.isFullScreen()}>{props.header}</Show>
@@ -68,5 +68,5 @@ export const Page = (props: PageProps) => {
       </div>
       {props.contentFooter}
     </div>
-  )
-}
+  );
+};

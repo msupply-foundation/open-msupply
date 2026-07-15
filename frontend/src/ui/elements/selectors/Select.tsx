@@ -1,33 +1,33 @@
-import { Show, type JSX } from 'solid-js'
-import * as KSelect from '@kobalte/core/select'
-import { keepDialogOpenOnInside } from './dismissInsideGuard'
-import { CheckIcon, ChevronDownIcon } from '../../icons'
-import { usePortalMount } from '../../utils/portalMount'
-import styles from './Select.module.css'
+import { Show, type JSX } from 'solid-js';
+import * as KSelect from '@kobalte/core/select';
+import { keepDialogOpenOnInside } from './dismissInsideGuard';
+import { CheckIcon, ChevronDownIcon } from '../../icons';
+import { usePortalMount } from '../../utils/portalMount';
+import styles from './Select.module.css';
 
 export interface SelectOption {
-  value: string
-  label: string
+  value: string;
+  label: string;
   /** Optional leading adornment (icon, or a coloured status dot). */
-  adornment?: JSX.Element
+  adornment?: JSX.Element;
   /** Optional muted second line under the label. */
-  description?: string
-  disabled?: boolean
+  description?: string;
+  disabled?: boolean;
 }
 
 interface SelectProps {
-  label: string
-  options: SelectOption[]
-  value?: string
-  defaultValue?: string
-  onValueChange?: (value: string) => void
-  placeholder?: string
-  helperText?: string
-  disabled?: boolean
+  label: string;
+  options: SelectOption[];
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+  placeholder?: string;
+  helperText?: string;
+  disabled?: boolean;
   /** Control size. 'md' (default) is the form-field size; 'sm' is a compact variant
    *  for dense contexts like a toolbar or the pagination rows-per-page control. */
-  size?: 'md' | 'sm'
-  class?: string
+  size?: 'md' | 'sm';
+  class?: string;
 }
 
 /*
@@ -48,11 +48,11 @@ interface SelectProps {
 export const Select = (props: SelectProps) => {
   // Inside a Dialog, mount the listbox into the dialog element (top layer + non-inert);
   // outside one this is undefined and Kobalte's default <body> portal is used.
-  const portalMount = usePortalMount()
+  const portalMount = usePortalMount();
   const findOption = (value: string | undefined) =>
     value === undefined
       ? undefined
-      : (props.options.find(o => o.value === value) ?? null)
+      : (props.options.find(o => o.value === value) ?? null);
 
   return (
     <KSelect.Root<SelectOption>
@@ -116,5 +116,5 @@ export const Select = (props: SelectProps) => {
         </KSelect.Content>
       </KSelect.Portal>
     </KSelect.Root>
-  )
-}
+  );
+};

@@ -24,7 +24,7 @@ if (!existsSync(PAGES_DIR)) {
 }
 
 const cssFiles = [];
-const walk = (dir) => {
+const walk = dir => {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) walk(path);
@@ -34,7 +34,7 @@ const walk = (dir) => {
 walk(PAGES_DIR);
 
 const offenders = cssFiles.filter(
-  (path) => !ALLOW.has(relative(PAGES_DIR, path).split(sep)[0])
+  path => !ALLOW.has(relative(PAGES_DIR, path).split(sep)[0])
 );
 
 if (offenders.length) {

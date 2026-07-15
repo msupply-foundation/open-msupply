@@ -11,7 +11,7 @@ import { persistUserLocale, rememberLastLocale } from './detectLocale';
  */
 export const changeLanguage = async (
   code: string,
-  username?: string,
+  username?: string
 ): Promise<void> => {
   if (!isSupported(code)) return;
   const locale: SupportedLocale = code;
@@ -29,7 +29,7 @@ export const changeLanguage = async (
  * never paints untranslated keys.
  */
 export const initialiseLocale = async (
-  locale: SupportedLocale,
+  locale: SupportedLocale
 ): Promise<void> => {
   await loadDictionary(locale);
   setLocale(locale);
