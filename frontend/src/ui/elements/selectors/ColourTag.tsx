@@ -55,6 +55,7 @@ export const ColourTagPicker = (props: {
           <span class={`${styles.dot} ${styles.dotEmpty}`} />
         )
       }
+      closeOnClickInside
     >
       <div class={styles.swatches}>
         <For each={TAG_COLOURS}>
