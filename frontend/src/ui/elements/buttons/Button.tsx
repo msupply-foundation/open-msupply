@@ -1,4 +1,4 @@
-import { Show, splitProps, type JSX } from 'solid-js'
+import { children, Show, splitProps, type JSX } from 'solid-js'
 import { createRipple } from '../../utils/createRipple'
 import { Ripple } from './Ripple'
 import styles from './Button.module.css'
@@ -40,6 +40,11 @@ export const Button = (props: ButtonProps) => {
     'onPointerDown',
   ])
   const ripple = createRipple()
+  // JSX-element props are lazy getters: each is read twice below (the <Show>
+  // test + the insertion), and raw reads would create the passed element twice
+  // per evaluation — resolve once (kdd/solid-reactivity-pitfalls §3).
+  const icon = children(() => local.icon)
+  const label = children(() => local.children)
 
   return (
     <button
@@ -58,11 +63,11 @@ export const Button = (props: ButtonProps) => {
       {...rest}
     >
       {/* Spinner replaces the icon while loading. */}
-      <Show when={local.loading} fallback={<Show when={local.icon}><span class={styles.icon}>{local.icon}</span></Show>}>
+      <Show when={local.loading} fallback={<Show when={icon()}><span class={styles.icon}>{icon()}</span></Show>}>
         <span class={styles.spinner} aria-hidden="true" />
       </Show>
-      <Show when={local.children}>
-        <span class={styles.label}>{local.children}</span>
+      <Show when={label()}>
+        <span class={styles.label}>{label()}</span>
       </Show>
       <Ripple ripples={ripple.ripples()} onDone={ripple.dismiss} />
     </button>

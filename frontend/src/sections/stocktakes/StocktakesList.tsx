@@ -117,7 +117,7 @@ const StocktakesList: Component = () => {
   // data during a refetch.
   //
   // The resource SOURCE is the SERIALISED variables (a stable string), not the
-  // variables object (kdd/no-remounts). Two states with identical query content
+  // variables object (kdd/solid-reactivity-pitfalls). Two states with identical query content
   // produce an equal string, so the resource does not refetch — e.g. adding an empty
   // filter chip, which our filter builder maps to the same effective filter, does not
   // reflash the list. Reading data() during a refetch returns the previous value and

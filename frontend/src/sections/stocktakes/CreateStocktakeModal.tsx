@@ -98,7 +98,7 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
   };
 
   const [estimate] = createResource(
-    // Source = the form as a stable string (kdd/no-remounts): equal content → no refetch.
+    // Source = the form as a stable string (kdd/solid-reactivity-pitfalls): equal content → no refetch.
     () => (isBlank() ? null : JSON.stringify(form())),
     async () => {
       const { includeAllItems, masterListId } = form();
