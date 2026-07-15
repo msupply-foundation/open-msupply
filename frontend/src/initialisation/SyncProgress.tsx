@@ -5,7 +5,8 @@ import { Alert } from '../ui/elements/feedback/Alert';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
-// Spec (Initialization Logic): common component listing the sync steps and their progress.
+// Spec (Initialization Logic): common component listing the sync steps and
+// their progress.
 const stepStatus = (step: SyncStep): string => {
   if (step.finished) return t('sync.status.done');
   if (!step.started) return t('sync.status.pending');
@@ -14,11 +15,13 @@ const stepStatus = (step: SyncStep): string => {
   return t('sync.status.in-progress');
 };
 
-// toSyncOverview builds a fresh overview (and fresh step objects) on every status
-// tick, so nothing here may key on object identity: non-keyed <Show> plus
-// position-keyed <Index> update the existing DOM in place instead of remounting
-// the whole list each tick.
-export const SyncProgress: Component<{ overview: SyncOverview | undefined }> = props => (
+// toSyncOverview builds a fresh overview (and fresh step objects) on every
+// status tick, so nothing here may key on object identity: non-keyed <Show>
+// plus position-keyed <Index> update the existing DOM in place instead of
+// remounting the whole list each tick.
+export const SyncProgress: Component<{
+  overview: SyncOverview | undefined;
+}> = props => (
   <Show when={props.overview} fallback={<p>{t('sync.waiting')}</p>}>
     {overview => (
       <div class={styles.stack}>
