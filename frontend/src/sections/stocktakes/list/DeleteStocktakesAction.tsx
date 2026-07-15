@@ -23,103 +23,109 @@ export interface DeleteStocktakesActionProps {
 // CannotEditStocktake) the whole batch fails and NOTHING is deleted, so on error we show OUR
 // translated message (not the server's English description) with just a Close. While deleting, the
 // dialog is blocking (no scrim/Escape) and Cancel is hidden. Success reports the count; the list
-// clears selection + re-queries (onDeleted). Ids are snapshotted on open so a re-sort/refetch can't
-// change what we submit.
+// clears selection + re-queries (onDeleted).
 //
-// This is NOT the shared ActionModal: the list delete has no per-line errors (atomic, one message)
-// and no "show error lines" jump — a distinct, simpler shape than the line actions.
+// Unlike the detail LINE actions this KEEPS success/error phases in the modal: the list has no rows
+// to stamp per-line errors onto, so the outcome (a count, or the atomic can't-delete message) is
+// shown in the dialog itself. Same mount-while-open shape though — the phase lives in <Body>, fresh
+// on every open, and the selected ids are read straight from props (like the line actions).
 type Phase = 'confirm' | 'deleting' | 'success' | 'error';
-type State = { ids: string[]; phase: Phase };
 
 export const DeleteStocktakesAction: Component<DeleteStocktakesActionProps> = (props) => {
-  const [state, setState] = createSignal<State | null>(null);
+  const [open, setOpen] = createSignal(false);
+  return (
+    <>
+      <Button variant="secondary" icon={<TrashIcon />} onClick={() => setOpen(true)}>
+        {t('common.delete')}
+      </Button>
+      <Show when={open()}>
+        <Body {...props} onClose={() => setOpen(false)} />
+      </Show>
+    </>
+  );
+};
 
-  const open = () => setState({ ids: [...props.selectedIds()], phase: 'confirm' });
+const Body = (props: DeleteStocktakesActionProps & { onClose: () => void }) => {
+  const [phase, setPhase] = createSignal<Phase>('confirm');
+  // Count snapshotted on open (Body mounts once per open) so the success/confirm message can't shift
+  // if the selection changes behind the dialog.
+  const count = props.selectedIds().length;
 
   const run = async () => {
-    const ids = state()?.ids ?? [];
-    if (ids.length === 0) return setState(null);
-    setState({ ids, phase: 'deleting' });
+    if (phase() !== 'confirm') return; // re-entry guard
+    setPhase('deleting');
     const result = await graphqlFetch(DeleteStocktakes, {
       storeId: props.storeId,
-      ids: ids.map((id) => ({ id })),
+      ids: props.selectedIds().map((id) => ({ id })),
     });
     if (result.kind !== 'success') {
       // transport/unexpected → the global error modal already surfaced it; drop back to confirm so
       // the dialog isn't left stuck loading.
-      setState({ ids, phase: 'confirm' });
+      setPhase('confirm');
       return;
     }
     const items = result.data.batchStocktake.deleteStocktakes ?? [];
     const failed = items.some((i) => i.response.__typename === 'DeleteStocktakeError');
     if (failed) {
-      setState({ ids, phase: 'error' });
+      setPhase('error');
       return;
     }
     // Success: hand back to the list (clear selection + re-query behind the dialog), then report.
     props.onDeleted();
-    setState({ ids, phase: 'success' });
+    setPhase('success');
   };
 
   return (
-    <>
-      <Button variant="secondary" icon={<TrashIcon />} onClick={open}>
-        {t('common.delete')}
-      </Button>
-      {/* A plain "delete N?" confirm; if the atomic batch reports it can't (a finalised stocktake in
-          the selection), the same dialog switches to the translated error with just a Close. */}
-      <Dialog
-        open={state() != null}
-        // Blocking while the mutation is in flight — no click-outside / Escape exit until it
-        // resolves; dismissable again on confirm / success / error.
-        dismissable={state()?.phase !== 'deleting'}
-        onClose={() => setState(null)}
-        icon={<TrashIcon />}
-        title={t('stocktake.delete.title')}
-        description={
-          <Switch fallback={t('stocktake.delete.confirm', { count: state()?.ids.length ?? 0 })}>
-            <Match when={state()?.phase === 'error'}>
-              <Alert severity="error">{t('stocktake.delete.cannot-edit')}</Alert>
-            </Match>
-            <Match when={state()?.phase === 'success'}>
-              {t('stocktake.delete.success', { count: state()?.ids.length ?? 0 })}
-            </Match>
-          </Switch>
-        }
-        actions={
-          <Switch
-            fallback={
-              // confirm / deleting: Cancel (hidden while deleting) + the loading Delete.
-              <>
-                <Show when={state()?.phase === 'confirm'}>
-                  <Button variant="secondary" icon={<XCircleIcon />} onClick={() => setState(null)}>
-                    {t('common.cancel')}
-                  </Button>
-                </Show>
-                <Button
-                  variant="secondary"
-                  icon={<TrashIcon />}
-                  loading={state()?.phase === 'deleting'}
-                  onClick={() => void run()}
-                >
-                  {t('stocktake.delete.action')}
+    // A plain "delete N?" confirm; if the atomic batch reports it can't (a finalised stocktake in the
+    // selection), the same dialog switches to the translated error with just a Close.
+    <Dialog
+      open
+      // Blocking while the mutation is in flight — no click-outside / Escape exit until it resolves.
+      dismissable={phase() !== 'deleting'}
+      onClose={props.onClose}
+      icon={<TrashIcon />}
+      title={t('stocktake.delete.title')}
+      description={
+        <Switch fallback={t('stocktake.delete.confirm', { count })}>
+          <Match when={phase() === 'error'}>
+            <Alert severity="error">{t('stocktake.delete.cannot-edit')}</Alert>
+          </Match>
+          <Match when={phase() === 'success'}>{t('stocktake.delete.success', { count })}</Match>
+        </Switch>
+      }
+      actions={
+        <Switch
+          fallback={
+            // confirm / deleting: Cancel (hidden while deleting) + the loading Delete.
+            <>
+              <Show when={phase() === 'confirm'}>
+                <Button variant="secondary" icon={<XCircleIcon />} onClick={props.onClose}>
+                  {t('common.cancel')}
                 </Button>
-              </>
-            }
-          >
-            <Match when={state()?.phase === 'success'}>
-              <Button variant="secondary" icon={<CheckIcon />} onClick={() => setState(null)}>
-                {t('common.ok')}
+              </Show>
+              <Button
+                variant="secondary"
+                icon={<TrashIcon />}
+                loading={phase() === 'deleting'}
+                onClick={() => void run()}
+              >
+                {t('stocktake.delete.action')}
               </Button>
-            </Match>
-            <Match when={state()?.phase === 'error'}>
-              <Button variant="secondary" icon={<XCircleIcon />} onClick={() => setState(null)}>
-                {t('common.cancel')}
-              </Button>
-            </Match>
-          </Switch>
-        }
-      />
-    </>
+            </>
+          }
+        >
+          <Match when={phase() === 'success'}>
+            <Button variant="secondary" icon={<CheckIcon />} onClick={props.onClose}>
+              {t('common.ok')}
+            </Button>
+          </Match>
+          <Match when={phase() === 'error'}>
+            <Button variant="secondary" icon={<XCircleIcon />} onClick={props.onClose}>
+              {t('common.cancel')}
+            </Button>
+          </Match>
+        </Switch>
+      }
+    />
   );
 };
