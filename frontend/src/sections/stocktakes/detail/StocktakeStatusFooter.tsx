@@ -28,10 +28,8 @@ export interface StocktakeStatusFooterProps {
   onSetHold: (hold: boolean) => void;
   /** The stocktake was finalised — merge the returned info over the node (in place, no refetch). */
   onFinalised: (node: StocktakeInfoFragment) => void;
-  /** A finalise rejection carrying offending lines — stamp them (inline + errors chip). */
-  onError: (message: string, lineIds: string[]) => void;
-  /** Error phase's "Show error lines": apply the errors filter to the offending lines. */
-  onShowErrors: (lineIds: string[]) => void;
+  /** A finalise rejection carrying offending lines — stamp them on the rows + jump to them. */
+  onError: (lineIds: string[]) => void;
 }
 
 export const StocktakeStatusFooter: Component<StocktakeStatusFooterProps> = (props) => {
@@ -68,7 +66,6 @@ export const StocktakeStatusFooter: Component<StocktakeStatusFooterProps> = (pro
         canFinalise={props.canFinalise}
         onApplied={props.onFinalised}
         onError={props.onError}
-        onShowErrors={props.onShowErrors}
       />
 
       {/* On-hold confirm: the message flips with the direction (set vs unset), matching OMS. */}

@@ -4,8 +4,7 @@ import { Button } from '../../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { ContentFooterActions } from '../../../../ui/layout/ContentFooter/ContentFooterActions';
-import { ArrowRightIcon, InfoIcon, CheckIcon } from '../../../../ui/icons';
-import { ActionModal, type ActionResult } from '../../../../domain/action';
+import { ArrowRightIcon, InfoIcon, CheckIcon, XCircleIcon } from '../../../../ui/icons';
 import { STATUS_FLOW, STATUS_LABELS, statusIndex } from '../stocktakeStatus';
 import { finaliseStocktake } from '../stocktakeUpdate';
 import type { StocktakeInfoFragment } from '../lines/stocktakeDetail.generated';
@@ -18,39 +17,27 @@ export interface FinaliseActionProps {
   /** No countable lines → finalise can't run yet (OMS no-lines guard). */
   canFinalise: boolean;
   /** The stocktake was finalised — the view merges the returned info over its node (in place, no
-   *  refetch). Fires the moment the mutation succeeds, so the UI updates behind the success message. */
+   *  refetch). Fires the moment the mutation succeeds. */
   onApplied: (node: StocktakeInfoFragment) => void;
-  /** A finalise rejection carrying offending lines — stamp them (inline + errors chip). */
-  onError: (message: string, lineIds: string[]) => void;
-  /** Error phase's "Show error lines": apply the errors filter to the offending lines. */
-  onShowErrors: (lineIds: string[]) => void;
+  /** A finalise rejection carrying offending lines — stamp them on the rows + jump to them. */
+  onError: (lineIds: string[]) => void;
 }
 
 // The Finalise action — a self-contained peer of the bulk selection actions (kdd/action-modal), but
 // its trigger is the status stepper's SplitButton rather than a plain button. It owns the button,
 // the finalise mutation (finaliseStocktake — the ONLY status write, NEW → FINALISED, no un-finalise),
-// the confirm → working → success | error ActionModal (a rejection carries per-line errors, so the
-// error phase offers "Show error lines"), AND a no-lines info dialog. Like the bulk actions, the view
-// keeps ownership of the stocktake state and applies the result via callbacks: onApplied (the saved
-// node) on success, onError (the offending lines) on a rejection. A transport failure is silent
-// (handled globally in graphqlFetch) → the modal resolves `ok` and just closes.
+// the confirm → working dialog, AND a no-lines info dialog.
+//
+// The confirm dialog is inline (not via a shared ActionModal) so the whole flow is readable in one
+// place (kdd/explicit-composition). On resolution it always closes: on success onApplied merges the
+// saved node (the FINALISED status shows in the footer behind the closing modal); on a rejection
+// onError stamps the offending lines + jumps to them (no in-modal error phase). A transport failure
+// is silent (handled globally) → just closes.
 export const FinaliseAction: Component<FinaliseActionProps> = (props) => {
-  const run = async (): Promise<ActionResult> => {
-    const result = await finaliseStocktake(props.storeId, props.node.id);
-    if (result.kind === 'saved') {
-      props.onApplied(result.node);
-      return { kind: 'ok' };
-    }
-    if (result.kind === 'error') {
-      props.onError(result.message, result.lineIds);
-      return { kind: 'error', message: result.message, lineIds: result.lineIds };
-    }
-    return { kind: 'ok' };
-  };
-
   // pendingStatus drives the confirm modal (set by the split button); noLinesOpen the info dialog.
   const [pendingStatus, setPendingStatus] = createSignal<string | undefined>();
   const [noLinesOpen, setNoLinesOpen] = createSignal(false);
+  const [working, setWorking] = createSignal(false);
 
   const isFinalised = () => props.node.status === 'FINALISED';
   const currentIndex = () => statusIndex(props.node.status);
@@ -80,6 +67,16 @@ export const FinaliseAction: Component<FinaliseActionProps> = (props) => {
     setPendingStatus(status);
   };
 
+  const run = async () => {
+    if (working()) return; // re-entry guard
+    setWorking(true);
+    const result = await finaliseStocktake(props.storeId, props.node.id);
+    if (result.kind === 'saved') props.onApplied(result.node);
+    else if (result.kind === 'error') props.onError(result.lineIds);
+    setWorking(false);
+    setPendingStatus(undefined);
+  };
+
   return (
     <>
       {/* Status change: hidden once finalised. The main button confirms the next status; the
@@ -96,22 +93,37 @@ export const FinaliseAction: Component<FinaliseActionProps> = (props) => {
         </ContentFooterActions>
       </Show>
 
-      {/* Finalise: confirm → working → success | error (shared ActionModal). The confirm body is
-          the finalise warning; run() reports a rejection with the offending lines, and the error
-          phase offers "Show error lines". Opened by the SplitButton via pendingStatus. */}
-      <ActionModal
+      {/* Finalise confirm → working. Opened by the SplitButton via pendingStatus; a rejection's
+          offending lines surface on the rows (onError), so there's no in-modal error phase. */}
+      <Dialog
         open={pendingStatus() != null}
+        dismissable={!working()}
         onClose={() => setPendingStatus(undefined)}
         icon={<ArrowRightIcon />}
         title={t('stocktake.finalise.confirm-title')}
-        confirmLabel={t('stocktake.detail.finalise')}
-        confirmIcon={<ArrowRightIcon />}
-        run={run}
-        successMessage={t('stocktake.finalise.success')}
-        onShowErrors={props.onShowErrors}
-      >
-        {t('stocktake.finalise.confirm')}
-      </ActionModal>
+        description={t('stocktake.finalise.confirm')}
+        actions={
+          <>
+            <Show when={!working()}>
+              <Button
+                variant="secondary"
+                icon={<XCircleIcon />}
+                onClick={() => setPendingStatus(undefined)}
+              >
+                {t('common.cancel')}
+              </Button>
+            </Show>
+            <Button
+              variant="primary"
+              icon={<ArrowRightIcon />}
+              loading={working()}
+              onClick={() => void run()}
+            >
+              {t('stocktake.detail.finalise')}
+            </Button>
+          </>
+        }
+      />
 
       {/* No counted lines: an info-only dialog (single OK) explaining the finalise can't run yet,
           shown instead of a silent no-op when the split button is pressed with nothing counted. */}
