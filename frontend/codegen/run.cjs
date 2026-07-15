@@ -5,8 +5,7 @@
  * against the live schema, and writes a co-located <name>.generated.ts next to
  * each .graphql file.
  *
- * Uses @graphql-codegen/core (a transitive dep of the CLI) so no extra package
- * is needed beyond graphql-codegen itself.
+ * Uses @graphql-codegen/core to drive the plugin — the full CLI isn't needed.
  *
  * Usage: node codegen/run.js
  *   SCHEMA_URL env overrides the introspection endpoint.

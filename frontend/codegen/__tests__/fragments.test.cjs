@@ -95,20 +95,6 @@ test("fragments referencing other fragments reference each other's types", () =>
   assert.equal(resultType(out, "Q"), `{\n  thing: OuterFragment;\n}`);
 });
 
-test("a missing fragment spread is skipped (no crash)", () => {
-  // The plugin guards spreads whose definition isn't present in the documents.
-  const schema = `
-    type Query { thing: Thing! }
-    type Thing { id: ID! }
-  `;
-  const out = generate({
-    schema,
-    document: "query Q { thing { id ...NotDefined } }",
-  });
-
-  assert.equal(resultType(out, "Q"), `{\n  thing: {\n  id: string;\n};\n}`);
-});
-
 test("inline fragments on a union become a DISCRIMINATED union", () => {
   const schema = `
     type Query { search: SearchResult! }

@@ -154,16 +154,18 @@ test("multiple operations in one document each get their own types", () => {
 });
 
 test("the document const is bound to TypedDocument<Result, Variables>", () => {
-  const schema = `type Query { thing: Thing! } type Thing { id: ID! }`;
+  // The variable must actually be used — declared-but-unused variables are
+  // invalid (the server rejects them).
+  const schema = `type Query { thing(id: String!): Thing! } type Thing { id: ID! }`;
   const out = generate({
     schema,
-    document: "query Q($id: String!) { thing { id } }",
+    document: "query Q($id: String!) { thing(id: $id) { id } }",
   });
 
   assert.equal(
     documentConst(out, "Q"),
     `export const Q = {
-  query: "query Q($id: String!) {\\n  thing {\\n    id\\n  }\\n}",
+  query: "query Q($id: String!) {\\n  thing(id: $id) {\\n    id\\n  }\\n}",
 } as TypedDocument<QResult, QVariables>;`,
   );
 });
