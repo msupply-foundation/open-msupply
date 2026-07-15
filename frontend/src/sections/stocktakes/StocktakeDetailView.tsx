@@ -236,16 +236,18 @@ const StocktakeDetailView: Component = () => {
     return item ? rows().filter((line) => line.item.id === item.id) : [];
   });
 
-  // Reflect a line-edit save in place (no refetch): drop deleted ids, replace updated lines by id,
-  // append inserted lines — all the SAME StocktakeLine fragment.
-  const applyCommit = (commit: LineEditCommit) => {
+  // Reflect a line change in place (no refetch): drop deleted ids, replace updated lines by id,
+  // append inserted lines — all the SAME StocktakeLine fragment. The ONE way rows() mutates: the
+  // line-edit modal passes a full LineEditCommit; the selection actions pass a partial (delete-only
+  // or update-only), so every path reduces to one splice with consistent semantics.
+  const applyCommit = (commit: Partial<LineEditCommit>) => {
     setRows((current) => {
       const deleted = new Set(commit.deletedIds);
-      const updatedById = new Map(commit.updated.map((line) => [line.id, line]));
+      const updatedById = new Map((commit.updated ?? []).map((line) => [line.id, line]));
       const next = current
         .filter((line) => !deleted.has(line.id))
         .map((line) => updatedById.get(line.id) ?? line);
-      return [...next, ...commit.inserted];
+      return [...next, ...(commit.inserted ?? [])];
     });
   };
 
@@ -316,20 +318,12 @@ const StocktakeDetailView: Component = () => {
   // --- Selection actions ---
   // Each action (Delete / Change location / Reduce to 0) is its own self-contained component in
   // actions/ (button + modal + run); the view keeps ownership of rows/selection/errors and applies
-  // each result via these callbacks (no refetch). Delete drops the deleted lines; the updates
+  // each result through applyCommit (no refetch) — delete drops the deleted lines, the updates
   // splice the returned lines back; a partial failure stamps the per-line errors.
   //
-  // The apply callbacks DON'T clear the selection — the action components host their modal inside
-  // the selection footer, so clearing here would unmount the modal mid-success-phase. Selection is
+  // applyCommit DOESN'T clear the selection — the action components host their modal inside the
+  // selection footer, so clearing here would unmount the modal mid-success-phase. Selection is
   // cleared when the modal closes, by which point the success/error phase has been seen.
-  const applyDeleted = (deletedIds: string[]) => {
-    const gone = new Set(deletedIds);
-    setRows((rows) => rows.filter((line) => !gone.has(line.id)));
-  };
-  const applyUpdated = (lines: Line[]) => {
-    const byId = new Map(lines.map((line) => [line.id, line]));
-    setRows((rows) => rows.map((line) => byId.get(line.id) ?? line));
-  };
 
   // "Show error lines" (the action modals' error phase + the finalise error dialog): wipe every
   // other filter and keep ONLY the error lines (OMS "add filter for errors"). Clears the selection
@@ -536,7 +530,7 @@ const StocktakeDetailView: Component = () => {
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onDeleted={applyDeleted}
+                    onDeleted={(deletedIds: string[]) => applyCommit({ deletedIds })}
                     onError={stampLineErrors}
                     onShowErrors={showErrorLines}
                   />
@@ -544,7 +538,7 @@ const StocktakeDetailView: Component = () => {
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onUpdated={applyUpdated}
+                    onUpdated={(updated: LineEditCommit['updated']) => applyCommit({ updated })}
                     onError={stampLineErrors}
                     onShowErrors={showErrorLines}
                   />
@@ -552,7 +546,7 @@ const StocktakeDetailView: Component = () => {
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onUpdated={applyUpdated}
+                    onUpdated={(updated: LineEditCommit['updated']) => applyCommit({ updated })}
                     onError={stampLineErrors}
                     onShowErrors={showErrorLines}
                   />
