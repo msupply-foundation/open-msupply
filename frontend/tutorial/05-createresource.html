@@ -1,83 +1,60 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>5 · createResource</title>
-    <link rel="stylesheet" href="style.css" />
-    <script src="tutorial.js"></script>
-  </head>
-  <body>
-    <button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
-    <div class="layout">
-      <aside class="sidebar">
-        <div class="brand"><span class="dot"></span> FE Patterns</div>
-        <nav>
-          <a href="index.html"><span class="num">·</span>Overview</a>
-          <a href="01-graphql-codegen.html"
-            ><span class="num">1</span>Codegen &amp; graphqlFetch</a
-          >
-          <a href="02-init-auth-error.html"
-            ><span class="num">2</span>Init, auth &amp; errors</a
-          >
-          <a href="03-store-login-state.html"
-            ><span class="num">3</span>Store &amp; global state</a
-          >
-          <a href="04-list-table-url.html"
-            ><span class="num">4</span>Lists: table &amp; URL</a
-          >
-          <a class="current" href="05-createresource.html"
-            ><span class="num">5</span>createResource</a
-          >
-          <a href="06-store-scoped.html"
-            ><span class="num">6</span>Store-scoped caches</a
-          >
-        </nav>
-      </aside>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>5 · createResource</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="tutorial.js"></script>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> FE Patterns</div>
+    <nav>
+      <a href="index.html"><span class="num">·</span>Overview</a>
+      <a href="01-graphql-codegen.html"><span class="num">1</span>Codegen &amp; graphqlFetch</a>
+      <a href="02-init-auth-error.html"><span class="num">2</span>Init, auth &amp; errors</a>
+      <a href="03-store-login-state.html"><span class="num">3</span>Store &amp; global state</a>
+      <a href="04-list-table-url.html"><span class="num">4</span>Lists: table &amp; URL</a>
+      <a class="current" href="05-createresource.html"><span class="num">5</span>createResource</a>
+      <a href="06-store-scoped.html"><span class="num">6</span>Store-scoped caches</a>
+    </nav>
+  </aside>
 
-      <main class="content">
-        <div class="content-inner">
-          <p class="eyebrow">Chapter 5</p>
-          <h1>createResource, without remounting the screen</h1>
-          <p class="lede">
-            This is where the list gets its data.
-            <code>createResource</code> re-fetches whenever its source signal
-            changes — but reading a <em>pending</em> resource under
-            <code>&lt;Suspense&gt;</code> tears the whole boundary down, which
-            reads to the user as "the field unfocused while I was typing" or
-            "the form reset when I toggled something." This chapter is the set
-            of rules that stop that from happening.
-          </p>
+  <main class="content">
+    <div class="content-inner">
+      <p class="eyebrow">Chapter 5</p>
+      <h1>createResource, without remounting the screen</h1>
+      <p class="lede">
+        This is where the list gets its data. <code>createResource</code> re-fetches whenever
+        its source signal changes — but reading a <em>pending</em> resource under
+        <code>&lt;Suspense&gt;</code> tears the whole boundary down, which reads to the user as
+        "the field unfocused while I was typing" or "the form reset when I toggled something."
+        This chapter is the set of rules that stop that from happening.
+      </p>
 
-          <div class="box kdd">
-            <p class="box-title">Why this matters (KDD)</p>
-            <p style="margin-bottom: 0">
-              A remount is a
-              <strong
-                >data-fetch or routing event, never an interaction
-                event.</strong
-              >
-              Typing, selecting, toggling, filtering and paginating must update
-              the live DOM in place. The failure is transient (the subtree tears
-              down and rebuilds within one interaction), so it must be prevented
-              by construction, not caught after the fact. See
-              <a href="../kdd/no-remounts/draft-kdd.md">kdd/no-remounts</a>.
-            </p>
-          </div>
+      <div class="box kdd">
+        <p class="box-title">Why this matters (KDD)</p>
+        <p style="margin-bottom:0">
+          A remount is a <strong>data-fetch or routing event, never an interaction event.</strong>
+          Typing, selecting, toggling, filtering and paginating must update the live DOM in
+          place. The failure is transient (the subtree tears down and rebuilds within one
+          interaction), so it must be prevented by construction, not caught after the fact. See
+          <a href="../kdd/solid-reactivity-pitfalls/draft-kdd.md">kdd/solid-reactivity-pitfalls</a>.
+        </p>
+      </div>
 
-          <h2>Rule 1 — refetch on change with a <em>serialised</em> source</h2>
-          <p>
-            The list resource's source is
-            <code>JSON.stringify(variables())</code>, not the variables object.
-            Two states with identical query content produce an equal string, so
-            the resource <strong>does not refetch</strong> — e.g. adding an
-            empty filter chip, which maps to the same effective filter, doesn't
-            reflash the list.
-          </p>
-          <span class="filename"
-            >src/sections/stocktakes/StocktakesList.tsx</span
-          >
-          <pre><code><span class="kw">const</span> [data, { refetch }] = <span class="fn">createResource</span>(
+      <h2>Rule 1 — refetch on change with a <em>serialised</em> source</h2>
+      <p>
+        The list resource's source is <code>JSON.stringify(variables())</code>, not the
+        variables object. Two states with identical query content produce an equal string, so
+        the resource <strong>does not refetch</strong> — e.g. adding an empty filter chip, which
+        maps to the same effective filter, doesn't reflash the list.
+      </p>
+      <span class="filename">src/sections/stocktakes/StocktakesList.tsx</span>
+<pre><code><span class="kw">const</span> [data, { refetch }] = <span class="fn">createResource</span>(
   () =&gt; <span class="fn">JSON.stringify</span>(<span class="fn">variables</span>()),          <span class="cm">// ← source: a stable STRING</span>
   <span class="kw">async</span> (serialised) =&gt; {
     <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">graphqlFetch</span>(Stocktakes, <span class="fn">JSON.parse</span>(serialised));
@@ -88,28 +65,22 @@
 
 <span class="kw">const</span> rows = () =&gt; <span class="fn">data</span>()?.nodes ?? [];
 <span class="kw">const</span> totalCount = () =&gt; <span class="fn">data</span>()?.totalCount ?? <span class="em">0</span>;</code></pre>
-          <p>
-            Crucially, the list reads <code>data()?.nodes ?? []</code>
-            <em>directly</em> — there is no
-            <code>&lt;Suspense&gt;</code> wrapping the table. During a refetch,
-            <code>data()</code>
-            returns the previous value, so the rows swap in place and the table
-            never remounts. Sorting, filtering and paging all just re-write the
-            URL (chapter 4), which changes the source string, which refetches —
-            with no flash.
-          </p>
+      <p>
+        Crucially, the list reads <code>data()?.nodes ?? []</code> <em>directly</em> — there is
+        no <code>&lt;Suspense&gt;</code> wrapping the table. During a refetch, <code>data()</code>
+        returns the previous value, so the rows swap in place and the table never remounts.
+        Sorting, filtering and paging all just re-write the URL (chapter 4), which changes the
+        source string, which refetches — with no flash.
+      </p>
 
-          <h2>Rule 2 — the sanctioned suspending read: initial load only</h2>
-          <p>
-            Suspense isn't banned — it's exactly right for a screen's
-            <em>first</em> load, where there's no user state to lose. The detail
-            view uses it, plus <code>&lt;Show keyed&gt;</code>
-            so navigating to a genuinely different record gets a fresh subtree.
-          </p>
-          <span class="filename"
-            >src/sections/stocktakes/StocktakeDetailView.tsx</span
-          >
-          <pre><code><span class="kw">const</span> [data] = <span class="fn">createResource</span>(
+      <h2>Rule 2 — the sanctioned suspending read: initial load only</h2>
+      <p>
+        Suspense isn't banned — it's exactly right for a screen's <em>first</em> load, where
+        there's no user state to lose. The detail view uses it, plus <code>&lt;Show keyed&gt;</code>
+        so navigating to a genuinely different record gets a fresh subtree.
+      </p>
+      <span class="filename">src/sections/stocktakes/StocktakeDetailView.tsx</span>
+<pre><code><span class="kw">const</span> [data] = <span class="fn">createResource</span>(
   () =&gt; ({ storeId: params.storeId, stocktakeId: params.stocktakeId }),  <span class="cm">// refetch on route change</span>
   <span class="kw">async</span> (variables) =&gt; { <span class="cm">/* graphqlFetch(StocktakeDetail, …) */</span> },
 );
@@ -121,36 +92,28 @@
     &lt;/<span class="ty">Show</span>&gt;
   &lt;/<span class="ty">Suspense</span>&gt;
 );</code></pre>
-          <div class="box warn">
-            <p class="box-title">The trap</p>
-            <p style="margin-bottom: 0">
-              Use <code>&lt;Show keyed&gt;</code> only for "a different record
-              loaded." Never for "the same record got new field values" — that
-              would remount and drop local state. Same for Suspense: reserve the
-              suspending read (<code>resource()</code>) for initial load; a
-              resource that refetches <em>while a screen stays open</em> must
-              not suspend that screen's boundary.
-            </p>
-          </div>
+      <div class="box warn">
+        <p class="box-title">The trap</p>
+        <p style="margin-bottom:0">
+          Use <code>&lt;Show keyed&gt;</code> only for "a different record loaded." Never for "the
+          same record got new field values" — that would remount and drop local state. Same for
+          Suspense: reserve the suspending read (<code>resource()</code>) for initial load; a
+          resource that refetches <em>while a screen stays open</em> must not suspend that
+          screen's boundary.
+        </p>
+      </div>
 
-          <h2>Rule 3 — live-refetch-while-open: read without suspending</h2>
-          <p>
-            The hardest case: a resource that refetches
-            <em>while a form is open</em>. The create modal shows a live
-            "estimated line count" that recomputes as the user edits the form.
-            This modal renders under AppShell's
-            <code>&lt;Suspense&gt;</code> (there for lazy section chunks), so a
-            pending read there would trip the fallback → remount the section →
-            reset the form mid-edit.
-          </p>
-          <p>
-            The fix is to read via a <strong>state gate</strong>, never a
-            suspending read:
-          </p>
-          <span class="filename"
-            >src/sections/stocktakes/CreateStocktakeModal.tsx</span
-          >
-          <pre><code><span class="kw">const</span> [estimate] = <span class="fn">createResource</span>(
+      <h2>Rule 3 — live-refetch-while-open: read without suspending</h2>
+      <p>
+        The hardest case: a resource that refetches <em>while a form is open</em>. The create
+        modal shows a live "estimated line count" that recomputes as the user edits the form.
+        This modal renders under AppShell's <code>&lt;Suspense&gt;</code> (there for lazy section
+        chunks), so a pending read there would trip the fallback → remount the section → reset
+        the form mid-edit.
+      </p>
+      <p>The fix is to read via a <strong>state gate</strong>, never a suspending read:</p>
+      <span class="filename">src/sections/stocktakes/CreateStocktakeModal.tsx</span>
+<pre><code><span class="kw">const</span> [estimate] = <span class="fn">createResource</span>(
   () =&gt; (<span class="fn">isBlank</span>() ? <span class="kw">null</span> : <span class="fn">JSON.stringify</span>(<span class="fn">form</span>())),  <span class="cm">// null source → no fetch</span>
   <span class="kw">async</span> () =&gt; { <span class="cm">/* count lines matching the form filters */</span> },
 );
@@ -161,114 +124,73 @@
   estimate.state === <span class="st">"ready"</span> || estimate.state === <span class="st">"refreshing"</span>
     ? (estimate.latest ?? <span class="em">0</span>)
     : <span class="em">0</span>;</code></pre>
-          <div class="box">
-            <p class="box-title">
-              Why <code>.state</code>, not <code>.latest</code>
-            </p>
-            <p style="margin-bottom: 0">
-              It's tempting to reach for <code>resource.latest</code> ("the
-              previous value, kept during a refetch"). But <code>.latest</code>
-              <strong>still suspends on the very first pending read</strong> —
-              before there is any previous value. Gating on
-              <code>resource.state</code> (<code>"ready"</code> or
-              <code>"refreshing"</code> → the value; anything else → a fallback)
-              never touches the boundary, first read or later. This subtlety is
-              the whole point of the pattern.
-            </p>
-          </div>
+      <div class="box">
+        <p class="box-title">Why <code>.state</code>, not <code>.latest</code></p>
+        <p style="margin-bottom:0">
+          It's tempting to reach for <code>resource.latest</code> ("the previous value, kept
+          during a refetch"). But <code>.latest</code> <strong>still suspends on the very first
+          pending read</strong> — before there is any previous value. Gating on
+          <code>resource.state</code> (<code>"ready"</code> or <code>"refreshing"</code> → the
+          value; anything else → a fallback) never touches the boundary, first read or later.
+          This subtlety is the whole point of the pattern.
+        </p>
+      </div>
 
-          <h2>The three cases side by side</h2>
-          <table class="data">
-            <thead>
-              <tr>
-                <th>Situation</th>
-                <th>Read</th>
-                <th>Wrapping Suspense?</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>List refetch on filter/sort/page</td>
-                <td><code>data()?.nodes ?? []</code></td>
-                <td>none — swaps rows in place</td>
-              </tr>
-              <tr>
-                <td>Detail initial load</td>
-                <td>
-                  <code>resource()</code> under <code>&lt;Suspense&gt;</code> +
-                  <code>&lt;Show keyed&gt;</code>
-                </td>
-                <td>yes — no state to lose on first load</td>
-              </tr>
-              <tr>
-                <td>Live estimate while a form is open</td>
-                <td><code>state === "ready" | "refreshing"</code> gate</td>
-                <td>renders under one, so must not suspend it</td>
-              </tr>
-            </tbody>
-          </table>
+      <h2>The three cases side by side</h2>
+      <table class="data">
+        <thead><tr><th>Situation</th><th>Read</th><th>Wrapping Suspense?</th></tr></thead>
+        <tbody>
+          <tr><td>List refetch on filter/sort/page</td><td><code>data()?.nodes ?? []</code></td><td>none — swaps rows in place</td></tr>
+          <tr><td>Detail initial load</td><td><code>resource()</code> under <code>&lt;Suspense&gt;</code> + <code>&lt;Show keyed&gt;</code></td><td>yes — no state to lose on first load</td></tr>
+          <tr><td>Live estimate while a form is open</td><td><code>state === "ready" | "refreshing"</code> gate</td><td>renders under one, so must not suspend it</td></tr>
+        </tbody>
+      </table>
 
-          <h2>Reflecting a mutation: refetch directly</h2>
-          <p>
-            Chapter 3's "refresh by direct call" shows up here too. After a
-            successful batch delete, the list just calls its own
-            <code>refetch()</code> — no cache key, no invalidation.
-          </p>
-          <pre><code><span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">graphqlFetch</span>(DeleteStocktakes, { storeId, ids });
+      <h2>Reflecting a mutation: refetch directly</h2>
+      <p>
+        Chapter 3's "refresh by direct call" shows up here too. After a successful batch delete,
+        the list just calls its own <code>refetch()</code> — no cache key, no invalidation.
+      </p>
+<pre><code><span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">graphqlFetch</span>(DeleteStocktakes, { storeId, ids });
 <span class="kw">if</span> (result.kind === <span class="st">"success"</span> &amp;&amp; !failed) {
   <span class="fn">setSelectedIds</span>([]);
   <span class="kw">void</span> <span class="fn">refetch</span>();                      <span class="cm">// ← deleted rows disappear; direct call</span>
 }</code></pre>
 
-          <div class="box build">
-            <p class="box-title">Build step · widgets</p>
-            <p style="margin-bottom: 0">
-              Wire your <code>WidgetsList</code> resource keyed on
-              <code>() =&gt; JSON.stringify(variables())</code> and read
-              <code>data()?.nodes ?? []</code> straight into the
-              <code>DataTable</code> — no Suspense. Then add a live "matching
-              count" resource read through a
-              <code>state === "ready" | "refreshing"</code> gate, and confirm
-              (using the
-              <a href="../.claude/skills/detect-remounts/SKILL.md"
-                >detect-remounts</a
-              >
-              skill if you have it) that typing in a filter never remounts the
-              table.
-            </p>
-          </div>
+      <div class="box build">
+        <p class="box-title">Build step · widgets</p>
+        <p style="margin-bottom:0">
+          Wire your <code>WidgetsList</code> resource keyed on
+          <code>() =&gt; JSON.stringify(variables())</code> and read
+          <code>data()?.nodes ?? []</code> straight into the <code>DataTable</code> — no Suspense.
+          Then add a live "matching count" resource read through a
+          <code>state === "ready" | "refreshing"</code> gate, and confirm (using the
+          <a href="../.claude/skills/detect-remounts/SKILL.md">detect-remounts</a> skill if you
+          have it) that typing in a filter never remounts the table.
+        </p>
+      </div>
 
-          <div class="box real">
-            <p class="box-title">Real code</p>
-            <p style="margin-bottom: 0">
-              <a href="../src/sections/stocktakes/StocktakesList.tsx"
-                >StocktakesList.tsx</a
-              >
-              ·
-              <a href="../src/sections/stocktakes/StocktakeDetailView.tsx"
-                >StocktakeDetailView.tsx</a
-              >
-              ·
-              <a href="../src/sections/stocktakes/CreateStocktakeModal.tsx"
-                >CreateStocktakeModal.tsx</a
-              >. Why: <a href="../kdd/no-remounts/draft-kdd.md">no-remounts</a>,
-              <a href="../kdd/state-management/draft-kdd.md">state-management</a
-              >.
-            </p>
-          </div>
+      <div class="box real">
+        <p class="box-title">Real code</p>
+        <p style="margin-bottom:0">
+          <a href="../src/sections/stocktakes/StocktakesList.tsx">StocktakesList.tsx</a> ·
+          <a href="../src/sections/stocktakes/StocktakeDetailView.tsx">StocktakeDetailView.tsx</a> ·
+          <a href="../src/sections/stocktakes/CreateStocktakeModal.tsx">CreateStocktakeModal.tsx</a>.
+          Why: <a href="../kdd/solid-reactivity-pitfalls/draft-kdd.md">solid-reactivity-pitfalls</a>,
+          <a href="../kdd/state-management/draft-kdd.md">state-management</a>.
+        </p>
+      </div>
 
-          <div class="pager">
-            <a class="prev" href="04-list-table-url.html">
-              <span class="dir">← Prev</span
-              ><span class="ttl">Lists: table &amp; URL</span>
-            </a>
-            <a class="next" href="06-store-scoped.html">
-              <span class="dir">Next →</span
-              ><span class="ttl">Store-scoped caches</span>
-            </a>
-          </div>
-        </div>
-      </main>
+      <div class="pager">
+        <a class="prev" href="04-list-table-url.html">
+          <span class="dir">← Prev</span><span class="ttl">Lists: table &amp; URL</span>
+        </a>
+        <a class="next" href="06-store-scoped.html">
+          <span class="dir">Next →</span><span class="ttl">Store-scoped caches</span>
+        </a>
+      </div>
     </div>
-  </body>
+  </main>
+</div>
+</body>
 </html>
