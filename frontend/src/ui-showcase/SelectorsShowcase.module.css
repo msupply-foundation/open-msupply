@@ -87,3 +87,26 @@
   font-size: 0.85em;
 }
 
+/* Colour-tag demo rows: picker/dots beside their explainer text. */
+.tagRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tagRow + .tagRow {
+  margin-block-start: var(--space-4);
+}
+
+.tagRowLabel {
+  margin-inline-start: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.tagRowLabel code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+}

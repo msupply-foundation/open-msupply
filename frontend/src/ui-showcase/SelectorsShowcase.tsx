@@ -1,20 +1,30 @@
-import { createSignal, type JSX } from 'solid-js'
-import { Select } from '../ui/elements/selectors/Select'
-import { Combobox } from '../ui/elements/selectors/Combobox'
-import { MultiSelect } from '../ui/elements/selectors/MultiSelect'
-import { Dialog } from '../ui/elements/feedback/Dialog'
-import { Button } from '../ui/elements/buttons/Button'
-import { PlusCircleIcon, XCircleIcon } from '../ui/icons'
+import { createSignal, For, type JSX } from 'solid-js';
+import { Select } from '../ui/elements/selectors/Select';
+import { Combobox } from '../ui/elements/selectors/Combobox';
+import { MultiSelect } from '../ui/elements/selectors/MultiSelect';
+import {
+  ColourTagDot,
+  ColourTagPicker,
+  TAG_COLOURS,
+} from '../ui/elements/selectors/ColourTag';
+import { t } from '../intl';
+import { Dialog } from '../ui/elements/feedback/Dialog';
+import { Button } from '../ui/elements/buttons/Button';
+import { PlusCircleIcon, XCircleIcon } from '../ui/icons';
 import {
   FilterBar,
   FilterSelect,
   FilterTextInput,
   type Filter,
-} from '../ui/elements/selectors/FilterBar'
-import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData'
-import styles from './SelectorsShowcase.module.css'
+} from '../ui/elements/selectors/FilterBar';
+import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
+import styles from './SelectorsShowcase.module.css';
 
-const Card = (props: { title: string; lead: JSX.Element; children: JSX.Element }) => (
+const Card = (props: {
+  title: string;
+  lead: JSX.Element;
+  children: JSX.Element;
+}) => (
   <section class={styles.card}>
     <header class={styles.cardHeader}>{props.title}</header>
     <div class={styles.cardBody}>
@@ -22,7 +32,7 @@ const Card = (props: { title: string; lead: JSX.Element; children: JSX.Element }
       {props.children}
     </div>
   </section>
-)
+);
 
 /* A coloured status dot — the kind of rich option a native <option> can't hold. */
 const Dot = (props: { color: string }) => (
@@ -31,7 +41,7 @@ const Dot = (props: { color: string }) => (
     style={{ background: props.color }}
     aria-hidden="true"
   />
-)
+);
 
 /* Two-line item option: name on top, code + stock beneath. */
 const renderItem = (item: DemoItem) => (
@@ -47,16 +57,16 @@ const renderItem = (item: DemoItem) => (
       )}
     </span>
   </span>
-)
+);
 
 // Match either the item name or its code, case-insensitively.
 const itemFilter = (item: DemoItem, input: string) => {
-  const needle = input.toLocaleLowerCase()
+  const needle = input.toLocaleLowerCase();
   return (
     item.name.toLocaleLowerCase().includes(needle) ||
     item.code.toLocaleLowerCase().includes(needle)
-  )
-}
+  );
+};
 
 /*
  * A demo filter object, shaped like a list page's GraphQL filter (the FilterBar is
@@ -65,10 +75,10 @@ const itemFilter = (item: DemoItem, input: string) => {
  * the current app's outbound-shipment FilterMenu set.
  */
 interface InvoiceFilter {
-  otherPartyName?: string | null
-  invoiceNumber?: string | null
-  theirReference?: string | null
-  status?: string | null
+  otherPartyName?: string | null;
+  invoiceNumber?: string | null;
+  theirReference?: string | null;
+  status?: string | null;
 }
 
 /* Built once as a stable const — labels are accessors, so FilterBar's <For> reuses
@@ -77,41 +87,47 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   {
     key: 'otherPartyName',
     label: () => 'Name',
-    render: (props) => (
+    render: props => (
       <FilterTextInput
         label="Name"
         placeholder="Search by name"
         value={props.filter().otherPartyName ?? ''}
-        onInput={value => props.setPartialFilter({ otherPartyName: value || null })}
+        onInput={value =>
+          props.setPartialFilter({ otherPartyName: value || null })
+        }
       />
     ),
   },
   {
     key: 'invoiceNumber',
     label: () => 'Invoice number',
-    render: (props) => (
+    render: props => (
       <FilterTextInput
         label="Invoice number"
         value={props.filter().invoiceNumber ?? ''}
-        onInput={value => props.setPartialFilter({ invoiceNumber: value || null })}
+        onInput={value =>
+          props.setPartialFilter({ invoiceNumber: value || null })
+        }
       />
     ),
   },
   {
     key: 'theirReference',
     label: () => 'Reference',
-    render: (props) => (
+    render: props => (
       <FilterTextInput
         label="Reference"
         value={props.filter().theirReference ?? ''}
-        onInput={value => props.setPartialFilter({ theirReference: value || null })}
+        onInput={value =>
+          props.setPartialFilter({ theirReference: value || null })
+        }
       />
     ),
   },
   {
     key: 'status',
     label: () => 'Status',
-    render: (props) => (
+    render: props => (
       <FilterSelect
         label="Status"
         value={props.filter().status ?? ''}
@@ -123,31 +139,37 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
       />
     ),
   },
-]
+];
 
 export const SelectorsShowcase = () => {
-  const [status, setStatus] = createSignal('allocated')
-  const [picked, setPicked] = createSignal<DemoItem | null>(null)
-  const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]])
+  const [status, setStatus] = createSignal('allocated');
+  const [picked, setPicked] = createSignal<DemoItem | null>(null);
+  const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]]);
   // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not behind it).
-  const [dialogOpen, setDialogOpen] = createSignal(false)
-  const [dialogItem, setDialogItem] = createSignal<DemoItem | null>(null)
-  const [dialogStatus, setDialogStatus] = createSignal('new')
+  const [dialogOpen, setDialogOpen] = createSignal(false);
+  const [dialogItem, setDialogItem] = createSignal<DemoItem | null>(null);
+  const [dialogStatus, setDialogStatus] = createSignal('new');
   // Seeded non-empty to show chips restoring from an existing filter (a key being
   // present is what shows its chip — here status starts on 'new').
-  const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' })
+  const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' });
+  // Colour-tag demo: starts untagged so the empty dashed ring shows first.
+  const [tagColour, setTagColour] = createSignal<string | null>(null);
+  const tagName = () => {
+    const tag = TAG_COLOURS.find(c => c.value === tagColour());
+    return tag ? t(tag.label) : null;
+  };
 
   // What the page would hand to a table — rendered as the URL query string the filter
   // is destined to live in once routing lands. Empty/null keys (added-but-empty chips)
   // are dropped, mirroring the page's stripEmpty before querying.
   const filterQuery = () => {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
     for (const [key, value] of Object.entries(filters())) {
-      if (value != null && value !== '') params.set(key, String(value))
+      if (value != null && value !== '') params.set(key, String(value));
     }
-    const query = params.toString()
-    return query ? `?${query}` : ''
-  }
+    const query = params.toString();
+    return query ? `?${query}` : '';
+  };
 
   return (
     <div class={styles.stack}>
@@ -234,15 +256,16 @@ export const SelectorsShowcase = () => {
         title="Selectors in a dialog — portal-into-dialog"
         lead={
           <>
-            The case that needs care: a <strong>Combobox / Select opened inside a
-            modal dialog</strong>. A listbox portaled to <code>&lt;body&gt;</code>{' '}
-            would render <em>behind</em> the top-layer <code>&lt;dialog&gt;</code>{' '}
-            and be inert — so our selectors portal <em>into</em> the dialog
-            instead, with a dismiss guard so a click on an option{' '}
-            <strong>selects</strong> it rather than being read as a click-outside
-            that closes the popup. Open the dialog and pick an item{' '}
-            <strong>by clicking</strong> — it commits, and the listbox layers above
-            the dialog.
+            The case that needs care: a{' '}
+            <strong>Combobox / Select opened inside a modal dialog</strong>. A
+            listbox portaled to <code>&lt;body&gt;</code> would render{' '}
+            <em>behind</em> the top-layer <code>&lt;dialog&gt;</code> and be
+            inert — so our selectors portal <em>into</em> the dialog instead,
+            with a dismiss guard so a click on an option{' '}
+            <strong>selects</strong> it rather than being read as a
+            click-outside that closes the popup. Open the dialog and pick an
+            item <strong>by clicking</strong> — it commits, and the listbox
+            layers above the dialog.
           </>
         }
       >
@@ -270,7 +293,10 @@ export const SelectorsShowcase = () => {
               >
                 Cancel
               </Button>
-              <Button icon={<PlusCircleIcon />} onClick={() => setDialogOpen(false)}>
+              <Button
+                icon={<PlusCircleIcon />}
+                onClick={() => setDialogOpen(false)}
+              >
                 Add
               </Button>
             </>
@@ -279,8 +305,8 @@ export const SelectorsShowcase = () => {
           <Combobox<DemoItem>
             label="Item"
             items={ITEMS}
-            itemToString={(item) => item.name}
-            itemToValue={(item) => item.code}
+            itemToString={item => item.name}
+            itemToValue={item => item.code}
             filter={itemFilter}
             renderItem={renderItem}
             onChange={setDialogItem}
@@ -290,7 +316,7 @@ export const SelectorsShowcase = () => {
             label="Status"
             value={dialogStatus()}
             onValueChange={setDialogStatus}
-            options={INVOICE_STATUSES.map((s) => ({
+            options={INVOICE_STATUSES.map(s => ({
               value: s.value,
               label: s.label,
               adornment: <Dot color={s.color} />,
@@ -314,12 +340,61 @@ export const SelectorsShowcase = () => {
           </>
         }
       >
-        <FilterBar filters={DEMO_FILTERS} filter={filters()} onChange={setFilters} />
+        <FilterBar
+          filters={DEMO_FILTERS}
+          filter={filters()}
+          onChange={setFilters}
+        />
         <p class={styles.filterReadout}>
           What the page hands to the table:{' '}
           <code>{filterQuery() || '(no filters)'}</code>
         </p>
       </Card>
+
+      <Card
+        title="Colour tag — dot + swatch picker"
+        lead={
+          <>
+            User-set colour on a record for visual grouping only. The
+            <code>ColourTagDot</code> is read-only and hides the dot for
+            uneditable records; the <code>ColourTagPicker</code> is a dot with a
+            `Popover` that opens the swatches. The dashed ring circle indicates
+            that no tag is set. The colour palette is currently baked into the
+            component since all current colour tag usages use the same palette.
+          </>
+        }
+      >
+        <div class={styles.tagRow}>
+          <For each={TAG_COLOURS}>
+            {colour => <ColourTagDot colour={colour.value} />}
+          </For>
+          <span class={styles.tagRowLabel}>
+            <code>ColourTagDot</code> — the read-only face (non-Draft rows,
+            read-only panels)
+          </span>
+        </div>
+        <div class={styles.tagRow}>
+          <ColourTagPicker colour={tagColour()} onSelect={setTagColour} />
+          <span class={styles.tagRowLabel}>
+            Inline table variant: <code>row</code>.{' '}
+            {tagName()
+              ? `Tagged: ${tagName()}`
+              : 'Untagged: dashed ring circle'}
+          </span>
+        </div>
+        <div class={styles.tagRow}>
+          <ColourTagPicker
+            colour={tagColour()}
+            onSelect={setTagColour}
+            variant="field"
+            placement="bottom-end"
+          />
+          <span class={styles.tagRowLabel}>
+            Side panel variant: use <code>placement="bottom-end"</code> so the
+            `Popover` grows back into the viewport from the panel's edge.{' '}
+          </span>
+        </div>
+      </Card>
     </div>
-  )
-}
+  );
+};
