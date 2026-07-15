@@ -293,5 +293,8 @@
   "stocktake.column.location": "الموقع",
   "stocktake.column.reason": "السبب",
   "stocktake.column.note": "ملاحظة",
-  "stocktake.line-edit.count-this-line": "عدّ هذا السطر"
+  "stocktake.line-edit.count-this-line": "عدّ هذا السطر",
+  "stocktake.lines.delete-success": "تم حذف الأسطر.",
+  "stocktake.lines.change-location-success": "تم تغيير الموقع.",
+  "stocktake.lines.reduce-to-zero-success": "تم تخفيض الأسطر إلى 0."
 }

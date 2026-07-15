@@ -289,5 +289,8 @@
   "stocktake.column.location": "Emplacement",
   "stocktake.column.reason": "Motif",
   "stocktake.column.note": "Note",
-  "stocktake.line-edit.count-this-line": "Compter cette ligne"
+  "stocktake.line-edit.count-this-line": "Compter cette ligne",
+  "stocktake.lines.delete-success": "Lignes supprimées.",
+  "stocktake.lines.change-location-success": "Emplacement modifié.",
+  "stocktake.lines.reduce-to-zero-success": "Lignes réduites à 0."
 }
