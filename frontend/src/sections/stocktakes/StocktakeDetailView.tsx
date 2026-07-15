@@ -32,6 +32,7 @@ import {
   StocktakeDetail,
   type StocktakeDetailResult,
   type StocktakeInfoFragment,
+  type UpdateStocktakeVariables,
 } from './stocktakeDetail.generated';
 import {
   StocktakeLineEditModal,
@@ -47,8 +48,10 @@ import {
   ChangeLocationAction,
   ReduceToZeroAction,
 } from './actions';
-import { runStocktakeUpdate } from './stocktakeUpdate';
+import { saveStocktakeFields, finaliseStocktake } from './stocktakeUpdate';
 import { lineMatchesFilter, type StocktakeLineFilter } from './stocktakeLineFilter';
+import { createDebouncedEdit } from '../../domain/debouncedEdit';
+import type { StocktakeEditFields } from './stocktakeEdit';
 import { useUrlQueryState } from '../../list/urlQueryState';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an editable
@@ -246,7 +249,7 @@ const StocktakeDetailView: Component = () => {
     });
   };
 
-  // --- Stocktake-level saves (all through updateStocktake, spliced back with no refetch) ---
+  // --- Stocktake-level saves (updateStocktake, spliced back with no refetch) ---
 
   // Stamp the per-line message on each offending line (rendered inline under its Snapshot cell,
   // and drives the errors filter chip via hasErrors). Both the finalise path and the bulk-action
@@ -261,36 +264,53 @@ const StocktakeDetailView: Component = () => {
     setErrorInfo(error);
   };
 
-  // A field / status / hold save. On a saved node we replace `info` in place. A finalise rejection
-  // (or a lock error) opens the error-summary dialog. A transport failure is silent (global modal).
-  const applyUpdate = async (input: Parameters<typeof runStocktakeUpdate>[0]['input']) => {
-    const result = await runStocktakeUpdate({ storeId: params.storeId, input });
+  const current = () => info();
+
+  // A stocktake-level field save: patch → updateStocktake, replace `info` in place on success. No
+  // user-facing error branch — any rejection here is unexpected (the UI disables the fields once the
+  // stocktake is finalised/locked) and saveStocktakeFields has already routed it to the global modal;
+  // on undefined we simply stay put. Shared by the debounce buffer (text fields) and on-hold
+  // (isLocked); the patch is a subset of UpdateStocktakeInput, so no separate patch type.
+  const saveField = async (patch: Partial<Omit<UpdateStocktakeVariables['input'], 'id'>>) => {
+    const node = current();
+    if (!node) return;
+    const saved = await saveStocktakeFields(params.storeId, { id: node.id, ...patch });
+    if (saved) setInfo(saved);
+  };
+
+  // ONE debounced-edit buffer for every as-you-type text field on the stocktake (the toolbar's
+  // description + the side panel's counted-by / verified-by / comment), owned here and passed whole
+  // to both children. One buffer = coalescing spans the whole entity: editing the description then a
+  // side-panel field in a single burst sends ONE updateStocktake with all changed keys, not two
+  // (createDebouncedEdit accumulates the dirty keys). Seeded from info() and re-seeded when the
+  // stocktake identity changes — including the first time the fetch lands (id goes '' → the real id,
+  // populating the buffer); never re-hydrated from a save result, so a returned node can't clobber
+  // in-progress typing. The debounced save writes the changed fields straight through saveField.
+  const edit = createDebouncedEdit<StocktakeEditFields>({
+    id: () => current()?.id ?? '',
+    initial: () => ({
+      description: current()?.description ?? '',
+      countedBy: current()?.countedBy ?? '',
+      verifiedBy: current()?.verifiedBy ?? '',
+      comment: current()?.comment ?? '',
+    }),
+    save: (patch) => void saveField(patch),
+  });
+  const setHold = (hold: boolean) => void saveField({ isLocked: hold });
+
+  // Finalise — the ACTION with user-facing errors, and the ONLY status write (a stocktake goes
+  // NEW → FINALISED, no intermediate / no un-finalise, and UpdateStocktakeInput.status only accepts
+  // FINALISED). A saved node replaces `info` in place; a rejection (snapshot mismatch / lock) opens
+  // the error-summary dialog; a transport failure is silent (global modal).
+  const finalise = async () => {
+    const node = current();
+    if (!node) return;
+    const result = await finaliseStocktake(params.storeId, node.id);
     if (result.kind === 'saved') {
       setInfo(result.node);
     } else if (result.kind === 'error') {
       recordError({ message: result.message, lineIds: result.lineIds });
     }
-  };
-
-  const current = () => info();
-  // The editable non-status fields (status is only ever set to FINALISED, via finalise()).
-  type StocktakeFieldPatch = {
-    description?: string;
-    comment?: string;
-    countedBy?: string;
-    verifiedBy?: string;
-    isLocked?: boolean;
-  };
-  const saveFields = (patch: StocktakeFieldPatch) => {
-    const node = current();
-    if (node) void applyUpdate({ id: node.id, ...patch });
-  };
-  const setHold = (hold: boolean) => saveFields({ isLocked: hold });
-  // Advance the stocktake status. The footer only ever emits a forward (non-disabled) status, and
-  // the update input only accepts FINALISED, so anything else is ignored.
-  const changeStatus = (status: 'NEW' | 'FINALISED') => {
-    const node = current();
-    if (node && status === 'FINALISED') void applyUpdate({ id: node.id, status });
   };
 
   // --- Selection actions ---
@@ -301,7 +321,7 @@ const StocktakeDetailView: Component = () => {
   //
   // The apply callbacks DON'T clear the selection — the action components host their modal inside
   // the selection footer, so clearing here would unmount the modal mid-success-phase. Selection is
-  // cleared when the modal closes (onDone), by which point the success/error phase has been seen.
+  // cleared when the modal closes, by which point the success/error phase has been seen.
   const applyDeleted = (deletedIds: string[]) => {
     const gone = new Set(deletedIds);
     setRows((rows) => rows.filter((line) => !gone.has(line.id)));
@@ -459,7 +479,7 @@ const StocktakeDetailView: Component = () => {
               <StocktakeSidePanel
                 node={node()}
                 disabled={isDisabled(node())}
-                onSave={(patch) => saveFields(patch)}
+                edit={edit}
               />
             }
             header={
@@ -482,7 +502,7 @@ const StocktakeDetailView: Component = () => {
                   <StocktakeDetailToolbar
                     node={node()}
                     disabled={isDisabled(node())}
-                    onSaveDescription={(description) => saveFields({ description })}
+                    edit={edit}
                     filter={filter()}
                     onFilterChange={setFilter}
                     hasErrors={lineErrors().size > 0}
@@ -502,7 +522,7 @@ const StocktakeDetailView: Component = () => {
                     disabled={isDisabled(node())}
                     canFinalise={canFinalise()}
                     onSetHold={setHold}
-                    onChangeStatus={changeStatus}
+                    onFinalise={finalise}
                   />
                 }
               >

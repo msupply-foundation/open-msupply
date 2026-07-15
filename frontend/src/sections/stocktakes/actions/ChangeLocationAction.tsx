@@ -6,7 +6,7 @@ import { CheckIcon, MapPinIcon } from '../../../ui/icons';
 import { SelectionActionModal, type SelectionActionResult } from '../../../domain/selection';
 import { LocationSelect } from '../../../domain/location';
 import type { StocktakeLineFragment } from '../stocktakeDetail.generated';
-import { updateStocktakeLines } from '../stocktakeUpdate';
+import { updateStocktakeLines } from '../stocktakeLineUpdate';
 
 export interface ChangeLocationActionProps {
   storeId: string;

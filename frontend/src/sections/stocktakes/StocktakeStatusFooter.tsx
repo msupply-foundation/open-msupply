@@ -11,10 +11,10 @@ import type { StocktakeInfoFragment } from './stocktakeDetail.generated';
 
 // The stocktake-level footer (Open mSupply's StocktakeDetailView footer, no rows selected): the
 // on-hold checkbox toggle, the status indicator, and the status-change split button. It owns ONLY
-// its two confirm dialogs' open state; the mutations run through the view's callbacks (onSetHold /
-// onFinalise → runStocktakeUpdate), which splice the returned node back with no refetch and route
-// a finalise rejection into the error-summary dialog. Shown only when nothing is selected — the
-// selection action bar replaces it (matching OMS, which swaps the whole footer).
+// its two confirm dialogs' open state; the mutations run through the view's callbacks (onSetHold →
+// saveStocktakeFields, onFinalise → finaliseStocktake), which splice the returned node back with no
+// refetch and route a finalise rejection into the error-summary dialog. Shown only when nothing is
+// selected — the selection action bar replaces it (matching OMS, which swaps the whole footer).
 
 // The stocktake status flow, in order. The status indicator renders every stage; the change
 // button lists every stage too, disabling those at-or-before the current one (you can only move
@@ -40,8 +40,8 @@ export interface StocktakeStatusFooterProps {
   canFinalise: boolean;
   /** Toggle the on-hold lock (writes isLocked). */
   onSetHold: (hold: boolean) => void;
-  /** Advance the stocktake to a new status (writes status; only FINALISED is reachable). */
-  onChangeStatus: (status: StocktakeStatus) => void;
+  /** Finalise the stocktake — the only status write (NEW → FINALISED; no other transition). */
+  onFinalise: () => void;
 }
 
 export const StocktakeStatusFooter: Component<StocktakeStatusFooterProps> = (props) => {
@@ -119,10 +119,7 @@ export const StocktakeStatusFooter: Component<StocktakeStatusFooterProps> = (pro
         title={t('stocktake.finalise.confirm-title')}
         message={t('stocktake.finalise.confirm')}
         confirmLabel={t('stocktake.detail.finalise')}
-        onConfirm={() => {
-          const status = pendingStatus();
-          if (status) props.onChangeStatus(status);
-        }}
+        onConfirm={() => props.onFinalise()}
       />
     </ContentFooter>
   );

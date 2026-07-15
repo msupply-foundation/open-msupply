@@ -3,7 +3,7 @@ import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { TrashIcon } from '../../../ui/icons';
 import { SelectionActionModal, type SelectionActionResult } from '../../../domain/selection';
-import { deleteStocktakeLines } from '../stocktakeUpdate';
+import { deleteStocktakeLines } from '../stocktakeLineUpdate';
 
 export interface DeleteLinesActionProps {
   storeId: string;

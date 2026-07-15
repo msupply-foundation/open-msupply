@@ -1,4 +1,4 @@
-import { onCleanup } from 'solid-js';
+import { getOwner, onCleanup } from 'solid-js';
 
 /*
  * A trailing debounce as a Solid primitive. The returned function schedules `fn` to run `ms`
@@ -10,6 +10,15 @@ import { onCleanup } from 'solid-js';
  * Hand-rolled rather than a dependency (own-the-simple-buy-hard): a trailing debounce is ~15
  * lines and we need exactly this shape — the buffered field saves in the stocktake side panel
  * call it per keystroke and rely on flush() when the field loses focus.
+ *
+ * Ownership: the auto-cancel-on-cleanup only works UNDER a reactive owner (a component / createRoot).
+ * Created ownerless (a module-level helper, a bare call in a test), there's no owner to hang the
+ * cleanup on — so the caller MUST call `cancel()` itself to avoid leaking a pending timer. We skip
+ * registering onCleanup in that case (it would be a no-op that also logs a dev warning).
+ *
+ * `flush()` runs `fn` SYNCHRONOUSLY in the caller's context (e.g. inside a blur handler), and does
+ * not catch: if `fn` throws, it propagates to the caller. Our `fn` is a never-throwing save
+ * (kdd/state-management), so this doesn't arise; a caller passing a throwing `fn` owns handling it.
  */
 export type Debounced<A extends unknown[]> = ((...args: A) => void) & {
   /** Run the pending call now (if any), with its buffered arguments. */
@@ -54,6 +63,8 @@ export const createDebounced = <A extends unknown[]>(
     pending = undefined;
   };
 
-  onCleanup(() => debounced.cancel());
+  // Only auto-cancel on cleanup when there's an owner to register against; an ownerless caller
+  // owns disposal via cancel() (see the ownership note above). Guarding avoids Solid's dev warning.
+  if (getOwner()) onCleanup(() => debounced.cancel());
   return debounced;
 };

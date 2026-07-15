@@ -6,7 +6,7 @@ import { CheckIcon, MinusCircleIcon } from '../../../ui/icons';
 import { SelectionActionModal, type SelectionActionResult } from '../../../domain/selection';
 import { ReasonSelect } from '../../../domain/reasonOptions';
 import type { StocktakeLineFragment } from '../stocktakeDetail.generated';
-import { updateStocktakeLines } from '../stocktakeUpdate';
+import { updateStocktakeLines } from '../stocktakeLineUpdate';
 
 export interface ReduceToZeroActionProps {
   storeId: string;
