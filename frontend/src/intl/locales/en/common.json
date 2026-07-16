@@ -42,6 +42,7 @@
   "sync.status.done": "done",
   "sync.status.pending": "pending",
   "sync.status.in-progress": "in progress",
+  "sync.status.error": "error",
   "sync.status.progress": "{{ done }} / {{ total }}",
   "sync.step.pull": "Pull",
   "sync.step.push": "Push",

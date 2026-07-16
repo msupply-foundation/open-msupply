@@ -46,6 +46,7 @@
   "sync.status.done": "مكتمل",
   "sync.status.pending": "قيد الانتظار",
   "sync.status.in-progress": "قيد التنفيذ",
+  "sync.status.error": "خطأ",
   "sync.status.progress": "{{ done }} / {{ total }}",
   "sync.step.pull": "السحب",
   "sync.step.push": "الدفع",

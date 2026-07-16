@@ -18,12 +18,18 @@
   color: var(--text-body);
 }
 
+/* Toned pills reuse Alert's colour recipe (severity tint over the surface,
+   severity mixed into the body text) rather than the current app's solid MUI
+   fills: at --text-xs no text colour holds AA on the solid severities (white
+   on the light-theme error red is ≈4.3:1, near-black ≈3.9:1) — the recorded
+   AA-over-fidelity trade. The tint is stronger than Alert's 10% panel so the
+   small pill still reads against its host. */
 .badge[data-tone='warning'] {
-  background: var(--warning-main);
-  color: var(--primary-contrast);
+  background: color-mix(in srgb, var(--warning-main) 15%, var(--bg-white));
+  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
 }
 
 .badge[data-tone='error'] {
-  background: var(--error-main);
-  color: var(--primary-contrast);
+  background: color-mix(in srgb, var(--error-main) 15%, var(--bg-white));
+  color: color-mix(in srgb, var(--error-main) 40%, var(--text-body));
 }

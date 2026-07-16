@@ -17,9 +17,15 @@ export interface ProgressStep {
   icon?: Component<IconProps>;
 }
 
-const stepStatus = (step: ProgressStep): string => {
-  if (step.finished) return t('sync.status.done');
-  if (!step.started) return t('sync.status.pending');
+type StepState = 'completed' | 'active' | 'pending';
+
+// Reads from the same derived state as the styling, so a step completed by
+// progression (finished flag never arrived — the #12172 case) announces done,
+// and the failure point announces error (the alert glyph is aria-hidden).
+const stepStatus = (state: StepState, errored: boolean): string => {
+  if (errored) return t('sync.status.error');
+  if (state === 'completed') return t('sync.status.done');
+  if (state === 'pending') return t('sync.status.pending');
   return t('sync.status.in-progress');
 };
 
@@ -44,8 +50,10 @@ const stepStatus = (step: ProgressStep): string => {
  * No remounts on interaction).
  *
  * The in-flight step pulses and carries aria-current="step"; meaning is never
- * colour-alone (each step carries visually-hidden pending / in progress /
- * done text, and the errored step swaps its marker for an alert glyph).
+ * colour-alone: each step carries visually-hidden status text (pending / in
+ * progress / done / error) derived from the SAME progression state as the
+ * styling — the errored step's alert glyph and colour are only its visual
+ * echo (the marker circle is aria-hidden).
  */
 export const ProgressList = (props: {
   steps: ProgressStep[];
@@ -63,7 +71,7 @@ export const ProgressList = (props: {
     return index;
   });
 
-  const stateOf = (index: number, step: ProgressStep) => {
+  const stateOf = (index: number, step: ProgressStep): StepState => {
     if (index < furthest() || (index === furthest() && step.finished))
       return 'completed';
     if (index === furthest()) return 'active';
@@ -110,7 +118,9 @@ export const ProgressList = (props: {
               </span>
               <span class={styles.label}>{step().label}</span>
               <span class={styles.count}>{count()}</span>
-              <span class={styles.srOnly}>{stepStatus(step())}</span>
+              <span class={styles.srOnly}>
+                {stepStatus(state(), errored())}
+              </span>
             </li>
           );
         }}
