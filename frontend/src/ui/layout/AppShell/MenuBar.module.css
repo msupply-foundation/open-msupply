@@ -188,12 +188,22 @@
 }
 
 /* --- Section children (indented tree) ---------------------------------- */
+/* The tree line sits under the parent's collapse chevron: navList padding
+   (--space-2) + this margin = 3.5rem, the chevron's box centre (icon 1.25rem +
+   gap 0.5rem + half the 1rem chevron, all past the 1.25rem button inset). This
+   matches the current app, where the child Collapse's border-left lands on the
+   section chevron's centre. Children then indent past the parent label. */
 .childList {
   display: flex;
   flex-direction: column;
   gap: 0.3125rem; /* the app's ListItem inter-row margin */
-  margin: var(--space-1) 0 0;
-  margin-inline-start: 1.75rem;
+  /* Pull the tree line's TOP up under the parent chevron (mirroring the current
+     app's child Collapse marginTop:-1.5), then pad the first child back down so
+     it still clears the parent row. The border spans the padding, so the line
+     reaches up to connect under the chevron without the children overlapping. */
+  margin-block: calc(-1 * var(--space-3)) 0;
+  margin-inline-start: 3rem;
+  padding-block-start: var(--space-4);
   padding-inline-start: var(--space-3);
   border-inline-start: 1px solid var(--gray-light);
   list-style: none;
