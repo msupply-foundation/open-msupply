@@ -67,6 +67,15 @@ type FetchOptions<TResult> = {
   // caller simply sees a non-success and stays in its loading phase (spec:
   // Unexpected API Errors).
   mapSuccessToError?: (data: TResult) => string | undefined;
+  // A self-retrying background call (an interval poll with a live-channel
+  // alternative, e.g. the sync-status fallback poll): failures still return
+  // { kind: 'unexpectedError' } but do NOT trip the global unexpected-error
+  // modal — a transient outage would otherwise convert a silently-recoverable
+  // background retry into a forced app reload (spec/sync-modal: a transport
+  // interruption must not degrade the session). Deliberate asymmetry: an
+  // unauthenticated result still reports globally (the re-login modal) — only
+  // the unexpected-error modal is suppressed.
+  background?: boolean;
   endpoint?: string;
 };
 
@@ -125,7 +134,7 @@ export async function graphqlFetch<TResult, TVariables>(
 ): Promise<GraphqlResult<TResult>> {
   lastCallAt = Date.now();
   const unexpected = (message: string): GraphqlFailure => {
-    setUnexpectedError(message);
+    if (!options.background) setUnexpectedError(message);
     return { kind: 'unexpectedError' };
   };
   let response: Response;

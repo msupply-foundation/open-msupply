@@ -5,6 +5,13 @@ query initialisationStatus {
   }
 }
 
+# Server role for the phase-visibility matrix (spec/sync-modal/rules.md
+# § phase visibility). Served without authentication on both schemas, so the
+# initialisation screen can read it pre-session.
+query isCentralServer {
+  isCentralServer
+}
+
 mutation initialiseSite($input: SyncSettingsInput!) {
   initialiseSite(input: $input) {
     ... on SyncSettingsNode {
@@ -26,10 +33,24 @@ mutation manualSync {
   manualSync
 }
 
+# Status-only poll — used by the initialisation page, which runs BEFORE a
+# session exists. numberOfRecordsInPushQueue requires auth, so it must not ride
+# on this document (it would fail the whole pre-login poll).
 query latestSyncStatus {
   latestSyncStatus {
     ...SyncStatus
   }
+}
+
+# Post-login polled fallback for the sync modal (spec/sync-modal: subscription
+# primary, polling fallback): status + push-queue count in one poll.
+# ⚠️ The polled count and the subscription's count are DIFFERENT derivations on
+# the server — see spec/sync-modal/contract.md § Records to push.
+query syncStatusAndQueue {
+  latestSyncStatus {
+    ...SyncStatus
+  }
+  numberOfRecordsInPushQueue
 }
 
 subscription syncInfoUpdated {
@@ -37,23 +58,35 @@ subscription syncInfoUpdated {
     syncStatus {
       ...SyncStatus
     }
+    numberOfRecordsInPushQueue
   }
 }
 
+# Both protocol generations, phases in execution order (spec/sync-modal/rules.md
+# § Sync runs and status). error.variant is the localisation discriminant.
 fragment SyncStatus on FullSyncStatusNode {
   ... on FullSyncStatusV7Node {
     __typename
     isSyncing
+    warningThreshold
+    errorThreshold
     error {
+      # Aliased: the same response key can't return SyncErrorVariantV7 on one
+      # union branch and SyncErrorVariant on the other (overlapping-fields rule).
+      variantV7: variant
       fullError
     }
-    pull {
+    push {
       started
       finished
       total
       done
     }
-    push {
+    waitingForIntegration {
+      started
+      finished
+    }
+    pull {
       started
       finished
       total
@@ -73,12 +106,27 @@ fragment SyncStatus on FullSyncStatusNode {
   ... on FullSyncStatusV5V6Node {
     __typename
     isSyncing
+    warningThreshold
+    errorThreshold
     error {
+      variant
       fullError
     }
     prepareInitial {
       started
       finished
+    }
+    push {
+      started
+      finished
+      total
+      done
+    }
+    pushV6 {
+      started
+      finished
+      total
+      done
     }
     pullCentral {
       started
@@ -92,7 +140,7 @@ fragment SyncStatus on FullSyncStatusNode {
       total
       done
     }
-    push {
+    pullV6 {
       started
       finished
       total

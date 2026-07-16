@@ -10,6 +10,13 @@ import { GRAPHQL_WS_PATH } from '../config';
 type Handlers<TResult> = {
   onData: (data: TResult) => void;
   onFailure: () => void;
+  /**
+   * The server acknowledged the connection and the subscribe frame was sent —
+   * the live channel is up. Fires before any data: the server only pushes on
+   * change, so a quiet subscription may deliver nothing for a long time and
+   * callers must not treat "no data yet" as "not connected".
+   */
+  onEstablished?: () => void;
 };
 
 export function subscribe<TResult, TVariables>(
@@ -58,6 +65,7 @@ export function subscribe<TResult, TVariables>(
             payload: { query: document.query, variables },
           })
         );
+        handlers.onEstablished?.();
         break;
       case 'next':
         if (message.payload?.data != null)

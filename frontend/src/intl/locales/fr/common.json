@@ -50,11 +50,11 @@
   "sync.status.error": "erreur",
   "sync.status.progress": "{{ done }} / {{ total }}",
   "sync.step.pull": "Réception",
-  "sync.step.push": "Envoi",
-  "sync.step.integration": "Intégration",
-  "sync.step.prepare-initial": "Préparation initiale",
-  "sync.step.pull-central": "Réception centrale",
-  "sync.step.pull-remote": "Réception distante",
+  "sync.step.push": "Envoyer",
+  "sync.step.integration": "Intégrer",
+  "sync.step.prepare-initial": "Préparer",
+  "sync.step.pull-central": "Récupérer (Central)",
+  "sync.step.pull-remote": "Récupérer (Remote)",
   "shell.footer.general": "Général",
   "shell.footer.edit": "Modifier",
   "shell.footer.central-server": "Serveur central",
@@ -300,5 +300,8 @@
   "stocktake.line-edit.count-this-line": "Compter cette ligne",
   "stocktake.lines.delete-success": "Lignes supprimées.",
   "stocktake.lines.change-location-success": "Emplacement modifié.",
-  "stocktake.lines.reduce-to-zero-success": "Lignes réduites à 0."
+  "stocktake.lines.reduce-to-zero-success": "Lignes réduites à 0.",
+  "sync.step.waiting-for-integration": "En attente d'intégration",
+  "sync.step.push-v6": "Envoyer V6",
+  "sync.step.pull-v6": "Récupérer V6"
 }

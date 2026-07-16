@@ -1,9 +1,4 @@
-import {
-  format,
-  formatDistanceToNow,
-  formatDistance,
-  differenceInYears,
-} from 'date-fns';
+import { format, formatDistanceToNow, differenceInYears } from 'date-fns';
 import type { Locale } from 'date-fns';
 // Import locales individually so they tree-shake (the date-fns methods do; the
 // locale objects need explicit imports). Add one per supported language.
@@ -44,11 +39,6 @@ export const localisedDistanceToNow = (value: Date | string | number): string =>
     addSuffix: true,
   });
 
-export const localisedDistance = (
-  from: Date | string | number,
-  to: Date | string | number
-): string =>
-  formatDistance(toDate(from), toDate(to), { locale: dateFnsLocale() });
 
 export const getDisplayAge = (dateOfBirth: Date | string | number): number =>
   differenceInYears(new Date(), toDate(dateOfBirth));

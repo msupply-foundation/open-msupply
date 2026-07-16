@@ -54,11 +54,11 @@
   "sync.status.error": "خطأ",
   "sync.status.progress": "{{ done }} / {{ total }}",
   "sync.step.pull": "السحب",
-  "sync.step.push": "الدفع",
-  "sync.step.integration": "الدمج",
-  "sync.step.prepare-initial": "التحضير الأولي",
-  "sync.step.pull-central": "سحب مركزي",
-  "sync.step.pull-remote": "سحب بعيد",
+  "sync.step.push": "ادفع",
+  "sync.step.integration": "دمج",
+  "sync.step.prepare-initial": "إعداد",
+  "sync.step.pull-central": "السحب المركزي",
+  "sync.step.pull-remote": "السحب عن بُعد",
   "shell.footer.general": "عام",
   "shell.footer.edit": "تعديل",
   "shell.footer.central-server": "الخادم المركزي",
@@ -304,5 +304,8 @@
   "stocktake.line-edit.count-this-line": "عدّ هذا السطر",
   "stocktake.lines.delete-success": "تم حذف الأسطر.",
   "stocktake.lines.change-location-success": "تم تغيير الموقع.",
-  "stocktake.lines.reduce-to-zero-success": "تم تخفيض الأسطر إلى 0."
+  "stocktake.lines.reduce-to-zero-success": "تم تخفيض الأسطر إلى 0.",
+  "sync.step.waiting-for-integration": "في انتظار الدمج",
+  "sync.step.push-v6": "دفع (v6)",
+  "sync.step.pull-v6": "سحب (v6)"
 }

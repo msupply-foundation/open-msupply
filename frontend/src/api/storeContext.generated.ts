@@ -13,6 +13,9 @@ export type StoreContextResult = {
   omProgramModule: boolean;
   vaccineModule: boolean;
 };
+  preferences: {
+  syncRecordsDisplayThreshold: number;
+};
   me: ({
   __typename: "UserNode";
 } & {
@@ -27,5 +30,5 @@ export type StoreContextResult = {
 };
 
 export const StoreContext = {
-  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    omProgramModule\n    vaccineModule\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
+  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    omProgramModule\n    vaccineModule\n  }\n  preferences(storeId: $storeId) {\n    syncRecordsDisplayThreshold\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<StoreContextResult, StoreContextVariables>;
