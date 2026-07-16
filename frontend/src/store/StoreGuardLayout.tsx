@@ -42,10 +42,6 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     stores().find(s => s.id === params.storeId) ??
     (stores().length === 1 ? stores()[0] : undefined);
 
-  // Loaded for THIS {store, user} (SL-5). The store key is the id the context
-  // was fetched with (currentStoreId), not the response's storePreferences.id —
-  // a store without a preference row gets the server's default row (id ''),
-  // which would never match and leave the guard refetching forever.
   const contextLoaded = (storeId: string) => {
     const context = storeContext();
     return (
