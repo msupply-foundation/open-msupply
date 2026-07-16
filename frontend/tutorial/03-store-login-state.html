@@ -1,65 +1,94 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>3 · Store &amp; global state</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="tutorial.js"></script>
-</head>
-<body>
-<button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
-<div class="layout">
-  <aside class="sidebar">
-    <div class="brand"><span class="dot"></span> FE Patterns</div>
-    <nav>
-      <a href="index.html"><span class="num">·</span>Overview</a>
-      <a href="01-graphql-codegen.html"><span class="num">1</span>Codegen &amp; graphqlFetch</a>
-      <a href="02-init-auth-error.html"><span class="num">2</span>Init, auth &amp; errors</a>
-      <a class="current" href="03-store-login-state.html"><span class="num">3</span>Store &amp; global state</a>
-      <a href="04-list-table-url.html"><span class="num">4</span>Lists: table &amp; URL</a>
-      <a href="05-createresource.html"><span class="num">5</span>createResource</a>
-      <a href="06-store-scoped.html"><span class="num">6</span>Store-scoped caches</a>
-    </nav>
-  </aside>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>3 · Store &amp; global state</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="tutorial.js"></script>
+  </head>
+  <body>
+    <button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand"><span class="dot"></span> FE Patterns</div>
+        <nav>
+          <a href="index.html"><span class="num">·</span>Overview</a>
+          <a href="01-graphql-codegen.html"
+            ><span class="num">1</span>Codegen &amp; graphqlFetch</a
+          >
+          <a href="02-init-auth-error.html"
+            ><span class="num">2</span>Init, auth &amp; errors</a
+          >
+          <a class="current" href="03-store-login-state.html"
+            ><span class="num">3</span>Store &amp; global state</a
+          >
+          <a href="04-list-table-url.html"
+            ><span class="num">4</span>Lists: table &amp; URL</a
+          >
+          <a href="05-createresource.html"
+            ><span class="num">5</span>createResource</a
+          >
+          <a href="06-store-scoped.html"
+            ><span class="num">6</span>Store-scoped caches</a
+          >
+          <a href="07-domain-modules.html"
+            ><span class="num">7</span>Domain modules</a
+          >
+          <a href="08-action-modal.html"
+            ><span class="num">8</span>Action modals</a
+          >
+          <a href="09-datatable-cards.html"
+            ><span class="num">9</span>Table: cards &amp; groups</a
+          >
+          <a href="datatable-reference.html"
+            ><span class="num">★</span>DataTable reference</a
+          >
+        </nav>
+      </aside>
 
-  <main class="content">
-    <div class="content-inner">
-      <p class="eyebrow">Chapter 3</p>
-      <h1>Store login &amp; the global-state shape</h1>
-      <p class="lede">
-        A user has many stores; working in the app means <em>entering</em> one. This chapter
-        introduces the canonical <strong>signal-plus-refetch</strong> pattern for GraphQL-backed
-        global state — the shape you'll reuse everywhere — and the principle that ties the whole
-        state model together: <strong>refresh by direct call, not cache keys</strong>.
-      </p>
+      <main class="content">
+        <div class="content-inner">
+          <p class="eyebrow">Chapter 3</p>
+          <h1>Store login &amp; the global-state shape</h1>
+          <p class="lede">
+            A user has many stores; working in the app means
+            <em>entering</em> one. This chapter introduces the canonical
+            <strong>signal-plus-refetch</strong> pattern for GraphQL-backed
+            global state — the shape you'll reuse everywhere — and the principle
+            that ties the whole state model together:
+            <strong>refresh by direct call, not cache keys</strong>.
+          </p>
 
-      <h2>User auth ≠ store entry</h2>
-      <p>
-        Chapter 2 got a <em>user</em>. But the same user may belong to several stores, each with
-        its own preferences and permissions. The URL encodes which store you're in:
-        <code>/{storeId}/{route}</code>. Entering a store loads its context.
-      </p>
-      <div class="box kdd">
-        <p class="box-title">Why (KDD)</p>
-        <p style="margin-bottom:0">
-          The store id is the <em>first</em> URL segment
-          (<code>/{store-uuid}/{route}?query=…</code>). Filter/sort/pagination ride in that
-          <code>?query=</code> JSON (chapter 4). See
-          <a href="../kdd/url-structure/draft-kdd.md">kdd/url-structure</a>.
-        </p>
-      </div>
+          <h2>User auth ≠ store entry</h2>
+          <p>
+            Chapter 2 got a <em>user</em>. But the same user may belong to
+            several stores, each with its own preferences and permissions. The
+            URL encodes which store you're in: <code>/{storeId}/{route}</code>.
+            Entering a store loads its context.
+          </p>
+          <div class="box kdd">
+            <p class="box-title">Why (KDD)</p>
+            <p style="margin-bottom: 0">
+              The store id is the <em>first</em> URL segment
+              (<code>/{store-uuid}/{route}?query=…</code>).
+              Filter/sort/pagination ride in that <code>?query=</code> JSON
+              (chapter 4). See
+              <a href="../kdd/url-structure/draft-kdd.md">kdd/url-structure</a>.
+            </p>
+          </div>
 
-      <h2>The canonical global-state shape: signal + explicit refetch</h2>
-      <p>
-        Store context is the template every piece of GraphQL-backed global state follows: a
-        plain signal, and an explicit async <code>refetch</code> function whose fetcher runs a
-        codegen document through <code>graphqlFetch</code>. On failure it leaves the state empty
-        (the failure was handled globally in chapter 1), so callers simply keep showing their
-        loading state.
-      </p>
-      <span class="filename">src/store/storeContext.ts</span>
-<pre><code><span class="kw">const</span> [storeContext, setStoreContext] = <span class="fn">createSignal</span>&lt;<span class="ty">StoreContextResult</span>&gt;();
+          <h2>The canonical global-state shape: signal + explicit refetch</h2>
+          <p>
+            Store context is the template every piece of GraphQL-backed global
+            state follows: a plain signal, and an explicit async
+            <code>refetch</code> function whose fetcher runs a codegen document
+            through <code>graphqlFetch</code>. On failure it leaves the state
+            empty (the failure was handled globally in chapter 1), so callers
+            simply keep showing their loading state.
+          </p>
+          <span class="filename">src/store/storeContext.ts</span>
+          <pre><code><span class="kw">const</span> [storeContext, setStoreContext] = <span class="fn">createSignal</span>&lt;<span class="ty">StoreContextResult</span>&gt;();
 
 <span class="kw">const</span> refetch = <span class="kw">async</span> (storeId: <span class="ty">string</span> | <span class="kw">undefined</span>) =&gt; {
   <span class="kw">if</span> (!storeId) { <span class="fn">setStoreContext</span>(<span class="kw">undefined</span>); <span class="kw">return</span>; }
@@ -70,36 +99,41 @@
 
 <span class="kw">export</span> { storeContext, refetch <span class="kw">as</span> refetchStoreContext };</code></pre>
 
-      <p>
-        Two derived accessors read out of that signal. They are exported at
-        <strong>module level</strong> — deliberately, so that global caches can depend on them
-        <em>without</em> being inside a component (you'll use exactly this in chapter 6).
-      </p>
-<pre><code><span class="cm">// The store the user has ENTERED (context loaded). undefined between store switches.</span>
+          <p>
+            Two derived accessors read out of that signal. They are exported at
+            <strong>module level</strong> — deliberately, so that global caches
+            can depend on them <em>without</em> being inside a component (you'll
+            use exactly this in chapter 6).
+          </p>
+          <pre><code><span class="cm">// The store the user has ENTERED (context loaded). undefined between store switches.</span>
 <span class="kw">const</span> currentStoreId = () =&gt; <span class="fn">storeContext</span>()?.storePreferences.id;
 <span class="kw">const</span> currentUserId  = () =&gt; <span class="fn">storeContext</span>()?.me?.userId;
 <span class="kw">export</span> { currentStoreId, currentUserId };</code></pre>
 
-      <div class="box">
-        <p class="box-title">Why module-level accessors matter</p>
-        <p style="margin-bottom:0">
-          <code>currentStoreId()</code> is reactive but not tied to any component's lifecycle. A
-          module-scope cache can read it and re-fetch when it changes. It's only non-undefined
-          once the guard (below) has resolved and authorised the store from the URL — so it's
-          <strong>URL-driven in effect</strong>, and never reports a store whose lookups aren't
-          yet valid to fetch.
-        </p>
-      </div>
+          <div class="box">
+            <p class="box-title">Why module-level accessors matter</p>
+            <p style="margin-bottom: 0">
+              <code>currentStoreId()</code> is reactive but not tied to any
+              component's lifecycle. A module-scope cache can read it and
+              re-fetch when it changes. It's only non-undefined once the guard
+              (below) has resolved and authorised the store from the URL — so
+              it's <strong>URL-driven in effect</strong>, and never reports a
+              store whose lookups aren't yet valid to fetch.
+            </p>
+          </div>
 
-      <h2>The store guard</h2>
-      <p>
-        <code>StoreGuardLayout</code> is the outermost routed layer — the <code>/:storeId</code>
-        route. It decides which store to enter, loads its context, and shows a loading state
-        until that context is loaded <em>for this store and this user</em>. Only then does it
-        render the routed section.
-      </p>
-      <span class="filename">src/store/StoreGuardLayout.tsx (the core)</span>
-<pre><code><span class="kw">const</span> storeToEnter = () =&gt;
+          <h2>The store guard</h2>
+          <p>
+            <code>StoreGuardLayout</code> is the outermost routed layer — the
+            <code>/:storeId</code> route. It decides which store to enter, loads
+            its context, and shows a loading state until that context is loaded
+            <em>for this store and this user</em>. Only then does it render the
+            routed section.
+          </p>
+          <span class="filename"
+            >src/store/StoreGuardLayout.tsx (the core)</span
+          >
+          <pre><code><span class="kw">const</span> storeToEnter = () =&gt;
   <span class="fn">stores</span>().<span class="fn">find</span>((s) =&gt; s.id === params.storeId) ??
   (<span class="fn">stores</span>().length === 1 ? <span class="fn">stores</span>()[0] : <span class="kw">undefined</span>);   <span class="cm">// sole store auto-enters</span>
 
@@ -116,70 +150,94 @@
   <span class="kw">if</span> (params.storeId !== store.id) <span class="fn">navigate</span>(<span class="st">`/</span>${store.id}<span class="st">`</span>, { replace: <span class="kw">true</span> });
   <span class="kw">if</span> (!<span class="fn">contextLoaded</span>(store.id)) <span class="kw">void</span> <span class="fn">refetchStoreContext</span>(store.id);  <span class="cm">// direct call</span>
 });</code></pre>
-      <p>
-        The render is two nested <code>&lt;Show&gt;</code>s: no store to enter → the picker; store
-        chosen but context not yet loaded → a loading screen; otherwise the section
-        (<code>props.children</code>). This is why a list screen in chapter 4 can assume
-        <code>storeId</code> is always present and its context is loaded.
-      </p>
+          <p>
+            The render is two nested <code>&lt;Show&gt;</code>s: no store to
+            enter → the picker; store chosen but context not yet loaded → a
+            loading screen; otherwise the section (<code>props.children</code>).
+            This is why a list screen in chapter 4 can assume
+            <code>storeId</code> is always present and its context is loaded.
+          </p>
 
-      <h2>Refresh by direct call, not cache keys</h2>
-      <p>
-        This is the through-line of the entire state model. There is no cache-invalidation
-        system. When something needs to refresh, <strong>whatever observed the need calls the
-        specific refetch function</strong>. Logout is the clearest example — it directly clears
-        the store context:
-      </p>
-      <span class="filename">src/auth/authContext.ts</span>
-<pre><code><span class="kw">export const</span> logout = <span class="kw">async</span> () =&gt; {
+          <h2>Refresh by direct call, not cache keys</h2>
+          <p>
+            This is the through-line of the entire state model. There is no
+            cache-invalidation system. When something needs to refresh,
+            <strong
+              >whatever observed the need calls the specific refetch
+              function</strong
+            >. Logout is the clearest example — it directly clears the store
+            context:
+          </p>
+          <span class="filename">src/auth/authContext.ts</span>
+          <pre><code><span class="kw">export const</span> logout = <span class="kw">async</span> () =&gt; {
   <span class="kw">await</span> <span class="fn">graphqlFetch</span>(Logout, {});
   <span class="fn">clearUnauthenticated</span>();
   <span class="fn">refetchStoreContext</span>(<span class="kw">undefined</span>);   <span class="cm">// ← direct call, not an invalidated key</span>
   <span class="fn">setUser</span>(<span class="kw">undefined</span>);
 };</code></pre>
-      <div class="box kdd">
-        <p class="box-title">Why (KDD)</p>
-        <p style="margin-bottom:0">
-          Direct calls make "what refetches when" greppable — the cost is losing the automatic
-          invalidation a cache-key system would give, which this app doesn't miss. Same principle
-          as explicit composition: direct calls over subscriber/registry indirection. See
-          <a href="../kdd/state-management/draft-kdd.md">kdd/state-management</a> and
-          <a href="../kdd/explicit-composition/draft-kdd.md">kdd/explicit-composition</a>.
-        </p>
-      </div>
+          <div class="box kdd">
+            <p class="box-title">Why (KDD)</p>
+            <p style="margin-bottom: 0">
+              Direct calls make "what refetches when" greppable — the cost is
+              losing the automatic invalidation a cache-key system would give,
+              which this app doesn't miss. Same principle as explicit
+              composition: direct calls over subscriber/registry indirection.
+              See
+              <a href="../kdd/state-management/draft-kdd.md"
+                >kdd/state-management</a
+              >
+              and
+              <a href="../kdd/explicit-composition/draft-kdd.md"
+                >kdd/explicit-composition</a
+              >.
+            </p>
+          </div>
 
-      <div class="box build">
-        <p class="box-title">Build step · widgets</p>
-        <p style="margin-bottom:0">
-          In your <code>WidgetsList</code>, read <code>useParams&lt;{ storeId: string }&gt;()</code>
-          — it is guaranteed present because the section renders inside
-          <code>StoreGuardLayout</code>. Log <code>currentStoreId()</code> and switch stores:
-          note it goes <code>undefined</code> during the switch (the guard shows its loading
-          state) and comes back as the new store's id once context reloads.
-        </p>
-      </div>
+          <div class="box build">
+            <p class="box-title">Build step · widgets</p>
+            <p style="margin-bottom: 0">
+              In your <code>WidgetsList</code>, read
+              <code>useParams&lt;{ storeId: string }&gt;()</code>
+              — it is guaranteed present because the section renders inside
+              <code>StoreGuardLayout</code>. Log
+              <code>currentStoreId()</code> and switch stores: note it goes
+              <code>undefined</code> during the switch (the guard shows its
+              loading state) and comes back as the new store's id once context
+              reloads.
+            </p>
+          </div>
 
-      <div class="box real">
-        <p class="box-title">Real code</p>
-        <p style="margin-bottom:0">
-          <a href="../src/store/storeContext.ts">src/store/storeContext.ts</a> ·
-          <a href="../src/store/StoreGuardLayout.tsx">StoreGuardLayout.tsx</a> ·
-          <a href="../src/store/StoreSelectionModal.tsx">StoreSelectionModal.tsx</a> ·
-          <a href="../src/appData.ts">src/appData.ts</a> (remembers your previous store, keyed
-          by user, in <code>localStorage</code>).
-        </p>
-      </div>
+          <div class="box real">
+            <p class="box-title">Real code</p>
+            <p style="margin-bottom: 0">
+              <a href="../src/store/storeContext.ts"
+                >src/store/storeContext.ts</a
+              >
+              ·
+              <a href="../src/store/StoreGuardLayout.tsx"
+                >StoreGuardLayout.tsx</a
+              >
+              ·
+              <a href="../src/store/StoreSelectionModal.tsx"
+                >StoreSelectionModal.tsx</a
+              >
+              · <a href="../src/appData.ts">src/appData.ts</a> (remembers your
+              previous store, keyed by user, in <code>localStorage</code>).
+            </p>
+          </div>
 
-      <div class="pager">
-        <a class="prev" href="02-init-auth-error.html">
-          <span class="dir">← Prev</span><span class="ttl">Init, auth &amp; errors</span>
-        </a>
-        <a class="next" href="04-list-table-url.html">
-          <span class="dir">Next →</span><span class="ttl">Lists: table &amp; URL</span>
-        </a>
-      </div>
+          <div class="pager">
+            <a class="prev" href="02-init-auth-error.html">
+              <span class="dir">← Prev</span
+              ><span class="ttl">Init, auth &amp; errors</span>
+            </a>
+            <a class="next" href="04-list-table-url.html">
+              <span class="dir">Next →</span
+              ><span class="ttl">Lists: table &amp; URL</span>
+            </a>
+          </div>
+        </div>
+      </main>
     </div>
-  </main>
-</div>
-</body>
+  </body>
 </html>

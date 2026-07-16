@@ -8,13 +8,21 @@ import styles from './SplitButton.module.css';
 export interface SplitButtonOption {
   value: string;
   label: string;
+  /**
+   * A non-selectable entry (shown greyed, can't be picked) — e.g. a
+   * past/current status in a
+   *  status-change menu that lists every status for context. */
+  disabled?: boolean;
 }
 
 interface SplitButtonProps {
   /** Leading icon for the main action. */
   icon?: JSX.Element;
   options: SplitButtonOption[];
-  /** Controlled selected value; omit for uncontrolled (defaults to first option). */
+  /**
+   * Controlled selected value; omit for uncontrolled (defaults to first
+   * option).
+   */
   value?: string;
   defaultValue?: string;
   /** Fired when the selection changes via the menu. */
@@ -107,7 +115,10 @@ export const SplitButton = (props: SplitButtonProps) => {
                   data-current={
                     option.value === selectedValue() ? 'true' : undefined
                   }
-                  onSelect={() => pick(option.value)}
+                  disabled={option.disabled}
+                  onSelect={() => {
+                    if (!option.disabled) pick(option.value);
+                  }}
                 >
                   {option.label}
                 </DropdownMenu.Item>

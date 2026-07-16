@@ -9,7 +9,12 @@
 
 .menuBar {
   position: relative;
-  z-index: 2;
+  /* Above the page content — specifically above the DataTable's sticky header (z 3) — so the
+     drawer's rightward drop shadow (--shadow-drawer) paints OVER the content along the whole left
+     edge, including alongside the table. At z 2 the sticky table cells covered it, so the shadow
+     vanished next to the table (the "missing corner shadow"). Still well below the overlay drawer
+     (z 40) and popovers, so nothing else is affected. */
+  z-index: 4;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;

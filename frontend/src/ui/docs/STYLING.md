@@ -15,21 +15,21 @@ Run it after **any** CSS or component change. It chains five steps with `&&`, so
 | 1   | `npm run css:types`              | [tcm](https://github.com/Quramy/typed-css-modules) regenerates a `.d.ts` next to every `*.module.css` in `src/` | (Feeds step 2 — stale/missing types)                                                     |
 | 2   | `tsc -b`                         | Typecheck, using those `.d.ts` files                                                                            | `styles.buton` → compile error; missing/renamed classes                                  |
 | 3   | `stylelint "src/**/*.css"`       | Standard lint + the unknown-custom-properties plugin, checked against `tokens.css`                              | `var(--typo)` — a CSS variable that doesn't exist; non-camelCase class names             |
-| 4   | `scripts/check-theme-tokens.mjs` | Theme-contract check on `src/ui/styles/tokens.css`                                                                 | A theme block missing a token override, or overriding a token that isn't in the contract |
+| 4   | `scripts/check-theme-tokens.mjs` | Theme-contract check on `src/ui/styles/tokens.css`                                                              | A theme block missing a token override, or overriding a token that isn't in the contract |
 | 5   | `scripts/check-page-css.mjs`     | No CSS files under `src/pages/` (allowlist: `Login`)                                                            | A page trying to own styling (principle #10)                                             |
 
 Nothing runs on commit or in CI yet — running `check` is on you. `npm run build` runs steps 1–2 only (types + typecheck) before `vite build`; it does **not** lint or run the two scripts.
 
 ## CSS-module typing (steps 1–2)
 
-**The problem**: a CSS Modules import is "*stringly*-typed" — `styles.anything` compiles fine and silently renders unstyled if the class doesn't exist.
+**The problem**: a CSS Modules import is "_stringly_-typed" — `styles.anything` compiles fine and silently renders unstyled if the class doesn't exist.
 
 **The fix**: `typed-css-modules` (tcm) reads each `Button.module.css` and writes a sibling `Button.module.css.d.ts` declaring exactly the classes that exist:
 
 ```ts
 declare const styles: {
-  readonly "button": string;
-  readonly "icon": string;
+  readonly button: string;
+  readonly icon: string;
 };
 export = styles;
 ```
@@ -58,12 +58,12 @@ Now `styles.buton` is a TypeScript error, in the editor and in `check`. Note tcm
 **The fix, part 2 — the theme contract** (`scripts/check-theme-tokens.mjs`): `tokens.css` has a region inside `:root` fenced by `/* @theme-contract:start */` … `/* @theme-contract:end */` comment markers. The script enforces, for every `[data-theme='…']` block in the file:
 
 1. **Completeness** — every contract token is overridden (no forgotten dark values);
-2. **No strays** — the block overrides *only* contract tokens (catches typos, and attempts to theme a static token).
+2. **No strays** — the block overrides _only_ contract tokens (catches typos, and attempts to theme a static token).
 
 **Adding a token** — decide which kind it is:
 
-- **Themed** (colours, shadows — anything that differs between light and dark): declare it *inside* the contract markers, then add an override to **every** `[data-theme]` block. The script fails until you do both.
-- **Static** (spacing, radii, typography, sizes): declare it *below* the contract markers, and don't touch the theme blocks.
+- **Themed** (colours, shadows — anything that differs between light and dark): declare it _inside_ the contract markers, then add an override to **every** `[data-theme]` block. The script fails until you do both.
+- **Static** (spacing, radii, typography, sizes): declare it _below_ the contract markers, and don't touch the theme blocks.
 
 ## Page-CSS check (step 5)
 

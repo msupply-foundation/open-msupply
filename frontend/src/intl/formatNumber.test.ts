@@ -19,7 +19,11 @@ describe('formatNumber', () => {
 
   it('raises max fraction digits to min when needed', () => {
     expect(
-      formatNumber(1, { locale: 'en', minimumFractionDigits: 2, maximumFractionDigits: 0 }),
+      formatNumber(1, {
+        locale: 'en',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 0,
+      })
     ).toBe('1.00');
   });
 });

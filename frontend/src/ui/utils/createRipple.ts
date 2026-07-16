@@ -1,10 +1,10 @@
-import { createSignal } from 'solid-js'
+import { createSignal } from 'solid-js';
 
 export interface RippleInstance {
-  id: number
-  x: number
-  y: number
-  size: number
+  id: number;
+  x: number;
+  y: number;
+  size: number;
 }
 
 /*
@@ -25,13 +25,15 @@ export interface RippleInstance {
  * itself is still CSS; JS only supplies the per-click position + element.
  */
 export function createRipple() {
-  const [ripples, setRipples] = createSignal<RippleInstance[]>([])
-  let nextId = 0
+  const [ripples, setRipples] = createSignal<RippleInstance[]>([]);
+  let nextId = 0;
 
-  const onPointerDown = (event: PointerEvent & { currentTarget: HTMLElement }) => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const rect = event.currentTarget.getBoundingClientRect()
-    const size = Math.max(rect.width, rect.height) * 2
+  const onPointerDown = (
+    event: PointerEvent & { currentTarget: HTMLElement }
+  ) => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2;
     setRipples(current => [
       ...current,
       {
@@ -40,11 +42,11 @@ export function createRipple() {
         y: event.clientY - rect.top,
         size,
       },
-    ])
-  }
+    ]);
+  };
 
   const dismiss = (id: number) =>
-    setRipples(current => current.filter(r => r.id !== id))
+    setRipples(current => current.filter(r => r.id !== id));
 
-  return { onPointerDown, ripples, dismiss }
+  return { onPointerDown, ripples, dismiss };
 }
