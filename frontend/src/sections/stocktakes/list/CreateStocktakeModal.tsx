@@ -10,7 +10,7 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { InsetPanel } from '../../../ui/elements/inputs/InsetPanel';
+import { InsetPanel } from '../../../ui/layout/InsetPanel/InsetPanel';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { RadioGroup } from '../../../ui/elements/inputs/RadioGroup';
 import { TextField } from '../../../ui/elements/inputs/TextField';

@@ -42,6 +42,12 @@ export interface DialogProps {
    */
   closeButton?: boolean;
   icon?: JSX.Element;
+  /**
+   * Action(s) pinned to the inline-END of the header row, on the same line as
+   * the title (e.g. an "Add" affordance that belongs with the heading rather
+   * than the footer). The title takes the free space; these group at the end.
+   */
+  headerActions?: JSX.Element;
   description?: JSX.Element;
   children?: JSX.Element;
   /**
@@ -120,6 +126,7 @@ export const Dialog = (props: DialogProps) => {
   // once (kdd/solid-reactivity-pitfalls §3); `children` is read exactly once
   // below, so it needs no helper.
   const icon = children(() => props.icon);
+  const headerActions = children(() => props.headerActions);
   const description = children(() => props.description);
   const footer = children(() => props.footer);
   const actions = children(() => props.actions);
@@ -196,6 +203,9 @@ export const Dialog = (props: DialogProps) => {
             <h2 class={styles.title} id={titleId}>
               {props.title}
             </h2>
+            <Show when={headerActions()}>
+              <div class={styles.headerActions}>{headerActions()}</div>
+            </Show>
           </header>
           <Show when={description()}>
             <p class={styles.description} id={descriptionId}>

@@ -1,7 +1,13 @@
-import { createSignal, type JSX } from 'solid-js';
+import { createSignal, For, type JSX } from 'solid-js';
 import { Select } from '../ui/elements/selectors/Select';
 import { Combobox } from '../ui/elements/selectors/Combobox';
 import { MultiSelect } from '../ui/elements/selectors/MultiSelect';
+import {
+  ColourTagDot,
+  ColourTagPicker,
+  TAG_COLOURS,
+} from '../ui/elements/selectors/ColourTag';
+import { t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { Button } from '../ui/elements/buttons/Button';
 import { PlusCircleIcon, XCircleIcon } from '../ui/icons';
@@ -153,6 +159,12 @@ export const SelectorsShowcase = () => {
   // Seeded non-empty to show chips restoring from an existing filter (a key
   // being present is what shows its chip — here status starts on 'new').
   const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' });
+  // Colour-tag demo: starts untagged so the empty dashed ring shows first.
+  const [tagColour, setTagColour] = createSignal<string | null>(null);
+  const tagName = () => {
+    const tag = TAG_COLOURS.find(c => c.value === tagColour());
+    return tag ? t(tag.label) : null;
+  };
 
   // What the page would hand to a table — rendered as the URL query string the
   // filter is destined to live in once routing lands. Empty/null keys
@@ -345,6 +357,53 @@ export const SelectorsShowcase = () => {
           What the page hands to the table:{' '}
           <code>{filterQuery() || '(no filters)'}</code>
         </p>
+      </Card>
+
+      <Card
+        title="Colour tag — dot + swatch picker"
+        lead={
+          <>
+            User-set colour on a record for visual grouping only. The{' '}
+            <code>ColourTagDot</code> is read-only and hides the dot for
+            uneditable records; the <code>ColourTagPicker</code> is a dot with a{' '}
+            <code>&lt;Popover&gt;</code> that opens the swatches. The dashed
+            ring circle indicates that no tag is set. The colour palette is
+            currently baked into the component since all current colour tag
+            usages use the same palette.
+          </>
+        }
+      >
+        <div class={styles.tagRow}>
+          <For each={TAG_COLOURS}>
+            {colour => <ColourTagDot colour={colour.value} />}
+          </For>
+          <span class={styles.tagRowLabel}>
+            <code>ColourTagDot</code> — the read-only face (uneditable rows,
+            read-only panels)
+          </span>
+        </div>
+        <div class={styles.tagRow}>
+          <ColourTagPicker colour={tagColour()} onSelect={setTagColour} />
+          <span class={styles.tagRowLabel}>
+            Inline table variant: <code>row</code>.{' '}
+            {tagName()
+              ? `Tagged: ${tagName()}`
+              : 'Untagged: dashed ring circle'}
+          </span>
+        </div>
+        <div class={styles.tagRow}>
+          <ColourTagPicker
+            colour={tagColour()}
+            onSelect={setTagColour}
+            variant="field"
+            placement="bottom-end"
+          />
+          <span class={styles.tagRowLabel}>
+            Side panel variant: use <code>placement="bottom-end"</code> so the
+            <code>&lt;Popover&gt;</code> grows back into the viewport from the
+            panel's edge.{' '}
+          </span>
+        </div>
       </Card>
     </div>
   );

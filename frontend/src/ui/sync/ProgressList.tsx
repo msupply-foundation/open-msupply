@@ -13,7 +13,10 @@ export interface ProgressStep {
   finished: boolean;
   done?: number;
   total?: number;
-  /** Marker glyph, by intent (a push icon, a pull icon…). Empty circle when omitted. */
+  /**
+   * Marker glyph, by intent (a push icon, a pull icon…). Empty circle when
+   * omitted.
+   */
   icon?: Component<IconProps>;
 }
 
@@ -58,7 +61,9 @@ const stepStatus = (state: StepState, errored: boolean): string => {
 export const ProgressList = (props: {
   steps: ProgressStep[];
   variant?: 'primary' | 'secondary';
-  /** The latest run failed: the in-flight step is marked as the failure point. */
+  /**
+   * The latest run failed: the in-flight step is marked as the failure point.
+   */
   error?: boolean;
 }) => {
   // The furthest-started step: everything before it is completed, whatever

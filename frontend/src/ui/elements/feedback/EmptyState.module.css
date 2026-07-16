@@ -2,12 +2,30 @@
   display: grid;
   place-content: center;
   justify-items: center;
-  gap: var(--space-4);
+  gap: var(--space-2);
   block-size: 100%;
   min-block-size: 10rem;
+  padding: var(--space-4);
   text-align: center;
 }
 
+/* The sprout illustration. Sized via font-size (the icon is 1em); ~120px at
+   the base root font-size, matching the current app. Its pale-blue fill is
+   baked into the icon (the --gray-pale token), so no colour here. */
+.graphic {
+  font-size: 7.5rem;
+  line-height: 1;
+}
+
+/* "Nothing here" — the bold heading, quiet grey (the current app's gray.light). */
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: var(--weight-bold);
+  color: var(--gray-light);
+}
+
+/* The body line under the heading; the CTA (children) follows it. */
 .message {
   margin: 0;
   color: var(--text-secondary);

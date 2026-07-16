@@ -6,16 +6,11 @@ import {
   type Component,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import {
-  HomeIcon,
-  EditIcon,
-  UserIcon,
-  CentralIcon,
-  type IconProps,
-} from '../../icons';
+import { StockIcon, CentralIcon, type IconProps } from '../../icons';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
 import { MenuBar, type MenuBarState } from './MenuBar';
 import { LanguageSelector } from './LanguageSelector';
+import { UserMenu } from './UserMenu';
 import { ShellNavContext, ShellFullScreenContext } from './shellContext';
 import { upperNav, lowerNav, type NavLeaf } from './navModel';
 import { locale, changeLanguage, t } from '../../../intl';
@@ -31,6 +26,24 @@ export interface AppShellProps {
   selected: NavLeaf;
   /** The user picked a menu item. */
   onNavigate: (leaf: NavLeaf) => void;
+  /**
+   * The active store's name, shown in the bottom bar (spec: store selector).
+   */
+  storeName: string;
+  /**
+   * Activating the store cell — routes to the store-selection screen (spec
+   * SL-6).
+   */
+  onStoreClick: () => void;
+  /**
+   * The signed-in user's name, shown in the bottom bar (spec: signed-in user).
+   */
+  username: string;
+  /** Explicit logout, from the user menu (spec: user menu / logout). */
+  onLogout: () => void;
+  /** On a central server the bottom bar is brand orange; otherwise neutral.
+   *  From the isCentralServer global, queried unauthenticated at startup. */
+  isCentralServer?: boolean;
   /**
    * The current page — typically a composed <Page> frame (which supplies the
    * pinned-header / scrolling-body / side-panel / content-footer geometry;
@@ -131,26 +144,38 @@ export const AppShell = (props: AppShellProps) => {
           <div class={styles.main}>
             <div class={styles.content}>{props.children}</div>
 
+            {/* Bottom bar (spec chrome › bottom bar), left to right: the store
+                selector (routes to the store-selection screen), a spacer, the
+                signed-in user (menu: logout), then the language selector. The
+                store name is shown as text, so the store colour is never the
+                sole active-store indicator (colour independence / D14). Hidden in
+                full-screen mode, like the menu bar. */}
             <Show when={!fullScreen()}>
-              <footer class={styles.footer}>
-                <FooterCell icon={HomeIcon} label={t('shell.footer.general')} />
+              <footer
+                class={styles.footer}
+                data-central={props.isCentralServer ? '' : undefined}
+              >
                 <FooterCell
-                  icon={EditIcon}
-                  label={t('shell.footer.edit')}
-                  onClick={() => {}}
+                  icon={StockIcon}
+                  label={props.storeName}
+                  onClick={props.onStoreClick}
                 />
-                <span class={styles.footerDivider} aria-hidden="true" />
-                {/* Placeholder username — real user data lands with the user menu. */}
-                <FooterCell icon={UserIcon} label="demo" />
+                <span class={styles.footerSpacer} aria-hidden="true" />
+                <UserMenu username={props.username} onLogout={props.onLogout} />
                 <span class={styles.footerDivider} aria-hidden="true" />
                 <LanguageSelector
                   language={locale()}
                   onSelect={v => void changeLanguage(v)}
                 />
-                <FooterCell
-                  icon={CentralIcon}
-                  label={t('shell.footer.central-server')}
-                />
+                {/* Central-server cell: only on a central server (its divider
+                    goes with it, so nothing dangles on a remote site). */}
+                <Show when={props.isCentralServer}>
+                  <span class={styles.footerDivider} aria-hidden="true" />
+                  <FooterCell
+                    icon={CentralIcon}
+                    label={t('shell.footer.central-server')}
+                  />
+                </Show>
               </footer>
             </Show>
           </div>

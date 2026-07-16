@@ -27,7 +27,10 @@ const ICONS: Record<AlertSeverity, Component<IconProps>> = {
 
 export interface AlertProps {
   severity: AlertSeverity;
-  /** Replaces the severity's default glyph (by intent — e.g. a completed check). */
+  /**
+   * Replaces the severity's default glyph (by intent — e.g. a completed
+   * check).
+   */
   icon?: Component<IconProps>;
   children: JSX.Element;
   class?: string;

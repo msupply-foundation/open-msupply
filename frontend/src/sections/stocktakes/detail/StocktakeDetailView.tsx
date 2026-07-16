@@ -19,8 +19,8 @@ import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
-import { InfoIcon, MinusCircleIcon } from '../../../ui/icons';
+import { Spinner } from '../../../ui/elements/feedback/Spinner';
+import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -42,6 +42,7 @@ import {
   StocktakeLineEditModal,
   type LineEditCommit,
   type StocktakeLineEditItem,
+  type StocktakeItemInfo,
 } from './edit-modal/StocktakeLineEditModal';
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
@@ -198,10 +199,11 @@ const StocktakeDetailView: Component = () => {
       },
     },
   });
-  // The item being edited (undefined = modal closed).
-  const [editItem, setEditItem] = createSignal<
-    StocktakeLineEditItem | undefined
-  >();
+  // The item the modal OPENS on (undefined = modal closed). Only the INITIAL
+  // item — once open, the modal tracks its own current item as the user
+  // advances with "OK & next" (it resolves each via itemInfo below). We never
+  // change this to advance; we only set it to open and clear it to close.
+  const [editItemId, setEditItemId] = createSignal<string | undefined>();
 
   // Fetch the stocktake. A NodeError (e.g. bad id) is promoted to the global
   // unexpected-error modal via mapSuccessToError, so it never reaches the view
@@ -265,17 +267,56 @@ const StocktakeDetailView: Component = () => {
   // Header click: TanStack computed the next direction; just record it.
   const onSort = (key: SortKey, desc: boolean) => setSort({ key, desc });
 
-  // Row click → edit that line's ITEM (all its batches).
-  const openRow = (line: Line) =>
-    setEditItem({
-      id: line.item.id,
-      code: line.item.code,
-      name: line.itemName,
-    });
-  const editItemLines = createMemo<Line[]>(() => {
-    const item = editItem();
-    return item ? rows().filter(line => line.item.id === item.id) : [];
-  });
+  // Row click → open the editor on that line's ITEM (all its batches).
+  const openRow = (line: Line) => setEditItemId(line.item.id);
+
+  // The item AFTER currentId in the CURRENT on-screen order (sortedRows) —
+  // "OK & next" advances to this. We walk the list top-to-bottom, collapsing to
+  // distinct items (each Line is a batch, so one item spans several rows), and
+  // return the first distinct item that appears AFTER the first row of the
+  // current item and hasn't been seen yet. Anchoring on the FIRST current row
+  // and skipping already-seen items makes it correct whether the table is
+  // grouped (item rows adjacent) or ungrouped (an item's batches interleaved):
+  // once we're past the current item's first row, the next new item is next.
+  // undefined = the current item is the last distinct item → no next (the modal
+  // then shows OK without OK & next). This follows the user's chosen sort/filter
+  // — unlike upstream OMS, which always steps in a hardcoded item-name order.
+  const nextAfter = (
+    list: Line[],
+    currentId: string
+  ): StocktakeLineEditItem | undefined => {
+    const seen = new Set<string>();
+    let past = false;
+    for (const line of list) {
+      const id = line.item.id;
+      if (id === currentId) {
+        past = true;
+        seen.add(id);
+        continue;
+      }
+      if (past && !seen.has(id))
+        return { id, code: line.item.code, name: line.itemName };
+      seen.add(id);
+    }
+    return undefined;
+  };
+
+  // Resolve everything the modal needs for one item, from the CURRENT
+  // filtered/sorted list — the item descriptor, its lines (to seed the draft),
+  // and the next item to advance to. The modal calls this on open and again on
+  // each "OK & next". undefined = the item is no longer in the list (e.g. the
+  // filter changed underneath) → the modal closes. Computed here (the parent
+  // owns the list); surfaced to the modal purely THROUGH this call.
+  const itemInfo = (id: string): StocktakeItemInfo | undefined => {
+    const list = sortedRows();
+    const current = list.find(line => line.item.id === id);
+    if (!current) return undefined;
+    return {
+      item: { id, code: current.item.code, name: current.itemName },
+      lines: list.filter(line => line.item.id === id),
+      nextItem: nextAfter(list, id),
+    };
+  };
 
   // Reflect a line change in place (no refetch): drop deleted ids, replace
   // updated lines by id, append inserted lines — all the SAME StocktakeLine
@@ -550,10 +591,10 @@ const StocktakeDetailView: Component = () => {
     // suspends until the fetch lands. Catching it here — rather than letting it
     // bubble to AppShell's section <Suspense> — keeps first-load from tripping
     // the section fallback and remounting the view
-    // (kdd/solid-reactivity-pitfalls). Its fallback is a centred "Loading…"
-    // (EmptyState). Every later save is a mutate(), which never suspends, so
-    // this fallback shows only on the initial fetch.
-    <Suspense fallback={<EmptyState message={t('common.loading')} />}>
+    // (kdd/solid-reactivity-pitfalls). Its fallback is a centred spinner. Every
+    // later save is a mutate(), which never suspends, so this fallback shows
+    // only on the initial fetch.
+    <Suspense fallback={<Spinner center />}>
       {/* NON-keyed Show: the subtree stays mounted while info() is truthy. It must NOT be `keyed`
           — a keyed Show re-runs (tears down + rebuilds) its child whenever the `when` value's
           IDENTITY changes, and every stocktake-level save sets a fresh node object (setInfo), so
@@ -690,10 +731,24 @@ const StocktakeDetailView: Component = () => {
               columns={columns()}
               rows={sortedRows()}
               rowKey={line => line.id}
+              // Non-suspending loading read — covers a between-stocktake
+              // refetch (keeps rows + shows the refreshing bar); the initial
+              // load is handled by the Suspense fallback below.
+              loading={data.loading}
               sort={sort()}
               onSort={onSort}
               onRowClick={isDisabled(node()) ? undefined : openRow}
               emptyMessage={t('stocktake.detail.empty')}
+              // "Add item" — only offered while the stocktake is editable (an
+              // empty finalised/locked one can't gain lines). The add-line flow
+              // doesn't exist yet, so the handler is a no-op placeholder.
+              empty={
+                isDisabled(node()) ? undefined : (
+                  <Button icon={<PlusCircleIcon />} onClick={() => {}}>
+                    {t('stocktake.detail.add-item')}
+                  </Button>
+                )
+              }
               rowGroup={{
                 columnId: 'code',
                 labelKey: 'stocktake.column.item-name',
@@ -705,12 +760,12 @@ const StocktakeDetailView: Component = () => {
               setConfig={tableConfig.setConfig}
             />
             <StocktakeLineEditModal
-              open={editItem() != null}
-              onClose={() => setEditItem(undefined)}
+              open={editItemId() != null}
+              onClose={() => setEditItemId(undefined)}
               storeId={params.storeId}
               stocktakeId={node().id}
-              item={editItem()}
-              lines={editItemLines()}
+              initialItemId={editItemId()}
+              itemInfo={itemInfo}
               onCommitted={applyCommit}
             />
           </Page>

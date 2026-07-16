@@ -63,9 +63,10 @@ export const StoreSelector = (props: {
 
       <TextField
         label={t('store.search')}
+        hideLabel
         width="full"
         value={query()}
-        placeholder={t('store.search')}
+        placeholder={t('store.search-placeholder')}
         onInput={e => setQuery(e.currentTarget.value)}
       />
 

@@ -81,8 +81,8 @@ export const Pagination = (props: PaginationProps) => {
     // every filter.
     <nav
       class={styles.pagination}
-      data-testid="table-pagination"
       aria-label={t('pagination.label')}
+      data-testid="table-pagination"
     >
       {/* "Showing X-Y of Z" — the range and total are emphasised (bold), the words
           are not, matching the current app's Showing/of split. */}

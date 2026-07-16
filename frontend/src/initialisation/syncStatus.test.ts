@@ -9,9 +9,12 @@ const v7 = (
 ): SyncStatusFragment => ({
   __typename: 'FullSyncStatusV7Node',
   isSyncing: false,
+  warningThreshold: 1,
+  errorThreshold: 3,
   error: null,
   pull: null,
   push: null,
+  waitingForIntegration: null,
   integration: null,
   lastSuccessfulSync: null,
   ...overrides,
@@ -87,7 +90,12 @@ describe('toSyncOverview', () => {
 
   it('surfaces the sync error message', () => {
     const overview = toSyncOverview(
-      v7({ error: { fullError: 'Connection refused' } })
+      v7({
+        error: {
+          variantV7: 'CONNECTION_ERROR',
+          fullError: 'Connection refused',
+        },
+      })
     );
     expect(overview?.errorMessage).toBe('Connection refused');
     expect(overview?.succeeded).toBe(false);

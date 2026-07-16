@@ -4,12 +4,8 @@ import { useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { authUser } from '../auth/authContext';
 import { getPreviousStoreId, recordPreviousStoreId } from '../appData';
-import {
-  currentStoreId,
-  refetchStoreContext,
-  storeContext,
-} from './storeContext';
-import { StoreSelectionModal } from './StoreSelectionModal';
+import { refetchStoreContext, storeContext } from './storeContext';
+import { StoreSelectionScreen } from './StoreSelectionScreen';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
@@ -28,10 +24,10 @@ export type StoreSummary = {
 // Spec (Store Login, Guards 2 and 3), applied as common logic to whatever
 // first URL segment we are looking at. The store to enter is the URL's store,
 // or the only store the user has; otherwise there is none and we show the
-// picker in place (no redirect). Entering records the store and fetches its
-// context; the routed section shows a loading state until that context is
-// loaded for this store and user (so re-authenticating as a different user
-// re-loads even for the same store).
+// store-selection screen ([D14]: a routed page at /resolve-store, not a modal).
+// Entering records the store and fetches its context; the routed section shows
+// a loading state until that context is loaded for this store and user (so
+// re-authenticating as a different user re-loads even for the same store).
 export const StoreGuardLayout: Component<RouteSectionProps> = props => {
   const params = useParams();
   const navigate = useNavigate();
@@ -45,7 +41,8 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
   const contextLoaded = (storeId: string) => {
     const context = storeContext();
     return (
-      currentStoreId() === storeId && context?.me.userId === user()?.userId
+      context?.storePreferences.id === storeId &&
+      context.me.userId === user()?.userId
     );
   };
 
@@ -77,7 +74,7 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     <Show
       when={storeToEnter()}
       fallback={
-        <StoreSelectionModal
+        <StoreSelectionScreen
           stores={pickerStores()}
           defaultStoreId={user()?.defaultStore?.id}
           lastUsedStoreId={

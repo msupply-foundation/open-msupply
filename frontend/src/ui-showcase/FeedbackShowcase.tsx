@@ -73,10 +73,10 @@ export const FeedbackShowcase = () => {
         title="Badge — count / status pill"
         lead={
           <>
-            The small pill riding on another element (the sidebar's sync
-            entry): a count, a capped <code>99+</code>, or an alert mark.
-            Meaning is the label text (plus the host's accessible text) — the
-            semantic <code>tone</code> only escalates it, never stands alone.
+            The small pill riding on another element (the sidebar's sync entry):
+            a count, a capped <code>99+</code>, or an alert mark. Meaning is the
+            label text (plus the host's accessible text) — the semantic{' '}
+            <code>tone</code> only escalates it, never stands alone.
           </>
         }
       >

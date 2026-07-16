@@ -43,15 +43,34 @@
   min-block-size: 2.25rem;
   padding-block: var(--space-1);
   padding-inline: var(--space-4);
-  background: var(--primary-main);
-  color: var(--primary-contrast);
+  /* Matches Open mSupply's AppFooter: on a remote site the bar is the menu
+     surface (--bg-drawer = OMS background.menu) with muted grey text/icons
+     (--gray-main = OMS gray.main); on a central server it flips to brand
+     orange with white content (below). The store name is text, so bar colour
+     is never the sole active-store cue. */
+  background: var(--bg-drawer);
+  color: var(--gray-main);
   font-size: var(--text-xs);
   line-height: 1.2; /* the 1.71 body line-height makes this dense bar too tall */
+  /* One knob the sub-rules (divider, hover, focus) read, flipped by
+     [data-central] — so tint follows the bar without repeating the condition. */
+  --footer-accent: var(--gray-main);
 }
 
-/* Push the last cell ("Central server") to the inline-end edge. */
-.footer > :last-child {
-  margin-inline-start: auto;
+/* Central server: the bar is brand orange (Open mSupply's central-server cue).
+   Set from the isCentralServer global (queried at startup) via AppShell. */
+.footer[data-central] {
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+  --footer-accent: var(--primary-contrast);
+}
+
+/* Spacer between the store selector and the user/language/central cluster
+   (spec bottom bar). Grows to consume free space, pushing the cluster to the
+   inline-end edge. */
+.footerSpacer {
+  flex: 1 1 auto;
+  min-inline-size: var(--space-4);
 }
 
 .footerCell {
@@ -73,11 +92,11 @@ button.footerCell {
 }
 
 button.footerCell:hover {
-  background: color-mix(in srgb, var(--primary-contrast) 15%, transparent);
+  background: color-mix(in srgb, var(--footer-accent) 15%, transparent);
 }
 
 button.footerCell:focus-visible {
-  outline: 2px solid var(--primary-contrast);
+  outline: 2px solid var(--footer-accent);
   outline-offset: -0.125rem;
 }
 
@@ -99,5 +118,5 @@ button.footerCell:focus-visible {
   flex-shrink: 0;
   inline-size: 1px;
   block-size: 1.5rem;
-  background: color-mix(in srgb, var(--primary-contrast) 45%, transparent);
+  background: color-mix(in srgb, var(--footer-accent) 45%, transparent);
 }
