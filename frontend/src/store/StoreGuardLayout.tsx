@@ -76,6 +76,10 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
       fallback={
         <StoreSelectionModal
           stores={pickerStores()}
+          defaultStoreId={user()?.defaultStore?.id}
+          lastUsedStoreId={
+            user() ? getPreviousStoreId(user()!.userId) : undefined
+          }
           onSelect={id => navigate(`/${id}`)}
         />
       }

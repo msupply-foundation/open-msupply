@@ -18,8 +18,18 @@
 #   pnpm dev-android <serial>     (serials: adb devices)
 #
 # UI changes hot-reload with no reinstall. Native changes need a re-run.
+#
+# The debug APK installs as org.openmsupply.client.dev (applicationIdSuffix,
+# android/app/build.gradle) so it coexists with a production install.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+# fail fast: the Capacitor CLI arrives with `pnpm install` (a stale checkout
+# otherwise gets all the way to the cap sync step before dying on it)
+if [ ! -x node_modules/.bin/cap ]; then
+  echo "Capacitor CLI not found (node_modules/.bin/cap) — run: pnpm install" >&2
+  exit 1
+fi
 
 # gradle needs a JDK even if none is on PATH; fall back to the sdkman install
 # (macOS ships a /usr/bin/java stub that exists but errors — run it to be sure)
@@ -49,6 +59,20 @@ if [ "$(echo "$DEVICES" | wc -l)" -gt 1 ]; then
 fi
 echo "Using device: $DEVICE"
 
+# fail fast on a doomed install: a higher-versioned install already on the
+# device means gradle builds for minutes, then dies at the install step with
+# INSTALL_FAILED_VERSION_DOWNGRADE
+PKG=org.openmsupply.client.dev # debug appId (applicationIdSuffix, android/app/build.gradle)
+OUR_VC="$(awk '/versionCode/ {print $2; exit}' android/app/build.gradle)"
+DEVICE_VC="$($ADB -s "$DEVICE" shell dumpsys package "$PKG" 2>/dev/null \
+  | sed -n 's/.*versionCode=\([0-9][0-9]*\).*/\1/p' | head -1 || true)"
+if [ -n "$DEVICE_VC" ] && [ -n "$OUR_VC" ] && [ "$DEVICE_VC" -gt "$OUR_VC" ]; then
+  echo "$PKG on $DEVICE is versionCode $DEVICE_VC; this build is $OUR_VC — install would fail (VERSION_DOWNGRADE)." >&2
+  echo "Uninstall it first (wipes that install's local app data):" >&2
+  echo "  $ADB -s $DEVICE uninstall $PKG" >&2
+  exit 1
+fi
+
 # vite in the background unless something already listens on 3005 (this
 # repo's dev port — vite.config.ts)
 if ! nc -z localhost 3005 2>/dev/null; then
@@ -58,9 +82,25 @@ if ! nc -z localhost 3005 2>/dev/null; then
   until nc -z localhost 3005 2>/dev/null; do sleep 0.3; done
 fi
 
-# warn early if there's no host backend for mode 2
+# fail fast on the host backend (mode 2, the default): the app's startup me
+# query must answer with the fe-auth-contract shape ("Unauthenticated" when no
+# session) — any other server boots the app straight into the unexpected-error
+# modal ("Internal error"). See the blocker in kdd/android/android-spec.md.
 if ! nc -z localhost 8000 2>/dev/null; then
   echo "WARNING: nothing listening on host :8000 — the app's GraphQL calls will fail." >&2
+else
+  ME_RESPONSE="$(curl -s -m 5 -X POST http://localhost:8000/graphql \
+    -H 'content-type: application/json' \
+    -d '{"query":"query me { me { ... on UserNode { __typename } } }"}' || true)"
+  case "$ME_RESPONSE" in
+    *Unauthenticated* | *UserNode*) ;; # fe-auth-contract server
+    *)
+      echo "The server on host :8000 is not an fe-auth-contract build — its me query returned:" >&2
+      echo "  ${ME_RESPONSE:-<no response>}" >&2
+      echo "Login cannot work against it. Run a host server built from the legacy repo's fe-auth-contract branch (kdd/android/android-spec.md)." >&2
+      exit 1
+      ;;
+  esac
 fi
 
 $ADB -s "$DEVICE" reverse tcp:3005 tcp:3005
@@ -71,7 +111,9 @@ $ADB -s "$DEVICE" forward tcp:18000 tcp:8000
 # ANDROID_SERIAL scopes gradle's install to the selected device only
 DEV_ANDROID=1 pnpm exec cap sync android
 (cd android && ANDROID_SERIAL="$DEVICE" ./gradlew installDebug -q)
-$ADB -s "$DEVICE" shell am start -n org.openmsupply.client/.MainActivity
+# fully qualified component: the debug appId ($PKG) differs from the Java
+# namespace the activity class lives in
+$ADB -s "$DEVICE" shell am start -n "$PKG/org.openmsupply.client.MainActivity"
 
 echo "App launched on $DEVICE against http://localhost:3005 (hot reload). Ctrl-C stops vite."
 wait
