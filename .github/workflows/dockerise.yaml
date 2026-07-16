@@ -44,14 +44,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Read .nvmrc
         run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
         id: nvm
 
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
 
@@ -65,7 +65,7 @@ jobs:
         run: NODE_OPTIONS="--max_old_space_size=4096" cd ./client && yarn build
 
       - name: Save artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: client-dist
           path: client/packages/host/dist
@@ -95,10 +95,10 @@ jobs:
       matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Load client artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: client-dist
           path: client/packages/host/dist
@@ -148,7 +148,7 @@ jobs:
           fi
 
       - name: Save server executable artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: server-executables-${{ matrix.db }}-${{ matrix.arch }}
           path: |
@@ -170,25 +170,25 @@ jobs:
       image_tag: ${{ env.VERSION }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Load server artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: server-executables-${{ matrix.db }}-${{ matrix.arch }}
           path: server/
 
       - name: Set up QEMU
         if: matrix.arch == 'arm64'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: arm64
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
@@ -209,7 +209,7 @@ jobs:
           fi
 
       - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           target: ${{ steps.vars.outputs.target }}
@@ -220,7 +220,7 @@ jobs:
 
       - name: Build and Push Docker Image Dev
         if: matrix.arch == 'amd64' && needs.check-tag.outputs.is_release == 'true'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           target: ${{ steps.vars.outputs.target_dev }}

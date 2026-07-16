@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.ref }}
           token: ${{ secrets.JSON_SORT_PAT }}
@@ -23,7 +23,7 @@ jobs:
         run: |
           chmod +x .github/scripts/sort-json.sh 
           .github/scripts/sort-json.sh
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      - uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Sorted JSON translation files"
           commit_options: "--no-verify"

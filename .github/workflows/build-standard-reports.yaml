@@ -25,23 +25,22 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.base.ref || inputs.branch }}
           token: ${{ secrets.JSON_SORT_PAT }}
           fetch-depth: 1
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --no-self-update
 
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: server
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Enable Corepack
         run: corepack enable
@@ -53,7 +52,7 @@ jobs:
         working-directory: ./server
         run: cargo run --bin remote_server_cli -- build-reports
 
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      - uses: stefanzweifel/git-auto-commit-action@v7
         with:
           branch: ${{ github.event.pull_request.base.ref || inputs.branch }}
           commit_message: "chore: regenerate standard reports/forms"

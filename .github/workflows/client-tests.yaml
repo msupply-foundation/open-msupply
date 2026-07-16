@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.ref }}
 
@@ -29,7 +29,7 @@ jobs:
         id: nvm
 
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 

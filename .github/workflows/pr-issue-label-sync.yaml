@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Sync labels
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             core.debug(`where the PR? ${context.repo.repo} ${context.repo.owner} ${context.issue.number}`);

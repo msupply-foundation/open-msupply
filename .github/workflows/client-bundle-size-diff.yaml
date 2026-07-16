@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.base_ref }}
 
@@ -28,7 +28,7 @@ jobs:
         id: nvm
 
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v5
         with:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
@@ -48,7 +48,7 @@ jobs:
 
       - name: Upload base stats.json
         if: ${{ steps.build.outcome == 'success' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: base
           path: ./client/packages/host/dist/stats.json
@@ -60,14 +60,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Read .nvmrc
         run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
         id: nvm
 
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v5
         with:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
@@ -78,7 +78,7 @@ jobs:
         run: cd ./client && yarn build-stats
 
       - name: Upload PR stats.json
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pr-stats
           path: ./client/packages/host/dist/stats.json
@@ -90,18 +90,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download base stats
         id: download-base
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: base
           path: base
 
       - name: Download PR stats
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: pr-stats
           path: pr
@@ -109,10 +109,27 @@ jobs:
       - name: Calculate diff
         if: ${{ steps.download-base.outcome == 'success' }}
         id: get-diff
-        uses: NejcZdovc/bundle-size-diff@v1
-        with:
-          base_path: './base/stats.json'
-          pr_path: './pr/stats.json'
+        # Sums .assets[].size from the webpack stats files, replicating the
+        # retired NejcZdovc/bundle-size-diff action (unmaintained, node12).
+        run: |
+          base=$(jq '[.assets[].size] | add // 0' base/stats.json)
+          pr=$(jq '[.assets[].size] | add // 0' pr/stats.json)
+          diff=$((pr - base))
+          human() {
+            awk -v b="$1" 'BEGIN {
+              sign = b < 0 ? "-" : ""; b = b < 0 ? -b : b
+              split("B KB MB GB TB", u, " "); i = 1
+              while (b >= 1024 && i < 5) { b /= 1024; i++ }
+              printf "%s%.2f %s", sign, b, u[i]
+            }'
+          }
+          percent=$(awk -v o="$base" -v n="$pr" 'BEGIN { printf "%.2f", o ? (n - o) / o * 100 : 0 }')
+          {
+            echo "base_file_string=$(human "$base")"
+            echo "pr_file_string=$(human "$pr")"
+            echo "diff_file_string=$(human "$diff")"
+            echo "percent=$percent"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Save comparison data
         run: |
@@ -135,7 +152,7 @@ jobs:
           fi
 
       - name: Upload comparison artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pr-artifact
           path: |

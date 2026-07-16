@@ -14,7 +14,7 @@ jobs:
       AFFECTED_BRANCHES: ${{ steps.create_tags.outputs.AFFECTED_BRANCHES }}
       HAS_TAGS: ${{ steps.create_tags.outputs.HAS_TAGS }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
@@ -33,7 +33,7 @@ jobs:
     if: needs.create-tags.outputs.HAS_TAGS == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Send Slack notifications
         env:
           SLACK_DEV_RELEASE_WEBHOOK_URL: ${{ secrets.SLACK_DEV_RELEASE_WEBHOOK_URL }}
