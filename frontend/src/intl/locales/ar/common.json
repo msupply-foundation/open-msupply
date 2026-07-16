@@ -29,6 +29,7 @@
   "store.select": "اختر متجرًا",
   "store.select-instructions": "اختر المتجر الذي تريد العمل فيه. يمكنك تبديل المتاجر في أي وقت من الشريط السفلي.",
   "store.search": "البحث عن المتاجر",
+  "store.search-placeholder": "ابحث باسم المتجر أو رمزه…",
   "store.no-results": "لا توجد متاجر تطابق بحثك.",
   "store.default": "افتراضي",
   "store.last-used": "آخر استخدام",

@@ -48,7 +48,7 @@
   background: transparent;
   color: var(--text-body);
   font: inherit;
-  font-size: var(--text-md);
+  font-size: var(--text-sm);
   text-align: start;
   cursor: pointer;
   transition: background-color 0.1s;

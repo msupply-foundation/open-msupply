@@ -265,6 +265,7 @@
   "store.loading": "Loading store…",
   "store.no-results": "No stores match your search.",
   "store.search": "Search stores",
+  "store.search-placeholder": "Search store name or code…",
   "store.select": "Select a store",
   "store.select-instructions": "Choose which store to work in. You can switch stores at any time from the bottom bar.",
   "sync.status.done": "done",
