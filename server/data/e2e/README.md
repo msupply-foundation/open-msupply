@@ -1,6 +1,8 @@
 # e2e reference datafile
 
-Seed data for the deterministic Playwright suites (`client/playwright`).
+Seed data for the deterministic Playwright suites (defined in
+[open-msupply-frontend](https://github.com/msupply-foundation/open-msupply-frontend)
+under `e2e/`; run against this repo with `yarn e2e:local`).
 Restore it into a fresh database with:
 
 ```bash
@@ -20,7 +22,7 @@ users, stores, periods, programs. Plus injected login wiring for Admin on GRY
 (`user_store_join` / `user_permission` — a v7 pull doesn't deliver those).
 
 Deliberately **no stock, no documents** — store-local state is created through
-the GraphQL API by `client/playwright/e2e/data.setup.ts` at suite start
+the GraphQL API by `e2e/specs/data.setup.ts` (in open-msupply-frontend) at suite start
 ("seed nouns, create verbs"). Don't add stock here; extend the arrange step.
 
 ## Format
