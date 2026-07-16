@@ -78,11 +78,14 @@ export const InitialisationPage: Component<{
       onData: data => handleStatus(data.syncInfoUpdated.syncStatus),
       onFailure: () => {
         poller = window.setInterval(() => {
-          void graphqlFetch(LatestSyncStatus, {}).then(result => {
-            // Transient poll failures are ignored; the next tick retries.
-            if (result.kind === 'success')
-              handleStatus(result.data.latestSyncStatus);
-          });
+          void graphqlFetch(LatestSyncStatus, {}, { background: true }).then(
+            result => {
+              // Transient poll failures are ignored (background: no global
+              // unexpected-error modal); the next tick retries.
+              if (result.kind === 'success')
+                handleStatus(result.data.latestSyncStatus);
+            }
+          );
         }, SYNC_POLL_INTERVAL_MS);
       },
     });

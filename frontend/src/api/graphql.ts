@@ -72,7 +72,9 @@ type FetchOptions<TResult> = {
   // { kind: 'unexpectedError' } but do NOT trip the global unexpected-error
   // modal — a transient outage would otherwise convert a silently-recoverable
   // background retry into a forced app reload (spec/sync-modal: a transport
-  // interruption must not degrade the session).
+  // interruption must not degrade the session). Deliberate asymmetry: an
+  // unauthenticated result still reports globally (the re-login modal) — only
+  // the unexpected-error modal is suppressed.
   background?: boolean;
   endpoint?: string;
 };
