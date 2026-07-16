@@ -10,6 +10,12 @@ hidden for the whole life of a blind stock take. #}
 {% set hide_snapshot = is_blind and is_new %}
 {% set hide_reason = is_blind %}
 
+{# Only show the campaign column when at least one line has a campaign #}
+{% set_global has_campaign = false %}
+{% for line in data.stocktakeLines.nodes %}
+{% if line.campaign.name %}{% set_global has_campaign = true %}{% endif %}
+{% endfor %}
+
 <table class="body_section">
     <thead>
         <tr class="body_column_label">
@@ -29,6 +35,9 @@ hidden for the whole life of a blind stock take. #}
             {% endif %}
             {% if not hide_reason %}
             <th>{{t(k="label.reason-adjustment",f="Adjustment Reason")}}</th>
+            {% endif %}
+            {% if has_campaign %}
+            <th>{{t(k="label.campaign-only",f="Campaign")}}</th>
             {% endif %}
             <th>{{t(k="label.comment",f="Comment")}}</th>
         </tr>
@@ -71,6 +80,9 @@ hidden for the whole life of a blind stock take. #}
         {% endif %}
         {% if not hide_reason %}
         <td>{{ line.reasonOption.reason | default(value='') }}</td>
+        {% endif %}
+        {% if has_campaign %}
+        <td>{{ line.campaign.name | default(value='') }}</td>
         {% endif %}
         <td style="white-space: pre-line; word-break: break-word;">{{ line.comment | default(value='') }}</td>
     </tr>
