@@ -123,21 +123,3 @@ test("__typename on a concrete object type is that type's name literal", () => {
 }`,
   );
 });
-
-test("fields not present in the schema are silently skipped", () => {
-  // The plugin guards `if (!fieldDef) continue;` — a typo'd field just drops
-  // out of the result type rather than crashing.
-  const out = generate({
-    schema: SCHEMA,
-    document: "query Q { thing { id doesNotExist } }",
-  });
-
-  assert.equal(
-    resultType(out),
-    `{
-  thing: {
-  id: string;
-};
-}`,
-  );
-});

@@ -97,7 +97,7 @@ export const CreateStocktakeModal = (props: { open: boolean; onClose: () => void
     };
   };
 
-  // Source for the estimate = the count-affecting fields (kdd/no-remounts). createResource has
+  // Source for the estimate = the count-affecting fields (kdd/solid-reactivity-pitfalls). createResource has
   // no `equals` option — it dedupes its source with ===, and a fresh array/object every setForm
   // would refetch on each edit. So the shallow compare lives on a createMemo (which DOES take
   // `equals`): the memo only emits a new value when a field actually changes, and the resource

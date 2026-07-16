@@ -9,7 +9,10 @@ import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
 import styles from './Login.module.css';
 
-type SubmitState = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'error'; message: string };
+type SubmitState =
+  | { kind: 'idle' }
+  | { kind: 'submitting' }
+  | { kind: 'error'; message: string };
 
 // The login screen: the design-system Login (gradient hero + form panel,
 // recreated from the current app — see kdd/page-composition) composed with
@@ -21,8 +24,13 @@ type SubmitState = { kind: 'idle' } | { kind: 'submitting' } | { kind: 'error'; 
 export const LoginPage: Component = () => {
   const [username, setUsername] = createSignal('');
   const [password, setPassword] = createSignal('');
-  const [fieldErrors, setFieldErrors] = createSignal({ username: '', password: '' });
-  const [submitState, setSubmitState] = createSignal<SubmitState>({ kind: 'idle' });
+  const [fieldErrors, setFieldErrors] = createSignal({
+    username: '',
+    password: '',
+  });
+  const [submitState, setSubmitState] = createSignal<SubmitState>({
+    kind: 'idle',
+  });
 
   const submitting = () => submitState().kind === 'submitting';
   const submitError = () => {
@@ -42,7 +50,8 @@ export const LoginPage: Component = () => {
     if (errors.username !== '' || errors.password !== '') return;
     setSubmitState({ kind: 'submitting' });
     const result = await login(username(), password());
-    if (result.kind === 'error') setSubmitState({ kind: 'error', message: result.message });
+    if (result.kind === 'error')
+      setSubmitState({ kind: 'error', message: result.message });
   };
 
   return (
@@ -54,7 +63,11 @@ export const LoginPage: Component = () => {
 
       <main class={styles.panel}>
         <div class={styles.formArea}>
-          <form class={styles.form} aria-label={t('login.title')} onSubmit={submit}>
+          <form
+            class={styles.form}
+            aria-label={t('login.title')}
+            onSubmit={submit}
+          >
             <MSupplyGuyLogo class={styles.logo} />
             <TextField
               label={t('login.username')}
@@ -64,7 +77,7 @@ export const LoginPage: Component = () => {
               autofocus
               value={username()}
               error={fieldErrors().username || undefined}
-              onInput={(e) => setUsername(e.currentTarget.value)}
+              onInput={e => setUsername(e.currentTarget.value)}
             />
             <TextField
               label={t('login.password')}
@@ -74,7 +87,7 @@ export const LoginPage: Component = () => {
               autocomplete="current-password"
               value={password()}
               error={fieldErrors().password || undefined}
-              onInput={(e) => setPassword(e.currentTarget.value)}
+              onInput={e => setPassword(e.currentTarget.value)}
             />
             <Show when={submitError()}>
               <Alert severity="error">{submitError()}</Alert>
@@ -95,7 +108,10 @@ export const LoginPage: Component = () => {
           <p class={styles.version}>
             <strong>{t('login.version')}</strong> 0.0.0
           </p>
-          <LanguageSelector language={locale()} onSelect={(v) => void changeLanguage(v)} />
+          <LanguageSelector
+            language={locale()}
+            onSelect={v => void changeLanguage(v)}
+          />
         </footer>
       </main>
     </div>

@@ -6,18 +6,23 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
-const filterStores = (stores: StoreSummary[], searchTerm: string): StoreSummary[] => {
+const filterStores = (
+  stores: StoreSummary[],
+  searchTerm: string
+): StoreSummary[] => {
   const term = searchTerm.trim().toLowerCase();
   if (term === '') return stores;
   return stores.filter(
-    s => s.name.toLowerCase().includes(term) || s.code.toLowerCase().includes(term)
+    s =>
+      s.name.toLowerCase().includes(term) || s.code.toLowerCase().includes(term)
   );
 };
 
-// Spec (Store Login, Guard 2): the selection modal, presented whenever the URL does
-// not resolve to a store. Searchable; previously logged-in store and default store
-// are already ordered to the top by the caller. Not dismissable — there is no store
-// behind it to fall back to; picking one is the only way forward.
+// Spec (Store Login, Guard 2): the selection modal, presented whenever the URL
+// does not resolve to a store. Searchable; previously logged-in store and
+// default store are already ordered to the top by the caller. Not dismissable —
+// there is no store behind it to fall back to; picking one is the only way
+// forward.
 export const StoreSelectionModal: Component<{
   stores: StoreSummary[];
   onSelect: (storeId: string) => void;
@@ -26,7 +31,12 @@ export const StoreSelectionModal: Component<{
   const visible = () => filterStores(props.stores, search());
 
   return (
-    <Dialog open dismissable={false} onClose={() => {}} title={t('store.select')}>
+    <Dialog
+      open
+      dismissable={false}
+      onClose={() => {}}
+      title={t('store.select')}
+    >
       <TextField
         label={t('store.search')}
         width="full"

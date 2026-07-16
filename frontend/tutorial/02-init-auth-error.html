@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2 · Init, auth &amp; errors</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="tutorial.js"></script>
+  </head>
+  <body>
+    <button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand"><span class="dot"></span> FE Patterns</div>
+        <nav>
+          <a href="index.html"><span class="num">·</span>Overview</a>
+          <a href="01-graphql-codegen.html"
+            ><span class="num">1</span>Codegen &amp; graphqlFetch</a
+          >
+          <a class="current" href="02-init-auth-error.html"
+            ><span class="num">2</span>Init, auth &amp; errors</a
+          >
+          <a href="03-store-login-state.html"
+            ><span class="num">3</span>Store &amp; global state</a
+          >
+          <a href="04-list-table-url.html"
+            ><span class="num">4</span>Lists: table &amp; URL</a
+          >
+          <a href="05-createresource.html"
+            ><span class="num">5</span>createResource</a
+          >
+          <a href="06-store-scoped.html"
+            ><span class="num">6</span>Store-scoped caches</a
+          >
+        </nav>
+      </aside>
+
+      <main class="content">
+        <div class="content-inner">
+          <p class="eyebrow">Chapter 2</p>
+          <h1>Init, auth &amp; the global error component</h1>
+          <p class="lede">
+            How the app boots, how a user logs in, and how errors surface. The
+            theme of this chapter:
+            <strong>global state is module-level signals</strong> — there is no
+            provider tree and no <code>createContext</code>. Files named
+            <code>authContext.ts</code> are modules, not React contexts.
+          </p>
+
+          <h2>The entry point</h2>
+          <p>
+            <code>src/index.tsx</code> renders <code>&lt;App/&gt;</code> into
+            <code>#root</code>. That's nearly all it does — the only branch is a
+            dev-only showcase that is dead-code eliminated from production.
+          </p>
+          <span class="filename">src/index.tsx</span>
+          <pre><code><span class="kw">import</span> { render } <span class="kw">from</span> <span class="st">"solid-js/web"</span>;
+<span class="kw">import</span> { App } <span class="kw">from</span> <span class="st">"./App"</span>;
+
+<span class="kw">const</span> root = document.<span class="fn">getElementById</span>(<span class="st">"root"</span>)!;
+<span class="fn">render</span>(() =&gt; &lt;App /&gt;, root);</code></pre>
+
+          <h2>A phase machine, not a router-first app</h2>
+          <p>
+            <code>App.tsx</code> is a small state machine with three phases.
+            Routing is only mounted once the app is <em>operational</em> and a
+            user is present. Startup runs in a fixed order and never navigates
+            away from the original URL, so a deep link is respected once auth
+            resolves.
+          </p>
+
+          <div class="diagram">
+            <svg
+              viewBox="0 0 700 150"
+              role="img"
+              aria-label="Startup phase machine"
+            >
+              <defs>
+                <marker
+                  id="ah2"
+                  markerWidth="9"
+                  markerHeight="9"
+                  refX="7"
+                  refY="3"
+                  orient="auto"
+                >
+                  <path d="M0,0 L7,3 L0,6 Z" fill="#8f90a6" />
+                </marker>
+                <style>
+                  .p {
+                    fill: var(--surface);
+                    stroke: var(--border);
+                    stroke-width: 1.5;
+                  }
+                  .pt {
+                    fill: var(--text);
+                    font: 600 13px system-ui;
+                  }
+                  .ps {
+                    fill: var(--text-3);
+                    font:
+                      11px ui-monospace,
+                      monospace;
+                  }
+                  .pl {
+                    stroke: #8f90a6;
+                    stroke-width: 1.5;
+                    fill: none;
+                  }
+                  .plt {
+                    fill: var(--text-3);
+                    font: 11px system-ui;
+                  }
+                  .op {
+                    fill: color-mix(in srgb, #2e9e6b 12%, var(--surface));
+                    stroke: #2e9e6b;
+                  }
+                </style>
+              </defs>
+              <rect class="p" x="20" y="45" width="150" height="56" rx="8" />
+              <text class="pt" x="36" y="70">loading</text>
+              <text class="ps" x="36" y="88">locale · status · me</text>
+
+              <rect class="p" x="255" y="45" width="160" height="56" rx="8" />
+              <text class="pt" x="271" y="70">initialisation</text>
+              <text class="ps" x="271" y="88">not INITIALISED</text>
+
+              <rect
+                class="p op"
+                x="500"
+                y="45"
+                width="180"
+                height="56"
+                rx="8"
+              />
+              <text class="pt" x="516" y="70">operational</text>
+              <text class="ps" x="516" y="88">login → router</text>
+
+              <path class="pl" d="M170,63 L251,63" marker-end="url(#ah2)" />
+              <text class="plt" x="176" y="55">needs setup</text>
+              <path
+                class="pl"
+                d="M170,85 Q340,150 500,90"
+                marker-end="url(#ah2)"
+              />
+              <text class="plt" x="300" y="140">authenticated</text>
+              <path
+                class="pl"
+                d="M415,80 Q460,105 500,88"
+                marker-end="url(#ah2)"
+              />
+              <text class="plt" x="420" y="120">done</text>
+            </svg>
+          </div>
+
+          <span class="filename">src/App.tsx (abridged)</span>
+          <pre><code><span class="kw">type</span> <span class="ty">Phase</span> = <span class="st">"loading"</span> | <span class="st">"initialisation"</span> | <span class="st">"operational"</span>;
+<span class="kw">const</span> [phase, setPhase] = <span class="fn">createSignal</span>&lt;<span class="ty">Phase</span>&gt;(<span class="st">"loading"</span>);
+
+<span class="kw">const</span> runStartup = <span class="kw">async</span> () =&gt; {
+  <span class="kw">await</span> <span class="fn">initialiseLocale</span>(<span class="fn">detectLocale</span>());          <span class="cm">// 1. dictionary before first paint</span>
+  <span class="kw">const</span> status = <span class="kw">await</span> <span class="fn">graphqlFetch</span>(InitialisationStatus, {});
+  <span class="kw">if</span> (status.kind !== <span class="st">"success"</span>) <span class="kw">return</span>;         <span class="cm">// failure handled globally; stay loading</span>
+  <span class="kw">if</span> (status.data.initialisationStatus.status !== <span class="st">"INITIALISED"</span>) {
+    <span class="fn">setPhase</span>(<span class="st">"initialisation"</span>); <span class="kw">return</span>;
+  }
+  <span class="kw">if</span> (<span class="kw">await</span> <span class="fn">checkAuth</span>()) <span class="fn">setPhase</span>(<span class="st">"operational"</span>);  <span class="cm">// 2. me check</span>
+};
+
+<span class="fn">onMount</span>(() =&gt; { <span class="kw">void</span> <span class="fn">runStartup</span>(); … });</code></pre>
+
+          <p>
+            And the render: routing appears only when operational <em>and</em> a
+            user exists.
+          </p>
+          <pre><code>&lt;<span class="ty">Match</span> when={phase() === <span class="st">"operational"</span>}&gt;
+  &lt;<span class="ty">Show</span> when={<span class="fn">authUser</span>()} fallback={&lt;<span class="ty">LoginPage</span> /&gt;}&gt;
+    &lt;<span class="ty">Router</span>&gt; … &lt;/<span class="ty">Router</span>&gt;
+    &lt;<span class="ty">ReLoginModal</span> /&gt;
+  &lt;/<span class="ty">Show</span>&gt;
+&lt;/<span class="ty">Match</span>&gt;
+<span class="cm">/* On top of EVERYTHING, including modals: */</span>
+&lt;<span class="ty">UnexpectedErrorModal</span> /&gt;</code></pre>
+
+          <div class="box">
+            <p class="box-title">No provider tree</p>
+            <p style="margin-bottom: 0">
+              Notice there are no context providers wrapping the app.
+              <code>authUser()</code> is a signal imported straight from a
+              module. Reactivity — not dependency injection — wires the app
+              together. This is the single most surprising thing for developers
+              arriving from React.
+            </p>
+          </div>
+
+          <h2>Auth is a module of signals + actions</h2>
+          <p>
+            All authentication lives in <code>src/auth/authContext.ts</code>:
+            the user signal, the session flags, and the actions that change
+            them. The user is typed to the <em>generated</em> fragment — no
+            parallel model (chapter 1's type-safety rule).
+          </p>
+          <span class="filename">src/auth/authContext.ts (abridged)</span>
+          <pre><code><span class="cm">// State from GraphQL keeps its generated type — the same fragment backs me AND login.</span>
+<span class="kw">export type</span> <span class="ty">AuthUser</span> = <span class="ty">UserInfoFragment</span>;
+
+<span class="kw">const</span> [user, setUser] = <span class="fn">createSignal</span>&lt;<span class="ty">AuthUser</span> | <span class="kw">undefined</span>&gt;();
+<span class="kw">export const</span> authUser = user;                      <span class="cm">// the global read accessor</span>
+
+<span class="kw">export const</span> checkAuth = <span class="kw">async</span> () =&gt; {          <span class="cm">// startup me check</span>
+  <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">graphqlFetch</span>(Me, {});
+  <span class="kw">if</span> (result.kind === <span class="st">"success"</span>) { <span class="fn">setUser</span>(result.data.me); <span class="kw">return</span> <span class="kw">true</span>; }
+  <span class="kw">return</span> result.kind === <span class="st">"unauthenticated"</span>;
+};
+
+<span class="kw">export const</span> login = <span class="kw">async</span> (username, password) =&gt; {
+  <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">graphqlFetch</span>(AuthToken, { username, password });
+  <span class="kw">if</span> (result.kind !== <span class="st">"success"</span>) <span class="kw">return</span> { kind: <span class="st">"pending"</span> }; <span class="cm">// global failure</span>
+  <span class="kw">const</span> auth = result.data.authToken;
+  <span class="kw">if</span> (auth.__typename === <span class="st">"AuthTokenError"</span>) <span class="kw">return</span> { kind: <span class="st">"error"</span>, message: auth.error.description };
+  <span class="fn">setUser</span>(auth.user); <span class="fn">clearUnauthenticated</span>(); <span class="kw">return</span> { kind: <span class="st">"success"</span> };
+};</code></pre>
+
+          <p>
+            The login page is a thin consumer: local signals for the fields, and
+            on success it just calls <code>login()</code>. There is
+            <strong>no success callback</strong> — setting the global
+            <code>user</code> signal is what makes <code>App</code> swap the
+            login page for the router.
+          </p>
+
+          <div class="box">
+            <p class="box-title">Sessions are cookie-based</p>
+            <p style="margin-bottom: 0">
+              Nothing auth-sensitive is stored client-side — no token in
+              <code>localStorage</code>, no <code>Authorization</code> header.
+              The server sets an HttpOnly session cookie and
+              <code>graphqlFetch</code> sends
+              <code>credentials: "same-origin"</code>. The user identity lives
+              only in the in-memory signal. (<code
+                >startActivityTracking()</code
+              >
+              fires a <code>RefreshToken</code> when the user is active but
+              GraphQL traffic has been idle, and flips an inactivity flag
+              otherwise.)
+            </p>
+          </div>
+
+          <h2>The global error component</h2>
+          <p>
+            Recall from chapter 1 that any unhandled failure sets a global
+            signal
+            <em>inside</em> <code>graphqlFetch</code>. Here is the whole
+            surfacing mechanism — a signal in the API layer, and one modal that
+            reads it.
+          </p>
+          <span class="filename">src/api/graphql.ts</span>
+          <pre><code><span class="cm">// One global failure state for anything outside the structured union results.</span>
+<span class="kw">const</span> [unexpectedError, setUnexpectedError] = <span class="fn">createSignal</span>&lt;<span class="ty">string</span> | <span class="kw">undefined</span>&gt;();
+<span class="kw">export</span> { unexpectedError };
+<span class="cm">// …inside graphqlFetch, on any unhandled failure:</span>
+<span class="fn">setUnexpectedError</span>(message);
+<span class="kw">return</span> { kind: <span class="st">"unexpectedError"</span> };</code></pre>
+
+          <span class="filename">src/UnexpectedErrorModal.tsx</span>
+          <pre><code><span class="kw">export const</span> <span class="fn">UnexpectedErrorModal</span> = () =&gt; (
+  &lt;<span class="ty">Dialog</span>
+    open={<span class="fn">Boolean</span>(<span class="fn">unexpectedError</span>())}
+    dismissable={<span class="kw">false</span>}                         <span class="cm">// recovery IS the only exit</span>
+    title={<span class="fn">t</span>(<span class="st">"error.unexpected"</span>)}
+    description={<span class="fn">unexpectedError</span>()}
+    actions={&lt;&gt;
+      &lt;<span class="ty">Button</span> onClick={() =&gt; location.<span class="fn">reload</span>()}&gt;{<span class="fn">t</span>(<span class="st">"error.reload"</span>)}&lt;/<span class="ty">Button</span>&gt;
+      &lt;<span class="ty">Button</span> onClick={() =&gt; (location.href = <span class="st">"/"</span>)}&gt;{<span class="fn">t</span>(<span class="st">"error.go-to-dashboard"</span>)}&lt;/<span class="ty">Button</span>&gt;
+    &lt;/&gt;}
+  /&gt;
+);</code></pre>
+
+          <div class="box">
+            <p class="box-title">Errors are values, handled once</p>
+            <p style="margin-bottom: 0">
+              There is <strong>no <code>ErrorBoundary</code></strong> and no
+              thrown-exception path. A failure is a value that trips a signal; a
+              single modal renders it, and the flow that hit the error simply
+              stays in its loading phase. Its sibling,
+              <code>ReLoginModal</code>, handles the
+              <code>unauthenticated</code> case differently — it preserves the
+              user's workflow (doesn't clear the user) rather than reloading.
+            </p>
+          </div>
+
+          <div class="box build">
+            <p class="box-title">Build step · widgets</p>
+            <p style="margin-bottom: 0">
+              Your <code>widgets</code> route will live inside the router, which
+              only mounts when <code>authUser()</code> is set — so it inherits
+              auth-gating for free, no guard code. To see the error path: make a
+              <code>widgets</code> fetch hit a bad endpoint and watch the
+              <code>UnexpectedErrorModal</code> appear over the whole app while
+              your list stays in its loading state.
+            </p>
+          </div>
+
+          <div class="box real">
+            <p class="box-title">Real code</p>
+            <p style="margin-bottom: 0">
+              <a href="../src/index.tsx">src/index.tsx</a> ·
+              <a href="../src/App.tsx">src/App.tsx</a> ·
+              <a href="../src/auth/authContext.ts">src/auth/authContext.ts</a> ·
+              <a href="../src/auth/LoginPage.tsx">LoginPage.tsx</a> ·
+              <a href="../src/auth/ReLoginModal.tsx">ReLoginModal.tsx</a> ·
+              <a href="../src/UnexpectedErrorModal.tsx"
+                >UnexpectedErrorModal.tsx</a
+              >. Why:
+              <a href="../kdd/state-management/draft-kdd.md"
+                >kdd/state-management</a
+              >,
+              <a href="../kdd/explicit-composition/draft-kdd.md"
+                >kdd/explicit-composition</a
+              >.
+            </p>
+          </div>
+
+          <div class="pager">
+            <a class="prev" href="01-graphql-codegen.html">
+              <span class="dir">← Prev</span
+              ><span class="ttl">Codegen &amp; graphqlFetch</span>
+            </a>
+            <a class="next" href="03-store-login-state.html">
+              <span class="dir">Next →</span
+              ><span class="ttl">Store &amp; global state</span>
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

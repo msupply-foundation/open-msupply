@@ -1,17 +1,17 @@
-import type { JSX } from 'solid-js'
-import { Header } from '../ui/layout/Header/Header'
-import { Breadcrumb } from '../ui/layout/Header/Breadcrumb'
-import { HeaderButtons } from '../ui/layout/Header/HeaderButtons'
-import { Toolbar } from '../ui/layout/Header/Toolbar'
-import { Button } from '../ui/elements/buttons/Button'
-import { SplitButton } from '../ui/elements/buttons/SplitButton'
-import { TruckIcon, PlusCircleIcon, DownloadIcon } from '../ui/icons'
-import styles from './HeaderShowcase.module.css'
+import type { JSX } from 'solid-js';
+import { Header } from '../ui/layout/Header/Header';
+import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
+import { Toolbar } from '../ui/layout/Header/Toolbar';
+import { Button } from '../ui/elements/buttons/Button';
+import { SplitButton } from '../ui/elements/buttons/SplitButton';
+import { TruckIcon, PlusCircleIcon, DownloadIcon } from '../ui/icons';
+import styles from './HeaderShowcase.module.css';
 
 const Card = (props: {
-  title: string
-  lead: JSX.Element
-  children: JSX.Element
+  title: string;
+  lead: JSX.Element;
+  children: JSX.Element;
 }) => (
   <section class={styles.card}>
     <header class={styles.cardHeader}>{props.title}</header>
@@ -20,12 +20,12 @@ const Card = (props: {
       {props.children}
     </div>
   </section>
-)
+);
 
 const EXPORT_OPTIONS = [
   { value: 'csv', label: 'Export CSV' },
   { value: 'excel', label: 'Export Excel' },
-]
+];
 
 export const HeaderShowcase = () => (
   <div class={styles.stack}>
@@ -73,9 +73,9 @@ export const HeaderShowcase = () => (
           A deeper trail on a detail page: ancestor crumbs with a{' '}
           <code>to</code> render as real links, and the current page renders as
           the page's <code>&lt;h1&gt;</code> (styled as just another crumb),
-          marked <code>aria-current="page"</code>. Every part is optional —
-          this one omits the <code>&lt;Toolbar&gt;</code>. Squeeze the window
-          to watch the buttons wrap below the breadcrumb intrinsically; no
+          marked <code>aria-current="page"</code>. Every part is optional — this
+          one omits the <code>&lt;Toolbar&gt;</code>. Squeeze the window to
+          watch the buttons wrap below the breadcrumb intrinsically; no
           breakpoints involved. Inside the app shell, the narrow-viewport
           hamburger slots into this strip automatically (see the App shell
           section).
@@ -104,4 +104,4 @@ export const HeaderShowcase = () => (
       </div>
     </Card>
   </div>
-)
+);

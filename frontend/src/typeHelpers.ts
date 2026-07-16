@@ -17,7 +17,7 @@ export const exhaustiveCheck = (value: never): never => {
 // null → equal). Meant as the `equals` for a createMemo whose output is a tuple of
 // reactive inputs: createResource dedupes its source by reference and has no `equals`
 // option, so a memo with this comparator gives it a source that only changes when a
-// field actually changes (kdd/no-remounts). Same-reference and same-length are the
+// field actually changes (kdd/solid-reactivity-pitfalls). Same-reference and same-length are the
 // fast paths; different length or any element mismatch → not equal.
 export const shallowEqual = <T extends readonly unknown[]>(a: T | null, b: T | null): boolean =>
   a === b ||

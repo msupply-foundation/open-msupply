@@ -1,11 +1,11 @@
-import { For } from 'solid-js'
-import type { RippleInstance } from '../../utils/createRipple'
-import styles from './Ripple.module.css'
+import { For } from 'solid-js';
+import type { RippleInstance } from '../../utils/createRipple';
+import styles from './Ripple.module.css';
 
 interface RippleProps {
-  ripples: RippleInstance[]
+  ripples: RippleInstance[];
   /** Called when a ripple finishes animating, so the host can drop it. */
-  onDone: (id: number) => void
+  onDone: (id: number) => void;
 }
 
 /*
@@ -32,4 +32,4 @@ export const Ripple = (props: RippleProps) => (
       )}
     </For>
   </span>
-)
+);

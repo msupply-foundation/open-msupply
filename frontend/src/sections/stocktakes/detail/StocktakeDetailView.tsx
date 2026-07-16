@@ -468,7 +468,7 @@ const StocktakeDetailView: Component = () => {
   return (
     // Local Suspense boundary: the FIRST read of data() (info()/rows()) suspends until the fetch
     // lands. Catching it here — rather than letting it bubble to AppShell's section <Suspense> —
-    // keeps first-load from tripping the section fallback and remounting the view (kdd/no-remounts).
+    // keeps first-load from tripping the section fallback and remounting the view (kdd/solid-reactivity-pitfalls).
     // Its fallback is a centred "Loading…" (EmptyState). Every later save is a mutate(), which never
     // suspends, so this fallback shows only on the initial fetch.
     <Suspense fallback={<EmptyState message={t('common.loading')} />}>

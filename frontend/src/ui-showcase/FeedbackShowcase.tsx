@@ -1,24 +1,24 @@
-import { createSignal, For, type JSX } from 'solid-js'
-import { Alert } from '../ui/elements/feedback/Alert'
-import { StatusChip } from '../ui/elements/feedback/StatusChip'
-import { Dialog } from '../ui/elements/feedback/Dialog'
-import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog'
-import { Popover } from '../ui/elements/feedback/Popover'
-import { Button } from '../ui/elements/buttons/Button'
-import { TextField } from '../ui/elements/inputs/TextField'
+import { createSignal, For, type JSX } from 'solid-js';
+import { Alert } from '../ui/elements/feedback/Alert';
+import { StatusChip } from '../ui/elements/feedback/StatusChip';
+import { Dialog } from '../ui/elements/feedback/Dialog';
+import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
+import { Popover } from '../ui/elements/feedback/Popover';
+import { Button } from '../ui/elements/buttons/Button';
+import { TextField } from '../ui/elements/inputs/TextField';
 import {
   HelpIcon,
   MessageSquareIcon,
   PlusCircleIcon,
   SaveIcon,
   XCircleIcon,
-} from '../ui/icons'
-import styles from './FeedbackShowcase.module.css'
+} from '../ui/icons';
+import styles from './FeedbackShowcase.module.css';
 
 const Card = (props: {
-  title: string
-  lead: JSX.Element
-  children: JSX.Element
+  title: string;
+  lead: JSX.Element;
+  children: JSX.Element;
 }) => (
   <section class={styles.card}>
     <header class={styles.cardHeader}>{props.title}</header>
@@ -27,7 +27,7 @@ const Card = (props: {
       {props.children}
     </div>
   </section>
-)
+);
 
 /* Chip colours come from the --status-* contract tokens (with dark
    overrides) — never literals here, per the no-hard-coded-colours rule. */
@@ -38,12 +38,12 @@ const STATUS_CHIPS: { label: string; colour: string }[] = [
   { label: 'Shipped', colour: 'var(--status-shipped)' },
   { label: 'Delivered', colour: 'var(--status-delivered)' },
   { label: 'Verified', colour: 'var(--status-verified)' },
-]
+];
 
 export const FeedbackShowcase = () => {
-  const [confirmOpen, setConfirmOpen] = createSignal(false)
-  const [outcome, setOutcome] = createSignal('')
-  const [dialogOpen, setDialogOpen] = createSignal(false)
+  const [confirmOpen, setConfirmOpen] = createSignal(false);
+  const [outcome, setOutcome] = createSignal('');
+  const [dialogOpen, setDialogOpen] = createSignal(false);
 
   return (
     <div class={styles.stack}>
@@ -62,7 +62,7 @@ export const FeedbackShowcase = () => {
       >
         <div class={styles.chipRow}>
           <For each={STATUS_CHIPS}>
-            {(chip) => <StatusChip label={chip.label} colour={chip.colour} />}
+            {chip => <StatusChip label={chip.label} colour={chip.colour} />}
           </For>
         </div>
       </Card>
@@ -71,9 +71,9 @@ export const FeedbackShowcase = () => {
         title="Alerts — error / warning / info / success"
         lead={
           <>
-            Hand-rolled, one <code>&lt;div&gt;</code> + CSS — the current
-            app's MUI Alert look (pale tinted panel, 10px radius, severity
-            icon) without the library. Panel and text colours are{' '}
+            Hand-rolled, one <code>&lt;div&gt;</code> + CSS — the current app's
+            MUI Alert look (pale tinted panel, 10px radius, severity icon)
+            without the library. Panel and text colours are{' '}
             <code>color-mix</code> derivations from the severity tokens over
             themed surfaces, so dark mode needs no extra rules; each severity
             keeps a distinct icon shape, so colour never stands alone.
@@ -107,7 +107,11 @@ export const FeedbackShowcase = () => {
           </>
         }
       >
-        <Button variant="secondary" icon={<SaveIcon />} onClick={() => setConfirmOpen(true)}>
+        <Button
+          variant="secondary"
+          icon={<SaveIcon />}
+          onClick={() => setConfirmOpen(true)}
+        >
           Save
         </Button>
         <span class={styles.outcome} role="status">
@@ -116,8 +120,10 @@ export const FeedbackShowcase = () => {
         <ConfirmDialog
           open={confirmOpen()}
           onClose={() => {
-            setConfirmOpen(false)
-            setOutcome((o) => (o === '' || o.startsWith('Cancelled') ? 'Cancelled.' : o))
+            setConfirmOpen(false);
+            setOutcome(o =>
+              o === '' || o.startsWith('Cancelled') ? 'Cancelled.' : o
+            );
           }}
           message="Save changes to this shipment? This is the standard Cancel/OK preset — ConfirmDialog is a thin composition over Dialog."
           onConfirm={() => setOutcome('Saved ✓')}
@@ -129,15 +135,16 @@ export const FeedbackShowcase = () => {
         lead={
           <>
             The base <code>&lt;Dialog&gt;</code> takes a required{' '}
-            <code>title</code> (its accessible name), optional icon / description,
-            free-form children, an optional bottom-pinned <code>footer</code> band
-            and an <code>actions</code> row. <code>widthRem</code> sets a steady
-            width and <code>minBodyHeightRem</code> reserves height so the box
-            doesn't jump as content changes — the slack falls above the footer, so
+            <code>title</code> (its accessible name), optional icon /
+            description, free-form children, an optional bottom-pinned{' '}
+            <code>footer</code> band and an <code>actions</code> row.{' '}
+            <code>widthRem</code> sets a steady width and{' '}
+            <code>minBodyHeightRem</code> reserves height so the box doesn't
+            jump as content changes — the slack falls above the footer, so
             footer + actions stay on the bottom edge. The browser moves focus to
-            the first control and Tab cycles inside while the page behind is inert.
-            (Opening a Combobox / Select <em>inside</em> a dialog needs extra care —
-            see the "in a dialog" card under Selectors.)
+            the first control and Tab cycles inside while the page behind is
+            inert. (Opening a Combobox / Select <em>inside</em> a dialog needs
+            extra care — see the "in a dialog" card under Selectors.)
           </>
         }
       >
@@ -152,7 +159,9 @@ export const FeedbackShowcase = () => {
           description="Give the shipment a reference."
           widthRem={34}
           minBodyHeightRem={16}
-          footer={<Alert severity="info">A new draft shipment will be created.</Alert>}
+          footer={
+            <Alert severity="info">A new draft shipment will be created.</Alert>
+          }
           actions={
             <>
               <Button
@@ -162,7 +171,10 @@ export const FeedbackShowcase = () => {
               >
                 Cancel
               </Button>
-              <Button icon={<PlusCircleIcon />} onClick={() => setDialogOpen(false)}>
+              <Button
+                icon={<PlusCircleIcon />}
+                onClick={() => setDialogOpen(false)}
+              >
                 Create
               </Button>
             </>
@@ -209,5 +221,5 @@ export const FeedbackShowcase = () => {
         </div>
       </Card>
     </div>
-  )
-}
+  );
+};

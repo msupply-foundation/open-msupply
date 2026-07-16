@@ -1,20 +1,24 @@
-import { createSignal, type JSX } from 'solid-js'
-import { Select } from '../ui/elements/selectors/Select'
-import { Combobox } from '../ui/elements/selectors/Combobox'
-import { MultiSelect } from '../ui/elements/selectors/MultiSelect'
-import { Dialog } from '../ui/elements/feedback/Dialog'
-import { Button } from '../ui/elements/buttons/Button'
-import { PlusCircleIcon, XCircleIcon } from '../ui/icons'
+import { createSignal, type JSX } from 'solid-js';
+import { Select } from '../ui/elements/selectors/Select';
+import { Combobox } from '../ui/elements/selectors/Combobox';
+import { MultiSelect } from '../ui/elements/selectors/MultiSelect';
+import { Dialog } from '../ui/elements/feedback/Dialog';
+import { Button } from '../ui/elements/buttons/Button';
+import { PlusCircleIcon, XCircleIcon } from '../ui/icons';
 import {
   FilterBar,
   FilterSelect,
   FilterTextInput,
   type Filter,
-} from '../ui/elements/selectors/FilterBar'
-import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData'
-import styles from './SelectorsShowcase.module.css'
+} from '../ui/elements/selectors/FilterBar';
+import { ITEMS, INVOICE_STATUSES, type DemoItem } from './selectorData';
+import styles from './SelectorsShowcase.module.css';
 
-const Card = (props: { title: string; lead: JSX.Element; children: JSX.Element }) => (
+const Card = (props: {
+  title: string;
+  lead: JSX.Element;
+  children: JSX.Element;
+}) => (
   <section class={styles.card}>
     <header class={styles.cardHeader}>{props.title}</header>
     <div class={styles.cardBody}>
@@ -22,16 +26,19 @@ const Card = (props: { title: string; lead: JSX.Element; children: JSX.Element }
       {props.children}
     </div>
   </section>
-)
+);
 
-/* A coloured status dot — the kind of rich option a native <option> can't hold. */
+/**
+ * A coloured status dot — the kind of rich option a native <option> can't
+ * hold.
+ */
 const Dot = (props: { color: string }) => (
   <span
     class={styles.dot}
     style={{ background: props.color }}
     aria-hidden="true"
   />
-)
+);
 
 /* Two-line item option: name on top, code + stock beneath. */
 const renderItem = (item: DemoItem) => (
@@ -47,107 +54,118 @@ const renderItem = (item: DemoItem) => (
       )}
     </span>
   </span>
-)
+);
 
 // Match either the item name or its code, case-insensitively.
 const itemFilter = (item: DemoItem, input: string) => {
-  const needle = input.toLocaleLowerCase()
+  const needle = input.toLocaleLowerCase();
   return (
     item.name.toLocaleLowerCase().includes(needle) ||
     item.code.toLocaleLowerCase().includes(needle)
-  )
-}
+  );
+};
 
 /*
- * A demo filter object, shaped like a list page's GraphQL filter (the FilterBar is
- * generic over it — see kdd/page-composition). A key PRESENT (even as null/'') means
- * its chip is shown; absent means it isn't. Three free-text columns + the status enum,
- * the current app's outbound-shipment FilterMenu set.
+ * A demo filter object, shaped like a list page's GraphQL filter (the
+ * FilterBar is generic over it — see kdd/page-composition). A key PRESENT
+ * (even as null/'') means its chip is shown; absent means it isn't. Three
+ * free-text columns + the status enum, the current app's outbound-shipment
+ * FilterMenu set.
  */
 interface InvoiceFilter {
-  otherPartyName?: string | null
-  invoiceNumber?: string | null
-  theirReference?: string | null
-  status?: string | null
+  otherPartyName?: string | null;
+  invoiceNumber?: string | null;
+  theirReference?: string | null;
+  status?: string | null;
 }
 
-/* Built once as a stable const — labels are accessors, so FilterBar's <For> reuses
+/* 
+ * Built once as a stable const — labels are accessors, so FilterBar's <For>
+ * reuses
    chip rows instead of remounting them (kdd/state-management: no remounts). */
 const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   {
     key: 'otherPartyName',
     label: () => 'Name',
-    render: ({ filter, setPartialFilter }) => (
+    render: props => (
       <FilterTextInput
         label="Name"
         placeholder="Search by name"
-        value={filter().otherPartyName ?? ''}
-        onInput={value => setPartialFilter({ otherPartyName: value || null })}
+        value={props.filter().otherPartyName ?? ''}
+        onInput={value =>
+          props.setPartialFilter({ otherPartyName: value || null })
+        }
       />
     ),
   },
   {
     key: 'invoiceNumber',
     label: () => 'Invoice number',
-    render: ({ filter, setPartialFilter }) => (
+    render: props => (
       <FilterTextInput
         label="Invoice number"
-        value={filter().invoiceNumber ?? ''}
-        onInput={value => setPartialFilter({ invoiceNumber: value || null })}
+        value={props.filter().invoiceNumber ?? ''}
+        onInput={value =>
+          props.setPartialFilter({ invoiceNumber: value || null })
+        }
       />
     ),
   },
   {
     key: 'theirReference',
     label: () => 'Reference',
-    render: ({ filter, setPartialFilter }) => (
+    render: props => (
       <FilterTextInput
         label="Reference"
-        value={filter().theirReference ?? ''}
-        onInput={value => setPartialFilter({ theirReference: value || null })}
+        value={props.filter().theirReference ?? ''}
+        onInput={value =>
+          props.setPartialFilter({ theirReference: value || null })
+        }
       />
     ),
   },
   {
     key: 'status',
     label: () => 'Status',
-    render: ({ filter, setPartialFilter }) => (
+    render: props => (
       <FilterSelect
         label="Status"
-        value={filter().status ?? ''}
+        value={props.filter().status ?? ''}
         options={[
           { value: '', label: 'Any' },
           ...INVOICE_STATUSES.map(s => ({ value: s.value, label: s.label })),
         ]}
-        onChange={value => setPartialFilter({ status: value || null })}
+        onChange={value => props.setPartialFilter({ status: value || null })}
       />
     ),
   },
-]
+];
 
 export const SelectorsShowcase = () => {
-  const [status, setStatus] = createSignal('allocated')
-  const [picked, setPicked] = createSignal<DemoItem | null>(null)
-  const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]])
-  // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not behind it).
-  const [dialogOpen, setDialogOpen] = createSignal(false)
-  const [dialogItem, setDialogItem] = createSignal<DemoItem | null>(null)
-  const [dialogStatus, setDialogStatus] = createSignal('new')
-  // Seeded non-empty to show chips restoring from an existing filter (a key being
-  // present is what shows its chip — here status starts on 'new').
-  const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' })
+  const [status, setStatus] = createSignal('allocated');
+  const [picked, setPicked] = createSignal<DemoItem | null>(null);
+  const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]]);
+  // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not
+  // behind it).
+  const [dialogOpen, setDialogOpen] = createSignal(false);
+  const [dialogItem, setDialogItem] = createSignal<DemoItem | null>(null);
+  const [dialogStatus, setDialogStatus] = createSignal('new');
+  // Seeded non-empty to show chips restoring from an existing filter (a key
+  // being present is what shows its chip — here status starts on 'new').
+  const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' });
 
-  // What the page would hand to a table — rendered as the URL query string the filter
-  // is destined to live in once routing lands. Empty/null keys (added-but-empty chips)
-  // are dropped, mirroring the page's stripEmpty before querying.
+  // What the page would hand to a table — rendered as the URL query string the
+  // filter is destined to live in once routing lands. Empty/null keys
+  // (added-but-empty chips) are dropped, mirroring the page's stripEmpty before
+  // querying.
   const filterQuery = () => {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
     for (const [key, value] of Object.entries(filters())) {
-      if (value != null && value !== '') params.set(key, String(value))
+      if (value != null && value !== '') params.set(key, String(value));
     }
-    const query = params.toString()
-    return query ? `?${query}` : ''
-  }
+    const query = params.toString();
+    return query ? `?${query}` : '';
+  };
 
   return (
     <div class={styles.stack}>
@@ -234,15 +252,16 @@ export const SelectorsShowcase = () => {
         title="Selectors in a dialog — portal-into-dialog"
         lead={
           <>
-            The case that needs care: a <strong>Combobox / Select opened inside a
-            modal dialog</strong>. A listbox portaled to <code>&lt;body&gt;</code>{' '}
-            would render <em>behind</em> the top-layer <code>&lt;dialog&gt;</code>{' '}
-            and be inert — so our selectors portal <em>into</em> the dialog
-            instead, with a dismiss guard so a click on an option{' '}
-            <strong>selects</strong> it rather than being read as a click-outside
-            that closes the popup. Open the dialog and pick an item{' '}
-            <strong>by clicking</strong> — it commits, and the listbox layers above
-            the dialog.
+            The case that needs care: a{' '}
+            <strong>Combobox / Select opened inside a modal dialog</strong>. A
+            listbox portaled to <code>&lt;body&gt;</code> would render{' '}
+            <em>behind</em> the top-layer <code>&lt;dialog&gt;</code> and be
+            inert — so our selectors portal <em>into</em> the dialog instead,
+            with a dismiss guard so a click on an option{' '}
+            <strong>selects</strong> it rather than being read as a
+            click-outside that closes the popup. Open the dialog and pick an
+            item <strong>by clicking</strong> — it commits, and the listbox
+            layers above the dialog.
           </>
         }
       >
@@ -270,7 +289,10 @@ export const SelectorsShowcase = () => {
               >
                 Cancel
               </Button>
-              <Button icon={<PlusCircleIcon />} onClick={() => setDialogOpen(false)}>
+              <Button
+                icon={<PlusCircleIcon />}
+                onClick={() => setDialogOpen(false)}
+              >
                 Add
               </Button>
             </>
@@ -279,8 +301,8 @@ export const SelectorsShowcase = () => {
           <Combobox<DemoItem>
             label="Item"
             items={ITEMS}
-            itemToString={(item) => item.name}
-            itemToValue={(item) => item.code}
+            itemToString={item => item.name}
+            itemToValue={item => item.code}
             filter={itemFilter}
             renderItem={renderItem}
             onChange={setDialogItem}
@@ -290,7 +312,7 @@ export const SelectorsShowcase = () => {
             label="Status"
             value={dialogStatus()}
             onValueChange={setDialogStatus}
-            options={INVOICE_STATUSES.map((s) => ({
+            options={INVOICE_STATUSES.map(s => ({
               value: s.value,
               label: s.label,
               adornment: <Dot color={s.color} />,
@@ -314,12 +336,16 @@ export const SelectorsShowcase = () => {
           </>
         }
       >
-        <FilterBar filters={DEMO_FILTERS} filter={filters()} onChange={setFilters} />
+        <FilterBar
+          filters={DEMO_FILTERS}
+          filter={filters()}
+          onChange={setFilters}
+        />
         <p class={styles.filterReadout}>
           What the page hands to the table:{' '}
           <code>{filterQuery() || '(no filters)'}</code>
         </p>
       </Card>
     </div>
-  )
-}
+  );
+};

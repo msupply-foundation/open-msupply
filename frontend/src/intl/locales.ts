@@ -1,9 +1,10 @@
 // Supported locales, their metadata, and the typed key set.
 //
-// LocaleKey is derived from the English source catalog (type-only import, so the
-// JSON isn't bundled here). Plural keys in the catalog carry CLDR suffixes
-// (`_one`, `_other`, …); we normalise those so the base key (`login.failed-attempts`)
-// is also a valid LocaleKey — that's what tPlural is called with.
+// LocaleKey is derived from the English source catalog (type-only import, so
+// the JSON isn't bundled here). Plural keys in the catalog carry CLDR suffixes
+// (`_one`, `_other`, …); we normalise those so the base key
+// (`login.failed-attempts`) is also a valid LocaleKey — that's what tPlural is
+// called with.
 import type commonEn from './locales/en/common.json';
 
 type PluralSuffix = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
