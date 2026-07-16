@@ -52,6 +52,7 @@ import {
   UngroupedIcon,
 } from '../../icons';
 import { Popover } from '../feedback/Popover';
+import { EmptyState } from '../feedback/EmptyState';
 import { ColumnSettings } from './ColumnSettings';
 import { t } from '../../../intl';
 import type { LocaleKey } from '../../../intl';
@@ -148,8 +149,14 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * edit
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
-  /** Message shown when there are no rows. */
+  /** Message shown (as the empty-state body) when there are no rows. */
   emptyMessage?: string;
+  /**
+   * Optional call-to-action rendered BELOW the empty message (inside the
+   * "nothing here" empty state), e.g. a "New stocktake" / "Add item" button.
+   * Shown in both table and card views when there are no rows.
+   */
+  empty?: JSX.Element;
   /**
    * Show the full-screen toggle in the control bar. Default true. Pass false
    * where full
@@ -339,15 +346,6 @@ export function DataTable<T, K extends string, G extends string = never>(
     if (!props.tabsAndCardGroups || cardGroup === undefined) return true;
     return membershipInTab(col?.tabsAndCardGroups, cardGroup);
   };
-  // The visible-in-active-card-group leaf columns (drives header/body render +
-  // empty-row colSpan).
-  const visibleTabColumns = () =>
-    table
-      .getVisibleLeafColumns()
-      .filter(c =>
-        columnInActiveTab(c.columnDef as { tabsAndCardGroups?: Membership })
-      );
-
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
@@ -448,14 +446,6 @@ export function DataTable<T, K extends string, G extends string = never>(
       }
     })
   );
-
-  // Count only the columns rendered in the active card group (+ the selection
-  // column + the expander column when grouped), so the empty-state row's
-  // colSpan matches the actual cell count.
-  const leafColumnCount = () =>
-    visibleTabColumns().length +
-    (props.enableSelection ? 1 : 0) +
-    (grouping().length > 0 ? 1 : 0);
 
   // --- Expand ALL groups (the header double-chevron) ---
   // TanStack's getToggleAllRowsExpandedHandler would also expand SINGLE-leaf
@@ -669,101 +659,104 @@ export function DataTable<T, K extends string, G extends string = never>(
         </Show>
       </div>
       <div class={styles.tableScroll}>
-        <Switch>
-          <Match when={viewMode() === 'card'}>
-            <CardView
-              table={table}
-              tabsAndCardGroups={props.tabsAndCardGroups}
-              enableSelection={props.enableSelection ?? false}
-              onRowClick={props.onRowClick}
-              emptyMessage={props.emptyMessage}
-            />
-          </Match>
-          <Match when={viewMode() === 'table'}>
-            <table class={styles.table}>
-              <thead>
-                <For each={table.getHeaderGroups()}>
-                  {headerGroup => (
-                    <tr>
-                      {/* Expander column header — the "expand/collapse ALL" double-chevron (Open
+        {/* No rows → render the empty state directly (no table/cards at all), so
+            there's no header row or colSpan cell to size. The toolbar above stays
+            put. The check is view-independent (both views read the same core row
+            model), so it sits above the table/card Switch. */}
+        <Show
+          when={table.getRowModel().rows.length > 0}
+          fallback={
+            <EmptyState
+              data-testid="nothing-here"
+              message={props.emptyMessage ?? t('table.no-results')}
+            >
+              {props.empty}
+            </EmptyState>
+          }
+        >
+          <Switch>
+            <Match when={viewMode() === 'card'}>
+              <CardView
+                table={table}
+                tabsAndCardGroups={props.tabsAndCardGroups}
+                enableSelection={props.enableSelection ?? false}
+                onRowClick={props.onRowClick}
+              />
+            </Match>
+            <Match when={viewMode() === 'table'}>
+              <table class={styles.table}>
+                <thead>
+                  <For each={table.getHeaderGroups()}>
+                    {headerGroup => (
+                      <tr>
+                        {/* Expander column header — the "expand/collapse ALL" double-chevron (Open
                           mSupply), reserving the chevron column when the table is grouped. */}
-                      <Show when={grouping().length > 0}>
-                        <th
-                          class={`${styles.th} ${styles.expanderCell}`}
-                          data-pinned="left"
-                          style={leadingPinnedStyle(0)}
-                        >
-                          <button
-                            type="button"
-                            class={styles.groupExpander}
-                            data-expanded={allGroupsExpanded() ? '' : undefined}
-                            aria-expanded={allGroupsExpanded()}
-                            aria-label={
-                              allGroupsExpanded()
-                                ? t('table.collapse-all-groups')
-                                : t('table.expand-all-groups')
-                            }
-                            data-testid="table-expand-all"
-                            onClick={toggleAllGroups}
+                        <Show when={grouping().length > 0}>
+                          <th
+                            class={`${styles.th} ${styles.expanderCell}`}
+                            data-pinned="left"
+                            style={leadingPinnedStyle(0)}
                           >
-                            <ChevronsDownIcon />
-                          </button>
-                        </th>
-                      </Show>
-                      <Show when={props.enableSelection}>
-                        <th
-                          class={`${styles.th} ${styles.selectCell}`}
-                          data-pinned="left"
-                          style={leadingPinnedStyle(
-                            grouping().length > 0 ? 1 : 0
-                          )}
-                        >
-                          <input
-                            type="checkbox"
-                            aria-label={t('table.select-all')}
-                            data-testid="select-all-rows-checkbox"
-                            checked={table.getIsAllRowsSelected()}
-                            onChange={table.getToggleAllRowsSelectedHandler()}
-                          />
-                        </th>
-                      </Show>
-                      {/* Display-time tab filter: render only the active tab's header cells
-                          (TanStack still holds every column — see columnInActiveTab). */}
-                      <For each={headerGroup.headers}>
-                        {header => (
-                          <Show
-                            when={columnInActiveTab(
-                              header.column.columnDef as {
-                                tabsAndCardGroups?: Membership;
+                            <button
+                              type="button"
+                              class={styles.groupExpander}
+                              data-expanded={
+                                allGroupsExpanded() ? '' : undefined
                               }
+                              aria-expanded={allGroupsExpanded()}
+                              aria-label={
+                                allGroupsExpanded()
+                                  ? t('table.collapse-all-groups')
+                                  : t('table.expand-all-groups')
+                              }
+                              data-testid="table-expand-all"
+                              onClick={toggleAllGroups}
+                            >
+                              <ChevronsDownIcon />
+                            </button>
+                          </th>
+                        </Show>
+                        <Show when={props.enableSelection}>
+                          <th
+                            class={`${styles.th} ${styles.selectCell}`}
+                            data-pinned="left"
+                            style={leadingPinnedStyle(
+                              grouping().length > 0 ? 1 : 0
                             )}
                           >
-                            <HeaderCell
-                              header={header}
-                              pinnedStyle={pinnedStyle}
+                            <input
+                              type="checkbox"
+                              aria-label={t('table.select-all')}
+                              data-testid="select-all-rows-checkbox"
+                              checked={table.getIsAllRowsSelected()}
+                              onChange={table.getToggleAllRowsSelectedHandler()}
                             />
-                          </Show>
-                        )}
-                      </For>
-                    </tr>
-                  )}
-                </For>
-              </thead>
-              <tbody>
-                <Show
-                  when={table.getRowModel().rows.length > 0}
-                  fallback={
-                    <tr>
-                      <td
-                        class={styles.empty}
-                        colSpan={leafColumnCount()}
-                        data-testid="nothing-here"
-                      >
-                        {props.emptyMessage ?? t('table.no-results')}
-                      </td>
-                    </tr>
-                  }
-                >
+                          </th>
+                        </Show>
+                        {/* Display-time tab filter: render only the active tab's header cells
+                          (TanStack still holds every column — see columnInActiveTab). */}
+                        <For each={headerGroup.headers}>
+                          {header => (
+                            <Show
+                              when={columnInActiveTab(
+                                header.column.columnDef as {
+                                  tabsAndCardGroups?: Membership;
+                                }
+                              )}
+                            >
+                              <HeaderCell
+                                header={header}
+                                pinnedStyle={pinnedStyle}
+                              />
+                            </Show>
+                          )}
+                        </For>
+                      </tr>
+                    )}
+                  </For>
+                </thead>
+                <tbody>
+                  {/* The outer <Show> guarantees rows here, so no empty fallback. */}
                   <For each={table.getRowModel().rows}>
                     {row => (
                       <TableRow
@@ -784,11 +777,11 @@ export function DataTable<T, K extends string, G extends string = never>(
                       />
                     )}
                   </For>
-                </Show>
-              </tbody>
-            </table>
-          </Match>
-        </Switch>
+                </tbody>
+              </table>
+            </Match>
+          </Switch>
+        </Show>
       </div>
     </div>
   );

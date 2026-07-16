@@ -35,7 +35,10 @@ import type {
 } from './stocktakes.generated';
 import { filterFields, type StocktakeFilter } from './listFilters';
 import { CreateStocktakeModal } from './CreateStocktakeModal';
-import { DeleteStocktakesAction } from './actions';
+import {
+  CreateInitialStocktakeAction,
+  DeleteStocktakesAction,
+} from './actions';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
 // filter/sort/pagination state come from the vertical; the UI is composed from
@@ -95,6 +98,10 @@ const StocktakesList: Component = () => {
   // it open. On a successful create it navigates away to the new stocktake's
   // detail page, so the list needs no refetch here.
   const [createOpen, setCreateOpen] = createSignal(false);
+  // The initial (opening-balance) create action — offered from the empty state
+  // only when the store has NO stocktakes at all (see hasStocktake below). Like
+  // createOpen, a successful create navigates away.
+  const [initialOpen, setInitialOpen] = createSignal(false);
 
   // Column config (order/sizing/pinning/visibility), resolved default → global
   // → user and by breakpoint band (kdd/table-state). On COMPACT (narrow
@@ -159,6 +166,31 @@ const StocktakesList: Component = () => {
 
   const rows = () => data()?.nodes ?? [];
   const totalCount = () => data()?.totalCount ?? 0;
+
+  // "Does this store have ANY stocktake?" — a SEPARATE, filter-independent
+  // fetch (mirrors OMS's useHasStocktake): the main list's totalCount is
+  // filter-scoped, so a filter that matches nothing would falsely read as an
+  // empty store and wrongly offer initial creation. One row is enough — we read
+  // the store-wide totalCount with no filter. Keyed on the store only, so it
+  // fetches once per store and never re-runs on filter/sort/page changes. An
+  // initial stocktake is a once-per-store opening balance; when the store has
+  // none the empty state offers "Create initial stocktake", else "New stocktake".
+  const [hasStocktakeData] = createResource(
+    () => params.storeId,
+    async storeId => {
+      const result = await graphqlFetch(Stocktakes, {
+        storeId,
+        page: { first: 1 },
+      });
+      if (result.kind !== 'success') return undefined;
+      return result.data.stocktakes.totalCount > 0;
+    }
+  );
+  // Undefined while unresolved — treat as "has stocktakes" so we DON'T flash the
+  // initial-create affordance before we know (a store with stocktakes is the
+  // common case; showing "New stocktake" and correcting to "initial" would be
+  // the wrong direction to flicker).
+  const hasStocktake = () => hasStocktakeData() ?? true;
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
@@ -327,7 +359,33 @@ const StocktakesList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        emptyMessage={t('stocktake.empty')}
+        emptyMessage={
+          hasStocktake() ? t('stocktake.empty') : t('stocktake.empty-store')
+        }
+        // The empty-state action flips on whether the store has ANY stocktake
+        // (mirrors OMS): a store with none is offered the once-per-store INITIAL
+        // (opening-balance) create — a plain confirm, no mode controls; a store
+        // that already has stocktakes (incl. filtered-to-nothing) gets the
+        // regular "New stocktake" modal.
+        empty={
+          hasStocktake() ? (
+            <Button
+              icon={<PlusCircleIcon />}
+              data-testid="nothing-here-create-button"
+              onClick={() => setCreateOpen(true)}
+            >
+              {t('stocktake.new')}
+            </Button>
+          ) : (
+            <Button
+              icon={<PlusCircleIcon />}
+              data-testid="nothing-here-create-button"
+              onClick={() => setInitialOpen(true)}
+            >
+              {t('stocktake.create.initial-action')}
+            </Button>
+          )
+        }
         enableSelection
         selectedIds={selectedIds()}
         onSelectionChange={setSelectedIds}
@@ -337,6 +395,10 @@ const StocktakesList: Component = () => {
       <CreateStocktakeModal
         open={createOpen()}
         onClose={() => setCreateOpen(false)}
+      />
+      <CreateInitialStocktakeAction
+        open={initialOpen()}
+        onClose={() => setInitialOpen(false)}
       />
     </Page>
   );

@@ -1,5 +1,5 @@
 import { createSignal, onMount, Show, type JSX } from 'solid-js';
-import { createStore, produce, unwrap } from 'solid-js/store';
+import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { toNumberOrNull } from '../../../../typeHelpers';
 import { t } from '../../../../intl';
@@ -26,6 +26,8 @@ import {
   XCircleIcon,
   TrashIcon,
   CopyIcon,
+  CheckIcon,
+  ArrowRightIcon,
 } from '../../../../ui/icons';
 import {
   StockLinesByItem,
@@ -60,6 +62,17 @@ import type { LineErrors } from '../lines/stocktakeLineErrors';
 export type { LineEditCommit };
 
 export type StocktakeLineEditItem = { id: string; code: string; name: string };
+
+// What the parent resolves for one item, from its current filtered/sorted list,
+// and hands to the modal THROUGH the itemInfo(id) call: the item descriptor,
+// that item's lines (to seed the draft), and the next item to advance to on
+// "OK & next" (undefined = this is the last item → no OK & next). The parent
+// owns the list and the ordering; the modal is told only the answer per item.
+export type StocktakeItemInfo = {
+  item: StocktakeLineEditItem;
+  lines: StocktakeLineFragment[];
+  nextItem?: StocktakeLineEditItem;
+};
 
 // A draft row: the line fragment plus client-only bookkeeping.
 // - isNew        an added batch not yet on the stocktake (→ insert when
@@ -171,10 +184,20 @@ interface StocktakeLineEditModalProps {
   onClose: () => void;
   storeId: string;
   stocktakeId: string;
-  /** The item whose lines are edited (fixed for the modal's lifetime). */
-  item?: StocktakeLineEditItem;
-  /** That item's existing lines, to seed the draft. */
-  lines: StocktakeLineFragment[];
+  /**
+   * The item the modal OPENS on. Only the INITIAL item — once open, the modal
+   * tracks its own current item as the user advances with "OK & next",
+   * resolving each through itemInfo. Changing this reopens on a new item; it is
+   * not how "next" happens.
+   */
+  initialItemId?: string;
+  /**
+   * Resolve one item from the parent's current filtered/sorted list: the item
+   * descriptor, its lines (to seed the draft), and the next item to advance to.
+   * The modal calls this on open and again on each "OK & next". undefined = the
+   * item is gone from the list (e.g. the filter changed) → the modal closes.
+   */
+  itemInfo: (id: string) => StocktakeItemInfo | undefined;
   /**
    * Fired after a successful save so the detail view reflects it in place (no
    * refetch).
@@ -182,23 +205,23 @@ interface StocktakeLineEditModalProps {
   onCommitted: (commit: LineEditCommit) => void;
 }
 
-// The parent-facing wrapper: mount the editor ONLY while open, and only with
-// an item. `<Show>` tears the content down on close and rebuilds it on the next
-// open, so the content component owns no open/closed state — it fetches + seeds
-// once, on mount (kdd/explicit-composition). This keeps the driving of the
-// editor explicit (open by passing an item, close via onClose) rather than the
-// content reacting to prop changes.
+// The parent-facing wrapper: mount the editor ONLY while open, and only with an
+// item id. `<Show>` tears the content down on close and rebuilds it on the next
+// open, so the content component starts each OPEN fresh. Within one open the
+// content owns its current item (advancing via "OK & next" is imperative — see
+// loadItem — not a prop change), keeping the driving explicit
+// (kdd/explicit-composition).
 export const StocktakeLineEditModal = (
   props: StocktakeLineEditModalProps
 ): JSX.Element => (
-  <Show when={props.open && props.item} keyed>
-    {item => (
+  <Show when={props.open && props.initialItemId} keyed>
+    {initialItemId => (
       <StocktakeLineEditContent
         onClose={props.onClose}
         storeId={props.storeId}
         stocktakeId={props.stocktakeId}
-        item={item}
-        lines={props.lines}
+        initialItemId={initialItemId}
+        itemInfo={props.itemInfo}
         onCommitted={props.onCommitted}
       />
     )}
@@ -209,13 +232,10 @@ interface StocktakeLineEditContentProps {
   onClose: () => void;
   storeId: string;
   stocktakeId: string;
-  /**
-   * The item whose lines are edited (fixed for the content's lifetime — it
-   * remounts per open).
-   */
-  item: StocktakeLineEditItem;
-  /** That item's existing lines, to seed the draft. */
-  lines: StocktakeLineFragment[];
+  /** The item this open STARTS on; the content advances from here internally. */
+  initialItemId: string;
+  /** Resolve an item's descriptor + lines + next item (see wrapper prop). */
+  itemInfo: (id: string) => StocktakeItemInfo | undefined;
   /**
    * Fired after a successful save so the detail view reflects it in place (no
    * refetch).
@@ -243,22 +263,49 @@ const StocktakeLineEditContent = (
   // line when it's edited. Only changes on save (not per-keystroke), so a plain
   // Map signal is enough — no store needed.
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
+  // The item currently being edited and the one to advance to. The content
+  // starts on props.initialItemId and moves through items itself (OK & next) —
+  // currentItem is set by loadItem, never watched. nextItem drives whether the
+  // OK & next button shows; undefined = current is the last item in the list.
+  const [currentItem, setCurrentItem] = createSignal<StocktakeLineEditItem>();
+  const [nextItem, setNextItem] = createSignal<StocktakeLineEditItem>();
+
+  // The dialog's one-line heading: "code - name" (empty until the first item
+  // loads). A derived string — the dialog title is the a11y accessible name.
+  const itemHeading = () => {
+    const item = currentItem();
+    return item ? `${item.code} - ${item.name}` : '';
+  };
 
   // Column config → lights up the toolbar's card-switch + column-settings
   // controls. Card view renders the batches as cards (grouped into sections),
   // the dual of the tabs.
   const tableConfig = createTableConfig({ tableId: 'stocktake-line-edit' });
 
-  // Seed once, on mount: fetch the item's opt-in batches and build the draft
-  // (fetchAndSeed). The modal only mounts while open (see the wrapper), so this
-  // replaces the old open/item-keyed resource + reseed machinery — the draft
-  // starts empty and fills when the fetch resolves. In future this same call
-  // re-runs when the selected lines change.
-  onMount(() => {
-    void fetchAndSeed(props.storeId, props.item, props.lines).then(seeded =>
-      setDraft(seeded)
-    );
-  });
+  // Load one item into the editor: resolve it via itemInfo (item + lines +
+  // nextItem), then fetch its opt-in batches and REPLACE the draft. This is the
+  // ONE seed path — called imperatively, on mount and again on "OK & next"
+  // (NOT via an effect that tracks the current item). setDraft(reconcile(...))
+  // swaps the store's contents so no rows from the previous item linger, and we
+  // reset the per-item UI (server errors, footer message) so a clean item
+  // starts clean. If the item has vanished from the list (undefined), close.
+  const loadItem = async (id: string) => {
+    const info = props.itemInfo(id);
+    if (!info) {
+      props.onClose();
+      return;
+    }
+    setCurrentItem(info.item);
+    setNextItem(info.nextItem);
+    setLineErrors(new Map());
+    setErrorMessage(undefined);
+    const seeded = await fetchAndSeed(props.storeId, info.item, info.lines);
+    setDraft(reconcile(seeded, { key: 'id' }));
+  };
+
+  // Seed on mount from the item this open started on. The draft starts empty
+  // and fills when the fetch resolves.
+  onMount(() => void loadItem(props.initialItemId));
 
   // The rows the table shows: the draft minus soft-deleted lines.
   const rows = (): DraftLine[] => draft.filter(line => !line.deleted);
@@ -287,7 +334,8 @@ const StocktakeLineEditContent = (
 
   // Add a new batch (a fresh draft line for the item) — prepended, count blank.
   const addBatch = () => {
-    const item = props.item;
+    const item = currentItem();
+    if (!item) return;
     setDraft(
       produce(lines =>
         lines.unshift({
@@ -434,12 +482,16 @@ const StocktakeLineEditContent = (
   // No pre-emptive client-side validation — we let the server decide (e.g.
   // reason-required, below-zero) and surface its per-line errors on save (see
   // below). This keeps one source of truth for what's valid.
-  const save = async () => {
+  //
+  // Returns whether the save fully succeeded (everything committed, no per-line
+  // errors) — the caller decides what to do next: OK closes, OK & next
+  // advances. save() itself never navigates, so both buttons share one path.
+  const save = async (): Promise<boolean> => {
     setSaving(true);
     setErrorMessage(undefined);
     const outcome = await runBatchStocktakeLines(props.storeId, buildBatch());
     setSaving(false);
-    if (!outcome) return; // transport/NodeError → global modal already showed it
+    if (!outcome) return false; // transport/NodeError → global modal showed it
 
     // Reflect the lines that DID save (partial success), even when others
     // errored — the detail view splices these in; the failed ones stay in the
@@ -459,9 +511,23 @@ const StocktakeLineEditContent = (
       // signal owns its own instance.
       setLineErrors(new Map(errors));
       setErrorMessage(t('stocktake.line-edit.save-errors'));
-      return; // keep the modal open on the failed lines
+      return false; // keep the modal open on the failed lines
     }
-    props.onClose();
+    return true;
+  };
+
+  // OK: save, then close on success (stay open on error, to fix the lines).
+  const onOk = async () => {
+    if (await save()) props.onClose();
+  };
+
+  // OK & next: save, then advance to the next item on success — imperatively
+  // re-running the same load path (loadItem) for the stashed next item. Only
+  // rendered when there IS a next item, so the assertion is safe; guarded
+  // anyway. Advancing reuses this open (no remount): loadItem swaps the draft.
+  const onOkNext = async () => {
+    const next = nextItem();
+    if (next && (await save())) await loadItem(next.id);
   };
 
   // ---- Columns: one set, split across groups; batch is the anchor (every
@@ -857,8 +923,21 @@ const StocktakeLineEditContent = (
       onClose={props.onClose}
       dismissable={!saving()}
       size="large"
-      title={props.item.name}
-      description={props.item.code}
+      // One-line heading: "code - name" (the code and item name the modal
+      // edits). A plain string — it's the dialog's a11y accessible name.
+      title={itemHeading()}
+      // Add batch lives at the inline-end of the header row (beside the
+      // heading), not in the footer — it's an editing affordance for the item,
+      // grouped with the item it acts on.
+      headerActions={
+        <Button
+          variant="secondary"
+          icon={<PlusCircleIcon />}
+          onClick={addBatch}
+        >
+          {t('stocktake.line-edit.add-batch')}
+        </Button>
+      }
       // The save/validation message sits at the inline-start of the actions
       // row (beside the buttons), so it doesn't eat the table's vertical space.
       actionsLead={
@@ -870,25 +949,29 @@ const StocktakeLineEditContent = (
         <>
           <Button
             variant="secondary"
-            icon={<PlusCircleIcon />}
-            onClick={addBatch}
-          >
-            {t('stocktake.line-edit.add-batch')}
-          </Button>
-          <Button
-            variant="secondary"
             icon={<XCircleIcon />}
             onClick={props.onClose}
           >
             {t('common.cancel')}
           </Button>
           <Button
-            icon={<StockIcon />}
+            icon={<CheckIcon />}
             loading={saving()}
-            onClick={() => void save()}
+            onClick={() => void onOk()}
           >
-            {t('common.save')}
+            {t('common.ok')}
           </Button>
+          {/* Only when there's a next item to go to — the last item shows just
+              OK (matching the parent's nextAfter returning undefined at end). */}
+          <Show when={nextItem()}>
+            <Button
+              icon={<ArrowRightIcon />}
+              loading={saving()}
+              onClick={() => void onOkNext()}
+            >
+              {t('common.ok-and-next')}
+            </Button>
+          </Show>
         </>
       }
     >

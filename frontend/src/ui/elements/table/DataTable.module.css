@@ -198,11 +198,6 @@
   background: var(--bg-row);
 }
 
-.empty {
-  padding: var(--space-5) var(--space-3);
-  color: var(--text-secondary);
-}
-
 /* The leading fixed columns (expander + select) are a FIXED box width so their pinned sticky
    offsets (leadingPinnedStyle, LEADING_COL_PX in DataTable.tsx) line up exactly — otherwise the
    next column scrolls through a seam between them. box-sizing: border-box + equal min/max pins
@@ -371,12 +366,6 @@ tr[data-selected] .expanderCell[data-pinned] {
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-3);
-}
-
-.cardEmpty {
-  padding: var(--space-5);
-  color: var(--text-secondary);
-  text-align: center;
 }
 
 .card {
