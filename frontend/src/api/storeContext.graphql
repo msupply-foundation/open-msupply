@@ -7,6 +7,12 @@ query storeContext($storeId: String!) {
     omProgramModule
     vaccineModule
   }
+  # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
+  # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
+  # refresh keeps it current.
+  preferences(storeId: $storeId) {
+    syncRecordsDisplayThreshold
+  }
   me {
     ... on UserNode {
       __typename

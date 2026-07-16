@@ -15,11 +15,16 @@ import { SyncProgress } from './SyncProgress';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
-import { DEFAULT_SYNC_INTERVAL_SECONDS, SYNC_POLL_INTERVAL_MS } from '../config';
+import {
+  DEFAULT_SYNC_INTERVAL_SECONDS,
+  SYNC_POLL_INTERVAL_MS,
+} from '../config';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
-export const InitialisationPage: Component<{ onComplete: () => void }> = props => {
+export const InitialisationPage: Component<{
+  onComplete: () => void;
+}> = props => {
   const [values, setValues] = createSignal({
     url: '',
     siteName: '',
@@ -73,10 +78,14 @@ export const InitialisationPage: Component<{ onComplete: () => void }> = props =
       onData: data => handleStatus(data.syncInfoUpdated.syncStatus),
       onFailure: () => {
         poller = window.setInterval(() => {
-          void graphqlFetch(LatestSyncStatus, {}).then(result => {
-            // Transient poll failures are ignored; the next tick retries.
-            if (result.kind === 'success') handleStatus(result.data.latestSyncStatus);
-          });
+          void graphqlFetch(LatestSyncStatus, {}, { background: true }).then(
+            result => {
+              // Transient poll failures are ignored (background: no global
+              // unexpected-error modal); the next tick retries.
+              if (result.kind === 'success')
+                handleStatus(result.data.latestSyncStatus);
+            }
+          );
         }, SYNC_POLL_INTERVAL_MS);
       },
     });
@@ -89,11 +98,14 @@ export const InitialisationPage: Component<{ onComplete: () => void }> = props =
   onMount(() => {
     void graphqlFetch(InitialisationStatus, {}).then(result => {
       if (result.kind !== 'success') return;
-      // Already initialising (e.g. page reload mid-initialisation): lock inputs,
-      // show the known site name, watch progress.
+      // Already initialising (e.g. page reload mid-initialisation): lock
+      // inputs, show the known site name, watch progress.
       const { initialisationStatus } = result.data;
       if (initialisationStatus.status === 'INITIALISING') {
-        setValues(previous => ({ ...previous, siteName: initialisationStatus.siteName ?? '' }));
+        setValues(previous => ({
+          ...previous,
+          siteName: initialisationStatus.siteName ?? '',
+        }));
         setInitialising(true);
         watchProgress();
       }
@@ -105,8 +117,10 @@ export const InitialisationPage: Component<{ onComplete: () => void }> = props =
     const interval = Number(current.intervalSeconds);
     const errors = {
       url: current.url.trim() === '' ? t('init.url-required') : '',
-      siteName: current.siteName.trim() === '' ? t('init.site-name-required') : '',
-      password: current.password.trim() === '' ? t('init.password-required') : '',
+      siteName:
+        current.siteName.trim() === '' ? t('init.site-name-required') : '',
+      password:
+        current.password.trim() === '' ? t('init.password-required') : '',
       intervalSeconds:
         current.intervalSeconds.trim() === ''
           ? t('init.interval-required')
@@ -132,8 +146,8 @@ export const InitialisationPage: Component<{ onComplete: () => void }> = props =
         intervalSeconds: Number(values().intervalSeconds),
       },
     });
-    // Failures are handled globally; stay in the initialising phase. The expected
-    // sync errors below come back as union variants on success.
+    // Failures are handled globally; stay in the initialising phase. The
+    // expected sync errors below come back as union variants on success.
     if (result.kind !== 'success') return;
     const { initialiseSite } = result.data;
     if (initialiseSite.__typename === 'SyncSettingsNode') {

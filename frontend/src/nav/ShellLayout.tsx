@@ -6,12 +6,13 @@ import { findLeafByPath, type NavLeaf } from '../ui/layout/AppShell/navModel';
 import { authUser, logout } from '../auth/authContext';
 import { resolveStorePath } from '../store/StoreGuardLayout';
 
-// The routed app shell: one <AppShell> for the whole in-store app, with the page
-// swapping inside it (props.children — the matched section route). This is the
-// "router stand-in" role the shell's own doc calls out, now filled by a real
-// root layout route: `selected` is derived from the URL, `onNavigate` pushes a
-// route. Mounted once under StoreGuardLayout, so menu state survives navigation.
-export const ShellLayout: Component<RouteSectionProps> = (props) => {
+// The routed app shell: one <AppShell> for the whole in-store app, with the
+// page swapping inside it (props.children — the matched section route). This is
+// the "router stand-in" role the shell's own doc calls out, now filled by a
+// real root layout route: `selected` is derived from the URL, `onNavigate`
+// pushes a route. Mounted once under StoreGuardLayout, so menu state survives
+// navigation.
+export const ShellLayout: Component<RouteSectionProps> = props => {
   const params = useParams<{ storeId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -33,14 +34,16 @@ export const ShellLayout: Component<RouteSectionProps> = (props) => {
   const selected = (): NavLeaf =>
     findLeafByPath(relativePath() || 'dashboard') ?? NO_SELECTION;
 
-  const onNavigate = (leaf: NavLeaf) => navigate(`/${params.storeId}/${leaf.to}`);
+  const onNavigate = (leaf: NavLeaf) =>
+    navigate(`/${params.storeId}/${leaf.to}`);
 
-  // The active store + signed-in user shown in the bottom bar. The store list and
-  // user come from the me/login response (authContext); the active store is the one
-  // named by the URL. Activating the store selector routes to the store-selection
-  // screen (spec SL-6 / AC-SL8); the user menu logs out (spec: explicit logout).
+  // The active store + signed-in user shown in the bottom bar. The store list
+  // and user come from the me/login response (authContext); the active store is
+  // the one named by the URL. Activating the store selector routes to the
+  // store-selection screen (spec SL-6 / AC-SL8); the user menu logs out (spec:
+  // explicit logout).
   const activeStore = () =>
-    authUser()?.stores.nodes.find((s) => s.id === params.storeId);
+    authUser()?.stores.nodes.find(s => s.id === params.storeId);
   const storeName = () => activeStore()?.name ?? '';
   const username = () => authUser()?.username ?? '';
 

@@ -1,13 +1,14 @@
-import { createSignal, createEffect, onCleanup, Show } from "solid-js";
-import { Dynamic } from "solid-js/web";
-import { sections, categories } from "./sections";
-import { MenuBar, type MenuBarState } from "../ui/layout/AppShell/MenuBar";
-import type { NavItem, NavLeaf } from "../ui/layout/AppShell/navModel";
-import type { LocaleKey } from "../intl";
-import { useIsNavOverlay } from "../ui/utils/createMediaQuery";
-import { MenuIcon } from "../ui/icons";
-import { ThemeToggle } from "../ui/elements/buttons/ThemeToggle";
-import styles from "./ShowcaseApp.module.css";
+import { createSignal, createEffect, onCleanup, Show } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import { sections, categories } from './sections';
+import { MenuBar, type MenuBarState } from '../ui/layout/AppShell/MenuBar';
+import { ShellFullScreenContext } from '../ui/layout/AppShell/shellContext';
+import type { NavItem, NavLeaf } from '../ui/layout/AppShell/navModel';
+import type { LocaleKey } from '../intl';
+import { useIsNavOverlay } from '../ui/utils/createMediaQuery';
+import { MenuIcon } from '../ui/icons';
+import { ThemeToggle } from '../ui/elements/buttons/ThemeToggle';
+import styles from './ShowcaseApp.module.css';
 
 /*
  * Storybook shell: the REAL MenuBar (dogfooding the library's main menu — one
@@ -27,38 +28,43 @@ import styles from "./ShowcaseApp.module.css";
  * resolves labelKey through t(), which falls back to the key itself for
  * unknown keys — so passing our literal section labels as "keys" renders
  * them verbatim. Dev-only scaffolding; the cast stays contained here. */
-const showcaseNav: NavItem[] = categories.map((c) => ({
+const showcaseNav: NavItem[] = categories.map(c => ({
   id: c.id,
   labelKey: c.label as LocaleKey,
   to: `/showcase/${c.id}`,
   icon: c.icon,
   children: sections
-    .filter((s) => s.category === c.id)
-    .map((s) => ({ id: s.id, labelKey: s.label as LocaleKey, to: `/showcase/${s.id}` })),
+    .filter(s => s.category === c.id)
+    .map(s => ({
+      id: s.id,
+      labelKey: s.label as LocaleKey,
+      to: `/showcase/${s.id}`,
+    })),
 }));
 
 const sectionFromHash = () => {
-  const id = window.location.hash.replace(/^#\/?showcase\/?/, "");
-  return sections.some((s) => s.id === id) ? id : sections[0].id;
+  const id = window.location.hash.replace(/^#\/?showcase\/?/, '');
+  return sections.some(s => s.id === id) ? id : sections[0].id;
 };
 
 export function ShowcaseApp() {
   const [activeId, setActiveId] = createSignal(sectionFromHash());
 
   const onHashChange = () => setActiveId(sectionFromHash());
-  window.addEventListener("hashchange", onHashChange);
-  onCleanup(() => window.removeEventListener("hashchange", onHashChange));
+  window.addEventListener('hashchange', onHashChange);
+  onCleanup(() => window.removeEventListener('hashchange', onHashChange));
 
-  const active = () => sections.find((s) => s.id === activeId())!;
+  const active = () => sections.find(s => s.id === activeId())!;
 
   // The MenuBar is controlled by its host — the same state block AppShell
   // keeps for the real app (rail collapse, overlay open/close).
   const [railCollapsed, setRailCollapsed] = createSignal(false);
   const [overlayOpen, setOverlayOpen] = createSignal(false);
+  const [fullScreen, setFullScreen] = createSignal(false);
   const isOverlay = useIsNavOverlay();
   const nav: MenuBarState = {
     railCollapsed,
-    toggleRail: () => setRailCollapsed((c) => !c),
+    toggleRail: () => setRailCollapsed(c => !c),
     overlayOpen,
     openOverlay: () => setOverlayOpen(true),
     closeOverlay: () => setOverlayOpen(false),
@@ -74,37 +80,55 @@ export function ShowcaseApp() {
   };
 
   return (
-    <div class={styles.shell}>
-      <MenuBar
-        nav={nav}
-        isOverlay={isOverlay()}
-        upper={showcaseNav}
-        selectedId={activeId()}
-        onSelect={select}
-      />
-      <div class={styles.main}>
-        <header class={styles.header}>
-          {/* No library Header here (that's a page-region component), so
-              the shell renders its own overlay hamburger. */}
-          <Show when={isOverlay()}>
-            <button
-              type="button"
-              class={styles.hamburger}
-              onClick={nav.openOverlay}
-              aria-label="Open section menu"
-              aria-expanded={overlayOpen()}
-            >
-              <MenuIcon />
-            </button>
+    // Provide the same shell-level full-screen context the real AppShell does,
+    // so a section that's a real page (Table) full-screens properly — the
+    // showcase chrome (menu + header strip) hides and the page's
+    // footer/pagination/selection stay.
+    <ShellFullScreenContext.Provider
+      value={{ isFullScreen: fullScreen, setFullScreen }}
+    >
+      <div class={styles.shell}>
+        <Show when={!fullScreen()}>
+          <MenuBar
+            nav={nav}
+            isOverlay={isOverlay()}
+            upper={showcaseNav}
+            selectedId={activeId()}
+            onSelect={select}
+          />
+        </Show>
+        <div class={styles.main}>
+          <Show when={!fullScreen()}>
+            <header class={styles.header}>
+              {/* No library Header here (that's a page-region component), so
+                  the shell renders its own overlay hamburger. */}
+              <Show when={isOverlay()}>
+                <button
+                  type="button"
+                  class={styles.hamburger}
+                  onClick={nav.openOverlay}
+                  aria-label="Open section menu"
+                  aria-expanded={overlayOpen()}
+                >
+                  <MenuIcon />
+                </button>
+              </Show>
+              <h1 class={styles.title}>Open mSupply — UI library</h1>
+              <ThemeToggle />
+            </header>
           </Show>
-          <h1 class={styles.title}>Open mSupply — UI library</h1>
-          <ThemeToggle />
-        </header>
-        <main class={styles.panel}>
-          <h2 class={styles.sectionTitle}>{active().label}</h2>
-          <Dynamic component={active().component} />
-        </main>
+          <main
+            class={`${styles.panel} ${active().fill ? styles.panelFill : ''}`}
+          >
+            {/* A fill section (e.g. Table) is a real full-height page that owns the whole
+                region — no section title, no panel padding/scroll. */}
+            <Show when={!active().fill}>
+              <h2 class={styles.sectionTitle}>{active().label}</h2>
+            </Show>
+            <Dynamic component={active().component} />
+          </main>
+        </div>
       </div>
-    </div>
+    </ShellFullScreenContext.Provider>
   );
 }

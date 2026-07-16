@@ -1,9 +1,11 @@
-import type { JSX } from 'solid-js'
-import styles from './Toolbar.module.css'
+import type { JSX } from 'solid-js';
+import styles from './Toolbar.module.css';
 
 export interface ToolbarProps {
-  /** Per-page toolbar content (filters, tabs, totals…). The page owns it all. */
-  children?: JSX.Element
+  /**
+   * Per-page toolbar content (filters, tabs, totals…). The page owns it all.
+   */
+  children?: JSX.Element;
 }
 
 /*
@@ -15,4 +17,4 @@ export interface ToolbarProps {
  */
 export const Toolbar = (props: ToolbarProps) => (
   <div class={styles.toolbar}>{props.children}</div>
-)
+);

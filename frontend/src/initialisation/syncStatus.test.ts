@@ -3,13 +3,18 @@ import type { SyncStatusFragment } from '../api/initialisation.generated';
 import { toSyncOverview } from './syncStatus';
 
 const v7 = (
-  overrides: Partial<Extract<SyncStatusFragment, { __typename: 'FullSyncStatusV7Node' }>>
+  overrides: Partial<
+    Extract<SyncStatusFragment, { __typename: 'FullSyncStatusV7Node' }>
+  >
 ): SyncStatusFragment => ({
   __typename: 'FullSyncStatusV7Node',
   isSyncing: false,
+  warningThreshold: 1,
+  errorThreshold: 3,
   error: null,
   pull: null,
   push: null,
+  waitingForIntegration: null,
   integration: null,
   lastSuccessfulSync: null,
   ...overrides,
@@ -24,36 +29,74 @@ describe('toSyncOverview', () => {
     const overview = toSyncOverview(
       v7({
         isSyncing: true,
-        pull: { started: '2026-01-01T00:00:00Z', finished: null, done: 5, total: 10 },
+        pull: {
+          started: '2026-01-01T00:00:00Z',
+          finished: null,
+          done: 5,
+          total: 10,
+        },
       })
     );
     expect(overview?.isSyncing).toBe(true);
     expect(overview?.succeeded).toBe(false);
     // Labels are i18n keys now (SyncProgress resolves them with t() at render).
     expect(overview?.steps).toEqual([
-      { label: 'sync.step.pull', started: true, finished: false, done: 5, total: 10 },
-      { label: 'sync.step.push', started: false, finished: false, done: undefined, total: undefined },
-      { label: 'sync.step.integration', started: false, finished: false, done: undefined, total: undefined },
+      {
+        label: 'sync.step.pull',
+        started: true,
+        finished: false,
+        done: 5,
+        total: 10,
+      },
+      {
+        label: 'sync.step.push',
+        started: false,
+        finished: false,
+        done: undefined,
+        total: undefined,
+      },
+      {
+        label: 'sync.step.integration',
+        started: false,
+        finished: false,
+        done: undefined,
+        total: undefined,
+      },
     ]);
   });
 
   it('reports success only when not syncing, no error, and a finished sync exists', () => {
     const succeeded = toSyncOverview(
-      v7({ lastSuccessfulSync: { started: '2026-01-01T00:00:00Z', finished: '2026-01-01T00:01:00Z' } })
+      v7({
+        lastSuccessfulSync: {
+          started: '2026-01-01T00:00:00Z',
+          finished: '2026-01-01T00:01:00Z',
+        },
+      })
     );
     expect(succeeded?.succeeded).toBe(true);
 
     const stillSyncing = toSyncOverview(
       v7({
         isSyncing: true,
-        lastSuccessfulSync: { started: '2026-01-01T00:00:00Z', finished: '2026-01-01T00:01:00Z' },
+        lastSuccessfulSync: {
+          started: '2026-01-01T00:00:00Z',
+          finished: '2026-01-01T00:01:00Z',
+        },
       })
     );
     expect(stillSyncing?.succeeded).toBe(false);
   });
 
   it('surfaces the sync error message', () => {
-    const overview = toSyncOverview(v7({ error: { fullError: 'Connection refused' } }));
+    const overview = toSyncOverview(
+      v7({
+        error: {
+          variantV7: 'CONNECTION_ERROR',
+          fullError: 'Connection refused',
+        },
+      })
+    );
     expect(overview?.errorMessage).toBe('Connection refused');
     expect(overview?.succeeded).toBe(false);
   });

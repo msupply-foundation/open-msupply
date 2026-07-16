@@ -2,14 +2,14 @@
  * Pages-compose-never-style check (see kdd/page-composition).
  *
  * Real pages (src/pages/) assemble library components; the Page frame owns
- * inter-region geometry and each region component owns its own look, so a
- * page has nowhere it NEEDS to write CSS — and a page that wants some is a
- * signal that a library component or token is missing. This script fails if
- * any CSS file exists under src/pages/ outside the allowlist.
+ * inter-region geometry and each region component owns its own look, so a page
+ * has nowhere it NEEDS to write CSS — and a page that wants some is a signal
+ * that a library component or token is missing. This script fails if any CSS
+ * file exists under src/pages/ outside the allowlist.
  *
- * Allowlist: bespoke one-off surfaces argued case-by-case in kdd/page-composition
- * (Login's gradient hero is the precedent). Add a page dir here ONLY with a
- * KDD entry to point at.
+ * Allowlist: bespoke one-off surfaces argued case-by-case in
+ * kdd/page-composition (Login's gradient hero is the precedent). Add a page dir
+ * here ONLY with a KDD entry to point at.
  */
 import { existsSync, readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
@@ -24,7 +24,7 @@ if (!existsSync(PAGES_DIR)) {
 }
 
 const cssFiles = [];
-const walk = (dir) => {
+const walk = dir => {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) walk(path);
@@ -34,7 +34,7 @@ const walk = (dir) => {
 walk(PAGES_DIR);
 
 const offenders = cssFiles.filter(
-  (path) => !ALLOW.has(relative(PAGES_DIR, path).split(sep)[0])
+  path => !ALLOW.has(relative(PAGES_DIR, path).split(sep)[0])
 );
 
 if (offenders.length) {

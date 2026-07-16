@@ -4,21 +4,17 @@ import {
   Show,
   type JSX,
   type Component,
-} from 'solid-js'
-import { Dynamic } from 'solid-js/web'
-import {
-  StockIcon,
-  CentralIcon,
-  type IconProps,
-} from '../../icons'
-import { useIsNavOverlay } from '../../utils/createMediaQuery'
-import { MenuBar, type MenuBarState } from './MenuBar'
-import { LanguageSelector } from './LanguageSelector'
-import { UserMenu } from './UserMenu'
-import { ShellNavContext } from './shellContext'
-import { upperNav, lowerNav, type NavLeaf } from './navModel'
-import { locale, changeLanguage, t } from '../../../intl'
-import styles from './AppShell.module.css'
+} from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import { StockIcon, CentralIcon, type IconProps } from '../../icons';
+import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import { MenuBar, type MenuBarState } from './MenuBar';
+import { LanguageSelector } from './LanguageSelector';
+import { UserMenu } from './UserMenu';
+import { ShellNavContext, ShellFullScreenContext } from './shellContext';
+import { upperNav, lowerNav, type NavLeaf } from './navModel';
+import { locale, changeLanguage, t } from '../../../intl';
+import styles from './AppShell.module.css';
 
 export interface AppShellProps {
   /**
@@ -27,17 +23,24 @@ export interface AppShellProps {
    * stays a pure layout element. A page outside the nav (e.g. Home) simply
    * highlights nothing.
    */
-  selected: NavLeaf
+  selected: NavLeaf;
   /** The user picked a menu item. */
-  onNavigate: (leaf: NavLeaf) => void
-  /** The active store's name, shown in the bottom bar (spec: store selector). */
-  storeName: string
-  /** Activating the store cell — routes to the store-selection screen (spec SL-6). */
-  onStoreClick: () => void
-  /** The signed-in user's name, shown in the bottom bar (spec: signed-in user). */
-  username: string
+  onNavigate: (leaf: NavLeaf) => void;
+  /**
+   * The active store's name, shown in the bottom bar (spec: store selector).
+   */
+  storeName: string;
+  /**
+   * Activating the store cell — routes to the store-selection screen (spec
+   * SL-6).
+   */
+  onStoreClick: () => void;
+  /**
+   * The signed-in user's name, shown in the bottom bar (spec: signed-in user).
+   */
+  username: string;
   /** Explicit logout, from the user menu (spec: user menu / logout). */
-  onLogout: () => void
+  onLogout: () => void;
   /**
    * The current page — typically a composed <Page> frame (which supplies the
    * pinned-header / scrolling-body / side-panel / content-footer geometry;
@@ -47,7 +50,7 @@ export interface AppShellProps {
    * the nav renders inside it (via ShellNavContext), so a page without one
    * has no way into the menu on narrow viewports.
    */
-  children: JSX.Element
+  children: JSX.Element;
 }
 
 /*
@@ -55,9 +58,9 @@ export interface AppShellProps {
  * <button>; static ones as a <div> — same look, correct semantics.
  */
 const FooterCell = (props: {
-  icon: Component<IconProps>
-  label: string
-  onClick?: () => void
+  icon: Component<IconProps>;
+  label: string;
+  onClick?: () => void;
 }) => (
   <Show
     when={props.onClick}
@@ -73,7 +76,7 @@ const FooterCell = (props: {
       <span class={styles.footerCellText}>{props.label}</span>
     </button>
   </Show>
-)
+);
 
 /*
  * Application shell — the APP-LEVEL container, not the page frame: docked
@@ -93,64 +96,81 @@ const FooterCell = (props: {
  * hamburger via ShellNavContext. Adapted from the RnD prototype's App shell.
  */
 export const AppShell = (props: AppShellProps) => {
-  const [railCollapsed, setRailCollapsed] = createSignal(false)
-  const [overlayOpen, setOverlayOpen] = createSignal(false)
-  const isOverlay = useIsNavOverlay()
+  const [railCollapsed, setRailCollapsed] = createSignal(false);
+  const [overlayOpen, setOverlayOpen] = createSignal(false);
+  const [fullScreen, setFullScreen] = createSignal(false);
+  const isOverlay = useIsNavOverlay();
 
   const nav: MenuBarState = {
     railCollapsed,
-    toggleRail: () => setRailCollapsed((c) => !c),
+    toggleRail: () => setRailCollapsed(c => !c),
     overlayOpen,
     openOverlay: () => setOverlayOpen(true),
     closeOverlay: () => setOverlayOpen(false),
-  }
+  };
 
   // Leaving overlay mode (e.g. widening the window) shouldn't strand an open
   // off-canvas panel — close it so the docked rail shows cleanly.
   createEffect(() => {
-    if (!isOverlay()) setOverlayOpen(false)
-  })
+    if (!isOverlay()) setOverlayOpen(false);
+  });
 
   // Document direction (RTL for ar/prs/ps) is owned once by App.tsx, driven by
   // the real i18n locale — not here — so there is a single dir effect. The
   // footer LanguageSelector drives that locale via changeLanguage.
 
   return (
-    <ShellNavContext.Provider
-      value={{ isOverlay, openNav: nav.openOverlay }}
-    >
-      <div class={styles.shell}>
-        <MenuBar
-          nav={nav}
-          isOverlay={isOverlay()}
-          upper={upperNav}
-          lower={lowerNav}
-          selectedId={props.selected.id}
-          onSelect={props.onNavigate}
-        />
-        <div class={styles.main}>
-          <div class={styles.content}>{props.children}</div>
-
-          {/* Bottom bar (spec chrome › bottom bar), left to right: the store
-              selector (routes to the store-selection screen), a spacer, the
-              signed-in user (menu: logout), then the language selector. The
-              store name is shown as text, so the store colour is never the sole
-              active-store indicator (colour independence / D8). */}
-          <footer class={styles.footer}>
-            <FooterCell
-              icon={StockIcon}
-              label={props.storeName}
-              onClick={props.onStoreClick}
+    <ShellNavContext.Provider value={{ isOverlay, openNav: nav.openOverlay }}>
+      <ShellFullScreenContext.Provider
+        value={{ isFullScreen: fullScreen, setFullScreen }}
+      >
+        <div class={styles.shell}>
+          {/* Full-screen (Open mSupply's host-level mode): the menu bar and the orange
+              app footer hide so the page content fills the viewport. The page's own
+              header hides too (see Page); its content + footer stay. */}
+          <Show when={!fullScreen()}>
+            <MenuBar
+              nav={nav}
+              isOverlay={isOverlay()}
+              upper={upperNav}
+              lower={lowerNav}
+              selectedId={props.selected.id}
+              onSelect={props.onNavigate}
             />
-            <span class={styles.footerSpacer} aria-hidden="true" />
-            <UserMenu username={props.username} onLogout={props.onLogout} />
-            <span class={styles.footerDivider} aria-hidden="true" />
-            <LanguageSelector language={locale()} onSelect={(v) => void changeLanguage(v)} />
-            <span class={styles.footerDivider} aria-hidden="true" />
-            <FooterCell icon={CentralIcon} label={t('shell.footer.central-server')} />
-          </footer>
+          </Show>
+          <div class={styles.main}>
+            <div class={styles.content}>{props.children}</div>
+
+            {/* Bottom bar (spec chrome › bottom bar), left to right: the store
+                selector (routes to the store-selection screen), a spacer, the
+                signed-in user (menu: logout), then the language selector. The
+                store name is shown as text, so the store colour is never the
+                sole active-store indicator (colour independence / D14). Hidden in
+                full-screen mode, like the menu bar. */}
+            <Show when={!fullScreen()}>
+              <footer class={styles.footer}>
+                <FooterCell
+                  icon={StockIcon}
+                  label={props.storeName}
+                  onClick={props.onStoreClick}
+                />
+                <span class={styles.footerSpacer} aria-hidden="true" />
+                <UserMenu username={props.username} onLogout={props.onLogout} />
+                <span class={styles.footerDivider} aria-hidden="true" />
+                <LanguageSelector
+                  language={locale()}
+                  onSelect={v => void changeLanguage(v)}
+                />
+                <span class={styles.footerDivider} aria-hidden="true" />
+                <FooterCell
+                  icon={CentralIcon}
+                  label={t('shell.footer.central-server')}
+                />
+              </footer>
+            </Show>
+          </div>
         </div>
-      </div>
+      </ShellFullScreenContext.Provider>
     </ShellNavContext.Provider>
-  )
-}
+  );
+};

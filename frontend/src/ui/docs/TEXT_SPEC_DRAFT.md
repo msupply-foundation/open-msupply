@@ -6,7 +6,7 @@
 ## Problem
 
 Text appears everywhere. Two questions: (1) where does text styling live, and
-(2) what does a content area (sidebar, table cell body) use to render a *mix* of
+(2) what does a content area (sidebar, table cell body) use to render a _mix_ of
 text blocks without re-inventing font rules each time.
 
 ## Proposal in one line
@@ -22,24 +22,24 @@ text-block areas use `Text`; **colour is always the container's call**, never
 The trigger is **one fixed, intrinsic text role vs. a variable arrangement of
 text blocks** — not "is it in a page".
 
-- **Component-owned text** — the component has a *single, intrinsic* text role:
+- **Component-owned text** — the component has a _single, intrinsic_ text role:
   a Button label, a TextField label/helper, a **table header (`th`)**. The role
   is fixed and there's exactly one, so the component's own CSS styles it, as
-  today. It does *not* wrap its text in `<Text>`; it just uses the scale tokens.
+  today. It does _not_ wrap its text in `<Text>`; it just uses the scale tokens.
   No change to these components beyond tokenising stray literals (below).
-- **`Text` (composed text blocks)** — a content area that hosts a *variable
-  arrangement* of text, where the composition itself is the point. The area
+- **`Text` (composed text blocks)** — a content area that hosts a _variable
+  arrangement_ of text, where the composition itself is the point. The area
   component owns the layout (stacking, gaps); `Text` supplies the styled blocks
   it arranges. Driving cases:
   - **SidePanel / sidebar regions** — a panel stacks a heading + body copy +
     captions in arrangements that differ per use. The panel shouldn't bake a
     font rule per line; it composes `Text` blocks.
   - **Table cell content** — a cell with a **main** value and a **subtext**
-    second line. The *cell component* owns the two-line layout, but composes two
+    second line. The _cell component_ owns the two-line layout, but composes two
     `Text` blocks (`body` main + `bodySmall`/`caption` subtext) rather than each
     cell type re-inventing its own font rules.
 
-So `th` (the header) is component-owned; a *cell's* main/subtext content is
+So `th` (the header) is component-owned; a _cell's_ main/subtext content is
 composed from `Text`. Same table, opposite sides of the split — because a header
 is one fixed role and a cell body is a composed block.
 
@@ -49,24 +49,25 @@ The current app (`client/.../theme.ts`) is deliberately flat. Its entire
 typography vocabulary — sizes shown in **rem** (all sizing is relative to the
 root, principle #6; the source app's raw px are noted only as the origin):
 
-The colour column below is the source app's *historical* colour — **`Text` does
+The colour column below is the source app's _historical_ colour — **`Text` does
 not set it**; it's shown only to record where the app leaned secondary vs. body.
 Colour is the container's responsibility (Q4).
 
-| Source (MUI) | size (rem) | was (px) | line-height | weight | (was) colour | used for |
-|---|---|---|---|---|---|---|
-| `body1`    | `0.875rem` | 14 | 1.71 | normal | `--text-body` | default body text |
-| `body2`    | `0.75rem`  | 12 | —    | 500    | `--text-secondary` | small / secondary |
-| `h6`       | `1rem`     | 16 | —    | normal | `--text-secondary` | the app's one heading style |
-| `th`       | `0.875rem` | 14 | —    | 700    | `--text-body` | table header |
-| `subtitle1`| `1.2em`    | —  | —    | normal | inherit | occasional subtitle (relative on purpose) |
-| `login`    | —          | —  | —    | —      | `--login-hero-text` | hero (already handled) |
+| Source (MUI) | size (rem) | was (px) | line-height | weight | (was) colour        | used for                                  |
+| ------------ | ---------- | -------- | ----------- | ------ | ------------------- | ----------------------------------------- |
+| `body1`      | `0.875rem` | 14       | 1.71        | normal | `--text-body`       | default body text                         |
+| `body2`      | `0.75rem`  | 12       | —           | 500    | `--text-secondary`  | small / secondary                         |
+| `h6`         | `1rem`     | 16       | —           | normal | `--text-secondary`  | the app's one heading style               |
+| `th`         | `0.875rem` | 14       | —           | 700    | `--text-body`       | table header                              |
+| `subtitle1`  | `1.2em`    | —        | —           | normal | inherit             | occasional subtitle (relative on purpose) |
+| `login`      | —          | —        | —           | —      | `--login-hero-text` | hero (already handled)                    |
 
 Notes worth surfacing:
-- There is **no h1–h5**. `h6` is the app's *one* heading style, used across many
+
+- There is **no h1–h5**. `h6` is the app's _one_ heading style, used across many
   document ranks — dialog/modal titles (`ConfirmationModal`, `AlertModal…`,
   `StocktakeErrorModal`), section headings (`ItemVariantsTab`, `ReportWidget`,
-  plugin `…Section`s) and error-alert headings. So it's a *visual* step, not a
+  plugin `…Section`s) and error-alert headings. So it's a _visual_ step, not a
   rank. **Q1 resolved (Carl):** keep one `heading` visual style; don't pin it to
   `<h6>` — the element comes from `level` (default `<h2>`, since it's usually the
   top heading in its region). Add bigger visual steps only by rule of three.
@@ -80,12 +81,12 @@ Names **resolved (Carl):** `body` / `bodySmall` / `heading` / `subtitle`. Each
 variant is a **type style only** — size + line-height + weight, **no colour**
 (Q4). `color: inherit`, so whatever the container sets cascades in.
 
-| Variant       | Maps to  | size token            | weight               | default element |
-|---------------|----------|-----------------------|----------------------|-----------------|
-| `body`        | body1    | `--text-sm` (0.875rem)| `--weight-regular` (400) | `<p>`       |
-| `bodySmall`   | body2    | `--text-xs` (0.75rem) | `--weight-medium` (500)  | `<p>`       |
-| `heading`     | h6       | `--text-md` (1rem)    | `--weight-bold` (700)    | `<h2>` (rank via `level`) |
-| `subtitle`    | subtitle1| `--text-sm` (0.875rem)| `--weight-semibold` (600) | `<p>` / `<span>` |
+| Variant     | Maps to   | size token             | weight                    | default element           |
+| ----------- | --------- | ---------------------- | ------------------------- | ------------------------- |
+| `body`      | body1     | `--text-sm` (0.875rem) | `--weight-regular` (400)  | `<p>`                     |
+| `bodySmall` | body2     | `--text-xs` (0.75rem)  | `--weight-medium` (500)   | `<p>`                     |
+| `heading`   | h6        | `--text-md` (1rem)     | `--weight-bold` (700)     | `<h2>` (rank via `level`) |
+| `subtitle`  | subtitle1 | `--text-sm` (0.875rem) | `--weight-semibold` (600) | `<p>` / `<span>`          |
 
 - **Base weight = 400 (Carl).** The showcase `body` text sets no weight and
   inherits the browser default (400) — see `index.css` `body` (font-family/size/
@@ -94,11 +95,11 @@ variant is a **type style only** — size + line-height + weight, **no colour**
   `--weight-bold`, matching the source app's ad-hoc `fontWeight: 700` overrides
   on `h6`. So `heading` defaults to bold, not the source `h6`'s bare 400.
 - **`subtitle` = `--text-sm`, semibold 600 (Q5 twice-revised with Carl,
-  2026-07-09).** It's a *deck under a title*, a fixed step smaller than `heading`
+  2026-07-09).** It's a _deck under a title_, a fixed step smaller than `heading`
   and distinguished from `body` by weight. Weight is **semibold**, matching the
   source app's near-universal `subtitle1 → 600` override (new
   `--weight-semibold: 600` token). **Kept a fixed rem step, not `em`:** `em`
-  resolves against the *parent's* font-size, so a subtitle that is a *sibling*
+  resolves against the _parent's_ font-size, so a subtitle that is a _sibling_
   of its title can't size relative to it (the intermediate `0.85em` version only
   "worked" because the showcase container was set to the title's size — the
   container, not the title, was the base). Since the scale is flat (one heading
@@ -179,8 +180,8 @@ The "each area manages its own" drift is already visible — `Select` and
    is used.
 5. ~~**`subtitle` size.**~~ **Resolved (Carl):** stays `em`, relative to its
    title/context.
-6. ~~**Truncation / line-clamp.**~~ **Resolved (Carl):** deferred and *out of
-   scope for `Text`* — a container concern (e.g. a table targets its cells'
+6. ~~**Truncation / line-clamp.**~~ **Resolved (Carl):** deferred and _out of
+   scope for `Text`_ — a container concern (e.g. a table targets its cells'
    truncation rules), not a `Text` prop.
 
 ### All resolved — BUILT (2026-07-09)

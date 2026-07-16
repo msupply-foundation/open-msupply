@@ -1,40 +1,108 @@
 /*
- * DataTable — the shared, TanStack-driven data table (list + detail lines).
+ * DataTable — the shared, TanStack-driven data table (list views).
  *
- * ⚠️ PLACEHOLDER STYLING. The design system has finished designs for the table
- * BODY (rows, headers, selection, hover) — those follow the same tokens as the
- * old display-shell Table.module.css. But the table CHROME introduced with the
- * engine has NO design yet: the toolbar controls (full-screen / Columns / Settings
- * / Group-by), the Columns reorder-pin-visibility panel, the card-view layout, the
- * field-group bands, and the grouped-row headers. Everything below the "PLACEHOLDER"
- * marker is a functional, token-driven stand-in — glyph buttons, plain popovers,
- * simple cards — meant to be replaced once those surfaces are designed. It is
- * token-driven (so it themes) but it is not the final look.
+ * ⚠️ PLACEHOLDER STYLING for the chrome. The design system has finished designs for the
+ * table BODY (rows, headers, selection, hover) — those follow the same tokens as the old
+ * display-shell Table.module.css. But the toolbar (full-screen button) and the
+ * full-screen surface have NO design yet; everything below the "PLACEHOLDER" marker is a
+ * functional, token-driven stand-in meant to be replaced once designed.
  */
 
 /* --- Table body (designed) -------------------------------------------------- */
 
+/* The DataTable fills the space its container gives it (a flex child in the page body)
+   and owns its own scroll — so the column headers stay pinned and horizontal scroll is
+   available immediately, rather than the whole page body scrolling. */
+.root {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  min-inline-size: 0;
+
+  /* Width of each leading fixed column (expander / select). The ONE source of truth for that
+     box — the .selectCell/.expanderCell rules size to it, and the JS column-pinning math mirrors
+     it as remToPx(2.75) (see DataTable.tsx LEADING_COL_PX). ≥44px at the 16px root is a
+     comfortable WCAG 2.5.8 touch target. Keep the rem here in sync with that JS literal. */
+  --table-leading-col: 2.75rem;
+}
+
+/* The bordered box starts here (the table itself), so the transparent toolbar above sits
+   OUTSIDE the border rather than being enclosed by it. */
 .tableScroll {
-  overflow-x: auto;
-  width: 100%;
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
   background: var(--bg-white);
 }
 
 .table {
+  width: 100%;
   border-collapse: collapse;
   font-size: var(--text-sm);
 }
 
+/* Column-header row stays pinned to the top of the scroll container while the body scrolls.
+   Sticky sits on the cells (more reliable than on <thead>). Stacking order (kept strict so the
+   header always wins on vertical scroll and pinned columns win on horizontal scroll):
+     normal body cell   z auto (0)
+     pinned body cell   z 1   (above scrolling body cells)
+     normal header cell z 2   (above ALL body cells, incl. pinned ones)
+     pinned header cell z 3   (the sticky corner — above everything)  */
 .th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
   padding: var(--space-2) var(--space-3);
   border-block-end: 1px solid var(--color-divider);
   background: var(--bg-toolbar);
   color: var(--text-secondary);
   font-weight: var(--weight-medium);
   text-align: start;
-  white-space: nowrap;
+  /* Header text may wrap (up to 2 lines — see .thText); the sort indicator stays visible,
+     vertically centered beside it. Body cells keep nowrap unless a column opts into
+     wrapLines (.td[data-wrap]). */
+  vertical-align: middle;
+}
+
+/* Column resize handle — a thin hit target on the trailing edge of a resizable header.
+   Invisible at rest (a faint divider on hover), highlighted with the brand tone while
+   dragging. Sticky positioning on .th is a containing block for this absolute child. */
+.resizeHandle {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  inline-size: var(--space-2);
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.resizeHandle::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  inline-size: 2px;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.resizeHandle:hover::after {
+  background: var(--color-divider);
+}
+
+.resizeHandleActive::after,
+.resizeHandleActive:hover::after {
+  background: var(--primary-main);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .resizeHandle::after {
+    transition: none;
+  }
 }
 
 .td {
@@ -45,19 +113,68 @@
   white-space: nowrap;
 }
 
-.thInner {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
+/* Wrapping cell (Column meta.wrapLines > 1): clamp to N lines then ellipsis. line-clamp
+   needs the -webkit-box display; --wrap-lines (set inline on the cell) carries N. The row
+   height becomes a MINIMUM so multi-line content can grow the row rather than clip to the
+   single-line height. Placed after .td so it wins the white-space + block-size. */
+.td[data-wrap] {
+  /* --wrap-lines is declared here (default 2) so it's a known custom property to the
+     stylelint value check; the per-column count is set inline on the cell and overrides it. */
+  --wrap-lines: 2;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--wrap-lines);
+  line-clamp: var(--wrap-lines);
+  block-size: auto;
+  min-block-size: var(--table-data-row);
+  padding-block: var(--space-1);
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Column alignment (Column meta.align), applied to header + body via a data-align
+   attribute. Body cells align with text-align; the header label is a flex row
+   (.thLabel), so it aligns with justify-content. Left is the default and needs no rule. */
+.th[data-align='right'],
+.td[data-align='right'] {
+  text-align: end;
+}
+
+.th[data-align='center'],
+.td[data-align='center'] {
+  text-align: center;
 }
 
 .thLabel {
-  flex: 1;
   display: flex;
+  /* Centered so the sort indicator sits vertically middle beside the header text, even
+     when the text wraps to two lines (.thText). */
   align-items: center;
   min-width: 0;
+}
+
+/* Header text — wraps up to 2 lines then ellipsises. min-width:0 lets it shrink so the
+   clamp engages inside the flex row rather than overflowing. */
+.thText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+}
+
+/* Header label is a flex row, so align it with justify-content (data-align lives on the
+   parent .th). Placed after the base .thLabel to keep specificity ascending. */
+.th[data-align='right'] .thLabel {
+  justify-content: flex-end;
+}
+
+.th[data-align='center'] .thLabel {
+  justify-content: center;
 }
 
 .thSortable {
@@ -66,6 +183,7 @@
 }
 
 .sortIndicator {
+  flex-shrink: 0;
   color: var(--text-secondary);
   font-size: var(--text-xs);
   margin-inline-start: var(--space-1);
@@ -85,64 +203,140 @@
   color: var(--text-secondary);
 }
 
-/* Narrow leading checkbox column for row selection. */
-.selectCell {
-  width: 2.25rem;
-  padding: var(--space-2) var(--space-3);
+/* The leading fixed columns (expander + select) are a FIXED box width so their pinned sticky
+   offsets (leadingPinnedStyle, LEADING_COL_PX in DataTable.tsx) line up exactly — otherwise the
+   next column scrolls through a seam between them. box-sizing: border-box + equal min/max pins
+   the box at --table-leading-col regardless of content/padding (a checkbox + padding would
+   otherwise push it wider). The width is --table-leading-col (defined on .root); the JS mirrors
+   the same rem via remToPx. */
+.selectCell,
+.expanderCell {
+  inline-size: var(--table-leading-col);
+  min-inline-size: var(--table-leading-col);
+  max-inline-size: var(--table-leading-col);
+  box-sizing: border-box;
+  border-block-end: 1px solid var(--color-divider);
   text-align: center;
 }
 
+/* Narrow leading checkbox column for row selection. */
+.selectCell {
+  padding: var(--space-2) var(--space-1);
+}
+
+/* Row grouping (rowGroup): a dedicated leading EXPANDER column (before select) — like OMS, the
+   chevrons live in their own column, not embedded in the grouped value's cell. Defined here
+   (before the selected-row rule below) so specificity ascends (no-descending-specificity). */
+.expanderCell {
+  padding: var(--space-2) var(--space-1);
+}
+
+/* Selected row — the SAME brand tint as a selected card (data-selected on the <tr>), so
+   selection reads identically in table and card view. The tint sits on the cells (which
+   paint over the row background). Placed AFTER the base .td / .selectCell rules so
+   specificity ascends (no-descending-specificity). */
+tr[data-selected] .td,
+tr[data-selected] .selectCell,
+tr[data-selected] .expanderCell {
+  background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
+}
+
+/* Pinned columns (sticky offsets set inline via data-pinned + style — see DataTable.pinnedStyle).
+   A pinned cell needs a FULLY OPAQUE background so the horizontally-scrolling content never shows
+   through the frozen cell (or through the seam between the two leading columns). All get z 1 —
+   above the normal scrolling body cells (z auto) on horizontal scroll, but BELOW the header (z 2 /
+   pinned header 3) so the header never disappears under a sticky pinned column. An edge shadow on
+   the inner side signals the freeze. */
+.td[data-pinned],
+.selectCell[data-pinned],
+.expanderCell[data-pinned] {
+  z-index: 1;
+}
+
+/* A pinned DATA column's body cells stay on the body (row) surface — it's data, not part of the
+   leading band. */
+.td[data-pinned] {
+  background: var(--bg-white);
+}
+
+/* Pinned HEADER cells: keep the normal header fill (opaque --bg-toolbar) so the pinned column's
+   header reads identically to the rest of the header — no restyle — and raise only the stacking
+   (z 3) so the sticky top corner sits above both the normal header (2) and any pinned body cell
+   (1). Placed after the body rule so a header leading cell (.th.selectCell[data-pinned]) wins its
+   background here rather than taking the body --bg-white. */
+.th[data-pinned] {
+  z-index: 3;
+  background: var(--bg-toolbar);
+}
+
+.th[data-pinned='left'],
+.td[data-pinned='left'],
+.selectCell[data-pinned],
+.expanderCell[data-pinned] {
+  box-shadow: inset -1px 0 0 0 var(--color-divider);
+}
+
+.th[data-pinned='right'],
+.td[data-pinned='right'] {
+  box-shadow: inset 1px 0 0 0 var(--color-divider);
+}
+
+/* The leading FROZEN columns (select + expander): the HEADER fill (--bg-toolbar) so the frozen
+   leading column reads as one cohesive band with the header above it (matching the header
+   background — as requested), plus a soft drop shadow onto the scrolling content to their
+   inline-END (the "this column is pinned" depth cue, visible as the body scrolls under it). The
+   shadow must fall to the RIGHT, not the left — the scroll container is overflow:auto, so a
+   leftward shadow past the table's edge would be clipped away. More specific than the base pinned
+   rule + placed after it (no-descending-specificity). No z-index change — the header still wins on
+   vertical scroll. */
+.selectCell[data-pinned],
+.expanderCell[data-pinned] {
+  background: var(--bg-toolbar);
+  box-shadow:
+    inset -1px 0 0 0 var(--color-divider),
+    0.375rem 0 0.5rem -0.25rem
+      color-mix(in srgb, var(--gray-main) 35%, transparent);
+}
+
+/* A selected pinned cell keeps the selection tint (over the opaque base) — placed AFTER the base
+   pinned + selected rules so specificity ascends (no-descending-specificity). */
+tr[data-selected] .td[data-pinned],
+tr[data-selected] .selectCell[data-pinned],
+tr[data-selected] .expanderCell[data-pinned] {
+  background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
+}
+
 /* ==========================================================================
- * PLACEHOLDER — the engine chrome below has no finished design yet.
+ * PLACEHOLDER — the toolbar + full-screen chrome below has no finished design yet.
  * ========================================================================== */
 
-/* Drag handle on the trailing edge of a header to resize the column. */
-.resizeHandle {
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 100%;
-  width: 0.3125rem;
-  cursor: col-resize;
-  user-select: none;
-  touch-action: none;
-}
-
-.resizeHandle:hover {
-  background: var(--gray-light);
-}
-
-/* A pinned column sticks to the left edge while the rest scrolls. */
-.pinnedLeft {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: var(--bg-white);
-  box-shadow: var(--shadow-2);
-}
-
-/* When full screen, the table area covers the viewport above everything. */
+/* When full screen, the table area covers the viewport above everything. Still a flex
+   column so the inner .root (and its scroll) fills it. */
 .fullScreen {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: var(--bg-white);
   padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
+  background: var(--bg-white);
 }
 
-/* --- The header controls (full screen, columns, settings, group-by) --- */
-
-.tableControls {
+/* A thin bar above the scroll area holding the full-screen toggle. It sits outside the
+   scroll region, so it never moves when the table scrolls (either axis). Transparent, and NO
+   bottom border — the bordered table box below it delineates the boundary; a border here would
+   double up against the table's own top border. */
+.toolbar {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-end;
-  gap: var(--space-1);
+  min-block-size: 2.25rem;
+  padding-inline: var(--space-1);
 }
 
-.controlButton {
+/* Shared look for the toolbar's icon controls (full-screen button + the settings popover
+   trigger, which gets this via Popover's triggerClass). Transparent, secondary-tone icon,
+   subtle hover — matches the OMS toolbar. */
+.controlButton,
+.fullScreenButton {
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
@@ -153,8 +347,9 @@
   border-radius: var(--radius-sm);
 }
 
-.controlButton:hover {
-  background: var(--bg-toolbar);
+.controlButton:hover,
+.fullScreenButton:hover {
+  background: color-mix(in srgb, var(--text-body) 8%, transparent);
 }
 
 .controlButtonActive {
@@ -163,164 +358,180 @@
   color: var(--secondary-main);
 }
 
-.controlWrapper {
-  position: relative;
-  display: inline-block;
-}
+/* --- Card view (ui-standards § tables, mobile card layout) ------------------- */
 
-/* The Columns panel and Settings popover. */
-.columnsPanel {
-  position: absolute;
-  right: 0;
-  z-index: 20;
-  margin-top: var(--space-1);
-  background: var(--surface-raised);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-3);
-  min-width: 15rem;
-  padding: var(--space-1);
-}
-
-.columnsPanelRow {
+/* Cards flow in a WRAPPING row, each sized to its own content (width: max-content) rather
+   than a uniform grid track — a card with more/longer fields is wider than a sparse one.
+   They wrap to the next row when the row fills, and never exceed the viewport
+   (max-inline-size: 100% on the card). The scroll container (.tableScroll) handles overflow;
+   padding gives breathing room. */
+.cardGrid {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--text-sm);
-}
-
-.columnsPanelName {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text-body);
-}
-
-.columnsPanelIconButton {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: var(--text-secondary);
-  padding: 0 var(--space-1);
-  font-size: var(--text-sm);
-}
-
-.columnsPanelIconButton:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.menuItem {
-  display: block;
-  width: 100%;
-  text-align: left;
-  border: none;
-  background: transparent;
-  color: var(--text-body);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-sm);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-}
-
-.menuItem:hover {
-  background: var(--bg-toolbar);
-}
-
-.menuItem:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-/* --- Card view (the DataTable's alternate body renderer) --- */
-
-.cardList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: var(--space-3);
-  padding: var(--space-1) 0;
+  padding: var(--space-3);
+}
+
+.cardEmpty {
+  padding: var(--space-5);
+  color: var(--text-secondary);
+  text-align: center;
 }
 
 .card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  /* Basis = content width (`auto` sizes from the content — a card with more fields is
+     wider), but GROW to absorb the row's leftover space: several per row share the slack,
+     while a card alone on its row (narrow viewport) stretches to fill it. `auto` basis is
+     used over `max-content` for reliable cross-engine support. Never wider than the
+     viewport (the flex container bounds it). */
+  flex: 1 1 auto;
+  max-inline-size: 100%;
+  padding: var(--space-3);
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
-  padding: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  background: var(--bg-white);
+  background: var(--surface-raised);
 }
 
-.cardClickable {
-  cursor: pointer;
+/* Selected card — same brand tint the design system uses for row selection. */
+.card[data-selected] {
+  border-color: color-mix(in srgb, var(--primary-main) 45%, transparent);
+  background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
 }
 
-.cardClickable:hover {
-  background: var(--bg-row);
-}
-
-.cardField {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.cardFieldLabel {
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-}
-
+/* Top row: identity (title + secondary) on the left, badge pinned top-right. */
 .cardHeader {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  align-items: flex-start;
   gap: var(--space-2);
 }
 
-/* A labelled field-group section inside a card (Column.group). */
-.cardGroup {
+.cardSelect {
+  margin-block-start: var(--space-1);
+  flex-shrink: 0;
+}
+
+.cardIdentity {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardPrimary {
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.cardBadge {
+  flex-shrink: 0;
+}
+
+/* Secondary fields — a WRAPPING row of stacked label-above-value units (LabelledValue).
+   Not a fixed grid: each field takes its natural width and the row wraps to as many
+   columns as fit (ui-standards § tables; CLAUDE.md #7 intrinsic layout). column-gap
+   separates fields across; row-gap separates wrapped rows. */
+.cardFields {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+}
+
+/* Group tabs (kdd/edit-line-card-table) — a row of tab buttons living INSIDE the control bar,
+   inline-start; `margin-inline-end: auto` pushes the icon controls (card-switch / settings /
+   full-screen) to the inline-end of the same bar. Switching sets the active field-group (a
+   secondary column filter); the active tab carries the brand underline (the app's tab idiom,
+   hand-rolled as a plain in-bar strip). */
+.groupTabs {
+  display: flex;
+  align-self: stretch;
+  align-items: stretch;
+  gap: var(--space-1);
+  margin-inline-end: auto;
+}
+
+.groupTab {
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-2);
-  padding-top: var(--space-1);
-  border-top: 1px solid var(--color-divider);
-}
-
-.cardGroupHeading {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--secondary-main);
-}
-
-/* The table-view field-group band: a spanning header cell above the column headers. */
-.groupBandCell {
-  text-align: left;
-  padding: var(--space-1) var(--space-3);
-  border-block-end: 1px solid var(--color-divider);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--secondary-main);
-  white-space: nowrap;
-}
-
-/* A grouped-rows header row (group-by), spanning the table. */
-.groupHeaderRow {
-  background: var(--bg-group-main);
+  padding-inline: var(--space-2);
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   cursor: pointer;
+  border-block-end: 2px solid transparent;
 }
 
-.groupToggle {
+.groupTab:hover {
+  color: var(--text-body);
+}
+
+.groupTab[data-active] {
+  color: var(--primary-main);
+  border-block-end-color: var(--primary-main);
+}
+
+.groupTab:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.groupTabIcon {
+  display: inline-flex;
+}
+
+.groupTabIcon svg {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+/* Card-view group marker (kdd/edit-line-card-table) — NOT a section header. The card's fields
+   flow as one list; each group contributes this as just another secondary element inline before
+   its fields: the 'secondary' text look (muted, --text-sm) with a bigger brand icon prepended.
+   It claims a full row of the wrapping cardFields flex so it reads as the lead-in to its fields,
+   but carries no divider/heading chrome. */
+/* Group icon — the icon-only marker that leads each group's cells in the secondary flow
+   (kdd/edit-line-card-table). It's just one more element in the .cardFields flex (no
+   flex-basis / row-claim), so the group's fields sit right after it, inline; a bigger,
+   brand-toned icon so the grouping reads at a glance. */
+.cardGroupIcon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--primary-main);
+}
+
+.cardGroupIcon svg {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+/* The expander chevron button on an expandable parent row. The chevron is 1em, so font-size
+   sizes it; collapsed points right, expanded rotates the down-chevron to point down. */
+.groupExpander {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border: none;
+  background: none;
+  padding: 0;
   color: var(--text-secondary);
-  margin-inline-end: var(--space-2);
-  display: inline-block;
-  width: 0.75rem;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+
+.groupExpander[data-expanded] {
+  transform: rotate(0deg);
+}
+
+.groupExpander:hover {
+  color: var(--text-body);
 }

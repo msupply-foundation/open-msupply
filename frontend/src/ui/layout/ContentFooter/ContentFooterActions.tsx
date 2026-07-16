@@ -1,9 +1,9 @@
-import type { JSX } from 'solid-js'
-import styles from './ContentFooterActions.module.css'
+import type { JSX } from 'solid-js';
+import styles from './ContentFooterActions.module.css';
 
 export interface ContentFooterActionsProps {
   /** The bar's action buttons — library Button instances (blue tone). */
-  children: JSX.Element
+  children: JSX.Element;
 }
 
 /*
@@ -16,4 +16,4 @@ export interface ContentFooterActionsProps {
  */
 export const ContentFooterActions = (props: ContentFooterActionsProps) => (
   <div class={styles.actions}>{props.children}</div>
-)
+);

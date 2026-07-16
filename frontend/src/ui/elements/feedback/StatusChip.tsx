@@ -1,14 +1,14 @@
-import styles from './StatusChip.module.css'
+import styles from './StatusChip.module.css';
 
 export interface StatusChipProps {
-  label: string
+  label: string;
   /**
    * Any CSS colour — in practice always a `var(--status-*)` token (colour
    * literals live only in tokens.css). Carried by the dot and, tinted via
    * `color-mix`, the pill background — one value drives both.
    */
-  colour: string
-  class?: string
+  colour: string;
+  class?: string;
 }
 
 /*
@@ -27,4 +27,4 @@ export const StatusChip = (props: StatusChipProps) => (
     <span class={styles.dot} aria-hidden="true" />
     {props.label}
   </span>
-)
+);

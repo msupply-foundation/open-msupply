@@ -1,0 +1,21 @@
+/*
+ * LabelledValue — a stacked label-above-value field. Text sets the type (bodySmall /
+ * body); this owns the colours (label muted/secondary, value body) and the vertical
+ * stack. min-inline-size lets a row of these wrap intrinsically without any field
+ * collapsing to nothing.
+ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.label {
+  color: var(--text-secondary);
+}
+
+.value {
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+}

@@ -18,7 +18,12 @@ export type SyncOverview = {
 };
 
 type ProgressPart =
-  | { started: string; finished?: string | null; done?: number | null; total?: number | null }
+  | {
+      started: string;
+      finished?: string | null;
+      done?: number | null;
+      total?: number | null;
+    }
   | null
   | undefined;
 
@@ -56,6 +61,8 @@ export const toSyncOverview = (
     errorMessage,
     steps,
     succeeded:
-      !status.isSyncing && errorMessage == null && status.lastSuccessfulSync?.finished != null,
+      !status.isSyncing &&
+      errorMessage == null &&
+      status.lastSuccessfulSync?.finished != null,
   };
 };

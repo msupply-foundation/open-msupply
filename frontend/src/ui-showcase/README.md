@@ -7,7 +7,7 @@ A "storybook"-type area demonstrating every component in the UI library (`src/ui
 - Run the dev server (`pnpm dev`) and open **`http://localhost:3005/#/showcase`** (the port comes from `vite.config.ts`; override with `DEV_SERVER_PORT`).
 - Individual sections are linkable: `#/showcase/buttons`, `#/showcase/selectors`, `#/showcase/feedback`, … (an unknown section falls back to the first one).
 - No backend or login is needed — the showcase renders instead of the app, skipping the startup flow.
-- The showcase/app decision happens at page load (see `src/index.tsx`), so crossing that boundary takes a reload; switching sections *inside* the showcase is live.
+- The showcase/app decision happens at page load (see `src/index.tsx`), so crossing that boundary takes a reload; switching sections _inside_ the showcase is live.
 
 ## Isolation
 

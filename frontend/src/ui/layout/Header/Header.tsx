@@ -1,8 +1,8 @@
-import { Show, type JSX } from 'solid-js'
-import { MenuIcon } from '../../icons'
-import { useShellNav } from '../AppShell/shellContext'
-import { t } from '../../../intl'
-import styles from './Header.module.css'
+import { Show, type JSX } from 'solid-js';
+import { MenuIcon } from '../../icons';
+import { useShellNav } from '../AppShell/shellContext';
+import { t } from '../../../intl';
+import styles from './Header.module.css';
 
 export interface HeaderProps {
   /**
@@ -12,7 +12,7 @@ export interface HeaderProps {
    * optional; they pin themselves into place via their own CSS, so the
    * header stays a flat flex-wrap container with no nested row markup.
    */
-  children: JSX.Element
+  children: JSX.Element;
 }
 
 /*
@@ -32,7 +32,7 @@ export interface HeaderProps {
  * the state, the header owns the spot. Standalone headers show none.
  */
 export const Header = (props: HeaderProps) => {
-  const shell = useShellNav()
+  const shell = useShellNav();
 
   return (
     <header class={styles.header}>
@@ -48,5 +48,5 @@ export const Header = (props: HeaderProps) => {
       </Show>
       {props.children}
     </header>
-  )
-}
+  );
+};

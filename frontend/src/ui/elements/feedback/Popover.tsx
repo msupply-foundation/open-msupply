@@ -1,33 +1,41 @@
-import { createUniqueId, onCleanup, onMount, type JSX } from 'solid-js'
-import styles from './Popover.module.css'
+import { createUniqueId, onCleanup, onMount, type JSX } from 'solid-js';
+import styles from './Popover.module.css';
 
 export type PopoverPlacement =
-  | 'bottom'
-  | 'bottom-start'
-  | 'bottom-end'
-  | 'top'
-  | 'top-start'
-  | 'top-end'
+  'bottom' | 'bottom-start' | 'bottom-end' | 'top' | 'top-start' | 'top-end';
 
 export interface PopoverProps {
-  /** Trigger content (an icon, some text) — rendered inside the invoker button. */
-  trigger: JSX.Element
-  /** Accessible name for the trigger — required when the trigger is icon-only. */
-  triggerLabel?: string
+  /**
+   * Trigger content (an icon, some text) — rendered inside the invoker button.
+   */
+  trigger: JSX.Element;
+  /**
+   * Accessible name for the trigger — required when the trigger is icon-only.
+   */
+  triggerLabel?: string;
   /** Extends the bare trigger button's styling. */
-  triggerClass?: string
+  triggerClass?: string;
   /** Preferred side/alignment; flips to the other side rather than overflow.
       start/end are logical (mirror in RTL). Default 'bottom'. */
-  placement?: PopoverPlacement
-  class?: string
-  children: JSX.Element
+  placement?: PopoverPlacement;
+  /** Close when a button inside the panel is clicked  */
+  closeOnClickInside?: boolean;
+  /**
+   * Open on hover (and focus) as well as click — for content bubbles whose
+   * trigger IS the
+   * content (a status row), where hover reads more naturally than a click.
+   * Click still works.
+   */
+  openOnHover?: boolean;
+  class?: string;
+  children: JSX.Element;
 }
 
 /* Gap between trigger and panel, and the viewport edge the panel never
    crosses. Pixel values because this is measured geometry (like the tab
    underline), not layout spacing. */
-const GAP = 4
-const EDGE = 8
+const GAP = 4;
+const EDGE = 8;
 
 /*
  * Popover — native Popover API (`popover="auto"`), NO library (the RnD
@@ -45,84 +53,125 @@ const EDGE = 8
  * needs roving focus + typeahead, which stays a Kobalte DropdownMenu buy.
  */
 export const Popover = (props: PopoverProps) => {
-  let trigger!: HTMLButtonElement
-  let panel!: HTMLDivElement
-  const panelId = createUniqueId()
+  let trigger!: HTMLButtonElement;
+  let panel!: HTMLDivElement;
+  const panelId = createUniqueId();
 
   const place = () => {
     // No box yet = the engine hasn't finished displaying the popover (the
     // exact interleaving varies) — retry pre-paint, so no wrong frame shows.
     if (panel.offsetHeight === 0) {
-      requestAnimationFrame(place)
-      return
+      requestAnimationFrame(place);
+      return;
     }
-    const t = trigger.getBoundingClientRect()
+    const t = trigger.getBoundingClientRect();
     // Layout size, not getBoundingClientRect — the entry animation's scale()
     // shrinks the rect while it plays, which would mis-place by a few px.
-    const p = { width: panel.offsetWidth, height: panel.offsetHeight }
+    const p = { width: panel.offsetWidth, height: panel.offsetHeight };
     const [side = 'bottom', align = 'center'] = (
       props.placement ?? 'bottom'
-    ).split('-')
+    ).split('-');
 
     // Logical → physical alignment against the trigger's writing direction.
-    const rtl = getComputedStyle(trigger).direction === 'rtl'
-    const alignLeft = align === 'center' ? null : (align === 'start') !== rtl
+    const rtl = getComputedStyle(trigger).direction === 'rtl';
+    const alignLeft = align === 'center' ? null : (align === 'start') !== rtl;
     let left =
       alignLeft === null
         ? t.left + t.width / 2 - p.width / 2
         : alignLeft
           ? t.left
-          : t.right - p.width
-    left = Math.max(EDGE, Math.min(left, window.innerWidth - p.width - EDGE))
+          : t.right - p.width;
+    left = Math.max(EDGE, Math.min(left, window.innerWidth - p.width - EDGE));
 
-    const below = t.bottom + GAP
-    const above = t.top - p.height - GAP
-    let top = side === 'top' ? above : below
+    const below = t.bottom + GAP;
+    const above = t.top - p.height - GAP;
+    let top = side === 'top' ? above : below;
     // Flip rather than overflow — only when the other side actually fits.
-    if (side === 'bottom' && below + p.height > window.innerHeight - EDGE && above >= EDGE)
-      top = above
-    else if (side === 'top' && above < EDGE && below + p.height <= window.innerHeight - EDGE)
-      top = below
+    if (
+      side === 'bottom' &&
+      below + p.height > window.innerHeight - EDGE &&
+      above >= EDGE
+    )
+      top = above;
+    else if (
+      side === 'top' &&
+      above < EDGE &&
+      below + p.height <= window.innerHeight - EDGE
+    )
+      top = below;
 
-    panel.style.top = `${Math.round(top)}px`
-    panel.style.left = `${Math.round(left)}px`
-  }
+    panel.style.top = `${Math.round(top)}px`;
+    panel.style.left = `${Math.round(left)}px`;
+  };
 
   // rAF-throttled re-place while open (scroll of any ancestor, resize).
-  let raf = 0
+  let raf = 0;
   const replace = () => {
-    if (raf) return
+    if (raf) return;
     raf = requestAnimationFrame(() => {
-      raf = 0
-      place()
-    })
-  }
+      raf = 0;
+      place();
+    });
+  };
 
   const stopTracking = () => {
-    window.removeEventListener('scroll', replace, true)
-    window.removeEventListener('resize', replace)
-    if (raf) cancelAnimationFrame(raf)
-    raf = 0
-  }
+    window.removeEventListener('scroll', replace, true);
+    window.removeEventListener('resize', replace);
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+  };
 
   onMount(() => {
     // beforetoggle fires synchronously just before the popover is shown/
     // hidden, so a microtask queued here runs after it IS shown (it has a
     // box to measure) but before the next paint — no misplaced first frame.
-    panel.addEventListener('beforetoggle', (event) => {
-      const open = (event as ToggleEvent).newState === 'open'
-      trigger.setAttribute('aria-expanded', String(open))
+    panel.addEventListener('beforetoggle', event => {
+      const open = (event as ToggleEvent).newState === 'open';
+      trigger.setAttribute('aria-expanded', String(open));
       if (open) {
-        queueMicrotask(place)
-        window.addEventListener('scroll', replace, { capture: true, passive: true })
-        window.addEventListener('resize', replace)
+        queueMicrotask(place);
+        window.addEventListener('scroll', replace, {
+          capture: true,
+          passive: true,
+        });
+        window.addEventListener('resize', replace);
       } else {
-        stopTracking()
+        stopTracking();
       }
-    })
-  })
+    });
+  });
 
-  onCleanup(stopTracking)
+  onCleanup(stopTracking);
+
+  // Hover-open: show on pointer-enter / focus of the trigger, hide once the
+  // pointer has left BOTH the trigger and the panel (a small delay lets the
+  // pointer travel across the gap). Click still toggles (native popovertarget).
+  // Keyboard focus opens it too, so it's not hover-only (a11y).
+  let hideTimer: ReturnType<typeof setTimeout> | undefined;
+  const show = () => {
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = undefined;
+    }
+    if (!panel.matches(':popover-open')) panel.showPopover();
+  };
+  const scheduleHide = () => {
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      if (panel.matches(':popover-open')) panel.hidePopover();
+    }, 120);
+  };
+  onCleanup(() => {
+    if (hideTimer) clearTimeout(hideTimer);
+  });
+  const hoverHandlers = props.openOnHover
+    ? {
+        onMouseEnter: show,
+        onMouseLeave: scheduleHide,
+        onFocus: show,
+        onBlur: scheduleHide,
+      }
+    : {};
 
   return (
     <>
@@ -136,6 +185,7 @@ export const Popover = (props: PopoverProps) => {
             : styles.trigger
         }
         aria-label={props.triggerLabel}
+        {...hoverHandlers}
       >
         {props.trigger}
       </button>
@@ -144,9 +194,19 @@ export const Popover = (props: PopoverProps) => {
         id={panelId}
         popover="auto"
         class={props.class ? `${styles.panel} ${props.class}` : styles.panel}
+        onClick={e => {
+          if (
+            props.closeOnClickInside &&
+            e.target instanceof Element &&
+            e.target.closest('button')
+          )
+            panel.hidePopover();
+        }}
+        onMouseEnter={props.openOnHover ? show : undefined}
+        onMouseLeave={props.openOnHover ? scheduleHide : undefined}
       >
         {props.children}
       </div>
     </>
-  )
-}
+  );
+};
