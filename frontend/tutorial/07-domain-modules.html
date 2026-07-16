@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>7 · Domain modules</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="tutorial.js"></script>
+  </head>
+  <body>
+    <button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand"><span class="dot"></span> FE Patterns</div>
+        <nav>
+          <a href="index.html"><span class="num">·</span>Overview</a>
+          <a href="01-graphql-codegen.html"
+            ><span class="num">1</span>Codegen &amp; graphqlFetch</a
+          >
+          <a href="02-init-auth-error.html"
+            ><span class="num">2</span>Init, auth &amp; errors</a
+          >
+          <a href="03-store-login-state.html"
+            ><span class="num">3</span>Store &amp; global state</a
+          >
+          <a href="04-list-table-url.html"
+            ><span class="num">4</span>Lists: table &amp; URL</a
+          >
+          <a href="05-createresource.html"
+            ><span class="num">5</span>createResource</a
+          >
+          <a href="06-store-scoped.html"
+            ><span class="num">6</span>Store-scoped caches</a
+          >
+          <a class="current" href="07-domain-modules.html"
+            ><span class="num">7</span>Domain modules</a
+          >
+          <a href="08-action-modal.html"
+            ><span class="num">8</span>Action modals</a
+          >
+          <a href="09-datatable-cards.html"
+            ><span class="num">9</span>Table: cards &amp; groups</a
+          >
+        </nav>
+      </aside>
+
+      <main class="content">
+        <div class="content-inner">
+          <p class="eyebrow">Chapter 7</p>
+          <h1>Domain modules — a reusable picker over store-scoped data</h1>
+          <p class="lede">
+            Chapter 6 gave us a store-scoped cache: locations, master lists and
+            reasons, fetched once per store and shared. But a cache isn't a
+            picker. Every screen that let you <em>choose</em> a location was
+            re-wiring the same <code>&lt;Combobox&gt;</code> — same resource
+            read, same <code>itemToString</code>, same <code>loading</code> —
+            and the wiring had already drifted. A
+            <code>src/domain/&lt;entity&gt;/</code> module is the fix: one home
+            for the data <strong>and</strong> its picker.
+          </p>
+
+          <h2>Three layers, not two</h2>
+          <p>
+            Until now the app had two layers: <code>src/api</code> (transport)
+            and <code>src/ui</code> (a pure, data-agnostic component library). A
+            picker over locations fits neither, and that mismatch is the whole
+            reason this chapter exists.
+          </p>
+          <ul>
+            <li>
+              <strong>Not <code>src/api</code>.</strong> That's the transport
+              layer — <code>graphqlFetch</code>, the codegen output, the
+              resource primitive. A rendered
+              <code>&lt;Combobox&gt;</code> doesn't belong there; it would make
+              <code>api</code> ship UI.
+            </li>
+            <li>
+              <strong>Not <code>src/ui</code>.</strong> The component library
+              imports nothing from the app (that's what keeps it
+              showcase-isolable). An <code>&lt;EntitySelect&gt;</code> imports a
+              resource from <code>api</code> and encodes domain knowledge (which
+              reason types apply) — putting it in <code>ui</code> breaks that
+              boundary.
+            </li>
+          </ul>
+          <p>
+            So we add a third layer, <code>src/domain/</code>, for widgets that
+            know <strong>both</strong> the app's data and how to render it.
+          </p>
+
+          <div class="box">
+            <p class="box-title">The dependency order (memorise this)</p>
+            <p style="margin-bottom: 0">
+              <code>domain</code> sits <em>between</em> <code>api</code> and
+              <code>ui</code>: it may import <strong>both</strong> —
+              <code>api</code> for the resource, <code>ui</code> for the
+              <code>Combobox</code>. But <code>ui</code> imports
+              <strong>neither</strong> <code>api</code> nor <code>domain</code>,
+              and <code>api</code> imports nothing above it. Verticals under
+              <code>sections/</code> compose <code>domain</code> selects +
+              <code>ui</code> components. If you ever find
+              <code>ui</code> reaching into <code>domain</code>, the layering
+              has inverted.
+            </p>
+          </div>
+
+          <h2>Anatomy of a domain module: four files</h2>
+          <p>
+            A folder-per-entity co-locates everything about one reference
+            entity. Here is <code>src/domain/location/</code> in full — four
+            files (plus the codegen output):
+          </p>
+          <ul>
+            <li>
+              <code>location.graphql</code> — the operation. Codegen walks
+              <code>src/**/*.graphql</code> and drops a co-located
+              <code>location.generated.ts</code> next to it, so the query lives
+              beside everything that uses it.
+            </li>
+            <li>
+              <code>locationResource.ts</code> — the state binding: a
+              <code>createStoreScopedResource</code> from chapter 6, plus the
+              exported node type.
+            </li>
+            <li>
+              <code>LocationSelect.tsx</code> — the picker: a thin,
+              self-fetching wrapper over the <code>ui/</code>
+              <code>Combobox</code>.
+            </li>
+            <li>
+              <code>index.ts</code> — re-exports the resource + type (for
+              non-select reads, e.g. a <code>.find()</code> lookup) and the
+              select. The module's public surface.
+            </li>
+          </ul>
+
+          <span class="filename">src/domain/location/locationResource.ts</span>
+          <pre><code><span class="cm">// One location node (id + code + name) — derived from the generated result,</span>
+<span class="cm">// never restated (kdd/type-safety).</span>
+<span class="kw">export type</span> <span class="ty">Location</span> = <span class="ty">LocationsResult</span>[<span class="st">'locations'</span>][<span class="st">'nodes'</span>][<span class="ty">number</span>];
+
+<span class="cm">// App-wide locations cache: store-scoped, lazy, deduped, read via .noSuspense().</span>
+<span class="kw">export const</span> locationsResource = <span class="fn">createStoreScopedResource</span>&lt;<span class="ty">Location</span>&gt;(
+  currentStoreId,
+  <span class="kw">async</span> storeId =&gt; {
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">graphqlFetch</span>(Locations, { storeId });
+    <span class="kw">return</span> result.kind === <span class="st">'success'</span> ? result.data.locations.nodes : <span class="kw">undefined</span>;
+  }
+);</code></pre>
+          <p>
+            The resource is exactly the chapter-6 pattern — the new part is that
+            it lives <em>inside the entity's folder</em>, not under
+            <code>src/api</code>, so the query, the cache and the picker are one
+            unit.
+          </p>
+
+          <h2>The self-fetching thin select</h2>
+          <p>
+            Here is the pay-off. The caller passes only <code>value</code> +
+            <code>onChange</code> (+ an a11y <code>label</code>). The select
+            owns everything data-shaped: the <code>.noSuspense()</code> resource
+            read, <code>itemToString</code>/<code>itemToValue</code>, and
+            <code>loading</code>. Nothing about the locations cache leaks to the
+            call site.
+          </p>
+          <span class="filename">src/domain/location/LocationSelect.tsx</span>
+          <pre><code><span class="kw">export interface</span> <span class="ty">LocationSelectProps</span> {
+  value?: <span class="ty">string</span>;                                <span class="cm">// selected location id</span>
+  onChange: (location: <span class="ty">Location</span> | <span class="kw">null</span>) =&gt; <span class="ty">void</span>;   <span class="cm">// hands back the FULL node</span>
+  label: <span class="ty">string</span>;                                <span class="cm">// required for a11y</span>
+}
+
+<span class="kw">export const</span> <span class="fn">LocationSelect</span> = (props: <span class="ty">LocationSelectProps</span>): <span class="ty">JSX.Element</span> =&gt; (
+  &lt;<span class="ty">Combobox</span>&lt;<span class="ty">Location</span>&gt;
+    label={props.label}
+    items={locationsResource.<span class="fn">noSuspense</span>()}   <span class="cm">// never suspends the screen it's on</span>
+    loading={locationsResource.<span class="fn">loading</span>()}
+    itemToString={l =&gt; l.code}                <span class="cm">// ONE label format, app-wide</span>
+    itemToValue={l =&gt; l.id}
+    value={props.value}
+    onChange={l =&gt; props.<span class="fn">onChange</span>(l)}          <span class="cm">// full node → caller can store code/name</span>
+  /&gt;
+);</code></pre>
+          <div class="box">
+            <p class="box-title">Why hand back the full node?</p>
+            <p style="margin-bottom: 0">
+              <code>onChange</code> reports the whole <code>Location</code> (id
+              + code + name), not just the id, because callers persist that
+              alongside the id — the stocktake line stores a
+              <code>location</code> object, so it can render the code without a
+              second lookup. Id-only callers just read <code>.id</code>. This is
+              the no-remapping rule: the select reports the domain shape the
+              caller already stores, so nothing gets flattened to a parallel
+              type. (<code>MasterListSelect</code>, whose caller only needs the
+              id, reports id-only —
+              <code>onChange={m =&gt; props.onChange(m?.id ?? null)}</code>.)
+            </p>
+          </div>
+
+          <h2>Variants are props, not new components</h2>
+          <p>
+            The reasons list is global and spans many types; each screen wants a
+            <em>slice</em>. The tempting move is a
+            <code>PositiveReasonSelect</code> and a
+            <code>NegativeReasonSelect</code> — but then the filter set is
+            re-declared per component. Instead the variant is a
+            <code>kind</code> prop, and the filtering lives in
+            <strong>one</strong> place.
+          </p>
+          <span class="filename"
+            >src/domain/reasonOptions/ReasonSelect.tsx</span
+          >
+          <pre><code><span class="kw">export type</span> <span class="ty">ReasonKind</span> = <span class="st">'adjustment'</span> | <span class="st">'reduction'</span>;
+
+<span class="cm">// The one source of truth for which reason types each use case offers.</span>
+<span class="kw">const</span> KIND_TYPES: <span class="ty">Record</span>&lt;<span class="ty">ReasonKind</span>, <span class="ty">ReadonlySet</span>&lt;<span class="ty">ReasonOption</span>[<span class="st">'type'</span>]&gt;&gt; = {
+  adjustment: <span class="kw">new</span> <span class="fn">Set</span>([<span class="st">'POSITIVE_INVENTORY_ADJUSTMENT'</span>, <span class="st">'NEGATIVE_INVENTORY_ADJUSTMENT'</span>]),
+  reduction:  <span class="kw">new</span> <span class="fn">Set</span>([<span class="st">'NEGATIVE_INVENTORY_ADJUSTMENT'</span>]),
+};
+
+<span class="cm">// Exported so non-select needs (resolving a label) filter the same way.</span>
+<span class="kw">export const</span> <span class="fn">reasonsOfKind</span> = (kind: <span class="ty">ReasonKind</span>): <span class="ty">ReasonOption</span>[] =&gt;
+  reasonOptionsResource.<span class="fn">noSuspense</span>().<span class="fn">filter</span>(r =&gt; KIND_TYPES[kind].<span class="fn">has</span>(r.type));
+
+&lt;<span class="ty">ReasonSelect</span> kind=<span class="st">"adjustment"</span> … /&gt;   <span class="cm">// stocktake line editor (both directions)</span>
+&lt;<span class="ty">ReasonSelect</span> kind=<span class="st">"reduction"</span> … /&gt;    <span class="cm">// reduce-to-zero (negative only)</span></code></pre>
+          <p>
+            Now the type-filter set is enumerated once,
+            <code>reasonsOfKind</code> is reusable outside the select, and every
+            caller offers exactly the reasons its use case allows — by naming a
+            <code>kind</code>, not by re-deriving a filter. That's the
+            explicit-composition reflex: name and enumerate the variants in one
+            file.
+          </p>
+
+          <h2>The current domain modules</h2>
+          <p>
+            Run <code>ls src/domain/</code> and you get exactly four folders:
+          </p>
+          <ul>
+            <li>
+              <span class="chip">location</span> — the canonical example above.
+            </li>
+            <li>
+              <span class="chip">masterList</span> — same shape, reports
+              id-only.
+            </li>
+            <li>
+              <span class="chip">reasonOptions</span> — the
+              <code>kind</code>-prop variant.
+            </li>
+            <li>
+              <span class="chip">debouncedEdit</span> — <strong>not</strong> an
+              entity module. <code>domain/</code> also hosts non-entity domain
+              helpers that bridge app data + behaviour but aren't reference
+              lookups: <code>createDebouncedEdit</code> is the buffered,
+              per-field save-as-you-type edit store the stocktake side panel
+              uses (chapter 8's cousin). Those get a concern-named folder rather
+              than an <code>&lt;entity&gt;/</code> one.
+            </li>
+          </ul>
+          <div class="box warn">
+            <p class="box-title">Rule of three, not reflex</p>
+            <p style="margin-bottom: 0">
+              A picker used in a <em>single</em> vertical can just live in that
+              <code>sections/</code> folder. <code>domain/</code> is for the
+              <em>reused</em> ones — each of these had two-to-three call sites
+              and drifting duplication (the location label was
+              <code>l.code</code> in two places and
+              <code>`${l.code} — ${l.name}`</code> in a third). Promote to
+              <code>domain/</code> when reuse is real, not on the first use.
+            </p>
+          </div>
+
+          <div class="box build">
+            <p class="box-title">Build step · widgets</p>
+            <p style="margin-bottom: 0">
+              Add a <code>src/widgets/widgetCategory/</code> domain module —
+              four files, matching <code>location/</code> exactly:
+              <code>widgetCategory.graphql</code> (a
+              <code>widgetCategories(storeId)</code> query), then run
+              <code>pnpm codegen</code> to emit the co-located
+              <code>.generated.ts</code>;
+              <code>widgetCategoryResource.ts</code> wrapping
+              <code>createStoreScopedResource(currentStoreId, …)</code> plus an
+              exported <code>WidgetCategory</code> type;
+              <code>WidgetCategorySelect.tsx</code>, a thin
+              <code>&lt;Combobox&gt;</code> that reads
+              <code>.noSuspense()</code>/<code>.loading()</code> and takes only
+              <code>value</code> + <code>onChange</code> + <code>label</code>;
+              and an <code>index.ts</code> re-exporting all three. Now drop
+              <code>&lt;WidgetCategorySelect&gt;</code> into your widgets create
+              form — the call site never touches the resource. Bonus: give it a
+              <code>kind</code> prop like <code>ReasonSelect</code> if
+              categories come in flavours.
+            </p>
+          </div>
+
+          <div class="box real">
+            <p class="box-title">Real code</p>
+            <p style="margin-bottom: 0">
+              <a href="../src/domain/location/LocationSelect.tsx"
+                >location/LocationSelect.tsx</a
+              >
+              ·
+              <a href="../src/domain/location/locationResource.ts"
+                >location/locationResource.ts</a
+              >
+              ·
+              <a href="../src/domain/location/index.ts">location/index.ts</a> ·
+              <a href="../src/domain/reasonOptions/ReasonSelect.tsx"
+                >reasonOptions/ReasonSelect.tsx</a
+              >
+              ·
+              <a href="../src/domain/masterList/MasterListSelect.tsx"
+                >masterList/MasterListSelect.tsx</a
+              >
+              ·
+              <a href="../src/domain/debouncedEdit/createDebouncedEdit.ts"
+                >debouncedEdit/createDebouncedEdit.ts</a
+              >. Why:
+              <a href="../kdd/domain-modules/draft-kdd.md">domain-modules</a> —
+              and the reflexes it leans on:
+              <a href="../kdd/explicit-composition/draft-kdd.md"
+                >explicit-composition</a
+              >, <a href="../kdd/type-safety/draft-kdd.md">type-safety</a>.
+            </p>
+          </div>
+
+          <div class="pager">
+            <a class="prev" href="06-store-scoped.html">
+              <span class="dir">← Prev</span
+              ><span class="ttl">Store-scoped caches</span>
+            </a>
+            <a class="next" href="08-action-modal.html">
+              <span class="dir">Next →</span
+              ><span class="ttl">Action modals</span>
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
