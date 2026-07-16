@@ -2,7 +2,6 @@ import { createSignal, For, type JSX } from 'solid-js';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { Badge } from '../ui/elements/feedback/Badge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
-import { ProgressList } from '../ui/sync/ProgressList';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import { Popover } from '../ui/elements/feedback/Popover';
@@ -10,10 +9,6 @@ import { Button } from '../ui/elements/buttons/Button';
 import { TextField } from '../ui/elements/inputs/TextField';
 import {
   CheckCircleIcon,
-  ChevronsDownIcon,
-  ChevronsUpIcon,
-  ClockIcon,
-  DownloadIcon,
   HelpIcon,
   MessageSquareIcon,
   PlusCircleIcon,
@@ -72,91 +67,6 @@ export const FeedbackShowcase = () => {
             {chip => <StatusChip label={chip.label} colour={chip.colour} />}
           </For>
         </div>
-      </Card>
-
-      <Card
-        title="Progress list — determinate sync steps"
-        lead={
-          <>
-            The sync surfaces' phase list (<code>ui/sync</code>), rendered as
-            the current app's horizontal stepper: circled icon markers joined
-            by connectors (a step without an icon shows its number), label +
-            done/total beneath, the in-flight marker pulsing.{' '}
-            <code>variant</code> picks the tone (primary = the sync modal,
-            secondary = initialisation); <code>error</code> flags the
-            in-flight step. Steps are position-keyed (<code>&lt;Index&gt;</code>)
-            and update in place, so consumers can rebuild the step objects on
-            every status tick.
-          </>
-        }
-      >
-        <ProgressList
-          steps={[
-            {
-              label: 'Push',
-              icon: ChevronsUpIcon,
-              started: true,
-              finished: true,
-            },
-            {
-              label: 'Waiting for integration',
-              icon: ClockIcon,
-              started: true,
-              finished: true,
-            },
-            {
-              label: 'Pull',
-              icon: ChevronsDownIcon,
-              started: true,
-              finished: false,
-              done: 5,
-              total: 10,
-            },
-            {
-              label: 'Integrate',
-              icon: DownloadIcon,
-              started: false,
-              finished: false,
-            },
-          ]}
-        />
-        {/* The genuine v5/v6 remote-site initialisation set (prepare has no
-            icon, so it shows its number; initialisation never pushes). */}
-        <ProgressList
-          variant="secondary"
-          error
-          steps={[
-            { label: 'Prepare', started: true, finished: true },
-            {
-              label: 'Pull central',
-              icon: ChevronsDownIcon,
-              started: true,
-              finished: true,
-              done: 33568,
-              total: 33568,
-            },
-            {
-              label: 'Pull remote',
-              icon: ChevronsDownIcon,
-              started: true,
-              finished: false,
-              done: 7260,
-              total: 80754,
-            },
-            {
-              label: 'Pull V6',
-              icon: ChevronsDownIcon,
-              started: false,
-              finished: false,
-            },
-            {
-              label: 'Integrate',
-              icon: DownloadIcon,
-              started: false,
-              finished: false,
-            },
-          ]}
-        />
       </Card>
 
       <Card
