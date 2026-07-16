@@ -394,13 +394,15 @@ export function DataTable<T, K extends string, G extends string = never>(
   // = the summed widths of the pinned columns before (left) / after (right) it, plus the leading
   // fixed columns (selection + expander) for left offsets. Returns undefined for an unpinned cell.
   //
-  // The leading select/expander columns are a FIXED 2.75rem box each (see .selectCell/
-  // .expanderCell — hard min/max so content can't widen them) and are themselves pinned-left (they
-  // must not scroll away either). LEADING_COL_PX MUST equal that box width, or the first data
-  // column scrolls through a seam between the leading columns. LEADING_WIDTH is their total.
-  const LEADING_COL_PX = 44; // 2.75rem at the 16px root — keep in sync with .selectCell/.expanderCell
+  // The leading select/expander columns are a FIXED box each (see .selectCell/.expanderCell —
+  // hard min/max so content can't widen them) and are themselves pinned-left (they must not scroll
+  // away either). This px MUST equal that box width, or the first data column scrolls through a
+  // seam between the leading columns. The width's ONE source is --table-leading-col (2.75rem, on
+  // the table .root — see DataTable.module.css); we mirror the same rem here via remToPx (reads the
+  // live root font-size, so it tracks the compact-band 85% root too). leadingWidth is their total.
+  const leadingColPx = () => remToPx(2.75); // keep 2.75 in sync with --table-leading-col
   const leadingWidth = () =>
-    (props.enableSelection ? LEADING_COL_PX : 0) + (grouping().length > 0 ? LEADING_COL_PX : 0);
+    (props.enableSelection ? leadingColPx() : 0) + (grouping().length > 0 ? leadingColPx() : 0);
 
   // The sticky style for a data column's cell (header or body), or undefined when unpinned. Only
   // position + edge offset — z-index (the header-over-body / pinned-over-scrolling stacking) is
@@ -427,7 +429,7 @@ export function DataTable<T, K extends string, G extends string = never>(
   // CSS-owned (see pinnedStyle).
   const leadingPinnedStyle = (index: number): JSX.CSSProperties => ({
     position: 'sticky',
-    left: `${index * LEADING_COL_PX}px`,
+    left: `${index * leadingColPx()}px`,
   });
 
   // Inside a shell, full-screen is handled by hiding shell/page chrome — the table stays

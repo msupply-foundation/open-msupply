@@ -19,6 +19,12 @@
   flex-direction: column;
   min-block-size: 0;
   min-inline-size: 0;
+
+  /* Width of each leading fixed column (expander / select). The ONE source of truth for that
+     box — the .selectCell/.expanderCell rules size to it, and the JS column-pinning math mirrors
+     it as remToPx(2.75) (see DataTable.tsx LEADING_COL_PX). ≥44px at the 16px root is a
+     comfortable WCAG 2.5.8 touch target. Keep the rem here in sync with that JS literal. */
+  --table-leading-col: 2.75rem;
 }
 
 /* The bordered box starts here (the table itself), so the transparent toolbar above sits
@@ -199,14 +205,15 @@
 
 /* The leading fixed columns (expander + select) are a FIXED box width so their pinned sticky
    offsets (leadingPinnedStyle, LEADING_COL_PX in DataTable.tsx) line up exactly — otherwise the
-   next column scrolls through an 8px seam between them. box-sizing: border-box + equal min/max
-   pins the box at --leading-col regardless of content/padding (a checkbox + padding would
-   otherwise push it wider). Keep LEADING_COL_PX === 44 (2.75rem) in sync. */
+   next column scrolls through a seam between them. box-sizing: border-box + equal min/max pins
+   the box at --table-leading-col regardless of content/padding (a checkbox + padding would
+   otherwise push it wider). The width is --table-leading-col (defined on .root); the JS mirrors
+   the same rem via remToPx. */
 .selectCell,
 .expanderCell {
-  inline-size: 2.75rem;
-  min-inline-size: 2.75rem;
-  max-inline-size: 2.75rem;
+  inline-size: var(--table-leading-col);
+  min-inline-size: var(--table-leading-col);
+  max-inline-size: var(--table-leading-col);
   box-sizing: border-box;
   border-block-end: 1px solid var(--color-divider);
   text-align: center;
