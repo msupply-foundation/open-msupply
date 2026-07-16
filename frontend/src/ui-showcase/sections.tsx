@@ -10,7 +10,7 @@ import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
 import { ContentFooterShowcase } from './ContentFooterShowcase';
 import { SidePanelShowcase } from './SidePanelShowcase';
-import { DashboardShowcase } from './DashboardShowcase';
+import { StatisticsShowcase } from './StatisticsShowcase';
 
 export type SectionCategory = 'components' | 'layout';
 
@@ -84,9 +84,9 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
-    id: 'dashboard',
-    label: 'Dashboard',
-    component: DashboardShowcase,
+    id: 'statistics',
+    label: 'Statistics',
+    component: StatisticsShowcase,
     category: 'components',
   },
   {

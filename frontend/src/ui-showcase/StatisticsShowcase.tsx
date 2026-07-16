@@ -7,10 +7,11 @@ import { SectionTitle } from '../ui/elements/dashboard/SectionTitle';
 import { Statistic } from '../ui/elements/dashboard/Statistic';
 import { Button } from '../ui/elements/buttons/Button';
 import { PlusCircleIcon, StockIcon } from '../ui/icons';
-import styles from './DashboardShowcase.module.css';
+import styles from './StatisticsShowcase.module.css';
 
 /*
- * Showcase for the dashboard building blocks — shown component-by-component
+ * Showcase for the statistics building blocks — common, reusable components
+ * whose main consumer is the dashboard. Shown component-by-component
  * (SectionTitle → Statistic → StatsPanel → Widget), like the other component
  * sections, then one composition example where CardGrid lays out several
  * Widgets (CardGrid renders nothing on its own — it only shows behaviour once
@@ -271,7 +272,7 @@ const Demo = () => (
   </div>
 );
 
-export const DashboardShowcase = () => (
+export const StatisticsShowcase = () => (
   <MemoryRouter>
     <Route path="*" component={Demo} />
   </MemoryRouter>
