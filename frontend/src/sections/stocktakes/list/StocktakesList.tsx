@@ -24,7 +24,7 @@ import { Stocktakes } from './stocktakes.generated';
 import type { StocktakesVariables, StocktakesResult } from './stocktakes.generated';
 import { filterFields, type StocktakeFilter } from './listFilters';
 import { CreateStocktakeModal } from './CreateStocktakeModal';
-import { DeleteStocktakesAction } from './DeleteStocktakesAction';
+import { DeleteStocktakesAction } from './actions';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
 // filter/sort/pagination state come from the vertical; the UI is composed from library
