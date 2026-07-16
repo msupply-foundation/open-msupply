@@ -254,6 +254,9 @@ const StocktakeLineEditContent = (
   // draft (incl. isNew and deleted lines).
   const [draft, setDraft] = createStore<DraftLine[]>([]);
   const [saving, setSaving] = createSignal(false);
+  // True while an item's lines are being fetched (mount + item switch), so the
+  // table shows a spinner instead of flashing its empty state (#160/#196).
+  const [loadingLines, setLoadingLines] = createSignal(true);
   const [errorMessage, setErrorMessage] = createSignal<string | undefined>();
   // Per-line save errors from the server, keyed by line id → the error's
   // __typename (the shared LineErrors shape, kept raw — same as the detail
@@ -299,8 +302,10 @@ const StocktakeLineEditContent = (
     setNextItem(info.nextItem);
     setLineErrors(new Map());
     setErrorMessage(undefined);
+    setLoadingLines(true);
     const seeded = await fetchAndSeed(props.storeId, info.item, info.lines);
     setDraft(reconcile(seeded, { key: 'id' }));
+    setLoadingLines(false);
   };
 
   // Seed on mount from the item this open started on. The draft starts empty
@@ -979,6 +984,7 @@ const StocktakeLineEditContent = (
         columns={columns()}
         rows={rows()}
         rowKey={line => line.id}
+        loading={loadingLines()}
         tabsAndCardGroups={TABS_AND_CARD_GROUPS}
         showFullScreen={false}
         config={tableConfig.config()}

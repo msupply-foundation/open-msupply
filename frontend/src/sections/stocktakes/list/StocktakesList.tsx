@@ -164,8 +164,15 @@ const StocktakesList: Component = () => {
     }
   );
 
-  const rows = () => data()?.nodes ?? [];
-  const totalCount = () => data()?.totalCount ?? 0;
+  // Read `data.latest`, NOT `data()`: `.latest` never suspends (it returns the
+  // previous value during a refetch, and undefined before the first load),
+  // whereas reading `data()` while pending suspends the whole list into the
+  // router's fallback-less <Suspense> — leaving the page BLANK on a slow initial
+  // load instead of showing the table's loading spinner (#160/#196). Keeping the
+  // read non-suspending lets the DataTable mount immediately and show its
+  // `loading` treatment (kdd/solid-reactivity-pitfalls rule 1).
+  const rows = () => data.latest?.nodes ?? [];
+  const totalCount = () => data.latest?.totalCount ?? 0;
 
   // "Does this store have ANY stocktake?" — a SEPARATE, filter-independent
   // fetch (mirrors OMS's useHasStocktake): the main list's totalCount is
@@ -186,11 +193,14 @@ const StocktakesList: Component = () => {
       return result.data.stocktakes.totalCount > 0;
     }
   );
-  // Undefined while unresolved — treat as "has stocktakes" so we DON'T flash the
+  // Read `.latest` (non-suspending), NOT `hasStocktakeData()`: a suspending read
+  // here would collapse the whole list into the router's fallback-less Suspense
+  // on first load (blank page — the same trap as `data()` above). Undefined
+  // while unresolved — treat as "has stocktakes" so we DON'T flash the
   // initial-create affordance before we know (a store with stocktakes is the
   // common case; showing "New stocktake" and correcting to "initial" would be
   // the wrong direction to flicker).
-  const hasStocktake = () => hasStocktakeData() ?? true;
+  const hasStocktake = () => hasStocktakeData.latest ?? true;
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
@@ -356,6 +366,11 @@ const StocktakesList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={r => r.id}
+        // `data.loading` (a non-suspending read) drives the table's loading
+        // treatment: a centred spinner on first load (no rows yet), a thin
+        // refreshing bar on filter/sort/page refetches (rows kept) — so a slow
+        // fetch never flashes the "no stocktakes" empty state (#160/#196).
+        loading={data.loading}
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}

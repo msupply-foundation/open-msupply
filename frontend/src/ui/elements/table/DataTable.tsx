@@ -53,6 +53,7 @@ import {
 } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import { EmptyState } from '../feedback/EmptyState';
+import { Spinner } from '../feedback/Spinner';
 import { ColumnSettings } from './ColumnSettings';
 import { t } from '../../../intl';
 import type { LocaleKey } from '../../../intl';
@@ -149,6 +150,17 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * edit
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
+  /**
+   * The data is being fetched. Drives the loading treatment so a slow fetch
+   * never flashes the empty state (issues #160/#196): with NO rows yet
+   * (initial load) a centred spinner replaces the empty state; with rows
+   * already showing (a refetch on filter/sort/page — kept via
+   * keepPreviousData) the rows stay put and a thin refreshing bar appears
+   * above the table. Pass the resource's `.loading` (a non-suspending read —
+   * do NOT wrap a refetching list in Suspense, which would remount the table;
+   * see kdd/solid-reactivity-pitfalls).
+   */
+  loading?: boolean;
   /** Message shown (as the empty-state body) when there are no rows. */
   emptyMessage?: string;
   /**
@@ -658,20 +670,42 @@ export function DataTable<T, K extends string, G extends string = never>(
           </button>
         </Show>
       </div>
+      {/* Refreshing bar — a thin indeterminate progress bar pinned above the
+          scroll area while a fetch runs AND rows are already showing (a refetch
+          on filter/sort/page — keepPreviousData keeps the old rows in place). It
+          signals "updating" without blanking the table or remounting it (issue
+          #160/#196). The initial load (no rows yet) uses the centred spinner
+          below instead, so the two never show together. */}
+      <Show when={props.loading && table.getRowModel().rows.length > 0}>
+        <div
+          class={styles.refreshingBar}
+          role="status"
+          aria-label={t('common.loading')}
+        />
+      </Show>
       <div class={styles.tableScroll}>
-        {/* No rows → render the empty state directly (no table/cards at all), so
-            there's no header row or colSpan cell to size. The toolbar above stays
-            put. The check is view-independent (both views read the same core row
-            model), so it sits above the table/card Switch. */}
+        {/* No rows → render the loading spinner or the empty state directly (no
+            table/cards at all, so there's no header row or colSpan cell to size).
+            The toolbar above stays put. The check is view-independent (both views
+            read the same core row model), so it sits above the table/card Switch.
+            When loading with no rows yet (initial load) the spinner shows; once
+            data lands the empty state is only shown if it's genuinely empty. */}
         <Show
           when={table.getRowModel().rows.length > 0}
           fallback={
-            <EmptyState
-              data-testid="nothing-here"
-              message={props.emptyMessage ?? t('table.no-results')}
+            <Show
+              when={props.loading}
+              fallback={
+                <EmptyState
+                  data-testid="nothing-here"
+                  message={props.emptyMessage ?? t('table.no-results')}
+                >
+                  {props.empty}
+                </EmptyState>
+              }
             >
-              {props.empty}
-            </EmptyState>
+              <Spinner center data-testid="table-loading" />
+            </Show>
           }
         >
           <Switch>

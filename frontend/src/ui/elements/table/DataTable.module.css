@@ -38,6 +38,45 @@
   background: var(--bg-white);
 }
 
+/* Refreshing bar — a thin indeterminate progress bar shown above the table
+   while a fetch runs and rows are already displayed (a filter/sort/page refetch).
+   A short highlight slides across a faint track; it sits flush on the table's
+   top edge (rounded to match). Signals "updating" without blanking the rows. */
+.refreshingBar {
+  position: relative;
+  block-size: 0.1875rem;
+  overflow: hidden;
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--secondary-main) 20%, transparent);
+}
+
+.refreshingBar::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inline-size: 40%;
+  background: var(--secondary-main);
+  border-radius: inherit;
+  animation: table-refreshing 1.1s ease-in-out infinite;
+}
+
+@keyframes table-refreshing {
+  from {
+    inset-inline-start: -40%;
+  }
+
+  to {
+    inset-inline-start: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refreshingBar::after {
+    animation-duration: 2.2s;
+  }
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
