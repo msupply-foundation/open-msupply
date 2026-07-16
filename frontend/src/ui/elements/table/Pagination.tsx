@@ -79,7 +79,11 @@ export const Pagination = (props: PaginationProps) => {
     // one page) — the footer is part of the list's stable chrome, as in the
     // current app; an appearing/disappearing bar would shift the layout on
     // every filter.
-    <nav class={styles.pagination} aria-label={t('pagination.label')}>
+    <nav
+      class={styles.pagination}
+      aria-label={t('pagination.label')}
+      data-testid="table-pagination"
+    >
       {/* "Showing X-Y of Z" — the range and total are emphasised (bold), the words
           are not, matching the current app's Showing/of split. */}
       <span class={styles.summary} aria-live="polite">

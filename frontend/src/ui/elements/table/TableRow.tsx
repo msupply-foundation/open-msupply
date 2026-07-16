@@ -119,6 +119,7 @@ export function TableRow<T>(props: {
           <input
             type="checkbox"
             aria-label={t('table.select-row')}
+            data-testid="select-row-checkbox"
             checked={
               props.row.getIsGrouped()
                 ? props.row.getIsAllSubRowsSelected()
@@ -138,6 +139,9 @@ export function TableRow<T>(props: {
           <Show when={props.cellVisible(cell)}>
             <td
               class={styles.td}
+              // Cross-FE test-id contract (e2e/TESTIDS.md): `cell-<columnId>`,
+              // scoped by row (row.getByTestId('cell-batch')).
+              data-testid={`cell-${cell.column.id}`}
               data-align={cellAlign(cell)}
               data-pinned={cell.column.getIsPinned() || undefined}
               // data-wrap + --wrap-lines: when a column sets meta.wrapLines >

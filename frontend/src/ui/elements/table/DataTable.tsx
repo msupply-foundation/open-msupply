@@ -721,7 +721,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                           <input
                             type="checkbox"
                             aria-label={t('table.select-all')}
-                            data-testid="select-all"
+                            data-testid="select-all-rows-checkbox"
                             checked={table.getIsAllRowsSelected()}
                             onChange={table.getToggleAllRowsSelectedHandler()}
                           />
@@ -754,7 +754,11 @@ export function DataTable<T, K extends string, G extends string = never>(
                   when={table.getRowModel().rows.length > 0}
                   fallback={
                     <tr>
-                      <td class={styles.empty} colSpan={leafColumnCount()}>
+                      <td
+                        class={styles.empty}
+                        colSpan={leafColumnCount()}
+                        data-testid="nothing-here"
+                      >
                         {props.emptyMessage ?? t('table.no-results')}
                       </td>
                     </tr>

@@ -262,6 +262,7 @@ const StocktakesList: Component = () => {
             <Button
               icon={<PlusCircleIcon />}
               onClick={() => setCreateOpen(true)}
+              data-testid="new-stocktake-button"
             >
               {t('stocktake.new')}
             </Button>
@@ -298,7 +299,7 @@ const StocktakesList: Component = () => {
           <ContentFooter>
             {/* Matching Open mSupply's action bar: the count and the row action(s)
                 (Delete) group on the inline-start edge; Clear pins inline-end. */}
-            <strong>
+            <strong data-testid="selected-rows-count">
               {t('stocktake.selected', { count: selectedIds().length })}
             </strong>
             <DeleteStocktakesAction

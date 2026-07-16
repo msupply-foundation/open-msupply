@@ -85,6 +85,8 @@ export interface DialogProps {
    * DataTable) fills the tall space.
    */
   size?: 'auto' | 'large';
+  /** Test id on the dialog element (cross-FE test-id contract). */
+  testId?: string;
 }
 
 /*
@@ -155,6 +157,7 @@ export const Dialog = (props: DialogProps) => {
       }}
       aria-labelledby={titleId}
       aria-describedby={description() ? descriptionId : undefined}
+      data-testid={props.testId}
       // Escape arrives as `cancel` before the dialog closes — a blocking
       // dialog swallows it here, so the element never closes underneath the
       // parent's `open` state.
