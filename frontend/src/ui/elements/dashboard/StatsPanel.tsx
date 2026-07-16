@@ -1,6 +1,5 @@
-import { Match, Show, Switch, type JSX } from 'solid-js';
-import { A } from '@solidjs/router';
-import { Alert } from '../feedback/Alert';
+import { Match, Switch, type JSX } from 'solid-js';
+import { SectionTitle } from './SectionTitle';
 import styles from './StatsPanel.module.css';
 
 export type StatsPanelState = 'loading' | 'error' | 'ready';
@@ -10,6 +9,8 @@ export interface StatsPanelProps {
   title: string;
   /** When set, the whole-panel title links here (the unfiltered list). */
   titleHref?: string;
+  /** Optional leading icon for the title (which family this panel counts). */
+  icon?: JSX.Element;
   /**
    * The state of the count query backing this panel. `loading` and `error`
    * replace the stat list in place; `ready` shows the stats (children). Each
@@ -17,6 +18,8 @@ export interface StatsPanelProps {
    * siblings untouched.
    */
   state: StatsPanelState;
+  /** Message shown in the loading state (e.g. "Loading…"), already translated. */
+  loadingMessage?: string;
   /** Message shown in the error state, already translated. */
   errorMessage?: string;
   /** The Statistic children, shown when ready. */
@@ -25,33 +28,29 @@ export interface StatsPanelProps {
 
 /*
  * A titled group of related statistics within a Widget (ui-standards §
- * Dashboard). The title (<h3>) optionally links to the unfiltered list. The
- * panel owns its own loading / error state from its count query: while the query
- * loads or fails (e.g. a Forbidden family the user cannot read), that state
- * replaces the stat list — sibling panels are unaffected.
+ * Dashboard), rendered as an inner elevation card. Its heading is a
+ * `SectionTitle` (the iconed action-colour title) that optionally links to the
+ * unfiltered list. The panel owns its own loading / error state from its count
+ * query: while the query loads or fails (e.g. a Forbidden family the user
+ * cannot read), that state replaces the stat list — sibling panels are
+ * unaffected.
  */
 export const StatsPanel = (props: StatsPanelProps) => (
   <section
     class={styles.panel}
     aria-busy={props.state === 'loading' || undefined}
   >
-    <h3 class={styles.title}>
-      <Show when={props.titleHref} fallback={props.title}>
-        <A href={props.titleHref!} class={styles.titleLink}>
-          {props.title}
-        </A>
-      </Show>
-    </h3>
+    <SectionTitle
+      title={props.title}
+      href={props.titleHref}
+      icon={props.icon}
+    />
     <Switch>
       <Match when={props.state === 'loading'}>
-        <div class={styles.loading} aria-hidden="true">
-          <span class={styles.skeleton} />
-          <span class={styles.skeleton} />
-          <span class={styles.skeleton} />
-        </div>
+        <p class={styles.status}>{props.loadingMessage}</p>
       </Match>
       <Match when={props.state === 'error'}>
-        <Alert severity="error">{props.errorMessage}</Alert>
+        <p class={styles.status}>{props.errorMessage}</p>
       </Match>
       <Match when={props.state === 'ready'}>
         <div class={styles.stats}>{props.children}</div>

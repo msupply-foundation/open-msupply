@@ -164,6 +164,16 @@ export const InfoIcon = (props: IconProps) => (
   </Fill>
 );
 
+/* Outline circle-i (the current app's InfoOutlineIcon) — the dashboard's stat
+   tooltip marker. Stroke sibling of AlertCircleIcon, with the dot on top. */
+export const InfoOutlineIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </Stroke>
+);
+
 /**
  * --- Navigation icons (from the current app; added as the menu bar needs
  * them) ---

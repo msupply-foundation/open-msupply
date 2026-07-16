@@ -1,4 +1,4 @@
-import { Show, type JSX } from 'solid-js';
+import { children, Show, type JSX } from 'solid-js';
 import styles from './Widget.module.css';
 
 export interface WidgetProps {
@@ -16,12 +16,18 @@ export interface WidgetProps {
  * Hand-rolled card, pure CSS. Presentational — the section owns the data, the
  * display gates, and what (if anything) fills the footer.
  */
-export const Widget = (props: WidgetProps) => (
-  <section class={styles.widget}>
-    <h2 class={styles.title}>{props.title}</h2>
-    <div class={styles.body}>{props.children}</div>
-    <Show when={props.footer}>
-      <div class={styles.footer}>{props.footer}</div>
-    </Show>
-  </section>
-);
+export const Widget = (props: WidgetProps) => {
+  // `footer` is a lazy JSX getter read twice (the <Show> test + the insertion);
+  // resolve it once so the element isn't instantiated twice
+  // (kdd/solid-reactivity-pitfalls §3).
+  const footer = children(() => props.footer);
+  return (
+    <section class={styles.widget}>
+      <h2 class={styles.title}>{props.title}</h2>
+      <div class={styles.body}>{props.children}</div>
+      <Show when={footer()}>
+        <div class={styles.footer}>{footer()}</div>
+      </Show>
+    </section>
+  );
+};

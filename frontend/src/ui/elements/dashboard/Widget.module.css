@@ -4,15 +4,15 @@
   gap: var(--space-4);
   padding: var(--space-5);
   background: var(--surface-raised);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
   block-size: 100%;
 }
 
 .title {
   margin: 0;
-  font-size: var(--text-lg);
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
   color: var(--text-body);
 }
 

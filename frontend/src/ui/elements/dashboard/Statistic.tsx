@@ -1,6 +1,7 @@
 import { Show } from 'solid-js';
 import { A } from '@solidjs/router';
-import { AlertTriangleIcon, InfoIcon } from '../../icons';
+import { InfoOutlineIcon } from '../../icons';
+import { StatusChip } from '../feedback/StatusChip';
 import styles from './Statistic.module.css';
 
 export interface StatisticProps {
@@ -12,40 +13,49 @@ export interface StatisticProps {
   href: string;
   /** Optional explanatory tooltip, already translated. */
   info?: string;
-  /** Raise visual emphasis (e.g. emergency requisitions > 0). */
+  /** Raise an alert emphasis (e.g. emergency requisitions > 0). */
   alert?: boolean;
+  /**
+   * The translated alert text (e.g. "Needs attention"), shown as a red status
+   * chip beneath the stat when `alert` is set — the meaning is carried by the
+   * chip's text, never by colour alone (accessibility § colour independence).
+   */
+  alertLabel?: string;
 }
 
 /*
- * A single dashboard statistic (ui-standards § Dashboard): a value over a label,
- * the whole thing a link into the list it counts. Hand-rolled, pure CSS + a
- * semantic <a> (the router's <A>), so it carries a real link role and accessible
- * name for free. When `alert` is set the value is emphasised AND flagged with an
- * icon — meaning is never carried by colour alone (accessibility § colour
- * independence). `info` adds a small tooltip marker.
+ * A single dashboard statistic (ui-standards § Dashboard): a big value beside
+ * its label (one row of a panel's vertical list; the value sits in a right-
+ * aligned column so rows line up), the whole thing a link into the list it
+ * counts. Hand-rolled, pure CSS + a semantic <a> (the router's <A>), so it
+ * carries a real link role and accessible name for free. When `alert` is set a
+ * red "needs attention" StatusChip appears beneath — matching the current app,
+ * whose value stays normal and whose emphasis is the chip. `info` adds a small
+ * tooltip marker in the brand tone.
  */
 export const Statistic = (props: StatisticProps) => (
   <A
     href={props.href}
     class={styles.stat}
-    data-alert={props.alert ? '' : undefined}
-    aria-label={`${props.value} ${props.label}`}
+    aria-label={`${props.value} ${props.label}${
+      props.alert && props.alertLabel ? `, ${props.alertLabel}` : ''
+    }`}
   >
-    <span class={styles.value}>
-      <Show when={props.alert}>
-        <span class={styles.alertIcon} aria-hidden="true">
-          <AlertTriangleIcon />
-        </span>
-      </Show>
-      {props.value}
+    <span class={styles.main}>
+      <span class={styles.value}>{props.value}</span>
+      <span class={styles.label}>
+        {props.label}
+        <Show when={props.info}>
+          <span class={styles.info} title={props.info} aria-hidden="true">
+            <InfoOutlineIcon />
+          </span>
+        </Show>
+      </span>
     </span>
-    <span class={styles.label}>
-      {props.label}
-      <Show when={props.info}>
-        <span class={styles.info} title={props.info} aria-hidden="true">
-          <InfoIcon />
-        </span>
-      </Show>
-    </span>
+    <Show when={props.alert && props.alertLabel}>
+      <span class={styles.alert}>
+        <StatusChip label={props.alertLabel!} colour="var(--error-main)" />
+      </span>
+    </Show>
   </A>
 );
