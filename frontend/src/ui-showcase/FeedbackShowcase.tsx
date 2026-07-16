@@ -120,21 +120,33 @@ export const FeedbackShowcase = () => {
             },
           ]}
         />
+        {/* The genuine v5/v6 remote-site initialisation set (prepare has no
+            icon, so it shows its number; initialisation never pushes). */}
         <ProgressList
           variant="secondary"
           error
           steps={[
             { label: 'Prepare', started: true, finished: true },
             {
-              label: 'Push',
-              icon: ChevronsUpIcon,
-              started: true,
-              finished: true,
-            },
-            {
-              label: 'Pull',
+              label: 'Pull central',
               icon: ChevronsDownIcon,
               started: true,
+              finished: true,
+              done: 33568,
+              total: 33568,
+            },
+            {
+              label: 'Pull remote',
+              icon: ChevronsDownIcon,
+              started: true,
+              finished: false,
+              done: 7260,
+              total: 80754,
+            },
+            {
+              label: 'Pull V6',
+              icon: ChevronsDownIcon,
+              started: false,
               finished: false,
             },
             {
