@@ -1,10 +1,11 @@
 import { lazy } from 'solid-js';
 import { Route } from '@solidjs/router';
 
-// The stocktakes section route tree, mounted under /{storeId}/inventory/stocktakes by
-// App.tsx. The list view is the reference list screen; the detail view (a stocktake's lines)
-// is reached by a list row-click or after creating a stocktake. Both are lazy so the section
-// is its own bundle.
+// The stocktakes section route tree, mounted under
+// /{storeId}/inventory/stocktakes by App.tsx. The list view is the reference
+// list screen; the detail view (a stocktake's lines) is reached by a list
+// row-click or after creating a stocktake. Both are lazy so the section is its
+// own bundle.
 const StocktakesList = lazy(() => import('./list/StocktakesList'));
 const StocktakeDetailView = lazy(() => import('./detail/StocktakeDetailView'));
 

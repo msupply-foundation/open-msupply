@@ -10,44 +10,67 @@ import { ChevronDownIcon } from '../../icons';
 import { t } from '../../../intl';
 import styles from './DataTable.module.css';
 
-// The alignment convention carried on a column's meta (set by the cell helpers).
-const cellAlign = <T,>(cell: TanCell<T, unknown>): 'left' | 'right' | 'center' | undefined =>
-  cell.column.columnDef.meta?.align;
+// The alignment convention carried on a column's meta (set by the cell
+// helpers).
+const cellAlign = <T,>(
+  cell: TanCell<T, unknown>
+): 'left' | 'right' | 'center' | undefined => cell.column.columnDef.meta?.align;
 
-// The wrap-lines convention: how many lines a cell may wrap to before truncating. Absent
-// (or <= 1) means the default single-line nowrap. Returns the clamp count when > 1.
+// The wrap-lines convention: how many lines a cell may wrap to before
+// truncating. Absent (or <= 1) means the default single-line nowrap. Returns
+// the clamp count when > 1.
 const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
   const lines = cell.column.columnDef.meta?.wrapLines;
   return lines && lines > 1 ? lines : undefined;
 };
 
-// A body row: its cells, clickable when onRowClick is set. Extracted from DataTable.tsx
-// (table-view row rendering).
+// A body row: its cells, clickable when onRowClick is set. Extracted from
+// DataTable.tsx (table-view row rendering).
 export function TableRow<T>(props: {
   row: TanRow<T>;
   enableSelection: boolean;
-  /** When grouped, a leading expander column is present; parent (expandable) rows show a chevron. */
+  /**
+   * When grouped, a leading expander column is present; parent (expandable)
+   * rows show a chevron.
+   */
   showExpander: boolean;
   onRowClick?: (row: T) => void;
-  /** Select/deselect ALL of a group row's leaves in one emit (called for a grouped-row checkbox). */
+  /**
+   * Select/deselect ALL of a group row's leaves in one emit (called for a
+   * grouped-row checkbox).
+   */
   onToggleGroup: (row: TanRow<T>) => void;
-  /** Sticky-pin style for a pinned data column's cell (position/offset/z-index), else undefined. */
+  /**
+   * Sticky-pin style for a pinned data column's cell
+   * (position/offset/z-index), else undefined.
+   */
   pinnedStyle: (column: TanColumn<T>) => JSX.CSSProperties | undefined;
-  /** Sticky-pin style for a leading (expander/select) cell at the given index (always pinned left). */
+  /**
+   * Sticky-pin style for a leading (expander/select) cell at the given index
+   * (always pinned left).
+   */
   leadingPinnedStyle: (index: number) => JSX.CSSProperties;
-  /** Display-time tab filter: render a cell only when this returns true (see columnInActiveTab). */
+  /**
+   * Display-time tab filter: render a cell only when this returns true (see
+   * columnInActiveTab).
+   */
   cellVisible: (cell: TanCell<T, unknown>) => boolean;
 }): JSX.Element {
   return (
     <tr
       data-testid="table-row"
       class={props.onRowClick ? styles.rowClickable : undefined}
-      // Selected rows get the same brand tint as selected cards (consistent selection signal
-      // across both views); styled on the cells (data-selected) in CSS. A GROUP row shows the
-      // tint when ALL its leaves are selected — mirroring its checkbox (its own id isn't stored,
-      // so getIsSelected() would stay false).
+      // Selected rows get the same brand tint as selected cards (consistent
+      // selection signal across both views); styled on the cells
+      // (data-selected) in CSS. A GROUP row shows the tint when ALL its leaves
+      // are selected — mirroring its checkbox (its own id isn't stored, so
+      // getIsSelected() would stay false).
       data-selected={
-        (props.row.getIsGrouped() ? props.row.getIsAllSubRowsSelected() : props.row.getIsSelected())
+        (
+          props.row.getIsGrouped()
+            ? props.row.getIsAllSubRowsSelected()
+            : props.row.getIsSelected()
+        )
           ? ''
           : undefined
       }
@@ -56,15 +79,23 @@ export function TableRow<T>(props: {
       {/* Expander column (row grouping): its OWN leading column — the chevron on an expandable
           parent, blank otherwise (matches Open mSupply, which puts the chevrons before select). */}
       <Show when={props.showExpander}>
-        <td class={styles.expanderCell} data-pinned="left" style={props.leadingPinnedStyle(0)}>
+        <td
+          class={styles.expanderCell}
+          data-pinned="left"
+          style={props.leadingPinnedStyle(0)}
+        >
           <Show when={props.row.getCanExpand()}>
             <button
               type="button"
               class={styles.groupExpander}
               data-expanded={props.row.getIsExpanded() ? '' : undefined}
               aria-expanded={props.row.getIsExpanded()}
-              aria-label={props.row.getIsExpanded() ? t('table.collapse-group') : t('table.expand-group')}
-              onClick={(event) => {
+              aria-label={
+                props.row.getIsExpanded()
+                  ? t('table.collapse-group')
+                  : t('table.expand-group')
+              }
+              onClick={event => {
                 event.stopPropagation();
                 props.row.toggleExpanded();
               }}
@@ -98,25 +129,28 @@ export function TableRow<T>(props: {
                 ? () => props.onToggleGroup(props.row)
                 : props.row.getToggleSelectedHandler()
             }
-            onClick={(event) => event.stopPropagation()}
+            onClick={event => event.stopPropagation()}
           />
         </td>
       </Show>
       <For each={props.row.getVisibleCells()}>
-        {(cell) => (
+        {cell => (
           <Show when={props.cellVisible(cell)}>
             <td
               class={styles.td}
               data-align={cellAlign(cell)}
               data-pinned={cell.column.getIsPinned() || undefined}
-              // data-wrap + --wrap-lines: when a column sets meta.wrapLines > 1, the cell
-              // clamps to that many lines then ellipsises (CSS line-clamp); otherwise the
-              // default single-line nowrap applies. min-width keeps the column-width floor.
-              // A pinned column additionally gets sticky position + its edge offset.
+              // data-wrap + --wrap-lines: when a column sets meta.wrapLines >
+              // 1, the cell clamps to that many lines then ellipsises (CSS
+              // line-clamp); otherwise the default single-line nowrap applies.
+              // min-width keeps the column-width floor. A pinned column
+              // additionally gets sticky position + its edge offset.
               data-wrap={cellWrapLines(cell) ? '' : undefined}
               style={{
                 'min-width': `${cell.column.getSize()}px`,
-                ...(cellWrapLines(cell) ? { '--wrap-lines': String(cellWrapLines(cell)) } : {}),
+                ...(cellWrapLines(cell)
+                  ? { '--wrap-lines': String(cellWrapLines(cell)) }
+                  : {}),
                 ...props.pinnedStyle(cell.column),
               }}
             >

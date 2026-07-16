@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createRoot } from 'solid-js';
 import { createDebounced } from './createDebounced';
 
-// The trailing-debounce primitive: collapse rapid calls to one trailing invocation with the latest
-// args; flush()/cancel() semantics; and the ownership guard — created ownerless it must NOT throw
-// or register a cleanup, leaving disposal to the caller's cancel(). Fake timers drive the delay.
+// The trailing-debounce primitive: collapse rapid calls to one trailing
+// invocation with the latest args; flush()/cancel() semantics; and the
+// ownership guard — created ownerless it must NOT throw or register a cleanup,
+// leaving disposal to the caller's cancel(). Fake timers drive the delay.
 
 describe('createDebounced', () => {
   beforeEach(() => vi.useFakeTimers());
@@ -12,7 +13,7 @@ describe('createDebounced', () => {
 
   it('collapses rapid calls into one trailing invocation with the latest args', () => {
     const fn = vi.fn();
-    createRoot((dispose) => {
+    createRoot(dispose => {
       const d = createDebounced((v: string) => fn(v), 500);
       d('a');
       d('ab');
@@ -27,7 +28,7 @@ describe('createDebounced', () => {
 
   it('flush runs the pending call immediately; a second flush is a no-op', () => {
     const fn = vi.fn();
-    createRoot((dispose) => {
+    createRoot(dispose => {
       const d = createDebounced((v: string) => fn(v), 500);
       d('x');
       d.flush();
@@ -40,7 +41,7 @@ describe('createDebounced', () => {
 
   it('cancel drops the pending call; a later flush does nothing', () => {
     const fn = vi.fn();
-    createRoot((dispose) => {
+    createRoot(dispose => {
       const d = createDebounced((v: string) => fn(v), 500);
       d('x');
       d.cancel();
@@ -51,8 +52,9 @@ describe('createDebounced', () => {
     });
   });
 
-  // The ownership guard: created OUTSIDE a reactive owner (no createRoot), it must not throw and
-  // must still work; the caller owns disposal via cancel() (there's no owner to auto-cancel).
+  // The ownership guard: created OUTSIDE a reactive owner (no createRoot), it
+  // must not throw and must still work; the caller owns disposal via cancel()
+  // (there's no owner to auto-cancel).
   it('works when created ownerless, and cancel() disposes the pending timer', () => {
     const fn = vi.fn();
     const d = createDebounced((v: string) => fn(v), 500); // no createRoot — ownerless
@@ -60,7 +62,8 @@ describe('createDebounced', () => {
     vi.advanceTimersByTime(500);
     expect(fn).toHaveBeenCalledWith('x');
 
-    // cancel() is the ownerless caller's disposal: a pending call is dropped, timer cleared.
+    // cancel() is the ownerless caller's disposal: a pending call is dropped,
+    // timer cleared.
     d('y');
     d.cancel();
     vi.advanceTimersByTime(1000);

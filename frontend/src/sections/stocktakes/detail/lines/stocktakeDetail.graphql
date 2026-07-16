@@ -231,7 +231,11 @@ mutation updateStocktake($storeId: String!, $input: UpdateStocktakeInput!) {
 # out server-side (id notEqualAll) so they aren't offered twice. hasPacksInStore drops empty
 # stock lines. The fields mirror what seeds a draft line (snapshot = totalNumberOfPacks);
 # location is the full node so the picker shows code/name.
-query stockLinesByItem($storeId: String!, $itemId: String!, $excludeStockLineIds: [String!]) {
+query stockLinesByItem(
+  $storeId: String!
+  $itemId: String!
+  $excludeStockLineIds: [String!]
+) {
   stockLines(
     storeId: $storeId
     filter: {

@@ -2,8 +2,10 @@ import { splitProps, type JSX } from 'solid-js';
 import { CheckIcon } from '../../icons';
 import styles from './CheckboxButton.module.css';
 
-export interface CheckboxButtonProps
-  extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
+export interface CheckboxButtonProps extends Omit<
+  JSX.ButtonHTMLAttributes<HTMLButtonElement>,
+  'onChange'
+> {
   /** Checked state — caller-owned; flip it in onChange. */
   checked: boolean;
   /** Fired when the button is clicked, with the NEXT checked state. */
@@ -13,14 +15,20 @@ export interface CheckboxButtonProps
 }
 
 /*
- * CheckboxButton — a pill button with a checkbox inside it: clicking anywhere on the button
- * toggles the box (Open mSupply's on-hold control). It IS a checkbox to assistive tech
- * (role="checkbox" + aria-checked), rendered as a button-shaped target so the whole pill is
- * clickable — the "own the simple" way to get OMS's look without a library. The caller owns the
- * checked state and flips it in onChange. Space/Enter toggle it (native <button>).
+ * CheckboxButton — a pill button with a checkbox inside it: clicking anywhere
+ * on the button toggles the box (Open mSupply's on-hold control). It IS a
+ * checkbox to assistive tech (role="checkbox" + aria-checked), rendered as a
+ * button-shaped target so the whole pill is clickable — the "own the simple"
+ * way to get OMS's look without a library. The caller owns the checked state
+ * and flips it in onChange. Space/Enter toggle it (native <button>).
  */
 export const CheckboxButton = (props: CheckboxButtonProps) => {
-  const [local, rest] = splitProps(props, ['checked', 'onChange', 'children', 'class']);
+  const [local, rest] = splitProps(props, [
+    'checked',
+    'onChange',
+    'children',
+    'class',
+  ]);
   return (
     <button
       type="button"

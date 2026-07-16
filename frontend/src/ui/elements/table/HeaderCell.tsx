@@ -1,13 +1,20 @@
 import { Show } from 'solid-js';
 import type { JSX } from 'solid-js';
-import { flexRender, type Column as TanColumn, type Header } from '@tanstack/solid-table';
+import {
+  flexRender,
+  type Column as TanColumn,
+  type Header,
+} from '@tanstack/solid-table';
 import styles from './DataTable.module.css';
 
-// A header cell: a sortable label + a resize handle on the trailing edge. Extracted from
-// DataTable.tsx (table-view header rendering).
+// A header cell: a sortable label + a resize handle on the trailing edge.
+// Extracted from DataTable.tsx (table-view header rendering).
 export function HeaderCell<T>(props: {
   header: Header<T, unknown>;
-  /** Sticky-pin style for a pinned column (position/left/right/z-index), else undefined. */
+  /**
+   * Sticky-pin style for a pinned column (position/left/right/z-index), else
+   * undefined.
+   */
   pinnedStyle: (column: TanColumn<T>) => JSX.CSSProperties | undefined;
 }): JSX.Element {
   const column = () => props.header.column;
@@ -19,7 +26,9 @@ export function HeaderCell<T>(props: {
   const indicator = () => {
     const sorted = column().getIsSorted();
     if (!sorted) return null;
-    return <span class={styles.sortIndicator}>{sorted === 'desc' ? '▼' : '▲'}</span>;
+    return (
+      <span class={styles.sortIndicator}>{sorted === 'desc' ? '▼' : '▲'}</span>
+    );
   };
   return (
     <th
@@ -27,9 +36,10 @@ export function HeaderCell<T>(props: {
       data-align={align()}
       data-pinned={column().getIsPinned() || undefined}
       data-testid={canSort() ? `column-${column().id}` : undefined}
-      // Auto table layout (columns flex to fill); getSize() is applied as a min-width FLOOR,
-      // so a configured size / a resize drag widens the column without losing the auto-fill.
-      // A pinned column additionally gets sticky position + its edge offset.
+      // Auto table layout (columns flex to fill); getSize() is applied as a
+      // min-width FLOOR, so a configured size / a resize drag widens the column
+      // without losing the auto-fill. A pinned column additionally gets sticky
+      // position + its edge offset.
       style={{ 'min-width': `${column().getSize()}px`, ...pin() }}
     >
       <span
@@ -50,7 +60,7 @@ export function HeaderCell<T>(props: {
           class={`${styles.resizeHandle} ${isResizing() ? styles.resizeHandleActive : ''}`}
           onMouseDown={props.header.getResizeHandler()}
           onTouchStart={props.header.getResizeHandler()}
-          onClick={(event) => event.stopPropagation()}
+          onClick={event => event.stopPropagation()}
           aria-hidden="true"
         />
       </Show>

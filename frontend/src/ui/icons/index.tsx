@@ -55,30 +55,32 @@ export const CloseIcon = (props: IconProps) => (
   </Fill>
 );
 
-// Row-grouping state icons (Tabler folder / folders). GroupedIcon = a single folder (rows are
-// grouped into one parent); UngroupedIcon = stacked folders (the "multiple", ungrouped state).
-// Used by the DataTable's group-by control (see rowGroup).
+// Row-grouping state icons (Tabler folder / folders). GroupedIcon = a single
+// folder (rows are grouped into one parent); UngroupedIcon = stacked folders
+// (the "multiple", ungrouped state). Used by the DataTable's group-by control
+// (see rowGroup).
 export const GroupedIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" />
   </Stroke>
-)
+);
 
 export const UngroupedIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M9 4h3l2 2h5a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
     <path d="M17 17v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h2" />
   </Stroke>
-)
+);
 
-// A double chevron (stacked). Points down as-is; the row-group "expand all" header control uses
-// it, flipped to point up (rotate 180deg) for "collapse all" — like Open mSupply.
+// A double chevron (stacked). Points down as-is; the row-group "expand all"
+// header control uses it, flipped to point up (rotate 180deg) for "collapse
+// all" — like Open mSupply.
 export const ChevronsDownIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M7 7l5 5l5 -5" />
     <path d="M7 13l5 5l5 -5" />
   </Stroke>
-)
+);
 
 export const SearchIcon = (props: IconProps) => (
   <Fill viewBox="0 0 16 16" {...props}>
@@ -143,7 +145,7 @@ export const LockIcon = (props: IconProps) => (
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
   </Stroke>
-)
+);
 
 /* Location / place */
 export const MapPinIcon = (props: IconProps) => (
@@ -151,7 +153,7 @@ export const MapPinIcon = (props: IconProps) => (
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
     <circle cx="12" cy="10" r="3" />
   </Stroke>
-)
+);
 
 /* Calendar / date */
 export const CalendarIcon = (props: IconProps) => (
@@ -161,7 +163,7 @@ export const CalendarIcon = (props: IconProps) => (
     <line x1="8" y1="2" x2="8" y2="6" />
     <line x1="3" y1="10" x2="21" y2="10" />
   </Stroke>
-)
+);
 
 /* Cancel / dismiss */
 export const XCircleIcon = (props: IconProps) => (

@@ -7,14 +7,22 @@ import styles from './StatusIndicator.module.css';
 export interface StatusStep {
   /** The step label (already translated by the caller). */
   label: string;
-  /** When this step was reached, if it has been — shown in the history popover. */
+  /**
+   * When this step was reached, if it has been — shown in the history popover.
+   */
   date?: string | Date | null;
 }
 
 export interface StatusIndicatorProps {
-  /** The ordered stages of the flow (e.g. New → Finalised), inline-start to inline-end. */
+  /**
+   * The ordered stages of the flow (e.g. New → Finalised), inline-start to
+   * inline-end.
+   */
   steps: StatusStep[];
-  /** Index of the current step — it reads as current (accent); earlier steps as reached. */
+  /**
+   * Index of the current step — it reads as current (accent); earlier steps as
+   * reached.
+   */
   current: number;
   /** Show the hover status-history popover. Default true. */
   history?: boolean;
@@ -22,21 +30,25 @@ export interface StatusIndicatorProps {
 }
 
 /*
- * StatusIndicator — a document's status progression as a row of chevron-separated stages, the
- * shared control across the app's detail views (stocktake, shipments, requisitions…). Matches
- * Open mSupply's footer status breadcrumb: reached stages read in the normal body colour, the
- * CURRENT stage is the brand accent, and stages not yet reached are greyed. Hovering (or focusing)
- * the WHOLE indicator opens a popover with the status history — each stage as a dot on a vertical
- * timeline with the datetime it was reached (like OMS). Meaning never rides on colour alone —
- * position + label + the accent weight carry it, and the popover spells out the timeline (AA).
+ * StatusIndicator — a document's status progression as a row of
+ * chevron-separated stages, the shared control across the app's detail views
+ * (stocktake, shipments, requisitions…). Matches Open mSupply's footer status
+ * breadcrumb: reached stages read in the normal body colour, the CURRENT stage
+ * is the brand accent, and stages not yet reached are greyed. Hovering (or
+ * focusing) the WHOLE indicator opens a popover with the status history — each
+ * stage as a dot on a vertical timeline with the datetime it was reached (like
+ * OMS). Meaning never rides on colour alone — position + label + the accent
+ * weight carry it, and the popover spells out the timeline (AA).
  *
- * Read-only progression: the only interaction is the hover popover (the Popover's, already bought).
+ * Read-only progression: the only interaction is the hover popover (the
+ * Popover's, already bought).
  */
 export const StatusIndicator = (props: StatusIndicatorProps): JSX.Element => {
   const showHistory = () => props.history !== false;
 
-  // The status row itself — the whole thing is the popover trigger (below), so this is what the
-  // user hovers. Rendered as an ordered list (the stages ARE ordered).
+  // The status row itself — the whole thing is the popover trigger (below), so
+  // this is what the user hovers. Rendered as an ordered list (the stages ARE
+  // ordered).
   const row = (
     <ol class={styles.steps}>
       <For each={props.steps}>
@@ -55,7 +67,10 @@ export const StatusIndicator = (props: StatusIndicatorProps): JSX.Element => {
   );
 
   return (
-    <Show when={showHistory()} fallback={<div class={statusClass(props.class)}>{row}</div>}>
+    <Show
+      when={showHistory()}
+      fallback={<div class={statusClass(props.class)}>{row}</div>}
+    >
       <Popover
         openOnHover
         triggerLabel={t('status.history')}
@@ -88,4 +103,5 @@ export const StatusIndicator = (props: StatusIndicatorProps): JSX.Element => {
   );
 };
 
-const statusClass = (extra?: string) => (extra ? `${styles.indicator} ${extra}` : styles.indicator);
+const statusClass = (extra?: string) =>
+  extra ? `${styles.indicator} ${extra}` : styles.indicator;

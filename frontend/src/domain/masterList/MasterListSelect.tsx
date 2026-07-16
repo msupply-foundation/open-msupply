@@ -16,9 +16,10 @@ export interface MasterListSelectProps {
 }
 
 /*
- * The reusable Master-list picker — a Combobox pre-wired to the store-scoped master-lists
- * resource. A domain widget (src/domain): knows the data, composed from the pure ui/ Combobox.
- * Call sites pass value + onChange; it owns items/label/value/loading. Reports only the id.
+ * The reusable Master-list picker — a Combobox pre-wired to the store-scoped
+ * master-lists resource. A domain widget (src/domain): knows the data,
+ * composed from the pure ui/ Combobox. Call sites pass value + onChange; it
+ * owns items/label/value/loading. Reports only the id.
  */
 export const MasterListSelect = (props: MasterListSelectProps): JSX.Element => (
   <Combobox<MasterList>
@@ -26,12 +27,12 @@ export const MasterListSelect = (props: MasterListSelectProps): JSX.Element => (
     hideLabel={props.hideLabel}
     items={masterListsResource.noSuspense()}
     loading={masterListsResource.loading()}
-    itemToString={(m) => m.name}
-    itemToValue={(m) => m.id}
+    itemToString={m => m.name}
+    itemToValue={m => m.id}
     value={props.value}
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
-    onChange={(m) => props.onChange(m?.id ?? null)}
+    onChange={m => props.onChange(m?.id ?? null)}
   />
 );

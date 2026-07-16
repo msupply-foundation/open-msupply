@@ -1,6 +1,10 @@
 import { For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
-import { flexRender, type Cell as TanCell, type Table } from '@tanstack/solid-table';
+import {
+  flexRender,
+  type Cell as TanCell,
+  type Table,
+} from '@tanstack/solid-table';
 import { LabelledValue } from '../typography/LabelledValue';
 import { t } from '../../../intl';
 import {
@@ -10,38 +14,51 @@ import {
 } from './columnTypes';
 import styles from './DataTable.module.css';
 
-// A cell's explicit card region, or undefined when it has none — in which case it belongs to
-// the single "secondary area" (rendered below the header, ordered by group when grouped).
-const cellCardRegion = <T,>(cell: TanCell<T, unknown>): 'primary' | 'badge' | undefined =>
-  cell.column.columnDef.meta?.card?.region;
+// A cell's explicit card region, or undefined when it has none — in which case
+// it belongs to the single "secondary area" (rendered below the header, ordered
+// by group when grouped).
+const cellCardRegion = <T,>(
+  cell: TanCell<T, unknown>
+): 'primary' | 'badge' | undefined => cell.column.columnDef.meta?.card?.region;
 
-// The column's header text, for a field label. Headers may be a string or JSX/function; only
-// the string case yields a readable label (our columns use strings), else no label.
-const columnHeaderText = <T,>(cell: TanCell<T, unknown>): string | undefined => {
+// The column's header text, for a field label. Headers may be a string or
+// JSX/function; only the string case yields a readable label (our columns use
+// strings), else no label.
+const columnHeaderText = <T,>(
+  cell: TanCell<T, unknown>
+): string | undefined => {
   const header = cell.column.columnDef.header;
   return typeof header === 'string' ? header : undefined;
 };
 
-// The optional caption for a primary/badge card cell — a small muted label above the cell (for
-// an otherwise-unlabelled cell, e.g. an editable input). Opt in with `card.showLabel`; the text
-// is the column's own header, so it isn't specified twice.
+// The optional caption for a primary/badge card cell — a small muted label
+// above the cell (for an otherwise-unlabelled cell, e.g. an editable input).
+// Opt in with `card.showLabel`; the text is the column's own header, so it
+// isn't specified twice.
 const cellCardLabel = <T,>(cell: TanCell<T, unknown>): string | undefined =>
-  cell.column.columnDef.meta?.card?.showLabel ? columnHeaderText(cell) : undefined;
+  cell.column.columnDef.meta?.card?.showLabel
+    ? columnHeaderText(cell)
+    : undefined;
 
-// A cell's column membership (ALL_TABS sentinel | array of group keys | undefined).
+// A cell's column membership (ALL_TABS sentinel | array of group keys |
+// undefined).
 const cellMembership = <T,>(cell: TanCell<T, unknown>): Membership =>
-  (cell.column.columnDef as { tabsAndCardGroups?: Membership }).tabsAndCardGroups;
+  (cell.column.columnDef as { tabsAndCardGroups?: Membership })
+    .tabsAndCardGroups;
 
-// Whether a cell belongs to a real card GROUP (a declared group key) — excludes ALL_TABS, which
-// appears in every tab but is NOT part of card grouping.
+// Whether a cell belongs to a real card GROUP (a declared group key) —
+// excludes ALL_TABS, which appears in every tab but is NOT part of card
+// grouping.
 const cellInGroup = <T,>(cell: TanCell<T, unknown>, key: string): boolean =>
   membershipCardGroups(cellMembership(cell)).includes(key);
 
-// Card view — each row is a card (ui-standards § tables): primary identity top-left, a badge
-// top-right, and the rest in the secondary area below. Reuses TanStack's row model + visible
-// cells, routing each by its meta.card region; selection + row-click mirror the table. When
-// `tabsAndCardGroups` is set (kdd/edit-line-card-table), the secondary area is ordered by group —
-// each group as its own ROW (icon + its fields); ALL_TABS / ungrouped cells follow, unlabelled.
+// Card view — each row is a card (ui-standards § tables): primary identity
+// top-left, a badge top-right, and the rest in the secondary area below. Reuses
+// TanStack's row model + visible cells, routing each by its meta.card region;
+// selection + row-click mirror the table. When `tabsAndCardGroups` is set
+// (kdd/edit-line-card-table), the secondary area is ordered by group — each
+// group as its own ROW (icon + its fields); ALL_TABS / ungrouped cells follow,
+// unlabelled.
 export function CardView<T>(props: {
   table: Table<T>;
   tabsAndCardGroups?: TabAndCardGroup<string>[];
@@ -53,16 +70,22 @@ export function CardView<T>(props: {
   return (
     <Show
       when={rows().length > 0}
-      fallback={<div class={styles.cardEmpty}>{props.emptyMessage ?? t('table.no-results')}</div>}
+      fallback={
+        <div class={styles.cardEmpty}>
+          {props.emptyMessage ?? t('table.no-results')}
+        </div>
+      }
     >
       <div class={styles.cardGrid}>
         <For each={rows()}>
-          {(row) => {
+          {row => {
             const cells = () => row.getVisibleCells();
             const inRegion = (region: 'primary' | 'badge') =>
-              cells().filter((c) => cellCardRegion(c) === region);
-            // The "secondary area": every visible cell with NO explicit card region.
-            const secondaryCells = () => cells().filter((c) => cellCardRegion(c) === undefined);
+              cells().filter(c => cellCardRegion(c) === region);
+            // The "secondary area": every visible cell with NO explicit card
+            // region.
+            const secondaryCells = () =>
+              cells().filter(c => cellCardRegion(c) === undefined);
             return (
               <div
                 class={`${styles.card} ${props.onRowClick ? styles.rowClickable : ''}`}
@@ -77,27 +100,34 @@ export function CardView<T>(props: {
                       aria-label={t('table.select-row')}
                       checked={row.getIsSelected()}
                       onChange={row.getToggleSelectedHandler()}
-                      onClick={(event) => event.stopPropagation()}
+                      onClick={event => event.stopPropagation()}
                     />
                   </Show>
                   <div class={styles.cardIdentity}>
                     <For each={inRegion('primary')}>
-                      {(cell) => (
-                        // meta.card.label (optional): a muted caption above the cell, same style
-                        // as a secondary field's label — for an unlabelled cell (e.g. an input).
+                      {cell => (
+                        // meta.card.label (optional): a muted caption above
+                        // the cell, same style as a secondary field's label —
+                        // for an unlabelled cell (e.g. an input).
                         <LabelledValue label={cellCardLabel(cell)}>
                           <div class={styles.cardPrimary}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
                           </div>
                         </LabelledValue>
                       )}
                     </For>
                   </div>
                   <For each={inRegion('badge')}>
-                    {(cell) => (
+                    {cell => (
                       <LabelledValue label={cellCardLabel(cell)}>
                         <div class={styles.cardBadge}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </div>
                       </LabelledValue>
                     )}
@@ -112,19 +142,26 @@ export function CardView<T>(props: {
                 <Show when={secondaryCells().length > 0}>
                   {/* Pass 1 — one row per group. */}
                   <For each={props.tabsAndCardGroups}>
-                    {(group) => {
+                    {group => {
                       const groupCells = () =>
-                        secondaryCells().filter((c) => cellInGroup(c, group.key));
+                        secondaryCells().filter(c => cellInGroup(c, group.key));
                       return (
                         <Show when={groupCells().length > 0}>
                           <div class={styles.cardFields}>
                             <Show when={group.icon}>
-                              {(icon) => <span class={styles.cardGroupIcon}>{icon()()}</span>}
+                              {icon => (
+                                <span class={styles.cardGroupIcon}>
+                                  {icon()()}
+                                </span>
+                              )}
                             </Show>
                             <For each={groupCells()}>
-                              {(cell) => (
+                              {cell => (
                                 <LabelledValue label={columnHeaderText(cell)}>
-                                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext()
+                                  )}
                                 </LabelledValue>
                               )}
                             </For>
@@ -137,16 +174,22 @@ export function CardView<T>(props: {
                       un-annotated), and the whole set when the table isn't grouped. No icon. */}
                   <Show
                     when={secondaryCells().filter(
-                      (c) => !(props.tabsAndCardGroups ?? []).some((g) => cellInGroup(c, g.key)),
+                      c =>
+                        !(props.tabsAndCardGroups ?? []).some(g =>
+                          cellInGroup(c, g.key)
+                        )
                     )}
                   >
-                    {(ungrouped) => (
+                    {ungrouped => (
                       <Show when={ungrouped().length > 0}>
                         <div class={styles.cardFields}>
                           <For each={ungrouped()}>
-                            {(cell) => (
+                            {cell => (
                               <LabelledValue label={columnHeaderText(cell)}>
-                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
                               </LabelledValue>
                             )}
                           </For>

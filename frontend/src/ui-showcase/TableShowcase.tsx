@@ -29,12 +29,13 @@ import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterAc
 import { Button } from '../ui/elements/buttons/Button';
 import { CloseIcon, PlusCircleIcon, TrashIcon } from '../ui/icons';
 
-// A realistic list-page demo for the showcase: the SAME assembly as a real vertical
-// (StocktakesList) — a Page frame with a header, a table that fills the body and scrolls
-// internally, and a contextual footer that swaps pagination ↔ selection actions. No
-// backend: sort / pagination / selection are driven by local signals over a static
-// dataset, sorted + sliced here to stand in for the server contract (DataTable stays
-// manualSorting — it renders whatever page of rows it's handed).
+// A realistic list-page demo for the showcase: the SAME assembly as a real
+// vertical (StocktakesList) — a Page frame with a header, a table that fills
+// the body and scrolls internally, and a contextual footer that swaps
+// pagination ↔ selection actions. No backend: sort / pagination / selection are
+// driven by local signals over a static dataset, sorted + sliced here to stand
+// in for the server contract (DataTable stays manualSorting — it renders
+// whatever page of rows it's handed).
 type Batch = {
   id: string;
   name: string;
@@ -59,8 +60,20 @@ const NAMES = [
   'Loratadine 10mg',
   'Diazepam 5mg',
 ];
-const CATEGORIES = ['Antibiotic', 'Analgesic', 'Antacid', 'Antihistamine', 'Diuretic'];
-const SUPPLIERS = ['Acme Pharma', 'MediCorp', 'HealthSupply Co', 'Global Meds', 'CarePoint'];
+const CATEGORIES = [
+  'Antibiotic',
+  'Analgesic',
+  'Antacid',
+  'Antihistamine',
+  'Diuretic',
+];
+const SUPPLIERS = [
+  'Acme Pharma',
+  'MediCorp',
+  'HealthSupply Co',
+  'Global Meds',
+  'CarePoint',
+];
 
 // Deterministic 60-row dataset (enough to paginate + scroll).
 const DATA: Batch[] = Array.from({ length: 60 }, (_, i) => ({
@@ -85,19 +98,33 @@ type SortKey =
   | 'stock'
   | 'price';
 
-// The tabs/groups this table can tab through (kdd/edit-line-card-table). GroupKey is the typed
-// union a column's `tabsAndCardGroups` must match — a typo is a compile error. Each carries an icon
-// + translated label; drives the tab strip (table view) and the card group-rows (card view).
-// Columns tagged [ALL_TABS] (name, batch) are anchors: every tab, but NOT a card group.
+// The tabs/groups this table can tab through (kdd/edit-line-card-table).
+// GroupKey is the typed union a column's `tabsAndCardGroups` must match — a
+// typo is a compile error. Each carries an icon + translated label; drives the
+// tab strip (table view) and the card group-rows (card view). Columns tagged
+// [ALL_TABS] (name, batch) are anchors: every tab, but NOT a card group.
 type GroupKey = 'details' | 'supply' | 'pricing';
 const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
-  { key: 'details', labelKey: 'table.demo-card-group.details', icon: () => <InfoIcon /> },
-  { key: 'supply', labelKey: 'table.demo-card-group.supply', icon: () => <TruckIcon /> },
-  { key: 'pricing', labelKey: 'table.demo-card-group.pricing', icon: () => <StockIcon /> },
+  {
+    key: 'details',
+    labelKey: 'table.demo-card-group.details',
+    icon: () => <InfoIcon />,
+  },
+  {
+    key: 'supply',
+    labelKey: 'table.demo-card-group.supply',
+    icon: () => <TruckIcon />,
+  },
+  {
+    key: 'pricing',
+    labelKey: 'table.demo-card-group.pricing',
+    icon: () => <StockIcon />,
+  },
 ];
 
-// The columns the show/hide toggles cover. `id` is the TanStack column id (= accessorKey);
-// `label` is the header. Kept beside the column defs so the toggle set stays in step.
+// The columns the show/hide toggles cover. `id` is the TanStack column id (=
+// accessorKey); `label` is the header. Kept beside the column defs so the
+// toggle set stays in step.
 const COLUMN_TOGGLES: { id: SortKey; label: string }[] = [
   { id: 'name', label: 'Item' },
   { id: 'batch', label: 'Batch' },
@@ -110,41 +137,57 @@ const COLUMN_TOGGLES: { id: SortKey; label: string }[] = [
 ];
 
 export const TableShowcase = () => {
-  const [sort, setSort] = createSignal<SortState<SortKey>>({ key: 'name', desc: false });
+  const [sort, setSort] = createSignal<SortState<SortKey>>({
+    key: 'name',
+    desc: false,
+  });
   const [offset, setOffset] = createSignal(0);
   const [pageSize, setPageSize] = createSignal(20);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
 
-  // Local column config, standing in for createTableConfig (which needs store context /
-  // appData the standalone showcase doesn't have). This is a mini-createTableConfig: a
-  // LayeredConfig with a `base` and a `compact` band, resolved against the ACTUAL viewport
-  // via createMediaQuery — exactly like the real thing. The two toolbar checkbox rows edit
-  // each band independently; resize below 600px and the table follows the compact row,
-  // demonstrating that bands don't share.
+  // Local column config, standing in for createTableConfig (which needs store
+  // context / appData the standalone showcase doesn't have). This is a
+  // mini-createTableConfig: a LayeredConfig with a `base` and a `compact` band,
+  // resolved against the ACTUAL viewport via createMediaQuery — exactly like
+  // the real thing. The two toolbar checkbox rows edit each band independently;
+  // resize below 600px and the table follows the compact row, demonstrating
+  // that bands don't share.
   const [layered, setLayered] = createSignal<LayeredConfig>({});
   const isCompact = createMediaQuery(mediaQuery.compact);
   const activeBand = (): Band => (isCompact() ? 'compact' : 'base');
 
-  // Resolved config for the active band → DataTable's `config`. Only the user layer here.
-  const tableConfig = () => resolveTableConfig(activeBand(), { user: layered() });
+  // Resolved config for the active band → DataTable's `config`. Only the user
+  // layer here.
+  const tableConfig = () =>
+    resolveTableConfig(activeBand(), { user: layered() });
 
-  // setConfig writes the ACTIVE band (DataTable already resolved TanStack's updater to a
-  // value). The checkbox rows below instead target a SPECIFIC band via setBandConfig, so
-  // you can edit compact while viewing base.
+  // setConfig writes the ACTIVE band (DataTable already resolved TanStack's
+  // updater to a value). The checkbox rows below instead target a SPECIFIC band
+  // via setBandConfig, so you can edit compact while viewing base.
   const setConfig = <K extends TableConfigKey>(key: K, value: TableConfig[K]) =>
     setBandConfig(activeBand(), key, value);
 
-  const setBandConfig = <K extends TableConfigKey>(band: Band, key: K, value: TableConfig[K]) =>
-    setLayered((current) => ({ ...current, [band]: { ...current[band], [key]: value } }));
+  const setBandConfig = <K extends TableConfigKey>(
+    band: Band,
+    key: K,
+    value: TableConfig[K]
+  ) =>
+    setLayered(current => ({
+      ...current,
+      [band]: { ...current[band], [key]: value },
+    }));
 
-  // Stand in for the server: sort the whole dataset, then slice the current page.
+  // Stand in for the server: sort the whole dataset, then slice the current
+  // page.
   const sorted = createMemo(() => {
     const { key, desc } = sort();
     return [...DATA].sort((a, b) => {
       const av = a[key];
       const bv = b[key];
       const cmp =
-        typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv));
+        typeof av === 'number' && typeof bv === 'number'
+          ? av - bv
+          : String(av).localeCompare(String(bv));
       return desc ? -cmp : cmp;
     });
   });
@@ -155,15 +198,17 @@ export const TableShowcase = () => {
     setOffset(0);
   };
 
-  // meta.card assigns each column its region in card view (ui-standards § tables):
-  // name = primary title, batch = the secondary code line, category = the top-right badge;
-  // the rest fall to the grid (default). Table view is unaffected.
-  // Columns carry both axes: `meta.card` (card region) AND `groups` (tab/section membership).
-  // name + batch declare NO groups → anchors, shown in every tab. The rest split across the
-  // three groups. Switch the tab strip (or card view) to see the secondary column filter.
+  // meta.card assigns each column its region in card view (ui-standards §
+  // tables): name = primary title, batch = the secondary code line, category =
+  // the top-right badge; the rest fall to the grid (default). Table view is
+  // unaffected. Columns carry both axes: `meta.card` (card region) AND `groups`
+  // (tab/section membership). name + batch declare NO groups → anchors, shown
+  // in every tab. The rest split across the three groups. Switch the tab strip
+  // (or card view) to see the secondary column filter.
   const columns = (): Column<Batch, SortKey, GroupKey>[] => [
-    // name + batch: ALL_TABS anchors (every tab; not a card group). Grouped parent → shared value
-    // or [multiple] (a group's rows share a name but differ on batch → [multiple]).
+    // name + batch: ALL_TABS anchors (every tab; not a card group). Grouped
+    // parent → shared value or [multiple] (a group's rows share a name but
+    // differ on batch → [multiple]).
     {
       c: { key: 'name' },
       sortKey: 'name',
@@ -186,7 +231,12 @@ export const TableShowcase = () => {
       meta: { card: { region: 'badge' } },
       tabsAndCardGroups: ['details'],
     },
-    { c: { key: 'expiry' }, sortKey: 'expiry', header: 'Expiry', tabsAndCardGroups: ['details'] },
+    {
+      c: { key: 'expiry' },
+      sortKey: 'expiry',
+      header: 'Expiry',
+      tabsAndCardGroups: ['details'],
+    },
     {
       c: { key: 'supplier' },
       sortKey: 'supplier',
@@ -202,13 +252,19 @@ export const TableShowcase = () => {
       tabsAndCardGroups: ['supply'],
       aggregationFn: sharedOrMultiple,
     },
-    { c: { key: 'stock' }, sortKey: 'stock', header: 'In stock', ...getNumberCell(), tabsAndCardGroups: ['supply', 'pricing'] },
+    {
+      c: { key: 'stock' },
+      sortKey: 'stock',
+      header: 'In stock',
+      ...getNumberCell(),
+      tabsAndCardGroups: ['supply', 'pricing'],
+    },
     {
       c: { key: 'price' },
       sortKey: 'price',
       header: 'Unit price',
       ...getNumberCell(),
-      cell: (info) => `$${info.getValue<number>().toFixed(2)}`,
+      cell: info => `$${info.getValue<number>().toFixed(2)}`,
       tabsAndCardGroups: ['pricing'],
     },
   ];
@@ -231,24 +287,36 @@ export const TableShowcase = () => {
                 viewport (resize below 600px → it follows the compact row), so the two rows
                 stay independent — bands don't share. The active band is marked. */}
             <For each={['base', 'compact'] as Band[]}>
-              {(band) => (
-                <div style={{ display: 'flex', gap: 'var(--space-3)', 'align-items': 'center' }}>
+              {band => (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 'var(--space-3)',
+                    'align-items': 'center',
+                  }}
+                >
                   <strong style={{ 'min-width': '5rem' }}>
                     {band === 'base' ? 'Base' : 'Compact'}
                     {activeBand() === band ? ' (active)' : ''}
                   </strong>
                   <For each={COLUMN_TOGGLES}>
-                    {(col) => {
-                      // Reflect THIS band's stored value, not the resolved config.
-                      const visible = () => layered()[band]?.columnVisibility?.[col.id] !== false;
+                    {col => {
+                      // Reflect THIS band's stored value, not the resolved
+                      // config.
+                      const visible = () =>
+                        layered()[band]?.columnVisibility?.[col.id] !== false;
                       return (
                         <label
-                          style={{ display: 'inline-flex', gap: 'var(--space-1)', 'align-items': 'center' }}
+                          style={{
+                            display: 'inline-flex',
+                            gap: 'var(--space-1)',
+                            'align-items': 'center',
+                          }}
                         >
                           <input
                             type="checkbox"
                             checked={visible()}
-                            onChange={(e) =>
+                            onChange={e =>
                               setBandConfig(band, 'columnVisibility', {
                                 ...layered()[band]?.columnVisibility,
                                 [col.id]: e.currentTarget.checked,
@@ -267,8 +335,9 @@ export const TableShowcase = () => {
         </Header>
       }
       contentFooter={
-        // The one contextual footer band: pagination normally, replaced by the selection
-        // action bar while rows are selected — the same swap the real page does.
+        // The one contextual footer band: pagination normally, replaced by the
+        // selection action bar while rows are selected — the same swap the real
+        // page does.
         <Show
           when={selectedIds().length > 0}
           fallback={
@@ -278,7 +347,7 @@ export const TableShowcase = () => {
                 pageSize={pageSize()}
                 total={DATA.length}
                 onOffsetChange={setOffset}
-                onPageSizeChange={(size) => {
+                onPageSizeChange={size => {
                   setPageSize(size);
                   setOffset(0);
                 }}
@@ -288,11 +357,20 @@ export const TableShowcase = () => {
         >
           <ContentFooter>
             <strong>{selectedIds().length} selected</strong>
-            <Button variant="secondary" icon={<TrashIcon />} disabled title="Demo only">
+            <Button
+              variant="secondary"
+              icon={<TrashIcon />}
+              disabled
+              title="Demo only"
+            >
               Delete
             </Button>
             <ContentFooterActions>
-              <Button variant="secondary" icon={<CloseIcon />} onClick={() => setSelectedIds([])}>
+              <Button
+                variant="secondary"
+                icon={<CloseIcon />}
+                onClick={() => setSelectedIds([])}
+              >
                 Clear
               </Button>
             </ContentFooterActions>
@@ -303,11 +381,14 @@ export const TableShowcase = () => {
       <DataTable
         columns={columns()}
         rows={rows()}
-        rowKey={(r) => r.id}
+        rowKey={r => r.id}
         sort={sort()}
         onSort={onSort}
         tabsAndCardGroups={TABS_AND_CARD_GROUPS}
-        rowGroup={{ columnId: 'category', labelKey: 'table.demo-card-group.details' }}
+        rowGroup={{
+          columnId: 'category',
+          labelKey: 'table.demo-card-group.details',
+        }}
         emptyMessage="No items"
         enableSelection
         selectedIds={selectedIds()}

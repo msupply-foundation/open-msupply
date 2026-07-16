@@ -2,17 +2,19 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createRoot } from 'solid-js';
 import { createDebouncedEdit } from './createDebouncedEdit';
 
-// The debounced-edit buffer's load-bearing behaviours: a field write reflects in the store
-// immediately; ONE debounce runs across the whole buffer and fires a single save carrying every
-// field changed since the last save; flush/cancel act on that pending patch; writing the value the
-// store already holds is a no-op. Run inside createRoot so onCleanup has an owner; fake timers
-// drive the debounce.
+// The debounced-edit buffer's load-bearing behaviours: a field write reflects
+// in the store immediately; ONE debounce runs across the whole buffer and fires
+// a single save carrying every field changed since the last save; flush/cancel
+// act on that pending patch; writing the value the store already holds is a
+// no-op. Run inside createRoot so onCleanup has an owner; fake timers drive the
+// debounce.
 //
-// NOTE: the identity-change RE-SEED is driven by a createEffect. These unit tests run in vitest's
-// node environment, where solid-js resolves to its SERVER build (createEffect does not run
-// reactively — SSR renders once). So the re-seed path can't be exercised here; it's the same
-// `on(id, …, {defer:true})` pattern the fields hand-rolled before and is verified in the running
-// app (the fields re-seed when navigating between stocktakes without a remount).
+// NOTE: the identity-change RE-SEED is driven by a createEffect. These unit
+// tests run in vitest's node environment, where solid-js resolves to its SERVER
+// build (createEffect does not run reactively — SSR renders once). So the
+// re-seed path can't be exercised here; it's the same `on(id, …, {defer:true})`
+// pattern the fields hand-rolled before and is verified in the running app (the
+// fields re-seed when navigating between stocktakes without a remount).
 
 describe('createDebouncedEdit', () => {
   beforeEach(() => vi.useFakeTimers());
@@ -20,7 +22,7 @@ describe('createDebouncedEdit', () => {
 
   it('writes the store immediately and saves debounced (collapsing rapid edits to one save)', () => {
     const save = vi.fn();
-    createRoot((dispose) => {
+    createRoot(dispose => {
       const edit = createDebouncedEdit<{ description: string }>({
         id: () => 'a',
         initial: () => ({ description: '' }),
@@ -48,7 +50,7 @@ describe('createDebouncedEdit', () => {
 
   it('coalesces edits across DIFFERENT fields into ONE save carrying every changed key', () => {
     const save = vi.fn();
-    createRoot((dispose) => {
+    createRoot(dispose => {
       const edit = createDebouncedEdit<{ a: string; b: string; c: string }>({
         id: () => 'x',
         initial: () => ({ a: '', b: '', c: '' }),
@@ -56,7 +58,8 @@ describe('createDebouncedEdit', () => {
         delayMs: 500,
       });
 
-      // Edit a, then b within the debounce window — each edit reschedules the single timer.
+      // Edit a, then b within the debounce window — each edit reschedules the
+      // single timer.
       edit.setField('a', 'a1');
       vi.advanceTimersByTime(300);
       edit.setField('b', 'b1');
@@ -65,7 +68,8 @@ describe('createDebouncedEdit', () => {
 
       vi.advanceTimersByTime(200); // 500ms since the last edit → fire
 
-      // ONE save with BOTH changed fields (c untouched → absent from the patch).
+      // ONE save with BOTH changed fields (c untouched → absent from the
+      // patch).
       expect(save).toHaveBeenCalledTimes(1);
       expect(save).toHaveBeenCalledWith({ a: 'a1', b: 'b1' });
       dispose();
@@ -74,7 +78,7 @@ describe('createDebouncedEdit', () => {
 
   it('a second burst after a save patches only the newly-changed fields', () => {
     const save = vi.fn();
-    createRoot((dispose) => {
+    createRoot(dispose => {
       const edit = createDebouncedEdit<{ a: string; b: string }>({
         id: () => 'x',
         initial: () => ({ a: '', b: '' }),
@@ -97,7 +101,7 @@ describe('createDebouncedEdit', () => {
 
   it('flush fires the pending patch now (one save with all pending fields)', () => {
     const save = vi.fn();
-    createRoot((dispose) => {
+    createRoot(dispose => {
       const edit = createDebouncedEdit<{ a: string; b: string }>({
         id: () => 'x',
         initial: () => ({ a: '', b: '' }),
@@ -114,7 +118,7 @@ describe('createDebouncedEdit', () => {
 
   it('cancel drops the pending patch without firing it', () => {
     const save = vi.fn();
-    createRoot((dispose) => {
+    createRoot(dispose => {
       const edit = createDebouncedEdit<{ a: string; b: string }>({
         id: () => 'x',
         initial: () => ({ a: '', b: '' }),
@@ -129,14 +133,15 @@ describe('createDebouncedEdit', () => {
     });
   });
 
-  // NOTE: flush-on-dispose (onCleanup(flush)) can't be asserted here — vitest's node env resolves
-  // solid-js to its SERVER build, where onCleanup is a no-op (SSR runs no cleanups). Same limit as
-  // the re-seed above. That durability path — typing then clicking a nav link within the debounce
+  // NOTE: flush-on-dispose (onCleanup(flush)) can't be asserted here —
+  // vitest's node env resolves solid-js to its SERVER build, where onCleanup is
+  // a no-op (SSR runs no cleanups). Same limit as the re-seed above. That
+  // durability path — typing then clicking a nav link within the debounce
   // window still saves — is verified in the running app.
 
   it('does not schedule a save when the value is unchanged', () => {
     const save = vi.fn();
-    createRoot((dispose) => {
+    createRoot(dispose => {
       const edit = createDebouncedEdit<{ description: string }>({
         id: () => 'a',
         initial: () => ({ description: 'same' }),

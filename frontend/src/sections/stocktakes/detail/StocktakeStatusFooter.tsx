@@ -8,33 +8,49 @@ import { FinaliseAction } from './actions';
 import { STATUS_LABELS, statusIndex } from './stocktakeStatus';
 import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
 
-// The stocktake-level footer (Open mSupply's StocktakeDetailView footer, no rows selected): the
-// on-hold checkbox toggle, the status indicator, and the finalise action. On-hold uses a plain
-// ConfirmDialog (no user-facing failure); finalise is its own self-contained component (the status
-// stepper's SplitButton + confirm/success/error ActionModal + no-lines dialog — see FinaliseAction).
-// This footer owns only the on-hold confirm; the mutations run through the view's callbacks
-// (onSetHold → saveStocktakeFields, run → finaliseStocktake), which splice the returned node back
-// with no refetch. Shown only when nothing is selected — the selection action bar replaces it
+// The stocktake-level footer (Open mSupply's StocktakeDetailView footer, no
+// rows selected): the on-hold checkbox toggle, the status indicator, and the
+// finalise action. On-hold uses a plain ConfirmDialog (no user-facing failure);
+// finalise is its own self-contained component (the status stepper's
+// SplitButton + confirm/success/error ActionModal + no-lines dialog — see
+// FinaliseAction). This footer owns only the on-hold confirm; the mutations run
+// through the view's callbacks (onSetHold → saveStocktakeFields, run →
+// finaliseStocktake), which splice the returned node back with no refetch.
+// Shown only when nothing is selected — the selection action bar replaces it
 // (matching OMS, which swaps the whole footer).
 
 export interface StocktakeStatusFooterProps {
   storeId: string;
   node: StocktakeInfoFragment;
-  /** True while status is not NEW or the stocktake is on hold — the edit lock (OMS isDisabled). */
+  /**
+   * True while status is not NEW or the stocktake is on hold — the edit lock
+   * (OMS isDisabled).
+   */
   disabled: boolean;
-  /** No countable lines → finalise is blocked (OMS no-lines guard); FinaliseAction explains why. */
+  /**
+   * No countable lines → finalise is blocked (OMS no-lines guard);
+   * FinaliseAction explains why.
+   */
   canFinalise: boolean;
   /** Toggle the on-hold lock (writes isLocked). */
   onSetHold: (hold: boolean) => void;
-  /** The stocktake was finalised — merge the returned info over the node (in place, no refetch). */
+  /**
+   * The stocktake was finalised — merge the returned info over the node (in
+   * place, no refetch).
+   */
   onFinalised: (node: StocktakeInfoFragment) => void;
   /** A finalise rejection carrying offending lines — stamp them on the rows. */
   onError: (lineIds: string[]) => void;
-  /** The finalise error phase's "Show error lines": filter the list to the stamped error lines. */
+  /**
+   * The finalise error phase's "Show error lines": filter the list to the
+   * stamped error lines.
+   */
   onShowErrors: () => void;
 }
 
-export const StocktakeStatusFooter: Component<StocktakeStatusFooterProps> = (props) => {
+export const StocktakeStatusFooter: Component<
+  StocktakeStatusFooterProps
+> = props => {
   // Confirm-before-act, like OMS: toggling on-hold confirms first.
   const [holdConfirm, setHoldConfirm] = createSignal(false);
 
@@ -42,10 +58,17 @@ export const StocktakeStatusFooter: Component<StocktakeStatusFooterProps> = (pro
   const holding = () => props.node.isLocked;
   const currentIndex = () => statusIndex(props.node.status);
 
-  // Status indicator steps — each stage + the datetime it was reached (for the history popover).
+  // Status indicator steps — each stage + the datetime it was reached (for the
+  // history popover).
   const steps = () => [
-    { label: STATUS_LABELS.NEW, date: props.node.stocktakeDate ?? props.node.createdDatetime },
-    { label: STATUS_LABELS.FINALISED, date: props.node.finalisedDatetime ?? undefined },
+    {
+      label: STATUS_LABELS.NEW,
+      date: props.node.stocktakeDate ?? props.node.createdDatetime,
+    },
+    {
+      label: STATUS_LABELS.FINALISED,
+      date: props.node.finalisedDatetime ?? undefined,
+    },
   ];
 
   return (
@@ -53,7 +76,10 @@ export const StocktakeStatusFooter: Component<StocktakeStatusFooterProps> = (pro
       {/* On-hold: a checkbox-in-a-button (OMS). Hidden once finalised (can't change a finalised
           stocktake). Confirms before toggling. */}
       <Show when={!isFinalised()}>
-        <CheckboxButton checked={holding()} onChange={() => setHoldConfirm(true)}>
+        <CheckboxButton
+          checked={holding()}
+          onChange={() => setHoldConfirm(true)}
+        >
           {t('stocktake.detail.on-hold')}
         </CheckboxButton>
       </Show>
@@ -76,7 +102,9 @@ export const StocktakeStatusFooter: Component<StocktakeStatusFooterProps> = (pro
         open={holdConfirm()}
         onClose={() => setHoldConfirm(false)}
         title={t('stocktake.on-hold.confirm-title')}
-        message={holding() ? t('stocktake.on-hold.unset') : t('stocktake.on-hold.set')}
+        message={
+          holding() ? t('stocktake.on-hold.unset') : t('stocktake.on-hold.set')
+        }
         onConfirm={() => props.onSetHold(!holding())}
       />
     </ContentFooter>

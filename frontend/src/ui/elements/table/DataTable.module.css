@@ -294,7 +294,8 @@ tr[data-selected] .expanderCell {
   background: var(--bg-toolbar);
   box-shadow:
     inset -1px 0 0 0 var(--color-divider),
-    0.375rem 0 0.5rem -0.25rem color-mix(in srgb, var(--gray-main) 35%, transparent);
+    0.375rem 0 0.5rem -0.25rem
+      color-mix(in srgb, var(--gray-main) 35%, transparent);
 }
 
 /* A selected pinned cell keeps the selection tint (over the opaque base) — placed AFTER the base

@@ -55,7 +55,10 @@ describe('graphqlFetch', () => {
     mockFetch({
       data: null,
       errors: [
-        { message: 'Bad user input', extensions: { details: 'DatabaseError("connection reset")' } },
+        {
+          message: 'Bad user input',
+          extensions: { details: 'DatabaseError("connection reset")' },
+        },
         // details equal to the message add nothing → not repeated.
         { message: 'Plain', extensions: { details: 'Plain' } },
         // non-string / empty details are ignored → bare message.

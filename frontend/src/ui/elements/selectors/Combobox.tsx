@@ -1,46 +1,68 @@
-import { createEffect, createMemo, createSignal, on, Show, type JSX } from 'solid-js'
-import * as KCombobox from '@kobalte/core/combobox'
-import { AlertTriangleIcon, ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons'
-import { usePortalMount } from '../../utils/portalMount'
-import { keepDialogOpenOnInside } from './dismissInsideGuard'
-import styles from './Combobox.module.css'
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  on,
+  Show,
+  type JSX,
+} from 'solid-js';
+import * as KCombobox from '@kobalte/core/combobox';
+import {
+  AlertTriangleIcon,
+  ChevronDownIcon,
+  CloseIcon,
+  SearchIcon,
+} from '../../icons';
+import { usePortalMount } from '../../utils/portalMount';
+import { keepDialogOpenOnInside } from './dismissInsideGuard';
+import styles from './Combobox.module.css';
 
 interface ComboboxProps<T> {
-  label: string
+  label: string;
   /** The full option set; filtered locally as the user types. */
-  items: T[]
-  /** The plain-text label of an item — used for the input, filtering and a11y. */
-  itemToString: (item: T) => string
+  items: T[];
+  /**
+   * The plain-text label of an item — used for the input, filtering and a11y.
+   */
+  itemToString: (item: T) => string;
   /**
    * Unique string key per item (list identity + form value). Defaults to
    * itemToString — override when labels can collide.
    */
-  itemToValue?: (item: T) => string
+  itemToValue?: (item: T) => string;
   /**
-   * Controlled selection: the itemToValue key of the currently-selected item (or undefined for
-   * none). Pass it to keep the input in sync with external state — e.g. an editable cell showing
-   * a line's saved location. Omit for an uncontrolled combobox (the create/filter forms), where
-   * the selection lives only in the widget and is reported via onChange.
+   * Controlled selection: the itemToValue key of the currently-selected item
+   * (or undefined for none). Pass it to keep the input in sync with external
+   * state — e.g. an editable cell showing a line's saved location. Omit for an
+   * uncontrolled combobox (the create/filter forms), where the selection lives
+   * only in the widget and is reported via onChange.
    */
-  value?: string
-  onChange?: (item: T | null) => void
+  value?: string;
+  onChange?: (item: T | null) => void;
   /** Rich per-option rendering; defaults to the plain itemToString label. */
-  renderItem?: (item: T) => JSX.Element
+  renderItem?: (item: T) => JSX.Element;
   /**
    * Override the default locale-aware substring filter. Per-item predicate
    * (Kobalte's model), unlike the prototype's whole-list filter.
    */
-  filter?: (item: T, input: string) => boolean
-  placeholder?: string
-  helperText?: string
-  /** Error message — presence switches the control to the error state (red border/glow +
-   *  aria-invalid), shown with an alert icon below the field. Mirrors TextField's `error`. */
-  error?: string
-  loading?: boolean
-  disabled?: boolean
-  /** Visually hide the label (kept for a11y) — for use inside a FieldRow that shows it. */
-  hideLabel?: boolean
-  class?: string
+  filter?: (item: T, input: string) => boolean;
+  placeholder?: string;
+  helperText?: string;
+  /**
+   * Error message — presence switches the control to the error state (red
+   * border/glow +
+   *  aria-invalid), shown with an alert icon below the field. Mirrors
+   *  TextField's `error`.
+   */
+  error?: string;
+  loading?: boolean;
+  disabled?: boolean;
+  /**
+   * Visually hide the label (kept for a11y) — for use inside a FieldRow that
+   * shows it.
+   */
+  hideLabel?: boolean;
+  class?: string;
 }
 
 /*
@@ -60,29 +82,31 @@ interface ComboboxProps<T> {
  * already handled by Kobalte itself (Escape clears it, blur reverts it).
  */
 export const Combobox = <T,>(props: ComboboxProps<T>) => {
-  const [selected, setSelected] = createSignal<T | null>(null)
-  const [inputValue, setInputValue] = createSignal('')
-  let inputEl: HTMLInputElement | undefined
+  const [selected, setSelected] = createSignal<T | null>(null);
+  const [inputValue, setInputValue] = createSignal('');
+  let inputEl: HTMLInputElement | undefined;
 
-  const keyOf = (item: T) => (props.itemToValue ?? props.itemToString)(item)
+  const keyOf = (item: T) => (props.itemToValue ?? props.itemToString)(item);
 
-  // Controlled selection: when `value` is provided, keep the internal `selected` item in sync with
-  // it (resolve the key against the current items). Skipped entirely when `value` is undefined —
-  // the widget then stays uncontrolled (create/filter forms). Guarded by `on(value, ...)` so it
-  // only reacts to the prop, not to the user's own selection.
+  // Controlled selection: when `value` is provided, keep the internal
+  // `selected` item in sync with it (resolve the key against the current
+  // items). Skipped entirely when `value` is undefined — the widget then stays
+  // uncontrolled (create/filter forms). Guarded by `on(value, ...)` so it only
+  // reacts to the prop, not to the user's own selection.
   createEffect(
     on(
       () => props.value,
       value => {
-        if (value === undefined) return
-        const match = props.items.find(item => keyOf(item) === value) ?? null
-        if (match !== selected()) setSelected(() => match)
-      },
-    ),
-  )
-  // Inside a Dialog, mount the listbox into the dialog element (top layer + non-inert);
-  // outside one this is undefined and Kobalte's default <body> portal is used.
-  const portalMount = usePortalMount()
+        if (value === undefined) return;
+        const match = props.items.find(item => keyOf(item) === value) ?? null;
+        if (match !== selected()) setSelected(() => match);
+      }
+    )
+  );
+  // Inside a Dialog, mount the listbox into the dialog element (top layer +
+  // non-inert); outside one this is undefined and Kobalte's default <body>
+  // portal is used.
+  const portalMount = usePortalMount();
 
   const matches = (item: T, input: string) =>
     props.filter
@@ -90,16 +114,16 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       : props
           .itemToString(item)
           .toLocaleLowerCase()
-          .includes(input.toLocaleLowerCase())
+          .includes(input.toLocaleLowerCase());
 
   const noMatches = createMemo(() =>
     props.items.every(item => !matches(item, inputValue()))
-  )
+  );
 
   const handleChange = (item: T | null) => {
-    setSelected(() => item)
-    props.onChange?.(item)
-  }
+    setSelected(() => item);
+    props.onChange?.(item);
+  };
 
   return (
     <KCombobox.Root<T>
@@ -125,10 +149,15 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
     >
       {/* hideLabel keeps the label for a11y (aria-labelledby) but visually hidden — used
           when a FieldRow already shows the label beside the control. */}
-      <KCombobox.Label class={props.hideLabel ? styles.labelHidden : styles.label}>
+      <KCombobox.Label
+        class={props.hideLabel ? styles.labelHidden : styles.label}
+      >
         {props.label}
       </KCombobox.Label>
-      <KCombobox.Control class={styles.control} data-error={props.error ? '' : undefined}>
+      <KCombobox.Control
+        class={styles.control}
+        data-error={props.error ? '' : undefined}
+      >
         <span class={styles.searchIcon} aria-hidden="true">
           <SearchIcon />
         </span>
@@ -143,8 +172,8 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             class={styles.clear}
             aria-label="Clear selection"
             onClick={() => {
-              handleChange(null)
-              inputEl?.focus()
+              handleChange(null);
+              inputEl?.focus();
             }}
           >
             <CloseIcon />
@@ -176,9 +205,10 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       <KCombobox.Portal mount={portalMount?.()}>
         <KCombobox.Content
           class={styles.content}
-          // Keep the listbox open when a pointerdown lands inside the dialog it's mounted in
-          // — Kobalte otherwise dismisses it before a mouse click commits (see
-          // dismissInsideGuard). A genuine click outside the dialog still closes it.
+          // Keep the listbox open when a pointerdown lands inside the dialog
+          // it's mounted in — Kobalte otherwise dismisses it before a mouse
+          // click commits (see dismissInsideGuard). A genuine click outside the
+          // dialog still closes it.
           onInteractOutside={keepDialogOpenOnInside(portalMount?.())}
         >
           <Show when={props.loading}>
@@ -191,5 +221,5 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         </KCombobox.Content>
       </KCombobox.Portal>
     </KCombobox.Root>
-  )
-}
+  );
+};
