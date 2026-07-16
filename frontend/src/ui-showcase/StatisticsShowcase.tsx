@@ -186,6 +186,11 @@ const Demo = () => (
           href="/demo"
           info="The info marker explains the count in a tooltip."
         />
+        <Statistic
+          label="Batches expiring in between 30 days and 90 days"
+          value="128"
+          href="/demo"
+        />
       </div>
     </Card>
 
