@@ -167,11 +167,15 @@ export const AppShell = (props: AppShellProps) => {
                   language={locale()}
                   onSelect={v => void changeLanguage(v)}
                 />
-                <span class={styles.footerDivider} aria-hidden="true" />
-                <FooterCell
-                  icon={CentralIcon}
-                  label={t('shell.footer.central-server')}
-                />
+                {/* Central-server cell: only on a central server (its divider
+                    goes with it, so nothing dangles on a remote site). */}
+                <Show when={props.isCentralServer}>
+                  <span class={styles.footerDivider} aria-hidden="true" />
+                  <FooterCell
+                    icon={CentralIcon}
+                    label={t('shell.footer.central-server')}
+                  />
+                </Show>
               </footer>
             </Show>
           </div>

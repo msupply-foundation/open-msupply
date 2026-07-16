@@ -43,10 +43,11 @@
   min-block-size: 2.25rem;
   padding-block: var(--space-1);
   padding-inline: var(--space-4);
-  /* Neutral by default; brand orange only on a central server (below). The
-     store name is text, so bar colour is never the sole active-store cue. */
-  background: var(--footer-neutral-bg);
-  color: var(--footer-neutral-contrast);
+  /* Same surface as the shell menu (--bg-drawer) by default; brand orange only
+     on a central server (below). The store name is text, so bar colour is never
+     the sole active-store cue. */
+  background: var(--bg-drawer);
+  color: var(--text-body);
   font-size: var(--text-xs);
   line-height: 1.2; /* the 1.71 body line-height makes this dense bar too tall */
 }

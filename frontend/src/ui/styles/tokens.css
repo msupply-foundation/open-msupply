@@ -43,12 +43,6 @@
   --gray-dark: #555770;
   --gray-pale: #cdf; /* #ccddff */
 
-  /* Bottom bar (app footer) when NOT on a central server — a neutral slate
-     strip. On a central server the footer is brand orange instead
-     (--primary-main); see AppShell .footer[data-central]. */
-  --footer-neutral-bg: #555770;
-  --footer-neutral-contrast: #fff;
-
   --color-border-value: #e4e4eb;
   --color-divider: #eaeaea;
   --outline-main: #555770;
@@ -217,10 +211,6 @@
   --gray-light: #4a4b5c;
   --gray-dark: #b8b9cc;
   --gray-pale: #2a3550;
-
-  /* Non-central bottom bar — a darker slate on the dark ground, light text. */
-  --footer-neutral-bg: #33343f;
-  --footer-neutral-contrast: #ececf2;
 
   --color-border-value: #33333f;
   --color-divider: #2c2c38;
