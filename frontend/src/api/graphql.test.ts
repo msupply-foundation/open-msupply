@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  clearForbiddenError,
   clearUnexpectedError,
+  forbiddenError,
   graphqlFetch,
   unexpectedError,
   type TypedDocument,
@@ -24,6 +26,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
   clearUnexpectedError();
   clearUnauthenticated();
+  clearForbiddenError();
+});
+
+// The real shape of a permission-denied error from the server (verified live):
+// message "Forbidden", the required permissions inside extensions.details.
+const forbiddenBody = (details: string) => ({
+  data: null,
+  errors: [{ message: 'Forbidden', extensions: { details } }],
 });
 
 describe('graphqlFetch', () => {
@@ -168,5 +178,47 @@ describe('graphqlFetch', () => {
     expect(result).toEqual({ kind: 'unauthenticated' });
     expect(unauthenticated()).toBe(true);
     expect(unexpectedError()).toBeUndefined();
+  });
+
+  it('returns forbidden with the parsed permission names, not unexpectedError', async () => {
+    mockFetch(
+      forbiddenBody(
+        'Missing access to store: X, Required permissions: And([HasStoreAccess, HasPermission(StocktakeMutate)]), Store: Some("X")'
+      )
+    );
+    const result = await graphqlFetch(document, {});
+    expect(result).toEqual({ kind: 'forbidden' });
+    // Only the HasPermission(...) name — HasStoreAccess is dropped.
+    expect(forbiddenError()).toEqual(['StocktakeMutate']);
+    expect(unexpectedError()).toBeUndefined();
+  });
+
+  it('sets an empty permission list when Forbidden carries no parseable detail', async () => {
+    mockFetch({ data: null, errors: [{ message: 'Forbidden' }] });
+    const result = await graphqlFetch(document, {});
+    expect(result).toEqual({ kind: 'forbidden' });
+    expect(forbiddenError()).toEqual([]);
+  });
+
+  it('hands Forbidden to the caller as a graphqlError when opted in, no global signal', async () => {
+    mockFetch(
+      forbiddenBody('Required permissions: HasPermission(StocktakeMutate)')
+    );
+    const result = await graphqlFetch(
+      document,
+      {},
+      { returnGraphqlErrors: true }
+    );
+    expect(result.kind).toBe('graphqlError');
+    expect(forbiddenError()).toBeUndefined();
+  });
+
+  it('does not trip the forbidden modal for a background call', async () => {
+    mockFetch(
+      forbiddenBody('Required permissions: HasPermission(StocktakeQuery)')
+    );
+    const result = await graphqlFetch(document, {}, { background: true });
+    expect(result).toEqual({ kind: 'forbidden' });
+    expect(forbiddenError()).toBeUndefined();
   });
 });
