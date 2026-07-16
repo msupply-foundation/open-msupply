@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -39,7 +39,7 @@ jobs:
           cp -r syncdoc/content/changelog/bench/index-configs changelog-bench-linux-x64/
           cp -r syncdoc/content/changelog/bench/partition-configs changelog-bench-linux-x64/
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: changelog-bench-linux-x64
           path: changelog-bench-linux-x64/
@@ -52,7 +52,7 @@ jobs:
     env:
       PQ_LIB_DIR: C:\Program Files\PostgreSQL\17\lib
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -82,7 +82,7 @@ jobs:
           cp "/c/Program Files/PostgreSQL/17/bin/libintl-9.dll" changelog-bench-windows-x64/ || true
           cp "/c/Program Files/PostgreSQL/17/bin/libiconv-2.dll" changelog-bench-windows-x64/ || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: changelog-bench-windows-x64
           path: changelog-bench-windows-x64/

@@ -10,16 +10,15 @@ jobs:
     env:
       RUSTFLAGS: '--cfg recursion_limit_256'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: actions/checkout@v5
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --no-self-update
       - name: Initialise
         working-directory: ./server
         run: cargo run --bin remote_server_cli -- initialise-from-export -n 'reference1' -r
       - name: Build
         run: ./build/mac/build.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v6
         with:
           name: mac_sqlite
           path: |

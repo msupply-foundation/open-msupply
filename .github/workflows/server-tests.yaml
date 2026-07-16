@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Update PATH
         run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Read Rust toolchain channel
         id: rust_toolchain
         # Scope the toolchain to this job only via RUSTUP_TOOLCHAIN; do NOT set a
@@ -33,21 +33,16 @@ jobs:
           CHANNEL=$(grep '^channel' server/rust-toolchain.toml | cut -d '"' -f2)
           echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
           echo "RUSTUP_TOOLCHAIN=$CHANNEL" >> "$GITHUB_ENV"
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ steps.rust_toolchain.outputs.channel }}
-          override: false
-          default: false
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install "${{ steps.rust_toolchain.outputs.channel }}" --profile minimal --no-self-update
       - name: Install cargo-nextest
         run: command -v cargo-nextest || cargo install cargo-nextest --locked
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clean
-          args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
+      - name: Clean changed crates
+        run: cargo clean -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - name: Run tests and generate report
         run: cargo nextest run --profile=ci-sqlite --features=sqlite --manifest-path server/Cargo.toml
       - name: Upload JUnit test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: (!cancelled())
         with:
           name: test-results-sqlite
@@ -74,7 +69,7 @@ jobs:
     steps:
       - name: Update PATH
         run: echo "$HOME/.cargo/bin/:/opt/homebrew/bin" >> $GITHUB_PATH
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Read Rust toolchain channel
         id: rust_toolchain
         # Scope the toolchain to this job only via RUSTUP_TOOLCHAIN; do NOT set a
@@ -84,21 +79,16 @@ jobs:
           CHANNEL=$(grep '^channel' server/rust-toolchain.toml | cut -d '"' -f2)
           echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
           echo "RUSTUP_TOOLCHAIN=$CHANNEL" >> "$GITHUB_ENV"
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ steps.rust_toolchain.outputs.channel }}
-          override: false
-          default: false
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install "${{ steps.rust_toolchain.outputs.channel }}" --profile minimal --no-self-update
       - name: Install cargo-nextest
         run: command -v cargo-nextest || cargo install cargo-nextest --locked
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clean
-          args: -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
+      - name: Clean changed crates
+        run: cargo clean -p repository -p graphql_types -p graphql_plugin -p graphql_invoice --manifest-path server/Cargo.toml
       - name: Run test and generate report
         run: cargo nextest run --profile=ci-postgres --features=postgres --manifest-path server/Cargo.toml
       - name: Upload JUnit test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: (!cancelled())
         with:
           name: test-results-postgres
