@@ -55,9 +55,10 @@
             Chapter 4 built the basic <code>DataTable</code>: headless TanStack
             under a hand-rolled <code>&lt;table&gt;</code>, sort/selection/
             pagination controlled and page-owned, one typed extension
-            (<code>sortKey</code>). This chapter covers the richer features added
-            since — a <strong>card view</strong>, <strong>column tabs / card
-            groups</strong>, <strong>row grouping</strong>, and
+            (<code>sortKey</code>). This chapter covers the richer features
+            added since — a <strong>card view</strong>,
+            <strong>column tabs / card groups</strong>,
+            <strong>row grouping</strong>, and
             <strong>per-breakpoint layout persistence</strong> — all built on
             the same rule: lean on TanStack where it genuinely owns the logic,
             extend it type-safely, keep the state the page's.
@@ -84,7 +85,9 @@
           <div class="flow">
             <div class="step"><code>viewMode: 'table'</code></div>
             <div class="arrow">→</div>
-            <div class="step">semantic <code>&lt;table&gt;</code> + tab strip</div>
+            <div class="step">
+              semantic <code>&lt;table&gt;</code> + tab strip
+            </div>
             <div class="arrow">⇄</div>
             <div class="step"><code>CardView</code></div>
             <div class="arrow">←</div>
@@ -96,7 +99,8 @@
             <code>&lt;table&gt;</code> or the <code>CardView</code>.
             <strong>Both faces read the same column defs</strong> — a column
             says once (in <code>meta</code> / <code>tabsAndCardGroups</code>)
-            how it should appear, and each face reads that. <code>viewMode</code>
+            how it should appear, and each face reads that.
+            <code>viewMode</code>
             is itself a persisted config field (below), not page state.
           </p>
 
@@ -118,8 +122,8 @@
 }</code></pre>
           <ul>
             <li>
-              <strong><code>region: 'primary'</code></strong> — the big
-              top-left title of the card.
+              <strong><code>region: 'primary'</code></strong> — the big top-left
+              title of the card.
             </li>
             <li>
               <strong><code>region: 'badge'</code></strong> — the chip in the
@@ -153,7 +157,9 @@
 <span class="cm">// primary → .cardPrimary (top-left), badge → .cardBadge (top-right),</span>
 <span class="cm">// the rest → the secondary area. Same flexRender as the table cell.</span></code></pre>
           <div class="box">
-            <p class="box-title">Card view reuses the table's engine, not its markup</p>
+            <p class="box-title">
+              Card view reuses the table's engine, not its markup
+            </p>
             <p style="margin-bottom: 0">
               <code>CardView</code> takes the same <code>table</code> instance
               and calls <code>table.getRowModel()</code>,
@@ -185,20 +191,20 @@
           <div class="box warn">
             <p class="box-title">Why the icon is a factory, not an element</p>
             <p style="margin-bottom: 0">
-              <code>icon</code> is <code>() =&gt; &lt;Icon/&gt;</code>, not a bare
-              <code>&lt;Icon/&gt;</code>. The same icon renders in several places
-              at once — the tab strip <em>and</em> one card group-row per card. A
-              shared JSX element is a single DOM node that can only live in one
-              place (it would end up on just the last card), so every render site
-              calls the factory for its own node.
+              <code>icon</code> is <code>() =&gt; &lt;Icon/&gt;</code>, not a
+              bare <code>&lt;Icon/&gt;</code>. The same icon renders in several
+              places at once — the tab strip <em>and</em> one card group-row per
+              card. A shared JSX element is a single DOM node that can only live
+              in one place (it would end up on just the last card), so every
+              render site calls the factory for its own node.
             </p>
           </div>
 
           <p>
             A column joins zero or more groups via its
             <code>tabsAndCardGroups</code> field — a
-            <strong>typed field on <code>Column&lt;T, K, G&gt;</code></strong>,
-            not <code>meta</code>, because it carries the <code>G</code> key
+            <strong>typed field on <code>Column&lt;T, K, G&gt;</code></strong
+            >, not <code>meta</code>, because it carries the <code>G</code> key
             union (a typo is a compile error). The value is one of three things:
           </p>
           <span class="filename">src/ui/elements/table/columnTypes.ts</span>
@@ -209,7 +215,7 @@
 <span class="cm">// A column's membership as stored on the def:</span>
 <span class="kw">export type</span> <span class="ty">Membership</span> = <span class="ty">string</span>[] | <span class="kw">typeof</span> ALL_TABS | <span class="kw">undefined</span>;
 
-<span class="cm">// Column<T,K,G>'s field is the TYPED version of that:</span>
+<span class="cm">// Column&lt;T,K,G&gt;'s field is the TYPED version of that:</span>
 tabsAndCardGroups?: <span class="ty">G</span>[] | <span class="kw">typeof</span> ALL_TABS;</code></pre>
           <ul>
             <li>
@@ -229,7 +235,8 @@ tabsAndCardGroups?: <span class="ty">G</span>[] | <span class="kw">typeof</span>
             </li>
           </ul>
           <p>
-            The membership tests are two tiny pure functions, used by both faces:
+            The membership tests are two tiny pure functions, used by both
+            faces:
           </p>
           <pre><code><span class="cm">// Does this column show in a given tab? ALL_TABS → any tab; array → if it lists it.</span>
 <span class="kw">const</span> membershipInTab = (m, tab) =&gt;
@@ -242,14 +249,14 @@ tabsAndCardGroups?: <span class="ty">G</span>[] | <span class="kw">typeof</span>
           <p>
             When <code>tabsAndCardGroups</code> is wired the table shows a
             lightweight <code>role="tablist"</code> strip and renders only the
-            active group's columns. This is a <strong>display-time
-            filter</strong>, not a column filter: TanStack always holds the full
-            column set (so order/visibility/sizing stay unambiguous — hiding a
-            shared column is global), and the table simply
-            <code>&lt;Show&gt;</code>s the header/body cells whose column is in
-            the active tab. The <strong>table owns the active tab</strong> as an
-            internal signal (defaulting to the first) — no active-tab state leaks
-            to the page.
+            active group's columns. This is a
+            <strong>display-time filter</strong>, not a column filter: TanStack
+            always holds the full column set (so order/visibility/sizing stay
+            unambiguous — hiding a shared column is global), and the table
+            simply <code>&lt;Show&gt;</code>s the header/body cells whose column
+            is in the active tab. The
+            <strong>table owns the active tab</strong> as an internal signal
+            (defaulting to the first) — no active-tab state leaks to the page.
           </p>
           <span class="filename">src/ui/elements/table/DataTable.tsx</span>
           <pre><code><span class="cm">// A column shows in the active tab when its membership includes it OR ALL_TABS;</span>
@@ -266,25 +273,26 @@ tabsAndCardGroups?: <span class="ty">G</span>[] | <span class="kw">typeof</span>
             <code>CardView</code> makes two passes over the cells that have no
             explicit region: <strong>pass 1</strong> — one row per declared
             group (led by the group's icon, its cells captioned by their
-            headers), skipping groups with nothing visible; <strong>pass
-            2</strong> — a final unlabelled row for cells in no real group
-            (<code>ALL_TABS</code> anchors + un-annotated columns). An ungrouped
-            table renders one flat row. A cell is "in a group" only via a real
-            key — <code>ALL_TABS</code> never counts as a card group.
+            headers), skipping groups with nothing visible;
+            <strong>pass 2</strong> — a final unlabelled row for cells in no
+            real group (<code>ALL_TABS</code> anchors + un-annotated columns).
+            An ungrouped table renders one flat row. A cell is "in a group" only
+            via a real key — <code>ALL_TABS</code> never counts as a card group.
           </p>
 
           <div class="box">
             <p class="box-title">Card groups ≠ row grouping</p>
             <p style="margin-bottom: 0">
               A separate optional feature, <code>rowGroup</code>, collapses
-              <em>rows</em> sharing a value under one expandable parent (e.g. all
-              a stocktake item's batches). That's pure TanStack —
-              <code>getGroupedRowModel</code> + <code>getExpandedRowModel</code>
-              + per-column <code>aggregationFn</code>. Parent cells show a
-              column's aggregate; the repo ships
-              <code>sharedOrMultiple</code> (one shared value, else the
-              <code>MULTIPLE</code> = <code>"[multiple]"</code> placeholder) and
-              a date variant. Grouping on/off is a persisted config toggle
+              <em>rows</em> sharing a value under one expandable parent (e.g.
+              all a stocktake item's batches). That's pure TanStack —
+              <code>getGroupedRowModel</code> +
+              <code>getExpandedRowModel</code> + per-column
+              <code>aggregationFn</code>. Parent cells show a column's
+              aggregate; the repo ships <code>sharedOrMultiple</code> (one
+              shared value, else the <code>MULTIPLE</code> =
+              <code>"[multiple]"</code> placeholder) and a date variant.
+              Grouping on/off is a persisted config toggle
               (<code>groupBy</code>), like <code>viewMode</code> — not page
               state. Don't confuse it with card groups: card groups partition
               <em>columns</em>, row grouping collapses <em>rows</em>.
@@ -293,10 +301,9 @@ tabsAndCardGroups?: <span class="ty">G</span>[] | <span class="kw">typeof</span>
 
           <h2>Layout persistence: three layers, per breakpoint</h2>
           <p>
-            Column layout — <code>columnOrder</code>,
-            <code>columnSizing</code>, <code>columnPinning</code>,
-            <code>columnVisibility</code>, plus the view-level
-            <code>viewMode</code> and <code>groupBy</code> — is
+            Column layout — <code>columnOrder</code>, <code>columnSizing</code>,
+            <code>columnPinning</code>, <code>columnVisibility</code>, plus the
+            view-level <code>viewMode</code> and <code>groupBy</code> — is
             <strong>controlled exactly like sort/selection</strong>: the page
             resolves it into one <code>config</code> and passes a
             <code>setConfig</code>; the table mirrors <code>config</code> into
@@ -314,7 +321,9 @@ tabsAndCardGroups?: <span class="ty">G</span>[] | <span class="kw">typeof</span>
             <code>compact</code>), highest wins, per field:
           </p>
           <div class="flow">
-            <div class="step"><code>default</code> (the table's own defaults)</div>
+            <div class="step">
+              <code>default</code> (the table's own defaults)
+            </div>
             <div class="arrow">→</div>
             <div class="step"><code>global</code> (GraphQL blob)</div>
             <div class="arrow">→</div>
@@ -355,12 +364,12 @@ tabsAndCardGroups?: <span class="ty">G</span>[] | <span class="kw">typeof</span>
               The global layer is <em>one</em>
               <code>createStoreScopedResource</code> created
               <strong>once at module scope</strong> — so the singleton/dedup
-              from chapter 6 is real: N tables share one lazy, store-keyed fetch,
-              refetched on store change. Read via <code>.noSuspense()</code> so a
-              pending first load never trips an ancestor
-              <code>&lt;Suspense&gt;</code> or remounts a live table. Creating it
-              inside <code>createTableConfig</code> would build a new singleton
-              per table and defeat the dedup.
+              from chapter 6 is real: N tables share one lazy, store-keyed
+              fetch, refetched on store change. Read via
+              <code>.noSuspense()</code> so a pending first load never trips an
+              ancestor <code>&lt;Suspense&gt;</code> or remounts a live table.
+              Creating it inside <code>createTableConfig</code> would build a
+              new singleton per table and defeat the dedup.
             </p>
           </div>
 
@@ -406,8 +415,8 @@ tabsAndCardGroups?: <span class="ty">G</span>[] | <span class="kw">typeof</span>
               (say <code>info</code> and <code>stock</code>), tag your columns'
               <code>tabsAndCardGroups</code> (keep the identity column as
               <code>ALL_TABS</code>), and check that the tab strip filters
-              columns in table view <em>and</em> renders one section per group in
-              card view. Finally wire
+              columns in table view <em>and</em> renders one section per group
+              in card view. Finally wire
               <code>createTableConfig({ tableId: 'widgets' })</code> into
               <code>config</code>/<code>setConfig</code> and verify a reorder or
               a hidden column survives a reload (user layer) and that resizing
@@ -434,24 +443,32 @@ tabsAndCardGroups?: <span class="ty">G</span>[] | <span class="kw">typeof</span>
             <p style="margin-bottom: 0">
               <a href="../src/ui/elements/table/DataTable.tsx">DataTable.tsx</a>
               ·
-              <a href="../src/ui/elements/table/columnTypes.ts">columnTypes.ts</a>
-              (card region + <code>tabsAndCardGroups</code> + <code>ALL_TABS</code>)
-              ·
+              <a href="../src/ui/elements/table/columnTypes.ts"
+                >columnTypes.ts</a
+              >
+              (card region + <code>tabsAndCardGroups</code> +
+              <code>ALL_TABS</code>) ·
               <a href="../src/ui/elements/table/CardView.tsx">CardView.tsx</a>
               ·
-              <a href="../src/ui/elements/table/HeaderCell.tsx">HeaderCell.tsx</a>
+              <a href="../src/ui/elements/table/HeaderCell.tsx"
+                >HeaderCell.tsx</a
+              >
               ·
               <a href="../src/ui/elements/table/TableRow.tsx">TableRow.tsx</a>
               ·
-              <a href="../src/ui/elements/table/aggregations.ts">aggregations.ts</a>
+              <a href="../src/ui/elements/table/aggregations.ts"
+                >aggregations.ts</a
+              >
               ·
-              <a href="../src/ui/elements/table/tableConfig.ts">tableConfig.ts</a>
+              <a href="../src/ui/elements/table/tableConfig.ts"
+                >tableConfig.ts</a
+              >
               ·
               <a href="../src/api/createTableConfig.ts">createTableConfig.ts</a>
               ·
-              <a href="../src/ui-showcase/TableShowcase.tsx">TableShowcase.tsx</a>.
-              Why:
-              <a href="../kdd/table-state/draft-kdd.md">table-state</a>,
+              <a href="../src/ui-showcase/TableShowcase.tsx"
+                >TableShowcase.tsx</a
+              >. Why: <a href="../kdd/table-state/draft-kdd.md">table-state</a>,
               <a href="../kdd/type-safety/draft-kdd.md">type-safety</a>.
             </p>
           </div>
