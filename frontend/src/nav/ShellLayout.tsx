@@ -4,6 +4,7 @@ import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
 import { findLeafByPath, type NavLeaf } from '../ui/layout/AppShell/navModel';
 import { authUser, logout } from '../auth/authContext';
+import { isCentralServer } from '../api/serverInfo';
 import { resolveStorePath } from '../store/StoreGuardLayout';
 
 // The routed app shell: one <AppShell> for the whole in-store app, with the
@@ -55,6 +56,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
       onStoreClick={() => navigate(resolveStorePath)}
       username={username()}
       onLogout={() => void logout()}
+      isCentralServer={isCentralServer()}
     >
       {props.children}
     </AppShell>

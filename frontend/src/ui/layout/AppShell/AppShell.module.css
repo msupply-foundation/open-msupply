@@ -43,10 +43,19 @@
   min-block-size: 2.25rem;
   padding-block: var(--space-1);
   padding-inline: var(--space-4);
-  background: var(--primary-main);
-  color: var(--primary-contrast);
+  /* Neutral by default; brand orange only on a central server (below). The
+     store name is text, so bar colour is never the sole active-store cue. */
+  background: var(--footer-neutral-bg);
+  color: var(--footer-neutral-contrast);
   font-size: var(--text-xs);
   line-height: 1.2; /* the 1.71 body line-height makes this dense bar too tall */
+}
+
+/* Central server: the bar is brand orange (Open mSupply's central-server cue).
+   Set from the isCentralServer global (queried at startup) via AppShell. */
+.footer[data-central] {
+  background: var(--primary-main);
+  color: var(--primary-contrast);
 }
 
 /* Spacer between the store selector and the user/language/central cluster

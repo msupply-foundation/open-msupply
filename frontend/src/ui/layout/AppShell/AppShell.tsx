@@ -41,6 +41,9 @@ export interface AppShellProps {
   username: string;
   /** Explicit logout, from the user menu (spec: user menu / logout). */
   onLogout: () => void;
+  /** On a central server the bottom bar is brand orange; otherwise neutral.
+   *  From the isCentralServer global, queried unauthenticated at startup. */
+  isCentralServer?: boolean;
   /**
    * The current page — typically a composed <Page> frame (which supplies the
    * pinned-header / scrolling-body / side-panel / content-footer geometry;
@@ -148,7 +151,10 @@ export const AppShell = (props: AppShellProps) => {
                 sole active-store indicator (colour independence / D14). Hidden in
                 full-screen mode, like the menu bar. */}
             <Show when={!fullScreen()}>
-              <footer class={styles.footer}>
+              <footer
+                class={styles.footer}
+                data-central={props.isCentralServer ? '' : undefined}
+              >
                 <FooterCell
                   icon={StockIcon}
                   label={props.storeName}
