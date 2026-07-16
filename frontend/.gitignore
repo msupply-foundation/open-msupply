@@ -29,3 +29,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+/.playwright-mcp
+
+# Playwright output (deterministic e2e suites in e2e/)
+e2e/test-results
+e2e/playwright-report

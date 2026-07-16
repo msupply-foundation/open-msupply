@@ -1,7 +1,13 @@
 import { For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import * as DropdownMenu from '@kobalte/core/dropdown-menu';
-import { CheckIcon, ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons';
+import {
+  CalendarIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  CloseIcon,
+  SearchIcon,
+} from '../../icons';
 import { t } from '../../../intl';
 import styles from './FilterBar.module.css';
 
@@ -285,3 +291,28 @@ export const FilterSelect = <V extends string>(props: {
     </DropdownMenu.Root>
   );
 };
+
+/**
+ * A date filter — a native date input behind the calendar icon, sharing the
+ * text-filter chrome. Value is an ISO `yyyy-mm-dd` string (native date input's
+ * format); '' clears it. Used for "before"/"after" bounds inside a filter's
+ * render.
+ */
+export const FilterDate = (props: {
+  value: string;
+  onInput: (value: string) => void;
+  label: string;
+}) => (
+  <span class={styles.textFilter}>
+    <span class={styles.textFilterIcon}>
+      <CalendarIcon />
+    </span>
+    <input
+      class={styles.input}
+      type="date"
+      value={props.value}
+      aria-label={props.label}
+      onInput={e => props.onInput(e.currentTarget.value)}
+    />
+  </span>
+);

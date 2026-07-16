@@ -73,6 +73,27 @@ type FetchOptions<TResult> = {
 export const isUnauthenticated = (errors: GraphqlErrorItem[]): boolean =>
   errors.some(e => e.message === 'Unauthenticated');
 
+// Server errors carry the human-useful specifics in `extensions.details` (e.g.
+// `NotAuthenticated("Missing auth token")`) while `message` is often just the
+// generic category ("Unauthenticated"). Surface the details when present and
+// distinct, so the unexpected-error modal shows what actually went wrong rather
+// than the bare category.
+const describeError = (e: GraphqlErrorItem): string => {
+  const details = e.extensions?.details;
+  if (
+    typeof details === 'string' &&
+    details.length > 0 &&
+    details !== e.message
+  ) {
+    return `${e.message}: ${details}`;
+  }
+  return e.message;
+};
+
+// Join every error into one description for the modal / graphqlError summary.
+export const describeErrors = (errors: GraphqlErrorItem[]): string =>
+  errors.map(describeError).join(', ');
+
 // Spec (Unexpected API Errors): one global failure state for any request that
 // fails outside the expected, structured union results — connection failures,
 // unusable responses, and unexpected GraphQL errors. A modal shows the
@@ -133,7 +154,7 @@ export async function graphqlFetch<TResult, TVariables>(
       reportUnauthenticated();
       return { kind: 'unauthenticated' };
     }
-    const message = body.errors.map(e => e.message).join(', ');
+    const message = describeErrors(body.errors);
     if (options.returnGraphqlErrors) {
       return { kind: 'graphqlError', message, errors: body.errors };
     }

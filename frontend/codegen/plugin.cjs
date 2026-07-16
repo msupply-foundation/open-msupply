@@ -219,11 +219,27 @@ function renderSelectionSet(selectionSet, parentType, schema, fragments) {
     const condType = br.typeCondition
       ? schema.getType(br.typeCondition.name.value)
       : parentType;
-    const branchBody = renderSelectionSet(br.selectionSet, condType, schema, fragments);
-    // The discriminant literal for this concrete branch type.
-    const typenameField = baseSelectedTypename
-      ? `{\n  __typename: ${JSON.stringify(condType.name)};\n}`
-      : null;
+    // A branch may re-select __typename inside its own inline fragment (the natural way to force a
+    // union on an interface, whose fragments each need a field). That is redundant with the
+    // discriminant we inject below, so strip it from the branch body — otherwise it renders a
+    // second `__typename:` line. It also means the branch alone can request the discriminant.
+    const branchSelections = br.selectionSet.selections.filter(
+      (s) => !(s.kind === Kind.FIELD && s.name.value === "__typename"),
+    );
+    const branchSelectedTypename =
+      branchSelections.length !== br.selectionSet.selections.length;
+    const branchBody = renderSelectionSet(
+      { ...br.selectionSet, selections: branchSelections },
+      condType,
+      schema,
+      fragments,
+    );
+    // The discriminant literal for this concrete branch type — emitted if __typename was selected
+    // on the base OR inside this branch.
+    const typenameField =
+      baseSelectedTypename || branchSelectedTypename
+        ? `{\n  __typename: ${JSON.stringify(condType.name)};\n}`
+        : null;
     const parts = [
       ...(typenameField ? [typenameField] : []),
       branchBody,

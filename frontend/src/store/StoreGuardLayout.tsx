@@ -4,7 +4,11 @@ import { useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { authUser } from '../auth/authContext';
 import { getPreviousStoreId, recordPreviousStoreId } from '../appData';
-import { refetchStoreContext, storeContext } from './storeContext';
+import {
+  currentStoreId,
+  refetchStoreContext,
+  storeContext,
+} from './storeContext';
 import { StoreSelectionModal } from './StoreSelectionModal';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
@@ -41,8 +45,7 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
   const contextLoaded = (storeId: string) => {
     const context = storeContext();
     return (
-      context?.storePreferences.id === storeId &&
-      context.me.userId === user()?.userId
+      currentStoreId() === storeId && context?.me.userId === user()?.userId
     );
   };
 
@@ -76,6 +79,10 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
       fallback={
         <StoreSelectionModal
           stores={pickerStores()}
+          defaultStoreId={user()?.defaultStore?.id}
+          lastUsedStoreId={
+            user() ? getPreviousStoreId(user()!.userId) : undefined
+          }
           onSelect={id => navigate(`/${id}`)}
         />
       }

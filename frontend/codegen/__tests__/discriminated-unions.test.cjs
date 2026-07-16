@@ -185,6 +185,71 @@ test("selecting only one branch still yields a (parenthesised) union member", ()
   );
 });
 
+test("__typename re-selected inside a branch is not duplicated", () => {
+  // A branch's inline fragment may redundantly re-select __typename (e.g. to force a discriminated
+  // union on a GraphQL interface, whose inline fragments each need at least one field). The base's
+  // __typename already supplies the per-branch discriminant literal, so the branch's own copy must
+  // NOT produce a second `__typename:` line — each branch stays a single clean discriminant.
+  const out = generate({
+    schema: UNION_SCHEMA,
+    document: `
+      query Q {
+        r {
+          __typename
+          ... on Cat { __typename meow }
+          ... on Dog { __typename bark }
+        }
+      }
+    `,
+  });
+
+  assert.equal(
+    resultType(out, "Q"),
+    `{
+  r: ({
+  __typename: "Cat";
+} & {
+  meow: string;
+}) | ({
+  __typename: "Dog";
+} & {
+  bark: number;
+});
+}`,
+  );
+});
+
+test("__typename selected ONLY inside branches (not on the base) still discriminates", () => {
+  // With no base __typename, the branch's own __typename is the sole discriminant source — it must
+  // render as the concrete-type literal, exactly as a base __typename would.
+  const out = generate({
+    schema: UNION_SCHEMA,
+    document: `
+      query Q {
+        r {
+          ... on Cat { __typename meow }
+          ... on Dog { __typename bark }
+        }
+      }
+    `,
+  });
+
+  assert.equal(
+    resultType(out, "Q"),
+    `{
+  r: ({
+  __typename: "Cat";
+} & {
+  meow: string;
+}) | ({
+  __typename: "Dog";
+} & {
+  bark: number;
+});
+}`,
+  );
+});
+
 test("a branch's fields can come from a fragment spread (referenced by type)", () => {
   const out = generate({
     schema: UNION_SCHEMA,

@@ -5,6 +5,7 @@ import { t } from '../../../intl';
 import { ChevronDownIcon } from '../../icons';
 import { pxToRem } from '../../utils/rem';
 import type { TableConfig, TableConfigKey } from './tableConfig';
+import { ALL_TABS, type TabAndCardGroup } from './DataTable';
 import styles from './ColumnSettings.module.css';
 
 // The column-settings panel: a table with a row per column, each exposing
@@ -22,7 +23,27 @@ export function ColumnSettings<T>(props: {
   table: Table<T>;
   config?: TableConfig;
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
+  /**
+   * The table's tabs/groups (when grouped) — used to badge each row with the
+   * group(s) a
+   *  column belongs to, so it's clear hiding/reordering is GLOBAL across tabs. */
+  tabsAndCardGroups?: TabAndCardGroup<string>[];
 }): JSX.Element {
+  // The tabs/groups a column id belongs to, for its settings-row icon badges.
+  // An ALL_TABS column (batch, actions) belongs to EVERY tab → show all icons;
+  // an array names specific groups → show those; absent → none.
+  const columnGroups = (id: string): TabAndCardGroup<string>[] => {
+    const groups = props.tabsAndCardGroups;
+    if (!groups) return [];
+    const membership = (
+      props.table.getColumn(id)?.columnDef as {
+        tabsAndCardGroups?: string[] | typeof ALL_TABS;
+      }
+    )?.tabsAndCardGroups;
+    if (membership === ALL_TABS) return groups;
+    if (!Array.isArray(membership)) return [];
+    return groups.filter(g => membership.includes(g.key));
+  };
   // Leaf columns in their current effective display order (columnOrder if set,
   // else def order). Reordering swaps a column with its neighbour in this id
   // list.
@@ -126,7 +147,26 @@ export function ColumnSettings<T>(props: {
                     />
                   </td>
 
-                  <td class={styles.labelCell}>{label(id)}</td>
+                  <td class={styles.labelCell}>
+                    {label(id)}
+                    {/* Group badge(s): just the ICON of each group this column belongs to (the
+                        group's label reads on its tab) — a compact hint that visibility/order
+                        changes here are GLOBAL across tabs. `title` gives the text on hover. */}
+                    <For each={columnGroups(id)}>
+                      {group => (
+                        <Show when={group.icon}>
+                          {icon => (
+                            <span
+                              class={styles.groupBadgeIcon}
+                              title={t(group.labelKey)}
+                            >
+                              {icon()()}
+                            </span>
+                          )}
+                        </Show>
+                      )}
+                    </For>
+                  </td>
 
                   {/* Pin left / right — only when the column can be pinned. Active state shown. */}
                   <td class={styles.pinCell}>

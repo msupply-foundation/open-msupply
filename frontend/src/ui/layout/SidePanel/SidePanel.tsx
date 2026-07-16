@@ -1,30 +1,46 @@
 import type { JSX } from 'solid-js';
+import { t } from '../../../intl';
+import { IconButton } from '../../elements/buttons/IconButton';
+import { CloseIcon } from '../../icons';
 import styles from './SidePanel.module.css';
 
 export interface SidePanelProps {
-  /** Accessible name for the aside landmark. */
+  /**
+   * The panel's title, shown in its header (and the aside's accessible name).
+   */
   label?: string;
+  /**
+   * Closes the panel — renders the top-inline-end close button that flips the
+   * page's open state.
+   */
+  onClose?: () => void;
   /** The panel's content — a stack of <SidePanelSection>s, page-owned. */
   children: JSX.Element;
 }
 
 /*
- * Side panel — the detail-view right-hand panel (the current app's
- * DetailPanel): related documents, additional info, comments. Pure layout,
- * zero state — the same contract as Header/ContentFooter: the page composes
- * <SidePanelSection>s and hands the panel to Page's `sidePanel` slot, which
- * docks it inline-end beside the scrolling body. The panel scrolls
- * independently of the body.
- *
- * KNOWN GAP (skeleton stage): below the nav-overlay breakpoint the docked
- * panel simply doesn't render (a which-element media decision in the CSS) —
- * the current app opens it as a toggled overlay drawer from an AppBar button
- * instead. That toggle needs a Drawer, which arrives with the Feedback work;
- * until then panel content is unreachable on narrow viewports. See
- * kdd/page-composition.
+ * Details panel — the detail-view right-hand panel (the current app's
+ * DetailPanel): additional info, related documents, comments. An OVERLAY
+ * drawer pinned to the inline-end edge of the Page's middle region, floating
+ * on top of the scrolling body (the CSS positions it; the page keeps the
+ * open/close boolean in Page.sidePanelOpen and opens it from a header icon
+ * button). Pure layout + look, no open state of its own: the page composes
+ * <SidePanelSection>s, hands the panel to Page's `sidePanel` slot, and passes
+ * `onClose` (→ the close button, top inline-end). Scrolls independently of the
+ * body.
  */
 export const SidePanel = (props: SidePanelProps) => (
   <aside class={styles.panel} aria-label={props.label ?? 'Details'}>
+    <div class={styles.header}>
+      <h2 class={styles.heading}>{props.label}</h2>
+      {props.onClose && (
+        <IconButton
+          label={t('common.close')}
+          icon={<CloseIcon />}
+          onClick={props.onClose}
+        />
+      )}
+    </div>
     {props.children}
   </aside>
 );
