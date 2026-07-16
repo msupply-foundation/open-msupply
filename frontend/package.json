@@ -16,9 +16,13 @@
     "format:check": "prettier --check .",
     "codegen": "node codegen/run.cjs",
     "test": "vitest run",
-    "test:codegen": "node --test \"codegen/__tests__/*.test.cjs\""
+    "test:codegen": "node --test \"codegen/__tests__/*.test.js\"",
+    "dev-android": "./scripts/dev-android.sh",
+    "build-android": "./scripts/build-android.sh"
   },
   "dependencies": {
+    "@capacitor/camera": "^8.2.0",
+    "@capacitor/core": "^8.4.1",
     "@fontsource-variable/inter": "^5.2.8",
     "@kobalte/core": "^0.13.12",
     "@solid-primitives/i18n": "^2.2.1",
@@ -28,6 +32,8 @@
     "solid-js": "^1.9.13"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
     "@eslint/js": "^9.39.5",
     "@graphql-codegen/core": "^6.2.0",
     "@types/node": "^24.13.2",
