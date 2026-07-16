@@ -1,11 +1,11 @@
-import type { JSX } from 'solid-js'
-import styles from './SidePanel.module.css'
+import type { JSX } from 'solid-js';
+import styles from './SidePanel.module.css';
 
 export interface SidePanelProps {
   /** Accessible name for the aside landmark. */
-  label?: string
+  label?: string;
   /** The panel's content — a stack of <SidePanelSection>s, page-owned. */
-  children: JSX.Element
+  children: JSX.Element;
 }
 
 /*
@@ -27,16 +27,16 @@ export const SidePanel = (props: SidePanelProps) => (
   <aside class={styles.panel} aria-label={props.label ?? 'Details'}>
     {props.children}
   </aside>
-)
+);
 
 export interface SidePanelSectionProps {
-  title: string
+  title: string;
   /**
    * Section content. Field rows are a plain <dl> of dt/dd pairs (styled by
    * the panel's CSS); free text is a <p>. Both stay semantic — no wrapper
    * components needed.
    */
-  children: JSX.Element
+  children: JSX.Element;
 }
 
 export const SidePanelSection = (props: SidePanelSectionProps) => (
@@ -44,4 +44,4 @@ export const SidePanelSection = (props: SidePanelSectionProps) => (
     <h2 class={styles.title}>{props.title}</h2>
     {props.children}
   </section>
-)
+);

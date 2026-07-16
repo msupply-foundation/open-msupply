@@ -34,7 +34,10 @@ const Card = (props: {
   </section>
 );
 
-/* A coloured status dot — the kind of rich option a native <option> can't hold. */
+/**
+ * A coloured status dot — the kind of rich option a native <option> can't
+ * hold.
+ */
 const Dot = (props: { color: string }) => (
   <span
     class={styles.dot}
@@ -69,10 +72,11 @@ const itemFilter = (item: DemoItem, input: string) => {
 };
 
 /*
- * A demo filter object, shaped like a list page's GraphQL filter (the FilterBar is
- * generic over it — see kdd/page-composition). A key PRESENT (even as null/'') means
- * its chip is shown; absent means it isn't. Three free-text columns + the status enum,
- * the current app's outbound-shipment FilterMenu set.
+ * A demo filter object, shaped like a list page's GraphQL filter (the
+ * FilterBar is generic over it — see kdd/page-composition). A key PRESENT
+ * (even as null/'') means its chip is shown; absent means it isn't. Three
+ * free-text columns + the status enum, the current app's outbound-shipment
+ * FilterMenu set.
  */
 interface InvoiceFilter {
   otherPartyName?: string | null;
@@ -81,7 +85,9 @@ interface InvoiceFilter {
   status?: string | null;
 }
 
-/* Built once as a stable const — labels are accessors, so FilterBar's <For> reuses
+/* 
+ * Built once as a stable const — labels are accessors, so FilterBar's <For>
+ * reuses
    chip rows instead of remounting them (kdd/state-management: no remounts). */
 const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   {
@@ -159,9 +165,10 @@ export const SelectorsShowcase = () => {
     return tag ? t(tag.label) : null;
   };
 
-  // What the page would hand to a table — rendered as the URL query string the filter
-  // is destined to live in once routing lands. Empty/null keys (added-but-empty chips)
-  // are dropped, mirroring the page's stripEmpty before querying.
+  // What the page would hand to a table — rendered as the URL query string the
+  // filter is destined to live in once routing lands. Empty/null keys
+  // (added-but-empty chips) are dropped, mirroring the page's stripEmpty before
+  // querying.
   const filterQuery = () => {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(filters())) {

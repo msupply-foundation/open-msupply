@@ -1,10 +1,10 @@
 import { onCleanup } from 'solid-js';
 
 // Dismiss-on-outside-click for dropdown menus. Attach the returned setter as an
-// element's `ref`; while that element is mounted, a pointerdown anywhere outside it
-// calls `onOutside`. Registered on the document at capture time so it fires before
-// the click reaches other handlers, and torn down when the element unmounts (or the
-// enclosing Show closes) via onCleanup.
+// element's `ref`; while that element is mounted, a pointerdown anywhere
+// outside it calls `onOutside`. Registered on the document at capture time so
+// it fires before the click reaches other handlers, and torn down when the
+// element unmounts (or the enclosing Show closes) via onCleanup.
 //
 //   const dismiss = clickOutside(() => setOpen(false));
 //   <div ref={dismiss}> … menu … </div>

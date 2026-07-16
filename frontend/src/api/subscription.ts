@@ -1,9 +1,9 @@
-// Trusted layer: our own GraphQL implementation. `as` assertions are permitted here
-// (see kdd/type-safety).
+// Trusted layer: our own GraphQL implementation. `as` assertions are permitted
+// here (see kdd/type-safety).
 //
-// Minimal graphql-transport-ws client. Spec (Initialization Logic): we first try the
-// subscription; any failure calls onFailure exactly once so the caller can fall back
-// to polling.
+// Minimal graphql-transport-ws client. Spec (Initialization Logic): we first
+// try the subscription; any failure calls onFailure exactly once so the caller
+// can fall back to polling.
 import type { TypedDocument } from './graphql';
 import { GRAPHQL_WS_PATH } from '../config';
 
@@ -29,13 +29,17 @@ export function subscribe<TResult, TVariables>(
 
   try {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    ws = new WebSocket(`${protocol}//${location.host}${GRAPHQL_WS_PATH}`, 'graphql-transport-ws');
+    ws = new WebSocket(
+      `${protocol}//${location.host}${GRAPHQL_WS_PATH}`,
+      'graphql-transport-ws'
+    );
   } catch {
     handlers.onFailure();
     return () => {};
   }
 
-  ws.onopen = () => ws.send(JSON.stringify({ type: 'connection_init', payload: {} }));
+  ws.onopen = () =>
+    ws.send(JSON.stringify({ type: 'connection_init', payload: {} }));
   ws.onerror = fail;
   ws.onclose = fail;
   ws.onmessage = event => {
@@ -56,7 +60,8 @@ export function subscribe<TResult, TVariables>(
         );
         break;
       case 'next':
-        if (message.payload?.data != null) handlers.onData(message.payload.data as TResult);
+        if (message.payload?.data != null)
+          handlers.onData(message.payload.data as TResult);
         break;
       case 'ping':
         ws.send(JSON.stringify({ type: 'pong' }));

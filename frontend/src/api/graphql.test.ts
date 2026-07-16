@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { clearUnexpectedError, graphqlFetch, unexpectedError, type TypedDocument } from './graphql';
+import {
+  clearUnexpectedError,
+  graphqlFetch,
+  unexpectedError,
+  type TypedDocument,
+} from './graphql';
 import { clearUnauthenticated, unauthenticated } from '../auth/authContext';
 
 type Result = { thing: { id: string } };
@@ -8,7 +13,9 @@ const document: TypedDocument<Result, Record<string, never>> = {
 };
 
 const mockFetch = (body: unknown, ok = true, status = 200) => {
-  const fetchMock = vi.fn().mockResolvedValue({ ok, status, json: async () => body });
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue({ ok, status, json: async () => body });
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
 };
@@ -35,7 +42,10 @@ describe('graphqlFetch', () => {
   });
 
   it('treats GraphQL errors as unexpectedError by default, description on the signal', async () => {
-    mockFetch({ data: null, errors: [{ message: 'Something failed' }, { message: 'Also this' }] });
+    mockFetch({
+      data: null,
+      errors: [{ message: 'Something failed' }, { message: 'Also this' }],
+    });
     const result = await graphqlFetch(document, {});
     expect(result).toEqual({ kind: 'unexpectedError' });
     expect(unexpectedError()).toBe('Something failed, Also this');
@@ -43,7 +53,11 @@ describe('graphqlFetch', () => {
 
   it('returns graphqlError without tripping the global signal when opted in', async () => {
     mockFetch({ data: null, errors: [{ message: 'Something failed' }] });
-    const result = await graphqlFetch(document, {}, { returnGraphqlErrors: true });
+    const result = await graphqlFetch(
+      document,
+      {},
+      { returnGraphqlErrors: true }
+    );
     expect(result).toEqual({
       kind: 'graphqlError',
       message: 'Something failed',
@@ -54,13 +68,20 @@ describe('graphqlFetch', () => {
 
   it('returns unexpectedError on non-200 responses', async () => {
     mockFetch({}, false, 500);
-    expect(await graphqlFetch(document, {})).toEqual({ kind: 'unexpectedError' });
+    expect(await graphqlFetch(document, {})).toEqual({
+      kind: 'unexpectedError',
+    });
     expect(unexpectedError()).toBe('HTTP 500');
   });
 
   it('returns unexpectedError when fetch rejects', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network down')));
-    expect(await graphqlFetch(document, {})).toEqual({ kind: 'unexpectedError' });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('Network down'))
+    );
+    expect(await graphqlFetch(document, {})).toEqual({
+      kind: 'unexpectedError',
+    });
     expect(unexpectedError()).toBe('Network down');
   });
 
@@ -75,30 +96,46 @@ describe('graphqlFetch', () => {
         },
       })
     );
-    expect(await graphqlFetch(document, {})).toEqual({ kind: 'unexpectedError' });
+    expect(await graphqlFetch(document, {})).toEqual({
+      kind: 'unexpectedError',
+    });
     expect(unexpectedError()).toBe('Unexpected token < in JSON');
   });
 
   it('returns unexpectedError when the body has neither data nor errors', async () => {
     mockFetch({});
-    expect(await graphqlFetch(document, {})).toEqual({ kind: 'unexpectedError' });
-    expect(unexpectedError()).toBe('Response contained neither data nor errors');
+    expect(await graphqlFetch(document, {})).toEqual({
+      kind: 'unexpectedError',
+    });
+    expect(unexpectedError()).toBe(
+      'Response contained neither data nor errors'
+    );
   });
 
   it('promotes a mapped success payload to unexpectedError, description on the signal', async () => {
     mockFetch({ data: { thing: { id: 'bad' } } });
-    const result = await graphqlFetch(document, {}, {
-      mapSuccessToError: data => (data.thing.id === 'bad' ? 'Record does not exist' : undefined),
-    });
+    const result = await graphqlFetch(
+      document,
+      {},
+      {
+        mapSuccessToError: data =>
+          data.thing.id === 'bad' ? 'Record does not exist' : undefined,
+      }
+    );
     expect(result).toEqual({ kind: 'unexpectedError' });
     expect(unexpectedError()).toBe('Record does not exist');
   });
 
   it('passes success through when the mapper returns undefined', async () => {
     mockFetch({ data: { thing: { id: 'ok' } } });
-    const result = await graphqlFetch(document, {}, {
-      mapSuccessToError: data => (data.thing.id === 'bad' ? 'Record does not exist' : undefined),
-    });
+    const result = await graphqlFetch(
+      document,
+      {},
+      {
+        mapSuccessToError: data =>
+          data.thing.id === 'bad' ? 'Record does not exist' : undefined,
+      }
+    );
     expect(result).toEqual({ kind: 'success', data: { thing: { id: 'ok' } } });
     expect(unexpectedError()).toBeUndefined();
   });

@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'solid-js'
+import type { ComponentProps } from 'solid-js';
 
 /*
  * Icon convention carried over from the RnD prototype (itself a port of the
@@ -11,7 +11,7 @@ import type { ComponentProps } from 'solid-js'
  * prototype's components/icons) as they're used, not speculatively.
  */
 
-export type IconProps = ComponentProps<'svg'>
+export type IconProps = ComponentProps<'svg'>;
 
 const Fill = (props: IconProps) => (
   <svg
@@ -21,7 +21,7 @@ const Fill = (props: IconProps) => (
     aria-hidden="true"
     {...props}
   />
-)
+);
 
 const Stroke = (props: IconProps) => (
   <svg
@@ -35,33 +35,36 @@ const Stroke = (props: IconProps) => (
     aria-hidden="true"
     {...props}
   />
-)
+);
 
 export const ChevronDownIcon = (props: IconProps) => (
   <Fill viewBox="0 0 24 24" {...props}>
     <path d="M12 13.586 6.707 8.293a1 1 0 0 0-1.414 1.414l6 6a1 1 0 0 0 1.414 0l6-6a1 1 0 1 0-1.414-1.414L12 13.586z" />
   </Fill>
-)
+);
 
 export const CheckIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <polyline points="20 6 9 17 4 12" />
   </Stroke>
-)
+);
 
 export const CloseIcon = (props: IconProps) => (
   <Fill viewBox="0 0 21 20" {...props}>
     <path d="M14.41 4.41a.833.833 0 0 1 1.18 1.18L11.177 10l4.411 4.41a.834.834 0 0 1 .075 1.094l-.075.085a.833.833 0 0 1-1.178 0L10 11.178l-4.41 4.411a.834.834 0 0 1-1.094.075l-.085-.075a.833.833 0 0 1 0-1.178L8.82 10l-4.41-4.41a.834.834 0 0 1-.075-1.094l.075-.085a.833.833 0 0 1 1.178 0L10 8.82z" />
   </Fill>
-)
+);
 
 export const SearchIcon = (props: IconProps) => (
   <Fill viewBox="0 0 16 16" {...props}>
     <path d="M7 1.333a5.667 5.667 0 0 1 4.45 9.175l3.021 3.02a.667.667 0 0 1-.942.943l-3.02-3.02A5.667 5.667 0 1 1 7 1.333zm0 1.334a4.333 4.333 0 1 0 3.044 7.417l.018-.022A4.306 4.306 0 0 0 11.333 7 4.333 4.333 0 0 0 7 2.667z" />
   </Fill>
-)
+);
 
-/* --- Action icons (used by buttons; from the current app via the prototype) --- */
+/**
+ * --- Action icons (used by buttons; from the current app via the prototype)
+ * ---
+ */
 
 /* New / add */
 export const PlusCircleIcon = (props: IconProps) => (
@@ -70,7 +73,7 @@ export const PlusCircleIcon = (props: IconProps) => (
     <line x1="12" y1="8" x2="12" y2="16" />
     <line x1="8" y1="12" x2="16" y2="12" />
   </Stroke>
-)
+);
 
 /* Export / download */
 export const DownloadIcon = (props: IconProps) => (
@@ -79,7 +82,7 @@ export const DownloadIcon = (props: IconProps) => (
     <polyline points="17 8 12 3 7 8" />
     <line x1="12" y1="3" x2="12" y2="15" />
   </Stroke>
-)
+);
 
 /* Save */
 export const SaveIcon = (props: IconProps) => (
@@ -88,7 +91,7 @@ export const SaveIcon = (props: IconProps) => (
     <polyline points="17 21 17 13 7 13 7 21" />
     <polyline points="7 3 7 8 15 8" />
   </Stroke>
-)
+);
 
 /* Validation error / warning */
 export const AlertTriangleIcon = (props: IconProps) => (
@@ -97,7 +100,7 @@ export const AlertTriangleIcon = (props: IconProps) => (
     <line x1="12" y1="9" x2="12" y2="13" />
     <line x1="12" y1="17" x2="12.01" y2="17" />
   </Stroke>
-)
+);
 
 /* Delete */
 export const TrashIcon = (props: IconProps) => (
@@ -107,7 +110,7 @@ export const TrashIcon = (props: IconProps) => (
     <line x1="10" y1="11" x2="10" y2="17" />
     <line x1="14" y1="11" x2="14" y2="17" />
   </Stroke>
-)
+);
 
 /* Cancel / dismiss */
 export const XCircleIcon = (props: IconProps) => (
@@ -116,7 +119,7 @@ export const XCircleIcon = (props: IconProps) => (
     <line x1="15" y1="9" x2="9" y2="15" />
     <line x1="9" y1="9" x2="15" y2="15" />
   </Stroke>
-)
+);
 
 /* Duplicate / make a copy */
 export const CopyIcon = (props: IconProps) => (
@@ -124,7 +127,7 @@ export const CopyIcon = (props: IconProps) => (
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </Stroke>
-)
+);
 
 /* Clear / remove */
 export const MinusCircleIcon = (props: IconProps) => (
@@ -132,14 +135,14 @@ export const MinusCircleIcon = (props: IconProps) => (
     <circle cx="12" cy="12" r="10" />
     <line x1="8" y1="12" x2="16" y2="12" />
   </Stroke>
-)
+);
 
 /* Comment / note (the table comment cell's popover trigger) */
 export const MessageSquareIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
   </Stroke>
-)
+);
 
 /* Exclamation-in-circle (the error Alert's icon — the current app's error
    alerts fall through to MUI's built-in ErrorOutline; this is the stroke-set
@@ -150,23 +153,28 @@ export const AlertCircleIcon = (props: IconProps) => (
     <line x1="12" y1="8" x2="12" y2="12" />
     <line x1="12" y1="16" x2="12.01" y2="16" />
   </Stroke>
-)
+);
 
-/* Filled circle-i (the current app's InfoIcon, verbatim incl. its 90×90 box) */
+/**
+ * Filled circle-i (the current app's InfoIcon, verbatim incl. its 90×90 box)
+ */
 export const InfoIcon = (props: IconProps) => (
   <Fill viewBox="0 0 90 90" {...props}>
     <path d="M35.688,40.036h11.359c2.23,0,4.027,1.795,4.027,4.027v16.861h2.551c1.084,0,1.965,0.881,1.965,1.969v6.023  c0,1.084-0.881,1.965-1.965,1.971h-17.15c-1.088,0-1.97-0.883-1.97-1.971v-6.023c0-1.088,0.882-1.969,1.97-1.969h2.552V48.634  l-3.442-1.537c-0.656-0.293-1.079-0.945-1.079-1.664v-4.217C34.505,40.563,35.038,40.036,35.688,40.036z M45.053,20.673  c4.025,0,7.291,3.268,7.291,7.301c0,4.029-3.266,7.299-7.291,7.299c-4.026,0-7.292-3.27-7.292-7.299  C37.761,23.94,41.027,20.673,45.053,20.673z M45.047,9.854c-19.818,0-35.885,16.084-35.885,35.924  c0,19.842,16.066,35.924,35.885,35.924c19.818,0.004,35.886-16.082,35.886-35.924C80.934,25.938,64.865,9.854,45.047,9.854z" />
   </Fill>
-)
+);
 
-/* --- Navigation icons (from the current app; added as the menu bar needs them) --- */
+/**
+ * --- Navigation icons (from the current app; added as the menu bar needs
+ * them) ---
+ */
 
 /* Inventory */
 export const StockIcon = (props: IconProps) => (
   <Fill viewBox="0 0 20 20" {...props}>
     <path d="M11.113.261l6.666 3.334c.85.422 1.387 1.288 1.388 2.237v7.943c0 .948-.538 1.815-1.386 2.236l-6.666 3.333c-.705.353-1.534.353-2.238 0L2.208 16.01c-.848-.428-1.381-1.3-1.375-2.244V5.832c0-.949.538-1.815 1.386-2.237l3.18-1.59c.037-.023.075-.043.115-.06L8.888.262c.7-.348 1.524-.348 2.225 0zM2.499 6.147l.001 7.625c-.002.316.175.607.456.748l6.21 3.105V9.481L2.5 6.147zm15 0L10.833 9.48v8.141l6.205-3.101c.283-.141.462-.43.462-.746V6.147zM5.836 3.649L3.533 4.801 10 8.034l2.303-1.152-6.467-3.233zm3.795-1.896l-1.93.964 6.465 3.234 2.3-1.15-6.096-3.048c-.233-.115-.507-.115-.739 0z" />
   </Fill>
-)
+);
 
 /* Distribution */
 export const TruckIcon = (props: IconProps) => (
@@ -176,21 +184,21 @@ export const TruckIcon = (props: IconProps) => (
     <circle cx="5.5" cy="18.5" r="2.5" />
     <circle cx="18.5" cy="18.5" r="2.5" />
   </Stroke>
-)
+);
 
 /* Dispensary */
 export const CustomersIcon = (props: IconProps) => (
   <Fill viewBox="0 0 20 20" {...props}>
     <path d="M10.833 11.667c2.302 0 4.167 1.865 4.167 4.166V17.5c0 .46-.373.833-.833.833-.46 0-.834-.373-.834-.833v-1.667c0-1.38-1.119-2.5-2.5-2.5H4.167c-1.381 0-2.5 1.12-2.5 2.5V17.5c0 .46-.373.833-.834.833-.46 0-.833-.373-.833-.833v-1.667c0-2.3 1.865-4.166 4.167-4.166zm5.027.733c.115-.446.57-.714 1.015-.599 1.839.475 3.124 2.133 3.125 4.032V17.5c0 .46-.373.833-.833.833-.46 0-.834-.373-.834-.833v-1.666c0-1.14-.772-2.134-1.875-2.419-.445-.115-.713-.57-.598-1.015zM7.5 1.667c2.301 0 4.167 1.865 4.167 4.166C11.667 8.135 9.8 10 7.5 10c-2.301 0-4.167-1.865-4.167-4.167 0-2.3 1.866-4.166 4.167-4.166zm5.026.735c.114-.446.568-.715 1.014-.601 1.844.472 3.133 2.133 3.133 4.037 0 1.903-1.29 3.564-3.133 4.036-.446.114-.9-.155-1.014-.6-.114-.446.155-.9.6-1.015 1.107-.283 1.88-1.28 1.88-2.421 0-1.142-.773-2.14-1.88-2.422-.445-.115-.714-.569-.6-1.014zM7.5 3.333c-1.38 0-2.5 1.12-2.5 2.5 0 1.381 1.12 2.5 2.5 2.5s2.5-1.119 2.5-2.5c0-1.38-1.12-2.5-2.5-2.5z" />
   </Fill>
-)
+);
 
 /* Cold chain */
 export const ThermometerIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 28 64" stroke-width="3" {...props}>
     <path d="M14,0 C9.9,0,6.5,3.2,6.5,7.2 L6.5,37.7 C2.4,40.2,0,44.1,0,48.6 C0,56,6.3,62,14,62 C21.7,62,28,56,28,48.6 C28,44.1,25.6,40.2,21.5,37.7 L21.5,7.2 C21.5,3.2,18.1,0,14,0 Z M26,48.6 C26,54.9,20.6,60,14,60 C7.4,60,2,54.9,2,48.6 C2,44.6,4.1,41.3,8,39.1 C8.3,38.9,8.5,38.6,8.5,38.2 L8.5,7.2 C8.5,4.3,11,2,14,2 C17,2,19.5,4.3,19.5,7.2 L19.5,11.2 L14.5,11.2 L14.5,13.2 L19.5,13.2 L19.5,21.2 L14.5,21.2 L14.5,23.2 L19.5,23.2 L19.5,31.2 L14.5,31.2 L14.5,33.2 L19.5,33.2 L19.5,38.3 C19.5,38.7,19.7,39,20,39.2 C23.9,41.3,26,44.6,26,48.6 Z" />
   </Stroke>
-)
+);
 
 /* Programs */
 export const FileIcon = (props: IconProps) => (
@@ -201,7 +209,7 @@ export const FileIcon = (props: IconProps) => (
     <line x1="16" y1="17" x2="8" y2="17" />
     <polyline points="10 9 9 9 8 9" />
   </Stroke>
-)
+);
 
 /* Daily Tallies */
 export const ClockIcon = (props: IconProps) => (
@@ -209,14 +217,14 @@ export const ClockIcon = (props: IconProps) => (
     <circle cx="12" cy="12" r="10" />
     <polyline points="12 6 12 12 16 14" />
   </Stroke>
-)
+);
 
 /* Reports */
 export const ReportsIcon = (props: IconProps) => (
   <Fill viewBox="0 0 20 20" {...props}>
     <path d="M6.334 1.595c.422-.185.913.008 1.097.43.184.422-.008.913-.43 1.097C3.91 4.47 2.1 7.713 2.575 11.05c.473 3.337 3.115 5.948 6.457 6.383 3.342.436 6.564-1.412 7.876-4.516.18-.424.668-.622 1.092-.443.424.18.623.668.443 1.092-1.604 3.794-5.542 6.052-9.627 5.52-4.084-.532-7.313-3.724-7.891-7.802-.579-4.078 1.634-8.042 5.41-9.69zm3.667-.762c2.431 0 4.763.966 6.482 2.685 1.719 1.72 2.684 4.05 2.684 6.482 0 .46-.373.833-.833.833h-8.333c-.46 0-.834-.373-.834-.833V1.667c0-.46.374-.834.834-.834zm.833 1.713v6.62h6.62c-.188-1.682-.941-3.26-2.15-4.47-1.209-1.208-2.787-1.962-4.47-2.15z" />
   </Fill>
-)
+);
 
 /* Catalogue */
 export const ListIcon = (props: IconProps) => (
@@ -228,7 +236,7 @@ export const ListIcon = (props: IconProps) => (
     <line x1="3" y1="12" x2="3.01" y2="12" />
     <line x1="3" y1="18" x2="3.01" y2="18" />
   </Stroke>
-)
+);
 
 /* Manage */
 export const SlidersIcon = (props: IconProps) => (
@@ -243,21 +251,21 @@ export const SlidersIcon = (props: IconProps) => (
     <line x1="9" y1="8" x2="15" y2="8" />
     <line x1="17" y1="16" x2="23" y2="16" />
   </Stroke>
-)
+);
 
 /* Settings */
 export const SettingsIcon = (props: IconProps) => (
   <Fill viewBox="0 0 20 20" {...props}>
     <path d="M10 0c1.38 0 2.5 1.12 2.5 2.5v.072c0 .216.13.41.336.499.203.09.44.046.591-.102l.05-.05c.469-.469 1.105-.733 1.769-.733.663 0 1.3.264 1.768.733.47.469.733 1.105.733 1.768 0 .664-.264 1.3-.733 1.769l-.043.043c-.155.159-.198.395-.109.598.024.053.042.109.054.166.099.146.264.236.442.237h.142c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5h-.072c-.216 0-.41.13-.495.328-.093.211-.05.448.098.6l.05.05c.469.468.733 1.104.733 1.768 0 .663-.264 1.3-.733 1.768-.469.47-1.105.733-1.768.733-.664 0-1.3-.264-1.769-.733l-.043-.043c-.159-.155-.395-.198-.606-.105-.198.085-.327.28-.328.492v.142c0 1.38-1.12 2.5-2.5 2.5-1.381 0-2.5-1.12-2.5-2.5-.005-.278-.146-.474-.403-.57-.203-.09-.44-.047-.591.1l-.05.05c-.469.47-1.105.734-1.769.734-.663 0-1.3-.264-1.768-.733-.47-.469-.733-1.105-.733-1.768 0-.664.264-1.3.733-1.769l.043-.043c.155-.159.198-.395.105-.606-.085-.198-.28-.327-.492-.328H2.5c-1.38 0-2.5-1.12-2.5-2.5 0-1.381 1.12-2.5 2.5-2.5.278-.005.474-.146.57-.403.09-.203.047-.44-.1-.591l-.05-.05c-.47-.469-.734-1.105-.734-1.769 0-.663.264-1.3.733-1.768.469-.47 1.105-.733 1.768-.733.664 0 1.3.264 1.769.733l.043.043c.159.155.395.198.598.109.053-.024.109-.042.166-.054.146-.099.236-.264.237-.442V2.5C7.5 1.12 8.62 0 10 0zm0 1.667c-.46 0-.833.373-.833.833v.145c-.004.88-.53 1.674-1.339 2.02-.07.031-.144.051-.22.061-.787.276-1.67.085-2.28-.512l-.05-.05c-.157-.157-.37-.244-.59-.244-.222 0-.434.087-.59.245-.157.156-.245.368-.245.59 0 .22.088.432.245.59l.056.056c.631.645.806 1.61.461 2.387-.313.85-1.114 1.424-2.04 1.445H2.5c-.46 0-.833.373-.833.834 0 .46.373.833.833.833h.145c.88.004 1.674.53 2.017 1.33.365.826.19 1.79-.448 2.443l-.05.05c-.157.156-.244.368-.244.59 0 .22.087.433.245.59.156.156.368.244.59.244.22 0 .432-.088.59-.245l.056-.056c.645-.631 1.61-.806 2.387-.461.85.313 1.424 1.114 1.445 2.04v.075c0 .46.373.833.834.833.46 0 .833-.373.833-.833v-.145c.004-.88.53-1.674 1.33-2.017.826-.365 1.79-.19 2.443.448l.05.05c.156.157.368.244.59.244.22 0 .433-.087.59-.245.156-.156.244-.368.244-.59 0-.22-.088-.432-.245-.59l-.056-.056c-.631-.645-.806-1.61-.442-2.435.343-.801 1.137-1.327 2.021-1.33h.075c.46 0 .833-.374.833-.834 0-.46-.373-.833-.833-.833h-.145c-.88-.004-1.674-.53-2.02-1.339-.031-.07-.051-.144-.061-.22-.276-.787-.085-1.67.512-2.28l.05-.05c.157-.157.244-.37.244-.59 0-.222-.087-.434-.245-.59-.156-.157-.368-.245-.59-.245-.22 0-.432.088-.59.245l-.056.056c-.645.631-1.61.806-2.427.445-.81-.346-1.335-1.14-1.339-2.024V2.5c0-.46-.373-.833-.833-.833zm0 5c1.84 0 3.333 1.492 3.333 3.333 0 1.84-1.492 3.333-3.333 3.333-1.84 0-3.333-1.492-3.333-3.333 0-1.84 1.492-3.333 3.333-3.333zm0 5c.92 0 1.667-.747 1.667-1.667S10.92 8.333 10 8.333 8.333 9.08 8.333 10 9.08 11.667 10 11.667z" />
   </Fill>
-)
+);
 
 /* Sync */
 export const RadioIcon = (props: IconProps) => (
   <Fill viewBox="0 0 20 20" {...props}>
     <path d="M15.3 3.577c.326-.325.854-.325 1.18 0 3.578 3.58 3.578 9.383 0 12.962-.326.326-.854.326-1.18 0-.325-.325-.325-.853 0-1.178 2.928-2.929 2.928-7.676 0-10.605-.325-.326-.325-.853 0-1.179zm-11.783 0c.326-.325.853-.325 1.179 0 .325.326.325.853 0 1.179-2.928 2.929-2.928 7.676 0 10.605.325.325.325.853 0 1.178-.326.326-.853.326-1.179 0-3.578-3.58-3.578-9.382 0-12.962zm9.425 2.36c.325-.327.853-.327 1.178-.002 1.096 1.095 1.711 2.58 1.711 4.128s-.615 3.032-1.71 4.127c-.326.325-.854.325-1.179-.001-.325-.326-.325-.853 0-1.179.783-.781 1.223-1.842 1.223-2.947 0-1.106-.44-2.167-1.222-2.948-.326-.326-.326-.853-.001-1.179zm-7.066-.01c.326-.325.853-.325 1.178 0 .326.326.325.854 0 1.18-.783.78-1.222 1.841-1.222 2.947s.44 2.167 1.222 2.948c.325.325.326.853 0 1.179-.325.325-.852.326-1.178 0-1.095-1.094-1.71-2.579-1.71-4.127 0-1.548.615-3.033 1.71-4.127zm4.122 1.631c1.38 0 2.5 1.12 2.5 2.5 0 1.381-1.12 2.5-2.5 2.5s-2.5-1.119-2.5-2.5c0-1.38 1.12-2.5 2.5-2.5z" />
   </Fill>
-)
+);
 
 /* Help */
 export const HelpIcon = (props: IconProps) => (
@@ -266,7 +274,7 @@ export const HelpIcon = (props: IconProps) => (
     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
     <line x1="12" y1="17" x2="12.01" y2="17" />
   </Stroke>
-)
+);
 
 /* Hamburger — opens the nav overlay below the docked-menu-bar breakpoint.
    Filled bars, matching the current app's MUI Menu icon. */
@@ -274,7 +282,7 @@ export const MenuIcon = (props: IconProps) => (
   <Fill viewBox="0 0 24 24" {...props}>
     <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
   </Fill>
-)
+);
 
 /* --- Footer icons (from the current app) ------------------------------- */
 
@@ -283,25 +291,25 @@ export const HomeIcon = (props: IconProps) => (
   <Fill viewBox="0 0 16 16" {...props}>
     <path d="M3.333 15.333a2 2 0 0 1-2-2V6c0-.206.095-.4.258-.526l6-4.667a.667.667 0 0 1 .818 0l6 4.667c.163.126.258.32.258.526v7.333a2 2 0 0 1-2 2H3.333zM8 2.178 2.667 6.326v7.007c0 .369.298.667.666.667h2V8c0-.335.247-.612.568-.66L6 7.334h4c.368 0 .667.299.667.667v6h2a.667.667 0 0 0 .666-.667V6.326L8 2.178zm1.333 6.489H6.667V14h2.666V8.667z" />
   </Fill>
-)
+);
 
 export const EditIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
   </Stroke>
-)
+);
 
 export const UserIcon = (props: IconProps) => (
   <Fill viewBox="0 0 16 16" {...props}>
     <path d="M10.667 9.333A3.333 3.333 0 0 1 14 12.667V14a.667.667 0 0 1-1.333 0v-1.333a2 2 0 0 0-2-2H5.333a2 2 0 0 0-2 2V14A.667.667 0 0 1 2 14v-1.333a3.333 3.333 0 0 1 3.333-3.334zM8 1.333A3.333 3.333 0 1 1 8 8a3.333 3.333 0 0 1 0-6.667zm0 1.334a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
   </Fill>
-)
+);
 
 export const TranslateIcon = (props: IconProps) => (
   <Fill viewBox="0 0 24 24" {...props}>
     <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z" />
   </Fill>
-)
+);
 
 export const CentralIcon = (props: IconProps) => (
   <Fill viewBox="0 0 512 640" {...props}>
@@ -316,7 +324,7 @@ export const CentralIcon = (props: IconProps) => (
     <path d="M366,263h-50c-3.866,0-7-3.134-7-7s3.134-7,7-7h50c3.866,0,7,3.134,7,7S369.866,263,366,263z" />
     <path d="M196,263h-50c-3.866,0-7-3.134-7-7s3.134-7,7-7h50c3.866,0,7,3.134,7,7S199.866,263,196,263z" />
   </Fill>
-)
+);
 
 /*
  * Directional (points forward). The current app wraps it in RtlFlipIcon;
@@ -326,37 +334,42 @@ export const ArrowRightIcon = (props: IconProps) => (
   <Fill viewBox="0 0 16 16" data-flip-rtl="" {...props}>
     <path d="M8.862 3.529c.26-.26.682-.26.943 0l4 4a.68.68 0 0 1 .176.314.672.672 0 0 1-.176.628l.053-.06a.67.67 0 0 1-.04.046l-.013.014-4 4a.667.667 0 0 1-.943-.942l2.861-2.863H2.667a.667.667 0 0 1-.66-.567L2 8c0-.368.298-.667.667-.667h9.056L8.862 4.47a.667.667 0 0 1-.07-.86z" />
   </Fill>
-)
+);
 
 /* Pagination pager arrows — ported verbatim from the current app's MUI icons
-   (FirstPage / NavigateBefore / NavigateNext / LastPage) so the pager pixel-matches
-   Open mSupply. Material-style filled paths; data-flip-rtl mirrors them in RTL. */
+ * (FirstPage / NavigateBefore / NavigateNext / LastPage) so the pager
+ * pixel-matches Open mSupply. Material-style filled paths; data-flip-rtl
+ * mirrors them in RTL.
+ */
 export const FirstPageIcon = (props: IconProps) => (
   <Fill viewBox="0 0 24 24" data-flip-rtl="" {...props}>
     <path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z" />
   </Fill>
-)
+);
 
 export const NavigateBeforeIcon = (props: IconProps) => (
   <Fill viewBox="0 0 24 24" data-flip-rtl="" {...props}>
     <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
   </Fill>
-)
+);
 
 export const NavigateNextIcon = (props: IconProps) => (
   <Fill viewBox="0 0 24 24" data-flip-rtl="" {...props}>
     <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
   </Fill>
-)
+);
 
 export const LastPageIcon = (props: IconProps) => (
   <Fill viewBox="0 0 24 24" data-flip-rtl="" {...props}>
     <path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z" />
   </Fill>
-)
+);
 
-/* Full screen: corner arrows out (maximise) / in (minimise). Ported from the current
-   app's Maximise/Minimise SvgIcons — used by the DataTable full-screen toggle. */
+/*
+ * Full screen: corner arrows out (maximise) / in (minimise). Ported from the
+ * current app's Maximise/Minimise SvgIcons — used by the DataTable full-screen
+ * toggle.
+ */
 export const MaximiseIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <polyline points="15 3 21 3 21 9" />
@@ -364,7 +377,7 @@ export const MaximiseIcon = (props: IconProps) => (
     <line x1="21" y1="3" x2="14" y2="10" />
     <line x1="3" y1="21" x2="10" y2="14" />
   </Stroke>
-)
+);
 
 export const MinimiseIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -373,7 +386,7 @@ export const MinimiseIcon = (props: IconProps) => (
     <line x1="14" y1="10" x2="21" y2="3" />
     <line x1="3" y1="21" x2="10" y2="14" />
   </Stroke>
-)
+);
 
 // Table/rows view — the "switch to table" control (a framed grid of rows/cols).
 export const TableViewIcon = (props: IconProps) => (
@@ -383,7 +396,7 @@ export const TableViewIcon = (props: IconProps) => (
     <line x1="3" y1="15" x2="21" y2="15" />
     <line x1="12" y1="3" x2="12" y2="21" />
   </Stroke>
-)
+);
 
 // Card/grid view — the "switch to cards" control (2×2 rounded squares).
 export const CardViewIcon = (props: IconProps) => (
@@ -393,7 +406,7 @@ export const CardViewIcon = (props: IconProps) => (
     <rect x="4" y="14" width="6" height="6" rx="1" />
     <rect x="14" y="14" width="6" height="6" rx="1" />
   </Stroke>
-)
+);
 
 /*
  * The open-mSupply logo (MSupplyGuy). Keeps its own brand gradient (orange →
@@ -437,4 +450,4 @@ export const MSupplyGuyLogo = (props: IconProps) => (
       d="M162.933,118.165 C161.551,117.737,159.965,116.153,159.491,114.727 C159.233,113.953,159.231,113.757,159.264,95.4329 L159.297,76.9202 L159.704,76.0617 C160.245,74.9187,161.076,74.0563,162.208,73.4615 C163.093,72.996,163.19,72.9746,164.764,72.8956 C166.365,72.8153,166.408,72.8053,166.784,72.4293 C167.274,71.94,167.399,71.379,167.403,69.673 L167.406,68.3002 L179.666,68.3002 L191.926,68.3002 L191.931,69.6092 C191.939,71.3719,192.064,71.9456,192.547,72.429 C192.937,72.8185,192.966,72.8254,194.574,72.9052 C196.346,72.9931,196.875,73.1521,197.893,73.9019 C198.682,74.4836,199.55,75.6572,199.845,76.5416 C200.098,77.3013,200.101,77.5777,200.068,95.825 L200.035,114.338 L199.628,115.196 C199.091,116.331,198.257,117.199,197.124,117.805 L196.204,118.296 L179.858,118.32 C166.132,118.341,163.419,118.316,162.933,118.165 M182.731,106.78 C183.649,106.208,183.684,106.052,183.731,102.312 L183.774,98.971 L187.116,98.9282 C190.288,98.8876,190.48,98.8713,190.904,98.6069 C191.762,98.0726,191.851,97.764,191.905,95.1417 C191.96,92.5344,191.859,92.0214,191.166,91.357 C190.644,90.8571,190.111,90.788,186.731,90.7818 L183.772,90.7762 L183.73,87.4878 C183.691,84.3982,183.672,84.168,183.411,83.6803 C182.934,82.7891,182.475,82.6669,179.606,82.6669 C177.405,82.6669,177.135,82.6911,176.742,82.9223 C176.184,83.2509,175.847,83.709,175.702,84.3369 C175.638,84.6125,175.584,86.174,175.583,87.807 L175.579,90.7762 L172.61,90.7792 C170.977,90.7809,169.416,90.8345,169.14,90.8984 C168.512,91.0441,168.054,91.381,167.726,91.9389 C167.494,92.3315,167.47,92.6021,167.47,94.8027 C167.47,97.6717,167.592,98.1305,168.484,98.6075 C168.971,98.8685,169.202,98.8879,172.291,98.9269 L175.579,98.9683 L175.585,101.928 C175.591,105.219,175.665,105.836,176.106,106.316 C176.78,107.047,177.198,107.134,179.858,107.095 C182.094,107.061,182.319,107.036,182.731,106.78 M164.353,66.0273 C164.113,65.9078,163.797,65.6478,163.65,65.4496 C163.391,65.0997,163.383,64.9345,163.348,59.8051 C163.307,53.8953,163.311,53.8656,164.201,53.2675 L164.635,52.9757 L179.655,52.9757 L194.676,52.9757 L195.151,53.2986 C196.029,53.8951,196.012,53.7711,196.012,59.6799 L196.012,64.992 L195.38,65.6245 L194.747,66.2569 L179.768,66.2508 C165.926,66.2452,164.755,66.2282,164.353,66.0273"
     />
   </svg>
-)
+);

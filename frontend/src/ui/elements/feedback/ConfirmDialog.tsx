@@ -1,17 +1,17 @@
-import { type JSX } from 'solid-js'
-import { CheckIcon, HelpIcon, XCircleIcon } from '../../icons'
-import { Button } from '../buttons/Button'
-import { Dialog } from './Dialog'
+import { type JSX } from 'solid-js';
+import { CheckIcon, HelpIcon, XCircleIcon } from '../../icons';
+import { Button } from '../buttons/Button';
+import { Dialog } from './Dialog';
 
 export interface ConfirmDialogProps {
-  open: boolean
+  open: boolean;
   /** Every close path — Cancel, scrim, Escape. OK runs onConfirm first. */
-  onClose: () => void
-  title?: string
-  message: JSX.Element
-  confirmLabel?: string
-  cancelLabel?: string
-  onConfirm: () => void
+  onClose: () => void;
+  title?: string;
+  message: JSX.Element;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm: () => void;
 }
 
 /*
@@ -40,8 +40,8 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => (
           variant="secondary"
           icon={<CheckIcon />}
           onClick={() => {
-            props.onConfirm()
-            props.onClose()
+            props.onConfirm();
+            props.onClose();
           }}
         >
           {props.confirmLabel ?? 'OK'}
@@ -49,4 +49,4 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => (
       </>
     }
   />
-)
+);

@@ -1,32 +1,35 @@
-import { createSignal, For, Show, type JSX } from 'solid-js'
-import * as DropdownMenu from '@kobalte/core/dropdown-menu'
-import { ChevronDownIcon } from '../../icons'
-import { createRipple } from '../../utils/createRipple'
-import { Ripple } from './Ripple'
-import styles from './SplitButton.module.css'
+import { createSignal, For, Show, type JSX } from 'solid-js';
+import * as DropdownMenu from '@kobalte/core/dropdown-menu';
+import { ChevronDownIcon } from '../../icons';
+import { createRipple } from '../../utils/createRipple';
+import { Ripple } from './Ripple';
+import styles from './SplitButton.module.css';
 
 export interface SplitButtonOption {
-  value: string
-  label: string
+  value: string;
+  label: string;
 }
 
 interface SplitButtonProps {
   /** Leading icon for the main action. */
-  icon?: JSX.Element
-  options: SplitButtonOption[]
-  /** Controlled selected value; omit for uncontrolled (defaults to first option). */
-  value?: string
-  defaultValue?: string
+  icon?: JSX.Element;
+  options: SplitButtonOption[];
+  /**
+   * Controlled selected value; omit for uncontrolled (defaults to first
+   * option).
+   */
+  value?: string;
+  defaultValue?: string;
   /** Fired when the selection changes via the menu. */
-  onValueChange?: (value: string) => void
+  onValueChange?: (value: string) => void;
   /**
    * Fired when the main action runs — either the main (left) button is clicked,
    * or a menu item is picked (which selects AND acts, like the app's
    * SplitButton/ExportSelector).
    */
-  onAction?: (value: string) => void
+  onAction?: (value: string) => void;
   /** Accessible name for the caret trigger (it has no visible text). */
-  menuLabel?: string
+  menuLabel?: string;
 }
 
 /*
@@ -43,20 +46,20 @@ interface SplitButtonProps {
  */
 export const SplitButton = (props: SplitButtonProps) => {
   const [internal, setInternal] = createSignal(
-    props.defaultValue ?? props.options[0]?.value,
-  )
-  const selectedValue = () => props.value ?? internal()
+    props.defaultValue ?? props.options[0]?.value
+  );
+  const selectedValue = () => props.value ?? internal();
   const selectedOption = () =>
-    props.options.find(o => o.value === selectedValue()) ?? props.options[0]
+    props.options.find(o => o.value === selectedValue()) ?? props.options[0];
 
-  const mainRipple = createRipple()
-  const caretRipple = createRipple()
+  const mainRipple = createRipple();
+  const caretRipple = createRipple();
 
   const pick = (value: string) => {
-    setInternal(value)
-    props.onValueChange?.(value)
-    props.onAction?.(value)
-  }
+    setInternal(value);
+    props.onValueChange?.(value);
+    props.onAction?.(value);
+  };
 
   return (
     <div class={styles.split}>
@@ -80,7 +83,10 @@ export const SplitButton = (props: SplitButtonProps) => {
           onPointerDown={caretRipple.onPointerDown}
         >
           <ChevronDownIcon class={styles.caretIcon} />
-          <Ripple ripples={caretRipple.ripples()} onDone={caretRipple.dismiss} />
+          <Ripple
+            ripples={caretRipple.ripples()}
+            onDone={caretRipple.dismiss}
+          />
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content class={styles.content}>
@@ -101,5 +107,5 @@ export const SplitButton = (props: SplitButtonProps) => {
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
     </div>
-  )
-}
+  );
+};
