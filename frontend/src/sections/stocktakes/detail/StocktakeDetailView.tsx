@@ -20,7 +20,7 @@ import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
-import { InfoIcon, MinusCircleIcon } from '../../../ui/icons';
+import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -553,7 +553,7 @@ const StocktakeDetailView: Component = () => {
     // (kdd/solid-reactivity-pitfalls). Its fallback is a centred "Loading…"
     // (EmptyState). Every later save is a mutate(), which never suspends, so
     // this fallback shows only on the initial fetch.
-    <Suspense fallback={<EmptyState message={t('common.loading')} />}>
+    <Suspense fallback={<EmptyState graphic={false} message={t('common.loading')} />}>
       {/* NON-keyed Show: the subtree stays mounted while info() is truthy. It must NOT be `keyed`
           — a keyed Show re-runs (tears down + rebuilds) its child whenever the `when` value's
           IDENTITY changes, and every stocktake-level save sets a fresh node object (setInfo), so
@@ -694,6 +694,16 @@ const StocktakeDetailView: Component = () => {
               onSort={onSort}
               onRowClick={isDisabled(node()) ? undefined : openRow}
               emptyMessage={t('stocktake.detail.empty')}
+              // "Add item" — only offered while the stocktake is editable (an
+              // empty finalised/locked one can't gain lines). The add-line flow
+              // doesn't exist yet, so the handler is a no-op placeholder.
+              empty={
+                isDisabled(node()) ? undefined : (
+                  <Button icon={<PlusCircleIcon />} onClick={() => {}}>
+                    {t('stocktake.detail.add-item')}
+                  </Button>
+                )
+              }
               rowGroup={{
                 columnId: 'code',
                 labelKey: 'stocktake.column.item-name',
