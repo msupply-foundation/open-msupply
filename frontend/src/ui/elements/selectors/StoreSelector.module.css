@@ -1,0 +1,100 @@
+/*
+ * Store selector panel. Mirrors the current app's login store-selector:
+ * instructions, a search field, a bordered scrollable list of selectable rows
+ * with an active/hover tint derived from the primary token, and a Continue
+ * button in the footer. All colours from tokens, rem sizing, logical properties
+ * for RTL.
+ */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  inline-size: 26rem;
+  max-inline-size: 100%;
+}
+
+.instructions {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Bordered list container — paper surface, rounded, scrolls when tall. */
+.listPanel {
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-block-size: 17rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.row {
+  inline-size: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0.875rem 1.125rem;
+  border: none;
+  background: transparent;
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-md);
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.row:hover {
+  background: color-mix(in srgb, var(--primary-main) 4%, transparent);
+}
+
+.row[data-active] {
+  background: color-mix(in srgb, var(--primary-main) 8%, transparent);
+}
+
+.row[data-active]:hover {
+  background: color-mix(in srgb, var(--primary-main) 14%, transparent);
+}
+
+.row:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 0.125rem var(--primary-main);
+}
+
+.storeName {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tags {
+  display: inline-flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.empty {
+  padding: var(--space-5);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}

@@ -35,7 +35,7 @@ export const currentLanguageName = (): string => LANGUAGE_ENDONYM[locale()];
  */
 export const getLocalisedFullName = (
   firstName: StringOrEmpty,
-  lastName: StringOrEmpty,
+  lastName: StringOrEmpty
 ): string => `${firstName ?? ''} ${lastName ?? ''}`.trim();
 
 // Minimal English pluralisation for dynamic words (the reference app used the

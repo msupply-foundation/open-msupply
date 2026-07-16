@@ -1,9 +1,9 @@
-import type { JSX } from 'solid-js'
-import styles from './HeaderButtons.module.css'
+import type { JSX } from 'solid-js';
+import styles from './HeaderButtons.module.css';
 
 export interface HeaderButtonsProps {
   /** The page's actions — library Button / SplitButton instances. */
-  children: JSX.Element
+  children: JSX.Element;
 }
 
 /*
@@ -15,4 +15,4 @@ export interface HeaderButtonsProps {
  */
 export const HeaderButtons = (props: HeaderButtonsProps) => (
   <div class={styles.buttons}>{props.children}</div>
-)
+);

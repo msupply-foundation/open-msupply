@@ -1,13 +1,13 @@
-import { createSignal, type JSX } from 'solid-js'
-import { SidePanel, SidePanelSection } from '../ui/layout/SidePanel/SidePanel'
-import { Button } from '../ui/elements/buttons/Button'
-import { useIsNavOverlay } from '../ui/utils/createMediaQuery'
-import styles from './SidePanelShowcase.module.css'
+import { createSignal, type JSX } from 'solid-js';
+import { SidePanel, SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
+import { Button } from '../ui/elements/buttons/Button';
+import { useIsNavOverlay } from '../ui/utils/createMediaQuery';
+import styles from './SidePanelShowcase.module.css';
 
 const Card = (props: {
-  title: string
-  lead: JSX.Element
-  children: JSX.Element
+  title: string;
+  lead: JSX.Element;
+  children: JSX.Element;
 }) => (
   <section class={styles.card}>
     <header class={styles.cardHeader}>{props.title}</header>
@@ -16,14 +16,14 @@ const Card = (props: {
       {props.children}
     </div>
   </section>
-)
+);
 
 export const SidePanelShowcase = () => {
-  const [open, setOpen] = createSignal(false)
+  const [open, setOpen] = createSignal(false);
   // Below the nav-overlay breakpoint the component itself doesn't render
   // (its known skeleton-stage gap), so the toggle would move nothing —
   // disable it rather than animate empty space.
-  const isOverlay = useIsNavOverlay()
+  const isOverlay = useIsNavOverlay();
 
   return (
     <div class={styles.stack}>
@@ -35,21 +35,20 @@ export const SidePanelShowcase = () => {
             additional info, related documents, comments.{' '}
             <code>&lt;SidePanel&gt;</code> is pure layout with zero state — a
             real page composes <code>&lt;SidePanelSection&gt;</code>s (field
-            rows are a plain <code>&lt;dl&gt;</code> of dt/dd pairs, free text
-            a <code>&lt;p&gt;</code>) and docks it in the Page frame's{' '}
-            <code>sidePanel</code> slot — see the Outbound Shipments detail
-            page for the real assembly. The button slides it out over the page
-            from the inline-end edge, full viewport height — demo rigging
-            around the panel, previewing the toggled-drawer behaviour that
-            arrives with the Feedback/Drawer work (which adds the scrim, focus
-            trap and Escape). Known gap: below the nav-overlay breakpoint
-            (1024px) the panel doesn't render at all — on a narrow viewport
-            the button is disabled.
+            rows are a plain <code>&lt;dl&gt;</code> of dt/dd pairs, free text a{' '}
+            <code>&lt;p&gt;</code>) and docks it in the Page frame's{' '}
+            <code>sidePanel</code> slot — see the Outbound Shipments detail page
+            for the real assembly. The button slides it out over the page from
+            the inline-end edge, full viewport height — demo rigging around the
+            panel, previewing the toggled-drawer behaviour that arrives with the
+            Feedback/Drawer work (which adds the scrim, focus trap and Escape).
+            Known gap: below the nav-overlay breakpoint (1024px) the panel
+            doesn't render at all — on a narrow viewport the button is disabled.
           </>
         }
       >
         <Button
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => setOpen(o => !o)}
           aria-expanded={open()}
           disabled={isOverlay()}
         >
@@ -82,5 +81,5 @@ export const SidePanelShowcase = () => {
         </div>
       </Card>
     </div>
-  )
-}
+  );
+};

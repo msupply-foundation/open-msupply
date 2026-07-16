@@ -1,10 +1,10 @@
-import type { JSX } from 'solid-js'
-import styles from './EmptyState.module.css'
+import type { JSX } from 'solid-js';
+import styles from './EmptyState.module.css';
 
 export interface EmptyStateProps {
-  message: string
+  message: string;
   /** Optional call to action below the message (e.g. a "New …" Button). */
-  children?: JSX.Element
+  children?: JSX.Element;
 }
 
 /*
@@ -18,4 +18,4 @@ export const EmptyState = (props: EmptyStateProps) => (
     <p class={styles.message}>{props.message}</p>
     {props.children}
   </div>
-)
+);

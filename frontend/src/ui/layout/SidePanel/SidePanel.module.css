@@ -1,28 +1,43 @@
 /*
- * Side panel — docked inline-end in a Page frame, own scroll. Sections are
- * divider-separated; field rows inside a section are a semantic <dl> styled
- * here (label start, value end), so pages compose plain markup and own no
- * CSS of their own.
+ * Details panel — a DOCKED column at the inline-end (right) edge of the Page's middle region.
+ * When the page opens it, it takes its own width and PUSHES the body (the body shrinks to fit) —
+ * it does not float over the content (matching Open mSupply, which animates the panel's width and
+ * moves the view). Dismissed by its own close button (top inline-end) or the header toggle; the
+ * page owns the open/close boolean (Page.sidePanelOpen) and hides the open button while it's open.
+ * Own scroll, so long field lists scroll independently of the body.
  */
 
 .panel {
   flex-shrink: 0;
-  inline-size: 17.5rem;
+  inline-size: 20rem;
+  max-inline-size: 100%;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
-  background: var(--bg-toolbar);
+  background: var(--surface-raised);
   border-inline-start: 1px solid var(--color-divider);
 }
 
-/*
- * Which-element decision (principle #7): below the nav-overlay breakpoint
- * (1024px — must match styles/breakpoints.ts navOverlay) the docked panel
- * doesn't render. Interim: the toggled overlay drawer that replaces it on
- * narrow viewports arrives with the Feedback/Drawer work (see SidePanel.tsx).
- */
-@media (width < 1024px) {
-  .panel {
-    display: none;
-  }
+/* Panel header: title inline-start, close button pinned inline-end. Sticky so it stays put while
+   the panel body scrolls. */
+.header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  border-block-end: 1px solid var(--color-divider);
+}
+
+.heading {
+  margin: 0;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
 }
 
 .section {

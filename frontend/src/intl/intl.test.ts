@@ -4,7 +4,8 @@ import commonEn from './locales/en/common.json';
 import commonAr from './locales/ar/common.json';
 
 // Seed the dictionaries signal directly (the loading pipeline is tested
-// separately) so we exercise the translator + plural selection deterministically.
+// separately) so we exercise the translator + plural selection
+// deterministically.
 setDictionaries({ en: commonEn, ar: commonAr });
 
 describe('t', () => {

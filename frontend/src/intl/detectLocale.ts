@@ -1,6 +1,7 @@
 import { DEFAULT_LOCALE, isSupported, type SupportedLocale } from './locales';
 
-// Where a user's chosen locale is persisted, keyed by username (cf. appData.ts).
+// Where a user's chosen locale is persisted, keyed by username (cf.
+// appData.ts).
 const USER_LOCALE_KEY = 'oms_i18n_user_locale';
 // Where the last active locale is remembered for first paint before login.
 const LAST_LOCALE_KEY = 'oms_i18n_last_locale';
@@ -13,14 +14,16 @@ const readUserLocales = (): Record<string, string> => {
   }
 };
 
-export const getUserLocale = (username: string): SupportedLocale | undefined => {
+export const getUserLocale = (
+  username: string
+): SupportedLocale | undefined => {
   const stored = readUserLocales()[username];
   return stored && isSupported(stored) ? stored : undefined;
 };
 
 export const persistUserLocale = (
   username: string,
-  locale: SupportedLocale,
+  locale: SupportedLocale
 ): void => {
   try {
     const all = readUserLocales();
@@ -51,8 +54,9 @@ const normalise = (tag?: string | null): SupportedLocale | undefined => {
 /**
  * Resolve the initial locale for first paint. Order: `?lng=` querystring →
  * last-active (localStorage) → the browser's preferred languages → default.
- * Language is normally set from the user profile on login (changeLanguage); this
- * covers first paint and refresh. A small pure function rather than a plugin chain.
+ * Language is normally set from the user profile on login (changeLanguage);
+ * this covers first paint and refresh. A small pure function rather than a
+ * plugin chain.
  */
 export const detectLocale = (): SupportedLocale => {
   try {
