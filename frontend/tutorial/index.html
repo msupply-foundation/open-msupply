@@ -1,197 +1,329 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Frontend Patterns Tutorial · open-mSupply</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-<button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
-<div class="layout">
-  <aside class="sidebar">
-    <div class="brand"><span class="dot"></span> FE Patterns</div>
-    <nav>
-      <a class="current" href="index.html"><span class="num">·</span>Overview</a>
-      <a href="01-graphql-codegen.html"><span class="num">1</span>Codegen &amp; graphqlFetch</a>
-      <a href="02-init-auth-error.html"><span class="num">2</span>Init, auth &amp; errors</a>
-      <a href="03-store-login-state.html"><span class="num">3</span>Store &amp; global state</a>
-      <a href="04-list-table-url.html"><span class="num">4</span>Lists: table &amp; URL</a>
-      <a href="05-createresource.html"><span class="num">5</span>createResource</a>
-      <a href="06-store-scoped.html"><span class="num">6</span>Store-scoped caches</a>
-    </nav>
-  </aside>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Frontend Patterns Tutorial · open-mSupply</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <button class="theme-toggle" onclick="toggleTheme()">◐ theme</button>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand"><span class="dot"></span> FE Patterns</div>
+        <nav>
+          <a class="current" href="index.html"
+            ><span class="num">·</span>Overview</a
+          >
+          <a href="01-graphql-codegen.html"
+            ><span class="num">1</span>Codegen &amp; graphqlFetch</a
+          >
+          <a href="02-init-auth-error.html"
+            ><span class="num">2</span>Init, auth &amp; errors</a
+          >
+          <a href="03-store-login-state.html"
+            ><span class="num">3</span>Store &amp; global state</a
+          >
+          <a href="04-list-table-url.html"
+            ><span class="num">4</span>Lists: table &amp; URL</a
+          >
+          <a href="05-createresource.html"
+            ><span class="num">5</span>createResource</a
+          >
+          <a href="06-store-scoped.html"
+            ><span class="num">6</span>Store-scoped caches</a
+          >
+          <a href="07-domain-modules.html"
+            ><span class="num">7</span>Domain modules</a
+          >
+          <a href="08-action-modal.html"
+            ><span class="num">8</span>Action modals</a
+          >
+          <a href="09-datatable-cards.html"
+            ><span class="num">9</span>Table: cards &amp; groups</a
+          >
+          <a href="datatable-reference.html"
+            ><span class="num">★</span>DataTable reference</a
+          >
+        </nav>
+      </aside>
 
-  <main class="content">
-    <div class="content-inner">
-      <p class="eyebrow">Developer Tutorial</p>
-      <h1>The open-mSupply frontend, from the state up</h1>
-      <p class="lede">
-        This is a hands-on tour of how the SolidJS front end is wired — its data flow, its
-        global state, and the small set of deliberate patterns everything is built from. By
-        the end you could re-create the front end from scratch. The focus is
-        <strong>functionality and state</strong>, not styling or components.
-      </p>
+      <main class="content">
+        <div class="content-inner">
+          <p class="eyebrow">Developer Tutorial</p>
+          <h1>The open-mSupply frontend, from the state up</h1>
+          <p class="lede">
+            This is a hands-on tour of how the SolidJS front end is wired — its
+            data flow, its global state, and the small set of deliberate
+            patterns everything is built from. By the end you could re-create
+            the front end from scratch. The focus is
+            <strong>functionality and state</strong>, not styling or components.
+          </p>
 
-      <div class="box">
-        <p class="box-title">How to read this</p>
-        <p>
-          Six chapters, in dependency order. Each one <strong>builds a small example
-          vertical</strong> called <code>widgets/</code> — from an empty <code>.graphql</code>
-          file to a working list-and-detail screen — introducing each pattern exactly when the
-          build needs it. This mirrors how the app's real reference vertical,
-          <code>src/sections/stocktakes/</code>, is put together. Every chapter points back to
-          the real file it is distilled from.
-        </p>
-        <p style="margin-bottom:0">
-          <strong>The <code>widgets/</code> code is a teaching device — it does not exist in
-          the repo.</strong> When you want to see a pattern in production, follow the
-          <span class="chip">Real code</span> links to <code>src/</code>.
-        </p>
-      </div>
+          <div class="box">
+            <p class="box-title">How to read this</p>
+            <p>
+              Nine chapters, in dependency order. Each one
+              <strong>builds a small example vertical</strong> called
+              <code>widgets/</code> — from an empty <code>.graphql</code>
+              file to a working list-and-detail screen — introducing each
+              pattern exactly when the build needs it. This mirrors how the
+              app's real reference vertical,
+              <code>src/sections/stocktakes/</code>, is put together. Every
+              chapter points back to the real file it is distilled from.
+            </p>
+            <p style="margin-bottom: 0">
+              <strong
+                >The <code>widgets/</code> code is a teaching device — it does
+                not exist in the repo.</strong
+              >
+              When you want to see a pattern in production, follow the
+              <span class="chip">Real code</span> links to <code>src/</code>.
+            </p>
+          </div>
 
-      <h2>The app in one picture</h2>
-      <p>
-        There is no Redux, no Apollo/urql, and — perhaps surprisingly — <strong>no React-style
-        provider tree or <code>createContext</code></strong>. Global state is just
-        module-level SolidJS signals, imported directly. Data flows one way: the URL and user
-        actions drive query variables; a single never-throwing fetch turns those into typed
-        results; errors are values handled once, globally.
-      </p>
+          <h2>The app in one picture</h2>
+          <p>
+            There is no Redux, no Apollo/urql, and — perhaps surprisingly —
+            <strong
+              >no React-style provider tree or
+              <code>createContext</code></strong
+            >. Global state is just module-level SolidJS signals, imported
+            directly. Data flows one way: the URL and user actions drive query
+            variables; a single never-throwing fetch turns those into typed
+            results; errors are values handled once, globally.
+          </p>
 
-      <div class="diagram">
-        <svg viewBox="0 0 720 340" role="img" aria-label="Data flow from URL and actions through the query layer to typed results, with global error handling">
-          <defs>
-            <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
-              <path d="M0,0 L7,3 L0,6 Z" fill="#8f90a6" />
-            </marker>
-            <style>
-              .bx { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; rx: 8; }
-              .bt { fill: var(--text); font: 600 13px system-ui; }
-              .bs { fill: var(--text-3); font: 11px ui-monospace, monospace; }
-              .ln { stroke: #8f90a6; stroke-width: 1.5; fill: none; }
-              .brandbx { fill: color-mix(in srgb, #e95c30 10%, var(--surface)); stroke: #e95c30; }
-              .actionbx { fill: color-mix(in srgb, #3e7bfa 10%, var(--surface)); stroke: #3e7bfa; }
-            </style>
-          </defs>
+          <div class="diagram">
+            <svg
+              viewBox="0 0 720 340"
+              role="img"
+              aria-label="Data flow from URL and actions through the query layer to typed results, with global error handling"
+            >
+              <defs>
+                <marker
+                  id="ah"
+                  markerWidth="9"
+                  markerHeight="9"
+                  refX="7"
+                  refY="3"
+                  orient="auto"
+                >
+                  <path d="M0,0 L7,3 L0,6 Z" fill="#8f90a6" />
+                </marker>
+                <style>
+                  .bx {
+                    fill: var(--surface);
+                    stroke: var(--border);
+                    stroke-width: 1.5;
+                    rx: 8;
+                  }
+                  .bt {
+                    fill: var(--text);
+                    font: 600 13px system-ui;
+                  }
+                  .bs {
+                    fill: var(--text-3);
+                    font:
+                      11px ui-monospace,
+                      monospace;
+                  }
+                  .ln {
+                    stroke: #8f90a6;
+                    stroke-width: 1.5;
+                    fill: none;
+                  }
+                  .brandbx {
+                    fill: color-mix(in srgb, #e95c30 10%, var(--surface));
+                    stroke: #e95c30;
+                  }
+                  .actionbx {
+                    fill: color-mix(in srgb, #3e7bfa 10%, var(--surface));
+                    stroke: #3e7bfa;
+                  }
+                </style>
+              </defs>
 
-          <rect class="bx" x="20" y="20" width="180" height="54" rx="8" />
-          <text class="bt" x="34" y="42">URL  ?query={JSON}</text>
-          <text class="bs" x="34" y="60">filter · sort · page</text>
+              <rect class="bx" x="20" y="20" width="180" height="54" rx="8" />
+              <text class="bt" x="34" y="42">URL ?query={JSON}</text>
+              <text class="bs" x="34" y="60">filter · sort · page</text>
 
-          <rect class="bx" x="20" y="96" width="180" height="54" rx="8" />
-          <text class="bt" x="34" y="118">User actions</text>
-          <text class="bs" x="34" y="136">login · store · clicks</text>
+              <rect class="bx" x="20" y="96" width="180" height="54" rx="8" />
+              <text class="bt" x="34" y="118">User actions</text>
+              <text class="bs" x="34" y="136">login · store · clicks</text>
 
-          <rect class="bx" x="270" y="58" width="170" height="54" rx="8" />
-          <text class="bt" x="284" y="80">variables memo</text>
-          <text class="bs" x="284" y="98">generated Variables</text>
+              <rect class="bx" x="270" y="58" width="170" height="54" rx="8" />
+              <text class="bt" x="284" y="80">variables memo</text>
+              <text class="bs" x="284" y="98">generated Variables</text>
 
-          <rect class="bx actionbx" x="270" y="150" width="170" height="54" rx="8" />
-          <text class="bt" x="284" y="172">graphqlFetch()</text>
-          <text class="bs" x="284" y="190">never throws</text>
+              <rect
+                class="bx actionbx"
+                x="270"
+                y="150"
+                width="170"
+                height="54"
+                rx="8"
+              />
+              <text class="bt" x="284" y="172">graphqlFetch()</text>
+              <text class="bs" x="284" y="190">never throws</text>
 
-          <rect class="bx" x="510" y="20" width="190" height="90" rx="8" />
-          <text class="bt" x="524" y="44">GraphqlResult</text>
-          <text class="bs" x="524" y="64">success</text>
-          <text class="bs" x="524" y="80">unauthenticated</text>
-          <text class="bs" x="524" y="96">graphqlError</text>
+              <rect class="bx" x="510" y="20" width="190" height="90" rx="8" />
+              <text class="bt" x="524" y="44">GraphqlResult</text>
+              <text class="bs" x="524" y="64">success</text>
+              <text class="bs" x="524" y="80">unauthenticated</text>
+              <text class="bs" x="524" y="96">graphqlError</text>
 
-          <rect class="bx brandbx" x="510" y="150" width="190" height="54" rx="8" />
-          <text class="bt" x="524" y="172">Global modals</text>
-          <text class="bs" x="524" y="190">error · re-login</text>
+              <rect
+                class="bx brandbx"
+                x="510"
+                y="150"
+                width="190"
+                height="54"
+                rx="8"
+              />
+              <text class="bt" x="524" y="172">Global modals</text>
+              <text class="bs" x="524" y="190">error · re-login</text>
 
-          <rect class="bx" x="270" y="252" width="170" height="54" rx="8" />
-          <text class="bt" x="284" y="274">Signals / resources</text>
-          <text class="bs" x="284" y="292">the app's state</text>
+              <rect class="bx" x="270" y="252" width="170" height="54" rx="8" />
+              <text class="bt" x="284" y="274">Signals / resources</text>
+              <text class="bs" x="284" y="292">the app's state</text>
 
-          <!-- arrows -->
-          <path class="ln" d="M200,47 L266,74" marker-end="url(#ah)" />
-          <path class="ln" d="M200,123 L266,92" marker-end="url(#ah)" />
-          <path class="ln" d="M355,112 L355,146" marker-end="url(#ah)" />
-          <path class="ln" d="M440,168 L506,110" marker-end="url(#ah)" />
-          <path class="ln" d="M440,182 L506,178" marker-end="url(#ah)" />
-          <path class="ln" d="M605,110 L605,146" marker-end="url(#ah)" />
-          <path class="ln" d="M510,190 Q430,240 440,285 L442,285" marker-end="url(#ah)" />
-          <path class="ln" d="M355,252 L355,116" marker-end="url(#ah)" />
-        </svg>
-      </div>
+              <!-- arrows -->
+              <path class="ln" d="M200,47 L266,74" marker-end="url(#ah)" />
+              <path class="ln" d="M200,123 L266,92" marker-end="url(#ah)" />
+              <path class="ln" d="M355,112 L355,146" marker-end="url(#ah)" />
+              <path class="ln" d="M440,168 L506,110" marker-end="url(#ah)" />
+              <path class="ln" d="M440,182 L506,178" marker-end="url(#ah)" />
+              <path class="ln" d="M605,110 L605,146" marker-end="url(#ah)" />
+              <path
+                class="ln"
+                d="M510,190 Q430,240 440,285 L442,285"
+                marker-end="url(#ah)"
+              />
+              <path class="ln" d="M355,252 L355,116" marker-end="url(#ah)" />
+            </svg>
+          </div>
 
-      <h2>The chapters</h2>
-      <div class="cards">
-        <a class="card" href="01-graphql-codegen.html">
-          <div class="n">CH 1</div>
-          <div class="t">Codegen &amp; graphqlFetch</div>
-          <div class="d">A <code>.graphql</code> file becomes a typed document; one never-throwing fetch returns a discriminated result.</div>
-        </a>
-        <a class="card" href="02-init-auth-error.html">
-          <div class="n">CH 2</div>
-          <div class="t">Init, auth &amp; errors</div>
-          <div class="d">The phase-machine bootstrap, auth as module signals, and the one global error modal.</div>
-        </a>
-        <a class="card" href="03-store-login-state.html">
-          <div class="n">CH 3</div>
-          <div class="t">Store &amp; global state</div>
-          <div class="d">Entering a store, the signal-plus-refetch state shape, and refresh-by-direct-call.</div>
-        </a>
-        <a class="card" href="04-list-table-url.html">
-          <div class="n">CH 4</div>
-          <div class="t">Lists: table &amp; URL</div>
-          <div class="d">URL-as-state in one JSON param, the controlled DataTable, and the variables memo.</div>
-        </a>
-        <a class="card" href="05-createresource.html">
-          <div class="n">CH 5</div>
-          <div class="t">createResource</div>
-          <div class="d">Re-fetch on change without ever remounting a live screen — the anti-Suspense rules.</div>
-        </a>
-        <a class="card" href="06-store-scoped.html">
-          <div class="n">CH 6</div>
-          <div class="t">Store-scoped caches</div>
-          <div class="d">One lazy, deduplicated, store-keyed cache shared by every consumer.</div>
-        </a>
-      </div>
+          <h2>The chapters</h2>
+          <div class="cards">
+            <a class="card" href="01-graphql-codegen.html">
+              <div class="n">CH 1</div>
+              <div class="t">Codegen &amp; graphqlFetch</div>
+              <div class="d">
+                A <code>.graphql</code> file becomes a typed document; one
+                never-throwing fetch returns a discriminated result.
+              </div>
+            </a>
+            <a class="card" href="02-init-auth-error.html">
+              <div class="n">CH 2</div>
+              <div class="t">Init, auth &amp; errors</div>
+              <div class="d">
+                The phase-machine bootstrap, auth as module signals, and the one
+                global error modal.
+              </div>
+            </a>
+            <a class="card" href="03-store-login-state.html">
+              <div class="n">CH 3</div>
+              <div class="t">Store &amp; global state</div>
+              <div class="d">
+                Entering a store, the signal-plus-refetch state shape, and
+                refresh-by-direct-call.
+              </div>
+            </a>
+            <a class="card" href="04-list-table-url.html">
+              <div class="n">CH 4</div>
+              <div class="t">Lists: table &amp; URL</div>
+              <div class="d">
+                URL-as-state in one JSON param, the controlled DataTable, and
+                the variables memo.
+              </div>
+            </a>
+            <a class="card" href="05-createresource.html">
+              <div class="n">CH 5</div>
+              <div class="t">createResource</div>
+              <div class="d">
+                Re-fetch on change without ever remounting a live screen — the
+                anti-Suspense rules.
+              </div>
+            </a>
+            <a class="card" href="06-store-scoped.html">
+              <div class="n">CH 6</div>
+              <div class="t">Store-scoped caches</div>
+              <div class="d">
+                One lazy, deduplicated, store-keyed cache shared by every
+                consumer.
+              </div>
+            </a>
+            <a class="card" href="07-domain-modules.html">
+              <div class="n">CH 7</div>
+              <div class="t">Domain modules</div>
+              <div class="d">
+                A third layer between api and ui: a reference entity's data plus
+                a thin, self-fetching picker.
+              </div>
+            </a>
+            <a class="card" href="08-action-modal.html">
+              <div class="n">CH 8</div>
+              <div class="t">Action modals</div>
+              <div class="d">
+                One dialog owning a confirm → working → success | error phase
+                machine; the view applies the result in place.
+              </div>
+            </a>
+            <a class="card" href="09-datatable-cards.html">
+              <div class="n">CH 9</div>
+              <div class="t">Table: cards &amp; groups</div>
+              <div class="d">
+                The richer DataTable — card view, column tabs and groups, and
+                three-layer layout persistence.
+              </div>
+            </a>
+          </div>
 
-      <h2>Two ideas run through everything</h2>
-      <p>
-        You will see these repeatedly rather than as their own chapters — they are the
-        codebase's taste, distilled from its
-        <a href="../kdd/README.md">Key Decision Documents (KDD)</a>:
-      </p>
-      <ul>
-        <li>
-          <strong>Maximum type safety through codegen.</strong> Every piece of state is derived
-          from a generated GraphQL type — never remapped to a parallel shape. A filter
-          <em>is</em> the generated filter input; a row <em>is</em>
-          <code>Result['nodes'][number]</code>.
-        </li>
-        <li>
-          <strong>Explicit composition, refresh by direct call.</strong> No cache keys, no event
-          bus, no subscriber registry. When something needs to refresh, whatever observed the
-          need calls the specific refetch function — click-through traceable.
-        </li>
-      </ul>
+          <h2>Two ideas run through everything</h2>
+          <p>
+            You will see these repeatedly rather than as their own chapters —
+            they are the codebase's taste, distilled from its
+            <a href="../kdd/README.md">Key Decision Documents (KDD)</a>:
+          </p>
+          <ul>
+            <li>
+              <strong>Maximum type safety through codegen.</strong> Every piece
+              of state is derived from a generated GraphQL type — never remapped
+              to a parallel shape. A filter <em>is</em> the generated filter
+              input; a row <em>is</em> <code>Result['nodes'][number]</code>.
+            </li>
+            <li>
+              <strong>Explicit composition, refresh by direct call.</strong> No
+              cache keys, no event bus, no subscriber registry. When something
+              needs to refresh, whatever observed the need calls the specific
+              refetch function — click-through traceable.
+            </li>
+          </ul>
 
-      <div class="box warn">
-        <p class="box-title">One doc-drift to know about</p>
-        <p style="margin-bottom:0">
-          A few source docstrings refer to <code>codegen/plugin.js</code> and
-          <code>codegen/run.js</code>; the actual files are <code>.cjs</code>
-          (<code>codegen/plugin.cjs</code>, <code>codegen/run.cjs</code>). This tutorial uses the
-          real filenames.
-        </p>
-      </div>
+          <div class="box warn">
+            <p class="box-title">One doc-drift to know about</p>
+            <p style="margin-bottom: 0">
+              A few source docstrings refer to
+              <code>codegen/plugin.js</code> and <code>codegen/run.js</code>;
+              the actual files are
+              <code>.cjs</code> (<code>codegen/plugin.cjs</code>,
+              <code>codegen/run.cjs</code>). This tutorial uses the real
+              filenames.
+            </p>
+          </div>
 
-      <div class="pager">
-        <a class="disabled" href="#"></a>
-        <a class="next" href="01-graphql-codegen.html">
-          <span class="dir">Next →</span>
-          <span class="ttl">Codegen &amp; graphqlFetch</span>
-        </a>
-      </div>
+          <div class="pager">
+            <a class="disabled" href="#"></a>
+            <a class="next" href="01-graphql-codegen.html">
+              <span class="dir">Next →</span>
+              <span class="ttl">Codegen &amp; graphqlFetch</span>
+            </a>
+          </div>
+        </div>
+      </main>
     </div>
-  </main>
-</div>
 
-<script src="tutorial.js"></script>
-</body>
+    <script src="tutorial.js"></script>
+  </body>
 </html>

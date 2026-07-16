@@ -1,8 +1,8 @@
-import { createSignal, For, Show, type JSX } from 'solid-js'
-import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter'
-import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions'
-import { Button } from '../ui/elements/buttons/Button'
-import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog'
+import { createSignal, For, Show, type JSX } from 'solid-js';
+import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
+import { Button } from '../ui/elements/buttons/Button';
+import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import {
   ClockIcon,
   CopyIcon,
@@ -10,13 +10,13 @@ import {
   SaveIcon,
   TrashIcon,
   XCircleIcon,
-} from '../ui/icons'
-import styles from './ContentFooterShowcase.module.css'
+} from '../ui/icons';
+import styles from './ContentFooterShowcase.module.css';
 
 const Card = (props: {
-  title: string
-  lead: JSX.Element
-  children: JSX.Element
+  title: string;
+  lead: JSX.Element;
+  children: JSX.Element;
 }) => (
   <section class={styles.card}>
     <header class={styles.cardHeader}>{props.title}</header>
@@ -25,21 +25,21 @@ const Card = (props: {
       {props.children}
     </div>
   </section>
-)
+);
 
-const DEMO_ROWS = ['OS-001024', 'OS-001025', 'OS-001026']
+const DEMO_ROWS = ['OS-001024', 'OS-001025', 'OS-001026'];
 
 export const ContentFooterShowcase = () => {
-  const [confirmSave, setConfirmSave] = createSignal(false)
-  const [picked, setPicked] = createSignal<ReadonlySet<string>>(new Set())
+  const [confirmSave, setConfirmSave] = createSignal(false);
+  const [picked, setPicked] = createSignal<ReadonlySet<string>>(new Set());
   const toggle = (id: string) =>
-    setPicked((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  const clear = () => setPicked(new Set<string>())
+    setPicked(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const clear = () => setPicked(new Set<string>());
 
   return (
     <div class={styles.stack}>
@@ -55,9 +55,9 @@ export const ContentFooterShowcase = () => {
             pins the button cluster inline-end. The page owns every handler —
             here Save opens the standard <code>&lt;ConfirmDialog&gt;</code>{' '}
             (native <code>&lt;dialog&gt;</code> — see the Feedback section).
-            Inside the app it pins between the scrolling body and the app
-            footer via the Page frame's <code>contentFooter</code> slot — see
-            the Outbound Shipments page in the Full page group.
+            Inside the app it pins between the scrolling body and the app footer
+            via the Page frame's <code>contentFooter</code> slot — see the
+            Outbound Shipments page in the Full page group.
           </>
         }
       >
@@ -105,7 +105,7 @@ export const ContentFooterShowcase = () => {
         <div class={styles.pageFrame}>
           <ul class={styles.demoRows}>
             <For each={DEMO_ROWS}>
-              {(id) => (
+              {id => (
                 <li>
                   <label class={styles.demoRow}>
                     <input
@@ -141,7 +141,11 @@ export const ContentFooterShowcase = () => {
             >
               <span class={styles.count}>{picked().size} selected</span>
               <ContentFooterActions>
-                <Button variant="secondary" icon={<TrashIcon />} onClick={clear}>
+                <Button
+                  variant="secondary"
+                  icon={<TrashIcon />}
+                  onClick={clear}
+                >
                   Delete
                 </Button>
                 <Button variant="secondary" icon={<CopyIcon />}>
@@ -160,5 +164,5 @@ export const ContentFooterShowcase = () => {
         </div>
       </Card>
     </div>
-  )
-}
+  );
+};

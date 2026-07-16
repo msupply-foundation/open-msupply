@@ -4,6 +4,7 @@ import type { TypedDocument } from "./graphql";
 
 export type SyncStatusFragment = ({
   __typename: "FullSyncStatusV7Node";
+} & {
   isSyncing: boolean;
   error: {
   fullError: string;
@@ -32,6 +33,7 @@ export type SyncStatusFragment = ({
 } | null;
 }) | ({
   __typename: "FullSyncStatusV5V6Node";
+} & {
   isSyncing: boolean;
   error: {
   fullError: string;
@@ -95,12 +97,15 @@ export type InitialiseSiteVariables = {
 export type InitialiseSiteResult = {
   initialiseSite: ({
   __typename: "SyncSettingsNode";
+} & {
   username: string;
 }) | ({
   __typename: "SyncErrorNode";
+} & {
   fullError: string;
 }) | ({
   __typename: "SyncErrorV7Node";
+} & {
   fullError: string;
 });
 };

@@ -30,7 +30,9 @@ const merge = (locale: SupportedLocale, dict: FlatDict): void => {
  * await it and keep showing a loading state until it lands. It never throws —
  * a total failure leaves an empty dictionary and t() falls back to keys.
  */
-export const loadDictionary = async (locale: SupportedLocale): Promise<void> => {
+export const loadDictionary = async (
+  locale: SupportedLocale
+): Promise<void> => {
   const cached = readCache(locale);
   if (cached) {
     merge(locale, cached);
@@ -44,8 +46,8 @@ export const loadDictionary = async (locale: SupportedLocale): Promise<void> => 
 
   // Flatten the bundled catalog (a no-op for already-flat catalogs, but correct
   // if nested ones are added), then let custom translations override. Trusted
-  // cast: our catalogs are string maps, so flatten's `unknown` values are strings
-  // (kdd/type-safety: `as` permitted where we own the implementation).
+  // cast: our catalogs are string maps, so flatten's `unknown` values are
+  // strings (kdd/type-safety: `as` permitted where we own the implementation).
   const flat: FlatDict = {
     ...(i18n.flatten(common) as FlatDict),
     ...custom,

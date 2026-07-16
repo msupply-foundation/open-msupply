@@ -16,6 +16,9 @@ dist-ssr
 # (*.module.css.d.ts) and global stylesheets (index.css, tokens.css → *.css.d.ts).
 *.css.d.ts
 
+# Playwright MCP session artifacts (page snapshots, console logs)
+.playwright-mcp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -26,6 +29,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+/.playwright-mcp
 
 # Playwright output (deterministic e2e suites in e2e/)
 e2e/test-results

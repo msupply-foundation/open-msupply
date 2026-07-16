@@ -86,14 +86,14 @@
 
   /* --- Elevation (theme.ts → createTheme shadow overrides) ------------ */
   /* Shadow offsets stay in px (sub-pixel blur/spread) — intentional. */
-  --shadow-1: 0 0.5px 2px 0 rgba(96, 97, 112, 0.16),
-    0 0 1px 0 rgba(40, 41, 61, 0.08);
-  --shadow-2: 0 4px 8px 0 rgba(96, 97, 112, 0.16),
-    0 0 2px 0 rgba(40, 41, 61, 0.04);
-  --shadow-3: 0 8px 16px 0 rgba(96, 97, 112, 0.16),
-    0 2px 4px 0 rgba(40, 41, 61, 0.04);
-  --shadow-4: 0 12px 24px 0 rgba(96, 97, 112, 0.16),
-    0 4px 8px 0 rgba(40, 41, 61, 0.3);
+  --shadow-1:
+    0 0.5px 2px 0 rgba(96, 97, 112, 0.16), 0 0 1px 0 rgba(40, 41, 61, 0.08);
+  --shadow-2:
+    0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04);
+  --shadow-3:
+    0 8px 16px 0 rgba(96, 97, 112, 0.16), 0 2px 4px 0 rgba(40, 41, 61, 0.04);
+  --shadow-4:
+    0 12px 24px 0 rgba(96, 97, 112, 0.16), 0 4px 8px 0 rgba(40, 41, 61, 0.3);
   --shadow-drawer: 4px 0 16px 0 rgba(96, 97, 112, 0.18);
 
   /* 3px orange glow focus ring; error variant for invalid fields (red glow) */
@@ -144,8 +144,8 @@
   --radius-button: 1.5rem; /* 24px pill buttons */
 
   /* --- Typography (theme.ts → typography) ----------------------------- */
-  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
-    sans-serif;
+  --font-sans:
+    'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --text-xs: 0.75rem; /* 12px — body2 */
   --text-sm: 0.875rem; /* 14px — body1 / th / input */
   --text-md: 1rem; /* 16px — h6 */
@@ -260,7 +260,8 @@
   --shadow-1: 0 0.5px 2px 0 rgba(0, 0, 0, 0.45), 0 0 1px 0 rgba(0, 0, 0, 0.35);
   --shadow-2: 0 4px 8px 0 rgba(0, 0, 0, 0.5), 0 0 2px 0 rgba(0, 0, 0, 0.35);
   --shadow-3: 0 8px 16px 0 rgba(0, 0, 0, 0.55), 0 2px 4px 0 rgba(0, 0, 0, 0.4);
-  --shadow-4: 0 16px 28px 0 rgba(0, 0, 0, 0.6), 0 4px 10px 0 rgba(0, 0, 0, 0.45);
+  --shadow-4:
+    0 16px 28px 0 rgba(0, 0, 0, 0.6), 0 4px 10px 0 rgba(0, 0, 0, 0.45);
   --shadow-drawer: 4px 0 20px 0 rgba(0, 0, 0, 0.55);
 
   /* Stronger focus glows + darker scrim read better on dark */

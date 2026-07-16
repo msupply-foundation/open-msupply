@@ -4,7 +4,6 @@
 
 **Component standards**: https://msupply-foundation.github.io/ui-standards/
 
-
 - No dedicated underling UI library
 - Components styled using CSS Modules
 - Common "themeable" elements used across all components are CSS Variables, and all listed in `tokens.css`
@@ -38,10 +37,11 @@
 - Make sure the ui area's `CLAUDE.md` file is kept up to date
 
 ### Strict rules
- - No hard-coded colours, always semantic, with reference to theme tokens
- - Always check mobile/responsive layout, particularly tablet in portrait mode
- - Sizing never in px, mostly rem, sometimes em (except border thickness and few other small things)
- - Any new components need to be added to the "Showcase"
+
+- No hard-coded colours, always semantic, with reference to theme tokens
+- Always check mobile/responsive layout, particularly tablet in portrait mode
+- Sizing never in px, mostly rem, sometimes em (except border thickness and few other small things)
+- Any new components need to be added to the "Showcase"
 
 ## Components list
 
@@ -55,7 +55,9 @@ See [UI_ELEMENTS.md](./docs/UI_ELEMENTS.md)
 - [ ] Modal (container) (will probably be a composed structure like `Page`)
 
 ## More detail
+
 Available in `ui/docs` and see key decisions made in `kdd/ui-styling/draft-kdd.md`
 
 ## Themeing
+
 - To do
