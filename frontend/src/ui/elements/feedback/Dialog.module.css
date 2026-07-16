@@ -93,6 +93,17 @@
   gap: var(--space-3);
 }
 
+/* titleHidden: the heading stays the accessible name but paints nothing (and
+   contributes no flex gap to the body column). */
+.header.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .icon {
   display: inline-flex;
   flex-shrink: 0;
@@ -191,4 +202,31 @@
     opacity: 1;
     transform: none;
   }
+}
+
+/* Icon-only dismiss affordance (closeButton prop) — pinned to the top corner,
+   above the header. Brand-toned, matching the current app's modal close
+   button. Logical inset so it mirrors in RTL. */
+.close {
+  position: absolute;
+  inset-block-start: var(--space-3);
+  inset-inline-end: var(--space-3);
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--primary-main);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: color-mix(in srgb, var(--primary-main) 12%, transparent);
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 2px;
 }

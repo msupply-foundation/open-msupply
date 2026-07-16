@@ -49,6 +49,13 @@ export const CheckIcon = (props: IconProps) => (
   </Stroke>
 );
 
+export const CheckCircleIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </Stroke>
+);
+
 export const CloseIcon = (props: IconProps) => (
   <Fill viewBox="0 0 21 20" {...props}>
     <path d="M14.41 4.41a.833.833 0 0 1 1.18 1.18L11.177 10l4.411 4.41a.834.834 0 0 1 .075 1.094l-.075.085a.833.833 0 0 1-1.178 0L10 11.178l-4.41 4.411a.834.834 0 0 1-1.094.075l-.085-.075a.833.833 0 0 1 0-1.178L8.82 10l-4.41-4.41a.834.834 0 0 1-.075-1.094l.075-.085a.833.833 0 0 1 1.178 0L10 8.82z" />
@@ -79,6 +86,13 @@ export const ChevronsDownIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M7 7l5 5l5 -5" />
     <path d="M7 13l5 5l5 -5" />
+  </Stroke>
+);
+
+export const ChevronsUpIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M7 11l5 -5l5 5" />
+    <path d="M7 17l5 -5l5 5" />
   </Stroke>
 );
 

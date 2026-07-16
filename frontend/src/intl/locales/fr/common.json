@@ -42,7 +42,7 @@
   "sync.status.done": "terminé",
   "sync.status.pending": "en attente",
   "sync.status.in-progress": "en cours",
-  "sync.status.progress": "{{ done }} sur {{ total }}",
+  "sync.status.progress": "{{ done }} / {{ total }}",
   "sync.step.pull": "Réception",
   "sync.step.push": "Envoi",
   "sync.step.integration": "Intégration",

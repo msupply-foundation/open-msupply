@@ -1,0 +1,29 @@
+/* Meaning is the label text; tone escalates it. Tabular digits so a ticking
+   count doesn't wobble. */
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 1.4em;
+  block-size: 1.4em;
+  padding-inline: 0.4em;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+
+  /* An inherited body line-height (e.g. 1.71) is taller than the 1.4em pill,
+     so the centred line box would ride high; hug the glyphs and let the grid
+     centre them. */
+  line-height: 1;
+  background: color-mix(in srgb, var(--text-secondary) 18%, transparent);
+  color: var(--text-body);
+}
+
+.badge[data-tone='warning'] {
+  background: var(--warning-main);
+  color: var(--primary-contrast);
+}
+
+.badge[data-tone='error'] {
+  background: var(--error-main);
+  color: var(--primary-contrast);
+}

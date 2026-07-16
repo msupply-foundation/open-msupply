@@ -6,6 +6,8 @@ import {
   Show,
   type JSX,
 } from 'solid-js';
+import { CloseIcon } from '../../icons';
+import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
 import styles from './Dialog.module.css';
 
@@ -26,6 +28,18 @@ export interface DialogProps {
   dismissable?: boolean;
   /** Required for a11y — becomes the dialog's accessible name. */
   title: string;
+  /**
+   * Visually hide the title (it stays the accessible name) — for dialogs the
+   * current app renders without a heading, e.g. the sync modal.
+   */
+  titleHidden?: boolean;
+  /**
+   * Renders an icon-only close button pinned to the dialog's top corner (an
+   * explicit dismiss affordance for informational dialogs, e.g. the sync
+   * modal). Closes via the same onClose path as Escape/scrim. Ignored when
+   * `dismissable` is false — a blocking dialog offers no dismiss affordance.
+   */
+  closeButton?: boolean;
   icon?: JSX.Element;
   description?: JSX.Element;
   children?: JSX.Element;
@@ -148,7 +162,20 @@ export const Dialog = (props: DialogProps) => {
     >
       <PortalMountContext.Provider value={dialogEl}>
         <div class={styles.body}>
-          <header class={styles.header}>
+          <Show when={props.closeButton && props.dismissable !== false}>
+            <button
+              type="button"
+              class={styles.close}
+              aria-label={t('common.close')}
+              onClick={() => props.onClose()}
+            >
+              <CloseIcon />
+            </button>
+          </Show>
+          <header
+            class={styles.header}
+            classList={{ [styles.srOnly ?? '']: props.titleHidden === true }}
+          >
             <Show when={props.icon}>
               <span class={styles.icon}>{props.icon}</span>
             </Show>
