@@ -49,6 +49,13 @@ export const CheckIcon = (props: IconProps) => (
   </Stroke>
 );
 
+export const CheckCircleIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </Stroke>
+);
+
 export const CloseIcon = (props: IconProps) => (
   <Fill viewBox="0 0 21 20" {...props}>
     <path d="M14.41 4.41a.833.833 0 0 1 1.18 1.18L11.177 10l4.411 4.41a.834.834 0 0 1 .075 1.094l-.075.085a.833.833 0 0 1-1.178 0L10 11.178l-4.41 4.411a.834.834 0 0 1-1.094.075l-.085-.075a.833.833 0 0 1 0-1.178L8.82 10l-4.41-4.41a.834.834 0 0 1-.075-1.094l.075-.085a.833.833 0 0 1 1.178 0L10 8.82z" />
@@ -79,6 +86,13 @@ export const ChevronsDownIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M7 7l5 5l5 -5" />
     <path d="M7 13l5 5l5 -5" />
+  </Stroke>
+);
+
+export const ChevronsUpIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M7 11l5 -5l5 5" />
+    <path d="M7 17l5 -5l5 5" />
   </Stroke>
 );
 
@@ -459,6 +473,33 @@ export const CardViewIcon = (props: IconProps) => (
     <rect x="4" y="14" width="6" height="6" rx="1" />
     <rect x="14" y="14" width="6" height="6" rx="1" />
   </Stroke>
+);
+
+/*
+ * "Nothing here" sprout — the empty-state illustration (a two-leaf seedling),
+ * ported verbatim (viewBox + path) from the current app's NothingHereIcon.
+ * Like MSupplyGuyLogo it keeps a FIXED fill rather than `currentColor`: the
+ * pale-blue --gray-pale token (which has its own dark-theme override), so the
+ * graphic reads as a quiet illustration independent of the surrounding text
+ * colour. Sized by font-size (1em) like every other icon — EmptyState sets a
+ * large font-size on it.
+ */
+export const NothingHereIcon = (props: IconProps) => (
+  <svg
+    viewBox="0 0 104 96"
+    width="1em"
+    height="1em"
+    fill="none"
+    aria-hidden="true"
+    {...props}
+  >
+    <path
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M34.4174 37.7111C40.3579 45.3308 42.0497 54.9396 42.4677 61.2494C44.0425 57.8387 45.4821 54.9054 46.7487 52.4333C41.9488 42.2372 38.7723 37.4931 38.7723 37.4931L38.7417 37.4445C38.1219 36.4697 28.0158 21.9871 17.4953 16.0539C17.4953 16.0539 31.0103 20.9421 41.1074 37.7796C41.1074 37.7796 55.2224 8.85582 5 7C5 7 5.52972 37.7075 34.4174 37.7111ZM83.1818 19.3283C70.016 26.7536 56.372 44.8762 55.5961 46.0978L55.559 46.1564C55.559 46.1564 48.1418 57.3271 43.5 69.4998C40.5118 77.3358 38.2273 87.1588 38.2273 93.9998H51.9091C51.9091 93.9998 49.2811 85.8464 50 76.9998C50.8415 66.6432 55.4571 54.8313 62.0063 46.43C98.1556 46.4261 98.8182 7.99976 98.8182 7.99976C35.9717 10.3218 51.5768 44.8429 51.5768 44.8429C64.211 23.7729 83.1818 19.3283 83.1818 19.3283Z"
+      fill="var(--gray-pale)"
+    />
+  </svg>
 );
 
 /*

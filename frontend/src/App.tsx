@@ -13,6 +13,7 @@ import { Navigate, Route, Router } from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
 import { InitialisationStatus } from './api/initialisation.generated';
+import { fetchServerInfo } from './api/serverInfo';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
@@ -48,7 +49,13 @@ export const App: Component = () => {
     // never flashes untranslated keys. Failures leave an empty dictionary and
     // t() falls back to keys — startup continues regardless.
     await initialiseLocale(detectLocale());
-    const status = await graphqlFetch(InitialisationStatus, {});
+    // Server role resolves alongside the status check so the phase-visibility
+    // matrix (spec/sync-modal) is answerable before either surface renders;
+    // re-running startup re-reads it (initialising as central changes it).
+    const [status] = await Promise.all([
+      graphqlFetch(InitialisationStatus, {}),
+      fetchServerInfo(),
+    ]);
     if (status.kind !== 'success') return;
     if (status.data.initialisationStatus.status !== 'INITIALISED') {
       setPhase('initialisation');

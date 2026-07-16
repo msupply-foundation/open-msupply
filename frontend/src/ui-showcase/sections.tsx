@@ -11,11 +11,14 @@ import { ButtonsShowcase } from './ButtonsShowcase';
 import { InputsShowcase } from './InputsShowcase';
 import { SelectorsShowcase } from './SelectorsShowcase';
 import { FeedbackShowcase } from './FeedbackShowcase';
+import { SyncShowcase } from './SyncShowcase';
+import { StoreLoginShowcase } from './StoreLoginShowcase';
 import { TableShowcase } from './TableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
 import { ContentFooterShowcase } from './ContentFooterShowcase';
 import { SidePanelShowcase } from './SidePanelShowcase';
+import { InsetPanelShowcase } from './InsetPanelShowcase';
 
 export type SectionCategory = 'components' | 'layout';
 
@@ -102,6 +105,18 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
+    id: 'sync',
+    label: 'Sync',
+    component: SyncShowcase,
+    category: 'components',
+  },
+  {
+    id: 'store-login',
+    label: 'Store login',
+    component: StoreLoginShowcase,
+    category: 'components',
+  },
+  {
     id: 'table',
     label: 'Table',
     component: TableShowcase,
@@ -124,6 +139,12 @@ export const sections: SectionDef[] = [
     id: 'side-panel',
     label: 'Side panel',
     component: SidePanelShowcase,
+    category: 'layout',
+  },
+  {
+    id: 'inset-panel',
+    label: 'Inset panel',
+    component: InsetPanelShowcase,
     category: 'layout',
   },
   // A standalone reference page, listed as its own top-level menu entry rather

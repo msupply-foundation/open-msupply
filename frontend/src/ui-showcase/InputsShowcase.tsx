@@ -1,7 +1,6 @@
 import { createSignal, type JSX } from 'solid-js';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
-import { InsetPanel } from '../ui/elements/inputs/InsetPanel';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
 import styles from './InputsShowcase.module.css';
 
@@ -32,9 +31,10 @@ const Card = (props: {
 
 /*
  * Storybook of the input + form-layout elements: the TextField (company input
- * design spec), the RadioGroup (native single-choice), and the two
- * form-composition pieces that pair with them inside a dialog/panel — FieldRow
- * (inline label + control) and InsetPanel (grouping).
+ * design spec), the RadioGroup (native single-choice), and FieldRow (inline
+ * label + control) — the form-composition piece that pairs with them inside a
+ * dialog/panel. InsetPanel, the recessed grouping container, is a layout
+ * element (see the Layout › Inset panel section).
  */
 export const InputsShowcase = () => {
   // RadioGroup demo: a stocktake-type choice, plus an indented include-all
@@ -128,31 +128,6 @@ export const InputsShowcase = () => {
           <FieldRow label="Expiring before">
             <TextField label="Expiring before" hideLabel type="date" />
           </FieldRow>
-        </div>
-      </Card>
-
-      <Card
-        title="Inset panel — recessed grouping"
-        lead={
-          <>
-            A recessed grey panel that groups related controls, with an optional
-            muted <code>hint</code> line at the top — the app's "extra options"
-            area inside a dialog (the create-stocktake include-all / filter
-            block). Hand-rolled, pure CSS + tokens: no interaction or a11y
-            contract to buy, just a tinted rounded container. Pairs with{' '}
-            <code>FieldRow</code>.
-          </>
-        }
-      >
-        <div class={styles.formPreview}>
-          <InsetPanel hint="Counts items matching the filters below.">
-            <FieldRow label="Master list">
-              <TextField label="Master list" hideLabel placeholder="Any" />
-            </FieldRow>
-            <FieldRow label="Location">
-              <TextField label="Location" hideLabel placeholder="Any" />
-            </FieldRow>
-          </InsetPanel>
         </div>
       </Card>
 

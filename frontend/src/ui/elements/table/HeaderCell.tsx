@@ -35,7 +35,9 @@ export function HeaderCell<T>(props: {
       class={styles.th}
       data-align={align()}
       data-pinned={column().getIsPinned() || undefined}
-      data-testid={canSort() ? `column-${column().id}` : undefined}
+      // Cross-FE test-id contract (e2e/TESTIDS.md): every header cell carries
+      // `header-<columnId>`, sortable or not.
+      data-testid={`header-${column().id}`}
       // Auto table layout (columns flex to fill); getSize() is applied as a
       // min-width FLOOR, so a configured size / a resize drag widens the column
       // without losing the auto-fill. A pinned column additionally gets sticky

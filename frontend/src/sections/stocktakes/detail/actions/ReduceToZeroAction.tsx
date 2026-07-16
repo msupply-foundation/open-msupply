@@ -78,13 +78,11 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
     if (phase() !== 'confirm') return; // re-entry guard
     setPhase('working');
     const outcome = await runBatchStocktakeLines(props.storeId, {
-      update: props
-        .selectedIds()
-        .map(id => ({
-          id,
-          countedNumberOfPacks: 0,
-          reasonOptionId: reasonId(),
-        })),
+      update: props.selectedIds().map(id => ({
+        id,
+        countedNumberOfPacks: 0,
+        reasonOptionId: reasonId(),
+      })),
     });
     // Transport / NodeError → outcome undefined (the global modal already
     // showed it); just close.

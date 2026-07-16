@@ -1,4 +1,5 @@
 import {
+  children,
   createEffect,
   createSignal,
   createUniqueId,
@@ -6,6 +7,8 @@ import {
   Show,
   type JSX,
 } from 'solid-js';
+import { CloseIcon } from '../../icons';
+import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
 import styles from './Dialog.module.css';
 
@@ -26,7 +29,25 @@ export interface DialogProps {
   dismissable?: boolean;
   /** Required for a11y — becomes the dialog's accessible name. */
   title: string;
+  /**
+   * Visually hide the title (it stays the accessible name) — for dialogs the
+   * current app renders without a heading, e.g. the sync modal.
+   */
+  titleHidden?: boolean;
+  /**
+   * Renders an icon-only close button pinned to the dialog's top corner (an
+   * explicit dismiss affordance for informational dialogs, e.g. the sync
+   * modal). Closes via the same onClose path as Escape/scrim. Ignored when
+   * `dismissable` is false — a blocking dialog offers no dismiss affordance.
+   */
+  closeButton?: boolean;
   icon?: JSX.Element;
+  /**
+   * Action(s) pinned to the inline-END of the header row, on the same line as
+   * the title (e.g. an "Add" affordance that belongs with the heading rather
+   * than the footer). The title takes the free space; these group at the end.
+   */
+  headerActions?: JSX.Element;
   description?: JSX.Element;
   children?: JSX.Element;
   /**
@@ -70,6 +91,8 @@ export interface DialogProps {
    * DataTable) fills the tall space.
    */
   size?: 'auto' | 'large';
+  /** Test id on the dialog element (cross-FE test-id contract). */
+  testId?: string;
 }
 
 /*
@@ -97,6 +120,17 @@ export const Dialog = (props: DialogProps) => {
   // nested popups mount here. The dialog box is overflow:visible (the clip
   // lives on the inner .body) so the popup isn't cut off.
   const [dialogEl, setDialogEl] = createSignal<HTMLElement>();
+  // JSX-element props are lazy getters: every read builds a fresh element, so
+  // a <Show when> test plus an insertion is two creations (a ref/onMount on
+  // the passed element would land on the discarded copy). Resolve each one
+  // once (kdd/solid-reactivity-pitfalls §3); `children` is read exactly once
+  // below, so it needs no helper.
+  const icon = children(() => props.icon);
+  const headerActions = children(() => props.headerActions);
+  const description = children(() => props.description);
+  const footer = children(() => props.footer);
+  const actions = children(() => props.actions);
+  const actionsLead = children(() => props.actionsLead);
 
   createEffect(() => {
     if (props.open && !dialog.open) dialog.showModal();
@@ -129,7 +163,8 @@ export const Dialog = (props: DialogProps) => {
           : {}),
       }}
       aria-labelledby={titleId}
-      aria-describedby={props.description ? descriptionId : undefined}
+      aria-describedby={description() ? descriptionId : undefined}
+      data-testid={props.testId}
       // Escape arrives as `cancel` before the dialog closes — a blocking
       // dialog swallows it here, so the element never closes underneath the
       // parent's `open` state.
@@ -148,33 +183,49 @@ export const Dialog = (props: DialogProps) => {
     >
       <PortalMountContext.Provider value={dialogEl}>
         <div class={styles.body}>
-          <header class={styles.header}>
-            <Show when={props.icon}>
-              <span class={styles.icon}>{props.icon}</span>
+          <Show when={props.closeButton && props.dismissable !== false}>
+            <button
+              type="button"
+              class={styles.close}
+              aria-label={t('common.close')}
+              onClick={() => props.onClose()}
+            >
+              <CloseIcon />
+            </button>
+          </Show>
+          <header
+            class={styles.header}
+            classList={{ [styles.srOnly ?? '']: props.titleHidden === true }}
+          >
+            <Show when={icon()}>
+              <span class={styles.icon}>{icon()}</span>
             </Show>
             <h2 class={styles.title} id={titleId}>
               {props.title}
             </h2>
+            <Show when={headerActions()}>
+              <div class={styles.headerActions}>{headerActions()}</div>
+            </Show>
           </header>
-          <Show when={props.description}>
+          <Show when={description()}>
             <p class={styles.description} id={descriptionId}>
-              {props.description}
+              {description()}
             </p>
           </Show>
           {props.children}
-          <Show when={props.footer}>
-            <div class={styles.footer}>{props.footer}</div>
+          <Show when={footer()}>
+            <div class={styles.footer}>{footer()}</div>
           </Show>
-          <Show when={props.actions}>
+          <Show when={actions()}>
             <div
               class={styles.actions}
-              data-has-lead={props.actionsLead ? '' : undefined}
+              data-has-lead={actionsLead() ? '' : undefined}
             >
               {/* Lead content sits at the inline-start; the buttons group at the inline-end. */}
-              <Show when={props.actionsLead}>
-                <div class={styles.actionsLead}>{props.actionsLead}</div>
+              <Show when={actionsLead()}>
+                <div class={styles.actionsLead}>{actionsLead()}</div>
               </Show>
-              <div class={styles.actionsButtons}>{props.actions}</div>
+              <div class={styles.actionsButtons}>{actions()}</div>
             </div>
           </Show>
         </div>

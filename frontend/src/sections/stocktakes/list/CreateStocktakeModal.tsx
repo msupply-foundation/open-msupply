@@ -10,7 +10,7 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { InsetPanel } from '../../../ui/elements/inputs/InsetPanel';
+import { InsetPanel } from '../../../ui/layout/InsetPanel/InsetPanel';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { RadioGroup } from '../../../ui/elements/inputs/RadioGroup';
 import { TextField } from '../../../ui/elements/inputs/TextField';
@@ -257,11 +257,16 @@ export const CreateStocktakeModal = (props: {
   const allItemsDisabled = () =>
     Boolean(form().locationId || form().expiryDate);
   const includeAllOptions = () => [
-    { value: 'soh', label: t('stocktake.create.items-with-stock') },
+    {
+      value: 'soh',
+      label: t('stocktake.create.items-with-stock'),
+      testId: 'stocktake-items-with-soh',
+    },
     {
       value: 'all',
       label: t('stocktake.create.items-all'),
       disabled: allItemsDisabled(),
+      testId: 'stocktake-all-items',
     },
   ];
   // If "All items" was chosen and then becomes disabled (location/expiry set),
@@ -272,6 +277,7 @@ export const CreateStocktakeModal = (props: {
   return (
     <Dialog
       open={props.open}
+      testId="create-stocktake-modal"
       title={t('stocktake.create.title')}
       icon={<PlusCircleIcon />}
       // Blocking while the mutation is in flight (no scrim/Escape exit until
@@ -292,12 +298,14 @@ export const CreateStocktakeModal = (props: {
           when={!isBlank()}
           fallback={
             <Alert severity="success">
-              {t('stocktake.create.estimate-none')}
+              <span data-testid="blank-stocktake-notice">
+                {t('stocktake.create.estimate-none')}
+              </span>
             </Alert>
           }
         >
           <Alert severity="info">
-            <span data-testid="stocktake-estimate">
+            <span data-testid="stocktake-line-estimate">
               <Show
                 when={!countLoading()}
                 fallback={t('stocktake.create.estimate-loading')}
@@ -313,13 +321,18 @@ export const CreateStocktakeModal = (props: {
           {/* Cancel disappears while creating (blocking). A failed create goes to the global
               error modal, so there's no in-dialog error state that would bring it back. */}
           <Show when={!creating()}>
-            <Button variant="secondary" icon={<XCircleIcon />} onClick={close}>
+            <Button
+              variant="secondary"
+              icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
+              onClick={close}
+            >
               {t('common.cancel')}
             </Button>
           </Show>
           <Button
             icon={<PlusCircleIcon />}
-            data-testid="create-stocktake-confirm"
+            data-testid="dialog-button-ok"
             loading={creating()}
             onClick={() => void create()}
           >
@@ -336,6 +349,7 @@ export const CreateStocktakeModal = (props: {
         options={TYPE_OPTIONS.map(o => ({
           value: o.value,
           label: t(o.labelKey),
+          testId: `stocktake-type-${o.value}`,
         }))}
       />
 

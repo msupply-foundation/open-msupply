@@ -30,7 +30,7 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
   },
   item: {
     label: () => t('stocktake.detail-filter.item'),
-    render: (props) => (
+    render: props => (
       <FilterTextInput
         label={t('stocktake.detail-filter.item')}
         placeholder={t('stocktake.filter.contains')}
@@ -41,7 +41,7 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
   },
   batch: {
     label: () => t('stocktake.detail-filter.batch'),
-    render: (props) => (
+    render: props => (
       <FilterTextInput
         label={t('stocktake.detail-filter.batch')}
         placeholder={t('stocktake.filter.contains')}
@@ -52,7 +52,7 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
   },
   location: {
     label: () => t('stocktake.detail-filter.location'),
-    render: (props) => (
+    render: props => (
       <FilterTextInput
         label={t('stocktake.detail-filter.location')}
         placeholder={t('stocktake.filter.contains')}
@@ -63,7 +63,7 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
   },
   expiryBefore: {
     label: () => t('stocktake.detail-filter.expiry'),
-    render: (props) => (
+    render: props => (
       <FilterDate
         label={t('stocktake.detail-filter.expiry')}
         value={props.filter().expiryBefore ?? ''}

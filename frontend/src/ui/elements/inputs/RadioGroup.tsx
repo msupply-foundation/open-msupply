@@ -7,6 +7,8 @@ export interface RadioOption {
   /** Optional muted second line under the label. */
   description?: string;
   disabled?: boolean;
+  /** Test id on the option's radio input (cross-FE test-id contract). */
+  testId?: string;
 }
 
 interface RadioGroupProps {
@@ -68,6 +70,7 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
                 class={styles.input}
                 name={name}
                 value={option.value}
+                data-testid={option.testId}
                 checked={props.value === option.value}
                 disabled={props.disabled || option.disabled}
                 onChange={() => props.onChange?.(option.value)}
