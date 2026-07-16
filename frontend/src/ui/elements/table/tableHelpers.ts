@@ -1,7 +1,8 @@
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
-import { type Column, MULTIPLE, sharedOrMultipleDate } from './DataTable';
+import type { Column } from './columnTypes';
+import { MULTIPLE, sharedOrMultipleDate } from './aggregations';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their column defs,
 // and the sortKey ⇄ column-id mapping. Kept in one place so a page has a single

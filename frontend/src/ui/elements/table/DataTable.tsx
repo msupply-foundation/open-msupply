@@ -2,35 +2,39 @@ import { createEffect, createSignal, For, Match, on, Show, Switch } from 'solid-
 import type { JSX } from 'solid-js';
 import {
   createSolidTable,
-  flexRender,
   functionalUpdate,
   getCoreRowModel,
   getExpandedRowModel,
   getGroupedRowModel,
-  type AggregationFn,
-  type Cell as TanCell,
   type Column as TanColumn,
-  type ColumnDef,
-  type IdentifiedColumnDef,
   type ColumnOrderState,
   type ColumnPinningState,
   type ColumnSizingState,
   type ExpandedState,
   type GroupingState,
-  type Row as TanRow,
-  type RowData,
   type RowSelectionState,
+  type Row as TanRow,
   type SortingState,
   type Updater,
   type VisibilityState,
 } from '@tanstack/solid-table';
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
+import {
+  membershipInTab,
+  toColumnDef,
+  type Column,
+  type Membership,
+  type SortState,
+  type TabAndCardGroup,
+} from './columnTypes';
+import { HeaderCell } from './HeaderCell';
+import { TableRow } from './TableRow';
+import { CardView } from './CardView';
 import type { TableConfig, TableConfigKey, ViewMode } from './tableConfig';
 import { pxToRem, remToPx } from '../../utils/rem';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
 import {
   CardViewIcon,
-  ChevronDownIcon,
   ChevronsDownIcon,
   GroupedIcon,
   MaximiseIcon,
@@ -40,37 +44,19 @@ import {
   UngroupedIcon,
 } from '../../icons';
 import { Popover } from '../feedback/Popover';
-import { LabelledValue } from '../typography/LabelledValue';
 import { ColumnSettings } from './ColumnSettings';
 import { t } from '../../../intl';
 import type { LocaleKey } from '../../../intl';
 import styles from './DataTable.module.css';
 
-// An untyped display convention → TanStack's `meta` bag (kdd/table-state: meta for flags
-// that need no table-specific type). Augmented here so it's typed everywhere
-// columnDef.meta is read (the cell helpers in tableHelpers.ts set align; the renderers
-// below read it). A convention that needs the K generic goes on Column<T,K> instead.
-declare module '@tanstack/solid-table' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface ColumnMeta<TData extends RowData, TValue> {
-    /** Text alignment for the cell + header — a display-only convention TanStack has no
-     *  concept of; read by the renderers below and applied via a data-align attribute. */
-    align?: 'left' | 'right' | 'center';
-    /** Max number of lines this column's body cells may wrap to before truncating with an
-     *  ellipsis (default is single-line nowrap). e.g. 2 = up to two lines then clamp. A
-     *  display convention; applied via a --wrap-lines custom property on the cell. */
-    wrapLines?: number;
-    /** Where this column renders in CARD view (viewMode 'card'). `region` 'primary' = the big
-     *  top-left title, 'badge' = the top-right chip. `showLabel: true` captions the cell with a
-     *  small muted label (same style as a secondary field's label) — reusing the column's own
-     *  `header`, so it isn't specified twice — useful when the cell is otherwise unlabelled
-     *  (e.g. an editable batch input in the primary slot). A column with NO `card` falls into
-     *  the single "secondary area" below the header (a wrapping label-value flow; grouped into
-     *  rows when the table is grouped — see CardView). Visibility still follows
-     *  columnVisibility — a hidden column doesn't appear on the card either. */
-    card?: { region: 'primary' | 'badge'; showLabel?: boolean };
-  }
-}
+// The column model (Column/ColumnIdentity/toColumnDef/TabAndCardGroup/ALL_TABS/SortState + the
+// ColumnMeta augmentation) lives in columnTypes.ts, and the grouped-parent aggregations
+// (MULTIPLE/sharedOrMultiple/sharedOrMultipleDate) in aggregations.ts — both re-exported here so
+// consumers keep importing from './DataTable'. The three render paths (HeaderCell / TableRow /
+// CardView) are their own files. What remains in THIS file is the stateful table controller.
+export type { Column, ColumnIdentity, SortState, TabAndCardGroup } from './columnTypes';
+export { ALL_TABS, toColumnDef } from './columnTypes';
+export { MULTIPLE, sharedOrMultiple, sharedOrMultipleDate } from './aggregations';
 
 // Generic, server-driven data table shared across list pages (kdd/explicit-composition
 // treats the data table as its sanctioned config-driven exception: N columns × M rows is
@@ -89,148 +75,6 @@ declare module '@tanstack/solid-table' {
 //
 // Header interactions: clicking a sortable header sorts. The toolbar has one control:
 // full screen.
-
-export type SortState<K extends string> = { key: K; desc: boolean };
-
-// --- Row grouping aggregation (kdd/table-state) ---------------------------------------------
-// When rows are GROUPED (see rowGroup below) a parent row stands in for its leaves, and each
-// column decides what its parent cell shows via TanStack's own `aggregationFn` (set directly on
-// the column — we don't wrap it). TanStack ships 'sum' etc. by name; here we export ONE extra
-// custom AggregationFn a caller can hand to `aggregationFn`:
-//   • sharedOrMultiple — the shared leaf value if they all agree, else the MULTIPLE sentinel.
-// MULTIPLE is ONE typed, global constant so the "[multiple]" placeholder is spelled once; the
-// renderer shows it literally, matching Open mSupply. The cell helpers (tableHelpers) set a
-// sensible default aggregationFn (getNumberCell → 'sum').
-export const MULTIPLE = '[multiple]';
-
-// The shared-or-[multiple] aggregation: the one shared leaf value (all equal) → that value; any
-// disagreement → MULTIPLE. Use EXPLICITLY on a column that should show its shared value or nothing
-// (the default for text columns; dates use the date variant below). A plain TanStack AggregationFn
-// — pass it straight to a column's `aggregationFn`. Typed <any> like TanStack's own built-in
-// aggregation fns (their row type is invariant, so a fixed T wouldn't fit an any-T column).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const sharedOrMultiple: AggregationFn<any> = (columnId, leafRows) => {
-  const first = leafRows[0]?.getValue(columnId);
-  const allEqual = leafRows.every((r) => r.getValue(columnId) === first);
-  return allEqual ? first : MULTIPLE;
-};
-
-// The date variant of sharedOrMultiple: compares by epoch-ms (Date.getTime) rather than the raw
-// value, so equal dates in different representations (ISO string vs Date) still count as shared,
-// and it's a fast numeric compare. Returns the FIRST leaf's raw value (so the column's own date
-// cell still formats it) or MULTIPLE. The default for getDateCell.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const sharedOrMultipleDate: AggregationFn<any> = (columnId, leafRows) => {
-  const time = (v: unknown): number | undefined => {
-    if (v == null) return undefined;
-    const ms = new Date(v as string | number | Date).getTime();
-    return Number.isNaN(ms) ? undefined : ms;
-  };
-  const first = leafRows[0]?.getValue(columnId);
-  const firstTime = time(first);
-  const allEqual = leafRows.every((r) => time(r.getValue(columnId)) === firstTime);
-  return allEqual ? first : MULTIPLE;
-};
-
-// A column that belongs to EVERY tab but is not itself part of card grouping (a row-identity
-// anchor like the batch or the selection). Setting `tabsAndCardGroups: ALL_TABS` (the bare
-// const, not an array) is explicit: shows in every tab (table view), and in card view falls to
-// the ungrouped area (if it has no `card` region) rather than any card group's row.
-export const ALL_TABS = '__all_tabs__';
-
-// A column's tab / card-group membership as stored on the columnDef: either the ALL_TABS
-// sentinel, an array of card-group keys, or absent.
-type Membership = string[] | typeof ALL_TABS | undefined;
-
-// Does a membership put the column in a given tab? ALL_TABS → yes for any tab; an array → yes
-// if it lists that card group (each card group is one tab); absent → no.
-const membershipInTab = (m: Membership, tab: string): boolean =>
-  m === ALL_TABS ? true : Array.isArray(m) ? m.includes(tab) : false;
-
-// The real card-group keys a membership names (excludes ALL_TABS / absent).
-const membershipCardGroups = (m: Membership): string[] => (Array.isArray(m) ? m : []);
-
-// How a column identifies itself — a discriminated union of the three real scenarios,
-// replacing TanStack's raw accessorKey/accessorFn/id fields (which we strip from the base
-// below, so identity is spelled EXACTLY one way per column and can be typed):
-//   • `key`      — a strict `keyof T`: the column reads that field, is natively sortable,
-//                  and its id is that key. Typos are a compile error. The common case.
-//   • `id`       — a display column with no data accessor (an actions column, a checkbox):
-//                  just a unique id, no value read.
-//   • `accessor` — a computed value (a nested `row.item.code`, a derived string): an
-//                  accessorFn plus an explicit `id`, since there's no key to derive one from.
-// The mapper `toColumnDef` (below) turns each case into the matching TanStack fields, and
-// always sets an explicit `id` — so EVERY column has a known id (no accessorKey-derivation to
-// mirror), which the sort-key ⇄ id round-trip and column config rely on. This lives under the
-// column's `c` field (below) as ONE nested object, so it can't get mixed up with the display
-// fields (header/cell/meta) or `sortKey`.
-export type ColumnIdentity<T> =
-  | { key: keyof T; id?: never; accessor?: never }
-  | { id: string; key?: never; accessor?: never }
-  | { accessor: (row: T) => unknown; id: string; key?: never };
-
-// Our column = a `c` field holding the identity union (nested so it never mixes with the rest)
-// + the non-identity TanStack column fields (cell, header, meta, enableSorting, …) via
-// IdentifiedColumnDef minus its own `id` — that interface is exactly ColumnDefBase
-// (cell/meta/footer/sorting/…) PLUS `header`, and carries NONE of accessorKey/accessorFn (those
-// live in TanStack's identity mixins, which we're replacing); we drop its optional `id` since
-// our identity `c` owns id — then add our two extensions:
-//   • `sortKey` — the GraphQL sort field, typed as a real K (kept SEPARATE from identity: a
-//     column may sort by a different field than it displays, and ColumnMeta can't carry K since
-//     ColumnDef only parameterises over TData/TValue). Usually equals the column's key/id; the
-//     DataTable maps sortKey ⇄ resolved id for the manual-sort round-trip.
-//   • `tabsAndCardGroups` — the card-group membership (a card group is presented as a TAB in
-//     table view, hence the name): EITHER the ALL_TABS sentinel (bare — an anchor in every tab
-//     but not a card group), OR an ARRAY of the table's card-group keys (typed G, so a typo is a
-//     compile error; a column may list several). Omitting it means the column is in no card
-//     group — in card view it lands in the ungrouped area. See TabAndCardGroup + the filter
-//     below, and kdd/edit-line-card-table.
-// Display-only conventions (align, card region) live in `meta` — kdd/table-state.
-export type Column<T, K extends string, G extends string = never> = {
-  /** The column's identity — one of key / id / accessor+id (see ColumnIdentity). Nested under
-   *  its own field so the identity choice stays distinct from the display fields and sortKey. */
-  c: ColumnIdentity<T>;
-} & Omit<IdentifiedColumnDef<T>, 'id'> & {
-    sortKey?: K;
-    tabsAndCardGroups?: G[] | typeof ALL_TABS;
-  };
-
-// Map our Column → the TanStack ColumnDef it feeds to createSolidTable, translating the `c`
-// identity into the matching TanStack fields and GUARANTEEING an explicit `id`:
-//   • key      → accessorKey: key, id: String(key)
-//   • accessor → accessorFn: accessor, id
-//   • id       → id (a display column — no accessor)
-// The rest of the column (header/cell/meta + our sortKey/tabsAndCardGroups) rides along untouched —
-// read back off the columnDef by the sort mapper, the card-group filter, and ColumnSettings.
-export const toColumnDef = <T, K extends string, G extends string>(
-  col: Column<T, K, G>,
-): ColumnDef<T> => {
-  const { c, ...rest } = col;
-  // `rest` already carries TanStack's own fields — including `aggregationFn`/`aggregatedCell` for
-  // row grouping (from ColumnDefBase) — so a caller sets those directly; nothing to remap.
-  if (c.key !== undefined) return { ...rest, accessorKey: c.key, id: String(c.key) } as ColumnDef<T>;
-  if (c.accessor !== undefined) return { ...rest, accessorFn: c.accessor, id: c.id } as ColumnDef<T>;
-  return { ...rest, id: c.id } as ColumnDef<T>;
-};
-
-// A card-group definition for a grouped table. The page declares a const list;
-// `Column.tabsAndCardGroups` references these keys (typed as G). One shape drives both faces
-// (kdd/edit-line-card-table): a card group shows as a TAB in table view and a GROUP-ROW in card
-// view — hence the icon (shown on the tab + the card group row) and the translated label.
-export type TabAndCardGroup<G extends string> = {
-  /** The card-group key — what a column's `tabsAndCardGroups` entry must match. */
-  key: G;
-  /** i18n key for the card-group label (shown on its tab + card group row). */
-  labelKey: LocaleKey;
-  /**
-   * Optional icon for the card group — its tab and its card group-row — as a FACTORY
-   * (`() => <Icon/>`), not a bare element. The icon renders in multiple places at once (the tab
-   * strip + one per card in card view); a shared JSX element is a single DOM node that can only
-   * live in one place (it would end up on just the last card), so each render site calls this to
-   * get its own node.
-   */
-  icon?: () => JSX.Element;
-};
 
 export type DataTableProps<T, K extends string, G extends string = never> = {
   columns: Column<T, K, G>[];
@@ -803,337 +647,5 @@ export function DataTable<T, K extends string, G extends string = never>(
         </Switch>
       </div>
     </div>
-  );
-}
-
-// The alignment convention carried on a column's meta (set by the cell helpers).
-const cellAlign = <T,>(cell: TanCell<T, unknown>): 'left' | 'right' | 'center' | undefined =>
-  cell.column.columnDef.meta?.align;
-
-// The wrap-lines convention: how many lines a cell may wrap to before truncating. Absent
-// (or <= 1) means the default single-line nowrap. Returns the clamp count when > 1.
-const cellWrapLines = <T,>(cell: TanCell<T, unknown>): number | undefined => {
-  const lines = cell.column.columnDef.meta?.wrapLines;
-  return lines && lines > 1 ? lines : undefined;
-};
-
-// A body row: its cells, clickable when onRowClick is set.
-function TableRow<T>(props: {
-  row: TanRow<T>;
-  enableSelection: boolean;
-  /** When grouped, a leading expander column is present; parent (expandable) rows show a chevron. */
-  showExpander: boolean;
-  onRowClick?: (row: T) => void;
-  /** Select/deselect ALL of a group row's leaves in one emit (called for a grouped-row checkbox). */
-  onToggleGroup: (row: TanRow<T>) => void;
-  /** Sticky-pin style for a pinned data column's cell (position/offset/z-index), else undefined. */
-  pinnedStyle: (column: TanColumn<T>) => JSX.CSSProperties | undefined;
-  /** Sticky-pin style for a leading (expander/select) cell at the given index (always pinned left). */
-  leadingPinnedStyle: (index: number) => JSX.CSSProperties;
-  /** Display-time tab filter: render a cell only when this returns true (see columnInActiveTab). */
-  cellVisible: (cell: TanCell<T, unknown>) => boolean;
-}): JSX.Element {
-  return (
-    <tr
-      data-testid="table-row"
-      class={props.onRowClick ? styles.rowClickable : undefined}
-      // Selected rows get the same brand tint as selected cards (consistent selection signal
-      // across both views); styled on the cells (data-selected) in CSS. A GROUP row shows the
-      // tint when ALL its leaves are selected — mirroring its checkbox (its own id isn't stored,
-      // so getIsSelected() would stay false).
-      data-selected={
-        (props.row.getIsGrouped() ? props.row.getIsAllSubRowsSelected() : props.row.getIsSelected())
-          ? ''
-          : undefined
-      }
-      onClick={() => props.onRowClick?.(props.row.original)}
-    >
-      {/* Expander column (row grouping): its OWN leading column — the chevron on an expandable
-          parent, blank otherwise (matches Open mSupply, which puts the chevrons before select). */}
-      <Show when={props.showExpander}>
-        <td class={styles.expanderCell} data-pinned="left" style={props.leadingPinnedStyle(0)}>
-          <Show when={props.row.getCanExpand()}>
-            <button
-              type="button"
-              class={styles.groupExpander}
-              data-expanded={props.row.getIsExpanded() ? '' : undefined}
-              aria-expanded={props.row.getIsExpanded()}
-              aria-label={props.row.getIsExpanded() ? t('table.collapse-group') : t('table.expand-group')}
-              onClick={(event) => {
-                event.stopPropagation();
-                props.row.toggleExpanded();
-              }}
-            >
-              <ChevronDownIcon />
-            </button>
-          </Show>
-        </td>
-      </Show>
-      <Show when={props.enableSelection}>
-        <td
-          class={styles.selectCell}
-          data-pinned="left"
-          style={props.leadingPinnedStyle(props.showExpander ? 1 : 0)}
-        >
-          {/* A GROUP row's checkbox is driven by its LEAVES, not the group's own selected state
-              (we never store a group's synthetic id): checked when all sub-rows are selected,
-              else unchecked (no indeterminate). Clicking it selects ALL leaves when not all are
-              selected, else deselects them — so select-group → deselect-one-leaf (group unchecks)
-              → click-group again cleanly re-selects all. A LEAF row uses the native handler. */}
-          <input
-            type="checkbox"
-            aria-label={t('table.select-row')}
-            checked={
-              props.row.getIsGrouped()
-                ? props.row.getIsAllSubRowsSelected()
-                : props.row.getIsSelected()
-            }
-            onChange={
-              props.row.getIsGrouped()
-                ? () => props.onToggleGroup(props.row)
-                : props.row.getToggleSelectedHandler()
-            }
-            onClick={(event) => event.stopPropagation()}
-          />
-        </td>
-      </Show>
-      <For each={props.row.getVisibleCells()}>
-        {(cell) => (
-          <Show when={props.cellVisible(cell)}>
-            <td
-              class={styles.td}
-              data-align={cellAlign(cell)}
-              data-pinned={cell.column.getIsPinned() || undefined}
-              // data-wrap + --wrap-lines: when a column sets meta.wrapLines > 1, the cell
-              // clamps to that many lines then ellipsises (CSS line-clamp); otherwise the
-              // default single-line nowrap applies. min-width keeps the column-width floor.
-              // A pinned column additionally gets sticky position + its edge offset.
-              data-wrap={cellWrapLines(cell) ? '' : undefined}
-              style={{
-                'min-width': `${cell.column.getSize()}px`,
-                ...(cellWrapLines(cell) ? { '--wrap-lines': String(cellWrapLines(cell)) } : {}),
-                ...props.pinnedStyle(cell.column),
-              }}
-            >
-              {/* Just flexRender the column's cell — TanStack's merged default cell renders the
-                  leaf value, the group value on a parent, and the aggregated value (via
-                  aggregatedCell). Unlike TanStack's own grouping example we DON'T render null for a
-                  placeholder (the grouped column on a CHILD row): flexRender gives the child's real
-                  value, so a grouped child keeps showing e.g. its code/name — a blank there would
-                  read as missing data (matches Open mSupply). The expander is its own column. */}
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </td>
-          </Show>
-        )}
-      </For>
-    </tr>
-  );
-}
-
-// A cell's explicit card region, or undefined when it has none — in which case it belongs to
-// the single "secondary area" (rendered below the header, ordered by group when grouped).
-const cellCardRegion = <T,>(cell: TanCell<T, unknown>): 'primary' | 'badge' | undefined =>
-  cell.column.columnDef.meta?.card?.region;
-
-// The column's header text, for a field label. Headers may be a string or JSX/function; only
-// the string case yields a readable label (our columns use strings), else no label.
-const columnHeaderText = <T,>(cell: TanCell<T, unknown>): string | undefined => {
-  const header = cell.column.columnDef.header;
-  return typeof header === 'string' ? header : undefined;
-};
-
-// The optional caption for a primary/badge card cell — a small muted label above the cell (for
-// an otherwise-unlabelled cell, e.g. an editable input). Opt in with `card.showLabel`; the text
-// is the column's own header, so it isn't specified twice.
-const cellCardLabel = <T,>(cell: TanCell<T, unknown>): string | undefined =>
-  cell.column.columnDef.meta?.card?.showLabel ? columnHeaderText(cell) : undefined;
-
-// A cell's column membership (ALL_TABS sentinel | array of group keys | undefined).
-const cellMembership = <T,>(cell: TanCell<T, unknown>): Membership =>
-  (cell.column.columnDef as { tabsAndCardGroups?: Membership }).tabsAndCardGroups;
-
-// Whether a cell belongs to a real card GROUP (a declared group key) — excludes ALL_TABS, which
-// appears in every tab but is NOT part of card grouping.
-const cellInGroup = <T,>(cell: TanCell<T, unknown>, key: string): boolean =>
-  membershipCardGroups(cellMembership(cell)).includes(key);
-
-// Card view — each row is a card (ui-standards § tables): primary identity top-left, a badge
-// top-right, and the rest in the secondary area below. Reuses TanStack's row model + visible
-// cells, routing each by its meta.card region; selection + row-click mirror the table. When
-// `tabsAndCardGroups` is set (kdd/edit-line-card-table), the secondary area is ordered by group —
-// each group as its own ROW (icon + its fields); ALL_TABS / ungrouped cells follow, unlabelled.
-function CardView<T>(props: {
-  table: import('@tanstack/solid-table').Table<T>;
-  tabsAndCardGroups?: TabAndCardGroup<string>[];
-  enableSelection: boolean;
-  onRowClick?: (row: T) => void;
-  emptyMessage?: string;
-}): JSX.Element {
-  const rows = () => props.table.getRowModel().rows;
-  return (
-    <Show
-      when={rows().length > 0}
-      fallback={<div class={styles.cardEmpty}>{props.emptyMessage ?? t('table.no-results')}</div>}
-    >
-      <div class={styles.cardGrid}>
-        <For each={rows()}>
-          {(row) => {
-            const cells = () => row.getVisibleCells();
-            const inRegion = (region: 'primary' | 'badge') =>
-              cells().filter((c) => cellCardRegion(c) === region);
-            // The "secondary area": every visible cell with NO explicit card region.
-            const secondaryCells = () => cells().filter((c) => cellCardRegion(c) === undefined);
-            return (
-              <div
-                class={`${styles.card} ${props.onRowClick ? styles.rowClickable : ''}`}
-                data-selected={row.getIsSelected() ? '' : undefined}
-                onClick={() => props.onRowClick?.(row.original)}
-              >
-                <div class={styles.cardHeader}>
-                  <Show when={props.enableSelection}>
-                    <input
-                      type="checkbox"
-                      class={styles.cardSelect}
-                      aria-label={t('table.select-row')}
-                      checked={row.getIsSelected()}
-                      onChange={row.getToggleSelectedHandler()}
-                      onClick={(event) => event.stopPropagation()}
-                    />
-                  </Show>
-                  <div class={styles.cardIdentity}>
-                    <For each={inRegion('primary')}>
-                      {(cell) => (
-                        // meta.card.label (optional): a muted caption above the cell, same style
-                        // as a secondary field's label — for an unlabelled cell (e.g. an input).
-                        <LabelledValue label={cellCardLabel(cell)}>
-                          <div class={styles.cardPrimary}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </div>
-                        </LabelledValue>
-                      )}
-                    </For>
-                  </div>
-                  <For each={inRegion('badge')}>
-                    {(cell) => (
-                      <LabelledValue label={cellCardLabel(cell)}>
-                        <div class={styles.cardBadge}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </div>
-                      </LabelledValue>
-                    )}
-                  </For>
-                </div>
-                {/* The secondary area — every cell with no explicit card region. When grouped:
-                    each group is its own ROW (a .cardFields flow led by the group ICON),
-                    skipping groups with nothing visible (pass 1); then a final row for cells in
-                    NO group — ALL_TABS anchors + un-annotated columns — with no icon (pass 2).
-                    Ungrouped tables render one flat row. A cell is "in a group" only via a real
-                    tab key; ALL_TABS never counts as a card group. */}
-                <Show when={secondaryCells().length > 0}>
-                  {/* Pass 1 — one row per group. */}
-                  <For each={props.tabsAndCardGroups}>
-                    {(group) => {
-                      const groupCells = () =>
-                        secondaryCells().filter((c) => cellInGroup(c, group.key));
-                      return (
-                        <Show when={groupCells().length > 0}>
-                          <div class={styles.cardFields}>
-                            <Show when={group.icon}>
-                              {(icon) => <span class={styles.cardGroupIcon}>{icon()()}</span>}
-                            </Show>
-                            <For each={groupCells()}>
-                              {(cell) => (
-                                <LabelledValue label={columnHeaderText(cell)}>
-                                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                </LabelledValue>
-                              )}
-                            </For>
-                          </div>
-                        </Show>
-                      );
-                    }}
-                  </For>
-                  {/* Pass 2 — the ungrouped row: cells in no real group (ALL_TABS anchors +
-                      un-annotated), and the whole set when the table isn't grouped. No icon. */}
-                  <Show
-                    when={secondaryCells().filter(
-                      (c) => !(props.tabsAndCardGroups ?? []).some((g) => cellInGroup(c, g.key)),
-                    )}
-                  >
-                    {(ungrouped) => (
-                      <Show when={ungrouped().length > 0}>
-                        <div class={styles.cardFields}>
-                          <For each={ungrouped()}>
-                            {(cell) => (
-                              <LabelledValue label={columnHeaderText(cell)}>
-                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                              </LabelledValue>
-                            )}
-                          </For>
-                        </div>
-                      </Show>
-                    )}
-                  </Show>
-                </Show>
-              </div>
-            );
-          }}
-        </For>
-      </div>
-    </Show>
-  );
-}
-
-// A header cell: a sortable label + a resize handle on the trailing edge.
-function HeaderCell<T>(props: {
-  header: import('@tanstack/solid-table').Header<T, unknown>;
-  /** Sticky-pin style for a pinned column (position/left/right/z-index), else undefined. */
-  pinnedStyle: (column: TanColumn<T>) => JSX.CSSProperties | undefined;
-}): JSX.Element {
-  const column = () => props.header.column;
-  const canSort = () => column().getCanSort();
-  const canResize = () => column().getCanResize();
-  const isResizing = () => column().getIsResizing();
-  const align = () => column().columnDef.meta?.align;
-  const pin = () => props.pinnedStyle(column());
-  const indicator = () => {
-    const sorted = column().getIsSorted();
-    if (!sorted) return null;
-    return <span class={styles.sortIndicator}>{sorted === 'desc' ? '▼' : '▲'}</span>;
-  };
-  return (
-    <th
-      class={styles.th}
-      data-align={align()}
-      data-pinned={column().getIsPinned() || undefined}
-      data-testid={canSort() ? `column-${column().id}` : undefined}
-      // Auto table layout (columns flex to fill); getSize() is applied as a min-width FLOOR,
-      // so a configured size / a resize drag widens the column without losing the auto-fill.
-      // A pinned column additionally gets sticky position + its edge offset.
-      style={{ 'min-width': `${column().getSize()}px`, ...pin() }}
-    >
-      <span
-        class={`${styles.thLabel} ${canSort() ? styles.thSortable : ''}`}
-        onClick={canSort() ? column().getToggleSortingHandler() : undefined}
-      >
-        {/* Header text wraps up to 2 lines (.thText clamp); the sort indicator is a
-            separate non-shrinking sibling so it stays visible when the text wraps. */}
-        <span class={styles.thText}>
-          {flexRender(column().columnDef.header, props.header.getContext())}
-        </span>
-        {indicator()}
-      </span>
-      {/* Resize handle on the trailing edge. TanStack's getResizeHandler drives the drag
-          (mouse + touch); we style a thin divider and highlight it while resizing. */}
-      <Show when={canResize()}>
-        <span
-          class={`${styles.resizeHandle} ${isResizing() ? styles.resizeHandleActive : ''}`}
-          onMouseDown={props.header.getResizeHandler()}
-          onTouchStart={props.header.getResizeHandler()}
-          onClick={(event) => event.stopPropagation()}
-          aria-hidden="true"
-        />
-      </Show>
-    </th>
   );
 }
