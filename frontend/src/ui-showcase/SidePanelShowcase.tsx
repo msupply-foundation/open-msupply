@@ -77,6 +77,27 @@ export const SidePanelShowcase = () => {
             <SidePanelSection title="Comment">
               <p>Placeholder — comments land with the Feedback work.</p>
             </SidePanelSection>
+            <SidePanelSection
+              title="Related documents (collapsible)"
+              collapsible
+            >
+              <dl>
+                <dt>Requisition</dt>
+                <dd>RQ-0042</dd>
+                <dt>Purchase order</dt>
+                <dd>PO-1042</dd>
+              </dl>
+            </SidePanelSection>
+            <SidePanelSection
+              title="History (collapsed by default)"
+              collapsible
+              defaultOpen={false}
+            >
+              <p>
+                Opened this section from its heading — the chevron rotates and
+                content expands.
+              </p>
+            </SidePanelSection>
           </SidePanel>
         </div>
       </Card>

@@ -1,0 +1,89 @@
+/*
+ * Toast — transient notifications stacked at the bottom inline-end corner.
+ * Reuses Alert's severity tint recipe (severity mixed over the raised surface,
+ * severity-coloured icon), on a shadowed card so it reads as floating above the
+ * page. rem/em sizing; colours from tokens (only px are the hairline accent +
+ * the shadow offsets already px in the token).
+ */
+
+.region {
+  position: fixed;
+  inset-block-end: var(--space-4);
+  inset-inline-end: var(--space-4);
+  z-index: 60; /* above dialogs (top layer) is impossible, but above page chrome */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  inline-size: min(24rem, calc(100vw - 2rem));
+  /* The region never blocks the page; individual cards re-enable pointers. */
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border-inline-start: 3px solid var(--toast-colour);
+  background: color-mix(
+    in srgb,
+    var(--toast-colour) 12%,
+    var(--surface-raised)
+  );
+  color: var(--text-body);
+  box-shadow: var(--shadow-3);
+  font-size: var(--text-sm);
+  line-height: 1.43;
+  pointer-events: auto;
+}
+
+.toast[data-severity='success'] {
+  --toast-colour: var(--success-main);
+}
+
+.toast[data-severity='info'] {
+  --toast-colour: var(--info-main);
+}
+
+.toast[data-severity='error'] {
+  --toast-colour: var(--error-main);
+}
+
+.icon {
+  display: flex;
+  flex-shrink: 0;
+  padding-block-start: 0.0625rem;
+  font-size: 1.25rem;
+  color: var(--toast-colour);
+}
+
+.message {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  padding-block-start: 0.125rem;
+}
+
+.dismiss {
+  flex-shrink: 0;
+  margin-inline-start: calc(-1 * var(--space-1));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: toast-in 160ms ease;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

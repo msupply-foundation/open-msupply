@@ -5,6 +5,7 @@ import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import { Popover } from '../ui/elements/feedback/Popover';
+import { showToast } from '../ui/elements/feedback/Toast';
 import { Button } from '../ui/elements/buttons/Button';
 import { TextField } from '../ui/elements/inputs/TextField';
 import {
@@ -116,6 +117,55 @@ export const FeedbackShowcase = () => {
             Last successful sync 09:37 (completed in 1 second) — the untinted
             notice, glyph overridden by intent.
           </Alert>
+        </div>
+      </Card>
+
+      <Card
+        title="Toast — transient notifications"
+        lead={
+          <>
+            A module-level queue + <code>showToast(&#123;...&#125;)</code> plus
+            a single <code>&lt;ToastRegion/&gt;</code> host mounted once at the
+            app root (beside the global modals). Toasts stack at the bottom
+            inline-end corner, auto-dismiss after ~5s (or on the close button),
+            and reuse Alert's severity iconography + tint tokens. The region is{' '}
+            <code>role="status"</code> <code>aria-live="polite"</code> so each
+            is announced without interrupting.
+          </>
+        }
+      >
+        <div class={styles.popoverRow}>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              showToast({ message: 'Stocktake saved.', severity: 'success' })
+            }
+          >
+            Success toast
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              showToast({
+                message: 'Report generated — opening in a new tab.',
+                severity: 'info',
+              })
+            }
+          >
+            Info toast
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              showToast({
+                message: 'Could not reach the server. Try again.',
+                severity: 'error',
+                durationMs: 8000,
+              })
+            }
+          >
+            Error toast (8s)
+          </Button>
         </div>
       </Card>
 

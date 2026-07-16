@@ -11,6 +11,7 @@ import { ButtonsShowcase } from './ButtonsShowcase';
 import { InputsShowcase } from './InputsShowcase';
 import { SelectorsShowcase } from './SelectorsShowcase';
 import { FeedbackShowcase } from './FeedbackShowcase';
+import { DisplayShowcase } from './DisplayShowcase';
 import { SyncShowcase } from './SyncShowcase';
 import { StoreLoginShowcase } from './StoreLoginShowcase';
 import { TableShowcase } from './TableShowcase';
@@ -102,6 +103,12 @@ export const sections: SectionDef[] = [
     id: 'feedback',
     label: 'Feedback',
     component: FeedbackShowcase,
+    category: 'components',
+  },
+  {
+    id: 'display',
+    label: 'Display',
+    component: DisplayShowcase,
     category: 'components',
   },
   {

@@ -24,6 +24,7 @@ import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
 import { ReLoginModal } from './auth/ReLoginModal';
 import { UnexpectedErrorModal } from './UnexpectedErrorModal';
+import { ToastRegion } from './ui/elements/feedback/Toast';
 import styles from './ui/styles/shared.module.css';
 
 type Phase = 'loading' | 'initialisation' | 'operational';
@@ -136,6 +137,9 @@ export const App: Component = () => {
       </Switch>
       {/* On top of everything, including other modals. */}
       <UnexpectedErrorModal />
+      {/* The single host for transient toasts, pushed from anywhere via
+          showToast() (kdd/state-management global signal). */}
+      <ToastRegion />
     </>
   );
 };
