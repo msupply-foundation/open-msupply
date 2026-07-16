@@ -112,10 +112,22 @@
 }
 
 .title {
+  /* Take the free inline space so any headerActions pin to the inline-end;
+     min-inline-size:0 lets a long title truncate/wrap rather than shove them off. */
+  flex: 1 1 auto;
+  min-inline-size: 0;
   margin: 0;
   font-size: var(--text-lg);
   font-weight: var(--weight-bold);
   color: var(--gray-dark);
+}
+
+/* Header action(s) (e.g. Add batch) — grouped at the inline-end of the header
+   row, opposite the title, not shrinking below their content. */
+.headerActions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-3);
 }
 
 .description {
