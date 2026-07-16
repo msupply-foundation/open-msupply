@@ -21,11 +21,9 @@ on:
   workflow_dispatch:
 
 env:
-  # Where the suite definitions live. Pinned to the open-msupply-frontend#167
-  # branch until that PR (which moves the suites there) merges — then flip
-  # this to main.
+  # Where the suite definitions live.
   FE_SUITES_REPO: msupply-foundation/open-msupply-frontend
-  FE_SUITES_REF: e2e-regression-ci
+  FE_SUITES_REF: main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
