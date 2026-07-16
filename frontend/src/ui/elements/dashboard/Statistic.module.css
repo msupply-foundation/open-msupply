@@ -1,0 +1,56 @@
+.stat {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 3.5rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  text-decoration: none;
+}
+
+.value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.stat:hover .value {
+  text-decoration: underline;
+}
+
+.stat:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.stat[data-alert] .value {
+  color: var(--error-main);
+}
+
+.alertIcon {
+  display: inline-flex;
+  color: var(--error-main);
+}
+
+.info {
+  display: inline-flex;
+  color: var(--text-secondary);
+}
+
+.alertIcon svg,
+.info svg {
+  inline-size: 1em;
+  block-size: 1em;
+}

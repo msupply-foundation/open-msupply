@@ -10,6 +10,7 @@ import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
 import { ContentFooterShowcase } from './ContentFooterShowcase';
 import { SidePanelShowcase } from './SidePanelShowcase';
+import { DashboardShowcase } from './DashboardShowcase';
 
 export type SectionCategory = 'components' | 'layout';
 
@@ -19,13 +20,9 @@ export type SectionDef = {
   component: Component;
   /** Which menu-bar group the section lists under. */
   category: SectionCategory;
-  /**
-   * When true, the section renders a full-height page (its own Page frame)
-   * that fills
-   *  the panel — the shell drops the section title + panel padding/scroll so
-   *  the page owns the whole region (e.g. the Table demo, which is a real list
-   *  Page).
-   */
+  /** When true, the section renders a full-height page (its own Page frame) that fills
+   *  the panel — the shell drops the section title + panel padding/scroll so the page
+   *  owns the whole region (e.g. the Table demo, which is a real list Page). */
   fill?: boolean;
 };
 
@@ -84,6 +81,12 @@ export const sections: SectionDef[] = [
     id: 'feedback',
     label: 'Feedback',
     component: FeedbackShowcase,
+    category: 'components',
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    component: DashboardShowcase,
     category: 'components',
   },
   {

@@ -1,0 +1,58 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.titleLink {
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.titleLink:hover {
+  text-decoration: underline;
+}
+
+.titleLink:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+}
+
+.loading {
+  display: flex;
+  gap: var(--space-5);
+}
+
+.skeleton {
+  display: inline-block;
+  inline-size: 3rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-group-main);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: statskeleton-pulse 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes statskeleton-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
