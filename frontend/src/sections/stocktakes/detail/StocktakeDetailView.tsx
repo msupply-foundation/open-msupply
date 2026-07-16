@@ -255,6 +255,21 @@ const StocktakeDetailView: Component = () => {
         .concat(commit.inserted ?? []);
       return { ...node, lines: { ...node.lines, nodes } };
     });
+    // Clear any stale error on the lines that just committed — a successfully saved/deleted line is
+    // no longer in error. (A partial bulk action clears the committed ids here, then stamps the
+    // failed ones via onError right after — so the two stay in sync.)
+    const committed = [
+      ...(commit.deletedIds ?? []),
+      ...(commit.updated ?? []).map((line) => line.id),
+      ...(commit.inserted ?? []).map((line) => line.id),
+    ];
+    if (committed.some((id) => lineErrors().has(id))) {
+      setLineErrors((prev) => {
+        const next = new Map(prev);
+        committed.forEach((id) => next.delete(id));
+        return next;
+      });
+    }
   };
 
   // --- Stocktake-level saves (updateStocktake, spliced back with no refetch) ---

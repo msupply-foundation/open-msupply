@@ -1,5 +1,5 @@
 import { createSignal, onMount, Show, type JSX } from 'solid-js';
-import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
+import { createStore, produce, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { toNumberOrNull } from '../../../../typeHelpers';
 import { t } from '../../../../intl';
@@ -37,7 +37,7 @@ import {
   type BatchStocktakeLinesInput,
   type LineEditCommit,
 } from '../lines/stocktakeLineUpdate';
-import type { LineErrorTypename } from '../lines/stocktakeLineErrors';
+import type { LineErrors } from '../lines/stocktakeLineErrors';
 
 // The stocktake line-edit modal (kdd/edit-line-card-table + kdd/stocktake-line-editing). Opened
 // from a detail-view row; it edits ALL of that ITEM's lines (batches) at once — the item is fixed
@@ -196,11 +196,12 @@ const StocktakeLineEditContent = (props: StocktakeLineEditContentProps): JSX.Ele
   const [draft, setDraft] = createStore<DraftLine[]>([]);
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string | undefined>();
-  // Per-line save errors from the server, keyed by line id → the error's __typename (kept raw). Each
-  // COLUMN renders its own error inline — <Show when={lineErrors[id] === 'ThatTypename'}>{t(…)}</Show>
-  // — so message + placement live at the column, not here. Set on a failed save, cleared for a line
-  // when it's edited. A store (not a signal) so each cell's error reacts independently.
-  const [lineErrors, setLineErrors] = createStore<Record<string, LineErrorTypename>>({});
+  // Per-line save errors from the server, keyed by line id → the error's __typename (the shared
+  // LineErrors shape, kept raw — same as the detail view). Each COLUMN renders its own error inline
+  // — <Show when={lineErrors().get(id) === 'ThatTypename'}>{t(…)}</Show> — so message + placement
+  // live at the column, not here. Set on a failed save, cleared for a line when it's edited. Only
+  // changes on save (not per-keystroke), so a plain Map signal is enough — no store needed.
+  const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
 
   // Column config → lights up the toolbar's card-switch + column-settings controls. Card view
   // renders the batches as cards (grouped into sections), the dual of the tabs.
@@ -223,7 +224,14 @@ const StocktakeLineEditContent = (props: StocktakeLineEditContentProps): JSX.Ele
   const update = <F extends keyof DraftLine>(id: string, field: F, value: DraftLine[F]) => {
     const index = draft.findIndex((line) => line.id === id);
     if (index >= 0) setDraft(index, field, value as never);
-    if (lineErrors[id]) setLineErrors(id, undefined!);
+    // Clear this line's stale server error (a fresh Map without it) so the cell stops flagging.
+    if (lineErrors().has(id)) {
+      setLineErrors((prev) => {
+        const next = new Map(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   };
 
   // Add a new batch (a fresh draft line for the item) — prepended, count blank.
@@ -380,8 +388,9 @@ const StocktakeLineEditContent = (props: StocktakeLineEditContentProps): JSX.Ele
     }
 
     if (errors.size > 0) {
-      // The store holds RAW typenames (lineId → typename); each column renders its own inline.
-      setLineErrors(reconcile(Object.fromEntries(errors)));
+      // Holds RAW typenames (lineId → typename); each column renders its own inline. errors is
+      // already the shared LineErrors Map — copy it so the signal owns its own instance.
+      setLineErrors(new Map(errors));
       setErrorMessage(t('stocktake.line-edit.save-errors'));
       return; // keep the modal open on the failed lines
     }
@@ -483,9 +492,15 @@ const StocktakeLineEditContent = (props: StocktakeLineEditContentProps): JSX.Ele
       cell: (info) => {
         const line = info.row.original;
         return (
-          <span style={{ display: 'inline-flex', 'flex-direction': 'column', 'align-items': 'flex-end' }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              'flex-direction': 'column',
+              'align-items': 'flex-end',
+            }}
+          >
             <span>{line.snapshotNumberOfPacks ?? '—'}</span>
-            <Show when={lineErrors[line.id] === 'SnapshotCountCurrentCountMismatchLine'}>
+            <Show when={lineErrors().get(line.id) === 'SnapshotCountCurrentCountMismatchLine'}>
               <span
                 style={{
                   color: 'var(--error-main)',
@@ -518,7 +533,7 @@ const StocktakeLineEditContent = (props: StocktakeLineEditContentProps): JSX.Ele
             disabled={!line.countThisLine}
             value={line.countedNumberOfPacks ?? ''}
             error={
-              lineErrors[line.id] === 'StockLineReducedBelowZero'
+              lineErrors().get(line.id) === 'StockLineReducedBelowZero'
                 ? t('stocktake.line-error.reduced-below-zero')
                 : undefined
             }
@@ -626,8 +641,9 @@ const StocktakeLineEditContent = (props: StocktakeLineEditContentProps): JSX.Ele
         const line = info.row.original;
         // The reason column owns two error typenames — required vs. invalid — each its own message.
         const error = () => {
-          const err = lineErrors[line.id];
-          if (err === 'AdjustmentReasonNotProvided') return t('stocktake.line-error.reason-not-provided');
+          const err = lineErrors().get(line.id);
+          if (err === 'AdjustmentReasonNotProvided')
+            return t('stocktake.line-error.reason-not-provided');
           if (err === 'AdjustmentReasonNotValid') return t('stocktake.line-error.reason-not-valid');
           return undefined;
         };
