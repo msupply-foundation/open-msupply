@@ -4,7 +4,11 @@ import { useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { authUser } from '../auth/authContext';
 import { getPreviousStoreId, recordPreviousStoreId } from '../appData';
-import { refetchStoreContext, storeContext } from './storeContext';
+import {
+  currentStoreId,
+  refetchStoreContext,
+  storeContext,
+} from './storeContext';
 import { StoreSelectionModal } from './StoreSelectionModal';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
@@ -38,11 +42,14 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     stores().find(s => s.id === params.storeId) ??
     (stores().length === 1 ? stores()[0] : undefined);
 
+  // Loaded for THIS {store, user} (SL-5). The store key is the id the context
+  // was fetched with (currentStoreId), not the response's storePreferences.id —
+  // a store without a preference row gets the server's default row (id ''),
+  // which would never match and leave the guard refetching forever.
   const contextLoaded = (storeId: string) => {
     const context = storeContext();
     return (
-      context?.storePreferences.id === storeId &&
-      context.me.userId === user()?.userId
+      currentStoreId() === storeId && context?.me.userId === user()?.userId
     );
   };
 
