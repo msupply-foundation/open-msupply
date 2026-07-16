@@ -151,12 +151,13 @@ export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated');
   const [picked, setPicked] = createSignal<DemoItem | null>(null);
   const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]]);
-  // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not behind it).
+  // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not
+  // behind it).
   const [dialogOpen, setDialogOpen] = createSignal(false);
   const [dialogItem, setDialogItem] = createSignal<DemoItem | null>(null);
   const [dialogStatus, setDialogStatus] = createSignal('new');
-  // Seeded non-empty to show chips restoring from an existing filter (a key being
-  // present is what shows its chip — here status starts on 'new').
+  // Seeded non-empty to show chips restoring from an existing filter (a key
+  // being present is what shows its chip — here status starts on 'new').
   const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' });
   // Colour-tag demo: starts untagged so the empty dashed ring shows first.
   const [tagColour, setTagColour] = createSignal<string | null>(null);
