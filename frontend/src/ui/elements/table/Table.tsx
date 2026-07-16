@@ -1,11 +1,13 @@
-import type { JSX } from 'solid-js'
-import styles from './Table.module.css'
+import type { JSX } from 'solid-js';
+import styles from './Table.module.css';
 
 export interface TableProps {
-  /** Accessible name for the table — what the data is ("Outbound shipments"). */
-  label: string
+  /**
+   * Accessible name for the table — what the data is ("Outbound shipments").
+   */
+  label: string;
   /** The <thead>/<tbody>, composed by the page. */
-  children: JSX.Element
+  children: JSX.Element;
 }
 
 /*
@@ -36,4 +38,4 @@ export const Table = (props: TableProps) => (
       {props.children}
     </table>
   </div>
-)
+);

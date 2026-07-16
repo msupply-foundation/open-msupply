@@ -26,19 +26,21 @@ AppShell                          ← app container: menu bar + orange app foote
 ## Minimal page
 
 ```tsx
-import { Page } from '../../ui/layout/Page/Page'
-import { Header } from '../../ui/layout/Header/Header'
-import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb'
-import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons'
-import { Button } from '../../ui/elements/buttons/Button'
-import { EmptyState } from '../../ui/elements/feedback/EmptyState'
-import { PlusCircleIcon } from '../../ui/icons'
+import { Page } from '../../ui/layout/Page/Page';
+import { Header } from '../../ui/layout/Header/Header';
+import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../ui/layout/Header/HeaderButtons';
+import { Button } from '../../ui/elements/buttons/Button';
+import { EmptyState } from '../../ui/elements/feedback/EmptyState';
+import { PlusCircleIcon } from '../../ui/icons';
 
 export const MyPage = () => (
   <Page
     header={
       <Header>
-        <Breadcrumb crumbs={[{ label: 'Distribution' }, { label: 'My Page' }]} />
+        <Breadcrumb
+          crumbs={[{ label: 'Distribution' }, { label: 'My Page' }]}
+        />
         <HeaderButtons>
           <Button icon={<PlusCircleIcon />}>New thing</Button>
         </HeaderButtons>
@@ -47,7 +49,7 @@ export const MyPage = () => (
   >
     <EmptyState message="Nothing here yet." />
   </Page>
-)
+);
 ```
 
 Always give the Page a `<Header>` — in overlay mode (narrow viewports) the menu hamburger renders inside it, so a header-less page has no way into the menu.
@@ -65,7 +67,11 @@ Header gets a `<Toolbar>` row (filters); the body is a `<Table>`; a contextual `
         <Button icon={<PlusCircleIcon />}>New shipment</Button>
       </HeaderButtons>
       <Toolbar>
-        <FilterBar fields={FILTER_FIELDS} values={filters()} onChange={setFilters} />
+        <FilterBar
+          fields={FILTER_FIELDS}
+          values={filters()}
+          onChange={setFilters}
+        />
       </Toolbar>
     </Header>
   }
@@ -74,7 +80,13 @@ Header gets a `<Toolbar>` row (filters); the body is a `<Table>`; a contextual `
       <ContentFooter>
         <strong>{picked().size} selected</strong>
         <ContentFooterActions>
-          <Button variant="secondary" icon={<TrashIcon />} onClick={deletePicked}>Delete</Button>
+          <Button
+            variant="secondary"
+            icon={<TrashIcon />}
+            onClick={deletePicked}
+          >
+            Delete
+          </Button>
         </ContentFooterActions>
       </ContentFooter>
     </Show>
@@ -90,14 +102,22 @@ Header gets a `<Toolbar>` row (filters); the body is a `<Table>`; a contextual `
     </thead>
     <tbody>
       <For each={visible()}>
-        {(row) => (
+        {row => (
           <tr data-selected={picked().has(row.id) ? '' : undefined}>
             <td data-check>
-              <input type="checkbox" checked={picked().has(row.id)}
-                onChange={() => togglePicked(row.id)} aria-label={`Select ${row.id}`} />
+              <input
+                type="checkbox"
+                checked={picked().has(row.id)}
+                onChange={() => togglePicked(row.id)}
+                aria-label={`Select ${row.id}`}
+              />
             </td>
             <td data-mono>
-              <button type="button" data-row-link onClick={() => props.onOpen(row.id)}>
+              <button
+                type="button"
+                data-row-link
+                onClick={() => props.onOpen(row.id)}
+              >
                 {row.id}
               </button>
             </td>
@@ -125,15 +145,22 @@ Table cell conventions (data attributes on your own markup): `data-numeric` (end
         <HeaderButtons>
           <Button icon={<PlusCircleIcon />}>Add item</Button>
         </HeaderButtons>
-        <TabList tabs={[{ value: 'details', label: 'Details' }, { value: 'log', label: 'Log' }]} />
+        <TabList
+          tabs={[
+            { value: 'details', label: 'Details' },
+            { value: 'log', label: 'Log' },
+          ]}
+        />
       </Header>
     }
     sidePanel={
       <SidePanel>
         <SidePanelSection title="Additional info">
           <dl>
-            <dt>Status</dt><dd>New</dd>
-            <dt>Customer</dt><dd>{shipment()?.customer}</dd>
+            <dt>Status</dt>
+            <dd>New</dd>
+            <dt>Customer</dt>
+            <dd>{shipment()?.customer}</dd>
           </dl>
         </SidePanelSection>
         <SidePanelSection title="Comment">
@@ -143,10 +170,20 @@ Table cell conventions (data attributes on your own markup): `data-numeric` (end
     }
     contentFooter={
       <ContentFooter>
-        <Button variant="secondary" icon={<ClockIcon />}>History</Button>
+        <Button variant="secondary" icon={<ClockIcon />}>
+          History
+        </Button>
         <ContentFooterActions>
-          <Button variant="secondary" icon={<XCircleIcon />} onClick={props.onBack}>Cancel</Button>
-          <Button variant="secondary" icon={<SaveIcon />}>Save</Button>
+          <Button
+            variant="secondary"
+            icon={<XCircleIcon />}
+            onClick={props.onBack}
+          >
+            Cancel
+          </Button>
+          <Button variant="secondary" icon={<SaveIcon />}>
+            Save
+          </Button>
         </ContentFooterActions>
       </ContentFooter>
     }
@@ -165,17 +202,19 @@ One component owns the `<AppShell>` and swaps pages inside it — the menu never
 
 ```tsx
 export const MyHost = () => {
-  const [selected, setSelected] = createSignal<NavLeaf>(MY_LEAF)
-  const [detailId, setDetailId] = createSignal<string>()
+  const [selected, setSelected] = createSignal<NavLeaf>(MY_LEAF);
+  const [detailId, setDetailId] = createSignal<string>();
 
   return (
     <AppShell selected={selected()} onNavigate={setSelected}>
       <Show when={detailId()} fallback={<ListView onOpen={setDetailId} />}>
-        {(id) => <DetailView reference={id()} onBack={() => setDetailId(undefined)} />}
+        {id => (
+          <DetailView reference={id()} onBack={() => setDetailId(undefined)} />
+        )}
       </Show>
     </AppShell>
-  )
-}
+  );
+};
 ```
 
 A router will absorb this host later; the pages themselves won't change.

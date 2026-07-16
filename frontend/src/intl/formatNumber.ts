@@ -4,11 +4,11 @@ import { locale } from './intl';
 const MAX_FRACTION_DIGITS = 10;
 
 // Intl.NumberFormat keyed by the locale's number override (so digit systems —
-// e.g. Arabic-Indic for `ar` — render correctly rather than defaulting to Latin).
-// This is the single place NumberFormat is constructed for the app.
+// e.g. Arabic-Indic for `ar` — render correctly rather than defaulting to
+// Latin). This is the single place NumberFormat is constructed for the app.
 export const intlNumberFormat = (
   locale: SupportedLocale,
-  options?: Intl.NumberFormatOptions,
+  options?: Intl.NumberFormatOptions
 ): Intl.NumberFormat =>
   new Intl.NumberFormat(LOCALE_META[locale].numberLocale, options);
 
@@ -19,7 +19,7 @@ export const intlNumberFormat = (
  */
 export const formatNumber = (
   value: number | undefined | null,
-  options?: Intl.NumberFormatOptions & { locale?: SupportedLocale },
+  options?: Intl.NumberFormatOptions & { locale?: SupportedLocale }
 ): string => {
   if (value === undefined || value === null) return '';
   const active = options?.locale ?? locale();
@@ -59,7 +59,7 @@ const toLatinDigits = (s: string): string =>
 
 export const parseNumber = (
   numberString: string,
-  decimalChar = '.',
+  decimalChar = '.'
 ): number => {
   const negative = numberString.trimStart().startsWith('-') ? -1 : 1;
   const cleaned = toLatinDigits(numberString)

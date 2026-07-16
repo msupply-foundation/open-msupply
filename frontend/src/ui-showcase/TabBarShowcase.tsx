@@ -1,17 +1,17 @@
-import { createSignal, type JSX } from 'solid-js'
-import { Header } from '../ui/layout/Header/Header'
-import { Breadcrumb } from '../ui/layout/Header/Breadcrumb'
-import { HeaderButtons } from '../ui/layout/Header/HeaderButtons'
-import { Toolbar } from '../ui/layout/Header/Toolbar'
-import { Tabs, TabList, TabPanel, type TabDef } from '../ui/elements/tabs/Tabs'
-import { Button } from '../ui/elements/buttons/Button'
-import { TruckIcon, PlusCircleIcon } from '../ui/icons'
-import styles from './TabBarShowcase.module.css'
+import { createSignal, type JSX } from 'solid-js';
+import { Header } from '../ui/layout/Header/Header';
+import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
+import { Toolbar } from '../ui/layout/Header/Toolbar';
+import { Tabs, TabList, TabPanel, type TabDef } from '../ui/elements/tabs/Tabs';
+import { Button } from '../ui/elements/buttons/Button';
+import { TruckIcon, PlusCircleIcon } from '../ui/icons';
+import styles from './TabBarShowcase.module.css';
 
 const Card = (props: {
-  title: string
-  lead: JSX.Element
-  children: JSX.Element
+  title: string;
+  lead: JSX.Element;
+  children: JSX.Element;
 }) => (
   <section class={styles.card}>
     <header class={styles.cardHeader}>{props.title}</header>
@@ -20,23 +20,23 @@ const Card = (props: {
       {props.children}
     </div>
   </section>
-)
+);
 
 const PAGE_TABS: TabDef[] = [
   { value: 'general', label: 'General' },
   { value: 'items', label: 'Items' },
   { value: 'transport', label: 'Transport' },
   { value: 'log', label: 'Log' },
-]
+];
 
 const KEYBOARD_TABS: TabDef[] = [
   { value: 'arrows', label: 'Arrow keys' },
   { value: 'ends', label: 'Home / End' },
   { value: 'panel', label: 'Into the panel' },
-]
+];
 
 export const TabBarShowcase = () => {
-  const [pageTab, setPageTab] = createSignal('general')
+  const [pageTab, setPageTab] = createSignal('general');
 
   return (
     <div class={styles.stack}>
@@ -106,12 +106,12 @@ export const TabBarShowcase = () => {
           <>
             Outside a header the strip keeps its own bottom border. The
             behaviour is Kobalte's WAI-ARIA tabs pattern — the part we buy: the
-            tablist is <strong>one</strong> tab stop (roving tabindex), ←/→
-            move between tabs and select as they go (automatic activation,
+            tablist is <strong>one</strong> tab stop (roving tabindex), ←/→ move
+            between tabs and select as they go (automatic activation,
             direction-aware in RTL), Home/End jump to the first/last tab, and
             pressing Tab moves into the active panel — which is only itself
-            focusable when it contains nothing tabbable. Uncontrolled here
-            (<code>defaultValue</code>); the demo above is controlled.
+            focusable when it contains nothing tabbable. Uncontrolled here (
+            <code>defaultValue</code>); the demo above is controlled.
           </>
         }
       >
@@ -131,12 +131,12 @@ export const TabBarShowcase = () => {
           </TabPanel>
           <TabPanel value="panel">
             <p class={styles.panelText}>
-              This panel has no tabbable child, so it takes focus itself —
-              with a visible ring (the prototype hid it; we don't).
+              This panel has no tabbable child, so it takes focus itself — with
+              a visible ring (the prototype hid it; we don't).
             </p>
           </TabPanel>
         </Tabs>
       </Card>
     </div>
-  )
-}
+  );
+};

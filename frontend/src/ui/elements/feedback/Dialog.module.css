@@ -7,13 +7,49 @@
  */
 
 .dialog {
-  width: min(30rem, calc(100vw - 2rem));
+  /* Defaults for the caller-overridable custom properties (widthRem / minBodyHeightRem).
+     Declared HERE (not on .body) so an inline override on the <dialog> inherits down to
+     .body — a default on .body would shadow the inherited value. */
+  --dialog-width: 30rem;
+  --dialog-min-body-height: 0;
+
+  /* Fixed width (steady box), clamped down to the viewport on narrow screens. */
+  width: min(var(--dialog-width), calc(100vw - 2rem));
+  /* Cap the height to the viewport so a dialog with growing content (e.g. a table gaining
+     rows) can't push past the screen — instead its inner scroll region takes over. The body
+     is a bounded flex column (below) so a flex-1 child like the DataTable scrolls internally
+     rather than growing the dialog. */
+  max-block-size: calc(100vh - 2rem);
   padding: 0;
   border: none;
   border-radius: 1rem;
   background: var(--surface-raised);
   color: var(--text-body);
   box-shadow: var(--shadow-4);
+  /* Popups (Select/Combobox listboxes) that open inside a dialog mount into this element so
+     they're non-inert + in the top layer; `visible` (not the UA/hidden default) lets those
+     floating panels extend past the dialog box instead of being clipped. The body's padding
+     keeps ordinary content clear of the rounded corners, so nothing else bleeds out. */
+  overflow: visible;
+}
+
+/* Large / "workbench" size (Dialog size="large") — for content-heavy modals like the
+   line-edit table. Fills nearly the whole viewport: full width and ~80% height (a ~10%
+   margin top/bottom). Overrides the fixed width; the body flex column (already bounded)
+   plus this fixed height let a flex-1 child (a DataTable) fill the tall space and scroll. */
+.large {
+  width: calc(100vw - 4rem);
+  height: calc(100vh - 4rem);
+  max-block-size: calc(100vh - 4rem);
+}
+
+/* Flex column so the body fills the fixed height, giving a flex-1 child the room. Scoped to
+   [open] — a bare `display: flex` on .large would OVERRIDE the UA's `display: none` for a
+   CLOSED <dialog>, making the (always-mounted) dialog's content leak onto the page. Only the
+   open dialog is a flex box; a closed one stays display:none. */
+.large[open] {
+  display: flex;
+  flex-direction: column;
 }
 
 .dialog::backdrop {
@@ -29,7 +65,26 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  /* Reserve a minimum height (Dialog's minBodyHeightRem) so a dialog whose content changes
+     size doesn't jump; inherits the default (0) or the caller's inline override from .dialog. */
+  min-block-size: var(--dialog-min-body-height);
+  /* Bounded so content can't push the dialog past the viewport: a flex-1 child (e.g. a
+     DataTable) scrolls INTERNALLY via its own scroll region, and any other over-tall content
+     falls back to scrolling the body itself. Header / footer / actions keep their natural
+     size. `auto` doesn't clip the Select/Combobox popups — those mount on the <dialog> (a
+     sibling of .body), which stays overflow:visible. */
+  max-block-size: calc(100vh - 2rem);
+  overflow: auto;
   padding: var(--space-6);
+}
+
+/* In large mode the body fills the dialog's fixed height, so its flex-1 child (the DataTable)
+   gets the full tall space and scrolls internally; header/footer/actions stay their size.
+   Placed after .body to satisfy stylelint no-descending-specificity. */
+.large .body {
+  flex: 1;
+  min-block-size: 0;
+  max-block-size: none;
 }
 
 .header {
@@ -59,12 +114,51 @@
   color: var(--text-body);
 }
 
+/* The footer (bottom-pinned content, e.g. a status banner) sits at the bottom of the body:
+   `auto` sends the reserved slack ABOVE it. With no height reserved it collapses to nothing.
+   When a footer is present the actions follow it naturally; when absent, .actions carries the
+   same `auto` so it bottom-pins on its own. */
+.footer {
+  margin-block-start: auto;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: var(--space-3);
-  margin-top: var(--space-2);
+  /* Bottom-pin the actions when there's no footer above them (see .footer). With a footer,
+     :not() drops the auto so the actions sit directly under it rather than adding a second gap. */
+  margin-block-start: auto;
+  padding-block-start: var(--space-2);
   flex-wrap: wrap;
+}
+
+/* With a lead (a message beside the buttons), split the row: lead at the inline-start, buttons
+   at the inline-end. Without it, the single buttons group stays inline-end (flex-end above). */
+.actions[data-has-lead] {
+  justify-content: space-between;
+}
+
+/* The lead content (e.g. a validation message) — takes the free inline-start space, wrapping if
+   long, so it doesn't push the buttons off. */
+.actionsLead {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+/* The buttons themselves stay grouped at the inline-end. */
+.actionsButtons {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* When a footer precedes the actions, the footer already absorbed the slack — don't add a
+   second auto-gap between them. */
+.footer + .actions {
+  margin-block-start: 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {

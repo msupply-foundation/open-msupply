@@ -4,22 +4,22 @@ import {
   Show,
   type JSX,
   type Component,
-} from 'solid-js'
-import { Dynamic } from 'solid-js/web'
+} from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import {
   HomeIcon,
   EditIcon,
   UserIcon,
   CentralIcon,
   type IconProps,
-} from '../../icons'
-import { useIsNavOverlay } from '../../utils/createMediaQuery'
-import { MenuBar, type MenuBarState } from './MenuBar'
-import { LanguageSelector } from './LanguageSelector'
-import { ShellNavContext } from './shellContext'
-import { upperNav, lowerNav, type NavLeaf } from './navModel'
-import { locale, changeLanguage, t } from '../../../intl'
-import styles from './AppShell.module.css'
+} from '../../icons';
+import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import { MenuBar, type MenuBarState } from './MenuBar';
+import { LanguageSelector } from './LanguageSelector';
+import { ShellNavContext, ShellFullScreenContext } from './shellContext';
+import { upperNav, lowerNav, type NavLeaf } from './navModel';
+import { locale, changeLanguage, t } from '../../../intl';
+import styles from './AppShell.module.css';
 
 export interface AppShellProps {
   /**
@@ -28,9 +28,9 @@ export interface AppShellProps {
    * stays a pure layout element. A page outside the nav (e.g. Home) simply
    * highlights nothing.
    */
-  selected: NavLeaf
+  selected: NavLeaf;
   /** The user picked a menu item. */
-  onNavigate: (leaf: NavLeaf) => void
+  onNavigate: (leaf: NavLeaf) => void;
   /**
    * The current page — typically a composed <Page> frame (which supplies the
    * pinned-header / scrolling-body / side-panel / content-footer geometry;
@@ -40,7 +40,7 @@ export interface AppShellProps {
    * the nav renders inside it (via ShellNavContext), so a page without one
    * has no way into the menu on narrow viewports.
    */
-  children: JSX.Element
+  children: JSX.Element;
 }
 
 /*
@@ -48,9 +48,9 @@ export interface AppShellProps {
  * <button>; static ones as a <div> — same look, correct semantics.
  */
 const FooterCell = (props: {
-  icon: Component<IconProps>
-  label: string
-  onClick?: () => void
+  icon: Component<IconProps>;
+  label: string;
+  onClick?: () => void;
 }) => (
   <Show
     when={props.onClick}
@@ -66,7 +66,7 @@ const FooterCell = (props: {
       <span class={styles.footerCellText}>{props.label}</span>
     </button>
   </Show>
-)
+);
 
 /*
  * Application shell — the APP-LEVEL container, not the page frame: docked
@@ -86,56 +86,76 @@ const FooterCell = (props: {
  * hamburger via ShellNavContext. Adapted from the RnD prototype's App shell.
  */
 export const AppShell = (props: AppShellProps) => {
-  const [railCollapsed, setRailCollapsed] = createSignal(false)
-  const [overlayOpen, setOverlayOpen] = createSignal(false)
-  const isOverlay = useIsNavOverlay()
+  const [railCollapsed, setRailCollapsed] = createSignal(false);
+  const [overlayOpen, setOverlayOpen] = createSignal(false);
+  const [fullScreen, setFullScreen] = createSignal(false);
+  const isOverlay = useIsNavOverlay();
 
   const nav: MenuBarState = {
     railCollapsed,
-    toggleRail: () => setRailCollapsed((c) => !c),
+    toggleRail: () => setRailCollapsed(c => !c),
     overlayOpen,
     openOverlay: () => setOverlayOpen(true),
     closeOverlay: () => setOverlayOpen(false),
-  }
+  };
 
   // Leaving overlay mode (e.g. widening the window) shouldn't strand an open
   // off-canvas panel — close it so the docked rail shows cleanly.
   createEffect(() => {
-    if (!isOverlay()) setOverlayOpen(false)
-  })
+    if (!isOverlay()) setOverlayOpen(false);
+  });
 
   // Document direction (RTL for ar/prs/ps) is owned once by App.tsx, driven by
   // the real i18n locale — not here — so there is a single dir effect. The
   // footer LanguageSelector drives that locale via changeLanguage.
 
   return (
-    <ShellNavContext.Provider
-      value={{ isOverlay, openNav: nav.openOverlay }}
-    >
-      <div class={styles.shell}>
-        <MenuBar
-          nav={nav}
-          isOverlay={isOverlay()}
-          upper={upperNav}
-          lower={lowerNav}
-          selectedId={props.selected.id}
-          onSelect={props.onNavigate}
-        />
-        <div class={styles.main}>
-          <div class={styles.content}>{props.children}</div>
+    <ShellNavContext.Provider value={{ isOverlay, openNav: nav.openOverlay }}>
+      <ShellFullScreenContext.Provider
+        value={{ isFullScreen: fullScreen, setFullScreen }}
+      >
+        <div class={styles.shell}>
+          {/* Full-screen (Open mSupply's host-level mode): the menu bar and the orange
+              app footer hide so the page content fills the viewport. The page's own
+              header hides too (see Page); its content + footer stay. */}
+          <Show when={!fullScreen()}>
+            <MenuBar
+              nav={nav}
+              isOverlay={isOverlay()}
+              upper={upperNav}
+              lower={lowerNav}
+              selectedId={props.selected.id}
+              onSelect={props.onNavigate}
+            />
+          </Show>
+          <div class={styles.main}>
+            <div class={styles.content}>{props.children}</div>
 
-          <footer class={styles.footer}>
-            <FooterCell icon={HomeIcon} label={t('shell.footer.general')} />
-            <FooterCell icon={EditIcon} label={t('shell.footer.edit')} onClick={() => {}} />
-            <span class={styles.footerDivider} aria-hidden="true" />
-            {/* Placeholder username — real user data lands with the user menu. */}
-            <FooterCell icon={UserIcon} label="demo" />
-            <span class={styles.footerDivider} aria-hidden="true" />
-            <LanguageSelector language={locale()} onSelect={(v) => void changeLanguage(v)} />
-            <FooterCell icon={CentralIcon} label={t('shell.footer.central-server')} />
-          </footer>
+            <Show when={!fullScreen()}>
+              <footer class={styles.footer}>
+                <FooterCell icon={HomeIcon} label={t('shell.footer.general')} />
+                <FooterCell
+                  icon={EditIcon}
+                  label={t('shell.footer.edit')}
+                  onClick={() => {}}
+                />
+                <span class={styles.footerDivider} aria-hidden="true" />
+                {/* Placeholder username — real user data lands with the user menu. */}
+                <FooterCell icon={UserIcon} label="demo" />
+                <span class={styles.footerDivider} aria-hidden="true" />
+                <LanguageSelector
+                  language={locale()}
+                  onSelect={v => void changeLanguage(v)}
+                />
+                <FooterCell
+                  icon={CentralIcon}
+                  label={t('shell.footer.central-server')}
+                />
+              </footer>
+            </Show>
+          </div>
         </div>
-      </div>
+      </ShellFullScreenContext.Provider>
     </ShellNavContext.Provider>
-  )
-}
+  );
+};

@@ -2,13 +2,14 @@
 // Nav components). One source of truth: the left menu renders from it, and the
 // router generates a route per destination from it.
 //
-// Paths are relative to the store root (/{storeId}). A section's own `path` is a
-// landing destination; its `children` are the inner sub-menu entries.
+// Paths are relative to the store root (/{storeId}). A section's own `path` is
+// a landing destination; its `children` are the inner sub-menu entries.
 //
 // Labels are i18n keys, not English (kdd/type-safety: LocaleKey is derived from
-// the catalog, so a typo or an un-added key stops compiling). Every renderer that
-// shows a destination — MenuBar, Breadcrumb, EntryPage title — resolves the key
-// with t() at render time, so the menu re-translates on a language switch.
+// the catalog, so a typo or an un-added key stops compiling). Every renderer
+// that shows a destination — MenuBar, Breadcrumb, EntryPage title — resolves
+// the key with t() at render time, so the menu re-translates on a language
+// switch.
 
 import type { LocaleKey } from '../intl';
 
@@ -24,12 +25,30 @@ export const navConfig: NavItem[] = [
     labelKey: 'nav.replenishment',
     path: 'replenishment',
     children: [
-      { labelKey: 'nav.replenishment.purchase-order', path: 'replenishment/purchase-order' },
-      { labelKey: 'nav.replenishment.internal-order', path: 'replenishment/internal-order' },
-      { labelKey: 'nav.replenishment.inbound-shipment', path: 'replenishment/inbound-shipment' },
-      { labelKey: 'nav.replenishment.supplier-return', path: 'replenishment/supplier-return' },
-      { labelKey: 'nav.replenishment.r-and-r-forms', path: 'replenishment/r-and-r-forms' },
-      { labelKey: 'nav.replenishment.suppliers', path: 'replenishment/suppliers' },
+      {
+        labelKey: 'nav.replenishment.purchase-order',
+        path: 'replenishment/purchase-order',
+      },
+      {
+        labelKey: 'nav.replenishment.internal-order',
+        path: 'replenishment/internal-order',
+      },
+      {
+        labelKey: 'nav.replenishment.inbound-shipment',
+        path: 'replenishment/inbound-shipment',
+      },
+      {
+        labelKey: 'nav.replenishment.supplier-return',
+        path: 'replenishment/supplier-return',
+      },
+      {
+        labelKey: 'nav.replenishment.r-and-r-forms',
+        path: 'replenishment/r-and-r-forms',
+      },
+      {
+        labelKey: 'nav.replenishment.suppliers',
+        path: 'replenishment/suppliers',
+      },
     ],
   },
   {
@@ -39,17 +58,32 @@ export const navConfig: NavItem[] = [
       { labelKey: 'nav.inventory.stock', path: 'inventory/stock' },
       { labelKey: 'nav.inventory.locations', path: 'inventory/locations' },
       { labelKey: 'nav.inventory.stocktakes', path: 'inventory/stocktakes' },
-      { labelKey: 'nav.inventory.stock-movement', path: 'inventory/stock-movement' },
+      {
+        labelKey: 'nav.inventory.stock-movement',
+        path: 'inventory/stock-movement',
+      },
     ],
   },
   {
     labelKey: 'nav.distribution',
     path: 'distribution',
     children: [
-      { labelKey: 'nav.distribution.customer-requisition', path: 'distribution/customer-requisition' },
-      { labelKey: 'nav.distribution.outbound-shipment', path: 'distribution/outbound-shipment' },
-      { labelKey: 'nav.distribution.customer-return', path: 'distribution/customer-return' },
-      { labelKey: 'nav.distribution.customers', path: 'distribution/customers' },
+      {
+        labelKey: 'nav.distribution.customer-requisition',
+        path: 'distribution/customer-requisition',
+      },
+      {
+        labelKey: 'nav.distribution.outbound-shipment',
+        path: 'distribution/outbound-shipment',
+      },
+      {
+        labelKey: 'nav.distribution.customer-return',
+        path: 'distribution/customer-return',
+      },
+      {
+        labelKey: 'nav.distribution.customers',
+        path: 'distribution/customers',
+      },
     ],
   },
   {
@@ -57,7 +91,10 @@ export const navConfig: NavItem[] = [
     path: 'dispensary',
     children: [
       { labelKey: 'nav.dispensary.patients', path: 'dispensary/patients' },
-      { labelKey: 'nav.dispensary.prescription', path: 'dispensary/prescription' },
+      {
+        labelKey: 'nav.dispensary.prescription',
+        path: 'dispensary/prescription',
+      },
       { labelKey: 'nav.dispensary.encounter', path: 'dispensary/encounter' },
       { labelKey: 'nav.dispensary.clinicians', path: 'dispensary/clinicians' },
     ],
@@ -74,7 +111,12 @@ export const navConfig: NavItem[] = [
   {
     labelKey: 'nav.programs',
     path: 'programs',
-    children: [{ labelKey: 'nav.programs.immunisation-programs', path: 'programs/immunisation-programs' }],
+    children: [
+      {
+        labelKey: 'nav.programs.immunisation-programs',
+        path: 'programs/immunisation-programs',
+      },
+    ],
   },
   {
     labelKey: 'nav.catalogue',
@@ -82,7 +124,10 @@ export const navConfig: NavItem[] = [
     children: [
       { labelKey: 'nav.catalogue.assets', path: 'catalogue/assets' },
       { labelKey: 'nav.catalogue.items', path: 'catalogue/items' },
-      { labelKey: 'nav.catalogue.master-lists', path: 'catalogue/master-lists' },
+      {
+        labelKey: 'nav.catalogue.master-lists',
+        path: 'catalogue/master-lists',
+      },
     ],
   },
   {
@@ -90,8 +135,14 @@ export const navConfig: NavItem[] = [
     path: 'manage',
     children: [
       { labelKey: 'nav.manage.stores', path: 'manage/stores' },
-      { labelKey: 'nav.manage.indicators-demographics', path: 'manage/indicators-demographics' },
-      { labelKey: 'nav.manage.global-preferences', path: 'manage/global-preferences' },
+      {
+        labelKey: 'nav.manage.indicators-demographics',
+        path: 'manage/indicators-demographics',
+      },
+      {
+        labelKey: 'nav.manage.global-preferences',
+        path: 'manage/global-preferences',
+      },
       { labelKey: 'nav.manage.equipment', path: 'manage/equipment' },
       { labelKey: 'nav.manage.campaigns', path: 'manage/campaigns' },
       { labelKey: 'nav.manage.sites', path: 'manage/sites' },

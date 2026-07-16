@@ -1,16 +1,16 @@
-import { createSignal, createMemo, For, Show } from 'solid-js'
-import { TextField } from '../inputs/TextField'
-import { StatusChip } from '../feedback/StatusChip'
-import { Button } from '../buttons/Button'
-import { ArrowRightIcon } from '../../icons'
-import { t } from '../../../intl'
-import styles from './StoreSelector.module.css'
+import { createSignal, createMemo, For, Show } from 'solid-js';
+import { TextField } from '../inputs/TextField';
+import { StatusChip } from '../feedback/StatusChip';
+import { Button } from '../buttons/Button';
+import { ArrowRightIcon } from '../../icons';
+import { t } from '../../../intl';
+import styles from './StoreSelector.module.css';
 
 export type StoreOption = {
-  id: string
-  code: string
-  name: string
-}
+  id: string;
+  code: string;
+  name: string;
+};
 
 /*
  * Store selector — the searchable store-picker panel, styled after the current
@@ -27,31 +27,35 @@ export type StoreOption = {
  * label), never colour alone; the active row is a token tint AND aria-selected.
  */
 export const StoreSelector = (props: {
-  stores: StoreOption[]
-  defaultStoreId?: string
-  lastUsedStoreId?: string
-  onConfirm: (storeId: string) => void
+  stores: StoreOption[];
+  defaultStoreId?: string;
+  lastUsedStoreId?: string;
+  onConfirm: (storeId: string) => void;
 }) => {
-  const [query, setQuery] = createSignal('')
-  const [selected, setSelected] = createSignal<string | undefined>()
+  const [query, setQuery] = createSignal('');
+  const [selected, setSelected] = createSignal<string | undefined>();
 
   const visible = createMemo(() => {
-    const q = query().trim().toLowerCase()
-    if (!q) return props.stores
+    const q = query().trim().toLowerCase();
+    if (!q) return props.stores;
     return props.stores.filter(
       s => s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q)
-    )
-  })
+    );
+  });
 
   // The effective selection: an explicit pick if it's still visible, else the
   // default, else last-used, else the first row — mirrors the app's fallback.
   const selectedId = createMemo(() => {
-    const candidates = [selected(), props.defaultStoreId, props.lastUsedStoreId]
+    const candidates = [
+      selected(),
+      props.defaultStoreId,
+      props.lastUsedStoreId,
+    ];
     for (const id of candidates) {
-      if (id && visible().some(s => s.id === id)) return id
+      if (id && visible().some(s => s.id === id)) return id;
     }
-    return visible()[0]?.id
-  })
+    return visible()[0]?.id;
+  });
 
   return (
     <div class={styles.panel}>
@@ -86,10 +90,16 @@ export const StoreSelector = (props: {
                     <span class={styles.storeName}>{store.name}</span>
                     <span class={styles.tags}>
                       <Show when={store.id === props.defaultStoreId}>
-                        <StatusChip label={t('store.default')} colour="var(--status-new)" />
+                        <StatusChip
+                          label={t('store.default')}
+                          colour="var(--status-new)"
+                        />
                       </Show>
                       <Show when={store.id === props.lastUsedStoreId}>
-                        <StatusChip label={t('store.last-used')} colour="var(--status-verified)" />
+                        <StatusChip
+                          label={t('store.last-used')}
+                          colour="var(--status-verified)"
+                        />
                       </Show>
                     </span>
                   </button>
@@ -112,5 +122,5 @@ export const StoreSelector = (props: {
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};

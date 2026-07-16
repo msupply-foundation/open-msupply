@@ -120,10 +120,35 @@
   color: var(--primary-contrast);
 }
 
+/* Loading spinner — replaces the icon while the button's action is in flight. A ring
+   that spins; sized to match the icon so the button doesn't reflow. Colour follows the
+   button text (currentColor) so it works on both rest and hover fills. */
+.spinner {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  inline-size: 1.1em;
+  block-size: 1.1em;
+  border: 2px solid color-mix(in srgb, currentcolor 30%, transparent);
+  border-block-start-color: currentcolor;
+  border-radius: 50%;
+  animation: button-spin 700ms linear infinite;
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .button,
   .icon {
     transition: none;
+  }
+
+  .spinner {
+    animation-duration: 2s;
   }
 }
 

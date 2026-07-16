@@ -1,0 +1,142 @@
+/*
+ * Column-settings panel — the content inside the toolbar ⚙ popover. A compact table:
+ * order chevrons, a visibility toggle, the column label, pin buttons, and a rem width
+ * input, with reset actions above. Bare CSS + tokens only (no library); colours are
+ * tokens, sizes rem (only px is the hairline dividers / focus ring, per the sizing rule).
+ */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 18rem;
+  padding: var(--space-2);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--color-divider);
+}
+
+.action {
+  border: none;
+  background: none;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--primary-main);
+  font: inherit;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.action:hover {
+  background: color-mix(in srgb, var(--primary-main) 8%, transparent);
+}
+
+.table {
+  border-collapse: collapse;
+  inline-size: 100%;
+}
+
+.row {
+  block-size: 2rem;
+}
+
+.orderCell,
+.visibilityCell,
+.pinCell,
+.sizeCell {
+  white-space: nowrap;
+}
+
+.labelCell {
+  inline-size: 100%;
+  padding-inline: var(--space-2);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  /* Icons are 1em, so font-size sets the chevron size. */
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.iconButton:disabled {
+  color: var(--gray-light);
+  cursor: default;
+}
+
+.iconButton:not(:disabled):hover {
+  color: var(--text-body);
+}
+
+/* The single chevron icon does double duty: pointing down as-is, flipped for "up". */
+.chevronUp {
+  transform: rotate(180deg);
+}
+
+.pinButton {
+  min-inline-size: 1.5rem;
+  padding: 0 var(--space-1);
+  margin-inline-start: var(--space-1);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.pinActive {
+  border-color: var(--primary-main);
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+}
+
+.sizeInput {
+  inline-size: 3.5rem;
+  padding: var(--space-1);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-body);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: end;
+}
+
+.remUnit {
+  margin-inline-start: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+/* Group badge — shows which tab/group(s) a column belongs to (icon + label), inline after the
+   column name, so it's clear that hiding/reordering here is GLOBAL across tabs. */
+/* Group-badge icon — just the group's icon after the column label (its text lives on the tab);
+   a compact hint that this column belongs to a group and edits here are global. Text on hover
+   via title. */
+.groupBadgeIcon {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-inline-start: var(--space-2);
+  color: var(--primary-main);
+}
+
+.groupBadgeIcon svg {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+}

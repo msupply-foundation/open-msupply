@@ -1,51 +1,105 @@
+/* Pagination bar — styled to match the current Open mSupply app: "Showing X-Y of Z"
+   on the inline-start edge, rows-per-page selector + numbered pager on the inline-end. */
 .pagination {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  /* Fill the container's width so justify-content spreads summary (start) from the
+     controls (end). A no-op in a block context (showcase card), but essential inside a
+     flex parent like ContentFooter, where a child otherwise shrinks to its content and
+     the whole bar would clump at the start. */
+  flex: 1;
   gap: 1rem;
-  padding: 0.5rem 0;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
-.range {
+.summary {
   white-space: nowrap;
 }
 
-.pageSize {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  white-space: nowrap;
+/* The range + total in the summary are emphasised, matching OMS's bold numbers. */
+.summaryNumber {
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
 }
 
 .controls {
   display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-inline-start: auto;
+}
+
+/* The rows-per-page Select, laid out inline for the bar: label beside a compact
+   trigger (overrides the Select field's default stacked column + short max-width). */
+.pageSize {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: none;
+  white-space: nowrap;
+}
+
+/* "Rows per page" is a plain caption here, not a form label — override the Select
+   label's medium weight so it reads as normal footer text. */
+.pageSize label {
+  font-weight: var(--weight-regular);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
   gap: 0.25rem;
 }
 
-.button {
+/* Circular pager buttons, matching the current app's MUI Pagination: 2rem circle,
+   transparent by default, subtle grey-tint fill for the active page (not a bold pill). */
+.pageButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
+  min-width: 2rem;
   height: 2rem;
-  border: 1px solid var(--color-border-value);
-  border-radius: var(--radius-sm);
-  background: var(--bg-white);
+  margin: 0 0.1875rem;
+  padding: 0 var(--space-1);
+  border: none;
+  border-radius: 1rem;
+  background: transparent;
   color: var(--text-body);
+  font-size: var(--text-xs);
   cursor: pointer;
 }
 
-.button:disabled {
+/* The arrow icons (first/prev/next/last) are drawn larger than the page-number text
+   so they read as chunky, clear controls (the MUI paths are filled, so size = weight). */
+.pageButton svg {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.pageButton:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.button:hover:not(:disabled) {
-  background: var(--bg-menu);
+.pageButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text-body) 4%, transparent);
 }
 
-.prevIcon {
-  transform: rotate(180deg);
+/* The current page — a subtle grey tint, dark text (matches OMS's rgba(0,0,0,0.08)). */
+.pageButtonActive {
+  background: color-mix(in srgb, var(--text-body) 8%, transparent);
+}
+
+.pageButtonActive:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text-body) 12%, transparent);
+}
+
+.gap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  color: var(--text-secondary);
 }

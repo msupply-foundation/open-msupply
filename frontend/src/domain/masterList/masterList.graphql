@@ -1,0 +1,14 @@
+# Master lists for the current store — an app-wide lookup backed by a store-scoped cache
+# (masterListsResource): fetched once per store, shared by every consumer (the stocktake
+# create form's master-list picker, and future verticals). id + name is all a picker needs.
+query masterLists($storeId: String!) {
+  masterLists(storeId: $storeId) {
+    ... on MasterListConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}
