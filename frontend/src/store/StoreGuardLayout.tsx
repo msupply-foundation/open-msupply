@@ -1,6 +1,6 @@
 import { createEffect, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useLocation, useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { authUser } from '../auth/authContext';
 import { getPreviousStoreId, recordPreviousStoreId } from '../appData';
@@ -33,19 +33,8 @@ export type StoreSummary = {
 export const StoreGuardLayout: Component<RouteSectionProps> = props => {
   const params = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const user = () => authUser();
   const stores = () => user()?.stores.nodes ?? [];
-
-  // A store-less deep link keeps its destination: /inventory/stocktakes arrives
-  // here with 'inventory' as the store segment, so the WHOLE current path is the
-  // route to continue to once the store is known (old-app URLs carry no store
-  // segment — this is what keeps them working). The reserved resolve-store path
-  // carries no destination.
-  const intendedPath = () =>
-    params.storeId === resolveStorePath.slice(1)
-      ? ''
-      : `${location.pathname}${location.search}`;
 
   const storeToEnter = () =>
     stores().find(s => s.id === params.storeId) ??
@@ -64,9 +53,9 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     if (!store || !currentUser) return;
     recordPreviousStoreId(currentUser.userId, store.id);
     // Auto-selected store (the URL segment did not name it): navigate to
-    // /{store-id}, continuing to the deep link's destination when there is one.
+    // /{store-id}.
     if (params.storeId !== store.id)
-      navigate(`/${store.id}${intendedPath()}`, { replace: true });
+      navigate(`/${store.id}`, { replace: true });
     if (!contextLoaded(store.id)) void refetchStoreContext(store.id);
   });
 
@@ -88,7 +77,7 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
       fallback={
         <StoreSelectionModal
           stores={pickerStores()}
-          onSelect={id => navigate(`/${id}${intendedPath()}`)}
+          onSelect={id => navigate(`/${id}`)}
         />
       }
     >
