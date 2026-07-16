@@ -9,12 +9,7 @@
 
 .menuBar {
   position: relative;
-  /* Above the page content — specifically above the DataTable's sticky header (z 3) — so the
-     drawer's rightward drop shadow (--shadow-drawer) paints OVER the content along the whole left
-     edge, including alongside the table. At z 2 the sticky table cells covered it, so the shadow
-     vanished next to the table (the "missing corner shadow"). Still well below the overlay drawer
-     (z 40) and popovers, so nothing else is affected. */
-  z-index: 4;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -91,6 +86,8 @@
 
 /* --- Nav button (leaves + section triggers share this) ----------------- */
 .navButton {
+  /* Anchor for the collapsed-rail badge docking (sync indicator). */
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -270,4 +267,33 @@
   .navButton {
     min-block-size: var(--touch-target);
   }
+}
+
+/* --- Sync-entry status badge (spec/chrome § sync indicator) -------------- */
+/* The pill itself is the shared Badge component; the MenuBar owns only its
+   placement — inline-end of the row, docking onto the icon when collapsed. */
+.badge {
+  margin-inline-start: auto;
+}
+
+/* The alert marker: the error-coloured glyph, as the current app renders it. */
+.alertBadge {
+  display: inline-flex;
+  font-size: 1rem;
+  color: var(--error-main);
+}
+
+/* Collapsed rail: labels hide, so the badge docks onto the icon's corner to
+   stay visible. */
+.menuBar[data-open='false'] .badge {
+  position: absolute;
+  inset-block-start: 0.2rem;
+  inset-inline-end: 0.2rem;
+}
+
+/* The Sync entry's icon dims while the latest run is errored; the badge (not
+   the dimming) carries the meaning. Grey, as in the current app — not a paler
+   brand tint. */
+.icon[data-dimmed='true'] {
+  color: var(--gray-main);
 }

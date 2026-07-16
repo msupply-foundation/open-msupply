@@ -6,16 +6,23 @@ export type SyncStatusFragment = ({
   __typename: "FullSyncStatusV7Node";
 } & {
   isSyncing: boolean;
+  warningThreshold: number;
+  errorThreshold: number;
   error: {
+  variantV7: "DATABASE_ERROR" | "SYNC_RECORD_SERIALIZE_ERROR" | "RECORD_NOT_FOUND" | "SYNC_VERSION_MISMATCH" | "NOT_A_CENTRAL_SERVER" | "AUTHENTICATION" | "INVALID_SITE_NAME_OR_PASSWORD" | "TOKEN_ALREADY_ALLOCATED" | "TOKEN_NOT_FOUND" | "HARDWARE_ID_MISMATCH" | "FAILED_TO_GET_HARDWARE_ID" | "MISSING_AUTH_HEADER" | "SITE_LOCK_ERROR" | "CONNECTION_ERROR" | "PARSING_ERROR" | "INTEGRATION_TIMEOUT_REACHED" | "SITE_ID_NOT_SET" | "GET_CURRENT_SITE_ID_ERROR" | "SITE_ID_MISMATCH" | "SITE_IS_NOT_V7" | "REQUEST_SITE_AUTH_ERROR" | "OTHER";
   fullError: string;
 } | null;
-  pull: {
+  push: {
   started: string;
   finished: string | null;
   total: number | null;
   done: number | null;
 } | null;
-  push: {
+  waitingForIntegration: {
+  started: string;
+  finished: string | null;
+} | null;
+  pull: {
   started: string;
   finished: string | null;
   total: number | null;
@@ -35,12 +42,27 @@ export type SyncStatusFragment = ({
   __typename: "FullSyncStatusV5V6Node";
 } & {
   isSyncing: boolean;
+  warningThreshold: number;
+  errorThreshold: number;
   error: {
+  variant: "CONNECTION_ERROR" | "SITE_UUID_IS_BEING_CHANGED" | "SITE_NAME_NOT_FOUND" | "INCORRECT_PASSWORD" | "HARDWARE_ID_MISMATCH" | "SITE_HAS_NO_STORE" | "SITE_AUTH_TIMEOUT" | "INTEGRATION_TIMEOUT_REACHED" | "INVALID_URL" | "UNKNOWN" | "API_VERSION_INCOMPATIBLE" | "CENTRAL_V6_NOT_CONFIGURED" | "V6_API_VERSION_INCOMPATIBLE" | "INTEGRATION_ERROR" | "V7_UPGRADE_FAILED";
   fullError: string;
 } | null;
   prepareInitial: {
   started: string;
   finished: string | null;
+} | null;
+  push: {
+  started: string;
+  finished: string | null;
+  total: number | null;
+  done: number | null;
+} | null;
+  pushV6: {
+  started: string;
+  finished: string | null;
+  total: number | null;
+  done: number | null;
 } | null;
   pullCentral: {
   started: string;
@@ -54,7 +76,7 @@ export type SyncStatusFragment = ({
   total: number | null;
   done: number | null;
 } | null;
-  push: {
+  pullV6: {
   started: string;
   finished: string | null;
   total: number | null;
@@ -84,6 +106,16 @@ export type InitialisationStatusResult = {
 export const InitialisationStatus = {
   query: "query initialisationStatus {\n  initialisationStatus {\n    status\n    siteName\n  }\n}",
 } as TypedDocument<InitialisationStatusResult, InitialisationStatusVariables>;
+
+export type IsCentralServerVariables = Record<string, never>;
+
+export type IsCentralServerResult = {
+  isCentralServer: boolean;
+};
+
+export const IsCentralServer = {
+  query: "query isCentralServer {\n  isCentralServer\n}",
+} as TypedDocument<IsCentralServerResult, IsCentralServerVariables>;
 
 export type InitialiseSiteVariables = {
   input: {
@@ -131,17 +163,29 @@ export type LatestSyncStatusResult = {
 };
 
 export const LatestSyncStatus = {
-  query: "query latestSyncStatus {\n  latestSyncStatus {\n    ...SyncStatus\n  }\n}\n\nfragment SyncStatus on FullSyncStatusNode {\n  ... on FullSyncStatusV7Node {\n    __typename\n    isSyncing\n    error {\n      fullError\n    }\n    pull {\n      started\n      finished\n      total\n      done\n    }\n    push {\n      started\n      finished\n      total\n      done\n    }\n    integration {\n      started\n      finished\n      total\n      done\n    }\n    lastSuccessfulSync {\n      started\n      finished\n    }\n  }\n  ... on FullSyncStatusV5V6Node {\n    __typename\n    isSyncing\n    error {\n      fullError\n    }\n    prepareInitial {\n      started\n      finished\n    }\n    pullCentral {\n      started\n      finished\n      total\n      done\n    }\n    pullRemote {\n      started\n      finished\n      total\n      done\n    }\n    push {\n      started\n      finished\n      total\n      done\n    }\n    integration {\n      started\n      finished\n      total\n      done\n    }\n    lastSuccessfulSync {\n      started\n      finished\n    }\n  }\n}",
+  query: "query latestSyncStatus {\n  latestSyncStatus {\n    ...SyncStatus\n  }\n}\n\nfragment SyncStatus on FullSyncStatusNode {\n  ... on FullSyncStatusV7Node {\n    __typename\n    isSyncing\n    warningThreshold\n    errorThreshold\n    error {\n      variantV7: variant\n      fullError\n    }\n    push {\n      started\n      finished\n      total\n      done\n    }\n    waitingForIntegration {\n      started\n      finished\n    }\n    pull {\n      started\n      finished\n      total\n      done\n    }\n    integration {\n      started\n      finished\n      total\n      done\n    }\n    lastSuccessfulSync {\n      started\n      finished\n    }\n  }\n  ... on FullSyncStatusV5V6Node {\n    __typename\n    isSyncing\n    warningThreshold\n    errorThreshold\n    error {\n      variant\n      fullError\n    }\n    prepareInitial {\n      started\n      finished\n    }\n    push {\n      started\n      finished\n      total\n      done\n    }\n    pushV6 {\n      started\n      finished\n      total\n      done\n    }\n    pullCentral {\n      started\n      finished\n      total\n      done\n    }\n    pullRemote {\n      started\n      finished\n      total\n      done\n    }\n    pullV6 {\n      started\n      finished\n      total\n      done\n    }\n    integration {\n      started\n      finished\n      total\n      done\n    }\n    lastSuccessfulSync {\n      started\n      finished\n    }\n  }\n}",
 } as TypedDocument<LatestSyncStatusResult, LatestSyncStatusVariables>;
+
+export type SyncStatusAndQueueVariables = Record<string, never>;
+
+export type SyncStatusAndQueueResult = {
+  latestSyncStatus: SyncStatusFragment | null;
+  numberOfRecordsInPushQueue: number;
+};
+
+export const SyncStatusAndQueue = {
+  query: "query syncStatusAndQueue {\n  latestSyncStatus {\n    ...SyncStatus\n  }\n  numberOfRecordsInPushQueue\n}\n\nfragment SyncStatus on FullSyncStatusNode {\n  ... on FullSyncStatusV7Node {\n    __typename\n    isSyncing\n    warningThreshold\n    errorThreshold\n    error {\n      variantV7: variant\n      fullError\n    }\n    push {\n      started\n      finished\n      total\n      done\n    }\n    waitingForIntegration {\n      started\n      finished\n    }\n    pull {\n      started\n      finished\n      total\n      done\n    }\n    integration {\n      started\n      finished\n      total\n      done\n    }\n    lastSuccessfulSync {\n      started\n      finished\n    }\n  }\n  ... on FullSyncStatusV5V6Node {\n    __typename\n    isSyncing\n    warningThreshold\n    errorThreshold\n    error {\n      variant\n      fullError\n    }\n    prepareInitial {\n      started\n      finished\n    }\n    push {\n      started\n      finished\n      total\n      done\n    }\n    pushV6 {\n      started\n      finished\n      total\n      done\n    }\n    pullCentral {\n      started\n      finished\n      total\n      done\n    }\n    pullRemote {\n      started\n      finished\n      total\n      done\n    }\n    pullV6 {\n      started\n      finished\n      total\n      done\n    }\n    integration {\n      started\n      finished\n      total\n      done\n    }\n    lastSuccessfulSync {\n      started\n      finished\n    }\n  }\n}",
+} as TypedDocument<SyncStatusAndQueueResult, SyncStatusAndQueueVariables>;
 
 export type SyncInfoUpdatedVariables = Record<string, never>;
 
 export type SyncInfoUpdatedResult = {
   syncInfoUpdated: {
   syncStatus: SyncStatusFragment | null;
+  numberOfRecordsInPushQueue: number;
 };
 };
 
 export const SyncInfoUpdated = {
-  query: "subscription syncInfoUpdated {\n  syncInfoUpdated {\n    syncStatus {\n      ...SyncStatus\n    }\n  }\n}\n\nfragment SyncStatus on FullSyncStatusNode {\n  ... on FullSyncStatusV7Node {\n    __typename\n    isSyncing\n    error {\n      fullError\n    }\n    pull {\n      started\n      finished\n      total\n      done\n    }\n    push {\n      started\n      finished\n      total\n      done\n    }\n    integration {\n      started\n      finished\n      total\n      done\n    }\n    lastSuccessfulSync {\n      started\n      finished\n    }\n  }\n  ... on FullSyncStatusV5V6Node {\n    __typename\n    isSyncing\n    error {\n      fullError\n    }\n    prepareInitial {\n      started\n      finished\n    }\n    pullCentral {\n      started\n      finished\n      total\n      done\n    }\n    pullRemote {\n      started\n      finished\n      total\n      done\n    }\n    push {\n      started\n      finished\n      total\n      done\n    }\n    integration {\n      started\n      finished\n      total\n      done\n    }\n    lastSuccessfulSync {\n      started\n      finished\n    }\n  }\n}",
+  query: "subscription syncInfoUpdated {\n  syncInfoUpdated {\n    syncStatus {\n      ...SyncStatus\n    }\n    numberOfRecordsInPushQueue\n  }\n}\n\nfragment SyncStatus on FullSyncStatusNode {\n  ... on FullSyncStatusV7Node {\n    __typename\n    isSyncing\n    warningThreshold\n    errorThreshold\n    error {\n      variantV7: variant\n      fullError\n    }\n    push {\n      started\n      finished\n      total\n      done\n    }\n    waitingForIntegration {\n      started\n      finished\n    }\n    pull {\n      started\n      finished\n      total\n      done\n    }\n    integration {\n      started\n      finished\n      total\n      done\n    }\n    lastSuccessfulSync {\n      started\n      finished\n    }\n  }\n  ... on FullSyncStatusV5V6Node {\n    __typename\n    isSyncing\n    warningThreshold\n    errorThreshold\n    error {\n      variant\n      fullError\n    }\n    prepareInitial {\n      started\n      finished\n    }\n    push {\n      started\n      finished\n      total\n      done\n    }\n    pushV6 {\n      started\n      finished\n      total\n      done\n    }\n    pullCentral {\n      started\n      finished\n      total\n      done\n    }\n    pullRemote {\n      started\n      finished\n      total\n      done\n    }\n    pullV6 {\n      started\n      finished\n      total\n      done\n    }\n    integration {\n      started\n      finished\n      total\n      done\n    }\n    lastSuccessfulSync {\n      started\n      finished\n    }\n  }\n}",
 } as TypedDocument<SyncInfoUpdatedResult, SyncInfoUpdatedVariables>;

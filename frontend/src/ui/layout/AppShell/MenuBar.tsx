@@ -1,8 +1,18 @@
 import { For, Show, createSignal } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { MSupplyGuyLogo, ChevronDownIcon } from '../../icons';
+import {
+  MSupplyGuyLogo,
+  ChevronDownIcon,
+  AlertTriangleIcon,
+} from '../../icons';
+import { Badge } from '../../elements/feedback/Badge';
 import { t } from '../../../intl';
-import type { NavItem, NavLeaf } from './navModel';
+import {
+  SYNC_NAV_ID,
+  type NavBadge,
+  type NavItem,
+  type NavLeaf,
+} from './navModel';
 import styles from './MenuBar.module.css';
 
 export interface MenuBarState {
@@ -26,6 +36,10 @@ interface MenuBarProps {
   lower?: NavItem[];
   selectedId: string;
   onSelect: (leaf: NavLeaf) => void;
+  /** Status badge for the Sync entry (spec/chrome § sync indicator). */
+  syncBadge?: NavBadge;
+  /** Dim the Sync entry's icon while the latest run is errored. */
+  syncIconDimmed?: boolean;
 }
 
 /*
@@ -36,14 +50,13 @@ const EndChevron = () => (
   <ChevronDownIcon class={styles.endChevron} aria-hidden="true" />
 );
 
-/**
- * Top-level leaf link: icon + empty chevron slot (so labels align with
- * sections).
- */
+/* Top-level leaf link: icon + empty chevron slot (so labels align with sections). */
 const TopLeaf = (props: {
   item: NavItem;
   selected: boolean;
   onSelect: () => void;
+  badge?: NavBadge;
+  iconDimmed?: boolean;
 }) => (
   <li class={styles.item}>
     <button
@@ -53,11 +66,38 @@ const TopLeaf = (props: {
       title={t(props.item.labelKey)}
       onClick={props.onSelect}
     >
-      <span class={styles.icon}>
+      <span
+        class={styles.icon}
+        data-dimmed={props.iconDimmed ? 'true' : undefined}
+      >
         <Dynamic component={props.item.icon} />
       </span>
       <span class={styles.chevronSlot} aria-hidden="true" />
       <span class={styles.label}>{t(props.item.labelKey)}</span>
+      <Show when={props.badge}>
+        {badge => {
+          const b = badge();
+          return b.kind === 'alert' ? (
+            // The current app's alert marker is a bare error-coloured glyph,
+            // not a pill; the title carries the meaning for hover/AT.
+            <span
+              class={`${styles.badge} ${styles.alertBadge}`}
+              role="img"
+              aria-label={b.title}
+              title={b.title}
+            >
+              <AlertTriangleIcon />
+            </span>
+          ) : (
+            <Badge
+              class={styles.badge}
+              label={b.label}
+              tone={b.tone}
+              title={b.title}
+            />
+          );
+        }}
+      </Show>
       <Show when={props.selected}>
         <EndChevron />
       </Show>
@@ -65,9 +105,7 @@ const TopLeaf = (props: {
   </li>
 );
 
-/**
- * Expandable parent: icon + collapse chevron (between icon and label) + label.
- */
+/* Expandable parent: icon + collapse chevron (between icon and label) + label. */
 const NavSection = (props: {
   item: NavItem;
   selectedId: string;
@@ -130,6 +168,8 @@ const NavGroup = (props: {
   selectedId: string;
   onSelect: (leaf: NavLeaf) => void;
   class?: string;
+  syncBadge?: NavBadge;
+  syncIconDimmed?: boolean;
 }) => (
   <ul class={`${styles.navList} ${props.class ?? ''}`}>
     <For each={props.items}>
@@ -140,6 +180,10 @@ const NavGroup = (props: {
             <TopLeaf
               item={item}
               selected={item.id === props.selectedId}
+              badge={item.id === SYNC_NAV_ID ? props.syncBadge : undefined}
+              iconDimmed={
+                item.id === SYNC_NAV_ID ? props.syncIconDimmed : undefined
+              }
               onSelect={() =>
                 props.onSelect({
                   id: item.id,
@@ -166,6 +210,8 @@ const NavLists = (props: {
   lower?: NavItem[];
   selectedId: string;
   onSelect: (leaf: NavLeaf) => void;
+  syncBadge?: NavBadge;
+  syncIconDimmed?: boolean;
 }) => (
   <>
     <NavGroup
@@ -180,6 +226,8 @@ const NavLists = (props: {
         selectedId={props.selectedId}
         onSelect={props.onSelect}
         class={styles.lower}
+        syncBadge={props.syncBadge}
+        syncIconDimmed={props.syncIconDimmed}
       />
     </Show>
   </>
@@ -187,12 +235,11 @@ const NavLists = (props: {
 
 /*
  * One menu bar, two layout modes — never a duplicate mobile nav component.
- *   - docked  (>= navOverlay): part of the flex row; logo toggles the icon
- *     rail.
- * - overlay (<  navOverlay): off-canvas panel + scrim, opened by the header's
- *     hamburger; the SAME NavLists, closing on navigate or scrim tap. Which
- *     mode renders is a "which element" decision — the one place a breakpoint
- *     is allowed (via useIsNavOverlay in AppShell).
+ *   - docked  (>= navOverlay): part of the flex row; logo toggles the icon rail.
+ *   - overlay (<  navOverlay): off-canvas panel + scrim, opened by the header's
+ *     hamburger; the SAME NavLists, closing on navigate or scrim tap.
+ * Which mode renders is a "which element" decision — the one place a breakpoint
+ * is allowed (via useIsNavOverlay in AppShell).
  */
 export const MenuBar = (props: MenuBarProps) => {
   const select = (leaf: NavLeaf) => {
@@ -229,6 +276,8 @@ export const MenuBar = (props: MenuBarProps) => {
             lower={props.lower}
             selectedId={props.selectedId}
             onSelect={select}
+            syncBadge={props.syncBadge}
+            syncIconDimmed={props.syncIconDimmed}
           />
         </nav>
       }
@@ -253,6 +302,8 @@ export const MenuBar = (props: MenuBarProps) => {
           lower={props.lower}
           selectedId={props.selectedId}
           onSelect={select}
+          syncBadge={props.syncBadge}
+          syncIconDimmed={props.syncIconDimmed}
         />
       </nav>
     </Show>
