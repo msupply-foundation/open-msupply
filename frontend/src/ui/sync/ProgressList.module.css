@@ -1,0 +1,156 @@
+/*
+ * Horizontal stepper look, faithful to the current app's HorizontalStepper:
+ * a circled icon marker per step, thick connector lines meeting the circles'
+ * outer edges, label + done/total count beneath, and a pulse on the in-flight
+ * marker. Geometry (30px circle, 3px border, 4px connector) is kept in rem
+ * except the border hairlines, mirroring the reference constants so the
+ * connectors stay centred on the circles.
+ *
+ * The tone variables map the semantic variant to palette tokens (never
+ * colour-named): primary = brand, secondary = the initialisation screen's
+ * action-blue scale (the current app's secondary stepper uses the pale-grey
+ * light shade).
+ */
+
+.list {
+  --tone-light: var(--primary-light);
+  --tone-main: var(--primary-main);
+  --tone-dark: var(--primary-dark);
+
+  /* Labels/counts on not-yet-completed steps. For primary this IS the pale
+     shade, but for secondary the current app keeps text at the action blue
+     while only circles/connectors go pale — pale text would be near-invisible
+     (see the reference's label colouring). */
+  --tone-muted-text: var(--primary-light);
+
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  inline-size: 100%;
+}
+
+.list[data-variant='secondary'] {
+  --tone-light: var(--gray-pale);
+  --tone-main: var(--secondary-main);
+  --tone-dark: var(--secondary-dark);
+  --tone-muted-text: var(--secondary-main);
+}
+
+.step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+/* Connector — the segment arriving from the previous step, centred on the
+   circles (top = outer radius 1.125rem − half the 4px thickness) and inset so
+   it meets their outer edges. Logical insets mirror it in RTL. */
+.step + .step::before {
+  content: '';
+  position: absolute;
+  inset-block-start: calc(1.125rem - 2px);
+  inset-inline: calc(-50% + 1.125rem) calc(50% + 1.125rem);
+  block-size: 4px;
+  background: var(--tone-light);
+}
+
+/* A segment belongs to the step it arrives at: it fills once that step has
+   been reached; the run-out to a pending step stays pale. */
+.step[data-state='active']::before,
+.step[data-state='completed']::before {
+  background: var(--tone-main);
+}
+
+/* The circled marker. Sits above the connector. */
+.circle {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem; /* 30px circle + 2 × 3px border */
+  block-size: 2.25rem;
+  border: 3px solid var(--tone-light);
+  border-radius: 50%;
+  background: var(--bg-white);
+  color: var(--tone-main);
+  font-size: 1.25rem;
+}
+
+.step[data-state='active'] .circle {
+  color: var(--tone-dark);
+  animation: progress-pulse 2s infinite;
+}
+
+.step[data-state='completed'] .circle {
+  border-color: var(--tone-main);
+  background: var(--tone-main);
+  color: var(--primary-contrast);
+}
+
+.step[data-error] .circle {
+  color: var(--error-main);
+}
+
+/* Icon-less marker: the step's number (bold, as the current app renders it). */
+.number {
+  font-size: 0.875rem;
+  font-weight: var(--weight-bold);
+}
+
+.label {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--tone-muted-text);
+}
+
+.step[data-state='completed'] .label {
+  color: var(--tone-dark);
+}
+
+.step[data-error] .label {
+  color: var(--error-main);
+}
+
+/* Done/total under the label; always rendered so rows keep an even height. */
+.count {
+  min-block-size: 1em;
+  font-size: var(--text-xs);
+  color: var(--tone-muted-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Meaning is never colour-alone: each step carries hidden status text. */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes progress-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--tone-main) 40%, transparent);
+  }
+
+  70% {
+    box-shadow: 0 0 0 0.625rem transparent;
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step[data-state='active'] .circle {
+    animation: none;
+  }
+}

@@ -18,6 +18,13 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // distinct identity so dev builds coexist with the legacy production
+            // app (which owns the release appId above, and whose release signature
+            // a debug build could never upgrade in place anyway). Only the Java
+            // namespace — unchanged — is load-bearing for the JNI .so symbols.
+            applicationIdSuffix ".dev"
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

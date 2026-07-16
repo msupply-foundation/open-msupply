@@ -1,6 +1,18 @@
-import { createMemo, createSignal, Show, type JSX } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  on,
+  Show,
+  type JSX,
+} from 'solid-js';
 import * as KCombobox from '@kobalte/core/combobox';
-import { ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons';
+import {
+  AlertTriangleIcon,
+  ChevronDownIcon,
+  CloseIcon,
+  SearchIcon,
+} from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
 import { keepDialogOpenOnInside } from './dismissInsideGuard';
 import styles from './Combobox.module.css';
@@ -18,6 +30,14 @@ interface ComboboxProps<T> {
    * itemToString — override when labels can collide.
    */
   itemToValue?: (item: T) => string;
+  /**
+   * Controlled selection: the itemToValue key of the currently-selected item
+   * (or undefined for none). Pass it to keep the input in sync with external
+   * state — e.g. an editable cell showing a line's saved location. Omit for an
+   * uncontrolled combobox (the create/filter forms), where the selection lives
+   * only in the widget and is reported via onChange.
+   */
+  value?: string;
   onChange?: (item: T | null) => void;
   /** Rich per-option rendering; defaults to the plain itemToString label. */
   renderItem?: (item: T) => JSX.Element;
@@ -28,6 +48,13 @@ interface ComboboxProps<T> {
   filter?: (item: T, input: string) => boolean;
   placeholder?: string;
   helperText?: string;
+  /**
+   * Error message — presence switches the control to the error state (red
+   * border/glow +
+   *  aria-invalid), shown with an alert icon below the field. Mirrors
+   *  TextField's `error`.
+   */
+  error?: string;
   loading?: boolean;
   disabled?: boolean;
   /**
@@ -58,6 +85,24 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   const [selected, setSelected] = createSignal<T | null>(null);
   const [inputValue, setInputValue] = createSignal('');
   let inputEl: HTMLInputElement | undefined;
+
+  const keyOf = (item: T) => (props.itemToValue ?? props.itemToString)(item);
+
+  // Controlled selection: when `value` is provided, keep the internal
+  // `selected` item in sync with it (resolve the key against the current
+  // items). Skipped entirely when `value` is undefined — the widget then stays
+  // uncontrolled (create/filter forms). Guarded by `on(value, ...)` so it only
+  // reacts to the prop, not to the user's own selection.
+  createEffect(
+    on(
+      () => props.value,
+      value => {
+        if (value === undefined) return;
+        const match = props.items.find(item => keyOf(item) === value) ?? null;
+        if (match !== selected()) setSelected(() => match);
+      }
+    )
+  );
   // Inside a Dialog, mount the listbox into the dialog element (top layer +
   // non-inert); outside one this is undefined and Kobalte's default <body>
   // portal is used.
@@ -109,11 +154,18 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       >
         {props.label}
       </KCombobox.Label>
-      <KCombobox.Control class={styles.control}>
+      <KCombobox.Control
+        class={styles.control}
+        data-error={props.error ? '' : undefined}
+      >
         <span class={styles.searchIcon} aria-hidden="true">
           <SearchIcon />
         </span>
-        <KCombobox.Input ref={inputEl} class={styles.input} />
+        <KCombobox.Input
+          ref={inputEl}
+          class={styles.input}
+          aria-invalid={props.error ? 'true' : undefined}
+        />
         <Show when={selected() !== null}>
           <button
             type="button"
@@ -133,9 +185,21 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           </KCombobox.Icon>
         </KCombobox.Trigger>
       </KCombobox.Control>
-      <Show when={props.helperText}>
-        <KCombobox.Description class={styles.helper}>
-          {props.helperText}
+      {/* Error message (with an alert icon) takes precedence over helperText — mirrors
+          TextField. Nothing is conveyed by colour alone (icon + text). */}
+      <Show
+        when={props.error}
+        fallback={
+          <Show when={props.helperText}>
+            <KCombobox.Description class={styles.helper}>
+              {props.helperText}
+            </KCombobox.Description>
+          </Show>
+        }
+      >
+        <KCombobox.Description class={styles.error}>
+          <AlertTriangleIcon class={styles.errorIcon} />
+          {props.error}
         </KCombobox.Description>
       </Show>
       <KCombobox.Portal mount={portalMount?.()}>

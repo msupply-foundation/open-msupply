@@ -1,5 +1,6 @@
 import { createSignal, For, type JSX } from 'solid-js';
 import { Alert } from '../ui/elements/feedback/Alert';
+import { Badge } from '../ui/elements/feedback/Badge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
@@ -7,6 +8,7 @@ import { Popover } from '../ui/elements/feedback/Popover';
 import { Button } from '../ui/elements/buttons/Button';
 import { TextField } from '../ui/elements/inputs/TextField';
 import {
+  CheckCircleIcon,
   HelpIcon,
   MessageSquareIcon,
   PlusCircleIcon,
@@ -68,7 +70,26 @@ export const FeedbackShowcase = () => {
       </Card>
 
       <Card
-        title="Alerts — error / warning / info / success"
+        title="Badge — count / status pill"
+        lead={
+          <>
+            The small pill riding on another element (the sidebar's sync
+            entry): a count, a capped <code>99+</code>, or an alert mark.
+            Meaning is the label text (plus the host's accessible text) — the
+            semantic <code>tone</code> only escalates it, never stands alone.
+          </>
+        }
+      >
+        <div class={styles.chipRow}>
+          <Badge label="3" title="3 records to push" />
+          <Badge label="99+" title="250 records to push" />
+          <Badge label="42" tone="warning" title="42 records to push" />
+          <Badge label="!" tone="error" title="Sync error" />
+        </div>
+      </Card>
+
+      <Card
+        title="Alerts — error / warning / info / success / neutral"
         lead={
           <>
             Hand-rolled, one <code>&lt;div&gt;</code> + CSS — the current app's
@@ -91,6 +112,10 @@ export const FeedbackShowcase = () => {
             This shipment was created from requisition RQ-1024.
           </Alert>
           <Alert severity="success">All lines allocated.</Alert>
+          <Alert severity="neutral" icon={CheckCircleIcon}>
+            Last successful sync 09:37 (completed in 1 second) — the untinted
+            notice, glyph overridden by intent.
+          </Alert>
         </div>
       </Card>
 

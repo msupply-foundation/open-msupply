@@ -49,10 +49,51 @@ export const CheckIcon = (props: IconProps) => (
   </Stroke>
 );
 
+export const CheckCircleIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </Stroke>
+);
+
 export const CloseIcon = (props: IconProps) => (
   <Fill viewBox="0 0 21 20" {...props}>
     <path d="M14.41 4.41a.833.833 0 0 1 1.18 1.18L11.177 10l4.411 4.41a.834.834 0 0 1 .075 1.094l-.075.085a.833.833 0 0 1-1.178 0L10 11.178l-4.41 4.411a.834.834 0 0 1-1.094.075l-.085-.075a.833.833 0 0 1 0-1.178L8.82 10l-4.41-4.41a.834.834 0 0 1-.075-1.094l.075-.085a.833.833 0 0 1 1.178 0L10 8.82z" />
   </Fill>
+);
+
+// Row-grouping state icons (Tabler folder / folders). GroupedIcon = a single
+// folder (rows are grouped into one parent); UngroupedIcon = stacked folders
+// (the "multiple", ungrouped state). Used by the DataTable's group-by control
+// (see rowGroup).
+export const GroupedIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" />
+  </Stroke>
+);
+
+export const UngroupedIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M9 4h3l2 2h5a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
+    <path d="M17 17v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h2" />
+  </Stroke>
+);
+
+// A double chevron (stacked). Points down as-is; the row-group "expand all"
+// header control uses it, flipped to point up (rotate 180deg) for "collapse
+// all" — like Open mSupply.
+export const ChevronsDownIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M7 7l5 5l5 -5" />
+    <path d="M7 13l5 5l5 -5" />
+  </Stroke>
+);
+
+export const ChevronsUpIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M7 11l5 -5l5 5" />
+    <path d="M7 17l5 -5l5 5" />
+  </Stroke>
 );
 
 export const SearchIcon = (props: IconProps) => (
@@ -109,6 +150,32 @@ export const TrashIcon = (props: IconProps) => (
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     <line x1="10" y1="11" x2="10" y2="17" />
     <line x1="14" y1="11" x2="14" y2="17" />
+  </Stroke>
+);
+
+/* On hold / locked */
+export const LockIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </Stroke>
+);
+
+/* Location / place */
+export const MapPinIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </Stroke>
+);
+
+/* Calendar / date */
+export const CalendarIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
   </Stroke>
 );
 

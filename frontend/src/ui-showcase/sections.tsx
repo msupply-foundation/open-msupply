@@ -5,6 +5,8 @@ import { ButtonsShowcase } from './ButtonsShowcase';
 import { InputsShowcase } from './InputsShowcase';
 import { SelectorsShowcase } from './SelectorsShowcase';
 import { FeedbackShowcase } from './FeedbackShowcase';
+import { SyncShowcase } from './SyncShowcase';
+import { StoreLoginShowcase } from './StoreLoginShowcase';
 import { TableShowcase } from './TableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
@@ -84,6 +86,18 @@ export const sections: SectionDef[] = [
     id: 'feedback',
     label: 'Feedback',
     component: FeedbackShowcase,
+    category: 'components',
+  },
+  {
+    id: 'sync',
+    label: 'Sync',
+    component: SyncShowcase,
+    category: 'components',
+  },
+  {
+    id: 'store-login',
+    label: 'Store login',
+    component: StoreLoginShowcase,
     category: 'components',
   },
   {

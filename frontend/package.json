@@ -16,7 +16,9 @@
     "format:check": "prettier --check .",
     "codegen": "node codegen/run.cjs",
     "test": "vitest run",
-    "test:codegen": "node --test \"codegen/__tests__/*.test.js\"",
+    "test:codegen": "node --test \"codegen/__tests__/*.test.cjs\"",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:local": "bash scripts/e2e/run-e2e.sh",
     "dev-android": "./scripts/dev-android.sh",
     "build-android": "./scripts/build-android.sh"
   },
@@ -36,6 +38,7 @@
     "@capacitor/cli": "^8.4.1",
     "@eslint/js": "^9.39.5",
     "@graphql-codegen/core": "^6.2.0",
+    "@playwright/test": "^1.61.1",
     "@types/node": "^24.13.2",
     "concurrently": "^9.2.3",
     "eslint": "^9.39.5",

@@ -40,9 +40,11 @@ export type AuthTokenVariables = {
 export type AuthTokenResult = {
   authToken: ({
   __typename: "AuthToken";
+} & {
   user: UserInfoFragment;
 }) | ({
   __typename: "AuthTokenError";
+} & {
   error: {
   description: string;
 };
@@ -58,9 +60,11 @@ export type RefreshTokenVariables = Record<string, never>;
 export type RefreshTokenResult = {
   refreshToken: ({
   __typename: "RefreshToken";
+} & {
   token: string;
 }) | ({
   __typename: "RefreshTokenError";
+} & {
   error: {
   description: string;
 };
@@ -76,6 +80,7 @@ export type LogoutVariables = Record<string, never>;
 export type LogoutResult = {
   logout: ({
   __typename: "Logout";
+} & {
   userId: string;
 });
 };

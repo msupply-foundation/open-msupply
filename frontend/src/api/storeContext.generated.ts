@@ -15,6 +15,7 @@ export type StoreContextResult = {
 };
   me: ({
   __typename: "UserNode";
+} & {
   userId: string;
   permissions: {
   nodes: Array<{

@@ -123,3 +123,20 @@
   color: var(--text-secondary);
   font-size: var(--text-xs);
 }
+
+/* Group badge — shows which tab/group(s) a column belongs to (icon + label), inline after the
+   column name, so it's clear that hiding/reordering here is GLOBAL across tabs. */
+/* Group-badge icon — just the group's icon after the column label (its text lives on the tab);
+   a compact hint that this column belongs to a group and edits here are global. Text on hover
+   via title. */
+.groupBadgeIcon {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-inline-start: var(--space-2);
+  color: var(--primary-main);
+}
+
+.groupBadgeIcon svg {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+}
