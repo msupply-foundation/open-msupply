@@ -42,10 +42,26 @@ const STATUS_CHIPS: { label: string; colour: string }[] = [
   { label: 'Verified', colour: 'var(--status-verified)' },
 ];
 
+/* A stand-in line list for the large "workbench" dialog — enough rows that the
+   body overflows and scrolls internally while the header/footer/actions stay
+   pinned (the real line-edit modal hosts a DataTable here). */
+const WORKBENCH_ROWS = Array.from({ length: 24 }, (_, i) => ({
+  code: `ITM-${1001 + i}`,
+  name: `Amoxicillin ${250 + i * 25}mg capsules`,
+  packs: (i * 7) % 40,
+}));
+
 export const FeedbackShowcase = () => {
   const [confirmOpen, setConfirmOpen] = createSignal(false);
   const [outcome, setOutcome] = createSignal('');
   const [dialogOpen, setDialogOpen] = createSignal(false);
+  const [workbenchOpen, setWorkbenchOpen] = createSignal(false);
+  const [lines, setLines] = createSignal(WORKBENCH_ROWS);
+  const addLine = () =>
+    setLines(rows => [
+      { code: `ITM-${1001 + rows.length}`, name: 'New line', packs: 0 },
+      ...rows,
+    ]);
 
   return (
     <div class={styles.stack}>
@@ -206,6 +222,82 @@ export const FeedbackShowcase = () => {
           }
         >
           <TextField label="Reference" placeholder="e.g. PO-1042" />
+        </Dialog>
+      </Card>
+
+      <Card
+        title={'Large "workbench" dialog — size="large"'}
+        lead={
+          <>
+            <code>size="large"</code> fills nearly the whole viewport — full
+            width and ~80% height — for content-heavy modals like the stock line
+            editor. The body becomes a flex column, so a single tall child (a
+            DataTable in the app) fills the space and{' '}
+            <em>scrolls internally</em> while the header, <code>footer</code>{' '}
+            and <code>actions</code> stay pinned to the edges. Add a line: the
+            box holds its size rather than growing. On phones (below the compact
+            breakpoint) a large dialog like this goes{' '}
+            <strong>full-screen</strong>, edge to edge with no radius — smaller
+            dialogs stay centred cards.
+          </>
+        }
+      >
+        <Button
+          icon={<PlusCircleIcon />}
+          onClick={() => setWorkbenchOpen(true)}
+        >
+          Edit lines
+        </Button>
+        <Dialog
+          open={workbenchOpen()}
+          onClose={() => setWorkbenchOpen(false)}
+          size="large"
+          icon={<PlusCircleIcon />}
+          title="Edit lines — stock take"
+          headerActions={
+            <Button
+              variant="secondary"
+              icon={<PlusCircleIcon />}
+              onClick={addLine}
+            >
+              Add line
+            </Button>
+          }
+          footer={
+            <Alert severity="info">
+              {lines().length} lines — the list scrolls; the header, this banner
+              and the actions stay put.
+            </Alert>
+          }
+          actions={
+            <>
+              <Button
+                variant="secondary"
+                icon={<XCircleIcon />}
+                onClick={() => setWorkbenchOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                icon={<SaveIcon />}
+                onClick={() => setWorkbenchOpen(false)}
+              >
+                Save
+              </Button>
+            </>
+          }
+        >
+          <div class={styles.workbench}>
+            <For each={lines()}>
+              {line => (
+                <div class={styles.workbenchRow}>
+                  <span class={styles.workbenchCode}>{line.code}</span>
+                  <span class={styles.workbenchName}>{line.name}</span>
+                  <span class={styles.workbenchPacks}>{line.packs} packs</span>
+                </div>
+              )}
+            </For>
+          </div>
         </Dialog>
       </Card>
 
