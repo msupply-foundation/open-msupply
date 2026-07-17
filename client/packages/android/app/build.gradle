@@ -15,6 +15,27 @@ def getVersionCodeFromVersionName(versionName) {
     return (major.toInteger() * 1000000) + (minor.toInteger() * 10000) + (patch.toInteger() * 100)
 }
 
+// Locates the Kotlin AAR bundled inside the rustls-platform-verifier-android
+// crate checkout (in the cargo registry), so the version always matches the
+// Rust side resolved in server/Cargo.lock. The Rust server initialises
+// rustls-platform-verifier at startup (see server/android/src/android.rs and
+// issue #12487); its certificate verification calls into this Kotlin
+// component at runtime. Requires `cargo` on PATH (already true for app
+// builds, which compile the Rust server first).
+// From https://github.com/rustls/rustls-platform-verifier README, adapted to
+// use paths relative to this project instead of the gradle daemon's CWD.
+String findRustlsPlatformVerifierProject() {
+    def serverAndroidManifest = new File(rootDir, "../../../server/android/Cargo.toml").canonicalPath
+    def dependencyText = providers.exec {
+        it.workingDir = projectDir
+        commandLine("cargo", "metadata", "--format-version", "1", "--filter-platform", "aarch64-linux-android", "--manifest-path", serverAndroidManifest)
+    }.standardOutput.asText.get()
+
+    def dependencyJson = new JsonSlurper().parseText(dependencyText)
+    def manifestPath = file(dependencyJson.packages.find { it.name == "rustls-platform-verifier-android" }.manifest_path)
+    return new File(manifestPath.parentFile, "maven").path
+}
+
 
 android {
     namespace = "org.openmsupply.client"
@@ -90,6 +111,10 @@ repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
+    maven {
+        url = findRustlsPlatformVerifierProject()
+        metadataSources.artifact()
+    }
 }
 
 // Exclude the unbundled Play Services barcode scanning dependency
@@ -114,6 +139,10 @@ dependencies {
     // Use bundled MLKit barcode scanning instead of unbundled Play Services version
     // This bundles the model with the app, avoiding runtime downloads
     implementation 'com.google.mlkit:barcode-scanning:17.3.0'
+
+    // Kotlin side of rustls-platform-verifier, resolved from the cargo
+    // registry checkout (see findRustlsPlatformVerifierProject above)
+    implementation "rustls:rustls-platform-verifier:latest.release"
 }
 
 apply from: 'capacitor.build.gradle'

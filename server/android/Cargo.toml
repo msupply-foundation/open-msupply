@@ -25,5 +25,11 @@ tokio = { workspace = true }
 android_logger = { version = "0.15.1" }
 simple-log = { workspace = true }
 
+# Keep in lockstep with the version reqwest resolves (see server/Cargo.lock) —
+# the Kotlin AAR bundled into the app via gradle comes from this crate's
+# checkout, so a version skew breaks certificate verification at runtime.
+[target.'cfg(target_os = "android")'.dependencies]
+rustls-platform-verifier = "0.7"
+
 [lints]
 workspace = true

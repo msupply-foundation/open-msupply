@@ -13,7 +13,7 @@ pub mod android {
     use tokio::sync::mpsc;
 
     use self::jni::errors::LogErrorAndDefault;
-    use self::jni::objects::{JClass, JString};
+    use self::jni::objects::{JClass, JObject, JString};
     use self::jni::EnvUnowned;
 
     struct ServerBucket {
@@ -31,14 +31,33 @@ pub mod android {
         files_dir: JString,
         cache_dir: JString,
         android_id: JString,
+        context: JObject,
     ) {
         let (off_switch, off_switch_receiver) = mpsc::channel(1);
-        let (files_dir, android_id, cache_dir) = unowned_env
+        let (files_dir, android_id, cache_dir, verifier_init) = unowned_env
             .with_env(|env| -> Result<_, jni::errors::Error> {
+                // Safety net for #12487: reqwest's default TLS stack verifies
+                // certificates via rustls-platform-verifier, which on Android
+                // panics at the first HTTPS handshake unless initialised with
+                // a JVM context. Production code must still build clients via
+                // util::https_client_builder() (bundled roots) — this init only
+                // contains the blast radius of a missed call site, which then
+                // verifies against the Android system CA store instead.
+                // Non-fatal: helper-based clients never touch the verifier.
+                #[cfg(target_os = "android")]
+                let verifier_init =
+                    rustls_platform_verifier::android::init_with_env(env, context)
+                        .err()
+                        .map(|e| format!("{e:?}"));
+                #[cfg(not(target_os = "android"))]
+                let verifier_init = {
+                    let _ = &context;
+                    None::<String>
+                };
                 let files_dir = files_dir.try_to_string(env)?;
                 let android_id = android_id.try_to_string(env)?;
                 let cache_dir = cache_dir.try_to_string(env)?;
-                Ok((files_dir, android_id, cache_dir))
+                Ok((files_dir, android_id, cache_dir, verifier_init))
             })
             .resolve::<LogErrorAndDefault>();
         let files_dir = PathBuf::from(&files_dir);
@@ -93,6 +112,10 @@ pub mod android {
         logging_init(settings.logging.clone(), None);
         log_panics::init();
         log::info!("omSupply server starting...");
+        match &verifier_init {
+            None => log::info!("rustls-platform-verifier initialised"),
+            Some(e) => log::error!("Failed to initialise rustls-platform-verifier: {e}"),
+        }
 
         // run server in background thread
         let thread = thread::spawn(move || {
