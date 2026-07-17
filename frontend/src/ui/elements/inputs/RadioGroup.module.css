@@ -53,23 +53,28 @@
 
 /* The native control, drawn by us: an outlined circle; checked = brand rim + a
    radial-gradient dot with a TRANSPARENT gap between them (the background shows
-   through — the point of dropping accent-color). Sized a touch larger than default
-   for a comfortable target; margin aligns it to the first line. */
+   through — the point of dropping accent-color). The rim is an INSET BOX-SHADOW,
+   not a border: browsers snap border widths to whole device pixels (1.5px paints
+   as 1px on a 1x screen), while shadow spreads anti-alias, so the checked rim
+   gets a true in-between weight — 2px read too heavy, 1px too spidery. Sized a
+   touch larger than default for a comfortable target; margin aligns it to the
+   first line. */
 .input {
   appearance: none;
   flex-shrink: 0;
   inline-size: 1.125rem;
   block-size: 1.125rem;
   margin: 0.0625rem 0 0;
-  border: 1px solid var(--gray-main);
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--gray-main);
   border-radius: 50%;
   background: transparent;
   cursor: inherit;
-  transition: border-color 120ms ease;
+  transition: box-shadow 120ms ease;
 }
 
 .input:checked {
-  border: 2px solid var(--primary-main);
+  box-shadow: inset 0 0 0 1.3px var(--primary-main);
   /* The dot — soft-edged stop for anti-aliasing; the ring outside it stays
      transparent up to the rim. */
   background: radial-gradient(
