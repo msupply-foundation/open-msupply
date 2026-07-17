@@ -61,6 +61,9 @@ pub mod android {
                 standalone_admin_username: None,
                 standalone_admin_password: None,
                 workers: None,
+                // The app shell copies its APK-bundled web UI here on startup,
+                // before starting the server (see MainActivity.copyFrontendAssets)
+                frontend_dir: files_dir.join("frontend").to_string_lossy().to_string(),
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),

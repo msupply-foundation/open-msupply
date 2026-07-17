@@ -60,10 +60,20 @@ pub struct ServerSettings {
     /// Number of actix-web worker threads. Defaults to the number of logical CPUs.
     /// Increase if 408 timeouts are observed under load.
     pub workers: Option<usize>,
+
+    /// Directory the web frontend is served from, resolved relative to the
+    /// working directory. Packaging ships the built frontend bundle here;
+    /// on Android the app shell copies its bundled web assets here on startup.
+    #[serde(default = "default_frontend_dir")]
+    pub frontend_dir: String,
 }
 
 fn default_base_dir() -> String {
     "app_data".to_string()
+}
+
+fn default_frontend_dir() -> String {
+    "frontend".to_string()
 }
 
 /// Builds a `Settings` value suitable for tests, given the `DatabaseSettings`
@@ -87,6 +97,7 @@ pub fn test_settings(
             standalone_admin_username: None,
             standalone_admin_password: None,
             workers: None,
+            frontend_dir: default_frontend_dir(),
         },
         database,
         sync: None,

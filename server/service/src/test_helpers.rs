@@ -52,6 +52,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             standalone_admin_username: None,
             standalone_admin_password: None,
             workers: None,
+            frontend_dir: "frontend".to_string(),
         },
         database: db_settings,
         sync: None,

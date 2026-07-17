@@ -490,6 +490,7 @@ impl LoadTest {
                 standalone_admin_username: None,
                 standalone_admin_password: None,
                 workers: Some(2),
+                frontend_dir: "frontend".to_string(),
             },
             database: DatabaseSettings {
                 username: "postgres".to_string(),
@@ -586,6 +587,7 @@ impl LoadTest {
                     standalone_admin_username: None,
                     standalone_admin_password: None,
                     workers: Some(1), // We're spawning many remote site in separate processes. Each one of these remote sites don't need several actix workers. Their main runtime will still have num CPU cores workers.
+                    frontend_dir: "frontend".to_string(),
                 },
                 database: DatabaseSettings {
                     username: "postgres".to_string(),

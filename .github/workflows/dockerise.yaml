@@ -97,12 +97,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Load client artifacts
-        uses: actions/download-artifact@v7
-        with:
-          name: client-dist
-          path: client/packages/host/dist
-
       - name: Build server
         run: |
           RUST_IMAGE="rust:1.94-slim"
@@ -177,6 +171,14 @@ jobs:
         with:
           name: server-executables-${{ matrix.db }}-${{ matrix.arch }}
           path: server/
+
+      # The frontend is no longer embedded in the server binary; the image
+      # ships it as files (see Dockerfile) so it must be in the build context
+      - name: Load client artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: client-dist
+          path: client/packages/host/dist
 
       - name: Set up QEMU
         if: matrix.arch == 'arm64'

@@ -39,6 +39,10 @@ mkdir $DESTINATION/bin
 cp "server/target/${TARGET}/release/remote_server" $DESTINATION/bin 
 cp "server/target/${TARGET}/release/remote_server_cli" $DESTINATION/bin 
 
+# Copy frontend bundle (served from frontend_dir at runtime, relative to the
+# launch script's working directory)
+cp -R client/packages/host/dist $DESTINATION/frontend
+
 # Copy configurations
 mkdir $DESTINATION/configuration
 cp -R server/configuration/base.yaml $DESTINATION/configuration/
