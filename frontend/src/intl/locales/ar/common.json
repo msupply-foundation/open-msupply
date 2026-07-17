@@ -1751,5 +1751,9 @@
   "button.logging-in": "جارٍ تسجيل الدخول…",
   "messages.select-store-instructions": "اختر المتجر الذي تريد العمل فيه. يمكنك تبديل المتاجر في أي وقت من الشريط السفلي.",
   "label.sync-progress": "{{ done }} / {{ total }}",
-  "messages.waiting-for-sync-status": "في انتظار حالة المزامنة…"
+  "messages.waiting-for-sync-status": "في انتظار حالة المزامنة…",
+  "error.failed-attempts_zero": "لا محاولات فاشلة",
+  "error.failed-attempts_two": "محاولتان فاشلتان",
+  "error.failed-attempts_few": "{{ count }} محاولات فاشلة",
+  "error.failed-attempts_many": "{{ count }} محاولة فاشلة"
 }
