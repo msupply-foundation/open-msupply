@@ -265,7 +265,7 @@ export const MenuBar = (props: MenuBarProps) => {
         <nav
           class={styles.menuBar}
           data-open={!props.nav.railCollapsed() ? 'true' : 'false'}
-          aria-label={t('menu')}
+          aria-label={t('label.menu')}
         >
           <div class={styles.logoArea}>
             <button
@@ -302,7 +302,7 @@ export const MenuBar = (props: MenuBarProps) => {
       <nav
         class={styles.overlayPanel}
         data-open={props.nav.overlayOpen() ? 'true' : 'false'}
-        aria-label={t('shell.main-navigation')}
+        aria-label={t('label.menu')}
         aria-hidden={!props.nav.overlayOpen()}
       >
         <div class={styles.logoArea}>

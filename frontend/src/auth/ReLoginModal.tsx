@@ -51,9 +51,9 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
     // Spec: the button is always clickable; validation errors show on click.
     const errors = {
       username:
-        values().username.trim() === '' ? t('login.username-required') : '',
+        values().username.trim() === '' ? t('error.username-required') : '',
       password:
-        values().password.trim() === '' ? t('login.password-required') : '',
+        values().password.trim() === '' ? t('error.password-required') : '',
     };
     setFieldErrors(errors);
     if (errors.username !== '' || errors.password !== '') return;
@@ -70,10 +70,10 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
       open
       dismissable={false}
       onClose={() => {}}
-      title={t('login.again')}
+      title={t('heading.login-again')}
       actions={
         <Button type="submit" form={formId} disabled={submitting()}>
-          {submitting() ? t('login.submitting') : t('button.login')}
+          {submitting() ? t('button.logging-in') : t('button.login')}
         </Button>
       }
     >

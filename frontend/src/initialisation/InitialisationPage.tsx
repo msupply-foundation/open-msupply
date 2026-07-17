@@ -116,16 +116,16 @@ export const InitialisationPage: Component<{
     const current = values();
     const interval = Number(current.intervalSeconds);
     const errors = {
-      url: current.url.trim() === '' ? t('init.url-required') : '',
+      url: current.url.trim() === '' ? t('error.url-required') : '',
       siteName:
-        current.siteName.trim() === '' ? t('init.site-name-required') : '',
+        current.siteName.trim() === '' ? t('error.site-name-required') : '',
       password:
-        current.password.trim() === '' ? t('init.password-required') : '',
+        current.password.trim() === '' ? t('error.password-required') : '',
       intervalSeconds:
         current.intervalSeconds.trim() === ''
-          ? t('init.interval-required')
+          ? t('error.interval-required')
           : !Number.isInteger(interval) || interval <= 0
-            ? t('init.interval-invalid')
+            ? t('error.interval-invalid')
             : '',
     };
     setFieldErrors(errors);
@@ -229,7 +229,7 @@ export const InitialisationPage: Component<{
           when={showRetry()}
           fallback={
             <Button type="submit" disabled={busy()}>
-              {busy() ? t('init.submitting') : t('button.initialise')}
+              {busy() ? t('button.initialising') : t('button.initialise')}
             </Button>
           }
         >

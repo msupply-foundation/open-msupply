@@ -43,7 +43,7 @@ export const LanguageSelector = (props: LanguageSelectorProps) => (
             >
               <span class={styles.itemLabel}>{option.label}</span>
               <Show when={LOCALE_META[option.value].dir === 'rtl'}>
-                <span class={styles.rtlTag}>{t('language.rtl')}</span>
+                <span class={styles.rtlTag}>{t('label.rtl')}</span>
               </Show>
             </DropdownMenu.Item>
           )}

@@ -121,7 +121,7 @@ export const App: Component = () => {
                   </For>
                   <Route
                     path="*"
-                    component={() => <EntryPage labelKey="app.not-found" />}
+                    component={() => <EntryPage labelKey="heading.not-found" />}
                   />
                 </Route>
               </Route>

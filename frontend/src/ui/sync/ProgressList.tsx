@@ -92,7 +92,7 @@ export const ProgressList = (props: {
           const count = () => {
             const { done, total } = step();
             return done != null && total != null
-              ? t('sync.status.progress', { done, total })
+              ? t('label.sync-progress', { done, total })
               : '';
           };
           return (

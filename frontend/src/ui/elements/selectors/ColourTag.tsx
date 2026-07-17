@@ -10,12 +10,12 @@ import styles from './ColourTag.module.css';
  * - `ColourTagPicker`: the dot with a Popover that opens the colour swatches.
  */
 export const TAG_COLOURS = [
-  { value: '#004fc4', label: 'colour.blue' },
-  { value: '#05a660', label: 'colour.green' },
-  { value: '#ff3b3b', label: 'colour.red' },
-  { value: '#ffcc00', label: 'colour.yellow' },
-  { value: '#00b7c4', label: 'colour.aqua' },
-  { value: '#8f90a6', label: 'colour.grey' },
+  { value: '#004fc4', label: 'label.blue' },
+  { value: '#05a660', label: 'label.green' },
+  { value: '#ff3b3b', label: 'label.red' },
+  { value: '#ffcc00', label: 'label.yellow' },
+  { value: '#00b7c4', label: 'label.aqua' },
+  { value: '#8f90a6', label: 'label.grey' },
 ] as const;
 
 export type ColourTagVariant = 'row' | 'field';
@@ -46,7 +46,7 @@ export const ColourTagPicker = (props: {
   <span class={styles.picker} onClick={e => e.stopPropagation()}>
     <Popover
       placement={props.placement ?? 'bottom-start'}
-      triggerLabel={props.label ?? t('colour.label')}
+      triggerLabel={props.label ?? t('label.tag-colour')}
       triggerClass={props.variant === 'field' ? styles.fieldTrigger : undefined}
       trigger={
         props.colour ? (

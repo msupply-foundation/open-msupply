@@ -43,8 +43,8 @@ export const LoginPage: Component = () => {
     // Spec (Authentication Logic): the button is always clickable; validation
     // errors show on submit.
     const errors = {
-      username: username().trim() === '' ? t('login.username-required') : '',
-      password: password().trim() === '' ? t('login.password-required') : '',
+      username: username().trim() === '' ? t('error.username-required') : '',
+      password: password().trim() === '' ? t('error.password-required') : '',
     };
     setFieldErrors(errors);
     if (errors.username !== '' || errors.password !== '') return;
@@ -56,7 +56,7 @@ export const LoginPage: Component = () => {
 
   return (
     <div class={styles.page}>
-      <section class={styles.hero} aria-label={t('login.about')}>
+      <section class={styles.hero} aria-label={t('label.about-open-msupply')}>
         <h1 class={styles.heroHeading}>{t('login.heading')}</h1>
         <p class={styles.heroBody}>{t('login.body')}</p>
       </section>
@@ -103,7 +103,7 @@ export const LoginPage: Component = () => {
                 data-testid="login-button"
                 disabled={submitting()}
               >
-                {submitting() ? t('login.submitting') : t('button.login')}
+                {submitting() ? t('button.logging-in') : t('button.login')}
               </Button>
             </div>
           </form>

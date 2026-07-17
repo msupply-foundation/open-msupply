@@ -59,7 +59,9 @@ export const StoreSelector = (props: {
 
   return (
     <div class={styles.panel}>
-      <p class={styles.instructions}>{t('store.select-instructions')}</p>
+      <p class={styles.instructions}>
+        {t('messages.select-store-instructions')}
+      </p>
 
       <TextField
         label={t('placeholder.search-by-name')}
