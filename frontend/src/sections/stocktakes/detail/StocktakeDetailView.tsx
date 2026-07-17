@@ -199,11 +199,23 @@ const StocktakeDetailView: Component = () => {
       },
     },
   });
-  // The item the modal OPENS on (undefined = modal closed). Only the INITIAL
-  // item — once open, the modal tracks its own current item as the user
-  // advances with "OK & next" (it resolves each via itemInfo below). We never
-  // change this to advance; we only set it to open and clear it to close.
-  const [editItemId, setEditItemId] = createSignal<string | undefined>();
+  // The line-edit modal's open state (undefined = closed):
+  // - { mode: 'update', itemId }: editing an existing item's lines (opened from
+  //   a row). itemId is only the INITIAL item — the modal then advances through
+  //   the list itself via "OK & next" (resolving each via itemInfo below); we
+  //   never change this to advance, only to open/close.
+  // - { mode: 'add' }: adding an item not yet on the stocktake (from "Add
+  //   item"). The modal searches for the item itself, so no id here.
+  type EditState =
+    { mode: 'update'; itemId: string } | { mode: 'add' } | undefined;
+  const [editState, setEditState] = createSignal<EditState>();
+
+  // Item ids already on the stocktake — passed to the add-item search so those
+  // items can't be added twice. Read live by the modal (an accessor) so an item
+  // added via "OK & next" drops out of the next search without reopening.
+  const existingItemIds = (): string[] => [
+    ...new Set(rows().map(line => line.item.id)),
+  ];
 
   // Fetch the stocktake. A NodeError (e.g. bad id) is promoted to the global
   // unexpected-error modal via mapSuccessToError, so it never reaches the view
@@ -267,8 +279,14 @@ const StocktakeDetailView: Component = () => {
   // Header click: TanStack computed the next direction; just record it.
   const onSort = (key: SortKey, desc: boolean) => setSort({ key, desc });
 
-  // Row click → open the editor on that line's ITEM (all its batches).
-  const openRow = (line: Line) => setEditItemId(line.item.id);
+  // Row click → open the editor (update mode) on that line's ITEM (all its
+  // batches).
+  const openRow = (line: Line) =>
+    setEditState({ mode: 'update', itemId: line.item.id });
+
+  // "Add item" (empty state + toolbar) → open the editor in add mode; the modal
+  // searches for an item not yet on the stocktake.
+  const openAdd = () => setEditState({ mode: 'add' });
 
   // The item AFTER currentId in the CURRENT on-screen order (sortedRows) —
   // "OK & next" advances to this. We walk the list top-to-bottom, collapsing to
@@ -278,9 +296,9 @@ const StocktakeDetailView: Component = () => {
   // and skipping already-seen items makes it correct whether the table is
   // grouped (item rows adjacent) or ungrouped (an item's batches interleaved):
   // once we're past the current item's first row, the next new item is next.
-  // undefined = the current item is the last distinct item → no next (the modal
-  // then shows OK without OK & next). This follows the user's chosen sort/filter
-  // — unlike upstream OMS, which always steps in a hardcoded item-name order.
+  // undefined = the current item is the last distinct item → no next (the
+  // modal then shows OK without OK & next). This follows the user's chosen
+  // sort/filter — unlike upstream OMS, which steps in a hardcoded item order.
   const nextAfter = (
     list: Line[],
     currentId: string
@@ -621,6 +639,14 @@ const StocktakeDetailView: Component = () => {
               <Header>
                 <Breadcrumb crumbs={crumbs(node())} />
                 <HeaderButtons>
+                  {/* "Add item" (primary) — opens the line-edit modal in add
+                      mode, next to "More" as in OMS. Only while the stocktake is
+                      editable (an on-hold/finalised one can't gain lines). */}
+                  <Show when={!isDisabled(node())}>
+                    <Button icon={<PlusCircleIcon />} onClick={openAdd}>
+                      {t('stocktake.detail.add-item')}
+                    </Button>
+                  </Show>
                   {/* A labelled "More" button (info icon + text), like OMS's details button. It
                       hides while the panel is open — the panel's own close button takes over. */}
                   <Show when={!sidePanelOpen()}>
@@ -742,14 +768,14 @@ const StocktakeDetailView: Component = () => {
               onRowClick={isDisabled(node()) ? undefined : openRow}
               emptyMessage={t('stocktake.detail.empty')}
               // "Add item" — only offered while the stocktake is editable (an
-              // empty finalised/locked one can't gain lines). The add-line flow
-              // doesn't exist yet, so the handler is a no-op placeholder.
+              // empty finalised/locked one can't gain lines). Opens the line-
+              // edit modal in add mode (search → edit the item's stock lines).
               empty={
                 isDisabled(node()) ? undefined : (
                   <Button
                     icon={<PlusCircleIcon />}
                     data-testid="add-item-button"
-                    onClick={() => {}}
+                    onClick={openAdd}
                   >
                     {t('stocktake.detail.add-item')}
                   </Button>
@@ -766,12 +792,18 @@ const StocktakeDetailView: Component = () => {
               setConfig={tableConfig.setConfig}
             />
             <StocktakeLineEditModal
-              open={editItemId() != null}
-              onClose={() => setEditItemId(undefined)}
+              open={editState() != null}
+              onClose={() => setEditState(undefined)}
               storeId={params.storeId}
               stocktakeId={node().id}
-              initialItemId={editItemId()}
+              mode={editState()?.mode ?? 'update'}
+              initialItemId={
+                editState()?.mode === 'update'
+                  ? (editState() as { itemId: string }).itemId
+                  : undefined
+              }
               itemInfo={itemInfo}
+              excludeItemIds={existingItemIds}
               onCommitted={applyCommit}
             />
           </Page>
