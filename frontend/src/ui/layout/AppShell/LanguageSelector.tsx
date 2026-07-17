@@ -7,6 +7,11 @@ import styles from './LanguageSelector.module.css';
 interface LanguageSelectorProps {
   language: string;
   onSelect: (value: string) => void;
+  /**
+   * Where the menu opens relative to the trigger. Default `top-start` — the
+   * footer home opens upward; a header host wants `bottom-end`.
+   */
+  placement?: DropdownMenu.DropdownMenuRootProps['placement'];
 }
 
 // The options come from the intl module's single source of truth
@@ -24,7 +29,7 @@ const labelFor = (value: string) =>
  * analogue of the RnD prototype's Radix DropdownMenu version — same reasoning.
  */
 export const LanguageSelector = (props: LanguageSelectorProps) => (
-  <DropdownMenu.Root placement="top-start" gutter={8}>
+  <DropdownMenu.Root placement={props.placement ?? 'top-start'} gutter={8}>
     <DropdownMenu.Trigger class={styles.trigger} title={t('language.select')}>
       <TranslateIcon class={styles.icon} />
       <span class={styles.triggerText}>{labelFor(props.language)}</span>

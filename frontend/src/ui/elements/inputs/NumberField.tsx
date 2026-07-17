@@ -1,11 +1,4 @@
-import {
-  createEffect,
-  createSignal,
-  on,
-  onMount,
-  splitProps,
-  untrack,
-} from 'solid-js';
+import { createEffect, createSignal, on, onMount, splitProps } from 'solid-js';
 import { locale } from '../../../intl/intl';
 import { TextField, type TextFieldProps } from './TextField';
 import {
@@ -156,13 +149,15 @@ export const NumberField = (props: NumberFieldProps) => {
     }
   });
 
-  // Parent → display sync: an external value (or locale) change rewrites the
-  // text — except when it's our own commit echoing back (the user's
-  // uncanonicalised text must survive until blur), or the user is mid-entry
-  // on an incomplete string.
+  // Parent → display sync: an external value change rewrites the text —
+  // except when it's our own commit echoing back (the user's uncanonicalised
+  // text must survive until blur), or the user is mid-entry on an incomplete
+  // string.
   createEffect(
-    on([() => local.value, locale], ([value, loc]) =>
-      untrack(() => {
+    on(
+      () => local.value,
+      value => {
+        const loc = locale();
         if (lastCommitted && value === lastCommitted.value) return;
         if (textRepresents(text(), value, loc)) return;
         if (focused() && isIncomplete(text(), loc)) return;
@@ -171,7 +166,24 @@ export const NumberField = (props: NumberFieldProps) => {
             ? editString(value, constraints(), loc)
             : displayString(value, constraints(), loc)
         );
-      })
+      }
+    )
+  );
+
+  // A locale change ALWAYS reformats — no semantic guard: the old text often
+  // parses to the same value under the new symbols ("12.50" → 12,50 in fr,
+  // "1 000" → ١٬٠٠٠ in ar) and must still be re-rendered. Deferred: the
+  // signal's initial text already used the current locale.
+  createEffect(
+    on(
+      locale,
+      loc =>
+        setText(
+          focused()
+            ? editString(local.value, constraints(), loc)
+            : displayString(local.value, constraints(), loc)
+        ),
+      { defer: true }
     )
   );
 
