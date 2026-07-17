@@ -451,6 +451,42 @@ mod test {
         assert_eq!(fraction_new_line.total_number_of_packs, 2.5);
         assert_eq!(repack_invoices_for(&fraction_new_id).len(), 1);
 
+        // Moving all available packs while some are reserved (available < total)
+        // must split, not relocate the whole line
+        StockLineRow {
+            available_number_of_packs: 6.0,
+            ..stock_line("reserved_sl")
+        }
+        .upsert(&ctx.connection)
+        .unwrap();
+        let reserved_movement = new_movement(&service_provider, &ctx).await;
+        let reserved_line_id = add_line(&ctx, &reserved_movement, "reserved_sl", 6.0);
+        service
+            .update_stock_relocation(
+                &ctx,
+                "store_a",
+                set_status(&reserved_movement, StockRelocationStatus::Finalised),
+            )
+            .unwrap();
+        let reserved_line = line_repo
+            .find_one_by_id(&reserved_line_id)
+            .unwrap()
+            .unwrap();
+        let reserved_new_id = reserved_line.destination_stock_line_id.clone().unwrap();
+        let reserved_source = stock_line_repo
+            .find_one_by_id("reserved_sl")
+            .unwrap()
+            .unwrap();
+        assert_eq!(reserved_source.available_number_of_packs, 0.0);
+        assert_eq!(reserved_source.total_number_of_packs, 4.0);
+        let reserved_new = stock_line_repo
+            .find_one_by_id(&reserved_new_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(reserved_new.total_number_of_packs, 6.0);
+        assert_eq!(reserved_new.available_number_of_packs, 6.0);
+        assert_eq!(repack_invoices_for(&reserved_new_id).len(), 1);
+
         // update comment
         let comment_movement = new_movement(&service_provider, &ctx).await;
         let updated = service
