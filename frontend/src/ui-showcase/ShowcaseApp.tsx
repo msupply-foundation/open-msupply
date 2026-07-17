@@ -8,7 +8,6 @@ import type { LocaleKey } from '../intl';
 import { useIsNavOverlay } from '../ui/utils/createMediaQuery';
 import { MenuIcon } from '../ui/icons';
 import { ThemeToggle } from '../ui/elements/buttons/ThemeToggle';
-import { ToastRegion } from '../ui/elements/feedback/Toast';
 import styles from './ShowcaseApp.module.css';
 
 /*
@@ -142,9 +141,6 @@ export function ShowcaseApp() {
           </main>
         </div>
       </div>
-      {/* Mirror the app root: the single Toast host, so the Feedback demo's
-          showToast() has somewhere to render. */}
-      <ToastRegion />
     </ShellFullScreenContext.Provider>
   );
 }

@@ -4,7 +4,7 @@ import { locale, t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
-import { showToast } from '../../../ui/elements/feedback/Toast';
+import { Alert } from '../../../ui/elements/feedback/Alert';
 import { currentStoreId } from '../../../store/storeContext';
 import { Reports } from '../api/reports.generated';
 import type { ReportsVariables } from '../api/reports.generated';
@@ -31,7 +31,7 @@ import { reportName } from '../reportName';
 //   through to generation so a record renders in the user's chosen order
 //   (best-effort, server-side — spec "Generation").
 // - A successful print/export closes the modal; a failure keeps it open and
-//   toasts.
+//   shows an inline error banner in the dialog body (no toasts — spec S5).
 
 // The record context, derived from the generated Reports filter so it stays in
 // lockstep with the schema (kdd/type-safety — no hand-written union).
@@ -106,10 +106,14 @@ export const ReportSelectorModal = (props: ReportSelectorModalProps) => {
   const actionsDisabled = (): boolean =>
     !selected() || runningAction() !== undefined;
 
+  // A failed run's error, shown inline in the dialog body; cleared when a new
+  // action starts or the selection changes.
+  const [runError, setRunError] = createSignal(false);
+
   // Generate + deliver. Print fetches HTML and opens the system print dialog;
   // PDF/Excel download the file (spec "Printing and exporting"). Any failure —
-  // typed data error, transport failure, or file fetch — toasts and leaves the
-  // modal open; success closes it.
+  // typed data error, transport failure, or file fetch — shows an inline error
+  // and leaves the modal open; success closes it.
   const runAction = async (
     kind: ActionKind,
     args: Record<string, unknown> | undefined
@@ -118,6 +122,7 @@ export const ReportSelectorModal = (props: ReportSelectorModalProps) => {
     const storeId = currentStoreId();
     if (!report || !storeId) return;
     setRunningAction(kind);
+    setRunError(false);
     try {
       const format =
         kind === 'print' ? 'HTML' : kind === 'pdf' ? 'PDF' : 'EXCEL';
@@ -131,12 +136,12 @@ export const ReportSelectorModal = (props: ReportSelectorModalProps) => {
         currentLanguage: locale(),
       });
       if (generated.kind !== 'fileId') {
-        showToast({ severity: 'error', message: t('report.generation-error') });
+        setRunError(true);
         return;
       }
       const file = await fetchReportFile(generated.fileId);
       if (file.kind !== 'success') {
-        showToast({ severity: 'error', message: t('report.generation-error') });
+        setRunError(true);
         return;
       }
       if (kind === 'print') {
@@ -217,8 +222,14 @@ export const ReportSelectorModal = (props: ReportSelectorModalProps) => {
           loading={reportsRes.loading}
           itemToString={report => reportName(report)}
           itemToValue={report => report.id}
-          onChange={report => setSelected(() => report)}
+          onChange={report => {
+            setRunError(false);
+            setSelected(() => report);
+          }}
         />
+        <Show when={runError()}>
+          <Alert severity="error">{t('report.generation-error')}</Alert>
+        </Show>
       </Dialog>
       {/* A schema'd selection opens the argument modal (S3) over this dialog
           before the pending action runs (AC-R1). ArgumentsModal owns its own

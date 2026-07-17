@@ -21,7 +21,7 @@ import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DocumentFrame } from '../../../ui/elements/display/DocumentFrame';
-import { showToast } from '../../../ui/elements/feedback/Toast';
+import type { LocaleKey } from '../../../intl';
 import { DownloadIcon, PrinterIcon, SlidersIcon } from '../../../ui/icons';
 import { Report as ReportDocument } from '../api/reports.generated';
 import type { ReportResult, ReportVariables } from '../api/reports.generated';
@@ -152,10 +152,15 @@ const ReportDetailView: Component = () => {
 
   const openFilters = () => setArgsModalOpen(true);
 
+  // Print/export failures surface inline in the document region (no toasts —
+  // spec S5). Cleared when a new action starts or new arguments regenerate.
+  const [actionError, setActionError] = createSignal<LocaleKey | undefined>();
+
   // Submit from S3: S2 owns navigation — write the arguments into the URL
   // query, which re-keys the generation resource (AC-U2 / AC-R1).
   const onArgsSubmit = (args: Record<string, unknown>) => {
     setArgsModalOpen(false);
+    setActionError(undefined);
     setSearchParams({ reportArgs: JSON.stringify(args) });
   };
 
@@ -165,9 +170,10 @@ const ReportDetailView: Component = () => {
   const onPrint = async () => {
     const r = result();
     if (r?.kind !== 'fileId') return;
+    setActionError(undefined);
     const file = await fetchReportFile(r.fileId);
     if (file.kind !== 'success') {
-      showToast({ severity: 'error', message: t('report.print-failed') });
+      setActionError('report.print-failed');
       return;
     }
     printHtml(await file.blob.text());
@@ -177,6 +183,7 @@ const ReportDetailView: Component = () => {
   const onExport = async () => {
     const r = report();
     if (!r) return;
+    setActionError(undefined);
     const gen = await generateReport({
       storeId: params.storeId,
       reportId: r.id,
@@ -186,12 +193,12 @@ const ReportDetailView: Component = () => {
       dataId: undefined,
     });
     if (gen.kind !== 'fileId') {
-      showToast({ severity: 'error', message: t('report.export-failed') });
+      setActionError('report.export-failed');
       return;
     }
     const file = await fetchReportFile(gen.fileId);
     if (file.kind !== 'success') {
-      showToast({ severity: 'error', message: t('report.export-failed') });
+      setActionError('report.export-failed');
       return;
     }
     downloadBlob(file.blob, file.filename);
@@ -237,6 +244,13 @@ const ReportDetailView: Component = () => {
         </Header>
       }
     >
+      <Show when={actionError()}>
+        {key => (
+          <div style={{ padding: 'var(--space-5) var(--space-5) 0' }}>
+            <Alert severity="error">{t(key())}</Alert>
+          </div>
+        )}
+      </Show>
       <Switch fallback={<></>}>
         <Match when={isLoading()}>
           <Spinner center />
