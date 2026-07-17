@@ -39,7 +39,7 @@ pub async fn central_user_login(
         .and_then(|u| u.join("/central/user/login"))
         .map_err(|e| CentralUserLoginError::Unreachable(format!("invalid central url: {e}")))?;
 
-    let client = ClientBuilder::new()
+    let client = util::https_client_builder()
         .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SEC))
         .timeout(Duration::from_secs(REQUEST_TIMEOUT_SEC))
         .build()
