@@ -3,7 +3,7 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
 import { Checkbox } from '../ui/elements/inputs/Checkbox';
-import { Switch } from '../ui/elements/inputs/Switch';
+import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 import { DateInput } from '../ui/elements/inputs/DateInput';
 import { DateRangeInput } from '../ui/elements/inputs/DateRangeInput';
 import styles from './InputsShowcase.module.css';
@@ -45,7 +45,7 @@ export const InputsShowcase = () => {
   // sub-choice — the exact shape the create-stocktake modal uses.
   const [stocktakeType, setStocktakeType] = createSignal('full');
   const [includeAll, setIncludeAll] = createSignal('soh');
-  // Checkbox / Switch demos.
+  // Checkbox / ToggleSwitch demos.
   const [countZero, setCountZero] = createSignal(true);
   const [confirmed, setConfirmed] = createSignal(false);
   const [showFinalised, setShowFinalised] = createSignal(false);
@@ -238,7 +238,7 @@ export const InputsShowcase = () => {
       </Card>
 
       <Card
-        title="Switch — on/off toggle (role=switch)"
+        title="Toggle switch — on/off toggle (role=switch)"
         lead={
           <>
             The native checkbox re-cast as a switch (<code>role="switch"</code>
@@ -249,12 +249,12 @@ export const InputsShowcase = () => {
         }
       >
         <div class={styles.formPreview}>
-          <Switch
+          <ToggleSwitch
             label="Show finalised stocktakes"
             checked={showFinalised()}
             onChange={setShowFinalised}
           />
-          <Switch label="Disabled switch" disabled checked />
+          <ToggleSwitch label="Disabled switch" disabled checked />
         </div>
       </Card>
 

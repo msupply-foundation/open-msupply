@@ -1,7 +1,7 @@
 import { createUniqueId } from 'solid-js';
-import styles from './Switch.module.css';
+import styles from './ToggleSwitch.module.css';
 
-export interface SwitchProps {
+export interface ToggleSwitchProps {
   /** The visible label; clicking it toggles (native <label> wrap). */
   label: string;
   checked?: boolean;
@@ -15,7 +15,8 @@ export interface SwitchProps {
 }
 
 /*
- * Switch — a labelled on/off toggle on the native <input type="checkbox"> with
+ * ToggleSwitch — a labelled on/off toggle on the native <input type="checkbox">
+ * (named to avoid clashing with SolidJS's <Switch> control-flow component) with
  * `role="switch"` (NO library): a checkbox IS a switch to assistive tech once
  * role + the on/off state are set, and the native control gives keyboard
  * (Space) + `disabled` for free. The input is visually hidden (kept for a11y +
@@ -24,7 +25,7 @@ export interface SwitchProps {
  * state is the thumb position (never colour alone). Label typography matches
  * TextField / Checkbox.
  */
-export const Switch = (props: SwitchProps) => {
+export const ToggleSwitch = (props: ToggleSwitchProps) => {
   const autoId = createUniqueId();
   const inputId = () => props.id ?? autoId;
 
