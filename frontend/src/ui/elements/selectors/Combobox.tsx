@@ -60,6 +60,17 @@ interface ComboboxProps<T> {
    *  TextField's `error`.
    */
   error?: string;
+  /**
+   * `data-testid` for the error message (locale-stable test hook,
+   * e2e/TESTIDS.md) — mirrors TextField's `errorTestId`.
+   */
+  errorTestId?: string;
+  /**
+   * `data-testid` for the text `<input>` itself (locale-stable test hook,
+   * e2e/TESTIDS.md) — the input is internal to the Kobalte composition, so it
+   * can't take a pass-through attribute.
+   */
+  inputTestId?: string;
   loading?: boolean;
   disabled?: boolean;
   // --- Server mode ------------------------------------------------------
@@ -227,6 +238,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         <KCombobox.Input
           ref={inputEl}
           class={styles.input}
+          data-testid={props.inputTestId}
           aria-invalid={props.error ? 'true' : undefined}
         />
         <Show when={selected() !== null}>
@@ -260,7 +272,10 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           </Show>
         }
       >
-        <KCombobox.Description class={styles.error}>
+        <KCombobox.Description
+          class={styles.error}
+          data-testid={props.errorTestId}
+        >
           <AlertTriangleIcon class={styles.errorIcon} />
           {props.error}
         </KCombobox.Description>

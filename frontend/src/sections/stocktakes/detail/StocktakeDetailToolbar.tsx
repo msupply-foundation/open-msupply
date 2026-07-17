@@ -52,7 +52,9 @@ export const StocktakeDetailToolbar: Component<
       {/* The disabled banner spans the full toolbar width (its own wrapped line) — a status
           message about the whole stocktake, above the controls. */}
       <Show when={props.disabled}>
-        <Alert severity="info">{disabledMessage()}</Alert>
+        <Alert severity="info" testId="stocktake-status-alert">
+          {disabledMessage()}
+        </Alert>
       </Show>
 
       {/* One wrapping row (the Toolbar is a flex row): the labelled description, the always-on
@@ -63,6 +65,7 @@ export const StocktakeDetailToolbar: Component<
           label={t('stocktake.detail.description')}
           hideLabel
           width="long"
+          data-testid="description-field"
           value={props.edit.state.description}
           disabled={props.disabled}
           onInput={e =>

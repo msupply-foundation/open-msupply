@@ -44,6 +44,8 @@ export interface ReasonSelectProps {
   hideLabel?: boolean;
   disabled?: boolean;
   error?: string;
+  /** `data-testid` for the error message — forwarded to the Combobox. */
+  errorTestId?: string;
   placeholder?: string;
 }
 
@@ -65,6 +67,7 @@ export const ReasonSelect = (props: ReasonSelectProps): JSX.Element => (
     value={props.value}
     disabled={props.disabled}
     error={props.error}
+    errorTestId={props.errorTestId}
     placeholder={props.placeholder}
     onChange={r => props.onChange(r)}
   />

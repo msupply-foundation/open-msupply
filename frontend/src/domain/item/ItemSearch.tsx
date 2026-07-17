@@ -29,10 +29,14 @@ export interface ItemSearchProps {
 
 // One option row: "code - name" at the inline-start, "{total} {unit}" at the
 // end (unit falls back to the generic "units" when the item has no unit name).
+// Code and name are separately-marked nodes (e2e/TESTIDS.md item-option-code /
+// -name) so the suites can read either regardless of the datafile's format.
 const renderRow = (item: ItemOption): JSX.Element => (
   <span class={styles.row}>
     <span class={styles.label}>
-      {item.code} - {item.name}
+      <span data-testid="item-option-code">{item.code}</span>
+      {' - '}
+      <span data-testid="item-option-name">{item.name}</span>
     </span>
     <span class={styles.total}>
       {formatNumber(item.totalUnits)} {item.unitName ?? t('item.units')}
@@ -70,6 +74,10 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       hideLabel={props.hideLabel}
       class={props.class}
       placeholder={props.placeholder}
+      // Every ItemSearch IS the contract's item search — the fixed id is
+      // stamped here (like ConfirmDialog's confirmation-modal), not per call
+      // site (e2e/TESTIDS.md).
+      inputTestId="item-search-input"
       items={search.items()}
       loading={search.loading()}
       loadingMore={search.loadingMore()}

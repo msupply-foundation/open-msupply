@@ -563,6 +563,9 @@ export function DataTable<T, K extends string, G extends string = never>(
                   type="button"
                   role="tab"
                   class={styles.groupTab}
+                  // tab-<key> per e2e/TESTIDS.md — the group key is the
+                  // locale-stable value (the label is translated).
+                  data-testid={`tab-${cardGroup.key}`}
                   data-active={cardGroup.key === activeTab() ? '' : undefined}
                   aria-selected={cardGroup.key === activeTab()}
                   onClick={() => setSelectedTab(() => cardGroup.key)}

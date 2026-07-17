@@ -736,6 +736,7 @@ const StocktakeLineEditContent = (
               }
             >
               <span
+                data-testid="stocktake-line-error"
                 style={{
                   color: 'var(--error-main)',
                   'font-size': 'var(--text-xs)',
@@ -771,6 +772,7 @@ const StocktakeLineEditContent = (
                 ? t('stocktake.line-error.reduced-below-zero')
                 : undefined
             }
+            errorTestId="stocktake-line-error"
             onInput={e =>
               update(
                 line.id,
@@ -886,8 +888,11 @@ const StocktakeLineEditContent = (
     {
       // The adjustment reason. The backend decides when it's required (counted
       // differs from snapshot) and rejects the save with a per-line error,
-      // surfaced inline on this column below.
-      c: { key: 'reasonOption' },
+      // surfaced inline on this column below. A display column: the custom
+      // cell reads row.original, and the id is the e2e/TESTIDS.md contract's
+      // `cell-inventoryAdjustmentReasonInput` (shared with OMS), not the
+      // fragment field name.
+      c: { id: 'inventoryAdjustmentReasonInput' },
       header: t('stocktake.line-edit.reason'),
       tabsAndCardGroups: ['batch'],
       cell: info => {
@@ -910,6 +915,7 @@ const StocktakeLineEditContent = (
             disabled={!line.countThisLine}
             value={line.reasonOption?.id}
             error={error()}
+            errorTestId="stocktake-line-error"
             placeholder={t('stocktake.line-edit.reason-select')}
             onChange={r =>
               update(
@@ -1008,6 +1014,7 @@ const StocktakeLineEditContent = (
       onClose={props.onClose}
       dismissable={!saving()}
       size="large"
+      testId="add-item-modal"
       // Title:
       // - UPDATE: a plain string "Edit: code - name" (also the a11y name).
       // - ADD: an inline item selector, kept in the title the WHOLE time so the
@@ -1051,6 +1058,7 @@ const StocktakeLineEditContent = (
           <Button
             variant="secondary"
             icon={<PlusCircleIcon />}
+            data-testid="add-batch-button"
             onClick={addBatch}
           >
             {t('stocktake.line-edit.add-batch')}
@@ -1069,6 +1077,7 @@ const StocktakeLineEditContent = (
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
             {t('common.cancel')}
@@ -1080,6 +1089,7 @@ const StocktakeLineEditContent = (
             <Button
               icon={<CheckIcon />}
               loading={saving()}
+              data-testid="dialog-button-ok"
               onClick={() => void onOk()}
             >
               {t('common.ok')}
@@ -1091,6 +1101,7 @@ const StocktakeLineEditContent = (
               <Button
                 icon={<ArrowRightIcon />}
                 loading={saving()}
+                data-testid="dialog-button-next-and-ok"
                 onClick={() => void onOkNext()}
               >
                 {t('common.ok-and-next')}

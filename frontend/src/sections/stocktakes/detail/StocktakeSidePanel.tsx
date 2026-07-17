@@ -67,6 +67,7 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
         label={t('stocktake.detail.comment')}
         hideLabel
         width="full"
+        data-testid="comment-field"
         value={props.edit.state.comment}
         disabled={props.disabled}
         onInput={e => props.edit.setField('comment', e.currentTarget.value)}
