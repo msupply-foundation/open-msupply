@@ -1,8 +1,18 @@
 import { createSignal, type JSX } from 'solid-js';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { DateField } from '../ui/elements/inputs/DateField';
+import { DateTimeField } from '../ui/elements/inputs/DateTimeField';
+import { TimeField } from '../ui/elements/inputs/TimeField';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
 import styles from './InputsShowcase.module.css';
+
+/** Today as ISO `YYYY-MM-DD`, for the "future dates unselectable" demo. */
+const todayIso = (): string => {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
 
 const Field = (props: {
   caption: string;
@@ -41,6 +51,15 @@ export const InputsShowcase = () => {
   // sub-choice — the exact shape the create-stocktake modal uses.
   const [stocktakeType, setStocktakeType] = createSignal('full');
   const [includeAll, setIncludeAll] = createSignal('soh');
+
+  // Date & time demo: an expiry (plain ISO date, passes straight through) and
+  // an appointment instant stored in UTC — the caption shows the stored UTC
+  // value so the local↔UTC boundary is visible.
+  const [expiry, setExpiry] = createSignal<string | null>('2027-03-01');
+  const [appointment, setAppointment] = createSignal<string | null>(
+    '2026-07-17T02:30:00.000Z'
+  );
+  const [cutoff, setCutoff] = createSignal<string | null>('17:30');
 
   return (
     <div class={styles.stack}>
@@ -100,6 +119,89 @@ export const InputsShowcase = () => {
               width="long"
               placeholder="Longer free-text field"
               helperText="Small height + the 'long' max-width cap (37.5rem / 600px) — wider than the 25rem 'short' default; spans the row so the cap is visible."
+            />
+          </Field>
+        </div>
+      </Card>
+
+      <Card
+        title="Date & time — native inputs"
+        lead={
+          <>
+            <code>DateField</code>, <code>DateTimeField</code> and{' '}
+            <code>TimeField</code>: native <code>date</code> /{' '}
+            <code>datetime-local</code> / <code>time</code> inputs wrapped in{' '}
+            <code>TextField</code> for the shared chrome — no library, zero
+            bundle, free keyboard entry and mobile pickers. The in-field parts
+            are <strong>brand-styled</strong> (our own calendar/clock glyph,
+            token-tinted, orange-highlighted segments — try dark mode); the
+            pop-up calendar/time overlay is the platform's own control.{' '}
+            <code>DateField</code>'s value <em>is</em> the wire value (ISO{' '}
+            <code>YYYY-MM-DD</code>, no timezone); <code>TimeField</code>'s is a
+            plain <code>HH:mm</code>. <code>DateTimeField</code> stores a{' '}
+            <strong>UTC instant</strong> but lets the user edit their{' '}
+            <strong>local wall-clock</strong> time — converting on the boundary
+            using the device timezone.
+          </>
+        }
+      >
+        <div class={styles.grid}>
+          <Field caption="Date">
+            <DateField
+              label="Expiry date"
+              value={expiry()}
+              onChange={setExpiry}
+              helperText={`Stored: ${expiry() ?? '(empty)'}`}
+            />
+          </Field>
+          <Field caption="Bounded — future unselectable">
+            <DateField
+              label="Manufacture date"
+              max={todayIso()}
+              helperText="max = today; later dates greyed out in the picker"
+            />
+          </Field>
+          <Field caption="Time — clock picker">
+            <TimeField
+              label="Cut-off time"
+              value={cutoff()}
+              onChange={setCutoff}
+              helperText={`Stored (HH:mm): ${cutoff() ?? '(empty)'}`}
+            />
+          </Field>
+          <Field caption="Required">
+            <DateField
+              label="Count date"
+              required
+              helperText="Asterisk on label — not placeholder"
+            />
+          </Field>
+          <Field caption="Error">
+            <DateField
+              label="Expiry date"
+              value="2020-01-01"
+              error="Date is in the past"
+            />
+          </Field>
+          <Field caption="Disabled">
+            <DateField
+              label="Locked date"
+              value="2026-07-17"
+              disabled
+              helperText="Grey fill — not interactive"
+            />
+          </Field>
+          <Field
+            caption="Date & time — local edit, UTC store"
+            class={styles.fullRow}
+          >
+            <DateTimeField
+              label="Appointment"
+              value={appointment()}
+              onChange={setAppointment}
+              helperText={`You edit local wall-clock; stored as UTC: ${
+                appointment() ?? '(empty)'
+              }`}
             />
           </Field>
         </div>
