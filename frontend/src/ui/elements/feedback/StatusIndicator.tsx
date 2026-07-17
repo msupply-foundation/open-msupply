@@ -48,9 +48,10 @@ export const StatusIndicator = (props: StatusIndicatorProps): JSX.Element => {
 
   // The status row itself — the whole thing is the popover trigger (below), so
   // this is what the user hovers. Rendered as an ordered list (the stages ARE
-  // ordered).
+  // ordered). The strip carries the shared `status-crumbs` test hook
+  // (e2e/TESTIDS.md) in both the plain and popover-wrapped branches.
   const row = (
-    <ol class={styles.steps}>
+    <ol class={styles.steps} data-testid="status-crumbs">
       <For each={props.steps}>
         {(step, index) => (
           <li

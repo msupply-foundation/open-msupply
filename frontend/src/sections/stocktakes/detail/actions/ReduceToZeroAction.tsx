@@ -56,6 +56,7 @@ export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = props => {
         variant="secondary"
         icon={<MinusCircleIcon />}
         disabled={props.disabled}
+        data-testid="reduce-lines-to-zero-button"
         onClick={() => setOpen(true)}
       >
         {t('stocktake.lines.reduce-to-zero')}
@@ -100,6 +101,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MinusCircleIcon />}
+      testId="confirmation-modal"
       title={t('stocktake.lines.reduce-to-zero-title')}
       description={
         <Switch
@@ -139,6 +141,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
                   {t('common.cancel')}
@@ -148,6 +151,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                 variant="primary"
                 icon={<CheckIcon />}
                 loading={phase() === 'working'}
+                data-testid="dialog-button-ok"
                 onClick={() => void run()}
               >
                 {t('common.apply')}
@@ -159,6 +163,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
               {t('common.ok')}
@@ -168,6 +173,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
               onClick={props.onClose}
             >
               {t('common.cancel')}

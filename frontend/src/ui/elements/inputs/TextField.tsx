@@ -11,6 +11,11 @@ export interface TextFieldProps extends Omit<
   helperText?: string;
   /** Error message — presence switches the field to the error state. */
   error?: string;
+  /**
+   * `data-testid` for the error message (locale-stable test hook,
+   * e2e/TESTIDS.md) — e.g. the line-edit modal's per-line errors.
+   */
+  errorTestId?: string;
   required?: boolean;
   /** Spec: 2.5rem (40px) default, 2.25rem (36px) small. */
   size?: 'default' | 'small';
@@ -43,6 +48,7 @@ export const TextField = (props: TextFieldProps) => {
     'label',
     'helperText',
     'error',
+    'errorTestId',
     'required',
     'size',
     'width',
@@ -92,7 +98,11 @@ export const TextField = (props: TextFieldProps) => {
           </Show>
         }
       >
-        <p id={messageId()} class={styles.error}>
+        <p
+          id={messageId()}
+          class={styles.error}
+          data-testid={local.errorTestId}
+        >
           <AlertTriangleIcon class={styles.errorIcon} />
           {local.error}
         </p>

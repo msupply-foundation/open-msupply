@@ -464,7 +464,9 @@ const StocktakeDetailView: Component = () => {
 
   const columns = (): Column<Line, SortKey>[] => [
     {
-      c: { accessor: line => line.item.code, id: 'code' },
+      // Column id is the e2e/TESTIDS.md contract's `item.code` (the accessor
+      // path, dots included — shared with OMS); the sort key stays `code`.
+      c: { accessor: line => line.item.code, id: 'item.code' },
       sortKey: 'code',
       header: t('stocktake.column.item-code'),
     },
@@ -744,13 +746,17 @@ const StocktakeDetailView: Component = () => {
               // doesn't exist yet, so the handler is a no-op placeholder.
               empty={
                 isDisabled(node()) ? undefined : (
-                  <Button icon={<PlusCircleIcon />} onClick={() => {}}>
+                  <Button
+                    icon={<PlusCircleIcon />}
+                    data-testid="add-item-button"
+                    onClick={() => {}}
+                  >
                     {t('stocktake.detail.add-item')}
                   </Button>
                 )
               }
               rowGroup={{
-                columnId: 'code',
+                columnId: 'item.code',
                 labelKey: 'stocktake.column.item-name',
               }}
               enableSelection

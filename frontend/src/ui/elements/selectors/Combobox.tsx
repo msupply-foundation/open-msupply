@@ -55,6 +55,11 @@ interface ComboboxProps<T> {
    *  TextField's `error`.
    */
   error?: string;
+  /**
+   * `data-testid` for the error message (locale-stable test hook,
+   * e2e/TESTIDS.md) — mirrors TextField's `errorTestId`.
+   */
+  errorTestId?: string;
   loading?: boolean;
   disabled?: boolean;
   /**
@@ -197,7 +202,10 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           </Show>
         }
       >
-        <KCombobox.Description class={styles.error}>
+        <KCombobox.Description
+          class={styles.error}
+          data-testid={props.errorTestId}
+        >
           <AlertTriangleIcon class={styles.errorIcon} />
           {props.error}
         </KCombobox.Description>

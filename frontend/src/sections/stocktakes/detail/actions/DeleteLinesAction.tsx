@@ -55,6 +55,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
         variant="secondary"
         icon={<TrashIcon />}
         disabled={props.disabled}
+        data-testid="delete-lines-button"
         onClick={() => setOpen(true)}
       >
         {t('common.delete')}
@@ -95,6 +96,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<TrashIcon />}
+      testId="confirmation-modal"
       title={t('stocktake.lines.delete-title')}
       description={
         <Switch fallback={t('stocktake.lines.delete-confirm', { count })}>
@@ -118,6 +120,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
                   {t('common.cancel')}
@@ -127,6 +130,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                 variant="secondary"
                 icon={<TrashIcon />}
                 loading={phase() === 'working'}
+                data-testid="confirmation-modal-ok"
                 onClick={() => void run()}
               >
                 {t('common.delete')}
@@ -138,6 +142,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
               {t('common.ok')}
@@ -147,6 +152,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
               onClick={props.onClose}
             >
               {t('common.cancel')}

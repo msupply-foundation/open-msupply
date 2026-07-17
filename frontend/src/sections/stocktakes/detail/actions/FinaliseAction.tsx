@@ -122,6 +122,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
             value={nextStatus()}
             onAction={openConfirm}
             menuLabel={t('stocktake.detail.finalise')}
+            testId="status-change-button"
           />
         </ContentFooterActions>
       </Show>
@@ -132,6 +133,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
         dismissable={phase() !== 'working'}
         onClose={close}
         icon={<ArrowRightIcon />}
+        testId="confirmation-modal"
         title={t('stocktake.finalise.confirm-title')}
         description={
           <Switch fallback={t('stocktake.finalise.confirm')}>
@@ -155,6 +157,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                   <Button
                     variant="secondary"
                     icon={<XCircleIcon />}
+                    data-testid="dialog-button-cancel"
                     onClick={close}
                   >
                     {t('common.cancel')}
@@ -164,6 +167,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                   variant="primary"
                   icon={<ArrowRightIcon />}
                   loading={phase() === 'working'}
+                  data-testid="confirmation-modal-ok"
                   onClick={() => void run()}
                 >
                   {t('stocktake.detail.finalise')}
@@ -172,7 +176,12 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
             }
           >
             <Match when={phase() === 'success'}>
-              <Button variant="secondary" icon={<CheckIcon />} onClick={close}>
+              <Button
+                variant="secondary"
+                icon={<CheckIcon />}
+                data-testid="dialog-button-ok"
+                onClick={close}
+              >
                 {t('common.ok')}
               </Button>
             </Match>
@@ -180,6 +189,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
               <Button
                 variant="secondary"
                 icon={<XCircleIcon />}
+                data-testid="dialog-button-cancel"
                 onClick={close}
               >
                 {t('common.cancel')}
