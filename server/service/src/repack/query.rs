@@ -282,6 +282,7 @@ mod test {
                     number_of_packs: 6.0,
                     new_pack_size: 5.0,
                     new_location_id: None,
+                    comment: None,
                 },
             )
             .unwrap();
