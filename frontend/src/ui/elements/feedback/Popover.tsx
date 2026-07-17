@@ -15,6 +15,8 @@ export interface PopoverProps {
   triggerLabel?: string;
   /** Extends the bare trigger button's styling. */
   triggerClass?: string;
+  /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
+  triggerTestId?: string;
   /** Preferred side/alignment; flips to the other side rather than overflow.
       start/end are logical (mirror in RTL). Default 'bottom'. */
   placement?: PopoverPlacement;
@@ -185,6 +187,7 @@ export const Popover = (props: PopoverProps) => {
             : styles.trigger
         }
         aria-label={props.triggerLabel}
+        data-testid={props.triggerTestId}
         {...hoverHandlers}
       >
         {props.trigger}

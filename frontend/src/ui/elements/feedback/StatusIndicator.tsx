@@ -76,6 +76,7 @@ export const StatusIndicator = (props: StatusIndicatorProps): JSX.Element => {
         openOnHover
         triggerLabel={t('status.history')}
         triggerClass={statusClass(props.class)}
+        triggerTestId="status-crumbs"
         placement="top-start"
         trigger={row}
       >

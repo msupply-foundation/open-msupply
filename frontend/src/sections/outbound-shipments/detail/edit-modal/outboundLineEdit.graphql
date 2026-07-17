@@ -1,0 +1,82 @@
+# The line editor (spec/outbound-shipments S4). The batch grid is the
+# server-computed draft: one row per available batch (FEFO-ordered by the
+# server), carrying available/in-store packs, hold state, and the item's
+# existing shipment lines as pre-filled numberOfPacks — plus the item's current
+# placeholder quantity.
+query draftStockOutLines(
+  $storeId: String!
+  $itemId: String!
+  $invoiceId: String!
+) {
+  draftStockOutLines(
+    storeId: $storeId
+    itemId: $itemId
+    invoiceId: $invoiceId
+  ) {
+    placeholderQuantity
+    draftLines {
+      id
+      numberOfPacks
+      stockLineId
+      batch
+      expiryDate
+      packSize
+      sellPricePerPack
+      inStorePacks
+      availablePacks
+      stockLineOnHold
+      dosesPerUnit
+      volumePerPack
+      location {
+        id
+        code
+        onHold
+      }
+      vvmStatus {
+        id
+        description
+        unusable
+      }
+    }
+  }
+}
+
+# The item-set save (AC-I6): replaces the item's lines as a set — changed packs
+# updated, zeroed batches removed, the placeholder created/updated/removed to
+# match. Returns the invoice node; the view refetches the detail (totals,
+# trims, and placeholder management are server-side).
+# ⚠ Every rejection here is a non-typed GraphQL error (contract.md wire trap) —
+# the caller opts into returnGraphqlErrors and translates what it can.
+mutation saveOutboundItemLines(
+  $storeId: String!
+  $input: SaveOutboundShipmentLinesInput!
+) {
+  saveOutboundShipmentItemLines(storeId: $storeId, input: $input) {
+    id
+  }
+}
+
+# The item picker (S4): searchable stock-item catalogue (client-side filter
+# over the store's cached set — the combobox pattern the registry sanctions).
+# The view excludes items already on the shipment.
+query outboundItemOptions($storeId: String!) {
+  items(
+    storeId: $storeId
+    filter: { isVisible: true, isActive: true, type: { equalTo: STOCK } }
+    page: { first: 1000 }
+    sort: { key: name }
+  ) {
+    ... on ItemConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        name
+        unitName
+        isVaccine
+        doses
+      }
+    }
+  }
+}

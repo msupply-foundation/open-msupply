@@ -156,6 +156,13 @@
    needs the -webkit-box display; --wrap-lines (set inline on the cell) carries N. The row
    height becomes a MINIMUM so multi-line content can grow the row rather than clip to the
    single-line height. Placed after .td so it wins the white-space + block-size. */
+/* De-emphasised (read-only) rows — data-dimmed stamped by TableRow when the
+   page's rowDimmed predicate matches (e.g. SHIPPED+ shipments). Opacity, not a
+   colour, so every cell treatment (chips, swatches) dims consistently. */
+tr[data-dimmed] > .td {
+  opacity: 0.55;
+}
+
 .td[data-wrap] {
   /* --wrap-lines is declared here (default 2) so it's a known custom property to the
      stylelint value check; the per-column count is set inline on the cell and overrides it. */

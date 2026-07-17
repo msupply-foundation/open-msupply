@@ -33,6 +33,13 @@ interface SplitButtonProps {
    * SplitButton/ExportSelector).
    */
   onAction?: (value: string) => void;
+  /**
+   * Menu picks SELECT ONLY (update the main button's action) instead of also
+   * running it — the status-change convention: pick "Shipped" from the menu,
+   * then the main "Confirm Shipped" click acts. Default false (pick acts,
+   * like the export selector).
+   */
+  menuSelectsOnly?: boolean;
   /** Accessible name for the caret trigger (it has no visible text). */
   menuLabel?: string;
   /**
@@ -69,7 +76,7 @@ export const SplitButton = (props: SplitButtonProps) => {
   const pick = (value: string) => {
     setInternal(value);
     props.onValueChange?.(value);
-    props.onAction?.(value);
+    if (!props.menuSelectsOnly) props.onAction?.(value);
   };
 
   return (

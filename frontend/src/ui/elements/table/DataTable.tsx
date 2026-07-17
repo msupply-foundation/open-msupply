@@ -151,6 +151,11 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
   /**
+   * De-emphasise matching rows (read-only records, e.g. SHIPPED+ shipments —
+   * ui-standards/list-views): stamps data-dimmed on the row, styled in CSS.
+   */
+  rowDimmed?: (row: T) => boolean;
+  /**
    * The data is being fetched. Drives the loading treatment so a slow fetch
    * never flashes the empty state (issues #160/#196): with NO rows yet
    * (initial load) a centred spinner replaces the empty state; with rows
@@ -808,6 +813,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         enableSelection={props.enableSelection ?? false}
                         showExpander={grouping().length > 0}
                         onRowClick={props.onRowClick}
+                        rowDimmed={props.rowDimmed}
                         onToggleGroup={toggleGroupSelection}
                         pinnedStyle={pinnedStyle}
                         leadingPinnedStyle={leadingPinnedStyle}

@@ -1,0 +1,184 @@
+import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
+import { t, tPlural } from '../../../../intl';
+import { graphqlFetch } from '../../../../api/graphql';
+import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { Alert } from '../../../../ui/elements/feedback/Alert';
+import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CheckIcon,
+  InfoIcon,
+  TrashIcon,
+  XCircleIcon,
+} from '../../../../ui/icons';
+import { isDeletable } from '../../outboundStatus';
+import { DeleteOutboundShipments } from '../outboundShipments.generated';
+
+export interface DeleteShipmentsActionProps {
+  storeId: string;
+  /** The selected rows' id + status (the pre-check needs the status). */
+  selectedRows: () => { id: string; status: string }[];
+  /** Deletion succeeded — clear the selection and re-query. */
+  onDeleted: () => void;
+}
+
+// The list's bulk delete (spec S1 bulk actions, AC-D3): the whole batch is
+// refused when ANY selected shipment is not deletable — a UI pre-check with a
+// blocking notice instead of the confirmation, no server call (rules.md § the
+// list; controls › action feedback); per-row enforcement remains server-side.
+// Same confirm → deleting → success | error dialog shape as the stocktakes
+// delete action (kdd/action-modal).
+type Phase = 'confirm' | 'deleting' | 'success' | 'error';
+
+export const DeleteShipmentsAction: Component<
+  DeleteShipmentsActionProps
+> = props => {
+  const [open, setOpen] = createSignal(false);
+  const [blockedOpen, setBlockedOpen] = createSignal(false);
+
+  const onClick = () => {
+    // Pre-check: every selected shipment must be deletable (NEW / ALLOCATED /
+    // PICKED) or the whole batch is refused with an explanatory notice in
+    // place of the confirmation (AC-D3).
+    if (props.selectedRows().some(row => !isDeletable(row.status))) {
+      setBlockedOpen(true);
+      return;
+    }
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <Button
+        variant="secondary"
+        icon={<TrashIcon />}
+        data-testid="delete-lines-button"
+        onClick={onClick}
+      >
+        {t('common.delete')}
+      </Button>
+      <Show when={open()}>
+        <Body {...props} onClose={() => setOpen(false)} />
+      </Show>
+      {/* Non-deletable selection: an info-only notice, no server call. */}
+      <Show when={blockedOpen()}>
+        <Dialog
+          open
+          onClose={() => setBlockedOpen(false)}
+          icon={<InfoIcon />}
+          title={t('outbound.delete.title')}
+          description={
+            <Alert severity="error">{t('outbound.delete.cannot')}</Alert>
+          }
+          actions={
+            <Button
+              variant="secondary"
+              icon={<CheckIcon />}
+              onClick={() => setBlockedOpen(false)}
+            >
+              {t('common.ok')}
+            </Button>
+          }
+        />
+      </Show>
+    </>
+  );
+};
+
+const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
+  const [phase, setPhase] = createSignal<Phase>('confirm');
+  // Snapshotted on open so the message can't shift behind the dialog.
+  const count = props.selectedRows().length;
+
+  const run = async () => {
+    if (phase() !== 'confirm') return; // re-entry guard
+    setPhase('deleting');
+    const result = await graphqlFetch(DeleteOutboundShipments, {
+      storeId: props.storeId,
+      ids: props.selectedRows().map(row => row.id),
+    });
+    if (result.kind !== 'success') {
+      // transport/unexpected → the global modal already surfaced it.
+      setPhase('confirm');
+      return;
+    }
+    const items =
+      result.data.batchOutboundShipment.deleteOutboundShipments ?? [];
+    const failed = items.some(
+      item => item.response.__typename === 'DeleteOutboundShipmentError'
+    );
+    if (failed) {
+      setPhase('error');
+      return;
+    }
+    // Success: hand back to the list (clear selection + re-query behind the
+    // dialog), then report in the dialog itself (controls › dialogs).
+    props.onDeleted();
+    setPhase('success');
+  };
+
+  return (
+    <Dialog
+      open
+      dismissable={phase() !== 'deleting'}
+      onClose={props.onClose}
+      icon={<TrashIcon />}
+      testId="confirmation-modal"
+      title={t('outbound.delete.title')}
+      description={
+        <Switch fallback={tPlural('outbound.delete.confirm', count)}>
+          <Match when={phase() === 'error'}>
+            <Alert severity="error">{t('outbound.delete.cannot')}</Alert>
+          </Match>
+          <Match when={phase() === 'success'}>
+            {tPlural('outbound.delete.success', count)}
+          </Match>
+        </Switch>
+      }
+      actions={
+        <Switch
+          fallback={
+            <>
+              <Show when={phase() === 'confirm'}>
+                <Button
+                  variant="secondary"
+                  icon={<XCircleIcon />}
+                  onClick={props.onClose}
+                >
+                  {t('common.cancel')}
+                </Button>
+              </Show>
+              <Button
+                variant="secondary"
+                icon={<TrashIcon />}
+                data-testid="confirmation-modal-ok"
+                loading={phase() === 'deleting'}
+                onClick={() => void run()}
+              >
+                {t('outbound.delete.action')}
+              </Button>
+            </>
+          }
+        >
+          <Match when={phase() === 'success'}>
+            <Button
+              variant="secondary"
+              icon={<CheckIcon />}
+              onClick={props.onClose}
+            >
+              {t('common.ok')}
+            </Button>
+          </Match>
+          <Match when={phase() === 'error'}>
+            <Button
+              variant="secondary"
+              icon={<XCircleIcon />}
+              onClick={props.onClose}
+            >
+              {t('common.cancel')}
+            </Button>
+          </Match>
+        </Switch>
+      }
+    />
+  );
+};

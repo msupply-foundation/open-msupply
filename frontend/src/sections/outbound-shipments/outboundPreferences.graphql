@@ -1,0 +1,22 @@
+# The preference gates for the outbound vertical (rules.md § store-preference
+# gates): display/affordance gates only — none change server validation. One
+# fetch per store, shared by list and detail.
+query outboundPreferences($storeId: String!) {
+  preferences(storeId: $storeId) {
+    manageVaccinesInDoses
+    manageVvmStatusForStock
+    sortByVvmStatusThenExpiry
+    allowTrackingOfStockByDonor
+    expiredStockPreventIssue
+    expiredStockIssueThreshold
+    invoiceStatusOptions
+    backdating {
+      shipmentsEnabled
+      maxDays
+    }
+  }
+  storePreferences(storeId: $storeId) {
+    issueInForeignCurrency
+    monthsLeadTime
+  }
+}

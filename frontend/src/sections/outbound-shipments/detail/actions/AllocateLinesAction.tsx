@@ -1,0 +1,223 @@
+import {
+  createSignal,
+  For,
+  Match,
+  Show,
+  Switch,
+  type Component,
+} from 'solid-js';
+import { t, tPlural } from '../../../../intl';
+import { graphqlFetch } from '../../../../api/graphql';
+import { Button } from '../../../../ui/elements/buttons/Button';
+import { Dialog } from '../../../../ui/elements/feedback/Dialog';
+import { Alert } from '../../../../ui/elements/feedback/Alert';
+import { CheckIcon, XCircleIcon, ZapIcon } from '../../../../ui/icons';
+import { AllocateOutboundLine } from '../outboundDetail.generated';
+import type { OutboundLineFragment } from '../outboundDetail.generated';
+
+export interface AllocateLinesActionProps {
+  storeId: string;
+  /** The selected LINE rows; only placeholders are allocatable. */
+  selectedLines: () => OutboundLineFragment[];
+  disabled: boolean;
+  /** Something committed — the view refetches. */
+  onCommitted: () => void;
+}
+
+// "Allocate placeholder lines" (spec S3 § bulk line actions, AC-A1–A5):
+// auto-allocation per selected placeholder — FEFO server-side. Outcomes are
+// classified per line exactly as the current app does (fully allocated /
+// partial / failed, with the skip reasons that applied) and reported as
+// inline banners in the dialog's report phase (controls › action feedback —
+// never a toast). A clean run just closes: the updated line table is the
+// confirmation. Zero-quantity placeholders in the selection prompt a removal
+// note in the confirmation (they are deleted by allocation). Runs only when
+// explicitly invoked (rules.md § auto-allocation).
+type Phase = 'confirm' | 'working' | 'report';
+
+interface Issue {
+  severity: 'error' | 'warning' | 'info';
+  message: string;
+}
+
+export const AllocateLinesAction: Component<
+  AllocateLinesActionProps
+> = props => {
+  const [open, setOpen] = createSignal(false);
+  const [phase, setPhase] = createSignal<Phase>('confirm');
+  const [issues, setIssues] = createSignal<Issue[]>([]);
+
+  const placeholders = () =>
+    props.selectedLines().filter(line => line.type === 'UNALLOCATED_STOCK');
+  const zeroQuantity = () =>
+    placeholders().filter(line => line.numberOfPacks === 0);
+
+  const openConfirm = () => {
+    setPhase('confirm');
+    setIssues([]);
+    setOpen(true);
+  };
+  const close = () => setOpen(false);
+
+  const run = async () => {
+    if (phase() !== 'confirm') return; // re-entry guard
+    setPhase('working');
+    const found: Issue[] = [];
+    let allocated = 0;
+    const partial = { count: 0, reasons: new Set<string>() };
+    const failed = { count: 0, reasons: new Set<string>() };
+    const expiringSoonBatches: string[] = [];
+    for (const line of placeholders()) {
+      const result = await graphqlFetch(AllocateOutboundLine, {
+        storeId: props.storeId,
+        lineId: line.id,
+      });
+      // Transport/unexpected → the global modal already surfaced it.
+      if (result.kind !== 'success') return close();
+      const response = result.data.allocateOutboundShipmentUnallocatedLine;
+      if (
+        response.__typename === 'AllocateOutboundShipmentUnallocatedLineError'
+      ) {
+        found.push({ severity: 'error', message: response.error.description });
+        continue;
+      }
+      // Classify like the current app: placeholder deleted → fully allocated;
+      // otherwise some stock moved (insert, or updates beyond the placeholder
+      // itself) → partial; nothing moved → failed. Skip categories become the
+      // reasons list on the partial/failed report line (AC-A2).
+      if (response.deletes.some(deleted => deleted.id === line.id)) {
+        allocated++;
+      } else {
+        const bucket =
+          response.inserts.totalCount > 0 || response.updates.totalCount > 1
+            ? partial
+            : failed;
+        bucket.count++;
+        if (response.skippedExpiredStockLines.nodes.length)
+          bucket.reasons.add(t('outbound.allocate.reason-expired'));
+        if (response.skippedOnHoldStockLines.nodes.length)
+          bucket.reasons.add(t('outbound.allocate.reason-on-hold'));
+        if (response.skippedUnusableVvmStatusLines.nodes.length)
+          bucket.reasons.add(t('outbound.allocate.reason-vvm'));
+      }
+      for (const node of response.issuedExpiringSoonStockLines.nodes)
+        expiringSoonBatches.push(node.batch ?? '—');
+    }
+    const reasonsSuffix = (reasons: Set<string>) =>
+      reasons.size > 0
+        ? ` ${t('outbound.allocate.skipped-reasons', {
+            reasons: Array.from(reasons).join(', '),
+          })}`
+        : '';
+    if (partial.count > 0)
+      found.push({
+        severity: 'warning',
+        message:
+          tPlural('outbound.allocate.partial', partial.count) +
+          reasonsSuffix(partial.reasons),
+      });
+    if (failed.count > 0)
+      found.push({
+        severity: 'error',
+        message:
+          tPlural('outbound.allocate.failed', failed.count) +
+          reasonsSuffix(failed.reasons),
+      });
+    if (expiringSoonBatches.length > 0)
+      found.push({
+        severity: 'info',
+        message: t('outbound.allocate.expiring-soon', {
+          batches: expiringSoonBatches.join(', '),
+        }),
+      });
+    // The allocated count leads the report when there is one; a clean run
+    // closes instead — the updated line table is the confirmation (D19).
+    if (allocated > 0 && found.length > 0)
+      found.unshift({
+        severity: 'info',
+        message: tPlural('outbound.allocate.allocated', allocated),
+      });
+    props.onCommitted();
+    if (found.length === 0) return close();
+    setIssues(found);
+    setPhase('report');
+  };
+
+  return (
+    <>
+      <Button
+        variant="secondary"
+        icon={<ZapIcon />}
+        data-testid="allocate-lines-button"
+        disabled={props.disabled || placeholders().length === 0}
+        onClick={openConfirm}
+      >
+        {t('outbound.lines.allocate')}
+      </Button>
+      <Show when={open()}>
+        <Dialog
+          open
+          dismissable={phase() !== 'working'}
+          onClose={close}
+          icon={<ZapIcon />}
+          testId="confirmation-modal"
+          title={t('outbound.lines.allocate-title')}
+          description={
+            <Switch>
+              <Match when={phase() !== 'report'}>
+                {zeroQuantity().length > 0
+                  ? tPlural(
+                      'outbound.lines.allocate-zero',
+                      zeroQuantity().length
+                    )
+                  : t('outbound.lines.allocate-confirm')}
+              </Match>
+              <Match when={phase() === 'report'}>
+                <For each={issues()}>
+                  {issue => (
+                    <Alert severity={issue.severity}>{issue.message}</Alert>
+                  )}
+                </For>
+              </Match>
+            </Switch>
+          }
+          actions={
+            <Show
+              when={phase() !== 'report'}
+              fallback={
+                <Button
+                  variant="secondary"
+                  icon={<CheckIcon />}
+                  data-testid="dialog-button-ok"
+                  onClick={close}
+                >
+                  {t('common.ok')}
+                </Button>
+              }
+            >
+              <Show when={phase() === 'confirm'}>
+                <Button
+                  variant="secondary"
+                  icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
+                  onClick={close}
+                >
+                  {t('common.cancel')}
+                </Button>
+              </Show>
+              <Button
+                variant="secondary"
+                icon={<CheckIcon />}
+                data-testid="confirmation-modal-ok"
+                loading={phase() === 'working'}
+                onClick={() => void run()}
+              >
+                {t('common.ok')}
+              </Button>
+            </Show>
+          }
+        />
+      </Show>
+    </>
+  );
+};

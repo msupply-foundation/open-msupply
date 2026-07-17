@@ -1,6 +1,7 @@
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
+import { formatNumber } from '../../../intl/formatNumber';
 import type { Column } from './columnTypes';
 import { MULTIPLE, sharedOrMultipleDate } from './aggregations';
 
@@ -76,6 +77,24 @@ export const getDateCell = <T>(meta?: Meta): CellFragment<T> => ({
 export const getBooleanCell = <T>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info => (info.getValue<boolean>() ? t('common.yes') : t('common.no')),
+});
+
+// Money: right-aligned, always two decimals (locale-formatted). Grouped parent
+// → SUM of the leaves, formatted the same way.
+const formatCurrencyCell = (value: number | null | undefined): string =>
+  value == null
+    ? EMPTY_CELL
+    : formatNumber(value, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+export const getCurrencyCell = <T>(meta?: Meta): CellFragment<T> => ({
+  meta: { align: 'right', ...meta },
+  aggregationFn: 'sum',
+  cell: info => formatCurrencyCell(info.getValue<number | null | undefined>()),
+  aggregatedCell: info =>
+    formatCurrencyCell(info.getValue<number | null | undefined>()),
 });
 
 // =================================================================================

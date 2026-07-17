@@ -1,0 +1,25 @@
+# Customer lookup (spec/ui-standards/components.md § customer lookup): the
+# store's visible customers, searchable across code or name. On-hold customers
+# are returned and rendered disabled (AC-C3) — never filtered out.
+query customers($storeId: String!) {
+  names(
+    storeId: $storeId
+    filter: { isCustomer: true }
+    page: { first: 1000 }
+    sort: { key: name }
+  ) {
+    ... on NameConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        name
+        isOnHold
+        store {
+          id
+        }
+      }
+    }
+  }
+}
