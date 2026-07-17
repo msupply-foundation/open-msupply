@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { fefoCompare, isBarred, type AllocationPreferences } from './policy';
+import {
+  barReasons,
+  fefoCompare,
+  isBarred,
+  type AllocationPreferences,
+} from './policy';
 import { lensToUnits, availableUnits, distinctPackSizes } from './units';
 import { deriveIssueWarnings } from './warnings';
 
@@ -13,43 +18,82 @@ const prefs = (over: Partial<AllocationPreferences> = {}) => ({
   ...over,
 });
 
-const inDays = (days: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return date.toISOString().slice(0, 10);
-};
-
-describe('isBarred', () => {
+describe('barReasons / isBarred', () => {
   // AC-AL2 — on hold bars, batch or location.
   it('bars on-hold batches and on-hold locations', () => {
-    expect(isBarred({ stockLineOnHold: true }, prefs())).toBe(true);
+    expect(barReasons({ stockLineOnHold: true }, prefs())).toEqual(['on-hold']);
     expect(
-      isBarred({ stockLineOnHold: false, location: { onHold: true } }, prefs())
-    ).toBe(true);
+      barReasons(
+        { stockLineOnHold: false, location: { onHold: true } },
+        prefs()
+      )
+    ).toEqual(['on-hold']);
     expect(isBarred({ stockLineOnHold: false }, prefs())).toBe(false);
   });
 
   // AC-AL2/AC-AL9 — unusable VVM bars only under the preference.
   it('bars unusable VVM only when the preference is on', () => {
     const batch = { stockLineOnHold: false, vvmStatus: { unusable: true } };
-    expect(isBarred(batch, prefs())).toBe(false);
-    expect(isBarred(batch, prefs({ manageVvmStatusForStock: true }))).toBe(
-      true
+    expect(barReasons(batch, prefs())).toEqual([]);
+    expect(barReasons(batch, prefs({ manageVvmStatusForStock: true }))).toEqual(
+      ['unusable-vvm']
     );
   });
 
   // AC-AL8 — the expired-issue guard bars within the threshold, gated by the
-  // preference.
+  // preference. The clock is injected so the boundary is exact.
   it('bars expiry within the threshold only when the guard is on', () => {
-    const soon = { stockLineOnHold: false, expiryDate: inDays(5) };
-    const far = { stockLineOnHold: false, expiryDate: inDays(60) };
-    expect(isBarred(soon, prefs())).toBe(false);
+    const today = new Date('2026-07-17T09:30:00');
     const guard = prefs({
       expiredStockPreventIssue: true,
       expiredStockIssueThreshold: 30,
     });
-    expect(isBarred(soon, guard)).toBe(true);
-    expect(isBarred(far, guard)).toBe(false);
+    const at = (expiryDate: string) => ({ stockLineOnHold: false, expiryDate });
+
+    expect(barReasons(at('2026-07-22'), prefs(), today)).toEqual([]);
+    expect(barReasons(at('2026-07-22'), guard, today)).toEqual(['expired']);
+    expect(barReasons(at('2026-12-01'), guard, today)).toEqual([]);
+  });
+
+  // rules.md § barred batches — the guard compares calendar DAYS, so the
+  // verdict cannot flip with the time of day the check runs.
+  it('is deterministic across the day at the threshold boundary', () => {
+    const guard = prefs({
+      expiredStockPreventIssue: true,
+      expiredStockIssueThreshold: 30,
+    });
+    const batch = { stockLineOnHold: false, expiryDate: '2026-08-16' };
+    for (const clock of [
+      '2026-07-17T00:00:01',
+      '2026-07-17T12:00:00',
+      '2026-07-17T23:59:59',
+    ]) {
+      // today + 30d = 2026-08-16 → the expiry day itself is barred, at any
+      // time of day.
+      expect(barReasons(batch, guard, new Date(clock))).toEqual(['expired']);
+    }
+    // One day later is out of the threshold, again at any time of day.
+    const dayAfter = { stockLineOnHold: false, expiryDate: '2026-08-17' };
+    for (const clock of ['2026-07-17T00:00:01', '2026-07-17T23:59:59']) {
+      expect(barReasons(dayAfter, guard, new Date(clock))).toEqual([]);
+    }
+  });
+
+  it('reports every category that applies', () => {
+    const batch = {
+      stockLineOnHold: true,
+      vvmStatus: { unusable: true },
+      expiryDate: '2020-01-01',
+    };
+    expect(
+      barReasons(
+        batch,
+        prefs({
+          expiredStockPreventIssue: true,
+          manageVvmStatusForStock: true,
+        })
+      ).sort()
+    ).toEqual(['expired', 'on-hold', 'unusable-vvm']);
   });
 });
 
@@ -66,12 +110,17 @@ describe('fefoCompare', () => {
 });
 
 describe('lensToUnits', () => {
-  // AC-AL7 — packs-of-‹size› converts; AC-AL6 — negatives distribute nothing.
-  it('converts the packs lens and rejects negatives', () => {
+  // AC-AL7 — packs-of-‹size› converts; AC-AL6 — negatives and non-finite
+  // values distribute nothing.
+  it('converts the packs lens and rejects negatives and non-finite input', () => {
     expect(lensToUnits(3, { kind: 'packs', size: 10 })).toBe(30);
     expect(lensToUnits(3, { kind: 'units' })).toBe(3);
     expect(lensToUnits(-1, { kind: 'units' })).toBeUndefined();
     expect(lensToUnits(null, { kind: 'units' })).toBeUndefined();
+    expect(lensToUnits(Number.NaN, { kind: 'units' })).toBeUndefined();
+    expect(
+      lensToUnits(Number.POSITIVE_INFINITY, { kind: 'packs', size: 10 })
+    ).toBeUndefined();
   });
 });
 
@@ -89,18 +138,24 @@ describe('unit sums', () => {
 
 describe('deriveIssueWarnings', () => {
   // rules.md § reporting — every deviation reported, nothing narrows silently.
-  it('reports over-allocation, shortfall (when consumed), and skips', () => {
+  it('reports over-allocation, shortfall (when consumed), and per-category skips', () => {
     const distribution = {
       packsById: new Map<string, number>(),
       shortfallUnits: 4,
       overAllocatedUnits: 2,
-      skippedBarred: true,
+      skippedReasons: new Set(['on-hold', 'expired'] as const),
     };
-    expect(
-      deriveIssueWarnings(distribution, { reportShortfall: true }).map(
-        warning => warning.kind
-      )
-    ).toEqual(['over-allocated', 'shortfall', 'skipped-barred']);
+    const reported = deriveIssueWarnings(distribution, {
+      reportShortfall: true,
+    });
+    expect(reported.map(warning => warning.kind)).toEqual([
+      'over-allocated',
+      'shortfall',
+      'skipped-barred',
+    ]);
+    expect(reported.find(warning => warning.kind === 'skipped-barred')).toEqual(
+      { kind: 'skipped-barred', reasons: ['on-hold', 'expired'] }
+    );
     expect(
       deriveIssueWarnings(distribution, { reportShortfall: false }).map(
         warning => warning.kind

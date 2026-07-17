@@ -6,12 +6,15 @@
 /** The quantity-entry lens (AC-AL7). Doses joins when a consumer needs it. */
 export type AllocateUnit = { kind: 'units' } | { kind: 'packs'; size: number };
 
-/** Convert a lens-entered quantity to units (negative → undefined: AC-AL6). */
+/**
+ * Convert a lens-entered quantity to units (negative or non-finite —
+ * NaN/Infinity from unparsed input — → undefined: AC-AL6).
+ */
 export const lensToUnits = (
   value: number | null | undefined,
   lens: AllocateUnit
 ): number | undefined => {
-  if (value == null || value < 0) return undefined;
+  if (value == null || !Number.isFinite(value) || value < 0) return undefined;
   return lens.kind === 'packs' ? value * lens.size : value;
 };
 

@@ -15,6 +15,12 @@ export interface AllocationPreferences {
 }
 
 /**
+ * Why a batch is barred — the skip-category vocabulary shared by every
+ * allocation report (spec/stock-allocation/contract.md § warning vocabulary).
+ */
+export type BarReason = 'on-hold' | 'expired' | 'unusable-vvm';
+
+/**
  * The structural batch fields barring reads
  * (spec/stock-allocation/contract.md § the distributable batch) — a subset of
  * any server-computed draft-line shape, so no vertical's generated type leaks
@@ -27,24 +33,47 @@ export interface BarrableBatch {
   expiryDate?: string | null;
 }
 
+/** Local calendar date as YYYY-MM-DD (the store clock's day). */
+const localDay = (date: Date): string => {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+};
+
 /**
- * A batch the store may not issue from: on hold (batch or location), unusable
- * VVM (under the preference), or expired within the guard threshold
- * (AC-AL2/AC-AL8).
+ * Every bar category that applies to a batch (AC-AL2/AC-AL8/AC-AL9): on hold
+ * (batch or location), expired within the guard threshold, unusable VVM
+ * (under the preference). Empty result = usable.
+ *
+ * The expiry guard compares calendar DAYS (`today + threshold` vs the
+ * expiry's date part), so the verdict is stable across the whole day rather
+ * than flipping with the time of day the check happens to run.
  */
+export const barReasons = (
+  batch: BarrableBatch,
+  prefs: AllocationPreferences,
+  /** Injectable clock for deterministic tests; defaults to now. */
+  today: Date = new Date()
+): BarReason[] => {
+  const reasons: BarReason[] = [];
+  if (batch.stockLineOnHold || batch.location?.onHold) reasons.push('on-hold');
+  if (prefs.expiredStockPreventIssue && batch.expiryDate) {
+    const limit = new Date(today);
+    limit.setDate(limit.getDate() + prefs.expiredStockIssueThreshold);
+    if (batch.expiryDate.slice(0, 10) <= localDay(limit))
+      reasons.push('expired');
+  }
+  if (batch.vvmStatus?.unusable && prefs.manageVvmStatusForStock)
+    reasons.push('unusable-vvm');
+  return reasons;
+};
+
+/** Convenience predicate over barReasons (grid row disabling, AC-AL8). */
 export const isBarred = (
   batch: BarrableBatch,
-  prefs: AllocationPreferences
-): boolean => {
-  if (batch.stockLineOnHold || batch.location?.onHold) return true;
-  if (batch.vvmStatus?.unusable && prefs.manageVvmStatusForStock) return true;
-  if (prefs.expiredStockPreventIssue && batch.expiryDate) {
-    const limit = new Date();
-    limit.setDate(limit.getDate() + prefs.expiredStockIssueThreshold);
-    if (new Date(batch.expiryDate) <= limit) return true;
-  }
-  return false;
-};
+  prefs: AllocationPreferences,
+  today?: Date
+): boolean => barReasons(batch, prefs, today).length > 0;
 
 /**
  * FEFO display/fill order: earliest expiry first, no expiry last (AC-AL1).

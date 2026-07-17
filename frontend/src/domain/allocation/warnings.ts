@@ -6,14 +6,18 @@
 // ui-standards/controls.md § action feedback — never a toast).
 
 import type { Distribution } from './distributeIssue';
+import type { BarReason } from './policy';
 
 export type IssueWarning =
   /** Whole-pack rounding issued more than requested (AC-AL3). */
   | { kind: 'over-allocated'; units: number }
   /** Requested units not covered by usable stock (AC-AL4). */
   | { kind: 'shortfall'; units: number }
-  /** Barred stock with availability was passed over (AC-AL2). */
-  | { kind: 'skipped-barred' };
+  /**
+   * Barred stock with availability was passed over, with each category that
+   * applied (AC-AL2 — the shared skip vocabulary).
+   */
+  | { kind: 'skipped-barred'; reasons: readonly BarReason[] };
 
 export const deriveIssueWarnings = (
   distribution: Distribution,
@@ -34,6 +38,10 @@ export const deriveIssueWarnings = (
     });
   if (distribution.shortfallUnits > 0 && options.reportShortfall)
     warnings.push({ kind: 'shortfall', units: distribution.shortfallUnits });
-  if (distribution.skippedBarred) warnings.push({ kind: 'skipped-barred' });
+  if (distribution.skippedReasons.size > 0)
+    warnings.push({
+      kind: 'skipped-barred',
+      reasons: [...distribution.skippedReasons],
+    });
   return warnings;
 };

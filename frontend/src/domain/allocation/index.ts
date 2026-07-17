@@ -9,10 +9,12 @@ export {
   type Distribution,
 } from './distributeIssue';
 export {
+  barReasons,
   isBarred,
   fefoCompare,
   type AllocationPreferences,
   type BarrableBatch,
+  type BarReason,
 } from './policy';
 export {
   lensToUnits,
