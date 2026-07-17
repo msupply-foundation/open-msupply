@@ -1,0 +1,53 @@
+/*
+ * Checkbox — native <input type="checkbox"> styled with `accent-color` so the
+ * checked fill is the brand orange, label to the inline-end; the wrapping
+ * <label> makes the whole row clickable. Mirrors RadioGroup's option styling
+ * (same box size, gap, disabled treatment). The only px is the focus-ring
+ * width (allowed by the sizing rule).
+ */
+
+/* The native checkbox + its label, in a row. */
+.item {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.item[data-disabled] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* The native control — accent-color paints the checked fill + tick in the brand tone. Sized
+   a touch larger than default for a comfortable target; margin aligns it to the first line. */
+.input {
+  flex-shrink: 0;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  margin: 0.0625rem 0 0;
+  accent-color: var(--primary-main);
+  cursor: inherit;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  color: var(--text-body);
+  font-size: var(--text-sm);
+}
+
+.description {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}

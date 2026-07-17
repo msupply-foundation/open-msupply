@@ -1,7 +1,9 @@
 import { createSignal, type JSX } from 'solid-js';
 import { TextField } from '../ui/elements/inputs/TextField';
+import { TextArea } from '../ui/elements/inputs/TextArea';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
+import { Checkbox } from '../ui/elements/inputs/Checkbox';
 import styles from './InputsShowcase.module.css';
 
 const Field = (props: {
@@ -31,16 +33,20 @@ const Card = (props: {
 
 /*
  * Storybook of the input + form-layout elements: the TextField (company input
- * design spec), the RadioGroup (native single-choice), and FieldRow (inline
- * label + control) — the form-composition piece that pairs with them inside a
- * dialog/panel. InsetPanel, the recessed grouping container, is a layout
- * element (see the Layout › Inset panel section).
+ * design spec), the TextArea (the same spec, multi-line), the RadioGroup
+ * (native single-choice), the Checkbox (native plain checkbox), and FieldRow
+ * (inline label + control) — the form-composition piece that pairs with them
+ * inside a dialog/panel. InsetPanel, the recessed grouping container, is a
+ * layout element (see the Layout › Inset panel section).
  */
 export const InputsShowcase = () => {
   // RadioGroup demo: a stocktake-type choice, plus an indented include-all
   // sub-choice — the exact shape the create-stocktake modal uses.
   const [stocktakeType, setStocktakeType] = createSignal('full');
   const [includeAll, setIncludeAll] = createSignal('soh');
+  // Checkbox demo: caller-owned checked state, flipped in onChange.
+  const [urgent, setUrgent] = createSignal(false);
+  const [confirmed, setConfirmed] = createSignal(true);
 
   return (
     <div class={styles.stack}>
@@ -106,6 +112,57 @@ export const InputsShowcase = () => {
       </Card>
 
       <Card
+        title="Multi-line text — native <textarea>"
+        lead={
+          <>
+            The TextField spec on a plain HTML <code>&lt;textarea&gt;</code> —
+            same border, focus ring, label and helper/error wiring. The{' '}
+            <code>rows</code> prop sets the visible lines (default 4, as the old
+            OMS TextArea); the height is fixed — longer content scrolls, no
+            resize grip. Defaults to full width (<code>width</code> caps it, as
+            TextField).
+          </>
+        }
+      >
+        <div class={styles.grid}>
+          <Field caption="Default (4 rows)">
+            <TextArea
+              label="Comment"
+              placeholder="Add a comment…"
+              helperText="Four visible lines by default — longer content scrolls"
+            />
+          </Field>
+          <Field caption="rows={2} · filled">
+            <TextArea
+              label="Notes"
+              rows={2}
+              value={
+                'Damaged carton on arrival.\nPhotos attached to the claim.'
+              }
+            />
+          </Field>
+          <Field caption="Error">
+            <TextArea
+              label="Reason"
+              rows={2}
+              required
+              value=""
+              error="A reason is required"
+            />
+          </Field>
+          <Field caption="Disabled">
+            <TextArea
+              label="Instructions"
+              rows={2}
+              placeholder="No instructions"
+              disabled
+              helperText="Grey fill, muted border — not interactive"
+            />
+          </Field>
+        </div>
+      </Card>
+
+      <Card
         title="Field row — inline label + control"
         lead={
           <>
@@ -138,12 +195,13 @@ export const InputsShowcase = () => {
             Single choice among fixed options — the "own the simple" case with{' '}
             <strong>no</strong> library. A shared <code>name</code> gives the
             browser single-select grouping, roving arrow-key focus and the
-            radiogroup/radio ARIA for free; we only style the native control
-            with <code>accent-color</code> (the brand dot) and lay the label —
-            with an optional muted description — beside it. Options can be
-            individually <code>disabled</code>, and <code>indentRem</code> lines
-            a sub-group up under a sibling control. This is the create-stocktake
-            type + include-all choice.
+            radiogroup/radio ARIA for free; we draw the control ourselves (brand
+            rim + dot, the gap between them transparent —{' '}
+            <code>accent-color</code> painted it white in both themes) and lay
+            the label — with an optional muted description — beside it. Options
+            can be individually <code>disabled</code>, and{' '}
+            <code>indentRem</code> lines a sub-group up under a sibling control.
+            This is the create-stocktake type + include-all choice.
           </>
         }
       >
@@ -188,6 +246,44 @@ export const InputsShowcase = () => {
               ]}
             />
           </div>
+        </div>
+      </Card>
+
+      <Card
+        title="Checkbox — native <input type=checkbox>"
+        lead={
+          <>
+            The plain form checkbox — the same "own the simple" call as the
+            radios: the native control gives the role, Space toggling and
+            checked announcement for free; we style it with{' '}
+            <code>accent-color</code> and the wrapping label makes the whole row
+            clickable. Caller owns <code>checked</code>, flips it in{' '}
+            <code>onChange</code>. (The pill-shaped toggle is{' '}
+            <code>CheckboxButton</code> — see Buttons; the table row-selection
+            checkbox is the DataTable's own.)
+          </>
+        }
+      >
+        <div class={styles.formPreview}>
+          <Checkbox label="Urgent" checked={urgent()} onChange={setUrgent} />
+          <Checkbox
+            label="Confirm counts"
+            description="Lines must be verified before the stocktake can be finalised."
+            checked={confirmed()}
+            onChange={setConfirmed}
+          />
+          <Checkbox
+            label="Disabled"
+            checked={false}
+            onChange={() => {}}
+            disabled
+          />
+          <Checkbox
+            label="Disabled · checked"
+            checked
+            onChange={() => {}}
+            disabled
+          />
         </div>
       </Card>
     </div>

@@ -1,8 +1,12 @@
 /*
- * RadioGroup — native <input type="radio"> styled with `accent-color` so the checked
- * dot/ring is the brand orange (matching the current app), label to the right. The
- * <fieldset> is reset (UA gives it a border + padding + margin) so it lays out like any
- * other group. The only px is the focus-ring width (allowed by the sizing rule).
+ * RadioGroup — native <input type="radio">, hand-drawn (`appearance: none`: a border
+ * ring + a radial-gradient dot) so the checked dot/ring is the brand orange, label to
+ * the right. Not `accent-color`: Chromium paints the gap between dot and rim in a
+ * computed contrast colour (white for our orange) in BOTH schemes, so it glowed white
+ * on dark backgrounds — here the gap is transparent and the page background shows
+ * through. The <fieldset> is reset (UA gives it a border + padding + margin) so it
+ * lays out like any other group. The only px are border/outline widths (allowed by
+ * the sizing rule).
  */
 .root {
   /* fieldset reset (UA gives it border/padding/margin), then our group layout. */
@@ -47,19 +51,36 @@
   opacity: 0.5;
 }
 
-/* The native control — accent-color paints the checked dot + ring in the brand tone. Sized
-   a touch larger than default for a comfortable target; margin aligns it to the first line. */
+/* The native control, drawn by us: an outlined circle; checked = brand rim + a
+   radial-gradient dot with a TRANSPARENT gap between them (the background shows
+   through — the point of dropping accent-color). Sized a touch larger than default
+   for a comfortable target; margin aligns it to the first line. */
 .input {
+  appearance: none;
   flex-shrink: 0;
   inline-size: 1.125rem;
   block-size: 1.125rem;
   margin: 0.0625rem 0 0;
-  accent-color: var(--primary-main);
+  border: 1px solid var(--gray-main);
+  border-radius: 50%;
+  background: transparent;
   cursor: inherit;
+  transition: border-color 120ms ease;
+}
+
+.input:checked {
+  border: 2px solid var(--primary-main);
+  /* The dot — soft-edged stop for anti-aliasing; the ring outside it stays
+     transparent up to the rim. */
+  background: radial-gradient(
+    circle,
+    var(--primary-main) 0.28rem,
+    transparent 0.34rem
+  );
 }
 
 .input:focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 2px solid var(--primary-main);
   outline-offset: 2px;
   border-radius: 50%;
 }
@@ -78,4 +99,10 @@
 .description {
   color: var(--text-secondary);
   font-size: var(--text-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input {
+    transition: none;
+  }
 }
