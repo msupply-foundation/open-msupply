@@ -10,6 +10,7 @@ import {
 import { CloseIcon } from '../../icons';
 import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
+import { useIsCompact } from '../../utils/createMediaQuery';
 import styles from './Dialog.module.css';
 
 export interface DialogProps {
@@ -103,7 +104,8 @@ export interface DialogProps {
    * DataTable) fills the tall space.
    */
   size?: 'auto' | 'large';
-  /** `data-testid` for the <dialog> element (locale-stable test hook, e2e/TESTIDS.md). */
+  /** `data-testid` for the <dialog> element (locale-stable test hook,
+   * e2e/TESTIDS.md). */
   testId?: string;
 }
 
@@ -176,6 +178,10 @@ export const Dialog = (props: DialogProps) => {
   // nested popups mount here. The dialog box is overflow:visible (the clip
   // lives on the inner .body) so the popup isn't cut off.
   const [dialogEl, setDialogEl] = createSignal<HTMLElement>();
+  // Large ("workbench") modals go full-screen on phone-ish widths;
+  // data-fullscreen drives the CSS. The 600px cutoff lives once in
+  // breakpoints.ts (createMediaQuery).
+  const compact = useIsCompact();
   // JSX-element props are lazy getters: every read builds a fresh element, so
   // a <Show when> test plus an insertion is two creations (a ref/onMount on
   // the passed element would land on the discarded copy). Resolve each one
@@ -217,6 +223,7 @@ export const Dialog = (props: DialogProps) => {
           : styles.dialog
       }
       data-testid={props.testId}
+      data-fullscreen={compact() && props.size === 'large' ? '' : undefined}
       style={{
         // widthRem is ignored in large mode (it goes full-bleed via the .large
         // class).
