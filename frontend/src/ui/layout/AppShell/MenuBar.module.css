@@ -249,7 +249,6 @@
   max-inline-size: 85vw;
   overflow: hidden;
   background: var(--bg-drawer);
-  box-shadow: var(--shadow-4);
   transform: translateX(var(--hide-x));
   transition: transform 220ms ease;
 }
@@ -258,7 +257,11 @@
   --hide-x: 100%;
 }
 
+/* Shadow only while open: when closed the panel slides fully off-screen
+   (translateX -100%), but its right-edge drop shadow would otherwise bleed
+   back into the viewport as a stray shadow along the left edge. */
 .overlayPanel[data-open='true'] {
+  box-shadow: var(--shadow-4);
   transform: none;
 }
 
@@ -277,12 +280,12 @@
   pointer-events: auto;
 }
 
-/* Touch: larger tap targets on coarse pointers (spec: 3rem) */
-@media (pointer: coarse) {
-  .navButton {
-    min-block-size: var(--touch-target);
-  }
-}
+/* NB: no pointer:coarse min-height bump on nav rows (matching the Button/Tabs
+   calls). --touch-target (48px) inflated every row in touch / device-emulation
+   mode — worst on the dense 1.875rem child rows — defeating the nested-drawer
+   density, and it fired at ANY width once the pointer read coarse (not just
+   narrow viewports). The natural 2.5rem section / 1.875rem child heights already
+   clear WCAG 2.5.8 (24px min), so we keep them. */
 
 /* --- Sync-entry status badge (spec/chrome § sync indicator) -------------- */
 /* The pill itself is the shared Badge component; the MenuBar owns only its
