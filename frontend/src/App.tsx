@@ -84,7 +84,7 @@ export const App: Component = () => {
       <Switch>
         <Match when={phase() === 'loading'}>
           <div class={styles.page}>
-            <p>{t('app.loading')}</p>
+            <p>{t('loading')}</p>
           </div>
         </Match>
         <Match when={phase() === 'initialisation'}>

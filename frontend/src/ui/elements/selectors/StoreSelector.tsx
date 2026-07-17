@@ -75,7 +75,7 @@ export const StoreSelector = (props: {
           when={visible().length > 0}
           fallback={<div class={styles.empty}>{t('store.no-results')}</div>}
         >
-          <ul class={styles.list} role="listbox" aria-label={t('store.select')}>
+          <ul class={styles.list} role="listbox" aria-label={t('heading.select-store')}>
             <For each={visible()}>
               {store => (
                 <li>
@@ -92,13 +92,13 @@ export const StoreSelector = (props: {
                     <span class={styles.tags}>
                       <Show when={store.id === props.defaultStoreId}>
                         <StatusChip
-                          label={t('store.default')}
+                          label={t('label.default')}
                           colour="var(--status-new)"
                         />
                       </Show>
                       <Show when={store.id === props.lastUsedStoreId}>
                         <StatusChip
-                          label={t('store.last-used')}
+                          label={t('label.last-used')}
                           colour="var(--status-verified)"
                         />
                       </Show>
@@ -119,7 +119,7 @@ export const StoreSelector = (props: {
           disabled={!selectedId()}
           onClick={() => selectedId() && props.onConfirm(selectedId()!)}
         >
-          {t('store.continue')}
+          {t('button.continue')}
         </Button>
       </div>
     </div>

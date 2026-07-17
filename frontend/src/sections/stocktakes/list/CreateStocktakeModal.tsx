@@ -259,12 +259,12 @@ export const CreateStocktakeModal = (props: {
   const includeAllOptions = () => [
     {
       value: 'soh',
-      label: t('stocktake.create.items-with-stock'),
+      label: t('stocktake.items-with-soh'),
       testId: 'stocktake-items-with-soh',
     },
     {
       value: 'all',
-      label: t('stocktake.create.items-all'),
+      label: t('label.all-items'),
       disabled: allItemsDisabled(),
       testId: 'stocktake-all-items',
     },
@@ -278,7 +278,7 @@ export const CreateStocktakeModal = (props: {
     <Dialog
       open={props.open}
       testId="create-stocktake-modal"
-      title={t('stocktake.create.title')}
+      title={t('label.new-stocktake')}
       icon={<PlusCircleIcon />}
       // Blocking while the mutation is in flight (no scrim/Escape exit until
       // it resolves).
@@ -325,7 +325,7 @@ export const CreateStocktakeModal = (props: {
               data-testid="dialog-button-cancel"
               onClick={close}
             >
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
           </Show>
           <Button
@@ -369,12 +369,12 @@ export const CreateStocktakeModal = (props: {
         <Match when={form().type === 'filtered'}>
           <InsetPanel hint={t('stocktake.create.filtered-hint')}>
             {/* Master list row + the include-all sub-choice beneath it (OMS layout). */}
-            <FieldRow label={t('stocktake.filter.master-list')}>
+            <FieldRow label={t('label.master-list')}>
               <MasterListSelect
-                label={t('stocktake.filter.master-list')}
+                label={t('label.master-list')}
                 hideLabel
                 disabled={creating()}
-                placeholder={t('filter.any')}
+                placeholder={t('label.any')}
                 value={form().masterListId || undefined}
                 onChange={id => setForm({ ...form(), masterListId: id ?? '' })}
               />
@@ -393,19 +393,19 @@ export const CreateStocktakeModal = (props: {
                 }
               />
             </FieldRow>
-            <FieldRow label={t('stocktake.filter.location')}>
+            <FieldRow label={t('label.location')}>
               <LocationSelect
-                label={t('stocktake.filter.location')}
+                label={t('label.location')}
                 hideLabel
                 disabled={creating()}
-                placeholder={t('filter.any')}
+                placeholder={t('label.any')}
                 value={form().locationId || undefined}
                 onChange={l => setForm({ ...form(), locationId: l?.id ?? '' })}
               />
             </FieldRow>
-            <FieldRow label={t('stocktake.create.expiring-before')}>
+            <FieldRow label={t('label.items-expiring-before')}>
               <TextField
-                label={t('stocktake.create.expiring-before')}
+                label={t('label.items-expiring-before')}
                 hideLabel
                 type="date"
                 disabled={creating()}

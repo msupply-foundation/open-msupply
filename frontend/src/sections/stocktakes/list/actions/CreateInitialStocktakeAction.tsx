@@ -39,7 +39,7 @@ export const CreateInitialStocktakeAction = (props: {
       input: {
         id: crypto.randomUUID(),
         isInitialStocktake: true,
-        comment: t('stocktake.create.initial-comment'),
+        comment: t('stocktake.comment-initial-stocktake-template'),
       },
     });
     if (result.kind !== 'success') {
@@ -71,7 +71,7 @@ export const CreateInitialStocktakeAction = (props: {
             disabled={creating()}
             onClick={props.onClose}
           >
-            {t('common.cancel')}
+            {t('button.cancel')}
           </Button>
           <Button
             variant="secondary"

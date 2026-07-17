@@ -58,7 +58,7 @@ export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = props => {
         disabled={props.disabled}
         onClick={() => setOpen(true)}
       >
-        {t('stocktake.lines.reduce-to-zero')}
+        {t('button.reduce-lines-to-zero')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -100,16 +100,16 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MinusCircleIcon />}
-      title={t('stocktake.lines.reduce-to-zero-title')}
+      title={t('button.reduce-lines-to-zero')}
       description={
         <Switch
           fallback={
             <>
               <p>{t('stocktake.lines.reduce-to-zero-message')}</p>
-              <FieldRow label={t('stocktake.line-edit.reason')}>
+              <FieldRow label={t('label.reason')}>
                 <ReasonSelect
                   kind="reduction"
-                  label={t('stocktake.line-edit.reason')}
+                  label={t('label.reason')}
                   hideLabel
                   value={reasonId() ?? undefined}
                   placeholder={t('stocktake.line-edit.reason-select')}
@@ -141,7 +141,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                   icon={<XCircleIcon />}
                   onClick={props.onClose}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
@@ -161,7 +161,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
               icon={<CheckIcon />}
               onClick={props.onClose}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
@@ -170,7 +170,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
               icon={<XCircleIcon />}
               onClick={props.onClose}
             >
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
             <Button
               variant="primary"

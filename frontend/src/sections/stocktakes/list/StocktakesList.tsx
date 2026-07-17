@@ -273,7 +273,7 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'stocktakeDate' },
       sortKey: 'stocktakeDate',
-      header: t('stocktake.column.stocktake-date'),
+      header: t('label.stocktake-date'),
       ...getDateCell(),
     },
     {
@@ -284,14 +284,14 @@ const StocktakesList: Component = () => {
     },
     {
       c: { key: 'isLocked' },
-      header: t('stocktake.column.locked'),
+      header: t('label.locked'),
       ...getBooleanCell(),
     },
   ];
 
   const crumbs = () => [
-    { label: t('nav.inventory') },
-    { label: t('nav.inventory.stocktakes') },
+    { label: t('inventory') },
+    { label: t('stocktakes') },
   ];
 
   return (
@@ -306,7 +306,7 @@ const StocktakesList: Component = () => {
               data-testid="new-stocktake-button"
               onClick={() => setCreateOpen(true)}
             >
-              {t('stocktake.new')}
+              {t('label.new-stocktake')}
             </Button>
           </HeaderButtons>
           <Toolbar>
@@ -389,7 +389,7 @@ const StocktakesList: Component = () => {
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >
-              {t('stocktake.new')}
+              {t('label.new-stocktake')}
             </Button>
           ) : (
             <Button

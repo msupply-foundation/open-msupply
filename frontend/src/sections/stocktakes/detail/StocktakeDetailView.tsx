@@ -454,9 +454,9 @@ const StocktakeDetailView: Component = () => {
 
   // Crumbs are an accessor so t() re-translates on locale change.
   const crumbs = (node: StocktakeInfoFragment) => [
-    { label: t('nav.inventory') },
+    { label: t('inventory') },
     {
-      label: t('nav.inventory.stocktakes'),
+      label: t('stocktakes'),
       onClick: () => navigate(`/${params.storeId}/inventory/stocktakes`),
     },
     { label: t('stocktake.detail.title', { number: node.stocktakeNumber }) },
@@ -466,7 +466,7 @@ const StocktakeDetailView: Component = () => {
     {
       c: { accessor: line => line.item.code, id: 'code' },
       sortKey: 'code',
-      header: t('stocktake.column.item-code'),
+      header: t('label.code'),
     },
     {
       c: { key: 'itemName' },
@@ -479,19 +479,19 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'batch' },
       sortKey: 'batch',
-      header: t('stocktake.column.batch'),
+      header: t('label.batch'),
       aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
-      header: t('stocktake.column.expiry'),
+      header: t('label.expiry'),
       ...getDateCell(),
     },
     {
       c: { key: 'snapshotNumberOfPacks' },
       sortKey: 'snapshotNumberOfPacks',
-      header: t('stocktake.column.snapshot'),
+      header: t('label.snapshot'),
       ...getNumberCell(),
       // Snapshot cell also carries the line's error inline beneath the count (a
       // snapshot/current-count mismatch is a "recount this line" message about
@@ -535,7 +535,7 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
-      header: t('stocktake.column.counted'),
+      header: t('label.counted'),
       ...getNumberCell(),
       meta: { align: 'right', card: { region: 'badge' } },
     },
@@ -571,18 +571,18 @@ const StocktakeDetailView: Component = () => {
       // Location is nested (location.code) — an accessor column.
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'location',
-      header: t('stocktake.column.location'),
+      header: t('label.location'),
     },
     {
       // The adjustment reason (reasonOption.reason) — an accessor column.
       c: { accessor: line => line.reasonOption?.reason ?? '', id: 'reason' },
       sortKey: 'reason',
-      header: t('stocktake.column.reason'),
+      header: t('label.reason'),
     },
     {
       c: { key: 'note' },
       sortKey: 'note',
-      header: t('stocktake.column.note'),
+      header: t('label.note'),
     },
   ];
 
@@ -627,7 +627,7 @@ const StocktakeDetailView: Component = () => {
                       icon={<InfoIcon />}
                       onClick={() => setSidePanelOpen(true)}
                     >
-                      {t('common.more')}
+                      {t('button.more')}
                     </Button>
                   </Show>
                 </HeaderButtons>
@@ -720,7 +720,7 @@ const StocktakeDetailView: Component = () => {
                       icon={<MinusCircleIcon />}
                       onClick={() => setSelectedIds([])}
                     >
-                      {t('stocktake.lines.clear-selection')}
+                      {t('label.clear-selection')}
                     </Button>
                   </ContentFooterActions>
                 </ContentFooter>
@@ -738,7 +738,7 @@ const StocktakeDetailView: Component = () => {
               sort={sort()}
               onSort={onSort}
               onRowClick={isDisabled(node()) ? undefined : openRow}
-              emptyMessage={t('stocktake.detail.empty')}
+              emptyMessage={t('error.no-stocktake-items')}
               // "Add item" — only offered while the stocktake is editable (an
               // empty finalised/locked one can't gain lines). The add-line flow
               // doesn't exist yet, so the handler is a no-op placeholder.

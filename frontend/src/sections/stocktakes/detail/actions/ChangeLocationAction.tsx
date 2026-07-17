@@ -57,7 +57,7 @@ export const ChangeLocationAction: Component<
         disabled={props.disabled}
         onClick={() => setOpen(true)}
       >
-        {t('stocktake.lines.change-location')}
+        {t('button.change-location')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -95,15 +95,15 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MapPinIcon />}
-      title={t('stocktake.lines.change-location')}
+      title={t('button.change-location')}
       description={
         <Switch
           fallback={
             <>
               <p>{t('stocktake.lines.change-location-message')}</p>
-              <FieldRow label={t('stocktake.line-edit.location')}>
+              <FieldRow label={t('label.location')}>
                 <LocationSelect
-                  label={t('stocktake.line-edit.location')}
+                  label={t('label.location')}
                   hideLabel
                   value={locationId() ?? undefined}
                   placeholder={t('stocktake.line-edit.location-none')}
@@ -135,7 +135,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                   icon={<XCircleIcon />}
                   onClick={props.onClose}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
@@ -155,7 +155,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
               icon={<CheckIcon />}
               onClick={props.onClose}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
@@ -164,7 +164,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
               icon={<XCircleIcon />}
               onClick={props.onClose}
             >
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
             <Button
               variant="primary"

@@ -25,13 +25,13 @@ const labelFor = (value: string) =>
  */
 export const LanguageSelector = (props: LanguageSelectorProps) => (
   <DropdownMenu.Root placement="top-start" gutter={8}>
-    <DropdownMenu.Trigger class={styles.trigger} title={t('language.select')}>
+    <DropdownMenu.Trigger class={styles.trigger} title={t('select-language')}>
       <TranslateIcon class={styles.icon} />
       <span class={styles.triggerText}>{labelFor(props.language)}</span>
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal>
       <DropdownMenu.Content class={styles.content}>
-        <div class={styles.heading}>{t('language.select')}</div>
+        <div class={styles.heading}>{t('select-language')}</div>
         <For each={languageOptions}>
           {option => (
             <DropdownMenu.Item

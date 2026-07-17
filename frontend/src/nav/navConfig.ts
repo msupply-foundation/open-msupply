@@ -22,11 +22,11 @@ export type NavItem = {
 export const navConfig: NavItem[] = [
   { labelKey: 'nav.dashboard', path: 'dashboard' },
   {
-    labelKey: 'nav.replenishment',
+    labelKey: 'replenishment',
     path: 'replenishment',
     children: [
       {
-        labelKey: 'nav.replenishment.purchase-order',
+        labelKey: 'label.purchase-orders',
         path: 'replenishment/purchase-order',
       },
       {
@@ -46,26 +46,26 @@ export const navConfig: NavItem[] = [
         path: 'replenishment/r-and-r-forms',
       },
       {
-        labelKey: 'nav.replenishment.suppliers',
+        labelKey: 'suppliers',
         path: 'replenishment/suppliers',
       },
     ],
   },
   {
-    labelKey: 'nav.inventory',
+    labelKey: 'inventory',
     path: 'inventory',
     children: [
-      { labelKey: 'nav.inventory.stock', path: 'inventory/stock' },
-      { labelKey: 'nav.inventory.locations', path: 'inventory/locations' },
-      { labelKey: 'nav.inventory.stocktakes', path: 'inventory/stocktakes' },
+      { labelKey: 'stock', path: 'inventory/stock' },
+      { labelKey: 'locations', path: 'inventory/locations' },
+      { labelKey: 'stocktakes', path: 'inventory/stocktakes' },
       {
-        labelKey: 'nav.inventory.stock-movement',
+        labelKey: 'label.stock-movement',
         path: 'inventory/stock-movement',
       },
     ],
   },
   {
-    labelKey: 'nav.distribution',
+    labelKey: 'distribution',
     path: 'distribution',
     children: [
       {
@@ -81,13 +81,13 @@ export const navConfig: NavItem[] = [
         path: 'distribution/customer-return',
       },
       {
-        labelKey: 'nav.distribution.customers',
+        labelKey: 'customers',
         path: 'distribution/customers',
       },
     ],
   },
   {
-    labelKey: 'nav.dispensary',
+    labelKey: 'dispensary',
     path: 'dispensary',
     children: [
       { labelKey: 'nav.dispensary.patients', path: 'dispensary/patients' },
@@ -96,7 +96,7 @@ export const navConfig: NavItem[] = [
         path: 'dispensary/prescription',
       },
       { labelKey: 'nav.dispensary.encounter', path: 'dispensary/encounter' },
-      { labelKey: 'nav.dispensary.clinicians', path: 'dispensary/clinicians' },
+      { labelKey: 'clinicians', path: 'dispensary/clinicians' },
     ],
   },
   {
@@ -104,8 +104,8 @@ export const navConfig: NavItem[] = [
     path: 'cold-chain',
     children: [
       { labelKey: 'nav.cold-chain.equipment', path: 'cold-chain/equipment' },
-      { labelKey: 'nav.cold-chain.monitoring', path: 'cold-chain/monitoring' },
-      { labelKey: 'nav.cold-chain.sensors', path: 'cold-chain/sensors' },
+      { labelKey: 'monitoring', path: 'cold-chain/monitoring' },
+      { labelKey: 'sensors', path: 'cold-chain/sensors' },
     ],
   },
   {
@@ -122,16 +122,16 @@ export const navConfig: NavItem[] = [
     labelKey: 'nav.catalogue',
     path: 'catalogue',
     children: [
-      { labelKey: 'nav.catalogue.assets', path: 'catalogue/assets' },
+      { labelKey: 'assets', path: 'catalogue/assets' },
       { labelKey: 'nav.catalogue.items', path: 'catalogue/items' },
       {
-        labelKey: 'nav.catalogue.master-lists',
+        labelKey: 'label.master-lists',
         path: 'catalogue/master-lists',
       },
     ],
   },
   {
-    labelKey: 'nav.manage',
+    labelKey: 'manage',
     path: 'manage',
     children: [
       { labelKey: 'nav.manage.stores', path: 'manage/stores' },
@@ -140,20 +140,20 @@ export const navConfig: NavItem[] = [
         path: 'manage/indicators-demographics',
       },
       {
-        labelKey: 'nav.manage.global-preferences',
+        labelKey: 'global-preferences',
         path: 'manage/global-preferences',
       },
       { labelKey: 'nav.manage.equipment', path: 'manage/equipment' },
-      { labelKey: 'nav.manage.campaigns', path: 'manage/campaigns' },
-      { labelKey: 'nav.manage.sites', path: 'manage/sites' },
-      { labelKey: 'nav.manage.reports', path: 'manage/reports' },
+      { labelKey: 'campaigns', path: 'manage/campaigns' },
+      { labelKey: 'sites', path: 'manage/sites' },
+      { labelKey: 'reports', path: 'manage/reports' },
       { labelKey: 'nav.manage.sync-message', path: 'manage/sync-message' },
-      { labelKey: 'nav.manage.plugins', path: 'manage/plugins' },
+      { labelKey: 'plugins', path: 'manage/plugins' },
     ],
   },
-  { labelKey: 'nav.reports', path: 'reports' },
-  { labelKey: 'nav.settings', path: 'settings' },
-  { labelKey: 'nav.help', path: 'help' },
+  { labelKey: 'reports', path: 'reports' },
+  { labelKey: 'settings', path: 'settings' },
+  { labelKey: 'help', path: 'help' },
 ];
 
 // Flattened list of every destination (sections + inner entries) — used to

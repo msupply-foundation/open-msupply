@@ -157,7 +157,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                     icon={<XCircleIcon />}
                     onClick={close}
                   >
-                    {t('common.cancel')}
+                    {t('button.cancel')}
                   </Button>
                 </Show>
                 <Button
@@ -173,7 +173,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
           >
             <Match when={phase() === 'success'}>
               <Button variant="secondary" icon={<CheckIcon />} onClick={close}>
-                {t('common.ok')}
+                {t('button.ok')}
               </Button>
             </Match>
             <Match when={phase() === 'error'}>
@@ -182,7 +182,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                 icon={<XCircleIcon />}
                 onClick={close}
               >
-                {t('common.cancel')}
+                {t('button.cancel')}
               </Button>
               <Button
                 variant="primary"
@@ -213,7 +213,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
             icon={<CheckIcon />}
             onClick={() => setNoLinesOpen(false)}
           >
-            {t('common.ok')}
+            {t('button.ok')}
           </Button>
         }
       />

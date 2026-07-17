@@ -75,7 +75,7 @@ export const getDateCell = <T>(meta?: Meta): CellFragment<T> => ({
 // Booleans: resolved value → localised Yes/No.
 export const getBooleanCell = <T>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
-  cell: info => (info.getValue<boolean>() ? t('common.yes') : t('common.no')),
+  cell: info => (info.getValue<boolean>() ? t('messages.yes') : t('messages.no')),
 });
 
 // =================================================================================

@@ -663,7 +663,7 @@ export function DataTable<T, K extends string, G extends string = never>(
             class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
             aria-label={t('table.toggle-full-screen')}
             data-testid="table-fullscreen"
-            title={t('table.full-screen')}
+            title={t('label.full-screen')}
             onClick={() => setFullScreen(!fullScreen())}
           >
             {fullScreen() ? <MinimiseIcon /> : <MaximiseIcon />}
@@ -680,7 +680,7 @@ export function DataTable<T, K extends string, G extends string = never>(
         <div
           class={styles.refreshingBar}
           role="status"
-          aria-label={t('common.loading')}
+          aria-label={t('loading')}
         />
       </Show>
       <div class={styles.tableScroll}>

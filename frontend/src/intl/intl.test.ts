@@ -11,9 +11,9 @@ setDictionaries({ en: commonEn, ar: commonAr });
 describe('t', () => {
   it('translates a key in the active locale', () => {
     setLocale('en');
-    expect(t('login.title')).toBe('Log in');
+    expect(t('button.login')).toBe('Log in');
     setLocale('ar');
-    expect(t('login.title')).toBe('تسجيل الدخول');
+    expect(t('button.login')).toBe('تسجيل الدخول');
   });
 
   it('falls back to the key when missing', () => {

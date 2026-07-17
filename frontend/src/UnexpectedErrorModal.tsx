@@ -42,12 +42,12 @@ const PermissionDenied: Component<{ permissions: string[] }> = props => {
       open
       dismissable={false}
       onClose={() => {}}
-      title={t('error.permission-denied')}
+      title={t('auth.permission-denied')}
       icon={<LockIcon />}
       description={description()}
       actions={
         <Button variant="secondary" onClick={clearForbiddenError}>
-          {t('common.ok')}
+          {t('button.ok')}
         </Button>
       }
     />

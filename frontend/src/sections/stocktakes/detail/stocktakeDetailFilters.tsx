@@ -40,10 +40,10 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
     ),
   },
   batch: {
-    label: () => t('stocktake.detail-filter.batch'),
+    label: () => t('label.batch'),
     render: props => (
       <FilterTextInput
-        label={t('stocktake.detail-filter.batch')}
+        label={t('label.batch')}
         placeholder={t('stocktake.filter.contains')}
         value={props.filter().batch ?? ''}
         onInput={value => props.setPartialFilter({ batch: value })}
@@ -51,10 +51,10 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
     ),
   },
   location: {
-    label: () => t('stocktake.detail-filter.location'),
+    label: () => t('label.location'),
     render: props => (
       <FilterTextInput
-        label={t('stocktake.detail-filter.location')}
+        label={t('label.location')}
         placeholder={t('stocktake.filter.contains')}
         value={props.filter().location ?? ''}
         onInput={value => props.setPartialFilter({ location: value })}

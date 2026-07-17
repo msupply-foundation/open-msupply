@@ -187,7 +187,7 @@ export const Dialog = (props: DialogProps) => {
             <button
               type="button"
               class={styles.close}
-              aria-label={t('common.close')}
+              aria-label={t('button.close')}
               onClick={() => props.onClose()}
             >
               <CloseIcon />

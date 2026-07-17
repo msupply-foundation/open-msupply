@@ -120,7 +120,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                   icon={<XCircleIcon />}
                   onClick={props.onClose}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
@@ -140,7 +140,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
               icon={<CheckIcon />}
               onClick={props.onClose}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
@@ -149,7 +149,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
               icon={<XCircleIcon />}
               onClick={props.onClose}
             >
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
             <Button
               variant="primary"

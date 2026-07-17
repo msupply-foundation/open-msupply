@@ -174,7 +174,7 @@ export const InitialisationPage: Component<{
       <form class={styles.card} onSubmit={submit}>
         <h1>{t('init.title')}</h1>
         <TextField
-          label={t('init.url')}
+          label={t('label.settings-url')}
           width="full"
           value={values().url}
           onInput={e => {
@@ -185,7 +185,7 @@ export const InitialisationPage: Component<{
           disabled={initialising()}
         />
         <TextField
-          label={t('init.site-name')}
+          label={t('label.settings-username')}
           width="full"
           value={values().siteName}
           onInput={e => {
@@ -196,7 +196,7 @@ export const InitialisationPage: Component<{
           disabled={initialising()}
         />
         <TextField
-          label={t('init.password')}
+          label={t('heading.password')}
           width="full"
           type="password"
           value={values().password}
@@ -233,7 +233,7 @@ export const InitialisationPage: Component<{
             </Button>
           }
         >
-          <Button onClick={() => void retry()}>{t('init.retry')}</Button>
+          <Button onClick={() => void retry()}>{t('button.retry')}</Button>
         </Show>
       </form>
     </div>

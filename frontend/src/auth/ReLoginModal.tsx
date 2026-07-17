@@ -73,13 +73,13 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
       title={t('login.again')}
       actions={
         <Button type="submit" form={formId} disabled={submitting()}>
-          {submitting() ? t('login.submitting') : t('login.submit')}
+          {submitting() ? t('login.submitting') : t('button.login')}
         </Button>
       }
     >
       <form id={formId} class={styles.stack} onSubmit={e => void submit(e)}>
         <TextField
-          label={t('login.username')}
+          label={t('heading.username')}
           width="full"
           name="username"
           autocomplete="username"
@@ -91,7 +91,7 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
           }}
         />
         <TextField
-          label={t('login.password')}
+          label={t('heading.password')}
           width="full"
           type="password"
           name="password"

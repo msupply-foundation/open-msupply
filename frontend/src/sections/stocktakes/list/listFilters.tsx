@@ -53,7 +53,7 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
         testId={props.testId}
         value={props.filter().status?.equalTo ?? ''}
         options={[
-          { value: '', label: t('filter.any') },
+          { value: '', label: t('label.any') },
           { value: 'NEW', label: t('stocktake.status.new') },
           { value: 'FINALISED', label: t('stocktake.status.finalised') },
         ]}
@@ -100,10 +100,10 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
     ),
   },
   isLocked: {
-    label: () => t('stocktake.filter.locked'),
+    label: () => t('label.locked'),
     render: props => (
       <FilterSelect
-        label={t('stocktake.filter.locked')}
+        label={t('label.locked')}
         testId={props.testId}
         value={
           props.filter().isLocked == null
@@ -113,9 +113,9 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
               : 'false'
         }
         options={[
-          { value: '', label: t('filter.any') },
-          { value: 'true', label: t('common.yes') },
-          { value: 'false', label: t('common.no') },
+          { value: '', label: t('label.any') },
+          { value: 'true', label: t('messages.yes') },
+          { value: 'false', label: t('messages.no') },
         ]}
         onChange={value =>
           props.setPartialFilter({
@@ -126,10 +126,10 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
     ),
   },
   stocktakeNumber: {
-    label: () => t('stocktake.filter.number'),
+    label: () => t('label.number'),
     render: props => (
       <FilterTextInput
-        label={t('stocktake.filter.number')}
+        label={t('label.number')}
         testId={props.testId}
         placeholder={t('stocktake.filter.equals')}
         // stocktakeNumber is an integer; the control edits a string. Show it

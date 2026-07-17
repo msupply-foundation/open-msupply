@@ -73,8 +73,8 @@ export const StocktakeDetailToolbar: Component<
       </FieldRow>
 
       <FilterTextInput
-        label={t('stocktake.detail.search-items')}
-        placeholder={t('stocktake.detail.search-items')}
+        label={t('placeholder.filter-items')}
+        placeholder={t('placeholder.filter-items')}
         value={props.filter.search ?? ''}
         onInput={value =>
           props.onFilterChange({ ...props.filter, search: value })

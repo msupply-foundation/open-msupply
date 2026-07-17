@@ -182,7 +182,7 @@ const FiltersMenu = <F extends object>(props: {
 }) => (
   <DropdownMenu.Root placement="bottom-start" gutter={4}>
     <DropdownMenu.Trigger class={styles.trigger} data-testid="filters-menu">
-      <span>{t('filter.filters')}</span>
+      <span>{t('label.filters')}</span>
       <ChevronDownIcon class={styles.triggerChevron} />
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal>
@@ -206,7 +206,7 @@ const FiltersMenu = <F extends object>(props: {
             class={styles.item}
             onSelect={() => props.onReset?.()}
           >
-            <span class={styles.itemLabel}>{t('filter.remove-all')}</span>
+            <span class={styles.itemLabel}>{t('label.remove-all-filters')}</span>
           </DropdownMenu.Item>
         </Show>
       </DropdownMenu.Content>
