@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, render } from '@testing-library/react';
-import { TestingProvider } from '@openmsupply-client/common';
+import { TestingProvider } from '@common/utils/testing';
 import { useFormErrorStore } from '../../../../hooks/useFormErrors/store';
 import { TextInputCell } from './TextInputCell';
 

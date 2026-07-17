@@ -5,7 +5,7 @@ import {
   setScreenSize_ONLY_FOR_TESTING,
   TestingProvider,
   TestingRouterContext,
-} from '@openmsupply-client/common';
+} from '@common/utils/testing';
 import '@testing-library/jest-dom';
 
 jest.mock('@openmsupply-client/common', () => ({

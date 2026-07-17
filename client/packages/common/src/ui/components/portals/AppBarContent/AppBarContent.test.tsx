@@ -1,7 +1,10 @@
 import React, { FC } from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import { AppBarContentPortal, AppBarContent } from './AppBarContent';
-import { TestingProvider, setScreenSize_ONLY_FOR_TESTING } from '@common/utils';
+import {
+  TestingProvider,
+  setScreenSize_ONLY_FOR_TESTING,
+} from '@common/utils/testing';
 
 
 describe('AppBarContent', () => {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import { Color, ColorMenu } from './ColorMenu';
 import { IconButton } from '../../buttons';
-import { TestingProvider } from '../../../../utils';
+import { TestingProvider } from '@common/utils/testing';
 import { CircleIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 

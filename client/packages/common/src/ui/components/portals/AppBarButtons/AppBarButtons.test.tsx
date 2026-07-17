@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import { AppBarButtons, AppBarButtonsPortal } from './AppBarButtons';
-import { TestingProvider } from '@common/utils';
+import { TestingProvider } from '@common/utils/testing';
 
 describe('AppBarButtons', () => {
   const TestAppBarButtons: FC<{ initialShow: boolean }> = ({ initialShow }) => {

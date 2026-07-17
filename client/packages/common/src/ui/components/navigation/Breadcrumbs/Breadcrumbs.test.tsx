@@ -1,11 +1,8 @@
 import React from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import { render } from '@testing-library/react';
-import {
-  RouteBuilder,
-  TestingProvider,
-  TestingRouter,
-} from '../../../../utils';
+import { RouteBuilder } from '../../../../utils';
+import { TestingProvider, TestingRouter } from '@common/utils/testing';
 import { Route } from 'react-router';
 import { Breadcrumbs } from './Breadcrumbs';
 import '@testing-library/jest-dom';

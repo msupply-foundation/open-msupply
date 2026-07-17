@@ -1,25 +1,27 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
-  Area,
   BasicSpinner,
   Box,
-  CartesianGrid,
-  ChartTooltip,
-  ComposedChart,
-  Dot,
-  Legend,
-  Line,
   NothingHere,
-  ResponsiveContainer,
   Typography,
   UNDEFINED_STRING_VALUE,
-  XAxis,
-  YAxis,
   useAppTheme,
   useUrlQuery,
   useIsExtraSmallScreen,
 } from '@openmsupply-client/common';
+import {
+  Area,
+  CartesianGrid,
+  Tooltip as ChartTooltip,
+  ComposedChart,
+  Dot,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { BreachPopover } from './BreachPopover';
 import { BreachDot, DotProps } from './types';
 import { BreachIndicator } from './BreachIndicator';

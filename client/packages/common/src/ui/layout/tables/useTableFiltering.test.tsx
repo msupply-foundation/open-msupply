@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { act, renderHook } from '@testing-library/react';
-import { TestingProvider } from '@common/utils';
+import { TestingProvider } from '@common/utils/testing';
 import { ColumnDef } from './types';
 import { useTableFiltering } from './useTableFiltering';
 

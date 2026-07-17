@@ -1,17 +1,16 @@
 import React from 'react';
+import { CircularProgress, Typography } from '@common/components';
 import {
   Bar,
   CartesianGrid,
   Cell,
-  ChartTooltip,
-  CircularProgress,
+  Tooltip as ChartTooltip,
   ComposedChart,
   Legend,
   Line,
-  Typography,
   XAxis,
   YAxis,
-} from '@common/components';
+} from 'recharts';
 import { Box, useTheme, useTranslation } from '@openmsupply-client/common';
 import { useFormatDateTime } from '@common/intl';
 import { useRequest } from '../../../api/hooks';

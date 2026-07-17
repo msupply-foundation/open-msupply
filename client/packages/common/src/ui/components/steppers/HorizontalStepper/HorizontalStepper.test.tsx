@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { HorizontalStepper } from './HorizontalStepper';
-import { TestingProvider } from '../../../../utils';
+import { TestingProvider } from '@common/utils/testing';
 
 describe('HorizontalStepper', () => {
   it('renders the label of each step', () => {

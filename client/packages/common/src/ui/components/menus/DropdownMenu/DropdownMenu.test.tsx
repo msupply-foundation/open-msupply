@@ -1,7 +1,7 @@
 import React, { act } from 'react';
 import { render } from '@testing-library/react';
 import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
-import { TestingProvider } from '../../../../utils';
+import { TestingProvider } from '@common/utils/testing';
 
 describe('Dropdown', () => {
   it('Renders the dropdown item children when the dropdown is clicked', async () => {

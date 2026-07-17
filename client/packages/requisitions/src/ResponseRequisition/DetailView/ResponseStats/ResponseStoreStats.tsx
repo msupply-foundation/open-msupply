@@ -3,11 +3,11 @@ import { useFormatNumber, useIntlUtils, useTranslation } from '@common/intl';
 import {
   Box,
   Typography,
-  NewValueBar,
   RequisitionNodeStatus,
   RepresentationValue,
   QuantityUtils,
 } from '@openmsupply-client/common';
+import { NewValueBar } from '@common/components/charts/NewValueBar';
 import { calculatePercentage, stats } from './utils';
 
 export interface ResponseStoreStatsProps {

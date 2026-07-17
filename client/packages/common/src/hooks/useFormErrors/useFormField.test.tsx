@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { act, fireEvent, render } from '@testing-library/react';
-import { TestingProvider } from '@openmsupply-client/common';
+import { TestingProvider } from '@common/utils/testing';
 import { selectVisibleError, useFormErrorStore } from './store';
 import { CustomErrorValue, useFormField } from './useFormField';
 import { useForm } from './useForm';

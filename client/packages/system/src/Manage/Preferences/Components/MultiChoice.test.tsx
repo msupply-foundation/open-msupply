@@ -5,8 +5,8 @@ import { MultiChoice } from './MultiChoice';
 import {
   InvoiceNodeStatus,
   PreferenceKey,
-  TestingProvider,
 } from '@openmsupply-client/common';
+import { TestingProvider } from '@common/utils/testing';
 
 // Mock the notification hook
 const mockError = jest.fn(() => jest.fn());

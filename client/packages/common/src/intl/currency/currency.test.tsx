@@ -1,4 +1,4 @@
-import { renderHookWithProvider } from '@common/utils';
+import { renderHookWithProvider } from '@common/utils/testing';
 import { useCurrency } from './currency';
 
 describe('currency formatting - en', () => {

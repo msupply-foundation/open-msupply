@@ -1,4 +1,4 @@
-import { renderHookWithProvider } from '@common/utils';
+import { renderHookWithProvider } from '@common/utils/testing';
 import { DateUtils, useFormatDateTime } from './DateUtils';
 
 describe('useFormatDateTime', () => {

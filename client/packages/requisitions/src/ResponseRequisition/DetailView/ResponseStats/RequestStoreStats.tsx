@@ -4,7 +4,6 @@ import {
   Box,
   Tooltip,
   Typography,
-  ValueBar,
   useFormatNumber,
   useIntlUtils,
   useTranslation,
@@ -12,6 +11,7 @@ import {
   RepresentationValue,
   QuantityUtils,
 } from '@openmsupply-client/common';
+import { ValueBar } from '@common/components/charts/ValueBar';
 import { calculatePercentage } from './utils';
 import { AvailableVolumeAtLocationTypeFragment } from '../../api';
 import { VolumeInformation } from './VolumeInfo';

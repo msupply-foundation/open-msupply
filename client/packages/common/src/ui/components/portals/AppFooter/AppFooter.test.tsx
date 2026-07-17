@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import { AppFooterPortal, AppFooter } from './AppFooter';
-import { TestingProvider } from '@common/utils';
+import { TestingProvider } from '@common/utils/testing';
 
 describe('AppBarContent', () => {
   const TestAppBarContent: FC<{ initialShow: boolean }> = ({ initialShow }) => {

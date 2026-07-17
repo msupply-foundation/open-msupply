@@ -1,7 +1,6 @@
 export * from './numbers';
 export * from './quantities';
 export * from './formatters';
-export * from './testing';
 export * from './arrays';
 export * from './regex';
 export * from './pricing';

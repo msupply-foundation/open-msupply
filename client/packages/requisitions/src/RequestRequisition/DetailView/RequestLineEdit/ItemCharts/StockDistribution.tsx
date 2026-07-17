@@ -1,11 +1,6 @@
 import React, { useMemo } from 'react';
-import {
-  AlertIcon,
-  Box,
-  Tooltip,
-  Typography,
-  ValueBar,
-} from '@openmsupply-client/common';
+import { AlertIcon, Box, Tooltip, Typography } from '@openmsupply-client/common';
+import { ValueBar } from '@common/components/charts/ValueBar';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { useRequest } from '../../../api';
 

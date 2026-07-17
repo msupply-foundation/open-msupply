@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import { NumericTextInput, NumericTextInputProps } from './NumericTextInput';
-import { TestingProvider } from '@common/utils';
+import { TestingProvider } from '@common/utils/testing';
 
 describe('Test NumericTextInput component', () => {
   const TestNumericTextInput = (props: NumericTextInputProps) => {

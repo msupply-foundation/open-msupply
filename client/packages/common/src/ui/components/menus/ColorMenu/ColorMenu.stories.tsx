@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 import { StoryFn, Meta } from '@storybook/react';
 
 import { ColorMenu } from './ColorMenu';
-import { StoryProvider } from '../../../../utils';
+import { StoryProvider } from '@common/utils/testing';
 import { IconButton } from '../../buttons';
 import { CircleIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';

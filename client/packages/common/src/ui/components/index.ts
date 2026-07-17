@@ -47,7 +47,6 @@ export * from './menus';
 export * from './modals';
 export * from './panels';
 export * from './popover';
-export * from './charts';
 export * from './steppers';
 export * from './footer';
 

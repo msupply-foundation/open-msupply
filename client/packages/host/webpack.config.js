@@ -51,8 +51,6 @@ module.exports = env => {
     resolve: {
       extensions: ['.js', '.css', '.ts', '.tsx'],
       plugins: [new TsconfigPathsPlugin()],
-      // Require condition needed for mui date pickers v8, until mui upgraded to v7
-      conditionNames: ['require', '...'],
     },
     output: {
       publicPath: '/',
@@ -71,6 +69,19 @@ module.exports = env => {
     },
     module: {
       rules: [
+        {
+          // @mui/x-date-pickers v8 ships a strict-ESM build whose imports of
+          // @mui/material/* and @mui/system/* subpaths omit file extensions.
+          // Those resolve via the exports map in @mui/material v7, but v6 (our
+          // current version) has no exports map, so webpack's fullySpecified
+          // ESM rule rejects the extensionless requests. Relax fullySpecified
+          // for these modules so the ESM (tree-shakeable) build resolves,
+          // instead of forcing the whole dependency graph to CJS. This keeps
+          // date-fns resolving to its ESM build. Remove once @mui/material is
+          // upgraded to v7.
+          test: /[\\/]node_modules[\\/]@mui[\\/]x-date-pickers[\\/]/,
+          resolve: { fullySpecified: false },
+        },
         {
           test: /\.[t|j]sx?$/,
           loader: isProduction ? 'ts-loader' : 'swc-loader',

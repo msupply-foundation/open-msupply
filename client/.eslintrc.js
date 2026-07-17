@@ -53,6 +53,18 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'warn',
     '@typescript-eslint/no-explicit-any': 'warn',
     'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: [
+          {
+            name: 'lodash',
+            message:
+              "Import per-method instead (e.g. import x from 'lodash/x') to keep the bundle small.",
+          },
+        ],
+      },
+    ],
     'prefer-const': [
       'error',
       {

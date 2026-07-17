@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render } from '@testing-library/react';
-import { TestingProvider } from '@common/utils';
+import { TestingProvider } from '@common/utils/testing';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
 
 const filterDefinition: EnumFilterDefinition = {

@@ -4,7 +4,6 @@ import { Autocomplete, AutocompleteOption } from '@common/components';
 import { CampaignNode } from '@common/types';
 import { useTranslation } from '@common/intl';
 import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
-import { isArray } from 'lodash';
 
 enum OptionType {
   Campaign = 'campaign',
@@ -44,7 +43,7 @@ export const CampaignOrProgramSelector = ({
     sortBy: { key: 'name', direction: 'asc' },
   });
   const { data: programData } = useProgramList(
-    isArray(programOptionsOrFilter)
+    Array.isArray(programOptionsOrFilter)
       ? { enabled: false }
       : {
           itemId: programOptionsOrFilter.filterByItemId,
@@ -53,7 +52,7 @@ export const CampaignOrProgramSelector = ({
   );
 
   const campaigns = campaignData?.nodes ?? [];
-  const programs = isArray(programOptionsOrFilter)
+  const programs = Array.isArray(programOptionsOrFilter)
     ? programOptionsOrFilter
     : (programData?.nodes ?? []);
 

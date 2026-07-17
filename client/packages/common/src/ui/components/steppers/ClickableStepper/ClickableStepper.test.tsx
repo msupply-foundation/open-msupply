@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { ClickableStepper } from './ClickableStepper';
-import { TestingProvider } from '../../../../utils';
+import { TestingProvider } from '@common/utils/testing';
 
 describe('ClickableStepper', () => {
   it('renders the description of each step', () => {

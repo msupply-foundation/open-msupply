@@ -8,10 +8,10 @@ import {
   DetailPanelAction,
   DetailPanelSection,
   RewindIcon,
-  StoryProvider,
   useDetailPanel,
   Grid,
 } from '@openmsupply-client/common';
+import { StoryProvider } from '@common/utils/testing';
 
 export default {
   title: 'Components/DetailPanel',
