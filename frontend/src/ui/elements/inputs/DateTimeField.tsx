@@ -1,84 +1,182 @@
-import { splitProps } from 'solid-js';
-import { TextField, type TextFieldProps } from './TextField';
+import { createEffect, createSignal, createUniqueId, on } from 'solid-js';
+import { TimeField as KTimeField } from '@kobalte/core/time-field';
+import { CalendarIcon } from '../../icons';
+import { Popover } from '../feedback/Popover';
+import { FieldShell } from './FieldShell';
+import { DatePickerPanel } from './DatePickerPanel';
+import {
+  DEFAULT_DATE_FORMAT,
+  dateToIsoDate,
+  formatIsoDate,
+  hhmmToTime,
+  isoDateToDate,
+  localPartsToUtc,
+  parseDateInput,
+  timeToHhmm,
+  utcToLocalParts,
+  type TimeValue,
+} from './dateTimeConvert';
 import styles from './DateTimeFields.module.css';
 
-export interface DateTimeFieldProps extends Omit<
-  TextFieldProps,
-  'type' | 'value' | 'onChange' | 'onInput' | 'min' | 'max'
-> {
+export interface DateTimeFieldProps {
+  label: string;
   /** The stored instant as a UTC ISO 8601 string, or null/undefined when empty. */
   value?: string | null;
-  /** Fired with the new UTC ISO instant, or null when the field is cleared. */
+  /** Fired with the new UTC ISO instant, or null when cleared. */
   onChange?: (value: string | null) => void;
-  /** Earliest selectable instant, UTC ISO. Earlier instants unselectable. */
+  /** Earliest selectable instant, UTC ISO (date-level bound on the calendar). */
   min?: string;
-  /** Latest selectable instant, UTC ISO. Later instants unselectable. */
+  /** Latest selectable instant, UTC ISO (date-level bound on the calendar). */
   max?: string;
+  /** Date display + typed-entry format (see DateField). */
+  format?: string;
+  /** 12-hour (am/pm) or 24-hour time segments. Defaults to the device locale. */
+  hourCycle?: 12 | 24;
+  helperText?: string;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  size?: 'default' | 'small';
+  /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
+  hideLabel?: boolean;
+  id?: string;
 }
 
-const pad = (n: number): string => String(n).padStart(2, '0');
-
-/**
- * A stored UTC instant → the local wall-clock string a `datetime-local` input
- * edits (`YYYY-MM-DDTHH:mm`, minute precision). Uses the device timezone (the
- * getters are local). Empty/invalid → '' (an empty input).
- */
-const toLocalInput = (utc: string | null | undefined): string => {
-  if (!utc) return '';
-  const d = new Date(utc);
-  if (Number.isNaN(d.getTime())) return '';
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours()
-  )}:${pad(d.getMinutes())}`;
-};
-
-/**
- * The edited local wall-clock string → the UTC ISO instant to store. A
- * datetime string with no zone is parsed as *local* time (ES spec), so
- * `toISOString()` yields the correct UTC instant for the device timezone.
- * Empty/invalid → null (a cleared, nullable field).
- */
-const toUtc = (localValue: string): string | null => {
-  if (!localValue) return null;
-  const d = new Date(localValue);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
-};
-
 /*
- * Date-and-time input (spec: ui-standards/inputs.md § Dates & times). The
- * native <input type="datetime-local">, wrapped in TextField for the shared
- * input chrome (label / helper / error / required / aria) — no library. The
- * `.picker` class brands the in-field parts (indicator, segment highlight);
- * the pop-up overlay is the platform's.
+ * Date-and-time input (spec: ui-standards/inputs.md § Dates & times). Date and
+ * time co-exist in one input frame: the date is a typed text field + corvu
+ * calendar popover (per the `format`), the time is Kobalte's segmented
+ * TimeField — both headless, identical in every browser.
  *
- * Unlike DateField, the value does NOT pass through: the stored value is a UTC
- * instant (schema `DateTime<Utc>`), but the user edits a *local wall-clock*
- * date + time. This field owns the conversion boundary — UTC → local for
- * display, local → UTC on change — anchored to the **device timezone** (the
- * user's own clock; no store/server timezone is in play). `min`/`max` are also
- * UTC ISO and converted the same way. Nothing above this field sees anything
- * but the UTC instant. Minute precision; clearing emits null.
- *
- * The in-field format follows the device/OS locale and the picker tracks the
- * theme via `color-scheme` — see DIVERGENCES D21.
+ * The stored value is a UTC instant (schema `DateTime<Utc>`) but the user edits
+ * a LOCAL wall-clock date + time; this field owns the conversion boundary at
+ * the DEVICE timezone (no store/server timezone). Editing the date (typed or
+ * picked) or the time recombines the two local parts into the UTC instant;
+ * nothing above sees anything but UTC. A date with a blank time defaults to
+ * midnight; clearing the date emits null. Both parts are buffered locally so
+ * the time survives being set before a date.
  */
 export const DateTimeField = (props: DateTimeFieldProps) => {
-  const [local, rest] = splitProps(props, [
-    'value',
-    'onChange',
-    'min',
-    'max',
-    'class',
-  ]);
+  const autoId = createUniqueId();
+  const dateId = () => props.id ?? autoId; // label focuses the date input
+  const fmt = () => props.format ?? DEFAULT_DATE_FORMAT;
+
+  const parts = () => utcToLocalParts(props.value);
+  const [dateText, setDateText] = createSignal(
+    formatIsoDate(parts()?.date, fmt())
+  );
+  const [time, setTime] = createSignal<TimeValue | undefined>(
+    hhmmToTime(parts()?.time)
+  );
+  // Resync both buffers from the external value only when IT changes.
+  createEffect(
+    on(
+      () => props.value,
+      () => {
+        const p = utcToLocalParts(props.value);
+        setDateText(formatIsoDate(p?.date, fmt()));
+        setTime(hhmmToTime(p?.time));
+      }
+    )
+  );
+
+  const emit = (dateIso: string | null, t: TimeValue | undefined) =>
+    props.onChange?.(
+      dateIso ? localPartsToUtc(dateIso, timeToHhmm(t) ?? '') : null
+    );
+
+  const commitDate = () => {
+    const parsed = parseDateInput(dateText(), fmt());
+    if (parsed === undefined) {
+      setDateText(formatIsoDate(parts()?.date, fmt())); // invalid → revert
+      return;
+    }
+    emit(parsed, time());
+  };
+
+  const boundDate = (utc: string | undefined) =>
+    isoDateToDate(utcToLocalParts(utc)?.date) ?? undefined;
+
   return (
-    <TextField
-      {...rest}
-      class={local.class ? `${styles.picker} ${local.class}` : styles.picker}
-      type="datetime-local"
-      value={toLocalInput(local.value)}
-      min={local.min ? toLocalInput(local.min) : undefined}
-      max={local.max ? toLocalInput(local.max) : undefined}
-      onInput={e => local.onChange?.(toUtc(e.currentTarget.value))}
-    />
+    <FieldShell
+      label={props.label}
+      hideLabel={props.hideLabel}
+      required={props.required}
+      error={props.error}
+      helperText={props.helperText}
+      controlId={dateId()}
+    >
+      {({ describedBy, invalid }) => (
+        <div
+          class={styles.control}
+          data-size={props.size === 'small' ? 'small' : undefined}
+          data-error={props.error ? '' : undefined}
+          data-disabled={props.disabled ? '' : undefined}
+        >
+          <input
+            id={dateId()}
+            type="text"
+            class={styles.dateInput}
+            value={dateText()}
+            placeholder={fmt()}
+            disabled={props.disabled}
+            aria-label={`${props.label}, date`}
+            aria-describedby={describedBy}
+            aria-invalid={invalid}
+            onInput={e => setDateText(e.currentTarget.value)}
+            onBlur={commitDate}
+            onKeyDown={e => {
+              if (e.key === 'Enter') e.currentTarget.blur(); // commits via onBlur
+            }}
+          />
+          <Popover
+            placement="bottom-end"
+            triggerClass={styles.iconBtn}
+            triggerLabel="Open calendar"
+            triggerProps={{ disabled: props.disabled }}
+            trigger={<CalendarIcon class={styles.calendarIcon} />}
+          >
+            {close => (
+              <DatePickerPanel
+                value={isoDateToDate(parts()?.date)}
+                min={boundDate(props.min)}
+                max={boundDate(props.max)}
+                onSelect={d => {
+                  if (!d) props.onChange?.(null);
+                  else emit(dateToIsoDate(d), time());
+                  close();
+                }}
+              />
+            )}
+          </Popover>
+          <span class={styles.divider} aria-hidden="true" />
+          <KTimeField
+            class={styles.timeRoot}
+            value={time()}
+            onChange={(t: TimeValue | null) => {
+              setTime(t ?? undefined);
+              emit(parts()?.date ?? null, t ?? undefined);
+            }}
+            aria-label={`${props.label}, time`}
+            hourCycle={props.hourCycle}
+            disabled={props.disabled}
+            onKeyDown={(e: KeyboardEvent) => {
+              // Enter exits the field (the value commits live per segment).
+              if (e.key === 'Enter' && e.target instanceof HTMLElement)
+                e.target.blur();
+            }}
+          >
+            <KTimeField.Input class={styles.timeSegs}>
+              {segment => (
+                <KTimeField.Segment
+                  class={styles.timeSeg}
+                  segment={segment()}
+                />
+              )}
+            </KTimeField.Input>
+          </KTimeField>
+        </div>
+      )}
+    </FieldShell>
   );
 };

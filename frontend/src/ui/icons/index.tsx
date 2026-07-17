@@ -43,6 +43,20 @@ export const ChevronDownIcon = (props: IconProps) => (
   </Fill>
 );
 
+/* Directional (prev/next) — mirror in RTL via data-flip-rtl (index.css). Used
+   by the date-picker month navigation. */
+export const ChevronLeftIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <polyline points="15 18 9 12 15 6" />
+  </Stroke>
+);
+
+export const ChevronRightIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <polyline points="9 18 15 12 9 6" />
+  </Stroke>
+);
+
 export const CheckIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <polyline points="20 6 9 17 4 12" />

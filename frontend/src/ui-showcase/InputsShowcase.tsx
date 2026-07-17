@@ -3,6 +3,10 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { DateField } from '../ui/elements/inputs/DateField';
 import { DateTimeField } from '../ui/elements/inputs/DateTimeField';
 import { TimeField } from '../ui/elements/inputs/TimeField';
+import {
+  DateRangeField,
+  type IsoDateRange,
+} from '../ui/elements/inputs/DateRangeField';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
 import styles from './InputsShowcase.module.css';
@@ -60,6 +64,14 @@ export const InputsShowcase = () => {
     '2026-07-17T02:30:00.000Z'
   );
   const [cutoff, setCutoff] = createSignal<string | null>('17:30');
+  const [invoiceDate, setInvoiceDate] = createSignal<string | null>(
+    '2023-04-23'
+  );
+  const [expiringBefore, setExpiringBefore] = createSignal<string | null>(null);
+  const [period, setPeriod] = createSignal<IsoDateRange>({
+    start: '2026-07-01',
+    end: '2026-07-31',
+  });
 
   return (
     <div class={styles.stack}>
@@ -125,33 +137,48 @@ export const InputsShowcase = () => {
       </Card>
 
       <Card
-        title="Date & time — native inputs"
+        title="Date & time — headless (corvu)"
         lead={
           <>
-            <code>DateField</code>, <code>DateTimeField</code> and{' '}
-            <code>TimeField</code>: native <code>date</code> /{' '}
-            <code>datetime-local</code> / <code>time</code> inputs wrapped in{' '}
-            <code>TextField</code> for the shared chrome — no library, zero
-            bundle, free keyboard entry and mobile pickers. The in-field parts
-            are <strong>brand-styled</strong> (our own calendar/clock glyph,
-            token-tinted, orange-highlighted segments — try dark mode); the
-            pop-up calendar/time overlay is the platform's own control.{' '}
-            <code>DateField</code>'s value <em>is</em> the wire value (ISO{' '}
-            <code>YYYY-MM-DD</code>, no timezone); <code>TimeField</code>'s is a
-            plain <code>HH:mm</code>. <code>DateTimeField</code> stores a{' '}
-            <strong>UTC instant</strong> but lets the user edit their{' '}
-            <strong>local wall-clock</strong> time — converting on the boundary
-            using the device timezone.
+            <code>DateField</code>, <code>DateRangeField</code>,{' '}
+            <code>DateTimeField</code> and <code>TimeField</code>: a popover
+            date picker on <strong>corvu</strong>'s headless calendar (our own
+            markup + tokens, same bargain as Kobalte), so it renders{' '}
+            <strong>identically in every browser</strong>. You can{' '}
+            <strong>type the date</strong> (e.g. <code>23/04/2023</code>) or
+            pick it; the calendar header opens{' '}
+            <strong>month &amp; year grids</strong> (no giant native dropdown).
+            The <code>format</code> prop drives both display and parsing (
+            <code>dd/MM/yyyy</code>, <code>dd MMM yyyy</code>, …). Time is{' '}
+            <strong>Kobalte's segmented TimeField</strong> (type or arrow-step,
+            no invalid values), with an optional <code>hourCycle</code> for
+            am/pm. <code>DateTimeField</code> puts the typed date and segmented
+            time in <strong>one input</strong>, storing a{' '}
+            <strong>UTC instant</strong> while the user edits{' '}
+            <strong>local wall-clock</strong> time.
           </>
         }
       >
         <div class={styles.grid}>
-          <Field caption="Date">
+          <Field caption="Date — type or pick">
             <DateField
               label="Expiry date"
               value={expiry()}
               onChange={setExpiry}
-              helperText={`Stored: ${expiry() ?? '(empty)'}`}
+              helperText={`Type e.g. 12 Aug 2027, or pick. Stored: ${
+                expiry() ?? '(empty)'
+              }`}
+            />
+          </Field>
+          <Field caption="Short format (dd/MM/yyyy)">
+            <DateField
+              label="Invoice date"
+              format="dd/MM/yyyy"
+              value={invoiceDate()}
+              onChange={setInvoiceDate}
+              helperText={`Type 23/04/2023. Stored: ${
+                invoiceDate() ?? '(empty)'
+              }`}
             />
           </Field>
           <Field caption="Bounded — future unselectable">
@@ -161,12 +188,21 @@ export const InputsShowcase = () => {
               helperText="max = today; later dates greyed out in the picker"
             />
           </Field>
-          <Field caption="Time — clock picker">
+          <Field caption="Time — 12h am/pm (Kobalte)">
             <TimeField
               label="Cut-off time"
               value={cutoff()}
               onChange={setCutoff}
+              hourCycle={12}
               helperText={`Stored (HH:mm): ${cutoff() ?? '(empty)'}`}
+            />
+          </Field>
+          <Field caption="Date range">
+            <DateRangeField
+              label="Report period"
+              value={period()}
+              onChange={setPeriod}
+              helperText={`${period().start ?? '…'} → ${period().end ?? '…'}`}
             />
           </Field>
           <Field caption="Required">
@@ -228,7 +264,12 @@ export const InputsShowcase = () => {
             <TextField label="Location" hideLabel placeholder="Any" />
           </FieldRow>
           <FieldRow label="Expiring before">
-            <TextField label="Expiring before" hideLabel type="date" />
+            <DateField
+              label="Expiring before"
+              hideLabel
+              value={expiringBefore()}
+              onChange={setExpiringBefore}
+            />
           </FieldRow>
         </div>
       </Card>

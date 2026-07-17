@@ -1,50 +1,80 @@
-import { splitProps } from 'solid-js';
-import { TextField, type TextFieldProps } from './TextField';
+import { Show } from 'solid-js';
+import { TimeField as KTimeField } from '@kobalte/core/time-field';
+import { AlertTriangleIcon } from '../../icons';
+import { hhmmToTime, timeToHhmm, type TimeValue } from './dateTimeConvert';
 import styles from './DateTimeFields.module.css';
 
-export interface TimeFieldProps extends Omit<
-  TextFieldProps,
-  'type' | 'value' | 'onChange' | 'onInput' | 'min' | 'max'
-> {
+export interface TimeFieldProps {
+  label: string;
   /** Wall-clock time of day, `HH:mm` (24-hour), or null/undefined when empty. */
   value?: string | null;
-  /** Fired with the new `HH:mm` time, or null when the field is cleared. */
+  /** Fired with the new `HH:mm` time, or null when cleared. */
   onChange?: (value: string | null) => void;
-  /** Earliest selectable time, `HH:mm`. Earlier times unselectable. */
-  min?: string;
-  /** Latest selectable time, `HH:mm`. Later times unselectable. */
-  max?: string;
+  helperText?: string;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  /** 12-hour (am/pm) or 24-hour segments. Defaults to the device locale. */
+  hourCycle?: 12 | 24;
+  /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
+  hideLabel?: boolean;
 }
 
 /*
- * Time-of-day input (spec: ui-standards/inputs.md § Dates & times). The native
- * <input type="time">, wrapped in TextField for the shared input chrome — no
- * library. On Chromium the indicator opens a real clock-list picker; the
- * `.picker` class swaps the glyph to our ClockIcon and brands the segments.
+ * Time-of-day input (spec: ui-standards/inputs.md § Dates & times). Our markup
+ * + tokens over Kobalte's headless TimeField — segmented spin-button hour/minute
+ * fields (type digits or arrow to step; can't hold an invalid time), the same
+ * "buy the behaviour, own the look" bargain as our other Kobalte widgets, and
+ * no new dependency (Kobalte is already in). Renders identically everywhere.
  *
- * The value is a plain 24-hour `HH:mm` wall-clock string with **no timezone**
- * and **no date** — a time of day (a cutoff/preference, or composed into a
- * DateTime elsewhere). There is no GraphQL `Time` scalar, so the value passes
- * straight through as a string; clearing emits null. The displayed format
- * (12-/24-hour) follows the device/OS locale — see DIVERGENCES D21.
+ * The value is a plain 24-hour `HH:mm` string with no date and no timezone —
+ * there is no GraphQL `Time` scalar, so it passes straight through; clearing
+ * emits null. (Kobalte carries the time as `{ hour, minute }`; we convert at the
+ * edge.) The 12-/24-hour display follows the device locale.
  */
-export const TimeField = (props: TimeFieldProps) => {
-  const [local, rest] = splitProps(props, [
-    'value',
-    'onChange',
-    'min',
-    'max',
-    'class',
-  ]);
-  return (
-    <TextField
-      {...rest}
-      class={local.class ? `${styles.picker} ${local.class}` : styles.picker}
-      type="time"
-      value={local.value ?? ''}
-      min={local.min}
-      max={local.max}
-      onInput={e => local.onChange?.(e.currentTarget.value || null)}
-    />
-  );
-};
+export const TimeField = (props: TimeFieldProps) => (
+  <KTimeField
+    class={styles.field}
+    value={hhmmToTime(props.value)}
+    onChange={(t: TimeValue | null) => props.onChange?.(timeToHhmm(t))}
+    hourCycle={props.hourCycle}
+    validationState={props.error ? 'invalid' : 'valid'}
+    required={props.required}
+    disabled={props.disabled}
+    onKeyDown={(e: KeyboardEvent) => {
+      // Enter exits the field (the value already commits live per segment).
+      if (e.key === 'Enter' && e.target instanceof HTMLElement) e.target.blur();
+    }}
+  >
+    <KTimeField.Label
+      class={props.hideLabel ? styles.labelHidden : styles.label}
+    >
+      {props.label}
+      <Show when={props.required}>
+        <span class={styles.required} aria-hidden="true">
+          *
+        </span>
+      </Show>
+    </KTimeField.Label>
+    <div
+      class={styles.control}
+      data-error={props.error ? '' : undefined}
+      data-disabled={props.disabled ? '' : undefined}
+    >
+      <KTimeField.Input class={`${styles.timeSegs} ${styles.timeSolo}`}>
+        {segment => (
+          <KTimeField.Segment class={styles.timeSeg} segment={segment()} />
+        )}
+      </KTimeField.Input>
+    </div>
+    <Show when={props.helperText && !props.error}>
+      <KTimeField.Description class={styles.helper}>
+        {props.helperText}
+      </KTimeField.Description>
+    </Show>
+    <KTimeField.ErrorMessage class={styles.error}>
+      <AlertTriangleIcon class={styles.errorIcon} />
+      {props.error}
+    </KTimeField.ErrorMessage>
+  </KTimeField>
+);

@@ -1,56 +1,131 @@
-import { splitProps } from 'solid-js';
-import { TextField, type TextFieldProps } from './TextField';
+import { createEffect, createSignal, createUniqueId, on } from 'solid-js';
+import { CalendarIcon } from '../../icons';
+import { Popover } from '../feedback/Popover';
+import { FieldShell } from './FieldShell';
+import { DatePickerPanel } from './DatePickerPanel';
+import {
+  DEFAULT_DATE_FORMAT,
+  dateToIsoDate,
+  formatIsoDate,
+  isoDateToDate,
+  parseDateInput,
+} from './dateTimeConvert';
 import styles from './DateTimeFields.module.css';
 
-export interface DateFieldProps extends Omit<
-  TextFieldProps,
-  'type' | 'value' | 'onChange' | 'onInput' | 'min' | 'max'
-> {
+export interface DateFieldProps {
+  label: string;
   /** ISO calendar date `YYYY-MM-DD`, or null/undefined when empty. */
   value?: string | null;
-  /** Fired with the new ISO date, or null when the field is cleared. */
+  /** Fired with the new ISO date, or null when cleared. */
   onChange?: (value: string | null) => void;
   /** Earliest selectable date, ISO `YYYY-MM-DD`. Earlier dates unselectable. */
   min?: string;
   /** Latest selectable date, ISO `YYYY-MM-DD`. Later dates unselectable. */
   max?: string;
+  /**
+   * Display + typed-entry format, e.g. `dd/MM/yyyy`, `dd MMM yyyy` (default),
+   * `MM/dd/yyyy`, `yyyy-MM-dd`. Tokens: d/dd, M/MM/MMM/MMMM, yy/yyyy.
+   */
+  format?: string;
+  helperText?: string;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  size?: 'default' | 'small';
+  /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
+  hideLabel?: boolean;
+  id?: string;
 }
 
 /*
- * Calendar-date input (spec: ui-standards/inputs.md § Dates & times). The
- * native <input type="date">, wrapped in TextField so it inherits the whole
- * input chrome — label / helper / error / required / aria wiring — with no
- * duplication ("own the simple", no library). The `.picker` class brands the
- * native in-field parts (indicator glyph, segment highlight) via
- * DateTimeFields.module.css; the pop-up calendar overlay is the platform's.
+ * Calendar-date input (spec: ui-standards/inputs.md § Dates & times). A typed
+ * text field (type e.g. "23/04/2023") paired with a corvu calendar popover (see
+ * DatePickerPanel) behind a calendar icon — headless, so it renders identically
+ * in every browser. Both display and typed parsing follow the `format` prop.
  *
- * The value IS the wire value: a plain ISO `YYYY-MM-DD` (schema `Date`, no
- * timezone) passes straight through — no conversion, unlike DateTimeField.
- * Clearing the field emits null, matching a nullable schema field. `min`/`max`
- * make out-of-range dates unselectable (a vertical's "future dates
- * unselectable" / backdating-window rule is expressed as bounds here).
- *
- * The in-field display format follows the device/OS locale, and the picker
- * tracks the theme via `color-scheme` (set on the dark root in tokens.css) —
- * see DIVERGENCES D21.
+ * Value IS the wire value: a plain ISO `YYYY-MM-DD` (schema `Date`, no
+ * timezone) passes straight through. Typed text is parsed on blur/Enter (invalid
+ * input reverts to the last value); picking from the calendar sets it too;
+ * clearing emits null. `min`/`max` make out-of-range days unselectable.
  */
 export const DateField = (props: DateFieldProps) => {
-  const [local, rest] = splitProps(props, [
-    'value',
-    'onChange',
-    'min',
-    'max',
-    'class',
-  ]);
+  const autoId = createUniqueId();
+  const id = () => props.id ?? autoId;
+  const fmt = () => props.format ?? DEFAULT_DATE_FORMAT;
+
+  // Local text buffer for typing; resynced from the external value only when IT
+  // changes (never mid-typing), so keystrokes don't get clobbered.
+  const [text, setText] = createSignal(formatIsoDate(props.value, fmt()));
+  createEffect(
+    on(
+      () => props.value,
+      v => setText(formatIsoDate(v, fmt()))
+    )
+  );
+
+  const commit = () => {
+    const parsed = parseDateInput(text(), fmt());
+    if (parsed === undefined) {
+      setText(formatIsoDate(props.value, fmt())); // invalid → revert
+      return;
+    }
+    props.onChange?.(parsed);
+    setText(formatIsoDate(parsed, fmt()));
+  };
+
   return (
-    <TextField
-      {...rest}
-      class={local.class ? `${styles.picker} ${local.class}` : styles.picker}
-      type="date"
-      value={local.value ?? ''}
-      min={local.min}
-      max={local.max}
-      onInput={e => local.onChange?.(e.currentTarget.value || null)}
-    />
+    <FieldShell
+      label={props.label}
+      hideLabel={props.hideLabel}
+      required={props.required}
+      error={props.error}
+      helperText={props.helperText}
+      controlId={id()}
+    >
+      {({ describedBy, invalid }) => (
+        <div
+          class={styles.control}
+          data-size={props.size === 'small' ? 'small' : undefined}
+          data-error={props.error ? '' : undefined}
+          data-disabled={props.disabled ? '' : undefined}
+        >
+          <input
+            id={id()}
+            type="text"
+            class={styles.dateInput}
+            value={text()}
+            placeholder={fmt()}
+            disabled={props.disabled}
+            required={props.required}
+            aria-describedby={describedBy}
+            aria-invalid={invalid}
+            onInput={e => setText(e.currentTarget.value)}
+            onBlur={commit}
+            onKeyDown={e => {
+              if (e.key === 'Enter') e.currentTarget.blur(); // commits via onBlur
+            }}
+          />
+          <Popover
+            placement="bottom-end"
+            triggerClass={styles.iconBtn}
+            triggerLabel="Open calendar"
+            triggerProps={{ disabled: props.disabled }}
+            trigger={<CalendarIcon class={styles.calendarIcon} />}
+          >
+            {close => (
+              <DatePickerPanel
+                value={isoDateToDate(props.value)}
+                min={isoDateToDate(props.min) ?? undefined}
+                max={isoDateToDate(props.max) ?? undefined}
+                onSelect={d => {
+                  props.onChange?.(d ? dateToIsoDate(d) : null);
+                  close();
+                }}
+              />
+            )}
+          </Popover>
+        </div>
+      )}
+    </FieldShell>
   );
 };
