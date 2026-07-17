@@ -19,14 +19,14 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Read .nvmrc
         run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
         id: nvm
 
       - name: Set Up Node JS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
 

@@ -28,7 +28,7 @@ jobs:
       CARGO_TARGET_DIR: /tmp/target/sqlite
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       # Resolve the commit to stamp the database from. The base ref tip can move
@@ -56,9 +56,8 @@ jobs:
         run: |
           git checkout ${{ steps.base.outputs.sha }}
           echo "Checked out base commit: ${{ steps.base.outputs.sha }}"
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --no-self-update
       - name: Initialize database with base branch code
         working-directory: server
         run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli -- initialise-database
@@ -78,7 +77,7 @@ jobs:
       CARGO_TARGET_DIR: /tmp/target/postgres
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Resolve base commit
@@ -94,9 +93,8 @@ jobs:
         run: |
           git checkout ${{ steps.base.outputs.sha }}
           echo "Checked out base commit: ${{ steps.base.outputs.sha }}"
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --no-self-update
       - name: Initialize database with base branch code
         working-directory: server
         run: APP__DATABASE__DATABASE_NAME=validate_views cargo run --bin remote_server_cli --features postgres -- initialise-database

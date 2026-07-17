@@ -32,7 +32,7 @@ jobs:
             --method POST \
             -f content="eyes"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload Claude logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: claude-logs
           path: /home/runner/work/_temp/claude-execution-output.json
