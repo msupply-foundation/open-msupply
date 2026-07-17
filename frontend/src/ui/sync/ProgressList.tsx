@@ -26,10 +26,10 @@ type StepState = 'completed' | 'active' | 'pending';
 // progression (finished flag never arrived — the #12172 case) announces done,
 // and the failure point announces error (the alert glyph is aria-hidden).
 const stepStatus = (state: StepState, errored: boolean): string => {
-  if (errored) return t('sync.status.error');
-  if (state === 'completed') return t('sync.status.done');
-  if (state === 'pending') return t('sync.status.pending');
-  return t('sync.status.in-progress');
+  if (errored) return t('label.error');
+  if (state === 'completed') return t('label.done');
+  if (state === 'pending') return t('label.pending');
+  return t('label.in-progress');
 };
 
 /*

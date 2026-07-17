@@ -73,13 +73,13 @@ export const StatusIndicator = (props: StatusIndicatorProps): JSX.Element => {
     >
       <Popover
         openOnHover
-        triggerLabel={t('status.history')}
+        triggerLabel={t('label.order-history')}
         triggerClass={statusClass(props.class)}
         placement="top-start"
         trigger={row}
       >
         <div class={styles.history}>
-          <p class={styles.historyTitle}>{t('status.history')}</p>
+          <p class={styles.historyTitle}>{t('label.order-history')}</p>
           <ol class={styles.timeline}>
             <For each={props.steps}>
               {(step, index) => (

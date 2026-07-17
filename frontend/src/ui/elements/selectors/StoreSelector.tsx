@@ -62,20 +62,24 @@ export const StoreSelector = (props: {
       <p class={styles.instructions}>{t('store.select-instructions')}</p>
 
       <TextField
-        label={t('store.search')}
+        label={t('placeholder.search-by-name')}
         hideLabel
         width="full"
         value={query()}
-        placeholder={t('store.search-placeholder')}
+        placeholder={t('placeholder.search-by-name-or-code')}
         onInput={e => setQuery(e.currentTarget.value)}
       />
 
       <div class={styles.listPanel}>
         <Show
           when={visible().length > 0}
-          fallback={<div class={styles.empty}>{t('store.no-results')}</div>}
+          fallback={<div class={styles.empty}>{t('error.no-results')}</div>}
         >
-          <ul class={styles.list} role="listbox" aria-label={t('heading.select-store')}>
+          <ul
+            class={styles.list}
+            role="listbox"
+            aria-label={t('heading.select-store')}
+          >
             <For each={visible()}>
               {store => (
                 <li>

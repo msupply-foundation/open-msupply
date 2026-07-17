@@ -172,7 +172,7 @@ export const InitialisationPage: Component<{
   return (
     <div class={styles.page}>
       <form class={styles.card} onSubmit={submit}>
-        <h1>{t('init.title')}</h1>
+        <h1>{t('initialise.heading')}</h1>
         <TextField
           label={t('label.settings-url')}
           width="full"
@@ -208,7 +208,7 @@ export const InitialisationPage: Component<{
           disabled={initialising()}
         />
         <TextField
-          label={t('init.interval')}
+          label={t('label.settings-interval')}
           width="full"
           inputmode="numeric"
           value={values().intervalSeconds}
@@ -229,7 +229,7 @@ export const InitialisationPage: Component<{
           when={showRetry()}
           fallback={
             <Button type="submit" disabled={busy()}>
-              {busy() ? t('init.submitting') : t('init.submit')}
+              {busy() ? t('init.submitting') : t('button.initialise')}
             </Button>
           }
         >

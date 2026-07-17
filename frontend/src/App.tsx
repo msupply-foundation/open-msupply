@@ -100,7 +100,7 @@ export const App: Component = () => {
                 <Route path="/" component={ShellLayout}>
                   <Route
                     path="/"
-                    component={() => <EntryPage labelKey="nav.dashboard" />}
+                    component={() => <EntryPage labelKey="dashboard" />}
                   />
                   <For each={Object.entries(sectionRoutes)}>
                     {([path, routes]) => (
