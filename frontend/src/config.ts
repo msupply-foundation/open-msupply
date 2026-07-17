@@ -10,4 +10,8 @@ export const DEFAULT_SYNC_INTERVAL_SECONDS = 300;
 // The current app's status-poll cadence (spec/sync-modal contract: ~2 s
 // while the surface is open and the live channel is down).
 export const SYNC_POLL_INTERVAL_MS = 2000;
+// The chrome sync indicator's slow cadence (spec/chrome § sync indicator):
+// the minutely staleness re-evaluation, doubling as its fallback-poll interval
+// while the live channel is down. The modal owns the fast poll while open.
+export const SYNC_INDICATOR_REFRESH_MS = 60_000;
 export const ACTIVITY_CHECK_INTERVAL_MS = 1000;

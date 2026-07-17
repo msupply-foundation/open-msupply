@@ -12,7 +12,13 @@ import { MenuBar, type MenuBarState } from './MenuBar';
 import { LanguageSelector } from './LanguageSelector';
 import { UserMenu } from './UserMenu';
 import { ShellNavContext, ShellFullScreenContext } from './shellContext';
-import { upperNav, lowerNav, type NavLeaf } from './navModel';
+import {
+  upperNav,
+  lowerNav,
+  SYNC_NAV_ID,
+  type NavBadge,
+  type NavLeaf,
+} from './navModel';
 import { locale, changeLanguage, t } from '../../../intl';
 import styles from './AppShell.module.css';
 
@@ -26,6 +32,17 @@ export interface AppShellProps {
   selected: NavLeaf;
   /** The user picked a menu item. */
   onNavigate: (leaf: NavLeaf) => void;
+  /**
+   * The user activated the sidebar's Sync entry — the chrome's sync affordance
+   * (spec/chrome § sync indicator: opens the sync modal in place, no
+   * navigation). Optional: hosts that don't wire sync (the showcase) get an
+   * inert entry.
+   */
+  onSyncOpen?: () => void;
+  /** The Sync entry's status badge (spec/chrome § sync indicator). */
+  syncBadge?: NavBadge;
+  /** Dim the Sync entry's icon while the latest run is errored. */
+  syncIconDimmed?: boolean;
   /**
    * The active store's name, shown in the bottom bar (spec: store selector).
    */
@@ -138,7 +155,15 @@ export const AppShell = (props: AppShellProps) => {
               upper={upperNav}
               lower={lowerNav}
               selectedId={props.selected.id}
-              onSelect={props.onNavigate}
+              // The Sync entry opens the modal in place — never navigates
+              // (spec/chrome AC-CH8).
+              onSelect={leaf =>
+                leaf.id === SYNC_NAV_ID
+                  ? props.onSyncOpen?.()
+                  : props.onNavigate(leaf)
+              }
+              syncBadge={props.syncBadge}
+              syncIconDimmed={props.syncIconDimmed}
             />
           </Show>
           <div class={styles.main}>

@@ -1,0 +1,102 @@
+/* The status band groups the status line and the phase list as one block
+   (spec/sync-modal/ui-surface.md § Layout) — the current app's drawer-grey
+   rounded panel. */
+.statusBand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-4) var(--space-6);
+  border-radius: 10px;
+  background: var(--bg-drawer);
+}
+
+.statusLine {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}
+
+/* The current app's error panel is stronger than its standard alert tint:
+   the full error-background fill with body-coloured text. The attribute
+   qualifier (always present on an Alert) outweighs the base rule regardless
+   of stylesheet order. */
+.errorPanel[data-severity] {
+  background: var(--error-bg);
+  color: var(--text-body);
+}
+
+.errorBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* "More information ›" — a link-styled disclosure, chevron rotating open. */
+.errorSummary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+  cursor: pointer;
+  font-size: var(--text-xs);
+  color: var(--secondary-main);
+}
+
+.errorSummary::-webkit-details-marker {
+  display: none;
+}
+
+.errorSummary svg {
+  font-size: 0.75em;
+  transform: rotate(-90deg);
+  transition: transform 140ms ease;
+}
+
+/* Mirror the closed chevron in RTL (it points into the reading direction). */
+:dir(rtl) .errorSummary svg {
+  transform: rotate(90deg);
+}
+
+.errorDetails[open] .errorSummary svg,
+:dir(rtl) .errorDetails[open] .errorSummary svg {
+  transform: none;
+}
+
+/* Guidance hint (the current app's remedy line) — shown with the expanded
+   detail, above the raw error. */
+.errorHint {
+  margin: var(--space-2) 0;
+  font-size: var(--text-sm);
+}
+
+.errorDetail {
+  margin: 0;
+  max-block-size: 12rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--text-xs);
+}
+
+/* The current app's last-successful banner: the neutral drawer-grey surface
+   and grey icon, but the message text in the success tint (its Alert is
+   success-severity with the background and icon overridden). Targeting the
+   message (the Alert's only div child) beats the neutral severity's inherited
+   text colour without a specificity tie. */
+.lastSuccess > div {
+  color: color-mix(in srgb, var(--success-main) 40%, var(--text-body));
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-block-start: var(--space-5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .errorSummary svg {
+    transition: none;
+  }
+}
