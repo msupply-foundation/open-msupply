@@ -253,7 +253,7 @@ export const InputsShowcase = () => {
               onChange={setYear}
               max={9999}
               noFormatting
-              helperText="No grouping ever — years, codes"
+              helperText="No grouping — still a number (leading 0s drop on blur); zero-keeping codes want TextField"
             />
             <ValueReadout value={year()} />
           </Field>

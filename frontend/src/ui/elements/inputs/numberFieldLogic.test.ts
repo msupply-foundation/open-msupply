@@ -225,6 +225,27 @@ describe('gate and repair', () => {
   });
 });
 
+describe('leading zeros', () => {
+  it('keeps them in the text while typing, commits the number', () => {
+    expect(processInput('000564', o(), 'en')).toEqual({
+      accepted: true,
+      text: '000564',
+      commit: { value: 564 },
+    });
+  });
+
+  it('collapses them on blur — a NumberField value is a number; digit strings that keep zeros (codes) are TextField territory', () => {
+    expect(finalizeText('000564', o(), 'en')).toEqual({
+      value: 564,
+      text: '564',
+    });
+    expect(finalizeText('000564', o({ noFormatting: true }), 'en')).toEqual({
+      value: 564,
+      text: '564',
+    });
+  });
+});
+
 describe('clamping (commit-only while typing; text on blur)', () => {
   const c = o({ min: 10, max: 100 });
 

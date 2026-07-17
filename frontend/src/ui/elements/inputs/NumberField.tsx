@@ -64,7 +64,12 @@ export interface NumberFieldProps extends Omit<
   step?: number;
   /** Shift+arrow multiplies `step` by this. Default 10. */
   multiplier?: number;
-  /** Plain `String(value)` display — no grouping/locale digits (years, codes). */
+  /**
+   * Plain `String(value)` display — no grouping/locale digits. For numbers
+   * where grouping is noise (years). Still a number: leading zeros collapse
+   * on blur ("000564" → 564) — digit strings where they're meaningful (item
+   * codes, barcodes) belong in a TextField, not here.
+   */
   noFormatting?: boolean;
   /** Seed when `value` starts undefined; committed to the parent on mount. */
   defaultValue?: number;
