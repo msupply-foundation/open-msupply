@@ -123,8 +123,16 @@ table! {
 // One row per historical split. Only relocations of stores active on this site are
 // selected: stock_relocation rows sync to central servers, so without the site gate
 // both the owning site and central would mint duplicate invoices for the same split.
-// The NOT EXISTS guard skips destination stock lines that already have a StockIn
-// invoice line (created by the live fix or a previous run).
+// The NOT EXISTS guard skips destination stock lines that already have a repack
+// StockIn invoice line (created by the live fix or a previous run). It must be
+// limited to REPACK invoices: inventory additions and stocktake surpluses also put
+// StockIn lines on existing stock lines, and those must not suppress the backfill,
+// while live repacks always put their StockIn on a newly created stock line.
+//
+// Known limitation: this runs once at startup, before sync, so a site freshly
+// initialised (or re-initialised) at 2.21.1+ pulls its historical splits from
+// central without invoices and they stay un-backfilled - support can re-run the
+// backfill by changing the fragment identifier, which is safe under this guard.
 const CANDIDATE_SQL: &str = r#"
     SELECT
         sr.store_id AS store_id,
@@ -162,8 +170,10 @@ const CANDIDATE_SQL: &str = r#"
       AND s.site_id = (SELECT value_int FROM key_value_store WHERE id = 'SETTINGS_SYNC_SITE_ID')
       AND NOT EXISTS (
           SELECT 1 FROM invoice_line il2
+          JOIN invoice i2 ON i2.id = il2.invoice_id
           WHERE il2.stock_line_id = srl.destination_stock_line_id
             AND il2.type = 'STOCK_IN'
+            AND i2.type = 'REPACK'
       )
     ORDER BY sr.store_id, finalised_datetime, sr.stock_movement_number, srl.id
 "#;
@@ -247,6 +257,9 @@ impl MigrationFragment for Migrate {
 
         // The 'repack' system name is required on the invoice; prefer the name_link
         // whose id equals the name id, matching what the runtime repository writes.
+        // If it is missing (only possible on a site that has never synced it, where
+        // the repack feature has never worked either) we skip rather than error:
+        // a fragment error would stop the server from starting at all.
         let repack_name_link_id = sql_query(
             r#"
             SELECT nl.id AS id FROM name n
@@ -302,6 +315,11 @@ impl MigrationFragment for Migrate {
             let entry = next_numbers.entry(store_id).or_insert(0);
             *entry = (*entry).max(value);
         }
+
+        let candidate_store_ids: std::collections::HashSet<String> = candidates
+            .iter()
+            .map(|candidate| candidate.store_id.clone())
+            .collect();
 
         let mut created_count = 0;
         for candidate in candidates {
@@ -452,7 +470,12 @@ impl MigrationFragment for Migrate {
             created_count += 1;
         }
 
+        // Only touch counters of stores that received backfilled invoices - other
+        // stores' number rows may be synced copies owned by another site
         for store_id in stores_with_number_row {
+            if !candidate_store_ids.contains(&store_id) {
+                continue;
+            }
             if let Some(new_value) = next_numbers.get(&store_id) {
                 diesel::update(number::table)
                     .filter(number::store_id.eq(&store_id))
@@ -520,6 +543,7 @@ mod tests {
         run(connection, &stock_line("dest_sl", "store1", "'loc_dst'", 4.0));
         run(connection, &stock_line("dest_sl_no_loc", "store1", "NULL", 1.0));
         run(connection, &stock_line("dest_sl_existing", "store1", "'loc_dst'", 1.0));
+        run(connection, &stock_line("dest_sl_adjusted", "store1", "'loc_dst'", 2.0));
         run(connection, &stock_line("s2_src", "store2", "NULL", 5.0));
         run(connection, &stock_line("s2_dest", "store2", "NULL", 3.0));
 
@@ -527,12 +551,20 @@ mod tests {
         //   srl1 - split into dest_sl (backfilled, with location movement)
         //   srl2 - full move, no destination stock line (skipped)
         //   srl3 - split into dest_sl_no_loc, no destination location (backfilled, no location movement)
-        //   srl4 - split into dest_sl_existing which already has a StockIn line (skipped)
+        //   srl4 - split into dest_sl_existing which already has a repack StockIn line (skipped)
+        //   srl5 - split into dest_sl_adjusted which has a non-repack StockIn from an
+        //          inventory addition (still backfilled - the guard is repack-only)
         run(connection, "INSERT INTO stock_relocation (id, store_id, stock_movement_number, status, created_datetime, created_by, confirmed_datetime, finalised_datetime) VALUES ('sr1', 'store1', 7, 'FINALISED', '2026-06-01 09:00:00', 'user1', '2026-06-01 09:30:00', '2026-06-01 10:00:00');");
         run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl1', 'sr1', 'source_sl', 'dest_sl', 'loc_src', 'loc_dst', 4.0);");
         run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl2', 'sr1', 'source_sl', NULL, 'loc_src', 'loc_dst', 2.0);");
         run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl3', 'sr1', 'source_sl', 'dest_sl_no_loc', 'loc_src', NULL, 1.0);");
         run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl4', 'sr1', 'source_sl', 'dest_sl_existing', 'loc_src', 'loc_dst', 1.0);");
+        run(connection, "INSERT INTO stock_relocation_line (id, stock_relocation_id, stock_line_id, destination_stock_line_id, source_location_id, destination_location_id, number_of_packs) VALUES ('srl5', 'sr1', 'source_sl', 'dest_sl_adjusted', 'loc_src', 'loc_dst', 2.0);");
+
+        // Inventory addition on dest_sl_adjusted - a non-repack StockIn that must NOT
+        // suppress the backfill of srl5
+        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('inv_addition', 'store1_name', 'store1', 1, false, '2026-06-05 00:00:00', 'INVENTORY_ADDITION', 'VERIFIED', 1.0, false);");
+        run(connection, "INSERT INTO invoice_line (id, invoice_id, item_link_id, item_name, item_code, type, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, stock_line_id) VALUES ('addition_in', 'inv_addition', 'item1', 'Item One', 'ITEM1', 'STOCK_IN', 5.0, 8.0, 10.0, 10.0, 2.0, 2.0, 'dest_sl_adjusted');");
 
         // Finalised split on store2 - not active on this site, must be skipped
         run(connection, "INSERT INTO stock_relocation (id, store_id, stock_movement_number, status, created_datetime, created_by, confirmed_datetime, finalised_datetime) VALUES ('sr2', 'store2', 1, 'FINALISED', '2026-06-02 09:00:00', 'user2', '2026-06-02 09:30:00', '2026-06-02 10:00:00');");
@@ -543,6 +575,12 @@ mod tests {
         run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('existing_repack', 'repack', 'store1', 5, false, '2026-05-01 00:00:00', 'REPACK', 'VERIFIED', 1.0, false);");
         run(connection, "INSERT INTO invoice_line (id, invoice_id, item_link_id, item_name, item_code, type, cost_price_per_pack, sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, stock_line_id) VALUES ('existing_in', 'existing_repack', 'item1', 'Item One', 'ITEM1', 'STOCK_IN', 5.0, 8.0, 5.0, 5.0, 1.0, 2.0, 'dest_sl_existing');");
         run(connection, "INSERT INTO number (id, value, store_id, type) VALUES ('num1', 5, 'store1', 'REPACK');");
+
+        // store2's counter lags its max repack invoice number - the migration must
+        // NOT touch it (store2 gets no backfilled invoices; its records are synced
+        // copies owned by another site)
+        run(connection, "INSERT INTO invoice (id, name_link_id, store_id, invoice_number, on_hold, created_datetime, type, status, currency_rate, is_cancellation) VALUES ('s2_repack', 'store2_name', 'store2', 3, false, '2026-05-01 00:00:00', 'REPACK', 'VERIFIED', 1.0, false);");
+        run(connection, "INSERT INTO number (id, value, store_id, type) VALUES ('num2', 1, 'store2', 'REPACK');");
     }
 
     #[actix_rt::test]
@@ -567,7 +605,7 @@ mod tests {
             .and_hms_opt(10, 0, 0)
             .unwrap();
 
-        // Exactly two invoices backfilled (splits srl1 and srl3), numbered on from 5
+        // Exactly three invoices backfilled (splits srl1, srl3 and srl5), numbered on from 5
         let invoices = invoice::table
             .select((
                 invoice::id,
@@ -584,6 +622,7 @@ mod tests {
                 invoice::currency_rate,
             ))
             .filter(invoice::type_.eq(InvoiceType::Repack))
+            .filter(invoice::store_id.eq("store1"))
             .filter(invoice::id.ne("existing_repack"))
             .order_by(invoice::invoice_number.asc())
             .load::<(
@@ -601,7 +640,7 @@ mod tests {
                 f64,
             )>(connection.lock().connection())
             .unwrap();
-        assert_eq!(invoices.len(), 2);
+        assert_eq!(invoices.len(), 3);
 
         let dest_sl_invoice = &invoices[0];
         assert_eq!(dest_sl_invoice.1, "repack");
@@ -616,6 +655,19 @@ mod tests {
         assert_eq!(dest_sl_invoice.10, Some("currency1".to_string()));
         assert_eq!(dest_sl_invoice.11, 1.0);
         assert_eq!(invoices[1].4, 7);
+        assert_eq!(invoices[2].4, 8);
+
+        // srl5 was backfilled despite the inventory-addition StockIn on its
+        // destination line: dest_sl_adjusted now has that addition plus one repack StockIn
+        let adjusted_stock_ins = invoice_line::table
+            .filter(invoice_line::stock_line_id.eq("dest_sl_adjusted"))
+            .filter(invoice_line::type_.eq(InvoiceLineType::StockIn))
+            .select(invoice_line::invoice_id)
+            .load::<String>(connection.lock().connection())
+            .unwrap();
+        assert_eq!(adjusted_stock_ins.len(), 2);
+        assert!(adjusted_stock_ins.contains(&"inv_addition".to_string()));
+        assert!(adjusted_stock_ins.contains(&invoices[2].0));
 
         // Both invoice lines of the dest_sl invoice
         let lines = invoice_line::table
@@ -679,7 +731,8 @@ mod tests {
         assert_eq!(stock_out.8, 20.0);
         assert_eq!(stock_out.10, 4.0);
 
-        // Location movement created only for the split with a destination location
+        // Location movements created only for splits with a destination location
+        // (dest_sl and dest_sl_adjusted; not dest_sl_no_loc)
         let movements = location_movement::table
             .select((
                 location_movement::stock_line_id,
@@ -692,12 +745,13 @@ mod tests {
                 connection.lock().connection(),
             )
             .unwrap();
-        assert_eq!(movements.len(), 1);
-        assert_eq!(movements[0].0, "dest_sl");
-        assert_eq!(movements[0].1, "store1");
-        assert_eq!(movements[0].2, Some("loc_dst".to_string()));
-        assert_eq!(movements[0].3, Some(finalised));
-        assert_eq!(movements[0].4, None);
+        assert_eq!(movements.len(), 2);
+        let dest_sl_movement = movements.iter().find(|m| m.0 == "dest_sl").unwrap();
+        assert_eq!(dest_sl_movement.1, "store1");
+        assert_eq!(dest_sl_movement.2, Some("loc_dst".to_string()));
+        assert_eq!(dest_sl_movement.3, Some(finalised));
+        assert_eq!(dest_sl_movement.4, None);
+        assert!(movements.iter().any(|m| m.0 == "dest_sl_adjusted"));
 
         // Changelog rows created for everything that must sync
         let changelog_rows = changelog::table
@@ -709,9 +763,9 @@ mod tests {
         let count = |table_name: ChangelogTableName| {
             changelog_rows.iter().filter(|r| r.0 == table_name).count()
         };
-        assert_eq!(count(ChangelogTableName::Invoice), 2);
-        assert_eq!(count(ChangelogTableName::InvoiceLine), 4);
-        assert_eq!(count(ChangelogTableName::LocationMovement), 1);
+        assert_eq!(count(ChangelogTableName::Invoice), 3);
+        assert_eq!(count(ChangelogTableName::InvoiceLine), 6);
+        assert_eq!(count(ChangelogTableName::LocationMovement), 2);
         let invoice_changelog = changelog_rows
             .iter()
             .find(|r| r.0 == ChangelogTableName::Invoice && r.1 == dest_sl_invoice.0)
@@ -732,7 +786,16 @@ mod tests {
             .select(number::value)
             .first::<i64>(connection.lock().connection())
             .unwrap();
-        assert_eq!(number_value, 7);
+        assert_eq!(number_value, 8);
+
+        // store2 received no backfilled invoices, so its (lagging) counter is untouched
+        let store2_number_value = number::table
+            .filter(number::store_id.eq("store2"))
+            .filter(number::type_.eq("REPACK"))
+            .select(number::value)
+            .first::<i64>(connection.lock().connection())
+            .unwrap();
+        assert_eq!(store2_number_value, 1);
 
         // Negatives: store2's split skipped (site gate), dest_sl_existing untouched
         let s2_lines = invoice_line::table
