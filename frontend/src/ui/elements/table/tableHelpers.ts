@@ -37,7 +37,7 @@ const EMPTY_CELL = '—';
 // DataTable rowGroup): a number column sums its leaves; a date column shows the
 // shared date or [multiple]. A caller can override by setting `aggregationFn`
 // on the column itself.
-type CellFragment<T> = Pick<
+export type CellFragment<T> = Pick<
   ColumnDefBase<T>,
   'meta' | 'cell' | 'aggregationFn' | 'aggregatedCell'
 >;

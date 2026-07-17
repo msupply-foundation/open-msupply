@@ -8,6 +8,7 @@ import {
   sharedOrMultiple,
 } from '../ui/elements/table/DataTable';
 import { getNumberCell } from '../ui/elements/table/tableHelpers';
+import { getChipListCell } from '../ui/elements/table/ChipListCell';
 import { StockIcon, InfoIcon, TruckIcon } from '../ui/icons';
 import {
   resolveTableConfig,
@@ -46,6 +47,7 @@ type Batch = {
   expiry: string;
   stock: number;
   price: number;
+  lists: string[];
 };
 
 const NAMES = [
@@ -74,6 +76,9 @@ const SUPPLIERS = [
   'Global Meds',
   'CarePoint',
 ];
+// Master-list-style tags for the chip-list cell demo; row i carries the first
+// 0–4 of these, so the column shows blank cells, single chips, and clipping.
+const LISTS = ['General list', 'Immunisation', 'HIV care', 'Essential meds'];
 
 // Deterministic 60-row dataset (enough to paginate + scroll).
 const DATA: Batch[] = Array.from({ length: 60 }, (_, i) => ({
@@ -86,6 +91,7 @@ const DATA: Batch[] = Array.from({ length: 60 }, (_, i) => ({
   expiry: `${String(1 + (i % 28)).padStart(2, '0')}/${String(1 + (i % 12)).padStart(2, '0')}/2027`,
   stock: ((i * 137) % 900) + 20,
   price: Number((((i * 7) % 300) / 100 + 0.02).toFixed(2)),
+  lists: LISTS.slice(0, i % (LISTS.length + 1)),
 }));
 
 type SortKey =
@@ -229,6 +235,14 @@ export const TableShowcase = () => {
       sortKey: 'category',
       header: 'Category',
       meta: { card: { region: 'badge' } },
+      tabsAndCardGroups: ['details'],
+    },
+    // Chip-list cell (registry "chip-list cell"): string[] → outlined chips,
+    // blank when empty, clipped at the cell edge with the full list on hover.
+    {
+      c: { key: 'lists' },
+      header: 'Lists',
+      ...getChipListCell(),
       tabsAndCardGroups: ['details'],
     },
     {
