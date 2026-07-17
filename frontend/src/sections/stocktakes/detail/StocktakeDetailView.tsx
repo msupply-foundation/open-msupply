@@ -459,7 +459,7 @@ const StocktakeDetailView: Component = () => {
       label: t('stocktakes'),
       onClick: () => navigate(`/${params.storeId}/inventory/stocktakes`),
     },
-    { label: t('stocktake.detail.title', { number: node.stocktakeNumber }) },
+    { label: String(node.stocktakeNumber) },
   ];
 
   const columns = (): Column<Line, SortKey>[] => [
@@ -471,7 +471,7 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'itemName' },
       sortKey: 'itemName',
-      header: t('stocktake.column.item-name'),
+      header: t('label.name'),
       // Item names are long — allow up to two wrapped lines before clamping.
       meta: { card: { region: 'primary' }, wrapLines: 2 },
       aggregationFn: sharedOrMultiple,
@@ -485,13 +485,13 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
-      header: t('label.expiry'),
+      header: t('label.expiry-date'),
       ...getDateCell(),
     },
     {
       c: { key: 'snapshotNumberOfPacks' },
       sortKey: 'snapshotNumberOfPacks',
-      header: t('label.snapshot'),
+      header: t('label.snapshot-num-of-packs'),
       ...getNumberCell(),
       // Snapshot cell also carries the line's error inline beneath the count (a
       // snapshot/current-count mismatch is a "recount this line" message about
@@ -525,7 +525,7 @@ const StocktakeDetailView: Component = () => {
                   'text-align': 'end',
                 }}
               >
-                {t('stocktake.line-error.snapshot-mismatch')}
+                {t('error.snapshot-total-mismatch')}
               </span>
             </Show>
           </span>
@@ -535,7 +535,7 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
-      header: t('label.counted'),
+      header: t('label.counted-num-of-packs'),
       ...getNumberCell(),
       meta: { align: 'right', card: { region: 'badge' } },
     },
@@ -546,25 +546,25 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'packSize' },
       sortKey: 'packSize',
-      header: t('stocktake.column.pack-size'),
+      header: t('label.pack-size'),
       ...getNumberCell(),
     },
     {
       c: { key: 'sellPricePerPack' },
       sortKey: 'sellPricePerPack',
-      header: t('stocktake.column.sell-price'),
+      header: t('label.pack-sell-price'),
       ...getNumberCell(),
     },
     {
       c: { key: 'costPricePerPack' },
       sortKey: 'costPricePerPack',
-      header: t('stocktake.column.cost-price'),
+      header: t('label.pack-cost-price'),
       ...getNumberCell(),
     },
     {
       c: { key: 'manufactureDate' },
       sortKey: 'manufactureDate',
-      header: t('stocktake.column.manufacture-date'),
+      header: t('label.manufacture-date'),
       ...getDateCell(),
     },
     {
@@ -606,7 +606,7 @@ const StocktakeDetailView: Component = () => {
           <Page
             fillBody
             sidePanelOpen={sidePanelOpen()}
-            sidePanelTitle={t('stocktake.detail.side-panel')}
+            sidePanelTitle={t('heading.details')}
             onSidePanelClose={() => setSidePanelOpen(false)}
             sidePanelContent={
               <StocktakeSidePanel
@@ -681,9 +681,7 @@ const StocktakeDetailView: Component = () => {
                   {/* Count + actions on the inline-start (OMS layout): Delete, Change location,
                       Reduce to 0. All disabled while the stocktake is finalised / on hold. */}
                   <strong>
-                    {t('stocktake.lines.selected', {
-                      count: selectedIds().length,
-                    })}
+                    {selectedIds().length} {t('label.selected')}
                   </strong>
                   {/* Each action owns its own button + confirm → working → success | error modal +
                       run; the view supplies storeId/selection and applies the result via callbacks —
@@ -745,13 +743,13 @@ const StocktakeDetailView: Component = () => {
               empty={
                 isDisabled(node()) ? undefined : (
                   <Button icon={<PlusCircleIcon />} onClick={() => {}}>
-                    {t('stocktake.detail.add-item')}
+                    {t('button.add-item')}
                   </Button>
                 )
               }
               rowGroup={{
                 columnId: 'code',
-                labelKey: 'stocktake.column.item-name',
+                labelKey: 'label.name',
               }}
               enableSelection
               selectedIds={selectedIds()}

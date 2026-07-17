@@ -101,9 +101,11 @@ export const StocktakeStatusFooter: Component<
       <ConfirmDialog
         open={holdConfirm()}
         onClose={() => setHoldConfirm(false)}
-        title={t('stocktake.on-hold.confirm-title')}
+        title={t('heading.are-you-sure')}
         message={
-          holding() ? t('messages.not-on-hold-description') : t('stocktake.on-hold.set')
+          holding()
+            ? t('messages.not-on-hold-description')
+            : t('messages.on-hold-description')
         }
         onConfirm={() => props.onSetHold(!holding())}
       />

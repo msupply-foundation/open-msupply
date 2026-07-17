@@ -3053,5 +3053,11 @@
   "warning.insufficient-recent-stocktake-items": "Vous n'avez pas effectué d'inventaire contenant au moins {{ minItems }} articles au cours des {{maxAge}} derniers jours. Vos niveaux de stock peuvent ne pas être exacts. Êtes-vous sûr de vouloir continuer ?",
   "warning.manual-store-requisition": "Attention - La saisie d'une réquisition client pour un dépôt peut entraîner des doublons si ce dépôt soumet aussi une commande interne.",
   "warning.nothing-to-supply": "La quantité demandée à été fournie !",
-  "warning.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée par le système"
+  "warning.requested-exceeds-suggested": "La quantité demandée est supérieure à la quantité suggérée par le système",
+  "messages.line-errors_one": "{{ count }} ligne comporte une erreur.",
+  "messages.line-errors_other": "{{ count }} lignes comportent des erreurs.",
+  "button.show-error-lines": "Afficher les lignes en erreur",
+  "button.apply": "Appliquer",
+  "messages.counting": "Calcul…",
+  "heading.nothing-counted-yet": "Rien de compté pour l'instant"
 }

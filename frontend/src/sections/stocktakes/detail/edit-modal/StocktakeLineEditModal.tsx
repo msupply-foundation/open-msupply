@@ -2,7 +2,7 @@ import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { toNumberOrNull } from '../../../../typeHelpers';
-import { t } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
@@ -169,12 +169,12 @@ const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
   },
   {
     key: 'pricing',
-    labelKey: 'stocktake.line-edit.tab-pricing',
+    labelKey: 'label.pricing',
     icon: () => <InfoIcon />,
   },
   {
     key: 'other',
-    labelKey: 'stocktake.line-edit.tab-other',
+    labelKey: 'heading.other',
     icon: () => <MessageSquareIcon />,
   },
 ];
@@ -515,7 +515,7 @@ const StocktakeLineEditContent = (
       // inline. errors is already the shared LineErrors Map — copy it so the
       // signal owns its own instance.
       setLineErrors(new Map(errors));
-      setErrorMessage(t('stocktake.line-edit.save-errors'));
+      setErrorMessage(tPlural('messages.line-errors', errors.size));
       return false; // keep the modal open on the failed lines
     }
     return true;
@@ -589,13 +589,13 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'expiryDate' },
-      header: t('label.expiry'),
+      header: t('label.expiry-date'),
       tabsAndCardGroups: ['batch'],
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('label.expiry')}
+            label={t('label.expiry-date')}
             hideLabel
             size="small"
             type="date"
@@ -631,7 +631,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'snapshotNumberOfPacks' },
-      header: t('label.snapshot'),
+      header: t('label.snapshot-num-of-packs'),
       tabsAndCardGroups: ['batch'],
       ...getNumberCell(),
       // Snapshot is the system count — read-only — but it also carries a
@@ -663,7 +663,7 @@ const StocktakeLineEditContent = (
                   'text-align': 'end',
                 }}
               >
-                {t('stocktake.line-error.snapshot-mismatch')}
+                {t('error.snapshot-total-mismatch')}
               </span>
             </Show>
           </span>
@@ -672,14 +672,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'countedNumberOfPacks' },
-      header: t('label.counted'),
+      header: t('label.counted-num-of-packs'),
       tabsAndCardGroups: ['batch'],
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('label.counted')}
+            label={t('label.counted-num-of-packs')}
             hideLabel
             size="small"
             type="number"
@@ -688,7 +688,7 @@ const StocktakeLineEditContent = (
             value={line.countedNumberOfPacks ?? ''}
             error={
               lineErrors().get(line.id) === 'StockLineReducedBelowZero'
-                ? t('stocktake.line-error.reduced-below-zero')
+                ? t('error.reduced-below-zero')
                 : undefined
             }
             onInput={e =>
@@ -704,14 +704,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'packSize' },
-      header: t('stocktake.line-edit.pack-size'),
+      header: t('label.pack-size'),
       tabsAndCardGroups: ['batch'],
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.line-edit.pack-size')}
+            label={t('label.pack-size')}
             hideLabel
             size="small"
             type="number"
@@ -727,14 +727,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('stocktake.line-edit.sell-price'),
+      header: t('label.pack-sell-price'),
       tabsAndCardGroups: ['pricing'],
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.line-edit.sell-price')}
+            label={t('label.pack-sell-price')}
             hideLabel
             size="small"
             type="number"
@@ -754,14 +754,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'costPricePerPack' },
-      header: t('stocktake.line-edit.cost-price'),
+      header: t('label.pack-cost-price'),
       tabsAndCardGroups: ['pricing'],
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.line-edit.cost-price')}
+            label={t('label.pack-cost-price')}
             hideLabel
             size="small"
             type="number"
@@ -791,7 +791,6 @@ const StocktakeLineEditContent = (
             hideLabel
             disabled={!line.countThisLine}
             value={line.location?.id}
-            placeholder={t('stocktake.line-edit.location-none')}
             onChange={l =>
               update(
                 line.id,
@@ -817,9 +816,9 @@ const StocktakeLineEditContent = (
         const error = () => {
           const err = lineErrors().get(line.id);
           if (err === 'AdjustmentReasonNotProvided')
-            return t('stocktake.line-error.reason-not-provided');
+            return t('error.provide-reason');
           if (err === 'AdjustmentReasonNotValid')
-            return t('stocktake.line-error.reason-not-valid');
+            return t('error.provide-valid-reason');
           return undefined;
         };
         return (
@@ -830,7 +829,6 @@ const StocktakeLineEditContent = (
             disabled={!line.countThisLine}
             value={line.reasonOption?.id}
             error={error()}
-            placeholder={t('stocktake.line-edit.reason-select')}
             onChange={r =>
               update(
                 line.id,
@@ -864,13 +862,13 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'comment' },
-      header: t('stocktake.detail.comment'),
+      header: t('label.stocktake-comment'),
       tabsAndCardGroups: ['other'],
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.detail.comment')}
+            label={t('label.stocktake-comment')}
             hideLabel
             size="small"
             disabled={!line.countThisLine}
@@ -886,7 +884,7 @@ const StocktakeLineEditContent = (
       // A DISPLAY column (buttons, no data value): identity `c` is `{ id }`
       // only — no key/accessor.
       c: { id: 'actions' },
-      header: t('common.action'),
+      header: t('label.actions'),
       // Row actions (duplicate + delete). ALL_TABS anchor → the LAST column in
       // every tab in table view; card: 'badge' puts it in the card header's
       // top-right chip area in card view.
@@ -908,7 +906,7 @@ const StocktakeLineEditContent = (
               size="small"
               variant="danger"
               icon={<TrashIcon />}
-              label={t('common.delete')}
+              label={t('button.delete')}
               onClick={() => removeLine(line)}
             />
           </>
@@ -989,7 +987,7 @@ const StocktakeLineEditContent = (
         showFullScreen={false}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
-        emptyMessage={t('stocktake.line-edit.empty')}
+        emptyMessage={t('label.add-new-line')}
       />
     </Dialog>
   );

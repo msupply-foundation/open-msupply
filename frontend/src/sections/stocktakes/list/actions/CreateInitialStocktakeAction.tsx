@@ -61,8 +61,8 @@ export const CreateInitialStocktakeAction = (props: {
       dismissable={!creating()}
       onClose={props.onClose}
       icon={<PlusCircleIcon />}
-      title={t('stocktake.create.initial-title')}
-      description={t('stocktake.create.initial-confirm')}
+      title={t('heading.create-initial-stocktake')}
+      description={t('messages.confirm-create-initial-stocktake')}
       actions={
         <>
           <Button
@@ -79,7 +79,7 @@ export const CreateInitialStocktakeAction = (props: {
             loading={creating()}
             onClick={() => void create()}
           >
-            {t('stocktake.create.action')}
+            {t('button.ok')}
           </Button>
         </>
       }

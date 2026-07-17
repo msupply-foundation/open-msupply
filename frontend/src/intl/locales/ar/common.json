@@ -1689,5 +1689,11 @@
   "warning.cannot-create-placeholder-units": "هناك إجمالي {{allocatedQuantity}} وحدات متوفرة. غير قادر على تخصيص جميع {{requestedQuantity}} الوحدات.",
   "warning.caps-lock": "تحذير: قفل القبعات قيد التشغيل",
   "warning.field-not-parsed": "لم يتم تحليل {{field}}",
-  "warning.nothing-to-supply": "لم يتبق شيء لتزويده!"
+  "warning.nothing-to-supply": "لم يتبق شيء لتزويده!",
+  "messages.line-errors_one": "يوجد خطأ في سطر واحد ({{ count }}).",
+  "messages.line-errors_other": "توجد أخطاء في {{ count }} أسطر.",
+  "button.show-error-lines": "عرض الأسطر ذات الأخطاء",
+  "button.apply": "تطبيق",
+  "messages.counting": "جارٍ العد…",
+  "heading.nothing-counted-yet": "لم يتم عدّ أي شيء بعد"
 }

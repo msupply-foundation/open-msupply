@@ -105,14 +105,13 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
         <Switch
           fallback={
             <>
-              <p>{t('stocktake.lines.reduce-to-zero-message')}</p>
+              <p>{t('messages.confirm-reduce-lines-to-zero')}</p>
               <FieldRow label={t('label.reason')}>
                 <ReasonSelect
                   kind="reduction"
                   label={t('label.reason')}
                   hideLabel
                   value={reasonId() ?? undefined}
-                  placeholder={t('stocktake.line-edit.reason-select')}
                   onChange={r => setReasonId(r?.id ?? null)}
                 />
               </FieldRow>
@@ -120,11 +119,11 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'success'}>
-            {t('stocktake.lines.reduce-to-zero-success')}
+            {tPlural('messages.reduced-to-zero', props.selectedIds().length)}
           </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
-              {tPlural('stocktake.errors.summary', errorCount())}
+              {tPlural('messages.line-errors', errorCount())}
             </Alert>
           </Match>
         </Switch>
@@ -150,7 +149,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('common.apply')}
+                {t('button.apply')}
               </Button>
             </>
           }
@@ -180,7 +179,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                 props.onClose();
               }}
             >
-              {t('stocktake.errors.show')}
+              {t('button.show-error-lines')}
             </Button>
           </Match>
         </Switch>

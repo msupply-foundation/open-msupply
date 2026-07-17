@@ -121,7 +121,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
             options={statusOptions()}
             value={nextStatus()}
             onAction={openConfirm}
-            menuLabel={t('stocktake.detail.finalise')}
+            menuLabel={t('button.finalise')}
           />
         </ContentFooterActions>
       </Show>
@@ -132,15 +132,17 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
         dismissable={phase() !== 'working'}
         onClose={close}
         icon={<ArrowRightIcon />}
-        title={t('stocktake.finalise.confirm-title')}
+        title={t('heading.are-you-sure')}
         description={
-          <Switch fallback={t('stocktake.finalise.confirm')}>
-            <Match when={phase() === 'success'}>
-              {t('stocktake.finalise.success')}
-            </Match>
+          <Switch
+            fallback={t('messages.confirm-status-as', {
+              status: 'status.finalised',
+            })}
+          >
+            <Match when={phase() === 'success'}>{t('messages.saved')}</Match>
             <Match when={phase() === 'error'}>
               <Alert severity="error">
-                {t('stocktake.update-error.snapshot-mismatch')}
+                {t('error.finalise-snapshot-mismatch')}
               </Alert>
             </Match>
           </Switch>
@@ -166,7 +168,9 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                   loading={phase() === 'working'}
                   onClick={() => void run()}
                 >
-                  {t('stocktake.detail.finalise')}
+                  {t('button.save-and-confirm-status', {
+                    status: STATUS_LABELS[nextStatus()],
+                  })}
                 </Button>
               </>
             }
@@ -192,7 +196,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                   close();
                 }}
               >
-                {t('stocktake.errors.show')}
+                {t('button.show-error-lines')}
               </Button>
             </Match>
           </Switch>
@@ -205,8 +209,8 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
         open={noLinesOpen()}
         onClose={() => setNoLinesOpen(false)}
         icon={<InfoIcon />}
-        title={t('stocktake.finalise.no-lines-title')}
-        description={t('stocktake.finalise.no-lines')}
+        title={t('heading.nothing-counted-yet')}
+        description={t('messages.no-lines')}
         actions={
           <Button
             variant="secondary"

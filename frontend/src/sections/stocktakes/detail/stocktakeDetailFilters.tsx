@@ -23,17 +23,17 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 const FILTERS = constructFilters<StocktakeLineFilter>({
   search: null,
   errorIds: {
-    label: () => t('stocktake.errors.filter-label'),
+    label: () => t('heading.stocktake-errors'),
     // Label-only chip — activated by the error dialog with the actual line
     // ids, removed by its X.
     render: () => null,
   },
   item: {
-    label: () => t('stocktake.detail-filter.item'),
+    label: () => t('label.item'),
     render: props => (
       <FilterTextInput
-        label={t('stocktake.detail-filter.item')}
-        placeholder={t('stocktake.filter.contains')}
+        label={t('label.item')}
+        placeholder={t('label.item')}
         value={props.filter().item ?? ''}
         onInput={value => props.setPartialFilter({ item: value })}
       />
@@ -44,7 +44,7 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
     render: props => (
       <FilterTextInput
         label={t('label.batch')}
-        placeholder={t('stocktake.filter.contains')}
+        placeholder={t('label.batch')}
         value={props.filter().batch ?? ''}
         onInput={value => props.setPartialFilter({ batch: value })}
       />
@@ -55,17 +55,17 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
     render: props => (
       <FilterTextInput
         label={t('label.location')}
-        placeholder={t('stocktake.filter.contains')}
+        placeholder={t('label.location')}
         value={props.filter().location ?? ''}
         onInput={value => props.setPartialFilter({ location: value })}
       />
     ),
   },
   expiryBefore: {
-    label: () => t('stocktake.detail-filter.expiry'),
+    label: () => t('label.items-expiring-before'),
     render: props => (
       <FilterDate
-        label={t('stocktake.detail-filter.expiry')}
+        label={t('label.items-expiring-before')}
         value={props.filter().expiryBefore ?? ''}
         onInput={value => props.setPartialFilter({ expiryBefore: value })}
       />

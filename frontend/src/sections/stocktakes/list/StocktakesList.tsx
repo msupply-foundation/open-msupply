@@ -81,10 +81,10 @@ const DEFAULT_STATE: StocktakesListState = {
 const statusMeta = (status: StocktakeRow['status']) =>
   status === 'FINALISED'
     ? {
-        label: t('stocktake.status.finalised'),
+        label: t('status.finalised'),
         colour: 'var(--status-finalised)',
       }
-    : { label: t('stocktake.status.new'), colour: 'var(--status-new)' };
+    : { label: t('status.new'), colour: 'var(--status-new)' };
 
 const StocktakesList: Component = () => {
   // storeId is guaranteed present: this section renders only inside
@@ -250,7 +250,7 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('stocktake.column.status'),
+      header: t('label.status'),
       cell: info => (
         <StatusChip {...statusMeta(info.getValue<StocktakeRow['status']>())} />
       ),
@@ -260,7 +260,7 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'description' },
       sortKey: 'description',
-      header: t('stocktake.column.description'),
+      header: t('label.description'),
       // Card view: the description flows in the secondary area. Wraps to 2
       // lines.
       meta: { wrapLines: 2 },
@@ -268,7 +268,7 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'comment' },
       sortKey: 'comment',
-      header: t('stocktake.column.comment'),
+      header: t('label.comment'),
     },
     {
       c: { key: 'stocktakeDate' },
@@ -279,7 +279,7 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('stocktake.column.created'),
+      header: t('label.created'),
       ...getDateCell(),
     },
     {
@@ -289,10 +289,7 @@ const StocktakesList: Component = () => {
     },
   ];
 
-  const crumbs = () => [
-    { label: t('inventory') },
-    { label: t('stocktakes') },
-  ];
+  const crumbs = () => [{ label: t('inventory') }, { label: t('stocktakes') }];
 
   return (
     <Page
@@ -342,7 +339,7 @@ const StocktakesList: Component = () => {
             {/* Matching Open mSupply's action bar: the count and the row action(s)
                 (Delete) group on the inline-start edge; Clear pins inline-end. */}
             <strong data-testid="selected-rows-count">
-              {t('stocktake.selected', { count: selectedIds().length })}
+              {selectedIds().length} {t('label.selected')}
             </strong>
             <DeleteStocktakesAction
               storeId={params.storeId}
@@ -355,7 +352,7 @@ const StocktakesList: Component = () => {
                 icon={<CloseIcon />}
                 onClick={() => setSelectedIds([])}
               >
-                {t('common.clear')}
+                {t('label.clear-selection')}
               </Button>
             </ContentFooterActions>
           </ContentFooter>
@@ -374,9 +371,7 @@ const StocktakesList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        emptyMessage={
-          hasStocktake() ? t('stocktake.empty') : t('stocktake.empty-store')
-        }
+        emptyMessage={t('error.no-stocktakes')}
         // The empty-state action flips on whether the store has ANY stocktake
         // (mirrors OMS): a store with none is offered the once-per-store INITIAL
         // (opening-balance) create — a plain confirm, no mode controls; a store
@@ -389,7 +384,7 @@ const StocktakesList: Component = () => {
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >
-              {t('label.new-stocktake')}
+              {t('button.create-a-new-one')}
             </Button>
           ) : (
             <Button
@@ -397,7 +392,7 @@ const StocktakesList: Component = () => {
               data-testid="nothing-here-create-button"
               onClick={() => setInitialOpen(true)}
             >
-              {t('stocktake.create.initial-action')}
+              {t('button.initial-stocktake')}
             </Button>
           )
         }

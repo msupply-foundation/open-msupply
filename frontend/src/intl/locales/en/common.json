@@ -3045,5 +3045,16 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
+  "messages.line-errors_one": "{{ count }} line has an error.",
+  "messages.line-errors_other": "{{ count }} lines have errors.",
+  "button.show-error-lines": "Show error lines",
+  "button.apply": "Apply",
+  "heading.create-initial-stocktake": "Create initial stocktake",
+  "messages.confirm-create-initial-stocktake": "This creates an initial stocktake with a line for every item in the store, so you can set opening balances. A store can only have one initial stocktake.",
+  "messages.counting": "Counting…",
+  "error.finalise-snapshot-mismatch": "The stock quantity is now different from when the stocktake was started because some of the stock has been issued in outbound shipments, prescriptions, or another stocktake. Please delete the affected lines and try again.",
+  "error.finalise-reduced-below-zero": "Stock reserved in new outbound shipments, prescriptions, or another stocktake. Some reductions are greater than the number of packs available.",
+  "messages.cannot-delete-finalised-stocktakes": "Some of the selected stocktakes are finalised and cannot be deleted. Nothing was deleted.",
+  "heading.nothing-counted-yet": "Nothing counted yet"
 }

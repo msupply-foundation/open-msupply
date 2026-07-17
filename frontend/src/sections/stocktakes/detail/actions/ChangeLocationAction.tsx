@@ -100,13 +100,12 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
         <Switch
           fallback={
             <>
-              <p>{t('stocktake.lines.change-location-message')}</p>
+              <p>{t('messages.confirm-change-location')}</p>
               <FieldRow label={t('label.location')}>
                 <LocationSelect
                   label={t('label.location')}
                   hideLabel
                   value={locationId() ?? undefined}
-                  placeholder={t('stocktake.line-edit.location-none')}
                   onChange={l => setLocationId(l?.id ?? null)}
                 />
               </FieldRow>
@@ -114,11 +113,11 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'success'}>
-            {t('stocktake.lines.change-location-success')}
+            {tPlural('messages.changed-location', props.selectedIds().length)}
           </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
-              {tPlural('stocktake.errors.summary', errorCount())}
+              {tPlural('messages.line-errors', errorCount())}
             </Alert>
           </Match>
         </Switch>
@@ -144,7 +143,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('common.apply')}
+                {t('button.apply')}
               </Button>
             </>
           }
@@ -174,7 +173,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                 props.onClose();
               }}
             >
-              {t('stocktake.errors.show')}
+              {t('button.show-error-lines')}
             </Button>
           </Match>
         </Switch>

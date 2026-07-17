@@ -57,7 +57,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
         disabled={props.disabled}
         onClick={() => setOpen(true)}
       >
-        {t('common.delete')}
+        {t('button.delete-lines')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -95,15 +95,17 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<TrashIcon />}
-      title={t('stocktake.lines.delete-title')}
+      title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={t('stocktake.lines.delete-confirm', { count })}>
+        <Switch
+          fallback={tPlural('messages.confirm-delete-stocktake_lines', count)}
+        >
           <Match when={phase() === 'success'}>
-            {t('stocktake.lines.delete-success')}
+            {tPlural('messages.deleted-lines', count)}
           </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
-              {tPlural('stocktake.errors.summary', errorCount())}
+              {tPlural('messages.line-errors', errorCount())}
             </Alert>
           </Match>
         </Switch>
@@ -129,7 +131,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('common.delete')}
+                {t('button.delete-lines')}
               </Button>
             </>
           }
@@ -159,7 +161,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                 props.onClose();
               }}
             >
-              {t('stocktake.errors.show')}
+              {t('button.show-error-lines')}
             </Button>
           </Match>
         </Switch>

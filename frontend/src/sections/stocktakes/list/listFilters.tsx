@@ -46,16 +46,16 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
   // ─ user-facing, in display order
   // ─────────────────────────────────────────────
   status: {
-    label: () => t('stocktake.filter.status'),
+    label: () => t('label.status'),
     render: props => (
       <FilterSelect
-        label={t('stocktake.filter.status')}
+        label={t('label.status')}
         testId={props.testId}
         value={props.filter().status?.equalTo ?? ''}
         options={[
           { value: '', label: t('label.any') },
-          { value: 'NEW', label: t('stocktake.status.new') },
-          { value: 'FINALISED', label: t('stocktake.status.finalised') },
+          { value: 'NEW', label: t('status.new') },
+          { value: 'FINALISED', label: t('status.finalised') },
         ]}
         // The server honours status.equalTo, NOT equalAny (equalAny is in the
         // schema input but the resolver ignores it). '' clears (→ null so the
@@ -68,12 +68,12 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
     ),
   },
   description: {
-    label: () => t('stocktake.filter.description'),
+    label: () => t('label.description'),
     render: props => (
       <FilterTextInput
-        label={t('stocktake.filter.description')}
+        label={t('label.description')}
         testId={props.testId}
-        placeholder={t('stocktake.filter.contains')}
+        placeholder={t('label.description')}
         value={props.filter().description?.like ?? ''}
         // Blank box → null, never { like: '' }: an empty `like` would wrongly
         // match (the server treats "" as a real substring).
@@ -86,12 +86,12 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
     ),
   },
   comment: {
-    label: () => t('stocktake.filter.comment'),
+    label: () => t('label.comment'),
     render: props => (
       <FilterTextInput
-        label={t('stocktake.filter.comment')}
+        label={t('label.comment')}
         testId={props.testId}
-        placeholder={t('stocktake.filter.contains')}
+        placeholder={t('label.comment')}
         value={props.filter().comment?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({ comment: value ? { like: value } : null })
@@ -131,7 +131,7 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
       <FilterTextInput
         label={t('label.number')}
         testId={props.testId}
-        placeholder={t('stocktake.filter.equals')}
+        placeholder={t('label.number')}
         // stocktakeNumber is an integer; the control edits a string. Show it
         // as text, and parse on input below. `?? ''` keeps the box blank when
         // unset.

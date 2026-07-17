@@ -1,5 +1,5 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
-import { t } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -50,7 +50,7 @@ export const DeleteStocktakesAction: Component<
         data-testid="delete-lines-button"
         onClick={() => setOpen(true)}
       >
-        {t('common.delete')}
+        {t('button.delete-lines')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -105,14 +105,16 @@ const Body = (props: DeleteStocktakesActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('stocktake.delete.title')}
+      title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={t('stocktake.delete.confirm', { count })}>
+        <Switch fallback={tPlural('messages.confirm-delete-stocktakes', count)}>
           <Match when={phase() === 'error'}>
-            <Alert severity="error">{t('stocktake.delete.cannot-edit')}</Alert>
+            <Alert severity="error">
+              {t('messages.cannot-delete-finalised-stocktakes')}
+            </Alert>
           </Match>
           <Match when={phase() === 'success'}>
-            {t('stocktake.delete.success', { count })}
+            {tPlural('messages.deleted-stocktakes', count)}
           </Match>
         </Switch>
       }
@@ -138,7 +140,7 @@ const Body = (props: DeleteStocktakesActionProps & { onClose: () => void }) => {
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
               >
-                {t('stocktake.delete.action')}
+                {t('button.ok')}
               </Button>
             </>
           }

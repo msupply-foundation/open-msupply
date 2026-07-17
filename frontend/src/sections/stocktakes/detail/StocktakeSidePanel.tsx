@@ -29,14 +29,14 @@ export interface StocktakeSidePanelProps {
 }
 
 export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
-  <SidePanelSection title={t('stocktake.detail.additional-info')}>
+  <SidePanelSection title={t('heading.additional-info')}>
     {/* All rows share ONE FieldRow label column so labels line up and the read-only values sit on
         the same inline-start as the editable inputs below them (no mixed <dl>/FieldRow widths).
         Read-only rows render a plain value; editable ones a buffered field. */}
     <FieldRow label={t('label.entered-by')}>
       <Text variant="body">{props.node.user?.username ?? '—'}</Text>
     </FieldRow>
-    <FieldRow label={t('stocktake.column.created')}>
+    <FieldRow label={t('label.created')}>
       <Text variant="body">{localisedDate(props.node.createdDatetime)}</Text>
     </FieldRow>
 
@@ -62,9 +62,9 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
         onBlur={() => props.edit.flush()}
       />
     </FieldRow>
-    <FieldRow label={t('stocktake.detail.comment')}>
+    <FieldRow label={t('heading.comment')}>
       <TextField
-        label={t('stocktake.detail.comment')}
+        label={t('heading.comment')}
         hideLabel
         width="full"
         value={props.edit.state.comment}
