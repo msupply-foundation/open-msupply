@@ -2,11 +2,41 @@ import { createSignal, type JSX } from 'solid-js';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { TextArea } from '../ui/elements/inputs/TextArea';
 import { NumberField } from '../ui/elements/inputs/NumberField';
+import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
 import { Checkbox } from '../ui/elements/inputs/Checkbox';
 import { Button } from '../ui/elements/buttons/Button';
+import { Select } from '../ui/elements/selectors/Select';
+import {
+  getCurrencyInfo,
+  homeCurrency,
+  locale,
+  setHomeCurrency,
+} from '../intl';
 import styles from './InputsShowcase.module.css';
+
+// Mock source for the home-currency selector: the currencies old OMS shipped
+// hand-configured. The real source is the entered store's homeCurrencyCode —
+// see the TODO in src/intl/currency.ts; this selector stands in until then.
+const MOCK_STORE_CURRENCIES = [
+  'USD',
+  'EUR',
+  'CDF',
+  'NZD',
+  'DJF',
+  'QAR',
+  'RUB',
+  'SSP',
+  'PGK',
+  'COP',
+  'SBD',
+  'KMF',
+  'XAF',
+  'XOF',
+  'STN',
+  'AFN',
+];
 
 /** The parent-state line under each NumberField demo: the committed value —
  *  a number (or undefined), as distinct from the text in the field. */
@@ -69,6 +99,13 @@ export const InputsShowcase = () => {
   const [raceValue, setRaceValue] = createSignal<number | undefined>();
   const [savedValue, setSavedValue] = createSignal<number | undefined>();
   const [raceSaves, setRaceSaves] = createSignal(0);
+  // CurrencyField demos. The home-currency mock selector drives the global
+  // homeCurrency signal, so the un-propped field follows it live.
+  const [price, setPrice] = createSignal<number | undefined>(1234.5);
+  const [eurPrice, setEurPrice] = createSignal<number | undefined>(99.95);
+  const [yenPrice, setYenPrice] = createSignal<number | undefined>(5800);
+  const [unitCost, setUnitCost] = createSignal<number | undefined>(1.5025);
+  const [sbdPrice, setSbdPrice] = createSignal<number | undefined>();
 
   return (
     <div class={styles.stack}>
@@ -257,14 +294,15 @@ export const InputsShowcase = () => {
             />
             <ValueReadout value={year()} />
           </Field>
-          <Field caption="Disabled · formatted display">
+          <Field caption='Disabled · width="short" override'>
             <NumberField
               label="Total (computed)"
               value={1234567.891}
               onChange={() => {}}
               decimalLimit={2}
               disabled
-              helperText="Grey fill — displays the formatted value"
+              width="short"
+              helperText="Grey fill — displays the formatted value. Numeric fields default to the compact 8rem cap; wide totals opt up to 'short'."
             />
           </Field>
           <Field
@@ -297,6 +335,88 @@ export const InputsShowcase = () => {
               ({raceSaves()} save{raceSaves() === 1 ? '' : 's'}) — eager commits
               + synchronous signals mean Save never sees a stale value
             </output>
+          </Field>
+        </div>
+      </Card>
+
+      <Card
+        title="Currency field — money over NumberField"
+        lead={
+          <>
+            A NumberField whose decimal rules and symbol come from the currency,
+            all derived from <code>Intl</code> — no hand-maintained table (the
+            old OMS table had drifted: it gave KMF 2 decimals; ISO says 0). The
+            symbol is field <em>chrome</em> (a TextField adornment), never part
+            of the text, so the whole NumberField machinery is inherited — try
+            pasting <code>$1,234.56</code>. With no <code>currency</code> prop
+            the field follows the store's home currency — mocked by the selector
+            below until the store wiring lands (TODO in{' '}
+            <code>src/intl/currency.ts</code>). Symbol placement follows the app
+            language: switch to French and the € moves after the number.
+          </>
+        }
+      >
+        <div class={styles.grid}>
+          <Field caption="Mock store home currency" class={styles.fullRow}>
+            <Select
+              label="Store home currency"
+              options={MOCK_STORE_CURRENCIES.map(code => ({
+                value: code,
+                label: `${code} — ${getCurrencyInfo(code, locale()).symbol}`,
+              }))}
+              value={homeCurrency()}
+              onValueChange={setHomeCurrency}
+            />
+          </Field>
+          <Field caption="Follows home currency">
+            <CurrencyField
+              label="Sell price"
+              value={price()}
+              onChange={setPrice}
+              helperText="No currency prop — switches with the selector above"
+            />
+            <ValueReadout value={price()} />
+          </Field>
+          <Field caption='Explicit currency="EUR"'>
+            <CurrencyField
+              label="Supplier price"
+              value={eurPrice()}
+              onChange={setEurPrice}
+              currency="EUR"
+              helperText="Fixed foreign currency — in French, € trails"
+            />
+            <ValueReadout value={eurPrice()} />
+          </Field>
+          <Field caption="Zero-decimal currency (JPY)">
+            <CurrencyField
+              label="Cost"
+              value={yenPrice()}
+              onChange={setYenPrice}
+              currency="JPY"
+              helperText="0 minor units — the decimal point isn't typeable"
+            />
+            <ValueReadout value={yenPrice()} />
+          </Field>
+          <Field caption="decimalLimit={4} override">
+            <CurrencyField
+              label="Cost per unit"
+              value={unitCost()}
+              onChange={setUnitCost}
+              decimalLimit={4}
+              helperText="4 dp in any home currency — blur pads to its minor units"
+            />
+            <ValueReadout value={unitCost()} />
+          </Field>
+          <Field caption='currencyDisplay="code"'>
+            <CurrencyField
+              label="Amount (SBD)"
+              value={sbdPrice()}
+              onChange={setSbdPrice}
+              currency="SBD"
+              currencyDisplay="code"
+              helperText='Where "$" would be ambiguous, show the ISO code'
+            />
+            <ValueReadout value={sbdPrice()} />
           </Field>
         </div>
       </Card>

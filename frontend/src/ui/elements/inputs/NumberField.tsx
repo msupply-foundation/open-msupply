@@ -120,6 +120,7 @@ export const NumberField = (props: NumberFieldProps) => {
     'multiplier',
     'noFormatting',
     'defaultValue',
+    'width',
     'class',
   ]);
 
@@ -171,14 +172,20 @@ export const NumberField = (props: NumberFieldProps) => {
     )
   );
 
-  // A locale change ALWAYS reformats — no semantic guard: the old text often
-  // parses to the same value under the new symbols ("12.50" → 12,50 in fr,
-  // "1 000" → ١٬٠٠٠ in ar) and must still be re-rendered. Deferred: the
-  // signal's initial text already used the current locale.
+  // A locale or constraint change ALWAYS reformats — no semantic guard: the
+  // old text often parses to the same value under the new symbols ("12.50" →
+  // 12,50 in fr, "1 000" → ١٬٠٠٠ in ar), and a decimalLimit/decimalMin change
+  // (CurrencyField switching USD → JPY) changes the canonical rendering of an
+  // unchanged value. Deferred: the signal's initial text already used the
+  // current locale and constraints.
+  const constraintsKey = () => {
+    const c = constraints();
+    return `${c.min}|${c.max}|${c.decimalLimit}|${c.decimalMin}|${c.noFormatting}`;
+  };
   createEffect(
     on(
-      locale,
-      loc =>
+      [locale, constraintsKey],
+      ([loc]) =>
         setText(
           focused()
             ? editString(local.value, constraints(), loc)
@@ -271,6 +278,9 @@ export const NumberField = (props: NumberFieldProps) => {
     <TextField
       {...rest}
       class={local.class ? `${styles.numeric} ${local.class}` : styles.numeric}
+      // Numbers are short: default to the compact width cap (old OMS's
+      // numeric input defaulted narrow too, at 75px). Overridable per field.
+      width={local.width ?? 'compact'}
       type="text"
       inputmode={inputMode()}
       autocomplete="off"
