@@ -302,7 +302,7 @@ export const InputsShowcase = () => {
               decimalLimit={2}
               disabled
               width="short"
-              helperText="Grey fill — displays the formatted value. Numeric fields default to the compact 8rem cap; wide totals opt up to 'short'."
+              helperText="Grey fill — displays the formatted value. Numeric fields default to the compact width cap; wide totals opt up to 'short'."
             />
           </Field>
           <Field

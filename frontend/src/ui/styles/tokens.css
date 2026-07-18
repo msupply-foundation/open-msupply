@@ -173,7 +173,7 @@
   --input-height-sm: 2.25rem; /* 36px small */
   --input-padding-x: 0.75rem; /* 12px horizontal */
   --input-radius: 0.375rem; /* 6px */
-  --input-max-compact: 10rem; /* 128px — numbers/money (NumberField default) */
+  --input-max-compact: 10rem; /* 160px — numbers/money (NumberField default) */
   --input-max-short: 25rem; /* 400px — codes, short text */
   --input-max-long: 37.5rem; /* 600px — names, descriptions */
 }

@@ -18,9 +18,12 @@
   position: relative;
 }
 
-/* Spec max-widths */
+/* Spec max-widths. `compact` caps only the INPUT BOX (rule after the base
+   input rules below) — the field container keeps the `short` cap so the label
+   and helper/error text wrap at a readable width instead of being squeezed to
+   match the narrow box. */
 .field[data-width='compact'] {
-  max-width: var(--input-max-compact);
+  max-width: var(--input-max-short);
 }
 
 .field[data-width='short'] {
@@ -151,6 +154,13 @@
 .inputWrap[data-adorned]:has(.input:disabled) {
   background: var(--bg-input);
   border-color: var(--color-divider);
+}
+
+/* The compact width variant: only the input box narrows (see the width-caps
+   comment above). */
+.field[data-width='compact'] .input,
+.field[data-width='compact'] .inputWrap[data-adorned] {
+  max-width: var(--input-max-compact);
 }
 
 .inputWrap[data-adorned] .input,

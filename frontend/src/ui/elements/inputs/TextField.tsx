@@ -20,9 +20,10 @@ export interface TextFieldProps extends Omit<
   /** Spec: 2.5rem (40px) default, 2.25rem (36px) small. */
   size?: 'default' | 'small';
   /**
-   * Max-width caps (the container can always be narrower): compact 8rem
-   * (numbers/money — NumberField's default), short 25rem (codes/short text),
-   * long 37.5rem (names), full = fill.
+   * Max-width caps (the container can always be narrower): compact 10rem
+   * (numbers/money — NumberField's default; caps only the input box, while
+   * the label and helper/error text wrap at the short cap), short 25rem
+   * (codes/short text), long 37.5rem (names), full = fill.
    */
   width?: 'compact' | 'short' | 'long' | 'full';
   /**
