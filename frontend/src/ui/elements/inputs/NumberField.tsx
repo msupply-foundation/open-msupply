@@ -96,8 +96,9 @@ export interface NumberFieldProps extends Omit<
  *   typing (old OMS clamped the display mid-entry: typing "5" toward "50"
  *   with min=10 became "10" under your fingers — the issue-5990 complaint).
  *
- * - Blur/Enter canonicalises: parse → round → clamp → commit if changed →
- *   display the formatted string (grouping separators, decimalMin padding).
+ * - Blur canonicalises: parse → round → clamp → commit if changed → display
+ *   the formatted string (grouping separators, decimalMin padding). Enter
+ *   commits-and-leaves: it blurs the field, which runs that same path.
  *   While focused the text is the "edit form" — locale digits and decimal
  *   separator but no grouping, so the caret never fights separators (the old
  *   component reformatted mid-typing and the caret jumped; we format only at
@@ -238,8 +239,10 @@ export const NumberField = (props: NumberFieldProps) => {
       commit(next);
       return;
     }
-    // Canonicalise before any Enter-triggered submit handler reads the value.
-    if (e.key === 'Enter') finalize();
+    // Enter = "I'm done": leave the field — blur runs the commit-and-
+    // canonicalise path synchronously, before any Enter-triggered submit
+    // handler reads the value.
+    if (e.key === 'Enter') e.currentTarget.blur();
   };
 
   const handleFocus = (e: FocusEvent & { currentTarget: HTMLInputElement }) => {
