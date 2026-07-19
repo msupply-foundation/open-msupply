@@ -1,0 +1,188 @@
+# Customers & Suppliers vertical (spec/names). Read-only: lists + detail views.
+# Filter / sort / pagination are carried as the generated GraphQL input types
+# (NameFilterInput, NameSortInput, PaginationInput) so URL state maps straight
+# onto them with no remapping (kdd/type-safety). NamesResponse is a single-member
+# union (NameConnector) with no typed error member — auth/validation failures are
+# transport-level and handled globally in graphqlFetch.
+
+# The list query — backs BOTH the Customer list (isCustomer) and the Supplier
+# list (isSupplier); the two differ only by the filter the page sends.
+query names(
+  $storeId: String!
+  $filter: NameFilterInput
+  $sort: [NameSortInput!]
+  $page: PaginationInput
+) {
+  names(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on NameConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        name
+        type
+        isCustomer
+        isSupplier
+        isVisible
+        # store is non-null only when the name is itself a store — drives the
+        # row's store indicator (spec/names columns; AC-N8).
+        store {
+          id
+          code
+        }
+        # v2 custom-field VALUES (JSON object; codegen types the JSON scalar as
+        # string — parsed at the boundary in customFields.ts). Server-filtered to
+        # the fields visible for the name's role scope(s). Slice 2 columns.
+        customFields
+      }
+    }
+  }
+}
+
+# Single-name detail read — the SAME `names` field filtered by id (the contract's
+# "no dedicated single-name operation"), selecting the full detail field set.
+# Backs the customer modal (S3) and the supplier detail page (S4).
+query nameById($storeId: String!, $nameId: String!) {
+  names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+        type
+        isCustomer
+        isSupplier
+        isVisible
+        store {
+          id
+          code
+          storeName
+        }
+        phone
+        address1
+        address2
+        country
+        website
+        comment
+        chargeCode
+        isManufacturer
+        isDonor
+        isOnHold
+        createdDatetime
+        # v1 name properties — a JSON STRING blob; read for the customer detail's
+        # supply level (well-known key), matched against nameProperties defs.
+        properties
+        # v2 custom-field values (JSON object as string; see customFields.ts).
+        customFields
+        # Supplier-only trade terms (S4 Details tab; AC-N25).
+        hshCode
+        hshName
+        email
+        margin
+        freightFactor
+        currency {
+          id
+          code
+        }
+      }
+    }
+  }
+}
+
+# Consumed read (owned by the settings/properties area): the v2 custom-field
+# DEFINITIONS for a role scope ("customer" / "supplier"). Drives which
+# custom-field columns/filters/rows exist. `key` indexes into NameNode.customFields
+# and is what a dynamicFilter condition targets.
+query customFieldDefinitions($scope: String!) {
+  customFields(filter: { scope: { equalTo: $scope } }) {
+    ... on CustomFieldConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        key
+        name
+        valueType
+        kind
+        displayMode
+        options {
+          id
+          key
+          name
+        }
+      }
+    }
+  }
+}
+
+# Consumed read: the v1 name-property DEFINITIONS (for the customer detail's
+# supply level). Distinct from the v2 custom-field system above.
+query nameProperties {
+  nameProperties {
+    ... on NamePropertyConnector {
+      __typename
+      nodes {
+        id
+        property {
+          id
+          key
+          name
+          valueType
+          allowedValues
+        }
+      }
+    }
+  }
+}
+
+# Consumed read (CROSS-VERTICAL — owned by the purchase-order vertical, named
+# here only to populate the supplier detail's Purchase Orders tab; AC-N26).
+# Filtered by supplier NAME (the PurchaseOrderFilterInput.supplier StringFilter
+# matches the supplier's name — confirmed against the current app); selecting a
+# row navigates into the purchase-order area.
+query supplierPurchaseOrders($storeId: String!, $supplierName: String!) {
+  purchaseOrders(
+    storeId: $storeId
+    filter: { supplier: { equalTo: $supplierName } }
+  ) {
+    ... on PurchaseOrderConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        number
+        status
+        createdDatetime
+        orderTotalAfterDiscount
+      }
+    }
+  }
+}
+
+# Consumed read: a name's contacts (supplier detail Contacts tab). Store- AND
+# name-scoped, read-only — there is no contact insert/update/delete in the schema.
+# ContactConnector has nodes only (no totalCount, no pagination).
+query contacts($storeId: String!, $nameId: String!) {
+  contacts(storeId: $storeId, nameId: $nameId) {
+    ... on ContactConnector {
+      __typename
+      nodes {
+        id
+        firstName
+        lastName
+        position
+        email
+        phone
+        category1
+        category2
+        category3
+        address1
+        address2
+        country
+        comment
+      }
+    }
+  }
+}
