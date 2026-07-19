@@ -1,0 +1,32 @@
+/*
+ * DocumentFrame — the iframe fills its container; a loading overlay covers it
+ * until the load event. rem/em sizing; colours from tokens (only px is the
+ * hairline border).
+ */
+
+.frame {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 0;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  overflow: hidden;
+}
+
+.iframe {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+}
+
+/* Loading overlay — the Spinner centred over the (blank) frame until load. */
+.loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg-white);
+}

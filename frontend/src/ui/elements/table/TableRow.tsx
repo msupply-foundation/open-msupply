@@ -144,17 +144,16 @@ export function TableRow<T>(props: {
               data-testid={`cell-${cell.column.id}`}
               data-align={cellAlign(cell)}
               data-pinned={cell.column.getIsPinned() || undefined}
-              // data-wrap + --wrap-lines: when a column sets meta.wrapLines >
-              // 1, the cell clamps to that many lines then ellipsises (CSS
-              // line-clamp); otherwise the default single-line nowrap applies.
+              // data-wrap: when a column sets meta.wrapLines > 1, the cell
+              // content clamps to that many lines then ellipsises (via the
+              // inner .tdClamp wrapper below — the clamp's -webkit-box display
+              // can't sit on the td itself without breaking table-cell
+              // alignment); otherwise the default single-line nowrap applies.
               // min-width keeps the column-width floor. A pinned column
               // additionally gets sticky position + its edge offset.
               data-wrap={cellWrapLines(cell) ? '' : undefined}
               style={{
                 'min-width': `${cell.column.getSize()}px`,
-                ...(cellWrapLines(cell)
-                  ? { '--wrap-lines': String(cellWrapLines(cell)) }
-                  : {}),
                 ...props.pinnedStyle(cell.column),
               }}
             >
@@ -164,7 +163,16 @@ export function TableRow<T>(props: {
                   placeholder (the grouped column on a CHILD row): flexRender gives the child's real
                   value, so a grouped child keeps showing e.g. its code/name — a blank there would
                   read as missing data (matches Open mSupply). The expander is its own column. */}
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              {cellWrapLines(cell) ? (
+                <span
+                  class={styles.tdClamp}
+                  style={{ '--wrap-lines': String(cellWrapLines(cell)) }}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </span>
+              ) : (
+                flexRender(cell.column.columnDef.cell, cell.getContext())
+              )}
             </td>
           </Show>
         )}
