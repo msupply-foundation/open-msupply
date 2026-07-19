@@ -11,7 +11,11 @@ import { DuplicateOutboundShipment } from '../outboundShipments.generated';
 export interface DuplicateShipmentActionProps {
   /** The shipment to copy. */
   shipmentId: () => string;
-  /** Render as an icon-less side-panel row instead of the footer button. */
+  /**
+   * Where the trigger renders: the list footer's bulk bar (secondary tone,
+   * default) or the detail side panel's record-actions stack (primary, like
+   * the page actions).
+   */
   variant?: 'footer' | 'panel';
 }
 
@@ -76,7 +80,7 @@ export const DuplicateShipmentAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
+        variant={props.variant === 'panel' ? 'primary' : 'secondary'}
         icon={<CopyIcon />}
         data-testid="duplicate-shipment-button"
         onClick={openConfirm}

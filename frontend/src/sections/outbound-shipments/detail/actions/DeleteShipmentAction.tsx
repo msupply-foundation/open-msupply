@@ -56,7 +56,6 @@ export const DeleteShipmentAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
         icon={<TrashIcon />}
         data-testid="delete-shipment-button"
         disabled={props.disabled}

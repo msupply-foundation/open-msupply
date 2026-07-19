@@ -65,3 +65,11 @@ export const SidePanelSection = (props: SidePanelSectionProps) => (
     {props.children}
   </section>
 );
+
+/**
+ * The record-actions cluster inside a panel section (the registry's
+ * record-actions section): one action per row, stretched to the panel width.
+ */
+export const SidePanelActions = (props: { children: JSX.Element }) => (
+  <div class={styles.actions}>{props.children}</div>
+);

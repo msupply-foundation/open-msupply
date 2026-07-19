@@ -1,20 +1,23 @@
-import { createSignal, onCleanup, Show, type Component } from 'solid-js';
+import { createSignal, For, onCleanup, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
-import { SidePanelSection } from '../../../ui/layout/SidePanel/SidePanel';
+import {
+  SidePanelActions,
+  SidePanelSection,
+} from '../../../ui/layout/SidePanel/SidePanel';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
-import { CopyIcon, EditIcon } from '../../../ui/icons';
+import { Popover } from '../../../ui/elements/feedback/Popover';
+import { CopyIcon, EditIcon, InfoIcon } from '../../../ui/icons';
 import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
 import { isDeletable } from '../outboundStatus';
-import { outboundPrefs } from '../outboundPreferencesResource';
 import type { OutboundNode } from './outboundUpdate';
 import type { OutboundFieldEdit } from './outboundEdit';
 
@@ -48,9 +51,42 @@ const money = (value: number | null | undefined): string =>
 export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const pricing = () => props.node.pricing;
   const requisition = () => props.node.requisition;
-  const foreignCurrencyOn = () =>
-    outboundPrefs()?.store.issueInForeignCurrency ?? false;
-  const isTransfer = () => props.node.otherParty.store != null;
+  const serviceLines = () =>
+    props.node.lines.nodes.filter(line => line.type === 'SERVICE');
+
+  // Tax display derivations (rules.md § pricing): the amount is total − sub
+  // total floored at zero; the service group shows the EFFECTIVE rate (tax
+  // over subtotal), the items group shows the STORED shipment rate.
+  const taxAmount = (
+    before: number | null | undefined,
+    after: number | null | undefined
+  ) => Math.max((after ?? 0) - (before ?? 0), 0);
+  const effectiveTaxPct = (
+    before: number | null | undefined,
+    after: number | null | undefined
+  ) => (taxAmount(before, after) / ((before ?? 0) || 1)) * 100;
+  const taxLabel = (pct: number) =>
+    `${t('outbound.panel.tax')} (${pct.toFixed(2)}%)`;
+
+  const groupHeading = (label: string, info: string): ReturnType<Component> => (
+    <span
+      style={{
+        display: 'inline-flex',
+        'align-items': 'center',
+        gap: 'var(--space-1)',
+      }}
+    >
+      <Popover
+        trigger={<InfoIcon />}
+        triggerLabel={label}
+        openOnHover
+        placement="bottom-start"
+      >
+        <p>{info}</p>
+      </Popover>
+      {label}
+    </span>
+  );
 
   // Copy confirmation shown inline beside the button (controls › action
   // feedback — never a toast), fading after a moment.
@@ -139,10 +175,77 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         </Show>
       </SidePanelSection>
 
-      {/* 3 — Invoice details: service charges block · items sell price block ·
-          grand total · foreign currency. */}
+      {/* 3 — Invoice details (rules.md § pricing; ui-surface S3 § side
+          panel): service charges group · items sell price group · grand
+          total · foreign currency. Disabled edit affordances stay visible,
+          dimmed — never hidden. */}
       <SidePanelSection title={t('outbound.panel.invoice-details')}>
-        <FieldRow label={t('outbound.panel.service-charges')}>
+        {/* Service charges: info bubble + the S5 edit action (dimmed once
+            read-only); one row per service line, then sub total / effective
+            tax / total. Service tax is edited per line in S5. */}
+        <FieldRow
+          label={groupHeading(
+            t('outbound.panel.service-charges'),
+            t('outbound.panel.service-charges-info')
+          )}
+        >
+          <IconButton
+            bordered
+            size="small"
+            icon={<EditIcon />}
+            label={t('outbound.panel.edit-service-charges')}
+            data-testid="edit-service-charges-button"
+            disabled={props.disabled}
+            onClick={props.onEditServiceCharges}
+          />
+        </FieldRow>
+        <For each={serviceLines()}>
+          {line => (
+            <FieldRow label={line.itemName}>
+              <Text variant="body">{money(line.totalBeforeTax)}</Text>
+            </FieldRow>
+          )}
+        </For>
+        <FieldRow label={t('outbound.panel.sub-total')}>
+          <Text variant="body">{money(pricing().serviceTotalBeforeTax)}</Text>
+        </FieldRow>
+        <FieldRow
+          label={taxLabel(
+            effectiveTaxPct(
+              pricing().serviceTotalBeforeTax,
+              pricing().serviceTotalAfterTax
+            )
+          )}
+        >
+          <Text variant="body">
+            {money(
+              taxAmount(
+                pricing().serviceTotalBeforeTax,
+                pricing().serviceTotalAfterTax
+              )
+            )}
+          </Text>
+        </FieldRow>
+        <FieldRow label={t('outbound.panel.total')}>
+          <Text variant="body">{money(pricing().serviceTotalAfterTax)}</Text>
+        </FieldRow>
+
+        {/* Items sell price: info bubble; sub total / editable stored
+            shipment tax (AC-T3 — the save cascades to every stock line
+            server-side; disabled while read-only or while the stock total is
+            zero) / total. */}
+        <FieldRow
+          label={groupHeading(
+            t('outbound.panel.items-sell-price'),
+            t('outbound.panel.items-sell-price-info')
+          )}
+        >
+          <span />
+        </FieldRow>
+        <FieldRow label={t('outbound.panel.sub-total')}>
+          <Text variant="body">{money(pricing().stockTotalBeforeTax)}</Text>
+        </FieldRow>
+        <FieldRow label={taxLabel(pricing().taxPercentage ?? 0)}>
           <span
             style={{
               display: 'inline-flex',
@@ -150,56 +253,65 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
               gap: 'var(--space-2)',
             }}
           >
-            <Text variant="body">{money(pricing().serviceTotalAfterTax)}</Text>
-            <IconButton
-              bordered
+            <TextField
+              label={t('outbound.panel.tax')}
+              hideLabel
               size="small"
-              icon={<EditIcon />}
-              label={t('outbound.panel.edit-service-charges')}
-              data-testid="edit-service-charges-button"
-              onClick={props.onEditServiceCharges}
+              type="number"
+              min="0"
+              disabled={
+                props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
+              }
+              value={pricing().taxPercentage ?? ''}
+              onChange={e => {
+                const raw = e.currentTarget.value;
+                const parsed = raw === '' ? null : Number(raw);
+                if (parsed == null || (Number.isFinite(parsed) && parsed >= 0))
+                  props.onSaveField({ tax: { percentage: parsed } });
+              }}
             />
+            <Text variant="body">
+              {money(
+                taxAmount(
+                  pricing().stockTotalBeforeTax,
+                  pricing().stockTotalAfterTax
+                )
+              )}
+            </Text>
           </span>
         </FieldRow>
-        <FieldRow label={t('outbound.panel.items-sell-price')}>
+        <FieldRow label={t('outbound.panel.total')}>
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
         </FieldRow>
-        <FieldRow label={t('outbound.panel.tax')}>
-          {/* Editable shipment tax (AC-T3): committing a value recalculates
-              every stock line's tax and after-tax totals server-side. */}
-          <TextField
-            label={t('outbound.panel.tax')}
-            hideLabel
-            size="small"
-            type="number"
-            min="0"
-            disabled={props.disabled}
-            value={pricing().taxPercentage ?? ''}
-            onChange={e => {
-              const raw = e.currentTarget.value;
-              const parsed = raw === '' ? null : Number(raw);
-              if (parsed == null || (Number.isFinite(parsed) && parsed >= 0))
-                props.onSaveField({ tax: { percentage: parsed } });
-            }}
-          />
-        </FieldRow>
+
         <FieldRow label={t('outbound.panel.grand-total')}>
           <Text variant="body">{money(pricing().totalAfterTax)}</Text>
         </FieldRow>
-        {/* Foreign currency (rules.md § pricing): control enabled only for
-            non-store customers with the issue-in-foreign-currency preference —
-            display-only otherwise. */}
-        <Show when={foreignCurrencyOn() && !isTransfer()}>
-          <FieldRow label={t('outbound.panel.foreign-currency')}>
-            <Text variant="body">
-              {props.node.currency?.code ?? '—'} @{' '}
-              {formatNumber(props.node.currencyRate)}
-              {pricing().foreignCurrencyTotalAfterTax != null
-                ? ` — ${money(pricing().foreignCurrencyTotalAfterTax)}`
-                : ''}
-            </Text>
-          </FieldRow>
-        </Show>
+
+        {/* Foreign currency — always shown (rules.md § pricing): code · rate
+            (a zero rate displays as 1) · total (dash until a real foreign
+            currency is set). The change-currency control is deferred with the
+            FC preference (impl gap recorded in the spec). */}
+        <FieldRow label={t('outbound.panel.foreign-currency')}>
+          <span />
+        </FieldRow>
+        <FieldRow label={t('outbound.panel.code')}>
+          <Text variant="body">{props.node.currency?.code ?? ''}</Text>
+        </FieldRow>
+        <FieldRow label={t('outbound.panel.rate')}>
+          <Text variant="body">
+            {formatNumber(
+              props.node.currencyRate === 0 ? 1 : props.node.currencyRate
+            )}
+          </Text>
+        </FieldRow>
+        <FieldRow label={t('outbound.panel.total')}>
+          <Text variant="body">
+            {pricing().foreignCurrencyTotalAfterTax != null
+              ? money(pricing().foreignCurrencyTotalAfterTax)
+              : '—'}
+          </Text>
+        </FieldRow>
       </SidePanelSection>
 
       {/* 4 — Transport details: shipping method · expected delivery ·
@@ -254,24 +366,26 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       {/* Record actions, pinned at the panel's end (spec S3 § record
           actions): Delete · Make a copy · Copy to clipboard. */}
       <SidePanelSection title={t('common.action')}>
-        <DeleteShipmentAction
-          shipmentId={props.node.id}
-          disabled={!isDeletable(props.node.status)}
-        />
-        <DuplicateShipmentAction shipmentId={() => props.node.id} />
-        <Button
-          variant="secondary"
-          icon={<CopyIcon />}
-          onClick={copyToClipboard}
-        >
-          {t('outbound.panel.copy-to-clipboard')}
-        </Button>
-        {/* role="status" so the confirmation is announced by assistive tech. */}
-        <span role="status">
-          <Show when={copied()}>
-            <Text variant="bodySmall">{t('outbound.panel.copied')}</Text>
-          </Show>
-        </span>
+        <SidePanelActions>
+          <DeleteShipmentAction
+            shipmentId={props.node.id}
+            disabled={!isDeletable(props.node.status)}
+          />
+          <DuplicateShipmentAction
+            shipmentId={() => props.node.id}
+            variant="panel"
+          />
+          <Button icon={<CopyIcon />} onClick={copyToClipboard}>
+            {t('outbound.panel.copy-to-clipboard')}
+          </Button>
+          {/* role="status" so the confirmation is announced by assistive
+              tech. */}
+          <span role="status">
+            <Show when={copied()}>
+              <Text variant="bodySmall">{t('outbound.panel.copied')}</Text>
+            </Show>
+          </span>
+        </SidePanelActions>
       </SidePanelSection>
     </>
   );

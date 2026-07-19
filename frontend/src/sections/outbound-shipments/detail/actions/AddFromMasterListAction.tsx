@@ -5,7 +5,7 @@ import { Button } from '../../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
-import { ListIcon, XCircleIcon } from '../../../../ui/icons';
+import { PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
 import {
   AddToOutboundFromMasterList,
   CustomerMasterLists,
@@ -77,8 +77,7 @@ export const AddFromMasterListAction: Component<
   return (
     <Show when={props.visible}>
       <Button
-        variant="secondary"
-        icon={<ListIcon />}
+        icon={<PlusCircleIcon />}
         data-testid="add-from-master-list-button"
         onClick={() => {
           setError(undefined);

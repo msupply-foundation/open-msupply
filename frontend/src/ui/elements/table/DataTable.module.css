@@ -163,6 +163,15 @@ tr[data-dimmed] > .td {
   opacity: 0.55;
 }
 
+/* Semantic row tones — data-tone stamped by TableRow when the page's rowTone
+   predicate matches. 'info' = the action-blue text the current app gives rows
+   awaiting an action (e.g. outbound's placeholder lines). Colour on the cells
+   so plain text follows; richer cell content (chips, swatches) keeps its own
+   colours. */
+tr[data-tone='info'] > .td {
+  color: var(--info-main);
+}
+
 .td[data-wrap] {
   /* --wrap-lines is declared here (default 2) so it's a known custom property to the
      stylelint value check; the per-column count is set inline on the cell and overrides it. */

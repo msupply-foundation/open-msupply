@@ -19,6 +19,7 @@ import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFo
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import {
   DataTable,
@@ -428,28 +429,37 @@ const OutboundDetailView: Component = () => {
                     </Show>
                   </HeaderButtons>
                   <Toolbar>
-                    {/* Customer lookup: disabled when not editable or when the
-                        shipment came from a requisition (AC-N2). */}
-                    <CustomerSelect
-                      label={t('outbound.toolbar.customer')}
-                      value={current().otherParty.id}
-                      disabled={!editable() || current().requisition != null}
-                      error={customerError()}
-                      onChange={customer => {
-                        if (customer) void changeCustomer(customer.id);
-                      }}
-                    />
-                    <TextField
-                      label={t('outbound.toolbar.customer-ref')}
-                      size="small"
-                      data-testid="customer-reference-field"
-                      value={edit.state.theirReference}
-                      disabled={!editable()}
-                      onInput={e =>
-                        edit.setField('theirReference', e.currentTarget.value)
-                      }
-                      onBlur={() => edit.flush()}
-                    />
+                    {/* Inline label: control pairs on one row (FieldRow, the
+                        current app's toolbar layout — the controls hide their
+                        own labels, the rows carry them). Customer lookup:
+                        disabled when not editable or when the shipment came
+                        from a requisition (AC-N2). */}
+                    <FieldRow label={t('outbound.toolbar.customer')}>
+                      <CustomerSelect
+                        label={t('outbound.toolbar.customer')}
+                        hideLabel
+                        value={current().otherParty.id}
+                        disabled={!editable() || current().requisition != null}
+                        error={customerError()}
+                        onChange={customer => {
+                          if (customer) void changeCustomer(customer.id);
+                        }}
+                      />
+                    </FieldRow>
+                    <FieldRow label={t('outbound.toolbar.customer-ref')}>
+                      <TextField
+                        label={t('outbound.toolbar.customer-ref')}
+                        hideLabel
+                        size="small"
+                        data-testid="customer-reference-field"
+                        value={edit.state.theirReference}
+                        disabled={!editable()}
+                        onInput={e =>
+                          edit.setField('theirReference', e.currentTarget.value)
+                        }
+                        onBlur={() => edit.flush()}
+                      />
+                    </FieldRow>
                   </Toolbar>
                   <TabList
                     tabs={[
@@ -528,6 +538,11 @@ const OutboundDetailView: Component = () => {
                   rowKey={line => line.id}
                   loading={data.loading}
                   onRowClick={editable() ? openRow : undefined}
+                  // Placeholder lines read in the info tone — whole-row blue
+                  // text, matching the current app (ui-surface S3 line table).
+                  rowTone={line =>
+                    line.type === 'UNALLOCATED_STOCK' ? 'info' : undefined
+                  }
                   emptyMessage={t('outbound.detail.empty')}
                   empty={
                     editable() ? (

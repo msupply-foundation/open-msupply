@@ -41,6 +41,12 @@ export function TableRow<T>(props: {
    */
   rowDimmed?: (row: T) => boolean;
   /**
+   * Semantic text tone for this row (e.g. 'info' for records awaiting an
+   * action — outbound's placeholder lines): stamps data-tone, styled in CSS.
+   * Semantic names only, mapped to palette tokens by the CSS — never colours.
+   */
+  rowTone?: (row: T) => 'info' | undefined;
+  /**
    * Select/deselect ALL of a group row's leaves in one emit (called for a
    * grouped-row checkbox).
    */
@@ -68,6 +74,11 @@ export function TableRow<T>(props: {
       data-dimmed={
         !props.row.getIsGrouped() && props.rowDimmed?.(props.row.original)
           ? ''
+          : undefined
+      }
+      data-tone={
+        !props.row.getIsGrouped()
+          ? props.rowTone?.(props.row.original)
           : undefined
       }
       // Selected rows get the same brand tint as selected cards (consistent
