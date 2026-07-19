@@ -482,7 +482,9 @@ const StocktakeDetailView: Component = () => {
 
   const columns = (): Column<Line, SortKey>[] => [
     {
-      c: { accessor: line => line.item.code, id: 'code' },
+      // Column id is the e2e/TESTIDS.md contract's `item.code` (the accessor
+      // path, dots included — shared with OMS); the sort key stays `code`.
+      c: { accessor: line => line.item.code, id: 'item.code' },
       sortKey: 'code',
       header: t('stocktake.column.item-code'),
     },
@@ -770,13 +772,17 @@ const StocktakeDetailView: Component = () => {
               // edit modal in add mode (search → edit the item's stock lines).
               empty={
                 isDisabled(node()) ? undefined : (
-                  <Button icon={<PlusCircleIcon />} onClick={openAdd}>
+                  <Button
+                    icon={<PlusCircleIcon />}
+                    data-testid="add-item-button"
+                    onClick={openAdd}
+                  >
                     {t('stocktake.detail.add-item')}
                   </Button>
                 )
               }
               rowGroup={{
-                columnId: 'code',
+                columnId: 'item.code',
                 labelKey: 'stocktake.column.item-name',
               }}
               enableSelection

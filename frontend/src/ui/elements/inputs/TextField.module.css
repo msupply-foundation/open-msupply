@@ -10,6 +10,12 @@
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
+  /* Contain the visually-hidden label (.labelHidden, position:absolute): with no
+     positioned ancestor its containing block is the document, so it lands at a
+     document-space coordinate deep in the page and stretches the viewport's
+     scrollHeight — a second, document-level scrollbar. Making the field the
+     containing block keeps it within the field (and the page's own scroll). */
+  position: relative;
 }
 
 /* Spec max-widths */
