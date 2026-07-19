@@ -65,23 +65,28 @@ export const TextField = (props: TextFieldProps) => {
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
       data-width={local.width ?? 'short'}
     >
-      <label
-        class={local.hideLabel ? styles.labelHidden : styles.label}
-        for={inputId()}
-      >
-        {local.label}
-        <Show when={local.required}>
-          <span class={styles.required} aria-hidden="true">
-            *
-          </span>
-        </Show>
-      </label>
+      {/* hideLabel names the input via aria-label INSTEAD of rendering a
+          visually-hidden <label>: the accessible name is identical, but no
+          duplicate text node exists beside the visible label the surrounding
+          layout (a FieldRow) already shows — a hidden twin trips strict
+          text-locator matches in the shared e2e suites. */}
+      <Show when={!local.hideLabel}>
+        <label class={styles.label} for={inputId()}>
+          {local.label}
+          <Show when={local.required}>
+            <span class={styles.required} aria-hidden="true">
+              *
+            </span>
+          </Show>
+        </label>
+      </Show>
       <input
         id={inputId()}
         class={styles.input}
         data-size={local.size ?? 'default'}
         data-error={local.error ? '' : undefined}
         required={local.required}
+        aria-label={local.hideLabel ? local.label : undefined}
         aria-invalid={local.error ? 'true' : undefined}
         aria-describedby={
           local.error || local.helperText ? messageId() : undefined

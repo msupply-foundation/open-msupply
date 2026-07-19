@@ -47,6 +47,7 @@ export const ColourTagPicker = (props: {
     <Popover
       placement={props.placement ?? 'bottom-start'}
       triggerLabel={props.label ?? t('colour.label')}
+      triggerTestId="colour-picker-button"
       triggerClass={props.variant === 'field' ? styles.fieldTrigger : undefined}
       trigger={
         props.colour ? (
@@ -64,6 +65,7 @@ export const ColourTagPicker = (props: {
               type="button"
               class={styles.swatch}
               style={{ '--tag-colour': option.value }}
+              data-testid={`colour-swatch-${option.label.split('.').pop()}`}
               aria-label={t(option.label)}
               title={t(option.label)}
               data-selected={

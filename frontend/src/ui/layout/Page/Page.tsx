@@ -93,16 +93,23 @@ export const Page = (props: PageProps) => {
         </div>
         {props.contentFooter}
       </div>
-      {/* Details panel, baked into the frame: full page height, shown while content is provided
-          AND open. The frame owns the SidePanel chrome (header, title, close); the page supplies
-          only the content + title + the open boolean. */}
-      <Show when={props.sidePanelContent && props.sidePanelOpen !== false}>
-        <SidePanel
-          label={props.sidePanelTitle}
-          onClose={props.onSidePanelClose}
+      {/* Details panel, baked into the frame: full page height, MOUNTED while content is
+          provided and merely COLLAPSED (width 0, clipped) while closed — open/close never
+          remounts the content (kdd/state-management: no remounts), and panel state (scroll,
+          in-progress edits) survives. The frame owns the SidePanel chrome (header, title,
+          close); the page supplies only the content + title + the open boolean. */}
+      <Show when={props.sidePanelContent}>
+        <div
+          class={styles.panelSlot}
+          data-closed={props.sidePanelOpen === false ? '' : undefined}
         >
-          {props.sidePanelContent}
-        </SidePanel>
+          <SidePanel
+            label={props.sidePanelTitle}
+            onClose={props.onSidePanelClose}
+          >
+            {props.sidePanelContent}
+          </SidePanel>
+        </div>
       </Show>
     </div>
   );
