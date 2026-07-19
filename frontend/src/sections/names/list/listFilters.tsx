@@ -8,7 +8,8 @@ import type { CustomFieldDef } from '../customFields';
 import type { NamesFilter } from './namesListLogic';
 
 // Filter definitions for the Customer & Supplier lists (spec/names). The search
-// (codeOrName) is slice 1; the per-custom-field filters are slice 2.
+// (codeOrName) is always present; the per-custom-field filters come from the
+// role's configured definitions.
 
 /*
  * The SEARCH filter — an EXHAUSTIVE, keyed map over every key of the generated
@@ -84,7 +85,7 @@ export const searchFilters = (): Filter<NamesFilter>[] => SEARCH_FILTERS;
 export type CustomFieldFilterState = Record<string, string | null>;
 
 /*
- * The CUSTOM-FIELD filters (slice 2) — built dynamically from the role's
+ * The CUSTOM-FIELD filters — built dynamically from the role's
  * configured definitions (AC-N19: "exactly the fields configured for the role";
  * none configured ⇒ no custom-field filters). Each definition becomes an
  * add-a-filter entry whose text box writes that field's value into the cf state.

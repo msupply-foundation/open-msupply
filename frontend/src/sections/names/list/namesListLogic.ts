@@ -1,7 +1,7 @@
 import { stripEmpty } from '../../../typeHelpers';
 import type { NamesVariables, NamesResult } from '../names.generated';
 
-// Pure list logic for the Customer & Supplier lists (spec/names slice 1). Kept
+// Pure list logic for the Customer & Supplier lists (spec/names). Kept
 // framework-free so the AC-N* behaviour (store scope, role filter, type
 // restriction, sort default, pagination, variables shape) is unit-testable in
 // node without a DOM. The two lists are the SAME query differing only by the
@@ -39,11 +39,11 @@ export const TYPE_RESTRICTION: NamesFilter = {
 
 // URL-backed list state. `filter` holds only the user's search (codeOrName) in
 // the generated operator shape; role + type restriction are applied at query
-// time, not stored. `cf` holds the raw per-custom-field filter values (slice 2),
+// time, not stored. `cf` holds the raw per-custom-field filter values,
 // converted to the dynamicFilter AST at query time.
 export type NamesListState = {
   filter: NamesFilter;
-  // Raw per-custom-field filter values; null = an added-but-empty chip (slice 2).
+  // Raw per-custom-field filter values; null = an added-but-empty chip.
   cf?: Record<string, string | null>;
   sort?: NamesSort;
   offset: number;
@@ -59,14 +59,14 @@ export const DEFAULT_STATE: NamesListState = {
 };
 
 // Compose the wire filter for a list: role relationship + type restriction +
-// the live user search + (slice 2) the custom-field dynamicFilter AST. Role and
+// the live user search + the custom-field dynamicFilter AST. Role and
 // type are ALWAYS applied and are never stripped (they are not removable user
 // chips). stripEmpty drops an added-but-empty search chip so it doesn't perturb
 // the query (see typeHelpers).
 export const buildFilter = (
   role: Role,
   userFilter: NamesFilter,
-  // The dynamicFilter AST (slice 2). Codegen types the JSON scalar as `string`,
+  // The dynamicFilter AST. Codegen types the JSON scalar as `string`,
   // but the server's JSON scalar accepts the object directly in variables — so
   // the single cast to the generated field type lives here, at the one boundary
   // (documented codegen limitation; see BUILD_REPORT).

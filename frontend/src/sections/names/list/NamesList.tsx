@@ -73,7 +73,7 @@ export const NamesList: Component<NamesListProps> = props => {
 
   const tableConfig = createTableConfig({ tableId: props.tableId });
 
-  // Custom-field definitions for the role (slice 2). A SEPARATE, filter-
+  // Custom-field definitions for the role. A SEPARATE, filter-
   // independent fetch keyed on store + scope, so it loads once per store/scope
   // and never re-runs on search/sort/page. Empty when the deployment configures
   // none (AC-N18/N19: none configured ⇒ no columns and no custom-field filters).
@@ -143,7 +143,7 @@ export const NamesList: Component<NamesListProps> = props => {
     setQuery({ ...query(), cf, offset: 0 });
 
   // Columns: code (with the store indicator), name, then one per configured
-  // custom field (slice 2). Accessors so headers re-translate on locale switch.
+  // custom field. Accessors so headers re-translate on locale switch.
   const columns = (): Column<NameRow, SortKey>[] => [
     {
       c: { key: 'code' },
@@ -199,7 +199,7 @@ export const NamesList: Component<NamesListProps> = props => {
               filter={query().filter}
               onChange={onSearchChange}
             />
-            {/* Custom-field filters (slice 2) — present only when the role has
+            {/* Custom-field filters — present only when the role has
                 configured fields (AC-N19). */}
             <Show when={cfDefs().length > 0}>
               <FilterBar

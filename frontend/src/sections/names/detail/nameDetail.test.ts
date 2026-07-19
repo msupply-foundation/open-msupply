@@ -10,7 +10,7 @@ import {
 } from './nameDetail';
 import type { NameByIdResult } from '../names.generated';
 
-// Logic-level coverage of the detail views (spec/names slice 2). The rendered-UI
+// Logic-level coverage of the detail views (spec/names). The rendered-UI
 // / read-only-a11y assertions (C4) and populated live data (C2) are recorded as
 // gaps in BUILD_REPORT; here we cover the read-model derivation.
 

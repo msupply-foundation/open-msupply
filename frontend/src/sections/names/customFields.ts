@@ -1,6 +1,6 @@
 import type { CustomFieldDefinitionsResult } from './names.generated';
 
-// The v2 custom-field surface (spec/names slice 2): the JSON boundary + the
+// The v2 custom-field surface (spec/names): the JSON boundary + the
 // column/filter derivation. Kept framework-free so AC-N18 (columns) and AC-N19
 // (dynamicFilter) are unit-testable. Definitions come from the consumed
 // `customFields` read, scoped per role (customer/supplier); values live in the

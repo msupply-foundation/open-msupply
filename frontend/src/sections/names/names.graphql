@@ -33,7 +33,7 @@ query names(
         }
         # v2 custom-field VALUES (JSON object; codegen types the JSON scalar as
         # string — parsed at the boundary in customFields.ts). Server-filtered to
-        # the fields visible for the name's role scope(s). Slice 2 columns.
+        # the fields visible for the name's role scope(s). Backs the custom-field columns.
         customFields
       }
     }
