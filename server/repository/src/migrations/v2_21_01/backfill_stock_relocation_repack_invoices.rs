@@ -467,6 +467,15 @@ impl MigrationFragment for Migrate {
                     .execute(connection.lock().connection())?;
             }
 
+            // One line per split so affected records can be traced back from the logs
+            log::info!(
+                "v2_21_01: backfilled repack invoice {invoice_number} ({invoice_id}) in store {} for stock movement #{}: stock line {} -> {}",
+                candidate.store_id,
+                candidate.stock_movement_number,
+                candidate.source_stock_line_id,
+                candidate.destination_stock_line_id
+            );
+
             created_count += 1;
         }
 
