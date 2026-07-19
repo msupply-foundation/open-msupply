@@ -7,7 +7,10 @@ import {
   ALL_TABS,
   sharedOrMultiple,
 } from '../ui/elements/table/DataTable';
-import { getNumberCell } from '../ui/elements/table/tableHelpers';
+import {
+  getCurrencyCell,
+  getNumberCell,
+} from '../ui/elements/table/tableHelpers';
 import { StockIcon, InfoIcon, TruckIcon } from '../ui/icons';
 import {
   resolveTableConfig,
@@ -260,11 +263,11 @@ export const TableShowcase = () => {
       tabsAndCardGroups: ['supply', 'pricing'],
     },
     {
+      // Currency cell: right-aligned, always 2 dp, SUM when grouped.
       c: { key: 'price' },
       sortKey: 'price',
       header: 'Unit price',
-      ...getNumberCell(),
-      cell: info => `$${info.getValue<number>().toFixed(2)}`,
+      ...getCurrencyCell(),
       tabsAndCardGroups: ['pricing'],
     },
   ];
@@ -384,6 +387,11 @@ export const TableShowcase = () => {
         rowKey={r => r.id}
         sort={sort()}
         onSort={onSort}
+        // Row presentation hooks: low-stock rows stand in for read-only
+        // records (data-dimmed → opacity); the cheapest row stands in for
+        // "awaiting an action" (semantic data-tone → info token).
+        rowDimmed={r => r.stock < 40}
+        rowTone={r => (r.price === 0.02 ? 'info' : undefined)}
         tabsAndCardGroups={TABS_AND_CARD_GROUPS}
         rowGroup={{
           columnId: 'category',
