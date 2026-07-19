@@ -28,14 +28,21 @@ import {
   type DraftStockOutLinesResult,
 } from './outboundLineEdit.generated';
 import { itemOptionsResource, type ItemOption } from './itemOptionsResource';
-import { distributeIssue } from './distributeIssue';
+import {
+  barReasons,
+  distributeIssue,
+  fefoCompare,
+  lensToUnits,
+  type AllocateUnit,
+  type AllocationPreferences,
+} from '../../../../domain/allocation';
 import { outboundPrefs } from '../../outboundPreferencesResource';
 
 // The line editor (spec S4): the SINGLE surface for issuing an item — set the
 // quantity to issue and distribute it across batches. The batch grid is the
 // server-computed draft (draftStockOutLines: one row per batch with
 // available/in-store packs + the item's existing lines pre-filled); entry in
-// the Issue field auto-distributes FEFO client-side (AC-A1's manual-entry
+// the Issue field auto-distributes FEFO client-side (AC-AL1's manual-entry
 // face), per-batch packs are directly editable bounded 0…available (AC-I5),
 // and quantity beyond available becomes the placeholder while NEW (AC-P1/P3).
 // Save is the item-set save (saveOutboundShipmentItemLines, AC-I6): lines +
@@ -78,10 +85,9 @@ export const OutboundLineEditModal = (
   </Show>
 );
 
-// Issue-entry units (spec S4 issue field): units, packs-of-‹size›; doses stay
-// display-only in this build (entry mode needs the doses preference, off on
-// the dev store).
-type AllocateUnit = { kind: 'units' } | { kind: 'packs'; size: number };
+// Issue-entry lens (spec/stock-allocation § the allocate-in lens): units,
+// packs-of-‹size›; doses stay display-only in this build (entry mode needs
+// the doses preference, off on the dev store).
 
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
@@ -127,18 +133,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       return;
     }
     const data = result.data.draftStockOutLines;
-    // FEFO order for display and distribution: earliest expiry first, no
-    // expiry last (rules.md § auto-allocation; VVM-then-expiry stays with the
-    // server-side allocation).
-    const sorted = [...data.draftLines].sort((a, b) => {
-      if (!a.expiryDate) return b.expiryDate ? 1 : 0;
-      if (!b.expiryDate) return -1;
-      return a.expiryDate < b.expiryDate
-        ? -1
-        : a.expiryDate > b.expiryDate
-          ? 1
-          : 0;
-    });
+    // FEFO order for display and distribution: the shared comparator
+    // (spec/stock-allocation § ordering, AC-AL1; VVM-then-expiry stays with
+    // the server-side allocation).
+    const sorted = [...data.draftLines].sort(fefoCompare);
     setDraft(reconcile(sorted, { key: 'id' }));
     setPlaceholderUnits(data.placeholderQuantity ?? 0);
     setLoadingLines(false);
@@ -148,21 +146,18 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     if (props.initialItem) void loadItem(props.initialItem);
   });
 
-  // A batch the store may not issue from (rules.md § issuing/auto-allocation +
-  // the expired-issue preference, AC-PR3): on hold (batch or location),
-  // unusable VVM, or expired within the guard threshold.
-  const isBarred = (line: DraftLine): boolean => {
-    if (line.stockLineOnHold || line.location?.onHold) return true;
-    if (line.vvmStatus?.unusable && (prefs()?.manageVvmStatusForStock ?? false))
-      return true;
-    if (prefs()?.expiredStockPreventIssue && line.expiryDate) {
-      const threshold = prefs()?.expiredStockIssueThreshold ?? 0;
-      const limit = new Date();
-      limit.setDate(limit.getDate() + threshold);
-      if (new Date(line.expiryDate) <= limit) return true;
-    }
-    return false;
-  };
+  // The shared barred-batch policy (spec/stock-allocation § barred batches,
+  // AC-AL2/AL8), fed outbound's resolved preferences — the module owns no
+  // preference fetch.
+  const allocationPrefs = (): AllocationPreferences => ({
+    expiredStockPreventIssue: prefs()?.expiredStockPreventIssue ?? false,
+    expiredStockIssueThreshold: prefs()?.expiredStockIssueThreshold ?? 0,
+    manageVvmStatusForStock: prefs()?.manageVvmStatusForStock ?? false,
+  });
+  const lineBarReasons = (line: DraftLine) =>
+    barReasons(line, allocationPrefs());
+  const isBarred = (line: DraftLine): boolean =>
+    lineBarReasons(line).length > 0;
 
   const availableUnits = createMemo(() =>
     draft.reduce((sum, line) => sum + line.availablePacks * line.packSize, 0)
@@ -176,17 +171,18 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const unitName = () => item()?.unitName ?? t('outbound.line.unit');
 
-  // FEFO auto-distribution across the grid (spec S4 issue field): the pure
+  // FEFO auto-distribution across the grid (spec S4 issue field): the shared
   // routine fills usable batches oldest-expiry-first in whole packs
-  // (distributeIssue — AC-A1/A3's client face); the shortfall becomes the
-  // placeholder (NEW only), and each condition raises its warning banner.
+  // (src/domain/allocation distributeIssue — AC-AL1/AL3's client face); the
+  // shortfall becomes the placeholder (NEW only), and each condition raises
+  // its warning banner.
   const distribute = (units: number) => {
     const result = distributeIssue(
       draft.map(line => ({
         id: line.id,
         packSize: line.packSize,
         availablePacks: line.availablePacks,
-        barred: isBarred(line),
+        barred: lineBarReasons(line),
       })),
       units
     );
@@ -204,19 +200,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       );
     if (result.shortfallUnits > 0 && props.isNew)
       notes.push(t('outbound.edit.warn-placeholder'));
-    if (result.skippedBarred) notes.push(t('outbound.edit.warn-on-hold'));
+    if (result.skippedReasons.size > 0)
+      notes.push(t('outbound.edit.warn-on-hold'));
     setWarnings(notes);
     setDirty(true);
   };
 
   const onIssueInput = (value: string) => {
     setIssueText(value);
-    const units = (() => {
-      const parsed = toNumberOrNull(value);
-      if (parsed == null || parsed < 0) return undefined;
-      const mode = allocateIn();
-      return mode.kind === 'packs' ? parsed * mode.size : parsed;
-    })();
+    const units = lensToUnits(toNumberOrNull(value), allocateIn());
     if (units != null) distribute(units);
   };
 
@@ -527,7 +519,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         </div>
 
         {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
-            disabled (AC-A2 / AC-PR3). */}
+            disabled (AC-AL2 / AC-AL8). */}
         <DataTable
           columns={columns()}
           rows={draft}
