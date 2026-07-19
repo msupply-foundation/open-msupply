@@ -56,6 +56,7 @@ export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = props => {
         variant="secondary"
         icon={<MinusCircleIcon />}
         disabled={props.disabled}
+        data-testid="reduce-lines-to-zero-button"
         onClick={() => setOpen(true)}
       >
         {t('button.reduce-lines-to-zero')}
@@ -100,6 +101,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MinusCircleIcon />}
+      testId="confirmation-modal"
       title={t('button.reduce-lines-to-zero')}
       description={
         <Switch
@@ -138,6 +140,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
                   {t('button.cancel')}
@@ -147,6 +150,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                 variant="primary"
                 icon={<CheckIcon />}
                 loading={phase() === 'working'}
+                data-testid="dialog-button-ok"
                 onClick={() => void run()}
               >
                 {t('button.apply')}
@@ -158,6 +162,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
               {t('button.ok')}
@@ -167,6 +172,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
               onClick={props.onClose}
             >
               {t('button.cancel')}

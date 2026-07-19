@@ -1,20 +1,9 @@
-import { createSignal, For, type JSX } from 'solid-js';
+import { For, type JSX } from 'solid-js';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { Badge } from '../ui/elements/feedback/Badge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
-import { Dialog } from '../ui/elements/feedback/Dialog';
-import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import { Popover } from '../ui/elements/feedback/Popover';
-import { Button } from '../ui/elements/buttons/Button';
-import { TextField } from '../ui/elements/inputs/TextField';
-import {
-  CheckCircleIcon,
-  HelpIcon,
-  MessageSquareIcon,
-  PlusCircleIcon,
-  SaveIcon,
-  XCircleIcon,
-} from '../ui/icons';
+import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
 import styles from './FeedbackShowcase.module.css';
 
 const Card = (props: {
@@ -43,10 +32,6 @@ const STATUS_CHIPS: { label: string; colour: string }[] = [
 ];
 
 export const FeedbackShowcase = () => {
-  const [confirmOpen, setConfirmOpen] = createSignal(false);
-  const [outcome, setOutcome] = createSignal('');
-  const [dialogOpen, setDialogOpen] = createSignal(false);
-
   return (
     <div class={styles.stack}>
       <Card
@@ -117,96 +102,6 @@ export const FeedbackShowcase = () => {
             notice, glyph overridden by intent.
           </Alert>
         </div>
-      </Card>
-
-      <Card
-        title="Confirm dialog — Save → are you sure?"
-        lead={
-          <>
-            Native <code>&lt;dialog&gt;</code> + <code>showModal()</code>, no
-            library — the platform gives the focus trap (top layer + inert
-            page), focus restore, Escape and <code>::backdrop</code>; the RnD
-            prototype bought Radix for exactly this contract, and the "hard to
-            drive from React" objection doesn't exist in Solid. Scrim click and
-            Escape both cancel. Watch focus return to the Save button on close.
-          </>
-        }
-      >
-        <Button
-          variant="secondary"
-          icon={<SaveIcon />}
-          onClick={() => setConfirmOpen(true)}
-        >
-          Save
-        </Button>
-        <span class={styles.outcome} role="status">
-          {outcome()}
-        </span>
-        <ConfirmDialog
-          open={confirmOpen()}
-          onClose={() => {
-            setConfirmOpen(false);
-            setOutcome(o =>
-              o === '' || o.startsWith('Cancelled') ? 'Cancelled.' : o
-            );
-          }}
-          message="Save changes to this shipment? This is the standard Cancel/OK preset — ConfirmDialog is a thin composition over Dialog."
-          onConfirm={() => setOutcome('Saved ✓')}
-        />
-      </Card>
-
-      <Card
-        title="Dialog — custom content, footer and actions"
-        lead={
-          <>
-            The base <code>&lt;Dialog&gt;</code> takes a required{' '}
-            <code>title</code> (its accessible name), optional icon /
-            description, free-form children, an optional bottom-pinned{' '}
-            <code>footer</code> band and an <code>actions</code> row.{' '}
-            <code>widthRem</code> sets a steady width and{' '}
-            <code>minBodyHeightRem</code> reserves height so the box doesn't
-            jump as content changes — the slack falls above the footer, so
-            footer + actions stay on the bottom edge. The browser moves focus to
-            the first control and Tab cycles inside while the page behind is
-            inert. (Opening a Combobox / Select <em>inside</em> a dialog needs
-            extra care — see the "in a dialog" card under Selectors.)
-          </>
-        }
-      >
-        <Button icon={<PlusCircleIcon />} onClick={() => setDialogOpen(true)}>
-          New shipment
-        </Button>
-        <Dialog
-          open={dialogOpen()}
-          onClose={() => setDialogOpen(false)}
-          icon={<PlusCircleIcon />}
-          title="New shipment"
-          description="Give the shipment a reference."
-          widthRem={34}
-          minBodyHeightRem={16}
-          footer={
-            <Alert severity="info">A new draft shipment will be created.</Alert>
-          }
-          actions={
-            <>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
-                onClick={() => setDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                icon={<PlusCircleIcon />}
-                onClick={() => setDialogOpen(false)}
-              >
-                Create
-              </Button>
-            </>
-          }
-        >
-          <TextField label="Reference" placeholder="e.g. PO-1042" />
-        </Dialog>
       </Card>
 
       <Card

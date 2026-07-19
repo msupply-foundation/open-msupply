@@ -1,0 +1,93 @@
+/* Generic showcase-card chrome (copied per section, the established pattern). */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 60rem;
+}
+
+.card {
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  box-shadow: var(--shadow-1);
+}
+
+.cardHeader {
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-group-light);
+  border-bottom: 1px solid var(--color-border-value);
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
+.cardBody {
+  padding: var(--space-5);
+}
+
+.lead {
+  margin: 0 0 var(--space-4);
+  max-width: 44rem;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.lead code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+}
+
+/* The confirm-dialog card's outcome readout, beside the trigger. */
+.outcome {
+  margin-inline-start: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* Large "workbench" dialog demo — a simple scrolling line list so the body
+   overflows and the header/footer/actions stay pinned. Showcase scaffolding
+   (not a library component or page), so it owns its CSS. */
+.workbench {
+  display: flex;
+  flex-direction: column;
+  /* Fill the large dialog's body and scroll INTERNALLY (min-block-size:0 lets a
+     flex child shrink below its content so overflow engages), so the header,
+     footer and actions stay pinned to the dialog edges — the workbench pattern
+     the real line-edit modal gets from its DataTable child. */
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
+}
+
+.workbenchRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+  border-block-end: 1px solid var(--color-border-value);
+  font-size: var(--text-sm);
+}
+
+.workbenchCode {
+  flex: 0 0 6rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.workbenchName {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  color: var(--text-body);
+}
+
+.workbenchPacks {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}

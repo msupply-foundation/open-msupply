@@ -33,6 +33,7 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => (
         <Button
           variant="secondary"
           icon={<XCircleIcon />}
+          data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >
           {props.cancelLabel ?? 'Cancel'}

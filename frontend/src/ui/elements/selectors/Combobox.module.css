@@ -145,6 +145,10 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  /* The listbox owns the scroll (min-height:0 lets a flex child shrink below
+     its content so it actually scrolls within .content's max-height); server
+     mode fetches the next page from its onScroll near the bottom. */
+  min-height: 0;
   overflow-y: auto;
   outline: none;
 }

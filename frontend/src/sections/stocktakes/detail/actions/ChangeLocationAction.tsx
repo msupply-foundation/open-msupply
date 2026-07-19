@@ -55,6 +55,7 @@ export const ChangeLocationAction: Component<
         variant="secondary"
         icon={<MapPinIcon />}
         disabled={props.disabled}
+        data-testid="change-location-button"
         onClick={() => setOpen(true)}
       >
         {t('button.change-location')}
@@ -95,6 +96,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MapPinIcon />}
+      testId="confirmation-modal"
       title={t('button.change-location')}
       description={
         <Switch
@@ -132,6 +134,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
                   {t('button.cancel')}
@@ -141,6 +144,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                 variant="primary"
                 icon={<CheckIcon />}
                 loading={phase() === 'working'}
+                data-testid="dialog-button-ok"
                 onClick={() => void run()}
               >
                 {t('button.apply')}
@@ -152,6 +156,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
               {t('button.ok')}
@@ -161,6 +166,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
               onClick={props.onClose}
             >
               {t('button.cancel')}

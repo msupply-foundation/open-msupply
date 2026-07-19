@@ -78,6 +78,7 @@ export const StocktakeStatusFooter: Component<
       <Show when={!isFinalised()}>
         <CheckboxButton
           checked={holding()}
+          data-testid="on-hold-button"
           onChange={() => setHoldConfirm(true)}
         >
           {t('label.on-hold')}

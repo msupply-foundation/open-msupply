@@ -55,6 +55,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
         variant="secondary"
         icon={<TrashIcon />}
         disabled={props.disabled}
+        data-testid="delete-lines-button"
         onClick={() => setOpen(true)}
       >
         {t('button.delete-lines')}
@@ -95,6 +96,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<TrashIcon />}
+      testId="confirmation-modal"
       title={t('heading.are-you-sure')}
       description={
         <Switch
@@ -120,6 +122,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
                   {t('button.cancel')}
@@ -129,6 +132,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
                 variant="secondary"
                 icon={<TrashIcon />}
                 loading={phase() === 'working'}
+                data-testid="confirmation-modal-ok"
                 onClick={() => void run()}
               >
                 {t('button.delete-lines')}
@@ -140,6 +144,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
               {t('button.ok')}
@@ -149,6 +154,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
               onClick={props.onClose}
             >
               {t('button.cancel')}
