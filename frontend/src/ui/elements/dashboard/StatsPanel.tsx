@@ -27,7 +27,7 @@ export interface StatsPanelProps {
 }
 
 /*
- * A titled group of related statistics within a Widget (ui-standards §
+ * A titled group of related statistics within a DashboardCard (ui-standards §
  * Dashboard), rendered as an inner elevation card. Its heading is a
  * `SectionTitle` (the iconed action-colour title) that optionally links to the
  * unfiltered list. The panel owns its own loading / error state from its count

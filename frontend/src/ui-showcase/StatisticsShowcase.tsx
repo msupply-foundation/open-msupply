@@ -1,7 +1,7 @@
 import { MemoryRouter, Route } from '@solidjs/router';
 import type { JSX } from 'solid-js';
 import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
-import { Widget } from '../ui/elements/dashboard/Widget';
+import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { StatsPanel } from '../ui/elements/dashboard/StatsPanel';
 import { SectionTitle } from '../ui/elements/dashboard/SectionTitle';
 import { Statistic } from '../ui/elements/dashboard/Statistic';
@@ -12,11 +12,11 @@ import styles from './StatisticsShowcase.module.css';
 /*
  * Showcase for the statistics building blocks — common, reusable components
  * whose main consumer is the dashboard. Shown component-by-component
- * (SectionTitle → Statistic → StatsPanel → Widget), like the other component
- * sections, then one composition example where CardGrid lays out several
- * Widgets (CardGrid renders nothing on its own — it only shows behaviour once
- * it has cards to arrange, so it's demonstrated doing its real job here rather
- * than as a standalone card).
+ * (SectionTitle → Statistic → StatsPanel → DashboardCard), like the other
+ * component sections, then one composition example where CardGrid lays out
+ * several DashboardCards (CardGrid renders nothing on its own — it only shows
+ * behaviour once it has cards to arrange, so it's demonstrated doing its real
+ * job here rather than as a standalone card).
  *
  * Statistic and SectionTitle render router <A>s, so the whole demo sits in a
  * MemoryRouter: links resolve and are clickable without navigating the app.
@@ -35,10 +35,10 @@ const Card = (props: {
   </section>
 );
 
-/* Reusable demo widgets — one is shown alone under "Widget", all three under
-   "Composition". Labels/values mirror the current app's dashboard. */
-const ReplenishmentWidget = () => (
-  <Widget
+/* Reusable demo cards — one is shown alone under "DashboardCard", all three
+   under "Composition". Labels/values mirror the current app's dashboard. */
+const ReplenishmentCard = () => (
+  <DashboardCard
     title="Replenishment"
     footer={
       <Button variant="secondary" icon={<PlusCircleIcon />}>
@@ -59,11 +59,11 @@ const ReplenishmentWidget = () => (
     <StatsPanel title="Internal Orders" icon={<StockIcon />} state="ready">
       <Statistic label="Draft" value="3" href="/demo" />
     </StatsPanel>
-  </Widget>
+  </DashboardCard>
 );
 
-const DistributionWidget = () => (
-  <Widget
+const DistributionCard = () => (
+  <DashboardCard
     title="Distribution"
     footer={
       <Button variant="secondary" icon={<PlusCircleIcon />}>
@@ -89,11 +89,11 @@ const DistributionWidget = () => (
         alertLabel="Needs attention"
       />
     </StatsPanel>
-  </Widget>
+  </DashboardCard>
 );
 
-const InventoryWidget = () => (
-  <Widget
+const InventoryCard = () => (
+  <DashboardCard
     title="Inventory Management"
     footer={
       <Button variant="secondary" icon={<PlusCircleIcon />}>
@@ -125,7 +125,7 @@ const InventoryWidget = () => (
       />
       <Statistic label="Total items" value="47" href="/demo" />
     </StatsPanel>
-  </Widget>
+  </DashboardCard>
 );
 
 const Demo = () => (
@@ -236,7 +236,7 @@ const Demo = () => (
     </Card>
 
     <Card
-      title="Widget — titled card of panels + footer action"
+      title="DashboardCard — titled card of panels + footer action"
       lead={
         <>
           Hand-rolled card (<code>--surface-raised</code>,{' '}
@@ -250,12 +250,12 @@ const Demo = () => (
       }
     >
       <div class={styles.widgetFrame}>
-        <ReplenishmentWidget />
+        <ReplenishmentCard />
       </div>
     </Card>
 
     <Card
-      title="Composition — CardGrid laying out Widgets"
+      title="Composition — CardGrid laying out DashboardCards"
       lead={
         <>
           <code>CardGrid</code> is a generic intrinsic grid (ui-standards §
@@ -264,14 +264,14 @@ const Demo = () => (
           as the width allows and wraps the rest, with{' '}
           <em>no breakpoint maths</em> (principle #7, intrinsic-first). It
           renders nothing on its own, so it's shown here doing its real job —
-          laying out Widgets. Resize the panel to watch them reflow.
+          laying out DashboardCards. Resize the panel to watch them reflow.
         </>
       }
     >
       <CardGrid>
-        <ReplenishmentWidget />
-        <DistributionWidget />
-        <InventoryWidget />
+        <ReplenishmentCard />
+        <DistributionCard />
+        <InventoryCard />
       </CardGrid>
     </Card>
   </div>
