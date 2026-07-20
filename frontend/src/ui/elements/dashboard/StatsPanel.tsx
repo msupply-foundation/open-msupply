@@ -2,7 +2,29 @@ import { Match, Switch, type JSX } from 'solid-js';
 import { SectionTitle } from './SectionTitle';
 import styles from './StatsPanel.module.css';
 
-export type StatsPanelState = 'loading' | 'error' | 'ready';
+interface ReadyState {
+  status: 'ready';
+}
+interface LoadingState {
+  status: 'loading';
+  /** Message shown while the count query loads (e.g. "Loading…"), already translated. */
+  loadingMessage: string;
+}
+interface ErrorState {
+  status: 'error';
+  /** Message shown when the count query fails, already translated. */
+  errorMessage: string;
+}
+
+/**
+ * The state of the count query backing a panel, as a discriminated union so a
+ * message always travels with the status that needs it — you can't pass
+ * `loading` without a `loadingMessage`, or `error` without an `errorMessage`.
+ * `loading` and `error` replace the stat list in place; `ready` shows the stats
+ * (the children). Each panel owns its own state, so a forbidden family erroring
+ * leaves its siblings untouched.
+ */
+export type StatsPanelState = ReadyState | LoadingState | ErrorState;
 
 export interface StatsPanelProps {
   /** Panel heading, already translated. */
@@ -11,17 +33,8 @@ export interface StatsPanelProps {
   titleHref?: string;
   /** Optional leading icon for the title (which family this panel counts). */
   icon?: JSX.Element;
-  /**
-   * The state of the count query backing this panel. `loading` and `error`
-   * replace the stat list in place; `ready` shows the stats (children). Each
-   * panel owns this independently, so a forbidden family erroring leaves its
-   * siblings untouched.
-   */
+  /** The count query's state — each message travels with its status (see `StatsPanelState`). */
   state: StatsPanelState;
-  /** Message shown in the loading state (e.g. "Loading…"), already translated. */
-  loadingMessage?: string;
-  /** Message shown in the error state, already translated. */
-  errorMessage?: string;
   /** The Statistic children, shown when ready. */
   children?: JSX.Element;
 }
@@ -38,7 +51,7 @@ export interface StatsPanelProps {
 export const StatsPanel = (props: StatsPanelProps) => (
   <section
     class={styles.panel}
-    aria-busy={props.state === 'loading' || undefined}
+    aria-busy={props.state.status === 'loading' || undefined}
   >
     <SectionTitle
       title={props.title}
@@ -46,13 +59,13 @@ export const StatsPanel = (props: StatsPanelProps) => (
       icon={props.icon}
     />
     <Switch>
-      <Match when={props.state === 'loading'}>
-        <p class={styles.status}>{props.loadingMessage}</p>
+      <Match when={props.state.status === 'loading' && props.state}>
+        {state => <p class={styles.status}>{state().loadingMessage}</p>}
       </Match>
-      <Match when={props.state === 'error'}>
-        <p class={styles.status}>{props.errorMessage}</p>
+      <Match when={props.state.status === 'error' && props.state}>
+        {state => <p class={styles.status}>{state().errorMessage}</p>}
       </Match>
-      <Match when={props.state === 'ready'}>
+      <Match when={props.state.status === 'ready'}>
         <div class={styles.stats}>{props.children}</div>
       </Match>
     </Switch>
