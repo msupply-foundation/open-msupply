@@ -61,8 +61,8 @@ export interface AsyncComboboxProps<T> {
  * page loads.
  *
  * This is the generic engine the domain search selectors are built on
- * (ItemSearch, NameSearch, CustomerSelect, …): each supplies a `fetchPage` (its
- * query) + row rendering and holds no combobox/pagination plumbing of its own.
+ * (ItemSearch, NameSearch, …): each supplies a `fetchPage` (its query) + row
+ * rendering and holds no combobox/pagination plumbing of its own.
  * The Combobox itself stays the client-mode (whole-list) primitive; this is its
  * async twin.
  *

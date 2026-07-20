@@ -13,7 +13,7 @@ const PAGE_SIZE = 30;
 export interface NameSearchProps {
   label: string;
   storeId: string;
-  /** Which role to offer — supplier (default), donor, or manufacturer. */
+  /** Which role to offer — supplier (default), customer, donor, or manufacturer. */
   role?: NameRole;
   /**
    * The currently-selected name (the controlled value). The object — not a bare
@@ -54,13 +54,14 @@ const renderRow = (name: NameOption): JSX.Element => (
 );
 
 /**
- * Reusable name picker — a supplier lookup, or (role="donor"/"manufacturer")
- * the donor / manufacturer picker. A thin binding over the generic AsyncCombobox:
- * it supplies the `names`-query fetcher (narrowed by role + visible in store)
- * and the option row; AsyncCombobox owns the combobox + pagination. An on-hold
- * name is listed but not selectable (itemDisabled). A pre-set `selected` keeps
- * its label visible even before its page loads. Sibling of CustomerSelect (the
- * customer-role lookup); both are thin AsyncCombobox bindings over `names`.
+ * Reusable party picker for every `names` lookup — supplier, customer, donor,
+ * or manufacturer (role selects the NameFilterInput flag; a "customer" is just
+ * a name with isCustomer, not a separate entity, so one component covers all).
+ * A thin binding over the generic AsyncCombobox: it supplies the `names`-query
+ * fetcher (narrowed by role + visible in store) and the option row;
+ * AsyncCombobox owns the combobox + pagination. An on-hold name is listed but
+ * not selectable (itemDisabled). A pre-set `selected` keeps its label visible
+ * even before its page loads.
  */
 export const NameSearch = (props: NameSearchProps): JSX.Element => (
   <AsyncCombobox<NameOption>

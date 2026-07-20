@@ -22,13 +22,16 @@ type NameNode = Extract<
   { __typename: 'NameConnector' }
 >['nodes'][number];
 
-// Which role the picker narrows to. A supplier picker offers suppliers; a donor
-// picker offers donors; a manufacturer picker offers manufacturers. The role
-// maps onto the NameFilterInput boolean flags.
-export type NameRole = 'supplier' | 'donor' | 'manufacturer';
+// Which role the picker narrows to — a customer / supplier / donor /
+// manufacturer are all just `names` filtered by the corresponding
+// NameFilterInput boolean flag (a "customer" is a name with isCustomer, not a
+// separate entity), so one picker covers every party lookup.
+export type NameRole = 'customer' | 'supplier' | 'donor' | 'manufacturer';
 
 const roleFilter = (role: NameRole) => {
   switch (role) {
+    case 'customer':
+      return { isCustomer: true };
     case 'supplier':
       return { isSupplier: true };
     case 'donor':
