@@ -173,7 +173,7 @@ const ReportDetailView: Component = () => {
     setActionError(undefined);
     const file = await fetchReportFile(r.fileId);
     if (file.kind !== 'success') {
-      setActionError('report.print-failed');
+      setActionError('error.failed-to-generate-report');
       return;
     }
     printHtml(await file.blob.text());
@@ -193,12 +193,12 @@ const ReportDetailView: Component = () => {
       dataId: undefined,
     });
     if (gen.kind !== 'fileId') {
-      setActionError('report.export-failed');
+      setActionError('error.failed-to-generate-report');
       return;
     }
     const file = await fetchReportFile(gen.fileId);
     if (file.kind !== 'success') {
-      setActionError('report.export-failed');
+      setActionError('error.failed-to-generate-report');
       return;
     }
     downloadBlob(file.blob, file.filename);
@@ -208,7 +208,7 @@ const ReportDetailView: Component = () => {
   // (AC-U3). The leaf is the report's translated name.
   const crumbs = () => [
     {
-      label: t('nav.reports'),
+      label: t('reports'),
       onClick: () => navigate(`/${params.storeId}/reports`),
     },
     { label: displayName() },
@@ -223,19 +223,19 @@ const ReportDetailView: Component = () => {
           <HeaderButtons>
             <Show when={schemaReport()}>
               <IconButton
-                label={t('report.action.filters')}
+                label={t('label.filters')}
                 icon={<SlidersIcon />}
                 onClick={openFilters}
               />
             </Show>
             <IconButton
-              label={t('report.action.print')}
+              label={t('button.print')}
               icon={<PrinterIcon />}
               disabled={result()?.kind !== 'fileId'}
               onClick={() => void onPrint()}
             />
             <IconButton
-              label={t('report.action.export')}
+              label={t('button.export')}
               icon={<DownloadIcon />}
               disabled={!report()}
               onClick={() => void onExport()}
@@ -270,9 +270,9 @@ const ReportDetailView: Component = () => {
                   gap: 'var(--space-2)',
                 }}
               >
-                <span>{t('report.generation-error')}</span>
+                <span>{t('error.failed-to-generate-report')}</span>
                 <details>
-                  <summary>{t('report.generation-error-details')}</summary>
+                  <summary>{t('label.click-to-view')}</summary>
                   <pre
                     style={{
                       margin: 0,

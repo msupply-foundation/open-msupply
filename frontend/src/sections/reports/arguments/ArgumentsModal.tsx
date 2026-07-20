@@ -122,15 +122,15 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
     <Dialog
       open={props.open}
       onClose={() => props.onClose()}
-      title={t('report.filters-title')}
-      description={t('report.filters-helper')}
+      title={t('label.report-filters')}
+      description={t('message.arguments')}
       widthRem={30}
       actions={
         <>
           <Button variant="secondary" onClick={() => props.onClose()}>
-            {t('common.cancel')}
+            {t('button.cancel')}
           </Button>
-          <Button onClick={submit}>{t('common.ok')}</Button>
+          <Button onClick={submit}>{t('button.ok')}</Button>
         </>
       }
     >
@@ -178,8 +178,8 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                   label={field.label}
                   orientation="horizontal"
                   options={[
-                    { value: 'asc', label: t('report.sort.ascending') },
-                    { value: 'desc', label: t('report.sort.descending') },
+                    { value: 'asc', label: t('report.ascending') },
+                    { value: 'desc', label: t('report.descending') },
                   ]}
                   value={selectValue(field.key)}
                   onChange={value => setValues(field.key, value)}
@@ -234,7 +234,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                   width="full"
                   disabled
                   value=""
-                  helperText={t('report.unsupported-control')}
+                  helperText={t('message.filter-not-supported')}
                 />
               </Match>
             </Switch>

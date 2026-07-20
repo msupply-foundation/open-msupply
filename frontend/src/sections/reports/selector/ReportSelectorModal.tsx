@@ -185,38 +185,38 @@ export const ReportSelectorModal = (props: ReportSelectorModalProps) => {
       <Dialog
         open={props.open}
         onClose={() => props.onClose()}
-        title={t('report.select-form-title')}
+        title={t('title.select-a-form')}
         actions={
           <>
             <Button variant="secondary" onClick={() => props.onClose()}>
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
             <Button
               disabled={actionsDisabled()}
               loading={runningAction() === 'excel'}
               onClick={() => startAction('excel')}
             >
-              {t('report.action.export-excel')}
+              {t('button.export-to-excel')}
             </Button>
             <Button
               disabled={actionsDisabled()}
               loading={runningAction() === 'print'}
               onClick={() => startAction('print')}
             >
-              {t('report.action.print')}
+              {t('button.print')}
             </Button>
             <Button
               disabled={actionsDisabled()}
               loading={runningAction() === 'pdf'}
               onClick={() => startAction('pdf')}
             >
-              {t('report.action.download-pdf')}
+              {t('button.download-pdf')}
             </Button>
           </>
         }
       >
         <Combobox
-          label={t('report.select-form-title')}
+          label={t('title.select-a-form')}
           hideLabel
           items={reports()}
           loading={reportsRes.loading}
@@ -228,7 +228,7 @@ export const ReportSelectorModal = (props: ReportSelectorModalProps) => {
           }}
         />
         <Show when={runError()}>
-          <Alert severity="error">{t('report.generation-error')}</Alert>
+          <Alert severity="error">{t('error.failed-to-generate-report')}</Alert>
         </Show>
       </Dialog>
       {/* A schema'd selection opens the argument modal (S3) over this dialog
