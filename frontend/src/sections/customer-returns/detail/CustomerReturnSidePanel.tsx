@@ -130,8 +130,9 @@ export const CustomerReturnSidePanel: Component<
       </SidePanelSection>
 
       <SidePanelSection title={t('label.actions')}>
+        {/* Default (primary) tone — brand-coloured icon, normal label — the
+            same look as the header's Add item button. */}
         <Button
-          variant="secondary"
           icon={<TrashIcon />}
           data-testid="delete-return-button"
           disabled={!canDelete()}
@@ -139,11 +140,7 @@ export const CustomerReturnSidePanel: Component<
         >
           {t('button.delete')}
         </Button>
-        <Button
-          variant="secondary"
-          icon={<CopyIcon />}
-          onClick={() => void copy()}
-        >
+        <Button icon={<CopyIcon />} onClick={() => void copy()}>
           {t('link.copy-to-clipboard')}
         </Button>
       </SidePanelSection>
