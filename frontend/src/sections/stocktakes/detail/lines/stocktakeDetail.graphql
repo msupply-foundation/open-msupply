@@ -37,6 +37,12 @@ fragment StocktakeLine on StocktakeLineNode {
   item {
     id
     code
+    # isVaccine gates the vaccine-only doses + VVM display; doses is the item's
+    # configured doses-per-unit, the client-side multiplier for the doses columns
+    # (spec/stocktakes › store-preference gates: doses is never a stored per-line
+    # fact — computed as counted × packSize × item.doses).
+    isVaccine
+    doses
   }
   # The stock line this stocktake line counts (if any). The editor passes these ids as
   # excludeStockLineIds to stockLinesByItem, so a batch already on the stocktake isn't offered
@@ -67,6 +73,27 @@ fragment StocktakeLine on StocktakeLineNode {
     id
     type
     reason
+  }
+  # Preference-gated display/edit fields (spec/stocktakes › store-preference gates). Selected
+  # unconditionally in the fragment; the UI decides whether to SHOW them from the store
+  # preferences (manageVvmStatusForStock / allowTrackingOfStockByDonor). A gated column is absent
+  # entirely when its preference is off — the data just goes unread.
+  #
+  # VVM status (vaccine items) — gated by manageVvmStatusForStock. Set via vvmStatusId on save.
+  vvmStatus {
+    id
+    code
+    description
+  }
+  # Donor — gated by allowTrackingOfStockByDonor. donorId/donorName are plain scalars on the line
+  # (no storeId arg, unlike the stock line's donor(storeId)); the picker sets donorId on save.
+  donorId
+  donorName
+  # Manufacturer name (ungated column). Arg-bearing field — pass the same storeId the lines query
+  # already carries; NameNode.name is the display string.
+  manufacturer(storeId: $storeId) {
+    id
+    name
   }
 }
 
@@ -286,6 +313,20 @@ query stockLinesByItem(
         location {
           id
           code
+          name
+        }
+        # Seed a new-batch draft's gated fields from the stock line it opts in
+        # (spec/stocktakes › store-preference gates). vvmStatus (vaccine items)
+        # and donor(storeId) carry into the editor so ticking an existing batch
+        # pre-fills its VVM status / donor. Read regardless of preference; the
+        # editor only SHOWS them when the gate is on.
+        vvmStatus {
+          id
+          code
+          description
+        }
+        donor(storeId: $storeId) {
+          id
           name
         }
       }

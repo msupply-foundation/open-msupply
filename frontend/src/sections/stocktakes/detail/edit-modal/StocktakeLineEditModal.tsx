@@ -19,6 +19,10 @@ import { createTableConfig } from '../../../../api/createTableConfig';
 import { LocationSelect } from '../../../../domain/location';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { ItemSearch } from '../../../../domain/item';
+import { VvmStatusSelect } from '../../../../domain/vvmStatus';
+import { NameSearch } from '../../../../domain/name';
+import { stocktakePreferences } from '../../../../store/storeContext';
+import { dosesCounted } from '../lines/doses';
 import {
   PlusCircleIcon,
   StockIcon,
@@ -68,7 +72,16 @@ import styles from './StocktakeLineEditModal.module.css';
 // resolving it from this module.
 export type { LineEditCommit };
 
-export type StocktakeLineEditItem = { id: string; code: string; name: string };
+export type StocktakeLineEditItem = {
+  id: string;
+  code: string;
+  name: string;
+  // The vaccine flag + doses-per-unit the doses display needs (spec/stocktakes ›
+  // store-preference gates). Carried on the descriptor so a fresh blank batch
+  // (addBatch) and a new-item pick both know them without a re-fetch.
+  isVaccine: boolean;
+  doses: number;
+};
 
 // One of the item's stock lines (from stockLinesByItem).
 type ItemStockLine = Extract<
@@ -142,7 +155,12 @@ const buildDraft = async (
     countThisLine: countByDefault,
     stockLine: { id: sl.id },
     itemName: item.name,
-    item: { id: item.id, code: item.code },
+    item: {
+      id: item.id,
+      code: item.code,
+      isVaccine: item.isVaccine,
+      doses: item.doses,
+    },
     batch: sl.batch,
     expiryDate: sl.expiryDate,
     manufactureDate: sl.manufactureDate,
@@ -155,6 +173,13 @@ const buildDraft = async (
     note: sl.note,
     location: sl.location,
     reasonOption: null,
+    // Seed the gated fields from the stock line the batch opts in
+    // (spec/stocktakes › store-preference gates): VVM status and donor carry
+    // over; manufacturer isn't stored on a stock line, so it starts unset.
+    vvmStatus: sl.vvmStatus,
+    donorId: sl.donor?.id ?? null,
+    donorName: sl.donor?.name ?? null,
+    manufacturer: null,
   }));
   return [...fromExisting, ...fromStock];
 };
@@ -278,6 +303,12 @@ const StocktakeLineEditContent = (
   // advances too. Seeded with each item as it loads; not reactive.
   const coveredItemIds = new Set<string>();
 
+  // Store-preference display gates (spec/stocktakes › store-preference gates),
+  // read reactively. Each gated column is built into the column set only when
+  // its preference is on. The VVM/doses cells additionally render only for a
+  // vaccine item's rows (isVaccine off → blank).
+  const prefs = () => stocktakePreferences();
+
   // No item picked yet → the search state (Cancel-only footer, prompt in place
   // of the table, no Add batch / OK / OK & next).
   const noItemYet = () => currentItem() === undefined;
@@ -336,7 +367,13 @@ const StocktakeLineEditContent = (
       props.onClose();
       return;
     }
-    await seedItem({ id, code: first.item.code, name: first.itemName });
+    await seedItem({
+      id,
+      code: first.item.code,
+      name: first.itemName,
+      isVaccine: first.item.isVaccine,
+      doses: first.item.doses,
+    });
   };
 
   // Back to the item-search state — add mode with no item picked. Reached by the
@@ -390,7 +427,12 @@ const StocktakeLineEditContent = (
           countThisLine: true,
           stockLine: null,
           itemName: item.name,
-          item: { id: item.id, code: item.code },
+          item: {
+            id: item.id,
+            code: item.code,
+            isVaccine: item.isVaccine,
+            doses: item.doses,
+          },
           batch: null,
           expiryDate: null,
           manufactureDate: null,
@@ -403,6 +445,13 @@ const StocktakeLineEditContent = (
           note: null,
           location: null,
           reasonOption: null,
+          // A fresh batch has no gated values yet — the user fills them in via
+          // the (preference-gated) VVM / donor fields; manufacturer isn't edited
+          // here.
+          vvmStatus: null,
+          donorId: null,
+          donorName: null,
+          manufacturer: null,
         })
       )
     );
@@ -476,6 +525,12 @@ const StocktakeLineEditContent = (
           note: line.note,
           location: { value: line.location?.id ?? null },
           reasonOptionId: line.reasonOption?.id ?? null,
+          // Gated fields (spec/stocktakes › store-preference gates). Plain
+          // scalars on INSERT (contract: InsertStocktakeLineInput). Sent
+          // regardless of the preference — the server accepts the data either
+          // way; the preference only decides whether the field was editable.
+          vvmStatusId: line.vvmStatus?.id ?? null,
+          donorId: line.donorId ?? null,
         });
         continue;
       }
@@ -492,6 +547,10 @@ const StocktakeLineEditContent = (
         comment: line.comment,
         note: line.note,
         reasonOptionId: line.reasonOption?.id ?? null,
+        // Gated fields — NullableStringUpdate wrapper on UPDATE (contract:
+        // UpdateStocktakeLineInput): { value: id | null } sets/clears.
+        vvmStatusId: { value: line.vvmStatus?.id ?? null },
+        donorId: { value: line.donorId ?? null },
       });
     }
     return { insert, update, delete: deletes.map(id => ({ id })) };
@@ -729,6 +788,58 @@ const StocktakeLineEditContent = (
         );
       },
     },
+    // VVM status (Batch tab) — gated by manageVvmStatusForStock, vaccine rows
+    // only. A VvmStatusSelect editing the draft's vvmStatus node.
+    ...(prefs().manageVvmStatusForStock
+      ? [
+          {
+            c: { id: 'vvmStatus' },
+            header: t('label.vvm-status'),
+            tabsAndCardGroups: ['batch'],
+            cell: info => {
+              const line = info.row.original;
+              // Non-vaccine rows leave the cell blank (the display is vaccine-
+              // only even when the preference is on).
+              if (!line.item.isVaccine) return null;
+              return (
+                <VvmStatusSelect
+                  label={t('label.vvm-status')}
+                  hideLabel
+                  disabled={!line.countThisLine}
+                  value={line.vvmStatus?.id}
+                  placeholder={t('label.none')}
+                  onChange={s =>
+                    update(
+                      line.id,
+                      'vvmStatus',
+                      s
+                        ? { id: s.id, code: s.code, description: s.description }
+                        : null
+                    )
+                  }
+                />
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]
+      : []),
+    // Doses counted (Batch tab) — gated by manageVaccinesInDoses, display-only,
+    // vaccine rows only (blank otherwise). Computed client-side (see ../lines/
+    // doses); nothing stored per line.
+    ...(prefs().manageVaccinesInDoses
+      ? [
+          {
+            c: { id: 'dosesCounted' },
+            header: t('label.doses-counted'),
+            tabsAndCardGroups: ['batch'],
+            ...getNumberCell(),
+            cell: info => {
+              const doses = dosesCounted(info.row.original);
+              return <span>{doses ?? ''}</span>;
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]
+      : []),
     {
       c: { key: 'sellPricePerPack' },
       header: t('label.pack-sell-price'),
@@ -807,6 +918,49 @@ const StocktakeLineEditContent = (
         );
       },
     },
+    // Donor (Other tab) — gated by allowTrackingOfStockByDonor. An async donor
+    // picker (NameSearch role="donor") over the draft's donorId/donorName. The
+    // line stores only id+name, so `selected` is a minimal NameOption (like
+    // ItemSearch's fallback) — enough to label the current value.
+    ...(prefs().allowTrackingOfStockByDonor
+      ? [
+          {
+            c: { id: 'donor' },
+            header: t('label.donor'),
+            tabsAndCardGroups: ['other'],
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <NameSearch
+                  label={t('label.donor')}
+                  hideLabel
+                  storeId={props.storeId}
+                  role="donor"
+                  disabled={!line.countThisLine}
+                  selected={
+                    line.donorId
+                      ? {
+                          id: line.donorId,
+                          name: line.donorName ?? '',
+                          code: '',
+                          isSupplier: false,
+                          isDonor: true,
+                          isOnHold: false,
+                          isStore: false,
+                        }
+                      : undefined
+                  }
+                  placeholder={t('label.none')}
+                  onSelect={name => {
+                    update(line.id, 'donorId', name?.id ?? null);
+                    update(line.id, 'donorName', name?.name ?? null);
+                  }}
+                />
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]
+      : []),
     {
       c: { id: 'inventoryAdjustmentReasonInput' },
       header: t('label.reason'),
