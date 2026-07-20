@@ -43,6 +43,16 @@ interface ComboboxProps<T> {
    * only in the widget and is reported via onChange.
    */
   value?: string;
+  /**
+   * The resolved item for the controlled `value`, for ASYNC/server-mode pickers
+   * whose selected row may not be in the currently-loaded `items` (e.g. a paged
+   * search showing a pre-set selection). Merged into the options so the input
+   * can render the selection's label and keep it visible while a fetch is in
+   * flight — without it, a controlled `value` resolves only against the loaded
+   * page and shows blank when the selection isn't on it. Omit for whole-list
+   * (client-mode) pickers, where `value` already resolves against `items`.
+   */
+  selectedItem?: T;
   onChange?: (item: T | null) => void;
   /** Rich per-option rendering; defaults to the plain itemToString label. */
   renderItem?: (item: T) => JSX.Element;
@@ -144,12 +154,26 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
 
   const keyOf = (item: T) => (props.itemToValue ?? props.itemToString)(item);
 
+  // The option set the widget actually shows: `items`, plus the controlled
+  // `selectedItem` when it isn't already loaded (so an async picker can display
+  // and keep a pre-set selection whose row isn't on the current page). `items`
+  // is blanked while a fresh fetch is in flight (`loading`) to avoid stale
+  // rows, but the selected item is always kept so its label still resolves.
+  const displayItems = createMemo<T[]>(() => {
+    const base = props.loading ? [] : props.items;
+    const sel = props.selectedItem;
+    return sel && !base.some(item => keyOf(item) === keyOf(sel))
+      ? [sel, ...base]
+      : base;
+  });
+
   // Controlled selection: keep the internal `selected` item in sync with
-  // `value` (resolve the key against the current items). `value === undefined`
-  // means "no selection" → clear `selected` (so a caller that resets its value
-  // — e.g. after saving, or when its bound field is cleared — empties the
-  // input, rather than the input keeping the stale item). Guarded by
-  // `on(value, ...)` so it only reacts to the prop, not the user's own pick.
+  // `value` (resolve the key against the shown items, incl. selectedItem).
+  // `value === undefined` means "no selection" → clear `selected` (so a caller
+  // that resets its value — e.g. after saving, or when its bound field is
+  // cleared — empties the input, rather than the input keeping the stale item).
+  // Guarded by `on(value, ...)` so it only reacts to the prop, not the user's
+  // own pick.
   createEffect(
     on(
       () => props.value,
@@ -157,7 +181,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         const match =
           value === undefined
             ? null
-            : (props.items.find(item => keyOf(item) === value) ?? null);
+            : (displayItems().find(item => keyOf(item) === value) ?? null);
         if (match !== selected()) setSelected(() => match);
       }
     )
@@ -189,8 +213,8 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // (once loading settles). Client mode: nothing passes the local filter.
   const noMatches = createMemo(() =>
     serverMode()
-      ? props.items.length === 0
-      : props.items.every(item => !matches(item, filterText()))
+      ? displayItems().length === 0
+      : displayItems().every(item => !matches(item, filterText()))
   );
 
   const handleInputChange = (value: string) => {
@@ -220,7 +244,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
-      options={props.loading ? [] : props.items}
+      options={displayItems()}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
       optionTextValue={item => props.itemToString(item as T)}
       optionLabel={item => props.itemToString(item as T)}
