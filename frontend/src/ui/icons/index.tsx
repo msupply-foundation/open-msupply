@@ -295,6 +295,21 @@ export const ThermometerIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Reports-page category headings (spec ui-standards/conventions.md → icons):
+   bar chart (Stock & Items) and suppliers (Replenishment); Distribution and
+   Programs/Other reuse TruckIcon and FileIcon. */
+export const BarIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 24 24" {...props}>
+    <path d="M14 2H10C9.44771 2 9 2.44772 9 3V21C9 21.5523 9.44771 22 10 22H14C14.5523 22 15 21.5523 15 21V3C15 2.44772 14.5523 2 14 2ZM13 20H11V4H13V20ZM18 7H22C22.5523 7 23 7.44772 23 8V21C23 21.5523 22.5523 22 22 22H18C17.4477 22 17 21.5523 17 21V8C17 7.44772 17.4477 7 18 7ZM6 12H2C1.44772 12 1 12.4477 1 13V21C1 21.5523 1.44772 22 2 22H6C6.55228 22 7 21.5523 7 21V13C7 12.4477 6.55228 12 6 12ZM19 9V20H21V9H19ZM5 20H3V14H5V20Z" />
+  </Fill>
+);
+
+export const SuppliersIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 20 20" {...props}>
+    <path d="M.89 10.532l.006-.016.01-.021 2.89-6.508c.402-.905 1.298-1.488 2.287-1.487h7.833c.99 0 1.887.583 2.287 1.487l2.892 6.508.006.015c.01.02.018.043.025.065l-.031-.08c.018.04.032.082.044.124l.011.049c.011.054.017.11.017.165V15c0 1.38-1.12 2.5-2.5 2.5H3.333c-1.38 0-2.5-1.12-2.5-2.5v-4.167l.007-.104c.005-.04.013-.08.023-.118l.002-.007.024-.072zM2.5 15c0 .46.373.833.833.833h13.334c.46 0 .833-.373.833-.833v-3.334h-3.72l-1.42 2.13c-.155.231-.415.37-.693.37H8.333c-.278 0-.538-.139-.693-.37l-1.42-2.13H2.5V15zM13.917 4.167H6.083c-.33 0-.63.194-.763.495L2.948 10h3.719c.238 0 .464.102.62.278l.073.093L8.78 12.5h2.44l1.42-2.129c.155-.232.415-.371.693-.371h3.717l-2.37-5.338c-.134-.301-.433-.496-.763-.495z" />
+  </Fill>
+);
+
 /* Programs */
 export const FileIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
