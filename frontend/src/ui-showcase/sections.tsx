@@ -21,6 +21,7 @@ import { ContentFooterShowcase } from './ContentFooterShowcase';
 import { SidePanelShowcase } from './SidePanelShowcase';
 import { StatisticsShowcase } from './StatisticsShowcase';
 import { InsetPanelShowcase } from './InsetPanelShowcase';
+import { CardGridShowcase } from './CardGridShowcase';
 
 export type SectionCategory = 'components' | 'layout';
 
@@ -158,6 +159,12 @@ export const sections: SectionDef[] = [
     id: 'inset-panel',
     label: 'Inset panel',
     component: InsetPanelShowcase,
+    category: 'layout',
+  },
+  {
+    id: 'card-grid',
+    label: 'Card grid',
+    component: CardGridShowcase,
     category: 'layout',
   },
   // A standalone reference page, listed as its own top-level menu entry rather
