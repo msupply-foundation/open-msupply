@@ -46,8 +46,6 @@ export interface AsyncComboboxProps<T> {
   hideLabel?: boolean;
   disabled?: boolean;
   error?: string;
-  /** Open the option list on focus/click (pick-first flows). */
-  openOnFocus?: boolean;
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
@@ -114,7 +112,6 @@ export const AsyncCombobox = <T,>(
       error={props.error}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
-      openOnFocus={props.openOnFocus}
       items={items()}
       loading={search.loading()}
       loadingMore={search.loadingMore()}
