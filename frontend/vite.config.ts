@@ -12,28 +12,25 @@ import solid from 'vite-plugin-solid';
  * across reloads.
  */
 
-// The displayed app version (spec/startup/rules.md § App version). Plain
-// production builds show the bare package version. A short build stamp is
-// appended ("0.0.1 (2ae7bd2)") when BUILD_SHA is set — deploy-demo.yml sets it
-// so the nightly demo deploys (regenerated spec-build branches, package.json
-// frozen) stay identifiable — or automatically in dev, from the git checkout.
-const appVersion = (mode: string): string => {
+// The displayed app version (spec/startup/rules.md § App version): the
+// package version with the short git SHA appended ("3.00.0 (2ae7bd2)") in
+// every build — the demo redeploys nightly from regenerated spec-build
+// branches while the package version stays put, so the SHA is what identifies
+// a build. Outside a git checkout (tarball/export) the bare version shows.
+const appVersion = (): string => {
   const { version } = JSON.parse(
     readFileSync(new URL('./package.json', import.meta.url), 'utf8')
   ) as { version: string };
-  let sha = process.env.BUILD_SHA?.trim() ?? '';
-  if (!sha && mode !== 'production') {
-    try {
-      sha = execSync('git rev-parse --short HEAD', {
-        stdio: ['ignore', 'pipe', 'ignore'],
-      })
-        .toString()
-        .trim();
-    } catch {
-      // not a git checkout — bare version
-    }
+  try {
+    const sha = execSync('git rev-parse --short HEAD', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim();
+    return sha ? `${version} (${sha})` : version;
+  } catch {
+    return version; // not a git checkout
   }
-  return sha ? `${version} (${sha})` : version;
 };
 
 export default defineConfig(({ mode }) => ({
@@ -42,7 +39,7 @@ export default defineConfig(({ mode }) => ({
     LANG_VERSION: JSON.stringify(
       mode === 'production' ? String(Date.now()) : 'dev'
     ),
-    APP_VERSION: JSON.stringify(appVersion(mode)),
+    APP_VERSION: JSON.stringify(appVersion()),
   },
   server: {
     port: Number(process.env.DEV_SERVER_PORT) || 3005,
