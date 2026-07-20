@@ -377,10 +377,37 @@ export const seedDefaults = (
 };
 
 /**
+ * Map a date-range field's editing shape (`{ start, end }`, each a 'yyyy-mm-dd'
+ * calendar date or '') to the wire shape the server binds it to: a GraphQL
+ * `DatetimeFilterInput` — `{ afterOrEqualTo, beforeOrEqualTo }` of RFC3339
+ * datetimes (spec/reports contract "arguments — DateRange"). Confirmed live
+ * against the Pending Encounters report: the uiSchema `DateRange` control scopes
+ * ONE property, whose value is this object, passed verbatim into the report's
+ * `startDatetime: DatetimeFilterInput` query variable.
+ *
+ * Each calendar date is widened to a full instant in the viewer's local zone —
+ * start at 00:00:00, end at 23:59:59.999 (an inclusive day, matching the real
+ * app's end-of-day handling) — because a bare 'yyyy-mm-dd' is not a valid
+ * `DateTime` scalar. An empty end (or start) is simply omitted; both empty
+ * means the field was already dropped upstream (the modal stores undefined).
+ */
+const toDatetimeFilter = (value: unknown): ReportArgs | undefined => {
+  if (!value || typeof value !== 'object') return undefined;
+  const { start, end } = value as { start?: unknown; end?: unknown };
+  const filter: ReportArgs = {};
+  if (typeof start === 'string' && start !== '')
+    filter.afterOrEqualTo = new Date(`${start}T00:00:00`).toISOString();
+  if (typeof end === 'string' && end !== '')
+    filter.beforeOrEqualTo = new Date(`${end}T23:59:59.999`).toISOString();
+  return Object.keys(filter).length > 0 ? filter : undefined;
+};
+
+/**
  * The submit transform (AC-R8): strip empty values — absent and '' filter
- * differently server-side — and coerce number-field entries typed as text back
- * to JSON numbers, so a numeric argument never leaves as a string. An
- * unparseable leftover (a lone '.') is dropped like an empty.
+ * differently server-side — coerce number-field entries typed as text back to
+ * JSON numbers (so a numeric argument never leaves as a string; an unparseable
+ * leftover like a lone '.' is dropped like an empty), and widen each date-range
+ * field to its `DatetimeFilterInput` wire shape (see `toDatetimeFilter`).
  */
 export const cleanArguments = (
   fields: ParsedField[],
@@ -389,9 +416,17 @@ export const cleanArguments = (
   const numberKeys = new Set(
     fields.filter(field => field.kind === 'number').map(field => field.key)
   );
+  const dateRangeKeys = new Set(
+    fields.filter(field => field.kind === 'dateRange').map(field => field.key)
+  );
   const cleaned: ReportArgs = {};
   for (const [key, value] of Object.entries(raw)) {
     if (value === '' || value === undefined || value === null) continue;
+    if (dateRangeKeys.has(key)) {
+      const filter = toDatetimeFilter(value);
+      if (filter) cleaned[key] = filter;
+      continue;
+    }
     if (numberKeys.has(key) && typeof value === 'string') {
       const parsed = Number(value);
       if (Number.isFinite(parsed)) cleaned[key] = parsed;

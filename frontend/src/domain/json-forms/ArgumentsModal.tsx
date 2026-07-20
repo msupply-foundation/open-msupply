@@ -280,13 +280,13 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match when={field.kind === 'dateRange'}>
                 {/*
-                 * DateRange arg shape: the real DateRange control's argument
-                 * shape couldn't be probed (the reports using it are dispensary
-                 * ones absent from the probe environment). The uiSchema scope
-                 * gives ONE property key, so we store the pair as a nested
-                 * object under it — { <key>: { start, end } } — and send undefined
-                 * (stripped) when both ends are empty. Revisit if a probed
-                 * DateRange report shows a two-key shape.
+                 * DateRange arg shape (confirmed live against Pending
+                 * Encounters): the uiSchema scope gives ONE property key, whose
+                 * value is a nested object. We hold the editing pair as
+                 * { <key>: { start, end } } (calendar dates) and store undefined
+                 * when both ends are empty; cleanArguments() widens it to the
+                 * wire `DatetimeFilterInput` — { afterOrEqualTo, beforeOrEqualTo }
+                 * — on submit (see schema.ts `toDatetimeFilter`).
                  */}
                 <DateRangeInput
                   label={field.label}
