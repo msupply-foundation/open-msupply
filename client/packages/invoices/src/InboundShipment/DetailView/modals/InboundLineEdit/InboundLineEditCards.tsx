@@ -256,11 +256,11 @@ export const InboundLineEditCards = ({
                 updateFn={(value: number) => {
                   const item = row.original.item;
                   const shouldClearSellPrice =
-                    item?.defaultPackSize !== line.packSize &&
+                    item?.defaultPackSize !== value &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
                       line.sellPricePerPack;
                   const shouldClearCostPrice =
-                    item?.defaultPackSize !== line.packSize &&
+                    item?.defaultPackSize !== value &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
                       line.costPricePerPack;
 
