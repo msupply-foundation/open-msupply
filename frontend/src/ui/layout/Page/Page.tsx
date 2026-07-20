@@ -85,7 +85,7 @@ export const Page = (props: PageProps) => {
   const panelContent = children(() => props.sidePanelContent);
 
   // Below the compact breakpoint the OPEN panel is a full-screen overlay
-  // (Page.module.css, spec ui-standards/layout.md → page regions, D26).
+  // (Page.module.css, spec ui-standards/layout.md → page regions, D27).
   // While it's active: the covered main column is `inert` (unreachable by
   // keyboard and assistive tech — the overlay isn't a dialog yet, so without
   // this focus could tab into the hidden content) and Esc closes the panel.

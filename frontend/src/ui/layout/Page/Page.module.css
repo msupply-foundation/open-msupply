@@ -62,7 +62,7 @@
 
 /* Phone widths: the OPEN panel becomes a full-screen overlay over the page
    region instead of a docked column that would squeeze the body to a sliver
-   (spec ui-standards/layout.md → page regions, D26). The closed state keeps
+   (spec ui-standards/layout.md → page regions, D27). The closed state keeps
    the docked clip rules above (zero-width, natural-width content inside), so
    the no-remount contract is untouched. 599 = the compact breakpoint in
    breakpoints.ts minus 1 (CSS can't read JS tokens — same constant as

@@ -16,8 +16,8 @@ import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { Select } from '../../ui/elements/selectors/Select';
 import { RadioGroup } from '../../ui/elements/inputs/RadioGroup';
-import { DateInput } from '../../ui/elements/inputs/DateInput';
-import { DateRangeInput } from '../../ui/elements/inputs/DateRangeInput';
+import { DateField } from '../../ui/elements/inputs/DateField';
+import { DateRangeField } from '../../ui/elements/inputs/DateRangeField';
 import { MasterListSelect } from '../masterList/MasterListSelect';
 import { LocationSelect } from '../location/LocationSelect';
 import { ProgramSelect } from '../program/ProgramSelect';
@@ -233,13 +233,13 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match when={field.kind === 'date' ? field : undefined} keyed>
                 {dateField => (
-                  <DateInput
+                  <DateField
                     label={dateField.label}
                     value={textValue(dateField.key)}
                     disabled={dateField.readOnly}
                     required={dateField.required}
                     error={requiredError(dateField)}
-                    onChange={value => setValues(dateField.key, value)}
+                    onChange={value => setValues(dateField.key, value ?? '')}
                   />
                 )}
               </Match>
@@ -290,18 +290,17 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                  * wire `DatetimeFilterInput` — { afterOrEqualTo, beforeOrEqualTo }
                  * — on submit (see schema.ts `toDatetimeFilter`).
                  */}
-                <DateRangeInput
+                <DateRangeField
                   label={field.label}
-                  start={rangeValue(field.key).start}
-                  end={rangeValue(field.key).end}
-                  onChange={range =>
+                  value={rangeValue(field.key)}
+                  onChange={range => {
+                    const start = range.start ?? '';
+                    const end = range.end ?? '';
                     setValues(
                       field.key,
-                      range.start || range.end
-                        ? { start: range.start, end: range.end }
-                        : undefined
-                    )
-                  }
+                      start || end ? { start, end } : undefined
+                    );
+                  }}
                 />
               </Match>
               <Match when={field.kind === 'program' ? field : undefined} keyed>
