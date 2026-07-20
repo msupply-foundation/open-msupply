@@ -23,49 +23,54 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 const FILTERS = constructFilters<StocktakeLineFilter>({
   search: null,
   errorIds: {
-    label: () => t('stocktake.errors.filter-label'),
+    label: () => t('heading.stocktake-errors'),
     // Label-only chip — activated by the error dialog with the actual line
     // ids, removed by its X.
     render: () => null,
   },
   item: {
-    label: () => t('stocktake.detail-filter.item'),
+    label: () => t('label.item'),
     render: props => (
       <FilterTextInput
-        label={t('stocktake.detail-filter.item')}
-        placeholder={t('stocktake.filter.contains')}
+        label={t('label.item')}
+        placeholder={t('label.item')}
         value={props.filter().item ?? ''}
         onInput={value => props.setPartialFilter({ item: value })}
+        // Client-side line filter (in-memory, no server round-trip) → apply on
+        // every keystroke, no debounce (spec: inputs.md § Server-bound input).
+        debounceMs={0}
       />
     ),
   },
   batch: {
-    label: () => t('stocktake.detail-filter.batch'),
+    label: () => t('label.batch'),
     render: props => (
       <FilterTextInput
-        label={t('stocktake.detail-filter.batch')}
-        placeholder={t('stocktake.filter.contains')}
+        label={t('label.batch')}
+        placeholder={t('label.batch')}
         value={props.filter().batch ?? ''}
         onInput={value => props.setPartialFilter({ batch: value })}
+        debounceMs={0}
       />
     ),
   },
   location: {
-    label: () => t('stocktake.detail-filter.location'),
+    label: () => t('label.location'),
     render: props => (
       <FilterTextInput
-        label={t('stocktake.detail-filter.location')}
-        placeholder={t('stocktake.filter.contains')}
+        label={t('label.location')}
+        placeholder={t('label.location')}
         value={props.filter().location ?? ''}
         onInput={value => props.setPartialFilter({ location: value })}
+        debounceMs={0}
       />
     ),
   },
   expiryBefore: {
-    label: () => t('stocktake.detail-filter.expiry'),
+    label: () => t('label.items-expiring-before'),
     render: props => (
       <FilterDate
-        label={t('stocktake.detail-filter.expiry')}
+        label={t('label.items-expiring-before')}
         value={props.filter().expiryBefore ?? ''}
         onInput={value => props.setPartialFilter({ expiryBefore: value })}
       />

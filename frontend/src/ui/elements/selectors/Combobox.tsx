@@ -17,6 +17,11 @@ import { usePortalMount } from '../../utils/portalMount';
 import { keepDialogOpenOnInside } from './dismissInsideGuard';
 import styles from './Combobox.module.css';
 
+// Server-mode infinite scroll: fetch the next page once the listbox is scrolled
+// to within this many px of the bottom (a small lead so the next page is on its
+// way before the user hits the very end).
+const NEXT_PAGE_THRESHOLD_PX = 100;
+
 interface ComboboxProps<T> {
   label: string;
   /** The full option set; filtered locally as the user types. */
@@ -46,6 +51,12 @@ interface ComboboxProps<T> {
    * (Kobalte's model), unlike the prototype's whole-list filter.
    */
   filter?: (item: T, input: string) => boolean;
+  /**
+   * Per-option disabled predicate — the option is listed (visible for context)
+   * but not selectable, e.g. an on-hold customer. Maps to Kobalte's
+   * optionDisabled, which exposes it as aria-disabled on the option.
+   */
+  itemDisabled?: (item: T) => boolean;
   placeholder?: string;
   helperText?: string;
   /**
@@ -55,13 +66,58 @@ interface ComboboxProps<T> {
    *  TextField's `error`.
    */
   error?: string;
+  /**
+   * `data-testid` for the error message (locale-stable test hook,
+   * e2e/TESTIDS.md) — mirrors TextField's `errorTestId`.
+   */
+  errorTestId?: string;
+  /**
+   * `data-testid` for the text `<input>` itself (locale-stable test hook,
+   * e2e/TESTIDS.md) — the input is internal to the Kobalte composition, so it
+   * can't take a pass-through attribute.
+   */
+  inputTestId?: string;
   loading?: boolean;
   disabled?: boolean;
+  // --- Server mode ------------------------------------------------------
+  // Passing `onInputChange` switches the combobox to SERVER mode: the caller
+  // owns filtering (it (re)fetches `items` from the input), so the built-in
+  // client-side substring filter is turned off (Kobalte shows `items` as-is)
+  // and the "no matches" copy keys off an empty `items` rather than a local
+  // filter. Whole-list callers (Location/Reason) pass none of these and behave
+  // exactly as before.
+  /**
+   * Called with the current input text as the user types (server-mode filter
+   * trigger). Its presence enables server mode.
+   */
+  onInputChange?: (value: string) => void;
+  /**
+   * Server mode: called when the listbox scrolls near the bottom — fetch the
+   * next page and append to `items`. No-op unless there are more pages.
+   */
+  onReachEnd?: () => void;
+  /**
+   * Server mode: a NEXT-page fetch is in flight — shows a spinner row at the
+   * end of the list (distinct from `loading`, which blanks the list for a
+   * fresh first-page fetch).
+   */
+  loadingMore?: boolean;
+  /**
+   * Called when the listbox opens or closes (Kobalte's onOpenChange) — lets a
+   * server-mode caller arm a deferred first fetch on first open.
+   */
+  onOpenChange?: (open: boolean) => void;
   /**
    * Visually hide the label (kept for a11y) — for use inside a FieldRow that
    * shows it.
    */
   hideLabel?: boolean;
+  /**
+   * Open the listbox as soon as the input is focused/clicked (Kobalte
+   * triggerMode "focus") — for pick-first flows like the customer-search
+   * modal, where the options must appear without typing.
+   */
+  openOnFocus?: boolean;
   class?: string;
 }
 
@@ -86,19 +142,27 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   const [inputValue, setInputValue] = createSignal('');
   let inputEl: HTMLInputElement | undefined;
 
+  // Server mode: the caller drives filtering via onInputChange (it refetches
+  // `items`), so we disable Kobalte's client-side filter and let it show every
+  // item we pass. See the prop docs.
+  const serverMode = () => props.onInputChange !== undefined;
+
   const keyOf = (item: T) => (props.itemToValue ?? props.itemToString)(item);
 
-  // Controlled selection: when `value` is provided, keep the internal
-  // `selected` item in sync with it (resolve the key against the current
-  // items). Skipped entirely when `value` is undefined — the widget then stays
-  // uncontrolled (create/filter forms). Guarded by `on(value, ...)` so it only
-  // reacts to the prop, not to the user's own selection.
+  // Controlled selection: keep the internal `selected` item in sync with
+  // `value` (resolve the key against the current items). `value === undefined`
+  // means "no selection" → clear `selected` (so a caller that resets its value
+  // — e.g. after saving, or when its bound field is cleared — empties the
+  // input, rather than the input keeping the stale item). Guarded by
+  // `on(value, ...)` so it only reacts to the prop, not the user's own pick.
   createEffect(
     on(
       () => props.value,
       value => {
-        if (value === undefined) return;
-        const match = props.items.find(item => keyOf(item) === value) ?? null;
+        const match =
+          value === undefined
+            ? null
+            : (props.items.find(item => keyOf(item) === value) ?? null);
         if (match !== selected()) setSelected(() => match);
       }
     )
@@ -116,13 +180,46 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           .toLocaleLowerCase()
           .includes(input.toLocaleLowerCase());
 
+  // The input text ONLY filters while it's something the user typed: when it
+  // just mirrors the committed selection's label, reopening the popup shows
+  // the FULL list (matching the platform autocompletes users expect — and the
+  // shared e2e suites, whose pickers reopen to browse all options).
+  const filterText = () => {
+    const current = selected();
+    const input = inputValue();
+    return current && input === props.itemToString(current) ? '' : input;
+  };
+
+  // Server mode: the caller already filtered, so "no matches" = an empty list
+  // (once loading settles). Client mode: nothing passes the local filter.
   const noMatches = createMemo(() =>
-    props.items.every(item => !matches(item, inputValue()))
+    serverMode()
+      ? props.items.length === 0
+      : props.items.every(item => !matches(item, filterText()))
   );
+
+  const handleInputChange = (value: string) => {
+    setInputValue(value);
+    props.onInputChange?.(value);
+  };
 
   const handleChange = (item: T | null) => {
     setSelected(() => item);
     props.onChange?.(item);
+  };
+
+  // Server-mode infinite scroll: when the listbox is scrolled near its bottom,
+  // ask the caller for the next page. The listbox owns the scroll (`.listbox`
+  // is overflow:auto), so a plain onScroll on it suffices — no observer, no
+  // sentinel. The caller's onReachEnd is a no-op when there are no more pages
+  // or a fetch is already in flight, so firing per scroll event is safe.
+  const onListboxScroll = (event: Event) => {
+    const el = event.currentTarget as HTMLElement;
+    if (
+      el.scrollHeight - el.scrollTop - el.clientHeight <
+      NEXT_PAGE_THRESHOLD_PX
+    )
+      props.onReachEnd?.();
   };
 
   return (
@@ -132,11 +229,20 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
       optionTextValue={item => props.itemToString(item as T)}
       optionLabel={item => props.itemToString(item as T)}
-      defaultFilter={(item, input) => matches(item as T, input)}
+      optionDisabled={
+        props.itemDisabled ? item => props.itemDisabled!(item as T) : undefined
+      }
+      // Server mode disables the client filter (the caller refetches `items`);
+      // client mode keeps the local substring/predicate filter.
+      defaultFilter={
+        serverMode() ? () => true : item => matches(item as T, filterText())
+      }
       value={selected()}
       onChange={handleChange}
-      onInputChange={setInputValue}
+      onInputChange={handleInputChange}
+      onOpenChange={open => props.onOpenChange?.(open)}
       allowsEmptyCollection
+      triggerMode={props.openOnFocus ? 'focus' : 'input'}
       disabled={props.disabled}
       placeholder={props.placeholder}
       itemComponent={itemProps => (
@@ -147,13 +253,13 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         </KCombobox.Item>
       )}
     >
-      {/* hideLabel keeps the label for a11y (aria-labelledby) but visually hidden — used
-          when a FieldRow already shows the label beside the control. */}
-      <KCombobox.Label
-        class={props.hideLabel ? styles.labelHidden : styles.label}
-      >
-        {props.label}
-      </KCombobox.Label>
+      {/* hideLabel names the input via aria-label instead of a visually-hidden
+          label element — same accessible name, no duplicate text node beside
+          the label the surrounding layout (a FieldRow) already shows (a hidden
+          twin trips strict text-locator matches in the shared e2e suites). */}
+      <Show when={!props.hideLabel}>
+        <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+      </Show>
       <KCombobox.Control
         class={styles.control}
         data-error={props.error ? '' : undefined}
@@ -164,6 +270,8 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         <KCombobox.Input
           ref={inputEl}
           class={styles.input}
+          data-testid={props.inputTestId}
+          aria-label={props.hideLabel ? props.label : undefined}
           aria-invalid={props.error ? 'true' : undefined}
         />
         <Show when={selected() !== null}>
@@ -197,7 +305,10 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           </Show>
         }
       >
-        <KCombobox.Description class={styles.error}>
+        <KCombobox.Description
+          class={styles.error}
+          data-testid={props.errorTestId}
+        >
           <AlertTriangleIcon class={styles.errorIcon} />
           {props.error}
         </KCombobox.Description>
@@ -217,7 +328,17 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           <Show when={!props.loading && noMatches()}>
             <div class={styles.status}>No matching items</div>
           </Show>
-          <KCombobox.Listbox class={styles.listbox} />
+          {/* The listbox owns the scroll; in server mode onScroll fetches the
+              next page near the bottom (see onListboxScroll). */}
+          <KCombobox.Listbox
+            class={styles.listbox}
+            onScroll={serverMode() ? onListboxScroll : undefined}
+          />
+          {/* Server mode: a trailing "loading more" row shown under the list
+              while the next page is in flight. */}
+          <Show when={props.loadingMore}>
+            <div class={styles.status}>Loading…</div>
+          </Show>
         </KCombobox.Content>
       </KCombobox.Portal>
     </KCombobox.Root>

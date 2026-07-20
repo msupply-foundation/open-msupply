@@ -19,8 +19,8 @@ import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
-import { InfoIcon, MinusCircleIcon } from '../../../ui/icons';
+import { Spinner } from '../../../ui/elements/feedback/Spinner';
+import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -42,6 +42,7 @@ import {
   StocktakeLineEditModal,
   type LineEditCommit,
   type StocktakeLineEditItem,
+  type StocktakeItemInfo,
 } from './edit-modal/StocktakeLineEditModal';
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
@@ -198,10 +199,23 @@ const StocktakeDetailView: Component = () => {
       },
     },
   });
-  // The item being edited (undefined = modal closed).
-  const [editItem, setEditItem] = createSignal<
-    StocktakeLineEditItem | undefined
-  >();
+  // The line-edit modal's open state (undefined = closed):
+  // - { mode: 'update', itemId }: editing an existing item's lines (opened from
+  //   a row). itemId is only the INITIAL item — the modal then advances through
+  //   the list itself via "OK & next" (resolving each via itemInfo below); we
+  //   never change this to advance, only to open/close.
+  // - { mode: 'add' }: adding an item not yet on the stocktake (from "Add
+  //   item"). The modal searches for the item itself, so no id here.
+  type EditState =
+    { mode: 'update'; itemId: string } | { mode: 'add' } | undefined;
+  const [editState, setEditState] = createSignal<EditState>();
+
+  // Item ids already on the stocktake — passed to the add-item search so those
+  // items can't be added twice. Read live by the modal (an accessor) so an item
+  // added via "OK & next" drops out of the next search without reopening.
+  const existingItemIds = (): string[] => [
+    ...new Set(rows().map(line => line.item.id)),
+  ];
 
   // Fetch the stocktake. A NodeError (e.g. bad id) is promoted to the global
   // unexpected-error modal via mapSuccessToError, so it never reaches the view
@@ -265,17 +279,62 @@ const StocktakeDetailView: Component = () => {
   // Header click: TanStack computed the next direction; just record it.
   const onSort = (key: SortKey, desc: boolean) => setSort({ key, desc });
 
-  // Row click → edit that line's ITEM (all its batches).
+  // Row click → open the editor (update mode) on that line's ITEM (all its
+  // batches).
   const openRow = (line: Line) =>
-    setEditItem({
-      id: line.item.id,
-      code: line.item.code,
-      name: line.itemName,
-    });
-  const editItemLines = createMemo<Line[]>(() => {
-    const item = editItem();
-    return item ? rows().filter(line => line.item.id === item.id) : [];
-  });
+    setEditState({ mode: 'update', itemId: line.item.id });
+
+  // "Add item" (empty state + toolbar) → open the editor in add mode; the modal
+  // searches for an item not yet on the stocktake.
+  const openAdd = () => setEditState({ mode: 'add' });
+
+  // The item AFTER currentId in the CURRENT on-screen order (sortedRows) —
+  // "OK & next" advances to this. We walk the list top-to-bottom, collapsing to
+  // distinct items (each Line is a batch, so one item spans several rows), and
+  // return the first distinct item that appears AFTER the first row of the
+  // current item and hasn't been seen yet. Anchoring on the FIRST current row
+  // and skipping already-seen items makes it correct whether the table is
+  // grouped (item rows adjacent) or ungrouped (an item's batches interleaved):
+  // once we're past the current item's first row, the next new item is next.
+  // undefined = the current item is the last distinct item → no next (the
+  // modal then shows OK without OK & next). This follows the user's chosen
+  // sort/filter — unlike upstream OMS, which steps in a hardcoded item order.
+  const nextAfter = (
+    list: Line[],
+    currentId: string
+  ): StocktakeLineEditItem | undefined => {
+    const seen = new Set<string>();
+    let past = false;
+    for (const line of list) {
+      const id = line.item.id;
+      if (id === currentId) {
+        past = true;
+        seen.add(id);
+        continue;
+      }
+      if (past && !seen.has(id))
+        return { id, code: line.item.code, name: line.itemName };
+      seen.add(id);
+    }
+    return undefined;
+  };
+
+  // Resolve everything the modal needs for one item, from the CURRENT
+  // filtered/sorted list — the item descriptor, its lines (to seed the draft),
+  // and the next item to advance to. The modal calls this on open and again on
+  // each "OK & next". undefined = the item is no longer in the list (e.g. the
+  // filter changed underneath) → the modal closes. Computed here (the parent
+  // owns the list); surfaced to the modal purely THROUGH this call.
+  const itemInfo = (id: string): StocktakeItemInfo | undefined => {
+    const list = sortedRows();
+    const current = list.find(line => line.item.id === id);
+    if (!current) return undefined;
+    return {
+      item: { id, code: current.item.code, name: current.itemName },
+      lines: list.filter(line => line.item.id === id),
+      nextItem: nextAfter(list, id),
+    };
+  };
 
   // Reflect a line change in place (no refetch): drop deleted ids, replace
   // updated lines by id, append inserted lines — all the SAME StocktakeLine
@@ -413,24 +472,26 @@ const StocktakeDetailView: Component = () => {
 
   // Crumbs are an accessor so t() re-translates on locale change.
   const crumbs = (node: StocktakeInfoFragment) => [
-    { label: t('nav.inventory') },
+    { label: t('inventory') },
     {
-      label: t('nav.inventory.stocktakes'),
+      label: t('stocktakes'),
       onClick: () => navigate(`/${params.storeId}/inventory/stocktakes`),
     },
-    { label: t('stocktake.detail.title', { number: node.stocktakeNumber }) },
+    { label: String(node.stocktakeNumber) },
   ];
 
   const columns = (): Column<Line, SortKey>[] => [
     {
-      c: { accessor: line => line.item.code, id: 'code' },
+      // Column id is the e2e/TESTIDS.md contract's `item.code` (the accessor
+      // path, dots included — shared with OMS); the sort key stays `code`.
+      c: { accessor: line => line.item.code, id: 'item.code' },
       sortKey: 'code',
-      header: t('stocktake.column.item-code'),
+      header: t('label.code'),
     },
     {
       c: { key: 'itemName' },
       sortKey: 'itemName',
-      header: t('stocktake.column.item-name'),
+      header: t('label.name'),
       // Item names are long — allow up to two wrapped lines before clamping.
       meta: { card: { region: 'primary' }, wrapLines: 2 },
       aggregationFn: sharedOrMultiple,
@@ -438,19 +499,19 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'batch' },
       sortKey: 'batch',
-      header: t('stocktake.column.batch'),
+      header: t('label.batch'),
       aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
-      header: t('stocktake.column.expiry'),
+      header: t('label.expiry-date'),
       ...getDateCell(),
     },
     {
       c: { key: 'snapshotNumberOfPacks' },
       sortKey: 'snapshotNumberOfPacks',
-      header: t('stocktake.column.snapshot'),
+      header: t('label.snapshot-num-of-packs'),
       ...getNumberCell(),
       // Snapshot cell also carries the line's error inline beneath the count (a
       // snapshot/current-count mismatch is a "recount this line" message about
@@ -484,7 +545,7 @@ const StocktakeDetailView: Component = () => {
                   'text-align': 'end',
                 }}
               >
-                {t('stocktake.line-error.snapshot-mismatch')}
+                {t('error.snapshot-total-mismatch')}
               </span>
             </Show>
           </span>
@@ -494,7 +555,7 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
-      header: t('stocktake.column.counted'),
+      header: t('label.counted-num-of-packs'),
       ...getNumberCell(),
       meta: { align: 'right', card: { region: 'badge' } },
     },
@@ -505,43 +566,43 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'packSize' },
       sortKey: 'packSize',
-      header: t('stocktake.column.pack-size'),
+      header: t('label.pack-size'),
       ...getNumberCell(),
     },
     {
       c: { key: 'sellPricePerPack' },
       sortKey: 'sellPricePerPack',
-      header: t('stocktake.column.sell-price'),
+      header: t('label.pack-sell-price'),
       ...getNumberCell(),
     },
     {
       c: { key: 'costPricePerPack' },
       sortKey: 'costPricePerPack',
-      header: t('stocktake.column.cost-price'),
+      header: t('label.pack-cost-price'),
       ...getNumberCell(),
     },
     {
       c: { key: 'manufactureDate' },
       sortKey: 'manufactureDate',
-      header: t('stocktake.column.manufacture-date'),
+      header: t('label.manufacture-date'),
       ...getDateCell(),
     },
     {
       // Location is nested (location.code) — an accessor column.
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'location',
-      header: t('stocktake.column.location'),
+      header: t('label.location'),
     },
     {
       // The adjustment reason (reasonOption.reason) — an accessor column.
       c: { accessor: line => line.reasonOption?.reason ?? '', id: 'reason' },
       sortKey: 'reason',
-      header: t('stocktake.column.reason'),
+      header: t('label.reason'),
     },
     {
       c: { key: 'note' },
       sortKey: 'note',
-      header: t('stocktake.column.note'),
+      header: t('label.note'),
     },
   ];
 
@@ -550,10 +611,10 @@ const StocktakeDetailView: Component = () => {
     // suspends until the fetch lands. Catching it here — rather than letting it
     // bubble to AppShell's section <Suspense> — keeps first-load from tripping
     // the section fallback and remounting the view
-    // (kdd/solid-reactivity-pitfalls). Its fallback is a centred "Loading…"
-    // (EmptyState). Every later save is a mutate(), which never suspends, so
-    // this fallback shows only on the initial fetch.
-    <Suspense fallback={<EmptyState message={t('common.loading')} />}>
+    // (kdd/solid-reactivity-pitfalls). Its fallback is a centred spinner. Every
+    // later save is a mutate(), which never suspends, so this fallback shows
+    // only on the initial fetch.
+    <Suspense fallback={<Spinner center />}>
       {/* NON-keyed Show: the subtree stays mounted while info() is truthy. It must NOT be `keyed`
           — a keyed Show re-runs (tears down + rebuilds) its child whenever the `when` value's
           IDENTITY changes, and every stocktake-level save sets a fresh node object (setInfo), so
@@ -565,7 +626,7 @@ const StocktakeDetailView: Component = () => {
           <Page
             fillBody
             sidePanelOpen={sidePanelOpen()}
-            sidePanelTitle={t('stocktake.detail.side-panel')}
+            sidePanelTitle={t('heading.details')}
             onSidePanelClose={() => setSidePanelOpen(false)}
             sidePanelContent={
               <StocktakeSidePanel
@@ -578,6 +639,14 @@ const StocktakeDetailView: Component = () => {
               <Header>
                 <Breadcrumb crumbs={crumbs(node())} />
                 <HeaderButtons>
+                  {/* "Add item" (primary) — opens the line-edit modal in add
+                      mode, next to "More" as in OMS. Only while the stocktake is
+                      editable (an on-hold/finalised one can't gain lines). */}
+                  <Show when={!isDisabled(node())}>
+                    <Button icon={<PlusCircleIcon />} onClick={openAdd}>
+                      {t('button.add-item')}
+                    </Button>
+                  </Show>
                   {/* A labelled "More" button (info icon + text), like OMS's details button. It
                       hides while the panel is open — the panel's own close button takes over. */}
                   <Show when={!sidePanelOpen()}>
@@ -586,7 +655,7 @@ const StocktakeDetailView: Component = () => {
                       icon={<InfoIcon />}
                       onClick={() => setSidePanelOpen(true)}
                     >
-                      {t('common.more')}
+                      {t('button.more')}
                     </Button>
                   </Show>
                 </HeaderButtons>
@@ -640,9 +709,7 @@ const StocktakeDetailView: Component = () => {
                   {/* Count + actions on the inline-start (OMS layout): Delete, Change location,
                       Reduce to 0. All disabled while the stocktake is finalised / on hold. */}
                   <strong>
-                    {t('stocktake.lines.selected', {
-                      count: selectedIds().length,
-                    })}
+                    {selectedIds().length} {t('label.selected')}
                   </strong>
                   {/* Each action owns its own button + confirm → working → success | error modal +
                       run; the view supplies storeId/selection and applies the result via callbacks —
@@ -679,7 +746,7 @@ const StocktakeDetailView: Component = () => {
                       icon={<MinusCircleIcon />}
                       onClick={() => setSelectedIds([])}
                     >
-                      {t('stocktake.lines.clear-selection')}
+                      {t('label.clear-selection')}
                     </Button>
                   </ContentFooterActions>
                 </ContentFooter>
@@ -690,13 +757,31 @@ const StocktakeDetailView: Component = () => {
               columns={columns()}
               rows={sortedRows()}
               rowKey={line => line.id}
+              // Non-suspending loading read — covers a between-stocktake
+              // refetch (keeps rows + shows the refreshing bar); the initial
+              // load is handled by the Suspense fallback below.
+              loading={data.loading}
               sort={sort()}
               onSort={onSort}
               onRowClick={isDisabled(node()) ? undefined : openRow}
-              emptyMessage={t('stocktake.detail.empty')}
+              emptyMessage={t('error.no-stocktake-items')}
+              // "Add item" — only offered while the stocktake is editable (an
+              // empty finalised/locked one can't gain lines). Opens the line-
+              // edit modal in add mode (search → edit the item's stock lines).
+              empty={
+                isDisabled(node()) ? undefined : (
+                  <Button
+                    icon={<PlusCircleIcon />}
+                    data-testid="add-item-button"
+                    onClick={openAdd}
+                  >
+                    {t('button.add-item')}
+                  </Button>
+                )
+              }
               rowGroup={{
-                columnId: 'code',
-                labelKey: 'stocktake.column.item-name',
+                columnId: 'item.code',
+                labelKey: 'label.name',
               }}
               enableSelection
               selectedIds={selectedIds()}
@@ -705,12 +790,18 @@ const StocktakeDetailView: Component = () => {
               setConfig={tableConfig.setConfig}
             />
             <StocktakeLineEditModal
-              open={editItem() != null}
-              onClose={() => setEditItem(undefined)}
+              open={editState() != null}
+              onClose={() => setEditState(undefined)}
               storeId={params.storeId}
               stocktakeId={node().id}
-              item={editItem()}
-              lines={editItemLines()}
+              mode={editState()?.mode ?? 'update'}
+              initialItemId={
+                editState()?.mode === 'update'
+                  ? (editState() as { itemId: string }).itemId
+                  : undefined
+              }
+              itemInfo={itemInfo}
+              excludeItemIds={existingItemIds}
               onCommitted={applyCommit}
             />
           </Page>

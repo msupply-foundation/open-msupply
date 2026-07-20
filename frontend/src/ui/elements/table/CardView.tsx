@@ -59,45 +59,47 @@ const cellInGroup = <T,>(cell: TanCell<T, unknown>, key: string): boolean =>
 // (kdd/edit-line-card-table), the secondary area is ordered by group — each
 // group as its own ROW (icon + its fields); ALL_TABS / ungrouped cells follow,
 // unlabelled.
+//
+// Each card is a full-width table ROW (a <tr> with a single <td>) so card view
+// shares the SAME <table> as table view — one scroll container, the header row
+// simply hidden. In card view the table has no header and every row is one
+// <td>, so it's effectively a one-column table: the cell fills the width with
+// no colSpan needed, and the card content wraps rather than scrolling.
 export function CardView<T>(props: {
   table: Table<T>;
   tabsAndCardGroups?: TabAndCardGroup<string>[];
   enableSelection: boolean;
   onRowClick?: (row: T) => void;
-  emptyMessage?: string;
 }): JSX.Element {
+  // The DataTable renders the empty state itself (before this view), so cards
+  // always have ≥1 row here — no empty branch.
   const rows = () => props.table.getRowModel().rows;
   return (
-    <Show
-      when={rows().length > 0}
-      fallback={
-        <div class={styles.cardEmpty}>
-          {props.emptyMessage ?? t('table.no-results')}
-        </div>
-      }
-    >
-      <div class={styles.cardGrid}>
-        <For each={rows()}>
-          {row => {
-            const cells = () => row.getVisibleCells();
-            const inRegion = (region: 'primary' | 'badge') =>
-              cells().filter(c => cellCardRegion(c) === region);
-            // The "secondary area": every visible cell with NO explicit card
-            // region.
-            const secondaryCells = () =>
-              cells().filter(c => cellCardRegion(c) === undefined);
-            return (
-              <div
-                class={`${styles.card} ${props.onRowClick ? styles.rowClickable : ''}`}
-                data-selected={row.getIsSelected() ? '' : undefined}
-                onClick={() => props.onRowClick?.(row.original)}
-              >
+    <For each={rows()}>
+      {row => {
+        const cells = () => row.getVisibleCells();
+        const inRegion = (region: 'primary' | 'badge') =>
+          cells().filter(c => cellCardRegion(c) === region);
+        // The "secondary area": every visible cell with NO explicit card
+        // region.
+        const secondaryCells = () =>
+          cells().filter(c => cellCardRegion(c) === undefined);
+        return (
+          <tr
+            class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
+            data-selected={row.getIsSelected() ? '' : undefined}
+            data-testid="table-row"
+            onClick={() => props.onRowClick?.(row.original)}
+          >
+            <td class={styles.cardCell}>
+              <div class={styles.card}>
                 <div class={styles.cardHeader}>
                   <Show when={props.enableSelection}>
                     <input
                       type="checkbox"
                       class={styles.cardSelect}
                       aria-label={t('table.select-row')}
+                      data-testid="select-row-checkbox"
                       checked={row.getIsSelected()}
                       onChange={row.getToggleSelectedHandler()}
                       onClick={event => event.stopPropagation()}
@@ -199,10 +201,10 @@ export function CardView<T>(props: {
                   </Show>
                 </Show>
               </div>
-            );
-          }}
-        </For>
-      </div>
-    </Show>
+            </td>
+          </tr>
+        );
+      }}
+    </For>
   );
 }

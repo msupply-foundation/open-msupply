@@ -35,7 +35,10 @@ import type {
 } from './stocktakes.generated';
 import { filterFields, type StocktakeFilter } from './listFilters';
 import { CreateStocktakeModal } from './CreateStocktakeModal';
-import { DeleteStocktakesAction } from './actions';
+import {
+  CreateInitialStocktakeAction,
+  DeleteStocktakesAction,
+} from './actions';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
 // filter/sort/pagination state come from the vertical; the UI is composed from
@@ -78,10 +81,10 @@ const DEFAULT_STATE: StocktakesListState = {
 const statusMeta = (status: StocktakeRow['status']) =>
   status === 'FINALISED'
     ? {
-        label: t('stocktake.status.finalised'),
+        label: t('status.finalised'),
         colour: 'var(--status-finalised)',
       }
-    : { label: t('stocktake.status.new'), colour: 'var(--status-new)' };
+    : { label: t('status.new'), colour: 'var(--status-new)' };
 
 const StocktakesList: Component = () => {
   // storeId is guaranteed present: this section renders only inside
@@ -95,6 +98,10 @@ const StocktakesList: Component = () => {
   // it open. On a successful create it navigates away to the new stocktake's
   // detail page, so the list needs no refetch here.
   const [createOpen, setCreateOpen] = createSignal(false);
+  // The initial (opening-balance) create action — offered from the empty state
+  // only when the store has NO stocktakes at all (see hasStocktake below). Like
+  // createOpen, a successful create navigates away.
+  const [initialOpen, setInitialOpen] = createSignal(false);
 
   // Column config (order/sizing/pinning/visibility), resolved default → global
   // → user and by breakpoint band (kdd/table-state). On COMPACT (narrow
@@ -157,8 +164,43 @@ const StocktakesList: Component = () => {
     }
   );
 
-  const rows = () => data()?.nodes ?? [];
-  const totalCount = () => data()?.totalCount ?? 0;
+  // Read `data.latest`, NOT `data()`: `.latest` never suspends (it returns the
+  // previous value during a refetch, and undefined before the first load),
+  // whereas reading `data()` while pending suspends the whole list into the
+  // router's fallback-less <Suspense> — leaving the page BLANK on a slow initial
+  // load instead of showing the table's loading spinner (#160/#196). Keeping the
+  // read non-suspending lets the DataTable mount immediately and show its
+  // `loading` treatment (kdd/solid-reactivity-pitfalls rule 1).
+  const rows = () => data.latest?.nodes ?? [];
+  const totalCount = () => data.latest?.totalCount ?? 0;
+
+  // "Does this store have ANY stocktake?" — a SEPARATE, filter-independent
+  // fetch (mirrors OMS's useHasStocktake): the main list's totalCount is
+  // filter-scoped, so a filter that matches nothing would falsely read as an
+  // empty store and wrongly offer initial creation. One row is enough — we read
+  // the store-wide totalCount with no filter. Keyed on the store only, so it
+  // fetches once per store and never re-runs on filter/sort/page changes. An
+  // initial stocktake is a once-per-store opening balance; when the store has
+  // none the empty state offers "Create initial stocktake", else "New stocktake".
+  const [hasStocktakeData] = createResource(
+    () => params.storeId,
+    async storeId => {
+      const result = await graphqlFetch(Stocktakes, {
+        storeId,
+        page: { first: 1 },
+      });
+      if (result.kind !== 'success') return undefined;
+      return result.data.stocktakes.totalCount > 0;
+    }
+  );
+  // Read `.latest` (non-suspending), NOT `hasStocktakeData()`: a suspending read
+  // here would collapse the whole list into the router's fallback-less Suspense
+  // on first load (blank page — the same trap as `data()` above). Undefined
+  // while unresolved — treat as "has stocktakes" so we DON'T flash the
+  // initial-create affordance before we know (a store with stocktakes is the
+  // common case; showing "New stocktake" and correcting to "initial" would be
+  // the wrong direction to flicker).
+  const hasStocktake = () => hasStocktakeData.latest ?? true;
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
@@ -208,7 +250,7 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('stocktake.column.status'),
+      header: t('label.status'),
       cell: info => (
         <StatusChip {...statusMeta(info.getValue<StocktakeRow['status']>())} />
       ),
@@ -218,7 +260,7 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'description' },
       sortKey: 'description',
-      header: t('stocktake.column.description'),
+      header: t('label.description'),
       // Card view: the description flows in the secondary area. Wraps to 2
       // lines.
       meta: { wrapLines: 2 },
@@ -226,31 +268,28 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'comment' },
       sortKey: 'comment',
-      header: t('stocktake.column.comment'),
+      header: t('label.comment'),
     },
     {
       c: { key: 'stocktakeDate' },
       sortKey: 'stocktakeDate',
-      header: t('stocktake.column.stocktake-date'),
+      header: t('label.stocktake-date'),
       ...getDateCell(),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('stocktake.column.created'),
+      header: t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'isLocked' },
-      header: t('stocktake.column.locked'),
+      header: t('label.locked'),
       ...getBooleanCell(),
     },
   ];
 
-  const crumbs = () => [
-    { label: t('nav.inventory') },
-    { label: t('nav.inventory.stocktakes') },
-  ];
+  const crumbs = () => [{ label: t('inventory') }, { label: t('stocktakes') }];
 
   return (
     <Page
@@ -261,9 +300,10 @@ const StocktakesList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              data-testid="new-stocktake-button"
               onClick={() => setCreateOpen(true)}
             >
-              {t('stocktake.new')}
+              {t('label.new-stocktake')}
             </Button>
           </HeaderButtons>
           <Toolbar>
@@ -295,11 +335,11 @@ const StocktakesList: Component = () => {
             </ContentFooter>
           }
         >
-          <ContentFooter>
+          <ContentFooter testId="actions-footer">
             {/* Matching Open mSupply's action bar: the count and the row action(s)
                 (Delete) group on the inline-start edge; Clear pins inline-end. */}
-            <strong>
-              {t('stocktake.selected', { count: selectedIds().length })}
+            <strong data-testid="selected-rows-count">
+              {selectedIds().length} {t('label.selected')}
             </strong>
             <DeleteStocktakesAction
               storeId={params.storeId}
@@ -312,7 +352,7 @@ const StocktakesList: Component = () => {
                 icon={<CloseIcon />}
                 onClick={() => setSelectedIds([])}
               >
-                {t('common.clear')}
+                {t('label.clear-selection')}
               </Button>
             </ContentFooterActions>
           </ContentFooter>
@@ -323,10 +363,39 @@ const StocktakesList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={r => r.id}
+        // `data.loading` (a non-suspending read) drives the table's loading
+        // treatment: a centred spinner on first load (no rows yet), a thin
+        // refreshing bar on filter/sort/page refetches (rows kept) — so a slow
+        // fetch never flashes the "no stocktakes" empty state (#160/#196).
+        loading={data.loading}
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        emptyMessage={t('stocktake.empty')}
+        emptyMessage={t('error.no-stocktakes')}
+        // The empty-state action flips on whether the store has ANY stocktake
+        // (mirrors OMS): a store with none is offered the once-per-store INITIAL
+        // (opening-balance) create — a plain confirm, no mode controls; a store
+        // that already has stocktakes (incl. filtered-to-nothing) gets the
+        // regular "New stocktake" modal.
+        empty={
+          hasStocktake() ? (
+            <Button
+              icon={<PlusCircleIcon />}
+              data-testid="nothing-here-create-button"
+              onClick={() => setCreateOpen(true)}
+            >
+              {t('button.create-a-new-one')}
+            </Button>
+          ) : (
+            <Button
+              icon={<PlusCircleIcon />}
+              data-testid="nothing-here-create-button"
+              onClick={() => setInitialOpen(true)}
+            >
+              {t('button.initial-stocktake')}
+            </Button>
+          )
+        }
         enableSelection
         selectedIds={selectedIds()}
         onSelectionChange={setSelectedIds}
@@ -336,6 +405,10 @@ const StocktakesList: Component = () => {
       <CreateStocktakeModal
         open={createOpen()}
         onClose={() => setCreateOpen(false)}
+      />
+      <CreateInitialStocktakeAction
+        open={initialOpen()}
+        onClose={() => setInitialOpen(false)}
       />
     </Page>
   );

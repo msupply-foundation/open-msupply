@@ -112,10 +112,22 @@
 }
 
 .title {
+  /* Take the free inline space so any headerActions pin to the inline-end;
+     min-inline-size:0 lets a long title truncate/wrap rather than shove them off. */
+  flex: 1 1 auto;
+  min-inline-size: 0;
   margin: 0;
   font-size: var(--text-lg);
   font-weight: var(--weight-bold);
   color: var(--gray-dark);
+}
+
+/* Header action(s) (e.g. Add batch) — grouped at the inline-end of the header
+   row, opposite the title, not shrinking below their content. */
+.headerActions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-3);
 }
 
 .description {
@@ -229,4 +241,42 @@
 .close:focus-visible {
   outline: 2px solid var(--primary-main);
   outline-offset: 2px;
+}
+
+/* Full-screen on phones — driven by data-fullscreen, which Dialog.tsx sets on a
+   size="large" dialog when useIsCompact matches (createMediaQuery reads the
+   compact breakpoint from breakpoints.ts, the single source of truth). A media
+   query can't read a CSS var, so the cutoff stays in JS as the repo prefers
+   (CLAUDE.md #7); this is the CSS analogue of the "which layout" createMediaQuery
+   branches. Only large ("workbench") modals go full-screen — smaller dialogs
+   stay centred cards (their base width/height caps already fit the phone).
+   Higher specificity than .large so these rules override its width/height.
+   dvh/dvw track the visible viewport as the mobile browser chrome shows/hides;
+   plain 100vh would tuck the actions behind the address bar. */
+.dialog[data-fullscreen] {
+  width: 100dvw;
+  height: 100dvh;
+  /* Override BOTH UA caps: dialog:modal ships a default max-inline/block-size of
+     calc(100% - ~2em - 6px) so dialogs never touch the edge — that would leave a
+     margin on a full-screen sheet (clamping width to ~360 on a 390px phone). */
+  max-inline-size: 100dvw;
+  max-block-size: 100dvh;
+  /* Pin to the top-inline-start corner (the UA centres with margin:auto). */
+  margin: 0;
+  border-radius: 0;
+}
+
+/* Flex column (as in large mode) so the body fills the height and the
+   footer/actions pin to the bottom edge instead of floating mid-screen under
+   short content. Scoped to [open] for the same reason as .large[open]: a bare
+   display:flex would override the UA's display:none on a closed <dialog>. */
+.dialog[data-fullscreen][open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog[data-fullscreen][open] .body {
+  flex: 1;
+  min-block-size: 0;
+  max-block-size: none;
 }

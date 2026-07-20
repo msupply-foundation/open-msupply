@@ -40,6 +40,11 @@ export type GraphqlErrorItem = {
 export type GraphqlFailure =
   // Spec (Unexpected logout): also sets the global unauthenticated signal.
   | { kind: 'unauthenticated' }
+  // Spec (Permission denied): authenticated but lacking the permission for the
+  // request. Sets the global forbidden signal (the same modal as unexpected
+  // errors, but a permission-denied variant with a single OK). Consumers treat
+  // this as a continuation of their loading phase, exactly like unexpectedError.
+  | { kind: 'forbidden' }
   // Anything the flow does not handle itself: connection failures, unusable
   // responses, and — unless returnGraphqlErrors is set — GraphQL errors. Also
   // sets the global unexpected-error signal (modal); consumers treat this as a
@@ -67,11 +72,46 @@ type FetchOptions<TResult> = {
   // caller simply sees a non-success and stays in its loading phase (spec:
   // Unexpected API Errors).
   mapSuccessToError?: (data: TResult) => string | undefined;
+  // A self-retrying background call (an interval poll with a live-channel
+  // alternative, e.g. the sync-status fallback poll): failures still return
+  // { kind: 'unexpectedError' } but do NOT trip the global unexpected-error
+  // modal — a transient outage would otherwise convert a silently-recoverable
+  // background retry into a forced app reload (spec/sync-modal: a transport
+  // interruption must not degrade the session). Deliberate asymmetry: an
+  // unauthenticated result still reports globally (the re-login modal) — only
+  // the unexpected-error modal is suppressed.
+  background?: boolean;
   endpoint?: string;
 };
 
 export const isUnauthenticated = (errors: GraphqlErrorItem[]): boolean =>
   errors.some(e => e.message === 'Unauthenticated');
+
+// Spec (Permission denied): a request the user is authenticated for but lacks
+// the permission to make comes back as a plain GraphQL error whose message is
+// exactly "Forbidden" (distinct from "Unauthenticated", the no-session case).
+export const isForbidden = (errors: GraphqlErrorItem[]): boolean =>
+  errors.some(e => e.message === 'Forbidden');
+
+// The server names the missing checks inside `extensions.details`, e.g.
+//   "Missing access to store: X, Required permissions:
+//    And([HasStoreAccess, HasPermission(StocktakeMutate)]), Store: Some(\"X\")"
+// We surface only the HasPermission(...) names — the actual UserPermission the
+// user is missing (PascalCase, e.g. StocktakeMutate; NOT the query's
+// SCREAMING_CASE) — and drop the structural checks like HasStoreAccess. Names
+// are de-duplicated in first-seen order; empty when details is absent/unparsable
+// (the modal then shows a generic permission-denied message).
+export const missingPermissions = (errors: GraphqlErrorItem[]): string[] => {
+  const seen = new Set<string>();
+  for (const e of errors) {
+    const details = e.extensions?.details;
+    if (typeof details !== 'string') continue;
+    for (const match of details.matchAll(/HasPermission\(([A-Za-z0-9]+)\)/g)) {
+      seen.add(match[1]);
+    }
+  }
+  return [...seen];
+};
 
 // Server errors carry the human-useful specifics in `extensions.details` (e.g.
 // `NotAuthenticated("Missing auth token")`) while `message` is often just the
@@ -109,6 +149,19 @@ export const clearUnexpectedError = (): void => {
   setUnexpectedError(undefined);
 };
 
+// Spec (Permission denied): a separate global signal for the authorised-but-
+// forbidden case. Holds the missing UserPermission names to show; the modal's
+// permission-denied variant reads it, and its single OK action clears it (no
+// reload/navigation — the app keeps running, since a lacked permission is not a
+// broken app state). Undefined = no permission error showing.
+const [forbiddenError, setForbiddenError] = createSignal<string[] | undefined>(
+  undefined
+);
+export { forbiddenError };
+export const clearForbiddenError = (): void => {
+  setForbiddenError(undefined);
+};
+
 // Spec (Token refresh): track when the last GraphQL call happened.
 let lastCallAt = Date.now();
 export const msSinceLastGqlCall = (): number => Date.now() - lastCallAt;
@@ -125,7 +178,7 @@ export async function graphqlFetch<TResult, TVariables>(
 ): Promise<GraphqlResult<TResult>> {
   lastCallAt = Date.now();
   const unexpected = (message: string): GraphqlFailure => {
-    setUnexpectedError(message);
+    if (!options.background) setUnexpectedError(message);
     return { kind: 'unexpectedError' };
   };
   let response: Response;
@@ -153,6 +206,14 @@ export async function graphqlFetch<TResult, TVariables>(
     if (isUnauthenticated(body.errors)) {
       reportUnauthenticated();
       return { kind: 'unauthenticated' };
+    }
+    // A caller opting into its own GraphQL-error handling takes Forbidden too
+    // (it may treat a permission-scoped read as an empty/partial result); only
+    // the default path routes Forbidden to the global permission-denied modal.
+    if (!options.returnGraphqlErrors && isForbidden(body.errors)) {
+      if (!options.background)
+        setForbiddenError(missingPermissions(body.errors));
+      return { kind: 'forbidden' };
     }
     const message = describeErrors(body.errors);
     if (options.returnGraphqlErrors) {

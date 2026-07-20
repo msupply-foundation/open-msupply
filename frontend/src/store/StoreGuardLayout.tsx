@@ -9,7 +9,7 @@ import {
   refetchStoreContext,
   storeContext,
 } from './storeContext';
-import { StoreSelectionModal } from './StoreSelectionModal';
+import { StoreSelectionScreen } from './StoreSelectionScreen';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 
@@ -28,10 +28,10 @@ export type StoreSummary = {
 // Spec (Store Login, Guards 2 and 3), applied as common logic to whatever
 // first URL segment we are looking at. The store to enter is the URL's store,
 // or the only store the user has; otherwise there is none and we show the
-// picker in place (no redirect). Entering records the store and fetches its
-// context; the routed section shows a loading state until that context is
-// loaded for this store and user (so re-authenticating as a different user
-// re-loads even for the same store).
+// store-selection screen ([D14]: a routed page at /resolve-store, not a modal).
+// Entering records the store and fetches its context; the routed section shows
+// a loading state until that context is loaded for this store and user (so
+// re-authenticating as a different user re-loads even for the same store).
 export const StoreGuardLayout: Component<RouteSectionProps> = props => {
   const params = useParams();
   const navigate = useNavigate();
@@ -42,6 +42,11 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     stores().find(s => s.id === params.storeId) ??
     (stores().length === 1 ? stores()[0] : undefined);
 
+  // Loaded for THIS {store, user} (SL-5). Keyed on the id the context was
+  // FETCHED with (currentStoreId), never the response's storePreferences.id —
+  // a store without a preference row gets the server's default row (id ''),
+  // which would never match and leave the guard refetching forever. (#188's
+  // fix; re-restored after an intervening merge resolution reverted it.)
   const contextLoaded = (storeId: string) => {
     const context = storeContext();
     return (
@@ -77,7 +82,7 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     <Show
       when={storeToEnter()}
       fallback={
-        <StoreSelectionModal
+        <StoreSelectionScreen
           stores={pickerStores()}
           defaultStoreId={user()?.defaultStore?.id}
           lastUsedStoreId={
@@ -92,7 +97,7 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
           when={contextLoaded(store().id)}
           fallback={
             <div class={styles.page}>
-              <p>{t('store.loading')}</p>
+              <p>{t('loading')}</p>
             </div>
           }
         >

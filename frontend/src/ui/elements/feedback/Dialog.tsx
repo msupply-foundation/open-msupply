@@ -10,6 +10,7 @@ import {
 import { CloseIcon } from '../../icons';
 import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
+import { useIsCompact } from '../../utils/createMediaQuery';
 import styles from './Dialog.module.css';
 
 export interface DialogProps {
@@ -27,8 +28,20 @@ export interface DialogProps {
    * the unexpected-error modal. Default: dismissable.
    */
   dismissable?: boolean;
-  /** Required for a11y — becomes the dialog's accessible name. */
-  title: string;
+  /**
+   * The dialog heading. A string is rendered as the <h2> AND used as the
+   * accessible name (aria-labelledby). A JSX element (e.g. an inline selector)
+   * is rendered in the heading slot instead — then pass `ariaLabel` for the
+   * accessible name, since a component isn't a usable label.
+   */
+  title: string | JSX.Element;
+  /**
+   * The dialog's accessible name when `title` is a component (a component can't
+   * serve as aria-labelledby text). Required for a11y in that case; ignored
+   * when `title` is a string (the string is the label). Also drives
+   * aria-labelledby vs aria-label selection.
+   */
+  ariaLabel?: string;
   /**
    * Visually hide the title (it stays the accessible name) — for dialogs the
    * current app renders without a heading, e.g. the sync modal.
@@ -42,6 +55,12 @@ export interface DialogProps {
    */
   closeButton?: boolean;
   icon?: JSX.Element;
+  /**
+   * Action(s) pinned to the inline-END of the header row, on the same line as
+   * the title (e.g. an "Add" affordance that belongs with the heading rather
+   * than the footer). The title takes the free space; these group at the end.
+   */
+  headerActions?: JSX.Element;
   description?: JSX.Element;
   children?: JSX.Element;
   /**
@@ -85,7 +104,54 @@ export interface DialogProps {
    * DataTable) fills the tall space.
    */
   size?: 'auto' | 'large';
+  /** `data-testid` for the <dialog> element (locale-stable test hook,
+   * e2e/TESTIDS.md). */
+  testId?: string;
 }
+
+interface DialogHeaderProps {
+  title: string | JSX.Element;
+  titleIsString: boolean;
+  titleId: string;
+  titleHidden?: boolean;
+  icon?: JSX.Element;
+  headerActions?: JSX.Element;
+}
+
+// The header, as its own component so its JSX-element props (icon, title,
+// headerActions) are resolved UNDER PortalMountContext — a combobox in the
+// title/actions then mounts its popup into the dialog (top layer), not <body>
+// (where the top-layer dialog would hide it). Each element prop is read once
+// via children() (§3): a guard-plus-insert would otherwise create it twice.
+const DialogHeader = (props: DialogHeaderProps): JSX.Element => {
+  const icon = children(() => props.icon);
+  const title = children(() => props.title);
+  const headerActions = children(() => props.headerActions);
+  return (
+    <header
+      class={styles.header}
+      classList={{ [styles.srOnly ?? '']: props.titleHidden === true }}
+    >
+      <Show when={icon()}>
+        <span class={styles.icon}>{icon()}</span>
+      </Show>
+      {/* A string title is the <h2> (and the aria-labelledby target); a
+          component title renders inline in the same heading slot (the
+          accessible name then comes from ariaLabel on the dialog). */}
+      <Show
+        when={props.titleIsString}
+        fallback={<div class={styles.title}>{title()}</div>}
+      >
+        <h2 class={styles.title} id={props.titleId}>
+          {title()}
+        </h2>
+      </Show>
+      <Show when={headerActions()}>
+        <div class={styles.headerActions}>{headerActions()}</div>
+      </Show>
+    </header>
+  );
+};
 
 /*
  * Modal dialog — native <dialog> + showModal(), NO library (unlike the RnD
@@ -112,16 +178,29 @@ export const Dialog = (props: DialogProps) => {
   // nested popups mount here. The dialog box is overflow:visible (the clip
   // lives on the inner .body) so the popup isn't cut off.
   const [dialogEl, setDialogEl] = createSignal<HTMLElement>();
+  // Large ("workbench") modals go full-screen on phone-ish widths;
+  // data-fullscreen drives the CSS. The 600px cutoff lives once in
+  // breakpoints.ts (createMediaQuery).
+  const compact = useIsCompact();
   // JSX-element props are lazy getters: every read builds a fresh element, so
   // a <Show when> test plus an insertion is two creations (a ref/onMount on
   // the passed element would land on the discarded copy). Resolve each one
   // once (kdd/solid-reactivity-pitfalls §3); `children` is read exactly once
   // below, so it needs no helper.
-  const icon = children(() => props.icon);
   const description = children(() => props.description);
   const footer = children(() => props.footer);
   const actions = children(() => props.actions);
   const actionsLead = children(() => props.actionsLead);
+  // A string title doubles as the accessible name (aria-labelledby → the <h2>).
+  // A component title can't be an accessible name, so callers pass `ariaLabel`
+  // and we use aria-label instead.
+  const titleIsString = () => typeof props.title === 'string';
+  // NB: `icon`, `headerActions` and `title` are resolved INSIDE the header
+  // (DialogHeader), not hoisted here — a component in `title`/`headerActions`
+  // (e.g. an inline combobox) must be created UNDER PortalMountContext so its
+  // popup mounts into this dialog (top layer, non-inert), not portaled to
+  // <body> where the top-layer dialog would hide it. Resolving them here (above
+  // the Provider) would create them outside that context.
 
   createEffect(() => {
     if (props.open && !dialog.open) dialog.showModal();
@@ -143,6 +222,8 @@ export const Dialog = (props: DialogProps) => {
           ? `${styles.dialog} ${styles.large}`
           : styles.dialog
       }
+      data-testid={props.testId}
+      data-fullscreen={compact() && props.size === 'large' ? '' : undefined}
       style={{
         // widthRem is ignored in large mode (it goes full-bleed via the .large
         // class).
@@ -153,7 +234,11 @@ export const Dialog = (props: DialogProps) => {
           ? { '--dialog-min-body-height': `${props.minBodyHeightRem}rem` }
           : {}),
       }}
-      aria-labelledby={titleId}
+      // A string title labels via aria-labelledby (the <h2 id={titleId}>); a
+      // component title has no label text, so fall back to the caller's
+      // ariaLabel.
+      aria-labelledby={titleIsString() ? titleId : undefined}
+      aria-label={titleIsString() ? undefined : props.ariaLabel}
       aria-describedby={description() ? descriptionId : undefined}
       // Escape arrives as `cancel` before the dialog closes — a blocking
       // dialog swallows it here, so the element never closes underneath the
@@ -177,23 +262,20 @@ export const Dialog = (props: DialogProps) => {
             <button
               type="button"
               class={styles.close}
-              aria-label={t('common.close')}
+              aria-label={t('button.close')}
               onClick={() => props.onClose()}
             >
               <CloseIcon />
             </button>
           </Show>
-          <header
-            class={styles.header}
-            classList={{ [styles.srOnly ?? '']: props.titleHidden === true }}
-          >
-            <Show when={icon()}>
-              <span class={styles.icon}>{icon()}</span>
-            </Show>
-            <h2 class={styles.title} id={titleId}>
-              {props.title}
-            </h2>
-          </header>
+          <DialogHeader
+            title={props.title}
+            titleIsString={titleIsString()}
+            titleId={titleId}
+            titleHidden={props.titleHidden}
+            icon={props.icon}
+            headerActions={props.headerActions}
+          />
           <Show when={description()}>
             <p class={styles.description} id={descriptionId}>
               {description()}

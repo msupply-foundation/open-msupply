@@ -1,0 +1,21 @@
+/* ChipListCell — one outlined pill per value, on a single non-wrapping line.
+   Overflowing chips clip at the cell edge; the container's title carries the
+   full list (ui-standards § tables — truncation, not row reflow). */
+.list {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.chip {
+  flex-shrink: 0;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-pill);
+  font-size: 0.85em;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}

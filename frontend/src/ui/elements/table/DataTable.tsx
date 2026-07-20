@@ -52,6 +52,8 @@ import {
   UngroupedIcon,
 } from '../../icons';
 import { Popover } from '../feedback/Popover';
+import { EmptyState } from '../feedback/EmptyState';
+import { Spinner } from '../feedback/Spinner';
 import { ColumnSettings } from './ColumnSettings';
 import { t } from '../../../intl';
 import type { LocaleKey } from '../../../intl';
@@ -148,8 +150,36 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * edit
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
-  /** Message shown when there are no rows. */
+  /**
+   * De-emphasise matching rows (read-only records, e.g. SHIPPED+ shipments —
+   * ui-standards/list-views): stamps data-dimmed on the row, styled in CSS.
+   */
+  rowDimmed?: (row: T) => boolean;
+  /**
+   * Semantic text tone for matching rows ('info' — e.g. outbound's
+   * placeholder lines awaiting allocation): stamps data-tone on the row,
+   * mapped to palette tokens in CSS. Semantic names only, never colours.
+   */
+  rowTone?: (row: T) => 'info' | undefined;
+  /**
+   * The data is being fetched. Drives the loading treatment so a slow fetch
+   * never flashes the empty state (issues #160/#196): with NO rows yet
+   * (initial load) a centred spinner replaces the empty state; with rows
+   * already showing (a refetch on filter/sort/page — kept via
+   * keepPreviousData) the rows stay put and a thin refreshing bar appears
+   * above the table. Pass the resource's `.loading` (a non-suspending read —
+   * do NOT wrap a refetching list in Suspense, which would remount the table;
+   * see kdd/solid-reactivity-pitfalls).
+   */
+  loading?: boolean;
+  /** Message shown (as the empty-state body) when there are no rows. */
   emptyMessage?: string;
+  /**
+   * Optional call-to-action rendered BELOW the empty message (inside the
+   * "nothing here" empty state), e.g. a "New stocktake" / "Add item" button.
+   * Shown in both table and card views when there are no rows.
+   */
+  empty?: JSX.Element;
   /**
    * Show the full-screen toggle in the control bar. Default true. Pass false
    * where full
@@ -339,15 +369,6 @@ export function DataTable<T, K extends string, G extends string = never>(
     if (!props.tabsAndCardGroups || cardGroup === undefined) return true;
     return membershipInTab(col?.tabsAndCardGroups, cardGroup);
   };
-  // The visible-in-active-card-group leaf columns (drives header/body render +
-  // empty-row colSpan).
-  const visibleTabColumns = () =>
-    table
-      .getVisibleLeafColumns()
-      .filter(c =>
-        columnInActiveTab(c.columnDef as { tabsAndCardGroups?: Membership })
-      );
-
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
@@ -448,14 +469,6 @@ export function DataTable<T, K extends string, G extends string = never>(
       }
     })
   );
-
-  // Count only the columns rendered in the active card group (+ the selection
-  // column + the expander column when grouped), so the empty-state row's
-  // colSpan matches the actual cell count.
-  const leafColumnCount = () =>
-    visibleTabColumns().length +
-    (props.enableSelection ? 1 : 0) +
-    (grouping().length > 0 ? 1 : 0);
 
   // --- Expand ALL groups (the header double-chevron) ---
   // TanStack's getToggleAllRowsExpandedHandler would also expand SINGLE-leaf
@@ -561,6 +574,9 @@ export function DataTable<T, K extends string, G extends string = never>(
                   type="button"
                   role="tab"
                   class={styles.groupTab}
+                  // tab-<key> per e2e/TESTIDS.md — the group key is the
+                  // locale-stable value (the label is translated).
+                  data-testid={`tab-${cardGroup.key}`}
                   data-active={cardGroup.key === activeTab() ? '' : undefined}
                   aria-selected={cardGroup.key === activeTab()}
                   onClick={() => setSelectedTab(() => cardGroup.key)}
@@ -661,26 +677,57 @@ export function DataTable<T, K extends string, G extends string = never>(
             class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
             aria-label={t('table.toggle-full-screen')}
             data-testid="table-fullscreen"
-            title={t('table.full-screen')}
+            title={t('label.full-screen')}
             onClick={() => setFullScreen(!fullScreen())}
           >
             {fullScreen() ? <MinimiseIcon /> : <MaximiseIcon />}
           </button>
         </Show>
       </div>
+      {/* Refreshing bar — a thin indeterminate progress bar pinned above the
+          scroll area while a fetch runs AND rows are already showing (a refetch
+          on filter/sort/page — keepPreviousData keeps the old rows in place). It
+          signals "updating" without blanking the table or remounting it (issue
+          #160/#196). The initial load (no rows yet) uses the centred spinner
+          below instead, so the two never show together. */}
+      <Show when={props.loading && table.getRowModel().rows.length > 0}>
+        <div
+          class={styles.refreshingBar}
+          role="status"
+          aria-label={t('loading')}
+        />
+      </Show>
       <div class={styles.tableScroll}>
-        <Switch>
-          <Match when={viewMode() === 'card'}>
-            <CardView
-              table={table}
-              tabsAndCardGroups={props.tabsAndCardGroups}
-              enableSelection={props.enableSelection ?? false}
-              onRowClick={props.onRowClick}
-              emptyMessage={props.emptyMessage}
-            />
-          </Match>
-          <Match when={viewMode() === 'table'}>
-            <table class={styles.table}>
+        {/* No rows → render the loading spinner or the empty state directly (no
+            table/cards at all, so there's no header row or colSpan cell to size).
+            The toolbar above stays put. The check is view-independent (both views
+            read the same core row model), so it sits above the table/card Switch.
+            When loading with no rows yet (initial load) the spinner shows; once
+            data lands the empty state is only shown if it's genuinely empty. */}
+        <Show
+          when={table.getRowModel().rows.length > 0}
+          fallback={
+            <Show
+              when={props.loading}
+              fallback={
+                <EmptyState
+                  data-testid="nothing-here"
+                  message={props.emptyMessage ?? t('table.no-results')}
+                >
+                  {props.empty}
+                </EmptyState>
+              }
+            >
+              <Spinner center data-testid="table-loading" />
+            </Show>
+          }
+        >
+          {/* One <table> for BOTH views — card view is now rows in the SAME
+              table (each card is a full-width <tr>), so columns/scroll/selection
+              are shared. The header row is table-view only (hidden in card view:
+              a card's fields carry their own labels via LabelledValue). */}
+          <table class={styles.table}>
+            <Show when={viewMode() === 'table'}>
               <thead>
                 <For each={table.getHeaderGroups()}>
                   {headerGroup => (
@@ -721,7 +768,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                           <input
                             type="checkbox"
                             aria-label={t('table.select-all')}
-                            data-testid="select-all"
+                            data-testid="select-all-rows-checkbox"
                             checked={table.getIsAllRowsSelected()}
                             onChange={table.getToggleAllRowsSelectedHandler()}
                           />
@@ -749,17 +796,22 @@ export function DataTable<T, K extends string, G extends string = never>(
                   )}
                 </For>
               </thead>
-              <tbody>
-                <Show
-                  when={table.getRowModel().rows.length > 0}
-                  fallback={
-                    <tr>
-                      <td class={styles.empty} colSpan={leafColumnCount()}>
-                        {props.emptyMessage ?? t('table.no-results')}
-                      </td>
-                    </tr>
-                  }
-                >
+            </Show>
+            <tbody>
+              {/* The outer <Show> guarantees rows here, so no empty fallback.
+                  Table view → one <TableRow> (a grid of <td>) per row; card
+                  view → one full-width card <tr> per row (CardView), so both
+                  live in the same <table>. */}
+              <Switch>
+                <Match when={viewMode() === 'card'}>
+                  <CardView
+                    table={table}
+                    tabsAndCardGroups={props.tabsAndCardGroups}
+                    enableSelection={props.enableSelection ?? false}
+                    onRowClick={props.onRowClick}
+                  />
+                </Match>
+                <Match when={viewMode() === 'table'}>
                   <For each={table.getRowModel().rows}>
                     {row => (
                       <TableRow
@@ -767,6 +819,8 @@ export function DataTable<T, K extends string, G extends string = never>(
                         enableSelection={props.enableSelection ?? false}
                         showExpander={grouping().length > 0}
                         onRowClick={props.onRowClick}
+                        rowDimmed={props.rowDimmed}
+                        rowTone={props.rowTone}
                         onToggleGroup={toggleGroupSelection}
                         pinnedStyle={pinnedStyle}
                         leadingPinnedStyle={leadingPinnedStyle}
@@ -780,11 +834,11 @@ export function DataTable<T, K extends string, G extends string = never>(
                       />
                     )}
                   </For>
-                </Show>
-              </tbody>
-            </table>
-          </Match>
-        </Switch>
+                </Match>
+              </Switch>
+            </tbody>
+          </table>
+        </Show>
       </div>
     </div>
   );

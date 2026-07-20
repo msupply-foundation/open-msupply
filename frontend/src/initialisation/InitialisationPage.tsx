@@ -78,11 +78,14 @@ export const InitialisationPage: Component<{
       onData: data => handleStatus(data.syncInfoUpdated.syncStatus),
       onFailure: () => {
         poller = window.setInterval(() => {
-          void graphqlFetch(LatestSyncStatus, {}).then(result => {
-            // Transient poll failures are ignored; the next tick retries.
-            if (result.kind === 'success')
-              handleStatus(result.data.latestSyncStatus);
-          });
+          void graphqlFetch(LatestSyncStatus, {}, { background: true }).then(
+            result => {
+              // Transient poll failures are ignored (background: no global
+              // unexpected-error modal); the next tick retries.
+              if (result.kind === 'success')
+                handleStatus(result.data.latestSyncStatus);
+            }
+          );
         }, SYNC_POLL_INTERVAL_MS);
       },
     });
@@ -113,16 +116,16 @@ export const InitialisationPage: Component<{
     const current = values();
     const interval = Number(current.intervalSeconds);
     const errors = {
-      url: current.url.trim() === '' ? t('init.url-required') : '',
+      url: current.url.trim() === '' ? t('error.url-required') : '',
       siteName:
-        current.siteName.trim() === '' ? t('init.site-name-required') : '',
+        current.siteName.trim() === '' ? t('error.site-name-required') : '',
       password:
-        current.password.trim() === '' ? t('init.password-required') : '',
+        current.password.trim() === '' ? t('error.password-required') : '',
       intervalSeconds:
         current.intervalSeconds.trim() === ''
-          ? t('init.interval-required')
+          ? t('error.interval-required')
           : !Number.isInteger(interval) || interval <= 0
-            ? t('init.interval-invalid')
+            ? t('error.interval-invalid')
             : '',
     };
     setFieldErrors(errors);
@@ -169,9 +172,9 @@ export const InitialisationPage: Component<{
   return (
     <div class={styles.page}>
       <form class={styles.card} onSubmit={submit}>
-        <h1>{t('init.title')}</h1>
+        <h1>{t('initialise.heading')}</h1>
         <TextField
-          label={t('init.url')}
+          label={t('label.settings-url')}
           width="full"
           value={values().url}
           onInput={e => {
@@ -182,7 +185,7 @@ export const InitialisationPage: Component<{
           disabled={initialising()}
         />
         <TextField
-          label={t('init.site-name')}
+          label={t('label.settings-username')}
           width="full"
           value={values().siteName}
           onInput={e => {
@@ -193,7 +196,7 @@ export const InitialisationPage: Component<{
           disabled={initialising()}
         />
         <TextField
-          label={t('init.password')}
+          label={t('heading.password')}
           width="full"
           type="password"
           value={values().password}
@@ -205,7 +208,7 @@ export const InitialisationPage: Component<{
           disabled={initialising()}
         />
         <TextField
-          label={t('init.interval')}
+          label={t('label.settings-interval')}
           width="full"
           inputmode="numeric"
           value={values().intervalSeconds}
@@ -226,11 +229,11 @@ export const InitialisationPage: Component<{
           when={showRetry()}
           fallback={
             <Button type="submit" disabled={busy()}>
-              {busy() ? t('init.submitting') : t('init.submit')}
+              {busy() ? t('button.initialising') : t('button.initialise')}
             </Button>
           }
         >
-          <Button onClick={() => void retry()}>{t('init.retry')}</Button>
+          <Button onClick={() => void retry()}>{t('button.retry')}</Button>
         </Show>
       </form>
     </div>

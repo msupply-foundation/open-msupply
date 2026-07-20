@@ -79,11 +79,15 @@ export const Pagination = (props: PaginationProps) => {
     // one page) — the footer is part of the list's stable chrome, as in the
     // current app; an appearing/disappearing bar would shift the layout on
     // every filter.
-    <nav class={styles.pagination} aria-label={t('pagination.label')}>
+    <nav
+      class={styles.pagination}
+      aria-label={t('pagination.label')}
+      data-testid="table-pagination"
+    >
       {/* "Showing X-Y of Z" — the range and total are emphasised (bold), the words
           are not, matching the current app's Showing/of split. */}
       <span class={styles.summary} aria-live="polite">
-        {t('pagination.showing')}{' '}
+        {t('label.showing')}{' '}
         <strong class={styles.summaryNumber}>
           {from()}-{to()}
         </strong>{' '}
@@ -96,6 +100,7 @@ export const Pagination = (props: PaginationProps) => {
             class={styles.pageSize}
             size="sm"
             label={t('pagination.rows')}
+            testId="rows-per-page-select"
             value={String(props.pageSize)}
             options={pageSizes().map(size => ({
               value: String(size),
@@ -119,6 +124,7 @@ export const Pagination = (props: PaginationProps) => {
             class={styles.pageButton}
             onClick={() => goToPage(currentPage() - 1)}
             disabled={!hasPrev()}
+            data-testid="pagination-previous"
             aria-label={t('pagination.previous')}
           >
             <NavigateBeforeIcon />
@@ -132,6 +138,7 @@ export const Pagination = (props: PaginationProps) => {
                 <button
                   type="button"
                   class={`${styles.pageButton} ${item === currentPage() ? styles.pageButtonActive : ''}`}
+                  data-testid={`pagination-page-${item as number}`}
                   aria-label={t('pagination.go-to-page', {
                     page: item as number,
                   })}
@@ -148,6 +155,7 @@ export const Pagination = (props: PaginationProps) => {
             class={styles.pageButton}
             onClick={() => goToPage(currentPage() + 1)}
             disabled={!hasNext()}
+            data-testid="pagination-next"
             aria-label={t('pagination.next')}
           >
             <NavigateNextIcon />

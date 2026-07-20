@@ -121,7 +121,8 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
             options={statusOptions()}
             value={nextStatus()}
             onAction={openConfirm}
-            menuLabel={t('stocktake.detail.finalise')}
+            menuLabel={t('button.finalise')}
+            testId="status-change-button"
           />
         </ContentFooterActions>
       </Show>
@@ -132,15 +133,18 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
         dismissable={phase() !== 'working'}
         onClose={close}
         icon={<ArrowRightIcon />}
-        title={t('stocktake.finalise.confirm-title')}
+        testId="confirmation-modal"
+        title={t('heading.are-you-sure')}
         description={
-          <Switch fallback={t('stocktake.finalise.confirm')}>
-            <Match when={phase() === 'success'}>
-              {t('stocktake.finalise.success')}
-            </Match>
+          <Switch
+            fallback={t('messages.confirm-status-as', {
+              status: 'status.finalised',
+            })}
+          >
+            <Match when={phase() === 'success'}>{t('messages.saved')}</Match>
             <Match when={phase() === 'error'}>
               <Alert severity="error">
-                {t('stocktake.update-error.snapshot-mismatch')}
+                {t('error.finalise-snapshot-mismatch')}
               </Alert>
             </Match>
           </Switch>
@@ -155,34 +159,44 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                   <Button
                     variant="secondary"
                     icon={<XCircleIcon />}
+                    data-testid="dialog-button-cancel"
                     onClick={close}
                   >
-                    {t('common.cancel')}
+                    {t('button.cancel')}
                   </Button>
                 </Show>
                 <Button
                   variant="primary"
                   icon={<ArrowRightIcon />}
                   loading={phase() === 'working'}
+                  data-testid="confirmation-modal-ok"
                   onClick={() => void run()}
                 >
-                  {t('stocktake.detail.finalise')}
+                  {t('button.save-and-confirm-status', {
+                    status: STATUS_LABELS[nextStatus()],
+                  })}
                 </Button>
               </>
             }
           >
             <Match when={phase() === 'success'}>
-              <Button variant="secondary" icon={<CheckIcon />} onClick={close}>
-                {t('common.ok')}
+              <Button
+                variant="secondary"
+                icon={<CheckIcon />}
+                data-testid="dialog-button-ok"
+                onClick={close}
+              >
+                {t('button.ok')}
               </Button>
             </Match>
             <Match when={phase() === 'error'}>
               <Button
                 variant="secondary"
                 icon={<XCircleIcon />}
+                data-testid="dialog-button-cancel"
                 onClick={close}
               >
-                {t('common.cancel')}
+                {t('button.cancel')}
               </Button>
               <Button
                 variant="primary"
@@ -192,7 +206,7 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
                   close();
                 }}
               >
-                {t('stocktake.errors.show')}
+                {t('button.show-error-lines')}
               </Button>
             </Match>
           </Switch>
@@ -205,15 +219,15 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
         open={noLinesOpen()}
         onClose={() => setNoLinesOpen(false)}
         icon={<InfoIcon />}
-        title={t('stocktake.finalise.no-lines-title')}
-        description={t('stocktake.finalise.no-lines')}
+        title={t('heading.nothing-counted-yet')}
+        description={t('messages.no-lines')}
         actions={
           <Button
             variant="secondary"
             icon={<CheckIcon />}
             onClick={() => setNoLinesOpen(false)}
           >
-            {t('common.ok')}
+            {t('button.ok')}
           </Button>
         }
       />

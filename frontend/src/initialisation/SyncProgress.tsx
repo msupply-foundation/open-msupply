@@ -8,11 +8,11 @@ import styles from '../ui/styles/shared.module.css';
 // Spec (Initialization Logic): common component listing the sync steps and
 // their progress.
 const stepStatus = (step: SyncStep): string => {
-  if (step.finished) return t('sync.status.done');
-  if (!step.started) return t('sync.status.pending');
+  if (step.finished) return t('label.done');
+  if (!step.started) return t('label.pending');
   if (step.done != null && step.total != null)
-    return t('sync.status.progress', { done: step.done, total: step.total });
-  return t('sync.status.in-progress');
+    return t('label.sync-progress', { done: step.done, total: step.total });
+  return t('label.in-progress');
 };
 
 // toSyncOverview builds a fresh overview (and fresh step objects) on every
@@ -22,7 +22,10 @@ const stepStatus = (step: SyncStep): string => {
 export const SyncProgress: Component<{
   overview: SyncOverview | undefined;
 }> = props => (
-  <Show when={props.overview} fallback={<p>{t('sync.waiting')}</p>}>
+  <Show
+    when={props.overview}
+    fallback={<p>{t('messages.waiting-for-sync-status')}</p>}
+  >
     {overview => (
       <div class={styles.stack}>
         <ul class={styles.list}>

@@ -73,12 +73,22 @@ test("custom scalars NaiveDate and DateTime map to string", () => {
 
 test("an unknown/unmapped scalar falls back to string", () => {
   const schema = `
+    scalar Duration
+    type Query { blob: Duration! }
+  `;
+  const out = generate({ schema, document: "query Q { blob }" });
+
+  assert.equal(resultType(out), `{\n  blob: string;\n}`);
+});
+
+test("the JSON scalar maps to unknown (server returns arbitrary JSON values)", () => {
+  const schema = `
     scalar JSON
     type Query { blob: JSON! }
   `;
   const out = generate({ schema, document: "query Q { blob }" });
 
-  assert.equal(resultType(out), `{\n  blob: string;\n}`);
+  assert.equal(resultType(out), `{\n  blob: unknown;\n}`);
 });
 
 test("enum becomes a string-literal union; nullable enum adds | null", () => {

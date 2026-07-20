@@ -1,12 +1,19 @@
-import { createSignal, type JSX } from 'solid-js';
+import { createSignal, For, type JSX } from 'solid-js';
 import { Select } from '../ui/elements/selectors/Select';
 import { Combobox } from '../ui/elements/selectors/Combobox';
 import { MultiSelect } from '../ui/elements/selectors/MultiSelect';
+import {
+  ColourTagDot,
+  ColourTagPicker,
+  TAG_COLOURS,
+} from '../ui/elements/selectors/ColourTag';
+import { t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { Button } from '../ui/elements/buttons/Button';
 import { PlusCircleIcon, XCircleIcon } from '../ui/icons';
 import {
   FilterBar,
+  FilterMultiSelect,
   FilterSelect,
   FilterTextInput,
   type Filter,
@@ -144,6 +151,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
 export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated');
   const [picked, setPicked] = createSignal<DemoItem | null>(null);
+  const [statusFilter, setStatusFilter] = createSignal<string[]>([]);
   const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]]);
   // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not
   // behind it).
@@ -153,6 +161,12 @@ export const SelectorsShowcase = () => {
   // Seeded non-empty to show chips restoring from an existing filter (a key
   // being present is what shows its chip — here status starts on 'new').
   const [filters, setFilters] = createSignal<InvoiceFilter>({ status: 'new' });
+  // Colour-tag demo: starts untagged so the empty dashed ring shows first.
+  const [tagColour, setTagColour] = createSignal<string | null>(null);
+  const tagName = () => {
+    const tag = TAG_COLOURS.find(c => c.value === tagColour());
+    return tag ? t(tag.label) : null;
+  };
 
   // What the page would hand to a table — rendered as the URL query string the
   // filter is destined to live in once routing lands. Empty/null keys
@@ -220,6 +234,35 @@ export const SelectorsShowcase = () => {
               ? `Selected: ${picked()!.code} — ${picked()!.name}`
               : 'Try "amox", "500", or a code like "ORS20"'
           }
+        />
+      </Card>
+
+      <Card
+        title="Autocomplete — pick-first flows & per-option disabled"
+        lead={
+          <>
+            Two lookup behaviours the domain selects lean on:{' '}
+            <code>openOnFocus</code> opens the full list on click/focus with no
+            typing (the customer-search modal's pick-first flow), and{' '}
+            <code>itemDisabled</code> lists an option for context without
+            letting it be chosen (on-hold customers, out-of-stock items —
+            exposed as <code>aria-disabled</code>). After committing a pick,
+            reopening shows the <em>full</em> list again — the input text only
+            filters while it's something the user typed.
+          </>
+        }
+      >
+        <Combobox<DemoItem>
+          label="Item (zero-stock rows listed but disabled)"
+          items={ITEMS}
+          itemToString={item => item.name}
+          itemToValue={item => item.code}
+          filter={itemFilter}
+          itemDisabled={item => item.availableStock === 0}
+          openOnFocus
+          renderItem={renderItem}
+          onChange={() => {}}
+          placeholder="Click — the list opens without typing"
         />
       </Card>
 
@@ -345,6 +388,85 @@ export const SelectorsShowcase = () => {
           What the page hands to the table:{' '}
           <code>{filterQuery() || '(no filters)'}</code>
         </p>
+      </Card>
+
+      <Card
+        title="Filter bar — multi-select enum filter"
+        lead={
+          <>
+            <code>FilterMultiSelect</code>: the TESTIDS contract's multi-select
+            enum filter (each option stamps{' '}
+            <code>filter-option-&lt;VALUE&gt;</code>) — a status filter that
+            maps straight onto a wire <code>equalAny</code>. The trigger
+            summarises the selection, or shows the placeholder while empty.
+          </>
+        }
+      >
+        <FilterMultiSelect
+          label="Status"
+          placeholder="Any"
+          values={statusFilter()}
+          options={INVOICE_STATUSES.map(status => ({
+            value: status.value,
+            label: status.label,
+          }))}
+          onChange={setStatusFilter}
+        />
+        <p class={styles.filterReadout}>
+          Wire filter:{' '}
+          <code>
+            {statusFilter().length
+              ? `status: { equalAny: [${statusFilter().join(', ')}] }`
+              : '(no status filter)'}
+          </code>
+        </p>
+      </Card>
+
+      <Card
+        title="Colour tag — dot + swatch picker"
+        lead={
+          <>
+            User-set colour on a record for visual grouping only. The{' '}
+            <code>ColourTagDot</code> is read-only and hides the dot for
+            uneditable records; the <code>ColourTagPicker</code> is a dot with a{' '}
+            <code>&lt;Popover&gt;</code> that opens the swatches. The dashed
+            ring circle indicates that no tag is set. The colour palette is
+            currently baked into the component since all current colour tag
+            usages use the same palette.
+          </>
+        }
+      >
+        <div class={styles.tagRow}>
+          <For each={TAG_COLOURS}>
+            {colour => <ColourTagDot colour={colour.value} />}
+          </For>
+          <span class={styles.tagRowLabel}>
+            <code>ColourTagDot</code> — the read-only face (uneditable rows,
+            read-only panels)
+          </span>
+        </div>
+        <div class={styles.tagRow}>
+          <ColourTagPicker colour={tagColour()} onSelect={setTagColour} />
+          <span class={styles.tagRowLabel}>
+            Inline table variant: <code>row</code>.{' '}
+            {tagName()
+              ? `Tagged: ${tagName()}`
+              : 'Untagged: dashed ring circle'}
+          </span>
+        </div>
+        <div class={styles.tagRow}>
+          <ColourTagPicker
+            colour={tagColour()}
+            onSelect={setTagColour}
+            variant="field"
+            placement="bottom-end"
+          />
+          <span class={styles.tagRowLabel}>
+            Side panel variant: use <code>placement="bottom-end"</code> so the
+            <code>&lt;Popover&gt;</code> grows back into the viewport from the
+            panel's edge.{' '}
+          </span>
+        </div>
       </Card>
     </div>
   );

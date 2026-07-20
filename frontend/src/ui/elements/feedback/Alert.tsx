@@ -9,7 +9,8 @@ import {
 } from '../../icons';
 import styles from './Alert.module.css';
 
-export type AlertSeverity = 'error' | 'warning' | 'info' | 'success' | 'neutral';
+export type AlertSeverity =
+  'error' | 'warning' | 'info' | 'success' | 'neutral';
 
 /* Same icon choices as the current app's Alert wrapper: its own triangle /
    circle-i / check per severity, and error falling through to the MUI default
@@ -26,10 +27,15 @@ const ICONS: Record<AlertSeverity, Component<IconProps>> = {
 
 export interface AlertProps {
   severity: AlertSeverity;
-  /** Replaces the severity's default glyph (by intent — e.g. a completed check). */
+  /**
+   * Replaces the severity's default glyph (by intent — e.g. a completed
+   * check).
+   */
   icon?: Component<IconProps>;
   children: JSX.Element;
   class?: string;
+  /** `data-testid` for the alert panel (locale-stable test hook, e2e/TESTIDS.md). */
+  testId?: string;
 }
 
 /*
@@ -45,6 +51,7 @@ export const Alert = (props: AlertProps) => (
   <div
     class={props.class ? `${styles.alert} ${props.class}` : styles.alert}
     data-severity={props.severity}
+    data-testid={props.testId}
     role="alert"
   >
     <span class={styles.icon} aria-hidden="true">

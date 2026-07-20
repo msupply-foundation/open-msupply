@@ -4,10 +4,11 @@ import { sections, categories } from './sections';
 import { MenuBar, type MenuBarState } from '../ui/layout/AppShell/MenuBar';
 import { ShellFullScreenContext } from '../ui/layout/AppShell/shellContext';
 import type { NavItem, NavLeaf } from '../ui/layout/AppShell/navModel';
-import type { LocaleKey } from '../intl';
+import { changeLanguage, isRtl, locale, type LocaleKey } from '../intl';
 import { useIsNavOverlay } from '../ui/utils/createMediaQuery';
 import { MenuIcon } from '../ui/icons';
 import { ThemeToggle } from '../ui/elements/buttons/ThemeToggle';
+import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import styles from './ShowcaseApp.module.css';
 
 /*
@@ -24,11 +25,21 @@ import styles from './ShowcaseApp.module.css';
  * in play here; see kdd/showcase-harness).
  */
 
-/* The showcase's nav model: one expandable section per category. MenuBar
- * resolves labelKey through t(), which falls back to the key itself for
- * unknown keys — so passing our literal section labels as "keys" renders
- * them verbatim. Dev-only scaffolding; the cast stays contained here. */
-const showcaseNav: NavItem[] = categories.map(c => ({
+/* The showcase's nav model: one expandable section per category, plus any
+ * top-level sections as standalone leaf entries (e.g. Icons) listed after the
+ * groups. MenuBar resolves labelKey through t(), which falls back to the key
+ * itself for unknown keys — so passing our literal section labels as "keys"
+ * renders them verbatim. Dev-only scaffolding; the cast stays contained here. */
+const topLevelNav: NavItem[] = sections
+  .filter(s => s.topLevel)
+  .map(s => ({
+    id: s.id,
+    labelKey: s.label as LocaleKey,
+    to: `/showcase/${s.id}`,
+    icon: s.icon!,
+  }));
+
+const groupNav: NavItem[] = categories.map(c => ({
   id: c.id,
   labelKey: c.label as LocaleKey,
   to: `/showcase/${c.id}`,
@@ -41,6 +52,8 @@ const showcaseNav: NavItem[] = categories.map(c => ({
       to: `/showcase/${s.id}`,
     })),
 }));
+
+const showcaseNav: NavItem[] = [...groupNav, ...topLevelNav];
 
 const sectionFromHash = () => {
   const id = window.location.hash.replace(/^#\/?showcase\/?/, '');
@@ -71,6 +84,15 @@ export function ShowcaseApp() {
   };
   createEffect(() => {
     if (!isOverlay()) setOverlayOpen(false);
+  });
+
+  // Document direction/lang, driven by the locale signal — mirrors App.tsx
+  // (the app's single owner), which doesn't run in the showcase branch. Here
+  // so the header's LanguageSelector demonstrates RTL layout + locale
+  // formatting (numbers, dates) across every section.
+  createEffect(() => {
+    document.documentElement.dir = isRtl() ? 'rtl' : 'ltr';
+    document.documentElement.lang = locale();
   });
 
   // The hash stays the single source of truth: selecting a menu item writes
@@ -114,6 +136,11 @@ export function ShowcaseApp() {
                 </button>
               </Show>
               <h1 class={styles.title}>Open mSupply — UI library</h1>
+              <LanguageSelector
+                language={locale()}
+                onSelect={code => void changeLanguage(code)}
+                placement="bottom-end"
+              />
               <ThemeToggle />
             </header>
           </Show>

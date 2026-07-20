@@ -15,9 +15,13 @@ export interface PopoverProps {
   triggerLabel?: string;
   /** Extends the bare trigger button's styling. */
   triggerClass?: string;
+  /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
+  triggerTestId?: string;
   /** Preferred side/alignment; flips to the other side rather than overflow.
       start/end are logical (mirror in RTL). Default 'bottom'. */
   placement?: PopoverPlacement;
+  /** Close when a button inside the panel is clicked  */
+  closeOnClickInside?: boolean;
   /**
    * Open on hover (and focus) as well as click — for content bubbles whose
    * trigger IS the
@@ -183,6 +187,7 @@ export const Popover = (props: PopoverProps) => {
             : styles.trigger
         }
         aria-label={props.triggerLabel}
+        data-testid={props.triggerTestId}
         {...hoverHandlers}
       >
         {props.trigger}
@@ -192,6 +197,14 @@ export const Popover = (props: PopoverProps) => {
         id={panelId}
         popover="auto"
         class={props.class ? `${styles.panel} ${props.class}` : styles.panel}
+        onClick={e => {
+          if (
+            props.closeOnClickInside &&
+            e.target instanceof Element &&
+            e.target.closest('button')
+          )
+            panel.hidePopover();
+        }}
         onMouseEnter={props.openOnHover ? show : undefined}
         onMouseLeave={props.openOnHover ? scheduleHide : undefined}
       >

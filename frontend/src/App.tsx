@@ -13,6 +13,7 @@ import { Navigate, Route, Router } from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
 import { InitialisationStatus } from './api/initialisation.generated';
+import { fetchServerInfo } from './api/serverInfo';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
@@ -48,7 +49,13 @@ export const App: Component = () => {
     // never flashes untranslated keys. Failures leave an empty dictionary and
     // t() falls back to keys — startup continues regardless.
     await initialiseLocale(detectLocale());
-    const status = await graphqlFetch(InitialisationStatus, {});
+    // Server role resolves alongside the status check so the phase-visibility
+    // matrix (spec/sync-modal) is answerable before either surface renders;
+    // re-running startup re-reads it (initialising as central changes it).
+    const [status] = await Promise.all([
+      graphqlFetch(InitialisationStatus, {}),
+      fetchServerInfo(),
+    ]);
     if (status.kind !== 'success') return;
     if (status.data.initialisationStatus.status !== 'INITIALISED') {
       setPhase('initialisation');
@@ -77,7 +84,7 @@ export const App: Component = () => {
       <Switch>
         <Match when={phase() === 'loading'}>
           <div class={styles.page}>
-            <p>{t('app.loading')}</p>
+            <p>{t('loading')}</p>
           </div>
         </Match>
         <Match when={phase() === 'initialisation'}>
@@ -93,7 +100,7 @@ export const App: Component = () => {
                 <Route path="/" component={ShellLayout}>
                   <Route
                     path="/"
-                    component={() => <EntryPage labelKey="nav.dashboard" />}
+                    component={() => <EntryPage labelKey="dashboard" />}
                   />
                   <For each={Object.entries(sectionRoutes)}>
                     {([path, routes]) => (
@@ -114,7 +121,7 @@ export const App: Component = () => {
                   </For>
                   <Route
                     path="*"
-                    component={() => <EntryPage labelKey="app.not-found" />}
+                    component={() => <EntryPage labelKey="heading.not-found" />}
                   />
                 </Route>
               </Route>

@@ -1,0 +1,86 @@
+.picker {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-inline-end: var(--space-1);
+}
+
+.dot {
+  --tag-colour: transparent;
+
+  display: inline-block;
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-inline-end: var(--space-1);
+  background: var(--tag-colour);
+}
+
+.picker .dot {
+  margin-inline-end: 0;
+}
+
+/* Untagged: an empty ring inviting a tag  */
+.dotEmpty {
+  background: transparent;
+  border: 1px dashed var(--gray-main);
+}
+
+/* Field variant (the side panel's standalone editable field): the dot looks
+   the same as in a table row — only the trigger's HIT AREA grows. 1.5rem
+   keeps the 24px target minimum a standalone control owes (an inline row dot
+   is excused); coarse pointers get the full touch target. */
+.fieldTrigger {
+  justify-content: center;
+  min-inline-size: 1.5rem;
+  min-block-size: 1.5rem;
+}
+
+@media (pointer: coarse) {
+  .fieldTrigger {
+    min-inline-size: var(--touch-target);
+    min-block-size: var(--touch-target);
+  }
+}
+
+.swatches {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.swatch {
+  --tag-colour: transparent;
+
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--tag-colour);
+  cursor: pointer;
+}
+
+.swatch:hover {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tag-colour) 35%, transparent);
+}
+
+.swatch:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 2px;
+}
+
+/* The record's current colour: a ring gap so the selected swatch reads at a glance. */
+.swatch[data-selected] {
+  box-shadow:
+    0 0 0 2px var(--surface-raised),
+    0 0 0 4px var(--tag-colour);
+}
+
+@media (pointer: coarse) {
+  .swatch {
+    inline-size: var(--touch-target);
+    block-size: var(--touch-target);
+  }
+}

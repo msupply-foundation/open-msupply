@@ -1,18 +1,26 @@
 import type { Component } from 'solid-js';
-import { SlidersIcon, CopyIcon, type IconProps } from '../ui/icons';
+import {
+  SlidersIcon,
+  CopyIcon,
+  CardViewIcon,
+  type IconProps,
+} from '../ui/icons';
 import { TypographyShowcase } from './TypographyShowcase';
+import { IconsShowcase } from './IconsShowcase';
 import { ButtonsShowcase } from './ButtonsShowcase';
 import { InputsShowcase } from './InputsShowcase';
 import { SelectorsShowcase } from './SelectorsShowcase';
 import { FeedbackShowcase } from './FeedbackShowcase';
+import { DialogShowcase } from './DialogShowcase';
+import { DisplayShowcase } from './DisplayShowcase';
 import { SyncShowcase } from './SyncShowcase';
-import { StoreLoginShowcase } from './StoreLoginShowcase';
 import { TableShowcase } from './TableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
 import { ContentFooterShowcase } from './ContentFooterShowcase';
 import { SidePanelShowcase } from './SidePanelShowcase';
 import { StatisticsShowcase } from './StatisticsShowcase';
+import { InsetPanelShowcase } from './InsetPanelShowcase';
 
 export type SectionCategory = 'components' | 'layout';
 
@@ -21,10 +29,22 @@ export type SectionDef = {
   label: string;
   component: Component;
   /** Which menu-bar group the section lists under. */
-  category: SectionCategory;
-  /** When true, the section renders a full-height page (its own Page frame) that fills
-   *  the panel — the shell drops the section title + panel padding/scroll so the page
-   *  owns the whole region (e.g. the Table demo, which is a real list Page). */
+  category?: SectionCategory;
+  /**
+   * Render this section as its own top-level menu entry (a leaf link), not
+   * inside a category group — for a standalone reference page like Icons.
+   * Requires `icon` (top-level entries show one, like the category groups).
+   */
+  topLevel?: boolean;
+  /** Icon for the menu entry — used by top-level sections. */
+  icon?: Component<IconProps>;
+  /**
+   * When true, the section renders a full-height page (its own Page frame)
+   * that fills
+   *  the panel — the shell drops the section title + panel padding/scroll so
+   *  the page owns the whole region (e.g. the Table demo, which is a real list
+   *  Page).
+   */
   fill?: boolean;
 };
 
@@ -92,15 +112,21 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
-    id: 'sync',
-    label: 'Sync',
-    component: SyncShowcase,
+    id: 'dialog',
+    label: 'Dialog / Modal',
+    component: DialogShowcase,
     category: 'components',
   },
   {
-    id: 'store-login',
-    label: 'Store login',
-    component: StoreLoginShowcase,
+    id: 'display',
+    label: 'Display',
+    component: DisplayShowcase,
+    category: 'components',
+  },
+  {
+    id: 'sync',
+    label: 'Sync',
+    component: SyncShowcase,
     category: 'components',
   },
   {
@@ -127,5 +153,20 @@ export const sections: SectionDef[] = [
     label: 'Side panel',
     component: SidePanelShowcase,
     category: 'layout',
+  },
+  {
+    id: 'inset-panel',
+    label: 'Inset panel',
+    component: InsetPanelShowcase,
+    category: 'layout',
+  },
+  // A standalone reference page, listed as its own top-level menu entry rather
+  // than inside a category group.
+  {
+    id: 'icons',
+    label: 'Icons',
+    component: IconsShowcase,
+    topLevel: true,
+    icon: CardViewIcon,
   },
 ];

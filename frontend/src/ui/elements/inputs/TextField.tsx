@@ -11,19 +11,34 @@ export interface TextFieldProps extends Omit<
   helperText?: string;
   /** Error message — presence switches the field to the error state. */
   error?: string;
+  /**
+   * `data-testid` for the error message (locale-stable test hook,
+   * e2e/TESTIDS.md) — e.g. the line-edit modal's per-line errors.
+   */
+  errorTestId?: string;
   required?: boolean;
   /** Spec: 2.5rem (40px) default, 2.25rem (36px) small. */
   size?: 'default' | 'small';
   /**
-   * Spec max-widths: short 25rem (codes/quantities), long 37.5rem (names),
-   * full = fill.
+   * Max-width caps (the container can always be narrower): compact 10rem
+   * (numbers/money — NumberField's default; caps only the input box, while
+   * the label and helper/error text wrap at the short cap), short 25rem
+   * (codes/short text), long 37.5rem (names), full = fill.
    */
-  width?: 'short' | 'long' | 'full';
+  width?: 'compact' | 'short' | 'long' | 'full';
   /**
    * Visually hide the label (kept for a11y) — for use inside a FieldRow that
    * shows it.
    */
   hideLabel?: boolean;
+  /**
+   * Short text rendered inside the field frame before/after the input — a
+   * currency symbol, a unit ("%", "packs"). Decorative (aria-hidden): the
+   * label must carry the meaning. With an adornment present the border box
+   * moves to a focus-within wrapper; without one the DOM/styling is unchanged.
+   */
+  startAdornment?: string;
+  endAdornment?: string;
 }
 
 /*
@@ -43,10 +58,13 @@ export const TextField = (props: TextFieldProps) => {
     'label',
     'helperText',
     'error',
+    'errorTestId',
     'required',
     'size',
     'width',
     'hideLabel',
+    'startAdornment',
+    'endAdornment',
     'id',
     'class',
   ]);
@@ -59,29 +77,53 @@ export const TextField = (props: TextFieldProps) => {
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
       data-width={local.width ?? 'short'}
     >
-      <label
-        class={local.hideLabel ? styles.labelHidden : styles.label}
-        for={inputId()}
-      >
-        {local.label}
-        <Show when={local.required}>
-          <span class={styles.required} aria-hidden="true">
-            *
-          </span>
-        </Show>
-      </label>
-      <input
-        id={inputId()}
-        class={styles.input}
+      {/* hideLabel names the input via aria-label INSTEAD of rendering a
+          visually-hidden <label>: the accessible name is identical, but no
+          duplicate text node exists beside the visible label the surrounding
+          layout (a FieldRow) already shows — a hidden twin trips strict
+          text-locator matches in the shared e2e suites. */}
+      <Show when={!local.hideLabel}>
+        <label class={styles.label} for={inputId()}>
+          {local.label}
+          <Show when={local.required}>
+            <span class={styles.required} aria-hidden="true">
+              *
+            </span>
+          </Show>
+        </label>
+      </Show>
+      <div
+        class={styles.inputWrap}
+        data-adorned={
+          local.startAdornment || local.endAdornment ? '' : undefined
+        }
         data-size={local.size ?? 'default'}
         data-error={local.error ? '' : undefined}
-        required={local.required}
-        aria-invalid={local.error ? 'true' : undefined}
-        aria-describedby={
-          local.error || local.helperText ? messageId() : undefined
-        }
-        {...rest}
-      />
+      >
+        <Show when={local.startAdornment}>
+          <span class={styles.adornment} aria-hidden="true">
+            {local.startAdornment}
+          </span>
+        </Show>
+        <input
+          id={inputId()}
+          class={styles.input}
+          data-size={local.size ?? 'default'}
+          data-error={local.error ? '' : undefined}
+          required={local.required}
+          aria-label={local.hideLabel ? local.label : undefined}
+          aria-invalid={local.error ? 'true' : undefined}
+          aria-describedby={
+            local.error || local.helperText ? messageId() : undefined
+          }
+          {...rest}
+        />
+        <Show when={local.endAdornment}>
+          <span class={styles.adornment} aria-hidden="true">
+            {local.endAdornment}
+          </span>
+        </Show>
+      </div>
       <Show
         when={local.error}
         fallback={
@@ -92,7 +134,11 @@ export const TextField = (props: TextFieldProps) => {
           </Show>
         }
       >
-        <p id={messageId()} class={styles.error}>
+        <p
+          id={messageId()}
+          class={styles.error}
+          data-testid={local.errorTestId}
+        >
           <AlertTriangleIcon class={styles.errorIcon} />
           {local.error}
         </p>
