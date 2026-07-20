@@ -26,8 +26,12 @@ export interface ReportSort {
 
 export interface GenerateReportParams {
   reportId: string;
-  /** The record the report renders (e.g. the stocktake id). */
-  dataId: string;
+  /**
+   * The record the report renders (e.g. the stocktake id). Absent for the
+   * Reports dashboard's standalone reports (spec/reports S2), which render
+   * against the store, not a record.
+   */
+  dataId?: string;
   format: PrintFormat;
   /** Optional filter-form arguments (from the ArgumentsModal). */
   args?: Record<string, unknown>;
