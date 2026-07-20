@@ -94,3 +94,15 @@
   padding: 0;
   overflow: hidden;
 }
+
+/* Tabbed fill-body page: <Tabs> renders as display:contents, so the active tab
+   panel is the direct flex child of the body — it must be the "single filling
+   child" the fill mode expects, or its own scrolling content (the DataTable,
+   the documents list) overflows the clipped body with no way to scroll. Give
+   it the fill + a column context so that inner child gets a bounded height. */
+.bodyFill [role='tabpanel'] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
+}
