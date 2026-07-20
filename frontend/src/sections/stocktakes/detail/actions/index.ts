@@ -12,3 +12,5 @@ export { FinaliseAction } from './FinaliseAction';
 // selection): the "Actions" section's Delete + Copy to clipboard.
 export { DeleteStocktakeAction } from './DeleteStocktakeAction';
 export { CopyStocktakeAction } from './CopyStocktakeAction';
+// The header Export/Print trigger (opens the reports Select-a-form dialog).
+export { ExportPrintAction } from './ExportPrintAction';

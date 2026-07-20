@@ -58,6 +58,7 @@ import {
   DeleteLinesAction,
   ChangeLocationAction,
   ReduceToZeroAction,
+  ExportPrintAction,
 } from './actions';
 import { saveStocktakeFields } from './stocktakeUpdate';
 import type { LineErrors } from './lines/stocktakeLineErrors';
@@ -137,6 +138,13 @@ const StocktakeDetailView: Component = () => {
     useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
   const filter = () => query().filter;
   const currentSort = (): SortState<SortKey> | undefined => {
+    const s = query().sort[0];
+    return s ? { key: s.key, desc: s.desc ?? false } : undefined;
+  };
+  // The current line sort as a report sort ({ key, desc }) for Export/Print, so
+  // the generated document orders rows the way the user sees them
+  // (spec/stocktakes S3 "respecting the current sort").
+  const reportSort = (): { key: string; desc: boolean } | undefined => {
     const s = query().sort[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
@@ -612,6 +620,14 @@ const StocktakeDetailView: Component = () => {
                         {t('button.add-item')}
                       </Button>
                     </Show>
+                    {/* Export/Print — always available (unlike Add item, it
+                        does not depend on editability): print/export a report of
+                        this stocktake, respecting the line table's current sort
+                        (spec/stocktakes S3 → spec/reports S4). */}
+                    <ExportPrintAction
+                      stocktakeId={node().id}
+                      sort={reportSort()}
+                    />
                     <Show when={!sidePanelOpen()}>
                       <Button
                         variant="secondary"

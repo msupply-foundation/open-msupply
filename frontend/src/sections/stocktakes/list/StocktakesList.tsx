@@ -37,6 +37,7 @@ import { CreateStocktakeModal } from './CreateStocktakeModal';
 import {
   CreateInitialStocktakeAction,
   DeleteStocktakesAction,
+  ExportStocktakesAction,
 } from './actions';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
@@ -304,6 +305,12 @@ const StocktakesList: Component = () => {
             >
               {t('label.new-stocktake')}
             </Button>
+            {/* Export the stocktakes list (all pages of the current filter) as
+                CSV or Excel (spec/stocktakes S1). */}
+            <ExportStocktakesAction
+              storeId={params.storeId}
+              filter={() => query().filter}
+            />
           </HeaderButtons>
           <Toolbar>
             <FilterBar

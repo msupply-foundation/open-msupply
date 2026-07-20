@@ -8,3 +8,4 @@ export {
   type CsvToExcelVariables,
   type GenerateResult,
 } from './csvToExcel';
+export { toCsv } from './csv';
