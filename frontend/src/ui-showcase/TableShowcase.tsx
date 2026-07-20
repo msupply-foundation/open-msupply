@@ -263,7 +263,7 @@ export const TableShowcase = () => {
       tabsAndCardGroups: ['supply', 'pricing'],
     },
     {
-      // Currency cell: right-aligned, always 2 dp, SUM when grouped.
+      // Currency cell: symbol + 2 dp, right-aligned; SUM when grouped.
       c: { key: 'price' },
       sortKey: 'price',
       header: 'Unit price',

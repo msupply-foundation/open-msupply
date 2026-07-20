@@ -79,12 +79,20 @@ export const getBooleanCell = <T>(meta?: Meta): CellFragment<T> => ({
   cell: info => (info.getValue<boolean>() ? t('common.yes') : t('common.no')),
 });
 
-// Money: right-aligned, always two decimals (locale-formatted). Grouped parent
-// → SUM of the leaves, formatted the same way.
+// Money: symbol + always two decimals (spec/ui-standards/conventions.md),
+// right-aligned, locale-formatted. Grouped parent → SUM of the leaves,
+// formatted the same way. The currency code is fixed at USD — the current
+// app's default store home currency — until store currency preferences are
+// plumbed through; narrowSymbol keeps the symbol a bare "$" in the
+// Latin-script locales (the current app's pattern) — ar has no CLDR narrow
+// form and falls back to "US$".
 const formatCurrencyCell = (value: number | null | undefined): string =>
   value == null
     ? EMPTY_CELL
     : formatNumber(value, {
+        style: 'currency',
+        currency: 'USD',
+        currencyDisplay: 'narrowSymbol',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
