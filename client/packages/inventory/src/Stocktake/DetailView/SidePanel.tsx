@@ -103,6 +103,7 @@ const AdditionalInfoSection: FC = () => {
             update({ comment: e.target.value });
           }}
           value={bufferedComment}
+          inputProps={{ 'data-testid': 'comment-field' }}
         />
       </Grid>
     </DetailPanelSection>
@@ -156,6 +157,7 @@ export const SidePanel = () => {
             title={t('label.delete')}
             onClick={onDelete}
             disabled={!canDelete}
+            testId="delete-stocktake-button"
           />
           <DetailPanelAction
             icon={<CopyIcon />}

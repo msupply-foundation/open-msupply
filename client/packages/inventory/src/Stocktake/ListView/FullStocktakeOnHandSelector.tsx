@@ -26,11 +26,13 @@ export const FullStocktakeOnHandSelector = ({
       }}
     >
       <FormControlLabel
+        data-testid="stocktake-items-with-soh"
         value={false}
         control={<Radio sx={{ padding: '4px' }} />}
         label={t('stocktake.items-with-soh')}
       />
       <FormControlLabel
+        data-testid="stocktake-all-items"
         value={true}
         control={<Radio sx={{ padding: '4px' }} />}
         label={t('stocktake.all-master-list-items')}

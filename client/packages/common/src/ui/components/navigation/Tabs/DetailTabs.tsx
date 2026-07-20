@@ -113,6 +113,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({
           <Tab
             key={value}
             value={value}
+            data-testid={`tab-${value.toLowerCase().replace(/\s+/g, '-')}`}
             label={t(`label.${value.toLowerCase()}` as LocaleKey, {
               defaultValue: value,
             })}
