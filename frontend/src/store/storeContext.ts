@@ -72,10 +72,34 @@ const stocktakePreferences = () => {
   };
 };
 
+// A server UserPermission name as it arrives in the store-context query
+// (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
+// generated so callers can't typo a permission. Reading the union off the
+// generated result keeps this in lock-step with the schema (kdd/type-safety).
+type UserPermission = NonNullable<
+  StoreContextResult['me'] & { __typename: 'UserNode' }
+>['permissions']['nodes'][number]['permissions'][number];
+
+// Whether the current user holds a permission in the entered store. Reactive
+// (reads storeContext), so gates re-evaluate when the context loads or the
+// store changes. The permissions query is already scoped to the entered store
+// (storeContext.graphql passes $storeId), so any node's list applies — we flat-
+// check across nodes rather than matching storeId again. Empty/undefined
+// context → false (nothing to grant).
+const hasPermission = (permission: UserPermission): boolean => {
+  const me = storeContext()?.me;
+  if (!me || me.__typename !== 'UserNode') return false;
+  return me.permissions.nodes.some(node =>
+    node.permissions.includes(permission)
+  );
+};
+
 export {
   storeContext,
   refetch as refetchStoreContext,
   currentStoreId,
   currentUserId,
   stocktakePreferences,
+  hasPermission,
 };
+export type { UserPermission };
