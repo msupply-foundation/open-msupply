@@ -4,6 +4,75 @@ import type { TypedDocument } from "../../api/graphql";
 
 export type CustomersVariables = {
   storeId: string;
+  filter?: {
+    id?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    name?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    code?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    isCustomer?: boolean | null;
+    isSupplier?: boolean | null;
+    isManufacturer?: boolean | null;
+    isDonor?: boolean | null;
+    isStore?: boolean | null;
+    storeCode?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    isVisible?: boolean | null;
+    isSystemName?: boolean | null;
+    type?: {
+    equalTo?: "FACILITY" | "INVAD" | "REPACK" | "STORE" | null;
+    equalAny?: Array<"FACILITY" | "INVAD" | "REPACK" | "STORE"> | null;
+    notEqualTo?: "FACILITY" | "INVAD" | "REPACK" | "STORE" | null;
+    notEqualAll?: Array<"FACILITY" | "INVAD" | "REPACK" | "STORE"> | null;
+  } | null;
+    phone?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    address1?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    address2?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    country?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    email?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    codeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    supplyingStoreId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+  } | null;
+  page?: {
+    first?: number | null;
+    offset?: number | null;
+  } | null;
 };
 
 export type CustomersResult = {
@@ -24,5 +93,5 @@ export type CustomersResult = {
 };
 
 export const Customers = {
-  query: "query customers($storeId: String!) {\n  names(\n    storeId: $storeId\n    filter: {isCustomer: true}\n    page: {first: 1000}\n    sort: {key: name}\n  ) {\n    ... on NameConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        name\n        isOnHold\n        store {\n          id\n        }\n      }\n    }\n  }\n}",
+  query: "query customers($storeId: String!, $filter: NameFilterInput, $page: PaginationInput) {\n  names(storeId: $storeId, filter: $filter, page: $page, sort: {key: name}) {\n    ... on NameConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        name\n        isOnHold\n        store {\n          id\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<CustomersResult, CustomersVariables>;
