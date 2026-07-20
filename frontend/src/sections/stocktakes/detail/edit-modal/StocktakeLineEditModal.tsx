@@ -1,13 +1,14 @@
 import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
-import { toNumberOrNull } from '../../../../typeHelpers';
 import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../../ui/elements/buttons/IconButton';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
+import { NumberField } from '../../../../ui/elements/inputs/NumberField';
+import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import {
   DataTable,
   type Column,
@@ -743,26 +744,25 @@ const StocktakeLineEditContent = (
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <NumberField
             label={t('label.counted-num-of-packs')}
             hideLabel
             size="small"
-            type="number"
-            min="0"
+            // Packs can be counted in fractions (a part-full pack); the doses
+            // formula multiplies packSize by this, so keep the same 2-dp room.
+            decimalLimit={2}
             disabled={!line.countThisLine}
-            value={line.countedNumberOfPacks ?? ''}
+            value={line.countedNumberOfPacks ?? undefined}
             error={
               lineErrors().get(line.id) === 'StockLineReducedBelowZero'
                 ? t('error.reduced-below-zero')
                 : undefined
             }
             errorTestId="stocktake-line-error"
-            onInput={e =>
-              update(
-                line.id,
-                'countedNumberOfPacks',
-                toNumberOrNull(e.currentTarget.value)
-              )
+            // NumberField commits a real number (or undefined when cleared);
+            // the draft stores null for empty, so map undefined → null.
+            onChange={value =>
+              update(line.id, 'countedNumberOfPacks', value ?? null)
             }
           />
         );
@@ -776,17 +776,14 @@ const StocktakeLineEditContent = (
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <NumberField
             label={t('label.pack-size')}
             hideLabel
             size="small"
-            type="number"
-            min="0"
+            decimalLimit={2}
             disabled={!line.countThisLine}
-            value={line.packSize ?? ''}
-            onInput={e =>
-              update(line.id, 'packSize', toNumberOrNull(e.currentTarget.value))
-            }
+            value={line.packSize ?? undefined}
+            onChange={value => update(line.id, 'packSize', value ?? null)}
           />
         );
       },
@@ -851,20 +848,14 @@ const StocktakeLineEditContent = (
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <CurrencyField
             label={t('label.pack-sell-price')}
             hideLabel
             size="small"
-            type="number"
-            min="0"
             disabled={!line.countThisLine}
-            value={line.sellPricePerPack ?? ''}
-            onInput={e =>
-              update(
-                line.id,
-                'sellPricePerPack',
-                toNumberOrNull(e.currentTarget.value)
-              )
+            value={line.sellPricePerPack ?? undefined}
+            onChange={value =>
+              update(line.id, 'sellPricePerPack', value ?? null)
             }
           />
         );
@@ -878,20 +869,14 @@ const StocktakeLineEditContent = (
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <CurrencyField
             label={t('label.pack-cost-price')}
             hideLabel
             size="small"
-            type="number"
-            min="0"
             disabled={!line.countThisLine}
-            value={line.costPricePerPack ?? ''}
-            onInput={e =>
-              update(
-                line.id,
-                'costPricePerPack',
-                toNumberOrNull(e.currentTarget.value)
-              )
+            value={line.costPricePerPack ?? undefined}
+            onChange={value =>
+              update(line.id, 'costPricePerPack', value ?? null)
             }
           />
         );
