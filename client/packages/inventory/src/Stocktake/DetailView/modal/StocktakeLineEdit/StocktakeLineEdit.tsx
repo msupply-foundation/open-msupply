@@ -124,6 +124,8 @@ export const StocktakeLineEdit = ({
   }, [currentItem?.id]);
 
   useEffect(() => {
+    // draft lines are loading or don't exist, don't open the variants selection panel
+    if (draftLines.length === 0) return;
     if (!currentItem || !hasVariants) return;
     if (variantShownForItem === currentItem.id) return;
     // Wait for the source queries before deciding, to avoid popping
