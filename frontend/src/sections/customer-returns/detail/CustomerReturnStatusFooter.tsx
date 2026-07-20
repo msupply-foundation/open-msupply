@@ -65,6 +65,8 @@ export const CustomerReturnStatusFooter: Component<
         current={statusIndex(kind(), props.node.status)}
       />
 
+      {/* One inline-end cluster (the current app's footer): Close sits right
+          beside the Confirm-status split button. */}
       <ContentFooterActions>
         <Button
           variant="secondary"
@@ -76,15 +78,14 @@ export const CustomerReturnStatusFooter: Component<
         >
           {t('button.close')}
         </Button>
+        <StatusChangeAction
+          storeId={props.storeId}
+          node={props.node}
+          hasLines={props.hasLines}
+          statusOptions={props.statusOptions}
+          onApplied={props.onAdvanced}
+        />
       </ContentFooterActions>
-
-      <StatusChangeAction
-        storeId={props.storeId}
-        node={props.node}
-        hasLines={props.hasLines}
-        statusOptions={props.statusOptions}
-        onApplied={props.onAdvanced}
-      />
 
       {/* Hold confirm: message flips with direction (AC-S5's reversible pause;
           the copy is the current app's on/off-hold confirmations). */}

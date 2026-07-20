@@ -4,7 +4,6 @@ import { Button } from '../../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { ContentFooterActions } from '../../../../ui/layout/ContentFooter/ContentFooterActions';
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -103,21 +102,24 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     <>
       <Show when={nextTarget()}>
         {next => (
-          <ContentFooterActions>
-            <SplitButton
-              icon={<ArrowRightIcon />}
-              options={targets().map(status => ({
-                value: status,
-                label: statusLabel(status),
-              }))}
-              value={next()}
-              onAction={openConfirm}
-              menuLabel={t('button.save-and-confirm-status', {
-                status: statusLabel(next()),
-              })}
-              testId="status-change-button"
-            />
-          </ContentFooterActions>
+          <SplitButton
+            icon={<ArrowRightIcon />}
+            // Each option is the full confirm phrase ("Confirm Received"), the
+            // current app's getButtonLabel — the main face shows the selected
+            // option's label, so it reads the same there and in the menu.
+            options={targets().map(status => ({
+              value: status,
+              label: t('button.save-and-confirm-status', {
+                status: statusLabel(status),
+              }),
+            }))}
+            value={next()}
+            onAction={openConfirm}
+            menuLabel={t('button.save-and-confirm-status', {
+              status: statusLabel(next()),
+            })}
+            testId="status-change-button"
+          />
         )}
       </Show>
 
