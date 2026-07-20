@@ -115,7 +115,7 @@ const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
   },
   {
     key: 'supply',
-    labelKey: 'table.demo-card-group.supply',
+    labelKey: 'label.supply',
     icon: () => <TruckIcon />,
   },
   {

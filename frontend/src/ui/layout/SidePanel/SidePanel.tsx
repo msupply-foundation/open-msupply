@@ -45,7 +45,7 @@ export const SidePanel = (props: SidePanelProps) => (
       <h2 class={styles.heading}>{props.label}</h2>
       {props.onClose && (
         <IconButton
-          label={t('common.close')}
+          label={t('button.close')}
           icon={<CloseIcon />}
           onClick={props.onClose}
         />

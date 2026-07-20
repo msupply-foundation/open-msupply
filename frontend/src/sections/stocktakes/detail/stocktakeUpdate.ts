@@ -81,10 +81,10 @@ export type StocktakeFinaliseResult =
 // our own translated copy. An unmapped typename falls back to the server
 // description (same convention as stocktakeLineErrors).
 const ERROR_MESSAGE_KEYS: Record<string, LocaleKey> = {
-  SnapshotCountCurrentCountMismatch: 'stocktake.update-error.snapshot-mismatch',
-  StockLinesReducedBelowZero: 'stocktake.update-error.reduced-below-zero',
-  StocktakeIsLocked: 'stocktake.update-error.is-locked',
-  CannotEditStocktake: 'stocktake.update-error.cannot-edit',
+  SnapshotCountCurrentCountMismatch: 'error.finalise-snapshot-mismatch',
+  StockLinesReducedBelowZero: 'error.finalise-reduced-below-zero',
+  StocktakeIsLocked: 'error.is-locked',
+  CannotEditStocktake: 'error.not-editable',
 };
 
 const errorMessage = (typename: string, fallback: string): string => {

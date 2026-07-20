@@ -472,12 +472,12 @@ const StocktakeDetailView: Component = () => {
 
   // Crumbs are an accessor so t() re-translates on locale change.
   const crumbs = (node: StocktakeInfoFragment) => [
-    { label: t('nav.inventory') },
+    { label: t('inventory') },
     {
-      label: t('nav.inventory.stocktakes'),
+      label: t('stocktakes'),
       onClick: () => navigate(`/${params.storeId}/inventory/stocktakes`),
     },
-    { label: t('stocktake.detail.title', { number: node.stocktakeNumber }) },
+    { label: String(node.stocktakeNumber) },
   ];
 
   const columns = (): Column<Line, SortKey>[] => [
@@ -486,12 +486,12 @@ const StocktakeDetailView: Component = () => {
       // path, dots included — shared with OMS); the sort key stays `code`.
       c: { accessor: line => line.item.code, id: 'item.code' },
       sortKey: 'code',
-      header: t('stocktake.column.item-code'),
+      header: t('label.code'),
     },
     {
       c: { key: 'itemName' },
       sortKey: 'itemName',
-      header: t('stocktake.column.item-name'),
+      header: t('label.name'),
       // Item names are long — allow up to two wrapped lines before clamping.
       meta: { card: { region: 'primary' }, wrapLines: 2 },
       aggregationFn: sharedOrMultiple,
@@ -499,19 +499,19 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'batch' },
       sortKey: 'batch',
-      header: t('stocktake.column.batch'),
+      header: t('label.batch'),
       aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
-      header: t('stocktake.column.expiry'),
+      header: t('label.expiry-date'),
       ...getDateCell(),
     },
     {
       c: { key: 'snapshotNumberOfPacks' },
       sortKey: 'snapshotNumberOfPacks',
-      header: t('stocktake.column.snapshot'),
+      header: t('label.snapshot-num-of-packs'),
       ...getNumberCell(),
       // Snapshot cell also carries the line's error inline beneath the count (a
       // snapshot/current-count mismatch is a "recount this line" message about
@@ -545,7 +545,7 @@ const StocktakeDetailView: Component = () => {
                   'text-align': 'end',
                 }}
               >
-                {t('stocktake.line-error.snapshot-mismatch')}
+                {t('error.snapshot-total-mismatch')}
               </span>
             </Show>
           </span>
@@ -555,7 +555,7 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
-      header: t('stocktake.column.counted'),
+      header: t('label.counted-num-of-packs'),
       ...getNumberCell(),
       meta: { align: 'right', card: { region: 'badge' } },
     },
@@ -566,43 +566,43 @@ const StocktakeDetailView: Component = () => {
     {
       c: { key: 'packSize' },
       sortKey: 'packSize',
-      header: t('stocktake.column.pack-size'),
+      header: t('label.pack-size'),
       ...getNumberCell(),
     },
     {
       c: { key: 'sellPricePerPack' },
       sortKey: 'sellPricePerPack',
-      header: t('stocktake.column.sell-price'),
+      header: t('label.pack-sell-price'),
       ...getNumberCell(),
     },
     {
       c: { key: 'costPricePerPack' },
       sortKey: 'costPricePerPack',
-      header: t('stocktake.column.cost-price'),
+      header: t('label.pack-cost-price'),
       ...getNumberCell(),
     },
     {
       c: { key: 'manufactureDate' },
       sortKey: 'manufactureDate',
-      header: t('stocktake.column.manufacture-date'),
+      header: t('label.manufacture-date'),
       ...getDateCell(),
     },
     {
       // Location is nested (location.code) — an accessor column.
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'location',
-      header: t('stocktake.column.location'),
+      header: t('label.location'),
     },
     {
       // The adjustment reason (reasonOption.reason) — an accessor column.
       c: { accessor: line => line.reasonOption?.reason ?? '', id: 'reason' },
       sortKey: 'reason',
-      header: t('stocktake.column.reason'),
+      header: t('label.reason'),
     },
     {
       c: { key: 'note' },
       sortKey: 'note',
-      header: t('stocktake.column.note'),
+      header: t('label.note'),
     },
   ];
 
@@ -626,7 +626,7 @@ const StocktakeDetailView: Component = () => {
           <Page
             fillBody
             sidePanelOpen={sidePanelOpen()}
-            sidePanelTitle={t('stocktake.detail.side-panel')}
+            sidePanelTitle={t('heading.details')}
             onSidePanelClose={() => setSidePanelOpen(false)}
             sidePanelContent={
               <StocktakeSidePanel
@@ -644,7 +644,7 @@ const StocktakeDetailView: Component = () => {
                       editable (an on-hold/finalised one can't gain lines). */}
                   <Show when={!isDisabled(node())}>
                     <Button icon={<PlusCircleIcon />} onClick={openAdd}>
-                      {t('stocktake.detail.add-item')}
+                      {t('button.add-item')}
                     </Button>
                   </Show>
                   {/* A labelled "More" button (info icon + text), like OMS's details button. It
@@ -655,7 +655,7 @@ const StocktakeDetailView: Component = () => {
                       icon={<InfoIcon />}
                       onClick={() => setSidePanelOpen(true)}
                     >
-                      {t('common.more')}
+                      {t('button.more')}
                     </Button>
                   </Show>
                 </HeaderButtons>
@@ -709,9 +709,7 @@ const StocktakeDetailView: Component = () => {
                   {/* Count + actions on the inline-start (OMS layout): Delete, Change location,
                       Reduce to 0. All disabled while the stocktake is finalised / on hold. */}
                   <strong>
-                    {t('stocktake.lines.selected', {
-                      count: selectedIds().length,
-                    })}
+                    {selectedIds().length} {t('label.selected')}
                   </strong>
                   {/* Each action owns its own button + confirm → working → success | error modal +
                       run; the view supplies storeId/selection and applies the result via callbacks —
@@ -748,7 +746,7 @@ const StocktakeDetailView: Component = () => {
                       icon={<MinusCircleIcon />}
                       onClick={() => setSelectedIds([])}
                     >
-                      {t('stocktake.lines.clear-selection')}
+                      {t('label.clear-selection')}
                     </Button>
                   </ContentFooterActions>
                 </ContentFooter>
@@ -766,7 +764,7 @@ const StocktakeDetailView: Component = () => {
               sort={sort()}
               onSort={onSort}
               onRowClick={isDisabled(node()) ? undefined : openRow}
-              emptyMessage={t('stocktake.detail.empty')}
+              emptyMessage={t('error.no-stocktake-items')}
               // "Add item" — only offered while the stocktake is editable (an
               // empty finalised/locked one can't gain lines). Opens the line-
               // edit modal in add mode (search → edit the item's stock lines).
@@ -777,13 +775,13 @@ const StocktakeDetailView: Component = () => {
                     data-testid="add-item-button"
                     onClick={openAdd}
                   >
-                    {t('stocktake.detail.add-item')}
+                    {t('button.add-item')}
                   </Button>
                 )
               }
               rowGroup={{
                 columnId: 'item.code',
-                labelKey: 'stocktake.column.item-name',
+                labelKey: 'label.name',
               }}
               enableSelection
               selectedIds={selectedIds()}
