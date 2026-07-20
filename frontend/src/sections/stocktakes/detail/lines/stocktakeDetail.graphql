@@ -372,17 +372,21 @@ query stockLinesByItem(
           code
           name
         }
-        # Seed a new-batch draft's gated fields from the stock line it opts in
-        # (spec/stocktakes › store-preference gates). vvmStatus (vaccine items)
-        # and donor(storeId) carry into the editor so ticking an existing batch
-        # pre-fills its VVM status / donor. Read regardless of preference; the
-        # editor only SHOWS them when the gate is on.
+        # Seed a new-batch draft's VVM/donor/manufacturer from the stock line it
+        # opts in. vvmStatus (vaccine items) and donor(storeId) are preference-
+        # gated in the editor UI (read regardless; only SHOWN when the gate is
+        # on); manufacturer(storeId) is UNGATED (always editable on the Other
+        # tab, spec S4), so it carries over too.
         vvmStatus {
           id
           code
           description
         }
         donor(storeId: $storeId) {
+          id
+          name
+        }
+        manufacturer(storeId: $storeId) {
           id
           name
         }

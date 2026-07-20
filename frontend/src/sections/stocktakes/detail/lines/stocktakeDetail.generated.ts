@@ -437,10 +437,14 @@ export type StockLinesByItemResult = {
   id: string;
   name: string;
 } | null;
+  manufacturer: {
+  id: string;
+  name: string;
+} | null;
 }>;
 });
 };
 
 export const StockLinesByItem = {
-  query: "query stockLinesByItem($storeId: String!, $itemId: String!, $excludeStockLineIds: [String!]) {\n  stockLines(\n    storeId: $storeId\n    filter: {itemId: {equalTo: $itemId}, hasPacksInStore: true, id: {notEqualAll: $excludeStockLineIds}}\n  ) {\n    ... on StockLineConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        batch\n        expiryDate\n        manufactureDate\n        packSize\n        costPricePerPack\n        sellPricePerPack\n        totalNumberOfPacks\n        note\n        location {\n          id\n          code\n          name\n        }\n        vvmStatus {\n          id\n          code\n          description\n        }\n        donor(storeId: $storeId) {\n          id\n          name\n        }\n      }\n    }\n  }\n}",
+  query: "query stockLinesByItem($storeId: String!, $itemId: String!, $excludeStockLineIds: [String!]) {\n  stockLines(\n    storeId: $storeId\n    filter: {itemId: {equalTo: $itemId}, hasPacksInStore: true, id: {notEqualAll: $excludeStockLineIds}}\n  ) {\n    ... on StockLineConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        batch\n        expiryDate\n        manufactureDate\n        packSize\n        costPricePerPack\n        sellPricePerPack\n        totalNumberOfPacks\n        note\n        location {\n          id\n          code\n          name\n        }\n        vvmStatus {\n          id\n          code\n          description\n        }\n        donor(storeId: $storeId) {\n          id\n          name\n        }\n        manufacturer(storeId: $storeId) {\n          id\n          name\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<StockLinesByItemResult, StockLinesByItemVariables>;

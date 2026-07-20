@@ -173,13 +173,12 @@ const buildDraft = async (
     note: sl.note,
     location: sl.location,
     reasonOption: null,
-    // Seed the gated fields from the stock line the batch opts in
-    // (spec/stocktakes › store-preference gates): VVM status and donor carry
-    // over; manufacturer isn't stored on a stock line, so it starts unset.
+    // Seed VVM / donor (preference-gated) and manufacturer (ungated) from the
+    // stock line the batch opts in, so ticking an existing batch pre-fills them.
     vvmStatus: sl.vvmStatus,
     donorId: sl.donor?.id ?? null,
     donorName: sl.donor?.name ?? null,
-    manufacturer: null,
+    manufacturer: sl.manufacturer,
   }));
   return [...fromExisting, ...fromStock];
 };
@@ -445,9 +444,9 @@ const StocktakeLineEditContent = (
           note: null,
           location: null,
           reasonOption: null,
-          // A fresh batch has no gated values yet — the user fills them in via
-          // the (preference-gated) VVM / donor fields; manufacturer isn't edited
-          // here.
+          // A fresh batch has no VVM / donor / manufacturer yet — the user fills
+          // them in via the VVM / donor (preference-gated) and manufacturer
+          // (ungated) fields on the Batch / Other tabs.
           vvmStatus: null,
           donorId: null,
           donorName: null,
@@ -525,12 +524,14 @@ const StocktakeLineEditContent = (
           note: line.note,
           location: { value: line.location?.id ?? null },
           reasonOptionId: line.reasonOption?.id ?? null,
-          // Gated fields (spec/stocktakes › store-preference gates). Plain
-          // scalars on INSERT (contract: InsertStocktakeLineInput). Sent
-          // regardless of the preference — the server accepts the data either
-          // way; the preference only decides whether the field was editable.
+          // VVM / donor (preference-gated) + manufacturer (ungated). Plain
+          // scalars on INSERT (contract: InsertStocktakeLineInput). Gated fields
+          // are sent regardless of the preference — the server accepts the data
+          // either way; the preference only decides whether the field was
+          // editable.
           vvmStatusId: line.vvmStatus?.id ?? null,
           donorId: line.donorId ?? null,
+          manufacturerId: line.manufacturer?.id ?? null,
         });
         continue;
       }
@@ -547,10 +548,12 @@ const StocktakeLineEditContent = (
         comment: line.comment,
         note: line.note,
         reasonOptionId: line.reasonOption?.id ?? null,
-        // Gated fields — NullableStringUpdate wrapper on UPDATE (contract:
+        // VVM / donor (preference-gated) + manufacturer (ungated) —
+        // NullableStringUpdate wrapper on UPDATE (contract:
         // UpdateStocktakeLineInput): { value: id | null } sets/clears.
         vvmStatusId: { value: line.vvmStatus?.id ?? null },
         donorId: { value: line.donorId ?? null },
+        manufacturerId: { value: line.manufacturer?.id ?? null },
       });
     }
     return { insert, update, delete: deletes.map(id => ({ id })) };
@@ -961,6 +964,48 @@ const StocktakeLineEditContent = (
           } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
+    // Manufacturer (Other tab) — UNGATED (no store preference; spec S4 lists it
+    // alongside donor but without a gate). An async manufacturer picker
+    // (NameSearch role="manufacturer") over the draft's manufacturer NameNode;
+    // saved via manufacturerId in buildBatch.
+    {
+      c: { id: 'manufacturer' },
+      header: t('label.manufacturer'),
+      tabsAndCardGroups: ['other'],
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <NameSearch
+            label={t('label.manufacturer')}
+            hideLabel
+            storeId={props.storeId}
+            role="manufacturer"
+            disabled={!line.countThisLine}
+            selected={
+              line.manufacturer
+                ? {
+                    id: line.manufacturer.id,
+                    name: line.manufacturer.name,
+                    code: '',
+                    isSupplier: false,
+                    isDonor: false,
+                    isOnHold: false,
+                    isStore: false,
+                  }
+                : undefined
+            }
+            placeholder={t('label.none')}
+            onSelect={name =>
+              update(
+                line.id,
+                'manufacturer',
+                name ? { id: name.id, name: name.name } : null
+              )
+            }
+          />
+        );
+      },
+    },
     {
       c: { id: 'inventoryAdjustmentReasonInput' },
       header: t('label.reason'),
