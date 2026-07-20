@@ -2781,7 +2781,6 @@
   "outbound.copy.title": "Continuer ?",
   "outbound.create.placeholder": "Rechercher par nom",
   "outbound.create.title": "Clients",
-  "outbound.customer.on-hold": "En attente",
   "outbound.delete.action": "Supprimer",
   "outbound.delete.cannot": "Vous ne pouvez pas supprimer le ou les articles sélectionnés",
   "outbound.delete.confirm_one": "Cette livraison sera définitivement supprimée",

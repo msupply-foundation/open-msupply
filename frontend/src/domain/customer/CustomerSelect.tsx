@@ -28,7 +28,7 @@ export interface CustomerSelectProps {
  * The customer lookup (spec/ui-standards/components.md § customer lookup): a
  * Combobox pre-wired to the store-scoped customers cache, searchable by code
  * or name, each option showing both. On-hold customers are listed but disabled
- * — suffixed "(On hold)" and not selectable (spec/outbound-shipments AC-C3).
+ * — suffixed "(On hold)" and not selectable (the current app's customer-picker behaviour; the consuming vertical cites the AC).
  */
 export const CustomerSelect = (props: CustomerSelectProps): JSX.Element => (
   <Combobox<Customer>
@@ -52,7 +52,7 @@ export const CustomerSelect = (props: CustomerSelectProps): JSX.Element => (
         <span data-testid="item-option-code">{c.code}</span>
         {' — '}
         <span data-testid="item-option-name">{c.name}</span>
-        {c.isOnHold ? ` (${t('outbound.customer.on-hold')})` : ''}
+        {c.isOnHold ? ` (${t('label.on-hold')})` : ''}
       </span>
     )}
     value={props.value}

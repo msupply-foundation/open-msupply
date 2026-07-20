@@ -2793,7 +2793,6 @@
   "outbound.copy.title": "Are you sure?",
   "outbound.create.placeholder": "Search by name",
   "outbound.create.title": "Customers",
-  "outbound.customer.on-hold": "On hold",
   "outbound.delete.action": "Delete",
   "outbound.delete.cannot": "You cannot delete one or more of the selected items",
   "outbound.delete.confirm_one": "This will permanently remove 1 shipment",

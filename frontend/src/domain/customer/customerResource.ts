@@ -4,7 +4,7 @@ import { createStoreScopedResource } from '../../api/storeScopedResource';
 import { currentStoreId } from '../../store/storeContext';
 
 // One customer node. `store` is set when the customer is itself another store —
-// a shipment to it is a transfer (spec/outbound-shipments rules § transfers).
+// a shipment to it is a transfer (a transfer, in the consuming vertical's terms).
 export type Customer = Extract<
   CustomersResult['names'],
   { __typename: 'NameConnector' }

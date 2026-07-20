@@ -1680,7 +1680,6 @@
   "outbound.copy.title": "هل أنت متأكد؟",
   "outbound.create.placeholder": "البحث حسب الاسم",
   "outbound.create.title": "العملاء",
-  "outbound.customer.on-hold": "معلّق",
   "outbound.delete.action": "حذف",
   "outbound.delete.cannot": "لا يمكنك حذف عنصر أو أكثر من العناصر المحددة",
   "outbound.delete.confirm_one": "سيؤدي ذلك إلى إزالة شحنة 1 بشكل دائم",
