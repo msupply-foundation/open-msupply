@@ -43,9 +43,9 @@ export interface PaginatedSearch<T> {
  * the fetch/accumulate/paging state; the component owns the input + listbox +
  * scroll sentinel and just calls setSearch/loadMore and reads items/loading.
  *
- * Item-specific for now (its only consumer is ItemSearch) but entity-agnostic —
- * fetchPage is the only coupling — so it can lift to a generic search primitive
- * once a second consumer appears (rule of three).
+ * Entity-agnostic — fetchPage is the only coupling. Lifted from src/domain/item
+ * when the customer lookup became its second consumer (the rule-of-three note
+ * this comment used to carry).
  *
  * Concurrency: each fetch is tagged with a monotonically increasing request id;
  * a resolved page is applied only if it's still the latest request, so a slow
