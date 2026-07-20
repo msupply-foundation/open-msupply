@@ -1,5 +1,5 @@
 import { batch, createSignal, onCleanup } from 'solid-js';
-import { createDebounced } from '../../ui/utils/createDebounced';
+import { createDebounced } from './createDebounced';
 
 // One page of results from the server: the rows plus the grand total (so we
 // know when there are no more pages to fetch).
@@ -19,6 +19,14 @@ export interface PaginatedSearchOptions<T> {
   fetchPage: (search: string, offset: number) => Promise<Page<T> | undefined>;
   /** Debounce for the search input, in ms. Defaults to 300. */
   debounceMs?: number;
+  /**
+   * Fetch the first (empty-search) page immediately on creation — the default,
+   * right for pickers that mount when they're about to be used (a modal's item
+   * search). Pass `false` to defer that fetch to the first `ensure()` call —
+   * for pickers that mount with the page (a detail toolbar's customer lookup),
+   * so one the user never opens never fetches.
+   */
+  eager?: boolean;
 }
 
 export interface PaginatedSearch<T> {
@@ -35,17 +43,21 @@ export interface PaginatedSearch<T> {
   /** Fetch the next page (call when the list scrolls near the bottom). No-op
    * while a fetch is in flight or when there are no more pages. */
   loadMore: () => void;
+  /** Arm the deferred (`eager: false`) first fetch — call on first open/focus.
+   * No-op once any fetch has run, so firing per open is safe. */
+  ensure: () => void;
 }
 
 /**
  * Drives a server-side-filtered, offset-paginated search that accumulates pages
- * for infinite scroll. The reusable half of the item-search selector: it owns
- * the fetch/accumulate/paging state; the component owns the input + listbox +
- * scroll sentinel and just calls setSearch/loadMore and reads items/loading.
+ * for infinite scroll. The reusable half of a server-fed selector: it owns the
+ * fetch/accumulate/paging state; the component (AsyncCombobox) owns the input +
+ * listbox + scroll sentinel and just calls setSearch/loadMore/ensure and reads
+ * items/loading.
  *
- * Item-specific for now (its only consumer is ItemSearch) but entity-agnostic —
- * fetchPage is the only coupling — so it can lift to a generic search primitive
- * once a second consumer appears (rule of three).
+ * Entity-agnostic — fetchPage is the only coupling. Lives in the shared UI
+ * layer (alongside AsyncCombobox) so a ui/ component can build on it without
+ * importing from src/domain.
  *
  * Concurrency: each fetch is tagged with a monotonically increasing request id;
  * a resolved page is applied only if it's still the latest request, so a slow
@@ -67,6 +79,9 @@ export const createPaginatedSearch = <T>(
   let requestId = 0;
   // Guard loadMore against firing while a fetch is already running.
   let fetching = false;
+  // Whether any fetch has run — gates `ensure()` (the deferred first fetch) so
+  // it can't duplicate a page 0 that typing already triggered.
+  let armed = false;
 
   const hasMore = () => items().length < totalCount();
 
@@ -74,6 +89,7 @@ export const createPaginatedSearch = <T>(
   // spinner); offset > 0 = append the next page (show the more spinner).
   const fetchAt = async (value: string, offset: number) => {
     const id = ++requestId;
+    armed = true;
     fetching = true;
     if (offset === 0) setLoading(true);
     else setLoadingMore(true);
@@ -112,9 +128,14 @@ export const createPaginatedSearch = <T>(
     void fetchAt(search(), items().length);
   };
 
-  // Kick off the initial (empty-search) page so the list has content the moment
-  // it opens, before the user types.
-  void fetchAt('', 0);
+  // Eager (default): kick off the initial (empty-search) page so the list has
+  // content the moment it opens, before the user types. Deferred: the first
+  // page waits for `ensure()` (first open/focus).
+  if (options.eager ?? true) void fetchAt('', 0);
+
+  const ensure = () => {
+    if (!armed) void fetchAt('', 0);
+  };
 
   // Drop any in-flight response on teardown by advancing the id past what any
   // pending fetch captured (the debounce timer is auto-cancelled by
@@ -130,5 +151,6 @@ export const createPaginatedSearch = <T>(
     hasMore,
     setSearch,
     loadMore,
+    ensure,
   };
 };

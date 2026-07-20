@@ -14,7 +14,7 @@ import {
   SearchIcon,
 } from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
-import { keepDialogOpenOnInside } from './dismissInsideGuard';
+import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import styles from './Combobox.module.css';
 
 // Server-mode infinite scroll: fetch the next page once the listbox is scrolled
@@ -103,16 +103,15 @@ interface ComboboxProps<T> {
    */
   loadingMore?: boolean;
   /**
+   * Called when the listbox opens or closes (Kobalte's onOpenChange) — lets a
+   * server-mode caller arm a deferred first fetch on first open.
+   */
+  onOpenChange?: (open: boolean) => void;
+  /**
    * Visually hide the label (kept for a11y) — for use inside a FieldRow that
    * shows it.
    */
   hideLabel?: boolean;
-  /**
-   * Open the listbox as soon as the input is focused/clicked (Kobalte
-   * triggerMode "focus") — for pick-first flows like the customer-search
-   * modal, where the options must appear without typing.
-   */
-  openOnFocus?: boolean;
   class?: string;
 }
 
@@ -136,6 +135,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   const [selected, setSelected] = createSignal<T | null>(null);
   const [inputValue, setInputValue] = createSignal('');
   let inputEl: HTMLInputElement | undefined;
+  let contentEl: HTMLElement | undefined;
 
   // Server mode: the caller drives filtering via onInputChange (it refetches
   // `items`), so we disable Kobalte's client-side filter and let it show every
@@ -150,6 +150,10 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // — e.g. after saving, or when its bound field is cleared — empties the
   // input, rather than the input keeping the stale item). Guarded by
   // `on(value, ...)` so it only reacts to the prop, not the user's own pick.
+  //
+  // Async/server pickers whose current selection may not be in the loaded page
+  // keep it visible by seeding it into `items` themselves (see AsyncCombobox) —
+  // the resolution here is a plain lookup against whatever `items` holds.
   createEffect(
     on(
       () => props.value,
@@ -235,8 +239,13 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       value={selected()}
       onChange={handleChange}
       onInputChange={handleInputChange}
+      onOpenChange={open => props.onOpenChange?.(open)}
       allowsEmptyCollection
-      triggerMode={props.openOnFocus ? 'focus' : 'input'}
+      // Open the listbox as soon as the input is focused/clicked (not only once
+      // the user types) — the options appear on interaction, matching the
+      // platform autocompletes users expect. Reopening a committed selection
+      // still shows the full list (see filterText).
+      triggerMode="focus"
       disabled={props.disabled}
       placeholder={props.placeholder}
       itemComponent={itemProps => (
@@ -309,12 +318,14 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       </Show>
       <KCombobox.Portal mount={portalMount?.()}>
         <KCombobox.Content
+          ref={contentEl}
           class={styles.content}
-          // Keep the listbox open when a pointerdown lands inside the dialog
-          // it's mounted in — Kobalte otherwise dismisses it before a mouse
-          // click commits (see dismissInsideGuard). A genuine click outside the
-          // dialog still closes it.
-          onInteractOutside={keepDialogOpenOnInside(portalMount?.())}
+          // Keep the listbox open only when a pointerdown lands inside this
+          // popup's own content — Kobalte otherwise dismisses an option click
+          // before it commits when the popup is mounted in a dialog (see
+          // dismissInsideGuard). Any click outside the listbox — blank space,
+          // another field — still closes it.
+          onInteractOutside={keepPopupOpenOnInsideContent(() => contentEl)}
         >
           <Show when={props.loading}>
             <div class={styles.status}>Loading…</div>
