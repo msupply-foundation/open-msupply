@@ -75,10 +75,11 @@ import { stripEmpty } from '../../../typeHelpers';
 // editing — the small page is cheap to re-pull, so we don't splice mutation
 // results in place anymore).
 //
-// TWO independent queries (kdd/stocktake-line-editing): `info` (stocktakeDetail,
-// the header/footer/side-panel fields) and `lines` (stocktakeLines, one
-// server-filtered/sorted page). A stocktake-LEVEL save mutates `info` in place
-// (a single node, no pagination); a LINE save refetches only the `lines` page.
+// TWO independent queries (kdd/stocktake-line-editing): `info`
+// (stocktakeDetail, the header/footer/side-panel fields) and `lines`
+// (stocktakeLines, one server-filtered/sorted page). A stocktake-LEVEL save
+// mutates `info` in place (a single node, no pagination); a LINE save refetches
+// only the `lines` page.
 //
 // A finalised or on-hold (locked) stocktake is read-only (OMS
 // isStocktakeDisabled): row-click, the description/side-panel fields, and
@@ -88,8 +89,8 @@ type Line = StocktakeLineFragment;
 
 // The `info` resource's element type — the stocktakeDetail response narrowed to
 // its success member ({ __typename: 'StocktakeNode' } & StocktakeInfoFragment).
-// `mutate` callbacks are typed to this (spreading a saved StocktakeInfo fragment
-// over it keeps __typename).
+// `mutate` callbacks are typed to this (spreading a saved StocktakeInfo
+// fragment over it keeps __typename).
 type StocktakeInfoNode = Extract<
   StocktakeDetailResult['stocktake'],
   { __typename: 'StocktakeNode' }
@@ -237,9 +238,9 @@ const StocktakeDetailView: Component = () => {
   const totalCount = (): number => linesData.latest?.totalCount ?? 0;
 
   // A save-triggered refetch is SILENT — no refreshing bar (the table stays put
-  // while the fresh page swaps in). A user-navigation refetch (filter/sort/page)
-  // shows the bar as usual. `silentRefetching` is raised around a save refetch
-  // and drives the DataTable's `loading` gate below.
+  // while the fresh page swaps in). A user-navigation refetch
+  // (filter/sort/page) shows the bar as usual. `silentRefetching` is raised
+  // around a save refetch and drives the DataTable's `loading` gate below.
   const [silentRefetching, setSilentRefetching] = createSignal(false);
   const refetchAfterSave = async () => {
     setSilentRefetching(true);
@@ -253,9 +254,9 @@ const StocktakeDetailView: Component = () => {
   // a post-save refetch.
   const tableLoading = () => linesData.loading && !silentRefetching();
 
-  // A fresh lines page clears stale per-line errors. lineErrors is independently
-  // stamped by save failures, so it stays its own signal — this effect only
-  // resets it when a new page lands.
+  // A fresh lines page clears stale per-line errors. lineErrors is
+  // independently stamped by save failures, so it stays its own signal — this
+  // effect only resets it when a new page lands.
   createEffect(on(linesData, () => setLineErrors(new Map())));
 
   // A stocktake can be finalised only when it has at least one counted line
@@ -282,7 +283,8 @@ const StocktakeDetailView: Component = () => {
   // state (no initial item).
   const openAdd = () => setEditState({});
 
-  // --- Stocktake-level saves (updateStocktake, spliced back with no refetch) --
+  // --- Stocktake-level saves (updateStocktake, spliced back with no refetch)
+  // --
 
   const current = () => info();
 
@@ -310,8 +312,8 @@ const StocktakeDetailView: Component = () => {
   // stocktake (the toolbar's description + the side panel's counted-by /
   // verified-by / comment), owned here and passed whole to both children. One
   // buffer = coalescing spans the whole entity. Seeded from info() and
-  // re-seeded when the stocktake identity changes; never re-hydrated from a save
-  // result, so a returned node can't clobber in-progress typing.
+  // re-seeded when the stocktake identity changes; never re-hydrated from a
+  // save result, so a returned node can't clobber in-progress typing.
   const edit = createDebouncedEdit<StocktakeEditFields>({
     id: () => current()?.id ?? '',
     initial: () => ({
@@ -335,11 +337,18 @@ const StocktakeDetailView: Component = () => {
     void refetchAfterSave();
   };
 
+  // The record was deleted from the side panel's Actions → leave for the list.
+  // `replace: true` drops the deleted stocktake's detail URL from history so
+  // Back can't return to a now-missing record (it would only 404 / promote a
+  // NodeError to the global modal).
+  const onDeleted = () =>
+    navigate(`/${params.storeId}/inventory/stocktakes`, { replace: true });
+
   // --- Selection actions + line-edit modal: refetch the page on any change ---
-  // Each action (Delete / Change location / Reduce to 0) and the line-edit modal
-  // report success; the view refetches the current lines page (no splice — the
-  // small page is cheap, kdd/stocktake-line-editing). Errors still stamp inline
-  // via stampErrors so the offending rows flag their error.
+  // Each action (Delete / Change location / Reduce to 0) and the line-edit
+  // modal report success; the view refetches the current lines page (no splice
+  // — the small page is cheap, kdd/stocktake-line-editing). Errors still stamp
+  // inline via stampErrors so the offending rows flag their error.
 
   // Stamp the per-line errors (lineId → typename) — drives the inline
   // Snapshot-cell message. An action/finalise calls this the moment a save
@@ -541,15 +550,15 @@ const StocktakeDetailView: Component = () => {
       ...getDateCell(),
     },
     {
-      // Location is nested (location.code) — an accessor column. Server sorts by
-      // locationCode.
+      // Location is nested (location.code) — an accessor column. Server sorts
+      // by locationCode.
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationCode',
       header: t('label.location'),
     },
     {
-      // The adjustment reason (reasonOption.reason) — an accessor column. Server
-      // sorts by reasonOption.
+      // The adjustment reason (reasonOption.reason) — an accessor column.
+      // Server sorts by reasonOption.
       c: { accessor: line => line.reasonOption?.reason ?? '', id: 'reason' },
       sortKey: 'reasonOption',
       header: t('label.reason'),
@@ -573,9 +582,10 @@ const StocktakeDetailView: Component = () => {
           (fresh node object), dropping focus from the field being typed. */}
       <Show when={info()}>
         {node => (
-          // The <Tabs> root wraps the whole Page from outside (display: contents,
-          // so it adds no layout box): the TabList lives in the Header, the
-          // TabPanels in the body, and both share this one tabs context.
+          // The <Tabs> root wraps the whole Page from outside (display:
+          // contents, so it adds no layout box): the TabList lives in the
+          // Header, the TabPanels in the body, and both share this one tabs
+          // context.
           <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <Page
               fillBody
@@ -584,9 +594,11 @@ const StocktakeDetailView: Component = () => {
               onSidePanelClose={() => setSidePanelOpen(false)}
               sidePanelContent={
                 <StocktakeSidePanel
+                  storeId={params.storeId}
                   node={node()}
                   disabled={isDisabled(node())}
                   edit={edit}
+                  onDeleted={onDeleted}
                 />
               }
               header={
@@ -626,9 +638,10 @@ const StocktakeDetailView: Component = () => {
               }
               contentFooter={
                 // Selection action bar while lines are selected; otherwise the
-                // stocktake status footer (on-hold / stepper / finalise). Matches
-                // OMS, which swaps the whole footer on selection. Pagination is NOT
-                // here anymore — it's overlaid inside the DataTable.
+                // stocktake status footer (on-hold / stepper / finalise).
+                // Matches OMS, which swaps the whole footer on selection.
+                // Pagination is NOT here anymore — it's overlaid inside the
+                // DataTable.
                 <Show
                   when={selectedIds().length > 0}
                   fallback={
@@ -705,9 +718,10 @@ const StocktakeDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
-                  // Non-suspending loading read — a between-page/filter/sort refetch
-                  // keeps rows + shows the refreshing bar; a post-save refetch is
-                  // silent (tableLoading gates it out). Initial load → Suspense.
+                  // Non-suspending loading read — a between-page/filter/sort
+                  // refetch keeps rows + shows the refreshing bar; a post-save
+                  // refetch is silent (tableLoading gates it out). Initial load
+                  // → Suspense.
                   loading={tableLoading()}
                   sort={currentSort()}
                   onSort={onSort}

@@ -35,7 +35,8 @@ const LOG_PAGE_SIZE = 1000;
 // Formatter.logTypeTranslation parity — TYPE → `log.<lower, _→->`). Our t()
 // has no react-i18next `defaultValue`, so we look the key up in the active
 // dictionary first and fall back to the raw enum value when it isn't mapped
-// (an unmapped type shows e.g. "STOCK_BATCH_CHANGE", not "log.stock-batch-...").
+// (an unmapped type shows e.g. "STOCK_BATCH_CHANGE", not
+// "log.stock-batch-...").
 const eventLabel = (type: Log['type']): string => {
   const key = `log.${type.toLowerCase().replace(/_/g, '-')}` as LocaleKey;
   const dict = dictionaries()[locale()];
@@ -127,10 +128,11 @@ export const StocktakeLogPanel: Component<{
   storeId: string;
   stocktakeId: string;
 }> = props => {
-  // The log entries for this record. Keyed on the serialised variables (a stable
-  // string) so identical content doesn't refetch (kdd/solid-reactivity-pitfalls),
-  // like the other stocktake resources. Sorted by id descending = most recent
-  // first (activity-log ids are monotonic; OMS orders the same way).
+  // The log entries for this record. Keyed on the serialised variables (a
+  // stable string) so identical content doesn't refetch
+  // (kdd/solid-reactivity-pitfalls), like the other stocktake resources. Sorted
+  // by id descending = most recent first (activity-log ids are monotonic; OMS
+  // orders the same way).
   const variables = (): StocktakeLogVariables => ({
     storeId: props.storeId,
     recordId: props.stocktakeId,

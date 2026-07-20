@@ -1,10 +1,14 @@
 import { type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
-import { SidePanelSection } from '../../../ui/layout/SidePanel/SidePanel';
+import {
+  SidePanelSection,
+  SidePanelActions,
+} from '../../../ui/layout/SidePanel/SidePanel';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Text } from '../../../ui/elements/typography/Text';
+import { DeleteStocktakeAction, CopyStocktakeAction } from './actions';
 import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
 import type { StocktakeFieldEdit } from './stocktakeEdit';
 
@@ -19,6 +23,7 @@ import type { StocktakeFieldEdit } from './stocktakeEdit';
 // re-seeds only when the stocktake identity changes.
 
 export interface StocktakeSidePanelProps {
+  storeId: string;
   node: StocktakeInfoFragment;
   disabled: boolean;
   /**
@@ -26,53 +31,81 @@ export interface StocktakeSidePanelProps {
    * verifiedBy / comment.
    */
   edit: StocktakeFieldEdit;
+  /**
+   * The record was deleted (from the "Actions" section's Delete) — the view
+   * navigates back to the list. Copy is self-contained and needs no callback.
+   */
+  onDeleted: () => void;
 }
 
 export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
-  <SidePanelSection title={t('heading.additional-info')}>
-    {/* All rows share ONE FieldRow label column so labels line up and the read-only values sit on
+  <>
+    <SidePanelSection title={t('heading.additional-info')}>
+      {/* All rows share ONE FieldRow label column so labels line up and the read-only values sit on
         the same inline-start as the editable inputs below them (no mixed <dl>/FieldRow widths).
         Read-only rows render a plain value; editable ones a buffered field. */}
-    <FieldRow label={t('label.entered-by')}>
-      <Text variant="body">{props.node.user?.username ?? '—'}</Text>
-    </FieldRow>
-    <FieldRow label={t('label.created')}>
-      <Text variant="body">{localisedDate(props.node.createdDatetime)}</Text>
-    </FieldRow>
+      <FieldRow label={t('label.entered-by')}>
+        <Text variant="body">{props.node.user?.username ?? '—'}</Text>
+      </FieldRow>
+      <FieldRow label={t('label.created')}>
+        <Text variant="body">{localisedDate(props.node.createdDatetime)}</Text>
+      </FieldRow>
 
-    <FieldRow label={t('label.counted-by')}>
-      <TextField
-        label={t('label.counted-by')}
-        hideLabel
-        width="full"
-        value={props.edit.state.countedBy}
-        disabled={props.disabled}
-        onInput={e => props.edit.setField('countedBy', e.currentTarget.value)}
-        onBlur={() => props.edit.flush()}
-      />
-    </FieldRow>
-    <FieldRow label={t('label.verified-by')}>
-      <TextField
-        label={t('label.verified-by')}
-        hideLabel
-        width="full"
-        value={props.edit.state.verifiedBy}
-        disabled={props.disabled}
-        onInput={e => props.edit.setField('verifiedBy', e.currentTarget.value)}
-        onBlur={() => props.edit.flush()}
-      />
-    </FieldRow>
-    <FieldRow label={t('heading.comment')}>
-      <TextField
-        label={t('heading.comment')}
-        hideLabel
-        width="full"
-        data-testid="comment-field"
-        value={props.edit.state.comment}
-        disabled={props.disabled}
-        onInput={e => props.edit.setField('comment', e.currentTarget.value)}
-        onBlur={() => props.edit.flush()}
-      />
-    </FieldRow>
-  </SidePanelSection>
+      <FieldRow label={t('label.counted-by')}>
+        <TextField
+          label={t('label.counted-by')}
+          hideLabel
+          width="full"
+          value={props.edit.state.countedBy}
+          disabled={props.disabled}
+          onInput={e => props.edit.setField('countedBy', e.currentTarget.value)}
+          onBlur={() => props.edit.flush()}
+        />
+      </FieldRow>
+      <FieldRow label={t('label.verified-by')}>
+        <TextField
+          label={t('label.verified-by')}
+          hideLabel
+          width="full"
+          value={props.edit.state.verifiedBy}
+          disabled={props.disabled}
+          onInput={e =>
+            props.edit.setField('verifiedBy', e.currentTarget.value)
+          }
+          onBlur={() => props.edit.flush()}
+        />
+      </FieldRow>
+      <FieldRow label={t('heading.comment')}>
+        <TextField
+          label={t('heading.comment')}
+          hideLabel
+          width="full"
+          data-testid="comment-field"
+          value={props.edit.state.comment}
+          disabled={props.disabled}
+          onInput={e => props.edit.setField('comment', e.currentTarget.value)}
+          onBlur={() => props.edit.flush()}
+        />
+      </FieldRow>
+    </SidePanelSection>
+
+    {/* Record-level actions (spec/stocktakes/ui-surface.md §S3): Delete — gated
+        on NEW+unlocked (the same `disabled` gate the fields use; the backend is
+        the final authority) — and Copy to clipboard, always available. */}
+    <SidePanelSection title={t('heading.actions')}>
+      <SidePanelActions>
+        <DeleteStocktakeAction
+          storeId={props.storeId}
+          stocktakeId={props.node.id}
+          stocktakeNumber={props.node.stocktakeNumber}
+          disabled={props.disabled}
+          onDeleted={props.onDeleted}
+        />
+        <CopyStocktakeAction
+          storeId={props.storeId}
+          stocktakeId={props.node.id}
+        />
+      </SidePanelActions>
+    </SidePanelSection>
+  </>
 );
