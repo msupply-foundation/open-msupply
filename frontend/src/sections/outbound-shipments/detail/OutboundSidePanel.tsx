@@ -115,7 +115,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       {/* 1 — Additional info: entered by · created · picked date (backdating
           control, disabled with the reason outside its gate) · colour ·
           comment. */}
-      <SidePanelSection title={t('outbound.panel.additional-info')}>
+      <SidePanelSection title={t('outbound.panel.additional-info')} collapsible>
         <FieldRow label={t('outbound.panel.entered-by')}>
           <Text variant="body">{props.node.user?.username ?? '—'}</Text>
         </FieldRow>
@@ -156,7 +156,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       </SidePanelSection>
 
       {/* 2 — Related documents: the originating customer requisition. */}
-      <SidePanelSection title={t('outbound.panel.related-documents')}>
+      <SidePanelSection title={t('outbound.panel.related-documents')} collapsible>
         <Show
           when={requisition()}
           fallback={
@@ -179,7 +179,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           panel): service charges group · items sell price group · grand
           total · foreign currency. Disabled edit affordances stay visible,
           dimmed — never hidden. */}
-      <SidePanelSection title={t('outbound.panel.invoice-details')}>
+      <SidePanelSection title={t('outbound.panel.invoice-details')} collapsible>
         {/* Service charges: info bubble + the S5 edit action (dimmed once
             read-only); one row per service line, then sub total / effective
             tax / total. Service tax is edited per line in S5. */}
@@ -316,7 +316,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
 
       {/* 4 — Transport details: shipping method · expected delivery ·
           transport reference. */}
-      <SidePanelSection title={t('outbound.panel.transport-details')}>
+      <SidePanelSection title={t('outbound.panel.transport-details')} collapsible>
         <FieldRow label={t('outbound.panel.shipping-method')}>
           <ShippingMethodSelect
             label={t('outbound.panel.shipping-method')}
