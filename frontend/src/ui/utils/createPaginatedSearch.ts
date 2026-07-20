@@ -1,5 +1,5 @@
 import { batch, createSignal, onCleanup } from 'solid-js';
-import { createDebounced } from '../../ui/utils/createDebounced';
+import { createDebounced } from './createDebounced';
 
 // One page of results from the server: the rows plus the grand total (so we
 // know when there are no more pages to fetch).
