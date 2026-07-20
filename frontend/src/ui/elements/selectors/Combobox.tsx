@@ -103,6 +103,11 @@ interface ComboboxProps<T> {
    */
   loadingMore?: boolean;
   /**
+   * Called when the listbox opens or closes (Kobalte's onOpenChange) — lets a
+   * server-mode caller arm a deferred first fetch on first open.
+   */
+  onOpenChange?: (open: boolean) => void;
+  /**
    * Visually hide the label (kept for a11y) — for use inside a FieldRow that
    * shows it.
    */
@@ -235,6 +240,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       value={selected()}
       onChange={handleChange}
       onInputChange={handleInputChange}
+      onOpenChange={open => props.onOpenChange?.(open)}
       allowsEmptyCollection
       triggerMode={props.openOnFocus ? 'focus' : 'input'}
       disabled={props.disabled}

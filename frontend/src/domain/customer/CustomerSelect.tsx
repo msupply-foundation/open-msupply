@@ -1,5 +1,4 @@
-import { type JSX } from 'solid-js';
-import { useParams } from '@solidjs/router';
+import { createSignal, type JSX } from 'solid-js';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { t } from '../../intl';
 import { createPaginatedSearch } from '../search/createPaginatedSearch';
@@ -8,6 +7,10 @@ import { customerPageFetcher, type Customer } from './customerResource';
 const PAGE_SIZE = 30;
 
 export interface CustomerSelectProps {
+  /** The store whose customers to search — from the caller (like ItemSearch),
+   * so the guard-resolved store the lookup depends on is visible at the call
+   * site. */
+  storeId: string;
   /** Selected customer id (undefined = none). */
   value?: string;
   /**
@@ -46,18 +49,33 @@ export interface CustomerSelectProps {
  * the AC).
  */
 export const CustomerSelect = (props: CustomerSelectProps): JSX.Element => {
-  const params = useParams<{ storeId: string }>();
   // Created ONCE so the accumulated pages and debounce keep a stable owner
-  // (see createPaginatedSearch).
+  // (see createPaginatedSearch). Deferred first fetch (`ensure` on open) —
+  // this select mounts with its page (detail toolbar), so one the user never
+  // opens never fetches.
   const search = createPaginatedSearch<Customer>({
-    fetchPage: customerPageFetcher(params.storeId, PAGE_SIZE),
+    fetchPage: customerPageFetcher(props.storeId, PAGE_SIZE),
+    eager: false,
   });
 
+  // What the user has typed — mirrors the input so the seed below can drop
+  // out of a search it doesn't match.
+  const [query, setQuery] = createSignal('');
+
   // The caller's selected node leads the list (deduped) so a controlled
-  // `value` always resolves, even before — or regardless of — its page.
+  // `value` resolves even before its page is fetched — but only while it
+  // matches the typed query (or none is typed): an unmatched seed would sort
+  // above real matches and mask the "no matches" row (which keys off an empty
+  // list).
   const items = (): Customer[] => {
     const seed = props.selected;
     if (!seed) return search.items();
+    const needle = query().toLocaleLowerCase();
+    const seedMatches =
+      !needle ||
+      seed.name.toLocaleLowerCase().includes(needle) ||
+      seed.code.toLocaleLowerCase().includes(needle);
+    if (!seedMatches) return search.items();
     return [seed, ...search.items().filter(c => c.id !== seed.id)];
   };
 
@@ -71,8 +89,12 @@ export const CustomerSelect = (props: CustomerSelectProps): JSX.Element => {
       itemToString={c => c.name}
       itemToValue={c => c.id}
       itemDisabled={c => c.isOnHold}
+      // Code and name are separately-marked nodes (e2e/TESTIDS.md
+      // item-option-code / -name) so the suites can read either regardless of
+      // the datafile's format. Suites target options via role=option — no
+      // per-option wrapper id.
       renderItem={c => (
-        <span data-testid={props.testId ? `${props.testId}-option` : undefined}>
+        <span>
           <span data-testid="item-option-code">{c.code}</span>
           {' — '}
           <span data-testid="item-option-name">{c.name}</span>
@@ -85,7 +107,11 @@ export const CustomerSelect = (props: CustomerSelectProps): JSX.Element => {
       placeholder={props.placeholder}
       openOnFocus={props.openOnFocus}
       inputTestId={props.testId}
-      onInputChange={value => search.setSearch(value)}
+      onInputChange={value => {
+        setQuery(value);
+        search.setSearch(value);
+      }}
+      onOpenChange={open => open && search.ensure()}
       onReachEnd={() => search.loadMore()}
       onChange={c => props.onChange(c)}
     />
