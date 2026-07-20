@@ -9,7 +9,7 @@ import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { XCircleIcon } from '../../../ui/icons';
 import { StatusChangeAction } from './actions/StatusChangeAction';
-import { returnKind, statusIndex, statusSteps } from './returnStatus';
+import { currentStep, returnKind, statusSteps } from './returnStatus';
 import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
 
 // The return-level footer (spec/customer-returns/ui-surface.md S3 § layout —
@@ -61,8 +61,8 @@ export const CustomerReturnStatusFooter: Component<
       </Show>
 
       <StatusIndicator
-        steps={statusSteps(kind(), props.node)}
-        current={statusIndex(kind(), props.node.status)}
+        steps={statusSteps(kind(), props.node, props.statusOptions)}
+        current={currentStep(kind(), props.node.status, props.statusOptions)}
       />
 
       {/* One inline-end cluster (the current app's footer): Close sits right

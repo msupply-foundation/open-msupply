@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  currentStep,
   filterByStatusPreference,
   isReturnDisabled,
   nextStatuses,
+  offeredFlow,
   returnKind,
   statusFlow,
   statusIndex,
@@ -134,6 +136,30 @@ describe('statusSteps / statusIndex — the lifecycle indicator', () => {
     expect(steps[2].date).toBeUndefined(); // verified — not reached
     expect(statusIndex('manual', 'RECEIVED')).toBe(1);
     expect(statusIndex('transfer', 'RECEIVED')).toBe(3);
+  });
+});
+
+describe('offeredFlow / currentStep — pref-filtered lifecycle indicator', () => {
+  // rules § preference gates: the invoice-status-options preference limits
+  // EVERY status surface, the lifecycle indicator included; the current stage
+  // falls back to the nearest offered status at-or-before the actual one.
+  it('filters the indicator steps and keeps a sensible current stage', () => {
+    expect(offeredFlow('manual', [])).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
+    expect(offeredFlow('manual', ['NEW', 'VERIFIED'])).toEqual([
+      'NEW',
+      'VERIFIED',
+    ]);
+    const steps = statusSteps(
+      'manual',
+      node({ status: 'RECEIVED', receivedDatetime: '2026-01-02T00:00:00Z' }),
+      ['NEW', 'VERIFIED']
+    );
+    expect(steps.map(s => s.label)).toHaveLength(2);
+    // Actual status RECEIVED is hidden by the pref → current falls back to
+    // NEW (the nearest offered stage at-or-before).
+    expect(currentStep('manual', 'RECEIVED', ['NEW', 'VERIFIED'])).toBe(0);
+    expect(currentStep('manual', 'RECEIVED', [])).toBe(1);
+    expect(currentStep('manual', 'VERIFIED', ['NEW', 'VERIFIED'])).toBe(1);
   });
 });
 

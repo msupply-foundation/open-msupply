@@ -39,7 +39,7 @@ import {
   type CustomerReturnsResult,
 } from './customerReturns.generated';
 import { CustomerReturnPreferences } from '../preferences.generated';
-import { filterFields, type ReturnsFilter } from './listFilters';
+import { createFilters, type ReturnsFilter } from './listFilters';
 import { NewReturnModal } from './NewReturnModal';
 import { DeleteReturnsAction } from './actions/DeleteReturnsAction';
 import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
@@ -159,6 +159,12 @@ const CustomerReturnsList: Component = () => {
   );
   const manualReturnsDisabled = () =>
     prefs.latest?.disableManualReturns ?? false;
+
+  // Built once per mount (stable identity — FilterBar never remounts a chip);
+  // the accessor is read lazily per render, so the status options narrow in
+  // place when the invoice-status-options preference resolves (rules
+  // § preference gates).
+  const filters = createFilters(() => prefs.latest?.invoiceStatusOptions ?? []);
 
   const onNewReturn = () => {
     if (manualReturnsDisabled()) setDisabledNoticeOpen(true);
@@ -292,7 +298,7 @@ const CustomerReturnsList: Component = () => {
           </HeaderButtons>
           <Toolbar>
             <FilterBar
-              filters={filterFields()}
+              filters={filters}
               filter={query().filter}
               onChange={onFilterChange}
             />

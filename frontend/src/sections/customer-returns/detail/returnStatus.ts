@@ -104,11 +104,21 @@ export const isReturnDisabled = (node: {
 export const advanceBlockedByHold = (node: { onHold: boolean }): boolean =>
   node.onHold;
 
-// Steps for the lifecycle indicator: every stage of the kind's flow with the
-// datetime it was reached (undefined = not reached yet).
+// The kind's flow narrowed to the statuses the invoice-status-options
+// preference offers (rules § preference gates — a display gate on EVERY
+// status surface, the lifecycle indicator included). Empty = no restriction.
+export const offeredFlow = (
+  kind: ReturnKind,
+  allowed: readonly string[]
+): ReturnStatus[] =>
+  statusFlow(kind).filter(s => allowed.length === 0 || allowed.includes(s));
+
+// Steps for the lifecycle indicator: each OFFERED stage of the kind's flow
+// with the datetime it was reached (undefined = not reached yet).
 export const statusSteps = (
   kind: ReturnKind,
-  node: CustomerReturnInfoFragment
+  node: CustomerReturnInfoFragment,
+  allowed: readonly string[] = []
 ): { label: string; date?: string }[] => {
   const dates: Record<string, string | null | undefined> = {
     NEW: node.createdDatetime,
@@ -117,10 +127,28 @@ export const statusSteps = (
     RECEIVED: node.receivedDatetime,
     VERIFIED: node.verifiedDatetime,
   };
-  return statusFlow(kind).map(status => ({
+  return offeredFlow(kind, allowed).map(status => ({
     label: statusLabel(status),
     date: dates[status] ?? undefined,
   }));
+};
+
+// The indicator's current stage within the OFFERED flow. When the preference
+// hides the actual status, the current stage falls back to the nearest
+// offered status at-or-before it (the current app's getPreviousStatus
+// fallback). −1 when nothing at-or-before is offered.
+export const currentStep = (
+  kind: ReturnKind,
+  status: ReturnStatus,
+  allowed: readonly string[] = []
+): number => {
+  const actual = statusIndex(kind, status);
+  const offered = offeredFlow(kind, allowed);
+  let current = -1;
+  offered.forEach((s, i) => {
+    if (statusIndex(kind, s) <= actual) current = i;
+  });
+  return current;
 };
 
 // Filter the offered targets by the store's invoice-status-options preference
