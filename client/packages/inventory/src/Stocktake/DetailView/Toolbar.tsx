@@ -122,6 +122,7 @@ const InformationFields = ({
             disabled={isDisabled}
             size="small"
             sx={{ width: 250 }}
+            inputProps={{ 'data-testid': 'description-field' }}
             value={descriptionBuffer ?? ''}
             onChange={event => {
               setDescriptionBuffer(event.target.value);
@@ -130,7 +131,11 @@ const InformationFields = ({
           />
         }
       />
-      {isDisabled && <Alert severity="info">{infoMessage}</Alert>}
+      {isDisabled && (
+        <Alert data-testid="stocktake-status-alert" severity="info">
+          {infoMessage}
+        </Alert>
+      )}
     </>
   );
 };

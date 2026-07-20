@@ -299,6 +299,10 @@ struct InitialisationData {
     sync_buffer_rows: Vec<repository::SyncBufferRow>,
     users: Vec<(LoginInput, LoginUserInfoV4)>,
     site_id: i32,
+    /// Set for v7 exports: the central site id the buffer rows are stamped
+    /// with (`source_site_id`). Presence switches integration to the v7 path.
+    #[serde(default)]
+    central_site_id: Option<i32>,
 }
 
 async fn initialise_from_central(
@@ -475,6 +479,9 @@ async fn main() -> anyhow::Result<()> {
                     .site_auth_service
                     .get_site_id(&ctx)?
                     .unwrap(),
+                // export-initialisation captures via the v5/v6 flow; v7
+                // exports are produced externally (see client/playwright/scripts).
+                central_site_id: None,
             };
 
             let data_string = if pretty {
@@ -526,6 +533,20 @@ async fn main() -> anyhow::Result<()> {
 
             let mut logger = SyncLogger::start(&ctx.connection).unwrap();
             integrate_and_translate_sync_buffer(&ctx.connection, Some(&mut logger), 0, true)?;
+
+            // V7 exports: buffer rows are stamped with the central site id and
+            // only integrate through the v7 path (the call above is V5_V6-only).
+            if let Some(central_site_id) = data.central_site_id {
+                info!("Integrating v7 sync buffer (central site {central_site_id})");
+                KeyValueStoreRepository::new(&ctx.connection).set_i32(
+                    KeyType::SettingsSyncCentralServerSiteId,
+                    Some(central_site_id),
+                )?;
+                service::sync_v7::validate_translate_integrate::integrate_v7_sync_buffer_offline(
+                    &ctx.connection,
+                    central_site_id,
+                )?;
+            }
 
             info!("Initialising users");
             for (input, user_info) in data.users {

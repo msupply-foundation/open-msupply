@@ -202,6 +202,7 @@ export const OutboundLineEdit = ({
           paddingBottom: 0,
         },
       }}
+      testId="add-item-modal"
     >
       <Grid
         container

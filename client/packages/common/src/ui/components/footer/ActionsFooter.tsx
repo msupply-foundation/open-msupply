@@ -16,6 +16,7 @@ export interface Action {
   loading?: boolean;
   shouldShrink?: boolean;
   tooltip?: string;
+  testId?: string;
 }
 
 interface ActionsFooterProps {
@@ -33,6 +34,7 @@ export const ActionsFooter = ({
 
   return (
     <Stack
+      data-testid="actions-footer"
       direction="row"
       alignItems="center"
       height={64}
@@ -46,6 +48,7 @@ export const ActionsFooter = ({
     >
       <Stack direction="row" alignItems="center" gap={4}>
         <Typography
+          data-testid="selected-rows-count"
           sx={{
             pr: 1,
             fontWeight: 'bold',
@@ -62,6 +65,7 @@ export const ActionsFooter = ({
             shouldShrink,
             loading,
             tooltip,
+            testId,
           }) => (
             <Tooltip key={label} title={tooltip ?? ''}>
               <span>
@@ -71,6 +75,7 @@ export const ActionsFooter = ({
                   disabled={disabled}
                   loading={loading}
                   onClick={onClick}
+                  testId={testId}
                   // Flatbutton doesn't shrink by default but we want it to in actions footer
                   shouldShrink={shouldShrink ?? true}
                 />

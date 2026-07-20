@@ -17,6 +17,7 @@ interface ButtonProps {
   sx?: SxProps;
   className?: string;
   showLabel?: boolean;
+  testId?: string;
 }
 
 export const IconButton: React.FC<ButtonProps> = ({
@@ -30,9 +31,11 @@ export const IconButton: React.FC<ButtonProps> = ({
   sx,
   className,
   showLabel,
+  testId,
 }) =>
   showLabel ? (
     <Button
+      data-testid={testId}
       disabled={disabled}
       onClick={onClick}
       variant="text"
@@ -47,6 +50,7 @@ export const IconButton: React.FC<ButtonProps> = ({
   ) : (
     <Tooltip title={disabled ? '' : label}>
       <MuiIconButton
+        data-testid={testId}
         sx={{ width, height, ...sx }}
         disabled={disabled}
         onClick={onClick}

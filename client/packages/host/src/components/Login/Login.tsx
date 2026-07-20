@@ -174,6 +174,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
             htmlInput: {
               autoComplete: 'username',
               name: 'username',
+              'data-testid': 'login-username-input',
             },
           }}
           autoFocus
@@ -191,6 +192,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
             htmlInput: {
               autoComplete: 'current-password',
               name: 'password',
+              'data-testid': 'login-password-input',
             },
           }}
           inputRef={passwordRef}
@@ -205,6 +207,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
           endIcon={<ArrowRightIcon />}
           disabled={!isValid}
           label={t('button.login')}
+          data-testid="login-button"
         />
       }
       ErrorMessage={

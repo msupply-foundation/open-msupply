@@ -48,6 +48,7 @@ export const AppBarButtonsComponent = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          data-testid="new-return-button"
           Icon={<PlusCircleIcon />}
           label={t('button.new-return')}
           onClick={onNew}
