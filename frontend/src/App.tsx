@@ -84,7 +84,7 @@ export const App: Component = () => {
       <Switch>
         <Match when={phase() === 'loading'}>
           <div class={styles.page}>
-            <p>{t('app.loading')}</p>
+            <p>{t('loading')}</p>
           </div>
         </Match>
         <Match when={phase() === 'initialisation'}>
@@ -100,7 +100,7 @@ export const App: Component = () => {
                 <Route path="/" component={ShellLayout}>
                   <Route
                     path="/"
-                    component={() => <EntryPage labelKey="nav.dashboard" />}
+                    component={() => <EntryPage labelKey="dashboard" />}
                   />
                   <For each={Object.entries(sectionRoutes)}>
                     {([path, routes]) => (
@@ -121,7 +121,7 @@ export const App: Component = () => {
                   </For>
                   <Route
                     path="*"
-                    component={() => <EntryPage labelKey="app.not-found" />}
+                    component={() => <EntryPage labelKey="heading.not-found" />}
                   />
                 </Route>
               </Route>

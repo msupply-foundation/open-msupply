@@ -51,6 +51,12 @@ interface ComboboxProps<T> {
    * (Kobalte's model), unlike the prototype's whole-list filter.
    */
   filter?: (item: T, input: string) => boolean;
+  /**
+   * Per-option disabled predicate — the option is listed (visible for context)
+   * but not selectable, e.g. an on-hold customer. Maps to Kobalte's
+   * optionDisabled, which exposes it as aria-disabled on the option.
+   */
+  itemDisabled?: (item: T) => boolean;
   placeholder?: string;
   helperText?: string;
   /**
@@ -101,6 +107,12 @@ interface ComboboxProps<T> {
    * shows it.
    */
   hideLabel?: boolean;
+  /**
+   * Open the listbox as soon as the input is focused/clicked (Kobalte
+   * triggerMode "focus") — for pick-first flows like the customer-search
+   * modal, where the options must appear without typing.
+   */
+  openOnFocus?: boolean;
   class?: string;
 }
 
@@ -163,12 +175,22 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           .toLocaleLowerCase()
           .includes(input.toLocaleLowerCase());
 
+  // The input text ONLY filters while it's something the user typed: when it
+  // just mirrors the committed selection's label, reopening the popup shows
+  // the FULL list (matching the platform autocompletes users expect — and the
+  // shared e2e suites, whose pickers reopen to browse all options).
+  const filterText = () => {
+    const current = selected();
+    const input = inputValue();
+    return current && input === props.itemToString(current) ? '' : input;
+  };
+
   // Server mode: the caller already filtered, so "no matches" = an empty list
   // (once loading settles). Client mode: nothing passes the local filter.
   const noMatches = createMemo(() =>
     serverMode()
       ? props.items.length === 0
-      : props.items.every(item => !matches(item, inputValue()))
+      : props.items.every(item => !matches(item, filterText()))
   );
 
   const handleInputChange = (value: string) => {
@@ -202,15 +224,19 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
       optionTextValue={item => props.itemToString(item as T)}
       optionLabel={item => props.itemToString(item as T)}
+      optionDisabled={
+        props.itemDisabled ? item => props.itemDisabled!(item as T) : undefined
+      }
       // Server mode disables the client filter (the caller refetches `items`);
       // client mode keeps the local substring/predicate filter.
       defaultFilter={
-        serverMode() ? () => true : (item, input) => matches(item as T, input)
+        serverMode() ? () => true : item => matches(item as T, filterText())
       }
       value={selected()}
       onChange={handleChange}
       onInputChange={handleInputChange}
       allowsEmptyCollection
+      triggerMode={props.openOnFocus ? 'focus' : 'input'}
       disabled={props.disabled}
       placeholder={props.placeholder}
       itemComponent={itemProps => (
@@ -221,13 +247,13 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         </KCombobox.Item>
       )}
     >
-      {/* hideLabel keeps the label for a11y (aria-labelledby) but visually hidden — used
-          when a FieldRow already shows the label beside the control. */}
-      <KCombobox.Label
-        class={props.hideLabel ? styles.labelHidden : styles.label}
-      >
-        {props.label}
-      </KCombobox.Label>
+      {/* hideLabel names the input via aria-label instead of a visually-hidden
+          label element — same accessible name, no duplicate text node beside
+          the label the surrounding layout (a FieldRow) already shows (a hidden
+          twin trips strict text-locator matches in the shared e2e suites). */}
+      <Show when={!props.hideLabel}>
+        <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+      </Show>
       <KCombobox.Control
         class={styles.control}
         data-error={props.error ? '' : undefined}
@@ -239,6 +265,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           ref={inputEl}
           class={styles.input}
           data-testid={props.inputTestId}
+          aria-label={props.hideLabel ? props.label : undefined}
           aria-invalid={props.error ? 'true' : undefined}
         />
         <Show when={selected() !== null}>

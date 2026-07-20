@@ -37,7 +37,7 @@ export const Spinner = (props: SpinnerProps): JSX.Element => {
     <span
       class={styles.spinner}
       role="status"
-      aria-label={props.label ?? t('common.loading')}
+      aria-label={props.label ?? t('loading')}
       style={{ 'font-size': `${props.sizeRem ?? 2}rem` }}
       data-testid={props.center ? undefined : props['data-testid']}
     />

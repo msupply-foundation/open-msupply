@@ -1,6 +1,11 @@
 import { createSignal, type JSX } from 'solid-js';
-import { SidePanel, SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
+import {
+  SidePanel,
+  SidePanelActions,
+  SidePanelSection,
+} from '../ui/layout/SidePanel/SidePanel';
 import { Button } from '../ui/elements/buttons/Button';
+import { CopyIcon, TrashIcon } from '../ui/icons';
 import { useIsNavOverlay } from '../ui/utils/createMediaQuery';
 import styles from './SidePanelShowcase.module.css';
 
@@ -87,6 +92,19 @@ export const SidePanelShowcase = () => {
                 <dt>Purchase order</dt>
                 <dd>PO-1042</dd>
               </dl>
+            </SidePanelSection>
+            {/* Record actions (the registry's record-actions section):
+                SidePanelActions stacks them one per row, aligned
+                inline-start, each button sized to its label. */}
+            <SidePanelSection title="Actions">
+              <SidePanelActions>
+                <Button icon={<TrashIcon />} onClick={() => {}}>
+                  Delete
+                </Button>
+                <Button icon={<CopyIcon />} onClick={() => {}}>
+                  Make a copy
+                </Button>
+              </SidePanelActions>
             </SidePanelSection>
             <SidePanelSection
               title="History (collapsed by default)"

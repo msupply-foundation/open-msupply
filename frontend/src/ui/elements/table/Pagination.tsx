@@ -87,7 +87,7 @@ export const Pagination = (props: PaginationProps) => {
       {/* "Showing X-Y of Z" — the range and total are emphasised (bold), the words
           are not, matching the current app's Showing/of split. */}
       <span class={styles.summary} aria-live="polite">
-        {t('pagination.showing')}{' '}
+        {t('label.showing')}{' '}
         <strong class={styles.summaryNumber}>
           {from()}-{to()}
         </strong>{' '}

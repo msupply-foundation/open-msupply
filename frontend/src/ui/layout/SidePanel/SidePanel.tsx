@@ -45,7 +45,7 @@ export const SidePanel = (props: SidePanelProps) => (
       <h2 class={styles.heading}>{props.label}</h2>
       {props.onClose && (
         <IconButton
-          label={t('common.close')}
+          label={t('button.close')}
           icon={<CloseIcon />}
           onClick={props.onClose}
         />
@@ -118,3 +118,12 @@ export const SidePanelSection = (props: SidePanelSectionProps) => {
     </section>
   );
 };
+
+/**
+ * The record-actions cluster inside a panel section (the registry's
+ * record-actions section): one action per row, aligned inline-start, each
+ * button sized to its label.
+ */
+export const SidePanelActions = (props: { children: JSX.Element }) => (
+  <div class={styles.actions}>{props.children}</div>
+);

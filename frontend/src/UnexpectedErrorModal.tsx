@@ -42,12 +42,12 @@ const PermissionDenied: Component<{ permissions: string[] }> = props => {
       open
       dismissable={false}
       onClose={() => {}}
-      title={t('error.permission-denied')}
+      title={t('auth.permission-denied')}
       icon={<LockIcon />}
       description={description()}
       actions={
         <Button variant="secondary" onClick={clearForbiddenError}>
-          {t('common.ok')}
+          {t('button.ok')}
         </Button>
       }
     />
@@ -59,16 +59,16 @@ const UnexpectedError: Component = () => (
     open={Boolean(unexpectedError())}
     dismissable={false}
     onClose={() => {}}
-    title={t('error.unexpected')}
+    title={t('error.something-wrong')}
     icon={<AlertCircleIcon />}
     description={unexpectedError()}
     actions={
       <>
         <Button variant="secondary" onClick={() => location.reload()}>
-          {t('error.reload')}
+          {t('button.try-again')}
         </Button>
         <Button variant="secondary" onClick={() => (location.href = '/')}>
-          {t('error.go-to-dashboard')}
+          {t('button.dashboard')}
         </Button>
       </>
     }

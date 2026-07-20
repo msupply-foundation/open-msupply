@@ -41,7 +41,7 @@ export const Header = (props: HeaderProps) => {
           type="button"
           class={styles.hamburger}
           onClick={() => shell?.openNav()}
-          aria-label={t('shell.open-navigation')}
+          aria-label={t('button.open-the-menu')}
         >
           <MenuIcon class={styles.hamburgerIcon} />
         </button>
