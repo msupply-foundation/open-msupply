@@ -36,6 +36,17 @@ export function TableRow<T>(props: {
   showExpander: boolean;
   onRowClick?: (row: T) => void;
   /**
+   * De-emphasise this row (read-only records — e.g. SHIPPED+ shipments,
+   * ui-standards list-views): stamps data-dimmed, styled in CSS.
+   */
+  rowDimmed?: (row: T) => boolean;
+  /**
+   * Semantic text tone for this row (e.g. 'info' for records awaiting an
+   * action — outbound's placeholder lines): stamps data-tone, styled in CSS.
+   * Semantic names only, mapped to palette tokens by the CSS — never colours.
+   */
+  rowTone?: (row: T) => 'info' | undefined;
+  /**
    * Select/deselect ALL of a group row's leaves in one emit (called for a
    * grouped-row checkbox).
    */
@@ -60,6 +71,16 @@ export function TableRow<T>(props: {
     <tr
       data-testid="table-row"
       class={props.onRowClick ? styles.rowClickable : undefined}
+      data-dimmed={
+        !props.row.getIsGrouped() && props.rowDimmed?.(props.row.original)
+          ? ''
+          : undefined
+      }
+      data-tone={
+        !props.row.getIsGrouped()
+          ? props.rowTone?.(props.row.original)
+          : undefined
+      }
       // Selected rows get the same brand tint as selected cards (consistent
       // selection signal across both views); styled on the cells
       // (data-selected) in CSS. A GROUP row shows the tint when ALL its leaves
@@ -144,17 +165,16 @@ export function TableRow<T>(props: {
               data-testid={`cell-${cell.column.id}`}
               data-align={cellAlign(cell)}
               data-pinned={cell.column.getIsPinned() || undefined}
-              // data-wrap + --wrap-lines: when a column sets meta.wrapLines >
-              // 1, the cell clamps to that many lines then ellipsises (CSS
-              // line-clamp); otherwise the default single-line nowrap applies.
+              // data-wrap: when a column sets meta.wrapLines > 1, the cell
+              // content clamps to that many lines then ellipsises (via the
+              // inner .tdClamp wrapper below — the clamp's -webkit-box display
+              // can't sit on the td itself without breaking table-cell
+              // alignment); otherwise the default single-line nowrap applies.
               // min-width keeps the column-width floor. A pinned column
               // additionally gets sticky position + its edge offset.
               data-wrap={cellWrapLines(cell) ? '' : undefined}
               style={{
                 'min-width': `${cell.column.getSize()}px`,
-                ...(cellWrapLines(cell)
-                  ? { '--wrap-lines': String(cellWrapLines(cell)) }
-                  : {}),
                 ...props.pinnedStyle(cell.column),
               }}
             >
@@ -164,7 +184,16 @@ export function TableRow<T>(props: {
                   placeholder (the grouped column on a CHILD row): flexRender gives the child's real
                   value, so a grouped child keeps showing e.g. its code/name — a blank there would
                   read as missing data (matches Open mSupply). The expander is its own column. */}
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              {cellWrapLines(cell) ? (
+                <span
+                  class={styles.tdClamp}
+                  style={{ '--wrap-lines': String(cellWrapLines(cell)) }}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </span>
+              ) : (
+                flexRender(cell.column.columnDef.cell, cell.getContext())
+              )}
             </td>
           </Show>
         )}

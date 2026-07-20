@@ -1,6 +1,11 @@
 export const GRAPHQL_URL = '/graphql';
 export const GRAPHQL_WS_PATH = '/graphql/ws';
 
+// Generated report files (spec/reports "The generated file"): fetched as
+// GET /files?id=<fileId> on the API origin — not a GraphQL operation. Proxied
+// to the backend in dev (see the dev server proxy in vite.config.ts).
+export const FILES_URL = '/files';
+
 // Custom (server-supplied) translations. The server returns a flat key→value
 // map for the requested language, overriding the bundled catalog. Proxied to
 // the backend in dev (see the dev server proxy in vite.config.ts).

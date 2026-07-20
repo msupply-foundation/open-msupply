@@ -7,7 +7,10 @@ import {
   ALL_TABS,
   sharedOrMultiple,
 } from '../ui/elements/table/DataTable';
-import { getNumberCell } from '../ui/elements/table/tableHelpers';
+import {
+  getCurrencyCell,
+  getNumberCell,
+} from '../ui/elements/table/tableHelpers';
 import { getChipListCell } from '../ui/elements/table/ChipListCell';
 import { StockIcon, InfoIcon, TruckIcon } from '../ui/icons';
 import {
@@ -118,7 +121,7 @@ const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
   },
   {
     key: 'supply',
-    labelKey: 'table.demo-card-group.supply',
+    labelKey: 'label.supply',
     icon: () => <TruckIcon />,
   },
   {
@@ -274,11 +277,11 @@ export const TableShowcase = () => {
       tabsAndCardGroups: ['supply', 'pricing'],
     },
     {
+      // Currency cell: symbol + 2 dp, right-aligned; SUM when grouped.
       c: { key: 'price' },
       sortKey: 'price',
       header: 'Unit price',
-      ...getNumberCell(),
-      cell: info => `$${info.getValue<number>().toFixed(2)}`,
+      ...getCurrencyCell(),
       tabsAndCardGroups: ['pricing'],
     },
   ];
@@ -398,6 +401,13 @@ export const TableShowcase = () => {
         rowKey={r => r.id}
         sort={sort()}
         onSort={onSort}
+        // Row presentation hooks, on DISTINCT rows so each reads clearly:
+        // low-stock rows stand in for read-only records (data-dimmed →
+        // opacity); one well-stocked row stands in for "awaiting an action"
+        // (semantic data-tone → info token). In a real vertical they live on
+        // different tables (rowDimmed: the list; rowTone: detail lines).
+        rowDimmed={r => r.stock < 40}
+        rowTone={r => (r.price === 0.09 ? 'info' : undefined)}
         tabsAndCardGroups={TABS_AND_CARD_GROUPS}
         rowGroup={{
           columnId: 'category',

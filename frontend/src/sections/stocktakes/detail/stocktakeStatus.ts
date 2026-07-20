@@ -11,10 +11,10 @@ export type StocktakeStatus = (typeof STATUS_FLOW)[number];
 
 export const STATUS_LABELS: Record<StocktakeStatus, string> = {
   get NEW() {
-    return t('stocktake.status.new');
+    return t('status.new');
   },
   get FINALISED() {
-    return t('stocktake.status.finalised');
+    return t('status.finalised');
   },
 };
 
