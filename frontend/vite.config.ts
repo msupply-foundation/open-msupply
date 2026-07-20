@@ -28,6 +28,10 @@ export default defineConfig(({ mode }) => ({
         target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/files': {
+        target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
 }));

@@ -18,6 +18,8 @@ export interface PopoverProps {
   /** Extra attributes for the trigger button (e.g. `id`, `aria-*` for field
       label wiring). Does not override the component's own wiring. */
   triggerProps?: JSX.ButtonHTMLAttributes<HTMLButtonElement>;
+  /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
+  triggerTestId?: string;
   /** Preferred side/alignment; flips to the other side rather than overflow.
       start/end are logical (mirror in RTL). Default 'bottom'. */
   placement?: PopoverPlacement;
@@ -193,6 +195,7 @@ export const Popover = (props: PopoverProps) => {
             : styles.trigger
         }
         aria-label={props.triggerLabel}
+        data-testid={props.triggerTestId}
         {...hoverHandlers}
         {...props.triggerProps}
       >

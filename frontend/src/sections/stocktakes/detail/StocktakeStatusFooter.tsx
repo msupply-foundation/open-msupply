@@ -78,9 +78,10 @@ export const StocktakeStatusFooter: Component<
       <Show when={!isFinalised()}>
         <CheckboxButton
           checked={holding()}
+          data-testid="on-hold-button"
           onChange={() => setHoldConfirm(true)}
         >
-          {t('stocktake.detail.on-hold')}
+          {t('label.on-hold')}
         </CheckboxButton>
       </Show>
 
@@ -101,9 +102,11 @@ export const StocktakeStatusFooter: Component<
       <ConfirmDialog
         open={holdConfirm()}
         onClose={() => setHoldConfirm(false)}
-        title={t('stocktake.on-hold.confirm-title')}
+        title={t('heading.are-you-sure')}
         message={
-          holding() ? t('stocktake.on-hold.unset') : t('stocktake.on-hold.set')
+          holding()
+            ? t('messages.not-on-hold-description')
+            : t('messages.on-hold-description')
         }
         onConfirm={() => props.onSetHold(!holding())}
       />

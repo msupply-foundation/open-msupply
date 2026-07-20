@@ -1,6 +1,6 @@
 import { graphqlFetch } from '../../api/graphql';
 import { ItemsWithStock, type ItemsWithStockResult } from './item.generated';
-import type { Page } from './createPaginatedSearch';
+import type { Page } from '../search/createPaginatedSearch';
 
 // One item option: the fields the search selector shows/needs. The row shows
 // "code - name" and a total (Σ batch packs * packSize) + unit; id feeds the

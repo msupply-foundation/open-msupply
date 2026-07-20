@@ -265,7 +265,7 @@ export const MenuBar = (props: MenuBarProps) => {
         <nav
           class={styles.menuBar}
           data-open={!props.nav.railCollapsed() ? 'true' : 'false'}
-          aria-label={t('shell.main-navigation')}
+          aria-label={t('label.menu')}
         >
           <div class={styles.logoArea}>
             <button
@@ -274,8 +274,8 @@ export const MenuBar = (props: MenuBarProps) => {
               onClick={props.nav.toggleRail}
               aria-label={
                 props.nav.railCollapsed()
-                  ? t('shell.expand-menu')
-                  : t('shell.collapse-menu')
+                  ? t('button.open-the-menu')
+                  : t('button.close-the-menu')
               }
               aria-expanded={!props.nav.railCollapsed()}
             >
@@ -302,7 +302,7 @@ export const MenuBar = (props: MenuBarProps) => {
       <nav
         class={styles.overlayPanel}
         data-open={props.nav.overlayOpen() ? 'true' : 'false'}
-        aria-label={t('shell.main-navigation')}
+        aria-label={t('label.menu')}
         aria-hidden={!props.nav.overlayOpen()}
       >
         <div class={styles.logoArea}>

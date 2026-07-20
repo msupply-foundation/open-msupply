@@ -1,0 +1,128 @@
+/*
+ * TextArea — the TextField input spec on a <textarea>. The field/label/message
+ * shells mirror TextField.module.css; the control differs only where
+ * multi-line forces it: height from the rows attribute (not the input-height
+ * tokens), block padding, line-height 1.5 for wrapped text, resize disabled
+ * (fixed at `rows`, content scrolls — the old OMS TextArea behaviour). All
+ * sizing rem/em; all colours from tokens.
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  /* Contain the visually-hidden label — see TextField.module.css. */
+  position: relative;
+}
+
+/* Spec max-widths (TextArea defaults to full — set in the component) */
+.field[data-width='short'] {
+  max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
+  max-width: var(--input-max-long);
+}
+
+.field[data-width='full'] {
+  max-width: 100%;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1.3;
+  color: var(--text-body);
+}
+
+/* Visually hidden but present for assistive tech (used with a FieldRow's visible label). */
+.labelHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.required {
+  margin-inline-start: 0.125em;
+  color: var(--error-main);
+}
+
+.textarea {
+  width: 100%;
+  padding: var(--space-2) var(--input-padding-x);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-white);
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  /* Fixed at the rows height; longer content scrolls (OMS has no resize grip). */
+  resize: none;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.textarea::placeholder {
+  color: var(--gray-main);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--primary-main);
+  box-shadow: var(--focus-ring);
+}
+
+/* Error state — red border + red glow (presence of data-error) */
+.textarea[data-error] {
+  border-color: var(--error-main);
+}
+
+.textarea[data-error]:focus {
+  box-shadow: var(--focus-ring-error);
+}
+
+/* Disabled — grey fill, muted border, not interactive */
+.textarea:disabled {
+  background: var(--bg-input);
+  border-color: var(--color-divider);
+  color: var(--gray-main);
+  cursor: not-allowed;
+}
+
+.helper {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--text-secondary);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--error-main);
+}
+
+.errorIcon {
+  font-size: 0.875em;
+  color: var(--color-warning);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .textarea {
+    transition: none;
+  }
+}

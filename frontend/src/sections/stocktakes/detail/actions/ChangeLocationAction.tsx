@@ -55,9 +55,10 @@ export const ChangeLocationAction: Component<
         variant="secondary"
         icon={<MapPinIcon />}
         disabled={props.disabled}
+        data-testid="change-location-button"
         onClick={() => setOpen(true)}
       >
-        {t('stocktake.lines.change-location')}
+        {t('button.change-location')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -95,18 +96,18 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MapPinIcon />}
-      title={t('stocktake.lines.change-location')}
+      testId="confirmation-modal"
+      title={t('button.change-location')}
       description={
         <Switch
           fallback={
             <>
-              <p>{t('stocktake.lines.change-location-message')}</p>
-              <FieldRow label={t('stocktake.line-edit.location')}>
+              <p>{t('messages.confirm-change-location')}</p>
+              <FieldRow label={t('label.location')}>
                 <LocationSelect
-                  label={t('stocktake.line-edit.location')}
+                  label={t('label.location')}
                   hideLabel
                   value={locationId() ?? undefined}
-                  placeholder={t('stocktake.line-edit.location-none')}
                   onChange={l => setLocationId(l?.id ?? null)}
                 />
               </FieldRow>
@@ -114,11 +115,11 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'success'}>
-            {t('stocktake.lines.change-location-success')}
+            {tPlural('messages.changed-location', props.selectedIds().length)}
           </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
-              {tPlural('stocktake.errors.summary', errorCount())}
+              {tPlural('messages.line-errors', errorCount())}
             </Alert>
           </Match>
         </Switch>
@@ -133,18 +134,20 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
                 variant="primary"
                 icon={<CheckIcon />}
                 loading={phase() === 'working'}
+                data-testid="dialog-button-ok"
                 onClick={() => void run()}
               >
-                {t('common.apply')}
+                {t('button.apply')}
               </Button>
             </>
           }
@@ -153,18 +156,20 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
               onClick={props.onClose}
             >
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
             <Button
               variant="primary"
@@ -174,7 +179,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
                 props.onClose();
               }}
             >
-              {t('stocktake.errors.show')}
+              {t('button.show-error-lines')}
             </Button>
           </Match>
         </Switch>

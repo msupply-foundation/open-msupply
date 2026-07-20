@@ -26,9 +26,17 @@ android {
             applicationIdSuffix ".dev"
         }
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // R8 shrink + optimize; Capacitor ships consumer keep rules for the
+            // bridge/plugins, ours are in proguard-rules.pro (JNI surface)
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    dependenciesInfo {
+        // Play-Store-only metadata blob; we distribute APKs directly
+        includeInApk false
+        includeInBundle false
     }
 }
 

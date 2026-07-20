@@ -151,6 +151,17 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
   /**
+   * De-emphasise matching rows (read-only records, e.g. SHIPPED+ shipments —
+   * ui-standards/list-views): stamps data-dimmed on the row, styled in CSS.
+   */
+  rowDimmed?: (row: T) => boolean;
+  /**
+   * Semantic text tone for matching rows ('info' — e.g. outbound's
+   * placeholder lines awaiting allocation): stamps data-tone on the row,
+   * mapped to palette tokens in CSS. Semantic names only, never colours.
+   */
+  rowTone?: (row: T) => 'info' | undefined;
+  /**
    * The data is being fetched. Drives the loading treatment so a slow fetch
    * never flashes the empty state (issues #160/#196): with NO rows yet
    * (initial load) a centred spinner replaces the empty state; with rows
@@ -563,6 +574,9 @@ export function DataTable<T, K extends string, G extends string = never>(
                   type="button"
                   role="tab"
                   class={styles.groupTab}
+                  // tab-<key> per e2e/TESTIDS.md — the group key is the
+                  // locale-stable value (the label is translated).
+                  data-testid={`tab-${cardGroup.key}`}
                   data-active={cardGroup.key === activeTab() ? '' : undefined}
                   aria-selected={cardGroup.key === activeTab()}
                   onClick={() => setSelectedTab(() => cardGroup.key)}
@@ -663,7 +677,7 @@ export function DataTable<T, K extends string, G extends string = never>(
             class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
             aria-label={t('table.toggle-full-screen')}
             data-testid="table-fullscreen"
-            title={t('table.full-screen')}
+            title={t('label.full-screen')}
             onClick={() => setFullScreen(!fullScreen())}
           >
             {fullScreen() ? <MinimiseIcon /> : <MaximiseIcon />}
@@ -680,7 +694,7 @@ export function DataTable<T, K extends string, G extends string = never>(
         <div
           class={styles.refreshingBar}
           role="status"
-          aria-label={t('common.loading')}
+          aria-label={t('loading')}
         />
       </Show>
       <div class={styles.tableScroll}>
@@ -708,89 +722,96 @@ export function DataTable<T, K extends string, G extends string = never>(
             </Show>
           }
         >
-          <Switch>
-            <Match when={viewMode() === 'card'}>
-              <CardView
-                table={table}
-                tabsAndCardGroups={props.tabsAndCardGroups}
-                enableSelection={props.enableSelection ?? false}
-                onRowClick={props.onRowClick}
-              />
-            </Match>
-            <Match when={viewMode() === 'table'}>
-              <table class={styles.table}>
-                <thead>
-                  <For each={table.getHeaderGroups()}>
-                    {headerGroup => (
-                      <tr>
-                        {/* Expander column header — the "expand/collapse ALL" double-chevron (Open
+          {/* One <table> for BOTH views — card view is now rows in the SAME
+              table (each card is a full-width <tr>), so columns/scroll/selection
+              are shared. The header row is table-view only (hidden in card view:
+              a card's fields carry their own labels via LabelledValue). */}
+          <table class={styles.table}>
+            <Show when={viewMode() === 'table'}>
+              <thead>
+                <For each={table.getHeaderGroups()}>
+                  {headerGroup => (
+                    <tr>
+                      {/* Expander column header — the "expand/collapse ALL" double-chevron (Open
                           mSupply), reserving the chevron column when the table is grouped. */}
-                        <Show when={grouping().length > 0}>
-                          <th
-                            class={`${styles.th} ${styles.expanderCell}`}
-                            data-pinned="left"
-                            style={leadingPinnedStyle(0)}
+                      <Show when={grouping().length > 0}>
+                        <th
+                          class={`${styles.th} ${styles.expanderCell}`}
+                          data-pinned="left"
+                          style={leadingPinnedStyle(0)}
+                        >
+                          <button
+                            type="button"
+                            class={styles.groupExpander}
+                            data-expanded={allGroupsExpanded() ? '' : undefined}
+                            aria-expanded={allGroupsExpanded()}
+                            aria-label={
+                              allGroupsExpanded()
+                                ? t('table.collapse-all-groups')
+                                : t('table.expand-all-groups')
+                            }
+                            data-testid="table-expand-all"
+                            onClick={toggleAllGroups}
                           >
-                            <button
-                              type="button"
-                              class={styles.groupExpander}
-                              data-expanded={
-                                allGroupsExpanded() ? '' : undefined
+                            <ChevronsDownIcon />
+                          </button>
+                        </th>
+                      </Show>
+                      <Show when={props.enableSelection}>
+                        <th
+                          class={`${styles.th} ${styles.selectCell}`}
+                          data-pinned="left"
+                          style={leadingPinnedStyle(
+                            grouping().length > 0 ? 1 : 0
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            aria-label={t('table.select-all')}
+                            data-testid="select-all-rows-checkbox"
+                            checked={table.getIsAllRowsSelected()}
+                            onChange={table.getToggleAllRowsSelectedHandler()}
+                          />
+                        </th>
+                      </Show>
+                      {/* Display-time tab filter: render only the active tab's header cells
+                          (TanStack still holds every column — see columnInActiveTab). */}
+                      <For each={headerGroup.headers}>
+                        {header => (
+                          <Show
+                            when={columnInActiveTab(
+                              header.column.columnDef as {
+                                tabsAndCardGroups?: Membership;
                               }
-                              aria-expanded={allGroupsExpanded()}
-                              aria-label={
-                                allGroupsExpanded()
-                                  ? t('table.collapse-all-groups')
-                                  : t('table.expand-all-groups')
-                              }
-                              data-testid="table-expand-all"
-                              onClick={toggleAllGroups}
-                            >
-                              <ChevronsDownIcon />
-                            </button>
-                          </th>
-                        </Show>
-                        <Show when={props.enableSelection}>
-                          <th
-                            class={`${styles.th} ${styles.selectCell}`}
-                            data-pinned="left"
-                            style={leadingPinnedStyle(
-                              grouping().length > 0 ? 1 : 0
                             )}
                           >
-                            <input
-                              type="checkbox"
-                              aria-label={t('table.select-all')}
-                              data-testid="select-all-rows-checkbox"
-                              checked={table.getIsAllRowsSelected()}
-                              onChange={table.getToggleAllRowsSelectedHandler()}
+                            <HeaderCell
+                              header={header}
+                              pinnedStyle={pinnedStyle}
                             />
-                          </th>
-                        </Show>
-                        {/* Display-time tab filter: render only the active tab's header cells
-                          (TanStack still holds every column — see columnInActiveTab). */}
-                        <For each={headerGroup.headers}>
-                          {header => (
-                            <Show
-                              when={columnInActiveTab(
-                                header.column.columnDef as {
-                                  tabsAndCardGroups?: Membership;
-                                }
-                              )}
-                            >
-                              <HeaderCell
-                                header={header}
-                                pinnedStyle={pinnedStyle}
-                              />
-                            </Show>
-                          )}
-                        </For>
-                      </tr>
-                    )}
-                  </For>
-                </thead>
-                <tbody>
-                  {/* The outer <Show> guarantees rows here, so no empty fallback. */}
+                          </Show>
+                        )}
+                      </For>
+                    </tr>
+                  )}
+                </For>
+              </thead>
+            </Show>
+            <tbody>
+              {/* The outer <Show> guarantees rows here, so no empty fallback.
+                  Table view → one <TableRow> (a grid of <td>) per row; card
+                  view → one full-width card <tr> per row (CardView), so both
+                  live in the same <table>. */}
+              <Switch>
+                <Match when={viewMode() === 'card'}>
+                  <CardView
+                    table={table}
+                    tabsAndCardGroups={props.tabsAndCardGroups}
+                    enableSelection={props.enableSelection ?? false}
+                    onRowClick={props.onRowClick}
+                  />
+                </Match>
+                <Match when={viewMode() === 'table'}>
                   <For each={table.getRowModel().rows}>
                     {row => (
                       <TableRow
@@ -798,6 +819,8 @@ export function DataTable<T, K extends string, G extends string = never>(
                         enableSelection={props.enableSelection ?? false}
                         showExpander={grouping().length > 0}
                         onRowClick={props.onRowClick}
+                        rowDimmed={props.rowDimmed}
+                        rowTone={props.rowTone}
                         onToggleGroup={toggleGroupSelection}
                         pinnedStyle={pinnedStyle}
                         leadingPinnedStyle={leadingPinnedStyle}
@@ -811,10 +834,10 @@ export function DataTable<T, K extends string, G extends string = never>(
                       />
                     )}
                   </For>
-                </tbody>
-              </table>
-            </Match>
-          </Switch>
+                </Match>
+              </Switch>
+            </tbody>
+          </table>
         </Show>
       </div>
     </div>

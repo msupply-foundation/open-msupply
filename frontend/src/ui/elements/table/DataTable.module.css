@@ -152,24 +152,45 @@
   white-space: nowrap;
 }
 
-/* Wrapping cell (Column meta.wrapLines > 1): clamp to N lines then ellipsis. line-clamp
-   needs the -webkit-box display; --wrap-lines (set inline on the cell) carries N. The row
-   height becomes a MINIMUM so multi-line content can grow the row rather than clip to the
-   single-line height. Placed after .td so it wins the white-space + block-size. */
+/* De-emphasised (read-only) rows — data-dimmed stamped by TableRow when the
+   page's rowDimmed predicate matches (e.g. SHIPPED+ shipments). Opacity, not a
+   colour, so every cell treatment (chips, swatches) dims consistently. */
+tr[data-dimmed] > .td {
+  opacity: 0.55;
+}
+
+/* Semantic row tones — data-tone stamped by TableRow when the page's rowTone
+   predicate matches. 'info' = the action-blue text the current app gives rows
+   awaiting an action (e.g. outbound's placeholder lines). Colour on the cells
+   so plain text follows; richer cell content (chips, swatches) keeps its own
+   colours. */
+tr[data-tone='info'] > .td {
+  color: var(--info-main);
+}
+
+/* Wrapping cell (Column meta.wrapLines > 1): clamp to N lines then ellipsis. The td
+   itself MUST stay a real table cell — swapping its display for the -webkit-box that
+   line-clamp needs detaches it from table layout, so its content and collapsed bottom
+   border stop lining up with neighbouring cells (issue #244). The clamp therefore lives
+   on an inner wrapper (.tdClamp); the td only relaxes nowrap and adds vertical padding.
+   .td's block-size acts as a minimum under table layout, so multi-line content grows
+   the row rather than clipping. Placed after .td so it wins the white-space. */
 .td[data-wrap] {
+  padding-block: var(--space-1);
+  white-space: normal;
+}
+
+.tdClamp {
   /* --wrap-lines is declared here (default 2) so it's a known custom property to the
-     stylelint value check; the per-column count is set inline on the cell and overrides it. */
+     stylelint value check; the per-column count is set inline on the wrapper and
+     overrides it. */
   --wrap-lines: 2;
 
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: var(--wrap-lines);
   line-clamp: var(--wrap-lines);
-  block-size: auto;
-  min-block-size: var(--table-data-row);
-  padding-block: var(--space-1);
   overflow: hidden;
-  white-space: normal;
   overflow-wrap: anywhere;
 }
 
@@ -394,40 +415,32 @@ tr[data-selected] .expanderCell[data-pinned] {
 
 /* --- Card view (ui-standards § tables, mobile card layout) ------------------- */
 
-/* Cards flow in a WRAPPING row, each sized to its own content (width: max-content) rather
-   than a uniform grid track — a card with more/longer fields is wider than a sparse one.
-   They wrap to the next row when the row fills, and never exceed the viewport
-   (max-inline-size: 100% on the card). The scroll container (.tableScroll) handles overflow;
-   padding gives breathing room. */
-.cardGrid {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--space-3);
+/* Card view is now rows in the SAME <table> as table view (each card is a full-width
+   <tr>). One card per row, stacked vertically — no wrapping grid — so a card bounds
+   itself to the table's width and its fields WRAP rather than scrolling horizontally.
+   The header row is hidden in card view (DataTable), so the card's own field labels
+   (LabelledValue) carry the naming. */
+
+/* The single spanning <td> that holds the card. Padding gives the card breathing room
+   inside the row; the border separates one card from the next. */
+.cardCell {
   padding: var(--space-3);
+  border-block-end: 1px solid var(--color-divider);
+  white-space: normal;
+  vertical-align: top;
 }
 
+/* Selected card <tr> — tints the whole row (brand tint, matching table-row selection). */
+.cardRow[data-selected] > .cardCell {
+  background: color-mix(in srgb, var(--primary-main) 8%, transparent);
+}
+
+/* The card body — a vertical stack (header row, then the secondary field rows). It
+   fills the cell, so its content bounds to the table width and wraps. */
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  /* Basis = content width (`auto` sizes from the content — a card with more fields is
-     wider), but GROW to absorb the row's leftover space: several per row share the slack,
-     while a card alone on its row (narrow viewport) stretches to fill it. `auto` basis is
-     used over `max-content` for reliable cross-engine support. Never wider than the
-     viewport (the flex container bounds it). */
-  flex: 1 1 auto;
-  max-inline-size: 100%;
-  padding: var(--space-3);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
-}
-
-/* Selected card — same brand tint the design system uses for row selection. */
-.card[data-selected] {
-  border-color: color-mix(in srgb, var(--primary-main) 45%, transparent);
-  background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
 }
 
 /* Top row: identity (title + secondary) on the left, badge pinned top-right. */

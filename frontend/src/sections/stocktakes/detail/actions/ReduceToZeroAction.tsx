@@ -56,9 +56,10 @@ export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = props => {
         variant="secondary"
         icon={<MinusCircleIcon />}
         disabled={props.disabled}
+        data-testid="reduce-lines-to-zero-button"
         onClick={() => setOpen(true)}
       >
-        {t('stocktake.lines.reduce-to-zero')}
+        {t('button.reduce-lines-to-zero')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -100,19 +101,19 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
       dismissable={phase() !== 'working'}
       onClose={props.onClose}
       icon={<MinusCircleIcon />}
-      title={t('stocktake.lines.reduce-to-zero-title')}
+      testId="confirmation-modal"
+      title={t('button.reduce-lines-to-zero')}
       description={
         <Switch
           fallback={
             <>
-              <p>{t('stocktake.lines.reduce-to-zero-message')}</p>
-              <FieldRow label={t('stocktake.line-edit.reason')}>
+              <p>{t('messages.confirm-reduce-lines-to-zero')}</p>
+              <FieldRow label={t('label.reason')}>
                 <ReasonSelect
                   kind="reduction"
-                  label={t('stocktake.line-edit.reason')}
+                  label={t('label.reason')}
                   hideLabel
                   value={reasonId() ?? undefined}
-                  placeholder={t('stocktake.line-edit.reason-select')}
                   onChange={r => setReasonId(r?.id ?? null)}
                 />
               </FieldRow>
@@ -120,11 +121,11 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'success'}>
-            {t('stocktake.lines.reduce-to-zero-success')}
+            {tPlural('messages.reduced-to-zero', props.selectedIds().length)}
           </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
-              {tPlural('stocktake.errors.summary', errorCount())}
+              {tPlural('messages.line-errors', errorCount())}
             </Alert>
           </Match>
         </Switch>
@@ -139,18 +140,20 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
                 variant="primary"
                 icon={<CheckIcon />}
                 loading={phase() === 'working'}
+                data-testid="dialog-button-ok"
                 onClick={() => void run()}
               >
-                {t('common.apply')}
+                {t('button.apply')}
               </Button>
             </>
           }
@@ -159,18 +162,20 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             <Button
               variant="secondary"
               icon={<CheckIcon />}
+              data-testid="dialog-button-ok"
               onClick={props.onClose}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              data-testid="dialog-button-cancel"
               onClick={props.onClose}
             >
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
             <Button
               variant="primary"
@@ -180,7 +185,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
                 props.onClose();
               }}
             >
-              {t('stocktake.errors.show')}
+              {t('button.show-error-lines')}
             </Button>
           </Match>
         </Switch>
