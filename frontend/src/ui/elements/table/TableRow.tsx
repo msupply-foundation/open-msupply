@@ -59,6 +59,9 @@ export function TableRow<T>(props: {
   return (
     <tr
       data-testid="table-row"
+      // The row's key (TanStack getRowId = the table's rowKey), so a caller can
+      // address a specific row in the DOM (e.g. scroll it into view).
+      data-row-key={props.row.id}
       class={props.onRowClick ? styles.rowClickable : undefined}
       data-dimmed={
         !props.row.getIsGrouped() && props.rowDimmed?.(props.row.original)

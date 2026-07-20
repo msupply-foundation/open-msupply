@@ -1,4 +1,4 @@
-import { createSignal, onMount, Show, type JSX } from 'solid-js';
+import { createEffect, createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, tPlural } from '../../../../intl';
@@ -18,7 +18,10 @@ import {
 import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { LocationSelect } from '../../../../domain/location';
-import { ReasonSelect } from '../../../../domain/reasonOptions';
+import {
+  ReasonSelect,
+  reasonMatchesKind,
+} from '../../../../domain/reasonOptions';
 import { ItemSearch } from '../../../../domain/item';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
 import { NameSearch } from '../../../../domain/name';
@@ -98,6 +101,30 @@ type DraftLine = StocktakeLineFragment & {
   countThisLine: boolean;
   deleted?: boolean;
 };
+
+// The adjustment DIRECTION of a line's count: counted MORE than snapshot is a
+// positive adjustment, FEWER is negative, and equal (or not yet counted) is no
+// adjustment (null). This drives which reason options the picker offers and
+// whether it's enabled — a UI mirror of the server's direction rule
+// (spec/stocktakes/rules.md §adjustment-reason rules). The reason itself stays
+// server-validated; this only narrows the choices to help the user.
+const adjustmentDirection = (
+  line: DraftLine
+): 'positive' | 'negative' | null => {
+  const counted = line.countedNumberOfPacks;
+  if (counted == null) return null;
+  const delta = counted - (line.snapshotNumberOfPacks ?? 0);
+  if (delta > 0) return 'positive';
+  if (delta < 0) return 'negative';
+  return null;
+};
+
+// Pack size is only editable on a genuinely NEW batch — one being introduced
+// with no existing stock behind it (`isNew` and no linked stock line). An
+// existing stocktake line, or a row opting an existing stock line into the
+// count, carries that stock's real pack size and must not be re-typed here.
+const packSizeEditable = (line: DraftLine): boolean =>
+  !!line.isNew && line.stockLineId == null;
 
 // How many lines/stock lines to pull for one item (a single item never has many
 // batches — one page covers it).
@@ -228,6 +255,12 @@ interface StocktakeLineEditModalProps {
    */
   initialItemId?: string;
   /**
+   * The clicked BATCH (stocktake-line id) for a row-click open — the editor
+   * scrolls it into view and focuses its count on open. Omitted for "Add item"
+   * (and irrelevant after an "OK & next" advance, which focuses the first row).
+   */
+  initialLineId?: string;
+  /**
    * UPDATE mode "OK & next": resolve the next item to edit (parent-owned; pages
    * the detail table forward as needed). See ResolveNextItem.
    */
@@ -258,6 +291,7 @@ export const StocktakeLineEditModal = (
         stocktakeId={props.stocktakeId}
         // 'add' sentinel → no initial item (start in add mode); otherwise the id.
         initialItemId={openKey === 'add' ? undefined : openKey}
+        initialLineId={props.initialLineId}
         nextItem={props.nextItem}
         onSaved={props.onSaved}
       />
@@ -270,6 +304,7 @@ interface StocktakeLineEditContentProps {
   storeId: string;
   stocktakeId: string;
   initialItemId?: string;
+  initialLineId?: string;
   nextItem: ResolveNextItem;
   onSaved: () => void;
 }
@@ -303,6 +338,16 @@ const StocktakeLineEditContent = (
   // advances too. Seeded with each item as it loads; not reactive.
   const coveredItemIds = new Set<string>();
 
+  // What to focus once the next draft finishes loading (see the focus effect):
+  // - { row: lineId } → scroll that batch into view and focus its count (a
+  //   row-click open focuses the clicked batch; an advance/pick focuses the
+  //   first row).
+  // - 'itemSelector'  → the add-mode item search (no item picked).
+  // Consumed (cleared) by the effect so it fires once per load.
+  const [pendingFocus, setPendingFocus] = createSignal<
+    { row: string } | 'itemSelector' | undefined
+  >();
+
   // Store-preference display gates (spec/stocktakes › store-preference gates),
   // read reactively. Each gated column is built into the column set only when
   // its preference is on. The VVM/doses cells additionally render only for a
@@ -319,7 +364,12 @@ const StocktakeLineEditContent = (
   // from the previous item linger, and resets per-item UI. countByDefault:
   // opt-in (unchecked) when the item already has stocktake lines, all-counted
   // for a brand-new item. Records the item in the covered set for the walk.
-  const seedItem = async (item: StocktakeLineEditItem) => {
+  // `focusLineId` is the batch to focus once loaded (a row-click open focuses
+  // the clicked line); omitted → focus the first row.
+  const seedItem = async (
+    item: StocktakeLineEditItem,
+    focusLineId?: string
+  ) => {
     setCurrentItem(item);
     coveredItemIds.add(item.id);
     setLineErrors(new Map());
@@ -337,6 +387,9 @@ const StocktakeLineEditContent = (
       existing.length === 0
     );
     setDraft(reconcile(seeded, { key: 'id' }));
+    // Focus the requested batch, else the first row — the focus effect runs
+    // when loadingLines flips false below.
+    setPendingFocus({ row: focusLineId ?? seeded[0]?.id ?? '' });
     setLoadingLines(false);
   };
 
@@ -367,13 +420,18 @@ const StocktakeLineEditContent = (
       props.onClose();
       return;
     }
-    await seedItem({
-      id,
-      code: first.item.code,
-      name: first.itemName,
-      isVaccine: first.item.isVaccine,
-      doses: first.item.doses,
-    });
+    await seedItem(
+      {
+        id,
+        code: first.item.code,
+        name: first.itemName,
+        isVaccine: first.item.isVaccine,
+        doses: first.item.doses,
+      },
+      // Focus the clicked batch (falls back to the first row if it's not among
+      // this item's lines, e.g. the id went stale).
+      props.initialLineId
+    );
   };
 
   // Back to the item-search state — add mode with no item picked. Reached by the
@@ -385,13 +443,48 @@ const StocktakeLineEditContent = (
     setLineErrors(new Map());
     setErrorMessage(undefined);
     setDraft(reconcile([], { key: 'id' }));
+    setPendingFocus('itemSelector');
   };
 
-  // Seed on mount: a row open starts on its item; an add open starts in the
-  // search state (nothing to seed).
+  // Seed on mount: a row open starts on its item (focusing the clicked batch);
+  // an add open starts in the search state, focusing the item selector.
   onMount(() => {
     if (props.initialItemId) void loadItemById(props.initialItemId);
-    else setLoadingLines(false);
+    else {
+      setLoadingLines(false);
+      setPendingFocus('itemSelector');
+    }
+  });
+
+  // Move focus once the target is in the DOM: the item search in add mode, else
+  // the requested batch row (scrolled into view, its count focused). Runs after
+  // the load so the row exists; deferred a frame so the table has painted. A
+  // disabled count (an uncounted row) can't take focus — we still scroll to it.
+  createEffect(() => {
+    const target = pendingFocus();
+    if (!target || loadingLines()) return;
+    setPendingFocus(undefined);
+    const modal = () =>
+      document.querySelector('[data-testid="add-item-modal"]');
+    requestAnimationFrame(() => {
+      const root = modal();
+      if (!root) return;
+      if (target === 'itemSelector') {
+        root
+          .querySelector<HTMLElement>('[data-testid="item-search-input"]')
+          ?.focus();
+        return;
+      }
+      const row = root.querySelector<HTMLElement>(
+        `[data-row-key="${target.row}"]`
+      );
+      if (!row) return;
+      row.scrollIntoView({ block: 'nearest' });
+      const count = row.querySelector<HTMLInputElement>(
+        '[data-testid="cell-countedNumberOfPacks"] input'
+      );
+      if (count && !count.disabled) count.focus();
+    });
   });
 
   // The rows the table shows: the draft minus soft-deleted lines.
@@ -412,6 +505,26 @@ const StocktakeLineEditContent = (
         next.delete(id);
         return next;
       });
+    }
+  };
+
+  // Update a line's counted packs AND drop a now-mismatched reason: recounting
+  // the other way (or back to the snapshot) can leave a reason that no longer
+  // matches the new adjustment direction, which the picker would then hide. We
+  // clear it so a stale, wrong-direction reason can't survive unseen (the
+  // server would reject it as AdjustmentReasonNotValid anyway).
+  const setCounted = (line: DraftLine, value: number | null) => {
+    update(line.id, 'countedNumberOfPacks', value);
+    const direction = adjustmentDirection({
+      ...line,
+      countedNumberOfPacks: value,
+    });
+    const reason = line.reasonOption;
+    if (
+      reason &&
+      (direction === null || !reasonMatchesKind(reason, direction))
+    ) {
+      update(line.id, 'reasonOption', null);
     }
   };
 
@@ -761,9 +874,9 @@ const StocktakeLineEditContent = (
             errorTestId="stocktake-line-error"
             // NumberField commits a real number (or undefined when cleared);
             // the draft stores null for empty, so map undefined → null.
-            onChange={value =>
-              update(line.id, 'countedNumberOfPacks', value ?? null)
-            }
+            // setCounted also drops a now-mismatched reason when the count
+            // changes adjustment direction.
+            onChange={value => setCounted(line, value ?? null)}
           />
         );
       },
@@ -781,7 +894,9 @@ const StocktakeLineEditContent = (
             hideLabel
             size="small"
             decimalLimit={2}
-            disabled={!line.countThisLine}
+            // Pack size is fixed for existing stock — editable only on a
+            // genuinely new batch (packSizeEditable).
+            disabled={!line.countThisLine || !packSizeEditable(line)}
             value={line.packSize ?? undefined}
             onChange={value => update(line.id, 'packSize', value ?? null)}
           />
@@ -1005,12 +1120,18 @@ const StocktakeLineEditContent = (
             return t('error.provide-valid-reason');
           return undefined;
         };
+        // Offer only reasons valid for the line's adjustment direction; a zero
+        // variance (or uncounted) line has no direction, so the picker is
+        // disabled — a zero adjustment never takes a reason (rules.md §reason
+        // rules). setCounted clears a now-mismatched reason when the count
+        // changes direction, so the disabled default 'positive' is never read.
+        const direction = () => adjustmentDirection(line);
         return (
           <ReasonSelect
-            kind="adjustment"
+            kind={direction() ?? 'positive'}
             label={t('label.reason')}
             hideLabel
-            disabled={!line.countThisLine}
+            disabled={!line.countThisLine || direction() === null}
             value={line.reasonOption?.id}
             error={error()}
             errorTestId="stocktake-line-error"
@@ -1112,10 +1233,15 @@ const StocktakeLineEditContent = (
       size="large"
       testId="add-item-modal"
       // Title: JUST the item selector (no "Add"/"Edit" label — the modal is one
-      // combined flow). Kept in the title the WHOLE time so the user can switch
-      // item any time — picking one loads its lines (discarding the current
-      // item's unsaved edits — seedItem replaces the draft). A component title
-      // can't be the a11y name, so pass ariaLabel.
+      // combined flow). A component title can't be the a11y name, so pass
+      // ariaLabel.
+      //
+      // DISABLED in update mode (opened from a row): the selector then just
+      // shows the item being edited, read-only — switching item is an add-flow
+      // action, and a disabled input can't steal the dialog's initial focus
+      // (which would otherwise open the combobox for a frame, then close as the
+      // focus effect moves to the clicked batch — a flicker). Add mode keeps it
+      // enabled: that IS how you pick an item.
       //
       // `selectedItem` gives the combobox the current item's label directly, so
       // it displays even in update mode where the row-opened item isn't in the
@@ -1127,6 +1253,7 @@ const StocktakeLineEditContent = (
             hideLabel
             class={styles.addSelect}
             storeId={props.storeId}
+            disabled={mode() === 'update'}
             value={currentItem()?.id}
             selectedItem={currentItem()}
             // Pick an item → load it; clear (×) → back to the search state.

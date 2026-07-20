@@ -85,9 +85,13 @@ export const AsyncCombobox = <T,>(
   const [query, setQuery] = createSignal('');
 
   // The caller's selected node leads the list (deduped) so a controlled value
-  // resolves even before its page is fetched — but only while it matches the
-  // typed query (or none is typed): an unmatched seed would sort above real
-  // matches and mask the "no matches" row (which keys off an empty list).
+  // resolves even before its page is fetched. We seed it when it either matches
+  // the typed query OR IS the controlled selection: the latter guarantees a
+  // controlled selection's label never blanks — e.g. when the parent advances
+  // the value externally ("OK & next" steps to a new item) while the input
+  // still holds the previous item's text as a stale, non-matching query. We
+  // still drop an unmatched seed that ISN'T the current value, so a free-text
+  // search doesn't sort a stale seed above real matches or mask "no matches".
   const items = (): T[] => {
     const seed = props.selected;
     if (!seed) return search.items();
@@ -95,7 +99,8 @@ export const AsyncCombobox = <T,>(
     const needle = query().toLocaleLowerCase();
     const seedMatches =
       !needle || props.itemToString(seed).toLocaleLowerCase().includes(needle);
-    if (!seedMatches) return search.items();
+    const isControlledValue = value() === key;
+    if (!seedMatches && !isControlledValue) return search.items();
     return [seed, ...search.items().filter(i => props.itemToValue(i) !== key)];
   };
 

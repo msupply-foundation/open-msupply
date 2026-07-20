@@ -193,10 +193,11 @@ const StocktakeDetailView: Component = () => {
   // The line-edit modal's open state (undefined = closed). The modal
   // self-queries its own data (its item's stocktake lines + stock lines), so we
   // only tell it WHICH item to open on (or none, in the item-search state):
-  // - { itemId }: opened from a ROW click — starts editing that item, and can
-  //   step through the list via "OK & next" (it pages the server itself).
+  // - { itemId, lineId }: opened from a ROW click — starts editing that item,
+  //   and can step through the list via "OK & next" (it pages the server
+  //   itself). lineId is the clicked batch, so the editor can scroll/focus it.
   // - {}: opened from "Add item" — starts in the item-search state.
-  type EditState = { itemId?: string } | undefined;
+  type EditState = { itemId?: string; lineId?: string } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
 
   // The content region's two tabs (OMS parity): Details (the line table) and
@@ -296,9 +297,11 @@ const StocktakeDetailView: Component = () => {
     setSelectedIds([]);
   };
 
-  // Row click → open the editor on that line's ITEM (all its batches). The
+  // Row click → open the editor on that line's ITEM (all its batches), passing
+  // the clicked line id so the editor can scroll to / focus that batch. The
   // modal advances through the list itself via "OK & next".
-  const openRow = (line: Line) => setEditState({ itemId: line.item.id });
+  const openRow = (line: Line) =>
+    setEditState({ itemId: line.item.id, lineId: line.id });
 
   // "Add item" (empty state + toolbar) → open the editor in the item-search
   // state (no initial item).
@@ -888,6 +891,7 @@ const StocktakeDetailView: Component = () => {
                 storeId={params.storeId}
                 stocktakeId={node().id}
                 initialItemId={editState()?.itemId}
+                initialLineId={editState()?.lineId}
                 nextItem={nextItem}
                 onSaved={onLinesChanged}
               />

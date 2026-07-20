@@ -33,6 +33,8 @@ export interface ItemSearchProps {
   onSelect: (item: ItemOption | null) => void;
   placeholder?: string;
   hideLabel?: boolean;
+  /** Read-only: show the selected item but don't allow searching/changing it. */
+  disabled?: boolean;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
 }
@@ -74,6 +76,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
     <AsyncCombobox<ItemOption>
       label={props.label}
       hideLabel={props.hideLabel}
+      disabled={props.disabled}
       class={props.class}
       placeholder={props.placeholder}
       // Every ItemSearch IS the contract's item search — the fixed id is
