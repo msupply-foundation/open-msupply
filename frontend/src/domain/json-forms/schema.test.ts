@@ -353,6 +353,97 @@ describe('cleanArguments', () => {
   });
 });
 
+// The Pending Encounters shape (real backend fixture, abridged): a required
+// `programId` driven by a PatientProgramSearch control, and a single
+// `startDatetime` property (type object|null) driven by a DateRange control.
+// The editing store holds { start, end } calendar dates under that one key;
+// cleanArguments widens them to the wire DatetimeFilterInput.
+const dateRangeSchema = {
+  jsonSchema: {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    allOf: [{ $ref: '#/definitions/Filters' }],
+    definitions: {
+      Filters: {
+        properties: {
+          programId: { type: 'string' },
+          startDatetime: { type: ['object', 'null'], format: 'date-time' },
+        },
+        required: ['programId'],
+      },
+    },
+  },
+  uiSchema: {
+    elements: [
+      {
+        type: 'PatientProgramSearch',
+        scope: '#/properties/programId',
+        label: 'Program',
+      },
+      {
+        type: 'DateRange',
+        scope: '#/properties/startDatetime',
+        label: '',
+        options: { dateOnly: true },
+      },
+    ],
+  },
+};
+
+describe('cleanArguments — DateRange', () => {
+  const fields = parseArgumentSchema(dateRangeSchema);
+
+  it('parses the DateRange control to the dateRange kind', () => {
+    expect(byKey(fields, 'startDatetime').kind).toBe('dateRange');
+  });
+
+  it('parses PatientProgramSearch to the program kind, carrying required', () => {
+    expect(byKey(fields, 'programId')).toEqual({
+      kind: 'program',
+      key: 'programId',
+      label: 'Program',
+      nullable: false,
+      required: true,
+    });
+  });
+
+  it('passes a program context id through untouched on submit', () => {
+    expect(cleanArguments(fields, { programId: 'hiv-context' })).toEqual({
+      programId: 'hiv-context',
+    });
+  });
+
+  it('widens both ends to a DatetimeFilterInput (inclusive local day)', () => {
+    expect(
+      cleanArguments(fields, {
+        startDatetime: { start: '2026-07-01', end: '2026-07-31' },
+      })
+    ).toEqual({
+      startDatetime: {
+        afterOrEqualTo: new Date('2026-07-01T00:00:00').toISOString(),
+        beforeOrEqualTo: new Date('2026-07-31T23:59:59.999').toISOString(),
+      },
+    });
+  });
+
+  it('omits an empty end (or start) rather than sending a blank', () => {
+    expect(
+      cleanArguments(fields, {
+        startDatetime: { start: '2026-07-01', end: '' },
+      })
+    ).toEqual({
+      startDatetime: {
+        afterOrEqualTo: new Date('2026-07-01T00:00:00').toISOString(),
+      },
+    });
+  });
+
+  it('drops the key entirely when both ends are empty', () => {
+    expect(
+      cleanArguments(fields, { startDatetime: { start: '', end: '' } })
+    ).toEqual({});
+  });
+});
+
 describe('seedDefaults', () => {
   const prefs = {
     monthsOverstock: 6,

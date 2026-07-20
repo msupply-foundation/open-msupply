@@ -300,17 +300,17 @@ export const SelectorsShowcase = () => {
       </Card>
 
       <Card
-        title="Autocomplete — pick-first flows & per-option disabled"
+        title="Autocomplete — open-on-interaction & per-option disabled"
         lead={
           <>
-            Two lookup behaviours the domain selects lean on:{' '}
-            <code>openOnFocus</code> opens the full list on click/focus with no
-            typing (the customer-search modal's pick-first flow), and{' '}
-            <code>itemDisabled</code> lists an option for context without
-            letting it be chosen (on-hold customers, out-of-stock items —
-            exposed as <code>aria-disabled</code>). After committing a pick,
-            reopening shows the <em>full</em> list again — the input text only
-            filters while it's something the user typed.
+            Every combobox opens its full list as soon as the input is
+            focused/clicked — no typing needed (the customer-search modal's
+            pick-first flow is just the default). <code>itemDisabled</code>{' '}
+            lists an option for context without letting it be chosen (on-hold
+            customers, out-of-stock items — exposed as{' '}
+            <code>aria-disabled</code>). After committing a pick, reopening
+            shows the <em>full</em> list again — the input text only filters
+            while it's something the user typed.
           </>
         }
       >
@@ -321,7 +321,6 @@ export const SelectorsShowcase = () => {
           itemToValue={item => item.code}
           filter={itemFilter}
           itemDisabled={item => item.availableStock === 0}
-          openOnFocus
           renderItem={renderItem}
           onChange={() => {}}
           placeholder="Click — the list opens without typing"
