@@ -6,6 +6,9 @@ import { CurrencyField } from '../ui/elements/inputs/CurrencyField';
 import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { RadioGroup } from '../ui/elements/inputs/RadioGroup';
 import { Checkbox } from '../ui/elements/inputs/Checkbox';
+import { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
+import { DateInput } from '../ui/elements/inputs/DateInput';
+import { DateRangeInput } from '../ui/elements/inputs/DateRangeInput';
 import { Button } from '../ui/elements/buttons/Button';
 import { Select } from '../ui/elements/selectors/Select';
 import {
@@ -87,9 +90,17 @@ export const InputsShowcase = () => {
   // sub-choice — the exact shape the create-stocktake modal uses.
   const [stocktakeType, setStocktakeType] = createSignal('full');
   const [includeAll, setIncludeAll] = createSignal('soh');
-  // Checkbox demo: caller-owned checked state, flipped in onChange.
-  const [urgent, setUrgent] = createSignal(false);
-  const [confirmed, setConfirmed] = createSignal(true);
+  // Checkbox / ToggleSwitch demos.
+  const [countZero, setCountZero] = createSignal(true);
+  const [confirmed, setConfirmed] = createSignal(false);
+  const [showFinalised, setShowFinalised] = createSignal(false);
+  // Date + range demos (ISO strings in/out).
+  const [expiry, setExpiry] = createSignal('2026-09-30');
+  const [range, setRange] = createSignal({ start: '', end: '' });
+  const rangeError = () =>
+    range().start && range().end && range().end < range().start
+      ? 'End date must not be before the start date.'
+      : undefined;
   // NumberField demos: the parent-owned numbers each ValueReadout displays.
   const [qty, setQty] = createSignal<number | undefined>(1000);
   const [cost, setCost] = createSignal<number | undefined>(12.5);
@@ -512,36 +523,81 @@ export const InputsShowcase = () => {
         title="Checkbox — native <input type=checkbox>"
         lead={
           <>
-            The plain form checkbox — the same "own the simple" call as the
-            radios: the native control gives the role, Space toggling and
-            checked announcement for free; we style it with{' '}
-            <code>accent-color</code> and the wrapping label makes the whole row
-            clickable. Caller owns <code>checked</code>, flips it in{' '}
-            <code>onChange</code>. (The pill-shaped toggle is{' '}
-            <code>CheckboxButton</code> — see Buttons; the table row-selection
-            checkbox is the DataTable's own.)
+            A labelled checkbox on the native control — no library. The real
+            input is visually hidden (kept for a11y + as the state owner); a
+            styled box + check glyph read the <code>:checked</code> /{' '}
+            <code>:focus-visible</code> state off it. The label click toggles
+            it; an <code>error</code> shows an icon + message (never colour
+            alone). Label typography matches TextField.
           </>
         }
       >
         <div class={styles.formPreview}>
-          <Checkbox label="Urgent" checked={urgent()} onChange={setUrgent} />
           <Checkbox
-            label="Confirm counts"
-            description="Lines must be verified before the stocktake can be finalised."
+            label="Count items with zero stock"
+            checked={countZero()}
+            onChange={setCountZero}
+          />
+          <Checkbox
+            label="I have physically counted every line"
             checked={confirmed()}
             onChange={setConfirmed}
+            error={
+              confirmed() ? undefined : 'Confirm the count before finalising.'
+            }
           />
-          <Checkbox
-            label="Disabled"
-            checked={false}
-            onChange={() => {}}
-            disabled
+          <Checkbox label="Disabled option" disabled checked />
+        </div>
+      </Card>
+
+      <Card
+        title="Toggle switch — on/off toggle (role=switch)"
+        lead={
+          <>
+            The native checkbox re-cast as a switch (<code>role="switch"</code>
+            ): a custom track + sliding thumb, the state carried by the thumb
+            position. Space toggles it; the label click toggles it. For a binary
+            on/off setting where a slider reads more naturally than a tick box.
+          </>
+        }
+      >
+        <div class={styles.formPreview}>
+          <ToggleSwitch
+            label="Show finalised stocktakes"
+            checked={showFinalised()}
+            onChange={setShowFinalised}
           />
-          <Checkbox
-            label="Disabled · checked"
-            checked
-            onChange={() => {}}
-            disabled
+          <ToggleSwitch label="Disabled switch" disabled checked />
+        </div>
+      </Card>
+
+      <Card
+        title="Date input & range — native <input type=date>"
+        lead={
+          <>
+            <code>DateInput</code> is the native date picker with TextField's
+            exact label / helper / error / required API — it <em>is</em> a
+            TextField (<code>type="date"</code>), so there's no new styling and
+            the browser owns the picker. <code>DateRangeInput</code> pairs two
+            of them in one labelled row and constrains them by construction
+            (start's <code>max</code> = end, end's <code>min</code> = start),
+            with one combined error slot — try to set the end before the start.
+          </>
+        }
+      >
+        <div class={styles.formPreview}>
+          <DateInput
+            label="Expiry date"
+            value={expiry()}
+            onChange={setExpiry}
+            helperText="ISO value in and out"
+          />
+          <DateRangeInput
+            label="Created between"
+            start={range().start}
+            end={range().end}
+            onChange={setRange}
+            error={rangeError()}
           />
         </div>
       </Card>

@@ -12,6 +12,7 @@ import { InputsShowcase } from './InputsShowcase';
 import { SelectorsShowcase } from './SelectorsShowcase';
 import { FeedbackShowcase } from './FeedbackShowcase';
 import { DialogShowcase } from './DialogShowcase';
+import { DisplayShowcase } from './DisplayShowcase';
 import { SyncShowcase } from './SyncShowcase';
 import { TableShowcase } from './TableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
@@ -108,6 +109,12 @@ export const sections: SectionDef[] = [
     id: 'dialog',
     label: 'Dialog / Modal',
     component: DialogShowcase,
+    category: 'components',
+  },
+  {
+    id: 'display',
+    label: 'Display',
+    component: DisplayShowcase,
     category: 'components',
   },
   {

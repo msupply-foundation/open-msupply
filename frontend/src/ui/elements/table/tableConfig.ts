@@ -86,10 +86,9 @@ export type GlobalTableConfigs = Record<string, LayeredConfig>;
 // back to an empty map rather than throwing — each table then uses
 // user/default/TanStack fallback. Trusted-layer cast: the blob's shape is the
 // server's contract, and bad JSON degrades to `{}`.
-export const parseGlobalTableConfigs = (
-  json: string | undefined
-): GlobalTableConfigs => {
+export const parseGlobalTableConfigs = (json: unknown): GlobalTableConfigs => {
   if (!json) return {};
+  if (typeof json !== 'string') return (json as GlobalTableConfigs) ?? {};
   try {
     return (JSON.parse(json) as GlobalTableConfigs) ?? {};
   } catch {

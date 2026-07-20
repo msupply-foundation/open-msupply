@@ -32,11 +32,11 @@ export const ThemeToggle = () => {
       class={styles.toggle}
       onClick={toggle}
       aria-pressed={theme() === 'dark'}
-      aria-label={t('theme.dark')}
+      aria-label={t('button.dark-theme')}
       title={
         theme() === 'dark'
-          ? t('theme.switch-to-light')
-          : t('theme.switch-to-dark')
+          ? t('button.switch-to-light-theme')
+          : t('button.switch-to-dark-theme')
       }
     >
       <Show

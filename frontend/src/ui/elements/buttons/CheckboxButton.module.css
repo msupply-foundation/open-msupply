@@ -5,6 +5,7 @@
  * rem (borders/radius in px per the sizing rule).
  */
 .button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -24,17 +25,31 @@
     background 140ms ease;
 }
 
-.button:focus-visible {
+/* The real (visually hidden) checkbox input — semantics + focus live here;
+   the pill draws the ring for it. */
+.input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.button:has(.input:focus-visible) {
   outline: 2px solid var(--primary-main);
   outline-offset: 2px;
 }
 
-.button:disabled {
+.button[data-disabled] {
   cursor: default;
   color: var(--gray-light);
 }
 
-.button:hover:not(:disabled) {
+.button:hover:not([data-disabled]) {
   border-color: var(--primary-main);
 }
 
@@ -72,7 +87,7 @@
   opacity: 1;
 }
 
-.button:disabled .box {
+.button[data-disabled] .box {
   border-color: var(--gray-light);
 }
 

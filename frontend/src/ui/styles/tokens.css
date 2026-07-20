@@ -113,7 +113,10 @@
   --status-picked: var(--color-warning);
   --status-shipped: #1fb6b6;
   --status-delivered: #7c5cff;
+  --status-received: #5c86ff;
   --status-verified: #38a169;
+  /* Cancelled — the error tone (a terminated record). */
+  --status-cancelled: var(--error-main);
   /* Stocktake terminal "done" status (integration branch) — reuses the
      verified hue. */
   --status-finalised: #38a169;
@@ -278,7 +281,9 @@
   --status-picked: var(--color-warning);
   --status-shipped: #2ecbcb;
   --status-delivered: #9678ff;
+  --status-received: #7a9dff;
   --status-verified: #48c78e;
+  --status-cancelled: var(--error-main);
   --status-finalised: #48c78e;
 
   /* Feedback severities — same lift as the rest of the dark palette */

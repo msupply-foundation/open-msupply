@@ -39,7 +39,7 @@ export const CreateInitialStocktakeAction = (props: {
       input: {
         id: crypto.randomUUID(),
         isInitialStocktake: true,
-        comment: t('stocktake.create.initial-comment'),
+        comment: t('stocktake.comment-initial-stocktake-template'),
       },
     });
     if (result.kind !== 'success') {
@@ -61,8 +61,8 @@ export const CreateInitialStocktakeAction = (props: {
       dismissable={!creating()}
       onClose={props.onClose}
       icon={<PlusCircleIcon />}
-      title={t('stocktake.create.initial-title')}
-      description={t('stocktake.create.initial-confirm')}
+      title={t('heading.create-initial-stocktake')}
+      description={t('messages.confirm-create-initial-stocktake')}
       actions={
         <>
           <Button
@@ -71,7 +71,7 @@ export const CreateInitialStocktakeAction = (props: {
             disabled={creating()}
             onClick={props.onClose}
           >
-            {t('common.cancel')}
+            {t('button.cancel')}
           </Button>
           <Button
             variant="secondary"
@@ -79,7 +79,7 @@ export const CreateInitialStocktakeAction = (props: {
             loading={creating()}
             onClick={() => void create()}
           >
-            {t('stocktake.create.action')}
+            {t('button.ok')}
           </Button>
         </>
       }

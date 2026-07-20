@@ -11,9 +11,9 @@ setDictionaries({ en: commonEn, ar: commonAr });
 describe('t', () => {
   it('translates a key in the active locale', () => {
     setLocale('en');
-    expect(t('login.title')).toBe('Log in');
+    expect(t('button.login')).toBe('Log in');
     setLocale('ar');
-    expect(t('login.title')).toBe('تسجيل الدخول');
+    expect(t('button.login')).toBe('تسجيل الدخول');
   });
 
   it('falls back to the key when missing', () => {
@@ -26,14 +26,14 @@ describe('t', () => {
 describe('tPlural', () => {
   it('selects English one/other and interpolates count', () => {
     setLocale('en');
-    expect(tPlural('login.failed-attempts', 1)).toBe('1 failed attempt');
-    expect(tPlural('login.failed-attempts', 3)).toBe('3 failed attempts');
+    expect(tPlural('error.failed-attempts', 1)).toBe('1 failed attempt');
+    expect(tPlural('error.failed-attempts', 3)).toBe('3 failed attempts');
   });
 
   it('selects Arabic plural categories', () => {
     setLocale('ar');
     // zero / one / two are fixed strings; few interpolates the count.
-    expect(tPlural('login.failed-attempts', 0)).toBe('لا محاولات فاشلة');
-    expect(tPlural('login.failed-attempts', 3)).toContain('محاولات فاشلة');
+    expect(tPlural('error.failed-attempts', 0)).toBe('لا محاولات فاشلة');
+    expect(tPlural('error.failed-attempts', 3)).toContain('محاولات فاشلة');
   });
 });

@@ -198,7 +198,7 @@ export const AppShell = (props: AppShellProps) => {
                   <span class={styles.footerDivider} aria-hidden="true" />
                   <FooterCell
                     icon={CentralIcon}
-                    label={t('shell.footer.central-server')}
+                    label={t('label.central-server')}
                   />
                 </Show>
               </footer>
