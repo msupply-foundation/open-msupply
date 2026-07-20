@@ -10,6 +10,7 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { CardGrid } from '../../../ui/layout/CardGrid/CardGrid';
 import { WidgetCard } from '../../../ui/elements/display/WidgetCard';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
@@ -307,14 +308,9 @@ const ReportsPage: Component = () => {
                     {t(group.def.titleKey)}
                   </Text>
                 </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    'grid-template-columns':
-                      'repeat(auto-fit, minmax(min(100%, 16rem), 1fr))',
-                    gap: 'var(--space-4)',
-                  }}
-                >
+                {/* The generic Card grid layout role (spec S1 layout) — the
+                    same intrinsic auto-fit grid as the dashboard's widgets. */}
+                <CardGrid minColumnWidth="16rem">
                   <For each={group.nodes}>
                     {report => (
                       <WidgetCard
@@ -323,7 +319,7 @@ const ReportsPage: Component = () => {
                       />
                     )}
                   </For>
-                </div>
+                </CardGrid>
               </section>
             )}
           </For>
