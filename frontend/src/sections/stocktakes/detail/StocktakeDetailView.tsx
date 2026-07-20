@@ -67,6 +67,8 @@ import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import type { StocktakeEditFields } from './stocktakeEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
+import { stocktakePreferences } from '../../../store/storeContext';
+import { dosesCounted, dosesPerUnit } from './lines/doses';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an
 // editable description + filters), the lines in a SERVER-paginated DataTable
@@ -173,6 +175,17 @@ const StocktakeDetailView: Component = () => {
           location: false,
           reason: false,
           note: false,
+          // The columns added for spec parity — all hidden by default (the user
+          // reveals them via the column-visibility control), matching the
+          // existing extras. Gated columns (doses*, donor) only appear in the
+          // table at all when their store preference is on; this just sets their
+          // initial visibility once present.
+          difference: false,
+          dosesPerUnit: false,
+          dosesCounted: false,
+          donor: false,
+          manufacturer: false,
+          comment: false,
         },
       },
     },
@@ -410,7 +423,13 @@ const StocktakeDetailView: Component = () => {
           continue;
         }
         if (!past || covered.has(id)) continue;
-        return { id, code: line.item.code, name: line.itemName };
+        return {
+          id,
+          code: line.item.code,
+          name: line.itemName,
+          isVaccine: line.item.isVaccine,
+          doses: line.item.doses,
+        };
       }
       return undefined;
     };
@@ -458,6 +477,12 @@ const StocktakeDetailView: Component = () => {
     },
     { label: String(node.stocktakeNumber) },
   ];
+
+  // Store-preference display gates (spec/stocktakes › store-preference gates).
+  // Read reactively so a post-sync context refetch re-gates in place. A gated
+  // column is built into the array only when its preference is on — absent
+  // entirely otherwise (not merely default-hidden).
+  const prefs = () => stocktakePreferences();
 
   const columns = (): Column<Line, SortKey>[] => [
     {
@@ -533,6 +558,33 @@ const StocktakeDetailView: Component = () => {
       ...getNumberCell(),
       meta: { align: 'right', card: { region: 'badge' } },
     },
+    // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine rows
+    // only (blank otherwise); nothing stored per line (see ./lines/doses).
+    ...(prefs().manageVaccinesInDoses
+      ? [
+          {
+            c: {
+              accessor: line => dosesCounted(line) ?? '',
+              id: 'dosesCounted',
+            },
+            header: t('label.doses-counted'),
+            ...getNumberCell(),
+          } satisfies Column<Line, SortKey>,
+        ]
+      : []),
+    // Difference = counted − snapshot; blank until the line is counted. Derived
+    // (no server field), so unsortable.
+    {
+      c: {
+        accessor: line =>
+          line.countedNumberOfPacks == null
+            ? ''
+            : line.countedNumberOfPacks - (line.snapshotNumberOfPacks ?? 0),
+        id: 'difference',
+      },
+      header: t('label.difference'),
+      ...getNumberCell(),
+    },
     // The remaining editable fields (mirroring the line-edit panel) as columns.
     // Start hidden by default. Only the fields the server can sort on carry a
     // `sortKey` (packSize) — the rest render as unsortable headers.
@@ -542,6 +594,20 @@ const StocktakeDetailView: Component = () => {
       header: t('label.pack-size'),
       ...getNumberCell(),
     },
+    // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
+    // vaccine rows only.
+    ...(prefs().manageVaccinesInDoses
+      ? [
+          {
+            c: {
+              accessor: line => dosesPerUnit(line) ?? '',
+              id: 'dosesPerUnit',
+            },
+            header: t('label.doses-per-unit'),
+            ...getNumberCell(),
+          } satisfies Column<Line, SortKey>,
+        ]
+      : []),
     {
       c: { key: 'sellPricePerPack' },
       header: t('label.pack-sell-price'),
@@ -571,9 +637,35 @@ const StocktakeDetailView: Component = () => {
       sortKey: 'reasonOption',
       header: t('label.reason'),
     },
+    // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain scalar
+    // on the line. Unsortable: StocktakeLineSortFieldInput has no donor key, so
+    // no sortKey (server can't sort it — kdd/type-safety, D23).
+    ...(prefs().allowTrackingOfStockByDonor
+      ? [
+          {
+            c: { accessor: line => line.donorName ?? '', id: 'donor' },
+            header: t('label.donor'),
+          } satisfies Column<Line, SortKey>,
+        ]
+      : []),
+    {
+      // Manufacturer name (ungated) — the arg-bearing manufacturer(storeId)
+      // field, resolved to its name. Unsortable (no server key).
+      c: {
+        accessor: line => line.manufacturer?.name ?? '',
+        id: 'manufacturer',
+      },
+      header: t('label.manufacturer'),
+    },
     {
       c: { key: 'note' },
       header: t('label.note'),
+    },
+    // Comment (spec column #18) — the line's own comment text. Distinct from
+    // note; hidden by default like the other extra columns.
+    {
+      c: { accessor: line => line.comment ?? '', id: 'comment' },
+      header: t('label.comment'),
     },
   ];
 

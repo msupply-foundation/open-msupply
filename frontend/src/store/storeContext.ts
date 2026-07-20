@@ -57,6 +57,21 @@ const currentStoreId = () => loadedStoreId();
 // `me?.userId`; undefined between store switches.
 const currentUserId = () => storeContext()?.me?.userId;
 
+// The stocktake display-gate preferences (spec/stocktakes › store-preference
+// gates), read from the guard-3 PreferencesNode. Each defaults to `false` while
+// the context is still unresolved — the safe default is OFF, so a gated column /
+// field never flashes in before the preference is known (mirrors the D7 rule for
+// the simplified layout: unresolved ⇒ render the plainer surface). Reactive, so
+// a post-sync refetch re-gates the affected surfaces in place.
+const stocktakePreferences = () => {
+  const prefs = storeContext()?.preferences;
+  return {
+    manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
+    manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
+    allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
+  };
+};
+
 // A server UserPermission name as it arrives in the store-context query
 // (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
 // generated so callers can't typo a permission. Reading the union off the
@@ -84,6 +99,7 @@ export {
   refetch as refetchStoreContext,
   currentStoreId,
   currentUserId,
+  stocktakePreferences,
   hasPermission,
 };
 export type { UserPermission };
