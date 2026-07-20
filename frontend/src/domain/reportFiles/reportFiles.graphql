@@ -1,0 +1,32 @@
+# The generated-file wire surface shared across verticals (spec/reports
+# "Cross-cutting" / AC-F3): plain CSV-to-workbook conversion for list-screen
+# exports. Same PrintReportResponse shape as the reports vertical's
+# generateReport; shares the report permission and the file service.
+query csvToExcel(
+  $storeId: String!
+  $csvData: String!
+  $filename: String!
+  $sheetName: String
+) {
+  csvToExcel(
+    storeId: $storeId
+    csvData: $csvData
+    filename: $filename
+    sheetName: $sheetName
+  ) {
+    ... on PrintReportNode {
+      __typename
+      fileId
+    }
+    ... on PrintReportError {
+      __typename
+      error {
+        __typename
+        description
+        ... on FailedToFetchReportData {
+          errors
+        }
+      }
+    }
+  }
+}
