@@ -25,13 +25,13 @@ const FILTERS: Filter<StocktakeLineFilter>[] =
   constructFilters<StocktakeLineFilter>({
     // ─ user-facing (addable chips), in display order ─────────────────────────
     locationId: {
-      label: () => t('stocktake.detail-filter.location'),
+      label: () => t('label.location'),
       render: props => (
         <LocationSelect
-          label={t('stocktake.detail-filter.location')}
+          label={t('label.location')}
           hideLabel
           value={props.filter().locationId?.equalTo ?? undefined}
-          placeholder={t('stocktake.detail-filter.location')}
+          placeholder={t('label.location')}
           // Pick a location → filter by its id (server locationId.equalTo);
           // clear (×) → null so stripEmpty drops it (the chip stays).
           onChange={location =>

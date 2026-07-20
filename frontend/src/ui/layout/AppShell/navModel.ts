@@ -77,14 +77,10 @@ const SECTION_ICONS: Record<string, Component<IconProps>> = {
 };
 
 // Sections pinned to the block-end lower cluster (matching the current app);
-// everything else scrolls in the upper list.
-const LOWER_IDS = new Set([
-  'catalogue',
-  'manage',
-  'reports',
-  'settings',
-  'help',
-]);
+// everything else scrolls in the upper list. Reports stays in the upper list,
+// as its last entry (spec/chrome § sidebar order: … Dispensary · Reports ·
+// Catalogue).
+const LOWER_IDS = new Set(['catalogue', 'manage', 'settings', 'help']);
 
 const toNavItem = (item: NavConfigItem): NavItem => ({
   id: item.path,
@@ -107,7 +103,7 @@ const items = navConfig.map(toNavItem);
 export const SYNC_NAV_ID = 'sync';
 const syncNavItem: NavItem = {
   id: SYNC_NAV_ID,
-  labelKey: 'nav.sync',
+  labelKey: 'sync',
   to: 'sync',
   icon: RadioIcon,
 };

@@ -30,7 +30,7 @@ export const UserMenu = (props: UserMenuProps) => (
           class={styles.item}
           onSelect={() => props.onLogout()}
         >
-          {t('user.logout')}
+          {t('logout')}
         </DropdownMenu.Item>
       </DropdownMenu.Content>
     </DropdownMenu.Portal>

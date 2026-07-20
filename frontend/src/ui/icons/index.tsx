@@ -43,6 +43,20 @@ export const ChevronDownIcon = (props: IconProps) => (
   </Fill>
 );
 
+/* Directional (prev/next) — mirror in RTL via data-flip-rtl (index.css). Used
+   by the date-picker month navigation. */
+export const ChevronLeftIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <polyline points="15 18 9 12 15 6" />
+  </Stroke>
+);
+
+export const ChevronRightIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <polyline points="9 18 15 12 9 6" />
+  </Stroke>
+);
+
 export const CheckIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <polyline points="20 6 9 17 4 12" />
@@ -53,6 +67,16 @@ export const CheckCircleIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
     <polyline points="22 4 12 14.01 9 11.01" />
+  </Stroke>
+);
+
+// Side-panel reopen affordance (the current app's SidebarIcon — a window
+// frame with the inline-start pane marked; spec ui-standards/layout.md →
+// page regions).
+export const SidebarIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <line x1="9" y1="3" x2="9" y2="21" />
   </Stroke>
 );
 
@@ -115,6 +139,17 @@ export const SaveIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Print — the report/document print action (stroke set: paper tray + body +
+   ejected sheet, matching the Feather/Tabler outline the rest of the stroke
+   icons follow). */
+export const PrinterIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <polyline points="6 9 6 2 18 2 18 9" />
+    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+    <rect x="6" y="14" width="12" height="8" />
+  </Stroke>
+);
+
 /* Validation error / warning */
 export const AlertTriangleIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -131,6 +166,13 @@ export const TrashIcon = (props: IconProps) => (
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     <line x1="10" y1="11" x2="10" y2="17" />
     <line x1="14" y1="11" x2="14" y2="17" />
+  </Stroke>
+);
+
+/* Auto-allocate (lightning bolt — the "do it for me" action) */
+export const ZapIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
   </Stroke>
 );
 
@@ -246,6 +288,21 @@ export const ThermometerIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 28 64" stroke-width="3" {...props}>
     <path d="M14,0 C9.9,0,6.5,3.2,6.5,7.2 L6.5,37.7 C2.4,40.2,0,44.1,0,48.6 C0,56,6.3,62,14,62 C21.7,62,28,56,28,48.6 C28,44.1,25.6,40.2,21.5,37.7 L21.5,7.2 C21.5,3.2,18.1,0,14,0 Z M26,48.6 C26,54.9,20.6,60,14,60 C7.4,60,2,54.9,2,48.6 C2,44.6,4.1,41.3,8,39.1 C8.3,38.9,8.5,38.6,8.5,38.2 L8.5,7.2 C8.5,4.3,11,2,14,2 C17,2,19.5,4.3,19.5,7.2 L19.5,11.2 L14.5,11.2 L14.5,13.2 L19.5,13.2 L19.5,21.2 L14.5,21.2 L14.5,23.2 L19.5,23.2 L19.5,31.2 L14.5,31.2 L14.5,33.2 L19.5,33.2 L19.5,38.3 C19.5,38.7,19.7,39,20,39.2 C23.9,41.3,26,44.6,26,48.6 Z" />
   </Stroke>
+);
+
+/* Reports-page category headings (spec ui-standards/conventions.md → icons):
+   bar chart (Stock & Items) and suppliers (Replenishment); Distribution and
+   Programs/Other reuse TruckIcon and FileIcon. */
+export const BarIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 24 24" {...props}>
+    <path d="M14 2H10C9.44771 2 9 2.44772 9 3V21C9 21.5523 9.44771 22 10 22H14C14.5523 22 15 21.5523 15 21V3C15 2.44772 14.5523 2 14 2ZM13 20H11V4H13V20ZM18 7H22C22.5523 7 23 7.44772 23 8V21C23 21.5523 22.5523 22 22 22H18C17.4477 22 17 21.5523 17 21V8C17 7.44772 17.4477 7 18 7ZM6 12H2C1.44772 12 1 12.4477 1 13V21C1 21.5523 1.44772 22 2 22H6C6.55228 22 7 21.5523 7 21V13C7 12.4477 6.55228 12 6 12ZM19 9V20H21V9H19ZM5 20H3V14H5V20Z" />
+  </Fill>
+);
+
+export const SuppliersIcon = (props: IconProps) => (
+  <Fill viewBox="0 0 20 20" {...props}>
+    <path d="M.89 10.532l.006-.016.01-.021 2.89-6.508c.402-.905 1.298-1.488 2.287-1.487h7.833c.99 0 1.887.583 2.287 1.487l2.892 6.508.006.015c.01.02.018.043.025.065l-.031-.08c.018.04.032.082.044.124l.011.049c.011.054.017.11.017.165V15c0 1.38-1.12 2.5-2.5 2.5H3.333c-1.38 0-2.5-1.12-2.5-2.5v-4.167l.007-.104c.005-.04.013-.08.023-.118l.002-.007.024-.072zM2.5 15c0 .46.373.833.833.833h13.334c.46 0 .833-.373.833-.833v-3.334h-3.72l-1.42 2.13c-.155.231-.415.37-.693.37H8.333c-.278 0-.538-.139-.693-.37l-1.42-2.13H2.5V15zM13.917 4.167H6.083c-.33 0-.63.194-.763.495L2.948 10h3.719c.238 0 .464.102.62.278l.073.093L8.78 12.5h2.44l1.42-2.129c.155-.232.415-.371.693-.371h3.717l-2.37-5.338c-.134-.301-.433-.496-.763-.495z" />
+  </Fill>
 );
 
 /* Programs */

@@ -30,6 +30,17 @@ export function TableRow<T>(props: {
   enableSelection: boolean;
   onRowClick?: (row: T) => void;
   /**
+   * De-emphasise this row (read-only records — e.g. SHIPPED+ shipments,
+   * ui-standards list-views): stamps data-dimmed, styled in CSS.
+   */
+  rowDimmed?: (row: T) => boolean;
+  /**
+   * Semantic text tone for this row (e.g. 'info' for records awaiting an
+   * action — outbound's placeholder lines): stamps data-tone, styled in CSS.
+   * Semantic names only, mapped to palette tokens by the CSS — never colours.
+   */
+  rowTone?: (row: T) => 'info' | undefined;
+  /**
    * Sticky-pin style for a pinned data column's cell
    * (position/offset/z-index), else undefined.
    */
@@ -49,6 +60,16 @@ export function TableRow<T>(props: {
     <tr
       data-testid="table-row"
       class={props.onRowClick ? styles.rowClickable : undefined}
+      data-dimmed={
+        !props.row.getIsGrouped() && props.rowDimmed?.(props.row.original)
+          ? ''
+          : undefined
+      }
+      data-tone={
+        !props.row.getIsGrouped()
+          ? props.rowTone?.(props.row.original)
+          : undefined
+      }
       // Selected rows get the same brand tint as selected cards (consistent
       // selection signal across both views); styled on the cells
       // (data-selected) in CSS.

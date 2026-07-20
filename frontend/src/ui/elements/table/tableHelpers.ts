@@ -1,6 +1,7 @@
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
+import { formatNumber } from '../../../intl/formatNumber';
 import type { Column } from './columnTypes';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their
@@ -24,13 +25,24 @@ type Meta = ColumnMeta<never, unknown>;
 
 const EMPTY_CELL = '—';
 
-// These return a narrow column FRAGMENT — only the fields they set (meta/cell),
-// typed off ColumnDefBase (the non-identity shared column fields), NOT our
-// Column<T,K,G>. Excluding the identity union + sortKey/groups extension lets a
-// fragment spread into a Column of ANY (K, G) — including a groups-only edit
-// table whose K is `never` — without a `sortKey?: never` or identity clash.
-// `cell` matches ColumnDefBase's own signature exactly.
-type CellFragment<T> = Pick<ColumnDefBase<T>, 'meta' | 'cell'>;
+// These return a narrow column FRAGMENT — only the fields they set (meta/cell
+// + the grouping aggregationFn), typed off ColumnDefBase (the non-identity
+// shared column fields), NOT our Column<T,K,G>. Excluding the identity union +
+// sortKey/groups extension lets a fragment spread into a Column of ANY (K, G) —
+// including a groups-only edit table whose K is `never` — without a `sortKey?:
+// never` or identity clash. `cell` matches ColumnDefBase's own signature
+// exactly. Exported for ChipListCell (getChipListCell), which builds a fragment
+// too.
+//
+// aggregationFn sets the DEFAULT grouped-parent value (row grouping — see
+// DataTable rowGroup): a number column sums its leaves; a date column shows the
+// shared date or [multiple]. The stocktake detail table no longer groups, but
+// the shared DataTable still supports grouping (card view, other verticals), so
+// the fragment keeps carrying the grouping fields.
+export type CellFragment<T> = Pick<
+  ColumnDefBase<T>,
+  'meta' | 'cell' | 'aggregationFn' | 'aggregatedCell'
+>;
 
 // Format a date value the ONE way: blank → em dash, else localised.
 const formatDateCell = (value: string | Date | null | undefined): string =>
@@ -51,7 +63,34 @@ export const getDateCell = <T>(meta?: Meta): CellFragment<T> => ({
 // Booleans: resolved value → localised Yes/No.
 export const getBooleanCell = <T>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
-  cell: info => (info.getValue<boolean>() ? t('common.yes') : t('common.no')),
+  cell: info =>
+    info.getValue<boolean>() ? t('messages.yes') : t('messages.no'),
+});
+
+// Money: symbol + always two decimals (spec/ui-standards/conventions.md),
+// right-aligned, locale-formatted. Grouped parent → SUM of the leaves,
+// formatted the same way. The currency code is fixed at USD — the current
+// app's default store home currency — until store currency preferences are
+// plumbed through; narrowSymbol keeps the symbol a bare "$" in the
+// Latin-script locales (the current app's pattern) — ar has no CLDR narrow
+// form and falls back to "US$".
+const formatCurrencyCell = (value: number | null | undefined): string =>
+  value == null
+    ? EMPTY_CELL
+    : formatNumber(value, {
+        style: 'currency',
+        currency: 'USD',
+        currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+export const getCurrencyCell = <T>(meta?: Meta): CellFragment<T> => ({
+  meta: { align: 'right', ...meta },
+  aggregationFn: 'sum',
+  cell: info => formatCurrencyCell(info.getValue<number | null | undefined>()),
+  aggregatedCell: info =>
+    formatCurrencyCell(info.getValue<number | null | undefined>()),
 });
 
 // =================================================================================

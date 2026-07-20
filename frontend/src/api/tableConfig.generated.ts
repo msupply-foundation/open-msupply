@@ -8,7 +8,7 @@ export type GlobalTableConfigsVariables = {
 
 export type GlobalTableConfigsResult = {
   preferences: {
-  globalTableConfigs: string;
+  globalTableConfigs: unknown;
 };
 };
 

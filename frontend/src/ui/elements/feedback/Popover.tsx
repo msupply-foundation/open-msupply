@@ -15,6 +15,11 @@ export interface PopoverProps {
   triggerLabel?: string;
   /** Extends the bare trigger button's styling. */
   triggerClass?: string;
+  /** Extra attributes for the trigger button (e.g. `id`, `aria-*` for field
+      label wiring). Does not override the component's own wiring. */
+  triggerProps?: JSX.ButtonHTMLAttributes<HTMLButtonElement>;
+  /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
+  triggerTestId?: string;
   /** Preferred side/alignment; flips to the other side rather than overflow.
       start/end are logical (mirror in RTL). Default 'bottom'. */
   placement?: PopoverPlacement;
@@ -28,7 +33,12 @@ export interface PopoverProps {
    */
   openOnHover?: boolean;
   class?: string;
-  children: JSX.Element;
+  /**
+   * Panel content. A function form receives a `close()` — for panels that
+   * dismiss on a specific action (e.g. picking a calendar day) rather than on
+   * any inside click (that's `closeOnClickInside`).
+   */
+  children: JSX.Element | ((close: () => void) => JSX.Element);
 }
 
 /* Gap between trigger and panel, and the viewport edge the panel never
@@ -185,7 +195,9 @@ export const Popover = (props: PopoverProps) => {
             : styles.trigger
         }
         aria-label={props.triggerLabel}
+        data-testid={props.triggerTestId}
         {...hoverHandlers}
+        {...props.triggerProps}
       >
         {props.trigger}
       </button>
@@ -205,7 +217,9 @@ export const Popover = (props: PopoverProps) => {
         onMouseEnter={props.openOnHover ? show : undefined}
         onMouseLeave={props.openOnHover ? scheduleHide : undefined}
       >
-        {props.children}
+        {typeof props.children === 'function'
+          ? props.children(() => panel.hidePopover())
+          : props.children}
       </div>
     </>
   );

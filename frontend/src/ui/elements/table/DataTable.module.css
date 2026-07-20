@@ -32,6 +32,44 @@
    `relative` so the absolutely-positioned overlay anchors to THIS box's bottom
    edge — not to the scrolling content — keeping the pager at the very
    bottom-right whatever the row count. */
+/* Refreshing bar — a thin indeterminate progress bar shown above the scroll
+   area during a keep-previous-data refetch (filter/sort/page). Signals
+   "updating" without blanking or remounting the table (issue #160/#196). */
+.refreshingBar {
+  position: relative;
+  block-size: 0.1875rem;
+  overflow: hidden;
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--secondary-main) 20%, transparent);
+}
+
+.refreshingBar::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inline-size: 40%;
+  background: var(--secondary-main);
+  border-radius: inherit;
+  animation: table-refreshing 1.1s ease-in-out infinite;
+}
+
+@keyframes table-refreshing {
+  from {
+    inset-inline-start: -40%;
+  }
+
+  to {
+    inset-inline-start: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refreshingBar::after {
+    animation-duration: 2.2s;
+  }
+}
+
 .tableArea {
   position: relative;
   display: flex;
@@ -126,24 +164,45 @@
   white-space: nowrap;
 }
 
-/* Wrapping cell (Column meta.wrapLines > 1): clamp to N lines then ellipsis. line-clamp
-   needs the -webkit-box display; --wrap-lines (set inline on the cell) carries N. The row
-   height becomes a MINIMUM so multi-line content can grow the row rather than clip to the
-   single-line height. Placed after .td so it wins the white-space + block-size. */
+/* De-emphasised (read-only) rows — data-dimmed stamped by TableRow when the
+   page's rowDimmed predicate matches (e.g. SHIPPED+ shipments). Opacity, not a
+   colour, so every cell treatment (chips, swatches) dims consistently. */
+tr[data-dimmed] > .td {
+  opacity: 0.55;
+}
+
+/* Semantic row tones — data-tone stamped by TableRow when the page's rowTone
+   predicate matches. 'info' = the action-blue text the current app gives rows
+   awaiting an action (e.g. outbound's placeholder lines). Colour on the cells
+   so plain text follows; richer cell content (chips, swatches) keeps its own
+   colours. */
+tr[data-tone='info'] > .td {
+  color: var(--info-main);
+}
+
+/* Wrapping cell (Column meta.wrapLines > 1): clamp to N lines then ellipsis. The td
+   itself MUST stay a real table cell — swapping its display for the -webkit-box that
+   line-clamp needs detaches it from table layout, so its content and collapsed bottom
+   border stop lining up with neighbouring cells (issue #244). The clamp therefore lives
+   on an inner wrapper (.tdClamp); the td only relaxes nowrap and adds vertical padding.
+   .td's block-size acts as a minimum under table layout, so multi-line content grows
+   the row rather than clipping. Placed after .td so it wins the white-space. */
 .td[data-wrap] {
+  padding-block: var(--space-1);
+  white-space: normal;
+}
+
+.tdClamp {
   /* --wrap-lines is declared here (default 2) so it's a known custom property to the
-     stylelint value check; the per-column count is set inline on the cell and overrides it. */
+     stylelint value check; the per-column count is set inline on the wrapper and
+     overrides it. */
   --wrap-lines: 2;
 
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: var(--wrap-lines);
   line-clamp: var(--wrap-lines);
-  block-size: auto;
-  min-block-size: var(--table-data-row);
-  padding-block: var(--space-1);
   overflow: hidden;
-  white-space: normal;
   overflow-wrap: anywhere;
 }
 

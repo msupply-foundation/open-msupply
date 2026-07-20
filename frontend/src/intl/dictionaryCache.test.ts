@@ -19,12 +19,12 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('dictionaryCache', () => {
   it('round-trips a dictionary', () => {
-    writeCache('en', { 'login.title': 'Log in' });
-    expect(readCache('en')).toEqual({ 'login.title': 'Log in' });
+    writeCache('en', { 'button.login': 'Log in' });
+    expect(readCache('en')).toEqual({ 'button.login': 'Log in' });
   });
 
   it('misses when LANG_VERSION changes', () => {
-    writeCache('en', { 'login.title': 'Log in' });
+    writeCache('en', { 'button.login': 'Log in' });
     vi.stubGlobal('LANG_VERSION', 'v2'); // new build shipped
     expect(readCache('en')).toBeUndefined();
   });
@@ -32,12 +32,12 @@ describe('dictionaryCache', () => {
   it('misses when the entry is older than the TTL', () => {
     const eightDaysAgo = Date.now() - 8 * 24 * 60 * 60 * 1000;
     vi.spyOn(Date, 'now').mockReturnValueOnce(eightDaysAgo); // stamp the write
-    writeCache('en', { 'login.title': 'Log in' });
+    writeCache('en', { 'button.login': 'Log in' });
     expect(readCache('en')).toBeUndefined();
   });
 
   it('clears an entry', () => {
-    writeCache('fr', { 'login.title': 'Connexion' });
+    writeCache('fr', { 'button.login': 'Connexion' });
     clearCache('fr');
     expect(readCache('fr')).toBeUndefined();
   });

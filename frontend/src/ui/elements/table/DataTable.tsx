@@ -119,6 +119,17 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
   /**
+   * De-emphasise matching rows (read-only records, e.g. SHIPPED+ shipments —
+   * ui-standards/list-views): stamps data-dimmed on the row, styled in CSS.
+   */
+  rowDimmed?: (row: T) => boolean;
+  /**
+   * Semantic text tone for matching rows ('info' — e.g. outbound's
+   * placeholder lines awaiting allocation): stamps data-tone on the row,
+   * mapped to palette tokens in CSS. Semantic names only, never colours.
+   */
+  rowTone?: (row: T) => 'info' | undefined;
+  /**
    * The data is being fetched. Drives the loading treatment so a slow fetch
    * never flashes the empty state (issues #160/#196): with NO rows yet
    * (initial load) a centred spinner replaces the empty state; with rows
@@ -546,13 +557,26 @@ export function DataTable<T, K extends string, G extends string = never>(
             class={`${styles.fullScreenButton} ${fullScreen() ? styles.controlButtonActive : ''}`}
             aria-label={t('table.toggle-full-screen')}
             data-testid="table-fullscreen"
-            title={t('table.full-screen')}
+            title={t('label.full-screen')}
             onClick={() => setFullScreen(!fullScreen())}
           >
             {fullScreen() ? <MinimiseIcon /> : <MaximiseIcon />}
           </button>
         </Show>
       </div>
+      {/* Refreshing bar — a thin indeterminate progress bar pinned above the
+          scroll area while a fetch runs AND rows are already showing (a refetch
+          on filter/sort/page — keepPreviousData keeps the old rows in place). It
+          signals "updating" without blanking the table or remounting it (issue
+          #160/#196). The initial load (no rows yet) uses the centred spinner
+          below instead, so the two never show together. */}
+      <Show when={props.loading && table.getRowModel().rows.length > 0}>
+        <div
+          class={styles.refreshingBar}
+          role="status"
+          aria-label={t('loading')}
+        />
+      </Show>
       {/* tableArea is the positioning context for the pagination overlay: the
           overlay is a SIBLING of the scroll box (not inside it), absolutely
           pinned to this box's bottom-inline-end — so it sits at the very bottom

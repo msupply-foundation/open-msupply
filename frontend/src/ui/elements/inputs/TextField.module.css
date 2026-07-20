@@ -10,15 +10,16 @@
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
-  /* Contain the visually-hidden label (.labelHidden, position:absolute): with no
-     positioned ancestor its containing block is the document, so it lands at a
-     document-space coordinate deep in the page and stretches the viewport's
-     scrollHeight — a second, document-level scrollbar. Making the field the
-     containing block keeps it within the field (and the page's own scroll). */
-  position: relative;
 }
 
-/* Spec max-widths */
+/* Spec max-widths. `compact` caps only the INPUT BOX (rule after the base
+   input rules below) — the field container keeps the `short` cap so the label
+   and helper/error text wrap at a readable width instead of being squeezed to
+   match the narrow box. */
+.field[data-width='compact'] {
+  max-width: var(--input-max-short);
+}
+
 .field[data-width='short'] {
   max-width: var(--input-max-short);
 }
@@ -36,19 +37,6 @@
   font-weight: var(--weight-medium);
   line-height: 1.3;
   color: var(--text-body);
-}
-
-/* Visually hidden but present for assistive tech (used with a FieldRow's visible label). */
-.labelHidden {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
 }
 
 .required {
@@ -103,6 +91,85 @@
   cursor: not-allowed;
 }
 
+/*
+ * Adornments (currency symbol, unit suffix). Without one, the wrapper is
+ * display:contents — zero box, the input renders exactly as it always has.
+ * With one, the border box moves to the wrapper (focus ring via :focus-within)
+ * and the input becomes a borderless flex child, so the adornment sits inside
+ * the field frame on the logical side (flips under RTL).
+ */
+.inputWrap {
+  display: contents;
+}
+
+.inputWrap[data-adorned] {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--input-height);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-white);
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.inputWrap[data-adorned][data-size='small'] {
+  height: var(--input-height-sm);
+}
+
+.inputWrap[data-adorned]:focus-within {
+  border-color: var(--primary-main);
+  box-shadow: var(--focus-ring);
+}
+
+.inputWrap[data-adorned][data-error] {
+  border-color: var(--error-main);
+}
+
+.inputWrap[data-adorned][data-error]:focus-within {
+  box-shadow: var(--focus-ring-error);
+}
+
+.inputWrap[data-adorned]:has(.input:disabled) {
+  background: var(--bg-input);
+  border-color: var(--color-divider);
+}
+
+/* The compact width variant: only the input box narrows (see the width-caps
+   comment above). */
+.field[data-width='compact'] .input,
+.field[data-width='compact'] .inputWrap[data-adorned] {
+  max-width: var(--input-max-compact);
+}
+
+.inputWrap[data-adorned] .input,
+.inputWrap[data-adorned] .input:focus,
+.inputWrap[data-adorned] .input:disabled {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+}
+
+.adornment {
+  flex-shrink: 0;
+  padding-inline-start: var(--input-padding-x);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.3;
+  pointer-events: none;
+}
+
+/* An end adornment pads against the field's end edge instead. */
+.input ~ .adornment {
+  padding-inline: 0 var(--input-padding-x);
+}
+
 .helper {
   margin: 0;
   font-size: var(--text-xs);
@@ -127,13 +194,19 @@
 }
 
 @media (pointer: coarse) {
-  .input {
+  .input,
+  .inputWrap[data-adorned] {
     min-height: var(--touch-target);
+  }
+
+  .inputWrap[data-adorned] .input {
+    min-height: 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .input {
+  .input,
+  .inputWrap[data-adorned] {
     transition: none;
   }
 }

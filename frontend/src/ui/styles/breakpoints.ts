@@ -13,10 +13,17 @@ export const breakpoints = {
   navOverlay: 1024,
   /** Below this = phone-ish; index.css drops the root font-size here. */
   compact: 600,
+  /**
+   * At/above this, a page's side panel defaults open (a default-state
+   * decision, not a styling nudge). The captured app's widest breakpoint —
+   * spec ui-standards/layout.md → page regions.
+   */
+  sidePanelDefaultOpen: 1536,
 } as const;
 
 /** matchMedia query strings built from the values above. */
 export const mediaQuery = {
   navOverlay: `(max-width: ${breakpoints.navOverlay - 1}px)`,
   compact: `(max-width: ${breakpoints.compact - 1}px)`,
+  sidePanelWide: `(min-width: ${breakpoints.sidePanelDefaultOpen}px)`,
 } as const;

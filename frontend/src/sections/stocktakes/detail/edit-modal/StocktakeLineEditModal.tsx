@@ -2,7 +2,7 @@ import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { toNumberOrNull } from '../../../../typeHelpers';
-import { t } from '../../../../intl';
+import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
@@ -165,17 +165,17 @@ type GroupKey = 'batch' | 'pricing' | 'other';
 const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
   {
     key: 'batch',
-    labelKey: 'stocktake.line-edit.tab-batch',
+    labelKey: 'label.batch',
     icon: () => <StockIcon />,
   },
   {
     key: 'pricing',
-    labelKey: 'stocktake.line-edit.tab-pricing',
+    labelKey: 'label.pricing',
     icon: () => <InfoIcon />,
   },
   {
     key: 'other',
-    labelKey: 'stocktake.line-edit.tab-other',
+    labelKey: 'heading.other',
     icon: () => <MessageSquareIcon />,
   },
 ];
@@ -519,7 +519,7 @@ const StocktakeLineEditContent = (
 
     if (errors.size > 0) {
       setLineErrors(new Map(errors));
-      setErrorMessage(t('stocktake.line-edit.save-errors'));
+      setErrorMessage(tPlural('messages.line-errors', errors.size));
       return false; // keep the modal open on the failed lines
     }
     return true;
@@ -555,10 +555,7 @@ const StocktakeLineEditContent = (
   const columns = (): Column<DraftLine, never, GroupKey>[] => [
     {
       c: { id: 'countThisLine' },
-      // Terse column header ("Count"); the checkbox keeps the fuller
-      // "Count this line" as its accessible name (a screen reader announcing
-      // just "Count" on a checkbox would be ambiguous).
-      header: t('stocktake.line-edit.count'),
+      header: t('label.count-this-line'),
       tabsAndCardGroups: ALL_TABS,
       meta: { align: 'center' },
       cell: info => {
@@ -566,7 +563,7 @@ const StocktakeLineEditContent = (
         return (
           <input
             type="checkbox"
-            aria-label={t('stocktake.line-edit.count-this-line')}
+            aria-label={t('label.count-this-line')}
             checked={line.countThisLine}
             onChange={e =>
               update(line.id, 'countThisLine', e.currentTarget.checked)
@@ -577,14 +574,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'batch' },
-      header: t('stocktake.column.batch'),
+      header: t('label.batch'),
       tabsAndCardGroups: ALL_TABS,
       meta: { card: { region: 'primary', showLabel: true } },
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.column.batch')}
+            label={t('label.batch')}
             hideLabel
             size="small"
             disabled={!line.countThisLine}
@@ -598,13 +595,13 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'expiryDate' },
-      header: t('stocktake.column.expiry'),
+      header: t('label.expiry-date'),
       tabsAndCardGroups: ['batch'],
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.column.expiry')}
+            label={t('label.expiry-date')}
             hideLabel
             size="small"
             type="date"
@@ -619,13 +616,13 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'manufactureDate' },
-      header: t('stocktake.line-edit.manufacture-date'),
+      header: t('label.manufacture-date'),
       tabsAndCardGroups: ['other'],
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.line-edit.manufacture-date')}
+            label={t('label.manufacture-date')}
             hideLabel
             size="small"
             type="date"
@@ -640,7 +637,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'snapshotNumberOfPacks' },
-      header: t('stocktake.column.snapshot'),
+      header: t('label.snapshot-num-of-packs'),
       tabsAndCardGroups: ['batch'],
       ...getNumberCell(),
       cell: info => {
@@ -669,7 +666,7 @@ const StocktakeLineEditContent = (
                   'text-align': 'end',
                 }}
               >
-                {t('stocktake.line-error.snapshot-mismatch')}
+                {t('error.snapshot-total-mismatch')}
               </span>
             </Show>
           </span>
@@ -678,14 +675,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'countedNumberOfPacks' },
-      header: t('stocktake.column.counted'),
+      header: t('label.counted-num-of-packs'),
       tabsAndCardGroups: ['batch'],
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.column.counted')}
+            label={t('label.counted-num-of-packs')}
             hideLabel
             size="small"
             type="number"
@@ -694,7 +691,7 @@ const StocktakeLineEditContent = (
             value={line.countedNumberOfPacks ?? ''}
             error={
               lineErrors().get(line.id) === 'StockLineReducedBelowZero'
-                ? t('stocktake.line-error.reduced-below-zero')
+                ? t('error.reduced-below-zero')
                 : undefined
             }
             errorTestId="stocktake-line-error"
@@ -711,14 +708,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'packSize' },
-      header: t('stocktake.line-edit.pack-size'),
+      header: t('label.pack-size'),
       tabsAndCardGroups: ['batch'],
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.line-edit.pack-size')}
+            label={t('label.pack-size')}
             hideLabel
             size="small"
             type="number"
@@ -734,14 +731,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('stocktake.line-edit.sell-price'),
+      header: t('label.pack-sell-price'),
       tabsAndCardGroups: ['pricing'],
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.line-edit.sell-price')}
+            label={t('label.pack-sell-price')}
             hideLabel
             size="small"
             type="number"
@@ -761,14 +758,14 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'costPricePerPack' },
-      header: t('stocktake.line-edit.cost-price'),
+      header: t('label.pack-cost-price'),
       tabsAndCardGroups: ['pricing'],
       ...getNumberCell(),
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.line-edit.cost-price')}
+            label={t('label.pack-cost-price')}
             hideLabel
             size="small"
             type="number"
@@ -788,17 +785,17 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'location' },
-      header: t('stocktake.line-edit.location'),
+      header: t('label.location'),
       tabsAndCardGroups: ['other'],
       cell: info => {
         const line = info.row.original;
         return (
           <LocationSelect
-            label={t('stocktake.line-edit.location')}
+            label={t('label.location')}
             hideLabel
             disabled={!line.countThisLine}
             value={line.location?.id}
-            placeholder={t('stocktake.line-edit.location-none')}
+            placeholder={t('label.none')}
             onChange={l =>
               update(
                 line.id,
@@ -812,28 +809,28 @@ const StocktakeLineEditContent = (
     },
     {
       c: { id: 'inventoryAdjustmentReasonInput' },
-      header: t('stocktake.line-edit.reason'),
+      header: t('label.reason'),
       tabsAndCardGroups: ['batch'],
       cell: info => {
         const line = info.row.original;
         const error = () => {
           const err = lineErrors().get(line.id);
           if (err === 'AdjustmentReasonNotProvided')
-            return t('stocktake.line-error.reason-not-provided');
+            return t('error.provide-reason');
           if (err === 'AdjustmentReasonNotValid')
-            return t('stocktake.line-error.reason-not-valid');
+            return t('error.provide-valid-reason');
           return undefined;
         };
         return (
           <ReasonSelect
             kind="adjustment"
-            label={t('stocktake.line-edit.reason')}
+            label={t('label.reason')}
             hideLabel
             disabled={!line.countThisLine}
             value={line.reasonOption?.id}
             error={error()}
             errorTestId="stocktake-line-error"
-            placeholder={t('stocktake.line-edit.reason-select')}
+            placeholder={t('label.select-reason')}
             onChange={r =>
               update(
                 line.id,
@@ -847,13 +844,13 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'note' },
-      header: t('stocktake.line-edit.note'),
+      header: t('label.note'),
       tabsAndCardGroups: ['other'],
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.line-edit.note')}
+            label={t('label.note')}
             hideLabel
             size="small"
             disabled={!line.countThisLine}
@@ -867,13 +864,13 @@ const StocktakeLineEditContent = (
     },
     {
       c: { key: 'comment' },
-      header: t('stocktake.detail.comment'),
+      header: t('label.stocktake-comment'),
       tabsAndCardGroups: ['other'],
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('stocktake.detail.comment')}
+            label={t('label.stocktake-comment')}
             hideLabel
             size="small"
             disabled={!line.countThisLine}
@@ -887,7 +884,7 @@ const StocktakeLineEditContent = (
     },
     {
       c: { id: 'actions' },
-      header: t('common.action'),
+      header: t('label.actions'),
       tabsAndCardGroups: ALL_TABS,
       meta: { card: { region: 'badge' }, align: 'right' },
       cell: info => {
@@ -898,7 +895,7 @@ const StocktakeLineEditContent = (
               bordered
               size="small"
               icon={<CopyIcon />}
-              label={t('stocktake.line-edit.duplicate')}
+              label={t('label.duplicate-batch')}
               onClick={() => duplicateLine(line)}
             />
             <IconButton
@@ -906,7 +903,7 @@ const StocktakeLineEditContent = (
               size="small"
               variant="danger"
               icon={<TrashIcon />}
-              label={t('common.delete')}
+              label={t('button.delete')}
               onClick={() => removeLine(line)}
             />
           </>
@@ -942,7 +939,7 @@ const StocktakeLineEditContent = (
       title={
         <span class={styles.addTitle}>
           <ItemSearch
-            label={t('stocktake.line-edit.add-title')}
+            label={t('heading.add-item')}
             hideLabel
             class={styles.addSelect}
             storeId={props.storeId}
@@ -950,11 +947,11 @@ const StocktakeLineEditContent = (
             selectedItem={currentItem()}
             // Pick an item → load it; clear (×) → back to the search state.
             onSelect={item => (item ? selectItem(item) : backToSearch())}
-            placeholder={t('stocktake.line-edit.item-search-placeholder')}
+            placeholder={t('placeholder.enter-an-item-code-or-name')}
           />
         </span>
       }
-      ariaLabel={t('stocktake.line-edit.add-title')}
+      ariaLabel={t('heading.add-item')}
       // Add batch lives at the inline-end of the header row. Hidden until an
       // item is picked.
       headerActions={
@@ -965,7 +962,7 @@ const StocktakeLineEditContent = (
             data-testid="add-batch-button"
             onClick={addBatch}
           >
-            {t('stocktake.line-edit.add-batch')}
+            {t('label.add-batch')}
           </Button>
         </Show>
       }
@@ -982,7 +979,7 @@ const StocktakeLineEditContent = (
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
-            {t('common.cancel')}
+            {t('button.cancel')}
           </Button>
           {/* Before an item is picked: nothing to save, so only Cancel shows.
               Once an item is chosen, OK / OK & next appear. */}
@@ -993,7 +990,7 @@ const StocktakeLineEditContent = (
               data-testid="dialog-button-ok"
               onClick={() => void onOk()}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
             {/* OK & next: ALWAYS shown once an item is loaded (both modes). In
                 update mode it advances to the next item, or — when the walk is
@@ -1005,7 +1002,7 @@ const StocktakeLineEditContent = (
               data-testid="dialog-button-next-and-ok"
               onClick={() => void onOkNext()}
             >
-              {t('common.ok-and-next')}
+              {t('button.ok-and-next')}
             </Button>
           </Show>
         </>
@@ -1017,7 +1014,7 @@ const StocktakeLineEditContent = (
         when={!noItemYet()}
         fallback={
           <div class={styles.selectPrompt}>
-            {t('stocktake.line-edit.select-item-prompt')}
+            {t('messages.select-item-to-count')}
           </div>
         }
       >
@@ -1030,7 +1027,7 @@ const StocktakeLineEditContent = (
           showFullScreen={false}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}
-          emptyMessage={t('stocktake.line-edit.empty')}
+          emptyMessage={t('label.add-new-line')}
         />
       </Show>
     </Dialog>
