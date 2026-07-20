@@ -395,6 +395,8 @@ const CustomerReturnDetailView: Component = () => {
                 itemById={itemById}
                 onSaved={onLinesSaved}
                 existingLineIds={existingLineIds}
+                returnFromName={node().otherPartyName}
+                edit={edit}
               />
             </Page>
           );

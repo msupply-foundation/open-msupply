@@ -7,6 +7,8 @@ import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
+import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
+import { Text } from '../../../../ui/elements/typography/Text';
 import {
   DataTable,
   type Column,
@@ -24,6 +26,7 @@ import {
 } from '../../../../ui/icons';
 import { GenerateCustomerReturnLines } from '../customerReturnDetail.generated';
 import { saveReturnLines, type SaveReturnLinesResult } from '../returnUpdate';
+import type { ReturnFieldEdit } from '../returnEdit';
 import {
   blankDraft,
   clampQuantity,
@@ -79,6 +82,14 @@ export interface ReturnItemsModalProps {
   onSaved: (node: ReturnLinesSaved) => void;
   /** Existing line ids on the return, per item (seeds the drafts). */
   existingLineIds: () => ReadonlySet<string>;
+  /** "Return from" — the customer the goods come back from (read-only). */
+  returnFromName: string;
+  /**
+   * The shared return edit buffer — the modal's Customer-reference field
+   * reads/writes theirReference through the same debounced save path as the
+   * detail toolbar (one buffer across the whole entity).
+   */
+  edit: ReturnFieldEdit;
 }
 
 // Mount-while-open wrapper (the reference modal shape): the content mounts
@@ -100,6 +111,8 @@ export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
         itemById={props.itemById}
         onSaved={props.onSaved}
         existingLineIds={props.existingLineIds}
+        returnFromName={props.returnFromName}
+        edit={props.edit}
       />
     )}
   </Show>
@@ -502,20 +515,6 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         )
       }
       ariaLabel={props.mode === 'add' ? t('heading.return-items') : undefined}
-      // Add batch lives beside the heading on the quantity step; the wizard's
-      // step indicator renders at the top of the body (ui-surface S4 § layout).
-      headerActions={
-        <Show when={!noItemYet() && step() === 'quantity'}>
-          <Button
-            variant="secondary"
-            icon={<PlusCircleIcon />}
-            data-testid="add-batch-button"
-            onClick={addBatch}
-          >
-            {t('label.add-batch')}
-          </Button>
-        </Show>
-      }
       actionsLead={
         <Show when={message()}>
           {m => <Alert severity={m().severity}>{m().text}</Alert>}
@@ -614,6 +613,54 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             },
           ]}
         />
+        {/* Under the stepper (the current app's ReturnSteps row): who the
+            goods come back from (read-only) and the return's customer
+            reference — edited through the shared debounced buffer, the same
+            save path as the detail toolbar. */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--space-6)',
+            'align-items': 'center',
+            'margin-block': 'var(--space-2)',
+          }}
+        >
+          <FieldRow label={t('label.return-from')}>
+            <Text variant="body">{props.returnFromName}</Text>
+          </FieldRow>
+          <FieldRow label={t('label.customer-ref')}>
+            <TextField
+              label={t('label.customer-ref')}
+              hideLabel
+              size="small"
+              value={props.edit.state.theirReference}
+              onInput={e =>
+                props.edit.setField('theirReference', e.currentTarget.value)
+              }
+              onBlur={() => props.edit.flush()}
+            />
+          </FieldRow>
+        </div>
+        {/* Add batch on its own row, inline-end aligned (the current app's
+            AddBatchButton row): present on both steps, actionable only while
+            entering quantities in per-item mode. Default (primary) tone —
+            brand icon, dark label. */}
+        <div
+          style={{
+            display: 'flex',
+            'justify-content': 'flex-end',
+            'margin-block-end': 'var(--space-2)',
+          }}
+        >
+          <Button
+            icon={<PlusCircleIcon />}
+            data-testid="add-batch-button"
+            disabled={step() !== 'quantity'}
+            onClick={addBatch}
+          >
+            {t('label.add-batch')}
+          </Button>
+        </div>
         <Show
           when={step() === 'reason'}
           fallback={
