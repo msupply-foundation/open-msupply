@@ -1755,5 +1755,6 @@
   "warning.cannot-create-placeholder-units": "هناك إجمالي {{allocatedQuantity}} وحدات متوفرة. غير قادر على تخصيص جميع {{requestedQuantity}} الوحدات.",
   "warning.caps-lock": "تحذير: قفل القبعات قيد التشغيل",
   "warning.field-not-parsed": "لم يتم تحليل {{field}}",
-  "warning.nothing-to-supply": "لم يتبق شيء لتزويده!"
+  "warning.nothing-to-supply": "لم يتبق شيء لتزويده!",
+  "name.on-hold-suffix": "(On hold)"
 }
