@@ -30,40 +30,34 @@ import { changeShipmentStatus, type OutboundNode } from '../outboundUpdate';
 // The status-change split button + its dialogs (spec S3 § status footer,
 // kdd/action-modal): primary action "Confirm ‹next status›", options = every
 // allowed next status with earlier ones disabled; hidden entirely when
-// read-only. Pre-flight guards run IN ORDER before any server call (AC-S6 and
-// friends):
-//   1. placeholders with quantity → blocking alert (the server would reject
-//      ALLOCATED+ anyway — AC-P3 — but SHIPPED-from-NEW would silently strand
-//      them, so the UI blocks first);
-//   2. no lines / only placeholder lines → notice, no server call (AC-S6);
-//   3. on hold → blocking notice, no server call (AC-H1's UX face);
-//   4. zero-quantity rows → the confirmation carries the removal warning
-//      (AC-S5);
-//   5. the confirmation prompt itself.
+// read-only. ONE client pre-flight guard (ui-standards/validation.md — the
+// sanctioned lineless server gap): no lines / only placeholder lines →
+// notice, no server call (AC-S6). Everything else submits and surfaces the
+// server's verdict inline in the confirmation dialog — on-hold (AC-H1) and
+// unallocated-placeholder (AC-P3) rejections land in the error phase; the
+// confirmation itself carries the zero-quantity removal warning (AC-S5).
 
 export interface StatusChangeActionProps {
   storeId: string;
   node: OutboundNode;
   hasLines: boolean;
   hasOnlyPlaceholders: boolean;
-  placeholderItemsWithQuantity: string[];
   zeroQuantityItems: string[];
   onSaved: (node: OutboundNode) => void;
   /** The Close button, rendered inside the footer's action cluster. */
   closeButton?: JSX.Element;
 }
 
-type Phase = 'confirm' | 'working' | 'error';
+type Phase = 'confirm' | 'working';
 
 export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
-  // pendingStatus != null opens the confirm dialog; infoMessage the blocking
-  // notice (guards 1–2).
+  // pendingStatus != null opens the confirm dialog; infoMessage the lineless
+  // blocking notice (the AC-S6 server gap).
   const [pendingStatus, setPendingStatus] = createSignal<
     SettableStatus | undefined
   >();
   const [infoMessage, setInfoMessage] = createSignal<string | undefined>();
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  const [errorMessage, setErrorMessage] = createSignal('');
 
   const editable = () => isEditable(props.node.status);
   const currentIndex = () => statusIndex(props.node.status);
@@ -104,24 +98,11 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
 
   const openConfirm = (status: string) => {
     if (!editable()) return;
-    // Guard 1 — placeholders still holding quantity block every advance.
-    if (props.placeholderItemsWithQuantity.length > 0) {
-      setInfoMessage(
-        t('outbound.status-change.unallocated', {
-          items: props.placeholderItemsWithQuantity.join(', '),
-        })
-      );
-      return;
-    }
-    // Guard 2 — no lines (or only placeholders): notice, no server call
-    // (AC-S6 — the server would accept it; blocking is UI-owned).
+    // The one sanctioned pre-flight (validation.md): no lines (or only
+    // placeholders) — the server would ACCEPT a lineless confirmation
+    // (captured server gap, AC-S6), so the notice is the only guard.
     if (!props.hasLines || props.hasOnlyPlaceholders) {
       setInfoMessage(t('outbound.status-change.no-lines'));
-      return;
-    }
-    // Guard 3 — on hold: status changes are blocked until released (AC-H1).
-    if (props.node.onHold) {
-      setInfoMessage(t('outbound.hold.blocked'));
       return;
     }
     setPhase('confirm');
@@ -141,11 +122,14 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     );
     if (result.kind === 'failed') return close();
     if (result.kind === 'error') {
-      // Server-side rejection (a race the pre-flight missed, or the on-hold /
-      // unallocated guard firing server-side): the dialog stays open and shows
-      // the error inline (controls › dialogs, D20).
-      setErrorMessage(result.message);
-      setPhase('error');
+      // The server's verdict (on hold, unallocated placeholders, reverse —
+      // the client never pre-checks these, validation.md): the confirmation
+      // closes (it holds no input to preserve, so D20's stay-open rationale
+      // doesn't apply) and the verdict surfaces as the footer's blocking
+      // notice — the same surface, still never a toast. The shared suite
+      // pins this close-then-notice shape.
+      close();
+      setInfoMessage(result.message);
       return;
     }
     // Saved: reflect the node and close — closure plus the footer's advanced
@@ -188,10 +172,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           testId="confirmation-modal"
           title={t('outbound.status-change.confirm-title')}
           description={
-            <Show
-              when={phase() !== 'error'}
-              fallback={<Alert severity="error">{errorMessage()}</Alert>}
-            >
+            <>
               {t('outbound.status-change.confirm', {
                 status: pendingStatus() ? STATUS_LABELS[pendingStatus()!] : '',
               })}
@@ -202,21 +183,10 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                   })}
                 </Alert>
               </Show>
-            </Show>
+            </>
           }
           actions={
-            <Show
-              when={phase() !== 'error'}
-              fallback={
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={close}
-                >
-                  {t('common.cancel')}
-                </Button>
-              }
-            >
+            <>
               <Show when={phase() === 'confirm'}>
                 <Button
                   variant="secondary"
@@ -235,7 +205,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               >
                 {t('common.ok')}
               </Button>
-            </Show>
+            </>
           }
         />
       </Show>

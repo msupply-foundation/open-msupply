@@ -2,6 +2,7 @@ import {
   createEffect,
   createResource,
   createSignal,
+  lazy,
   Show,
   Suspense,
 } from 'solid-js';
@@ -39,6 +40,7 @@ import {
   InfoIcon,
   MinusCircleIcon,
   PlusCircleIcon,
+  PrinterIcon,
 } from '../../../ui/icons';
 import { CustomerSelect } from '../../../domain/customer';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
@@ -59,6 +61,14 @@ import {
   type LineEditItem,
 } from './edit-modal/OutboundLineEditModal';
 import { ServiceChargesModal } from './service-charges/ServiceChargesModal';
+// The record-screen report selector (reports S4): lazy-imported behind the
+// Export/Print trigger per the reports section's bundle note — a static
+// import would pull the selector graph into this section's eager chunk.
+const ReportSelectorModal = lazy(() =>
+  import('../../reports/selector/ReportSelectorModal').then(module => ({
+    default: module.ReportSelectorModal,
+  }))
+);
 import {
   AddFromMasterListAction,
   AllocateLinesAction,
@@ -99,6 +109,8 @@ const OutboundDetailView: Component = () => {
   const [customerError, setCustomerError] = createSignal<string>();
   // "Return selected lines" before SHIPPED — the AC-V3 explanatory notice.
   const [returnNoticeOpen, setReturnNoticeOpen] = createSignal(false);
+  // Export/Print (S3 page action → reports S4, AC-E1–E3; any status).
+  const [reportsOpen, setReportsOpen] = createSignal(false);
 
   const [data, { mutate, refetch }] = createResource(
     () => ({ storeId: params.storeId, id: params.invoiceId }),
@@ -133,13 +145,8 @@ const OutboundDetailView: Component = () => {
     return current ? isEditable(current.status) : false;
   };
 
-  // Footer pre-flight inputs (spec S3 § status footer).
-  const placeholderItemsWithQuantity = () =>
-    lines()
-      .filter(
-        line => line.type === 'UNALLOCATED_STOCK' && line.numberOfPacks > 0
-      )
-      .map(line => line.itemName);
+  // Footer inputs (spec S3 § status footer): the one client pre-flight is the
+  // lineless server gap (AC-S6); other rejections surface from the server.
   const hasOnlyPlaceholders = () => {
     const stock = stockAndPlaceholderLines();
     return (
@@ -418,6 +425,15 @@ const OutboundDetailView: Component = () => {
                       visible={current().status === 'NEW'}
                       onCommitted={onLineOpsCommitted}
                     />
+                    {/* Export/Print — the reports vertical's record-screen
+                        selector (reports S4), available at every status. */}
+                    <Button
+                      icon={<PrinterIcon />}
+                      data-testid="export-print-button"
+                      onClick={() => setReportsOpen(true)}
+                    >
+                      {t('button.export-or-print')}
+                    </Button>
                     <Show when={!sidePanelOpen()}>
                       <Button
                         variant="secondary"
@@ -481,7 +497,6 @@ const OutboundDetailView: Component = () => {
                       node={current()}
                       hasLines={stockAndPlaceholderLines().length > 0}
                       hasOnlyPlaceholders={hasOnlyPlaceholders()}
-                      placeholderItemsWithQuantity={placeholderItemsWithQuantity()}
                       zeroQuantityItems={zeroQuantityItems()}
                       onSetHold={setHold}
                       onSaved={saved => mutate(() => saved)}
@@ -591,6 +606,16 @@ const OutboundDetailView: Component = () => {
                 serviceLines={serviceLines()}
                 onCommitted={onLineOpsCommitted}
               />
+              {/* Export/Print (reports S4): mounted on first open so the
+                  selector's chunk loads lazily. */}
+              <Show when={reportsOpen()}>
+                <ReportSelectorModal
+                  context="OUTBOUND_SHIPMENT"
+                  dataId={current().id}
+                  open
+                  onClose={() => setReportsOpen(false)}
+                />
+              </Show>
               {/* Returns need a shipped shipment (AC-V3) — an info-only
                   notice; the return flow is the returns vertical's. */}
               <Show when={returnNoticeOpen()}>

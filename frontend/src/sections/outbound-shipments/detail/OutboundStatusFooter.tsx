@@ -24,7 +24,6 @@ export interface OutboundStatusFooterProps {
   /** Lines exist / placeholders-with-quantity — the pre-flight inputs. */
   hasLines: boolean;
   hasOnlyPlaceholders: boolean;
-  placeholderItemsWithQuantity: string[];
   zeroQuantityItems: string[];
   /** Toggle hold (writes onHold via the field-save path). */
   onSetHold: (hold: boolean) => void;
@@ -89,7 +88,6 @@ export const OutboundStatusFooter: Component<
         node={props.node}
         hasLines={props.hasLines}
         hasOnlyPlaceholders={props.hasOnlyPlaceholders}
-        placeholderItemsWithQuantity={props.placeholderItemsWithQuantity}
         zeroQuantityItems={props.zeroQuantityItems}
         onSaved={props.onSaved}
         closeButton={
