@@ -333,6 +333,62 @@ export const UpdateStocktake = {
   query: "mutation updateStocktake($storeId: String!, $input: UpdateStocktakeInput!) {\n  updateStocktake(storeId: $storeId, input: $input) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n    }\n    ... on UpdateStocktakeError {\n      error {\n        __typename\n        description\n        ... on SnapshotCountCurrentCountMismatch {\n          lines {\n            description\n            stocktakeLine {\n              id\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n  }\n}",
 } as TypedDocument<UpdateStocktakeResult, UpdateStocktakeVariables>;
 
+export type FullStocktakeVariables = {
+  storeId: string;
+  stocktakeId: string;
+};
+
+export type FullStocktakeResult = {
+  stocktake: ({
+  __typename: "StocktakeNode";
+} & {
+  lines: {
+  totalCount: number;
+  nodes: Array<StocktakeLineFragment>;
+};
+} & StocktakeInfoFragment) | ({
+  __typename: "NodeError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+};
+
+export const FullStocktake = {
+  query: "query fullStocktake($storeId: String!, $stocktakeId: String!) {\n  stocktake(storeId: $storeId, id: $stocktakeId) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n      lines {\n        totalCount\n        nodes {\n          ...StocktakeLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n  }\n}\n\nfragment StocktakeLine on StocktakeLineNode {\n  id\n  itemName\n  item {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  batch\n  expiryDate\n  manufactureDate\n  snapshotNumberOfPacks\n  countedNumberOfPacks\n  packSize\n  sellPricePerPack\n  costPricePerPack\n  comment\n  note\n  location {\n    id\n    code\n    name\n  }\n  reasonOption {\n    id\n    type\n    reason\n  }\n}",
+} as TypedDocument<FullStocktakeResult, FullStocktakeVariables>;
+
+export type DeleteStocktakeVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type DeleteStocktakeResult = {
+  batchStocktake: {
+  __typename: "BatchStocktakeResponse";
+  deleteStocktakes: Array<{
+  id: string;
+  response: ({
+  __typename: "DeleteResponse";
+} & {
+  id: string;
+}) | ({
+  __typename: "DeleteStocktakeError";
+} & {
+  error: {
+  __typename: string;
+};
+});
+}> | null;
+};
+};
+
+export const DeleteStocktake = {
+  query: "mutation deleteStocktake($storeId: String!, $id: String!) {\n  batchStocktake(storeId: $storeId, input: {deleteStocktakes: [{id: $id}]}) {\n    ... on BatchStocktakeResponse {\n      __typename\n      deleteStocktakes {\n        id\n        response {\n          __typename\n          ... on DeleteResponse {\n            id\n          }\n          ... on DeleteStocktakeError {\n            error {\n              __typename\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<DeleteStocktakeResult, DeleteStocktakeVariables>;
+
 export type StockLinesByItemVariables = {
   storeId: string;
   itemId: string;

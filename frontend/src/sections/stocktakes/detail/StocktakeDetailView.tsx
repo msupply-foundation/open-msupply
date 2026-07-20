@@ -319,6 +319,13 @@ const StocktakeDetailView: Component = () => {
     void refetchAfterSave();
   };
 
+  // The record was deleted from the side panel's Actions → leave for the list.
+  // `replace: true` drops the deleted stocktake's detail URL from history so
+  // Back can't return to a now-missing record (it would only 404 / promote a
+  // NodeError to the global modal).
+  const onDeleted = () =>
+    navigate(`/${params.storeId}/inventory/stocktakes`, { replace: true });
+
   // --- Selection actions + line-edit modal: refetch the page on any change ---
   // Each action (Delete / Change location / Reduce to 0) and the line-edit modal
   // report success; the view refetches the current lines page (no splice — the
@@ -564,9 +571,11 @@ const StocktakeDetailView: Component = () => {
             onSidePanelClose={() => setSidePanelOpen(false)}
             sidePanelContent={
               <StocktakeSidePanel
+                storeId={params.storeId}
                 node={node()}
                 disabled={isDisabled(node())}
                 edit={edit}
+                onDeleted={onDeleted}
               />
             }
             header={
