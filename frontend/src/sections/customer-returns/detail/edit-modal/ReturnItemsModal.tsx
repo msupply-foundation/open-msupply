@@ -600,6 +600,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             reaching the reason step completes "Select quantity" and starts
             "Select reason" (ui-surface S4 § layout). */}
         <ProgressList
+          variant="secondary"
           steps={[
             {
               label: t('label.select-quantity'),
