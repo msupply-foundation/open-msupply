@@ -12,11 +12,12 @@ starting the server. No web bundle is compiled into the `.so`.
 
 CI ([build-android-server-lib.yaml](../../.github/workflows/build-android-server-lib.yaml))
 builds the library on every `v*` tag (and on demand via workflow dispatch) on
-stock GitHub runners with a stock NDK, in `debug` and `release` profiles, and
+the self-hosted Mac mini runner (same NDK the APK build uses; the workflow
+pins its path), in `debug` and `release` profiles, and
 uploads zips as workflow artifacts. For non-nightly tags the zips are also
 attached to the GitHub release, with `.sha256` checksums:
 
-```
+```text
 remote-server-android-<version>-<profile>.zip
 ├── jniLibs/
 │   ├── arm64-v8a/libremote_server_android.so

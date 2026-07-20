@@ -6,8 +6,8 @@ name: Build Android server library
 # frontend repo (open-msupply-frontend), which pins a version and
 # fetches + checksum-verifies these zips at APK build time.
 #
-# Runs on stock GitHub runners with a stock NDK — deliberately no
-# dependency on the self-hosted Mac mini used for the legacy APK build.
+# Runs on the self-hosted Mac mini (same runner as the APK build), whose
+# NDK installation the team maintains — see the NDK_BIN env below.
 
 on:
   push:
@@ -16,23 +16,23 @@ on:
   workflow_dispatch:
 
 env:
-  # Keep in sync with the jniLibs layout expected by Android gradle projects
   LIB_NAME: remote-server-android
 
 jobs:
   build:
-    name: Build .so (${{ matrix.profile }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    strategy:
-      matrix:
-        profile: [debug, release]
+    name: Build .so (debug + release)
+    runs-on: self-hosted
+    timeout-minutes: 60
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Read Rust toolchain channel
         id: rust_toolchain
+        # Scope the toolchain to this job only via RUSTUP_TOOLCHAIN; do NOT set a
+        # global rustup default/override on the shared self-hosted runner, or it
+        # would leak into develop builds (which pin a different channel).
         run: |
           CHANNEL=$(grep '^channel' server/rust-toolchain.toml | cut -d '"' -f2)
           echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
@@ -43,39 +43,23 @@ jobs:
           rustup toolchain install "${{ steps.rust_toolchain.outputs.channel }}" --profile minimal --no-self-update
           rustup target add aarch64-linux-android armv7-linux-androideabi --toolchain "${{ steps.rust_toolchain.outputs.channel }}"
 
-      - name: Set up NDK
-        id: ndk
-        uses: nttld/setup-ndk@v1
-        with:
-          # server/android/.cargo/config.toml uses the API-22 clang wrappers
-          # (aarch64-linux-android22-clang etc.), present in this NDK
-          ndk-version: r27c
-          add-to-path: false
-
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: server
-          key: android-${{ matrix.profile }}
-
-      - name: Build
+      - name: Build (debug + release)
         env:
-          NDK_BIN: ${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin
+          NDK_BIN: /Users/tmfmacmini/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
+        # Update this version when upgrading the NDK version on the self-hosted machine
         run: |
-          # AR/CC env needed to build the `ring` crate
-          export AR="$NDK_BIN/llvm-ar"
-          export CC_armv7_linux_androideabi="$NDK_BIN/armv7a-linux-androideabi22-clang"
+          # AR/CC env needed to build the `ring` crate; the API-22 clang
+          # wrappers match server/android/.cargo/config.toml
+          export AR="${NDK_BIN}llvm-ar"
+          export CC_armv7_linux_androideabi="${NDK_BIN}armv7a-linux-androideabi22-clang"
           export PATH="$PATH:$NDK_BIN"
 
-          PROFILE_FLAG=""
-          if [ "${{ matrix.profile }}" = "release" ]; then
-            PROFILE_FLAG="--release"
-          fi
-
-          cargo build $PROFILE_FLAG \
-            --manifest-path server/android/Cargo.toml \
-            --config server/android/.cargo/config.toml \
-            --target-dir "$PWD/server-lib"
+          for PROFILE_FLAG in "" "--release"; do
+            cargo build $PROFILE_FLAG \
+              --manifest-path server/android/Cargo.toml \
+              --config server/android/.cargo/config.toml \
+              --target-dir "$PWD/server-lib"
+          done
 
       - name: Package
         id: package
@@ -85,32 +69,42 @@ jobs:
           else
             VERSION="$(git describe --tags --always)"
           fi
-          ZIP="${LIB_NAME}-${VERSION}-${{ matrix.profile }}.zip"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
 
-          mkdir -p dist/jniLibs/arm64-v8a dist/jniLibs/armeabi-v7a
-          cp server-lib/aarch64-linux-android/${{ matrix.profile }}/libremote_server_android.so dist/jniLibs/arm64-v8a/
-          cp server-lib/armv7-linux-androideabi/${{ matrix.profile }}/libremote_server_android.so dist/jniLibs/armeabi-v7a/
+          rm -rf dist
+          for PROFILE in debug release; do
+            OUT="dist/$PROFILE"
+            ZIP="${LIB_NAME}-${VERSION}-${PROFILE}.zip"
+            mkdir -p "$OUT/jniLibs/arm64-v8a" "$OUT/jniLibs/armeabi-v7a"
+            cp "server-lib/aarch64-linux-android/$PROFILE/libremote_server_android.so" "$OUT/jniLibs/arm64-v8a/"
+            cp "server-lib/armv7-linux-androideabi/$PROFILE/libremote_server_android.so" "$OUT/jniLibs/armeabi-v7a/"
 
-          {
-            echo "version: $VERSION"
-            echo "profile: ${{ matrix.profile }}"
-            echo "commit: $GITHUB_SHA"
-            echo "abis: arm64-v8a armeabi-v7a"
-          } > dist/VERSION.txt
+            {
+              echo "version: $VERSION"
+              echo "profile: $PROFILE"
+              echo "commit: $GITHUB_SHA"
+              echo "abis: arm64-v8a armeabi-v7a"
+            } > "$OUT/VERSION.txt"
 
-          cd dist
-          zip -r "$ZIP" jniLibs VERSION.txt
-          sha256sum "$ZIP" > "$ZIP.sha256"
+            (cd "$OUT" && zip -r "$ZIP" jniLibs VERSION.txt && shasum -a 256 "$ZIP" > "$ZIP.sha256")
+          done
 
-      - name: Upload artifact
+      - name: Upload debug artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ env.LIB_NAME }}-${{ matrix.profile }}
+          name: ${{ env.LIB_NAME }}-debug
           path: |
-            dist/${{ steps.package.outputs.zip }}
-            dist/${{ steps.package.outputs.zip }}.sha256
+            dist/debug/*.zip
+            dist/debug/*.sha256
+          if-no-files-found: error
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.LIB_NAME }}-release
+          path: |
+            dist/release/*.zip
+            dist/release/*.sha256
           if-no-files-found: error
 
   # Attach the zips to the GitHub release for real version tags. Nightly
@@ -143,16 +137,18 @@ jobs:
           fi
           gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
 
+  # Runs on a GitHub-hosted runner so it still fires when the self-hosted
+  # runner is down (the build job's steps never execute in that case).
   notify-build-result:
     needs: [build, publish]
-    if: failure()
+    if: ${{ always() && (needs.build.result != 'success' || needs.publish.result == 'failure') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Notify Slack on failure
+      - name: Notify Slack
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_DEV_RELEASE_WEBHOOK_URL }}
-          MESSAGE: ":warning: *Android server library build failed* for `${{ github.ref_name }}`\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          MESSAGE: ":warning: *Android server library build did not succeed* for `${{ github.ref_name }}` (build: ${{ needs.build.result }}, publish: ${{ needs.publish.result }})\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         run: |
           curl -sf -X POST -H 'Content-type: application/json' \
             --data "{\"text\": \"$MESSAGE\"}" "$WEBHOOK_URL"
