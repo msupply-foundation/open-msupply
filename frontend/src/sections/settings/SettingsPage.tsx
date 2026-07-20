@@ -24,7 +24,7 @@ const SettingsPage: Component = () => (
       </Header>
     }
   >
-    <EmptyState message={t('table.no-results')} />
+    <EmptyState message={t('message.coming-soon')} />
   </Page>
 );
 
