@@ -13,17 +13,20 @@ starting the server. No web bundle is compiled into the `.so`.
 CI ([build-android-server-lib.yaml](../../.github/workflows/build-android-server-lib.yaml))
 builds the library on every `v*` tag (and on demand via workflow dispatch) on
 the self-hosted Mac mini runner (same NDK the APK build uses; the workflow
-pins its path), in `debug` and `release` profiles, and
-uploads zips as workflow artifacts. For non-nightly tags the zips are also
-attached to the GitHub release, with `.sha256` checksums:
+pins its path) and uploads a zip as a workflow artifact. For non-nightly tags
+the zip is also attached to the GitHub release, with a `.sha256` checksum:
 
 ```text
-remote-server-android-<version>-<profile>.zip
+remote-server-android-<version>.zip
 ├── jniLibs/
 │   ├── arm64-v8a/libremote_server_android.so
 │   └── armeabi-v7a/libremote_server_android.so
-└── VERSION.txt   (version, profile, commit, abis)
+└── VERSION.txt   (version, commit, abis)
 ```
+
+Only the release profile is published. For a debuggable set-up, run the
+server on a dev machine and point the app at it via `adb reverse` instead of
+debugging through the `.so`.
 
 Consumers (e.g. the [open-msupply-frontend](https://github.com/msupply-foundation/open-msupply-frontend)
 Android app) pin a version and fetch + checksum-verify the zip at build time,

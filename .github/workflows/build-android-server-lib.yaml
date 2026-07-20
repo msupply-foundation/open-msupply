@@ -20,7 +20,7 @@ env:
 
 jobs:
   build:
-    name: Build .so (debug + release)
+    name: Build .so (release)
     runs-on: self-hosted
     timeout-minutes: 60
     steps:
@@ -43,7 +43,9 @@ jobs:
           rustup toolchain install "${{ steps.rust_toolchain.outputs.channel }}" --profile minimal --no-self-update
           rustup target add aarch64-linux-android armv7-linux-androideabi --toolchain "${{ steps.rust_toolchain.outputs.channel }}"
 
-      - name: Build (debug + release)
+      # Release only. For a debuggable set-up, run the server on a dev
+      # machine and point the app at it via `adb reverse` instead.
+      - name: Build
         env:
           NDK_BIN: /Users/tmfmacmini/android/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64/bin/
         # Update this version when upgrading the NDK version on the self-hosted machine
@@ -54,12 +56,10 @@ jobs:
           export CC_armv7_linux_androideabi="${NDK_BIN}armv7a-linux-androideabi22-clang"
           export PATH="$PATH:$NDK_BIN"
 
-          for PROFILE_FLAG in "" "--release"; do
-            cargo build $PROFILE_FLAG \
-              --manifest-path server/android/Cargo.toml \
-              --config server/android/.cargo/config.toml \
-              --target-dir "$PWD/server-lib"
-          done
+          cargo build --release \
+            --manifest-path server/android/Cargo.toml \
+            --config server/android/.cargo/config.toml \
+            --target-dir "$PWD/server-lib"
 
       - name: Package
         id: package
@@ -72,39 +72,26 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
           rm -rf dist
-          for PROFILE in debug release; do
-            OUT="dist/$PROFILE"
-            ZIP="${LIB_NAME}-${VERSION}-${PROFILE}.zip"
-            mkdir -p "$OUT/jniLibs/arm64-v8a" "$OUT/jniLibs/armeabi-v7a"
-            cp "server-lib/aarch64-linux-android/$PROFILE/libremote_server_android.so" "$OUT/jniLibs/arm64-v8a/"
-            cp "server-lib/armv7-linux-androideabi/$PROFILE/libremote_server_android.so" "$OUT/jniLibs/armeabi-v7a/"
+          ZIP="${LIB_NAME}-${VERSION}.zip"
+          mkdir -p dist/jniLibs/arm64-v8a dist/jniLibs/armeabi-v7a
+          cp "server-lib/aarch64-linux-android/release/libremote_server_android.so" dist/jniLibs/arm64-v8a/
+          cp "server-lib/armv7-linux-androideabi/release/libremote_server_android.so" dist/jniLibs/armeabi-v7a/
 
-            {
-              echo "version: $VERSION"
-              echo "profile: $PROFILE"
-              echo "commit: $GITHUB_SHA"
-              echo "abis: arm64-v8a armeabi-v7a"
-            } > "$OUT/VERSION.txt"
+          {
+            echo "version: $VERSION"
+            echo "commit: $GITHUB_SHA"
+            echo "abis: arm64-v8a armeabi-v7a"
+          } > dist/VERSION.txt
 
-            (cd "$OUT" && zip -r "$ZIP" jniLibs VERSION.txt && shasum -a 256 "$ZIP" > "$ZIP.sha256")
-          done
+          (cd dist && zip -r "$ZIP" jniLibs VERSION.txt && shasum -a 256 "$ZIP" > "$ZIP.sha256")
 
-      - name: Upload debug artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ env.LIB_NAME }}-debug
+          name: ${{ env.LIB_NAME }}
           path: |
-            dist/debug/*.zip
-            dist/debug/*.sha256
-          if-no-files-found: error
-
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ env.LIB_NAME }}-release
-          path: |
-            dist/release/*.zip
-            dist/release/*.sha256
+            dist/*.zip
+            dist/*.sha256
           if-no-files-found: error
 
   # Attach the zips to the GitHub release for real version tags. Nightly
@@ -122,8 +109,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v7
         with:
-          pattern: ${{ env.LIB_NAME }}-*
-          merge-multiple: true
+          name: ${{ env.LIB_NAME }}
           path: dist
 
       - name: Upload release assets
