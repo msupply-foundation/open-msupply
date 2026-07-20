@@ -36,6 +36,9 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
         placeholder={t('label.item')}
         value={props.filter().item ?? ''}
         onInput={value => props.setPartialFilter({ item: value })}
+        // Client-side line filter (in-memory, no server round-trip) → apply on
+        // every keystroke, no debounce (spec: inputs.md § Server-bound input).
+        debounceMs={0}
       />
     ),
   },
@@ -47,6 +50,7 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
         placeholder={t('label.batch')}
         value={props.filter().batch ?? ''}
         onInput={value => props.setPartialFilter({ batch: value })}
+        debounceMs={0}
       />
     ),
   },
@@ -58,6 +62,7 @@ const FILTERS = constructFilters<StocktakeLineFilter>({
         placeholder={t('label.location')}
         value={props.filter().location ?? ''}
         onInput={value => props.setPartialFilter({ location: value })}
+        debounceMs={0}
       />
     ),
   },

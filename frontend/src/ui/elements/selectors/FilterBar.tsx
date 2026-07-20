@@ -1,4 +1,4 @@
-import { For, Show } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import type { JSX } from 'solid-js';
 import * as DropdownMenu from '@kobalte/core/dropdown-menu';
 import {
@@ -9,6 +9,7 @@ import {
   SearchIcon,
 } from '../../icons';
 import { t } from '../../../intl';
+import { createDebounced } from '../../utils/createDebounced';
 import styles from './FilterBar.module.css';
 
 /*
@@ -222,9 +223,17 @@ const FiltersMenu = <F extends object>(props: {
  * field maps that).
  */
 
-/**
+/*
  * A search-style text box (no chip chrome — FilterBar draws the label +
  * remove).
+ *
+ * Typing here is continuous server-bound input (spec:
+ * ui-standards/inputs.md § Server-bound input): `onInput` is debounced so a
+ * burst of keystrokes reaches the query (and the URL-persisted filter) once,
+ * not once per key. Keystrokes still render immediately — the input shows the
+ * pending draft; only `onInput` waits. Enter or blur flushes the draft at
+ * once; a draft still pending at unmount is discarded, never applied
+ * (flushing there would resurrect a chip the user just removed).
  */
 export const FilterTextInput = (props: {
   value: string;
@@ -233,22 +242,55 @@ export const FilterTextInput = (props: {
   label: string;
   /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
   testId?: string;
-}) => (
-  <span class={styles.textFilter}>
-    <span class={styles.textFilterIcon}>
-      <SearchIcon />
+  /** Delay before onInput fires (default 300ms); 0 = every keystroke (client-side sets). */
+  debounceMs?: number;
+}) => {
+  // undefined = no pending edit → the input shows the committed props.value.
+  const [draft, setDraft] = createSignal<string>();
+  const shown = () => draft() ?? props.value;
+
+  // Trailing debounce (createDebounced buffers the latest value; flush() on
+  // Enter/blur replays it now, cancel-on-cleanup drops a pending draft at
+  // unmount so a removed chip is never resurrected).
+  const commit = createDebounced((value: string) => {
+    if (value !== props.value) props.onInput(value);
+    // After onInput, so shown() moves draft → updated prop without flashing
+    // the old value.
+    setDraft(undefined);
+  }, props.debounceMs ?? 300);
+
+  const onInput = (value: string) => {
+    if ((props.debounceMs ?? 300) <= 0) return props.onInput(value);
+    setDraft(value);
+    commit(value);
+  };
+
+  const flush = (value: string) => {
+    if ((props.debounceMs ?? 300) <= 0) return;
+    setDraft(value);
+    commit(value);
+    commit.flush();
+  };
+
+  return (
+    <span class={styles.textFilter}>
+      <span class={styles.textFilterIcon}>
+        <SearchIcon />
+      </span>
+      <input
+        class={styles.input}
+        type="text"
+        data-testid={props.testId}
+        value={shown()}
+        placeholder={props.placeholder}
+        aria-label={props.label}
+        onInput={e => onInput(e.currentTarget.value)}
+        onKeyDown={e => e.key === 'Enter' && flush(e.currentTarget.value)}
+        onBlur={e => flush(e.currentTarget.value)}
+      />
     </span>
-    <input
-      class={styles.input}
-      type="text"
-      data-testid={props.testId}
-      value={props.value}
-      placeholder={props.placeholder}
-      aria-label={props.label}
-      onInput={e => props.onInput(e.currentTarget.value)}
-    />
-  </span>
-);
+  );
+};
 
 /**
  * A single-select dropdown. Generic over its option-value union `V`, so
@@ -256,6 +298,9 @@ export const FilterTextInput = (props: {
  * matching the emitted string against the typed options — no cast, and an
  * unknown value degrades to no change). Include a '' option to offer a "clear"
  * choice.
+ *
+ * A discrete choice, so `onChange` applies immediately — no debounce (spec:
+ * ui-standards/inputs.md § Server-bound input).
  */
 export const FilterSelect = <V extends string>(props: {
   value: V | '';

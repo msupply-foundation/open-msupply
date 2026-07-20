@@ -82,6 +82,9 @@ export const StocktakeDetailToolbar: Component<
         onInput={value =>
           props.onFilterChange({ ...props.filter, search: value })
         }
+        // Client-side line filter (in-memory) → no debounce (spec: inputs.md §
+        // Server-bound input).
+        debounceMs={0}
       />
 
       <FilterBar
