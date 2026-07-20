@@ -1,4 +1,4 @@
-import { Show, type JSX } from 'solid-js';
+import { children, Show, type JSX } from 'solid-js';
 import { useFullScreen } from '../AppShell/shellContext';
 import { SidePanel } from '../SidePanel/SidePanel';
 import styles from './Page.module.css';
@@ -76,6 +76,12 @@ export const Page = (props: PageProps) => {
   // remain), matching Open mSupply. Outside a shell (no provider)
   // useFullScreen() is undefined, so the header always shows there.
   const fullScreen = useFullScreen();
+  // Resolve the JSX-element prop ONCE (kdd/solid-reactivity-pitfalls §3): it's
+  // read both by the <Show> test and the insertion below, and each raw access
+  // of a JSX prop getter builds a brand-new subtree — the test's copy would be
+  // discarded but still executed (doubled onMounts/refs, live computations on
+  // detached DOM). children() memoizes so both reads share one instance.
+  const panelContent = children(() => props.sidePanelContent);
   return (
     // Top level is a ROW: the main column (header / body / footer) beside the
     // details panel, so the panel spans the WHOLE page height (alongside the
@@ -98,7 +104,7 @@ export const Page = (props: PageProps) => {
           remounts the content (kdd/state-management: no remounts), and panel state (scroll,
           in-progress edits) survives. The frame owns the SidePanel chrome (header, title,
           close); the page supplies only the content + title + the open boolean. */}
-      <Show when={props.sidePanelContent}>
+      <Show when={panelContent()}>
         <div
           class={styles.panelSlot}
           data-closed={props.sidePanelOpen === false ? '' : undefined}
@@ -107,7 +113,7 @@ export const Page = (props: PageProps) => {
             label={props.sidePanelTitle}
             onClose={props.onSidePanelClose}
           >
-            {props.sidePanelContent}
+            {panelContent()}
           </SidePanel>
         </div>
       </Show>
