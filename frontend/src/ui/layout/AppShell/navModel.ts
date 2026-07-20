@@ -107,7 +107,7 @@ const items = navConfig.map(toNavItem);
 export const SYNC_NAV_ID = 'sync';
 const syncNavItem: NavItem = {
   id: SYNC_NAV_ID,
-  labelKey: 'nav.sync',
+  labelKey: 'sync',
   to: 'sync',
   icon: RadioIcon,
 };

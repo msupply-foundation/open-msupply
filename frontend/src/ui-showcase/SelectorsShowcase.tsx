@@ -13,6 +13,7 @@ import { Button } from '../ui/elements/buttons/Button';
 import { PlusCircleIcon, XCircleIcon } from '../ui/icons';
 import {
   FilterBar,
+  FilterMultiSelect,
   FilterSelect,
   FilterTextInput,
   type Filter,
@@ -150,6 +151,7 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
 export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated');
   const [picked, setPicked] = createSignal<DemoItem | null>(null);
+  const [statusFilter, setStatusFilter] = createSignal<string[]>([]);
   const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]]);
   // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not
   // behind it).
@@ -232,6 +234,35 @@ export const SelectorsShowcase = () => {
               ? `Selected: ${picked()!.code} — ${picked()!.name}`
               : 'Try "amox", "500", or a code like "ORS20"'
           }
+        />
+      </Card>
+
+      <Card
+        title="Autocomplete — pick-first flows & per-option disabled"
+        lead={
+          <>
+            Two lookup behaviours the domain selects lean on:{' '}
+            <code>openOnFocus</code> opens the full list on click/focus with no
+            typing (the customer-search modal's pick-first flow), and{' '}
+            <code>itemDisabled</code> lists an option for context without
+            letting it be chosen (on-hold customers, out-of-stock items —
+            exposed as <code>aria-disabled</code>). After committing a pick,
+            reopening shows the <em>full</em> list again — the input text only
+            filters while it's something the user typed.
+          </>
+        }
+      >
+        <Combobox<DemoItem>
+          label="Item (zero-stock rows listed but disabled)"
+          items={ITEMS}
+          itemToString={item => item.name}
+          itemToValue={item => item.code}
+          filter={itemFilter}
+          itemDisabled={item => item.availableStock === 0}
+          openOnFocus
+          renderItem={renderItem}
+          onChange={() => {}}
+          placeholder="Click — the list opens without typing"
         />
       </Card>
 
@@ -356,6 +387,38 @@ export const SelectorsShowcase = () => {
         <p class={styles.filterReadout}>
           What the page hands to the table:{' '}
           <code>{filterQuery() || '(no filters)'}</code>
+        </p>
+      </Card>
+
+      <Card
+        title="Filter bar — multi-select enum filter"
+        lead={
+          <>
+            <code>FilterMultiSelect</code>: the TESTIDS contract's multi-select
+            enum filter (each option stamps{' '}
+            <code>filter-option-&lt;VALUE&gt;</code>) — a status filter that
+            maps straight onto a wire <code>equalAny</code>. The trigger
+            summarises the selection, or shows the placeholder while empty.
+          </>
+        }
+      >
+        <FilterMultiSelect
+          label="Status"
+          placeholder="Any"
+          values={statusFilter()}
+          options={INVOICE_STATUSES.map(status => ({
+            value: status.value,
+            label: status.label,
+          }))}
+          onChange={setStatusFilter}
+        />
+        <p class={styles.filterReadout}>
+          Wire filter:{' '}
+          <code>
+            {statusFilter().length
+              ? `status: { equalAny: [${statusFilter().join(', ')}] }`
+              : '(no status filter)'}
+          </code>
         </p>
       </Card>
 

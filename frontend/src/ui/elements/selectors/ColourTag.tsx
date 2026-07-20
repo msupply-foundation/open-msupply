@@ -10,12 +10,16 @@ import styles from './ColourTag.module.css';
  * - `ColourTagPicker`: the dot with a Popover that opens the colour swatches.
  */
 export const TAG_COLOURS = [
-  { value: '#004fc4', label: 'colour.blue' },
-  { value: '#05a660', label: 'colour.green' },
-  { value: '#ff3b3b', label: 'colour.red' },
-  { value: '#ffcc00', label: 'colour.yellow' },
-  { value: '#00b7c4', label: 'colour.aqua' },
-  { value: '#8f90a6', label: 'colour.grey' },
+  // `name` is the stable identifier the e2e contract's `colour-swatch-<name>`
+  // testids are built from (e2e/TESTIDS.md) — never derive those from the
+  // i18n key, which can be renamed without anyone thinking of the DOM contract
+  // (main's translation overhaul renamed colour.* → label.* under this PR).
+  { name: 'blue', value: '#004fc4', label: 'label.blue' },
+  { name: 'green', value: '#05a660', label: 'label.green' },
+  { name: 'red', value: '#ff3b3b', label: 'label.red' },
+  { name: 'yellow', value: '#ffcc00', label: 'label.yellow' },
+  { name: 'aqua', value: '#00b7c4', label: 'label.aqua' },
+  { name: 'grey', value: '#8f90a6', label: 'label.grey' },
 ] as const;
 
 export type ColourTagVariant = 'row' | 'field';
@@ -46,7 +50,7 @@ export const ColourTagPicker = (props: {
   <span class={styles.picker} onClick={e => e.stopPropagation()}>
     <Popover
       placement={props.placement ?? 'bottom-start'}
-      triggerLabel={props.label ?? t('colour.label')}
+      triggerLabel={props.label ?? t('label.tag-colour')}
       triggerTestId="colour-picker-button"
       triggerClass={props.variant === 'field' ? styles.fieldTrigger : undefined}
       trigger={
@@ -65,7 +69,7 @@ export const ColourTagPicker = (props: {
               type="button"
               class={styles.swatch}
               style={{ '--tag-colour': option.value }}
-              data-testid={`colour-swatch-${option.label.split('.').pop()}`}
+              data-testid={`colour-swatch-${option.name}`}
               aria-label={t(option.label)}
               title={t(option.label)}
               data-selected={

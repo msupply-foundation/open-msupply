@@ -152,10 +152,6 @@
   white-space: nowrap;
 }
 
-/* Wrapping cell (Column meta.wrapLines > 1): clamp to N lines then ellipsis. line-clamp
-   needs the -webkit-box display; --wrap-lines (set inline on the cell) carries N. The row
-   height becomes a MINIMUM so multi-line content can grow the row rather than clip to the
-   single-line height. Placed after .td so it wins the white-space + block-size. */
 /* De-emphasised (read-only) rows — data-dimmed stamped by TableRow when the
    page's rowDimmed predicate matches (e.g. SHIPPED+ shipments). Opacity, not a
    colour, so every cell treatment (chips, swatches) dims consistently. */
@@ -172,20 +168,29 @@ tr[data-tone='info'] > .td {
   color: var(--info-main);
 }
 
+/* Wrapping cell (Column meta.wrapLines > 1): clamp to N lines then ellipsis. The td
+   itself MUST stay a real table cell — swapping its display for the -webkit-box that
+   line-clamp needs detaches it from table layout, so its content and collapsed bottom
+   border stop lining up with neighbouring cells (issue #244). The clamp therefore lives
+   on an inner wrapper (.tdClamp); the td only relaxes nowrap and adds vertical padding.
+   .td's block-size acts as a minimum under table layout, so multi-line content grows
+   the row rather than clipping. Placed after .td so it wins the white-space. */
 .td[data-wrap] {
+  padding-block: var(--space-1);
+  white-space: normal;
+}
+
+.tdClamp {
   /* --wrap-lines is declared here (default 2) so it's a known custom property to the
-     stylelint value check; the per-column count is set inline on the cell and overrides it. */
+     stylelint value check; the per-column count is set inline on the wrapper and
+     overrides it. */
   --wrap-lines: 2;
 
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: var(--wrap-lines);
   line-clamp: var(--wrap-lines);
-  block-size: auto;
-  min-block-size: var(--table-data-row);
-  padding-block: var(--space-1);
   overflow: hidden;
-  white-space: normal;
   overflow-wrap: anywhere;
 }
 
