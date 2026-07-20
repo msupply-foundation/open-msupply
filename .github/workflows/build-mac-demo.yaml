@@ -38,6 +38,9 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "${{ steps.nvm.outputs.NVMRC }}"
+          # Don't auto-cache via packageManager: it runs the global yarn 1
+          # before corepack is enabled (#12508)
+          package-manager-cache: false
       - name: Build
         run: ./build/mac/build.sh ${{ inputs.architecture }} ${{ inputs.includeDemoData }}
       # Upload artifact would remove +x (execute) permission and attributes from files when zipping
