@@ -175,8 +175,10 @@ impl SyncTranslation for NameStoreJoinTranslation {
         changelog: &ChangelogRow,
         row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        if let Some(reason) = skip_name_relay_to_legacy(connection, changelog)? {
-            return Ok(PushTranslateResult::Ignored(reason));
+        if skip_name_relay_to_legacy(connection, changelog)? {
+            return Ok(PushTranslateResult::Ignored(
+                "Source site pushes name_store_join records to legacy itself".to_string(),
+            ));
         }
 
         let Row::NameStoreJoin(name_store_join_row) = row else {

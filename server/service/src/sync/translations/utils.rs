@@ -40,16 +40,16 @@ pub(crate) fn legacy_custom_fields_if_central(
 }
 
 /// On central, decides whether a `name`/`name_store_join` changelog row should be
-/// relayed to legacy (OG) central, by source site (#9430, #12106). Returns
-/// `Some(reason)` when the push must be skipped:
-/// - Not the central server → `None`: remotes push their own edits to OG as before.
-/// - `source_site_id` is `None` → `None`: pre-3.0 rows; the v5 push filter
+/// skipped rather than relayed to legacy (OG) central, by source site (#9430,
+/// #12106). Returns `true` (and logs why) when the push must be skipped:
+/// - Not the central server → `false`: remotes push their own edits to OG as before.
+/// - `source_site_id` is `None` → `false`: pre-3.0 rows; the v5 push filter
 ///   (`ChangelogFilter::all_data_for_legacy_central`) excludes them anyway.
-/// - Authored on this server (source == current site id) → `None`: a central
+/// - Authored on this server (source == current site id) → `false`: a central
 ///   dispensary's patient edits must reach OG (#12106).
-/// - Source site is V7 → `None`: V7 sites never talk to OG, so central is the
+/// - Source site is V7 → `false`: V7 sites never talk to OG, so central is the
 ///   only path their patients have to OG (#12106).
-/// - Source site is V5/V6 (or unknown) → `Some`: that site pushes its patient
+/// - Source site is V5/V6 (or unknown) → `true`: that site pushes its patient
 ///   edits to OG itself; relaying central's copy would round-trip stale data
 ///   (the #9430 patient-DOB bug).
 ///
@@ -61,28 +61,38 @@ pub(crate) fn legacy_custom_fields_if_central(
 pub(crate) fn skip_name_relay_to_legacy(
     connection: &StorageConnection,
     changelog: &ChangelogRow,
-) -> Result<Option<String>, RepositoryError> {
+) -> Result<bool, RepositoryError> {
     if !crate::sync::CentralServerConfig::is_central_server() {
-        return Ok(None);
+        return Ok(false);
     }
     let Some(source_site_id) = changelog.source_site_id else {
-        return Ok(None);
+        return Ok(false);
     };
 
     if KeyValueStoreRepository::new(connection).get_current_site_id()? == Some(source_site_id) {
-        return Ok(None);
+        return Ok(false);
     }
 
     match SiteRowRepository::new(connection).find_one_by_id(source_site_id)? {
-        Some(site) if site.sync_version == SyncVersion::V7 => Ok(None),
-        Some(_) => Ok(Some(format!(
-            "Not relaying {} record {} to legacy: source site {} is V5/V6 and pushes to legacy itself",
-            changelog.table_name, changelog.record_id, source_site_id
-        ))),
-        None => Ok(Some(format!(
-            "Not relaying {} record {} to legacy: unknown source site {}",
-            changelog.table_name, changelog.record_id, source_site_id
-        ))),
+        Some(site) if site.sync_version == SyncVersion::V7 => Ok(false),
+        Some(_) => {
+            log::debug!(
+                "Not relaying {} record {} to legacy: source site {} is V5/V6 and pushes to legacy itself",
+                changelog.table_name,
+                changelog.record_id,
+                source_site_id
+            );
+            Ok(true)
+        }
+        None => {
+            log::warn!(
+                "Not relaying {} record {} to legacy: unknown source site {}",
+                changelog.table_name,
+                changelog.record_id,
+                source_site_id
+            );
+            Ok(true)
+        }
     }
 }
 

@@ -476,8 +476,10 @@ impl SyncTranslation for NameTranslation {
         changelog: &ChangelogRow,
         row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        if let Some(reason) = skip_name_relay_to_legacy(connection, changelog)? {
-            return Ok(PushTranslateResult::Ignored(reason));
+        if skip_name_relay_to_legacy(connection, changelog)? {
+            return Ok(PushTranslateResult::Ignored(
+                "Source site pushes name records to legacy itself".to_string(),
+            ));
         }
 
         let Row::Name(name_row) = row else {
@@ -609,8 +611,10 @@ impl SyncTranslation for NameTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        if let Some(reason) = skip_name_relay_to_legacy(connection, changelog)? {
-            return Ok(PushTranslateResult::Ignored(reason));
+        if skip_name_relay_to_legacy(connection, changelog)? {
+            return Ok(PushTranslateResult::Ignored(
+                "Source site pushes name records to legacy itself".to_string(),
+            ));
         }
 
         Ok(PushTranslateResult::delete(changelog, self.table_name()))
