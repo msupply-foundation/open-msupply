@@ -13,8 +13,8 @@ use crate::sync::{
 };
 
 use super::{
-    FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    utils::skip_name_relay_to_legacy, FkField, IntegrationOperation, PullTranslateResult,
+    PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 #[allow(non_snake_case)]
@@ -58,23 +58,12 @@ impl SyncTranslation for NameStoreJoinTranslation {
         r#type: &ToSyncRecordTranslationType,
     ) -> bool {
         match r#type {
+            // Which name_store_join rows central relays to OG is decided per row in
+            // `try_translate_to_upsert_sync_record` via `skip_name_relay_to_legacy`
+            // (#9430, #12106) — it needs a database connection, which this method
+            // doesn't receive.
             ToSyncRecordTranslationType::PushToLegacyCentral => {
-                let is_name_store_record = self.change_log_type().as_ref() == Some(&row.table_name);
-
-                if !is_name_store_record {
-                    return false;
-                }
-
-                // Check if we're the central server, if we are don't push changes received from remote sites
-                // Otherwise we could end up syncing changes back to the site they came from
-                if CentralServerConfig::is_central_server() && row.source_site_id.is_some() {
-                    log::debug!(
-                        "Not pushing name_store_join update from remote site back to central for id: {}", row.record_id
-                    );
-                    return false;
-                }
-
-                true
+                self.change_log_type().as_ref() == Some(&row.table_name)
             }
             // We are also pushing to omsupply central so that it's available for
             // cross site patient details sharing, same for name
@@ -186,6 +175,10 @@ impl SyncTranslation for NameStoreJoinTranslation {
         changelog: &ChangelogRow,
         row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        if let Some(reason) = skip_name_relay_to_legacy(connection, changelog)? {
+            return Ok(PushTranslateResult::Ignored(reason));
+        }
+
         let Row::NameStoreJoin(name_store_join_row) = row else {
             return Ok(PushTranslateResult::NotMatched);
         };
@@ -272,6 +265,93 @@ mod tests {
         SyncRecordData,
     };
     use serde_json::json;
+
+    /// #9430/#12106 routing: on central, name_store_join rows relay to OG only
+    /// when authored on this server or on a V7 site; rows from V5/V6 sites are
+    /// ignored. Shares `skip_name_relay_to_legacy` with the name translator —
+    /// the full source matrix is covered by that translator's test.
+    #[actix_rt::test]
+    async fn name_store_join_relay_to_legacy_routed_by_source_site() {
+        use repository::{KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion};
+
+        let (_, connection, _, _) = setup_all(
+            "name_store_join_relay_to_legacy_routed_by_source_site",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let v5v6_site_id = 2;
+        let v7_site_id = 3;
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(1))
+            .unwrap();
+        let site_repo = SiteRowRepository::new(&connection);
+        site_repo
+            .upsert(&SiteRow {
+                id: v5v6_site_id,
+                code: "site2".to_string(),
+                name: "V5V6 site".to_string(),
+                sync_version: SyncVersion::V5V6,
+                ..Default::default()
+            })
+            .unwrap();
+        site_repo
+            .upsert(&SiteRow {
+                id: v7_site_id,
+                code: "site3".to_string(),
+                name: "V7 site".to_string(),
+                sync_version: SyncVersion::V7,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let join = NameStoreJoinRow {
+            id: "nsj_relay_test".to_string(),
+            store_id: "store_b".to_string(),
+            name_id: "name_store_a".to_string(),
+            name_is_customer: false,
+            name_is_supplier: true,
+        };
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one_without_changelog(&join)
+            .unwrap();
+
+        let translator = NameStoreJoinTranslation {};
+        let changelog_from = |source_site_id: Option<i32>| ChangelogRow {
+            table_name: ChangelogTableName::NameStoreJoin,
+            record_id: join.id.clone(),
+            source_site_id,
+            ..Default::default()
+        };
+
+        crate::sync::test_util_set_is_central_server(true);
+
+        let result = translator
+            .try_translate_to_upsert_sync_record(
+                &connection,
+                &changelog_from(Some(v5v6_site_id)),
+                Row::NameStoreJoin(join.clone()),
+            )
+            .unwrap();
+        assert!(
+            matches!(result, PushTranslateResult::Ignored(_)),
+            "V5/V6-site row should be ignored"
+        );
+
+        let result = translator
+            .try_translate_to_upsert_sync_record(
+                &connection,
+                &changelog_from(Some(v7_site_id)),
+                Row::NameStoreJoin(join.clone()),
+            )
+            .unwrap();
+        assert!(
+            matches!(result, PushTranslateResult::PushRecord(_)),
+            "V7-site row should push"
+        );
+
+        crate::sync::test_util_set_is_central_server(false);
+    }
 
     #[actix_rt::test]
     async fn test_name_store_join_translation() {
