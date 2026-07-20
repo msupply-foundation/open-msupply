@@ -1,8 +1,7 @@
 import { type JSX } from 'solid-js';
-import { Combobox } from '../../ui/elements/selectors/Combobox';
+import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { formatNumber } from '../../intl/formatNumber';
 import { t } from '../../intl';
-import { createPaginatedSearch } from '../search/createPaginatedSearch';
 import { itemPageFetcher, type ItemOption } from './itemResource';
 import styles from './ItemSearch.module.css';
 
@@ -47,32 +46,22 @@ const renderRow = (item: ItemOption): JSX.Element => (
 );
 
 /**
- * Reusable server-side-filtered, infinite-scroll item picker (add-item flow).
- * Wraps the shared Combobox in server mode — typing refetches from the backend
- * (filtered by code/name), scrolling to the bottom loads the next page — over
- * the paginated `items` query. Excludes `excludeItemIds` server-side so items
- * already in the caller's context aren't offered.
- *
- * Domain-level (not a ui/ element) because it's bound to the item query; it
- * follows the domain-selector pattern (LocationSelect/ReasonSelect wrap
- * Combobox) but server-fed rather than whole-list — see
- * [[createPaginatedSearch]].
+ * Reusable server-side-filtered, infinite-scroll item picker (add-item flow) —
+ * a thin binding over the generic AsyncCombobox: it supplies the `items`-query
+ * fetcher (excluding `excludeItemIds` server-side) and the option row;
+ * AsyncCombobox owns the combobox + pagination.
  */
 export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
-  // Created ONCE (not in a memo) so its signals/effects/debounce keep a stable
-  // owner and the accumulated pages survive re-renders. The fetcher reads the
-  // exclusions accessor per call, so a later change (an item added via "OK &
-  // next") is picked up on the next fetch without recreating the primitive.
-  const search = createPaginatedSearch<ItemOption>({
-    fetchPage: itemPageFetcher(
-      props.storeId,
-      () => props.excludeItemIds,
-      PAGE_SIZE
-    ),
-  });
+  // The fetcher reads the exclusions accessor per call, so a later change (an
+  // item added via "OK & next") is picked up on the next fetch.
+  const fetchPage = itemPageFetcher(
+    props.storeId,
+    () => props.excludeItemIds,
+    PAGE_SIZE
+  );
 
   return (
-    <Combobox<ItemOption>
+    <AsyncCombobox<ItemOption>
       label={props.label}
       hideLabel={props.hideLabel}
       class={props.class}
@@ -81,16 +70,12 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       // stamped here (like ConfirmDialog's confirmation-modal), not per call
       // site (e2e/TESTIDS.md).
       inputTestId="item-search-input"
-      items={search.items()}
-      loading={search.loading()}
-      loadingMore={search.loadingMore()}
+      fetchPage={fetchPage}
       value={props.value}
       itemToString={item => `${item.code} - ${item.name}`}
       itemToValue={item => item.id}
       renderItem={renderRow}
-      onInputChange={value => search.setSearch(value)}
-      onReachEnd={() => search.loadMore()}
-      onChange={item => props.onSelect(item)}
+      onSelect={item => props.onSelect(item)}
     />
   );
 };

@@ -155,6 +155,10 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // — e.g. after saving, or when its bound field is cleared — empties the
   // input, rather than the input keeping the stale item). Guarded by
   // `on(value, ...)` so it only reacts to the prop, not the user's own pick.
+  //
+  // Async/server pickers whose current selection may not be in the loaded page
+  // keep it visible by seeding it into `items` themselves (see AsyncCombobox) —
+  // the resolution here is a plain lookup against whatever `items` holds.
   createEffect(
     on(
       () => props.value,

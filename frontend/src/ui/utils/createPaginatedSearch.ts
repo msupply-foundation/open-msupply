@@ -1,5 +1,5 @@
 import { batch, createSignal, onCleanup } from 'solid-js';
-import { createDebounced } from '../../ui/utils/createDebounced';
+import { createDebounced } from './createDebounced';
 
 // One page of results from the server: the rows plus the grand total (so we
 // know when there are no more pages to fetch).
@@ -50,13 +50,14 @@ export interface PaginatedSearch<T> {
 
 /**
  * Drives a server-side-filtered, offset-paginated search that accumulates pages
- * for infinite scroll. The reusable half of the item-search selector: it owns
- * the fetch/accumulate/paging state; the component owns the input + listbox +
- * scroll sentinel and just calls setSearch/loadMore and reads items/loading.
+ * for infinite scroll. The reusable half of a server-fed selector: it owns the
+ * fetch/accumulate/paging state; the component (AsyncCombobox) owns the input +
+ * listbox + scroll sentinel and just calls setSearch/loadMore/ensure and reads
+ * items/loading.
  *
- * Entity-agnostic — fetchPage is the only coupling. Lifted from src/domain/item
- * when the customer lookup became its second consumer (the rule-of-three note
- * this comment used to carry).
+ * Entity-agnostic — fetchPage is the only coupling. Lives in the shared UI
+ * layer (alongside AsyncCombobox) so a ui/ component can build on it without
+ * importing from src/domain.
  *
  * Concurrency: each fetch is tagged with a monotonically increasing request id;
  * a resolved page is applied only if it's still the latest request, so a slow
