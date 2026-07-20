@@ -21,3 +21,29 @@ export type LocationsResult = {
 export const Locations = {
   query: "query locations($storeId: String!) {\n  locations(storeId: $storeId) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<LocationsResult, LocationsVariables>;
+
+export type LocationsWithVolumeVariables = {
+  storeId: string;
+};
+
+export type LocationsWithVolumeResult = {
+  locations: ({
+  __typename: "LocationConnector";
+} & {
+  nodes: Array<{
+  id: string;
+  code: string;
+  name: string;
+  volume: number;
+  volumeUsed: number;
+  stock: {
+  __typename: "StockLineConnector";
+  totalCount: number;
+};
+}>;
+});
+};
+
+export const LocationsWithVolume = {
+  query: "query locationsWithVolume($storeId: String!) {\n  locations(storeId: $storeId) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        volume\n        volumeUsed\n        stock {\n          ... on StockLineConnector {\n            __typename\n            totalCount\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<LocationsWithVolumeResult, LocationsWithVolumeVariables>;

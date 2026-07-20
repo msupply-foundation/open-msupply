@@ -3,7 +3,7 @@ import {
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
-import { LocationSelect } from '../../../domain/location';
+import { LocationSelect, type Location } from '../../../domain/location';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 
 // Type-driven, EXHAUSTIVE filter definitions for the stocktake detail lines,
@@ -21,7 +21,14 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 // picker). The filters the OLD client-side filter offered but the server can't
 // do yet — batch (no field), expiry-before (no field), and the "show error
 // lines" filter — are TODOs below.
-const FILTERS: Filter<StocktakeLineFilter>[] =
+// The location filter uses the plain, VOLUME-BLIND picker: it only narrows the
+// line list to a location, so capacity is irrelevant (spec/stocktakes/
+// ui-surface.md). The locations are fetched by the detail VIEW (one fetch,
+// shared with the volume-aware editor pickers) and threaded through here as an
+// accessor so the chip's render reads the live list without owning a cache.
+export const stocktakeDetailFilters = (
+  locations: () => Location[]
+): Filter<StocktakeLineFilter>[] =>
   constructFilters<StocktakeLineFilter>({
     // ─ user-facing (addable chips), in display order ─────────────────────────
     locationId: {
@@ -30,6 +37,7 @@ const FILTERS: Filter<StocktakeLineFilter>[] =
         <LocationSelect
           label={t('label.location')}
           hideLabel
+          locations={locations()}
           value={props.filter().locationId?.equalTo ?? undefined}
           placeholder={t('label.location')}
           // Pick a location → filter by its id (server locationId.equalTo);
@@ -59,6 +67,3 @@ const FILTERS: Filter<StocktakeLineFilter>[] =
     itemId: null,
     stockLineId: null,
   });
-
-export const stocktakeDetailFilters = (): Filter<StocktakeLineFilter>[] =>
-  FILTERS;

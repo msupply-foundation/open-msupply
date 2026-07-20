@@ -1,6 +1,7 @@
 import {
   createEffect,
   createMemo,
+  createResource,
   createSignal,
   For,
   Match,
@@ -20,8 +21,9 @@ import { DateField } from '../../ui/elements/inputs/DateField';
 import { DateRangeField } from '../../ui/elements/inputs/DateRangeField';
 import { MasterListSelect } from '../masterList/MasterListSelect';
 import { LocationSelect } from '../location/LocationSelect';
+import { fetchLocations, type Location } from '../location/locationResource';
 import { ProgramSelect } from '../program/ProgramSelect';
-import { storeContext } from '../../store/storeContext';
+import { storeContext, currentStoreId } from '../../store/storeContext';
 import {
   cleanArguments,
   parseArgumentSchema,
@@ -83,6 +85,16 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
       ? parseArgumentSchema(props.report.argumentSchema)
       : []
   );
+
+  // Locations for a `location`-kind argument, fetched locally (no global cache —
+  // the location domain owns none anymore). Volume-blind: a report filter only
+  // references a location. Non-suspending read so a pending fetch never trips an
+  // ancestor <Suspense>.
+  const [locationsData] = createResource(currentStoreId, fetchLocations);
+  const locations = (): Location[] =>
+    locationsData.state === 'ready' || locationsData.state === 'refreshing'
+      ? (locationsData.latest ?? [])
+      : [];
 
   // Local form state as a store, updated field-by-field in place. Seeded fresh
   // each time the modal opens (an interaction never reseeds): from the URL
@@ -325,6 +337,8 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               <Match when={field.kind === 'location'}>
                 <LocationSelect
                   label={field.label}
+                  locations={locations()}
+                  loading={locationsData.loading}
                   value={selectValue(field.key)}
                   onChange={location =>
                     setValues(field.key, location?.id ?? undefined)
