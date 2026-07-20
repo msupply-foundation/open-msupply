@@ -387,11 +387,13 @@ export const TableShowcase = () => {
         rowKey={r => r.id}
         sort={sort()}
         onSort={onSort}
-        // Row presentation hooks: low-stock rows stand in for read-only
-        // records (data-dimmed → opacity); the cheapest row stands in for
-        // "awaiting an action" (semantic data-tone → info token).
+        // Row presentation hooks, on DISTINCT rows so each reads clearly:
+        // low-stock rows stand in for read-only records (data-dimmed →
+        // opacity); one well-stocked row stands in for "awaiting an action"
+        // (semantic data-tone → info token). In a real vertical they live on
+        // different tables (rowDimmed: the list; rowTone: detail lines).
         rowDimmed={r => r.stock < 40}
-        rowTone={r => (r.price === 0.02 ? 'info' : undefined)}
+        rowTone={r => (r.price === 0.09 ? 'info' : undefined)}
         tabsAndCardGroups={TABS_AND_CARD_GROUPS}
         rowGroup={{
           columnId: 'category',
