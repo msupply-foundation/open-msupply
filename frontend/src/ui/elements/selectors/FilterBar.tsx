@@ -163,7 +163,7 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
             <button
               type="button"
               class={styles.remove}
-              aria-label={t('filter.remove', { name: f.label() })}
+              aria-label={t('label.clear-filter-detail', { name: f.label() })}
               onClick={() => removeFilter(f)}
             >
               <CloseIcon />
@@ -182,7 +182,7 @@ const FiltersMenu = <F extends object>(props: {
 }) => (
   <DropdownMenu.Root placement="bottom-start" gutter={4}>
     <DropdownMenu.Trigger class={styles.trigger} data-testid="filters-menu">
-      <span>{t('filter.filters')}</span>
+      <span>{t('label.filters')}</span>
       <ChevronDownIcon class={styles.triggerChevron} />
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal>
@@ -206,7 +206,9 @@ const FiltersMenu = <F extends object>(props: {
             class={styles.item}
             onSelect={() => props.onReset?.()}
           >
-            <span class={styles.itemLabel}>{t('filter.remove-all')}</span>
+            <span class={styles.itemLabel}>
+              {t('label.remove-all-filters')}
+            </span>
           </DropdownMenu.Item>
         </Show>
       </DropdownMenu.Content>
@@ -303,6 +305,68 @@ export const FilterSelect = <V extends string>(props: {
               )}
             </For>
           </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+};
+
+/**
+ * A multi-select enum filter — FilterSelect's many-value sibling: the same
+ * dropdown chrome, but checkbox items and an "any of" selection array. The
+ * trigger shows the selected labels (or the placeholder when none). Options
+ * carry `filter-option-<VALUE>` testids (e2e/TESTIDS.md — raw enum value).
+ */
+export const FilterMultiSelect = <V extends string>(props: {
+  values: readonly V[];
+  options: readonly { value: V; label: string }[];
+  onChange: (values: V[]) => void;
+  label: string;
+  /** Shown on the trigger while nothing is selected (e.g. "Any"). */
+  placeholder: string;
+  /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
+  testId?: string;
+}) => {
+  const summary = () => {
+    const chosen = props.options.filter(o => props.values.includes(o.value));
+    return chosen.length
+      ? chosen.map(o => o.label).join(', ')
+      : props.placeholder;
+  };
+  const toggle = (value: V, checked: boolean) => {
+    const without = props.values.filter(v => v !== value);
+    props.onChange(checked ? [...without, value] : [...without]);
+  };
+  return (
+    <DropdownMenu.Root placement="bottom-start" gutter={4}>
+      <DropdownMenu.Trigger
+        class={styles.enumTrigger}
+        data-testid={props.testId}
+        aria-label={props.label}
+      >
+        <span>{summary()}</span>
+        <ChevronDownIcon class={styles.triggerChevron} />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content class={styles.content}>
+          <For each={props.options}>
+            {option => (
+              <DropdownMenu.CheckboxItem
+                checked={props.values.includes(option.value)}
+                onChange={checked => toggle(option.value, checked)}
+                class={`${styles.item} ${styles.checkboxItem}`}
+                data-testid={`filter-option-${option.value}`}
+                closeOnSelect={false}
+              >
+                <span class={styles.checkbox}>
+                  <DropdownMenu.ItemIndicator class={styles.indicator}>
+                    <CheckIcon />
+                  </DropdownMenu.ItemIndicator>
+                </span>
+                <span class={styles.itemLabel}>{option.label}</span>
+              </DropdownMenu.CheckboxItem>
+            )}
+          </For>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

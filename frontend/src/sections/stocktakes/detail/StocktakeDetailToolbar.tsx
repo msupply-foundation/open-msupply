@@ -44,8 +44,8 @@ export const StocktakeDetailToolbar: Component<
 > = props => {
   const disabledMessage = () =>
     props.node.status === 'FINALISED'
-      ? t('stocktake.detail.disabled-finalised')
-      : t('stocktake.detail.disabled-on-hold');
+      ? t('messages.finalised-stock-take')
+      : t('messages.on-hold-stock-take');
 
   return (
     <>
@@ -60,9 +60,9 @@ export const StocktakeDetailToolbar: Component<
       {/* One wrapping row (the Toolbar is a flex row): the labelled description, the always-on
           item search (name OR code, like OMS's SearchBar), then the addable filter chips — all
           sharing a baseline instead of stacking ragged. */}
-      <FieldRow label={t('stocktake.detail.description')}>
+      <FieldRow label={t('heading.description')}>
         <TextField
-          label={t('stocktake.detail.description')}
+          label={t('heading.description')}
           hideLabel
           width="long"
           data-testid="description-field"
@@ -76,8 +76,8 @@ export const StocktakeDetailToolbar: Component<
       </FieldRow>
 
       <FilterTextInput
-        label={t('stocktake.detail.search-items')}
-        placeholder={t('stocktake.detail.search-items')}
+        label={t('placeholder.filter-items')}
+        placeholder={t('placeholder.filter-items')}
         value={props.filter.search ?? ''}
         onInput={value =>
           props.onFilterChange({ ...props.filter, search: value })

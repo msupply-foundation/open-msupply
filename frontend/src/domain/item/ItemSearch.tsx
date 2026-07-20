@@ -11,7 +11,9 @@ const PAGE_SIZE = 30;
 export interface ItemSearchProps {
   label: string;
   storeId: string;
-  /** Item ids to hide from the results (e.g. items already on the stocktake). */
+  /**
+   * Item ids to hide from the results (e.g. items already on the stocktake).
+   */
   excludeItemIds: string[];
   /**
    * The currently-selected item's id (controlled). Shows that item as the
@@ -39,7 +41,7 @@ const renderRow = (item: ItemOption): JSX.Element => (
       <span data-testid="item-option-name">{item.name}</span>
     </span>
     <span class={styles.total}>
-      {formatNumber(item.totalUnits)} {item.unitName ?? t('item.units')}
+      {formatNumber(item.totalUnits)} {item.unitName ?? t('label.unit-plural')}
     </span>
   </span>
 );
@@ -53,7 +55,8 @@ const renderRow = (item: ItemOption): JSX.Element => (
  *
  * Domain-level (not a ui/ element) because it's bound to the item query; it
  * follows the domain-selector pattern (LocationSelect/ReasonSelect wrap
- * Combobox) but server-fed rather than whole-list — see [[createPaginatedSearch]].
+ * Combobox) but server-fed rather than whole-list — see
+ * [[createPaginatedSearch]].
  */
 export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
   // Created ONCE (not in a memo) so its signals/effects/debounce keep a stable

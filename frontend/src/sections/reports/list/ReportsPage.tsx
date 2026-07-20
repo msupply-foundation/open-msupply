@@ -47,23 +47,23 @@ type CategoryDef = {
 
 const CATEGORIES: readonly CategoryDef[] = [
   {
-    titleKey: 'report.category.stock-and-items',
+    titleKey: 'heading.stock-and-items',
     subContexts: ['StockAndItems'],
     gate: 'primary',
   },
   {
-    titleKey: 'report.category.distribution',
+    titleKey: 'distribution',
     subContexts: ['Distribution'],
     gate: 'primary',
   },
   {
-    titleKey: 'report.category.replenishment',
+    titleKey: 'replenishment',
     subContexts: ['Replenishment'],
     gate: 'primary',
   },
-  { titleKey: 'report.category.other', subContexts: ['Other'], gate: 'ifAny' },
+  { titleKey: 'heading.other', subContexts: ['Other'], gate: 'ifAny' },
   {
-    titleKey: 'report.category.programs',
+    titleKey: 'label.programs',
     subContexts: ['HIVCareProgram', 'Vaccinations', 'Encounters'],
     gate: 'programs',
   },
@@ -78,7 +78,7 @@ const PrefField = (props: { label: string; value: number | undefined }) => (
     value={props.value ?? ''}
     readOnly
     width="short"
-    helperText={t('report.side-panel.months')}
+    helperText={t('label.months')}
   />
 );
 
@@ -162,36 +162,36 @@ const ReportsPage: Component = () => {
   const sidePanelContent = (
     <>
       <SidePanelSection
-        title={t('report.side-panel.notification-preferences')}
+        title={t('heading.notification-preferences')}
         collapsible
       >
         <div style={stackStyle}>
           <PrefField
-            label={t('report.side-panel.overstock')}
+            label={t('label.threshold-for-overstock')}
             value={prefs()?.monthsOverstock}
           />
           <PrefField
-            label={t('report.side-panel.understock')}
+            label={t('label.threshold-for-understock')}
             value={prefs()?.monthsUnderstock}
           />
           <PrefField
-            label={t('report.side-panel.expiring')}
+            label={t('label.expiring-item-period-report-panel')}
             value={prefs()?.monthsItemsExpire}
           />
         </div>
       </SidePanelSection>
-      <SidePanelSection title={t('report.side-panel.custom')} collapsible>
+      <SidePanelSection title={t('heading.custom')} collapsible>
         <div style={stackStyle}>
           <PrefField
-            label={t('report.side-panel.stocktake-frequency')}
+            label={t('label.stocktake-frequency')}
             value={prefs()?.stocktakeFrequency}
           />
           <PrefField
-            label={t('report.side-panel.look-back')}
+            label={t('label.monthly-consumption-look-back-period')}
             value={prefs()?.monthlyConsumptionLookBackPeriod}
           />
           <PrefField
-            label={t('report.side-panel.lead-time')}
+            label={t('label.lead-time')}
             value={prefs()?.monthsLeadTime}
           />
         </div>
@@ -202,12 +202,12 @@ const ReportsPage: Component = () => {
   return (
     <Page
       sidePanelOpen={panelOpen()}
-      sidePanelTitle={t('report.side-panel.title')}
+      sidePanelTitle={t('label.preferences')}
       onSidePanelClose={() => setPanelOpen(false)}
       sidePanelContent={sidePanelContent}
       header={
         <Header>
-          <Breadcrumb crumbs={[{ label: t('nav.reports') }]} />
+          <Breadcrumb crumbs={[{ label: t('reports') }]} />
         </Header>
       }
     >
@@ -219,7 +219,7 @@ const ReportsPage: Component = () => {
           // (kdd/solid-reactivity-pitfalls).
           <Show
             when={reportsRes.loading}
-            fallback={<EmptyState message={t('report.empty')} />}
+            fallback={<EmptyState message={t('message.contact-support')} />}
           >
             <Spinner center />
           </Show>

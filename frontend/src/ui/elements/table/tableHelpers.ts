@@ -1,6 +1,7 @@
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
+import { formatNumber } from '../../../intl/formatNumber';
 import type { Column } from './columnTypes';
 import { MULTIPLE, sharedOrMultipleDate } from './aggregations';
 
@@ -75,7 +76,33 @@ export const getDateCell = <T>(meta?: Meta): CellFragment<T> => ({
 // Booleans: resolved value → localised Yes/No.
 export const getBooleanCell = <T>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
-  cell: info => (info.getValue<boolean>() ? t('common.yes') : t('common.no')),
+  cell: info => (info.getValue<boolean>() ? t('messages.yes') : t('messages.no')),
+});
+
+// Money: symbol + always two decimals (spec/ui-standards/conventions.md),
+// right-aligned, locale-formatted. Grouped parent → SUM of the leaves,
+// formatted the same way. The currency code is fixed at USD — the current
+// app's default store home currency — until store currency preferences are
+// plumbed through; narrowSymbol keeps the symbol a bare "$" in the
+// Latin-script locales (the current app's pattern) — ar has no CLDR narrow
+// form and falls back to "US$".
+const formatCurrencyCell = (value: number | null | undefined): string =>
+  value == null
+    ? EMPTY_CELL
+    : formatNumber(value, {
+        style: 'currency',
+        currency: 'USD',
+        currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+export const getCurrencyCell = <T>(meta?: Meta): CellFragment<T> => ({
+  meta: { align: 'right', ...meta },
+  aggregationFn: 'sum',
+  cell: info => formatCurrencyCell(info.getValue<number | null | undefined>()),
+  aggregatedCell: info =>
+    formatCurrencyCell(info.getValue<number | null | undefined>()),
 });
 
 // =================================================================================

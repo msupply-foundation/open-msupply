@@ -10,12 +10,6 @@
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
-  /* Contain the visually-hidden label (.labelHidden, position:absolute): with no
-     positioned ancestor its containing block is the document, so it lands at a
-     document-space coordinate deep in the page and stretches the viewport's
-     scrollHeight — a second, document-level scrollbar. Making the field the
-     containing block keeps it within the field (and the page's own scroll). */
-  position: relative;
 }
 
 /* Spec max-widths */
@@ -36,19 +30,6 @@
   font-weight: var(--weight-medium);
   line-height: 1.3;
   color: var(--text-body);
-}
-
-/* Visually hidden but present for assistive tech (used with a FieldRow's visible label). */
-.labelHidden {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
 }
 
 .required {

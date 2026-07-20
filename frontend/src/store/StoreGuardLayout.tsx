@@ -97,7 +97,7 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
           when={contextLoaded(store().id)}
           fallback={
             <div class={styles.page}>
-              <p>{t('store.loading')}</p>
+              <p>{t('loading')}</p>
             </div>
           }
         >

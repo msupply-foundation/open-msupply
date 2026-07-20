@@ -42,21 +42,21 @@ describe('toSyncOverview', () => {
     // Labels are i18n keys now (SyncProgress resolves them with t() at render).
     expect(overview?.steps).toEqual([
       {
-        label: 'sync.step.pull',
+        label: 'sync-status.pull',
         started: true,
         finished: false,
         done: 5,
         total: 10,
       },
       {
-        label: 'sync.step.push',
+        label: 'sync-status.push',
         started: false,
         finished: false,
         done: undefined,
         total: undefined,
       },
       {
-        label: 'sync.step.integration',
+        label: 'sync-status.integrate',
         started: false,
         finished: false,
         done: undefined,
