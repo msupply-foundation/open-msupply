@@ -2,7 +2,7 @@ import { type JSX } from 'solid-js';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { formatNumber } from '../../intl/formatNumber';
 import { t } from '../../intl';
-import { createPaginatedSearch } from './createPaginatedSearch';
+import { createPaginatedSearch } from '../search/createPaginatedSearch';
 import { itemPageFetcher, type ItemOption } from './itemResource';
 import styles from './ItemSearch.module.css';
 

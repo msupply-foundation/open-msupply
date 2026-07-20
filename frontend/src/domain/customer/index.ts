@@ -1,2 +1,2 @@
 export { CustomerSelect } from './CustomerSelect';
-export { customersResource, type Customer } from './customerResource';
+export { customerPageFetcher, type Customer } from './customerResource';

@@ -1,13 +1,15 @@
-# Customer lookup (spec/ui-standards/components.md § customer lookup): the
-# store's visible customers, searchable across code or name. On-hold customers
-# are returned and rendered disabled (AC-C3) — never filtered out.
-query customers($storeId: String!) {
-  names(
-    storeId: $storeId
-    filter: { isCustomer: true }
-    page: { first: 1000 }
-    sort: { key: name }
-  ) {
+# Customer lookup (spec/ui-standards/components.md § name / customer lookup):
+# the store's visible customers, server-side filtered by code or name and
+# offset-paginated for infinite scroll — customer lists can exceed any
+# load-all cap (the current app's CustomerSearchInput pages the same way via
+# its infinite names query). On-hold customers are returned and rendered
+# disabled — never filtered out.
+query customers(
+  $storeId: String!
+  $filter: NameFilterInput
+  $page: PaginationInput
+) {
+  names(storeId: $storeId, filter: $filter, page: $page, sort: { key: name }) {
     ... on NameConnector {
       __typename
       totalCount

@@ -455,6 +455,9 @@ const OutboundDetailView: Component = () => {
                         label={t('outbound.toolbar.customer')}
                         hideLabel
                         value={current().otherParty.id}
+                        // Seed the record's current customer so the controlled
+                        // value resolves before (or regardless of) its page.
+                        selected={current().otherParty}
                         disabled={!editable() || current().requisition != null}
                         error={customerError()}
                         onChange={customer => {

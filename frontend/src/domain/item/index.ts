@@ -8,4 +8,4 @@ export {
   createPaginatedSearch,
   type PaginatedSearch,
   type Page,
-} from './createPaginatedSearch';
+} from '../search/createPaginatedSearch';
