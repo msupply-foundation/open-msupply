@@ -275,6 +275,7 @@
   "error.integration-timeout-reached": "استغرق الخادم المركزي وقتاً طويلاً في دمج السجلات المدفوعة. يرجى إعادة المحاولة لاحقاً.",
   "error.internal-error": "واجه الخادم مشكلة.",
   "error.interval-invalid": "يجب أن تكون فترة المزامنة عددًا صحيحًا موجبًا",
+  "error.field-required": "هذا الفلتر مطلوب.",
   "error.interval-required": "فترة المزامنة مطلوبة",
   "error.invalid-credentials": "تعذر جلب تفاصيل المستخدم. يرجى إعادة تسجيل الدخول لتحديث تفاصيل المستخدم.",
   "error.invalid-field-value": "{{ value }} ليست {{ field }} صالحة",
