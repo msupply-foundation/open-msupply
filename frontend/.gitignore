@@ -34,3 +34,9 @@ dist-ssr
 # Playwright output (deterministic e2e suites in e2e/)
 e2e/test-results
 e2e/playwright-report
+
+# Spec-owned verticals are regenerated from spec/ (spec-build) and stay out of
+# git — only the reference vertical (stocktakes) and sync-modal are tracked.
+src/sections/*
+!src/sections/stocktakes/
+!src/sections/sync-modal/
