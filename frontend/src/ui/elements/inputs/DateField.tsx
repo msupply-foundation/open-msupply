@@ -63,14 +63,22 @@ export const DateField = (props: DateFieldProps) => {
     )
   );
 
+  // Apply a committed value: notify the parent AND write the local text buffer
+  // directly, so a selection shows even when the parent doesn't echo `value`
+  // back (uncontrolled use). Shared by the typed-commit and calendar-pick paths
+  // so the two stay symmetric — reuses the existing buffer, no extra state.
+  const apply = (iso: string | null) => {
+    props.onChange?.(iso);
+    setText(formatIsoDate(iso, fmt()));
+  };
+
   const commit = () => {
     const parsed = parseDateInput(text(), fmt());
     if (parsed === undefined) {
       setText(formatIsoDate(props.value, fmt())); // invalid → revert
       return;
     }
-    props.onChange?.(parsed);
-    setText(formatIsoDate(parsed, fmt()));
+    apply(parsed);
   };
 
   return (
@@ -118,7 +126,7 @@ export const DateField = (props: DateFieldProps) => {
                 min={isoDateToDate(props.min) ?? undefined}
                 max={isoDateToDate(props.max) ?? undefined}
                 onSelect={d => {
-                  props.onChange?.(d ? dateToIsoDate(d) : null);
+                  apply(d ? dateToIsoDate(d) : null);
                   close();
                 }}
               />

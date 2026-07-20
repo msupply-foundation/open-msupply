@@ -112,6 +112,8 @@ export const InputsShowcase = () => {
     '2023-04-23'
   );
   const [expiringBefore, setExpiringBefore] = createSignal<string | null>(null);
+  const [manufacture, setManufacture] = createSignal<string | null>(null);
+  const [countDate, setCountDate] = createSignal<string | null>(null);
   const [cutoff, setCutoff] = createSignal<string | null>('17:30');
   const [appointment, setAppointment] = createSignal<string | null>(
     '2026-07-17T02:30:00.000Z'
@@ -644,7 +646,11 @@ export const InputsShowcase = () => {
             <DateField
               label="Manufacture date"
               max={todayIso()}
-              helperText="max = today; later dates greyed out in the picker"
+              value={manufacture()}
+              onChange={setManufacture}
+              helperText={`max = today; later dates greyed out. Stored: ${
+                manufacture() ?? '(empty)'
+              }`}
             />
           </Field>
           <Field caption="Time — 12h am/pm (Kobalte)">
@@ -668,6 +674,8 @@ export const InputsShowcase = () => {
             <DateField
               label="Count date"
               required
+              value={countDate()}
+              onChange={setCountDate}
               helperText="Asterisk on label — not placeholder"
             />
           </Field>

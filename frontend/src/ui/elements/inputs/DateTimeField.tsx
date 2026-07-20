@@ -85,13 +85,23 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
       dateIso ? localPartsToUtc(dateIso, timeToHhmm(t) ?? '') : null
     );
 
+  // Apply a committed date: write the local date buffer directly AND emit the
+  // recombined UTC instant, so a picked/typed date shows even when the parent
+  // doesn't echo `value` back (uncontrolled use). Mirrors the time path (which
+  // already updates its own buffer) — keeps date and time symmetric, no extra
+  // state.
+  const applyDate = (dateIso: string | null) => {
+    setDateText(formatIsoDate(dateIso, fmt()));
+    emit(dateIso, time());
+  };
+
   const commitDate = () => {
     const parsed = parseDateInput(dateText(), fmt());
     if (parsed === undefined) {
       setDateText(formatIsoDate(parts()?.date, fmt())); // invalid → revert
       return;
     }
-    emit(parsed, time());
+    applyDate(parsed);
   };
 
   const boundDate = (utc: string | undefined) =>
@@ -142,8 +152,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
                 min={boundDate(props.min)}
                 max={boundDate(props.max)}
                 onSelect={d => {
-                  if (!d) props.onChange?.(null);
-                  else emit(dateToIsoDate(d), time());
+                  applyDate(d ? dateToIsoDate(d) : null);
                   close();
                 }}
               />
