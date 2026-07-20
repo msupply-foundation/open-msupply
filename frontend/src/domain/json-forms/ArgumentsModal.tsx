@@ -1,25 +1,56 @@
-import { createEffect, createMemo, For, Match, on, Switch } from 'solid-js';
-import { createStore, reconcile, unwrap } from 'solid-js/store';
-import { t } from '../../../intl';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { TextField } from '../../../ui/elements/inputs/TextField';
-import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
-import { Select } from '../../../ui/elements/selectors/Select';
-import { RadioGroup } from '../../../ui/elements/inputs/RadioGroup';
-import { DateRangeInput } from '../../../ui/elements/inputs/DateRangeInput';
-import { MasterListSelect } from '../../../domain/masterList/MasterListSelect';
-import { LocationSelect } from '../../../domain/location/LocationSelect';
-import { storeContext } from '../../../store/storeContext';
-import type { Report } from '../api/generate';
 import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  Match,
+  on,
+  Switch,
+} from 'solid-js';
+import { createStore, reconcile, unwrap } from 'solid-js/store';
+import { t } from '../../intl';
+import { Dialog } from '../../ui/elements/feedback/Dialog';
+import { Button } from '../../ui/elements/buttons/Button';
+import { TextField } from '../../ui/elements/inputs/TextField';
+import { NumberField } from '../../ui/elements/inputs/NumberField';
+import { Checkbox } from '../../ui/elements/inputs/Checkbox';
+import { Select } from '../../ui/elements/selectors/Select';
+import { RadioGroup } from '../../ui/elements/inputs/RadioGroup';
+import { DateInput } from '../../ui/elements/inputs/DateInput';
+import { DateRangeInput } from '../../ui/elements/inputs/DateRangeInput';
+import { MasterListSelect } from '../masterList/MasterListSelect';
+import { LocationSelect } from '../location/LocationSelect';
+import { storeContext } from '../../store/storeContext';
+import {
+  cleanArguments,
   parseArgumentSchema,
   seedDefaults,
   type ParsedField,
   type ReportArgs,
 } from './schema';
 
-// S3 — the argument-entry modal (spec/reports S3, AC-R1/R2/R3). The filter form
+/**
+ * The slice of a report node the form reads — the schema pair. Structural, so
+ * any generated ReportNode satisfies it without remapping (kdd/type-safety).
+ */
+export interface ArgumentSchemaSource {
+  argumentSchema?: { jsonSchema: unknown; uiSchema: unknown } | null;
+}
+
+// The kinds whose empty-while-required state gates OK (AC-R7). Unsupported
+// controls are deliberately absent: a required field the client can't render
+// never blocks — the server's typed data-fetch failure reports the miss.
+type RequirableField = Extract<
+  ParsedField,
+  { kind: 'text' | 'number' | 'enum' | 'date' }
+>;
+const isRequirable = (field: ParsedField): field is RequirableField =>
+  field.kind === 'text' ||
+  field.kind === 'number' ||
+  field.kind === 'enum' ||
+  field.kind === 'date';
+
+// S3 — the argument-entry modal (spec/reports S3, AC-R1–R8). The filter form
 // is rendered FROM the report's argument schema: field set, order, labels, and
 // control choice come from the server's schema, not per-report client code
 // (spec "Arguments"). Because that is render-from-config by wire contract, the
@@ -34,7 +65,7 @@ import {
 // entered arguments; the consumer writes them into the URL query, which drives
 // generation. Cancel closes without generating.
 export interface ArgumentsModalProps {
-  report: Report;
+  report: ArgumentSchemaSource;
   open: boolean;
   initialValues?: Record<string, unknown>;
   onClose: () => void;
@@ -57,11 +88,15 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
   // schema defaults (AC-R3). reconcile replaces the contents while keeping the
   // store's identity, so bindings that still apply don't tear down.
   const [values, setValues] = createStore<ReportArgs>({});
+  // Required-field errors only show after an OK attempt (AC-R7) — the form's
+  // helper text promises the details are optional, so nothing nags earlier.
+  const [attempted, setAttempted] = createSignal(false);
   createEffect(
     on(
       () => props.open,
       open => {
         if (!open) return;
+        setAttempted(false);
         const prefs = storeContext()?.storePreferences ?? {};
         const seed = props.initialValues ?? seedDefaults(fields(), prefs);
         setValues(reconcile({ ...seed }));
@@ -104,18 +139,35 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
       end: typeof range.end === 'string' ? range.end : '',
     };
   };
+  // NumberField owns the edit text; the store holds the committed number (or
+  // undefined = empty). A URL-restored value is already a JSON number.
+  const numberValue = (key: string): number | undefined => {
+    const value = values[key];
+    return typeof value === 'number' ? value : undefined;
+  };
 
-  // OK: emit the current values, stripping empties so a blank filter isn't sent
-  // as an empty string (the server treats absent and "" differently for some
-  // queries). unwrap() drops the store proxy first.
+  const isEmpty = (key: string): boolean => {
+    const value = values[key];
+    return value === undefined || value === null || value === '';
+  };
+  const requiredError = (field: RequirableField): string | undefined =>
+    attempted() && field.required && isEmpty(field.key)
+      ? t('error.field-required')
+      : undefined;
+
+  // OK: block while a rendered required field is empty (AC-R7 — the inline
+  // error appears at the field), then emit the cleaned values: empties
+  // stripped (absent ≠ "" server-side), numbers as numbers (AC-R8). unwrap()
+  // drops the store proxy first.
   const submit = (): void => {
-    const raw = unwrap(values);
-    const cleaned: ReportArgs = {};
-    for (const [key, value] of Object.entries(raw)) {
-      if (value === '' || value === undefined || value === null) continue;
-      cleaned[key] = value;
+    const missing = fields().some(
+      field => isRequirable(field) && field.required && isEmpty(field.key)
+    );
+    if (missing) {
+      setAttempted(true);
+      return;
     }
-    props.onSubmit(cleaned);
+    props.onSubmit(cleanArguments(fields(), unwrap(values)));
   };
 
   return (
@@ -144,21 +196,57 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
         <For each={fields()}>
           {field => (
             <Switch>
-              <Match when={field.kind === 'text'}>
-                <TextField
-                  label={field.label}
-                  width="full"
-                  value={textValue(field.key)}
-                  onInput={event =>
-                    setValues(field.key, event.currentTarget.value)
-                  }
-                />
+              <Match when={field.kind === 'text' ? field : undefined} keyed>
+                {textField => (
+                  <TextField
+                    label={textField.label}
+                    width="full"
+                    value={textValue(textField.key)}
+                    disabled={textField.readOnly}
+                    required={textField.required}
+                    error={requiredError(textField)}
+                    onInput={event =>
+                      setValues(textField.key, event.currentTarget.value)
+                    }
+                  />
+                )}
+              </Match>
+              <Match when={field.kind === 'number' ? field : undefined} keyed>
+                {numberField => (
+                  /* Constrained numeric entry (AC-R4): NumberField gates
+                     keystrokes and raises the decimal keypad. The schema
+                     declares no precision; two decimal places covers the
+                     fractional-months cases without float noise. */
+                  <NumberField
+                    label={numberField.label}
+                    width="full"
+                    decimalLimit={2}
+                    value={numberValue(numberField.key)}
+                    disabled={numberField.readOnly}
+                    required={numberField.required}
+                    error={requiredError(numberField)}
+                    onChange={value => setValues(numberField.key, value)}
+                  />
+                )}
+              </Match>
+              <Match when={field.kind === 'date' ? field : undefined} keyed>
+                {dateField => (
+                  <DateInput
+                    label={dateField.label}
+                    value={textValue(dateField.key)}
+                    disabled={dateField.readOnly}
+                    required={dateField.required}
+                    error={requiredError(dateField)}
+                    onChange={value => setValues(dateField.key, value)}
+                  />
+                )}
               </Match>
               <Match when={field.kind === 'boolean' ? field : undefined} keyed>
                 {boolField => (
                   <Checkbox
                     label={boolField.label}
                     checked={boolChecked(boolField)}
+                    disabled={boolField.readOnly}
                     onChange={checked => setBool(boolField, checked)}
                   />
                 )}
@@ -169,6 +257,11 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     label={enumField.label}
                     options={enumField.options}
                     value={selectValue(enumField.key)}
+                    disabled={enumField.readOnly}
+                    // Select has no error slot; the required miss still gates
+                    // OK (AC-R7) and this text says why. No shipped schema
+                    // marks an enum required today.
+                    helperText={requiredError(enumField)}
                     onValueChange={value => setValues(enumField.key, value)}
                   />
                 )}

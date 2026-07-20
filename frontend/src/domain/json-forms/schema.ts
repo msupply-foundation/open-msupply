@@ -17,7 +17,12 @@
 // `{ allOf: [{ $ref: '#/definitions/X' }], definitions: { X: { properties }}}`;
 // we resolve ONE level of local $ref. Property shapes seen: `{ type: 'string' |
 // ['string','null'] }`, `{ type: 'boolean' | ['boolean','null'], default? }`,
-// `{ enum: [...], type: [...] }`, `{ format: 'SortToggle', enum: [...] }`.
+// `{ enum: [...], type: [...] }`, `{ format: 'SortToggle', enum: [...] }`,
+// `{ type: 'number', readOnly? }` (the preference thresholds), and strings
+// with `format: 'date' | 'date-time'`. A `required: [keys]` list may sit at
+// the top level or inside a definition. That is the CLOSED vocabulary the
+// form honours (spec/reports rules "Arguments", AC-R4–R8) — anything else
+// passes through un-enforced.
 //
 // uiSchema — `{ elements: [{ type, label, scope: '#/properties/<key>',
 // options? }] }`. `options`: `{ invert: true }` on boolean Controls, `{ show:
@@ -41,6 +46,18 @@ export type ParsedField =
       key: string;
       label: string;
       nullable: boolean;
+      readOnly: boolean;
+      required: boolean;
+      default?: unknown;
+    }
+  | {
+      kind: 'number';
+      key: string;
+      label: string;
+      nullable: boolean;
+      /** Shown disabled with its seeded value, still submitted (AC-R6). */
+      readOnly: boolean;
+      required: boolean;
       default?: unknown;
     }
   | {
@@ -50,6 +67,7 @@ export type ParsedField =
       nullable: boolean;
       /** Display-invert: schema key `isActive` shown as "Include inactive". */
       invert: boolean;
+      readOnly: boolean;
       default?: unknown;
     }
   | {
@@ -58,7 +76,22 @@ export type ParsedField =
       label: string;
       nullable: boolean;
       options: EnumOption[];
+      readOnly: boolean;
+      required: boolean;
       default?: unknown;
+    }
+  | {
+      kind: 'date';
+      key: string;
+      label: string;
+      nullable: boolean;
+      readOnly: boolean;
+      required: boolean;
+      /**
+       * True for `format: 'date-time'` — rendered as date-only until the
+       * date-time input role exists (spec/reports AC-R5 degradation).
+       */
+      dateTime: boolean;
     }
   | {
       kind: 'sortToggle';
@@ -109,33 +142,35 @@ const normalize = (raw: unknown): Record<string, unknown> | undefined => {
 const DEFINITIONS_PREFIX = '#/definitions/';
 const PROPERTIES_MARKER = '/properties/';
 
-// Resolve the property map from a jsonSchema, flattening one level of local
-// $ref: merge top-level `properties`, plus each `allOf` entry's own properties
-// and any `#/definitions/X` it $refs. Later entries win on key collision.
-const resolveProperties = (
+// Resolve the property map and required-key set from a jsonSchema, flattening
+// one level of local $ref: merge top-level `properties` (and `required`), plus
+// each `allOf` entry's own and any `#/definitions/X` it $refs. Later entries
+// win on key collision.
+const resolveSchema = (
   schema: Record<string, unknown> | undefined
-): Record<string, unknown> => {
-  if (!schema) return {};
-  const definitions = asRecord(schema.definitions) ?? {};
+): { properties: Record<string, unknown>; required: Set<string> } => {
   const props: Record<string, unknown> = {};
+  const required = new Set<string>();
+  if (!schema) return { properties: props, required };
+  const definitions = asRecord(schema.definitions) ?? {};
 
   const merge = (node: unknown): void => {
     const record = asRecord(node);
     if (!record) return;
     Object.assign(props, asRecord(record.properties) ?? {});
+    if (Array.isArray(record.required))
+      for (const key of record.required)
+        if (typeof key === 'string') required.add(key);
     const ref = typeof record.$ref === 'string' ? record.$ref : undefined;
     if (ref?.startsWith(DEFINITIONS_PREFIX)) {
-      const target = asRecord(
-        definitions[ref.slice(DEFINITIONS_PREFIX.length)]
-      );
-      Object.assign(props, asRecord(target?.properties) ?? {});
+      merge(definitions[ref.slice(DEFINITIONS_PREFIX.length)]);
     }
   };
 
   merge(schema); // plain `{ properties }`
   const allOf = Array.isArray(schema.allOf) ? schema.allOf : [];
   for (const entry of allOf) merge(entry);
-  return props;
+  return { properties: props, required };
 };
 
 // `#/properties/<key>` → `<key>`.
@@ -194,7 +229,7 @@ export const parseArgumentSchema = (raw: {
 }): ParsedField[] => {
   const jsonSchema = normalize(raw.jsonSchema);
   const uiSchema = normalize(raw.uiSchema);
-  const properties = resolveProperties(jsonSchema);
+  const { properties, required } = resolveSchema(jsonSchema);
   const elements = Array.isArray(uiSchema?.elements) ? uiSchema.elements : [];
 
   const fields: ParsedField[] = [];
@@ -207,6 +242,8 @@ export const parseArgumentSchema = (raw: {
     const options = asRecord(el.options);
     const prop = asRecord(properties[key]);
     const nullable = prop ? isNullable(prop) : false;
+    const readOnly = prop?.readOnly === true;
+    const isRequired = required.has(key);
 
     switch (type) {
       case 'Control': {
@@ -223,6 +260,8 @@ export const parseArgumentSchema = (raw: {
             label,
             nullable,
             options: enumOptions(prop, options),
+            readOnly,
+            required: isRequired,
             default: prop.default,
           });
         } else if (hasType(prop, 'boolean')) {
@@ -232,7 +271,31 @@ export const parseArgumentSchema = (raw: {
             label,
             nullable,
             invert: options?.invert === true,
+            readOnly,
             default: prop.default,
+          });
+        } else if (hasType(prop, 'number') || hasType(prop, 'integer')) {
+          fields.push({
+            kind: 'number',
+            key,
+            label,
+            nullable,
+            readOnly,
+            required: isRequired,
+            default: prop.default,
+          });
+        } else if (
+          hasType(prop, 'string') &&
+          (prop.format === 'date' || prop.format === 'date-time')
+        ) {
+          fields.push({
+            kind: 'date',
+            key,
+            label,
+            nullable,
+            readOnly,
+            required: isRequired,
+            dateTime: prop.format === 'date-time',
           });
         } else if (hasType(prop, 'string')) {
           fields.push({
@@ -240,6 +303,8 @@ export const parseArgumentSchema = (raw: {
             key,
             label,
             nullable,
+            readOnly,
+            required: isRequired,
             default: prop.default,
           });
         } else {
@@ -309,4 +374,30 @@ export const seedDefaults = (
     }
   }
   return seed;
+};
+
+/**
+ * The submit transform (AC-R8): strip empty values — absent and '' filter
+ * differently server-side — and coerce number-field entries typed as text back
+ * to JSON numbers, so a numeric argument never leaves as a string. An
+ * unparseable leftover (a lone '.') is dropped like an empty.
+ */
+export const cleanArguments = (
+  fields: ParsedField[],
+  raw: ReportArgs
+): ReportArgs => {
+  const numberKeys = new Set(
+    fields.filter(field => field.kind === 'number').map(field => field.key)
+  );
+  const cleaned: ReportArgs = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (value === '' || value === undefined || value === null) continue;
+    if (numberKeys.has(key) && typeof value === 'string') {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) cleaned[key] = parsed;
+      continue;
+    }
+    cleaned[key] = value;
+  }
+  return cleaned;
 };

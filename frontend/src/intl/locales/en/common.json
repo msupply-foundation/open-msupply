@@ -381,6 +381,7 @@
   "error.encounter-not-found": "Encounter not found.",
   "error.estimated-delivery-before-shipped-date": "Estimated delivery date must be after the shipped date",
   "error.facility-not-found": "Facility not found",
+  "error.field-required": "This filter is required.",
   "error.failed-attempts_one": "{{ count }} failed attempt",
   "error.failed-attempts_other": "{{ count }} failed attempts",
   "error.failed-to-create-inbound-shipment": "Failed to create inbound shipment! {{message}}",
