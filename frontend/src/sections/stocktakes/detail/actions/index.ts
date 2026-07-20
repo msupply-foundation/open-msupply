@@ -8,3 +8,9 @@ export { DeleteLinesAction } from './DeleteLinesAction';
 export { ChangeLocationAction } from './ChangeLocationAction';
 export { ReduceToZeroAction } from './ReduceToZeroAction';
 export { FinaliseAction } from './FinaliseAction';
+// Record-level side-panel actions (act on the whole stocktake, not a line
+// selection): the "Actions" section's Delete + Copy to clipboard.
+export { DeleteStocktakeAction } from './DeleteStocktakeAction';
+export { CopyStocktakeAction } from './CopyStocktakeAction';
+// The header Export/Print trigger (opens the reports Select-a-form dialog).
+export { ExportPrintAction } from './ExportPrintAction';

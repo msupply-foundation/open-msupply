@@ -93,6 +93,10 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
               name: props.selectedItem.name,
               unitName: null,
               totalUnits: 0,
+              // Label-only fallback: the dropdown-only fields get safe defaults
+              // (the real values arrive with the item's own search page).
+              isVaccine: false,
+              doses: 0,
             }
           : undefined
       }

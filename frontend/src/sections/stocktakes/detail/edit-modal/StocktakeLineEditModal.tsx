@@ -1,13 +1,14 @@
 import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
-import { toNumberOrNull } from '../../../../typeHelpers';
 import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../../ui/elements/buttons/IconButton';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
+import { NumberField } from '../../../../ui/elements/inputs/NumberField';
+import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import {
   DataTable,
   type Column,
@@ -22,6 +23,10 @@ import {
 } from '../../../../domain/location';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { ItemSearch } from '../../../../domain/item';
+import { VvmStatusSelect } from '../../../../domain/vvmStatus';
+import { NameSearch } from '../../../../domain/name';
+import { stocktakePreferences } from '../../../../store/storeContext';
+import { dosesCounted } from '../lines/doses';
 import {
   PlusCircleIcon,
   StockIcon,
@@ -71,7 +76,16 @@ import styles from './StocktakeLineEditModal.module.css';
 // resolving it from this module.
 export type { LineEditCommit };
 
-export type StocktakeLineEditItem = { id: string; code: string; name: string };
+export type StocktakeLineEditItem = {
+  id: string;
+  code: string;
+  name: string;
+  // The vaccine flag + doses-per-unit the doses display needs (spec/stocktakes ›
+  // store-preference gates). Carried on the descriptor so a fresh blank batch
+  // (addBatch) and a new-item pick both know them without a re-fetch.
+  isVaccine: boolean;
+  doses: number;
+};
 
 // One of the item's stock lines (from stockLinesByItem).
 type ItemStockLine = Extract<
@@ -149,7 +163,12 @@ const buildDraft = async (
     countThisLine: countByDefault,
     stockLine: { id: sl.id },
     itemName: item.name,
-    item: { id: item.id, code: item.code },
+    item: {
+      id: item.id,
+      code: item.code,
+      isVaccine: item.isVaccine,
+      doses: item.doses,
+    },
     batch: sl.batch,
     expiryDate: sl.expiryDate,
     manufactureDate: sl.manufactureDate,
@@ -163,6 +182,12 @@ const buildDraft = async (
     volumePerPack: sl.volumePerPack,
     location: sl.location,
     reasonOption: null,
+    // Seed VVM / donor (preference-gated) and manufacturer (ungated) from the
+    // stock line the batch opts in, so ticking an existing batch pre-fills them.
+    vvmStatus: sl.vvmStatus,
+    donorId: sl.donor?.id ?? null,
+    donorName: sl.donor?.name ?? null,
+    manufacturer: sl.manufacturer,
   }));
   return [...fromExisting, ...fromStock];
 };
@@ -298,6 +323,12 @@ const StocktakeLineEditContent = (
   // advances too. Seeded with each item as it loads; not reactive.
   const coveredItemIds = new Set<string>();
 
+  // Store-preference display gates (spec/stocktakes › store-preference gates),
+  // read reactively. Each gated column is built into the column set only when
+  // its preference is on. The VVM/doses cells additionally render only for a
+  // vaccine item's rows (isVaccine off → blank).
+  const prefs = () => stocktakePreferences();
+
   // No item picked yet → the search state (Cancel-only footer, prompt in place
   // of the table, no Add batch / OK / OK & next).
   const noItemYet = () => currentItem() === undefined;
@@ -356,7 +387,13 @@ const StocktakeLineEditContent = (
       props.onClose();
       return;
     }
-    await seedItem({ id, code: first.item.code, name: first.itemName });
+    await seedItem({
+      id,
+      code: first.item.code,
+      name: first.itemName,
+      isVaccine: first.item.isVaccine,
+      doses: first.item.doses,
+    });
   };
 
   // Back to the item-search state — add mode with no item picked. Reached by the
@@ -410,7 +447,12 @@ const StocktakeLineEditContent = (
           countThisLine: true,
           stockLine: null,
           itemName: item.name,
-          item: { id: item.id, code: item.code },
+          item: {
+            id: item.id,
+            code: item.code,
+            isVaccine: item.isVaccine,
+            doses: item.doses,
+          },
           batch: null,
           expiryDate: null,
           manufactureDate: null,
@@ -424,6 +466,13 @@ const StocktakeLineEditContent = (
           volumePerPack: null,
           location: null,
           reasonOption: null,
+          // A fresh batch has no VVM / donor / manufacturer yet — the user fills
+          // them in via the VVM / donor (preference-gated) and manufacturer
+          // (ungated) fields on the Batch / Other tabs.
+          vvmStatus: null,
+          donorId: null,
+          donorName: null,
+          manufacturer: null,
         })
       )
     );
@@ -498,6 +547,14 @@ const StocktakeLineEditContent = (
           location: { value: line.location?.id ?? null },
           volumePerPack: line.volumePerPack,
           reasonOptionId: line.reasonOption?.id ?? null,
+          // VVM / donor (preference-gated) + manufacturer (ungated). Plain
+          // scalars on INSERT (contract: InsertStocktakeLineInput). Gated fields
+          // are sent regardless of the preference — the server accepts the data
+          // either way; the preference only decides whether the field was
+          // editable.
+          vvmStatusId: line.vvmStatus?.id ?? null,
+          donorId: line.donorId ?? null,
+          manufacturerId: line.manufacturer?.id ?? null,
         });
         continue;
       }
@@ -515,6 +572,12 @@ const StocktakeLineEditContent = (
         note: line.note,
         volumePerPack: line.volumePerPack,
         reasonOptionId: line.reasonOption?.id ?? null,
+        // VVM / donor (preference-gated) + manufacturer (ungated) —
+        // NullableStringUpdate wrapper on UPDATE (contract:
+        // UpdateStocktakeLineInput): { value: id | null } sets/clears.
+        vvmStatusId: { value: line.vvmStatus?.id ?? null },
+        donorId: { value: line.donorId ?? null },
+        manufacturerId: { value: line.manufacturer?.id ?? null },
       });
     }
     return { insert, update, delete: deletes.map(id => ({ id })) };
@@ -704,26 +767,25 @@ const StocktakeLineEditContent = (
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <NumberField
             label={t('label.counted-num-of-packs')}
             hideLabel
             size="small"
-            type="number"
-            min="0"
+            // Packs can be counted in fractions (a part-full pack); the doses
+            // formula multiplies packSize by this, so keep the same 2-dp room.
+            decimalLimit={2}
             disabled={!line.countThisLine}
-            value={line.countedNumberOfPacks ?? ''}
+            value={line.countedNumberOfPacks ?? undefined}
             error={
               lineErrors().get(line.id) === 'StockLineReducedBelowZero'
                 ? t('error.reduced-below-zero')
                 : undefined
             }
             errorTestId="stocktake-line-error"
-            onInput={e =>
-              update(
-                line.id,
-                'countedNumberOfPacks',
-                toNumberOrNull(e.currentTarget.value)
-              )
+            // NumberField commits a real number (or undefined when cleared);
+            // the draft stores null for empty, so map undefined → null.
+            onChange={value =>
+              update(line.id, 'countedNumberOfPacks', value ?? null)
             }
           />
         );
@@ -737,21 +799,70 @@ const StocktakeLineEditContent = (
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <NumberField
             label={t('label.pack-size')}
             hideLabel
             size="small"
-            type="number"
-            min="0"
+            decimalLimit={2}
             disabled={!line.countThisLine}
-            value={line.packSize ?? ''}
-            onInput={e =>
-              update(line.id, 'packSize', toNumberOrNull(e.currentTarget.value))
-            }
+            value={line.packSize ?? undefined}
+            onChange={value => update(line.id, 'packSize', value ?? null)}
           />
         );
       },
     },
+    // VVM status (Batch tab) — gated by manageVvmStatusForStock, vaccine rows
+    // only. A VvmStatusSelect editing the draft's vvmStatus node.
+    ...(prefs().manageVvmStatusForStock
+      ? [
+          {
+            c: { id: 'vvmStatus' },
+            header: t('label.vvm-status'),
+            tabsAndCardGroups: ['batch'],
+            cell: info => {
+              const line = info.row.original;
+              // Non-vaccine rows leave the cell blank (the display is vaccine-
+              // only even when the preference is on).
+              if (!line.item.isVaccine) return null;
+              return (
+                <VvmStatusSelect
+                  label={t('label.vvm-status')}
+                  hideLabel
+                  disabled={!line.countThisLine}
+                  value={line.vvmStatus?.id}
+                  placeholder={t('label.none')}
+                  onChange={s =>
+                    update(
+                      line.id,
+                      'vvmStatus',
+                      s
+                        ? { id: s.id, code: s.code, description: s.description }
+                        : null
+                    )
+                  }
+                />
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]
+      : []),
+    // Doses counted (Batch tab) — gated by manageVaccinesInDoses, display-only,
+    // vaccine rows only (blank otherwise). Computed client-side (see ../lines/
+    // doses); nothing stored per line.
+    ...(prefs().manageVaccinesInDoses
+      ? [
+          {
+            c: { id: 'dosesCounted' },
+            header: t('label.doses-counted'),
+            tabsAndCardGroups: ['batch'],
+            ...getNumberCell(),
+            cell: info => {
+              const doses = dosesCounted(info.row.original);
+              return <span>{doses ?? ''}</span>;
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]
+      : []),
     {
       c: { key: 'sellPricePerPack' },
       header: t('label.pack-sell-price'),
@@ -760,20 +871,14 @@ const StocktakeLineEditContent = (
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <CurrencyField
             label={t('label.pack-sell-price')}
             hideLabel
             size="small"
-            type="number"
-            min="0"
             disabled={!line.countThisLine}
-            value={line.sellPricePerPack ?? ''}
-            onInput={e =>
-              update(
-                line.id,
-                'sellPricePerPack',
-                toNumberOrNull(e.currentTarget.value)
-              )
+            value={line.sellPricePerPack ?? undefined}
+            onChange={value =>
+              update(line.id, 'sellPricePerPack', value ?? null)
             }
           />
         );
@@ -787,20 +892,14 @@ const StocktakeLineEditContent = (
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <CurrencyField
             label={t('label.pack-cost-price')}
             hideLabel
             size="small"
-            type="number"
-            min="0"
             disabled={!line.countThisLine}
-            value={line.costPricePerPack ?? ''}
-            onInput={e =>
-              update(
-                line.id,
-                'costPricePerPack',
-                toNumberOrNull(e.currentTarget.value)
-              )
+            value={line.costPricePerPack ?? undefined}
+            onChange={value =>
+              update(line.id, 'costPricePerPack', value ?? null)
             }
           />
         );
@@ -814,21 +913,17 @@ const StocktakeLineEditContent = (
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <NumberField
             label={t('label.volume-per-pack')}
             hideLabel
             size="small"
-            type="number"
-            min="0"
+            // Volume per pack is a fine measure (m³); match OMS's 10-dp room.
+            decimalLimit={10}
             disabled={!line.countThisLine}
-            value={line.volumePerPack ?? ''}
-            onInput={e =>
-              update(
-                line.id,
-                'volumePerPack',
-                toNumberOrNull(e.currentTarget.value)
-              )
-            }
+            value={line.volumePerPack ?? undefined}
+            // NumberField commits a real number (or undefined when cleared); the
+            // draft stores null for empty, so map undefined → null.
+            onChange={value => update(line.id, 'volumePerPack', value ?? null)}
           />
         );
       },
@@ -860,6 +955,91 @@ const StocktakeLineEditContent = (
                 line.id,
                 'location',
                 l ? { id: l.id, code: l.code, name: l.name } : null
+              )
+            }
+          />
+        );
+      },
+    },
+    // Donor (Other tab) — gated by allowTrackingOfStockByDonor. An async donor
+    // picker (NameSearch role="donor") over the draft's donorId/donorName. The
+    // line stores only id+name, so `selected` is a minimal NameOption (like
+    // ItemSearch's fallback) — enough to label the current value.
+    ...(prefs().allowTrackingOfStockByDonor
+      ? [
+          {
+            c: { id: 'donor' },
+            header: t('label.donor'),
+            tabsAndCardGroups: ['other'],
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <NameSearch
+                  label={t('label.donor')}
+                  hideLabel
+                  storeId={props.storeId}
+                  role="donor"
+                  disabled={!line.countThisLine}
+                  selected={
+                    line.donorId
+                      ? {
+                          id: line.donorId,
+                          name: line.donorName ?? '',
+                          code: '',
+                          isSupplier: false,
+                          isDonor: true,
+                          isOnHold: false,
+                          isStore: false,
+                        }
+                      : undefined
+                  }
+                  placeholder={t('label.none')}
+                  onSelect={name => {
+                    update(line.id, 'donorId', name?.id ?? null);
+                    update(line.id, 'donorName', name?.name ?? null);
+                  }}
+                />
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]
+      : []),
+    // Manufacturer (Other tab) — UNGATED (no store preference; spec S4 lists it
+    // alongside donor but without a gate). An async manufacturer picker
+    // (NameSearch role="manufacturer") over the draft's manufacturer NameNode;
+    // saved via manufacturerId in buildBatch.
+    {
+      c: { id: 'manufacturer' },
+      header: t('label.manufacturer'),
+      tabsAndCardGroups: ['other'],
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <NameSearch
+            label={t('label.manufacturer')}
+            hideLabel
+            storeId={props.storeId}
+            role="manufacturer"
+            disabled={!line.countThisLine}
+            selected={
+              line.manufacturer
+                ? {
+                    id: line.manufacturer.id,
+                    name: line.manufacturer.name,
+                    code: '',
+                    isSupplier: false,
+                    isDonor: false,
+                    isOnHold: false,
+                    isStore: false,
+                  }
+                : undefined
+            }
+            placeholder={t('label.none')}
+            onSelect={name =>
+              update(
+                line.id,
+                'manufacturer',
+                name ? { id: name.id, name: name.name } : null
               )
             }
           />

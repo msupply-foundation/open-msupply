@@ -37,6 +37,7 @@ import { CreateStocktakeModal } from './CreateStocktakeModal';
 import {
   CreateInitialStocktakeAction,
   DeleteStocktakesAction,
+  ExportStocktakesAction,
 } from './actions';
 
 // The stocktakes list view — the reference list screen. Data + URL-backed
@@ -304,6 +305,12 @@ const StocktakesList: Component = () => {
             >
               {t('label.new-stocktake')}
             </Button>
+            {/* Export the stocktakes list (all pages of the current filter) as
+                CSV or Excel (spec/stocktakes S1). */}
+            <ExportStocktakesAction
+              storeId={params.storeId}
+              filter={() => query().filter}
+            />
           </HeaderButtons>
           <Toolbar>
             <FilterBar
@@ -386,6 +393,16 @@ const StocktakesList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their current
+        // layout to the shared install-wide default; everyone else gets no
+        // action (the gate is the app's, so the generic DataTable stays
+        // agnostic). Gate + action both come off the config controller, and the
+        // gate is reactive: undefined until central + permitted both hold.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
         // Pagination renders as an overlay INSIDE the table (bottom-inline-end),
         // not in a page footer band — consistent with the stocktake detail view
         // (kdd/table-state). State stays page-owned/URL-backed.

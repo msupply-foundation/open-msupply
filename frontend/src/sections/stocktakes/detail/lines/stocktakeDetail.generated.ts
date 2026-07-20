@@ -25,6 +25,8 @@ export type StocktakeLineFragment = {
   item: {
   id: string;
   code: string;
+  isVaccine: boolean;
+  doses: number;
 };
   stockLine: {
   id: string;
@@ -49,6 +51,17 @@ export type StocktakeLineFragment = {
   id: string;
   type: "POSITIVE_INVENTORY_ADJUSTMENT" | "NEGATIVE_INVENTORY_ADJUSTMENT" | "OPEN_VIAL_WASTAGE" | "RETURN_REASON" | "REQUISITION_LINE_VARIANCE" | "CLOSED_VIAL_WASTAGE" | "SHIPMENT_VARIANCE";
   reason: string;
+} | null;
+  vvmStatus: {
+  id: string;
+  code: string;
+  description: string;
+} | null;
+  donorId: string | null;
+  donorName: string | null;
+  manufacturer: {
+  id: string;
+  name: string;
 } | null;
 };
 
@@ -138,7 +151,7 @@ export type StocktakeLinesResult = {
 };
 
 export const StocktakeLines = {
-  query: "query stocktakeLines($storeId: String!, $stocktakeId: String!, $page: PaginationInput, $filter: StocktakeLineFilterInput, $sort: [StocktakeLineSortInput!]) {\n  stocktakeLines(\n    storeId: $storeId\n    stocktakeId: $stocktakeId\n    page: $page\n    filter: $filter\n    sort: $sort\n  ) {\n    ... on StocktakeLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...StocktakeLine\n      }\n    }\n  }\n}\n\nfragment StocktakeLine on StocktakeLineNode {\n  id\n  itemName\n  item {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  batch\n  expiryDate\n  manufactureDate\n  snapshotNumberOfPacks\n  countedNumberOfPacks\n  packSize\n  sellPricePerPack\n  costPricePerPack\n  comment\n  note\n  volumePerPack\n  location {\n    id\n    code\n    name\n  }\n  reasonOption {\n    id\n    type\n    reason\n  }\n}",
+  query: "query stocktakeLines($storeId: String!, $stocktakeId: String!, $page: PaginationInput, $filter: StocktakeLineFilterInput, $sort: [StocktakeLineSortInput!]) {\n  stocktakeLines(\n    storeId: $storeId\n    stocktakeId: $stocktakeId\n    page: $page\n    filter: $filter\n    sort: $sort\n  ) {\n    ... on StocktakeLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...StocktakeLine\n      }\n    }\n  }\n}\n\nfragment StocktakeLine on StocktakeLineNode {\n  id\n  itemName\n  item {\n    id\n    code\n    isVaccine\n    doses\n  }\n  stockLine {\n    id\n  }\n  batch\n  expiryDate\n  manufactureDate\n  snapshotNumberOfPacks\n  countedNumberOfPacks\n  packSize\n  sellPricePerPack\n  costPricePerPack\n  comment\n  note\n  volumePerPack\n  location {\n    id\n    code\n    name\n  }\n  reasonOption {\n    id\n    type\n    reason\n  }\n  vvmStatus {\n    id\n    code\n    description\n  }\n  donorId\n  donorName\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n}",
 } as TypedDocument<StocktakeLinesResult, StocktakeLinesVariables>;
 
 export type BatchStocktakeLinesVariables = {
@@ -292,7 +305,7 @@ export type BatchStocktakeLinesResult = {
 };
 
 export const BatchStocktakeLines = {
-  query: "mutation batchStocktakeLines($storeId: String!, $insert: [InsertStocktakeLineInput!], $update: [UpdateStocktakeLineInput!], $delete: [DeleteStocktakeLineInput!]) {\n  batchStocktake(\n    storeId: $storeId\n    input: {insertStocktakeLines: $insert, updateStocktakeLines: $update, deleteStocktakeLines: $delete}\n  ) {\n    insertStocktakeLines {\n      id\n      response {\n        __typename\n        ... on StocktakeLineNode {\n          ...StocktakeLine\n        }\n        ... on InsertStocktakeLineError {\n          error {\n            __typename\n            description\n            ... on StockLineReducedBelowZero {\n              __typename\n            }\n            ... on AdjustmentReasonNotProvided {\n              __typename\n            }\n            ... on AdjustmentReasonNotValid {\n              __typename\n            }\n            ... on CannotEditStocktake {\n              __typename\n            }\n          }\n        }\n      }\n    }\n    updateStocktakeLines {\n      id\n      response {\n        __typename\n        ... on StocktakeLineNode {\n          ...StocktakeLine\n        }\n        ... on UpdateStocktakeLineError {\n          error {\n            __typename\n            description\n            ... on StockLineReducedBelowZero {\n              __typename\n            }\n            ... on AdjustmentReasonNotProvided {\n              __typename\n            }\n            ... on AdjustmentReasonNotValid {\n              __typename\n            }\n            ... on SnapshotCountCurrentCountMismatchLine {\n              __typename\n            }\n            ... on CannotEditStocktake {\n              __typename\n            }\n          }\n        }\n      }\n    }\n    deleteStocktakeLines {\n      id\n      response {\n        __typename\n        ... on DeleteResponse {\n          id\n        }\n        ... on DeleteStocktakeLineError {\n          error {\n            __typename\n            description\n            ... on CannotEditStocktake {\n              __typename\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment StocktakeLine on StocktakeLineNode {\n  id\n  itemName\n  item {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  batch\n  expiryDate\n  manufactureDate\n  snapshotNumberOfPacks\n  countedNumberOfPacks\n  packSize\n  sellPricePerPack\n  costPricePerPack\n  comment\n  note\n  volumePerPack\n  location {\n    id\n    code\n    name\n  }\n  reasonOption {\n    id\n    type\n    reason\n  }\n}",
+  query: "mutation batchStocktakeLines($storeId: String!, $insert: [InsertStocktakeLineInput!], $update: [UpdateStocktakeLineInput!], $delete: [DeleteStocktakeLineInput!]) {\n  batchStocktake(\n    storeId: $storeId\n    input: {insertStocktakeLines: $insert, updateStocktakeLines: $update, deleteStocktakeLines: $delete}\n  ) {\n    insertStocktakeLines {\n      id\n      response {\n        __typename\n        ... on StocktakeLineNode {\n          ...StocktakeLine\n        }\n        ... on InsertStocktakeLineError {\n          error {\n            __typename\n            description\n            ... on StockLineReducedBelowZero {\n              __typename\n            }\n            ... on AdjustmentReasonNotProvided {\n              __typename\n            }\n            ... on AdjustmentReasonNotValid {\n              __typename\n            }\n            ... on CannotEditStocktake {\n              __typename\n            }\n          }\n        }\n      }\n    }\n    updateStocktakeLines {\n      id\n      response {\n        __typename\n        ... on StocktakeLineNode {\n          ...StocktakeLine\n        }\n        ... on UpdateStocktakeLineError {\n          error {\n            __typename\n            description\n            ... on StockLineReducedBelowZero {\n              __typename\n            }\n            ... on AdjustmentReasonNotProvided {\n              __typename\n            }\n            ... on AdjustmentReasonNotValid {\n              __typename\n            }\n            ... on SnapshotCountCurrentCountMismatchLine {\n              __typename\n            }\n            ... on CannotEditStocktake {\n              __typename\n            }\n          }\n        }\n      }\n    }\n    deleteStocktakeLines {\n      id\n      response {\n        __typename\n        ... on DeleteResponse {\n          id\n        }\n        ... on DeleteStocktakeLineError {\n          error {\n            __typename\n            description\n            ... on CannotEditStocktake {\n              __typename\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment StocktakeLine on StocktakeLineNode {\n  id\n  itemName\n  item {\n    id\n    code\n    isVaccine\n    doses\n  }\n  stockLine {\n    id\n  }\n  batch\n  expiryDate\n  manufactureDate\n  snapshotNumberOfPacks\n  countedNumberOfPacks\n  packSize\n  sellPricePerPack\n  costPricePerPack\n  comment\n  note\n  volumePerPack\n  location {\n    id\n    code\n    name\n  }\n  reasonOption {\n    id\n    type\n    reason\n  }\n  vvmStatus {\n    id\n    code\n    description\n  }\n  donorId\n  donorName\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n}",
 } as TypedDocument<BatchStocktakeLinesResult, BatchStocktakeLinesVariables>;
 
 export type UpdateStocktakeVariables = {
@@ -334,6 +347,62 @@ export const UpdateStocktake = {
   query: "mutation updateStocktake($storeId: String!, $input: UpdateStocktakeInput!) {\n  updateStocktake(storeId: $storeId, input: $input) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n    }\n    ... on UpdateStocktakeError {\n      error {\n        __typename\n        description\n        ... on SnapshotCountCurrentCountMismatch {\n          lines {\n            description\n            stocktakeLine {\n              id\n            }\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n  }\n}",
 } as TypedDocument<UpdateStocktakeResult, UpdateStocktakeVariables>;
 
+export type FullStocktakeVariables = {
+  storeId: string;
+  stocktakeId: string;
+};
+
+export type FullStocktakeResult = {
+  stocktake: ({
+  __typename: "StocktakeNode";
+} & {
+  lines: {
+  totalCount: number;
+  nodes: Array<StocktakeLineFragment>;
+};
+} & StocktakeInfoFragment) | ({
+  __typename: "NodeError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+};
+
+export const FullStocktake = {
+  query: "query fullStocktake($storeId: String!, $stocktakeId: String!) {\n  stocktake(storeId: $storeId, id: $stocktakeId) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n      lines {\n        totalCount\n        nodes {\n          ...StocktakeLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n  }\n}\n\nfragment StocktakeLine on StocktakeLineNode {\n  id\n  itemName\n  item {\n    id\n    code\n    isVaccine\n    doses\n  }\n  stockLine {\n    id\n  }\n  batch\n  expiryDate\n  manufactureDate\n  snapshotNumberOfPacks\n  countedNumberOfPacks\n  packSize\n  sellPricePerPack\n  costPricePerPack\n  comment\n  note\n  volumePerPack\n  location {\n    id\n    code\n    name\n  }\n  reasonOption {\n    id\n    type\n    reason\n  }\n  vvmStatus {\n    id\n    code\n    description\n  }\n  donorId\n  donorName\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n}",
+} as TypedDocument<FullStocktakeResult, FullStocktakeVariables>;
+
+export type DeleteStocktakeVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type DeleteStocktakeResult = {
+  batchStocktake: {
+  __typename: "BatchStocktakeResponse";
+  deleteStocktakes: Array<{
+  id: string;
+  response: ({
+  __typename: "DeleteResponse";
+} & {
+  id: string;
+}) | ({
+  __typename: "DeleteStocktakeError";
+} & {
+  error: {
+  __typename: string;
+};
+});
+}> | null;
+};
+};
+
+export const DeleteStocktake = {
+  query: "mutation deleteStocktake($storeId: String!, $id: String!) {\n  batchStocktake(storeId: $storeId, input: {deleteStocktakes: [{id: $id}]}) {\n    ... on BatchStocktakeResponse {\n      __typename\n      deleteStocktakes {\n        id\n        response {\n          __typename\n          ... on DeleteResponse {\n            id\n          }\n          ... on DeleteStocktakeError {\n            error {\n              __typename\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<DeleteStocktakeResult, DeleteStocktakeVariables>;
+
 export type StockLinesByItemVariables = {
   storeId: string;
   itemId: string;
@@ -361,10 +430,23 @@ export type StockLinesByItemResult = {
   code: string;
   name: string;
 } | null;
+  vvmStatus: {
+  id: string;
+  code: string;
+  description: string;
+} | null;
+  donor: {
+  id: string;
+  name: string;
+} | null;
+  manufacturer: {
+  id: string;
+  name: string;
+} | null;
 }>;
 });
 };
 
 export const StockLinesByItem = {
-  query: "query stockLinesByItem($storeId: String!, $itemId: String!, $excludeStockLineIds: [String!]) {\n  stockLines(\n    storeId: $storeId\n    filter: {itemId: {equalTo: $itemId}, hasPacksInStore: true, id: {notEqualAll: $excludeStockLineIds}}\n  ) {\n    ... on StockLineConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        batch\n        expiryDate\n        manufactureDate\n        packSize\n        costPricePerPack\n        sellPricePerPack\n        totalNumberOfPacks\n        note\n        volumePerPack\n        location {\n          id\n          code\n          name\n        }\n      }\n    }\n  }\n}",
+  query: "query stockLinesByItem($storeId: String!, $itemId: String!, $excludeStockLineIds: [String!]) {\n  stockLines(\n    storeId: $storeId\n    filter: {itemId: {equalTo: $itemId}, hasPacksInStore: true, id: {notEqualAll: $excludeStockLineIds}}\n  ) {\n    ... on StockLineConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        batch\n        expiryDate\n        manufactureDate\n        packSize\n        costPricePerPack\n        sellPricePerPack\n        totalNumberOfPacks\n        note\n        volumePerPack\n        location {\n          id\n          code\n          name\n        }\n        vvmStatus {\n          id\n          code\n          description\n        }\n        donor(storeId: $storeId) {\n          id\n          name\n        }\n        manufacturer(storeId: $storeId) {\n          id\n          name\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<StockLinesByItemResult, StockLinesByItemVariables>;

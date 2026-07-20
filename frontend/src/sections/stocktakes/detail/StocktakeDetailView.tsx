@@ -18,6 +18,12 @@ import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import {
+  Tabs,
+  TabList,
+  TabPanel,
+  type TabDef,
+} from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
@@ -47,10 +53,12 @@ import {
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
+import { StocktakeLogPanel } from './log/StocktakeLogPanel';
 import {
   DeleteLinesAction,
   ChangeLocationAction,
   ReduceToZeroAction,
+  ExportPrintAction,
 } from './actions';
 import { saveStocktakeFields } from './stocktakeUpdate';
 import type { LineErrors } from './lines/stocktakeLineErrors';
@@ -63,6 +71,8 @@ import {
 import type { StocktakeEditFields } from './stocktakeEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
+import { stocktakePreferences } from '../../../store/storeContext';
+import { dosesCounted, dosesPerUnit } from './lines/doses';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an
 // editable description + filters), the lines in a SERVER-paginated DataTable
@@ -72,10 +82,11 @@ import { stripEmpty } from '../../../typeHelpers';
 // editing — the small page is cheap to re-pull, so we don't splice mutation
 // results in place anymore).
 //
-// TWO independent queries (kdd/stocktake-line-editing): `info` (stocktakeDetail,
-// the header/footer/side-panel fields) and `lines` (stocktakeLines, one
-// server-filtered/sorted page). A stocktake-LEVEL save mutates `info` in place
-// (a single node, no pagination); a LINE save refetches only the `lines` page.
+// TWO independent queries (kdd/stocktake-line-editing): `info`
+// (stocktakeDetail, the header/footer/side-panel fields) and `lines`
+// (stocktakeLines, one server-filtered/sorted page). A stocktake-LEVEL save
+// mutates `info` in place (a single node, no pagination); a LINE save refetches
+// only the `lines` page.
 //
 // A finalised or on-hold (locked) stocktake is read-only (OMS
 // isStocktakeDisabled): row-click, the description/side-panel fields, and
@@ -85,8 +96,8 @@ type Line = StocktakeLineFragment;
 
 // The `info` resource's element type — the stocktakeDetail response narrowed to
 // its success member ({ __typename: 'StocktakeNode' } & StocktakeInfoFragment).
-// `mutate` callbacks are typed to this (spreading a saved StocktakeInfo fragment
-// over it keeps __typename).
+// `mutate` callbacks are typed to this (spreading a saved StocktakeInfo
+// fragment over it keeps __typename).
 type StocktakeInfoNode = Extract<
   StocktakeDetailResult['stocktake'],
   { __typename: 'StocktakeNode' }
@@ -136,6 +147,13 @@ const StocktakeDetailView: Component = () => {
     const s = query().sort[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
+  // The current line sort as a report sort ({ key, desc }) for Export/Print, so
+  // the generated document orders rows the way the user sees them
+  // (spec/stocktakes S3 "respecting the current sort").
+  const reportSort = (): { key: string; desc: boolean } | undefined => {
+    const s = query().sort[0];
+    return s ? { key: s.key, desc: s.desc ?? false } : undefined;
+  };
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The details panel is an overlay — it starts CLOSED (like OMS) and the
@@ -161,6 +179,17 @@ const StocktakeDetailView: Component = () => {
           location: false,
           reason: false,
           note: false,
+          // The columns added for spec parity — all hidden by default (the user
+          // reveals them via the column-visibility control), matching the
+          // existing extras. Gated columns (doses*, donor) only appear in the
+          // table at all when their store preference is on; this just sets their
+          // initial visibility once present.
+          difference: false,
+          dosesPerUnit: false,
+          dosesCounted: false,
+          donor: false,
+          manufacturer: false,
+          comment: false,
         },
       },
     },
@@ -173,6 +202,15 @@ const StocktakeDetailView: Component = () => {
   // - {}: opened from "Add item" — starts in the item-search state.
   type EditState = { itemId?: string } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
+
+  // The content region's two tabs (OMS parity): Details (the line table) and
+  // Log (the stocktake's activity log). Local UI state — not URL-backed; a
+  // reload lands on Details. The Log tab self-queries its own activity log.
+  const [activeTab, setActiveTab] = createSignal('details');
+  const tabs = (): TabDef[] => [
+    { value: 'details', label: t('label.details') },
+    { value: 'log', label: t('label.log') },
+  ];
 
   // Fetch the stocktake INFO (header/footer/side-panel fields — NOT the lines).
   // A NodeError (e.g. bad id) is promoted to the global unexpected-error modal
@@ -238,9 +276,9 @@ const StocktakeDetailView: Component = () => {
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
   // A save-triggered refetch is SILENT — no refreshing bar (the table stays put
-  // while the fresh page swaps in). A user-navigation refetch (filter/sort/page)
-  // shows the bar as usual. `silentRefetching` is raised around a save refetch
-  // and drives the DataTable's `loading` gate below.
+  // while the fresh page swaps in). A user-navigation refetch
+  // (filter/sort/page) shows the bar as usual. `silentRefetching` is raised
+  // around a save refetch and drives the DataTable's `loading` gate below.
   const [silentRefetching, setSilentRefetching] = createSignal(false);
   const refetchAfterSave = async () => {
     setSilentRefetching(true);
@@ -257,9 +295,9 @@ const StocktakeDetailView: Component = () => {
   // a post-save refetch.
   const tableLoading = () => linesData.loading && !silentRefetching();
 
-  // A fresh lines page clears stale per-line errors. lineErrors is independently
-  // stamped by save failures, so it stays its own signal — this effect only
-  // resets it when a new page lands.
+  // A fresh lines page clears stale per-line errors. lineErrors is
+  // independently stamped by save failures, so it stays its own signal — this
+  // effect only resets it when a new page lands.
   createEffect(on(linesData, () => setLineErrors(new Map())));
 
   // A stocktake can be finalised only when it has at least one counted line
@@ -286,7 +324,8 @@ const StocktakeDetailView: Component = () => {
   // state (no initial item).
   const openAdd = () => setEditState({});
 
-  // --- Stocktake-level saves (updateStocktake, spliced back with no refetch) --
+  // --- Stocktake-level saves (updateStocktake, spliced back with no refetch)
+  // --
 
   const current = () => info();
 
@@ -314,8 +353,8 @@ const StocktakeDetailView: Component = () => {
   // stocktake (the toolbar's description + the side panel's counted-by /
   // verified-by / comment), owned here and passed whole to both children. One
   // buffer = coalescing spans the whole entity. Seeded from info() and
-  // re-seeded when the stocktake identity changes; never re-hydrated from a save
-  // result, so a returned node can't clobber in-progress typing.
+  // re-seeded when the stocktake identity changes; never re-hydrated from a
+  // save result, so a returned node can't clobber in-progress typing.
   const edit = createDebouncedEdit<StocktakeEditFields>({
     id: () => current()?.id ?? '',
     initial: () => ({
@@ -339,11 +378,18 @@ const StocktakeDetailView: Component = () => {
     void refetchAfterSave();
   };
 
+  // The record was deleted from the side panel's Actions → leave for the list.
+  // `replace: true` drops the deleted stocktake's detail URL from history so
+  // Back can't return to a now-missing record (it would only 404 / promote a
+  // NodeError to the global modal).
+  const onDeleted = () =>
+    navigate(`/${params.storeId}/inventory/stocktakes`, { replace: true });
+
   // --- Selection actions + line-edit modal: refetch the page on any change ---
-  // Each action (Delete / Change location / Reduce to 0) and the line-edit modal
-  // report success; the view refetches the current lines page (no splice — the
-  // small page is cheap, kdd/stocktake-line-editing). Errors still stamp inline
-  // via stampErrors so the offending rows flag their error.
+  // Each action (Delete / Change location / Reduce to 0) and the line-edit
+  // modal report success; the view refetches the current lines page (no splice
+  // — the small page is cheap, kdd/stocktake-line-editing). Errors still stamp
+  // inline via stampErrors so the offending rows flag their error.
 
   // Stamp the per-line errors (lineId → typename) — drives the inline
   // Snapshot-cell message. An action/finalise calls this the moment a save
@@ -397,7 +443,13 @@ const StocktakeDetailView: Component = () => {
           continue;
         }
         if (!past || covered.has(id)) continue;
-        return { id, code: line.item.code, name: line.itemName };
+        return {
+          id,
+          code: line.item.code,
+          name: line.itemName,
+          isVaccine: line.item.isVaccine,
+          doses: line.item.doses,
+        };
       }
       return undefined;
     };
@@ -445,6 +497,12 @@ const StocktakeDetailView: Component = () => {
     },
     { label: String(node.stocktakeNumber) },
   ];
+
+  // Store-preference display gates (spec/stocktakes › store-preference gates).
+  // Read reactively so a post-sync context refetch re-gates in place. A gated
+  // column is built into the array only when its preference is on — absent
+  // entirely otherwise (not merely default-hidden).
+  const prefs = () => stocktakePreferences();
 
   const columns = (): Column<Line, SortKey>[] => [
     {
@@ -520,6 +578,33 @@ const StocktakeDetailView: Component = () => {
       ...getNumberCell(),
       meta: { align: 'right', card: { region: 'badge' } },
     },
+    // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine rows
+    // only (blank otherwise); nothing stored per line (see ./lines/doses).
+    ...(prefs().manageVaccinesInDoses
+      ? [
+          {
+            c: {
+              accessor: line => dosesCounted(line) ?? '',
+              id: 'dosesCounted',
+            },
+            header: t('label.doses-counted'),
+            ...getNumberCell(),
+          } satisfies Column<Line, SortKey>,
+        ]
+      : []),
+    // Difference = counted − snapshot; blank until the line is counted. Derived
+    // (no server field), so unsortable.
+    {
+      c: {
+        accessor: line =>
+          line.countedNumberOfPacks == null
+            ? ''
+            : line.countedNumberOfPacks - (line.snapshotNumberOfPacks ?? 0),
+        id: 'difference',
+      },
+      header: t('label.difference'),
+      ...getNumberCell(),
+    },
     // The remaining editable fields (mirroring the line-edit panel) as columns.
     // Start hidden by default. Only the fields the server can sort on carry a
     // `sortKey` (packSize) — the rest render as unsortable headers.
@@ -529,6 +614,20 @@ const StocktakeDetailView: Component = () => {
       header: t('label.pack-size'),
       ...getNumberCell(),
     },
+    // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
+    // vaccine rows only.
+    ...(prefs().manageVaccinesInDoses
+      ? [
+          {
+            c: {
+              accessor: line => dosesPerUnit(line) ?? '',
+              id: 'dosesPerUnit',
+            },
+            header: t('label.doses-per-unit'),
+            ...getNumberCell(),
+          } satisfies Column<Line, SortKey>,
+        ]
+      : []),
     {
       c: { key: 'sellPricePerPack' },
       header: t('label.pack-sell-price'),
@@ -545,22 +644,48 @@ const StocktakeDetailView: Component = () => {
       ...getDateCell(),
     },
     {
-      // Location is nested (location.code) — an accessor column. Server sorts by
-      // locationCode.
+      // Location is nested (location.code) — an accessor column. Server sorts
+      // by locationCode.
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationCode',
       header: t('label.location'),
     },
     {
-      // The adjustment reason (reasonOption.reason) — an accessor column. Server
-      // sorts by reasonOption.
+      // The adjustment reason (reasonOption.reason) — an accessor column.
+      // Server sorts by reasonOption.
       c: { accessor: line => line.reasonOption?.reason ?? '', id: 'reason' },
       sortKey: 'reasonOption',
       header: t('label.reason'),
     },
+    // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain scalar
+    // on the line. Unsortable: StocktakeLineSortFieldInput has no donor key, so
+    // no sortKey (server can't sort it — kdd/type-safety, D23).
+    ...(prefs().allowTrackingOfStockByDonor
+      ? [
+          {
+            c: { accessor: line => line.donorName ?? '', id: 'donor' },
+            header: t('label.donor'),
+          } satisfies Column<Line, SortKey>,
+        ]
+      : []),
+    {
+      // Manufacturer name (ungated) — the arg-bearing manufacturer(storeId)
+      // field, resolved to its name. Unsortable (no server key).
+      c: {
+        accessor: line => line.manufacturer?.name ?? '',
+        id: 'manufacturer',
+      },
+      header: t('label.manufacturer'),
+    },
     {
       c: { key: 'note' },
       header: t('label.note'),
+    },
+    // Comment (spec column #18) — the line's own comment text. Distinct from
+    // note; hidden by default like the other extra columns.
+    {
+      c: { accessor: line => line.comment ?? '', id: 'comment' },
+      header: t('label.comment'),
     },
   ];
 
@@ -577,177 +702,222 @@ const StocktakeDetailView: Component = () => {
           (fresh node object), dropping focus from the field being typed. */}
       <Show when={info()}>
         {node => (
-          <Page
-            fillBody
-            sidePanelOpen={sidePanelOpen()}
-            sidePanelTitle={t('heading.details')}
-            onSidePanelClose={() => setSidePanelOpen(false)}
-            sidePanelContent={
-              <StocktakeSidePanel
-                node={node()}
-                disabled={isDisabled(node())}
-                edit={edit}
-              />
-            }
-            header={
-              <Header>
-                <Breadcrumb crumbs={crumbs(node())} />
-                <HeaderButtons>
-                  {/* "Add item" — opens the line-edit modal in the item-search
+          // The <Tabs> root wraps the whole Page from outside (display:
+          // contents, so it adds no layout box): the TabList lives in the
+          // Header, the TabPanels in the body, and both share this one tabs
+          // context.
+          <Tabs value={activeTab()} onValueChange={setActiveTab}>
+            <Page
+              fillBody
+              sidePanelOpen={sidePanelOpen()}
+              sidePanelTitle={t('heading.details')}
+              onSidePanelClose={() => setSidePanelOpen(false)}
+              sidePanelContent={
+                <StocktakeSidePanel
+                  storeId={params.storeId}
+                  node={node()}
+                  disabled={isDisabled(node())}
+                  edit={edit}
+                  onDeleted={onDeleted}
+                />
+              }
+              header={
+                <Header>
+                  <Breadcrumb crumbs={crumbs(node())} />
+                  <HeaderButtons>
+                    {/* "Add item" — opens the line-edit modal in the item-search
                       state. Only while the stocktake is editable. */}
-                  <Show when={!isDisabled(node())}>
-                    <Button icon={<PlusCircleIcon />} onClick={openAdd}>
-                      {t('button.add-item')}
-                    </Button>
-                  </Show>
-                  <Show when={!sidePanelOpen()}>
-                    <Button
-                      variant="secondary"
-                      icon={<InfoIcon />}
-                      onClick={() => setSidePanelOpen(true)}
-                    >
-                      {t('button.more')}
-                    </Button>
-                  </Show>
-                </HeaderButtons>
-                <Toolbar>
-                  <StocktakeDetailToolbar
-                    node={node()}
-                    disabled={isDisabled(node())}
-                    edit={edit}
-                    filter={filter()}
-                    onFilterChange={onFilterChange}
-                    locations={locations()}
-                  />
-                </Toolbar>
-              </Header>
-            }
-            contentFooter={
-              // Selection action bar while lines are selected; otherwise the
-              // stocktake status footer (on-hold / stepper / finalise). Matches
-              // OMS, which swaps the whole footer on selection. Pagination is NOT
-              // here anymore — it's overlaid inside the DataTable.
-              <Show
-                when={selectedIds().length > 0}
-                fallback={
-                  <StocktakeStatusFooter
-                    storeId={params.storeId}
-                    node={node()}
-                    disabled={isDisabled(node())}
-                    canFinalise={canFinalise()}
-                    onSetHold={setHold}
-                    onFinalised={onFinalised}
-                    onError={lineIds =>
-                      stampErrors(
-                        new Map(
-                          lineIds.map(id => [
-                            id,
-                            'SnapshotCountCurrentCountMismatchLine',
-                          ])
+                    <Show when={!isDisabled(node())}>
+                      <Button icon={<PlusCircleIcon />} onClick={openAdd}>
+                        {t('button.add-item')}
+                      </Button>
+                    </Show>
+                    {/* Export/Print — always available (unlike Add item, it
+                        does not depend on editability): print/export a report of
+                        this stocktake, respecting the line table's current sort
+                        (spec/stocktakes S3 → spec/reports S4). */}
+                    <ExportPrintAction
+                      stocktakeId={node().id}
+                      sort={reportSort()}
+                    />
+                    <Show when={!sidePanelOpen()}>
+                      <Button
+                        variant="secondary"
+                        icon={<InfoIcon />}
+                        onClick={() => setSidePanelOpen(true)}
+                      >
+                        {t('button.more')}
+                      </Button>
+                    </Show>
+                  </HeaderButtons>
+                  <Toolbar>
+                    <StocktakeDetailToolbar
+                      node={node()}
+                      disabled={isDisabled(node())}
+                      edit={edit}
+                      filter={filter()}
+                      onFilterChange={onFilterChange}
+                      locations={locations()}
+                    />
+                  </Toolbar>
+                  {/* Last child of the Header → the tab strip claims its bottom
+                    edge (Header.module.css / Tabs). Details + Log. */}
+                  <TabList tabs={tabs()} />
+                </Header>
+              }
+              contentFooter={
+                // Selection action bar while lines are selected; otherwise the
+                // stocktake status footer (on-hold / stepper / finalise).
+                // Matches OMS, which swaps the whole footer on selection.
+                // Pagination is NOT here anymore — it's overlaid inside the
+                // DataTable.
+                <Show
+                  when={selectedIds().length > 0}
+                  fallback={
+                    <StocktakeStatusFooter
+                      storeId={params.storeId}
+                      node={node()}
+                      disabled={isDisabled(node())}
+                      canFinalise={canFinalise()}
+                      onSetHold={setHold}
+                      onFinalised={onFinalised}
+                      onError={lineIds =>
+                        stampErrors(
+                          new Map(
+                            lineIds.map(id => [
+                              id,
+                              'SnapshotCountCurrentCountMismatchLine',
+                            ])
+                          )
                         )
-                      )
-                    }
-                    onShowErrors={showErrors}
-                  />
-                }
-              >
-                <ContentFooter>
-                  <strong>
-                    {selectedIds().length} {t('label.selected')}
-                  </strong>
-                  {/* Each action owns its own button + confirm/working/success/
+                      }
+                      onShowErrors={showErrors}
+                    />
+                  }
+                >
+                  <ContentFooter>
+                    <strong>
+                      {selectedIds().length} {t('label.selected')}
+                    </strong>
+                    {/* Each action owns its own button + confirm/working/success/
                       error modal + run; the view supplies storeId/selection and
                       refetches the page on any commit (onCommit → onLinesChanged),
                       stamps failed lines inline (onError), and clears selection on
                       the error phase's "Show error lines" (onShowErrors). */}
-                  <DeleteLinesAction
-                    storeId={params.storeId}
-                    selectedIds={selectedIds}
-                    disabled={isDisabled(node())}
-                    onCommit={onLinesChanged}
-                    onError={stampErrors}
-                    onShowErrors={showErrors}
-                  />
-                  <ChangeLocationAction
-                    storeId={params.storeId}
-                    selectedIds={selectedIds}
-                    disabled={isDisabled(node())}
-                    locations={locations()}
-                    rows={rows()}
-                    onCommit={onLinesChanged}
-                    onError={stampErrors}
-                    onShowErrors={showErrors}
-                  />
-                  <ReduceToZeroAction
-                    storeId={params.storeId}
-                    selectedIds={selectedIds}
-                    disabled={isDisabled(node())}
-                    onCommit={onLinesChanged}
-                    onError={stampErrors}
-                    onShowErrors={showErrors}
-                  />
-                  <ContentFooterActions>
-                    <Button
-                      variant="secondary"
-                      icon={<MinusCircleIcon />}
-                      onClick={() => setSelectedIds([])}
-                    >
-                      {t('label.clear-selection')}
-                    </Button>
-                  </ContentFooterActions>
-                </ContentFooter>
-              </Show>
-            }
-          >
-            <DataTable
-              columns={columns()}
-              rows={rows()}
-              rowKey={line => line.id}
-              // Non-suspending loading read — a between-page/filter/sort refetch
-              // keeps rows + shows the refreshing bar; a post-save refetch is
-              // silent (tableLoading gates it out). Initial load → Suspense.
-              loading={tableLoading()}
-              sort={currentSort()}
-              onSort={onSort}
-              onRowClick={isDisabled(node()) ? undefined : openRow}
-              emptyMessage={t('error.no-stocktake-items')}
-              empty={
-                isDisabled(node()) ? undefined : (
-                  <Button
-                    icon={<PlusCircleIcon />}
-                    data-testid="add-item-button"
-                    onClick={openAdd}
-                  >
-                    {t('button.add-item')}
-                  </Button>
-                )
+                    <DeleteLinesAction
+                      storeId={params.storeId}
+                      selectedIds={selectedIds}
+                      disabled={isDisabled(node())}
+                      onCommit={onLinesChanged}
+                      onError={stampErrors}
+                      onShowErrors={showErrors}
+                    />
+                    <ChangeLocationAction
+                      storeId={params.storeId}
+                      selectedIds={selectedIds}
+                      disabled={isDisabled(node())}
+                      locations={locations()}
+                      rows={rows()}
+                      onCommit={onLinesChanged}
+                      onError={stampErrors}
+                      onShowErrors={showErrors}
+                    />
+                    <ReduceToZeroAction
+                      storeId={params.storeId}
+                      selectedIds={selectedIds}
+                      disabled={isDisabled(node())}
+                      onCommit={onLinesChanged}
+                      onError={stampErrors}
+                      onShowErrors={showErrors}
+                    />
+                    <ContentFooterActions>
+                      <Button
+                        variant="secondary"
+                        icon={<MinusCircleIcon />}
+                        onClick={() => setSelectedIds([])}
+                      >
+                        {t('label.clear-selection')}
+                      </Button>
+                    </ContentFooterActions>
+                  </ContentFooter>
+                </Show>
               }
-              enableSelection
-              selectedIds={selectedIds()}
-              onSelectionChange={setSelectedIds}
-              config={tableConfig.config()}
-              setConfig={tableConfig.setConfig}
-              pagination={{
-                offset: query().offset,
-                pageSize: query().first,
-                total: totalCount(),
-                onOffsetChange: offset => setQuery({ ...query(), offset }),
-                onPageSizeChange: first =>
-                  setQuery({ ...query(), first, offset: 0 }),
-              }}
-            />
-            <StocktakeLineEditModal
-              open={editState() != null}
-              onClose={() => setEditState(undefined)}
-              storeId={params.storeId}
-              stocktakeId={node().id}
-              initialItemId={editState()?.itemId}
-              locations={locations()}
-              locationsLoading={locationsData.loading}
-              nextItem={nextItem}
-              onSaved={onLinesChanged}
-            />
-          </Page>
+            >
+              {/* Details tab: the read-only, server-paginated line table (S3). */}
+              <TabPanel value="details">
+                <DataTable
+                  columns={columns()}
+                  rows={rows()}
+                  rowKey={line => line.id}
+                  // Non-suspending loading read — a between-page/filter/sort
+                  // refetch keeps rows + shows the refreshing bar; a post-save
+                  // refetch is silent (tableLoading gates it out). Initial load
+                  // → Suspense.
+                  loading={tableLoading()}
+                  sort={currentSort()}
+                  onSort={onSort}
+                  onRowClick={isDisabled(node()) ? undefined : openRow}
+                  emptyMessage={t('error.no-stocktake-items')}
+                  empty={
+                    isDisabled(node()) ? undefined : (
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        data-testid="add-item-button"
+                        onClick={openAdd}
+                      >
+                        {t('button.add-item')}
+                      </Button>
+                    )
+                  }
+                  enableSelection
+                  selectedIds={selectedIds()}
+                  onSelectionChange={setSelectedIds}
+                  config={tableConfig.config()}
+                  setConfig={tableConfig.setConfig}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default (same gate as the list).
+                  // Gate + action both off the config controller; undefined for
+                  // everyone else, so the action isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
+                  pagination={{
+                    offset: query().offset,
+                    pageSize: query().first,
+                    total: totalCount(),
+                    onOffsetChange: offset => setQuery({ ...query(), offset }),
+                    onPageSizeChange: first =>
+                      setQuery({ ...query(), first, offset: 0 }),
+                  }}
+                />
+              </TabPanel>
+              {/* Log tab: the stocktake's activity log — its own query (OMS
+                parity), mounted only while this tab is active (Kobalte unmounts
+                inactive panels), so it fetches on first visit. */}
+              <TabPanel value="log">
+                <StocktakeLogPanel
+                  storeId={params.storeId}
+                  stocktakeId={node().id}
+                />
+              </TabPanel>
+              {/* The line-edit modal is an overlay, not tab content: it stays a
+                direct child of the Page so a row-click on Details opens it
+                regardless of which tab last had focus. */}
+              <StocktakeLineEditModal
+                open={editState() != null}
+                onClose={() => setEditState(undefined)}
+                storeId={params.storeId}
+                stocktakeId={node().id}
+                initialItemId={editState()?.itemId}
+                locations={locations()}
+                locationsLoading={locationsData.loading}
+                nextItem={nextItem}
+                onSaved={onLinesChanged}
+              />
+            </Page>
+          </Tabs>
         )}
       </Show>
     </Suspense>

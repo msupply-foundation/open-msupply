@@ -13,7 +13,7 @@
 .addSelect {
   flex: 1 1 auto;
   min-inline-size: 0;
-  max-inline-size: 32rem;
+  max-inline-size: 60rem;
 }
 
 /* Body prompt shown in add mode before an item is picked (in place of the

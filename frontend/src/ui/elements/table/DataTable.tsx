@@ -173,6 +173,13 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   // defaults from `columns`.
   config?: TableConfig;
   setConfig?: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
+  // Save the current layout as the shared install-wide default, surfaced in the
+  // column-settings panel. The HOST owns the gate (central server +
+  // EDIT_CENTRAL_DATA — kept out of this generic table): pass the callback only
+  // when the current user may save, omit it otherwise and the action isn't
+  // offered. Resolves true on success / false on failure (the panel reflects it
+  // inline).
+  onSaveGlobalDefault?: () => Promise<boolean>;
 
   // --- Pagination (optional), STATE owned by the page. --- When set, the table
   // renders the Pagination control pinned bottom-inline-end, overlaid on the
@@ -545,6 +552,7 @@ export function DataTable<T, K extends string, G extends string = never>(
               config={props.config}
               setConfig={props.setConfig}
               tabsAndCardGroups={props.tabsAndCardGroups}
+              onSaveGlobalDefault={props.onSaveGlobalDefault}
             />
           </Popover>
         </Show>

@@ -37,6 +37,12 @@ fragment StocktakeLine on StocktakeLineNode {
   item {
     id
     code
+    # isVaccine gates the vaccine-only doses + VVM display; doses is the item's
+    # configured doses-per-unit, the client-side multiplier for the doses columns
+    # (spec/stocktakes › store-preference gates: doses is never a stored per-line
+    # fact — computed as counted × packSize × item.doses).
+    isVaccine
+    doses
   }
   # The stock line this stocktake line counts (if any). The editor passes these ids as
   # excludeStockLineIds to stockLinesByItem, so a batch already on the stocktake isn't offered
@@ -71,6 +77,27 @@ fragment StocktakeLine on StocktakeLineNode {
     id
     type
     reason
+  }
+  # Preference-gated display/edit fields (spec/stocktakes › store-preference gates). Selected
+  # unconditionally in the fragment; the UI decides whether to SHOW them from the store
+  # preferences (manageVvmStatusForStock / allowTrackingOfStockByDonor). A gated column is absent
+  # entirely when its preference is off — the data just goes unread.
+  #
+  # VVM status (vaccine items) — gated by manageVvmStatusForStock. Set via vvmStatusId on save.
+  vvmStatus {
+    id
+    code
+    description
+  }
+  # Donor — gated by allowTrackingOfStockByDonor. donorId/donorName are plain scalars on the line
+  # (no storeId arg, unlike the stock line's donor(storeId)); the picker sets donorId on save.
+  donorId
+  donorName
+  # Manufacturer name (ungated column). Arg-bearing field — pass the same storeId the lines query
+  # already carries; NameNode.name is the display string.
+  manufacturer(storeId: $storeId) {
+    id
+    name
   }
 }
 
@@ -254,6 +281,63 @@ mutation updateStocktake($storeId: String!, $input: UpdateStocktakeInput!) {
   }
 }
 
+# The WHOLE stocktake — its info fields AND every line in one call (the nested `lines` connector,
+# NOT paginated) — for the side-panel "Copy to clipboard" action. Unlike the detail table (which is
+# server-paged via `stocktakeLines`), copy wants the complete record in a single result to serialise
+# to the clipboard, so it reads `StocktakeNode.lines` directly. Reuses the same StocktakeInfo /
+# StocktakeLine fragments the detail view already uses, so the copied JSON mirrors the app's own
+# shape (kdd/type-safety). NodeError is promoted to the global error modal by the caller.
+query fullStocktake($storeId: String!, $stocktakeId: String!) {
+  stocktake(storeId: $storeId, id: $stocktakeId) {
+    __typename
+    ... on StocktakeNode {
+      ...StocktakeInfo
+      lines {
+        totalCount
+        nodes {
+          ...StocktakeLine
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Delete ONE stocktake by id (the side-panel "Delete" action). The same atomic batchStocktake
+# delete the list uses, but for a single id: the backend is the source of truth for what can be
+# deleted (a finalised/on-hold stocktake can't) and reports the outcome per item; the caller shows
+# a translated message on a DeleteStocktakeError and navigates back to the list on success. Mirrors
+# the list's `deleteStocktakes` selection so codegen narrows the response union the same way.
+mutation deleteStocktake($storeId: String!, $id: String!) {
+  batchStocktake(
+    storeId: $storeId
+    input: { deleteStocktakes: [{ id: $id }] }
+  ) {
+    ... on BatchStocktakeResponse {
+      __typename
+      deleteStocktakes {
+        id
+        response {
+          __typename
+          ... on DeleteResponse {
+            id
+          }
+          ... on DeleteStocktakeError {
+            error {
+              __typename
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 # The item's stock lines in the store NOT already on the stocktake (its "available batches" to
 # opt into the count), for the line-edit modal: the modal offers EVERY other batch of the item —
 # including ones in other locations that a location-filtered stocktake didn't auto-include —
@@ -292,6 +376,24 @@ query stockLinesByItem(
         location {
           id
           code
+          name
+        }
+        # Seed a new-batch draft's VVM/donor/manufacturer from the stock line it
+        # opts in. vvmStatus (vaccine items) and donor(storeId) are preference-
+        # gated in the editor UI (read regardless; only SHOWN when the gate is
+        # on); manufacturer(storeId) is UNGATED (always editable on the Other
+        # tab, spec S4), so it carries over too.
+        vvmStatus {
+          id
+          code
+          description
+        }
+        donor(storeId: $storeId) {
+          id
+          name
+        }
+        manufacturer(storeId: $storeId) {
+          id
           name
         }
       }
