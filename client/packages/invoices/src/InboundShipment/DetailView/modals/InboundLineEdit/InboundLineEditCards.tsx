@@ -218,8 +218,8 @@ export const InboundLineEditCards = ({
                 helperText={
                   isPlaceholder
                     ? t('error.field-must-be-specified', {
-                      field: t('label.packs-received'),
-                    })
+                        field: t('label.packs-received'),
+                      })
                     : undefined
                 }
               />
@@ -258,7 +258,11 @@ export const InboundLineEditCards = ({
                   const shouldClearSellPrice =
                     item?.defaultPackSize !== line.packSize &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
-                    line.sellPricePerPack;
+                      line.sellPricePerPack;
+                  const shouldClearCostPrice =
+                    item?.defaultPackSize !== line.packSize &&
+                    item?.itemStoreProperties?.defaultSellPricePerPack ===
+                      line.costPricePerPack;
 
                   updateDraftLine({
                     volumePerPack:
@@ -269,6 +273,9 @@ export const InboundLineEditCards = ({
                     sellPricePerPack: shouldClearSellPrice
                       ? 0
                       : line.sellPricePerPack,
+                    costPricePerPack: shouldClearCostPrice
+                      ? 0
+                      : line.costPricePerPack,
                     packSize: value,
                     id: row.original.id,
                   });
@@ -481,7 +488,10 @@ export const InboundLineEditCards = ({
                 disabled={isDisabled || !isManualShipment}
                 decimalsLimit={5}
                 updateFn={value =>
-                  updateDraftLine({ id: row.original.id, costPricePerPack: value })
+                  updateDraftLine({
+                    id: row.original.id,
+                    costPricePerPack: value,
+                  })
                 }
               />
             </span>
@@ -837,9 +847,9 @@ export const InboundLineEditCards = ({
   const groupIcons = simplified
     ? undefined
     : {
-      stockLineDetails: <StockIcon />,
-      moreInfo: <InfoIcon />,
-    };
+        stockLineDetails: <StockIcon />,
+        moreInfo: <InfoIcon />,
+      };
 
   return (
     <>
