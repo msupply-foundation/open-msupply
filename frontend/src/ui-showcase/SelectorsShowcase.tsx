@@ -293,8 +293,7 @@ export const SelectorsShowcase = () => {
           itemToString={item => item.name}
           itemToValue={item => item.code}
           renderItem={renderItem}
-          value={asyncPicked()?.code}
-          selectedItem={asyncPicked() ?? undefined}
+          selected={asyncPicked() ?? undefined}
           onSelect={setAsyncPicked}
           placeholder="Search by item code or name…"
         />

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { parseArgumentSchema, seedDefaults, type ParsedField } from './schema';
+import {
+  cleanArguments,
+  parseArgumentSchema,
+  seedDefaults,
+  type ParsedField,
+} from './schema';
 
 // The real item-list report schema shape (the ItemListFilters form), embedded
 // as the fixture. jsonSchema is draft-07 with the top-level `allOf` + `$ref` +
@@ -101,6 +106,8 @@ describe('parseArgumentSchema — item-list shape', () => {
       key: 'itemCode',
       label: 'Item code',
       nullable: true,
+      readOnly: false,
+      required: false,
     });
   });
 
@@ -176,7 +183,14 @@ describe('parseArgumentSchema — input normalisation', () => {
       },
     });
     expect(fields).toEqual([
-      { kind: 'text', key: 'itemName', label: 'Name', nullable: false },
+      {
+        kind: 'text',
+        key: 'itemName',
+        label: 'Name',
+        nullable: false,
+        readOnly: false,
+        required: false,
+      },
     ]);
   });
 
@@ -231,6 +245,111 @@ describe('parseArgumentSchema — unsupported fallback', () => {
         elementType: 'Control',
       },
     ]);
+  });
+});
+
+// The expiring-items shape (real backend fixture, abridged): numeric
+// preference thresholds marked readOnly, a date-formatted string, and a
+// definition-level `required` list (the encounters report's shape).
+const stockFiltersSchema = {
+  jsonSchema: {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    allOf: [{ $ref: '#/definitions/StockFilters' }],
+    definitions: {
+      StockFilters: {
+        properties: {
+          expiryDate: { type: 'string', format: 'date' },
+          fromDatetime: { type: 'string', format: 'date-time' },
+          monthsItemsExpire: { type: 'number', readOnly: true },
+          monthsOverstock: { type: 'number' },
+          programId: { type: 'string' },
+        },
+        required: ['programId'],
+      },
+    },
+  },
+  uiSchema: {
+    elements: [
+      { type: 'Control', scope: '#/properties/expiryDate', label: 'Expiry' },
+      { type: 'Control', scope: '#/properties/fromDatetime', label: 'From' },
+      {
+        type: 'Control',
+        scope: '#/properties/monthsItemsExpire',
+        label: 'Expiring period',
+      },
+      {
+        type: 'Control',
+        scope: '#/properties/monthsOverstock',
+        label: 'Months overstock',
+      },
+      { type: 'Control', scope: '#/properties/programId', label: 'Program' },
+    ],
+  },
+};
+
+describe('parseArgumentSchema — numbers, dates, readOnly, required', () => {
+  const fields = parseArgumentSchema(stockFiltersSchema);
+
+  it('maps number properties to the number kind, carrying readOnly', () => {
+    expect(byKey(fields, 'monthsItemsExpire')).toEqual({
+      kind: 'number',
+      key: 'monthsItemsExpire',
+      label: 'Expiring period',
+      nullable: false,
+      readOnly: true,
+      required: false,
+      default: undefined,
+    });
+    const editable = byKey(fields, 'monthsOverstock');
+    if (editable.kind !== 'number') throw new Error('expected number');
+    expect(editable.readOnly).toBe(false);
+  });
+
+  it('maps date and date-time formatted strings to the date kind', () => {
+    expect(byKey(fields, 'expiryDate')).toEqual({
+      kind: 'date',
+      key: 'expiryDate',
+      label: 'Expiry',
+      nullable: false,
+      readOnly: false,
+      required: false,
+      dateTime: false,
+    });
+    const fromDatetime = byKey(fields, 'fromDatetime');
+    if (fromDatetime.kind !== 'date') throw new Error('expected date');
+    expect(fromDatetime.dateTime).toBe(true);
+  });
+
+  it('reads a definition-level required list through the $ref', () => {
+    const programId = byKey(fields, 'programId');
+    if (programId.kind !== 'text') throw new Error('expected text');
+    expect(programId.required).toBe(true);
+  });
+});
+
+describe('cleanArguments', () => {
+  const fields = parseArgumentSchema(stockFiltersSchema);
+
+  it('strips empty values and coerces number-field text to numbers', () => {
+    expect(
+      cleanArguments(fields, {
+        expiryDate: '2026-07-31',
+        monthsOverstock: '6.5',
+        monthsItemsExpire: 4, // untouched seed stays a number
+        programId: '',
+        timezone: 'Pacific/Auckland',
+        untouched: undefined,
+      })
+    ).toEqual({
+      expiryDate: '2026-07-31',
+      monthsOverstock: 6.5,
+      monthsItemsExpire: 4,
+      timezone: 'Pacific/Auckland',
+    });
+  });
+
+  it('drops an unparseable number leftover like an empty', () => {
+    expect(cleanArguments(fields, { monthsOverstock: '.' })).toEqual({});
   });
 });
 

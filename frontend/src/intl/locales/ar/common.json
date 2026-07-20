@@ -275,6 +275,7 @@
   "error.integration-timeout-reached": "استغرق الخادم المركزي وقتاً طويلاً في دمج السجلات المدفوعة. يرجى إعادة المحاولة لاحقاً.",
   "error.internal-error": "واجه الخادم مشكلة.",
   "error.interval-invalid": "يجب أن تكون فترة المزامنة عددًا صحيحًا موجبًا",
+  "error.field-required": "هذا الفلتر مطلوب.",
   "error.interval-required": "فترة المزامنة مطلوبة",
   "error.invalid-credentials": "تعذر جلب تفاصيل المستخدم. يرجى إعادة تسجيل الدخول لتحديث تفاصيل المستخدم.",
   "error.invalid-field-value": "{{ value }} ليست {{ field }} صالحة",
@@ -1755,6 +1756,5 @@
   "warning.cannot-create-placeholder-units": "هناك إجمالي {{allocatedQuantity}} وحدات متوفرة. غير قادر على تخصيص جميع {{requestedQuantity}} الوحدات.",
   "warning.caps-lock": "تحذير: قفل القبعات قيد التشغيل",
   "warning.field-not-parsed": "لم يتم تحليل {{field}}",
-  "warning.nothing-to-supply": "لم يتبق شيء لتزويده!",
-  "name.on-hold-suffix": "(On hold)"
+  "warning.nothing-to-supply": "لم يتبق شيء لتزويده!"
 }

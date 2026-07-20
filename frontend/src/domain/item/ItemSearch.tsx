@@ -46,21 +46,14 @@ const renderRow = (item: ItemOption): JSX.Element => (
 );
 
 /**
- * Reusable server-side-filtered, infinite-scroll item picker (add-item flow).
- * Wraps the shared Combobox in server mode — typing refetches from the backend
- * (filtered by code/name), scrolling to the bottom loads the next page — over
- * the paginated `items` query. Excludes `excludeItemIds` server-side so items
- * already in the caller's context aren't offered.
- *
- * Domain-level (not a ui/ element) because it's bound to the item query: a thin
- * binding over the generic AsyncCombobox — it supplies the `items`-query fetcher
- * (excluding `excludeItemIds` server-side) and the option row; AsyncCombobox
- * owns the combobox + pagination.
+ * Reusable server-side-filtered, infinite-scroll item picker (add-item flow) —
+ * a thin binding over the generic AsyncCombobox: it supplies the `items`-query
+ * fetcher (excluding `excludeItemIds` server-side) and the option row;
+ * AsyncCombobox owns the combobox + pagination.
  */
 export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
   // The fetcher reads the exclusions accessor per call, so a later change (an
-  // item added via "OK & next") is picked up on the next fetch. Built once here;
-  // AsyncCombobox keeps a stable search primitive across re-renders.
+  // item added via "OK & next") is picked up on the next fetch.
   const fetchPage = itemPageFetcher(
     props.storeId,
     () => props.excludeItemIds,

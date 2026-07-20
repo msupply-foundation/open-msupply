@@ -381,6 +381,7 @@
   "error.encounter-not-found": "Encounter not found.",
   "error.estimated-delivery-before-shipped-date": "Estimated delivery date must be after the shipped date",
   "error.facility-not-found": "Facility not found",
+  "error.field-required": "This filter is required.",
   "error.failed-attempts_one": "{{ count }} failed attempt",
   "error.failed-attempts_other": "{{ count }} failed attempts",
   "error.failed-to-create-inbound-shipment": "Failed to create inbound shipment! {{message}}",
@@ -3122,6 +3123,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "name.on-hold-suffix": "(On hold)"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }

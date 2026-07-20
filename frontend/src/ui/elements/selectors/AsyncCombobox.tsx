@@ -1,4 +1,4 @@
-import { type JSX } from 'solid-js';
+import { createSignal, type JSX } from 'solid-js';
 import { Combobox } from './Combobox';
 import {
   createPaginatedSearch,
@@ -21,23 +21,33 @@ export interface AsyncComboboxProps<T> {
   /** Rich per-option rendering; defaults to the plain itemToString label. */
   renderItem?: (item: T) => JSX.Element;
   /**
-   * The controlled selection key (an itemToValue). Use for a picker whose
-   * current value is already among the loaded page; pair with `selectedItem`
-   * when the value may not be loaded (see below).
+   * The controlled selection key (an itemToValue). For a picker controlled by a
+   * bare id whose row is already among the loaded page (e.g. a just-picked
+   * item). Callers that hold the whole selected node should pass `selected`
+   * instead — it also resolves the value.
    */
   value?: string;
   /**
-   * The resolved item for a controlled `value` whose row may not be on the
-   * loaded page (a paged search only loads a page at a time). Passed straight to
-   * the Combobox so the selection's label renders and stays visible during a
-   * fetch. Omit for a fresh picker with no pre-set value.
+   * The selected node, when the caller already holds it (e.g. a detail toolbar
+   * showing the record's current supplier/customer). Seeded into the option
+   * list — while it matches the typed query — so a controlled selection's label
+   * shows even before its page is fetched. Also supplies the controlled value
+   * when `value` isn't given.
    */
-  selectedItem?: T;
+  selected?: T;
+  /**
+   * Per-option disabled predicate — the option is listed but not selectable
+   * (e.g. an on-hold party), exposed as aria-disabled.
+   */
+  itemDisabled?: (item: T) => boolean;
   /** The picked item, or null when the selection is cleared. */
   onSelect: (item: T | null) => void;
   placeholder?: string;
   hideLabel?: boolean;
   disabled?: boolean;
+  error?: string;
+  /** Open the option list on focus/click (pick-first flows). */
+  openOnFocus?: boolean;
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
@@ -47,24 +57,53 @@ export interface AsyncComboboxProps<T> {
  * A server-side-filtered, infinite-scroll combobox: the shared Combobox wired to
  * the paginated-search loop (createPaginatedSearch). Typing refetches from the
  * backend (the caller's `fetchPage`), scrolling near the bottom loads the next
- * page, and a controlled `value` (+ optional `selectedItem`) shows the current
- * selection even before/without loading its page.
+ * page, and a controlled selection (`value`/`selected`) shows even before its
+ * page loads.
  *
  * This is the generic engine the domain search selectors are built on
- * (ItemSearch, NameSearch, …): each supplies a `fetchPage` (its query) + row
- * rendering and holds no combobox/pagination plumbing of its own. The Combobox
- * itself stays the client-mode (whole-list) primitive; this is its async twin.
+ * (ItemSearch, NameSearch, CustomerSelect, …): each supplies a `fetchPage` (its
+ * query) + row rendering and holds no combobox/pagination plumbing of its own.
+ * The Combobox itself stays the client-mode (whole-list) primitive; this is its
+ * async twin.
+ *
+ * Deferred first fetch: the page waits for the first open (`ensure` via
+ * onOpenChange), so a select that mounts with a detail view but is never opened
+ * never fetches. A pre-set `selected` still shows its label immediately — it's
+ * seeded into the list, and with no fetch on mount there are no options to blank
+ * it out.
  */
 export const AsyncCombobox = <T,>(
   props: AsyncComboboxProps<T>
 ): JSX.Element => {
-  // Created ONCE (not in a memo) so its signals/effects/debounce keep a stable
-  // owner and the accumulated pages survive re-renders. The fetcher is read per
-  // call, so later changes to the caller's closure (e.g. exclusions) are picked
-  // up without recreating the primitive.
+  // Created ONCE so accumulated pages + debounce keep a stable owner. Deferred
+  // (`eager: false`): the first page waits for the first open (see onOpenChange).
   const search = createPaginatedSearch<T>({
     fetchPage: (value, offset) => props.fetchPage(value, offset),
+    eager: false,
   });
+
+  // What the user has typed — so the seed below drops out of a search it
+  // doesn't match.
+  const [query, setQuery] = createSignal('');
+
+  // The caller's selected node leads the list (deduped) so a controlled value
+  // resolves even before its page is fetched — but only while it matches the
+  // typed query (or none is typed): an unmatched seed would sort above real
+  // matches and mask the "no matches" row (which keys off an empty list).
+  const items = (): T[] => {
+    const seed = props.selected;
+    if (!seed) return search.items();
+    const key = props.itemToValue(seed);
+    const needle = query().toLocaleLowerCase();
+    const seedMatches =
+      !needle || props.itemToString(seed).toLocaleLowerCase().includes(needle);
+    if (!seedMatches) return search.items();
+    return [seed, ...search.items().filter(i => props.itemToValue(i) !== key)];
+  };
+
+  const value = () =>
+    props.value ??
+    (props.selected ? props.itemToValue(props.selected) : undefined);
 
   return (
     <Combobox<T>
@@ -72,17 +111,23 @@ export const AsyncCombobox = <T,>(
       hideLabel={props.hideLabel}
       class={props.class}
       disabled={props.disabled}
+      error={props.error}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
-      items={search.items()}
+      openOnFocus={props.openOnFocus}
+      items={items()}
       loading={search.loading()}
       loadingMore={search.loadingMore()}
-      value={props.value}
-      selectedItem={props.selectedItem}
+      value={value()}
       itemToString={props.itemToString}
       itemToValue={props.itemToValue}
+      itemDisabled={props.itemDisabled}
       renderItem={props.renderItem}
-      onInputChange={value => search.setSearch(value)}
+      onInputChange={next => {
+        setQuery(next);
+        search.setSearch(next);
+      }}
+      onOpenChange={open => open && search.ensure()}
       onReachEnd={() => search.loadMore()}
       onChange={item => props.onSelect(item)}
     />

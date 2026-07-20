@@ -31,24 +31,25 @@ export interface NameSearchProps {
   class?: string;
 }
 
-// One dropdown option row: a kind icon (truck = external party, building = a
-// party that is itself another store in the system), then the code (bold) and
-// name, with an "(On hold)" suffix for an on-hold name (rendered but not
-// selectable — see onSelect). The row shows both code and name; the selected
-// input shows only the name (itemToString below).
+// One option row: a kind icon (truck = external party, home = a party that is
+// itself another store in the system), then the code (bold) and name, with an
+// "(On hold)" suffix for an on-hold name (listed but not selectable via
+// itemDisabled). Code and name are separately-marked nodes (e2e/TESTIDS.md
+// item-option-code / -name). The row shows both; the selected input shows only
+// the name (itemToString below).
 const renderRow = (name: NameOption): JSX.Element => (
   <span
     style={{ display: 'inline-flex', 'align-items': 'center', gap: '0.5rem' }}
   >
     {name.isStore ? <HomeIcon /> : <TruckIcon />}
     <span
-      data-testid="name-option-code"
+      data-testid="item-option-code"
       style={{ 'font-weight': 'var(--weight-bold)' }}
     >
       {name.code}
     </span>
-    <span data-testid="name-option-name">{name.name}</span>
-    {name.isOnHold ? <span>{t('name.on-hold-suffix')}</span> : null}
+    <span data-testid="item-option-name">{name.name}</span>
+    {name.isOnHold ? ` (${t('label.on-hold')})` : null}
   </span>
 );
 
@@ -57,9 +58,9 @@ const renderRow = (name: NameOption): JSX.Element => (
  * the donor / manufacturer picker. A thin binding over the generic AsyncCombobox:
  * it supplies the `names`-query fetcher (narrowed by role + visible in store)
  * and the option row; AsyncCombobox owns the combobox + pagination. An on-hold
- * name is shown but not selectable: the row carries the "(On hold)" suffix and
- * onSelect ignores it. A pre-set `selected` keeps its label visible even when it
- * isn't on the loaded page (AsyncCombobox's selectedItem support).
+ * name is listed but not selectable (itemDisabled). A pre-set `selected` keeps
+ * its label visible even before its page loads. Sibling of CustomerSelect (the
+ * customer-role lookup); both are thin AsyncCombobox bindings over `names`.
  */
 export const NameSearch = (props: NameSearchProps): JSX.Element => (
   <AsyncCombobox<NameOption>
@@ -79,14 +80,9 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     // used for filtering — the `names` query searches codeOrName regardless.
     itemToString={name => name.name}
     itemToValue={name => name.id}
+    itemDisabled={name => name.isOnHold}
     renderItem={renderRow}
-    value={props.selected?.id}
-    selectedItem={props.selected}
-    // An on-hold name is not selectable: ignore the pick, keep the picker open
-    // for another choice.
-    onSelect={name => {
-      if (name?.isOnHold) return;
-      props.onSelect(name);
-    }}
+    selected={props.selected}
+    onSelect={props.onSelect}
   />
 );
