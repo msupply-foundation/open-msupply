@@ -82,7 +82,6 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
         let new_inbound_lines = generate_inbound_lines(
             &ctx.connection,
             &inbound_invoice.invoice_row.id,
-            &inbound_invoice.store_row.id,
             outbound_invoice,
         )?;
 

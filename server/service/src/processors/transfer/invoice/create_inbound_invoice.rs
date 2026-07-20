@@ -156,7 +156,6 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         let new_inbound_lines = generate_inbound_lines(
             &ctx.connection,
             &new_inbound_invoice.id,
-            &new_inbound_invoice.store_id,
             outbound_invoice,
         )?;
         let store_preferences =

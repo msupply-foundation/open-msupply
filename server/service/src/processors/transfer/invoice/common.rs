@@ -1,7 +1,6 @@
 use repository::{
     EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow,
-    InvoiceType, ItemRow, ItemStoreJoinRow, ItemStoreJoinRowRepository,
-    ItemStoreJoinRowRepositoryTrait, NameFilter, NameRepository, Pagination,
+    InvoiceType, ItemRow,
 };
 use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
 use util::uuid::uuid;
@@ -11,13 +10,12 @@ use crate::invoice::inbound_shipment::{
     update_inbound_shipment, InboundShipmentType, UpdateInboundShipment,
     UpdateInboundShipmentStatus,
 };
-use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
+use crate::preference::{InboundShipmentAutoVerify, Preference};
 use crate::service_provider::ServiceContext;
 
 pub(crate) fn generate_inbound_lines(
     connection: &StorageConnection,
     inbound_invoice_id: &str,
-    inbound_store_id: &str,
     source_invoice: &Invoice,
 ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
     let invoice_row = &source_invoice.invoice_row;
@@ -29,7 +27,6 @@ pub(crate) fn generate_inbound_lines(
             // when duplicating lines from outbound invoice to inbound invoice
             .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()),
     )?;
-    let item_properties_repo = ItemStoreJoinRowRepository::new(connection);
 
     let inbound_lines = outbound_lines
         .into_iter()
@@ -74,42 +71,27 @@ pub(crate) fn generate_inbound_lines(
                     purchase_order_line_id,
                     received_number_of_packs: _,
                 },
-                ItemRow {
-                    id: item_id,
-                    default_pack_size,
-                    ..
-                },
+                ItemRow { id: item_id, .. },
             )| {
-                let item_properties = item_properties_repo
-                    .find_one_by_item_and_store_id(&item_id, inbound_store_id)
-                    .unwrap_or(None);
-
-                let supplier_id = &source_invoice.store_row.name_id;
-
-                let trans_cost_price = sell_price_per_pack;
+                // Prices carried onto the inbound (receiving) line. For an outbound shipment ->
+                // inbound shipment transfer, the sending store's cost and sell prices are carried
+                // straight through, so the receiving store's cost price is the sending store's cost
+                // price and its sell price is the sending store's sell price. For a supplier return
+                // -> customer return, both use the cost price. `line_total_price` is the per-pack
+                // price used for the line total (cost price on a transfer, matching 4D's price
+                // extension = cost price * quantity).
+                let (inbound_cost_price_per_pack, inbound_sell_price_per_pack, line_total_price) =
+                    match invoice_row.r#type {
+                        InvoiceType::SupplierReturn => {
+                            (cost_price_per_pack, cost_price_per_pack, sell_price_per_pack)
+                        }
+                        _ => (cost_price_per_pack, sell_price_per_pack, cost_price_per_pack),
+                    };
 
                 let total_before_tax = match r#type {
                     // Service lines don't work in packs
                     InvoiceLineType::Service => total_before_tax,
-                    _ => trans_cost_price * number_of_packs,
-                };
-
-                let default_price_per_default_pack = item_properties
-                    .as_ref()
-                    .map_or(0.0, |i| i.default_sell_price_per_pack);
-
-                let default_price_for_inbound_pack = get_default_price_for_pack(
-                    default_price_per_default_pack,
-                    default_pack_size,
-                    pack_size,
-                );
-
-                // Default price per pack takes priority over cost + margin
-                let adjusted_sell_price_per_pack = if default_price_for_inbound_pack > 0.0 {
-                    default_price_for_inbound_pack
-                } else {
-                    get_cost_plus_margin(connection, trans_cost_price, item_properties, supplier_id)
-                        .unwrap_or(trans_cost_price)
+                    _ => line_total_price * number_of_packs,
                 };
 
                 InvoiceLineRow {
@@ -125,10 +107,7 @@ pub(crate) fn generate_inbound_lines(
                     pack_size,
                     total_before_tax,
                     total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
-                    cost_price_per_pack: match invoice_row.r#type {
-                        InvoiceType::SupplierReturn => cost_price_per_pack,
-                        _ => sell_price_per_pack,
-                    },
+                    cost_price_per_pack: inbound_cost_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineType::Service => InvoiceLineType::Service,
                         _ => InvoiceLineType::StockIn,
@@ -147,10 +126,7 @@ pub(crate) fn generate_inbound_lines(
                     program_id,
                     shipped_number_of_packs,
                     volume_per_pack,
-                    sell_price_per_pack: match invoice_row.r#type {
-                        InvoiceType::SupplierReturn => cost_price_per_pack,
-                        _ => adjusted_sell_price_per_pack,
-                    },
+                    sell_price_per_pack: inbound_sell_price_per_pack,
                     shipped_pack_size,
                     reason_option_id,
                     linked_invoice_line_id: Some(source_line_id),
@@ -236,209 +212,3 @@ pub(crate) fn auto_verify_if_store_preference(
     Ok(())
 }
 
-pub(super) fn get_default_price_for_pack(
-    default_sell_price_per_pack: f64,
-    default_pack_size: f64,
-    inbound_pack_size: f64,
-) -> f64 {
-    if default_pack_size == 0.0 {
-        return 0.0;
-    }
-    let price_per_unit = default_sell_price_per_pack / default_pack_size;
-    price_per_unit * inbound_pack_size
-}
-
-pub(super) fn get_cost_plus_margin(
-    connection: &StorageConnection,
-    cost_price_per_pack: f64,
-    item_properties: Option<ItemStoreJoinRow>,
-    supplier_id: &String,
-) -> Result<f64, RepositoryError> {
-    let item_margin_overrides_supplier_margin = ItemMarginOverridesSupplierMargin
-        .load(connection, None)
-        .unwrap_or(false);
-
-    let margin = if item_margin_overrides_supplier_margin {
-        get_item_margin(item_properties)
-            .filter(|&m| m != 0.0)
-            .or_else(|| get_supplier_margin(connection, supplier_id))
-    } else {
-        get_supplier_margin(connection, supplier_id)
-            .filter(|&m| m != 0.0)
-            .or_else(|| get_item_margin(item_properties))
-    }
-    .unwrap_or(0.0);
-
-    Ok(cost_price_per_pack + (cost_price_per_pack * margin) / 100.0)
-}
-
-fn get_item_margin(item_properties: Option<ItemStoreJoinRow>) -> Option<f64> {
-    item_properties.as_ref().map(|i| i.margin)
-}
-
-fn get_supplier_margin(connection: &StorageConnection, supplier_id: &String) -> Option<f64> {
-    let suppliers = NameRepository::new(connection)
-        .query(
-            supplier_id,
-            Pagination::all(),
-            Some(NameFilter::new().id(EqualFilter::equal_to(supplier_id.to_string()))),
-            None,
-        )
-        .ok()?;
-
-    suppliers
-        .into_iter()
-        .next()
-        .and_then(|name| name.name_row.margin)
-}
-
-#[cfg(test)]
-mod test {
-    use super::{get_cost_plus_margin, get_default_price_for_pack};
-
-    use repository::{
-        mock::{
-            mock_item_a_join_store_a, mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
-        },
-        test_db::setup_all,
-        PreferenceRow, PreferenceRowRepository,
-    };
-
-    use crate::{
-        preference::{ItemMarginOverridesSupplierMargin, Preference},
-        service_provider::ServiceProvider,
-    };
-
-    #[actix_rt::test]
-    async fn test_get_cost_plus_margin() {
-        let (_, _, connection_manager, _) =
-            setup_all("transfer_invoice_processor", MockDataInserts::all()).await;
-
-        let service_provider = ServiceProvider::new(connection_manager);
-        let context = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-
-        let connection = context.connection;
-
-        let cost_price_per_pack = 5.0;
-
-        let outbound_store = mock_store_b();
-        let supplier_id = outbound_store.name_id;
-        let item_properties = mock_item_a_join_store_a();
-
-        // Set preference to true -> item margin has priority
-        PreferenceRowRepository::new(&connection)
-            .upsert_one(&PreferenceRow {
-                id: "item margin overrides supplier margin".to_string(),
-                store_id: None,
-                key: ItemMarginOverridesSupplierMargin.key().to_string(),
-                value: "true".to_string(),
-            })
-            .unwrap();
-
-        assert_eq!(
-            get_cost_plus_margin(
-                &connection,
-                cost_price_per_pack,
-                Some(item_properties.clone()),
-                &supplier_id
-            ),
-            Ok(cost_price_per_pack + (cost_price_per_pack * 15.0) / 100.0)
-        );
-
-        // No item properties, fallback to supplier margin
-        assert_eq!(
-            get_cost_plus_margin(&connection, cost_price_per_pack, None, &supplier_id),
-            Ok(cost_price_per_pack + (cost_price_per_pack * 10.0) / 100.0)
-        );
-
-        // Set preference to false -> supplier margin has priority
-        PreferenceRowRepository::new(&connection)
-            .upsert_one(&PreferenceRow {
-                id: "item margin overrides supplier margin".to_string(),
-                store_id: None,
-                key: ItemMarginOverridesSupplierMargin.key().to_string(),
-                value: "false".to_string(),
-            })
-            .unwrap();
-
-        assert_eq!(
-            get_cost_plus_margin(
-                &connection,
-                cost_price_per_pack,
-                Some(item_properties.clone()),
-                &supplier_id
-            ),
-            Ok(cost_price_per_pack + (cost_price_per_pack * 10.0) / 100.0)
-        );
-
-        let store_c = mock_store_c();
-        let supplier_no_margin_id = store_c.name_id;
-
-        // No supplier margin, fallback to item margin
-        assert_eq!(
-            get_cost_plus_margin(
-                &connection,
-                cost_price_per_pack,
-                Some(item_properties),
-                &supplier_no_margin_id
-            ),
-            Ok(cost_price_per_pack + (cost_price_per_pack * 15.0) / 100.0)
-        );
-
-        // No item properties or supplier margin, use cost price (margin 0%)
-        assert_eq!(
-            get_cost_plus_margin(
-                &connection,
-                cost_price_per_pack,
-                None,
-                &supplier_no_margin_id
-            ),
-            Ok(cost_price_per_pack)
-        );
-    }
-
-    #[test]
-    fn test_get_default_price_for_pack_conversion() {
-        let default_price = 5.0;
-        let default_pack_size = 10.0;
-
-        // Exact pack
-        let inbound_pack_size = 10.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            5.0
-        );
-
-        // Pack of one
-        let inbound_pack_size = 1.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            0.5
-        );
-
-        // Larger pack
-        let inbound_pack_size = 100.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            50.0
-        );
-
-        // Zero default pack size
-        let default_pack_size = 0.0;
-        let inbound_pack_size = 10.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            0.0
-        );
-
-        // Zero default price
-        let default_price = 0.0;
-        let inbound_pack_size = 10.0;
-        assert_eq!(
-            get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
-            0.0
-        );
-    }
-}
