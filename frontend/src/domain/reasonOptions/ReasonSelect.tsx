@@ -11,8 +11,10 @@ import {
 // 'adjustment' — a stocktake line's inventory adjustment (count differs from
 // snapshot, either direction): both positive and negative inventory-adjustment
 // reasons. - 'reduction'  — reduce-to-zero (always a reduction): negative
-// inventory-adjustment only.
-export type ReasonKind = 'adjustment' | 'reduction';
+// inventory-adjustment only. - 'return' — a customer-return line's optional
+// "why it came back" (spec/customer-returns/rules.md § line rules): the
+// active return reasons only.
+export type ReasonKind = 'adjustment' | 'reduction' | 'return';
 
 const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
   adjustment: new Set([
@@ -20,6 +22,7 @@ const KIND_TYPES: Record<ReasonKind, ReadonlySet<ReasonOption['type']>> = {
     'NEGATIVE_INVENTORY_ADJUSTMENT',
   ]),
   reduction: new Set(['NEGATIVE_INVENTORY_ADJUSTMENT']),
+  return: new Set(['RETURN_REASON']),
 };
 
 /**
