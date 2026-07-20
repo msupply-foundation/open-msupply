@@ -1,0 +1,140 @@
+/*
+ * Status progression indicator. The whole row is the Popover trigger (via triggerClass), so it
+ * strips the button chrome and reads as plain status text; hovering it opens the history timeline.
+ * Current stage = brand accent; reached (past) = normal body colour; not-yet-reached = greyed.
+ * Chevron-separated, logical properties so the chevrons flip in RTL.
+ */
+.indicator {
+  display: inline-flex;
+  align-items: center;
+  /* Strip the trigger <button>'s default chrome — this reads as text, not a button. */
+  border: none;
+  background: none;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: inherit;
+}
+
+.indicator:hover,
+.indicator:focus-visible {
+  background: var(--bg-group-light);
+}
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--gray-light);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* Chevron separator before every stage after the first — a › pointing along the flow, muted. */
+.step + .step::before {
+  content: '';
+  inline-size: 0.4rem;
+  block-size: 0.4rem;
+  border-inline-end: 1.5px solid var(--gray-light);
+  border-block-start: 1.5px solid var(--gray-light);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+.step[data-reached] {
+  color: var(--text-body);
+}
+
+.step[data-current] {
+  color: var(--primary-main);
+  font-weight: var(--weight-bold);
+}
+
+/* ---- History popover: a vertical timeline of dots + labels + dates ---- */
+
+.history {
+  min-inline-size: 12rem;
+  padding: var(--space-2);
+}
+
+.historyTitle {
+  margin: 0 0 var(--space-3);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Each row: a dot column (inline-start) + label + date. The connecting line is drawn as a
+   ::before on every step after the first, joining its dot up to the previous one. */
+.timelineStep {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.25rem 1fr auto;
+  align-items: center;
+  column-gap: var(--space-3);
+  min-block-size: 2rem;
+  font-size: var(--text-sm);
+}
+
+.dot {
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  justify-self: center;
+  border-radius: 50%;
+  border: 2px solid var(--gray-light);
+  background: var(--surface-raised);
+  z-index: 1;
+}
+
+/* Connecting line between consecutive dots. */
+.timelineStep + .timelineStep::before {
+  content: '';
+  position: absolute;
+  inset-block-end: 50%;
+  block-size: 2rem;
+  inline-size: 2px;
+  /* Centre of the 1.25rem dot column. */
+  inset-inline-start: calc(0.625rem - 1px);
+  background: var(--color-divider);
+}
+
+.timelineLabel {
+  color: var(--text-body);
+}
+
+.timelineDate {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  text-align: end;
+}
+
+/* A reached stage's dot is filled with the accent; the current stage additionally gets a ring. */
+.timelineStep[data-reached] .dot {
+  border-color: var(--primary-main);
+  background: var(--primary-main);
+}
+
+.timelineStep[data-current] .dot {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-main) 25%, transparent);
+}

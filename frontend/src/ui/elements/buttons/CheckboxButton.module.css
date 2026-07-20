@@ -1,0 +1,104 @@
+/*
+ * A pill button with a checkbox inside (Open mSupply's on-hold control). Outlined pill, a square
+ * checkbox indicator on the inline-start, label after. The whole pill is the click target; the
+ * box fills with the brand accent + shows a check when checked. Every colour is a token; sizes in
+ * rem (borders/radius in px per the sizing rule).
+ */
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--nav-item-height);
+  padding-inline: 1rem;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-button);
+  background: var(--surface-raised);
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+/* The real (visually hidden) checkbox input — semantics + focus live here;
+   the pill draws the ring for it. */
+.input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.button:has(.input:focus-visible) {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 2px;
+}
+
+.button[data-disabled] {
+  cursor: default;
+  color: var(--gray-light);
+}
+
+.button:hover:not([data-disabled]) {
+  border-color: var(--primary-main);
+}
+
+/* The checkbox indicator — an outlined square; fills with the accent + reveals the check when
+   checked. */
+.box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  flex-shrink: 0;
+  border: 1px solid var(--gray-main);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.check {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  color: var(--primary-contrast);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.button[data-checked] .box {
+  background: var(--primary-main);
+  border-color: var(--primary-main);
+}
+
+.button[data-checked] .check {
+  opacity: 1;
+}
+
+.button[data-disabled] .box {
+  border-color: var(--gray-light);
+}
+
+.label {
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .box,
+  .check {
+    transition: none;
+  }
+}

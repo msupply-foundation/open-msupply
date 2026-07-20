@@ -1,15 +1,25 @@
 import type { Component } from 'solid-js';
-import { SlidersIcon, CopyIcon, type IconProps } from '../ui/icons';
+import {
+  SlidersIcon,
+  CopyIcon,
+  CardViewIcon,
+  type IconProps,
+} from '../ui/icons';
 import { TypographyShowcase } from './TypographyShowcase';
+import { IconsShowcase } from './IconsShowcase';
 import { ButtonsShowcase } from './ButtonsShowcase';
 import { InputsShowcase } from './InputsShowcase';
 import { SelectorsShowcase } from './SelectorsShowcase';
 import { FeedbackShowcase } from './FeedbackShowcase';
+import { DialogShowcase } from './DialogShowcase';
+import { DisplayShowcase } from './DisplayShowcase';
+import { SyncShowcase } from './SyncShowcase';
 import { TableShowcase } from './TableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
 import { ContentFooterShowcase } from './ContentFooterShowcase';
 import { SidePanelShowcase } from './SidePanelShowcase';
+import { InsetPanelShowcase } from './InsetPanelShowcase';
 
 export type SectionCategory = 'components' | 'layout';
 
@@ -17,8 +27,17 @@ export type SectionDef = {
   id: string;
   label: string;
   component: Component;
-  /** Which menu-bar group the section lists under. */
-  category: SectionCategory;
+  /** Which menu-bar group the section lists under. Omitted for a top-level
+   * section (see `topLevel`). */
+  category?: SectionCategory;
+  /**
+   * Render this section as its own top-level menu entry (a leaf link), not
+   * inside a category group — for a standalone reference page like Icons.
+   * Requires `icon` (top-level entries show one, like the category groups).
+   */
+  topLevel?: boolean;
+  /** Icon for the menu entry — used by top-level sections. */
+  icon?: Component<IconProps>;
   /**
    * When true, the section renders a full-height page (its own Page frame)
    * that fills
@@ -87,6 +106,24 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
+    id: 'dialog',
+    label: 'Dialog / Modal',
+    component: DialogShowcase,
+    category: 'components',
+  },
+  {
+    id: 'display',
+    label: 'Display',
+    component: DisplayShowcase,
+    category: 'components',
+  },
+  {
+    id: 'sync',
+    label: 'Sync',
+    component: SyncShowcase,
+    category: 'components',
+  },
+  {
     id: 'table',
     label: 'Table',
     component: TableShowcase,
@@ -110,5 +147,20 @@ export const sections: SectionDef[] = [
     label: 'Side panel',
     component: SidePanelShowcase,
     category: 'layout',
+  },
+  {
+    id: 'inset-panel',
+    label: 'Inset panel',
+    component: InsetPanelShowcase,
+    category: 'layout',
+  },
+  // A standalone reference page, listed as its own top-level menu entry rather
+  // than inside a category group.
+  {
+    id: 'icons',
+    label: 'Icons',
+    component: IconsShowcase,
+    topLevel: true,
+    icon: CardViewIcon,
   },
 ];

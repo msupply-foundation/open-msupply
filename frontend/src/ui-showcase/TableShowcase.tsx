@@ -3,8 +3,15 @@ import {
   DataTable,
   type Column,
   type SortState,
+  type TabAndCardGroup,
+  ALL_TABS,
+  sharedOrMultiple,
 } from '../ui/elements/table/DataTable';
-import { getNumberCell } from '../ui/elements/table/tableHelpers';
+import {
+  getCurrencyCell,
+  getNumberCell,
+} from '../ui/elements/table/tableHelpers';
+import { StockIcon, InfoIcon, TruckIcon } from '../ui/icons';
 import {
   resolveTableConfig,
   type Band,
@@ -94,6 +101,30 @@ type SortKey =
   | 'stock'
   | 'price';
 
+// The tabs/groups this table can tab through (kdd/edit-line-card-table).
+// GroupKey is the typed union a column's `tabsAndCardGroups` must match — a
+// typo is a compile error. Each carries an icon + translated label; drives the
+// tab strip (table view) and the card group-rows (card view). Columns tagged
+// [ALL_TABS] (name, batch) are anchors: every tab, but NOT a card group.
+type GroupKey = 'details' | 'supply' | 'pricing';
+const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
+  {
+    key: 'details',
+    labelKey: 'table.demo-card-group.details',
+    icon: () => <InfoIcon />,
+  },
+  {
+    key: 'supply',
+    labelKey: 'label.supply',
+    icon: () => <TruckIcon />,
+  },
+  {
+    key: 'pricing',
+    labelKey: 'table.demo-card-group.pricing',
+    icon: () => <StockIcon />,
+  },
+];
+
 // The columns the show/hide toggles cover. `id` is the TanStack column id (=
 // accessorKey); `label` is the header. Kept beside the column defs so the
 // toggle set stays in step.
@@ -173,46 +204,71 @@ export const TableShowcase = () => {
   // meta.card assigns each column its region in card view (ui-standards §
   // tables): name = primary title, batch = the secondary code line, category =
   // the top-right badge; the rest fall to the grid (default). Table view is
-  // unaffected.
-  const columns = (): Column<Batch, SortKey>[] => [
+  // unaffected. Columns carry both axes: `meta.card` (card region) AND `groups`
+  // (tab/section membership). name + batch declare NO groups → anchors, shown
+  // in every tab. The rest split across the three groups. Switch the tab strip
+  // (or card view) to see the secondary column filter.
+  const columns = (): Column<Batch, SortKey, GroupKey>[] => [
+    // name + batch: ALL_TABS anchors (every tab; not a card group). Grouped
+    // parent → shared value or [multiple] (a group's rows share a name but
+    // differ on batch → [multiple]).
     {
-      accessorKey: 'name',
+      c: { key: 'name' },
       sortKey: 'name',
       header: 'Item',
-      meta: { card: 'primary' },
+      meta: { card: { region: 'primary' } },
+      tabsAndCardGroups: ALL_TABS,
+      aggregationFn: sharedOrMultiple,
     },
     {
-      accessorKey: 'batch',
+      c: { key: 'batch' },
       sortKey: 'batch',
       header: 'Batch',
-      meta: { card: 'secondary' },
+      tabsAndCardGroups: ALL_TABS,
+      aggregationFn: sharedOrMultiple,
     },
     {
-      accessorKey: 'category',
+      c: { key: 'category' },
       sortKey: 'category',
       header: 'Category',
-      meta: { card: 'badge' },
+      meta: { card: { region: 'badge' } },
+      tabsAndCardGroups: ['details'],
     },
-    { accessorKey: 'supplier', sortKey: 'supplier', header: 'Supplier' },
     {
-      accessorKey: 'location',
+      c: { key: 'expiry' },
+      sortKey: 'expiry',
+      header: 'Expiry',
+      tabsAndCardGroups: ['details'],
+    },
+    {
+      c: { key: 'supplier' },
+      sortKey: 'supplier',
+      header: 'Supplier',
+      tabsAndCardGroups: ['supply'],
+      aggregationFn: sharedOrMultiple,
+    },
+    {
+      c: { key: 'location' },
       sortKey: 'location',
       header: 'Location',
       meta: { wrapLines: 2 },
+      tabsAndCardGroups: ['supply'],
+      aggregationFn: sharedOrMultiple,
     },
-    { accessorKey: 'expiry', sortKey: 'expiry', header: 'Expiry' },
     {
-      accessorKey: 'stock',
+      c: { key: 'stock' },
       sortKey: 'stock',
       header: 'In stock',
       ...getNumberCell(),
+      tabsAndCardGroups: ['supply', 'pricing'],
     },
     {
-      accessorKey: 'price',
+      // Currency cell: symbol + 2 dp, right-aligned; SUM when grouped.
+      c: { key: 'price' },
       sortKey: 'price',
       header: 'Unit price',
-      ...getNumberCell(),
-      cell: info => `$${info.getValue<number>().toFixed(2)}`,
+      ...getCurrencyCell(),
+      tabsAndCardGroups: ['pricing'],
     },
   ];
 
@@ -331,6 +387,18 @@ export const TableShowcase = () => {
         rowKey={r => r.id}
         sort={sort()}
         onSort={onSort}
+        // Row presentation hooks, on DISTINCT rows so each reads clearly:
+        // low-stock rows stand in for read-only records (data-dimmed →
+        // opacity); one well-stocked row stands in for "awaiting an action"
+        // (semantic data-tone → info token). In a real vertical they live on
+        // different tables (rowDimmed: the list; rowTone: detail lines).
+        rowDimmed={r => r.stock < 40}
+        rowTone={r => (r.price === 0.09 ? 'info' : undefined)}
+        tabsAndCardGroups={TABS_AND_CARD_GROUPS}
+        rowGroup={{
+          columnId: 'category',
+          labelKey: 'table.demo-card-group.details',
+        }}
         emptyMessage="No items"
         enableSelection
         selectedIds={selectedIds()}

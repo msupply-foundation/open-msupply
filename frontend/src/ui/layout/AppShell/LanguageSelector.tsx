@@ -25,13 +25,13 @@ const labelFor = (value: string) =>
  */
 export const LanguageSelector = (props: LanguageSelectorProps) => (
   <DropdownMenu.Root placement="top-start" gutter={8}>
-    <DropdownMenu.Trigger class={styles.trigger} title={t('language.select')}>
+    <DropdownMenu.Trigger class={styles.trigger} title={t('select-language')}>
       <TranslateIcon class={styles.icon} />
       <span class={styles.triggerText}>{labelFor(props.language)}</span>
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal>
       <DropdownMenu.Content class={styles.content}>
-        <div class={styles.heading}>{t('language.select')}</div>
+        <div class={styles.heading}>{t('select-language')}</div>
         <For each={languageOptions}>
           {option => (
             <DropdownMenu.Item
@@ -43,7 +43,7 @@ export const LanguageSelector = (props: LanguageSelectorProps) => (
             >
               <span class={styles.itemLabel}>{option.label}</span>
               <Show when={LOCALE_META[option.value].dir === 'rtl'}>
-                <span class={styles.rtlTag}>{t('language.rtl')}</span>
+                <span class={styles.rtlTag}>{t('label.rtl')}</span>
               </Show>
             </DropdownMenu.Item>
           )}

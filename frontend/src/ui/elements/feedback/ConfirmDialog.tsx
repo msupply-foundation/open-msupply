@@ -25,6 +25,7 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => (
     open={props.open}
     onClose={props.onClose}
     icon={<HelpIcon />}
+    testId="confirmation-modal"
     title={props.title ?? 'Are you sure?'}
     description={props.message}
     actions={
@@ -32,6 +33,7 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => (
         <Button
           variant="secondary"
           icon={<XCircleIcon />}
+          data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >
           {props.cancelLabel ?? 'Cancel'}
@@ -39,6 +41,7 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => (
         <Button
           variant="secondary"
           icon={<CheckIcon />}
+          data-testid="confirmation-modal-ok"
           onClick={() => {
             props.onConfirm();
             props.onClose();

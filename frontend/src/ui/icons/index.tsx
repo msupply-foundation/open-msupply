@@ -49,10 +49,51 @@ export const CheckIcon = (props: IconProps) => (
   </Stroke>
 );
 
+export const CheckCircleIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </Stroke>
+);
+
 export const CloseIcon = (props: IconProps) => (
   <Fill viewBox="0 0 21 20" {...props}>
     <path d="M14.41 4.41a.833.833 0 0 1 1.18 1.18L11.177 10l4.411 4.41a.834.834 0 0 1 .075 1.094l-.075.085a.833.833 0 0 1-1.178 0L10 11.178l-4.41 4.411a.834.834 0 0 1-1.094.075l-.085-.075a.833.833 0 0 1 0-1.178L8.82 10l-4.41-4.41a.834.834 0 0 1-.075-1.094l.075-.085a.833.833 0 0 1 1.178 0L10 8.82z" />
   </Fill>
+);
+
+// Row-grouping state icons (Tabler folder / folders). GroupedIcon = a single
+// folder (rows are grouped into one parent); UngroupedIcon = stacked folders
+// (the "multiple", ungrouped state). Used by the DataTable's group-by control
+// (see rowGroup).
+export const GroupedIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" />
+  </Stroke>
+);
+
+export const UngroupedIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M9 4h3l2 2h5a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
+    <path d="M17 17v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h2" />
+  </Stroke>
+);
+
+// A double chevron (stacked). Points down as-is; the row-group "expand all"
+// header control uses it, flipped to point up (rotate 180deg) for "collapse
+// all" — like Open mSupply.
+export const ChevronsDownIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M7 7l5 5l5 -5" />
+    <path d="M7 13l5 5l5 -5" />
+  </Stroke>
+);
+
+export const ChevronsUpIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M7 11l5 -5l5 5" />
+    <path d="M7 17l5 -5l5 5" />
+  </Stroke>
 );
 
 export const SearchIcon = (props: IconProps) => (
@@ -93,6 +134,17 @@ export const SaveIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Print — the report/document print action (stroke set: paper tray + body +
+   ejected sheet, matching the Feather/Tabler outline the rest of the stroke
+   icons follow). */
+export const PrinterIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <polyline points="6 9 6 2 18 2 18 9" />
+    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+    <rect x="6" y="14" width="12" height="8" />
+  </Stroke>
+);
+
 /* Validation error / warning */
 export const AlertTriangleIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -109,6 +161,39 @@ export const TrashIcon = (props: IconProps) => (
     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     <line x1="10" y1="11" x2="10" y2="17" />
     <line x1="14" y1="11" x2="14" y2="17" />
+  </Stroke>
+);
+
+/* Auto-allocate (lightning bolt — the "do it for me" action) */
+export const ZapIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </Stroke>
+);
+
+/* On hold / locked */
+export const LockIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </Stroke>
+);
+
+/* Location / place */
+export const MapPinIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </Stroke>
+);
+
+/* Calendar / date */
+export const CalendarIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
   </Stroke>
 );
 
@@ -406,6 +491,33 @@ export const CardViewIcon = (props: IconProps) => (
     <rect x="4" y="14" width="6" height="6" rx="1" />
     <rect x="14" y="14" width="6" height="6" rx="1" />
   </Stroke>
+);
+
+/*
+ * "Nothing here" sprout — the empty-state illustration (a two-leaf seedling),
+ * ported verbatim (viewBox + path) from the current app's NothingHereIcon.
+ * Like MSupplyGuyLogo it keeps a FIXED fill rather than `currentColor`: the
+ * pale-blue --gray-pale token (which has its own dark-theme override), so the
+ * graphic reads as a quiet illustration independent of the surrounding text
+ * colour. Sized by font-size (1em) like every other icon — EmptyState sets a
+ * large font-size on it.
+ */
+export const NothingHereIcon = (props: IconProps) => (
+  <svg
+    viewBox="0 0 104 96"
+    width="1em"
+    height="1em"
+    fill="none"
+    aria-hidden="true"
+    {...props}
+  >
+    <path
+      fill-rule="evenodd"
+      clip-rule="evenodd"
+      d="M34.4174 37.7111C40.3579 45.3308 42.0497 54.9396 42.4677 61.2494C44.0425 57.8387 45.4821 54.9054 46.7487 52.4333C41.9488 42.2372 38.7723 37.4931 38.7723 37.4931L38.7417 37.4445C38.1219 36.4697 28.0158 21.9871 17.4953 16.0539C17.4953 16.0539 31.0103 20.9421 41.1074 37.7796C41.1074 37.7796 55.2224 8.85582 5 7C5 7 5.52972 37.7075 34.4174 37.7111ZM83.1818 19.3283C70.016 26.7536 56.372 44.8762 55.5961 46.0978L55.559 46.1564C55.559 46.1564 48.1418 57.3271 43.5 69.4998C40.5118 77.3358 38.2273 87.1588 38.2273 93.9998H51.9091C51.9091 93.9998 49.2811 85.8464 50 76.9998C50.8415 66.6432 55.4571 54.8313 62.0063 46.43C98.1556 46.4261 98.8182 7.99976 98.8182 7.99976C35.9717 10.3218 51.5768 44.8429 51.5768 44.8429C64.211 23.7729 83.1818 19.3283 83.1818 19.3283Z"
+      fill="var(--gray-pale)"
+    />
+  </svg>
 );
 
 /*

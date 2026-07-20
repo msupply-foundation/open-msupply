@@ -12,9 +12,19 @@ export type StoreContextResult = {
   packToOne: boolean;
   omProgramModule: boolean;
   vaccineModule: boolean;
+  monthsOverstock: number;
+  monthsUnderstock: number;
+  monthsItemsExpire: number;
+  stocktakeFrequency: number;
+  monthlyConsumptionLookBackPeriod: number;
+  monthsLeadTime: number;
+};
+  preferences: {
+  syncRecordsDisplayThreshold: number;
 };
   me: ({
   __typename: "UserNode";
+} & {
   userId: string;
   permissions: {
   nodes: Array<{
@@ -26,5 +36,5 @@ export type StoreContextResult = {
 };
 
 export const StoreContext = {
-  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    omProgramModule\n    vaccineModule\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
+  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    omProgramModule\n    vaccineModule\n    monthsOverstock\n    monthsUnderstock\n    monthsItemsExpire\n    stocktakeFrequency\n    monthlyConsumptionLookBackPeriod\n    monthsLeadTime\n  }\n  preferences(storeId: $storeId) {\n    syncRecordsDisplayThreshold\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<StoreContextResult, StoreContextVariables>;

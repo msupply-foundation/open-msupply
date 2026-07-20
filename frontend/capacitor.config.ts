@@ -1,4 +1,4 @@
-import type { CapacitorConfig } from '@capacitor/cli'
+import type { CapacitorConfig } from '@capacitor/cli';
 
 // Spike: Capacitor used in its NORMAL mode — the web bundle ships in the APK
 // and is served from the capacitor origin (https://localhost). The embedded
@@ -20,6 +20,6 @@ const config: CapacitorConfig = {
   ...(process.env.DEV_ANDROID
     ? { server: { url: 'http://localhost:3005', cleartext: true } }
     : {}),
-}
+};
 
-export default config
+export default config;

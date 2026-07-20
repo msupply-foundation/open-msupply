@@ -32,6 +32,8 @@ interface SelectProps {
    */
   size?: 'md' | 'sm';
   class?: string;
+  /** `data-testid` for the trigger button (locale-stable test hook, e2e/TESTIDS.md). */
+  testId?: string;
 }
 
 /*
@@ -96,7 +98,7 @@ export const Select = (props: SelectProps) => {
       )}
     >
       <KSelect.Label class={styles.label}>{props.label}</KSelect.Label>
-      <KSelect.Trigger class={styles.trigger}>
+      <KSelect.Trigger class={styles.trigger} data-testid={props.testId}>
         <KSelect.Value<SelectOption> class={styles.value}>
           {state => state.selectedOption().label}
         </KSelect.Value>

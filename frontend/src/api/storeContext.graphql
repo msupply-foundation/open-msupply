@@ -6,6 +6,20 @@ query storeContext($storeId: String!) {
     packToOne
     omProgramModule
     vaccineModule
+    # Threshold defaults the reports argument form seeds (spec/reports/rules
+    # "Arguments" — defaults are client-seeded from store preferences).
+    monthsOverstock
+    monthsUnderstock
+    monthsItemsExpire
+    stocktakeFrequency
+    monthlyConsumptionLookBackPeriod
+    monthsLeadTime
+  }
+  # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
+  # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
+  # refresh keeps it current.
+  preferences(storeId: $storeId) {
+    syncRecordsDisplayThreshold
   }
   me {
     ... on UserNode {

@@ -1,0 +1,32 @@
+/* A spinning ring, sized by font-size (1em = the sizeRem prop). Colour follows
+   currentColor; the track is a faint tint of it. Mirrors the Button spinner
+   (.spinner in Button.module.css) — same ring construction and keyframes. */
+.spinner {
+  display: inline-block;
+  inline-size: 1em;
+  block-size: 1em;
+  border: 0.15em solid color-mix(in srgb, currentcolor 25%, transparent);
+  border-block-start-color: currentcolor;
+  border-radius: 50%;
+  animation: spinner-spin 700ms linear infinite;
+}
+
+@keyframes spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Full-container centred layout for a page/section loading state. */
+.center {
+  display: grid;
+  place-content: center;
+  block-size: 100%;
+  min-block-size: 10rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2s;
+  }
+}

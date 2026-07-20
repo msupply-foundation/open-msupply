@@ -43,16 +43,16 @@ export const toSyncOverview = (
   const steps =
     status.__typename === 'FullSyncStatusV7Node'
       ? [
-          step('sync.step.pull', status.pull),
-          step('sync.step.push', status.push),
-          step('sync.step.integration', status.integration),
+          step('sync-status.pull', status.pull),
+          step('sync-status.push', status.push),
+          step('sync-status.integrate', status.integration),
         ]
       : [
-          step('sync.step.prepare-initial', status.prepareInitial),
-          step('sync.step.pull-central', status.pullCentral),
-          step('sync.step.pull-remote', status.pullRemote),
-          step('sync.step.push', status.push),
-          step('sync.step.integration', status.integration),
+          step('sync-status.prepare', status.prepareInitial),
+          step('sync-status.pull-central', status.pullCentral),
+          step('sync-status.pull-remote', status.pullRemote),
+          step('sync-status.push', status.push),
+          step('sync-status.integrate', status.integration),
         ];
 
   const errorMessage = status.error?.fullError ?? undefined;

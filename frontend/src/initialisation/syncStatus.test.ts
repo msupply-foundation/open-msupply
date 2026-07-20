@@ -9,9 +9,12 @@ const v7 = (
 ): SyncStatusFragment => ({
   __typename: 'FullSyncStatusV7Node',
   isSyncing: false,
+  warningThreshold: 1,
+  errorThreshold: 3,
   error: null,
   pull: null,
   push: null,
+  waitingForIntegration: null,
   integration: null,
   lastSuccessfulSync: null,
   ...overrides,
@@ -39,21 +42,21 @@ describe('toSyncOverview', () => {
     // Labels are i18n keys now (SyncProgress resolves them with t() at render).
     expect(overview?.steps).toEqual([
       {
-        label: 'sync.step.pull',
+        label: 'sync-status.pull',
         started: true,
         finished: false,
         done: 5,
         total: 10,
       },
       {
-        label: 'sync.step.push',
+        label: 'sync-status.push',
         started: false,
         finished: false,
         done: undefined,
         total: undefined,
       },
       {
-        label: 'sync.step.integration',
+        label: 'sync-status.integrate',
         started: false,
         finished: false,
         done: undefined,
@@ -87,7 +90,12 @@ describe('toSyncOverview', () => {
 
   it('surfaces the sync error message', () => {
     const overview = toSyncOverview(
-      v7({ error: { fullError: 'Connection refused' } })
+      v7({
+        error: {
+          variantV7: 'CONNECTION_ERROR',
+          fullError: 'Connection refused',
+        },
+      })
     );
     expect(overview?.errorMessage).toBe('Connection refused');
     expect(overview?.succeeded).toBe(false);

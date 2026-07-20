@@ -24,11 +24,21 @@ import styles from './ShowcaseApp.module.css';
  * in play here; see kdd/showcase-harness).
  */
 
-/* The showcase's nav model: one expandable section per category. MenuBar
- * resolves labelKey through t(), which falls back to the key itself for
- * unknown keys — so passing our literal section labels as "keys" renders
- * them verbatim. Dev-only scaffolding; the cast stays contained here. */
-const showcaseNav: NavItem[] = categories.map(c => ({
+/* The showcase's nav model: one expandable section per category, plus any
+ * top-level sections as standalone leaf entries (e.g. Icons) listed after the
+ * groups. MenuBar resolves labelKey through t(), which falls back to the key
+ * itself for unknown keys — so passing our literal section labels as "keys"
+ * renders them verbatim. Dev-only scaffolding; the cast stays contained here. */
+const topLevelNav: NavItem[] = sections
+  .filter(s => s.topLevel)
+  .map(s => ({
+    id: s.id,
+    labelKey: s.label as LocaleKey,
+    to: `/showcase/${s.id}`,
+    icon: s.icon!,
+  }));
+
+const groupNav: NavItem[] = categories.map(c => ({
   id: c.id,
   labelKey: c.label as LocaleKey,
   to: `/showcase/${c.id}`,
@@ -41,6 +51,8 @@ const showcaseNav: NavItem[] = categories.map(c => ({
       to: `/showcase/${s.id}`,
     })),
 }));
+
+const showcaseNav: NavItem[] = [...groupNav, ...topLevelNav];
 
 const sectionFromHash = () => {
   const id = window.location.hash.replace(/^#\/?showcase\/?/, '');

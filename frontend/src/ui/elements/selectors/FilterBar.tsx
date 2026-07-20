@@ -1,8 +1,15 @@
-import { For, Show, createSignal, onCleanup } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import type { JSX } from 'solid-js';
 import * as DropdownMenu from '@kobalte/core/dropdown-menu';
-import { CheckIcon, ChevronDownIcon, CloseIcon, SearchIcon } from '../../icons';
+import {
+  CalendarIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  CloseIcon,
+  SearchIcon,
+} from '../../icons';
 import { t } from '../../../intl';
+import { createDebounced } from '../../utils/createDebounced';
 import styles from './FilterBar.module.css';
 
 /*
@@ -43,6 +50,9 @@ export type Filter<F> = {
      * only its own key.
      */
     setPartialFilter: (patch: Partial<F>) => void;
+    /** `filter-input-<key>` (e2e/TESTIDS.md) — pass to the control so the id
+     *  lands on the actual input, where the deterministic suites expect it. */
+    testId: string;
   }) => JSX.Element;
 };
 
@@ -149,11 +159,12 @@ export const FilterBar = <F extends object>(props: FilterBarProps<F>) => {
               filter: () => props.filter,
               setFilter,
               setPartialFilter,
+              testId: `filter-input-${f.key}`,
             })}
             <button
               type="button"
               class={styles.remove}
-              aria-label={t('filter.remove', { name: f.label() })}
+              aria-label={t('label.clear-filter-detail', { name: f.label() })}
               onClick={() => removeFilter(f)}
             >
               <CloseIcon />
@@ -171,8 +182,8 @@ const FiltersMenu = <F extends object>(props: {
   onReset?: () => void;
 }) => (
   <DropdownMenu.Root placement="bottom-start" gutter={4}>
-    <DropdownMenu.Trigger class={styles.trigger}>
-      <span>{t('filter.filters')}</span>
+    <DropdownMenu.Trigger class={styles.trigger} data-testid="filters-menu">
+      <span>{t('label.filters')}</span>
       <ChevronDownIcon class={styles.triggerChevron} />
     </DropdownMenu.Trigger>
     <DropdownMenu.Portal>
@@ -181,6 +192,7 @@ const FiltersMenu = <F extends object>(props: {
           {f => (
             <DropdownMenu.Item
               class={styles.item}
+              data-testid={`filter-option-${f.key}`}
               onSelect={() => props.onAdd(f)}
             >
               <span class={styles.itemLabel}>{f.label()}</span>
@@ -195,7 +207,9 @@ const FiltersMenu = <F extends object>(props: {
             class={styles.item}
             onSelect={() => props.onReset?.()}
           >
-            <span class={styles.itemLabel}>{t('filter.remove-all')}</span>
+            <span class={styles.itemLabel}>
+              {t('label.remove-all-filters')}
+            </span>
           </DropdownMenu.Item>
         </Show>
       </DropdownMenu.Content>
@@ -226,31 +240,37 @@ export const FilterTextInput = (props: {
   onInput: (value: string) => void;
   placeholder?: string;
   label: string;
+  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  testId?: string;
   /** Delay before onInput fires (default 300ms); 0 = every keystroke (client-side sets). */
   debounceMs?: number;
 }) => {
   // undefined = no pending edit → the input shows the committed props.value.
   const [draft, setDraft] = createSignal<string>();
   const shown = () => draft() ?? props.value;
-  let timer: ReturnType<typeof setTimeout> | undefined;
 
-  const commit = (value: string) => {
-    clearTimeout(timer);
+  // Trailing debounce (createDebounced buffers the latest value; flush() on
+  // Enter/blur replays it now, cancel-on-cleanup drops a pending draft at
+  // unmount so a removed chip is never resurrected).
+  const commit = createDebounced((value: string) => {
     if (value !== props.value) props.onInput(value);
     // After onInput, so shown() moves draft → updated prop without flashing
     // the old value.
     setDraft(undefined);
-  };
+  }, props.debounceMs ?? 300);
 
   const onInput = (value: string) => {
-    const ms = props.debounceMs ?? 300;
-    if (ms <= 0) return props.onInput(value);
+    if ((props.debounceMs ?? 300) <= 0) return props.onInput(value);
     setDraft(value);
-    clearTimeout(timer);
-    timer = setTimeout(() => commit(value), ms);
+    commit(value);
   };
 
-  onCleanup(() => clearTimeout(timer));
+  const flush = (value: string) => {
+    if ((props.debounceMs ?? 300) <= 0) return;
+    setDraft(value);
+    commit(value);
+    commit.flush();
+  };
 
   return (
     <span class={styles.textFilter}>
@@ -260,12 +280,13 @@ export const FilterTextInput = (props: {
       <input
         class={styles.input}
         type="text"
+        data-testid={props.testId}
         value={shown()}
         placeholder={props.placeholder}
         aria-label={props.label}
         onInput={e => onInput(e.currentTarget.value)}
-        onKeyDown={e => e.key === 'Enter' && commit(e.currentTarget.value)}
-        onBlur={e => commit(e.currentTarget.value)}
+        onKeyDown={e => e.key === 'Enter' && flush(e.currentTarget.value)}
+        onBlur={e => flush(e.currentTarget.value)}
       />
     </span>
   );
@@ -286,11 +307,17 @@ export const FilterSelect = <V extends string>(props: {
   options: readonly { value: V | ''; label: string }[];
   onChange: (value: V | '') => void;
   label: string;
+  /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
+  testId?: string;
 }) => {
   const current = () => props.options.find(o => o.value === props.value);
   return (
     <DropdownMenu.Root placement="bottom-start" gutter={4}>
-      <DropdownMenu.Trigger class={styles.enumTrigger} aria-label={props.label}>
+      <DropdownMenu.Trigger
+        class={styles.enumTrigger}
+        data-testid={props.testId}
+        aria-label={props.label}
+      >
         <span>{current()?.label ?? ''}</span>
         <ChevronDownIcon class={styles.triggerChevron} />
       </DropdownMenu.Trigger>
@@ -308,6 +335,9 @@ export const FilterSelect = <V extends string>(props: {
                 <DropdownMenu.RadioItem
                   value={option.value}
                   class={`${styles.item} ${styles.checkboxItem}`}
+                  data-testid={
+                    option.value ? `filter-option-${option.value}` : undefined
+                  }
                   closeOnSelect={false}
                 >
                   <span class={styles.checkbox}>
@@ -325,3 +355,93 @@ export const FilterSelect = <V extends string>(props: {
     </DropdownMenu.Root>
   );
 };
+
+/**
+ * A multi-select enum filter — FilterSelect's many-value sibling: the same
+ * dropdown chrome, but checkbox items and an "any of" selection array. The
+ * trigger shows the selected labels (or the placeholder when none). Options
+ * carry `filter-option-<VALUE>` testids (e2e/TESTIDS.md — raw enum value).
+ */
+export const FilterMultiSelect = <V extends string>(props: {
+  values: readonly V[];
+  options: readonly { value: V; label: string }[];
+  onChange: (values: V[]) => void;
+  label: string;
+  /** Shown on the trigger while nothing is selected (e.g. "Any"). */
+  placeholder: string;
+  /** `data-testid` for the trigger (FilterBar's render supplies `filter-input-<key>`). */
+  testId?: string;
+}) => {
+  const summary = () => {
+    const chosen = props.options.filter(o => props.values.includes(o.value));
+    return chosen.length
+      ? chosen.map(o => o.label).join(', ')
+      : props.placeholder;
+  };
+  const toggle = (value: V, checked: boolean) => {
+    const without = props.values.filter(v => v !== value);
+    props.onChange(checked ? [...without, value] : [...without]);
+  };
+  return (
+    <DropdownMenu.Root placement="bottom-start" gutter={4}>
+      <DropdownMenu.Trigger
+        class={styles.enumTrigger}
+        data-testid={props.testId}
+        aria-label={props.label}
+      >
+        <span>{summary()}</span>
+        <ChevronDownIcon class={styles.triggerChevron} />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content class={styles.content}>
+          <For each={props.options}>
+            {option => (
+              <DropdownMenu.CheckboxItem
+                checked={props.values.includes(option.value)}
+                onChange={checked => toggle(option.value, checked)}
+                class={`${styles.item} ${styles.checkboxItem}`}
+                data-testid={`filter-option-${option.value}`}
+                closeOnSelect={false}
+              >
+                <span class={styles.checkbox}>
+                  <DropdownMenu.ItemIndicator class={styles.indicator}>
+                    <CheckIcon />
+                  </DropdownMenu.ItemIndicator>
+                </span>
+                <span class={styles.itemLabel}>{option.label}</span>
+              </DropdownMenu.CheckboxItem>
+            )}
+          </For>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+};
+
+/**
+ * A date filter — a native date input behind the calendar icon, sharing the
+ * text-filter chrome. Value is an ISO `yyyy-mm-dd` string (native date input's
+ * format); '' clears it. Used for "before"/"after" bounds inside a filter's
+ * render.
+ */
+export const FilterDate = (props: {
+  value: string;
+  onInput: (value: string) => void;
+  label: string;
+  /** `data-testid` for the input (FilterBar's render supplies `filter-input-<key>`). */
+  testId?: string;
+}) => (
+  <span class={styles.textFilter}>
+    <span class={styles.textFilterIcon}>
+      <CalendarIcon />
+    </span>
+    <input
+      class={styles.input}
+      type="date"
+      data-testid={props.testId}
+      value={props.value}
+      aria-label={props.label}
+      onInput={e => props.onInput(e.currentTarget.value)}
+    />
+  </span>
+);

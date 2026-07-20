@@ -1,28 +1,43 @@
 /*
- * Side panel — docked inline-end in a Page frame, own scroll. Sections are
- * divider-separated; field rows inside a section are a semantic <dl> styled
- * here (label start, value end), so pages compose plain markup and own no
- * CSS of their own.
+ * Details panel — a DOCKED column at the inline-end (right) edge of the Page's middle region.
+ * When the page opens it, it takes its own width and PUSHES the body (the body shrinks to fit) —
+ * it does not float over the content (matching Open mSupply, which animates the panel's width and
+ * moves the view). Dismissed by its own close button (top inline-end) or the header toggle; the
+ * page owns the open/close boolean (Page.sidePanelOpen) and hides the open button while it's open.
+ * Own scroll, so long field lists scroll independently of the body.
  */
 
 .panel {
   flex-shrink: 0;
-  inline-size: 17.5rem;
+  inline-size: 20rem;
+  max-inline-size: 100%;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
-  background: var(--bg-toolbar);
+  background: var(--surface-raised);
   border-inline-start: 1px solid var(--color-divider);
 }
 
-/*
- * Which-element decision (principle #7): below the nav-overlay breakpoint
- * (1024px — must match styles/breakpoints.ts navOverlay) the docked panel
- * doesn't render. Interim: the toggled overlay drawer that replaces it on
- * narrow viewports arrives with the Feedback/Drawer work (see SidePanel.tsx).
- */
-@media (width < 1024px) {
-  .panel {
-    display: none;
-  }
+/* Panel header: title inline-start, close button pinned inline-end. Sticky so it stays put while
+   the panel body scrolls. */
+.header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  border-block-end: 1px solid var(--color-divider);
+}
+
+.heading {
+  margin: 0;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
 }
 
 .section {
@@ -38,6 +53,52 @@
   color: var(--text-body);
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
+}
+
+/* Collapsible mode: the h2 wraps a full-width disclosure button. It inherits
+   the heading's type/colour so the section still reads as a heading; only the
+   chevron marks the expand/collapse affordance. */
+.disclosure {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  inline-size: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.disclosure:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Chevron points down when open; rotates to point at the inline-start edge when
+   collapsed (RTL-mirrored) — the MenuBar section-chevron convention. */
+.disclosureChevron {
+  flex-shrink: 0;
+  color: var(--gray-dark);
+  transition: transform 140ms ease;
+}
+
+.disclosureChevron[data-open='false'] {
+  transform: rotate(-90deg);
+}
+
+:dir(rtl) .disclosureChevron[data-open='false'] {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosureChevron {
+    transition: none;
+  }
 }
 
 /* Field rows: a <dl> of dt/dd pairs — label inline-start, value inline-end. */
@@ -67,4 +128,13 @@
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-sm);
+}
+
+/* Record actions (the registry's record-actions section): one action per
+   row, each button sized to its label and aligned inline-start. */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
 }

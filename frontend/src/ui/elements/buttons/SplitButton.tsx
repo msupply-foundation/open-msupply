@@ -8,6 +8,11 @@ import styles from './SplitButton.module.css';
 export interface SplitButtonOption {
   value: string;
   label: string;
+  /**
+   * A non-selectable entry (shown greyed, can't be picked) — e.g. a
+   * past/current status in a
+   *  status-change menu that lists every status for context. */
+  disabled?: boolean;
 }
 
 interface SplitButtonProps {
@@ -28,8 +33,21 @@ interface SplitButtonProps {
    * SplitButton/ExportSelector).
    */
   onAction?: (value: string) => void;
+  /**
+   * Menu picks SELECT ONLY (update the main button's action) instead of also
+   * running it — the status-change convention: pick "Shipped" from the menu,
+   * then the main "Confirm Shipped" click acts. Default false (pick acts,
+   * like the export selector).
+   */
+  menuSelectsOnly?: boolean;
   /** Accessible name for the caret trigger (it has no visible text). */
   menuLabel?: string;
+  /**
+   * Test-hook prefix (e2e/TESTIDS.md): stamps `<testId>-main` on the main
+   * button, `<testId>-dropdown` on the caret, and `<testId>-option-<value>`
+   * on each menu item (e.g. `status-change-button`, `export-csv`).
+   */
+  testId?: string;
 }
 
 /*
@@ -58,7 +76,7 @@ export const SplitButton = (props: SplitButtonProps) => {
   const pick = (value: string) => {
     setInternal(value);
     props.onValueChange?.(value);
-    props.onAction?.(value);
+    if (!props.menuSelectsOnly) props.onAction?.(value);
   };
 
   return (
@@ -66,6 +84,7 @@ export const SplitButton = (props: SplitButtonProps) => {
       <button
         type="button"
         class={styles.main}
+        data-testid={props.testId ? `${props.testId}-main` : undefined}
         onClick={() => props.onAction?.(selectedValue())}
         onPointerDown={mainRipple.onPointerDown}
       >
@@ -79,6 +98,7 @@ export const SplitButton = (props: SplitButtonProps) => {
       <DropdownMenu.Root placement="bottom-end" gutter={4}>
         <DropdownMenu.Trigger
           class={styles.caret}
+          data-testid={props.testId ? `${props.testId}-dropdown` : undefined}
           aria-label={props.menuLabel ?? 'More options'}
           onPointerDown={caretRipple.onPointerDown}
         >
@@ -94,10 +114,18 @@ export const SplitButton = (props: SplitButtonProps) => {
               {option => (
                 <DropdownMenu.Item
                   class={styles.item}
+                  data-testid={
+                    props.testId
+                      ? `${props.testId}-option-${option.value}`
+                      : undefined
+                  }
                   data-current={
                     option.value === selectedValue() ? 'true' : undefined
                   }
-                  onSelect={() => pick(option.value)}
+                  disabled={option.disabled}
+                  onSelect={() => {
+                    if (!option.disabled) pick(option.value);
+                  }}
                 >
                   {option.label}
                 </DropdownMenu.Item>

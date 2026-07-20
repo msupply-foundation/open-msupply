@@ -1,31 +1,74 @@
-import type { Component } from 'solid-js';
-import { unexpectedError } from './api/graphql';
+import { Show, type Component } from 'solid-js';
+import {
+  clearForbiddenError,
+  forbiddenError,
+  unexpectedError,
+} from './api/graphql';
+import { humanisePermission } from './auth/permissionLabels';
 import { t } from './intl';
 import { Dialog } from './ui/elements/feedback/Dialog';
 import { Button } from './ui/elements/buttons/Button';
-import { AlertCircleIcon } from './ui/icons';
+import { AlertCircleIcon, LockIcon } from './ui/icons';
 
-// Spec (Unexpected API Errors): global modal with the error description, on
-// top of everything else. The flow that hit the error remains in its loading
-// phase. Two recovery actions, both a full-page navigation (so the app restarts
-// from a clean state, and the modal stays router-agnostic): reload the current
-// URL in place, or go to the root — which resolves the store and lands on the
-// dashboard. Not dismissable — recovery IS one of the two navigations.
+// Spec (Unexpected API Errors + Permission denied): one global modal, on top of
+// everything else, for the two failure classes the query method routes here.
+// The flow that hit the error stays in its loading phase either way.
+//
+// - Unexpected error: the description, and two recovery actions that are each a
+//   full-page navigation (reload in place, or go to the root/dashboard) — the
+//   app restarts from a clean state, so the modal is not otherwise dismissable.
+// - Permission denied (Forbidden): the user is authenticated but lacks the
+//   permission. Nothing is broken, so recovery is NOT a reload — the modal
+//   names the missing permission(s) and its single OK just clears the signal,
+//   leaving the user where they were. Takes precedence when both are set.
 export const UnexpectedErrorModal: Component = () => (
+  <Show when={forbiddenError()} fallback={<UnexpectedError />} keyed>
+    {permissions => <PermissionDenied permissions={permissions} />}
+  </Show>
+);
+
+const PermissionDenied: Component<{ permissions: string[] }> = props => {
+  // List the humanised names; when none could be parsed from the wire, a
+  // generic line ("You do not have permission to do that.").
+  const description = () =>
+    props.permissions.length > 0
+      ? t('error.permission-denied.detail', {
+          permissions: props.permissions.map(humanisePermission).join(', '),
+        })
+      : t('error.permission-denied.generic');
+
+  return (
+    <Dialog
+      open
+      dismissable={false}
+      onClose={() => {}}
+      title={t('auth.permission-denied')}
+      icon={<LockIcon />}
+      description={description()}
+      actions={
+        <Button variant="secondary" onClick={clearForbiddenError}>
+          {t('button.ok')}
+        </Button>
+      }
+    />
+  );
+};
+
+const UnexpectedError: Component = () => (
   <Dialog
     open={Boolean(unexpectedError())}
     dismissable={false}
     onClose={() => {}}
-    title={t('error.unexpected')}
+    title={t('error.something-wrong')}
     icon={<AlertCircleIcon />}
     description={unexpectedError()}
     actions={
       <>
         <Button variant="secondary" onClick={() => location.reload()}>
-          {t('error.reload')}
+          {t('button.try-again')}
         </Button>
         <Button variant="secondary" onClick={() => (location.href = '/')}>
-          {t('error.go-to-dashboard')}
+          {t('button.dashboard')}
         </Button>
       </>
     }

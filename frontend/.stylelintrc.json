@@ -11,7 +11,8 @@
             "customProperties": {
               "--kb-popper-content-available-height": "100vh",
               "--ripple-color": "transparent",
-              "--chip-colour": "transparent"
+              "--chip-colour": "transparent",
+              "--table-leading-col": "2.75rem"
             }
           }
         ]

@@ -30,7 +30,6 @@ export {
   localisedDateTime,
   customDate,
   localisedDistanceToNow,
-  localisedDistance,
   getDisplayAge,
 } from './formatDateTime';
 

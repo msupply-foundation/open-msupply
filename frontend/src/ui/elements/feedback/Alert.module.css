@@ -37,6 +37,15 @@
   --alert-colour: var(--success-main);
 }
 
+/* Neutral: no severity tint — the current app's drawer-grey notice (its
+   last-successful-sync banner): drawer surface, body text, grey icon. */
+.alert[data-severity='neutral'] {
+  --alert-colour: var(--gray-dark);
+
+  background: var(--bg-drawer);
+  color: var(--text-body);
+}
+
 /* Block padding on icon and message (not centring) keeps the icon beside the
    first line when the message wraps — MUI's geometry. */
 .icon {

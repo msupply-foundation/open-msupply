@@ -7,6 +7,8 @@ export interface RadioOption {
   /** Optional muted second line under the label. */
   description?: string;
   disabled?: boolean;
+  /** `data-testid` for the radio input (locale-stable test hook, e2e/TESTIDS.md). */
+  testId?: string;
 }
 
 interface RadioGroupProps {
@@ -67,6 +69,7 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
                 type="radio"
                 class={styles.input}
                 name={name}
+                data-testid={option.testId}
                 value={option.value}
                 checked={props.value === option.value}
                 disabled={props.disabled || option.disabled}

@@ -9,7 +9,12 @@
 
 .menuBar {
   position: relative;
-  z-index: 2;
+  /* Above the page content — specifically above the DataTable's sticky header (z 3) — so the
+     drawer's rightward drop shadow (--shadow-drawer) paints OVER the content along the whole left
+     edge, including alongside the table. At z 2 the sticky table cells covered it, so the shadow
+     vanished next to the table (the "missing corner shadow"). Still well below the overlay drawer
+     (z 40) and popovers, so nothing else is affected. */
+  z-index: 4;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -86,6 +91,8 @@
 
 /* --- Nav button (leaves + section triggers share this) ----------------- */
 .navButton {
+  /* Anchor for the collapsed-rail badge docking (sync indicator). */
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -183,12 +190,22 @@
 }
 
 /* --- Section children (indented tree) ---------------------------------- */
+/* The tree line sits under the parent's collapse chevron: navList padding
+   (--space-2) + this margin = 3.5rem, the chevron's box centre (icon 1.25rem +
+   gap 0.5rem + half the 1rem chevron, all past the 1.25rem button inset). This
+   matches the current app, where the child Collapse's border-left lands on the
+   section chevron's centre. Children then indent past the parent label. */
 .childList {
   display: flex;
   flex-direction: column;
   gap: 0.3125rem; /* the app's ListItem inter-row margin */
-  margin: var(--space-1) 0 0;
-  margin-inline-start: 1.75rem;
+  /* Pull the tree line's TOP up under the parent chevron (mirroring the current
+     app's child Collapse marginTop:-1.5), then pad the first child back down so
+     it still clears the parent row. The border spans the padding, so the line
+     reaches up to connect under the chevron without the children overlapping. */
+  margin-block: calc(-1 * var(--space-3)) 0;
+  margin-inline-start: 3rem;
+  padding-block-start: var(--space-4);
   padding-inline-start: var(--space-3);
   border-inline-start: 1px solid var(--gray-light);
   list-style: none;
@@ -232,7 +249,6 @@
   max-inline-size: 85vw;
   overflow: hidden;
   background: var(--bg-drawer);
-  box-shadow: var(--shadow-4);
   transform: translateX(var(--hide-x));
   transition: transform 220ms ease;
 }
@@ -241,7 +257,11 @@
   --hide-x: 100%;
 }
 
+/* Shadow only while open: when closed the panel slides fully off-screen
+   (translateX -100%), but its right-edge drop shadow would otherwise bleed
+   back into the viewport as a stray shadow along the left edge. */
 .overlayPanel[data-open='true'] {
+  box-shadow: var(--shadow-4);
   transform: none;
 }
 
@@ -260,9 +280,38 @@
   pointer-events: auto;
 }
 
-/* Touch: larger tap targets on coarse pointers (spec: 3rem) */
-@media (pointer: coarse) {
-  .navButton {
-    min-block-size: var(--touch-target);
-  }
+/* NB: no pointer:coarse min-height bump on nav rows (matching the Button/Tabs
+   calls). --touch-target (48px) inflated every row in touch / device-emulation
+   mode — worst on the dense 1.875rem child rows — defeating the nested-drawer
+   density, and it fired at ANY width once the pointer read coarse (not just
+   narrow viewports). The natural 2.5rem section / 1.875rem child heights already
+   clear WCAG 2.5.8 (24px min), so we keep them. */
+
+/* --- Sync-entry status badge (spec/chrome § sync indicator) -------------- */
+/* The pill itself is the shared Badge component; the MenuBar owns only its
+   placement — inline-end of the row, docking onto the icon when collapsed. */
+.badge {
+  margin-inline-start: auto;
+}
+
+/* The alert marker: the error-coloured glyph, as the current app renders it. */
+.alertBadge {
+  display: inline-flex;
+  font-size: 1rem;
+  color: var(--error-main);
+}
+
+/* Collapsed rail: labels hide, so the badge docks onto the icon's corner to
+   stay visible. */
+.menuBar[data-open='false'] .badge {
+  position: absolute;
+  inset-block-start: 0.2rem;
+  inset-inline-end: 0.2rem;
+}
+
+/* The Sync entry's icon dims while the latest run is errored; the badge (not
+   the dimming) carries the meaning. Grey, as in the current app — not a paler
+   brand tint. */
+.icon[data-dimmed='true'] {
+  color: var(--gray-main);
 }
