@@ -52,9 +52,9 @@ interface ComboboxProps<T> {
    */
   filter?: (item: T, input: string) => boolean;
   /**
-   * Per-option disabled predicate — the option is listed (visible for context)
-   * but not selectable, e.g. an on-hold customer. Maps to Kobalte's
-   * optionDisabled, which exposes it as aria-disabled on the option.
+   * Per-option disabled predicate — the option is listed (visible for context,
+   * rendered dimmed) but not selectable, e.g. an on-hold customer. Maps to
+   * Kobalte's optionDisabled, which exposes it as aria-disabled on the option.
    */
   itemDisabled?: (item: T) => boolean;
   placeholder?: string;

@@ -159,6 +159,15 @@
   font-weight: var(--weight-medium);
 }
 
+/* A listed-but-disabled option (aria-disabled — e.g. an on-hold customer):
+   dimmed like any disabled control (the Button convention's grey) alongside
+   its textual marker, never colour-alone. Visible for context, not
+   selectable; no pointer affordance. */
+.item[data-disabled] {
+  color: var(--gray-light);
+  cursor: default;
+}
+
 .status {
   padding: var(--space-2);
   color: var(--text-secondary);
