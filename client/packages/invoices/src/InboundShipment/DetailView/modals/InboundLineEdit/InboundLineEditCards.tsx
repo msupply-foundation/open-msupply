@@ -260,7 +260,7 @@ export const InboundLineEditCards = ({
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
                       line.sellPricePerPack;
                   const shouldClearCostPrice =
-                    item?.defaultPackSize !== value &&
+                    item?.defaultPackSize !== line.packSize &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
                       line.costPricePerPack;
 
