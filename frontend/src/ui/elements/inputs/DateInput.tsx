@@ -1,3 +1,4 @@
+import { createEffect } from 'solid-js';
 import { TextField } from './TextField';
 
 export interface DateInputProps {
@@ -28,22 +29,41 @@ export interface DateInputProps {
  * label/message wiring, so there's nothing to re-style and no new CSS. The ISO
  * string in/out mirrors the current app's date filters. `min`/`max` constrain
  * the range (DateRangeInput uses them to keep end >= start).
+ *
+ * The value is deliberately NOT a controlled `value` binding. A partially
+ * edited date (say the year segment cleared) reads back as '' — a plain
+ * controlled binding echoes that '' straight into `input.value`, and THAT
+ * assignment makes the browser clear every other segment too (backspace in
+ * the year would wipe day + month). Instead the incoming ISO value is written
+ * imperatively, and only when it differs from what the DOM already reports —
+ * the echo becomes a no-op and mid-edit segments survive.
  */
-export const DateInput = (props: DateInputProps) => (
-  <TextField
-    type="date"
-    label={props.label}
-    value={props.value ?? ''}
-    helperText={props.helperText}
-    error={props.error}
-    required={props.required}
-    hideLabel={props.hideLabel}
-    disabled={props.disabled}
-    min={props.min}
-    max={props.max}
-    id={props.id}
-    class={props.class}
-    data-testid={props.testId}
-    onInput={event => props.onChange?.(event.currentTarget.value)}
-  />
-);
+export const DateInput = (props: DateInputProps) => {
+  let input: HTMLInputElement | undefined;
+  createEffect(() => {
+    const next = props.value ?? '';
+    if (input && input.value !== next) input.value = next;
+  });
+  return (
+    <TextField
+      type="date"
+      label={props.label}
+      helperText={props.helperText}
+      error={props.error}
+      required={props.required}
+      hideLabel={props.hideLabel}
+      disabled={props.disabled}
+      min={props.min}
+      max={props.max}
+      id={props.id}
+      class={props.class}
+      data-testid={props.testId}
+      ref={element => {
+        input = element;
+        // The effect above may have run before the ref existed (first mount).
+        element.value = props.value ?? '';
+      }}
+      onInput={event => props.onChange?.(event.currentTarget.value)}
+    />
+  );
+};
