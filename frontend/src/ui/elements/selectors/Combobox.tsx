@@ -119,6 +119,14 @@ interface ComboboxProps<T> {
    * shows it.
    */
   hideLabel?: boolean;
+  /**
+   * Content pinned at the TOP of the open listbox popup, above the options — a
+   * sticky in-dropdown header for controls that scope the list (e.g. the
+   * location picker's fullness filter). Interacting with it keeps the popup open
+   * (it lives inside the popup's own content, so the outside-dismiss guard
+   * ignores it). Omit for a plain combobox.
+   */
+  listboxHeader?: JSX.Element;
   class?: string;
 }
 
@@ -358,6 +366,12 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           // another field — still closes it.
           onInteractOutside={keepPopupOpenOnInsideContent(() => contentEl)}
         >
+          {/* Sticky in-dropdown header (e.g. the location fullness filter). Sits
+              above the options and stays put while the list scrolls. Rendered
+              inside the popup content so interacting with it doesn't dismiss. */}
+          <Show when={props.listboxHeader}>
+            <div class={styles.listboxHeader}>{props.listboxHeader}</div>
+          </Show>
           <Show when={props.loading}>
             <div class={styles.status}>Loading…</div>
           </Show>

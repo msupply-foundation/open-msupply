@@ -56,6 +56,10 @@ import { saveStocktakeFields } from './stocktakeUpdate';
 import type { LineErrors } from './lines/stocktakeLineErrors';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
+import {
+  fetchLocationsWithVolume,
+  type LocationWithVolume,
+} from '../../../domain/location';
 import type { StocktakeEditFields } from './stocktakeEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
@@ -220,6 +224,19 @@ const StocktakeDetailView: Component = () => {
   const rows = (): Line[] => linesData.latest?.nodes ?? [];
   const totalCount = (): number => linesData.latest?.totalCount ?? 0;
 
+  // Locations WITH capacity for this store, fetched HERE (not from a global
+  // cache) and passed down to the line editor + change-location picker, so their
+  // % used / fullness filter reflect current stock. `volumeUsed` is
+  // server-computed and shifts whenever a count commits stock into/out of a
+  // location, so this is REFETCHED after every line save (see refetchAfterSave).
+  // The detail location FILTER also reads it (code/name only). Non-suspending
+  // read via `.latest` so a refetch never trips the view's Suspense boundary.
+  const [locationsData, { refetch: refetchLocations }] = createResource(
+    () => params.storeId,
+    fetchLocationsWithVolume
+  );
+  const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
+
   // A save-triggered refetch is SILENT — no refreshing bar (the table stays put
   // while the fresh page swaps in). A user-navigation refetch (filter/sort/page)
   // shows the bar as usual. `silentRefetching` is raised around a save refetch
@@ -228,7 +245,10 @@ const StocktakeDetailView: Component = () => {
   const refetchAfterSave = async () => {
     setSilentRefetching(true);
     try {
-      await refetchLines();
+      // Refetch the lines page AND the location capacities together: a save may
+      // have moved stock between locations (changing volumeUsed) or edited a
+      // line's volume, so the picker's % used / fullness must be re-read.
+      await Promise.all([refetchLines(), refetchLocations()]);
     } finally {
       setSilentRefetching(false);
     }
@@ -597,6 +617,7 @@ const StocktakeDetailView: Component = () => {
                     edit={edit}
                     filter={filter()}
                     onFilterChange={onFilterChange}
+                    locations={locations()}
                   />
                 </Toolbar>
               </Header>
@@ -651,6 +672,8 @@ const StocktakeDetailView: Component = () => {
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
+                    locations={locations()}
+                    rows={rows()}
                     onCommit={onLinesChanged}
                     onError={stampErrors}
                     onShowErrors={showErrors}
@@ -719,6 +742,8 @@ const StocktakeDetailView: Component = () => {
               storeId={params.storeId}
               stocktakeId={node().id}
               initialItemId={editState()?.itemId}
+              locations={locations()}
+              locationsLoading={locationsData.loading}
               nextItem={nextItem}
               onSaved={onLinesChanged}
             />

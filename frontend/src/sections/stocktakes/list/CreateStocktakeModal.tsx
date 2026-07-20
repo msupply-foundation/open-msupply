@@ -19,7 +19,11 @@ import {
   masterListsResource,
   MasterListSelect,
 } from '../../../domain/masterList';
-import { locationsResource, LocationSelect } from '../../../domain/location';
+import {
+  fetchLocations,
+  LocationSelect,
+  type Location,
+} from '../../../domain/location';
 import { PlusCircleIcon, XCircleIcon } from '../../../ui/icons';
 import { t, tPlural } from '../../../intl';
 import { shallowEqual } from '../../../typeHelpers';
@@ -81,6 +85,17 @@ export const CreateStocktakeModal = (props: {
 }) => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
+
+  // Locations for the picker, fetched locally (the domain widget owns no cache —
+  // spec/ui-standards/components.md). Volume-blind here: the picker only scopes
+  // which stock to count, so capacity is irrelevant. Read WITHOUT suspending
+  // (this modal renders under AppShell's <Suspense>; a pending read there would
+  // remount + reset the form — see the estimate resource below).
+  const [locationsData] = createResource(() => params.storeId, fetchLocations);
+  const locations = (): Location[] =>
+    locationsData.state === 'ready' || locationsData.state === 'refreshing'
+      ? (locationsData.latest ?? [])
+      : [];
 
   const [form, setForm] = createSignal<FormState>(EMPTY_FORM);
   const [creating, setCreating] = createSignal(false);
@@ -187,9 +202,7 @@ export const CreateStocktakeModal = (props: {
     const masterList = masterListsResource
       .noSuspense()
       .find(m => m.id === masterListId);
-    const location = locationsResource
-      .noSuspense()
-      .find(l => l.id === locationId);
+    const location = locations().find(l => l.id === locationId);
     if (masterList)
       parts.push(
         t('stocktake.master-list-template', { masterList: masterList.name })
@@ -302,10 +315,7 @@ export const CreateStocktakeModal = (props: {
         >
           <Alert severity="info" testId="stocktake-line-estimate">
             <span>
-              <Show
-                when={!countLoading()}
-                fallback={t('messages.counting')}
-              >
+              <Show when={!countLoading()} fallback={t('messages.counting')}>
                 {tPlural('message.lines-estimated', estimatedLines())}
               </Show>
             </span>
@@ -395,6 +405,8 @@ export const CreateStocktakeModal = (props: {
               <LocationSelect
                 label={t('label.location')}
                 hideLabel
+                locations={locations()}
+                loading={locationsData.loading}
                 disabled={creating()}
                 placeholder={t('label.any')}
                 value={form().locationId || undefined}

@@ -16,7 +16,10 @@ import {
 } from '../../../../ui/elements/table/DataTable';
 import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { LocationSelect } from '../../../../domain/location';
+import {
+  LocationVolumeSelect,
+  type LocationWithVolume,
+} from '../../../../domain/location';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { ItemSearch } from '../../../../domain/item';
 import {
@@ -78,11 +81,15 @@ type ItemStockLine = Extract<
 
 // A draft row: the line fragment plus client-only bookkeeping (see the original
 // notes) — isNew / stockLineId / countThisLine / deleted.
-type DraftLine = StocktakeLineFragment & {
+type DraftLine = Omit<StocktakeLineFragment, 'volumePerPack'> & {
   isNew?: boolean;
   stockLineId?: string;
   countThisLine: boolean;
   deleted?: boolean;
+  // The wire fragment types volumePerPack non-null (defaults 0 on the server),
+  // but the editor lets the user CLEAR it — an empty input persists no volume.
+  // So the draft widens it to nullable; the input types accept null too.
+  volumePerPack: number | null;
 };
 
 // How many lines/stock lines to pull for one item (a single item never has many
@@ -153,6 +160,7 @@ const buildDraft = async (
     costPricePerPack: sl.costPricePerPack,
     comment: null,
     note: sl.note,
+    volumePerPack: sl.volumePerPack,
     location: sl.location,
     reasonOption: null,
   }));
@@ -208,6 +216,14 @@ interface StocktakeLineEditModalProps {
    */
   nextItem: ResolveNextItem;
   /**
+   * The store's locations WITH capacity, fetched by the detail view and passed
+   * down (the picker owns no cache — volumeUsed goes stale, so the view re-reads
+   * it after every save). The line editor's location field is volume-aware.
+   */
+  locations: LocationWithVolume[];
+  /** True while the view's location fetch is in flight. */
+  locationsLoading?: boolean;
+  /**
    * Fired after a successful save so the detail view refetches the current lines
    * page (no splice-in-place).
    */
@@ -234,6 +250,8 @@ export const StocktakeLineEditModal = (
         // 'add' sentinel → no initial item (start in add mode); otherwise the id.
         initialItemId={openKey === 'add' ? undefined : openKey}
         nextItem={props.nextItem}
+        locations={props.locations}
+        locationsLoading={props.locationsLoading}
         onSaved={props.onSaved}
       />
     )}
@@ -246,6 +264,8 @@ interface StocktakeLineEditContentProps {
   stocktakeId: string;
   initialItemId?: string;
   nextItem: ResolveNextItem;
+  locations: LocationWithVolume[];
+  locationsLoading?: boolean;
   onSaved: () => void;
 }
 
@@ -401,6 +421,7 @@ const StocktakeLineEditContent = (
           costPricePerPack: null,
           comment: null,
           note: null,
+          volumePerPack: null,
           location: null,
           reasonOption: null,
         })
@@ -475,6 +496,7 @@ const StocktakeLineEditContent = (
           comment: line.comment,
           note: line.note,
           location: { value: line.location?.id ?? null },
+          volumePerPack: line.volumePerPack,
           reasonOptionId: line.reasonOption?.id ?? null,
         });
         continue;
@@ -491,6 +513,7 @@ const StocktakeLineEditContent = (
         costPricePerPack: line.costPricePerPack,
         comment: line.comment,
         note: line.note,
+        volumePerPack: line.volumePerPack,
         reasonOptionId: line.reasonOption?.id ?? null,
       });
     }
@@ -784,18 +807,54 @@ const StocktakeLineEditContent = (
       },
     },
     {
+      c: { key: 'volumePerPack' },
+      header: t('label.volume-per-pack'),
+      tabsAndCardGroups: ['other'],
+      ...getNumberCell(),
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <TextField
+            label={t('label.volume-per-pack')}
+            hideLabel
+            size="small"
+            type="number"
+            min="0"
+            disabled={!line.countThisLine}
+            value={line.volumePerPack ?? ''}
+            onInput={e =>
+              update(
+                line.id,
+                'volumePerPack',
+                toNumberOrNull(e.currentTarget.value)
+              )
+            }
+          />
+        );
+      },
+    },
+    {
       c: { key: 'location' },
       header: t('label.location'),
       tabsAndCardGroups: ['other'],
       cell: info => {
         const line = info.row.original;
         return (
-          <LocationSelect
+          <LocationVolumeSelect
             label={t('label.location')}
             hideLabel
+            locations={props.locations}
+            loading={props.locationsLoading}
             disabled={!line.countThisLine}
             value={line.location?.id}
             placeholder={t('label.none')}
+            // Required volume = this line's volume (volumePerPack × counted). A
+            // missing volume-per-pack or count means no requirement (0) — the
+            // filter still lets the user browse Empty / Available, and the
+            // already-chosen location always passes (LocationVolumeSelect).
+            volumeRequired={
+              (line.volumePerPack ?? 0) * (line.countedNumberOfPacks ?? 0)
+            }
             onChange={l =>
               update(
                 line.id,

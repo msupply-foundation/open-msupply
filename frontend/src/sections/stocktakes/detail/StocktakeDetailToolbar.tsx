@@ -11,6 +11,7 @@ import { stocktakeDetailFilters } from './stocktakeDetailFilters';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
 import type { StocktakeFieldEdit } from './stocktakeEdit';
+import type { LocationWithVolume } from '../../../domain/location';
 
 // The detail view's toolbar (Open mSupply's Toolbar): the editable stocktake
 // description, a disabled-state banner when the stocktake is on hold /
@@ -32,11 +33,24 @@ export interface StocktakeDetailToolbarProps {
   edit: StocktakeFieldEdit;
   filter: StocktakeLineFilter;
   onFilterChange: (filter: StocktakeLineFilter) => void;
+  /**
+   * The store's locations (fetched by the view, shared with the editor pickers).
+   * The location filter chip uses the volume-blind picker, so it reads only the
+   * code/name — but we take the volume shape the view already has to avoid a
+   * second fetch.
+   */
+  locations: LocationWithVolume[];
 }
 
 export const StocktakeDetailToolbar: Component<
   StocktakeDetailToolbarProps
 > = props => {
+  // Build the filter definitions ONCE (a Solid component body runs once at
+  // mount). The location chip's render reads `props.locations` through this
+  // accessor, so the live list flows in without rebuilding the filter array on
+  // every location refetch.
+  const filters = stocktakeDetailFilters(() => props.locations);
+
   const disabledMessage = () =>
     props.node.status === 'FINALISED'
       ? t('messages.finalised-stock-take')
@@ -86,7 +100,7 @@ export const StocktakeDetailToolbar: Component<
       />
 
       <FilterBar
-        filters={stocktakeDetailFilters()}
+        filters={filters}
         filter={props.filter}
         onChange={props.onFilterChange}
       />
