@@ -704,6 +704,15 @@ const StocktakeDetailView: Component = () => {
               onSelectionChange={setSelectedIds}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}
+              // Central-server admins can promote this table's layout to the
+              // shared install-wide default (same gate as the list). Gate +
+              // action both off the config controller; undefined for everyone
+              // else, so the action isn't offered.
+              onSaveGlobalDefault={
+                tableConfig.canSaveGlobalDefault()
+                  ? tableConfig.saveGlobalTableConfig
+                  : undefined
+              }
               pagination={{
                 offset: query().offset,
                 pageSize: query().first,
