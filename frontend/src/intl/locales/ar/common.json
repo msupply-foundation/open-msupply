@@ -1493,6 +1493,7 @@
   "messages.scanner-disconnected": "غير متصل",
   "messages.scanner-found": "تم العثور على الماسح الضوئي! 🥳",
   "messages.search": "بحث",
+  "messages.select-item-to-count": "حدد صنفًا لعد خطوط المخزون الخاصة به.",
   "messages.select-rows-to-delete": "حدد الصفوف المراد حذفها",
   "messages.select-rows-to-delete-them": "حدد الصفوف المراد حذفها",
   "messages.select-rows-to-return": "حدد الصفوف المراد حذفها",

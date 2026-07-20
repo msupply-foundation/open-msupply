@@ -25,7 +25,6 @@ import {
   DataTable,
   type Column,
   type SortState,
-  sharedOrMultiple,
 } from '../../../ui/elements/table/DataTable';
 import {
   getDateCell,
@@ -34,15 +33,16 @@ import {
 import { createTableConfig } from '../../../api/createTableConfig';
 import {
   StocktakeDetail,
+  StocktakeLines,
   type StocktakeDetailResult,
   type StocktakeInfoFragment,
+  type StocktakeLineFragment,
+  type StocktakeLinesVariables,
   type UpdateStocktakeVariables,
 } from './lines/stocktakeDetail.generated';
 import {
   StocktakeLineEditModal,
-  type LineEditCommit,
   type StocktakeLineEditItem,
-  type StocktakeItemInfo,
 } from './edit-modal/StocktakeLineEditModal';
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
@@ -54,118 +54,84 @@ import {
 } from './actions';
 import { saveStocktakeFields } from './stocktakeUpdate';
 import type { LineErrors } from './lines/stocktakeLineErrors';
-import {
-  lineMatchesFilter,
-  type StocktakeLineFilter,
-} from './stocktakeLineFilter';
+import type { StocktakeLineFilter } from './stocktakeLineFilter';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import type { StocktakeEditFields } from './stocktakeEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { stripEmpty } from '../../../typeHelpers';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an
-// editable description + filters), the lines in the DataTable (front-end sorted
-// / grouped / filtered / selectable), an Additional-info side panel, and the
+// editable description + filters), the lines in a SERVER-paginated DataTable
+// (server sorted / filtered / paged), an Additional-info side panel, and the
 // stocktake-level status footer (on-hold / finalise). Clicking a row opens the
-// line-edit modal; saves reflect in place with NO refetch — both the line batch
-// mutation and the stocktake-level updateStocktake return the same fragments we
-// already render, spliced straight back.
+// line-edit modal; a save REFETCHES the current lines page (kdd/stocktake-line-
+// editing — the small page is cheap to re-pull, so we don't splice mutation
+// results in place anymore).
+//
+// TWO independent queries (kdd/stocktake-line-editing): `info` (stocktakeDetail,
+// the header/footer/side-panel fields) and `lines` (stocktakeLines, one
+// server-filtered/sorted page). A stocktake-LEVEL save mutates `info` in place
+// (a single node, no pagination); a LINE save refetches only the `lines` page.
 //
 // A finalised or on-hold (locked) stocktake is read-only (OMS
 // isStocktakeDisabled): row-click, the description/side-panel fields, and
 // Finalise are all disabled; on-hold can still be lifted.
 
-type StocktakeNode = Extract<
+type Line = StocktakeLineFragment;
+
+// The `info` resource's element type — the stocktakeDetail response narrowed to
+// its success member ({ __typename: 'StocktakeNode' } & StocktakeInfoFragment).
+// `mutate` callbacks are typed to this (spreading a saved StocktakeInfo fragment
+// over it keeps __typename).
+type StocktakeInfoNode = Extract<
   StocktakeDetailResult['stocktake'],
   { __typename: 'StocktakeNode' }
 >;
-type Line = StocktakeNode['lines']['nodes'][number];
+
+// The server sort-field union (from codegen) — a column can only ever name a
+// real server sort key (kdd/type-safety). Columns whose data the server can't
+// sort on (prices, manufacture date, note, comment) simply omit `sortKey`.
+type SortKey = NonNullable<StocktakeLinesVariables['sort']>[number]['key'];
 
 // A finalised or on-hold (locked) stocktake can't have its content edited (OMS
 // isStocktakeDisabled).
 const isDisabled = (node: StocktakeInfoFragment) =>
   node.status !== 'NEW' || node.isLocked;
 
-// The line fields the table can sort by (client-side). `code` reads the nested
-// item.code; `location` reads the nested location.code.
-type SortKey =
-  | 'code'
-  | 'itemName'
-  | 'batch'
-  | 'expiryDate'
-  | 'manufactureDate'
-  | 'snapshotNumberOfPacks'
-  | 'countedNumberOfPacks'
-  | 'packSize'
-  | 'sellPricePerPack'
-  | 'costPricePerPack'
-  | 'location'
-  | 'reason'
-  | 'note';
+const DEFAULT_PAGE_SIZE = 20;
 
-// A stable, comparable value per sort key. Strings compare case-insensitively;
-// pack counts are numbers (null sorts as -1 so uncounted lines group together).
-// Explicit rather than a generic accessor map (kdd/explicit-composition).
-const sortValue = (line: Line, key: SortKey): string | number => {
-  switch (key) {
-    case 'code':
-      return line.item.code.toLowerCase();
-    case 'itemName':
-      return line.itemName.toLowerCase();
-    case 'batch':
-      return (line.batch ?? '').toLowerCase();
-    case 'expiryDate':
-      return line.expiryDate ?? '';
-    case 'manufactureDate':
-      return line.manufactureDate ?? '';
-    case 'snapshotNumberOfPacks':
-      return line.snapshotNumberOfPacks ?? -1;
-    case 'countedNumberOfPacks':
-      return line.countedNumberOfPacks ?? -1;
-    case 'packSize':
-      return line.packSize ?? -1;
-    case 'sellPricePerPack':
-      return line.sellPricePerPack ?? -1;
-    case 'costPricePerPack':
-      return line.costPricePerPack ?? -1;
-    case 'location':
-      return (line.location?.code ?? '').toLowerCase();
-    case 'reason':
-      return (line.reasonOption?.reason ?? '').toLowerCase();
-    case 'note':
-      return (line.note ?? '').toLowerCase();
-  }
-};
-
-// The URL-backed view state (kdd/url-structure): sort + the client-side line
-// filter (which includes the item `search`) live in the single `?query=` JSON
-// param, so a sorted/filtered/ searched view is shareable and survives reload +
-// back-nav. Selection and the side-panel open state stay local (transient UI,
-// not worth a URL). Errors filter ids are carried too — a stale link degrades
-// gracefully (matches whatever ids it holds). Mirrors the stocktakes LIST.
+// The URL-backed view state (kdd/url-structure): filter + sort + pagination in
+// the single `?query=` JSON param, so a filtered/sorted/paged view is shareable
+// and survives reload + back-nav. All three conform to the generated
+// stocktakeLines variables (no remapping — kdd/type-safety). Selection and the
+// side-panel open state stay local (transient UI). Mirrors the stocktakes LIST.
 type DetailUrlState = {
-  sort: SortState<SortKey>;
   filter: StocktakeLineFilter;
+  sort: NonNullable<StocktakeLinesVariables['sort']>;
+  offset: number;
+  first: number;
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
-  sort: { key: 'itemName', desc: false },
   filter: {},
+  // Default sort: item name ascending (matches OMS's default line order).
+  sort: [{ key: 'itemName', desc: false }],
+  offset: 0,
+  first: DEFAULT_PAGE_SIZE,
 };
 
 const StocktakeDetailView: Component = () => {
   const params = useParams<{ storeId: string; stocktakeId: string }>();
   const navigate = useNavigate();
-  // Sort + filter (incl. search) are URL-backed (shareable, survive
-  // reload/back-nav) in one `?query=` param. sort()/filter()/setSort/setFilter
-  // are thin accessors over that single query.
+  // Filter + sort + pagination are URL-backed (shareable, survive reload/back-
+  // nav) in one `?query=` param. Thin accessors over that single query.
   const { query, setQuery } =
     useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
-  const sort = () => query().sort;
   const filter = () => query().filter;
-  const setSort = (next: SortState<SortKey>) =>
-    setQuery({ ...query(), sort: next });
-  const setFilter = (next: StocktakeLineFilter) =>
-    setQuery({ ...query(), filter: next });
+  const currentSort = (): SortState<SortKey> | undefined => {
+    const s = query().sort[0];
+    return s ? { key: s.key, desc: s.desc ?? false } : undefined;
+  };
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The details panel is an overlay — it starts CLOSED (like OMS) and the
@@ -174,15 +140,11 @@ const StocktakeDetailView: Component = () => {
   const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
   // Per-line errors from the last failed finalise/bulk action, keyed by line
   // id → the error's __typename (the shared LineErrors shape, kept raw). The
-  // Snapshot column renders it inline (<Show when={… ===
-  // 'SnapshotCountCurrentCountMismatchLine'}>); no pre-rendered text lives
-  // here. Cleared when a fresh fetch lands.
+  // Snapshot column renders it inline; cleared when a fresh page lands.
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
-  // Column config (order/sizing/visibility) + the row-grouping choice persist
-  // per user/store. The extra editable columns (pricing / pack size /
-  // manufacture / location / reason / note) start HIDDEN by default so the
-  // table isn't overwhelming — the user reveals them via the column-visibility
-  // settings. columnVisibility is sparse "show" semantics: false = hidden.
+  // Column config (order/sizing/visibility) persists per user/store. The extra
+  // editable columns start HIDDEN by default so the table isn't overwhelming —
+  // the user reveals them via the column-visibility settings.
   const tableConfig = createTableConfig({
     tableId: 'stocktake-detail',
     defaultConfig: {
@@ -199,30 +161,19 @@ const StocktakeDetailView: Component = () => {
       },
     },
   });
-  // The line-edit modal's open state (undefined = closed):
-  // - { mode: 'update', itemId }: editing an existing item's lines (opened from
-  //   a row). itemId is only the INITIAL item — the modal then advances through
-  //   the list itself via "OK & next" (resolving each via itemInfo below); we
-  //   never change this to advance, only to open/close.
-  // - { mode: 'add' }: adding an item not yet on the stocktake (from "Add
-  //   item"). The modal searches for the item itself, so no id here.
-  type EditState =
-    { mode: 'update'; itemId: string } | { mode: 'add' } | undefined;
+  // The line-edit modal's open state (undefined = closed). The modal
+  // self-queries its own data (its item's stocktake lines + stock lines), so we
+  // only tell it WHICH item to open on (or none, in the item-search state):
+  // - { itemId }: opened from a ROW click — starts editing that item, and can
+  //   step through the list via "OK & next" (it pages the server itself).
+  // - {}: opened from "Add item" — starts in the item-search state.
+  type EditState = { itemId?: string } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
 
-  // Item ids already on the stocktake — passed to the add-item search so those
-  // items can't be added twice. Read live by the modal (an accessor) so an item
-  // added via "OK & next" drops out of the next search without reopening.
-  const existingItemIds = (): string[] => [
-    ...new Set(rows().map(line => line.item.id)),
-  ];
-
-  // Fetch the stocktake. A NodeError (e.g. bad id) is promoted to the global
-  // unexpected-error modal via mapSuccessToError, so it never reaches the view
-  // — we only narrow to the node. The resource IS the local state: every save
-  // writes back with `mutate` (no refetch), so `info` and `rows` are just
-  // accessors over data() rather than separate signals kept in sync by an
-  // effect (kdd/state-management).
+  // Fetch the stocktake INFO (header/footer/side-panel fields — NOT the lines).
+  // A NodeError (e.g. bad id) is promoted to the global unexpected-error modal
+  // via mapSuccessToError. Stocktake-LEVEL saves write back with `mutate` (no
+  // refetch), so `info` is an accessor over data().
   const [data, { mutate }] = createResource(
     () => ({ storeId: params.storeId, stocktakeId: params.stocktakeId }),
     async variables => {
@@ -238,143 +189,84 @@ const StocktakeDetailView: Component = () => {
         : undefined;
     }
   );
-
-  // Stocktake-level info + the lines both come straight from the fetched node.
-  // Saves reflect in place with no refetch by mutating the resource:
-  // updateStocktake returns the StocktakeInfo fragment (merged over the node,
-  // keeping its lines) and the line batch mutation returns line fragments
-  // (spliced into node.lines.nodes).
   const info = (): StocktakeInfoFragment | undefined => data();
-  const rows = (): Line[] => data()?.lines.nodes ?? [];
 
-  // A fresh fetch clears stale per-line errors. lineErrors is independently
-  // mutated by save failures (stampLineErrors), so it stays its own signal —
-  // this effect only resets it when new data lands (the one reaction we still
-  // need now that info/rows are derived).
-  createEffect(on(data, () => setLineErrors(new Map())));
-
-  // Filter → sort. The filter runs first (client-side over the loaded rows),
-  // then the sort memo orders what survives. The DataTable is display-only
-  // about order (manualSorting).
-  const filteredRows = createMemo<Line[]>(() =>
-    rows().filter(line => lineMatchesFilter(line, filter()))
+  // The lines PAGE — a separate, server-filtered/sorted/paged query. Keyed on
+  // the SERIALISED variables (a stable string) like the stocktakes LIST, so
+  // identical query content doesn't refetch (kdd/solid-reactivity-pitfalls).
+  // stripEmpty drops added-but-empty filter chips so an empty chip doesn't
+  // reflash the list.
+  const linesVariables = createMemo<StocktakeLinesVariables>(() => ({
+    storeId: params.storeId,
+    stocktakeId: params.stocktakeId,
+    filter: stripEmpty(query().filter),
+    sort: query().sort,
+    page: { first: query().first, offset: query().offset },
+  }));
+  const [linesData, { refetch: refetchLines }] = createResource(
+    () => JSON.stringify(linesVariables()),
+    async serialised => {
+      const result = await graphqlFetch(
+        StocktakeLines,
+        JSON.parse(serialised) as StocktakeLinesVariables
+      );
+      if (result.kind !== 'success') return undefined;
+      return result.data.stocktakeLines;
+    }
   );
-  const sortedRows = createMemo<Line[]>(() => {
-    const { key, desc } = sort();
-    const dir = desc ? -1 : 1;
-    return [...filteredRows()].sort((a, b) => {
-      const av = sortValue(a, key);
-      const bv = sortValue(b, key);
-      if (av < bv) return -1 * dir;
-      if (av > bv) return 1 * dir;
-      return 0;
-    });
-  });
+
+  // Read `.latest` (non-suspending): during a refetch it returns the previous
+  // page (keeps rows in place, no remount); undefined before the first load.
+  const rows = (): Line[] => linesData.latest?.nodes ?? [];
+  const totalCount = (): number => linesData.latest?.totalCount ?? 0;
+
+  // A save-triggered refetch is SILENT — no refreshing bar (the table stays put
+  // while the fresh page swaps in). A user-navigation refetch (filter/sort/page)
+  // shows the bar as usual. `silentRefetching` is raised around a save refetch
+  // and drives the DataTable's `loading` gate below.
+  const [silentRefetching, setSilentRefetching] = createSignal(false);
+  const refetchAfterSave = async () => {
+    setSilentRefetching(true);
+    try {
+      await refetchLines();
+    } finally {
+      setSilentRefetching(false);
+    }
+  };
+  // Show the loading treatment only for a genuine (user-navigation) fetch — not
+  // a post-save refetch.
+  const tableLoading = () => linesData.loading && !silentRefetching();
+
+  // A fresh lines page clears stale per-line errors. lineErrors is independently
+  // stamped by save failures, so it stays its own signal — this effect only
+  // resets it when a new page lands.
+  createEffect(on(linesData, () => setLineErrors(new Map())));
 
   // A stocktake can be finalised only when it has at least one counted line
-  // (OMS no-lines guard).
+  // (OMS no-lines guard). Best-effort over the CURRENT page — a fuller guard
+  // would need a server count; the finalise mutation is the source of truth.
   const canFinalise = () =>
     rows().some(line => line.countedNumberOfPacks != null);
 
-  // Header click: TanStack computed the next direction; just record it.
-  const onSort = (key: SortKey, desc: boolean) => setSort({ key, desc });
+  // Header click: TanStack computed the next direction; record it as the
+  // GraphQL sort array and reset to the first page.
+  const onSort = (key: SortKey, desc: boolean) =>
+    setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
 
-  // Row click → open the editor (update mode) on that line's ITEM (all its
-  // batches).
-  const openRow = (line: Line) =>
-    setEditState({ mode: 'update', itemId: line.item.id });
-
-  // "Add item" (empty state + toolbar) → open the editor in add mode; the modal
-  // searches for an item not yet on the stocktake.
-  const openAdd = () => setEditState({ mode: 'add' });
-
-  // The item AFTER currentId in the CURRENT on-screen order (sortedRows) —
-  // "OK & next" advances to this. We walk the list top-to-bottom, collapsing to
-  // distinct items (each Line is a batch, so one item spans several rows), and
-  // return the first distinct item that appears AFTER the first row of the
-  // current item and hasn't been seen yet. Anchoring on the FIRST current row
-  // and skipping already-seen items makes it correct whether the table is
-  // grouped (item rows adjacent) or ungrouped (an item's batches interleaved):
-  // once we're past the current item's first row, the next new item is next.
-  // undefined = the current item is the last distinct item → no next (the
-  // modal then shows OK without OK & next). This follows the user's chosen
-  // sort/filter — unlike upstream OMS, which steps in a hardcoded item order.
-  const nextAfter = (
-    list: Line[],
-    currentId: string
-  ): StocktakeLineEditItem | undefined => {
-    const seen = new Set<string>();
-    let past = false;
-    for (const line of list) {
-      const id = line.item.id;
-      if (id === currentId) {
-        past = true;
-        seen.add(id);
-        continue;
-      }
-      if (past && !seen.has(id))
-        return { id, code: line.item.code, name: line.itemName };
-      seen.add(id);
-    }
-    return undefined;
+  const onFilterChange = (next: StocktakeLineFilter) => {
+    setQuery({ ...query(), filter: next, offset: 0 });
+    setSelectedIds([]);
   };
 
-  // Resolve everything the modal needs for one item, from the CURRENT
-  // filtered/sorted list — the item descriptor, its lines (to seed the draft),
-  // and the next item to advance to. The modal calls this on open and again on
-  // each "OK & next". undefined = the item is no longer in the list (e.g. the
-  // filter changed underneath) → the modal closes. Computed here (the parent
-  // owns the list); surfaced to the modal purely THROUGH this call.
-  const itemInfo = (id: string): StocktakeItemInfo | undefined => {
-    const list = sortedRows();
-    const current = list.find(line => line.item.id === id);
-    if (!current) return undefined;
-    return {
-      item: { id, code: current.item.code, name: current.itemName },
-      lines: list.filter(line => line.item.id === id),
-      nextItem: nextAfter(list, id),
-    };
-  };
+  // Row click → open the editor on that line's ITEM (all its batches). The
+  // modal advances through the list itself via "OK & next".
+  const openRow = (line: Line) => setEditState({ itemId: line.item.id });
 
-  // Reflect a line change in place (no refetch): drop deleted ids, replace
-  // updated lines by id, append inserted lines — all the SAME StocktakeLine
-  // fragment. The ONE way rows() mutates: the line-edit modal passes a full
-  // LineEditCommit; the selection actions pass a partial (delete-only or
-  // update-only), so every path reduces to one splice with consistent
-  // semantics.
-  const applyCommit = (commit: Partial<LineEditCommit>) => {
-    mutate((node: StocktakeNode | undefined) => {
-      if (!node) return node;
-      const deleted = new Set(commit.deletedIds);
-      const updatedById = new Map(
-        (commit.updated ?? []).map(line => [line.id, line])
-      );
-      const nodes = node.lines.nodes
-        .filter(line => !deleted.has(line.id))
-        .map(line => updatedById.get(line.id) ?? line)
-        .concat(commit.inserted ?? []);
-      return { ...node, lines: { ...node.lines, nodes } };
-    });
-    // Clear any stale error on the lines that just committed — a successfully
-    // saved/deleted line is no longer in error. (A partial bulk action clears
-    // the committed ids here, then stamps the failed ones via onError right
-    // after — so the two stay in sync.)
-    const committed = [
-      ...(commit.deletedIds ?? []),
-      ...(commit.updated ?? []).map(line => line.id),
-      ...(commit.inserted ?? []).map(line => line.id),
-    ];
-    if (committed.some(id => lineErrors().has(id))) {
-      setLineErrors(prev => {
-        const next = new Map(prev);
-        committed.forEach(id => next.delete(id));
-        return next;
-      });
-    }
-  };
+  // "Add item" (empty state + toolbar) → open the editor in the item-search
+  // state (no initial item).
+  const openAdd = () => setEditState({});
 
-  // --- Stocktake-level saves (updateStocktake, spliced back with no refetch)
-  // ---
+  // --- Stocktake-level saves (updateStocktake, spliced back with no refetch) --
 
   const current = () => info();
 
@@ -382,9 +274,7 @@ const StocktakeDetailView: Component = () => {
   // place on success. No user-facing error branch — any rejection here is
   // unexpected (the UI disables the fields once the stocktake is
   // finalised/locked) and saveStocktakeFields has already routed it to the
-  // global modal; on undefined we simply stay put. Shared by the debounce
-  // buffer (text fields) and on-hold (isLocked); the patch is a subset of
-  // UpdateStocktakeInput, so no separate patch type.
+  // global modal. The patch is a subset of UpdateStocktakeInput.
   const saveField = async (
     patch: Partial<Omit<UpdateStocktakeVariables['input'], 'id'>>
   ) => {
@@ -394,10 +284,8 @@ const StocktakeDetailView: Component = () => {
       id: node.id,
       ...patch,
     });
-    // updateStocktake returns info fields only — merge over the current node
-    // to keep its lines.
     if (saved)
-      mutate((prev: StocktakeNode | undefined) =>
+      mutate((prev: StocktakeInfoNode | undefined) =>
         prev ? { ...prev, ...saved } : prev
       );
   };
@@ -405,14 +293,9 @@ const StocktakeDetailView: Component = () => {
   // ONE debounced-edit buffer for every as-you-type text field on the
   // stocktake (the toolbar's description + the side panel's counted-by /
   // verified-by / comment), owned here and passed whole to both children. One
-  // buffer = coalescing spans the whole entity: editing the description then a
-  // side-panel field in a single burst sends ONE updateStocktake with all
-  // changed keys, not two (createDebouncedEdit accumulates the dirty keys).
-  // Seeded from info() and re-seeded when the stocktake identity changes —
-  // including the first time the fetch lands (id goes '' → the real id,
-  // populating the buffer); never re-hydrated from a save result, so a returned
-  // node can't clobber in-progress typing. The debounced save writes the
-  // changed fields straight through saveField.
+  // buffer = coalescing spans the whole entity. Seeded from info() and
+  // re-seeded when the stocktake identity changes; never re-hydrated from a save
+  // result, so a returned node can't clobber in-progress typing.
   const edit = createDebouncedEdit<StocktakeEditFields>({
     id: () => current()?.id ?? '',
     initial: () => ({
@@ -425,50 +308,113 @@ const StocktakeDetailView: Component = () => {
   });
   const setHold = (hold: boolean) => void saveField({ isLocked: hold });
 
-  // Finalise is owned by FinaliseAction (the status footer's action component
-  // — it calls finaliseStocktake and routes a rejection through
-  // onError/onShowErrors). On success it hands the saved node back here:
-  // finaliseStocktake returns the StocktakeInfo fragment (status/dates), which
-  // we merge over the current node to keep its lines, reflecting the FINALISED
-  // state in place with no refetch (kdd/state-management). NEW → FINALISED is
-  // the only status write.
-  const onFinalised = (saved: StocktakeInfoFragment) =>
-    mutate((prev: StocktakeNode | undefined) =>
+  // Finalise is owned by FinaliseAction; on success it hands the saved node
+  // back here, which we merge over the current node to reflect the FINALISED
+  // state in place with no refetch. A finalise can change lines (it may zero
+  // uncounted lines), so we also refetch the lines page.
+  const onFinalised = (saved: StocktakeInfoFragment) => {
+    mutate((prev: StocktakeInfoNode | undefined) =>
       prev ? { ...prev, ...saved } : prev
     );
+    void refetchAfterSave();
+  };
 
-  // --- Selection actions ---
-  // Each action (Delete / Change location / Reduce to 0) is its own
-  // self-contained component in actions/ (button + modal + run); the view keeps
-  // ownership of rows/selection/errors and applies each result through
-  // applyCommit (no refetch) — delete drops the deleted lines, the updates
-  // splice the returned lines back; a partial failure stamps the per-line
-  // errors.
-  //
-  // applyCommit DOESN'T clear the selection — the action components host their
-  // modal inside the selection footer, so clearing here would unmount the modal
-  // mid-success-phase. Selection is cleared when the modal closes, by which
-  // point the success/error phase has been seen.
-
-  // "Show error lines" (the action modals' error phase + the finalise error
-  // dialog): wipe every other filter and keep ONLY the error lines (OMS "add
-  // filter for errors"). Clears the selection so the footer returns to the
-  // status view.
+  // --- Selection actions + line-edit modal: refetch the page on any change ---
+  // Each action (Delete / Change location / Reduce to 0) and the line-edit modal
+  // report success; the view refetches the current lines page (no splice — the
+  // small page is cheap, kdd/stocktake-line-editing). Errors still stamp inline
+  // via stampErrors so the offending rows flag their error.
 
   // Stamp the per-line errors (lineId → typename) — drives the inline
-  // Snapshot-cell message + the errors filter chip (via hasErrors). An action
-  // calls this the moment a save partially fails, so the offending rows show
-  // their error even before the user chooses to filter to them.
+  // Snapshot-cell message. An action/finalise calls this the moment a save
+  // partially fails.
   const stampErrors = (errors: LineErrors) => setLineErrors(new Map(errors));
 
-  // "Show error lines" — filter to ONLY the stamped error lines (OMS "add
-  // filter for errors") and clear the selection so the footer returns to the
-  // status view. Takes no args: it reads the ids off the already-stamped
-  // lineErrors map (the action stamped them on failure).
-  const showErrors = () => {
-    setFilter({ errorIds: [...lineErrors().keys()] });
+  // A line-level change committed (line-edit modal OR a selection action). We
+  // refetch the current page rather than splice; the fresh page also clears
+  // stale rows. Selection is cleared so the footer returns to the status view.
+  const onLinesChanged = () => {
     setSelectedIds([]);
+    void refetchAfterSave();
   };
+
+  // "OK & next" (update mode) asks the parent for the next item to edit. We own
+  // this (not the modal) because the list is server-paginated: the next item
+  // may be on a later PAGE, and finding it means advancing the detail table
+  // forward — the same as the user paging. Rules (see the behaviour matrix):
+  //   1. Scan the CURRENT page's rows after the current item for the next
+  //      distinct item not in `covered` (an item spans several batch rows).
+  //   2. If none on this page and more pages exist, advance to the next page
+  //      (offset += first — the table VISIBLY moves), fetch it, and rescan.
+  //   3. Exhausted (no eligible item on any further page) → undefined; the
+  //      modal then drops into add mode. The table stays on the last page.
+  // `covered` is the modal's this-iteration set (items already stepped
+  // through), passed in so a re-appearing item isn't offered twice, across
+  // pages too.
+  //
+  // Pages beyond the first are fetched DIRECTLY (not via the reactive resource)
+  // so the walk is race-free; we still setQuery(offset) so the visible table
+  // follows along, and the resource refetches that page in the background.
+  const nextItem = async (
+    currentId: string,
+    covered: Set<string>
+  ): Promise<StocktakeLineEditItem | undefined> => {
+    // Pick the next distinct, uncovered item within a page's rows. On the
+    // CURRENT page we must start AFTER the current item's row (`fromStart` =
+    // false): items before it are uncovered but already behind us, so a `past`
+    // gate walks past the current item first. On later pages everything is
+    // "after", so `fromStart` = true. An item spans several batch rows; the
+    // covered set (which includes the current item) skips repeats.
+    const pick = (
+      pageRows: Line[],
+      fromStart: boolean
+    ): StocktakeLineEditItem | undefined => {
+      let past = fromStart;
+      for (const line of pageRows) {
+        const id = line.item.id;
+        if (id === currentId) {
+          past = true; // now past the current item's rows
+          continue;
+        }
+        if (!past || covered.has(id)) continue;
+        return { id, code: line.item.code, name: line.itemName };
+      }
+      return undefined;
+    };
+
+    // 1. The current page (already loaded) — scan only after the current item.
+    const onThisPage = pick(rows(), false);
+    if (onThisPage) return onThisPage;
+
+    // 2/3. Walk forward a page at a time until we find one or run out. Later
+    // pages scan from their top (fromStart), the covered set guarding repeats.
+    let offset = query().offset;
+    const first = query().first;
+    for (;;) {
+      offset += first;
+      if (offset >= totalCount()) return undefined; // no further pages
+      // Move the visible table to this page (the resource refetches it too).
+      setQuery({ ...query(), offset });
+      const result = await graphqlFetch(StocktakeLines, {
+        storeId: params.storeId,
+        stocktakeId: params.stocktakeId,
+        filter: stripEmpty(query().filter),
+        sort: query().sort,
+        page: { first, offset },
+      });
+      if (result.kind !== 'success') return undefined;
+      const found = pick(result.data.stocktakeLines.nodes, true);
+      if (found) return found;
+      // else keep advancing
+    }
+  };
+
+  // "Show error lines" — TODO: the old client-side errors-only filter is gone
+  // (the server can't filter by an arbitrary id list yet — see
+  // stocktakeDetailFilters.tsx). For now this just clears the selection so the
+  // footer returns to the status view; the error lines already flag inline via
+  // stampErrors.
+  const showErrors = () => setSelectedIds([]);
 
   // Crumbs are an accessor so t() re-translates on locale change.
   const crumbs = (node: StocktakeInfoFragment) => [
@@ -483,9 +429,9 @@ const StocktakeDetailView: Component = () => {
   const columns = (): Column<Line, SortKey>[] => [
     {
       // Column id is the e2e/TESTIDS.md contract's `item.code` (the accessor
-      // path, dots included — shared with OMS); the sort key stays `code`.
+      // path); the server sort key is `itemCode`.
       c: { accessor: line => line.item.code, id: 'item.code' },
-      sortKey: 'code',
+      sortKey: 'itemCode',
       header: t('label.code'),
     },
     {
@@ -494,13 +440,11 @@ const StocktakeDetailView: Component = () => {
       header: t('label.name'),
       // Item names are long — allow up to two wrapped lines before clamping.
       meta: { card: { region: 'primary' }, wrapLines: 2 },
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
       header: t('label.batch'),
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'expiryDate' },
@@ -515,9 +459,8 @@ const StocktakeDetailView: Component = () => {
       ...getNumberCell(),
       // Snapshot cell also carries the line's error inline beneath the count (a
       // snapshot/current-count mismatch is a "recount this line" message about
-      // the snapshot). The error wraps on its own line in the error tone;
-      // colours/sizes are tokens (a section owns no stylesheet, so the dynamic
-      // sub-text is styled inline from the design tokens).
+      // the snapshot). Styled inline from the design tokens (a section owns no
+      // stylesheet).
       cell: info => {
         const value = info.getValue<number | null | undefined>();
         return (
@@ -529,8 +472,6 @@ const StocktakeDetailView: Component = () => {
             }}
           >
             <span>{value ?? ''}</span>
-            {/* The snapshot/current-count mismatch is the "recount this line" error about the snapshot;
-                other line errors surface in the edit modal, not on this read-only list. */}
             <Show
               when={
                 lineErrors().get(info.row.original.id) ===
@@ -559,10 +500,9 @@ const StocktakeDetailView: Component = () => {
       ...getNumberCell(),
       meta: { align: 'right', card: { region: 'badge' } },
     },
-    // The remaining editable fields (mirroring the line-edit panel) as
-    // columns, so the detail table shows everything the editor can change.
-    // Start hidden by default so the table isn't overwhelming — the user
-    // reveals them via the column-visibility settings.
+    // The remaining editable fields (mirroring the line-edit panel) as columns.
+    // Start hidden by default. Only the fields the server can sort on carry a
+    // `sortKey` (packSize) — the rest render as unsortable headers.
     {
       c: { key: 'packSize' },
       sortKey: 'packSize',
@@ -571,56 +511,50 @@ const StocktakeDetailView: Component = () => {
     },
     {
       c: { key: 'sellPricePerPack' },
-      sortKey: 'sellPricePerPack',
       header: t('label.pack-sell-price'),
       ...getNumberCell(),
     },
     {
       c: { key: 'costPricePerPack' },
-      sortKey: 'costPricePerPack',
       header: t('label.pack-cost-price'),
       ...getNumberCell(),
     },
     {
       c: { key: 'manufactureDate' },
-      sortKey: 'manufactureDate',
       header: t('label.manufacture-date'),
       ...getDateCell(),
     },
     {
-      // Location is nested (location.code) — an accessor column.
+      // Location is nested (location.code) — an accessor column. Server sorts by
+      // locationCode.
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
-      sortKey: 'location',
+      sortKey: 'locationCode',
       header: t('label.location'),
     },
     {
-      // The adjustment reason (reasonOption.reason) — an accessor column.
+      // The adjustment reason (reasonOption.reason) — an accessor column. Server
+      // sorts by reasonOption.
       c: { accessor: line => line.reasonOption?.reason ?? '', id: 'reason' },
-      sortKey: 'reason',
+      sortKey: 'reasonOption',
       header: t('label.reason'),
     },
     {
       c: { key: 'note' },
-      sortKey: 'note',
       header: t('label.note'),
     },
   ];
 
   return (
-    // Local Suspense boundary: the FIRST read of data() (info()/rows())
-    // suspends until the fetch lands. Catching it here — rather than letting it
-    // bubble to AppShell's section <Suspense> — keeps first-load from tripping
-    // the section fallback and remounting the view
-    // (kdd/solid-reactivity-pitfalls). Its fallback is a centred spinner. Every
-    // later save is a mutate(), which never suspends, so this fallback shows
-    // only on the initial fetch.
+    // Local Suspense boundary: the FIRST read of data() (info()) suspends until
+    // the info fetch lands. Catching it here keeps first-load from tripping the
+    // section fallback and remounting the view (kdd/solid-reactivity-pitfalls).
+    // Every later stocktake-level save is a mutate(), which never suspends, so
+    // this fallback shows only on the initial info fetch. The lines resource is
+    // read non-suspending (.latest), so a lines refetch never trips it.
     <Suspense fallback={<Spinner center />}>
-      {/* NON-keyed Show: the subtree stays mounted while info() is truthy. It must NOT be `keyed`
-          — a keyed Show re-runs (tears down + rebuilds) its child whenever the `when` value's
-          IDENTITY changes, and every stocktake-level save sets a fresh node object (setInfo), so
-          keyed would recreate the whole page — dropping focus from the description/side-panel
-          input you're typing in. Non-keyed passes an accessor (node()) and only the fine-grained
-          reads re-run. */}
+      {/* NON-keyed Show: the subtree stays mounted while info() is truthy — a
+          keyed Show would tear down + rebuild on every stocktake-level save
+          (fresh node object), dropping focus from the field being typed. */}
       <Show when={info()}>
         {node => (
           <Page
@@ -639,16 +573,13 @@ const StocktakeDetailView: Component = () => {
               <Header>
                 <Breadcrumb crumbs={crumbs(node())} />
                 <HeaderButtons>
-                  {/* "Add item" (primary) — opens the line-edit modal in add
-                      mode, next to "More" as in OMS. Only while the stocktake is
-                      editable (an on-hold/finalised one can't gain lines). */}
+                  {/* "Add item" — opens the line-edit modal in the item-search
+                      state. Only while the stocktake is editable. */}
                   <Show when={!isDisabled(node())}>
                     <Button icon={<PlusCircleIcon />} onClick={openAdd}>
                       {t('button.add-item')}
                     </Button>
                   </Show>
-                  {/* A labelled "More" button (info icon + text), like OMS's details button. It
-                      hides while the panel is open — the panel's own close button takes over. */}
                   <Show when={!sidePanelOpen()}>
                     <Button
                       variant="secondary"
@@ -665,17 +596,16 @@ const StocktakeDetailView: Component = () => {
                     disabled={isDisabled(node())}
                     edit={edit}
                     filter={filter()}
-                    onFilterChange={setFilter}
-                    hasErrors={lineErrors().size > 0}
+                    onFilterChange={onFilterChange}
                   />
                 </Toolbar>
               </Header>
             }
             contentFooter={
-              // Selection action bar while lines are selected (delete);
-              // otherwise the stocktake status footer (on-hold / stepper /
-              // finalise). Matches OMS, which swaps the whole footer on
-              // selection.
+              // Selection action bar while lines are selected; otherwise the
+              // stocktake status footer (on-hold / stepper / finalise). Matches
+              // OMS, which swaps the whole footer on selection. Pagination is NOT
+              // here anymore — it's overlaid inside the DataTable.
               <Show
                 when={selectedIds().length > 0}
                 fallback={
@@ -686,11 +616,6 @@ const StocktakeDetailView: Component = () => {
                     canFinalise={canFinalise()}
                     onSetHold={setHold}
                     onFinalised={onFinalised}
-                    // Finalise is stocktake-level; its only line-carrying
-                    // rejection is the snapshot/ current-count mismatch — map
-                    // each offending id to that LINE-level typename so the
-                    // Snapshot column shows the same "recount this line"
-                    // message a batch would.
                     onError={lineIds =>
                       stampErrors(
                         new Map(
@@ -706,20 +631,19 @@ const StocktakeDetailView: Component = () => {
                 }
               >
                 <ContentFooter>
-                  {/* Count + actions on the inline-start (OMS layout): Delete, Change location,
-                      Reduce to 0. All disabled while the stocktake is finalised / on hold. */}
                   <strong>
                     {selectedIds().length} {t('label.selected')}
                   </strong>
-                  {/* Each action owns its own button + confirm → working → success | error modal +
-                      run; the view supplies storeId/selection and applies the result via callbacks —
-                      onCommit splices what saved, onError stamps the failed lines (rows show them),
-                      onShowErrors filters to those lines (the error phase's "Show error lines"). */}
+                  {/* Each action owns its own button + confirm/working/success/
+                      error modal + run; the view supplies storeId/selection and
+                      refetches the page on any commit (onCommit → onLinesChanged),
+                      stamps failed lines inline (onError), and clears selection on
+                      the error phase's "Show error lines" (onShowErrors). */}
                   <DeleteLinesAction
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onCommit={applyCommit}
+                    onCommit={onLinesChanged}
                     onError={stampErrors}
                     onShowErrors={showErrors}
                   />
@@ -727,7 +651,7 @@ const StocktakeDetailView: Component = () => {
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onCommit={applyCommit}
+                    onCommit={onLinesChanged}
                     onError={stampErrors}
                     onShowErrors={showErrors}
                   />
@@ -735,11 +659,10 @@ const StocktakeDetailView: Component = () => {
                     storeId={params.storeId}
                     selectedIds={selectedIds}
                     disabled={isDisabled(node())}
-                    onCommit={applyCommit}
+                    onCommit={onLinesChanged}
                     onError={stampErrors}
                     onShowErrors={showErrors}
                   />
-                  {/* Clear selection pinned to the inline-end. */}
                   <ContentFooterActions>
                     <Button
                       variant="secondary"
@@ -755,19 +678,16 @@ const StocktakeDetailView: Component = () => {
           >
             <DataTable
               columns={columns()}
-              rows={sortedRows()}
+              rows={rows()}
               rowKey={line => line.id}
-              // Non-suspending loading read — covers a between-stocktake
-              // refetch (keeps rows + shows the refreshing bar); the initial
-              // load is handled by the Suspense fallback below.
-              loading={data.loading}
-              sort={sort()}
+              // Non-suspending loading read — a between-page/filter/sort refetch
+              // keeps rows + shows the refreshing bar; a post-save refetch is
+              // silent (tableLoading gates it out). Initial load → Suspense.
+              loading={tableLoading()}
+              sort={currentSort()}
               onSort={onSort}
               onRowClick={isDisabled(node()) ? undefined : openRow}
               emptyMessage={t('error.no-stocktake-items')}
-              // "Add item" — only offered while the stocktake is editable (an
-              // empty finalised/locked one can't gain lines). Opens the line-
-              // edit modal in add mode (search → edit the item's stock lines).
               empty={
                 isDisabled(node()) ? undefined : (
                   <Button
@@ -779,30 +699,28 @@ const StocktakeDetailView: Component = () => {
                   </Button>
                 )
               }
-              rowGroup={{
-                columnId: 'item.code',
-                labelKey: 'label.name',
-              }}
               enableSelection
               selectedIds={selectedIds()}
               onSelectionChange={setSelectedIds}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}
+              pagination={{
+                offset: query().offset,
+                pageSize: query().first,
+                total: totalCount(),
+                onOffsetChange: offset => setQuery({ ...query(), offset }),
+                onPageSizeChange: first =>
+                  setQuery({ ...query(), first, offset: 0 }),
+              }}
             />
             <StocktakeLineEditModal
               open={editState() != null}
               onClose={() => setEditState(undefined)}
               storeId={params.storeId}
               stocktakeId={node().id}
-              mode={editState()?.mode ?? 'update'}
-              initialItemId={
-                editState()?.mode === 'update'
-                  ? (editState() as { itemId: string }).itemId
-                  : undefined
-              }
-              itemInfo={itemInfo}
-              excludeItemIds={existingItemIds}
-              onCommitted={applyCommit}
+              initialItemId={editState()?.itemId}
+              nextItem={nextItem}
+              onSaved={onLinesChanged}
             />
           </Page>
         )}

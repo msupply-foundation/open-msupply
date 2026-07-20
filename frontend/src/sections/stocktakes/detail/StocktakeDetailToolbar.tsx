@@ -32,11 +32,6 @@ export interface StocktakeDetailToolbarProps {
   edit: StocktakeFieldEdit;
   filter: StocktakeLineFilter;
   onFilterChange: (filter: StocktakeLineFilter) => void;
-  /**
-   * True when the stocktake has error lines — enables the removable "Error
-   * lines" filter chip.
-   */
-  hasErrors: boolean;
 }
 
 export const StocktakeDetailToolbar: Component<
@@ -75,20 +70,23 @@ export const StocktakeDetailToolbar: Component<
         />
       </FieldRow>
 
+      {/* Always-on item search — name OR code (server itemCodeOrName.like), like
+          OMS's SearchBar. Blank clears to null so stripEmpty drops it (a blank
+          `like` would match everything). */}
       <FilterTextInput
         label={t('placeholder.filter-items')}
         placeholder={t('placeholder.filter-items')}
-        value={props.filter.search ?? ''}
+        value={props.filter.itemCodeOrName?.like ?? ''}
         onInput={value =>
-          props.onFilterChange({ ...props.filter, search: value })
+          props.onFilterChange({
+            ...props.filter,
+            itemCodeOrName: value ? { like: value } : null,
+          })
         }
-        // Client-side line filter (in-memory) → no debounce (spec: inputs.md §
-        // Server-bound input).
-        debounceMs={0}
       />
 
       <FilterBar
-        filters={stocktakeDetailFilters(props.hasErrors)}
+        filters={stocktakeDetailFilters()}
         filter={props.filter}
         onChange={props.onFilterChange}
       />

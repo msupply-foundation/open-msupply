@@ -1,5 +1,5 @@
-/* Add mode: the "Add:" prefix + the inline item selector sit on the title row.
-   The selector takes the remaining space so it reads as one heading-level
+/* The inline item selector sits on the title row (no "Add"/"Edit" label — one
+   combined flow). It takes the full width so it reads as one heading-level
    control; min-inline-size:0 lets it shrink rather than push Add batch off. */
 .addTitle {
   display: flex;
@@ -8,12 +8,6 @@
   inline-size: 100%;
   min-inline-size: 0;
   font-weight: var(--weight-regular);
-}
-
-.addPrefix {
-  flex-shrink: 0;
-  font-weight: var(--weight-bold);
-  color: var(--gray-dark);
 }
 
 .addSelect {

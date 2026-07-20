@@ -1,7 +1,9 @@
-# A single stocktake with its lines, for the detail view. The stocktake-level fields feed the
-# page header (number / status / description / comment); the lines feed the DataTable (front-end
-# sorted + grouped). StocktakeResponse is StocktakeNode | NodeError; the view promotes NodeError
-# to the global error modal.
+# A single stocktake (info only) for the detail view. The stocktake-level fields feed the page
+# header (number / status / description / comment), the status footer and the side panel. The
+# LINES are NOT selected here — they come from the separate, server-paginated `stocktakeLines`
+# query below (kdd/stocktake-line-editing: the detail table is server sorted / filtered / paged,
+# not client-side over a whole-connection fetch). StocktakeResponse is StocktakeNode | NodeError;
+# the view promotes NodeError to the global error modal.
 #
 # The stocktake-level fields the detail view reads AND edits: the header (number/status/
 # description), the status footer (status/isLocked/finalisedDatetime), and the Additional-info
@@ -73,20 +75,44 @@ query stocktakeDetail($storeId: String!, $stocktakeId: String!) {
     __typename
     ... on StocktakeNode {
       ...StocktakeInfo
-      lines {
-        ... on StocktakeLineConnector {
-          __typename
-          totalCount
-          nodes {
-            ...StocktakeLine
-          }
-        }
-      }
     }
     ... on NodeError {
       error {
         __typename
         description
+      }
+    }
+  }
+}
+
+# The detail table's rows: one server-paginated / filtered / sorted page of a stocktake's lines.
+# A DIFFERENT query from `stocktakeDetail` (which is info-only) so the two refetch independently —
+# a stocktake-level save (description/hold/finalise) never re-pulls the lines, and a line save
+# refetches only the current page (kdd/stocktake-line-editing). Same `StocktakeLine` fragment the
+# batch mutation returns, so nothing is remapped. filter/sort/page conform to the generated input
+# types (kdd/type-safety) — the URL query state carries them verbatim.
+#
+# The line-edit modal also uses this query with `filter: { itemId }` to load one item's existing
+# lines (it self-queries rather than being fed lines as props).
+query stocktakeLines(
+  $storeId: String!
+  $stocktakeId: String!
+  $page: PaginationInput
+  $filter: StocktakeLineFilterInput
+  $sort: [StocktakeLineSortInput!]
+) {
+  stocktakeLines(
+    storeId: $storeId
+    stocktakeId: $stocktakeId
+    page: $page
+    filter: $filter
+    sort: $sort
+  ) {
+    ... on StocktakeLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StocktakeLine
       }
     }
   }

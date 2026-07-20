@@ -24,7 +24,6 @@ import {
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { Pagination } from '../../../ui/elements/table/Pagination';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
@@ -316,25 +315,11 @@ const StocktakesList: Component = () => {
         </Header>
       }
       contentFooter={
-        // The page's one contextual footer band (matching Open mSupply):
-        // pagination normally, replaced by the selection action bar while rows
-        // are selected.
-        <Show
-          when={selectedIds().length > 0}
-          fallback={
-            <ContentFooter>
-              <Pagination
-                offset={query().offset}
-                pageSize={query().first}
-                total={totalCount()}
-                onOffsetChange={offset => setQuery({ ...query(), offset })}
-                onPageSizeChange={first =>
-                  setQuery({ ...query(), first, offset: 0 })
-                }
-              />
-            </ContentFooter>
-          }
-        >
+        // The page's one contextual footer band: the selection action bar while
+        // rows are selected, otherwise nothing (pagination now renders as an
+        // overlay INSIDE the DataTable — see the `pagination` prop below —
+        // matching the stocktake detail view; kdd/table-state).
+        <Show when={selectedIds().length > 0}>
           <ContentFooter testId="actions-footer">
             {/* Matching Open mSupply's action bar: the count and the row action(s)
                 (Delete) group on the inline-start edge; Clear pins inline-end. */}
@@ -401,6 +386,16 @@ const StocktakesList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        // Pagination renders as an overlay INSIDE the table (bottom-inline-end),
+        // not in a page footer band — consistent with the stocktake detail view
+        // (kdd/table-state). State stays page-owned/URL-backed.
+        pagination={{
+          offset: query().offset,
+          pageSize: query().first,
+          total: totalCount(),
+          onOffsetChange: offset => setQuery({ ...query(), offset }),
+          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+        }}
       />
       <CreateStocktakeModal
         open={createOpen()}

@@ -59,12 +59,6 @@ export type StocktakeDetailVariables = {
 export type StocktakeDetailResult = {
   stocktake: ({
   __typename: "StocktakeNode";
-} & {
-  lines: {
-  __typename: "StocktakeLineConnector";
-  totalCount: number;
-  nodes: Array<StocktakeLineFragment>;
-};
 } & StocktakeInfoFragment) | ({
   __typename: "NodeError";
 } & {
@@ -76,8 +70,75 @@ export type StocktakeDetailResult = {
 };
 
 export const StocktakeDetail = {
-  query: "query stocktakeDetail($storeId: String!, $stocktakeId: String!) {\n  stocktake(storeId: $storeId, id: $stocktakeId) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n      lines {\n        ... on StocktakeLineConnector {\n          __typename\n          totalCount\n          nodes {\n            ...StocktakeLine\n          }\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n  }\n}\n\nfragment StocktakeLine on StocktakeLineNode {\n  id\n  itemName\n  item {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  batch\n  expiryDate\n  manufactureDate\n  snapshotNumberOfPacks\n  countedNumberOfPacks\n  packSize\n  sellPricePerPack\n  costPricePerPack\n  comment\n  note\n  location {\n    id\n    code\n    name\n  }\n  reasonOption {\n    id\n    type\n    reason\n  }\n}",
+  query: "query stocktakeDetail($storeId: String!, $stocktakeId: String!) {\n  stocktake(storeId: $storeId, id: $stocktakeId) {\n    __typename\n    ... on StocktakeNode {\n      ...StocktakeInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment StocktakeInfo on StocktakeNode {\n  id\n  stocktakeNumber\n  status\n  description\n  comment\n  isLocked\n  countedBy\n  verifiedBy\n  stocktakeDate\n  finalisedDatetime\n  createdDatetime\n  user {\n    username\n  }\n}",
 } as TypedDocument<StocktakeDetailResult, StocktakeDetailVariables>;
+
+export type StocktakeLinesVariables = {
+  storeId: string;
+  stocktakeId: string;
+  page?: {
+    first?: number | null;
+    offset?: number | null;
+  } | null;
+  filter?: {
+    id?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    stocktakeId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    locationId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    itemCodeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    itemId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    stockLineId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+  } | null;
+  sort?: Array<{
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationCode" | "snapshotNumberOfPacks" | "countedNumberOfPacks" | "reasonOption";
+    desc?: boolean | null;
+  }> | null;
+};
+
+export type StocktakeLinesResult = {
+  stocktakeLines: ({
+  __typename: "StocktakeLineConnector";
+} & {
+  totalCount: number;
+  nodes: Array<StocktakeLineFragment>;
+});
+};
+
+export const StocktakeLines = {
+  query: "query stocktakeLines($storeId: String!, $stocktakeId: String!, $page: PaginationInput, $filter: StocktakeLineFilterInput, $sort: [StocktakeLineSortInput!]) {\n  stocktakeLines(\n    storeId: $storeId\n    stocktakeId: $stocktakeId\n    page: $page\n    filter: $filter\n    sort: $sort\n  ) {\n    ... on StocktakeLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...StocktakeLine\n      }\n    }\n  }\n}\n\nfragment StocktakeLine on StocktakeLineNode {\n  id\n  itemName\n  item {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  batch\n  expiryDate\n  manufactureDate\n  snapshotNumberOfPacks\n  countedNumberOfPacks\n  packSize\n  sellPricePerPack\n  costPricePerPack\n  comment\n  note\n  location {\n    id\n    code\n    name\n  }\n  reasonOption {\n    id\n    type\n    reason\n  }\n}",
+} as TypedDocument<StocktakeLinesResult, StocktakeLinesVariables>;
 
 export type BatchStocktakeLinesVariables = {
   storeId: string;

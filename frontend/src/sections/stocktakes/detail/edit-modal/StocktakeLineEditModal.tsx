@@ -32,6 +32,7 @@ import {
 } from '../../../../ui/icons';
 import {
   StockLinesByItem,
+  StocktakeLines,
   type StocktakeLineFragment,
   type StockLinesByItemResult,
 } from '../lines/stocktakeDetail.generated';
@@ -44,57 +45,30 @@ import type { LineErrors } from '../lines/stocktakeLineErrors';
 import styles from './StocktakeLineEditModal.module.css';
 
 // The stocktake line-edit modal (kdd/edit-line-card-table +
-// kdd/stocktake-line-editing). Opened from a detail-view row; it edits ALL of
-// that ITEM's lines (batches) at once — the item is fixed (shown read-only at
-// the top), each batch is one row / one card. The grouped DataTable gives the
-// two faces from ONE column set: tabs (Batch / Pricing / Other) in table view,
-// sections in card view. Edits live in a local draft STORE; Save partitions the
-// draft into one batchStocktake mutation and hands the result back so the
-// detail view can splice the returned nodes into its rows with no refetch.
+// kdd/stocktake-line-editing). It edits ALL of one ITEM's lines (batches) at
+// once — each batch is one row / one card. The grouped DataTable gives two faces
+// from ONE column set: tabs (Batch / Pricing / Other) in table view, sections in
+// card view. Edits live in a local draft STORE; Save partitions the draft into
+// one batchStocktake mutation and — on success — asks the detail view to refetch
+// the current lines page (onSaved). No splice-in-place: the page re-pulls.
 //
-// Editable, matching Open mSupply: batch, expiry + manufacture date, counted
-// packs, pack size, sell/cost price, location, adjustment reason (required once
-// counted differs from snapshot), note + comment. Snapshot packs is the system
-// count (read-only).
+// COMBINED add/edit (no mode flag): the item selector lives in the title the
+// whole time. Picking an item loads THAT item's data from the API — its existing
+// stocktake lines (stocktakeLines filtered by itemId) PLUS its other stock lines
+// (stockLinesByItem) — so the modal self-queries rather than being fed lines as
+// props. An item already on the stocktake loads its counted lines; a brand-new
+// item starts a fresh count. The search shows EVERY item (no exclusion).
+//
+// The parent tells the modal only which item to OPEN on (initialItemId, from a
+// row click) or none (Add item → start in the search state), plus the current
+// list filter/sort so "OK & next" can step through the SAME server order the
+// table shows.
 
-// LineEditCommit (what the detail view applies in place) now lives with the
-// shared batch layer (stocktakeLineUpdate) — it's the common return of every
-// batchStocktake call, not modal-specific. Re-exported (imported above) so
-// existing importers keep resolving it from this module.
+// LineEditCommit is re-exported (imported above) so existing importers keep
+// resolving it from this module.
 export type { LineEditCommit };
 
 export type StocktakeLineEditItem = { id: string; code: string; name: string };
-
-// What the parent resolves for one item, from its current filtered/sorted list,
-// and hands to the modal THROUGH the itemInfo(id) call: the item descriptor,
-// that item's lines (to seed the draft), and the next item to advance to on
-// "OK & next" (undefined = this is the last item → no OK & next). The parent
-// owns the list and the ordering; the modal is told only the answer per item.
-export type StocktakeItemInfo = {
-  item: StocktakeLineEditItem;
-  lines: StocktakeLineFragment[];
-  nextItem?: StocktakeLineEditItem;
-};
-
-// A draft row: the line fragment plus client-only bookkeeping.
-// - isNew        an added batch not yet on the stocktake (→ insert when
-// counted). - stockLineId  when isNew, the stock line this draft came from (the
-// item's existing batches offered for counting — e.g. batches in OTHER
-// locations a location-filtered stocktake didn't auto-include). Links the
-// insert back to its stock line. - countThisLine  whether the user wants this
-// line IN the stocktake. Existing lines start true; the item's not-yet-counted
-// batches start false (opt-in). It's the routing gate (see buildBatch) and
-// gates the row's other editable cells — matching OMS's client-only
-// countThisLine flag (never sent to the server). - deleted      soft-delete
-// flag: the row is hidden from the table and, if it's an existing line, sent as
-// a delete on save. (isNew rows splice out of the store instead — they never
-// reach the server, so they leave no trace to flag.)
-type DraftLine = StocktakeLineFragment & {
-  isNew?: boolean;
-  stockLineId?: string;
-  countThisLine: boolean;
-  deleted?: boolean;
-};
 
 // One of the item's stock lines (from stockLinesByItem).
 type ItemStockLine = Extract<
@@ -102,22 +76,43 @@ type ItemStockLine = Extract<
   { __typename: 'StockLineConnector' }
 >['nodes'][number];
 
-// Fetch the item's other batches (not already on the stocktake) and build the
-// draft rows. The draft is the stocktake's EXISTING lines for this item
-// (already counted-in → countThisLine true), PLUS those fetched stock lines,
-// linked to their stockLineId (ticking one inserts it, matching OMS). The fetch
-// excludes batches already on the stocktake server-side (excludeStockLineIds =
-// the existing lines' stockLine ids), so a stock line isn't offered twice.
-//
-// countThisLine for the fetched stock lines is `countByDefault`: in UPDATE mode
-// (the item is already on the stocktake) they're offered opt-in (false) — you
-// choose which other batches to add; in ADD mode (a brand-new item, existing
-// empty) they're all counted (true), matching OMS, since adding the item means
-// counting all its batches.
-//
-// Called by loadItem (on mount and on each item change). A failed/empty fetch
-// just yields the existing lines.
-const fetchAndSeed = async (
+// A draft row: the line fragment plus client-only bookkeeping (see the original
+// notes) — isNew / stockLineId / countThisLine / deleted.
+type DraftLine = StocktakeLineFragment & {
+  isNew?: boolean;
+  stockLineId?: string;
+  countThisLine: boolean;
+  deleted?: boolean;
+};
+
+// How many lines/stock lines to pull for one item (a single item never has many
+// batches — one page covers it).
+const ITEM_LINES_PAGE = 500;
+
+// Fetch one item's EXISTING stocktake lines (server-filtered by itemId). The
+// modal self-queries these rather than receiving them as props. Returns [] on a
+// failed/empty fetch.
+const fetchExistingLines = async (
+  storeId: string,
+  stocktakeId: string,
+  itemId: string
+): Promise<StocktakeLineFragment[]> => {
+  const result = await graphqlFetch(StocktakeLines, {
+    storeId,
+    stocktakeId,
+    filter: { itemId: { equalTo: itemId } },
+    page: { first: ITEM_LINES_PAGE },
+  });
+  return result.kind === 'success' ? result.data.stocktakeLines.nodes : [];
+};
+
+// Fetch the item's other batches (stock lines NOT already on the stocktake) and
+// build the draft rows: the existing lines (counted-in → countThisLine true)
+// PLUS those stock lines (linked to their stockLineId — ticking one inserts it).
+// countThisLine for the stock lines is `countByDefault`: opt-in (false) when the
+// item already has lines on the stocktake, all-counted (true) for a brand-new
+// item (adding it means counting all its batches) — matching OMS.
+const buildDraft = async (
   storeId: string,
   item: StocktakeLineEditItem,
   existing: StocktakeLineFragment[],
@@ -164,9 +159,8 @@ const fetchAndSeed = async (
   return [...fromExisting, ...fromStock];
 };
 
-// The tabs / card-groups for the grouped table. Batch is NOT a group — it's an
-// ALL_TABS anchor (shows in every tab, ungrouped in card view), see its column
-// below.
+// The tabs / card-groups for the grouped table (unchanged). Batch is an ALL_TABS
+// anchor (shows in every tab), not its own group.
 type GroupKey = 'batch' | 'pricing' | 'other';
 const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
   {
@@ -186,77 +180,61 @@ const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
   },
 ];
 
-// Which flow the modal is in:
-// - 'update': edit an EXISTING item's lines (opened from a row). Header shows
-//   the item read-only; advancing steps through the list via "OK & next".
-// - 'add': ADD an item not yet on the stocktake (opened from "Add item"). Two
-//   states — search for an item, then edit its (auto-counted) stock lines;
-//   "OK & next" saves and returns to search to add another.
-export type StocktakeLineEditMode = 'add' | 'update';
+// Resolve the next item to step to in UPDATE mode ("OK & next"). Owned by the
+// PARENT (the list is server-paginated — the next item may be on a later page,
+// and finding it advances the detail table forward): given the current item id
+// and the set of items already covered THIS iteration, it returns the next
+// distinct uncovered item in the parent's filtered/sorted order, or undefined
+// when the list is exhausted (→ the modal drops into add mode).
+export type ResolveNextItem = (
+  currentId: string,
+  covered: Set<string>
+) => Promise<StocktakeLineEditItem | undefined>;
 
 interface StocktakeLineEditModalProps {
   open: boolean;
   onClose: () => void;
   storeId: string;
   stocktakeId: string;
-  /** Which flow (add vs update). See StocktakeLineEditMode. */
-  mode: StocktakeLineEditMode;
   /**
-   * UPDATE mode: the item the modal OPENS on. The modal then tracks its own
-   * current item as the user advances with "OK & next", resolving each through
-   * itemInfo. Unused in add mode (no initial item — the user searches).
+   * The item this open STARTS on (a row click) → UPDATE mode. Omitted for "Add
+   * item" → the modal opens in add mode (item-search state). The modal tracks
+   * its own current item as the user advances with "OK & next".
    */
   initialItemId?: string;
   /**
-   * UPDATE mode: resolve one item from the parent's current filtered/sorted
-   * list — its descriptor, its lines (to seed the draft), and the next item to
-   * advance to. Called on open and on each "OK & next". undefined = the item is
-   * gone from the list (e.g. the filter changed) → the modal closes.
+   * UPDATE mode "OK & next": resolve the next item to edit (parent-owned; pages
+   * the detail table forward as needed). See ResolveNextItem.
    */
-  itemInfo: (id: string) => StocktakeItemInfo | undefined;
+  nextItem: ResolveNextItem;
   /**
-   * ADD mode: item ids already on the stocktake, hidden from the item search so
-   * they can't be added twice. Read live (an accessor) so an item added via
-   * "OK & next" drops out of the next search.
+   * Fired after a successful save so the detail view refetches the current lines
+   * page (no splice-in-place).
    */
-  excludeItemIds: () => string[];
-  /**
-   * Fired after a successful save so the detail view reflects it in place (no
-   * refetch).
-   */
-  onCommitted: (commit: LineEditCommit) => void;
+  onSaved: () => void;
 }
 
-// The parent-facing wrapper: mount the editor ONLY while open. `<Show>` tears
-// the content down on close and rebuilds it on the next open, so the content
-// starts each OPEN fresh. Within one open the content owns its current item
-// (advancing via "OK & next" is imperative — see loadItem/selectItem — not a
-// prop change), keeping the driving explicit (kdd/explicit-composition).
+// The parent-facing wrapper: mount the editor ONLY while open. `<Show keyed>`
+// tears the content down on close and rebuilds it on the next open, so each OPEN
+// starts fresh. Within one open the content owns its current item (advancing via
+// "OK & next" is imperative — see loadItemById/selectItem — not a prop change).
 //
-// The keyed `when` is the OPEN identity: in update mode it's the initial item
-// id (a fresh id reopens on a new item); in add mode there's no item yet, so we
-// key on the literal 'add' — the content mounts once per open and drives its
-// own search → edit-lines states. (A stale close leaves `open` false, so the
-// key is falsy and the content unmounts either way.)
+// The keyed `when` is the OPEN identity: the initial item id when opened from a
+// row, or the literal 'add' when opened from "Add item" (no initial item). A
+// stale close leaves `open` false, so the key is falsy and the content unmounts.
 export const StocktakeLineEditModal = (
   props: StocktakeLineEditModalProps
 ): JSX.Element => (
-  <Show
-    when={props.open && (props.mode === 'add' ? 'add' : props.initialItemId)}
-    keyed
-  >
+  <Show when={props.open && (props.initialItemId ?? 'add')} keyed>
     {openKey => (
       <StocktakeLineEditContent
         onClose={props.onClose}
         storeId={props.storeId}
         stocktakeId={props.stocktakeId}
-        mode={props.mode}
-        // In update mode the key IS the initial item id; in add mode it's the
-        // 'add' sentinel and there's no initial item.
-        initialItemId={props.mode === 'update' ? openKey : undefined}
-        itemInfo={props.itemInfo}
-        excludeItemIds={props.excludeItemIds}
-        onCommitted={props.onCommitted}
+        // 'add' sentinel → no initial item (start in add mode); otherwise the id.
+        initialItemId={openKey === 'add' ? undefined : openKey}
+        nextItem={props.nextItem}
+        onSaved={props.onSaved}
       />
     )}
   </Show>
@@ -266,133 +244,124 @@ interface StocktakeLineEditContentProps {
   onClose: () => void;
   storeId: string;
   stocktakeId: string;
-  mode: StocktakeLineEditMode;
-  /** UPDATE mode: the item this open STARTS on; content advances from here. */
   initialItemId?: string;
-  /** UPDATE mode: resolve an item's descriptor + lines + next (see wrapper). */
-  itemInfo: (id: string) => StocktakeItemInfo | undefined;
-  /** ADD mode: item ids already on the stocktake, hidden from the search. */
-  excludeItemIds: () => string[];
-  /**
-   * Fired after a successful save so the detail view reflects it in place (no
-   * refetch).
-   */
-  onCommitted: (commit: LineEditCommit) => void;
+  nextItem: ResolveNextItem;
+  onSaved: () => void;
 }
 
 const StocktakeLineEditContent = (
   props: StocktakeLineEditContentProps
 ): JSX.Element => {
-  // Draft state as a STORE (not a signal), so editing one field of one line
-  // writes just that path — setDraft(index, field, value) — and only that
-  // cell's subscribers update, rather than rebuilding the whole array on every
-  // keystroke (kdd/state-management). A soft-deleted row carries a `deleted`
-  // flag on the line itself (no separate id set); the store holds the full
-  // draft (incl. isNew and deleted lines).
+  // Draft state as a STORE (fine-grained per-cell updates — see the original
+  // notes). Soft-deleted rows carry a `deleted` flag; isNew rows splice out.
   const [draft, setDraft] = createStore<DraftLine[]>([]);
   const [saving, setSaving] = createSignal(false);
-  // True while an item's lines are being fetched (mount + item switch), so the
-  // table shows a spinner instead of flashing its empty state (#160/#196).
+  // True while an item's data is being fetched (mount + item switch), so the
+  // table shows a spinner instead of flashing its empty state.
   const [loadingLines, setLoadingLines] = createSignal(true);
   const [errorMessage, setErrorMessage] = createSignal<string | undefined>();
-  // Per-line save errors from the server, keyed by line id → the error's
-  // __typename (the shared LineErrors shape, kept raw — same as the detail
-  // view). Each COLUMN renders its own error inline — <Show
-  // when={lineErrors().get(id) === 'ThatTypename'}>{t(…)}</Show> — so message +
-  // placement live at the column, not here. Set on a failed save, cleared for a
-  // line when it's edited. Only changes on save (not per-keystroke), so a plain
-  // Map signal is enough — no store needed.
+  // Per-line save errors (lineId → typename), same shape as the detail view.
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
-  // The item currently being edited and the one to advance to. The content
-  // starts on props.initialItemId and moves through items itself (OK & next) —
-  // currentItem is set by loadItem, never watched. nextItem drives whether the
-  // OK & next button shows; undefined = current is the last item in the list.
+  // The item currently being edited; undefined = add mode with no item picked
+  // yet (the search state).
   const [currentItem, setCurrentItem] = createSignal<StocktakeLineEditItem>();
-  const [nextItem, setNextItem] = createSignal<StocktakeLineEditItem>();
+  // Mode: 'update' (opened from a row — "OK & next" steps to the next item) or
+  // 'add' ("Add item", or fallen into when an update walk runs out — "OK & next"
+  // clears the selector to add another). Only ever flips update → add, never
+  // back. Not user-visible (no Add/Edit label).
+  const [mode, setMode] = createSignal<'add' | 'update'>(
+    props.initialItemId ? 'update' : 'add'
+  );
 
-  // Add mode with no item picked yet. In add mode the item selector lives
-  // permanently in the title (so you can change item any time); when nothing is
-  // picked yet there's nothing to count — the footer is Cancel-only, Add batch
-  // is hidden, and the body shows a prompt instead of the (empty) table.
-  const noItemYet = () => props.mode === 'add' && currentItem() === undefined;
+  // Items already stepped through THIS iteration (since the modal opened on a
+  // row), so the parent's next-item walk never offers one twice — across page
+  // advances too. Seeded with each item as it loads; not reactive.
+  const coveredItemIds = new Set<string>();
 
-  // Column config → lights up the toolbar's card-switch + column-settings
-  // controls. Card view renders the batches as cards (grouped into sections),
-  // the dual of the tabs.
+  // No item picked yet → the search state (Cancel-only footer, prompt in place
+  // of the table, no Add batch / OK / OK & next).
+  const noItemYet = () => currentItem() === undefined;
+
   const tableConfig = createTableConfig({ tableId: 'stocktake-line-edit' });
 
-  // The one seed path: make `item` the current item and REPLACE the draft with
-  // its lines. Called imperatively (never from an effect that tracks the
-  // current item): update mode calls it on mount and on "OK & next"; add mode
-  // calls it when an item is picked from the search. setDraft(reconcile(...))
-  // swaps the store's contents so no rows from the previous item linger, and we
-  // reset the per-item UI (server errors, footer message) so each item starts
-  // clean. countThisLine for the fetched stock lines is `countByDefault` —
-  // opt-in (false) in update mode, all-counted (true) in add mode (see
-  // fetchAndSeed).
-  const seedDraft = async (
-    item: StocktakeLineEditItem,
-    existing: StocktakeLineFragment[],
-    next: StocktakeLineEditItem | undefined,
-    countByDefault: boolean
-  ) => {
+  // Seed the draft for one item. Replaces the store (reconcile by id) so no rows
+  // from the previous item linger, and resets per-item UI. countByDefault:
+  // opt-in (unchecked) when the item already has stocktake lines, all-counted
+  // for a brand-new item. Records the item in the covered set for the walk.
+  const seedItem = async (item: StocktakeLineEditItem) => {
     setCurrentItem(item);
-    setNextItem(next);
+    coveredItemIds.add(item.id);
     setLineErrors(new Map());
     setErrorMessage(undefined);
     setLoadingLines(true);
-    const seeded = await fetchAndSeed(
+    const existing = await fetchExistingLines(
+      props.storeId,
+      props.stocktakeId,
+      item.id
+    );
+    const seeded = await buildDraft(
       props.storeId,
       item,
       existing,
-      countByDefault
+      existing.length === 0
     );
     setDraft(reconcile(seeded, { key: 'id' }));
     setLoadingLines(false);
   };
 
-  // UPDATE mode: resolve the item via itemInfo (item + its lines + next item),
-  // then seed. If the item has vanished from the list (undefined), close.
-  const loadItem = async (id: string) => {
-    const info = props.itemInfo(id);
-    if (!info) {
+  // The user picked an item in the search (or a row opened one). We only have
+  // its id from a row open; the descriptor (code/name) comes from the search
+  // selection OR, for a row open, from the item's own existing lines.
+  //
+  // Picking from the selector is an ADD-flow action: update mode is entered ONLY
+  // by clicking a row, so a manual pick switches to add mode (its "OK & next"
+  // then adds another rather than stepping the original row-walk).
+  const selectItem = (item: StocktakeLineEditItem) => {
+    setMode('add');
+    void seedItem(item);
+  };
+
+  // Row-open path: resolve the item descriptor from its existing lines (the
+  // fetch we need for the draft anyway), then seed. If the item has no lines
+  // (vanished), close.
+  const loadItemById = async (id: string) => {
+    setLoadingLines(true);
+    const existing = await fetchExistingLines(
+      props.storeId,
+      props.stocktakeId,
+      id
+    );
+    const first = existing[0];
+    if (!first) {
       props.onClose();
       return;
     }
-    await seedDraft(info.item, info.lines, info.nextItem, false);
+    await seedItem({ id, code: first.item.code, name: first.itemName });
   };
 
-  // ADD mode: the user picked an item in the search. Seed with NO existing
-  // lines (a brand-new item) and all stock lines auto-counted. No next item —
-  // add-mode "OK & next" returns to the search instead of advancing.
-  const selectItem = (item: StocktakeLineEditItem) =>
-    void seedDraft(item, [], undefined, true);
-
-  // ADD mode: drop back to the item-search state (after "OK & next", or if the
-  // user clears the picked item). Clears the current item and empties the
-  // draft.
+  // Back to the item-search state — add mode with no item picked. Reached by the
+  // × clear, by "OK & next" in add mode, or when an update walk runs out of
+  // items. Always add mode from here on.
   const backToSearch = () => {
+    setMode('add');
     setCurrentItem(undefined);
-    setNextItem(undefined);
     setLineErrors(new Map());
     setErrorMessage(undefined);
     setDraft(reconcile([], { key: 'id' }));
   };
 
-  // Seed on mount: update mode starts on its initial item; add mode starts in
-  // the search state (no item yet), so there's nothing to seed.
+  // Seed on mount: a row open starts on its item; an add open starts in the
+  // search state (nothing to seed).
   onMount(() => {
-    if (props.mode === 'update' && props.initialItemId)
-      void loadItem(props.initialItemId);
+    if (props.initialItemId) void loadItemById(props.initialItemId);
+    else setLoadingLines(false);
   });
 
   // The rows the table shows: the draft minus soft-deleted lines.
   const rows = (): DraftLine[] => draft.filter(line => !line.deleted);
 
-  // Edit ONE field of ONE line: locate it by id, write just that path in the
-  // store. Fine-grained — only that cell reacts (the whole point of the store,
-  // vs. a map-the-array signal update). Editing a line clears its stale server
-  // error (the user is fixing it) — mirrors OMS.
+  // Edit ONE field of ONE line (fine-grained store write); clears the line's
+  // stale server error.
   const update = <F extends keyof DraftLine>(
     id: string,
     field: F,
@@ -400,8 +369,6 @@ const StocktakeLineEditContent = (
   ) => {
     const index = draft.findIndex(line => line.id === id);
     if (index >= 0) setDraft(index, field, value as never);
-    // Clear this line's stale server error (a fresh Map without it) so the
-    // cell stops flagging.
     if (lineErrors().has(id)) {
       setLineErrors(prev => {
         const next = new Map(prev);
@@ -411,7 +378,7 @@ const StocktakeLineEditContent = (
     }
   };
 
-  // Add a new batch (a fresh draft line for the item) — prepended, count blank.
+  // Add a new batch (a fresh draft line) — prepended, count blank.
   const addBatch = () => {
     const item = currentItem();
     if (!item) return;
@@ -420,7 +387,7 @@ const StocktakeLineEditContent = (
         lines.unshift({
           id: crypto.randomUUID(),
           isNew: true,
-          countThisLine: true, // a manually-added batch is intended to be counted
+          countThisLine: true,
           stockLine: null,
           itemName: item.name,
           item: { id: item.id, code: item.code },
@@ -441,9 +408,8 @@ const StocktakeLineEditContent = (
     );
   };
 
-  // Soft-delete a row. A never-saved (isNew) line splices out of the store; an
-  // existing line is flagged deleted (hidden from the table; the save sends a
-  // delete for it).
+  // Soft-delete a row (isNew splices out; existing flagged deleted → sent as a
+  // delete on save).
   const removeLine = (line: DraftLine) => {
     if (line.isNew) {
       setDraft(
@@ -458,9 +424,8 @@ const StocktakeLineEditContent = (
     }
   };
 
-  // Duplicate a row — clone its editable fields into a fresh isNew draft (new
-  // id + blank count), inserted right after the source. Always an INSERT.
-  // unwrap() clones plain data out of the store.
+  // Duplicate a row — clone into a fresh isNew draft (new id + blank count),
+  // inserted right after the source.
   const duplicateLine = (line: DraftLine) => {
     const copy: DraftLine = {
       ...unwrap(line),
@@ -477,45 +442,23 @@ const StocktakeLineEditContent = (
     );
   };
 
-  // --- Save: partition the draft into the three batch-mutation input arrays
-  // --------------------- NB the UPDATE input wraps nullable date/string fields
-  // as `{ value }` (NullableDateUpdate / NullableStringUpdate) — sending the
-  // key means "set to value", omitting it means "leave unchanged". INSERT takes
-  // the same fields UNWRAPPED. Getting this right is why expiry/location edits
-  // to existing lines actually persist.
+  // Partition the draft into the batch-mutation input arrays (unchanged from the
+  // original — the routing rules for insert/update/delete + countThisLine are
+  // identical). See the wrapped-nullable-field note.
   const buildBatch = (): BatchStocktakeLinesInput => {
     const insert: NonNullable<BatchStocktakeLinesInput['insert']> = [];
     const update: NonNullable<BatchStocktakeLinesInput['update']> = [];
-    // Deletes = soft-deleted existing rows (the trash action) + existing rows
-    // the user unchecked (countThisLine off). Both remove an existing stocktake
-    // line; never delete an isNew draft (those splice out of the store and
-    // never reached the server).
     const deletes: string[] = [];
     for (const line of draft) {
-      // Soft-deleted: an existing row → delete it; an isNew row shouldn't be
-      // here (it splices out).
       if (line.deleted) {
         if (!line.isNew) deletes.push(line.id);
         continue;
       }
-
-      // countThisLine is the routing gate (matching OMS):
-      // - unchecked + NEW (an opt-in batch or a fresh add) → drop (never on
-      // the stocktake). - unchecked + EXISTING → delete (untick removes the
-      // line from the stocktake).
       if (!line.countThisLine) {
         if (!line.isNew) deletes.push(line.id);
         continue;
       }
-
       if (line.isNew) {
-        // Checked + new → insert. The ONLY difference between an opt-in batch
-        // and a manually-added one is which identity it carries: the server
-        // requires EXACTLY ONE of stockLineId / itemId (StockLineXOrItem). Both
-        // carry the full set of entered fields — an opt-in batch's batch/
-        // expiry/pack/price/location/note edits must persist too (AC-F7: a
-        // counted line can update those in place), so we send them either way
-        // rather than letting the stock line's originals stand.
         insert.push({
           id: line.id,
           stocktakeId: props.stocktakeId,
@@ -536,13 +479,9 @@ const StocktakeLineEditContent = (
         });
         continue;
       }
-      // Checked + existing → update. We always send it (no dirty-check): the
-      // server applies the full field set and returns the line, so a no-op
-      // update is harmless.
       update.push({
         id: line.id,
         batch: line.batch,
-        // Wrapped nullable fields ({ value }): set-or-clear on update.
         expiryDate: { value: line.expiryDate },
         manufactureDate: { value: line.manufactureDate },
         location: { value: line.location?.id ?? null },
@@ -558,13 +497,10 @@ const StocktakeLineEditContent = (
     return { insert, update, delete: deletes.map(id => ({ id })) };
   };
 
-  // No pre-emptive client-side validation — we let the server decide (e.g.
-  // reason-required, below-zero) and surface its per-line errors on save (see
-  // below). This keeps one source of truth for what's valid.
-  //
-  // Returns whether the save fully succeeded (everything committed, no per-line
-  // errors) — the caller decides what to do next: OK closes, OK & next
-  // advances. save() itself never navigates, so both buttons share one path.
+  // Save (no client-side validation — the server decides; per-line errors
+  // surface on failure). Returns whether it fully succeeded. On any commit we
+  // notify the parent so it refetches the page (partial success still reflects
+  // the committed lines).
   const save = async (): Promise<boolean> => {
     setSaving(true);
     setErrorMessage(undefined);
@@ -572,22 +508,16 @@ const StocktakeLineEditContent = (
     setSaving(false);
     if (!outcome) return false; // transport/NodeError → global modal showed it
 
-    // Reflect the lines that DID save (partial success), even when others
-    // errored — the detail view splices these in; the failed ones stay in the
-    // modal for the user to fix.
     const { commit, errors } = outcome;
     if (
       commit.inserted.length ||
       commit.updated.length ||
       commit.deletedIds.length
     ) {
-      props.onCommitted(commit);
+      props.onSaved();
     }
 
     if (errors.size > 0) {
-      // Holds RAW typenames (lineId → typename); each column renders its own
-      // inline. errors is already the shared LineErrors Map — copy it so the
-      // signal owns its own instance.
       setLineErrors(new Map(errors));
       setErrorMessage(tPlural('messages.line-errors', errors.size));
       return false; // keep the modal open on the failed lines
@@ -595,39 +525,35 @@ const StocktakeLineEditContent = (
     return true;
   };
 
-  // OK: save, then close on success (stay open on error, to fix the lines).
+  // OK: save, then close on success (stay open on error).
   const onOk = async () => {
     if (await save()) props.onClose();
   };
 
-  // OK & next: save, then — on success — go to the "next" thing without
-  // closing. UPDATE mode: advance to the stashed next item (loadItem swaps the
-  // draft in place, no remount). ADD mode: return to the item-search state to
-  // add another (the just-added item drops out of the search via the parent's
-  // live excludeItemIds). Reuses this open either way.
+  // OK & next: save, then — on success only — advance. Behaviour by mode:
+  // - ADD: return to the search state to add another (backToSearch).
+  // - UPDATE: ask the parent for the next item (it pages the detail table
+  //   forward as needed). Got one → seed it (draft swaps in place, no remount).
+  //   None left → the walk is exhausted, so drop into add mode's search state.
+  // Reuses this open either way (no close/reopen). A failed save stays put.
   const onOkNext = async () => {
     if (!(await save())) return;
-    if (props.mode === 'add') {
+    if (mode() === 'add') {
       backToSearch();
       return;
     }
-    const next = nextItem();
-    if (next) await loadItem(next.id);
+    const current = currentItem();
+    const next = current
+      ? await props.nextItem(current.id, coveredItemIds)
+      : undefined;
+    if (next) await seedItem(next);
+    else backToSearch(); // exhausted → add mode
   };
 
-  // ---- Columns: one set, split across groups; batch is the anchor (every
-  // tab). ---- Each identity `c` carries a `key` (a real DraftLine field, typed
-  // keyof) so it's a data column; the custom `cell` overrides display (an
-  // editable input). Editing flows through the cell's own onInput → update()
-  // into the draft store. The final column's `c` is `{ id: 'actions' }`.
+  // ---- Columns: one set, split across groups; batch is the anchor. ----
+  // (Unchanged from the original — each cell edits the draft store via update().)
   const columns = (): Column<DraftLine, never, GroupKey>[] => [
     {
-      // "Count this line" — the leading checkbox (OMS). It decides whether the
-      // row is IN the stocktake: the item's other batches (e.g. in other
-      // locations) start unchecked and are opted in by ticking; unticking an
-      // existing line removes it. All the row's other editable cells are
-      // disabled when it's off (you don't edit a line you're not counting).
-      // ALL_TABS anchor so it's the first column in every tab.
       c: { id: 'countThisLine' },
       header: t('label.count-this-line'),
       tabsAndCardGroups: ALL_TABS,
@@ -714,10 +640,6 @@ const StocktakeLineEditContent = (
       header: t('label.snapshot-num-of-packs'),
       tabsAndCardGroups: ['batch'],
       ...getNumberCell(),
-      // Snapshot is the system count — read-only — but it also carries a
-      // snapshot/current-count mismatch error inline beneath it (same placement
-      // as the detail list). Section owns no stylesheet, so the dynamic error
-      // sub-text is styled inline from the design tokens.
       cell: info => {
         const line = info.row.original;
         return (
@@ -873,6 +795,7 @@ const StocktakeLineEditContent = (
             hideLabel
             disabled={!line.countThisLine}
             value={line.location?.id}
+            placeholder={t('label.none')}
             onChange={l =>
               update(
                 line.id,
@@ -885,19 +808,11 @@ const StocktakeLineEditContent = (
       },
     },
     {
-      // The adjustment reason. The backend decides when it's required (counted
-      // differs from snapshot) and rejects the save with a per-line error,
-      // surfaced inline on this column below. A display column: the custom
-      // cell reads row.original, and the id is the e2e/TESTIDS.md contract's
-      // `cell-inventoryAdjustmentReasonInput` (shared with OMS), not the
-      // fragment field name.
       c: { id: 'inventoryAdjustmentReasonInput' },
       header: t('label.reason'),
       tabsAndCardGroups: ['batch'],
       cell: info => {
         const line = info.row.original;
-        // The reason column owns two error typenames — required vs. invalid —
-        // each its own message.
         const error = () => {
           const err = lineErrors().get(line.id);
           if (err === 'AdjustmentReasonNotProvided')
@@ -915,6 +830,7 @@ const StocktakeLineEditContent = (
             value={line.reasonOption?.id}
             error={error()}
             errorTestId="stocktake-line-error"
+            placeholder={t('label.select-reason')}
             onChange={r =>
               update(
                 line.id,
@@ -967,13 +883,8 @@ const StocktakeLineEditContent = (
       },
     },
     {
-      // A DISPLAY column (buttons, no data value): identity `c` is `{ id }`
-      // only — no key/accessor.
       c: { id: 'actions' },
       header: t('label.actions'),
-      // Row actions (duplicate + delete). ALL_TABS anchor → the LAST column in
-      // every tab in table view; card: 'badge' puts it in the card header's
-      // top-right chip area in card view.
       tabsAndCardGroups: ALL_TABS,
       meta: { card: { region: 'badge' }, align: 'right' },
       cell: info => {
@@ -1003,47 +914,46 @@ const StocktakeLineEditContent = (
 
   const footerError = () => errorMessage();
 
+  // OK / OK & next show a loading state while the modal is busy — both while
+  // SAVING and while the item's table content is being fetched (mount, item
+  // switch, or an "OK & next" step): there's nothing to act on until the draft
+  // has loaded, so the buttons spin rather than acting on an empty/stale draft.
+  const busy = () => saving() || loadingLines();
+
   return (
-    // Always open: the wrapper mounts this content only while the modal should
-    // be open, and unmounting it (on close) cleanly closes the underlying
-    // <dialog> (see Dialog's onCleanup).
     <Dialog
       open
       onClose={props.onClose}
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
-      // Title, matching the reference app (StocktakeLineEditModal.tsx):
-      // - UPDATE: the plain string "Edit line" (also the a11y name).
-      // - ADD: an inline item selector, kept in the title the WHOLE time so the
-      //   user can switch item even after picking (which discards the current
-      //   item's unsaved edits — seedDraft replaces the draft). A component
-      //   title can't be the a11y name, so we pass ariaLabel ("Add item").
+      // Title: JUST the item selector (no "Add"/"Edit" label — the modal is one
+      // combined flow). Kept in the title the WHOLE time so the user can switch
+      // item any time — picking one loads its lines (discarding the current
+      // item's unsaved edits — seedItem replaces the draft). A component title
+      // can't be the a11y name, so pass ariaLabel.
+      //
+      // `selectedItem` gives the combobox the current item's label directly, so
+      // it displays even in update mode where the row-opened item isn't in the
+      // search's own paginated result list.
       title={
-        props.mode === 'add' ? (
-          <span class={styles.addTitle}>
-            <span class={styles.addPrefix}>{t('button.add')}</span>
-            <ItemSearch
-              label={t('button.add-item')}
-              hideLabel
-              class={styles.addSelect}
-              storeId={props.storeId}
-              excludeItemIds={props.excludeItemIds()}
-              value={currentItem()?.id}
-              // Pick an item → load it; clear the selection (×) → back to the
-              // no-item state (empty draft, prompt, Cancel-only footer).
-              onSelect={item => (item ? selectItem(item) : backToSearch())}
-              placeholder={t('placeholder.enter-an-item-code-or-name')}
-            />
-          </span>
-        ) : (
-          t('heading.edit-line')
-        )
+        <span class={styles.addTitle}>
+          <ItemSearch
+            label={t('heading.add-item')}
+            hideLabel
+            class={styles.addSelect}
+            storeId={props.storeId}
+            value={currentItem()?.id}
+            selectedItem={currentItem()}
+            // Pick an item → load it; clear (×) → back to the search state.
+            onSelect={item => (item ? selectItem(item) : backToSearch())}
+            placeholder={t('placeholder.enter-an-item-code-or-name')}
+          />
+        </span>
       }
-      ariaLabel={props.mode === 'add' ? t('heading.add-item') : undefined}
-      // Add batch lives at the inline-end of the header row (beside the
-      // heading), not in the footer — it's an editing affordance for the item,
-      // grouped with the item it acts on. Hidden until an item is picked.
+      ariaLabel={t('heading.add-item')}
+      // Add batch lives at the inline-end of the header row. Hidden until an
+      // item is picked.
       headerActions={
         <Show when={!noItemYet()}>
           <Button
@@ -1056,8 +966,6 @@ const StocktakeLineEditContent = (
           </Button>
         </Show>
       }
-      // The save/validation message sits at the inline-start of the actions
-      // row (beside the buttons), so it doesn't eat the table's vertical space.
       actionsLead={
         <Show when={footerError()}>
           {message => <Alert severity="error">{message()}</Alert>}
@@ -1073,45 +981,40 @@ const StocktakeLineEditContent = (
           >
             {t('button.cancel')}
           </Button>
-          {/* Add mode before an item is picked: nothing to save yet, so only
-              Cancel shows. Once an item is chosen (add) or in update mode,
-              OK / OK & next appear. */}
+          {/* Before an item is picked: nothing to save, so only Cancel shows.
+              Once an item is chosen, OK / OK & next appear. */}
           <Show when={!noItemYet()}>
             <Button
               icon={<CheckIcon />}
-              loading={saving()}
+              loading={busy()}
               data-testid="dialog-button-ok"
               onClick={() => void onOk()}
             >
               {t('button.ok')}
             </Button>
-            {/* OK & next: add mode always offers it (save, then clear the item
-                to add another); update mode only when there's a next item to
-                advance to (the last item shows just OK). */}
-            <Show when={props.mode === 'add' || nextItem()}>
-              <Button
-                icon={<ArrowRightIcon />}
-                loading={saving()}
-                data-testid="dialog-button-next-and-ok"
-                onClick={() => void onOkNext()}
-              >
-                {t('button.ok-and-next')}
-              </Button>
-            </Show>
+            {/* OK & next: ALWAYS shown once an item is loaded (both modes). In
+                update mode it advances to the next item, or — when the walk is
+                exhausted — saves and drops into add mode. In add mode it saves
+                and returns to the search to add another. */}
+            <Button
+              icon={<ArrowRightIcon />}
+              loading={busy()}
+              data-testid="dialog-button-next-and-ok"
+              onClick={() => void onOkNext()}
+            >
+              {t('button.ok-and-next')}
+            </Button>
           </Show>
         </>
       }
     >
-      {/* Add mode before an item is picked (the selector lives in the title):
-          a prompt in place of the empty table. Otherwise the batch-edit table
-          for the chosen item. */}
+      {/* Before an item is picked (the selector lives in the title): a prompt in
+          place of the empty table. Otherwise the batch-edit table. */}
       <Show
         when={!noItemYet()}
         fallback={
           <div class={styles.selectPrompt}>
-            {/* {t('placeholder.enter-an-item-code-or-name')} */}
-            {/* "stocktake.line-edit.select-item-prompt": "Select an item
-              // to count its stock lines.", */}
+            {t('messages.select-item-to-count')}
           </div>
         }
       >

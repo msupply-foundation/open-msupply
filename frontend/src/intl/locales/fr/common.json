@@ -2584,6 +2584,7 @@
   "messages.search": "Rechercher",
   "messages.select-an-item": "Sélectionnez un article à déplacer ou reconditionner.",
   "messages.select-from-location": "Sélectionner un emplacement pour visualiser et déplacer ou reconditionner son stock.",
+  "messages.select-item-to-count": "Sélectionnez un article pour compter ses lignes de stock.",
   "messages.select-rows-to-approve": "Choisissez les lignes pour les approuver",
   "messages.select-rows-to-delete": "Sélectionner les lignes pour les supprimer",
   "messages.select-rows-to-delete-them": "Sélectionner les lignes pour les supprimer",
