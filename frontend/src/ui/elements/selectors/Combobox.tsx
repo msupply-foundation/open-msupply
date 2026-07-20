@@ -43,6 +43,13 @@ interface ComboboxProps<T> {
    * only in the widget and is reported via onChange.
    */
   value?: string;
+  /**
+   * Fallback for the selected item when `value`'s key isn't present in `items`
+   * — e.g. a server-fed combobox whose selection came from outside its current
+   * result page. Without it the selection can't be resolved to a label and the
+   * field shows blank. Used only when `items` has no match for `value`.
+   */
+  selectedItem?: T;
   onChange?: (item: T | null) => void;
   /** Rich per-option rendering; defaults to the plain itemToString label. */
   renderItem?: (item: T) => JSX.Element;
@@ -136,16 +143,25 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // `value` (resolve the key against the current items). `value === undefined`
   // means "no selection" → clear `selected` (so a caller that resets its value
   // — e.g. after saving, or when its bound field is cleared — empties the
-  // input, rather than the input keeping the stale item). Guarded by
+  // input, rather than the input keeping the stale item). When the key isn't in
+  // `items` (a server-fed selection from outside the current result page), fall
+  // back to `selectedItem` if the caller supplied it. Guarded by
   // `on(value, ...)` so it only reacts to the prop, not the user's own pick.
   createEffect(
     on(
       () => props.value,
       value => {
-        const match =
+        const inItems =
           value === undefined
             ? null
             : (props.items.find(item => keyOf(item) === value) ?? null);
+        const fallback =
+          value !== undefined &&
+          props.selectedItem &&
+          keyOf(props.selectedItem) === value
+            ? props.selectedItem
+            : null;
+        const match = inItems ?? fallback;
         if (match !== selected()) setSelected(() => match);
       }
     )
@@ -181,6 +197,21 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
     props.onChange?.(item);
   };
 
+  // The options Kobalte sees. Kobalte can only DISPLAY a selected value that is
+  // present in its options collection, so when `selectedItem` is the current
+  // value but isn't in `items` (a selection from outside the loaded page), we
+  // prepend it — otherwise the field would show blank. While loading we show no
+  // options EXCEPT that pinned selected item (so the label survives a refetch).
+  const options = createMemo<T[]>(() => {
+    const base = props.loading ? [] : props.items;
+    const sel = props.selectedItem;
+    if (sel && props.value !== undefined && keyOf(sel) === props.value) {
+      const present = base.some(item => keyOf(item) === props.value);
+      if (!present) return [sel, ...base];
+    }
+    return base;
+  });
+
   // Server-mode infinite scroll: when the listbox is scrolled near its bottom,
   // ask the caller for the next page. The listbox owns the scroll (`.listbox`
   // is overflow:auto), so a plain onScroll on it suffices — no observer, no
@@ -198,7 +229,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
-      options={props.loading ? [] : props.items}
+      options={options()}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
       optionTextValue={item => props.itemToString(item as T)}
       optionLabel={item => props.itemToString(item as T)}

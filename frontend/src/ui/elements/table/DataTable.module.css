@@ -27,6 +27,19 @@
   --table-leading-col: 2.75rem;
 }
 
+/* Positioning context for the pagination overlay: fills the remaining page
+   height (so the scroll box below is full-height even for a short list) and is
+   `relative` so the absolutely-positioned overlay anchors to THIS box's bottom
+   edge — not to the scrolling content — keeping the pager at the very
+   bottom-right whatever the row count. */
+.tableArea {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
 /* The bordered box starts here (the table itself), so the transparent toolbar above sits
    OUTSIDE the border rather than being enclosed by it. */
 .tableScroll {
@@ -36,45 +49,6 @@
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
   background: var(--bg-white);
-}
-
-/* Refreshing bar — a thin indeterminate progress bar shown above the table
-   while a fetch runs and rows are already displayed (a filter/sort/page refetch).
-   A short highlight slides across a faint track; it sits flush on the table's
-   top edge (rounded to match). Signals "updating" without blanking the rows. */
-.refreshingBar {
-  position: relative;
-  block-size: 0.1875rem;
-  overflow: hidden;
-  border-start-start-radius: var(--radius-md);
-  border-start-end-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--secondary-main) 20%, transparent);
-}
-
-.refreshingBar::after {
-  content: '';
-  position: absolute;
-  inset-block: 0;
-  inline-size: 40%;
-  background: var(--secondary-main);
-  border-radius: inherit;
-  animation: table-refreshing 1.1s ease-in-out infinite;
-}
-
-@keyframes table-refreshing {
-  from {
-    inset-inline-start: -40%;
-  }
-
-  to {
-    inset-inline-start: 100%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .refreshingBar::after {
-    animation-duration: 2.2s;
-  }
 }
 
 .table {
@@ -237,31 +211,19 @@
   background: var(--bg-row);
 }
 
-/* The leading fixed columns (expander + select) are a FIXED box width so their pinned sticky
-   offsets (leadingPinnedStyle, LEADING_COL_PX in DataTable.tsx) line up exactly — otherwise the
-   next column scrolls through a seam between them. box-sizing: border-box + equal min/max pins
+/* The leading fixed selection column is a FIXED box width so its pinned sticky
+   offset (leadingPinnedStyle, LEADING_COL_PX in DataTable.tsx) lines up exactly — otherwise the
+   next column scrolls through a seam beside it. box-sizing: border-box + equal min/max pins
    the box at --table-leading-col regardless of content/padding (a checkbox + padding would
    otherwise push it wider). The width is --table-leading-col (defined on .root); the JS mirrors
    the same rem via remToPx. */
-.selectCell,
-.expanderCell {
+.selectCell {
   inline-size: var(--table-leading-col);
   min-inline-size: var(--table-leading-col);
   max-inline-size: var(--table-leading-col);
   box-sizing: border-box;
   border-block-end: 1px solid var(--color-divider);
   text-align: center;
-}
-
-/* Narrow leading checkbox column for row selection. */
-.selectCell {
-  padding: var(--space-2) var(--space-1);
-}
-
-/* Row grouping (rowGroup): a dedicated leading EXPANDER column (before select) — like OMS, the
-   chevrons live in their own column, not embedded in the grouped value's cell. Defined here
-   (before the selected-row rule below) so specificity ascends (no-descending-specificity). */
-.expanderCell {
   padding: var(--space-2) var(--space-1);
 }
 
@@ -270,8 +232,7 @@
    paint over the row background). Placed AFTER the base .td / .selectCell rules so
    specificity ascends (no-descending-specificity). */
 tr[data-selected] .td,
-tr[data-selected] .selectCell,
-tr[data-selected] .expanderCell {
+tr[data-selected] .selectCell {
   background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
 }
 
@@ -282,8 +243,7 @@ tr[data-selected] .expanderCell {
    pinned header 3) so the header never disappears under a sticky pinned column. An edge shadow on
    the inner side signals the freeze. */
 .td[data-pinned],
-.selectCell[data-pinned],
-.expanderCell[data-pinned] {
+.selectCell[data-pinned] {
   z-index: 1;
 }
 
@@ -305,8 +265,7 @@ tr[data-selected] .expanderCell {
 
 .th[data-pinned='left'],
 .td[data-pinned='left'],
-.selectCell[data-pinned],
-.expanderCell[data-pinned] {
+.selectCell[data-pinned] {
   box-shadow: inset -1px 0 0 0 var(--color-divider);
 }
 
@@ -315,16 +274,15 @@ tr[data-selected] .expanderCell {
   box-shadow: inset 1px 0 0 0 var(--color-divider);
 }
 
-/* The leading FROZEN columns (select + expander): the HEADER fill (--bg-toolbar) so the frozen
+/* The leading FROZEN selection column: the HEADER fill (--bg-toolbar) so the frozen
    leading column reads as one cohesive band with the header above it (matching the header
-   background — as requested), plus a soft drop shadow onto the scrolling content to their
+   background — as requested), plus a soft drop shadow onto the scrolling content to its
    inline-END (the "this column is pinned" depth cue, visible as the body scrolls under it). The
    shadow must fall to the RIGHT, not the left — the scroll container is overflow:auto, so a
    leftward shadow past the table's edge would be clipped away. More specific than the base pinned
    rule + placed after it (no-descending-specificity). No z-index change — the header still wins on
    vertical scroll. */
-.selectCell[data-pinned],
-.expanderCell[data-pinned] {
+.selectCell[data-pinned] {
   background: var(--bg-toolbar);
   box-shadow:
     inset -1px 0 0 0 var(--color-divider),
@@ -335,8 +293,7 @@ tr[data-selected] .expanderCell {
 /* A selected pinned cell keeps the selection tint (over the opaque base) — placed AFTER the base
    pinned + selected rules so specificity ascends (no-descending-specificity). */
 tr[data-selected] .td[data-pinned],
-tr[data-selected] .selectCell[data-pinned],
-tr[data-selected] .expanderCell[data-pinned] {
+tr[data-selected] .selectCell[data-pinned] {
   background: color-mix(in srgb, var(--primary-main) 8%, var(--surface-raised));
 }
 
@@ -364,6 +321,17 @@ tr[data-selected] .expanderCell[data-pinned] {
   justify-content: flex-end;
   min-block-size: 2.25rem;
   padding-inline: var(--space-1);
+}
+
+/* Inline loading spinner sitting just left of the toolbar's icon controls (a
+   refetch is running over already-shown rows). The toolbar is flex-end, so it
+   clusters with the controls at the inline-end; the secondary tone matches the
+   toolbar icons. */
+.toolbarLoading {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--space-2);
+  color: var(--text-secondary);
 }
 
 /* Shared look for the toolbar's icon controls (full-screen button + the settings popover
@@ -530,28 +498,58 @@ tr[data-selected] .expanderCell[data-pinned] {
   block-size: 1.5rem;
 }
 
-/* The expander chevron button on an expandable parent row. The chevron is 1em, so font-size
-   sizes it; collapsed points right, expanded rotates the down-chevron to point down. */
-.groupExpander {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 1.5rem;
-  block-size: 1.5rem;
-  border: none;
-  background: none;
+/* --- Pagination overlay (kdd/table-state) ---------------------------------- */
+
+/* The pager floats over the bottom-inline-end of the table rather than living
+   in a separate footer band, so it's always visible without stealing a row of
+   vertical space. position: absolute anchors it to .tableArea's bottom edge (not
+   the scrolling content), so it sits at the very bottom-right for ANY list size
+   — a short list keeps it flush at the box bottom, and it never scrolls away on
+   a long one. It spans the area width and pushes its content to the inline-end.
+   The inset-block-end offset lifts the chip clear of a horizontal scrollbar that
+   the scroll box shows along its bottom edge; the larger padding-inline-end
+   likewise keeps it clear of a vertical scrollbar on the right (otherwise the
+   chip overlays either scrollbar).
+   pointer-events pass through the empty track so clicks on rows behind the
+   (transparent) gutter still land — only the pager panel itself captures them. */
+.paginationOverlay {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: var(--space-3);
+  z-index: 4;
+  display: flex;
+  justify-content: flex-end;
+  /* start end — the larger inline-end keeps the chip clear of a vertical
+     scrollbar on the right. */
+  padding-inline: var(--space-2) var(--space-5);
+  pointer-events: none;
+}
+
+/* The pager panel — a raised, bordered chip so it reads as floating above the
+   rows, pinned bottom-inline-end. Its own contents are interactive again (the
+   track above is click-through). The shared Pagination nav sets `flex: 1` +
+   space-between to fill a full-width footer band; inside this floating chip we
+   override that so it shrinks to content (summary + controls sit together in the
+   corner instead of spanning the table). */
+.paginationOverlay :global(nav) {
+  pointer-events: auto;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding-inline: var(--space-3);
+  padding-block: var(--space-1);
+  box-shadow: 0 0.125rem 0.5rem -0.125rem
+    color-mix(in srgb, var(--gray-main) 35%, transparent);
+}
+
+/* Trailing spacer row — reserves enough height for the overlay so the last data
+   row scrolls clear of it. A single spanning cell; no border (it's not a real
+   row). Height ≈ pager panel + its overlay padding. */
+.paginationSpacerRow > td {
+  block-size: 3.25rem;
+  border-block-end: none;
   padding: 0;
-  color: var(--text-secondary);
-  font-size: 1.25rem;
-  cursor: pointer;
-  transform: rotate(-90deg);
-  transition: transform 0.15s ease;
-}
-
-.groupExpander[data-expanded] {
-  transform: rotate(0deg);
-}
-
-.groupExpander:hover {
-  color: var(--text-body);
 }

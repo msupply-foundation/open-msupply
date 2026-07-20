@@ -11,14 +11,25 @@ const PAGE_SIZE = 30;
 export interface ItemSearchProps {
   label: string;
   storeId: string;
-  /** Item ids to hide from the results (e.g. items already on the stocktake). */
-  excludeItemIds: string[];
+  /**
+   * Item ids to hide from the results. Optional — omit to show every item (e.g.
+   * the stocktake line editor now shows all items, even ones already counted,
+   * and loads that item's existing lines when picked).
+   */
+  excludeItemIds?: string[];
   /**
    * The currently-selected item's id (controlled). Shows that item as the
    * value while still allowing a new search — e.g. the picked item stays in
    * the picker after selection so it can be swapped for another.
    */
   value?: string;
+  /**
+   * The selected item's label fields, for when `value` is an item that ISN'T in
+   * the search's own paginated results (e.g. an item the stocktake editor opened
+   * from a row, not from a search). Without it the combobox can't resolve the id
+   * to a label and shows blank. Only code/name are needed to render the label.
+   */
+  selectedItem?: { id: string; code: string; name: string };
   /** The picked item, or null when the selection is cleared. */
   onSelect: (item: ItemOption | null) => void;
   placeholder?: string;
@@ -63,7 +74,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
   const search = createPaginatedSearch<ItemOption>({
     fetchPage: itemPageFetcher(
       props.storeId,
-      () => props.excludeItemIds,
+      () => props.excludeItemIds ?? [],
       PAGE_SIZE
     ),
   });
@@ -82,6 +93,20 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       loading={search.loading()}
       loadingMore={search.loadingMore()}
       value={props.value}
+      // Fallback so the field shows a label when `value` is an item that isn't
+      // in the current search results (opened from outside the search). Only
+      // code/name feed the label; the dropdown-only fields get safe defaults.
+      selectedItem={
+        props.selectedItem
+          ? {
+              id: props.selectedItem.id,
+              code: props.selectedItem.code,
+              name: props.selectedItem.name,
+              unitName: null,
+              totalUnits: 0,
+            }
+          : undefined
+      }
       itemToString={item => `${item.code} - ${item.name}`}
       itemToValue={item => item.id}
       renderItem={renderRow}

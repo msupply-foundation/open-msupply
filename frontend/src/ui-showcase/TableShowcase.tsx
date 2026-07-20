@@ -5,7 +5,6 @@ import {
   type SortState,
   type TabAndCardGroup,
   ALL_TABS,
-  sharedOrMultiple,
 } from '../ui/elements/table/DataTable';
 import { getNumberCell } from '../ui/elements/table/tableHelpers';
 import { StockIcon, InfoIcon, TruckIcon } from '../ui/icons';
@@ -206,23 +205,19 @@ export const TableShowcase = () => {
   // in every tab. The rest split across the three groups. Switch the tab strip
   // (or card view) to see the secondary column filter.
   const columns = (): Column<Batch, SortKey, GroupKey>[] => [
-    // name + batch: ALL_TABS anchors (every tab; not a card group). Grouped
-    // parent → shared value or [multiple] (a group's rows share a name but
-    // differ on batch → [multiple]).
+    // name + batch: ALL_TABS anchors (shown in every tab; not a card group).
     {
       c: { key: 'name' },
       sortKey: 'name',
       header: 'Item',
       meta: { card: { region: 'primary' } },
       tabsAndCardGroups: ALL_TABS,
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
       header: 'Batch',
       tabsAndCardGroups: ALL_TABS,
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'category' },
@@ -242,7 +237,6 @@ export const TableShowcase = () => {
       sortKey: 'supplier',
       header: 'Supplier',
       tabsAndCardGroups: ['supply'],
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'location' },
@@ -250,7 +244,6 @@ export const TableShowcase = () => {
       header: 'Location',
       meta: { wrapLines: 2 },
       tabsAndCardGroups: ['supply'],
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'stock' },
@@ -385,10 +378,6 @@ export const TableShowcase = () => {
         sort={sort()}
         onSort={onSort}
         tabsAndCardGroups={TABS_AND_CARD_GROUPS}
-        rowGroup={{
-          columnId: 'category',
-          labelKey: 'table.demo-card-group.details',
-        }}
         emptyMessage="No items"
         enableSelection
         selectedIds={selectedIds()}
