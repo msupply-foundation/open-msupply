@@ -40,18 +40,8 @@ pub(crate) fn legacy_custom_fields_if_central(
 }
 
 /// On central, decides whether a `name`/`name_store_join` changelog row should be
-/// skipped rather than relayed to legacy (OG) central, by source site (#9430,
-/// #12106). Returns `true` (and logs why) when the push must be skipped:
-/// - Not the central server → `false`: remotes push their own edits to OG as before.
-/// - `source_site_id` is `None` → `false`: pre-3.0 rows; the v5 push filter
-///   (`ChangelogFilter::all_data_for_legacy_central`) excludes them anyway.
-/// - Authored on this server (source == current site id) → `false`: a central
-///   dispensary's patient edits must reach OG (#12106).
-/// - Source site is V7 → `false`: V7 sites never talk to OG, so central is the
-///   only path their patients have to OG (#12106).
-/// - Source site is V5/V6 (or unknown) → `true`: that site pushes its patient
-///   edits to OG itself; relaying central's copy would round-trip stale data
-///   (the #9430 patient-DOB bug).
+/// skipped (`true`, reason logged) rather than relayed to legacy (OG) central,
+/// based on which site the row was edited on (#9430, #12106).
 ///
 /// Called from `try_translate_to_*_sync_record` rather than
 /// `should_translate_to_sync_record` because only the former receives a
@@ -62,19 +52,37 @@ pub(crate) fn skip_name_relay_to_legacy(
     connection: &StorageConnection,
     changelog: &ChangelogRow,
 ) -> Result<bool, RepositoryError> {
+    // Only the central server relays other sites' records to legacy. On a remote
+    // site this whole check is a no-op: the remote pushes its own edits to legacy
+    // exactly as it always has.
     if !crate::sync::CentralServerConfig::is_central_server() {
         return Ok(false);
     }
+
+    // Rows with no source_site_id predate v3.0.0 (since then every changelog row
+    // is stamped with the id of the site it was edited on). Leave them alone —
+    // the v5 push filter (`ChangelogFilter::all_data_for_legacy_central`) never
+    // selects them, so they can't reach this point anyway.
     let Some(source_site_id) = changelog.source_site_id else {
         return Ok(false);
     };
 
+    // Edited on this server (central itself, e.g. central used as an active
+    // dispensary): push to legacy — nobody else will (#12106).
     if KeyValueStoreRepository::new(connection).get_current_site_id()? == Some(source_site_id) {
         return Ok(false);
     }
 
+    // Edited on a remote site: look the site up (the `site` table exists on
+    // central only) and decide by its sync version.
     match SiteRowRepository::new(connection).find_one_by_id(source_site_id)? {
+        // V7 sites sync only with OMS central, never with legacy — central is
+        // the only path their patient edits have to legacy, so push (#12106).
         Some(site) if site.sync_version == SyncVersion::V7 => Ok(false),
+        // V5/V6 sites push their patient edits to legacy themselves (as well as
+        // to OMS central, for cross-site patient sharing). Pushing central's
+        // copy too would race the site's own push and could overwrite newer
+        // data with stale data — the original #9430 patient-DOB bug.
         Some(_) => {
             log::debug!(
                 "Not relaying {} record {} to legacy: source site {} is V5/V6 and pushes to legacy itself",
@@ -84,6 +92,8 @@ pub(crate) fn skip_name_relay_to_legacy(
             );
             Ok(true)
         }
+        // No site row for this id — shouldn't happen (every syncing site has
+        // one on central). Fail safe by not pushing, and warn so it's visible.
         None => {
             log::warn!(
                 "Not relaying {} record {} to legacy: unknown source site {}",
