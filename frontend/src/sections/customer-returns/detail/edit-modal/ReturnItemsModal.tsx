@@ -15,6 +15,7 @@ import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ItemSearch } from '../../../../domain/item';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
+import { ProgressList } from '../../../../ui/sync/ProgressList';
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -501,30 +502,18 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         )
       }
       ariaLabel={props.mode === 'add' ? t('heading.return-items') : undefined}
-      // The wizard's step indicator (Select quantity → Select reason) rendered
-      // as header context; Add batch joins it on the quantity step.
+      // Add batch lives beside the heading on the quantity step; the wizard's
+      // step indicator renders at the top of the body (ui-surface S4 § layout).
       headerActions={
-        <Show when={!noItemYet()}>
-          <span
-            style={{
-              'font-size': 'var(--text-sm)',
-              color: 'var(--text-secondary)',
-            }}
+        <Show when={!noItemYet() && step() === 'quantity'}>
+          <Button
+            variant="secondary"
+            icon={<PlusCircleIcon />}
+            data-testid="add-batch-button"
+            onClick={addBatch}
           >
-            {step() === 'quantity'
-              ? t('label.select-quantity')
-              : t('label.select-reason')}
-          </span>
-          <Show when={step() === 'quantity'}>
-            <Button
-              variant="secondary"
-              icon={<PlusCircleIcon />}
-              data-testid="add-batch-button"
-              onClick={addBatch}
-            >
-              {t('label.add-batch')}
-            </Button>
-          </Show>
+            {t('label.add-batch')}
+          </Button>
         </Show>
       }
       actionsLead={
@@ -580,18 +569,20 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 >
                   {t('button.ok')}
                 </Button>
-                <Show when={hasNext()}>
-                  <Button
-                    icon={<ArrowRightIcon />}
-                    loading={saving()}
-                    data-testid="dialog-button-next-and-ok"
-                    onClick={() => void onOkNext()}
-                  >
-                    {t('button.ok-and-next')}
-                  </Button>
-                </Show>
               </Match>
             </Switch>
+            {/* OK & next is present on BOTH steps (matching the running app)
+                but actionable only on the reason step with a next item to
+                advance to — until then it's disabled, never hidden. */}
+            <Button
+              icon={<ArrowRightIcon />}
+              loading={saving()}
+              disabled={step() !== 'reason' || !hasNext()}
+              data-testid="dialog-button-next-and-ok"
+              onClick={() => void onOkNext()}
+            >
+              {t('button.ok-and-next')}
+            </Button>
           </Show>
         </>
       }
@@ -604,6 +595,24 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           </p>
         }
       >
+        {/* The wizard's step indicator — the shared determinate progress list
+            (the sync stepper), which the two-step flow maps onto directly:
+            reaching the reason step completes "Select quantity" and starts
+            "Select reason" (ui-surface S4 § layout). */}
+        <ProgressList
+          steps={[
+            {
+              label: t('label.select-quantity'),
+              started: true,
+              finished: step() === 'reason',
+            },
+            {
+              label: t('label.select-reason'),
+              started: step() === 'reason',
+              finished: false,
+            },
+          ]}
+        />
         <Show
           when={step() === 'reason'}
           fallback={

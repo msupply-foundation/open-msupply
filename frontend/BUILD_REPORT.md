@@ -47,6 +47,6 @@ Spec: [`spec/customer-returns/`](spec/customer-returns/) — itself a fresh reve
 
 - **C2 tooling**: no CI harness for real-backend AC legs yet — behavioural ACs are covered at logic level and marked pending above.
 - **⛔ / registry gaps**: CSV export (AC-L4); read-only rows are not de-emphasised (`DataTable` has no per-row tone hook — S1's de-emphasis note is unimplementable without a library addition); no user-permissions plumbing exists app-wide, so the `CUSTOMER_RETURN_MUTATE` affordance gate is not mirrored client-side (the server still enforces it).
-- **Spec refinement candidates**: AC-L3's deep-link-by-number vs the observed id-based URLs; S4's step indicator is rendered as header context (the registry has no wizard/stepper role); whether the S3 side panel's "copy to clipboard" payload should be specified.
+- **Spec refinement candidates**: AC-L3's deep-link-by-number vs the observed id-based URLs; whether the S3 side panel's "copy to clipboard" payload should be specified. _(Resolved: S4's step indicator now uses the shared determinate progress list — the registry row records the wizard usage; OK & next is present on both steps, disabled until the reason step, matching the running app.)_
 - **Cross-vertical dependency**: the from-shipment creation flow (AC-C4–C7) activates only when the outbound-shipments vertical is implemented and wires its "Return selected lines" action to this section's S4 modal.
 - **DIVERGENCES.md**: none applicable to this vertical.
