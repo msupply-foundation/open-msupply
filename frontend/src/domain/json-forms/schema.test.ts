@@ -353,7 +353,8 @@ describe('cleanArguments', () => {
   });
 });
 
-// The Pending Encounters shape (real backend fixture, abridged): a single
+// The Pending Encounters shape (real backend fixture, abridged): a required
+// `programId` driven by a PatientProgramSearch control, and a single
 // `startDatetime` property (type object|null) driven by a DateRange control.
 // The editing store holds { start, end } calendar dates under that one key;
 // cleanArguments widens them to the wire DatetimeFilterInput.
@@ -364,13 +365,20 @@ const dateRangeSchema = {
     definitions: {
       Filters: {
         properties: {
+          programId: { type: 'string' },
           startDatetime: { type: ['object', 'null'], format: 'date-time' },
         },
+        required: ['programId'],
       },
     },
   },
   uiSchema: {
     elements: [
+      {
+        type: 'PatientProgramSearch',
+        scope: '#/properties/programId',
+        label: 'Program',
+      },
       {
         type: 'DateRange',
         scope: '#/properties/startDatetime',
@@ -386,6 +394,22 @@ describe('cleanArguments — DateRange', () => {
 
   it('parses the DateRange control to the dateRange kind', () => {
     expect(byKey(fields, 'startDatetime').kind).toBe('dateRange');
+  });
+
+  it('parses PatientProgramSearch to the program kind, carrying required', () => {
+    expect(byKey(fields, 'programId')).toEqual({
+      kind: 'program',
+      key: 'programId',
+      label: 'Program',
+      nullable: false,
+      required: true,
+    });
+  });
+
+  it('passes a program context id through untouched on submit', () => {
+    expect(cleanArguments(fields, { programId: 'hiv-context' })).toEqual({
+      programId: 'hiv-context',
+    });
   });
 
   it('widens both ends to a DatetimeFilterInput (inclusive local day)', () => {

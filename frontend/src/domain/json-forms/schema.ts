@@ -103,6 +103,18 @@ export type ParsedField =
   | { kind: 'dateRange'; key: string; label: string; nullable: boolean }
   | { kind: 'masterList'; key: string; label: string; nullable: boolean }
   | { kind: 'location'; key: string; label: string; nullable: boolean }
+  /**
+   * The patient-program picker: options are the store's program-enrolment
+   * registries; the submitted value is the program's CONTEXT id (AC-R10).
+   * Carries `required` — report schemas mark the program mandatory.
+   */
+  | {
+      kind: 'program';
+      key: string;
+      label: string;
+      nullable: boolean;
+      required: boolean;
+    }
   // Any control the interpreter doesn't render — an unknown element type, or a
   // Control whose jsonSchema property is missing. The original element type is
   // preserved so the modal can show it (and so the degradation is diagnosable).
@@ -330,9 +342,18 @@ export const parseArgumentSchema = (raw: {
       case 'LocationSearch':
         fields.push({ kind: 'location', key, label, nullable });
         break;
+      case 'PatientProgramSearch':
+        fields.push({
+          kind: 'program',
+          key,
+          label,
+          nullable,
+          required: isRequired,
+        });
+        break;
       // NameSearch, ItemSearch, ReasonOptionSearch, ScheduleForm,
-      // PatientProgramSearch, ProgramSearch, PeriodSearch, and any future type
-      // are not yet rendered — their picker roles are backlog registry rows
+      // ProgramSearch, PeriodSearch, and any future type are not yet
+      // rendered — their picker roles are backlog registry rows
       // (spec/reports S3). Preserve the type name for the unsupported control.
       default:
         fields.push({ kind: 'unsupported', key, label, elementType: type });

@@ -20,6 +20,7 @@ import { DateInput } from '../../ui/elements/inputs/DateInput';
 import { DateRangeInput } from '../../ui/elements/inputs/DateRangeInput';
 import { MasterListSelect } from '../masterList/MasterListSelect';
 import { LocationSelect } from '../location/LocationSelect';
+import { ProgramSelect } from '../program/ProgramSelect';
 import { storeContext } from '../../store/storeContext';
 import {
   cleanArguments,
@@ -42,13 +43,14 @@ export interface ArgumentSchemaSource {
 // never blocks — the server's typed data-fetch failure reports the miss.
 type RequirableField = Extract<
   ParsedField,
-  { kind: 'text' | 'number' | 'enum' | 'date' }
+  { kind: 'text' | 'number' | 'enum' | 'date' | 'program' }
 >;
 const isRequirable = (field: ParsedField): field is RequirableField =>
   field.kind === 'text' ||
   field.kind === 'number' ||
   field.kind === 'enum' ||
-  field.kind === 'date';
+  field.kind === 'date' ||
+  field.kind === 'program';
 
 // S3 — the argument-entry modal (spec/reports S3, AC-R1–R8). The filter form
 // is rendered FROM the report's argument schema: field set, order, labels, and
@@ -301,6 +303,18 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     )
                   }
                 />
+              </Match>
+              <Match when={field.kind === 'program' ? field : undefined} keyed>
+                {programField => (
+                  <ProgramSelect
+                    label={programField.label}
+                    value={selectValue(programField.key)}
+                    onChange={contextId =>
+                      setValues(programField.key, contextId ?? undefined)
+                    }
+                    error={requiredError(programField)}
+                  />
+                )}
               </Match>
               <Match when={field.kind === 'masterList'}>
                 <MasterListSelect
