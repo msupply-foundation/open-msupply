@@ -1,14 +1,13 @@
 use chrono::Utc;
 use repository::{
-    ActivityLogType, RepositoryError, StockLineRow, StockLineRowRepository, StockRelocationLineRow,
+    RepositoryError, StockLine, StockLineRow, StockRelocationLineRow,
     StockRelocationLineRowRepository, StockRelocationRow, StockRelocationRowRepository,
     StockRelocationStatus, StorageConnection, TransactionError,
 };
-use util::uuid::uuid;
 use util::EPSILON;
 
 use crate::{
-    activity_log::activity_log_entry,
+    repack::{insert_repack_from_stock_line, InsertRepack, InsertRepackError},
     service_provider::ServiceContext,
     stock_line::update::{update_stock_line, UpdateStockLine, UpdateStockLineError},
     stock_relocation::validate::{validate_line_movement, LineMovement, ValidateMovementError},
@@ -34,6 +33,7 @@ pub enum UpdateStockRelocationError {
         error: ValidateMovementError,
     },
     UpdateStockLine(UpdateStockLineError),
+    Repack(InsertRepackError),
     DatabaseError(RepositoryError),
 }
 
@@ -64,7 +64,7 @@ pub fn update_stock_relocation(
                     row.confirmed_datetime = Some(Utc::now().naive_utc());
                 }
                 if status == StockRelocationStatus::Finalised {
-                    finalise(ctx, connection, store_id, &row.id)?;
+                    finalise(ctx, connection, store_id, &row)?;
                     row.finalised_datetime = Some(Utc::now().naive_utc());
                 }
                 row.status = status;
@@ -83,15 +83,17 @@ fn finalise(
     ctx: &ServiceContext,
     connection: &StorageConnection,
     store_id: &str,
-    stock_relocation_id: &str,
+    relocation: &StockRelocationRow,
 ) -> Result<(), UpdateStockRelocationError> {
     use UpdateStockRelocationError::*;
 
     let line_repo = StockRelocationLineRowRepository::new(connection);
-    let lines = line_repo.find_many_by_stock_relocation_id(stock_relocation_id)?;
+    let lines = line_repo.find_many_by_stock_relocation_id(&relocation.id)?;
     if lines.is_empty() {
         return Err(MovementHasNoLines);
     }
+
+    let comment = format!("Stock movement #{}", relocation.stock_movement_number);
 
     for mut line in lines {
         let stock_line = validate_line_movement(
@@ -108,7 +110,8 @@ fn finalise(
             error,
         })?;
 
-        line.destination_stock_line_id = apply_movement(ctx, connection, &line, &stock_line)?;
+        line.destination_stock_line_id =
+            apply_movement(ctx, connection, &line, stock_line, &comment)?;
         line_repo.upsert_one(&line)?;
     }
 
@@ -119,9 +122,10 @@ fn apply_movement(
     ctx: &ServiceContext,
     connection: &StorageConnection,
     line: &StockRelocationLineRow,
-    stock_line: &StockLineRow,
+    stock_line: StockLine,
+    comment: &str,
 ) -> Result<Option<String>, UpdateStockRelocationError> {
-    if is_full_move(stock_line, line) {
+    if is_full_move(&stock_line.stock_line_row, line) {
         update_stock_line(
             ctx,
             UpdateStockLine {
@@ -136,36 +140,27 @@ fn apply_movement(
         return Ok(None);
     }
 
-    // Partial move
-    let moved = line.number_of_packs;
-    let source_total = stock_line.total_number_of_packs - moved;
-    let source = StockLineRow {
-        available_number_of_packs: stock_line.available_number_of_packs - moved,
-        total_number_of_packs: source_total,
-        total_volume: stock_line.volume_per_pack * source_total,
-        ..stock_line.clone()
-    };
-    let new_line = StockLineRow {
-        id: uuid(),
-        location_id: line.destination_location_id.clone(),
-        available_number_of_packs: moved,
-        total_number_of_packs: moved,
-        total_volume: stock_line.volume_per_pack * moved,
-        ..stock_line.clone()
-    };
-
-    let stock_line_repo = StockLineRowRepository::new(connection);
-    stock_line_repo.upsert_one(&source)?;
-    stock_line_repo.upsert_one(&new_line)?;
-    activity_log_entry(
+    // Partial move: split the stock line via a repack invoice (with unchanged pack
+    // size) so the movement appears in the stock ledger for both stock lines, and a
+    // location movement is recorded for the new line. The line was already validated
+    // by validate_line_movement; repack validation (which disallows fractional packs)
+    // is intentionally not run.
+    let pack_size = stock_line.stock_line_row.pack_size;
+    let result = insert_repack_from_stock_line(
         ctx,
-        ActivityLogType::StockLineEdit,
-        Some(new_line.id.clone()),
-        Some(stock_line.id.clone()),
-        None,
-    )?;
+        connection,
+        stock_line,
+        InsertRepack {
+            stock_line_id: line.stock_line_id.clone(),
+            number_of_packs: line.number_of_packs,
+            new_pack_size: pack_size,
+            new_location_id: line.destination_location_id.clone(),
+            comment: Some(comment.to_string()),
+        },
+    )
+    .map_err(UpdateStockRelocationError::Repack)?;
 
-    Ok(Some(new_line.id))
+    Ok(Some(result.new_stock_line_id))
 }
 
 fn is_full_move(stock_line: &StockLineRow, line: &StockRelocationLineRow) -> bool {
@@ -182,9 +177,14 @@ impl From<RepositoryError> for UpdateStockRelocationError {
 #[cfg(test)]
 mod test {
     use repository::{
+        activity_log::{ActivityLogFilter, ActivityLogRepository},
+        location_movement::{LocationMovementFilter, LocationMovementRepository},
         mock::{mock_location_1, MockDataInserts},
+        stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository},
         test_db::setup_all,
-        StockLineRow, StockLineRowRepository, StockRelocationStatus, Upsert,
+        ActivityLogType, EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository,
+        InvoiceLineType, InvoiceRepository, InvoiceStatus, InvoiceType, StockLineRow,
+        StockLineRowRepository, StockRelocationStatus, Upsert,
     };
     use util::uuid::uuid;
 
@@ -326,6 +326,166 @@ mod test {
         assert_eq!(new_line.pack_size, 1.0);
         assert_eq!(new_line.available_number_of_packs, 4.0);
         assert_eq!(new_line.location_id, Some(mock_location_1().id));
+
+        // Partial move creates a repack invoice so it shows in the stock ledger
+        let relocation = StockRelocationRowRepository::new(&ctx.connection)
+            .find_one_by_id(&partial_movement)
+            .unwrap()
+            .unwrap();
+        let repack_invoices_for = |stock_line_id: &str| {
+            InvoiceRepository::new(&ctx.connection)
+                .query_by_filter(
+                    InvoiceFilter::new()
+                        .store_id(EqualFilter::equal_to("store_a".to_string()))
+                        .r#type(InvoiceType::Repack.equal_to())
+                        .stock_line_id(stock_line_id.to_string()),
+                )
+                .unwrap()
+        };
+        let invoices = repack_invoices_for(&new_id);
+        assert_eq!(invoices.len(), 1);
+        let invoice = &invoices[0].invoice_row;
+        assert_eq!(invoice.status, InvoiceStatus::Verified);
+        assert!(invoice.verified_datetime.is_some());
+        assert_eq!(
+            invoice.comment,
+            Some(format!(
+                "Stock movement #{}",
+                relocation.stock_movement_number
+            ))
+        );
+
+        let invoice_lines = InvoiceLineRepository::new(&ctx.connection)
+            .query_by_filter(
+                InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice.id.to_string())),
+            )
+            .unwrap();
+        assert_eq!(invoice_lines.len(), 2);
+        let stock_in = invoice_lines
+            .iter()
+            .find(|l| l.invoice_line_row.r#type == InvoiceLineType::StockIn)
+            .unwrap();
+        assert_eq!(stock_in.invoice_line_row.stock_line_id, Some(new_id.clone()));
+        assert_eq!(
+            stock_in.invoice_line_row.location_id,
+            Some(mock_location_1().id)
+        );
+        assert_eq!(stock_in.invoice_line_row.number_of_packs, 4.0);
+        assert_eq!(stock_in.invoice_line_row.pack_size, 1.0);
+        let stock_out = invoice_lines
+            .iter()
+            .find(|l| l.invoice_line_row.r#type == InvoiceLineType::StockOut)
+            .unwrap();
+        assert_eq!(
+            stock_out.invoice_line_row.stock_line_id,
+            Some("partial_sl".to_string())
+        );
+        assert_eq!(stock_out.invoice_line_row.number_of_packs, 4.0);
+
+        // Enter-only location movement recorded for the new stock line
+        let movements = LocationMovementRepository::new(&ctx.connection)
+            .query_by_filter(
+                LocationMovementFilter::new().stock_line_id(EqualFilter::equal_to(new_id.clone())),
+            )
+            .unwrap();
+        assert_eq!(movements.len(), 1);
+        let movement = &movements[0].location_movement_row;
+        assert_eq!(movement.location_id, Some(mock_location_1().id));
+        assert!(movement.enter_datetime.is_some());
+        assert_eq!(movement.exit_datetime, None);
+
+        // Repack activity log linking new line back to the source
+        let logs = ActivityLogRepository::new(&ctx.connection)
+            .query_by_filter(
+                ActivityLogFilter::new().record_id(EqualFilter::equal_to(new_id.clone())),
+            )
+            .unwrap();
+        let repack_log = logs
+            .iter()
+            .find(|l| l.activity_log_row.r#type == ActivityLogType::Repack)
+            .unwrap();
+        assert_eq!(
+            repack_log.activity_log_row.changed_from,
+            Some("partial_sl".to_string())
+        );
+
+        // Both stock lines show the movement in the ledger
+        let ledger_for = |stock_line_id: &str| {
+            StockLineLedgerRepository::new(&ctx.connection)
+                .query_by_filter(
+                    StockLineLedgerFilter::new()
+                        .stock_line_id(EqualFilter::equal_to(stock_line_id.to_string())),
+                )
+                .unwrap()
+        };
+        let new_line_ledger = ledger_for(&new_id);
+        assert_eq!(new_line_ledger.len(), 1);
+        assert_eq!(new_line_ledger[0].invoice_type, InvoiceType::Repack);
+        assert_eq!(new_line_ledger[0].quantity, 4.0);
+        assert_eq!(new_line_ledger[0].running_balance, 4.0);
+        let source_ledger = ledger_for("partial_sl");
+        assert_eq!(source_ledger.len(), 1);
+        assert_eq!(source_ledger[0].invoice_type, InvoiceType::Repack);
+        assert_eq!(source_ledger[0].quantity, -4.0);
+
+        // Full move must not create an invoice
+        assert_eq!(repack_invoices_for("full_sl").len(), 0);
+
+        // Fractional pack quantities can be moved (repack validation is not applied)
+        stock_line("fraction_sl").upsert(&ctx.connection).unwrap();
+        let fraction_movement = new_movement(&service_provider, &ctx).await;
+        let fraction_line_id = add_line(&ctx, &fraction_movement, "fraction_sl", 2.5);
+        service
+            .update_stock_relocation(
+                &ctx,
+                "store_a",
+                set_status(&fraction_movement, StockRelocationStatus::Finalised),
+            )
+            .unwrap();
+        let fraction_line = line_repo.find_one_by_id(&fraction_line_id).unwrap().unwrap();
+        let fraction_new_id = fraction_line.destination_stock_line_id.clone().unwrap();
+        let fraction_new_line = stock_line_repo
+            .find_one_by_id(&fraction_new_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(fraction_new_line.total_number_of_packs, 2.5);
+        assert_eq!(repack_invoices_for(&fraction_new_id).len(), 1);
+
+        // Moving all available packs while some are reserved (available < total)
+        // must split, not relocate the whole line
+        StockLineRow {
+            available_number_of_packs: 6.0,
+            ..stock_line("reserved_sl")
+        }
+        .upsert(&ctx.connection)
+        .unwrap();
+        let reserved_movement = new_movement(&service_provider, &ctx).await;
+        let reserved_line_id = add_line(&ctx, &reserved_movement, "reserved_sl", 6.0);
+        service
+            .update_stock_relocation(
+                &ctx,
+                "store_a",
+                set_status(&reserved_movement, StockRelocationStatus::Finalised),
+            )
+            .unwrap();
+        let reserved_line = line_repo
+            .find_one_by_id(&reserved_line_id)
+            .unwrap()
+            .unwrap();
+        let reserved_new_id = reserved_line.destination_stock_line_id.clone().unwrap();
+        let reserved_source = stock_line_repo
+            .find_one_by_id("reserved_sl")
+            .unwrap()
+            .unwrap();
+        assert_eq!(reserved_source.available_number_of_packs, 0.0);
+        assert_eq!(reserved_source.total_number_of_packs, 4.0);
+        let reserved_new = stock_line_repo
+            .find_one_by_id(&reserved_new_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(reserved_new.total_number_of_packs, 6.0);
+        assert_eq!(reserved_new.available_number_of_packs, 6.0);
+        assert_eq!(repack_invoices_for(&reserved_new_id).len(), 1);
 
         // update comment
         let comment_movement = new_movement(&service_provider, &ctx).await;

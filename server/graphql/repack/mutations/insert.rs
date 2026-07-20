@@ -89,6 +89,7 @@ impl InsertRepackInput {
             number_of_packs,
             new_pack_size,
             new_location_id,
+            comment: None,
         }
     }
 }
