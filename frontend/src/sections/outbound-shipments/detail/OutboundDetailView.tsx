@@ -38,7 +38,7 @@ import {
   PlusCircleIcon,
   PrinterIcon,
 } from '../../../ui/icons';
-import { CustomerSelect } from '../../../domain/customer';
+import { NameSearch } from '../../../domain/name';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   OutboundDetail,
@@ -475,16 +475,25 @@ const OutboundDetailView: Component = () => {
                         disabled when not editable or when the shipment came
                         from a requisition (AC-N2). */}
                     <FieldRow label={t('outbound.toolbar.customer')}>
-                      <CustomerSelect
+                      <NameSearch
                         label={t('outbound.toolbar.customer')}
                         hideLabel
-                        value={current().otherParty.id}
-                        // Seed the record's current customer so the controlled
-                        // value resolves before (or regardless of) its page.
-                        selected={current().otherParty}
+                        storeId={params.storeId}
+                        role="customer"
+                        // Seed the record's current customer so the selection's
+                        // label resolves before (or regardless of) its page.
+                        selected={{
+                          id: current().otherParty.id,
+                          name: current().otherParty.name,
+                          code: current().otherParty.code,
+                          isOnHold: current().otherParty.isOnHold,
+                          isStore: current().otherParty.store != null,
+                          isSupplier: false,
+                          isDonor: false,
+                        }}
                         disabled={!editable() || current().requisition != null}
                         error={customerError()}
-                        onChange={customer => {
+                        onSelect={customer => {
                           if (customer) void changeCustomer(customer.id);
                         }}
                       />

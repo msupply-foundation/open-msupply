@@ -6,7 +6,7 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { XCircleIcon } from '../../../ui/icons';
-import { CustomerSelect, type Customer } from '../../../domain/customer';
+import { NameSearch, type NameOption } from '../../../domain/name';
 import { InsertOutboundShipment } from './outboundShipments.generated';
 
 // S2 — customer selection (spec/outbound-shipments ui-surface § S2): a modal
@@ -24,7 +24,7 @@ export const CustomerSearchModal = (props: {
   const [creating, setCreating] = createSignal(false);
   const [error, setError] = createSignal<string>();
 
-  const create = async (customer: Customer | null) => {
+  const create = async (customer: NameOption | null) => {
     if (!customer || creating()) return;
     setError(undefined);
     setCreating(true);
@@ -81,12 +81,14 @@ export const CustomerSearchModal = (props: {
         </Button>
       }
     >
-      <CustomerSelect
+      <NameSearch
         label={t('outbound.toolbar.customer')}
+        storeId={params.storeId}
+        role="customer"
         placeholder={t('outbound.create.placeholder')}
         disabled={creating()}
-        testId="customer-search-input"
-        onChange={customer => void create(customer)}
+        inputTestId="customer-search-input"
+        onSelect={customer => void create(customer)}
       />
       <Show when={error()}>
         {message => <Alert severity="error">{message()}</Alert>}

@@ -28,6 +28,10 @@ export interface NameSearchProps {
   placeholder?: string;
   hideLabel?: boolean;
   disabled?: boolean;
+  /** Inline error text shown under the field. */
+  error?: string;
+  /** Override the input's `data-testid` (defaults to `name-search-input`). */
+  inputTestId?: string;
   class?: string;
 }
 
@@ -70,7 +74,8 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     class={props.class}
     disabled={props.disabled}
     placeholder={props.placeholder}
-    inputTestId="name-search-input"
+    inputTestId={props.inputTestId ?? 'name-search-input'}
+    error={props.error}
     fetchPage={namePageFetcher(
       props.storeId,
       props.role ?? 'supplier',
