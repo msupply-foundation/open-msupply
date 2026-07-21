@@ -37,6 +37,19 @@ query draftStockOutLines(
         description
         unusable
       }
+      receivedNumberOfPacks
+      campaign {
+        name
+      }
+      program {
+        name
+      }
+      donor(storeId: $storeId) {
+        name
+      }
+      manufacturer(storeId: $storeId) {
+        name
+      }
     }
   }
 }
