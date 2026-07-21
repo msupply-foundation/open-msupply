@@ -186,7 +186,12 @@ const ServiceChargesContent = (
       ...(batch.deleteOutboundShipmentServiceLines ?? []),
     ].filter(item => item.response.__typename.endsWith('Error'));
     if (failures.length > 0) {
-      setErrorMessage(t('error.cant-save'));
+      const descriptions = failures
+        .map(item => item.response.error.description)
+        .filter(description => description.length > 0);
+      setErrorMessage(
+        descriptions.length > 0 ? descriptions.join('\n') : t('error.cant-save')
+      );
       return;
     }
     props.onCommitted();

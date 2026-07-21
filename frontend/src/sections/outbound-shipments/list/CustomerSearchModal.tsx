@@ -18,7 +18,13 @@ import { InsertOutboundShipment } from './outboundShipments.generated';
 export const CustomerSearchModal = (props: {
   open: boolean;
   onClose: () => void;
-}): JSX.Element => {
+}): JSX.Element => (
+  <Show when={props.open}>
+    <CustomerSearchContent onClose={props.onClose} />
+  </Show>
+);
+
+const CustomerSearchContent = (props: { onClose: () => void }): JSX.Element => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
   const [creating, setCreating] = createSignal(false);
@@ -62,7 +68,7 @@ export const CustomerSearchModal = (props: {
 
   return (
     <Dialog
-      open={props.open}
+      open
       testId="customer-search-modal"
       title={t('customers')}
       dismissable={!creating()}

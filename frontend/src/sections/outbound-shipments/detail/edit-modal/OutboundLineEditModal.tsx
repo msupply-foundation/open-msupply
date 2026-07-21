@@ -8,6 +8,7 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
+import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import styles from './OutboundLineEditModal.module.css';
@@ -16,7 +17,7 @@ import {
   type Column,
 } from '../../../../ui/elements/table/DataTable';
 import {
-  getDateCell,
+  getExpiryDateCell,
   getNumberCell,
   getCurrencyCell,
 } from '../../../../ui/elements/table/tableHelpers';
@@ -185,6 +186,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   ]);
 
   const unitName = () => item()?.unitName ?? t('label.unit');
+
+  // The <Select> value string for the current allocate-in lens. Capture the
+  // lens in a local so TS narrows the discriminated union without a cast (a
+  // bare second allocateIn() call is not narrowed).
+  const allocateInValue = () => {
+    const lens = allocateIn();
+    return lens.kind === 'units' ? 'units' : `packs-${lens.size}`;
+  };
 
   // FEFO auto-distribution across the grid (spec S4 issue field): the shared
   // routine fills usable batches oldest-expiry-first in whole packs
@@ -355,7 +364,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     {
       c: { key: 'expiryDate' },
       header: t('label.expiry'),
-      ...getDateCell(),
+      ...getExpiryDateCell(),
     },
     ...(prefs()?.manageVvmStatusForStock
       ? [
@@ -434,18 +443,16 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       cell: info => {
         const line = info.row.original;
         return (
-          <TextField
+          <NumberField
             label={t('label.issued')}
             hideLabel
             size="small"
-            type="number"
-            min="0"
-            max={String(line.availablePacks)}
+            min={0}
+            max={line.availablePacks}
+            decimalLimit={2}
             disabled={isBarred(line)}
-            value={line.numberOfPacks || ''}
-            onInput={e =>
-              setPacks(line.id, toNumberOrNull(e.currentTarget.value))
-            }
+            value={line.numberOfPacks || undefined}
+            onChange={value => setPacks(line.id, value ?? null)}
           />
         );
       },
@@ -600,11 +607,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           <Select
             label={t('label.units')}
             size="sm"
-            value={
-              allocateIn().kind === 'units'
-                ? 'units'
-                : `packs-${(allocateIn() as { size: number }).size}`
-            }
+            value={allocateInValue()}
             options={[
               { value: 'units', label: unitName() },
               ...distinctPackSizes().map(size => ({
