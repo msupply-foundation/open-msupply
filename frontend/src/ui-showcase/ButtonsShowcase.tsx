@@ -193,6 +193,32 @@ export const ButtonsShowcase = () => {
       </Card>
 
       <Card
+        title="Collapsible — icon-only on phones"
+        lead={
+          <>
+            Opt-in with <code>collapsible</code> (ui-standards #btn-icons): at
+            phone widths (≤767px) the button sheds its label down to just the
+            icon, to save toolbar space.{' '}
+            <strong>Resize the window below 768px</strong> to see the first two
+            collapse; the third (no <code>collapsible</code>) keeps its label.
+            Only use it on buttons with an <code>icon</code>; the label stays as
+            the accessible name. Default is off app-wide — one constant flips it
+            later.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <Button collapsible icon={<PlusCircleIcon />}>
+            New shipment
+          </Button>
+          <Button collapsible variant="secondary" icon={<DownloadIcon />}>
+            Export
+          </Button>
+          <Button icon={<SaveIcon />}>Save changes</Button>
+        </div>
+      </Card>
+
+      <Card
         title="Icon button — the icon IS the button"
         lead={
           <>

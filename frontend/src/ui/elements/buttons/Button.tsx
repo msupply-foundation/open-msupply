@@ -3,6 +3,15 @@ import { createRipple } from '../../utils/createRipple';
 import { Ripple } from './Ripple';
 import styles from './Button.module.css';
 
+/*
+ * Whether a labelled Button sheds its label down to just the icon on phone
+ * widths (≤767px, ui-standards #btn-icons) WITHOUT an explicit `collapsible`
+ * prop. Off for now — collapsing is opt-in per button. This is the single
+ * switch to make collapse the app-wide default later: flip it to `true` and
+ * every labelled button collapses on phones unless it passes `collapsible={false}`.
+ */
+const COLLAPSIBLE_BY_DEFAULT = false;
+
 export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: JSX.Element;
   /**
@@ -28,6 +37,15 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    * marks it
    *  aria-busy (so a click can't re-fire an in-flight action). */
   loading?: boolean;
+  /**
+   * Collapse to just the icon on phone widths (≤767px) to save toolbar space
+   * (ui-standards #btn-icons). Opt-in, and only meaningful with an `icon`. The
+   * label stays in the DOM (visually hidden), so the button keeps its
+   * accessible name — no aria-label needed. Omit to use the app default
+   * (COLLAPSIBLE_BY_DEFAULT, currently off); `collapsible={false}` always opts
+   * out even if that default flips.
+   */
+  collapsible?: boolean;
 }
 
 /*
@@ -43,6 +61,7 @@ export const Button = (props: ButtonProps) => {
     'size',
     'iconPosition',
     'loading',
+    'collapsible',
     'children',
     'class',
     'type',
@@ -63,6 +82,9 @@ export const Button = (props: ButtonProps) => {
       data-variant={local.variant ?? 'primary'}
       data-size={local.size ?? 'medium'}
       data-icon-position={local.iconPosition ?? 'start'}
+      data-collapsible={
+        (local.collapsible ?? COLLAPSIBLE_BY_DEFAULT) ? '' : undefined
+      }
       disabled={local.disabled || local.loading}
       aria-busy={local.loading || undefined}
       onPointerDown={event => {

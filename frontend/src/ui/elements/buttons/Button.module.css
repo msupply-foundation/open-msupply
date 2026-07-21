@@ -118,6 +118,29 @@
   order: 1;
 }
 
+/* Collapsible (opt-in, ui-standards #btn-icons): at phone widths a labelled
+   button sheds its label down to just the icon, to save toolbar space. The
+   label stays in the DOM but visually hidden (not display:none), so the button
+   keeps its accessible name with no aria-label. Only meaningful with an icon.
+   Placed after the base .label rule so specificity ascends. */
+@media (max-width: 767px) {
+  .button[data-collapsible] {
+    min-inline-size: 3rem;
+    padding-inline: 0.75rem;
+  }
+
+  .button[data-collapsible] .label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 /* --- Variant tone at rest -------------------------------------------- */
 .button[data-variant='primary'] {
   background: var(--secondary-main);
