@@ -256,9 +256,13 @@ export const InboundLineEditCards = ({
                 updateFn={(value: number) => {
                   const item = row.original.item;
                   const shouldClearSellPrice =
-                    item?.defaultPackSize !== line.packSize &&
+                    item?.defaultPackSize !== value &&
                     item?.itemStoreProperties?.defaultSellPricePerPack ===
                       line.sellPricePerPack;
+                  const shouldClearCostPrice =
+                    item?.defaultPackSize !== value &&
+                    item?.itemStoreProperties?.defaultSellPricePerPack ===
+                      line.costPricePerPack;
 
                   updateDraftLine({
                     volumePerPack:
@@ -269,6 +273,9 @@ export const InboundLineEditCards = ({
                     sellPricePerPack: shouldClearSellPrice
                       ? 0
                       : line.sellPricePerPack,
+                    costPricePerPack: shouldClearCostPrice
+                      ? 0
+                      : line.costPricePerPack,
                     packSize: value,
                     id: row.original.id,
                   });
