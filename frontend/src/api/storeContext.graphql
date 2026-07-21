@@ -17,14 +17,23 @@ query storeContext($storeId: String!) {
   }
   # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
   # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
-  # refresh keeps it current. The three stocktake display gates
-  # (spec/stocktakes › store-preference gates) ride here too — global state,
-  # read by the detail line table, line editor, and create modal.
+  # refresh keeps it current. The stocktake AND stock display gates
+  # (spec/stocktakes + spec/stock › store-preference gates) ride here too —
+  # global state, read by the detail line table, line editor, create modal, and
+  # the whole stock vertical (list/detail/new-stock/adjust).
   preferences(storeId: $storeId) {
     syncRecordsDisplayThreshold
     manageVaccinesInDoses
     manageVvmStatusForStock
     allowTrackingOfStockByDonor
+    # spec/stock: the VVM status FIELD (S2/S3) shows when this OR
+    # manageVvmStatusForStock is on; the adjust date control (S4) is gated on
+    # backdating.inventoryAdjustmentsEnabled and bounded by maxDays.
+    sortByVvmStatusThenExpiry
+    backdating {
+      inventoryAdjustmentsEnabled
+      maxDays
+    }
   }
   me {
     ... on UserNode {

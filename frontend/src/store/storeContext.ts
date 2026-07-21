@@ -72,6 +72,31 @@ const stocktakePreferences = () => {
   };
 };
 
+// The stock vertical's display-gate preferences (spec/stock › store-preference
+// gates). A superset of stocktakePreferences: the same three shared gates PLUS
+// sortByVvmStatusThenExpiry (the VVM status FIELD shows on S2/S3 when this OR
+// manageVvmStatusForStock is on) and the global backdating window (the S4
+// adjust-date control appears only when inventoryAdjustmentsEnabled, bounded by
+// maxDays). Each defaults OFF/0 while the context is unresolved — the safe
+// default is a plainer surface, so a gated field/control never flashes in
+// before its preference is known. Reactive, so a post-sync refetch re-gates in
+// place. maxDays === 0 means "no maximum" (the server enforces the real bound).
+const stockPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  const backdating = prefs?.backdating;
+  return {
+    manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
+    manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
+    allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
+    sortByVvmStatusThenExpiry: prefs?.sortByVvmStatusThenExpiry ?? false,
+    backdating: {
+      inventoryAdjustmentsEnabled:
+        backdating?.inventoryAdjustmentsEnabled ?? false,
+      maxDays: backdating?.maxDays ?? 0,
+    },
+  };
+};
+
 // A server UserPermission name as it arrives in the store-context query
 // (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
 // generated so callers can't typo a permission. Reading the union off the
@@ -100,6 +125,7 @@ export {
   currentStoreId,
   currentUserId,
   stocktakePreferences,
+  stockPreferences,
   hasPermission,
 };
 export type { UserPermission };
