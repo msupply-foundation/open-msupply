@@ -42,6 +42,10 @@ export type SaveGlobalTableConfigsVariables = {
     maxDays: number;
   } | null;
     receivePaymentsFromPrescriptions?: boolean | null;
+    blindStocktake?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
     manageVaccinesInDoses?: Array<{
     storeId: string;
     value: boolean;

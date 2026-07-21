@@ -28,21 +28,31 @@ export interface NameSearchProps {
   placeholder?: string;
   hideLabel?: boolean;
   disabled?: boolean;
+  /** Inline error text shown under the field. */
   error?: string;
+  /** Override the input's `data-testid` (defaults to `name-search-input`). */
+  inputTestId?: string;
+  /** Whether the selection can be cleared (default true). */
+  clearable?: boolean;
   class?: string;
 }
 
-// One option row: a kind icon (truck = external party, home = a party that is
-// itself another store in the system), then the code (bold) and name, with an
-// "(On hold)" suffix for an on-hold name (listed but not selectable via
-// itemDisabled). Code and name are separately-marked nodes (e2e/TESTIDS.md
-// item-option-code / -name). The row shows both; the selected input shows only
-// the name (itemToString below).
+// One option row: a kind icon (a house in the PRIMARY colour = a party that is
+// itself another store in the system, a truck in the SECONDARY colour = an
+// external party), then the code (bold) and name, with an "(On hold)" suffix
+// for an on-hold name (listed but not selectable via itemDisabled). Code and
+// name are separately-marked nodes (e2e/TESTIDS.md item-option-code / -name).
+// The row shows both; the selected input shows only the name (itemToString
+// below).
 const renderRow = (name: NameOption): JSX.Element => (
   <span
     style={{ display: 'inline-flex', 'align-items': 'center', gap: '0.5rem' }}
   >
-    {name.isStore ? <HomeIcon /> : <TruckIcon />}
+    {name.isStore ? (
+      <HomeIcon style={{ color: 'var(--primary-main)' }} />
+    ) : (
+      <TruckIcon style={{ color: 'var(--secondary-main)' }} />
+    )}
     <span
       data-testid="item-option-code"
       style={{ 'font-weight': 'var(--weight-bold)' }}
@@ -72,7 +82,8 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
-    inputTestId="name-search-input"
+    inputTestId={props.inputTestId ?? 'name-search-input'}
+    clearable={props.clearable}
     fetchPage={namePageFetcher(
       props.storeId,
       props.role ?? 'supplier',

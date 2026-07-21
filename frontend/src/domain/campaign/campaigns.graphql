@@ -1,0 +1,18 @@
+# The store's campaigns — an app-wide lookup backed by a store-scoped cache
+# (campaignsResource): fetched once per store, shared by every consumer (the
+# stocktake line-editor's campaign-or-program field pairs these with the
+# item-narrowed programs, spec/stocktakes S4). Campaigns are store-scoped and few,
+# so one cache serves all pickers. Sorted by name (the only sort key the server
+# offers) so every picker lists them in a stable order. id + name label the
+# option; startDate/endDate are unused by the picker but come cheap on the node.
+query campaigns($storeId: String!) {
+  campaigns(storeId: $storeId, sort: [{ key: name }]) {
+    ... on CampaignConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}
