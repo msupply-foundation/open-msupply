@@ -50,7 +50,11 @@ const collect = path => {
         tests.set([spec.file, ...chain, spec.title].join(' › '), {
           // expected | unexpected | flaky | skipped
           outcome: t.status,
-          error: lastRun?.errors?.[0]?.message?.split('\n')[0] ?? '',
+          // First line only, ANSI color codes stripped — it lands in markdown.
+          error:
+            lastRun?.errors?.[0]?.message
+              ?.replace(/\u001b\[[0-9;]*m/g, '')
+              .split('\n')[0] ?? '',
         });
       }
     }
