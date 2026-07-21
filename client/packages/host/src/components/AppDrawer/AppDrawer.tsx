@@ -100,7 +100,8 @@ const closedMixin = (theme: Theme) => ({
 
 const StyledDrawer = styled(Box, {
   shouldForwardProp: prop => prop !== 'isOpen',
-})<{ isOpen: boolean }>(({ isOpen, theme }) => ({
+  // styled() loses Box's polymorphic `component` prop, so redeclare it
+})<{ isOpen: boolean; component?: React.ElementType }>(({ isOpen, theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
