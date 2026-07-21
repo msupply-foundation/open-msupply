@@ -3,7 +3,6 @@ import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import type { Column } from './columnTypes';
-import { MULTIPLE, sharedOrMultipleDate } from './aggregations';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their
 // column defs, and the sortKey ⇄ column-id mapping. Kept in one place so a page
@@ -32,44 +31,32 @@ const EMPTY_CELL = '—';
 // sortKey/groups extension lets a fragment spread into a Column of ANY (K, G) —
 // including a groups-only edit table whose K is `never` — without a `sortKey?:
 // never` or identity clash. `cell` matches ColumnDefBase's own signature
-// exactly.
+// exactly. Exported for ChipListCell (getChipListCell), which builds a fragment
+// too.
 //
 // aggregationFn sets the DEFAULT grouped-parent value (row grouping — see
 // DataTable rowGroup): a number column sums its leaves; a date column shows the
-// shared date or [multiple]. A caller can override by setting `aggregationFn`
-// on the column itself.
-type CellFragment<T> = Pick<
+// shared date or [multiple]. The stocktake detail table no longer groups, but
+// the shared DataTable still supports grouping (card view, other verticals), so
+// the fragment keeps carrying the grouping fields.
+export type CellFragment<T> = Pick<
   ColumnDefBase<T>,
   'meta' | 'cell' | 'aggregationFn' | 'aggregatedCell'
 >;
 
-// Format a date value the ONE way, shared by a date column's leaf `cell` and
-// its grouped-parent `aggregatedCell` so a group's shared date renders
-// IDENTICALLY to its rows (not raw ISO): blank → em dash, the MULTIPLE sentinel
-// → literal, else localised.
-const formatDateCell = (value: string | Date | null | undefined): string => {
-  if (value === MULTIPLE) return MULTIPLE;
-  return value ? localisedDate(value) : EMPTY_CELL;
-};
+// Format a date value the ONE way: blank → em dash, else localised.
+const formatDateCell = (value: string | Date | null | undefined): string =>
+  value ? localisedDate(value) : EMPTY_CELL;
 
-// Numbers: right-aligned. Grouped parent → SUM of the leaves (a number cell
-// needs no `cell`, so the summed value renders as-is).
+// Numbers: right-aligned.
 export const getNumberCell = <T>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
-  aggregationFn: 'sum',
 });
 
-// Dates: format the resolved value via localisedDate, blank → em dash. Grouped
-// parent → the shared date (fast epoch-ms compare) or [multiple]; the
-// aggregatedCell formats it the SAME way as a leaf cell (TanStack won't run the
-// leaf `cell` for an aggregated value, so without this the parent would show
-// the raw ISO while its children show the localised date).
+// Dates: format the resolved value via localisedDate, blank → em dash.
 export const getDateCell = <T>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
-  aggregationFn: sharedOrMultipleDate,
   cell: info =>
-    formatDateCell(info.getValue<string | Date | null | undefined>()),
-  aggregatedCell: info =>
     formatDateCell(info.getValue<string | Date | null | undefined>()),
 });
 

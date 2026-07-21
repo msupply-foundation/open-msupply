@@ -1,0 +1,272 @@
+/*
+ * Chrome for the headless date/time fields (DateField, DateTimeField,
+ * TimeField). The field wrapper + label + helper/error mirror TextField's
+ * (these controls are composites — a popover trigger and/or a typed input —
+ * so they can't reuse TextField's <input> directly, but they match its look).
+ * `.control` is the input-looking frame the parts sit inside; it owns the
+ * border + focus ring so date-trigger and time-input read as one input.
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: var(--input-max-short);
+  position: relative;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1.3;
+  color: var(--text-body);
+}
+
+.labelHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.required {
+  margin-inline-start: 0.125em;
+  color: var(--error-main);
+}
+
+/* The shared input frame: border + focus ring live here so every part inside
+   reads as one input. */
+.control {
+  display: flex;
+  align-items: center;
+  inline-size: 100%;
+  block-size: var(--input-height);
+  padding-inline: var(--input-padding-x);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-white);
+  color: var(--text-body);
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.control[data-size='small'] {
+  block-size: var(--input-height-sm);
+}
+
+.control:focus-within {
+  border-color: var(--primary-main);
+  box-shadow: var(--focus-ring);
+}
+
+.control[data-error] {
+  border-color: var(--error-main);
+}
+
+.control[data-error]:focus-within {
+  box-shadow: var(--focus-ring-error);
+}
+
+.control[data-disabled] {
+  background: var(--bg-input);
+  border-color: var(--color-divider);
+  color: var(--gray-main);
+}
+
+/* The date portion: a bare button filling the free space, calendar icon at the
+   inline-end. */
+.dateTrigger {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: start;
+  cursor: pointer;
+}
+
+/* The frame's :focus-within ring is the single focus indicator — suppress the
+   Popover trigger button's own ring (higher specificity than Popover's rule). */
+.control .dateTrigger:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.control[data-disabled] .dateTrigger {
+  cursor: not-allowed;
+}
+
+.dateText {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.placeholder {
+  color: var(--gray-main);
+}
+
+.calendarIcon {
+  flex-shrink: 0;
+  color: var(--gray-dark);
+  font-size: 1.1em;
+}
+
+.dateTrigger:hover .calendarIcon {
+  color: var(--primary-main);
+}
+
+/* Typed date entry: a bare text input filling the frame + a calendar icon
+   button that opens the picker. */
+.dateInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm);
+}
+
+.dateInput:focus {
+  outline: none;
+}
+
+.dateInput::placeholder {
+  color: var(--gray-main);
+}
+
+.dateInput:disabled {
+  cursor: not-allowed;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0;
+  margin-inline-start: var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--gray-dark);
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  color: var(--primary-main);
+}
+
+/* Frame's :focus-within ring is the single indicator — suppress the icon
+   button's own (Popover trigger) ring. */
+.control .iconBtn:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.control[data-disabled] .iconBtn {
+  cursor: not-allowed;
+}
+
+/* Divider between the date and time portions of DateTimeField. */
+.divider {
+  flex-shrink: 0;
+  inline-size: 1px;
+  align-self: stretch;
+  margin-inline: var(--space-2);
+  margin-block: 0.4em;
+  background: var(--color-divider);
+}
+
+/* Kobalte TimeField Root, embedded in the combined DateTimeField frame. */
+.timeRoot {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Kobalte TimeField segments — bare (the frame owns the border). The segment
+   group. */
+.timeSegs {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}
+
+/* A lone time field lets the segments fill the frame from the start. */
+.timeSolo {
+  flex: 1;
+}
+
+/* Each editable segment (hour / minute) — brand highlight on focus, mirroring
+   the selected calendar day; the separator (colon) is inert. */
+.timeSeg {
+  padding: 0 0.1em;
+  border-radius: var(--radius-sm);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.timeSeg[data-placeholder] {
+  color: var(--gray-main);
+}
+
+.timeSeg[data-separator] {
+  padding: 0;
+  color: var(--text-secondary);
+}
+
+.timeSeg:focus {
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+}
+
+.control[data-disabled] .timeSeg {
+  color: var(--gray-main);
+}
+
+.helper {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--text-secondary);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--error-main);
+}
+
+.errorIcon {
+  font-size: 0.875em;
+  color: var(--error-main);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control {
+    transition: none;
+  }
+}

@@ -1,6 +1,8 @@
 import { createSignal, For, type JSX } from 'solid-js';
 import { Select } from '../ui/elements/selectors/Select';
 import { Combobox } from '../ui/elements/selectors/Combobox';
+import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
+import type { Page } from '../ui/utils/createPaginatedSearch';
 import { MultiSelect } from '../ui/elements/selectors/MultiSelect';
 import {
   ColourTagDot,
@@ -62,6 +64,33 @@ const renderItem = (item: DemoItem) => (
     </span>
   </span>
 );
+
+// A MOCK server-paginated fetcher for the AsyncCombobox demo: filters the fixed
+// ITEMS list by code/name, returns one page at a time, and fakes network
+// latency — so the demo shows the loading spinner, infinite-scroll paging, and
+// selected-value display without a live backend. Real callers pass a fetcher
+// backed by a GraphQL query (see ItemSearch / NameSearch).
+const ASYNC_PAGE_SIZE = 5;
+const mockFetchPage = (
+  search: string,
+  offset: number
+): Promise<Page<DemoItem>> =>
+  new Promise(resolve => {
+    const needle = search.toLocaleLowerCase();
+    const filtered = ITEMS.filter(
+      item =>
+        item.name.toLocaleLowerCase().includes(needle) ||
+        item.code.toLocaleLowerCase().includes(needle)
+    );
+    setTimeout(
+      () =>
+        resolve({
+          nodes: filtered.slice(offset, offset + ASYNC_PAGE_SIZE),
+          totalCount: filtered.length,
+        }),
+      350
+    );
+  });
 
 // Match either the item name or its code, case-insensitively.
 const itemFilter = (item: DemoItem, input: string) => {
@@ -151,6 +180,11 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
 export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated');
   const [picked, setPicked] = createSignal<DemoItem | null>(null);
+  // Seeded to the LAST item (not on the first page) to show AsyncCombobox
+  // rendering a selected value whose row hasn't been loaded yet.
+  const [asyncPicked, setAsyncPicked] = createSignal<DemoItem | null>(
+    ITEMS[ITEMS.length - 1]
+  );
   const [statusFilter, setStatusFilter] = createSignal<string[]>([]);
   const [multi, setMulti] = createSignal<DemoItem[]>([ITEMS[0], ITEMS[2]]);
   // Selector-in-a-dialog demo: the pickers must portal INTO the dialog (not
@@ -238,17 +272,45 @@ export const SelectorsShowcase = () => {
       </Card>
 
       <Card
-        title="Autocomplete — pick-first flows & per-option disabled"
+        title="Async autocomplete — AsyncCombobox (server-paginated)"
         lead={
           <>
-            Two lookup behaviours the domain selects lean on:{' '}
-            <code>openOnFocus</code> opens the full list on click/focus with no
-            typing (the customer-search modal's pick-first flow), and{' '}
-            <code>itemDisabled</code> lists an option for context without
-            letting it be chosen (on-hold customers, out-of-stock items —
-            exposed as <code>aria-disabled</code>). After committing a pick,
-            reopening shows the <em>full</em> list again — the input text only
-            filters while it's something the user typed.
+            The <strong>server-fed</strong> combobox: typing refetches from the
+            backend, scrolling near the bottom loads the next page, and a
+            controlled selection shows its label even before its page is loaded.
+            The generic engine behind the domain pickers (
+            <code>ItemSearch</code>, <code>NameSearch</code>) — each just
+            supplies a <code>fetchPage</code> and an option row. This demo uses
+            a mock fetcher (page size {ASYNC_PAGE_SIZE}, faked latency) and
+            starts preselected to the last item to show it render without a
+            lookup.
+          </>
+        }
+      >
+        <AsyncCombobox<DemoItem>
+          label="Add item (async)"
+          fetchPage={mockFetchPage}
+          itemToString={item => item.name}
+          itemToValue={item => item.code}
+          renderItem={renderItem}
+          selected={asyncPicked() ?? undefined}
+          onSelect={setAsyncPicked}
+          placeholder="Search by item code or name…"
+        />
+      </Card>
+
+      <Card
+        title="Autocomplete — open-on-interaction & per-option disabled"
+        lead={
+          <>
+            Every combobox opens its full list as soon as the input is
+            focused/clicked — no typing needed (the customer-search modal's
+            pick-first flow is just the default). <code>itemDisabled</code>{' '}
+            lists an option for context without letting it be chosen (on-hold
+            customers, out-of-stock items — exposed as{' '}
+            <code>aria-disabled</code>). After committing a pick, reopening
+            shows the <em>full</em> list again — the input text only filters
+            while it's something the user typed.
           </>
         }
       >
@@ -259,7 +321,6 @@ export const SelectorsShowcase = () => {
           itemToValue={item => item.code}
           filter={itemFilter}
           itemDisabled={item => item.availableStock === 0}
-          openOnFocus
           renderItem={renderItem}
           onChange={() => {}}
           placeholder="Click — the list opens without typing"

@@ -1,57 +1,12 @@
-# Reports data layer (spec/reports). Filter / sort are carried as GraphQL input
-# types (ReportFilterInput, ReportSortInput) so URL / caller state maps straight
-# onto them with no remapping (kdd/type-safety). `__typename` is selected on
-# every union branch so call sites discriminate on it (kdd/state-management),
-# matching the stocktakes convention.
-
-# List available reports. The server applies compatibility / custom-wins /
-# latest selection per code AFTER the caller's filter narrows the candidates
-# (spec/reports/rules "Which version a user sees"). storeId scopes auth only.
-query reports(
-  $storeId: String!
-  $userLanguage: String!
-  $filter: ReportFilterInput
-  $sort: [ReportSortInput!]
-) {
-  reports(
-    storeId: $storeId
-    userLanguage: $userLanguage
-    filter: $filter
-    sort: $sort
-  ) {
-    ... on ReportConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        name
-        code
-        context
-        subContext
-        isCustom
-        isActive
-        argumentSchema {
-          id
-          jsonSchema
-          uiSchema
-        }
-      }
-    }
-    # Declared but effectively unreachable on the wire (spec/reports/contract);
-    # selected so the union is a discriminated result the caller can match on.
-    ... on QueryReportsError {
-      __typename
-      error {
-        __typename
-        description
-      }
-    }
-  }
-}
-
-# Fetch a single report version by id — no selection, no compatibility / active
-# check (spec/reports/rules). Unknown id surfaces as a plain GraphQL error, not
+# The reports SECTION's own wire surface (spec/reports S2): fetch one report
+# version by id — no selection, no compatibility / active check
+# (spec/reports/rules). Unknown id surfaces as a plain GraphQL error, not
 # QueryReportError (a wire trap; see contract), so that branch is rarely hit.
+#
+# The cross-vertical operations live in domain/reports (the S4 selector's
+# `reports` list and `generateReport`) — this section reuses those documents
+# rather than restating them. `__typename` is selected on every union branch so
+# call sites discriminate on it (kdd/state-management).
 query report($storeId: String!, $userLanguage: String!, $id: String!) {
   report(storeId: $storeId, userLanguage: $userLanguage, id: $id) {
     ... on ReportNode {
@@ -59,10 +14,6 @@ query report($storeId: String!, $userLanguage: String!, $id: String!) {
       id
       name
       code
-      context
-      subContext
-      isCustom
-      isActive
       argumentSchema {
         id
         jsonSchema
@@ -74,77 +25,6 @@ query report($storeId: String!, $userLanguage: String!, $id: String!) {
       error {
         __typename
         description
-      }
-    }
-  }
-}
-
-# Generate a report file. A root QUERY despite creating a server-side file
-# (spec/reports/contract "Generation") — no mutation / cache-invalidation
-# semantics. Returns a fileId fetched from GET /files (see files.ts). The only
-# reachable typed error is FailedToFetchReportData, carrying the failing data
-# query's raw GraphQL errors.
-query generateReport(
-  $storeId: String!
-  $reportId: String!
-  $dataId: String
-  $arguments: JSON
-  $format: PrintFormat
-  $sort: PrintReportSortInput
-  $currentLanguage: String
-) {
-  generateReport(
-    storeId: $storeId
-    reportId: $reportId
-    dataId: $dataId
-    arguments: $arguments
-    format: $format
-    sort: $sort
-    currentLanguage: $currentLanguage
-  ) {
-    ... on PrintReportNode {
-      __typename
-      fileId
-    }
-    ... on PrintReportError {
-      __typename
-      error {
-        __typename
-        description
-        ... on FailedToFetchReportData {
-          errors
-        }
-      }
-    }
-  }
-}
-
-# Plain CSV-to-workbook conversion (list-screen exports). Same response shape as
-# generateReport; shares the report permission and the file service.
-query csvToExcel(
-  $storeId: String!
-  $csvData: String!
-  $filename: String!
-  $sheetName: String
-) {
-  csvToExcel(
-    storeId: $storeId
-    csvData: $csvData
-    filename: $filename
-    sheetName: $sheetName
-  ) {
-    ... on PrintReportNode {
-      __typename
-      fileId
-    }
-    ... on PrintReportError {
-      __typename
-      error {
-        __typename
-        description
-        ... on FailedToFetchReportData {
-          errors
-        }
       }
     }
   }

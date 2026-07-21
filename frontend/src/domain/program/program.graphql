@@ -1,0 +1,22 @@
+# Program-enrolment document registries for the current store — the option
+# source of the patient-program picker (spec/reports contract "Arguments",
+# AC-R10). One registry per program the caller may see: the server restricts
+# results to contexts the user holds a document permission for. The submitted
+# argument value is `contextId` (the program's context), not the registry id.
+query programRegistries($storeId: String!) {
+  documentRegistries(
+    storeId: $storeId
+    filter: { category: { equalTo: PROGRAM_ENROLMENT } }
+    sort: [{ key: documentType }]
+  ) {
+    ... on DocumentRegistryConnector {
+      __typename
+      nodes {
+        id
+        name
+        documentType
+        contextId
+      }
+    }
+  }
+}

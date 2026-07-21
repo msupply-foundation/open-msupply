@@ -17,9 +17,14 @@ query storeContext($storeId: String!) {
   }
   # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
   # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
-  # refresh keeps it current.
+  # refresh keeps it current. The three stocktake display gates
+  # (spec/stocktakes › store-preference gates) ride here too — global state,
+  # read by the detail line table, line editor, and create modal.
   preferences(storeId: $storeId) {
     syncRecordsDisplayThreshold
+    manageVaccinesInDoses
+    manageVvmStatusForStock
+    allowTrackingOfStockByDonor
   }
   me {
     ... on UserNode {

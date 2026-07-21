@@ -2,6 +2,7 @@ import { t } from '../../../intl';
 import {
   FilterSelect,
   FilterTextInput,
+  FilterNumberInput,
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
@@ -128,24 +129,22 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
   stocktakeNumber: {
     label: () => t('label.number'),
     render: props => (
-      <FilterTextInput
+      <FilterNumberInput
         label={t('label.number')}
         testId={props.testId}
         placeholder={t('label.number')}
-        // stocktakeNumber is an integer; the control edits a string. Show it
-        // as text, and parse on input below. `?? ''` keeps the box blank when
-        // unset.
-        value={props.filter().stocktakeNumber?.equalTo?.toString() ?? ''}
-        // Server honours stocktakeNumber.equalTo (verified). Parse the string
-        // to an int; a blank or non-numeric box clears to null (chip stays, no
-        // filter applied) — never { equalTo: NaN }, which would serialise to
-        // null and silently mismatch.
-        onInput={value => {
-          const n = Number.parseInt(value, 10);
+        // stocktakeNumber is an integer — NumberField edits (and commits) a real
+        // number, so no string parsing / NaN guard here. `?? undefined` keeps
+        // the box blank when unset.
+        value={props.filter().stocktakeNumber?.equalTo ?? undefined}
+        // Server honours stocktakeNumber.equalTo (verified). A committed number
+        // → { equalTo }; clearing the box (undefined) → null so the chip stays
+        // with no filter applied (never { equalTo: NaN }).
+        onChange={value =>
           props.setPartialFilter({
-            stocktakeNumber: Number.isNaN(n) ? null : { equalTo: n },
-          });
-        }}
+            stocktakeNumber: value === undefined ? null : { equalTo: value },
+          })
+        }
       />
     ),
   },

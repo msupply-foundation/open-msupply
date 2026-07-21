@@ -5,12 +5,12 @@ import {
   type SortState,
   type TabAndCardGroup,
   ALL_TABS,
-  sharedOrMultiple,
 } from '../ui/elements/table/DataTable';
 import {
   getCurrencyCell,
   getNumberCell,
 } from '../ui/elements/table/tableHelpers';
+import { getChipListCell } from '../ui/elements/table/ChipListCell';
 import { StockIcon, InfoIcon, TruckIcon } from '../ui/icons';
 import {
   resolveTableConfig,
@@ -49,6 +49,7 @@ type Batch = {
   expiry: string;
   stock: number;
   price: number;
+  lists: string[];
 };
 
 const NAMES = [
@@ -77,6 +78,9 @@ const SUPPLIERS = [
   'Global Meds',
   'CarePoint',
 ];
+// Master-list-style tags for the chip-list cell demo; row i carries the first
+// 0–4 of these, so the column shows blank cells, single chips, and clipping.
+const LISTS = ['General list', 'Immunisation', 'HIV care', 'Essential meds'];
 
 // Deterministic 60-row dataset (enough to paginate + scroll).
 const DATA: Batch[] = Array.from({ length: 60 }, (_, i) => ({
@@ -89,6 +93,7 @@ const DATA: Batch[] = Array.from({ length: 60 }, (_, i) => ({
   expiry: `${String(1 + (i % 28)).padStart(2, '0')}/${String(1 + (i % 12)).padStart(2, '0')}/2027`,
   stock: ((i * 137) % 900) + 20,
   price: Number((((i * 7) % 300) / 100 + 0.02).toFixed(2)),
+  lists: LISTS.slice(0, i % (LISTS.length + 1)),
 }));
 
 type SortKey =
@@ -209,29 +214,33 @@ export const TableShowcase = () => {
   // in every tab. The rest split across the three groups. Switch the tab strip
   // (or card view) to see the secondary column filter.
   const columns = (): Column<Batch, SortKey, GroupKey>[] => [
-    // name + batch: ALL_TABS anchors (every tab; not a card group). Grouped
-    // parent → shared value or [multiple] (a group's rows share a name but
-    // differ on batch → [multiple]).
+    // name + batch: ALL_TABS anchors (shown in every tab; not a card group).
     {
       c: { key: 'name' },
       sortKey: 'name',
       header: 'Item',
       meta: { card: { region: 'primary' } },
       tabsAndCardGroups: ALL_TABS,
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
       header: 'Batch',
       tabsAndCardGroups: ALL_TABS,
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'category' },
       sortKey: 'category',
       header: 'Category',
       meta: { card: { region: 'badge' } },
+      tabsAndCardGroups: ['details'],
+    },
+    // Chip-list cell (registry "chip-list cell"): string[] → outlined chips,
+    // blank when empty, clipped at the cell edge with the full list on hover.
+    {
+      c: { key: 'lists' },
+      header: 'Lists',
+      ...getChipListCell(),
       tabsAndCardGroups: ['details'],
     },
     {
@@ -245,7 +254,6 @@ export const TableShowcase = () => {
       sortKey: 'supplier',
       header: 'Supplier',
       tabsAndCardGroups: ['supply'],
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'location' },
@@ -253,7 +261,6 @@ export const TableShowcase = () => {
       header: 'Location',
       meta: { wrapLines: 2 },
       tabsAndCardGroups: ['supply'],
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'stock' },
@@ -395,10 +402,6 @@ export const TableShowcase = () => {
         rowDimmed={r => r.stock < 40}
         rowTone={r => (r.price === 0.09 ? 'info' : undefined)}
         tabsAndCardGroups={TABS_AND_CARD_GROUPS}
-        rowGroup={{
-          columnId: 'category',
-          labelKey: 'table.demo-card-group.details',
-        }}
         emptyMessage="No items"
         enableSelection
         selectedIds={selectedIds()}

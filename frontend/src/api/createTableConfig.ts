@@ -10,11 +10,23 @@ import {
   type TableConfig,
   type TableConfigKey,
 } from '../ui/elements/table/tableConfig';
-import { getUserTableConfig, setUserTableConfig } from '../appData';
-import { currentStoreId, currentUserId } from '../store/storeContext';
+import {
+  getUserTableConfig,
+  setUserTableConfig,
+  isEmptyLayeredConfig,
+} from '../appData';
+import {
+  currentStoreId,
+  currentUserId,
+  hasPermission,
+} from '../store/storeContext';
+import { isCentralServer } from './serverInfo';
 import { createStoreScopedResource } from './storeScopedResource';
 import { graphqlFetch } from './graphql';
-import { GlobalTableConfigs } from './tableConfig.generated';
+import {
+  GlobalTableConfigs,
+  SaveGlobalTableConfigs,
+} from './tableConfig.generated';
 
 // App-glue that turns the three config layers (default → global → user) plus
 // the current breakpoint band into ONE resolved `config` for DataTable, and a
@@ -42,6 +54,26 @@ export type TableConfigController = {
    * value, not
    *  an updater — DataTable resolves TanStack's updater before calling this). */
   setConfig: <K extends TableConfigKey>(key: K, value: TableConfig[K]) => void;
+  /**
+   * Whether the current user may save this table's layout as the shared
+   * global default — central server AND EDIT_CENTRAL_DATA (the same gate the
+   * reference client uses; the server enforces it regardless). REACTIVE: reads
+   * the central-server + permission signals, so it flips when either resolves
+   * after construction (isCentralServer starts false and is set by an async
+   * startup probe). Drive the action's visibility off this — pass
+   * `saveGlobalTableConfig` to the table only when it returns true.
+   */
+  canSaveGlobalDefault: () => boolean;
+  /**
+   * Promote this user's current layout (the whole layered user config for this
+   * table — all bands) to the store's GLOBAL default, shared install-wide via
+   * sync. Central-server + EDIT_CENTRAL_DATA only (gate this on
+   * `canSaveGlobalDefault`); the server enforces both. Resolves to `true` on
+   * success, `false` on any failure. On success the shared global-config
+   * resource is refetched so the new default is live immediately for every
+   * table (including this one, whose user layer still wins on top).
+   */
+  saveGlobalTableConfig: () => Promise<boolean>;
 };
 
 // The global layer is ONE store-scoped query for the whole app: the
@@ -65,6 +97,16 @@ const globalConfigsResource = createStoreScopedResource<GlobalTableConfigsMap>(
 );
 const globalConfigs = (): GlobalTableConfigsMap =>
   globalConfigsResource.noSuspense()[0] ?? {};
+
+// The gate for promoting a layout to the shared global default (central server
+// AND EDIT_CENTRAL_DATA) — the same rule the reference client uses; the server
+// enforces it regardless. Reactive (both sources are signals). Internal to this
+// module: exposed per-controller as `canSaveGlobalDefault` so a page reads the
+// gate off the same object it gets the save action from, rather than importing
+// a free function and re-deriving the rule. Not table-specific, so it's defined
+// once at module scope.
+const canSaveGlobalDefault = (): boolean =>
+  isCentralServer() && hasPermission('EDIT_CENTRAL_DATA');
 
 export function createTableConfig(options: {
   tableId: string;
@@ -123,5 +165,40 @@ export function createTableConfig(options: {
     bumpUser(v => v + 1);
   };
 
-  return { config, setConfig };
+  // Promote the user's current layout for THIS table to the shared global
+  // default. Mirrors the reference client (useSaveGlobalTableConfig): take the
+  // whole current global blob, splice in this table's user-layer config (or
+  // drop the key when the user has cleared it back to defaults, so the stored
+  // blob never accumulates empty objects), and send the FULL blob —
+  // upsertPreferences replaces globalTableConfigs wholesale. On success refetch
+  // the shared resource so the new global layer is live without a reload.
+  const saveGlobalTableConfig = async (): Promise<boolean> => {
+    const storeId = currentStoreId();
+    const userId = currentUserId();
+    if (!storeId || !userId) return false;
+
+    const current = globalConfigs();
+    const userConfig = getUserTableConfig(userId, tableId);
+    const { [tableId]: _existing, ...rest } = current;
+    const nextConfigs: GlobalTableConfigsMap = isEmptyLayeredConfig(userConfig)
+      ? rest
+      : { ...rest, [tableId]: userConfig };
+
+    const result = await graphqlFetch(SaveGlobalTableConfigs, {
+      storeId,
+      // globalTableConfigs is the JSON scalar (typed `unknown`) — the server
+      // stores/returns a real object, so send the map object directly.
+      input: { globalTableConfigs: nextConfigs },
+    });
+    if (
+      result.kind !== 'success' ||
+      !result.data.centralServer.preferences.upsertPreferences.ok
+    )
+      return false;
+
+    await globalConfigsResource.refetch();
+    return true;
+  };
+
+  return { config, setConfig, canSaveGlobalDefault, saveGlobalTableConfig };
 }

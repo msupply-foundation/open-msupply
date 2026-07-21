@@ -2,7 +2,7 @@ import { type JSX } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { t } from '../../intl';
-import { createPaginatedSearch } from '../search/createPaginatedSearch';
+import { createPaginatedSearch } from '../../ui/utils/createPaginatedSearch';
 import { customerPageFetcher, type Customer } from './customerResource';
 
 const PAGE_SIZE = 30;
@@ -29,8 +29,6 @@ export interface CustomerSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
-  /** Open the option list on focus/click (pick-first flows). */
-  openOnFocus?: boolean;
   /** `data-testid` for the input (e.g. `customer-search-input`). */
   testId?: string;
 }
@@ -83,7 +81,6 @@ export const CustomerSelect = (props: CustomerSelectProps): JSX.Element => {
       disabled={props.disabled}
       error={props.error}
       placeholder={props.placeholder}
-      openOnFocus={props.openOnFocus}
       inputTestId={props.testId}
       onInputChange={value => search.setSearch(value)}
       onReachEnd={() => search.loadMore()}

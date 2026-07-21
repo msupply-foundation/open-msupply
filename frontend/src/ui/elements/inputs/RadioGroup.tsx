@@ -34,10 +34,11 @@ interface RadioGroupProps {
  * Radio group — built on the plain browser <input type="radio"> (NO headless
  * library). A radio group is the "own the simple" case: a shared `name` gives
  * the browser single-select grouping, roving arrow-key focus, and the
- * radiogroup/radio ARIA for free — nothing to buy. We style the native control
- * with `accent-color` (the brand orange dot/ring) and lay out the label beside
- * it; the <fieldset>/<legend> carry the group semantics. Matches the current
- * app's radios.
+ * radiogroup/radio ARIA for free — nothing to buy. We draw the control
+ * ourselves (`appearance: none` — brand rim + dot with a transparent gap;
+ * `accent-color` painted the gap white in both schemes, see the CSS module)
+ * and lay out the label beside it; the <fieldset>/<legend> carry the group
+ * semantics. Matches the current app's radios.
  */
 export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
   // One shared name per group instance so the native radios single-select

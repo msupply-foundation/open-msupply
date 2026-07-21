@@ -60,6 +60,31 @@
   max-inline-size: none;
 }
 
+/* Phone widths: the OPEN panel becomes a full-screen overlay over the page
+   region instead of a docked column that would squeeze the body to a sliver
+   (spec ui-standards/layout.md → page regions, D27). The closed state keeps
+   the docked clip rules above (zero-width, natural-width content inside), so
+   the no-remount contract is untouched. 599 = the compact breakpoint in
+   breakpoints.ts minus 1 (CSS can't read JS tokens — same constant as
+   index.css). Page.tsx pairs this with `inert` on the covered main column
+   and Esc-to-close. */
+@media (max-width: 599px) {
+  .page {
+    position: relative;
+  }
+
+  .panelSlot {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+  }
+
+  .panelSlot:not([data-closed]) > * {
+    inline-size: 100%;
+    border-inline-start: none;
+  }
+}
+
 /* Fill mode (Page fillBody): the body stops scrolling and becomes a flex column with no
    padding, so a single self-scrolling child (e.g. the DataTable) fills the region and
    owns its own scroll + sticky headers. */
@@ -68,4 +93,16 @@
   flex-direction: column;
   padding: 0;
   overflow: hidden;
+}
+
+/* Tabbed fill-body page: <Tabs> renders as display:contents, so the active tab
+   panel is the direct flex child of the body — it must be the "single filling
+   child" the fill mode expects, or its own scrolling content (the DataTable,
+   the documents list) overflows the clipped body with no way to scroll. Give
+   it the fill + a column context so that inner child gets a bounded height. */
+.bodyFill [role='tabpanel'] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
 }

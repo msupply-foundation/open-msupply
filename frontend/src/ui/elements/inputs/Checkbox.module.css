@@ -11,6 +11,11 @@
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
+  /* Contain the visually-hidden native input (.input, position:absolute): with
+     no positioned ancestor it escapes to document space and stretches the
+     viewport's scrollHeight — a second, document-level scrollbar (same fix as
+     TextField's .labelHidden). */
+  position: relative;
 }
 
 .root {

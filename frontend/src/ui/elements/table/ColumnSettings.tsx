@@ -1,8 +1,8 @@
-import { For, Show } from 'solid-js';
+import { For, Show, createSignal } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { Table } from '@tanstack/solid-table';
 import { t } from '../../../intl';
-import { ChevronDownIcon } from '../../icons';
+import { ChevronDownIcon, SaveIcon } from '../../icons';
 import { pxToRem } from '../../utils/rem';
 import type { TableConfig, TableConfigKey } from './tableConfig';
 import { ALL_TABS, type TabAndCardGroup } from './DataTable';
@@ -28,7 +28,27 @@ export function ColumnSettings<T>(props: {
    * group(s) a
    *  column belongs to, so it's clear hiding/reordering is GLOBAL across tabs. */
   tabsAndCardGroups?: TabAndCardGroup<string>[];
+  /**
+   * Promote the current layout to the shared install-wide default. Present ONLY
+   * when the host has decided the current user may do so (central server +
+   * EDIT_CENTRAL_DATA — the gate is the host's, kept out of this generic
+   * component); absent → the action isn't offered. Resolves true on success,
+   * false on failure, which this panel reflects inline.
+   */
+  onSaveGlobalDefault?: () => Promise<boolean>;
 }): JSX.Element {
+  // Inline status for the save-as-global-default action (this app surfaces
+  // feedback inline via Alert-style notices rather than a global toast). Reset
+  // to idle when the panel is re-opened is unnecessary — the popover unmounts
+  // its contents on close.
+  const [saveStatus, setSaveStatus] = createSignal<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle');
+  const saveGlobalDefault = async () => {
+    setSaveStatus('saving');
+    const ok = await props.onSaveGlobalDefault?.();
+    setSaveStatus(ok ? 'saved' : 'error');
+  };
   // The tabs/groups a column id belongs to, for its settings-row icon badges.
   // An ALL_TABS column (batch, actions) belongs to EVERY tab → show all icons;
   // an array names specific groups → show those; absent → none.
@@ -106,6 +126,37 @@ export function ColumnSettings<T>(props: {
           {t('table.reset-size')}
         </button>
       </div>
+
+      {/* Save-as-global-default — only for central-server admins (the host gates
+          the callback's presence). Divider above sets it apart from the per-user
+          reset actions: this writes the INSTALL-WIDE default, not local state.
+          Feedback is inline (saving / saved / error) — no global toast. */}
+      <Show when={props.onSaveGlobalDefault}>
+        <div class={styles.saveDefault}>
+          <button
+            type="button"
+            class={styles.saveButton}
+            disabled={saveStatus() === 'saving'}
+            data-testid="table-save-global-default"
+            onClick={saveGlobalDefault}
+          >
+            <SaveIcon class={styles.saveIcon} />
+            {t('table.save-global-default')}
+          </button>
+          <Show when={saveStatus() !== 'idle'}>
+            <span
+              class={styles.saveStatus}
+              data-status={saveStatus()}
+              role="status"
+            >
+              {saveStatus() === 'saving' &&
+                t('table.save-global-default.saving')}
+              {saveStatus() === 'saved' && t('table.save-global-default.saved')}
+              {saveStatus() === 'error' && t('table.save-global-default.error')}
+            </span>
+          </Show>
+        </div>
+      </Show>
 
       <table class={styles.table}>
         <tbody>

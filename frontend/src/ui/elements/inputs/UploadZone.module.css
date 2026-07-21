@@ -1,0 +1,105 @@
+/*
+ * UploadZone — dashed drop target with a Browse button. The tint + dashed edge
+ * use the secondary (action) tone. The dragging highlight is signalled by the
+ * border colour (a bare token, so it survives even where color-mix is dropped),
+ * not by the tint alone. Sizing rem/em; the only px are border widths + radius.
+ */
+.zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 2rem 1.5rem;
+  border: 2px dashed var(--secondary-main);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--secondary-main) 7%, transparent);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.zone:hover,
+.zone[data-dragging] {
+  border-color: var(--secondary-dark);
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+}
+
+.zone[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* The native input is the real control; kept in the DOM but visually removed. */
+.hiddenInput {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--secondary-main);
+}
+
+.invite {
+  margin: 0;
+  font-weight: 700;
+  color: var(--secondary-main);
+}
+
+.or {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.browse {
+  margin-top: 0.25rem;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--secondary-main);
+  border-radius: 999px;
+  background: var(--bg-white);
+  color: var(--secondary-main);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.browse:hover {
+  border-color: var(--secondary-dark);
+  background: color-mix(in srgb, var(--secondary-main) 8%, transparent);
+}
+
+.browse:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.browse:disabled {
+  cursor: not-allowed;
+}
+
+@media (pointer: coarse) {
+  .browse {
+    min-height: var(--touch-target);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zone,
+  .browse {
+    transition: none;
+  }
+}

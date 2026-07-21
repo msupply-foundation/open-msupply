@@ -452,7 +452,6 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         )}
         value={item()?.id ?? ''}
         disabled={editMode() || saving()}
-        openOnFocus
         inputTestId="item-search-input"
         placeholder={t('outbound.create.placeholder')}
         onChange={option => {

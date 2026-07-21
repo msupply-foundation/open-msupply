@@ -22,11 +22,7 @@ import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
-import {
-  DataTable,
-  type Column,
-  sharedOrMultiple,
-} from '../../../ui/elements/table/DataTable';
+import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
   getCurrencyCell,
   getDateCell,
@@ -64,9 +60,9 @@ import { ServiceChargesModal } from './service-charges/ServiceChargesModal';
 // The record-screen report selector (reports S4): lazy-imported behind the
 // Export/Print trigger per the reports section's bundle note — a static
 // import would pull the selector graph into this section's eager chunk.
-const ReportSelectorModal = lazy(() =>
-  import('../../reports/selector/ReportSelectorModal').then(module => ({
-    default: module.ReportSelectorModal,
+const SelectReportModal = lazy(() =>
+  import('../../../domain/reports').then(module => ({
+    default: module.SelectReportModal,
   }))
 );
 import {
@@ -270,19 +266,18 @@ const OutboundDetailView: Component = () => {
     { label: String(current.invoiceNumber) },
   ];
 
-  // The detail line table (spec S3 § line table): grouped by item — a group
-  // row aggregates its batches; placeholder rows show the requested quantity.
+  // The detail line table (spec S3 § line table): one row per stock/placeholder
+  // line — flat, since main dropped row-grouping from the shared DataTable;
+  // placeholder rows show the requested quantity.
   const columns = (): Column<Line, never>[] => [
     {
       c: { key: 'itemCode' },
       header: t('outbound.line.code'),
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'itemName' },
       header: t('outbound.line.name'),
       meta: { card: { region: 'primary' }, wrapLines: 2 },
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: {
@@ -322,7 +317,6 @@ const OutboundDetailView: Component = () => {
       c: { key: 'packSize' },
       header: t('outbound.line.pack-size'),
       ...getNumberCell(),
-      aggregationFn: sharedOrMultiple,
     },
     {
       c: { key: 'numberOfPacks' },
@@ -573,10 +567,6 @@ const OutboundDetailView: Component = () => {
                       </Button>
                     ) : undefined
                   }
-                  rowGroup={{
-                    columnId: 'itemCode',
-                    labelKey: 'outbound.line.name',
-                  }}
                   enableSelection
                   selectedIds={selectedIds()}
                   onSelectionChange={setSelectedIds}
@@ -612,10 +602,9 @@ const OutboundDetailView: Component = () => {
               {/* Export/Print (reports S4): mounted on first open so the
                   selector's chunk loads lazily. */}
               <Show when={reportsOpen()}>
-                <ReportSelectorModal
+                <SelectReportModal
                   context="OUTBOUND_SHIPMENT"
                   dataId={current().id}
-                  open
                   onClose={() => setReportsOpen(false)}
                 />
               </Show>

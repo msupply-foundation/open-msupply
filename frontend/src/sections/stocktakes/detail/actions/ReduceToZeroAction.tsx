@@ -110,7 +110,7 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
               <p>{t('messages.confirm-reduce-lines-to-zero')}</p>
               <FieldRow label={t('label.reason')}>
                 <ReasonSelect
-                  kind="reduction"
+                  kind="negative"
                   label={t('label.reason')}
                   hideLabel
                   value={reasonId() ?? undefined}

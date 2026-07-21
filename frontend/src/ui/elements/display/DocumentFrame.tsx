@@ -3,7 +3,9 @@ import { Spinner } from '../feedback/Spinner';
 import styles from './DocumentFrame.module.css';
 
 export interface DocumentFrameProps {
-  /** Required — the iframe's accessible name (what the embedded document is). */
+  /**
+   * Required — the iframe's accessible name (what the embedded document is).
+   */
   title: string;
   /** URL of the document to load. Provide this OR `srcdoc`. */
   src?: string;
