@@ -567,6 +567,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         )}
         value={item()?.id ?? ''}
         selectedItem={selectedItemOption()}
+        clearable={false}
         disabled={editMode() || saving()}
         inputTestId="item-search-input"
         placeholder={t('placeholder.search-by-name')}

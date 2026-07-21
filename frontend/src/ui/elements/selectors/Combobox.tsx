@@ -322,14 +322,11 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           aria-label={props.hideLabel ? props.label : undefined}
           aria-invalid={props.error ? 'true' : undefined}
         />
-        <Show
-          when={
-            (props.clearable ?? true) && !props.disabled && selected() !== null
-          }
-        >
+        <Show when={(props.clearable ?? true) && selected() !== null}>
           <button
             type="button"
             class={styles.clear}
+            disabled={props.disabled}
             aria-label="Clear selection"
             onClick={() => {
               handleChange(null);
