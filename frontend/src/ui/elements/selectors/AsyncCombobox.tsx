@@ -71,6 +71,12 @@ export interface AsyncComboboxProps<T> {
  * never fetches. A pre-set `selected` still shows its label immediately — it's
  * seeded into the list, and with no fetch on mount there are no options to blank
  * it out.
+ *
+ * Stale-options window: between a keystroke and its (debounced) refetch
+ * landing, the held rows answer the PREVIOUS query. They're shown
+ * client-filtered against the current text (see `base`) so every visible
+ * option always matches what's typed — without this, scanner-speed input
+ * (code + immediate Enter) commits the old list's first item (#318).
  */
 export const AsyncCombobox = <T,>(
   props: AsyncComboboxProps<T>
@@ -83,8 +89,26 @@ export const AsyncCombobox = <T,>(
   });
 
   // What the user has typed — so the seed below drops out of a search it
-  // doesn't match.
+  // doesn't match, and the interim filter below knows what to match against.
   const [query, setQuery] = createSignal('');
+
+  // The rows the widget may show. While the server's answer is current
+  // (`!pending`), that's the fetched page as-is. While the typed text is AHEAD
+  // of the server — debounce window + request latency — the held rows belong to
+  // the PREVIOUS query and are client-filtered against the current text
+  // (case-insensitive substring on itemToString, approximating the server
+  // filter), so a scanner-speed type-and-Enter can never commit an option that
+  // doesn't match what was typed (#318). The interim list is only as good as
+  // the held page (~one page of the old query), which is fine: when the real
+  // page-0 response lands, `pending` drops and it replaces this wholesale.
+  const base = (): T[] => {
+    if (!search.pending()) return search.items();
+    const needle = query().toLocaleLowerCase();
+    if (!needle) return search.items();
+    return search
+      .items()
+      .filter(i => props.itemToString(i).toLocaleLowerCase().includes(needle));
+  };
 
   // The caller's selected node leads the list (deduped) so a controlled value
   // resolves even before its page is fetched. We seed it when it either matches
@@ -96,19 +120,28 @@ export const AsyncCombobox = <T,>(
   // search doesn't sort a stale seed above real matches or mask "no matches".
   const items = (): T[] => {
     const seed = props.selected;
-    if (!seed) return search.items();
+    if (!seed) return base();
     const key = props.itemToValue(seed);
     const needle = query().toLocaleLowerCase();
     const seedMatches =
       !needle || props.itemToString(seed).toLocaleLowerCase().includes(needle);
     const isControlledValue = value() === key;
-    if (!seedMatches && !isControlledValue) return search.items();
-    return [seed, ...search.items().filter(i => props.itemToValue(i) !== key)];
+    if (!seedMatches && !isControlledValue) return base();
+    return [seed, ...base().filter(i => props.itemToValue(i) !== key)];
   };
 
   const value = () =>
     props.value ??
     (props.selected ? props.itemToValue(props.selected) : undefined);
+
+  // What `loading` means to the Combobox: "show a Loading row instead of the
+  // list". With the interim filter above there's usually something sensible to
+  // show while a fetch is pending, so we only signal loading when the filtered
+  // interim list is EMPTY — blanking a non-empty interim list would reintroduce
+  // the list-blink the filter exists to avoid. While pending with nothing to
+  // show, loading (not "no matches") is the honest state: the in-flight page-0
+  // fetch — or the one the debounce is about to fire — can still produce rows.
+  const loading = () => search.pending() && items().length === 0;
 
   return (
     <Combobox<T>
@@ -121,7 +154,7 @@ export const AsyncCombobox = <T,>(
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
       items={items()}
-      loading={search.loading()}
+      loading={loading()}
       loadingMore={search.loadingMore()}
       value={value()}
       itemToString={props.itemToString}

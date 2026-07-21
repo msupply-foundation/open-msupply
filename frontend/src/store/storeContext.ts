@@ -72,6 +72,33 @@ const stocktakePreferences = () => {
   };
 };
 
+// The inbound-shipment display/behaviour gate preferences
+// (spec/inbound-shipments › store-preference gates). Same safe-default-OFF rule
+// as stocktakePreferences: each is `false` (or a zero window) while the context
+// is unresolved so a gated column/control never flashes in before the
+// preference is known. Reactive — a post-sync refetch re-gates in place.
+// `donorTracking`/`vvm`/`vaccinesInDoses` overlap the stocktake gates; the
+// inbound-only ones (procurement, authorisation, foreign currency, backdating,
+// pack-to-one, manual internal-order linking) ride the same guard-3 query.
+const inboundShipmentPreferences = () => {
+  const prefs = storeContext()?.preferences;
+  const store = storeContext()?.storePreferences;
+  return {
+    manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
+    manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
+    allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
+    useProcurementFunctionality: prefs?.useProcurementFunctionality ?? false,
+    externalInboundShipmentLinesMustBeAuthorised:
+      prefs?.externalInboundShipmentLinesMustBeAuthorised ?? false,
+    backdatingEnabled: prefs?.backdating?.shipmentsEnabled ?? false,
+    backdatingMaxDays: prefs?.backdating?.maxDays ?? 0,
+    packToOne: store?.packToOne ?? false,
+    issueInForeignCurrency: store?.issueInForeignCurrency ?? false,
+    manuallyLinkInternalOrderToInboundShipment:
+      store?.manuallyLinkInternalOrderToInboundShipment ?? false,
+  };
+};
+
 // A server UserPermission name as it arrives in the store-context query
 // (SCREAMING_CASE — e.g. "EDIT_CENTRAL_DATA"), narrowed to the enum the codegen
 // generated so callers can't typo a permission. Reading the union off the
@@ -100,6 +127,7 @@ export {
   currentStoreId,
   currentUserId,
   stocktakePreferences,
+  inboundShipmentPreferences,
   hasPermission,
 };
 export type { UserPermission };

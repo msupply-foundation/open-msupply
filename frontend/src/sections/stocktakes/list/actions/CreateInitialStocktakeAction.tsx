@@ -1,6 +1,8 @@
 import { createSignal } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../../intl';
+import { localisedDate } from '../../../../intl/formatDateTime';
+import { userDisplayName } from '../../../../auth/authContext';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../../ui/elements/buttons/Button';
@@ -40,6 +42,12 @@ export const CreateInitialStocktakeAction = (props: {
         id: crypto.randomUUID(),
         isInitialStocktake: true,
         comment: t('stocktake.comment-initial-stocktake-template'),
+        // Same client-composed default description as the regular create flow
+        // (spec AC-C9) — every create mode seeds it.
+        description: t('stocktake.description-template', {
+          username: userDisplayName(),
+          date: localisedDate(new Date()),
+        }),
       },
     });
     if (result.kind !== 'success') {

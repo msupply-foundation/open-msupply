@@ -178,6 +178,13 @@ export type StockLineCountVariables = {
   } | null;
     isActive?: boolean | null;
     isProgramStockLine?: boolean | null;
+    campaignId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
   } | null;
 };
 
@@ -245,6 +252,7 @@ export type NoStockItemCountVariables = {
     equalTo?: string | null;
     like?: string | null;
   } | null;
+    dynamicFilter?: unknown | null;
   } | null;
 };
 

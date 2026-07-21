@@ -4,6 +4,10 @@ query storeContext($storeId: String!) {
   storePreferences(storeId: $storeId) {
     id
     packToOne
+    # Inbound-shipment gates (spec/inbound-shipments › store-preference gates):
+    # foreign-currency issuing and manual internal-order linking.
+    issueInForeignCurrency
+    manuallyLinkInternalOrderToInboundShipment
     omProgramModule
     vaccineModule
     # Threshold defaults the reports argument form seeds (spec/reports/rules
@@ -14,9 +18,6 @@ query storeContext($storeId: String!) {
     stocktakeFrequency
     monthlyConsumptionLookBackPeriod
     monthsLeadTime
-    # Outbound issue-in-foreign-currency gate (spec/outbound-shipments § store
-    # preference gates) — rides on guard 3 like the other display gates.
-    issueInForeignCurrency
   }
   # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
   # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
@@ -35,6 +36,10 @@ query storeContext($storeId: String!) {
     expiredStockPreventIssue
     expiredStockIssueThreshold
     invoiceStatusOptions
+    # Inbound-shipment gates (spec/inbound-shipments): procurement (from-PO
+    # creation option), authorisation lock, and the backdating window.
+    useProcurementFunctionality
+    externalInboundShipmentLinesMustBeAuthorised
     backdating {
       shipmentsEnabled
       maxDays
