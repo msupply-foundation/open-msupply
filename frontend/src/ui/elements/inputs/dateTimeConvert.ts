@@ -69,6 +69,30 @@ const monthNames = (): { short: string; long: string }[] =>
     long: new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'long' }),
   }));
 
+// Placeholder token letters per language — only the letters that differ from
+// English (day/year initials): French jour/année → J/A; M (mois) coincides.
+// Languages absent here (en, ar — the MUI convention keeps Latin tokens for
+// ar) fall through to the English letters.
+const PLACEHOLDER_LETTERS: Record<string, Record<string, string>> = {
+  fr: { d: 'J', y: 'A' },
+};
+
+/**
+ * A token `format` → the empty-field HINT the user sees (ui-standards/inputs.md
+ * § Dates & times): the format's token letters localised to the app language
+ * and presented UPPERCASE (`dd MMM yyyy` → `DD MMM YYYY`, French `JJ MMM
+ * AAAA`) — never the raw format string, whose lowercase English mnemonics mean
+ * nothing in French. Display-only: typed parsing still follows the format.
+ */
+export const formatPlaceholder = (format: string): string => {
+  const language = locale().split('-')[0];
+  const letters = PLACEHOLDER_LETTERS[language] ?? {};
+  return format.replace(TOKEN, tok => {
+    const letter = letters[tok[0]] ?? tok[0].toUpperCase();
+    return letter.repeat(tok.length);
+  });
+};
+
 /**
  * An ISO date `YYYY-MM-DD` → a display string per a token `format` (`d`, `dd`,
  * `M`, `MM`, `MMM`, `MMMM`, `yy`, `yyyy`; anything else is a literal). Month

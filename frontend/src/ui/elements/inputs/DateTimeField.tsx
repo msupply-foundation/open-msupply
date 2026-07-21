@@ -9,6 +9,7 @@ import {
   DEFAULT_DATE_FORMAT,
   dateToIsoDate,
   formatIsoDate,
+  formatPlaceholder,
   hhmmToTime,
   isoDateToDate,
   localPartsToUtc,
@@ -130,7 +131,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
             type="text"
             class={styles.dateInput}
             value={dateText()}
-            placeholder={fmt()}
+            placeholder={formatPlaceholder(fmt())}
             disabled={props.disabled}
             aria-label={`${props.label}, date`}
             aria-describedby={describedBy}

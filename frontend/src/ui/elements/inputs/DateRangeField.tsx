@@ -1,6 +1,7 @@
 import { createUniqueId } from 'solid-js';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
+import { t } from '../../../intl';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
@@ -97,7 +98,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
                       : `${styles.dateText} ${styles.placeholder}`
                   }
                 >
-                  {display() ?? props.placeholder ?? 'Select dates'}
+                  {display() ?? props.placeholder ?? t('label.select-dates')}
                 </span>
                 <CalendarIcon class={styles.calendarIcon} />
               </>

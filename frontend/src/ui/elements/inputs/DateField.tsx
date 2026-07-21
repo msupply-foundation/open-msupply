@@ -8,6 +8,7 @@ import {
   DEFAULT_DATE_FORMAT,
   dateToIsoDate,
   formatIsoDate,
+  formatPlaceholder,
   isoDateToDate,
   parseDateInput,
 } from './dateTimeConvert';
@@ -104,7 +105,7 @@ export const DateField = (props: DateFieldProps) => {
             type="text"
             class={styles.dateInput}
             value={text()}
-            placeholder={fmt()}
+            placeholder={formatPlaceholder(fmt())}
             disabled={props.disabled}
             required={props.required}
             aria-describedby={describedBy}
