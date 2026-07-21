@@ -324,6 +324,19 @@ const OutboundDetailView: Component = () => {
       header: t('outbound.line.pack-size'),
       ...getNumberCell(),
     },
+    ...(dosesOn()
+      ? [
+          {
+            c: {
+              accessor: (line: Line) =>
+                line.item.isVaccine ? line.item.doses : null,
+              id: 'dosesPerUnit',
+            },
+            header: t('label.doses-per-unit'),
+            ...getNumberCell(),
+          } as Column<Line, never>,
+        ]
+      : []),
     {
       c: { key: 'numberOfPacks' },
       header: t('outbound.line.pack-qty'),
