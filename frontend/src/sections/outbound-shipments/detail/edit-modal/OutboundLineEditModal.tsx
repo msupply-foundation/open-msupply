@@ -10,6 +10,7 @@ import { Button } from '../../../../ui/elements/buttons/Button';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { Select } from '../../../../ui/elements/selectors/Select';
+import styles from './OutboundLineEditModal.module.css';
 import {
   DataTable,
   type Column,
@@ -445,9 +446,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           );
         }}
         renderItem={option => (
-          <span>
-            <span data-testid="item-option-code">{option.code}</span>{' '}
-            <span data-testid="item-option-name">{option.name}</span>
+          <span class={styles.itemOption}>
+            <span class={styles.itemLabel}>
+              <span data-testid="item-option-code">{option.code}</span>{' '}
+              <span data-testid="item-option-name">{option.name}</span>
+            </span>
+            <span class={styles.itemStock}>
+              {formatNumber(option.availableStockOnHand)}{' '}
+              {option.unitName ?? t('label.unit-plural')}
+            </span>
           </span>
         )}
         value={item()?.id ?? ''}
@@ -499,7 +506,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 : `packs-${(allocateIn() as { size: number }).size}`
             }
             options={[
-              { value: 'units', label: t('outbound.edit.units') },
+              { value: 'units', label: unitName() },
               ...distinctPackSizes().map(size => ({
                 value: `packs-${size}`,
                 label: t('outbound.edit.packs-of', { size }),
