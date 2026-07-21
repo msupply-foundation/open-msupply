@@ -1,10 +1,4 @@
-import {
-  createResource,
-  createSignal,
-  For,
-  Show,
-  type Component,
-} from 'solid-js';
+import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
@@ -16,11 +10,21 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../../ui/elements/inputs/CurrencyField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import {
+  DataTable,
+  type Column,
+  type TabAndCardGroup,
+  ALL_TABS,
+} from '../../../../ui/elements/table/DataTable';
+import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
+import { createTableConfig } from '../../../../api/createTableConfig';
+import {
   CopyIcon,
+  InfoIcon,
+  MessageSquareIcon,
   PlusCircleIcon,
+  StockIcon,
   TrashIcon,
   XCircleIcon,
 } from '../../../../ui/icons';
@@ -73,11 +77,14 @@ export interface InboundShipmentLineEditModalProps {
 
 // The inbound-shipment line editor (spec S4): the single surface for entering a
 // batch's received detail. A modal over the detail view, editing ALL of one
-// item's batches at once. Add mode opens on an item search (manual/transfer)
-// or a purchase-order-line picker (PO-linked — a line must cite one); edit mode
-// loads the item's existing lines. Each open is a fresh mount (keyed Show) so
-// state never leaks between items. "OK & next" advances to the next item on the
-// shipment (edit mode) or resets to add-another (add mode).
+// item's batches at once — each batch is one row / one card. Like the stocktake
+// line editor (kdd/stocktake-line-editing), the body is the grouped DataTable:
+// ONE column set gives two faces — tabs (Batch / Pricing / Other) in table
+// view, sections in card view. Add mode opens on an item search (manual/
+// transfer) or a purchase-order-line picker (PO-linked — a line must cite one);
+// edit mode loads the item's existing lines. Each open is a fresh mount (keyed
+// Show) so state never leaks between items. "OK & next" advances to the next
+// item on the shipment (edit mode) or resets to add-another (add mode).
 type DraftBatch = {
   id: string;
   isNew: boolean;
@@ -141,6 +148,19 @@ const fromLine = (line: InboundLineFragment): DraftBatch => ({
   volumePerPack: line.volumePerPack,
 });
 
+// The tabs / card-groups for the grouped table (matching the stocktake editor).
+// Batch is the ALL_TABS anchor (shows in every tab), not its own group.
+type GroupKey = 'batch' | 'pricing' | 'other';
+const TABS_AND_CARD_GROUPS: TabAndCardGroup<GroupKey>[] = [
+  { key: 'batch', labelKey: 'label.batch', icon: () => <StockIcon /> },
+  { key: 'pricing', labelKey: 'label.pricing', icon: () => <InfoIcon /> },
+  {
+    key: 'other',
+    labelKey: 'heading.other',
+    icon: () => <MessageSquareIcon />,
+  },
+];
+
 export const InboundShipmentLineEditModal: Component<
   InboundShipmentLineEditModalProps
 > = props => (
@@ -160,6 +180,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const [batches, setBatches] = createStore<DraftBatch[]>([]);
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
+
+  const tableConfig = createTableConfig({ tableId: 'inbound-line-edit' });
 
   // Edit mode: load the item's existing lines and seed the draft. Add mode
   // loads nothing until an item is chosen.
@@ -222,20 +244,41 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setBatches([{ ...emptyBatch(), packSize: line.requestedPackSize || 1 }]);
   };
 
+  // Draft edits are keyed by batch id (like the stocktake editor) so a filter/
+  // splice can't desync a row from its store slot.
+  const indexById = (id: string) => batches.findIndex(b => b.id === id);
+  const updateBatch = <F extends keyof DraftBatch>(
+    id: string,
+    field: F,
+    value: DraftBatch[F]
+  ) => {
+    const index = indexById(id);
+    if (index >= 0) setBatches(index, field, value as never);
+  };
+
   const addBatch = () => setBatches(produce(d => d.push(emptyBatch())));
-  const duplicateBatch = (index: number) =>
+  const duplicateBatch = (id: string) =>
     setBatches(
-      produce(d =>
-        d.push({ ...d[index], id: crypto.randomUUID(), isNew: true })
-      )
+      produce(d => {
+        const index = d.findIndex(b => b.id === id);
+        if (index >= 0)
+          d.splice(index + 1, 0, {
+            ...d[index],
+            id: crypto.randomUUID(),
+            isNew: true,
+          });
+      })
     );
-  const removeBatch = (index: number) => {
+  const removeBatch = (id: string) => {
+    const index = indexById(id);
+    if (index < 0) return;
+    // A new draft row splices out; an existing line is flagged for a delete op.
     if (batches[index].isNew) setBatches(produce(d => d.splice(index, 1)));
     else setBatches(index, 'deleted', true);
   };
 
-  const visibleBatches = () =>
-    batches.map((b, i) => ({ b, i })).filter(({ b }) => !b.deleted);
+  // The rows the table shows: the draft minus soft-deleted batches.
+  const rows = (): DraftBatch[] => batches.filter(b => !b.deleted);
 
   const buildBatch = (): BatchInboundShipmentVariables['input'] | null => {
     const chosen = item();
@@ -334,6 +377,261 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
 
   const noItemYet = () => !item();
 
+  // ---- Columns: one set, split across groups; batch is the anchor. ----
+  const columns = (): Column<DraftBatch, never, GroupKey>[] => [
+    {
+      c: { key: 'batch' },
+      header: t('label.batch'),
+      tabsAndCardGroups: ALL_TABS,
+      meta: { card: { region: 'primary', showLabel: true } },
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <TextField
+            label={t('label.batch')}
+            hideLabel
+            size="small"
+            value={b.batch}
+            onInput={e => updateBatch(b.id, 'batch', e.currentTarget.value)}
+          />
+        );
+      },
+    },
+    {
+      c: { key: 'numberOfPacks' },
+      header: t('label.pack-quantity'),
+      tabsAndCardGroups: ['batch'],
+      ...getNumberCell(),
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <NumberField
+            label={t('label.pack-quantity')}
+            hideLabel
+            size="small"
+            value={b.numberOfPacks}
+            min={0}
+            onChange={v => updateBatch(b.id, 'numberOfPacks', v ?? 0)}
+          />
+        );
+      },
+    },
+    {
+      c: { key: 'packSize' },
+      header: t('label.pack-size'),
+      tabsAndCardGroups: ['batch'],
+      ...getNumberCell(),
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <NumberField
+            label={t('label.pack-size')}
+            hideLabel
+            size="small"
+            value={b.packSize}
+            min={1}
+            onChange={v => updateBatch(b.id, 'packSize', v ?? 1)}
+          />
+        );
+      },
+    },
+    {
+      c: { key: 'expiryDate' },
+      header: t('label.expiry'),
+      tabsAndCardGroups: ['batch'],
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <DateField
+            label={t('label.expiry')}
+            hideLabel
+            value={b.expiryDate}
+            onChange={v => updateBatch(b.id, 'expiryDate', v)}
+          />
+        );
+      },
+    },
+    // VVM status (Batch tab) — gated by the manage-VVM preference.
+    ...(props.prefs.vvm
+      ? [
+          {
+            c: { id: 'vvmStatus' },
+            header: t('label.vvm-status'),
+            tabsAndCardGroups: ['batch'],
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <VvmStatusSelect
+                  label={t('label.vvm-status')}
+                  hideLabel
+                  value={b.vvmStatusId ?? undefined}
+                  onChange={s =>
+                    updateBatch(b.id, 'vvmStatusId', s?.id ?? null)
+                  }
+                />
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
+    {
+      c: { key: 'costPricePerPack' },
+      header: t('label.pack-cost-price'),
+      tabsAndCardGroups: ['pricing'],
+      ...getNumberCell(),
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <CurrencyField
+            label={t('label.pack-cost-price')}
+            hideLabel
+            size="small"
+            value={b.costPricePerPack}
+            disabled={props.costLocked}
+            onChange={v => updateBatch(b.id, 'costPricePerPack', v ?? 0)}
+          />
+        );
+      },
+    },
+    {
+      c: { key: 'sellPricePerPack' },
+      header: t('label.pack-sell-price'),
+      tabsAndCardGroups: ['pricing'],
+      ...getNumberCell(),
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <CurrencyField
+            label={t('label.pack-sell-price')}
+            hideLabel
+            size="small"
+            value={b.sellPricePerPack}
+            onChange={v => updateBatch(b.id, 'sellPricePerPack', v ?? 0)}
+          />
+        );
+      },
+    },
+    {
+      c: { id: 'location' },
+      header: t('label.location'),
+      tabsAndCardGroups: ['other'],
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <LocationSelect
+            label={t('label.location')}
+            hideLabel
+            locations={props.locations}
+            value={b.locationId ?? undefined}
+            onChange={loc => updateBatch(b.id, 'locationId', loc?.id ?? null)}
+          />
+        );
+      },
+    },
+    {
+      c: { key: 'manufactureDate' },
+      header: t('label.manufacture-date'),
+      tabsAndCardGroups: ['other'],
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <DateField
+            label={t('label.manufacture-date')}
+            hideLabel
+            value={b.manufactureDate}
+            max={new Date().toISOString().slice(0, 10)}
+            onChange={v => updateBatch(b.id, 'manufactureDate', v)}
+          />
+        );
+      },
+    },
+    // Donor (Other tab) — gated by the donor-tracking preference.
+    ...(props.prefs.donor
+      ? [
+          {
+            c: { id: 'donor' },
+            header: t('label.donor'),
+            tabsAndCardGroups: ['other'],
+            cell: info => {
+              const b = info.row.original;
+              return (
+                <NameSearch
+                  label={t('label.donor')}
+                  hideLabel
+                  storeId={props.storeId}
+                  role="donor"
+                  selected={
+                    b.donorId
+                      ? ({
+                          id: b.donorId,
+                          name: b.donorName ?? '',
+                          code: '',
+                          isSupplier: false,
+                          isDonor: true,
+                          isOnHold: false,
+                          isStore: false,
+                        } satisfies NameOption)
+                      : undefined
+                  }
+                  onSelect={d => {
+                    updateBatch(b.id, 'donorId', d?.id ?? null);
+                    updateBatch(b.id, 'donorName', d?.name ?? null);
+                  }}
+                />
+              );
+            },
+          } satisfies Column<DraftBatch, never, GroupKey>,
+        ]
+      : []),
+    {
+      c: { key: 'note' },
+      header: t('label.note'),
+      tabsAndCardGroups: ['other'],
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <TextField
+            label={t('label.note')}
+            hideLabel
+            size="small"
+            value={b.note}
+            onInput={e => updateBatch(b.id, 'note', e.currentTarget.value)}
+          />
+        );
+      },
+    },
+    {
+      c: { id: 'actions' },
+      header: t('label.actions'),
+      tabsAndCardGroups: ALL_TABS,
+      meta: { card: { region: 'badge' }, align: 'right' },
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <>
+            <IconButton
+              bordered
+              size="small"
+              icon={<CopyIcon />}
+              label={t('label.duplicate-batch')}
+              disabled={saving()}
+              onClick={() => duplicateBatch(b.id)}
+            />
+            <IconButton
+              bordered
+              size="small"
+              variant="danger"
+              icon={<TrashIcon />}
+              label={t('label.delete-batch')}
+              disabled={saving()}
+              onClick={() => removeBatch(b.id)}
+            />
+          </>
+        );
+      },
+    },
+  ];
+
   return (
     <Dialog
       open
@@ -342,11 +640,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       size="large"
       testId="add-item-modal"
       title={
-        props.initialItemId ? (
-          <span>{item()?.name ?? t('label.edit')}</span>
-        ) : props.purchaseOrderId ? (
-          // PO-linked add: pick a purchase-order line (excludes items already
-          // on the shipment).
+        // On a PO-linked shipment, add mode picks a purchase-order line; every
+        // other case (manual add, and edit mode) shows the item selector — in
+        // edit mode disabled, so add and edit read as the same surface.
+        props.purchaseOrderId && !props.initialItemId ? (
           <Select
             label={t('label.purchase-order')}
             value={poLineId()}
@@ -361,9 +658,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         ) : (
           <ItemSearch
             label={t('label.item')}
+            hideLabel
             storeId={props.storeId}
             excludeItemIds={props.existingItemIds}
+            value={item()?.id}
             selectedItem={item() ?? undefined}
+            disabled={!!props.initialItemId}
             onSelect={chooseItem}
           />
         )
@@ -421,160 +721,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             <Alert severity="info">{t('messages.select-an-item')}</Alert>
           }
         >
-          <For each={visibleBatches()}>
-            {({ b, i }) => (
-              <fieldset
-                style={{
-                  border: '1px solid var(--color-border-value)',
-                  'border-radius': 'var(--radius-md)',
-                  padding: 'var(--space-3)',
-                  'margin-block-end': 'var(--space-3)',
-                }}
-              >
-                <legend
-                  style={{
-                    display: 'flex',
-                    gap: 'var(--space-2)',
-                    'align-items': 'center',
-                  }}
-                >
-                  {t('label.batch')} {b.batch || i + 1}
-                  <IconButton
-                    icon={<CopyIcon />}
-                    label={t('label.duplicate-batch')}
-                    disabled={saving()}
-                    onClick={() => duplicateBatch(i)}
-                  />
-                  <IconButton
-                    icon={<TrashIcon />}
-                    label={t('label.delete-batch')}
-                    variant="danger"
-                    disabled={saving()}
-                    onClick={() => removeBatch(i)}
-                  />
-                </legend>
-
-                <FieldRow label={t('label.pack-quantity')}>
-                  <NumberField
-                    label={t('label.pack-quantity')}
-                    hideLabel
-                    value={b.numberOfPacks}
-                    min={0}
-                    onChange={v => setBatches(i, 'numberOfPacks', v ?? 0)}
-                  />
-                </FieldRow>
-                <FieldRow label={t('label.pack-size')}>
-                  <NumberField
-                    label={t('label.pack-size')}
-                    hideLabel
-                    value={b.packSize}
-                    min={1}
-                    onChange={v => setBatches(i, 'packSize', v ?? 1)}
-                  />
-                </FieldRow>
-                <FieldRow label={t('label.batch')}>
-                  <TextField
-                    label={t('label.batch')}
-                    hideLabel
-                    value={b.batch}
-                    onInput={e => setBatches(i, 'batch', e.currentTarget.value)}
-                  />
-                </FieldRow>
-                <FieldRow label={t('label.expiry')}>
-                  <DateField
-                    label={t('label.expiry')}
-                    hideLabel
-                    value={b.expiryDate}
-                    onChange={v => setBatches(i, 'expiryDate', v)}
-                  />
-                </FieldRow>
-                <FieldRow label={t('label.manufacture-date')}>
-                  <DateField
-                    label={t('label.manufacture-date')}
-                    hideLabel
-                    value={b.manufactureDate}
-                    max={new Date().toISOString().slice(0, 10)}
-                    onChange={v => setBatches(i, 'manufactureDate', v)}
-                  />
-                </FieldRow>
-                <FieldRow label={t('label.location')}>
-                  <LocationSelect
-                    label={t('label.location')}
-                    hideLabel
-                    locations={props.locations}
-                    value={b.locationId ?? undefined}
-                    onChange={loc =>
-                      setBatches(i, 'locationId', loc?.id ?? null)
-                    }
-                  />
-                </FieldRow>
-                <Show when={props.prefs.vvm}>
-                  <FieldRow label={t('label.vvm-status')}>
-                    <VvmStatusSelect
-                      label={t('label.vvm-status')}
-                      hideLabel
-                      value={b.vvmStatusId ?? undefined}
-                      onChange={s =>
-                        setBatches(i, 'vvmStatusId', s?.id ?? null)
-                      }
-                    />
-                  </FieldRow>
-                </Show>
-                <FieldRow label={t('label.pack-cost-price')}>
-                  <CurrencyField
-                    label={t('label.pack-cost-price')}
-                    hideLabel
-                    value={b.costPricePerPack}
-                    disabled={props.costLocked}
-                    onChange={v => setBatches(i, 'costPricePerPack', v ?? 0)}
-                  />
-                </FieldRow>
-                <FieldRow label={t('label.pack-sell-price')}>
-                  <CurrencyField
-                    label={t('label.pack-sell-price')}
-                    hideLabel
-                    value={b.sellPricePerPack}
-                    onChange={v => setBatches(i, 'sellPricePerPack', v ?? 0)}
-                  />
-                </FieldRow>
-                <Show when={props.prefs.donor}>
-                  <FieldRow label={t('label.donor')}>
-                    <NameSearch
-                      label={t('label.donor')}
-                      hideLabel
-                      storeId={props.storeId}
-                      role="donor"
-                      selected={
-                        b.donorId
-                          ? ({
-                              id: b.donorId,
-                              name: b.donorName ?? '',
-                              code: '',
-                              isSupplier: false,
-                              isDonor: true,
-                              isOnHold: false,
-                              isStore: false,
-                            } satisfies NameOption)
-                          : undefined
-                      }
-                      onSelect={d => {
-                        setBatches(i, 'donorId', d?.id ?? null);
-                        setBatches(i, 'donorName', d?.name ?? null);
-                      }}
-                    />
-                  </FieldRow>
-                </Show>
-                <FieldRow label={t('label.note')}>
-                  <TextField
-                    label={t('label.note')}
-                    hideLabel
-                    value={b.note}
-                    onInput={e => setBatches(i, 'note', e.currentTarget.value)}
-                  />
-                </FieldRow>
-              </fieldset>
-            )}
-          </For>
+          <DataTable
+            columns={columns()}
+            rows={rows()}
+            rowKey={b => b.id}
+            tabsAndCardGroups={TABS_AND_CARD_GROUPS}
+            showFullScreen={false}
+            config={tableConfig.config()}
+            setConfig={tableConfig.setConfig}
+            emptyMessage={t('label.add-batch')}
+          />
         </Show>
       </Show>
     </Dialog>
