@@ -92,9 +92,21 @@ export const LocationVolumeSelect = (
         value={fullness()}
         onChange={v => setFullness(v as Fullness)}
         options={[
-          { value: 'all', label: t('label.all') },
-          { value: 'empty', label: t('label.empty') },
-          { value: 'available', label: t('label.available') },
+          {
+            value: 'all',
+            label: t('label.all'),
+            testId: 'location-fullness-all',
+          },
+          {
+            value: 'empty',
+            label: t('label.empty'),
+            testId: 'location-fullness-empty',
+          },
+          {
+            value: 'available',
+            label: t('label.available'),
+            testId: 'location-fullness-available',
+          },
         ]}
       />
     </Show>

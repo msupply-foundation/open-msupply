@@ -35,6 +35,11 @@ const appVersion = (): string => {
 
 export default defineConfig(({ mode }) => ({
   plugins: [solid()],
+  // Lets the same build be mounted at a non-root path (the demo server's
+  // /spec track, deploy/build-and-deploy-spec.sh) — Vite rewrites every
+  // asset reference to match and exposes it at runtime as
+  // import.meta.env.BASE_URL (read by <Router base> in src/App.tsx).
+  base: process.env.VITE_BASE_PATH || '/',
   define: {
     LANG_VERSION: JSON.stringify(
       mode === 'production' ? String(Date.now()) : 'dev'
@@ -54,6 +59,12 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
       },
       '/files': {
+        target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Sync-file store (upload/download/delete of record documents, e.g. an
+      // inbound shipment's attachments) — a REST endpoint, not GraphQL.
+      '/sync_files': {
         target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },

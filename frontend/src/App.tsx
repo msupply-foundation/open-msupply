@@ -20,6 +20,7 @@ import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
+import { inboundShipmentsRoutes } from './sections/inbound-shipments';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { helpRoutes } from './sections/help';
@@ -40,6 +41,7 @@ type Phase = 'loading' | 'initialisation' | 'operational';
 const sectionRoutes: Record<string, () => JSX.Element> = {
   'inventory/stocktakes': stocktakesRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
+  'replenishment/inbound-shipment': inboundShipmentsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,
@@ -100,7 +102,16 @@ export const App: Component = () => {
         </Match>
         <Match when={phase() === 'operational'}>
           <Show when={authUser()} fallback={<LoginPage />}>
-            <Router>
+            {/* base matches Vite's `base` config so the same build can be
+                mounted at a non-root path (e.g. the demo server's /spec
+                track). import.meta.env.BASE_URL always ends in "/" (Vite's
+                convention); solid-router's own root-route resolution
+                doesn't strip that before concatenating an absolute `to`
+                (e.g. navigate(`/${id}`) in StoreGuardLayout), producing a
+                double slash — "/spec//id" — that fails to match any route
+                and drops the base entirely. Trimmed here, once, at the
+                source. */}
+            <Router base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
               {/* Store guard wraps the routed app shell; the shell mounts once and
                   pages swap inside it. One route per nav destination renders its
                   (empty) entry page until a real section is registered above. */}

@@ -2,6 +2,7 @@ import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
+import { Comment } from '../feedback/Comment';
 import type { Column } from './columnTypes';
 import { differenceInMonths } from 'date-fns';
 import styles from './tableHelpers.module.css';
@@ -86,6 +87,14 @@ export const getBooleanCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info =>
     info.getValue<boolean>() ? t('messages.yes') : t('messages.no'),
+});
+
+// Comment: the resolved string value behind a comment icon + popover (blank →
+// nothing). The Comment component renders null when there's no value, so an
+// empty cell stays empty. Centre-aligned — the icon is the whole cell.
+export const getCommentCell = <T,>(meta?: Meta): CellFragment<T> => ({
+  meta: { align: 'center', ...meta },
+  cell: info => <Comment comment={info.getValue<string | null>()} />,
 });
 
 // Money: symbol + always two decimals (spec/ui-standards/conventions.md),

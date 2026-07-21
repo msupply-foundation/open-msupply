@@ -482,7 +482,7 @@ const OutboundDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<InfoIcon />}
-                        data-testid="more-button"
+                        data-testid="open-detail-panel-button"
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}

@@ -37,7 +37,8 @@ export const ExportStocktakesAction: Component<
 > = props => {
   const [busy, setBusy] = createSignal(false);
 
-  const options: SplitButtonOption[] = [
+  // An accessor read in JSX, so the labels re-translate on a language switch.
+  const options = (): SplitButtonOption[] => [
     { value: 'csv', label: t('button.export-csv') },
     { value: 'excel', label: t('button.export-excel') },
   ];
@@ -86,7 +87,7 @@ export const ExportStocktakesAction: Component<
   return (
     <SplitButton
       icon={<DownloadIcon />}
-      options={options}
+      options={options()}
       testId="export-csv"
       menuLabel={t('button.export')}
       onAction={format => void run(format)}

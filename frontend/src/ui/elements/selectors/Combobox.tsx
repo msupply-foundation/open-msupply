@@ -84,6 +84,13 @@ interface ComboboxProps<T> {
    * can't take a pass-through attribute.
    */
   inputTestId?: string;
+  /**
+   * Replace the option list with a "Loading…" row (and suppress "no matches").
+   * Pass it only when there's nothing sensible to show: a server-mode caller
+   * holding rows it can still present (e.g. AsyncCombobox's client-filtered
+   * interim list while a refetch is pending) keeps this false so the list isn't
+   * blanked mid-keystroke.
+   */
   loading?: boolean;
   disabled?: boolean;
   /**
