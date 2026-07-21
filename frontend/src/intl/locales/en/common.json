@@ -2046,6 +2046,8 @@
   "message.placeholder-lines-cannot-be-returned": "Placeholder lines cannot be returned",
   "message.program-period": "Only the first five historic and future periods are available for selection.",
   "message.remember-store-choice": "Remember my choice",
+  "message.select-program-first": "Select a program first",
+  "message.select-schedule-first": "Select a schedule first",
   "messages": "Messages",
   "messages.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "messages.active-policy-needs-coverage": "An active policy must have a non-zero coverage rate. Increase the rate or deactivate the policy.",

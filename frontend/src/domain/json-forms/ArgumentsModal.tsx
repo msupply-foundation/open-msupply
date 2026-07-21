@@ -149,13 +149,18 @@ const PeriodArgumentField = (props: {
     )
   );
 
+  const waiting = (): boolean => props.field.findByProgram && !props.programId;
+
   return (
     <PeriodSelect
       label={props.field.label}
       periods={periods()}
       loading={periodsData.loading}
       value={selectedId()}
-      disabled={props.field.findByProgram && !props.programId}
+      disabled={waiting()}
+      // A disabled field says why (ui-standards inputs › fields): the
+      // placeholder names the prerequisite pick (AC-R16).
+      placeholder={waiting() ? t('message.select-program-first') : undefined}
       error={props.error}
       onChange={props.onPick}
     />
@@ -363,8 +368,14 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
   // stripped (absent ≠ "" server-side), numbers as numbers (AC-R8). unwrap()
   // drops the store proxy first.
   const submit = (): void => {
-    const missing = fields().some(
-      field => isRequirable(field) && field.required && isEmpty(field.key)
+    // The schedule cascade renders the fields for its five flat keys, so the
+    // schema's required list gates them too (AC-R17 / AC-R7) — without this,
+    // an empty submit reaches the report's SQL as missing parameters.
+    const missing = fields().some(field =>
+      isRequirable(field)
+        ? field.required && isEmpty(field.key)
+        : field.kind === 'scheduleForm' &&
+          field.requiredKeys.some(key => isEmpty(key))
     );
     if (missing) {
       setAttempted(true);
@@ -651,20 +662,33 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                   />
                 )}
               </Match>
-              <Match when={field.kind === 'scheduleForm'}>
-                {/* AC-R17: the cascade ignores its scoped key and writes the
-                    five flat keys via scheduleCascadeWrites. */}
-                <ScheduleFormFields
-                  storeId={currentStoreId() ?? ''}
-                  programs={programs()}
-                  programsLoading={programsData.loading}
-                  programId={selectValue('programId')}
-                  scheduleId={selectValue('scheduleId')}
-                  periodId={selectValue('periodId')}
-                  after={selectValue('after')}
-                  before={selectValue('before')}
-                  onWrites={applyWrites}
-                />
+              <Match
+                when={field.kind === 'scheduleForm' ? field : undefined}
+                keyed
+              >
+                {sfField => (
+                  /* AC-R17: the cascade ignores its scoped key and writes the
+                     five flat keys via scheduleCascadeWrites; the schema's
+                     required list gates the keys it renders (see submit). */
+                  <ScheduleFormFields
+                    storeId={currentStoreId() ?? ''}
+                    programs={programs()}
+                    programsLoading={programsData.loading}
+                    programId={selectValue('programId')}
+                    scheduleId={selectValue('scheduleId')}
+                    periodId={selectValue('periodId')}
+                    after={selectValue('after')}
+                    before={selectValue('before')}
+                    errorFor={key =>
+                      attempted() &&
+                      sfField.requiredKeys.includes(key) &&
+                      isEmpty(key)
+                        ? t('error.field-required')
+                        : undefined
+                    }
+                    onWrites={applyWrites}
+                  />
+                )}
               </Match>
               <Match when={field.kind === 'masterList'}>
                 <MasterListSelect

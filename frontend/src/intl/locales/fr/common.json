@@ -2042,6 +2042,8 @@
   "message.placeholder-lines-cannot-be-returned": "Les lignes temporaires ne peuvent pas être retournées",
   "message.program-period": "Seules les cinq périodes précédentes ou futures peuvent être sélectionnées.",
   "message.remember-store-choice": "Se souvenir de mon choix",
+  "message.select-program-first": "Sélectionnez d'abord un programme",
+  "message.select-schedule-first": "Sélectionnez d'abord un calendrier",
   "messages": "Messages",
   "messages.acknowledge-breach-helptext": "Entrez un commentaire et cliquez OK pour accepter l'excursion.",
   "messages.active-policy-needs-coverage": "Une règle active doit avoir un taux de couverture non nul. Augmentez le taux ou désactivez la règle.",

@@ -664,6 +664,33 @@ describe('parseArgumentSchema — search controls (AC-R13–R17)', () => {
       kind: 'scheduleForm',
       key: 'schedule',
       label: 'Schedule',
+      requiredKeys: [],
+    });
+  });
+
+  it('collects required cascade keys from the schema, Congo-style (AC-R17)', () => {
+    // The Congo quarterly requisition marks after/before/programId required —
+    // keys OUTSIDE the element's own scope, but rendered by the cascade, so
+    // they gate OK. scheduleId/periodId stay optional there.
+    const parsed = parseArgumentSchema({
+      jsonSchema: {
+        type: 'object',
+        properties: { schedule: { type: 'object' } },
+        required: ['after', 'before', 'programId'],
+      },
+      uiSchema: {
+        elements: [
+          {
+            type: 'ScheduleForm',
+            scope: '#/properties/schedule',
+            label: 'Schedule',
+          },
+        ],
+      },
+    });
+    expect(parsed[0]).toMatchObject({
+      kind: 'scheduleForm',
+      requiredKeys: ['programId', 'after', 'before'],
     });
   });
 });

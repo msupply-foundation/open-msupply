@@ -30,6 +30,11 @@ export interface ScheduleFormFieldsProps {
   before?: string;
   /** One batched write per interaction — key → value, undefined = remove. */
   onWrites: (writes: ReportArgs) => void;
+  /**
+   * Required-miss message for one of the five flat keys (the modal owns the
+   * attempted/required state — AC-R17's gating); undefined = no error.
+   */
+  errorFor?: (key: string) => string | undefined;
 }
 
 /*
@@ -78,6 +83,7 @@ export const ScheduleFormFields = (
         programs={props.programs}
         loading={props.programsLoading}
         value={props.programId}
+        error={props.errorFor?.('programId')}
         onChange={pick =>
           props.onWrites(
             scheduleCascadeWrites.program(
@@ -86,6 +92,8 @@ export const ScheduleFormFields = (
           )
         }
       />
+      {/* Each waiting step says what unlocks it (ui-standards inputs ›
+          fields): the placeholder names the prerequisite pick (AC-R17). */}
       <Combobox<ScheduleWithPeriods>
         label={t('label.schedule')}
         items={schedules()}
@@ -94,6 +102,10 @@ export const ScheduleFormFields = (
         itemToValue={schedule => schedule.id}
         value={props.scheduleId}
         disabled={!props.programId}
+        placeholder={
+          props.programId ? undefined : t('message.select-program-first')
+        }
+        error={props.errorFor?.('scheduleId')}
         onChange={schedule =>
           props.onWrites(scheduleCascadeWrites.schedule(schedule?.id))
         }
@@ -103,6 +115,10 @@ export const ScheduleFormFields = (
         periods={periods()}
         value={props.periodId}
         disabled={!props.scheduleId}
+        placeholder={
+          props.scheduleId ? undefined : t('message.select-schedule-first')
+        }
+        error={props.errorFor?.('periodId')}
         onChange={period =>
           props.onWrites(scheduleCascadeWrites.period(period))
         }
@@ -111,6 +127,7 @@ export const ScheduleFormFields = (
         label={t('label.from-date')}
         width="full"
         value={instantToLocalDate(props.after) || null}
+        error={props.errorFor?.('after')}
         onChange={value =>
           props.onWrites({
             after: value ? dayStartInstant(value) : undefined,
@@ -121,6 +138,7 @@ export const ScheduleFormFields = (
         label={t('label.to-date')}
         width="full"
         value={instantToLocalDate(props.before) || null}
+        error={props.errorFor?.('before')}
         onChange={value =>
           props.onWrites({
             before: value ? dayEndInstant(value) : undefined,

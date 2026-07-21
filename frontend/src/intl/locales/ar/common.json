@@ -1167,6 +1167,8 @@
   "message.nothing-to-save": "لا شيء للحفظ",
   "message.placeholder-line": "تم إنشاء سطر عنصر نائب للكمية الإضافية المطلوبة",
   "message.placeholder-lines-cannot-be-returned": "لا يمكن إرجاع خطوط العناصر النائبة",
+  "message.select-program-first": "اختر برنامجًا أولاً",
+  "message.select-schedule-first": "اختر جدولة أولاً",
   "messages": "رسائل",
   "messages.acknowledge-breach-helptext": "أدخل تعليقاً وانقر فوق موافق للإقرار بالخرق.",
   "messages.ago": "منذ {{time}}",

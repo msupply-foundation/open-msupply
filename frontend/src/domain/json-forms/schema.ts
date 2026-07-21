@@ -195,9 +195,18 @@ export type ParsedField =
   /**
    * The schedule cascade (AC-R17): program → schedule → period plus editable
    * from/to dates. Ignores its scoped key entirely — writes five flat keys
-   * (see `scheduleCascadeWrites`).
+   * (see `scheduleCascadeWrites`). `requiredKeys` is the schema's required
+   * list restricted to those five keys: the cascade renders the fields that
+   * write them, so they gate OK (AC-R7) even though they sit outside the
+   * element's own scope (the Congo quarterly requisition marks
+   * after/before/programId required this way).
    */
-  | { kind: 'scheduleForm'; key: string; label: string }
+  | {
+      kind: 'scheduleForm';
+      key: string;
+      label: string;
+      requiredKeys: string[];
+    }
   // Any control the interpreter doesn't render — an unknown element type, or a
   // Control whose jsonSchema property is missing. The original element type is
   // preserved so the modal can show it (and so the degradation is diagnosable).
@@ -311,6 +320,15 @@ const enumOptions = (
   const values = Array.isArray(prop.enum) ? prop.enum : [];
   return values.map(value => ({ value: String(value), label: String(value) }));
 };
+
+/** The five flat keys the schedule cascade writes (AC-R17). */
+export const SCHEDULE_CASCADE_KEYS = [
+  'programId',
+  'scheduleId',
+  'periodId',
+  'after',
+  'before',
+] as const;
 
 /**
  * Parse a report's argument schema into an ordered list of ParsedFields —
@@ -495,7 +513,12 @@ export const parseArgumentSchema = (raw: {
         });
         break;
       case 'ScheduleForm':
-        fields.push({ kind: 'scheduleForm', key, label });
+        fields.push({
+          kind: 'scheduleForm',
+          key,
+          label,
+          requiredKeys: SCHEDULE_CASCADE_KEYS.filter(k => required.has(k)),
+        });
         break;
       // Any future/unknown type degrades to the disabled placeholder
       // (spec/reports S3). Preserve the type name for the unsupported control.
