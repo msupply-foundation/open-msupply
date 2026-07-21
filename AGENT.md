@@ -7,6 +7,7 @@
 - **Generate Types From Graphql** `yarn generate`
 - **Lint:** `cd client && yarn eslint` (client), `cd server && cargo fmt` (server)
 - **Single test:** `cargo nextest run test_name` (server), `yarn test --testNamePattern="test_name"` (client)
+- **E2E (hermetic):** `cd client && yarn e2e:local <suite>` — boots its own server + FE from the reference datafile; see `client/playwright/README.md`. The suite definitions live in a sibling open-msupply-frontend checkout (`FE_SUITES_DIR`, default `../open-msupply-frontend`) — the cross-FE test-id contract (`e2e/TESTIDS.md` there) is shared with the rewrite, so change suites there, not here
 - **Install nextest:** `cargo install cargo-nextest --locked --version 0.9.132`
 
 ## Architecture

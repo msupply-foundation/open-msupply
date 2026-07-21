@@ -29,6 +29,7 @@ export const StocktakeLineEditModal: FC<
 
   return (
     <Modal
+      testId="add-item-modal"
       title={
         mode === ModalMode.Create
           ? t('heading.add-item')

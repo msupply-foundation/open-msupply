@@ -368,6 +368,7 @@ export const LoginStoreSelectorPanel = ({
           disabled={!selectedId || isLoggingIn}
           onClick={() => void confirm(selectedId)}
           label={t('button.continue')}
+          data-testid="store-selector-continue"
         />
       </Box>
     </Box>

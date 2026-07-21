@@ -31,6 +31,9 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
+          # Don't auto-cache via packageManager: it runs the global yarn 1
+          # before corepack is enabled (#12508)
+          package-manager-cache: false
 
       # Install/Build tolerate failure so a broken base branch doesn't fail
       # the PR check. The compare job detects the missing artifact and posts
@@ -70,6 +73,9 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
+          # Don't auto-cache via packageManager: it runs the global yarn 1
+          # before corepack is enabled (#12508)
+          package-manager-cache: false
 
       - name: Install dependencies
         run: corepack enable && yarn install --immutable

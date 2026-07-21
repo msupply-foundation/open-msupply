@@ -1,5 +1,9 @@
 import React from 'react';
-import { MRT_RowData, MRT_ShowHideColumnsButton } from 'material-react-table';
+import {
+  MRT_RowData,
+  MRT_ShowHideColumnsButton,
+  MRT_TableOptions,
+} from 'material-react-table';
 import { BaseTableConfig, useBaseMaterialTable } from './useBaseMaterialTable';
 import { ColumnDef } from './types';
 import { Box } from '@mui/material';
@@ -49,15 +53,19 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
       </Box>
     ),
 
-    muiTableHeadCellProps: {
+    // NOTE: these replace (not merge with) the base display options, so the
+    // e2e `header-<columnId>` / `cell-<columnId>` testids must be re-applied.
+    muiTableHeadCellProps: ({ column }) => ({
+      'data-testid': `header-${column.id}`,
       sx: {
         fontSize: '0.85em',
         '& .Mui-TableHeadCell-Content-Wrapper': {
           whiteSpace: 'normal',
         },
       },
-    },
+    }),
     muiTableBodyCellProps: ({ column, row }) => ({
+      'data-testid': `cell-${column.id}`,
       sx: {
         fontSize: '0.85em',
         fontWeight: 400,
@@ -77,9 +85,11 @@ export const useSimpleMaterialTable = <T extends MRT_RowData>({
           : {}),
       },
     }),
+    // data-* attributes are forwarded by MUI but absent from TableRowProps.
     muiTableBodyRowProps: {
+      'data-testid': 'table-row',
       sx: { minHeight: '32px' },
-    },
+    } as MRT_TableOptions<T>['muiTableBodyRowProps'],
   });
 
   return table;

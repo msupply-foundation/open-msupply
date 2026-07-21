@@ -46,6 +46,7 @@ export const CustomerSearchInput = ({
       autoFocus={autoFocus}
       openOnFocus={openOnFocus}
       width={width}
+      inputTestId="customer-search-input"
       noOptionsText={t('label.no-options')}
     />
   );

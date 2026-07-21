@@ -86,6 +86,8 @@ export interface InfiniteSearchPickerProps<T extends HasId, TFilter> {
   // DOM id for the input. Defaults to a stable generated id so multiple
   // pickers can coexist on the same page without collisions.
   id?: string;
+  // data-testid placed on the inner <input> (e2e locator hook)
+  inputTestId?: string;
   noOptionsText?: ReactNode;
   // sx applied to the input slot — used for the elevated-card style
   // (boxShadow + white/toolbar bg) shared by modal forms like PO line edit.
@@ -115,6 +117,7 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
   width,
   popperMinWidth,
   id,
+  inputTestId,
   noOptionsText,
   textSx,
 }: InfiniteSearchPickerProps<T, TFilter>) {
@@ -288,6 +291,9 @@ export function InfiniteSearchPicker<T extends HasId, TFilter>({
         resetFilter();
       }}
       inputProps={{
+        ...(inputTestId
+          ? { inputProps: { 'data-testid': inputTestId } }
+          : {}),
         onChange: e => {
           const { value: next } = e.target;
           setSearch(next);

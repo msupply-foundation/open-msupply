@@ -80,6 +80,7 @@ export const AppBarButtonsComponent = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <SplitButton
+          testId="add-item-button"
           color="primary"
           options={options}
           selectedOption={selectedOption}

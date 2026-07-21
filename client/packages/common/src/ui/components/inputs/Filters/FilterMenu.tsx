@@ -122,7 +122,11 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
     >
       {/* 13px margin to make menu match the individual filter inputs */}
       {showFilterMenu && (
-        <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>
+        <DropdownMenu
+          testId="filters-menu"
+          label={t('label.filters')}
+          sx={{ marginTop: '13px' }}
+        >
           {filterOptions.map(option => (
             <FilterMenuItem
               key={
@@ -130,6 +134,11 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
                   ? option.value.name
                   : option.value.urlParameter
               }
+              testId={`filter-option-${
+                option.value.type === 'group'
+                  ? option.value.name.toLowerCase().replace(/\s+/g, '-')
+                  : option.value.urlParameter
+              }`}
               onClick={() => handleSelect(option.value)}
               label={option.label}
             />
@@ -151,11 +160,13 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
 const FilterMenuItem = ({
   onClick,
   label,
+  testId,
 }: {
   onClick: () => void;
   label: string;
+  testId?: string;
 }) => (
-  <DropdownMenuItem onClick={onClick} sx={{ fontSize: 14 }}>
+  <DropdownMenuItem data-testid={testId} onClick={onClick} sx={{ fontSize: 14 }}>
     {label}
   </DropdownMenuItem>
 );
@@ -224,9 +235,7 @@ const getFilterComponent = (
         />
       );
     case 'enum':
-      return (
-        <EnumFilter key={filter.urlParameter} filterDefinition={filter} />
-      );
+      return <EnumFilter key={filter.urlParameter} filterDefinition={filter} />;
     case 'hierarchicalEnum':
       return (
         <HierarchicalEnumFilter

@@ -1,0 +1,73 @@
+# e2e reference datafile
+
+Seed data for the deterministic Playwright suites (defined in
+[open-msupply-frontend](https://github.com/msupply-foundation/open-msupply-frontend)
+under `e2e/`; run against this repo with `yarn e2e:local`).
+Restore it into a fresh database with:
+
+```bash
+cd server
+MSUPPLY_NO_TEST_DB_TEMPLATE=1 cargo run --bin remote_server_cli -- initialise-from-export -n e2e -r
+```
+
+`-r` refreshes all dates relative to now and leaves sync disabled. Login:
+`Admin` / `pass` (case-insensitive), store `GRY` (Gryffindor District Store,
+exported as site 900).
+
+## What's in it (and what isn't)
+
+Central-owned **nouns** the remote API cannot create: items, units, reason
+options, master lists (+ GRY's joins, so ~23 items are visible), currencies,
+users, stores, periods, programs. Plus injected login wiring for Admin on GRY
+(`user_store_join` / `user_permission` — a v7 pull doesn't deliver those).
+
+Deliberately **no stock, no documents** — store-local state is created through
+the GraphQL API by `e2e/specs/data.setup.ts` (in open-msupply-frontend) at suite start
+("seed nouns, create verbs"). Don't add stock here; extend the arrange step.
+
+## Format
+
+A v7 `initialise-from-export` file: `sync_buffer_rows` in v7 wire shape
+(`data` = translated OMS row JSON), `site_id: 900`, `central_site_id: 6`.
+The `central_site_id` field routes integration through the v7 path — see
+`InitialisationData` in `server/cli/src/cli.rs`.
+
+## Regenerating
+
+Only needed when reference data must change (new reason types, more items) or
+after a sync-schema change. Small edits can be made directly to `export.json`
+— it's deliberately reviewable. Full recapture:
+
+1. Run the demo central (postgres `omsupply_central_2_july`, port 8890) with
+   `APP__SERVER__OVERRIDE_IS_CENTRAL_SERVER=true` (v7 `get_token` requires
+   central mode).
+2. The central needs the capture site + store assignment (one-off, already
+   done): a `site` row `id=900, name='e2e', sync_version='V7'` whose
+   `hashed_password` is bcrypt of sha256("e2e_password"), and store GRY
+   (`80004C94…`) with `site_id = 900`.
+3. Bootstrap a scratch remote as that site — the trick is pre-setting the
+   sync version so the fresh remote speaks v7 (no legacy server involved):
+
+   ```bash
+   APP__DATABASE__DATABASE_NAME=oms_e2e_capture APP__DATABASE__PORT=5433 \
+     cargo run --bin remote_server_cli --features=postgres -- initialise-database
+   APP__DATABASE__DATABASE_NAME=oms_e2e_capture APP__DATABASE__PORT=5433 \
+     cargo run --bin remote_server_cli --features=postgres -- migrate
+   psql -p 5433 -U postgres -d oms_e2e_capture \
+     -c "INSERT INTO key_value_store (id, value_string) VALUES ('SETTINGS_SYNC_VERSION','V7');"
+   APP__DATABASE__DATABASE_NAME=oms_e2e_capture APP__DATABASE__PORT=5433 \
+     APP__SERVER__PORT=8011 APP__SERVER__BASE_DIR=app_data/e2e_capture \
+     APP__SYNC__URL=http://localhost:8890 APP__SYNC__USERNAME=e2e \
+     APP__SYNC__PASSWORD_SHA256=8f3e9e24be9af303a8d496d5f5528d3e8c3daa1877dd96297966a9c29928910d \
+     APP__SYNC__INTERVAL_SECONDS=60 \
+     cargo run --features=postgres   # wait for initialisationStatus INITIALISED, then stop it
+   ```
+
+4. Re-emit this folder from the captured buffer:
+
+   ```bash
+   python3 client/playwright/scripts/build-e2e-export.py
+   ```
+
+5. Round-trip (`initialise-from-export -n e2e -r`) and run the stocktake
+   suite before committing the new export.

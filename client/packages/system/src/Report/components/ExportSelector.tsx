@@ -76,6 +76,7 @@ export const ExportSelector = ({
 
   return (
     <SplitButton
+      testId="export-csv"
       color="primary"
       Icon={<DownloadIcon />}
       isLoadingType={true}
