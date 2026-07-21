@@ -30,10 +30,10 @@ interface UseSubscriptionResult<TData> {
   data: TData | undefined;
 }
 
-// Track the last token across all useSubscription instances.
-// When it changes, we dispose the old client once so a fresh
-// connection is made with the new token.
-let lastKnownToken: string | undefined;
+// Track the last known auth signal across all useSubscription instances.
+// When it flips we dispose the old client once so a fresh connection picks up the latest
+// session cookie. (The cookie itself isn't readable from JS, so we use the boolean as a proxy.)
+let lastKnownAuth: boolean | undefined;
 
 /**
  * Hook that subscribes to a GraphQL subscription over WebSocket and
@@ -42,8 +42,7 @@ let lastKnownToken: string | undefined;
  * Consuming hooks merge this with useQuery data — subscription takes
  * priority, query provides initial fetch and polling fallback.
  *
- * Automatically re-subscribes when the auth token changes (e.g. after
- * re-authentication).
+ * Automatically re-subscribes when auth state changes (e.g. after re-authentication).
  */
 export const useSubscription = <TSubscription, TData>({
   document,
@@ -56,7 +55,7 @@ export const useSubscription = <TSubscription, TData>({
   TData
 >): UseSubscriptionResult<TData> => {
   const { client: gqlClient } = useGql();
-  const { token } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
   const [isConnected, setIsConnected] = useState(getConnectionState);
   const [data, setData] = useState<TData | undefined>(undefined);
   const unsubscribeRef = useRef<(() => void) | null>(null);
@@ -67,13 +66,13 @@ export const useSubscription = <TSubscription, TData>({
   }, []);
 
   useEffect(() => {
-    if (!enabled || (requireAuth && !token)) {
+    if (!enabled || (requireAuth && !isAuthenticated)) {
       setData(undefined);
       return;
     }
 
-    if (token !== lastKnownToken) {
-      lastKnownToken = token;
+    if (isAuthenticated !== lastKnownAuth) {
+      lastKnownAuth = isAuthenticated;
       reconnectSubscriptionClient();
     }
 
@@ -117,11 +116,12 @@ export const useSubscription = <TSubscription, TData>({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, document, token]);
+  }, [enabled, document, isAuthenticated]);
 
   // Active only when the socket is connected, the caller has enabled it, and
-  // a token is present.
-  const isSubscribed = isConnected && enabled && (!requireAuth || !!token);
+  // (when auth is required) we believe we're logged in.
+  const isSubscribed =
+    isConnected && enabled && (!requireAuth || isAuthenticated);
 
   return { isSubscribed, data };
 };

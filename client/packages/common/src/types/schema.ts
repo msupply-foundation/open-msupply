@@ -863,7 +863,24 @@ export type AssignStoresToSiteNode = {
 
 export type AuthToken = {
   __typename: 'AuthToken';
-  /** Bearer token */
+  /** When the session expires, as a unix timestamp [s]. */
+  expiryDate: Scalars['Int']['output'];
+  /**
+   * **Deprecated** — there is no longer a separate refresh token. Returned as a duplicate of
+   * `token` purely so existing integrations that read this field don't break.
+   */
+  refresh: Scalars['String']['output'];
+  /**
+   * **Deprecated** — there is no longer a separate refresh-token expiry. Returned as a
+   * duplicate of `expiry_date` purely so existing integrations that read this field don't
+   * break.
+   */
+  refreshExpiryDate: Scalars['Int']['output'];
+  /**
+   * Bearer token. Web clients ignore this — the browser sends the HttpOnly `session_{port}`
+   * cookie automatically. Kept in the response for backwards-compatible API integrations
+   * (e.g. Sage) that pass it as `Authorization: Bearer`.
+   */
   token: Scalars['String']['output'];
 };
 
@@ -8307,8 +8324,8 @@ export type Queries = {
   /** Query omSupply "assets" entries */
   assets: AssetsResponse;
   /**
-   * Retrieves a new auth bearer and refresh token
-   * The refresh token is returned as a cookie
+   * Authenticate with username + password. Issues an opaque session token, returned both in
+   * the response body and as an HttpOnly session cookie. There is no separate refresh token.
    */
   authToken: AuthTokenResponse;
   barcodeByGtin: BarcodeResponse;
@@ -8451,8 +8468,9 @@ export type Queries = {
   rAndRForms: RnRFormsResponse;
   reasonOptions: ReasonOptionResponse;
   /**
-   * Retrieves a new auth bearer and refresh token
-   * The refresh token is returned as a cookie
+   * Slides the existing session's expiry forward (no token rotation). Kept for backwards
+   * compatibility — web clients no longer need to call this, since the session slides on every
+   * authenticated request.
    */
   refreshToken: RefreshTokenResponse;
   repack: RepackResponse;
@@ -9457,7 +9475,18 @@ export type RefreshAncillaryItemsSuccess = {
 
 export type RefreshToken = {
   __typename: 'RefreshToken';
-  /** New Bearer token */
+  expiryDate: Scalars['Int']['output'];
+  /**
+   * **Deprecated** — there is no longer a separate refresh token. Returned as a duplicate of
+   * `token` purely so existing integrations that read this field don't break.
+   */
+  refresh: Scalars['String']['output'];
+  /**
+   * **Deprecated** — there is no longer a separate refresh-token expiry. Returned as a
+   * duplicate of `expiry_date` purely so existing integrations that read this field don't
+   * break.
+   */
+  refreshExpiryDate: Scalars['Int']['output'];
   token: Scalars['String']['output'];
 };
 

@@ -8,6 +8,7 @@ import {
   RadioIcon,
   Typography,
   useAuthContext,
+  useRefreshUserCookie,
   useFormatDateTime,
   useNativeClient,
   useQueryClient,
@@ -51,7 +52,7 @@ const useHostSync = (enabled: boolean) => {
   const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
-  const { refreshUserCookie } = useAuthContext();
+  const { refreshUserCookie } = useRefreshUserCookie();
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
@@ -129,7 +130,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { refreshUserCookie } = useAuthContext();
+  const { refreshUserCookie } = useRefreshUserCookie();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');

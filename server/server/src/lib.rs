@@ -7,7 +7,6 @@ use crate::{
     central::config_central,
     certs::Certificates,
     cold_chain::config_cold_chain,
-    configuration::{get_or_create_token_secret, save_token_secret},
     cors::cors_policy,
     custom_translations::config_custom_translations,
     middleware::central_server_only,
@@ -50,12 +49,12 @@ use service::{
     standalone_central::InitialiseAsCentralServerInput,
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
+    session_store::SessionStore,
     sync::{
         sync_status::status::InitialisationStatus,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
         CentralServerConfig,
     },
-    token_bucket::TokenBucket,
 };
 
 use actix_web::{web, web::Data, App, HttpServer};
@@ -192,10 +191,8 @@ pub async fn start_server(
         "Certificates loaded in {} ms",
         cert_start.elapsed().as_millis()
     );
-    let token_bucket = Arc::new(RwLock::new(TokenBucket::new()));
-    let token_secret = get_or_create_token_secret(&connection_manager.connection().unwrap());
-    let token_secret_copy = token_secret.clone();
-    let auth = auth_data(&settings.server, token_bucket, token_secret, &certificates);
+    let session_store = Arc::new(RwLock::new(SessionStore::new()));
+    let auth = auth_data(&settings.server, session_store, &certificates);
     info!("Initialising server context..done");
 
     let service_context = service_provider.basic_context().unwrap();
@@ -435,9 +432,6 @@ pub async fn start_server(
         }
     }
 
-    // Persist token secret now that the key_value_store table is guaranteed to exist
-    save_token_secret(&connection, &token_secret_copy);
-
     StandardReports::load_reports(&connection_manager.connection().unwrap(), false).unwrap();
 
     // Log the server starting message with the startup timestamp
@@ -603,13 +597,14 @@ impl<'a> StatusLog<'a> {
 
 fn auth_data(
     server_settings: &ServerSettings,
-    token_bucket: Arc<RwLock<TokenBucket>>,
-    token_secret: String,
+    session_store: Arc<RwLock<SessionStore>>,
     certificates: &Certificates,
 ) -> Data<AuthData> {
     Data::new(AuthData {
-        auth_token_secret: token_secret,
-        token_bucket,
+        session_store,
+        // Suffix cookies with the server port so multiple instances on the same domain don't
+        // overwrite each other's session cookies (#11094).
+        cookie_suffix: server_settings.port.to_string(),
         no_ssl: !certificates.is_https(),
         debug_no_access_control: is_develop() && server_settings.debug_no_access_control,
     })

@@ -13,7 +13,7 @@ declare const LOCAL_PLUGINS: { pluginPath: string; pluginCode: string }[];
 export const useInitPlugins = () => {
   const { setPluginBundles } = usePluginProvider();
   const { query } = usePlugins();
-  const { token, storeId } = useAuthContext();
+  const { isAuthenticated, storeId } = useAuthContext();
 
   const initRemotePlugins = async () => {
     const plugins = await query();
@@ -60,8 +60,8 @@ export const useInitPlugins = () => {
   // re-added on top of RC's auth model if needed.)
   useEffect(() => {
     if (process.env['NODE_ENV'] !== 'production') return;
-    if (!token || !storeId) return;
+    if (!isAuthenticated || !storeId) return;
     initRemotePlugins();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, storeId]);
+  }, [isAuthenticated, storeId]);
 };
