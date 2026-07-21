@@ -100,10 +100,16 @@ export const App: Component = () => {
         </Match>
         <Match when={phase() === 'operational'}>
           <Show when={authUser()} fallback={<LoginPage />}>
-            {/* base matches Vite's `base` config (import.meta.env.BASE_URL) so the
-                same build can be mounted at a non-root path, e.g. the demo
-                server's /spec track. */}
-            <Router base={import.meta.env.BASE_URL}>
+            {/* base matches Vite's `base` config so the same build can be
+                mounted at a non-root path (e.g. the demo server's /spec
+                track). import.meta.env.BASE_URL always ends in "/" (Vite's
+                convention); solid-router's own root-route resolution
+                doesn't strip that before concatenating an absolute `to`
+                (e.g. navigate(`/${id}`) in StoreGuardLayout), producing a
+                double slash — "/spec//id" — that fails to match any route
+                and drops the base entirely. Trimmed here, once, at the
+                source. */}
+            <Router base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
               {/* Store guard wraps the routed app shell; the shell mounts once and
                   pages swap inside it. One route per nav destination renders its
                   (empty) entry page until a real section is registered above. */}
