@@ -24,7 +24,7 @@ import {
   PlusCircleIcon,
   ChevronRightIcon,
   ChevronDownIcon,
-  ListIcon,
+  CatalogueIcon,
 } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
@@ -631,7 +631,7 @@ const StockList: Component = () => {
               onChange={onFilterChange}
             />
             <IconButton
-              icon={<ListIcon />}
+              icon={<CatalogueIcon />}
               label={t('label.group-by-item')}
               data-testid="group-by-item-toggle"
               bordered
