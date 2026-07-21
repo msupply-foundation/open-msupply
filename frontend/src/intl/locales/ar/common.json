@@ -1692,6 +1692,7 @@
   "outbound.detail.add-from-master-list": "إضافة من قائمة رئيسية",
   "outbound.detail.add-item": "إضافة صنف",
   "outbound.detail.empty": "لم تتم إضافة أي عناصر إلى هذا التسليم.",
+  "outbound.detail.not-found": "تعذّر العثور على هذه الشحنة الصادرة — ربما تم حذفها.",
   "outbound.detail.side-panel": "تفاصيل",
   "outbound.detail.tab-details": "تفاصيل",
   "outbound.detail.tab-log": "السجل",

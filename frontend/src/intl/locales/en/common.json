@@ -2813,6 +2813,7 @@
   "outbound.detail.add-from-master-list": "Add from master list",
   "outbound.detail.add-item": "Add item",
   "outbound.detail.empty": "No items have been added to this shipment.",
+  "outbound.detail.not-found": "This outbound shipment could not be found — it may have been deleted.",
   "outbound.detail.side-panel": "Details",
   "outbound.detail.tab-details": "Details",
   "outbound.detail.tab-log": "Log",

@@ -383,7 +383,37 @@ const OutboundDetailView: Component = () => {
     <Suspense fallback={<Spinner center />}>
       {/* NON-keyed Show — saves set a fresh node object; keyed would remount
           the page and drop focus (kdd/solid-reactivity-pitfalls). */}
-      <Show when={node()}>
+      <Show
+        when={node()}
+        fallback={
+          <Show when={!data.loading}>
+            <Dialog
+              open
+              dismissable={false}
+              onClose={() =>
+                navigate(`/${params.storeId}/distribution/outbound-shipment`)
+              }
+              icon={<InfoIcon />}
+              title={t('app.not-found')}
+              description={t('outbound.detail.not-found')}
+              actions={
+                <Button
+                  variant="secondary"
+                  icon={<CheckIcon />}
+                  data-testid="dialog-button-ok"
+                  onClick={() =>
+                    navigate(
+                      `/${params.storeId}/distribution/outbound-shipment`
+                    )
+                  }
+                >
+                  {t('common.ok')}
+                </Button>
+              }
+            />
+          </Show>
+        }
+      >
         {current => (
           <Tabs defaultValue="details">
             <Page
