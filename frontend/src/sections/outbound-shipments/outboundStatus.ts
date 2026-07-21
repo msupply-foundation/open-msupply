@@ -23,28 +23,28 @@ export type SettableStatus = (typeof CLIENT_SETTABLE)[number];
 
 export const STATUS_LABELS: Record<OutboundStatus | 'CANCELLED', string> = {
   get NEW() {
-    return t('outbound.status.new');
+    return t('label.new');
   },
   get ALLOCATED() {
-    return t('outbound.status.allocated');
+    return t('label.allocated');
   },
   get PICKED() {
-    return t('outbound.status.picked');
+    return t('label.picked');
   },
   get SHIPPED() {
-    return t('outbound.status.shipped');
+    return t('label.shipped');
   },
   get DELIVERED() {
-    return t('outbound.status.delivered');
+    return t('label.delivered');
   },
   get RECEIVED() {
-    return t('outbound.status.received');
+    return t('label.received');
   },
   get VERIFIED() {
-    return t('outbound.status.verified');
+    return t('label.verified');
   },
   get CANCELLED() {
-    return t('outbound.status.cancelled');
+    return t('label.cancelled');
   },
 };
 

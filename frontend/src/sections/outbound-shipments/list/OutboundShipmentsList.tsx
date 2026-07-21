@@ -183,7 +183,7 @@ const OutboundShipmentsList: Component = () => {
       // editable; a read-only dot otherwise).
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: t('outbound.column.customer'),
+      header: t('label.name'),
       meta: { card: { region: 'primary' }, wrapLines: 2 },
       cell: info => {
         const row = info.row.original;
@@ -213,7 +213,7 @@ const OutboundShipmentsList: Component = () => {
     {
       c: { key: 'status' },
       sortKey: 'status',
-      header: t('outbound.column.status'),
+      header: t('label.status'),
       cell: info => {
         const status = info.getValue<ShipmentRow['status']>();
         return (
@@ -228,24 +228,24 @@ const OutboundShipmentsList: Component = () => {
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
-      header: t('outbound.column.number'),
+      header: t('label.number'),
       ...getNumberCell(),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
-      header: t('outbound.column.created'),
+      header: t('label.created'),
       ...getDateCell(),
     },
     {
       c: { key: 'theirReference' },
       sortKey: 'theirReference',
-      header: t('outbound.column.reference'),
+      header: t('label.reference'),
     },
     {
       c: { key: 'comment' },
       sortKey: 'comment',
-      header: t('outbound.column.comment'),
+      header: t('label.comment'),
     },
     {
       // Shipment total after tax (nested under pricing) — an accessor column.
@@ -253,14 +253,14 @@ const OutboundShipmentsList: Component = () => {
         accessor: row => row.pricing.totalAfterTax,
         id: 'totalAfterTax',
       },
-      header: t('outbound.column.total'),
+      header: t('label.total'),
       ...getCurrencyCell(),
     },
   ];
 
   const crumbs = () => [
-    { label: t('nav.distribution') },
-    { label: t('outbound.title') },
+    { label: t('distribution') },
+    { label: t('outbound-shipments') },
   ];
 
   return (
@@ -275,7 +275,7 @@ const OutboundShipmentsList: Component = () => {
               data-testid="new-shipment-button"
               onClick={() => setCreateOpen(true)}
             >
-              {t('outbound.new')}
+              {t('button.new-shipment')}
             </Button>
             <ExportShipmentsAction
               storeId={params.storeId}
@@ -310,7 +310,7 @@ const OutboundShipmentsList: Component = () => {
         >
           <ContentFooter testId="actions-footer">
             <strong data-testid="selected-rows-count">
-              {tPlural('outbound.lines.selected', selectedIds().length)}
+              {tPlural('label.items-selected', selectedIds().length)}
             </strong>
             <DeleteShipmentsAction
               storeId={params.storeId}
@@ -319,7 +319,17 @@ const OutboundShipmentsList: Component = () => {
             />
             {/* Make a copy — single selection only (spec S1 bulk actions). */}
             <Show when={selectedIds().length === 1}>
-              <DuplicateShipmentAction shipmentId={() => selectedIds()[0]!} />
+              <DuplicateShipmentAction
+                shipmentId={() => selectedIds()[0]!}
+                number={() =>
+                  rows().find(r => r.id === selectedIds()[0])?.invoiceNumber ??
+                  0
+                }
+                customerName={() =>
+                  rows().find(r => r.id === selectedIds()[0])?.otherPartyName ??
+                  ''
+                }
+              />
             </Show>
             <ContentFooterActions>
               <Button
@@ -327,7 +337,7 @@ const OutboundShipmentsList: Component = () => {
                 icon={<CloseIcon />}
                 onClick={() => setSelectedIds([])}
               >
-                {t('common.clear')}
+                {t('label.clear-selection')}
               </Button>
             </ContentFooterActions>
           </ContentFooter>
@@ -344,14 +354,14 @@ const OutboundShipmentsList: Component = () => {
         onRowClick={openRow}
         // Read-only rows (SHIPPED+) are de-emphasised (AC-L3).
         rowDimmed={row => !isEditable(row.status)}
-        emptyMessage={t('outbound.empty')}
+        emptyMessage={t('error.no-outbound-shipments')}
         empty={
           <Button
             icon={<PlusCircleIcon />}
             data-testid="nothing-here-create-button"
             onClick={() => setCreateOpen(true)}
           >
-            {t('outbound.new')}
+            {t('button.new-shipment')}
           </Button>
         }
         enableSelection

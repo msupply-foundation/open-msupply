@@ -12,13 +12,13 @@ type ShipmentRow = OutboundShipmentsResult['invoices']['nodes'][number];
 // stocktakesToCsv.
 export const shipmentsToCsv = (rows: ShipmentRow[]): string => {
   const fields = [
-    t('outbound.column.customer'),
-    t('outbound.column.status'),
-    t('outbound.column.number'),
-    t('outbound.column.created'),
-    t('outbound.column.reference'),
-    t('outbound.column.comment'),
-    t('outbound.column.total'),
+    t('label.name'),
+    t('label.status'),
+    t('label.number'),
+    t('label.created'),
+    t('label.reference'),
+    t('label.comment'),
+    t('label.total'),
   ];
   const data = rows.map(row => [
     row.otherPartyName,

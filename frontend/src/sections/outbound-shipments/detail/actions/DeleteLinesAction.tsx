@@ -45,15 +45,15 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
         disabled={props.disabled}
         onClick={() => setConfirmOpen(true)}
       >
-        {t('outbound.lines.delete')}
+        {t('label.delete')}
       </Button>
       <Show when={confirmOpen()}>
         <ConfirmDialog
           open
           onClose={() => setConfirmOpen(false)}
-          title={t('outbound.lines.delete-title')}
+          title={t('heading.are-you-sure')}
           message={tPlural(
-            'outbound.lines.delete-confirm',
+            'messages.confirm-delete-invoice-lines',
             props.selectedLines().length
           )}
           onConfirm={() => void run()}

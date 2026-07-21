@@ -50,7 +50,7 @@ export const CustomerSearchModal = (props: {
       const description =
         response.__typename === 'InsertOutboundShipmentError'
           ? response.error.description
-          : t('outbound.create.title');
+          : t('customers');
       setError(description);
       return;
     }
@@ -64,7 +64,7 @@ export const CustomerSearchModal = (props: {
     <Dialog
       open={props.open}
       testId="customer-search-modal"
-      title={t('outbound.create.title')}
+      title={t('customers')}
       dismissable={!creating()}
       onClose={props.onClose}
       widthRem={36}
@@ -77,15 +77,15 @@ export const CustomerSearchModal = (props: {
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >
-          {t('common.cancel')}
+          {t('button.cancel')}
         </Button>
       }
     >
       <NameSearch
-        label={t('outbound.toolbar.customer')}
+        label={t('label.customer-name')}
         storeId={params.storeId}
         role="customer"
-        placeholder={t('outbound.create.placeholder')}
+        placeholder={t('placeholder.search-by-name')}
         disabled={creating()}
         inputTestId="customer-search-input"
         clearable={false}

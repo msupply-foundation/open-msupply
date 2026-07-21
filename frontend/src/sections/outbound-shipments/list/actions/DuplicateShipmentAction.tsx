@@ -12,6 +12,9 @@ import { hasPermission } from '../../../../store/storeContext';
 export interface DuplicateShipmentActionProps {
   /** The shipment to copy. */
   shipmentId: () => string;
+  /** The shipment number and customer name — for the confirmation copy. */
+  number: () => number;
+  customerName: () => string;
   /**
    * Where the trigger renders: the list footer's bulk bar (secondary tone,
    * default) or the detail side panel's record-actions stack (primary, like
@@ -97,7 +100,7 @@ export const DuplicateShipmentAction: Component<
         title={canMutate() ? undefined : t('auth.permission-denied')}
         onClick={openConfirm}
       >
-        {t('outbound.copy.action')}
+        {t('button.make-a-copy')}
       </Button>
       <Show when={confirmOpen()}>
         <Dialog
@@ -106,13 +109,16 @@ export const DuplicateShipmentAction: Component<
           onClose={close}
           icon={<CopyIcon />}
           testId="confirmation-modal"
-          title={t('outbound.copy.title')}
+          title={t('heading.are-you-sure')}
           description={
             <Show
               when={phase() !== 'skipped'}
               fallback={
                 <Alert severity="warning">
-                  {tPlural('outbound.copy.skipped', skippedCount())}
+                  {tPlural(
+                    'messages.shipment-copied-skipped-items',
+                    skippedCount()
+                  )}
                 </Alert>
               }
             >
@@ -120,7 +126,10 @@ export const DuplicateShipmentAction: Component<
                 when={phase() !== 'error'}
                 fallback={<Alert severity="error">{errorMessage()}</Alert>}
               >
-                {t('outbound.copy.confirm')}
+                {t('messages.confirm-duplicate-shipment-customer', {
+                  number: props.number(),
+                  customerName: props.customerName(),
+                })}
               </Show>
             </Show>
           }
@@ -138,7 +147,7 @@ export const DuplicateShipmentAction: Component<
                     if (id) goToCopy(id);
                   }}
                 >
-                  {t('common.ok')}
+                  {t('button.ok')}
                 </Button>
               }
             >
@@ -150,7 +159,7 @@ export const DuplicateShipmentAction: Component<
                     icon={<XCircleIcon />}
                     onClick={close}
                   >
-                    {t('common.cancel')}
+                    {t('button.cancel')}
                   </Button>
                 }
               >
@@ -161,7 +170,7 @@ export const DuplicateShipmentAction: Component<
                     data-testid="dialog-button-cancel"
                     onClick={close}
                   >
-                    {t('common.cancel')}
+                    {t('button.cancel')}
                   </Button>
                 </Show>
                 <Button
@@ -171,7 +180,7 @@ export const DuplicateShipmentAction: Component<
                   loading={phase() === 'working'}
                   onClick={() => void run()}
                 >
-                  {t('common.ok')}
+                  {t('button.ok')}
                 </Button>
               </Show>
             </Show>

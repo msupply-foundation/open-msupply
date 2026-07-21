@@ -77,14 +77,14 @@ export const changeShipmentStatus = async (
     case 'CannotChangeStatusOfInvoiceOnHold':
       return {
         kind: 'error',
-        message: t('outbound.hold.blocked'),
+        message: t('messages.on-hold-outbound'),
         unallocatedItems: [],
       };
     case 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines': {
       const items = error.invoiceLines.nodes.map(line => line.itemName);
       return {
         kind: 'error',
-        message: t('outbound.status-change.unallocated', {
+        message: t('messages.must-allocate-all-lines', {
           items: items.join(', '),
         }),
         unallocatedItems: items,

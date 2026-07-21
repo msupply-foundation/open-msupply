@@ -94,18 +94,18 @@ export const AllocateLinesAction: Component<
             : failed;
         bucket.count++;
         if (response.skippedExpiredStockLines.nodes.length)
-          bucket.reasons.add(t('outbound.allocate.reason-expired'));
+          bucket.reasons.add(t('label.expired'));
         if (response.skippedOnHoldStockLines.nodes.length)
-          bucket.reasons.add(t('outbound.allocate.reason-on-hold'));
+          bucket.reasons.add(t('label.on-hold'));
         if (response.skippedUnusableVvmStatusLines.nodes.length)
-          bucket.reasons.add(t('outbound.allocate.reason-vvm'));
+          bucket.reasons.add(t('label.unusable-vvm-status'));
       }
       for (const node of response.issuedExpiringSoonStockLines.nodes)
         expiringSoonBatches.push(node.batch ?? '—');
     }
     const reasonsSuffix = (reasons: Set<string>) =>
       reasons.size > 0
-        ? ` ${t('outbound.allocate.skipped-reasons', {
+        ? ` ${t('messages.allocated-lines-skipped-line-reasons', {
             reasons: Array.from(reasons).join(', '),
           })}`
         : '';
@@ -113,20 +113,20 @@ export const AllocateLinesAction: Component<
       found.push({
         severity: 'warning',
         message:
-          tPlural('outbound.allocate.partial', partial.count) +
+          tPlural('messages.allocated-lines-partial', partial.count) +
           reasonsSuffix(partial.reasons),
       });
     if (failed.count > 0)
       found.push({
         severity: 'error',
         message:
-          tPlural('outbound.allocate.failed', failed.count) +
+          tPlural('messages.allocated-lines-failed', failed.count) +
           reasonsSuffix(failed.reasons),
       });
     if (expiringSoonBatches.length > 0)
       found.push({
         severity: 'info',
-        message: t('outbound.allocate.expiring-soon', {
+        message: t('label.expiring-soon', {
           batches: expiringSoonBatches.join(', '),
         }),
       });
@@ -135,7 +135,7 @@ export const AllocateLinesAction: Component<
     if (allocated > 0 && found.length > 0)
       found.unshift({
         severity: 'info',
-        message: tPlural('outbound.allocate.allocated', allocated),
+        message: tPlural('messages.allocated-lines', allocated),
       });
     props.onCommitted();
     if (found.length === 0) return close();
@@ -152,7 +152,7 @@ export const AllocateLinesAction: Component<
         disabled={props.disabled || placeholders().length === 0}
         onClick={openConfirm}
       >
-        {t('outbound.lines.allocate')}
+        {t('button.allocate-lines')}
       </Button>
       <Show when={open()}>
         <Dialog
@@ -161,16 +161,16 @@ export const AllocateLinesAction: Component<
           onClose={close}
           icon={<ZapIcon />}
           testId="confirmation-modal"
-          title={t('outbound.lines.allocate-title')}
+          title={t('heading.are-you-sure')}
           description={
             <Switch>
               <Match when={phase() !== 'report'}>
                 {zeroQuantity().length > 0
                   ? tPlural(
-                      'outbound.lines.allocate-zero',
+                      'messages.empty-unallocated-lines',
                       zeroQuantity().length
                     )
-                  : t('outbound.lines.allocate-confirm')}
+                  : ''}
               </Match>
               <Match when={phase() === 'report'}>
                 <For each={issues()}>
@@ -191,7 +191,7 @@ export const AllocateLinesAction: Component<
                   data-testid="dialog-button-ok"
                   onClick={close}
                 >
-                  {t('common.ok')}
+                  {t('button.ok')}
                 </Button>
               }
             >
@@ -202,7 +202,7 @@ export const AllocateLinesAction: Component<
                   data-testid="dialog-button-cancel"
                   onClick={close}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
@@ -212,7 +212,7 @@ export const AllocateLinesAction: Component<
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('common.ok')}
+                {t('button.ok')}
               </Button>
             </Show>
           }

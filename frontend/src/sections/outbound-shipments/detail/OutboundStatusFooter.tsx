@@ -105,7 +105,7 @@ export const OutboundStatusFooter: Component<
           <IconButton
             bordered
             icon={<CloseIcon />}
-            label={t('common.close')}
+            label={t('button.close')}
             data-testid="close-button"
             onClick={props.onClose}
           />
@@ -118,9 +118,9 @@ export const OutboundStatusFooter: Component<
         <ConfirmDialog
           open
           onClose={() => setHoldConfirm(false)}
-          title={t('outbound.hold.title')}
+          title={t('heading.are-you-sure')}
           message={
-            holding() ? t('outbound.hold.unset') : t('outbound.hold.set')
+            holding() ? t('messages.off-hold-confirmation') : t('messages.on-hold-confirmation')
           }
           onConfirm={() => props.onSetHold(!holding())}
         />

@@ -184,7 +184,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     ...new Set(draft.map(line => line.packSize)),
   ]);
 
-  const unitName = () => item()?.unitName ?? t('outbound.line.unit');
+  const unitName = () => item()?.unitName ?? t('label.unit');
 
   // FEFO auto-distribution across the grid (spec S4 issue field): the shared
   // routine fills usable batches oldest-expiry-first in whole packs
@@ -207,14 +207,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     }
     setPlaceholderUnits(props.isNew ? result.shortfallUnits : 0);
     const notes: string[] = [];
-    if (result.overAllocatedUnits > 0)
-      notes.push(
-        t('outbound.edit.warn-over-allocated', {
-          count: formatNumber(result.overAllocatedUnits),
-        })
-      );
-    if (result.skippedReasons.size > 0)
-      notes.push(t('outbound.edit.warn-on-hold'));
+    if (result.skippedReasons.size > 0) notes.push(t('messages.stock-expired'));
     setWarnings(notes);
     setDirty(true);
     // The allocation just changed — any earlier zero-allocation confirmation
@@ -275,9 +268,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     );
     setSaving(false);
     if (result.kind === 'graphqlError') {
-      setErrorMessage(
-        t('outbound.edit.save-failed', { error: result.message })
-      );
+      setErrorMessage(t('error.cant-save'));
       return false;
     }
     if (result.kind !== 'success') return false;
@@ -350,7 +341,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       header: '',
       cell: info => (
         <Show when={info.getValue<boolean>()}>
-          <span title={t('outbound.edit.used-in-auto-allocation')}>
+          <span title={t('description.used-in-auto-allocation')}>
             <CheckIcon />
           </span>
         </Show>
@@ -358,12 +349,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       c: { key: 'batch' },
-      header: t('outbound.edit.column.batch'),
+      header: t('label.batch'),
       cell: info => info.getValue<string | null>() ?? '—',
     },
     {
       c: { key: 'expiryDate' },
-      header: t('outbound.edit.column.expiry'),
+      header: t('label.expiry'),
       ...getDateCell(),
     },
     ...(prefs()?.manageVvmStatusForStock
@@ -373,7 +364,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               accessor: (line: DraftLine) => line.vvmStatus?.description ?? '',
               id: 'vvmStatus',
             },
-            header: t('outbound.edit.column.vvm'),
+            header: t('label.vvm-status'),
           } as Column<DraftLine, never>,
         ]
       : []),
@@ -386,7 +377,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
-      header: t('outbound.edit.column.location'),
+      header: t('label.location'),
     },
     ...(prefs()?.allowTrackingOfStockByDonor
       ? [
@@ -408,12 +399,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       c: { key: 'sellPricePerPack' },
-      header: t('outbound.edit.column.sell-price'),
+      header: t('label.sell-price'),
       ...getCurrencyCell(),
     },
     {
       c: { key: 'packSize' },
-      header: t('outbound.edit.column.pack-size'),
+      header: t('label.pack-size'),
       ...getNumberCell(),
     },
     ...(prefs()?.manageVaccinesInDoses
@@ -427,24 +418,24 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       : []),
     {
       c: { key: 'inStorePacks' },
-      header: t('outbound.edit.column.in-store'),
+      header: t('label.in-store'),
       ...getNumberCell(),
     },
     {
       c: { key: 'availablePacks' },
-      header: t('outbound.edit.column.available'),
+      header: t('label.available'),
       ...getNumberCell(),
     },
     {
       // The one editable cell: packs issued from this batch (AC-I5).
       c: { key: 'numberOfPacks' },
-      header: t('outbound.edit.column.issued'),
+      header: t('label.issued'),
       meta: { align: 'right' },
       cell: info => {
         const line = info.row.original;
         return (
           <TextField
-            label={t('outbound.edit.column.issued')}
+            label={t('label.issued')}
             hideLabel
             size="small"
             type="number"
@@ -499,11 +490,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
-      title={
-        editMode()
-          ? t('outbound.edit.edit-title')
-          : t('outbound.edit.add-title')
-      }
+      title={editMode() ? t('heading.edit-line') : t('button.add-item')}
       actionsLead={
         <Show when={errorMessage()}>
           {message => <Alert severity="error">{message()}</Alert>}
@@ -517,7 +504,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
-            {t('common.cancel')}
+            {t('button.cancel')}
           </Button>
           <Button
             icon={<CheckIcon />}
@@ -526,7 +513,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             loading={saving()}
             onClick={onOk}
           >
-            {t('common.ok')}
+            {t('button.ok')}
           </Button>
           {/* Rapid entry — add mode only (spec S4 § save). */}
           <Show when={!editMode()}>
@@ -537,7 +524,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               loading={saving()}
               onClick={onOkNext}
             >
-              {t('common.ok-and-next')}
+              {t('button.ok-and-next')}
             </Button>
           </Show>
         </>
@@ -545,7 +532,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     >
       {/* Item row: the catalogue lookup (locked in edit mode) + unit. */}
       <Combobox<ItemOption>
-        label={t('outbound.edit.item')}
+        label={t('label.item')}
         items={pickerItems()}
         loading={itemOptionsResource.loading()}
         itemToString={option => option.name}
@@ -573,7 +560,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         selectedItem={selectedItemOption()}
         disabled={editMode() || saving()}
         inputTestId="item-search-input"
-        placeholder={t('outbound.create.placeholder')}
+        placeholder={t('placeholder.search-by-name')}
         onChange={option => {
           if (option)
             void loadItem({
@@ -590,10 +577,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       <Show when={item()}>
         <div style={{ 'margin-block': 'var(--space-3) var(--space-2)' }}>
           <span>
-            {t('outbound.edit.available', {
-              count: formatNumber(availableUnits()),
-              unit: unitName(),
-            })}
+            {t('label.available')}: {formatNumber(availableUnits())}{' '}
+            {unitName()}
           </span>
         </div>
         <div
@@ -605,7 +590,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           }}
         >
           <TextField
-            label={t('outbound.edit.issue')}
+            label={t('label.issue')}
             size="small"
             inputmode="decimal"
             value={issueText()}
@@ -613,7 +598,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             onInput={e => onIssueInput(e.currentTarget.value)}
           />
           <Select
-            label={t('outbound.edit.allocate-in')}
+            label={t('label.units')}
             size="sm"
             value={
               allocateIn().kind === 'units'
@@ -624,7 +609,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               { value: 'units', label: unitName() },
               ...distinctPackSizes().map(size => ({
                 value: `packs-${size}`,
-                label: t('outbound.edit.packs-of', { size }),
+                label: t('label.packs-of-pack-size', { packSize: size }),
               })),
             ]}
             onValueChange={value => {
@@ -642,9 +627,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           <Show when={placeholderUnits() > 0}>
             <div class={styles.placeholderNotice}>
               <Alert severity="info">
-                {t('outbound.edit.placeholder-notice', {
-                  requested: formatNumber(issuedUnits() + placeholderUnits()),
-                  placeholder: formatNumber(placeholderUnits()),
+                {t('messages.placeholder-allocated-units', {
+                  requestedQuantity: formatNumber(
+                    issuedUnits() + placeholderUnits()
+                  ),
+                  placeholderQuantity: formatNumber(placeholderUnits()),
                 })}
               </Alert>
             </div>
@@ -660,7 +647,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           loading={loadingLines()}
           showFullScreen={false}
           rowDimmed={line => isBarred(line)}
-          emptyMessage={t('outbound.edit.empty')}
+          emptyMessage={t('messages.no-stock-available')}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}
         />
@@ -675,14 +662,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           }}
         >
           <span>
-            {t('outbound.edit.placeholder', {
-              count: formatNumber(placeholderUnits()),
-            })}
+            {t('label.placeholder')}: {formatNumber(placeholderUnits())}
           </span>
           <span>
-            {t('outbound.edit.total-units', {
-              count: formatNumber(issuedUnits() + placeholderUnits()),
-            })}
+            {t('label.total-units')}:{' '}
+            {formatNumber(issuedUnits() + placeholderUnits())}
           </span>
         </div>
 
@@ -704,7 +688,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
         {/* Zero-allocation second confirmation (spec S4 § save). */}
         <Show when={zeroConfirm()}>
-          <Alert severity="info">{t('outbound.edit.zero-confirm')}</Alert>
+          <Alert severity="info">{t('messages.confirm-zero-quantity')}</Alert>
         </Show>
       </Show>
     </Dialog>

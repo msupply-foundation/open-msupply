@@ -186,7 +186,7 @@ const ServiceChargesContent = (
       ...(batch.deleteOutboundShipmentServiceLines ?? []),
     ].filter(item => item.response.__typename.endsWith('Error'));
     if (failures.length > 0) {
-      setErrorMessage(t('outbound.edit.save-failed', { error: '' }));
+      setErrorMessage(t('error.cant-save'));
       return;
     }
     props.onCommitted();
@@ -196,12 +196,12 @@ const ServiceChargesContent = (
   const columns = (): Column<DraftCharge, never>[] => [
     {
       c: { key: 'name' },
-      header: t('outbound.service.name'),
+      header: t('label.name'),
       cell: info => {
         const charge = info.row.original;
         return (
           <TextField
-            label={t('outbound.service.name')}
+            label={t('label.name')}
             hideLabel
             size="small"
             disabled={props.disabled}
@@ -213,13 +213,13 @@ const ServiceChargesContent = (
     },
     {
       c: { key: 'totalBeforeTax' },
-      header: t('outbound.service.amount'),
+      header: t('label.amount'),
       meta: { align: 'right' },
       cell: info => {
         const charge = info.row.original;
         return (
           <TextField
-            label={t('outbound.service.amount')}
+            label={t('label.amount')}
             hideLabel
             size="small"
             type="number"
@@ -238,13 +238,13 @@ const ServiceChargesContent = (
     },
     {
       c: { key: 'taxPercentage' },
-      header: t('outbound.service.tax'),
+      header: t('label.tax'),
       meta: { align: 'right' },
       cell: info => {
         const charge = info.row.original;
         return (
           <TextField
-            label={t('outbound.service.tax')}
+            label={t('label.tax')}
             hideLabel
             size="small"
             type="number"
@@ -266,12 +266,12 @@ const ServiceChargesContent = (
     },
     {
       c: { key: 'note' },
-      header: t('outbound.service.note'),
+      header: t('label.note'),
       cell: info => {
         const charge = info.row.original;
         return (
           <TextField
-            label={t('outbound.service.note')}
+            label={t('label.note')}
             hideLabel
             size="small"
             disabled={props.disabled}
@@ -283,7 +283,7 @@ const ServiceChargesContent = (
     },
     {
       c: { id: 'actions' },
-      header: t('common.action'),
+      header: t('label.actions'),
       meta: { align: 'right' },
       cell: info => (
         <IconButton
@@ -291,7 +291,7 @@ const ServiceChargesContent = (
           size="small"
           variant="danger"
           icon={<TrashIcon />}
-          label={t('common.delete')}
+          label={t('label.delete')}
           disabled={props.disabled}
           onClick={() => removeCharge(info.row.original)}
         />
@@ -305,7 +305,7 @@ const ServiceChargesContent = (
       onClose={props.onClose}
       dismissable={!saving()}
       testId="service-charges-modal"
-      title={t('outbound.service.title')}
+      title={t('heading.service-charges')}
       widthRem={48}
       headerActions={
         <Button
@@ -315,7 +315,7 @@ const ServiceChargesContent = (
           disabled={props.disabled || !defaultServiceItem()}
           onClick={addCharge}
         >
-          {t('outbound.service.add')}
+          {t('label.add-charge')}
         </Button>
       }
       actionsLead={
@@ -331,7 +331,7 @@ const ServiceChargesContent = (
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           >
-            {t('common.cancel')}
+            {t('button.cancel')}
           </Button>
           <Button
             icon={<CheckIcon />}
@@ -340,7 +340,7 @@ const ServiceChargesContent = (
             loading={saving()}
             onClick={() => void save()}
           >
-            {t('common.ok')}
+            {t('button.ok')}
           </Button>
         </>
       }
@@ -349,10 +349,10 @@ const ServiceChargesContent = (
         when={rows().length > 0}
         fallback={
           <p>
-            {t('outbound.service.empty')}
+            {t('error.no-service-charges')}
             <Show when={!defaultServiceItem() && !serviceItems.loading}>
               {' — '}
-              {t('outbound.service.no-default')}
+              {t('error.no-service-charges')}
             </Show>
           </p>
         }
