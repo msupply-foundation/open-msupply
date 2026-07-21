@@ -97,6 +97,10 @@ public class MainActivity extends BridgeActivity {
                     }
                 });
 
+        // The server serves the web UI from <filesDir>/frontend; ship the
+        // APK-bundled assets there before it starts
+        FrontendAssets.sync(this);
+
         String path = getFilesDir().getAbsolutePath();
         String cache = getCacheDir().getAbsolutePath();
         server.start(discoveryConstants.PORT, path, cache, discoveryConstants.hardwareId);

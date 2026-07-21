@@ -63,6 +63,9 @@ pub mod android {
                 workers: None,
                 inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
                 token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                // The app shell copies its APK-bundled web UI here on startup,
+                // before starting the server (see MainActivity.copyFrontendAssets)
+                frontend_dir: files_dir.join("frontend").to_string_lossy().to_string(),
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),

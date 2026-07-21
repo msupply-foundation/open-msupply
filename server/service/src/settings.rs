@@ -71,6 +71,12 @@ pub struct ServerSettings {
     /// `UserNode.tokenRefreshIntervalSeconds`.
     #[serde(default = "default_token_refresh_interval_seconds")]
     pub token_refresh_interval_seconds: u32,
+
+    /// Directory the web frontend is served from, resolved relative to the
+    /// working directory. Packaging ships the built frontend bundle here;
+    /// on Android the app shell copies its bundled web assets here on startup.
+    #[serde(default = "default_frontend_dir")]
+    pub frontend_dir: String,
 }
 
 pub const DEFAULT_INACTIVITY_TIMEOUT_SECONDS: u32 = 900;
@@ -86,6 +92,10 @@ fn default_token_refresh_interval_seconds() -> u32 {
 
 fn default_base_dir() -> String {
     "app_data".to_string()
+}
+
+fn default_frontend_dir() -> String {
+    "frontend".to_string()
 }
 
 /// Builds a `Settings` value suitable for tests, given the `DatabaseSettings`
@@ -111,6 +121,7 @@ pub fn test_settings(
             workers: None,
             inactivity_timeout_seconds: DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
             token_refresh_interval_seconds: DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+            frontend_dir: default_frontend_dir(),
         },
         database,
         sync: None,

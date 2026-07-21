@@ -33,6 +33,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          data-testid="add-item-button"
           Icon={<PlusCircleIcon />}
           label={t('button.add-item')}
           onClick={() => onAddItem(true)}

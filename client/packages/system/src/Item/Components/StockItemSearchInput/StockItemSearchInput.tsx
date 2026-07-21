@@ -173,6 +173,7 @@ export const StockItemSearchInput = ({
         onFilter('');
       }}
       inputProps={{
+        inputProps: { 'data-testid': 'item-search-input' },
         onChange: e => {
           const { value } = e.target;
           setSearch(value);

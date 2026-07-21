@@ -39,15 +39,18 @@ export const EnumFilter: FC<{
 
     return (
       <Select
+        data-testid={`filter-input-${urlParameter}`}
         options={options}
         label={name}
         value={selectedValues}
         sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}
         renderOption={option => (
-          <MenuItem key={option.value} value={option.value}>
-            <Checkbox
-              checked={selectedValues.includes(String(option.value))}
-            />
+          <MenuItem
+            key={option.value}
+            value={option.value}
+            data-testid={`filter-option-${option.value}`}
+          >
+            <Checkbox checked={selectedValues.includes(String(option.value))} />
             <ListItemText primary={option.label} />
           </MenuItem>
         )}
@@ -80,6 +83,7 @@ export const EnumFilter: FC<{
 
   return (
     <Select
+      data-testid={`filter-input-${urlParameter}`}
       options={options}
       placeholder={name}
       sx={{ ...FilterLabelSx, width: FILTER_WIDTH }}

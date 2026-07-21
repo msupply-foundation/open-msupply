@@ -50,6 +50,7 @@ const OutboundServiceLineEditComponent = ({
 
   return (
     <Modal
+      testId="service-charges-modal"
       title={t('heading.service-charges')}
       width={900}
       height={300}
@@ -79,6 +80,7 @@ const OutboundServiceLineEditComponent = ({
             display="flex"
           >
             <ButtonWithIcon
+              data-testid="add-charge-button"
               disabled={isDisabled || !defaultServiceItem}
               color="primary"
               variant="outlined"
