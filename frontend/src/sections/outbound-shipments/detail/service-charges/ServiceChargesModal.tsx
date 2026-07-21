@@ -249,6 +249,8 @@ const ServiceChargesContent = (
             size="small"
             type="number"
             min="0"
+            max="100"
+            step="0.01"
             disabled={props.disabled}
             value={charge.taxPercentage ?? ''}
             onInput={e =>
