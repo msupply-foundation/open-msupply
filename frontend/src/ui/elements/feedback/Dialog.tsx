@@ -257,7 +257,14 @@ export const Dialog = (props: DialogProps) => {
       }
     >
       <PortalMountContext.Provider value={dialogEl}>
-        <div class={styles.body}>
+        {/* Initial focus lands HERE, not on the first field (ui-standards ›
+            accessibility › keyboard): showModal() focuses the first
+            autofocus-bearing element, and without this the first field takes
+            it — which pops an autocomplete's listbox open unprompted
+            (Combobox opens on focus by design). tabindex=-1 makes the panel
+            programmatically focusable; the first Tab reaches the first
+            control. */}
+        <div class={styles.body} tabindex="-1" autofocus>
           <Show when={props.closeButton && props.dismissable !== false}>
             <button
               type="button"
