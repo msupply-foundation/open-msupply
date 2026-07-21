@@ -61,7 +61,7 @@ export const DeleteShipmentAction: Component<
         disabled={props.disabled}
         onClick={openConfirm}
       >
-        {t('outbound.panel.delete')}
+        {t('label.delete')}
       </Button>
       <Show when={confirmOpen()}>
         <Dialog
@@ -70,13 +70,13 @@ export const DeleteShipmentAction: Component<
           onClose={close}
           icon={<TrashIcon />}
           testId="confirmation-modal"
-          title={t('outbound.delete.title')}
+          title={t('heading.are-you-sure')}
           description={
             <Show
               when={phase() !== 'error'}
               fallback={<Alert severity="error">{errorMessage()}</Alert>}
             >
-              {tPlural('outbound.delete.confirm', 1)}
+              {tPlural('messages.confirm-delete-shipments', 1)}
             </Show>
           }
           actions={
@@ -88,7 +88,7 @@ export const DeleteShipmentAction: Component<
                   icon={<XCircleIcon />}
                   onClick={close}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               }
             >
@@ -99,7 +99,7 @@ export const DeleteShipmentAction: Component<
                   data-testid="dialog-button-cancel"
                   onClick={close}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
@@ -109,7 +109,7 @@ export const DeleteShipmentAction: Component<
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('common.ok')}
+                {t('button.ok')}
               </Button>
             </Show>
           }

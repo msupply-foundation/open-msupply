@@ -69,7 +69,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     CLIENT_SETTABLE.filter(status => allowedStatuses().includes(status)).map(
       status => ({
         value: status,
-        label: t('outbound.status-change.label', {
+        label: t('button.save-and-confirm-status', {
           status: STATUS_LABELS[status],
         }),
         disabled: statusIndex(status) <= currentIndex(),
@@ -102,7 +102,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
     // placeholders) — the server would ACCEPT a lineless confirmation
     // (captured server gap, AC-S6), so the notice is the only guard.
     if (!props.hasLines || props.hasOnlyPlaceholders) {
-      setInfoMessage(t('outbound.status-change.no-lines'));
+      setInfoMessage(t('messages.no-lines'));
       return;
     }
     setPhase('confirm');
@@ -153,7 +153,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               menuSelectsOnly
               onValueChange={value => setPicked(value as SettableStatus)}
               onAction={openConfirm}
-              menuLabel={t('outbound.status-change.title')}
+              menuLabel={t('button.confirm')}
             />
           )}
         </Show>
@@ -170,15 +170,15 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           onClose={close}
           icon={<ArrowRightIcon />}
           testId="confirmation-modal"
-          title={t('outbound.status-change.confirm-title')}
+          title={t('heading.are-you-sure')}
           description={
             <>
-              {t('outbound.status-change.confirm', {
+              {t('messages.confirm-status-as', {
                 status: pendingStatus() ? STATUS_LABELS[pendingStatus()!] : '',
               })}
               <Show when={props.zeroQuantityItems.length > 0}>
                 <Alert severity="warning">
-                  {t('outbound.status-change.zero-warning', {
+                  {t('messages.confirm-zero-quantity-status', {
                     items: props.zeroQuantityItems.join(', '),
                   })}
                 </Alert>
@@ -193,7 +193,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                   icon={<XCircleIcon />}
                   onClick={close}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
@@ -203,7 +203,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('common.ok')}
+                {t('button.ok')}
               </Button>
             </>
           }
@@ -216,7 +216,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           open
           onClose={() => setInfoMessage(undefined)}
           icon={<InfoIcon />}
-          title={t('outbound.status-change.blocked-title')}
+          title={t('heading.cannot-do-that')}
           description={infoMessage()}
           actions={
             <Button
@@ -224,7 +224,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
               icon={<CheckIcon />}
               onClick={() => setInfoMessage(undefined)}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
           }
         />

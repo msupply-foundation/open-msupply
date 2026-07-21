@@ -72,8 +72,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
     before: number | null | undefined,
     after: number | null | undefined
   ) => (taxAmount(before, after) / ((before ?? 0) || 1)) * 100;
-  const taxLabel = (pct: number) =>
-    `${t('outbound.panel.tax')} (${pct.toFixed(2)}%)`;
+  const taxLabel = (pct: number) => `${t('label.tax')} (${pct.toFixed(2)}%)`;
 
   const groupHeading = (label: string, info: string): JSX.Element => (
     <span
@@ -104,11 +103,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const copyToClipboard = () => {
     const node = props.node;
     const text = [
-      `${t('nav.distribution.outbound-shipment')} #${node.invoiceNumber}`,
-      `${t('outbound.toolbar.customer')}: ${node.otherParty.name}`,
-      `${t('outbound.column.status')}: ${statusLabel(node.status)}`,
-      `${t('outbound.panel.created')}: ${localisedDate(node.createdDatetime)}`,
-      `${t('outbound.panel.grand-total')}: ${money(pricing().totalAfterTax)}`,
+      `${t('label.outbound-shipment')} #${node.invoiceNumber}`,
+      `${t('label.customer-name')}: ${node.otherParty.name}`,
+      `${t('label.status')}: ${statusLabel(node.status)}`,
+      `${t('label.created')}: ${localisedDate(node.createdDatetime)}`,
+      `${t('heading.grand-total')}: ${money(pricing().totalAfterTax)}`,
     ].join('\n');
     void navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -122,16 +121,16 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       {/* 1 — Additional info: entered by · created · picked date (backdating
           control, disabled with the reason outside its gate) · colour ·
           comment. */}
-      <SidePanelSection title={t('outbound.panel.additional-info')} collapsible>
-        <FieldRow label={t('outbound.panel.entered-by')}>
+      <SidePanelSection title={t('label.additional-info')} collapsible>
+        <FieldRow label={t('label.entered-by')}>
           <Text variant="body">{props.node.user?.username ?? '—'}</Text>
         </FieldRow>
-        <FieldRow label={t('outbound.panel.created')}>
+        <FieldRow label={t('label.created')}>
           <Text variant="body">
             {localisedDate(props.node.createdDatetime)}
           </Text>
         </FieldRow>
-        <FieldRow label={t('outbound.panel.picked-date')}>
+        <FieldRow label={t('label.picked-date')}>
           {/* Backdating (rules.md § backdating) is preference-gated and NEW-
               only; the dev preference is off, so this build renders the value
               read-only — the control slots in here when the gate opens. */}
@@ -141,16 +140,16 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
               : '—'}
           </Text>
         </FieldRow>
-        <FieldRow label={t('outbound.panel.colour')}>
+        <FieldRow label={t('label.color')}>
           <ColourTagPicker
             colour={props.node.colour ?? null}
             variant="field"
             onSelect={colour => props.onSaveField({ colour })}
           />
         </FieldRow>
-        <FieldRow label={t('outbound.panel.comment')}>
+        <FieldRow label={t('label.comment')}>
           <TextField
-            label={t('outbound.panel.comment')}
+            label={t('label.comment')}
             hideLabel
             width="full"
             data-testid="comment-field"
@@ -163,23 +162,16 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       </SidePanelSection>
 
       {/* 2 — Related documents: the originating customer requisition. */}
-      <SidePanelSection
-        title={t('outbound.panel.related-documents')}
-        collapsible
-      >
+      <SidePanelSection title={t('heading.related-documents')} collapsible>
         <Show
           when={requisition()}
           fallback={
-            <Text variant="body">
-              {t('outbound.panel.no-related-documents')}
-            </Text>
+            <Text variant="body">{t('messages.no-related-documents')}</Text>
           }
         >
           {req => (
             <Text variant="body">
-              {t('outbound.panel.requisition', {
-                number: req().requisitionNumber,
-              })}
+              {t('label.requisition')} #{req().requisitionNumber}
             </Text>
           )}
         </Show>
@@ -189,21 +181,21 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           panel): service charges group · items sell price group · grand
           total · foreign currency. Disabled edit affordances stay visible,
           dimmed — never hidden. */}
-      <SidePanelSection title={t('outbound.panel.invoice-details')} collapsible>
+      <SidePanelSection title={t('heading.invoice-details')} collapsible>
         {/* Service charges: info bubble + the S5 edit action (dimmed once
             read-only); one row per service line, then sub total / effective
             tax / total. Service tax is edited per line in S5. */}
         <FieldRow
           label={groupHeading(
-            t('outbound.panel.service-charges'),
-            t('outbound.panel.service-charges-info')
+            t('heading.service-charges'),
+            t('messages.service-charges-description')
           )}
         >
           <IconButton
             bordered
             size="small"
             icon={<EditIcon />}
-            label={t('outbound.panel.edit-service-charges')}
+            label={t('messages.edit-service-charges')}
             data-testid="edit-service-charges-button"
             disabled={props.disabled}
             onClick={props.onEditServiceCharges}
@@ -216,7 +208,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             </FieldRow>
           )}
         </For>
-        <FieldRow label={t('outbound.panel.sub-total')}>
+        <FieldRow label={t('heading.sub-total')}>
           <Text variant="body">{money(pricing().serviceTotalBeforeTax)}</Text>
         </FieldRow>
         <FieldRow
@@ -236,7 +228,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             )}
           </Text>
         </FieldRow>
-        <FieldRow label={t('outbound.panel.total')}>
+        <FieldRow label={t('label.total')}>
           <Text variant="body">{money(pricing().serviceTotalAfterTax)}</Text>
         </FieldRow>
 
@@ -246,13 +238,13 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             zero) / total. */}
         <FieldRow
           label={groupHeading(
-            t('outbound.panel.items-sell-price'),
-            t('outbound.panel.items-sell-price-info')
+            t('heading.item-sell-price'),
+            t('messages.stock-charges-description')
           )}
         >
           <span />
         </FieldRow>
-        <FieldRow label={t('outbound.panel.sub-total')}>
+        <FieldRow label={t('heading.sub-total')}>
           <Text variant="body">{money(pricing().stockTotalBeforeTax)}</Text>
         </FieldRow>
         <FieldRow label={taxLabel(pricing().taxPercentage ?? 0)}>
@@ -264,7 +256,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             }}
           >
             <TextField
-              label={t('outbound.panel.tax')}
+              label={t('label.tax')}
               hideLabel
               size="small"
               type="number"
@@ -295,11 +287,11 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             </Text>
           </span>
         </FieldRow>
-        <FieldRow label={t('outbound.panel.total')}>
+        <FieldRow label={t('label.total')}>
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
         </FieldRow>
 
-        <FieldRow label={t('outbound.panel.grand-total')}>
+        <FieldRow label={t('heading.grand-total')}>
           <Text variant="body">{money(pricing().totalAfterTax)}</Text>
         </FieldRow>
 
@@ -308,20 +300,20 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             currency is set). The change-currency control is deferred with the
             FC preference — the dev store has it off, so it isn't built/
             verifiable yet (ui-surface § side panel notes this gap). */}
-        <FieldRow label={t('outbound.panel.foreign-currency')}>
+        <FieldRow label={t('heading.foreign-currency')}>
           <span />
         </FieldRow>
-        <FieldRow label={t('outbound.panel.code')}>
+        <FieldRow label={t('label.code')}>
           <Text variant="body">{props.node.currency?.code ?? ''}</Text>
         </FieldRow>
-        <FieldRow label={t('outbound.panel.rate')}>
+        <FieldRow label={t('heading.rate')}>
           <Text variant="body">
             {formatNumber(
               props.node.currencyRate === 0 ? 1 : props.node.currencyRate
             )}
           </Text>
         </FieldRow>
-        <FieldRow label={t('outbound.panel.total')}>
+        <FieldRow label={t('label.total')}>
           <Text variant="body">
             {pricing().foreignCurrencyTotalAfterTax != null
               ? money(pricing().foreignCurrencyTotalAfterTax)
@@ -332,17 +324,14 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
 
       {/* 4 — Transport details: shipping method · expected delivery ·
           transport reference. */}
-      <SidePanelSection
-        title={t('outbound.panel.transport-details')}
-        collapsible
-      >
-        <FieldRow label={t('outbound.panel.shipping-method')}>
+      <SidePanelSection title={t('heading.transport-details')} collapsible>
+        <FieldRow label={t('label.shipping-method')}>
           <ShippingMethodSelect
-            label={t('outbound.panel.shipping-method')}
+            label={t('label.shipping-method')}
             hideLabel
             disabled={props.disabled}
             value={props.node.shippingMethod?.id}
-            placeholder={t('filter.any')}
+            placeholder={t('label.any')}
             onChange={method =>
               props.onSaveField({
                 shippingMethodId: { value: method?.id ?? null },
@@ -350,9 +339,9 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             }
           />
         </FieldRow>
-        <FieldRow label={t('outbound.panel.expected-delivery')}>
+        <FieldRow label={t('label.expected-delivery-date')}>
           <TextField
-            label={t('outbound.panel.expected-delivery')}
+            label={t('label.expected-delivery-date')}
             hideLabel
             type="date"
             disabled={props.disabled}
@@ -366,9 +355,9 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             }
           />
         </FieldRow>
-        <FieldRow label={t('outbound.panel.reference')}>
+        <FieldRow label={t('label.reference')}>
           <TextField
-            label={t('outbound.panel.reference')}
+            label={t('label.reference')}
             hideLabel
             width="full"
             data-testid="transport-reference-field"
@@ -384,7 +373,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
 
       {/* Record actions, pinned at the panel's end (spec S3 § record
           actions): Delete · Make a copy · Copy to clipboard. */}
-      <SidePanelSection title={t('common.action')}>
+      <SidePanelSection title={t('label.actions')}>
         <SidePanelActions>
           <DeleteShipmentAction
             shipmentId={props.node.id}
@@ -392,16 +381,18 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           />
           <DuplicateShipmentAction
             shipmentId={() => props.node.id}
+            number={() => props.node.invoiceNumber}
+            customerName={() => props.node.otherParty.name}
             variant="panel"
           />
           <Button icon={<CopyIcon />} onClick={copyToClipboard}>
-            {t('outbound.panel.copy-to-clipboard')}
+            {t('button.copy-to-clipboard')}
           </Button>
           {/* role="status" so the confirmation is announced by assistive
               tech. */}
           <span role="status">
             <Show when={copied()}>
-              <Text variant="bodySmall">{t('outbound.panel.copied')}</Text>
+              <Text variant="bodySmall">{t('message.copy-success')}</Text>
             </Show>
           </span>
         </SidePanelActions>

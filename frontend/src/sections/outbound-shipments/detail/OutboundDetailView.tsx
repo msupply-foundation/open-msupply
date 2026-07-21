@@ -263,9 +263,9 @@ const OutboundDetailView: Component = () => {
   const vvmOn = () => prefs()?.manageVvmStatusForStock ?? false;
 
   const crumbs = (current: OutboundNode) => [
-    { label: t('nav.distribution') },
+    { label: t('distribution') },
     {
-      label: t('outbound.title'),
+      label: t('outbound-shipments'),
       onClick: () =>
         navigate(`/${params.storeId}/distribution/outbound-shipment`),
     },
@@ -278,26 +278,26 @@ const OutboundDetailView: Component = () => {
   const columns = (): Column<Line, never>[] => [
     {
       c: { key: 'itemCode' },
-      header: t('outbound.line.code'),
+      header: t('label.code'),
     },
     {
       c: { key: 'itemName' },
-      header: t('outbound.line.name'),
+      header: t('label.name'),
       meta: { card: { region: 'primary' }, wrapLines: 2 },
     },
     {
       c: {
         accessor: line =>
           line.type === 'UNALLOCATED_STOCK'
-            ? t('outbound.line.placeholder')
+            ? t('label.placeholder')
             : (line.batch ?? '—'),
         id: 'batch',
       },
-      header: t('outbound.line.batch'),
+      header: t('label.batch'),
     },
     {
       c: { key: 'expiryDate' },
-      header: t('outbound.line.expiry'),
+      header: t('label.expiry-date'),
       ...getExpiryDateCell(),
     },
     ...(vvmOn()
@@ -307,21 +307,21 @@ const OutboundDetailView: Component = () => {
               accessor: (line: Line) => line.vvmStatus?.description ?? '',
               id: 'vvmStatus',
             },
-            header: t('outbound.line.vvm'),
+            header: t('label.vvm-status'),
           } as Column<Line, never>,
         ]
       : []),
     {
       c: { accessor: line => line.location?.code ?? '', id: 'locationCode' },
-      header: t('outbound.line.location'),
+      header: t('label.location'),
     },
     {
       c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
-      header: t('outbound.line.unit'),
+      header: t('label.unit'),
     },
     {
       c: { key: 'packSize' },
-      header: t('outbound.line.pack-size'),
+      header: t('label.pack-size'),
       ...getNumberCell(),
     },
     ...(dosesOn()
@@ -339,12 +339,12 @@ const OutboundDetailView: Component = () => {
       : []),
     {
       c: { key: 'numberOfPacks' },
-      header: t('outbound.line.pack-qty'),
+      header: t('label.pack-quantity'),
       ...getNumberCell(),
     },
     {
       c: { key: 'receivedNumberOfPacks' },
-      header: t('outbound.line.received'),
+      header: t('label.packs-received'),
       ...getNumberCell(),
     },
     {
@@ -355,7 +355,7 @@ const OutboundDetailView: Component = () => {
             : null,
         id: 'difference',
       },
-      header: t('outbound.line.difference'),
+      header: t('label.difference'),
       ...getNumberCell(),
     },
     {
@@ -363,7 +363,7 @@ const OutboundDetailView: Component = () => {
         accessor: line => line.numberOfPacks * line.packSize,
         id: 'unitQuantity',
       },
-      header: t('outbound.line.unit-qty'),
+      header: t('label.unit-quantity'),
       ...getNumberCell(),
     },
     ...(dosesOn()
@@ -376,24 +376,24 @@ const OutboundDetailView: Component = () => {
                   : null,
               id: 'doses',
             },
-            header: t('outbound.line.doses'),
+            header: t('label.doses'),
             ...getNumberCell(),
           } as Column<Line, never>,
         ]
       : []),
     {
       c: { key: 'sellPricePerPack' },
-      header: t('outbound.line.sell-price'),
+      header: t('label.unit-sell-price'),
       ...getCurrencyCell(),
     },
     {
       c: { key: 'totalAfterTax' },
-      header: t('outbound.line.total'),
+      header: t('label.total'),
       ...getCurrencyCell(),
     },
     {
       c: { key: 'volumePerPack' },
-      header: t('outbound.line.volume'),
+      header: t('label.volume'),
       ...getNumberCell(),
     },
   ];
@@ -413,8 +413,8 @@ const OutboundDetailView: Component = () => {
                 navigate(`/${params.storeId}/distribution/outbound-shipment`)
               }
               icon={<InfoIcon />}
-              title={t('app.not-found')}
-              description={t('outbound.detail.not-found')}
+              title={t('heading.not-found')}
+              description={t('error.shipment-not-found')}
               actions={
                 <Button
                   variant="secondary"
@@ -426,7 +426,7 @@ const OutboundDetailView: Component = () => {
                     )
                   }
                 >
-                  {t('common.ok')}
+                  {t('button.ok')}
                 </Button>
               }
             />
@@ -438,7 +438,7 @@ const OutboundDetailView: Component = () => {
             <Page
               fillBody
               sidePanelOpen={sidePanelOpen()}
-              sidePanelTitle={t('outbound.detail.side-panel')}
+              sidePanelTitle={t('label.details')}
               onSidePanelClose={() => setSidePanelOpen(false)}
               sidePanelContent={
                 <OutboundSidePanel
@@ -459,7 +459,7 @@ const OutboundDetailView: Component = () => {
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >
-                        {t('outbound.detail.add-item')}
+                        {t('button.add-item')}
                       </Button>
                     </Show>
                     <AddFromMasterListAction
@@ -484,7 +484,7 @@ const OutboundDetailView: Component = () => {
                         icon={<InfoIcon />}
                         onClick={() => setSidePanelOpen(true)}
                       >
-                        {t('common.more')}
+                        {t('button.more')}
                       </Button>
                     </Show>
                   </HeaderButtons>
@@ -494,9 +494,9 @@ const OutboundDetailView: Component = () => {
                         own labels, the rows carry them). Customer lookup:
                         disabled when not editable or when the shipment came
                         from a requisition (AC-N2). */}
-                    <FieldRow label={t('outbound.toolbar.customer')}>
+                    <FieldRow label={t('label.customer-name')}>
                       <NameSearch
-                        label={t('outbound.toolbar.customer')}
+                        label={t('label.customer-name')}
                         hideLabel
                         storeId={params.storeId}
                         role="customer"
@@ -519,9 +519,9 @@ const OutboundDetailView: Component = () => {
                         }}
                       />
                     </FieldRow>
-                    <FieldRow label={t('outbound.toolbar.customer-ref')}>
+                    <FieldRow label={t('label.customer-ref')}>
                       <TextField
-                        label={t('outbound.toolbar.customer-ref')}
+                        label={t('label.customer-ref')}
                         hideLabel
                         size="small"
                         data-testid="customer-reference-field"
@@ -538,9 +538,9 @@ const OutboundDetailView: Component = () => {
                     tabs={[
                       {
                         value: 'details',
-                        label: t('outbound.detail.tab-details'),
+                        label: t('label.details'),
                       },
-                      { value: 'log', label: t('outbound.detail.tab-log') },
+                      { value: 'log', label: t('label.log') },
                     ]}
                   />
                 </Header>
@@ -567,7 +567,7 @@ const OutboundDetailView: Component = () => {
                 >
                   <ContentFooter testId="actions-footer">
                     <strong data-testid="selected-rows-count">
-                      {tPlural('outbound.lines.selected', selectedIds().length)}
+                      {tPlural('label.items-selected', selectedIds().length)}
                     </strong>
                     <DeleteLinesAction
                       storeId={params.storeId}
@@ -590,7 +590,7 @@ const OutboundDetailView: Component = () => {
                       variant="secondary"
                       onClick={() => setReturnNoticeOpen(true)}
                     >
-                      {t('outbound.lines.return')}
+                      {t('button.return-lines')}
                     </Button>
                     <ContentFooterActions>
                       <Button
@@ -598,7 +598,7 @@ const OutboundDetailView: Component = () => {
                         icon={<MinusCircleIcon />}
                         onClick={() => setSelectedIds([])}
                       >
-                        {t('outbound.lines.clear-selection')}
+                        {t('label.clear-selection')}
                       </Button>
                     </ContentFooterActions>
                   </ContentFooter>
@@ -617,7 +617,7 @@ const OutboundDetailView: Component = () => {
                   rowTone={line =>
                     line.type === 'UNALLOCATED_STOCK' ? 'info' : undefined
                   }
-                  emptyMessage={t('outbound.detail.empty')}
+                  emptyMessage={t('error.no-outbound-items')}
                   empty={
                     editable() ? (
                       <Button
@@ -625,7 +625,7 @@ const OutboundDetailView: Component = () => {
                         data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >
-                        {t('outbound.detail.add-item')}
+                        {t('button.add-item')}
                       </Button>
                     ) : undefined
                   }
@@ -678,15 +678,15 @@ const OutboundDetailView: Component = () => {
                   open
                   onClose={() => setReturnNoticeOpen(false)}
                   icon={<InfoIcon />}
-                  title={t('outbound.lines.return')}
-                  description={t('outbound.lines.return-blocked')}
+                  title={t('button.return-lines')}
+                  description={t('messages.cant-return-shipment')}
                   actions={
                     <Button
                       variant="secondary"
                       icon={<CheckIcon />}
                       onClick={() => setReturnNoticeOpen(false)}
                     >
-                      {t('common.ok')}
+                      {t('button.ok')}
                     </Button>
                   }
                 />

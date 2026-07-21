@@ -84,13 +84,13 @@ export const AddFromMasterListAction: Component<
           setOpen(true);
         }}
       >
-        {t('outbound.detail.add-from-master-list')}
+        {t('button.add-from-master-list')}
       </Button>
       <Dialog
         open={open()}
         dismissable={!adding()}
         onClose={() => setOpen(false)}
-        title={t('outbound.master-list.title')}
+        title={t('button.add-from-master-list')}
         widthRem={32}
         minBodyHeightRem={20}
         actions={
@@ -100,16 +100,16 @@ export const AddFromMasterListAction: Component<
             data-testid="dialog-button-cancel"
             onClick={() => setOpen(false)}
           >
-            {t('common.cancel')}
+            {t('button.cancel')}
           </Button>
         }
       >
         <Show
           when={listOptions().length > 0 || lists.loading}
-          fallback={<p>{t('outbound.master-list.empty')}</p>}
+          fallback={<p>{t('error.no-master-lists')}</p>}
         >
           <Combobox
-            label={t('outbound.master-list.select')}
+            label={t('label.master-list')}
             items={listOptions()}
             loading={lists.loading}
             itemToString={list => list.name}

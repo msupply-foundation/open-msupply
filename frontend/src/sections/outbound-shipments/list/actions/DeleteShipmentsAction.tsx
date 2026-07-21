@@ -54,7 +54,7 @@ export const DeleteShipmentsAction: Component<
         data-testid="delete-lines-button"
         onClick={onClick}
       >
-        {t('common.delete')}
+        {t('label.delete')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
@@ -65,9 +65,9 @@ export const DeleteShipmentsAction: Component<
           open
           onClose={() => setBlockedOpen(false)}
           icon={<InfoIcon />}
-          title={t('outbound.delete.title')}
+          title={t('heading.are-you-sure')}
           description={
-            <Alert severity="error">{t('outbound.delete.cannot')}</Alert>
+            <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
           }
           actions={
             <Button
@@ -75,7 +75,7 @@ export const DeleteShipmentsAction: Component<
               icon={<CheckIcon />}
               onClick={() => setBlockedOpen(false)}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
           }
         />
@@ -123,14 +123,14 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('outbound.delete.title')}
+      title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={tPlural('outbound.delete.confirm', count)}>
+        <Switch fallback={tPlural('messages.confirm-delete-shipments', count)}>
           <Match when={phase() === 'error'}>
-            <Alert severity="error">{t('outbound.delete.cannot')}</Alert>
+            <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
           </Match>
           <Match when={phase() === 'success'}>
-            {tPlural('outbound.delete.success', count)}
+            {tPlural('messages.deleted-shipments', count)}
           </Match>
         </Switch>
       }
@@ -144,7 +144,7 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
                   icon={<XCircleIcon />}
                   onClick={props.onClose}
                 >
-                  {t('common.cancel')}
+                  {t('button.cancel')}
                 </Button>
               </Show>
               <Button
@@ -154,7 +154,7 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
               >
-                {t('outbound.delete.action')}
+                {t('label.delete')}
               </Button>
             </>
           }
@@ -165,7 +165,7 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
               icon={<CheckIcon />}
               onClick={props.onClose}
             >
-              {t('common.ok')}
+              {t('button.ok')}
             </Button>
           </Match>
           <Match when={phase() === 'error'}>
@@ -174,7 +174,7 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
               icon={<XCircleIcon />}
               onClick={props.onClose}
             >
-              {t('common.cancel')}
+              {t('button.cancel')}
             </Button>
           </Match>
         </Switch>

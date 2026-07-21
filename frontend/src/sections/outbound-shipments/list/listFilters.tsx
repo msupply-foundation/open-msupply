@@ -33,12 +33,12 @@ type StatusValue = NonNullable<
 const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
   // ─ user-facing, in display order ─────────────────────────────────────────
   otherPartyName: {
-    label: () => t('outbound.filter.customer'),
+    label: () => t('label.name'),
     render: props => (
       <FilterTextInput
-        label={t('outbound.filter.customer')}
+        label={t('label.name')}
         testId={props.testId}
-        placeholder={t('outbound.filter.contains')}
+        placeholder={t('placeholder.search-by-name')}
         value={props.filter().otherPartyName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({
@@ -49,12 +49,12 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
     ),
   },
   status: {
-    label: () => t('outbound.filter.status'),
+    label: () => t('label.status'),
     render: props => (
       <FilterMultiSelect<StatusValue>
-        label={t('outbound.filter.status')}
+        label={t('label.status')}
         testId={props.testId}
-        placeholder={t('filter.any')}
+        placeholder={t('label.any')}
         values={props.filter().status?.equalAny ?? []}
         // Options limited by the _invoice status options_ preference (AC-PR1);
         // computed in render so the preference fetch resolves reactively.
@@ -71,12 +71,12 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
     ),
   },
   invoiceNumber: {
-    label: () => t('outbound.filter.number'),
+    label: () => t('label.invoice-number'),
     render: props => (
       <FilterTextInput
-        label={t('outbound.filter.number')}
+        label={t('label.invoice-number')}
         testId={props.testId}
-        placeholder={t('outbound.filter.equals')}
+        placeholder={t('placeholder.search-by-invoice-number')}
         value={props.filter().invoiceNumber?.equalTo?.toString() ?? ''}
         onInput={value => {
           const n = Number.parseInt(value, 10);
@@ -88,12 +88,12 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
     ),
   },
   theirReference: {
-    label: () => t('outbound.filter.reference'),
+    label: () => t('label.reference'),
     render: props => (
       <FilterTextInput
-        label={t('outbound.filter.reference')}
+        label={t('label.reference')}
         testId={props.testId}
-        placeholder={t('outbound.filter.contains')}
+        placeholder={t('messages.search')}
         value={props.filter().theirReference?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({
@@ -104,7 +104,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
     ),
   },
   createdDatetime: {
-    label: () => t('outbound.filter.created'),
+    label: () => t('label.created'),
     render: props => {
       // A date range as two bounds on the one key. The native input yields
       // yyyy-mm-dd; bounds are inclusive (afterOrEqualTo / beforeOrEqualTo,
@@ -121,7 +121,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
       return (
         <>
           <FilterDate
-            label={t('outbound.filter.created-from')}
+            label={t('label.from-created-datetime')}
             testId={props.testId}
             value={range().afterOrEqualTo?.slice(0, 10) ?? ''}
             onInput={value =>
@@ -129,7 +129,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
             }
           />
           <FilterDate
-            label={t('outbound.filter.created-to')}
+            label={t('label.to-created-datetime')}
             testId={`${props.testId}-to`}
             value={range().beforeOrEqualTo?.slice(0, 10) ?? ''}
             onInput={value =>
@@ -141,7 +141,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
     },
   },
   shippedDatetime: {
-    label: () => t('outbound.filter.shipped'),
+    label: () => t('label.shipped'),
     render: props => {
       const range = () => props.filter().shippedDatetime ?? {};
       const setRange = (patch: {
@@ -155,7 +155,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
       return (
         <>
           <FilterDate
-            label={t('outbound.filter.shipped-from')}
+            label={t('label.from-shipped-datetime')}
             testId={props.testId}
             value={range().afterOrEqualTo?.slice(0, 10) ?? ''}
             onInput={value =>
@@ -163,7 +163,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
             }
           />
           <FilterDate
-            label={t('outbound.filter.shipped-to')}
+            label={t('label.to-shipped-datetime')}
             testId={`${props.testId}-to`}
             value={range().beforeOrEqualTo?.slice(0, 10) ?? ''}
             onInput={value =>

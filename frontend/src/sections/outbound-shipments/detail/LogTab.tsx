@@ -54,16 +54,16 @@ export const LogTab: Component<{
   const columns = (): Column<LogRow, never>[] => [
     {
       c: { key: 'datetime' },
-      header: t('outbound.log.datetime'),
+      header: t('label.date-time'),
       cell: info => localisedDateTime(info.getValue<string>()),
     },
     {
       c: { accessor: row => row.user?.username ?? '—', id: 'user' },
-      header: t('outbound.log.user'),
+      header: t('label.user'),
     },
     {
       c: { accessor: row => eventLabel(row), id: 'event' },
-      header: t('outbound.log.event'),
+      header: t('label.event'),
     },
   ];
 
@@ -74,7 +74,7 @@ export const LogTab: Component<{
       rowKey={row => row.id}
       loading={data.loading}
       showFullScreen={false}
-      emptyMessage={t('outbound.log.empty')}
+      emptyMessage={t('messages.no-log-entries')}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}
     />
