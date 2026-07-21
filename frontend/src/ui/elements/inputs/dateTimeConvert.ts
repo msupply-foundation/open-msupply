@@ -2,7 +2,12 @@
  * Pure conversions shared by DateField / DateTimeField / TimeField. All local
  * arithmetic uses the device timezone (see ui-standards/inputs.md § Dates &
  * times); no date library — plain JS Date, so nothing is added to the bundle.
+ * Month names follow the APP language (`locale()`, an accepted src/intl
+ * boundary import like NumberField's — src/ui/CLAUDE.md), not the device
+ * locale: a French UI shows "juil.", whatever the OS is set to.
  */
+
+import { locale } from '../../../intl';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
@@ -55,19 +60,19 @@ export const DEFAULT_DATE_FORMAT = 'dd MMM yyyy';
 
 const TOKEN = /yyyy|yy|MMMM|MMM|MM|M|dd|d/g;
 
-/** Localised month names for the device locale, `[short, long]` per month. */
+/** Localised month names for the app language, `[short, long]` per month. */
 const monthNames = (): { short: string; long: string }[] =>
   Array.from({ length: 12 }, (_, i) => ({
-    short: new Date(2000, i, 1).toLocaleDateString(undefined, {
+    short: new Date(2000, i, 1).toLocaleDateString(locale(), {
       month: 'short',
     }),
-    long: new Date(2000, i, 1).toLocaleDateString(undefined, { month: 'long' }),
+    long: new Date(2000, i, 1).toLocaleDateString(locale(), { month: 'long' }),
   }));
 
 /**
  * An ISO date `YYYY-MM-DD` → a display string per a token `format` (`d`, `dd`,
  * `M`, `MM`, `MMM`, `MMMM`, `yy`, `yyyy`; anything else is a literal). Month
- * names are in the device locale. Empty/invalid → ''.
+ * names are in the app language. Empty/invalid → ''.
  */
 export const formatIsoDate = (
   iso: string | null | undefined,

@@ -19,6 +19,8 @@ export interface IsoDateRange {
 
 export interface DateRangeFieldProps {
   label: string;
+  /** Max-width cap: `short` (default) or `full` (see FieldShell). */
+  width?: 'short' | 'full';
   value?: IsoDateRange;
   /** Fired as the range is picked (start first, then end). */
   onChange?: (value: IsoDateRange) => void;
@@ -63,6 +65,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
   return (
     <FieldShell
       label={props.label}
+      width={props.width}
       hideLabel={props.hideLabel}
       required={props.required}
       error={props.error}

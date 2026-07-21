@@ -1,5 +1,6 @@
 import { createEffect, createSignal, createUniqueId, on } from 'solid-js';
 import { TimeField as KTimeField } from '@kobalte/core/time-field';
+import { locale } from '../../../intl';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import { FieldShell } from './FieldShell';
@@ -20,6 +21,8 @@ import styles from './DateTimeFields.module.css';
 
 export interface DateTimeFieldProps {
   label: string;
+  /** Max-width cap: `short` (default) or `full` (see FieldShell). */
+  width?: 'short' | 'full';
   /** The stored instant as a UTC ISO 8601 string, or null/undefined when empty. */
   value?: string | null;
   /** Fired with the new UTC ISO instant, or null when cleared. */
@@ -68,16 +71,14 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
   const [time, setTime] = createSignal<TimeValue | undefined>(
     hhmmToTime(parts()?.time)
   );
-  // Resync both buffers from the external value only when IT changes.
+  // Resync both buffers from the external value only when IT (or the app
+  // language — month names) changes.
   createEffect(
-    on(
-      () => props.value,
-      () => {
-        const p = utcToLocalParts(props.value);
-        setDateText(formatIsoDate(p?.date, fmt()));
-        setTime(hhmmToTime(p?.time));
-      }
-    )
+    on([() => props.value, locale], () => {
+      const p = utcToLocalParts(props.value);
+      setDateText(formatIsoDate(p?.date, fmt()));
+      setTime(hhmmToTime(p?.time));
+    })
   );
 
   const emit = (dateIso: string | null, t: TimeValue | undefined) =>
@@ -110,6 +111,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
   return (
     <FieldShell
       label={props.label}
+      width={props.width}
       hideLabel={props.hideLabel}
       required={props.required}
       error={props.error}

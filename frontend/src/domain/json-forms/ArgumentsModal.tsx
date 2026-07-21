@@ -441,6 +441,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {dateField => (
                   <DateField
                     label={dateField.label}
+                    width="full"
                     value={textValue(dateField.key)}
                     disabled={dateField.readOnly}
                     required={dateField.required}
@@ -463,6 +464,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {dateTimeField => (
                   <DateTimeField
                     label={dateTimeField.label}
+                    width="full"
                     value={textValue(dateTimeField.key) || null}
                     disabled={dateTimeField.readOnly}
                     required={dateTimeField.required}
@@ -522,6 +524,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                  */}
                 <DateRangeField
                   label={field.label}
+                  width="full"
                   value={rangeValue(field.key)}
                   onChange={range => {
                     const start = range.start ?? '';

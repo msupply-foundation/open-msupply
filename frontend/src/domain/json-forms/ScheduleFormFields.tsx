@@ -109,6 +109,7 @@ export const ScheduleFormFields = (
       />
       <DateField
         label={t('label.from-date')}
+        width="full"
         value={instantToLocalDate(props.after) || null}
         onChange={value =>
           props.onWrites({
@@ -118,6 +119,7 @@ export const ScheduleFormFields = (
       />
       <DateField
         label={t('label.to-date')}
+        width="full"
         value={instantToLocalDate(props.before) || null}
         onChange={value =>
           props.onWrites({
