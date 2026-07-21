@@ -19,7 +19,6 @@ import {
   getDateCell,
   getNumberCell,
   getCurrencyCell,
-  getBooleanCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ArrowRightIcon, CheckIcon, XCircleIcon } from '../../../../ui/icons';
@@ -208,8 +207,6 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           count: formatNumber(result.overAllocatedUnits),
         })
       );
-    if (result.shortfallUnits > 0 && props.isNew)
-      notes.push(t('outbound.edit.warn-placeholder'));
     if (result.skippedReasons.size > 0)
       notes.push(t('outbound.edit.warn-on-hold'));
     setWarnings(notes);
@@ -219,7 +216,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const onIssueInput = (value: string) => {
     setIssueText(value);
     const units = lensToUnits(toNumberOrNull(value), allocateIn());
-    if (units != null) distribute(units);
+    // Clearing (or blanking) the Issue field distributes 0 — resetting every
+    // batch's packs and the placeholder, not leaving the last distribution behind.
+    distribute(units ?? 0);
   };
 
   // Direct per-batch edit, bounded 0…available (AC-I5 — the client bounds the
@@ -314,6 +313,20 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const columns = (): Column<DraftLine, never>[] => [
     {
+      // "Will be used in auto-allocation": a check on usable (not barred)
+      // batches — matches the old app's canAllocate CheckCell; hovering the
+      // tick shows the reason. Barred rows are additionally dimmed (rowDimmed).
+      c: { accessor: line => !isBarred(line), id: 'canAllocate' },
+      header: '',
+      cell: info => (
+        <Show when={info.getValue<boolean>()}>
+          <span title={t('outbound.edit.used-in-auto-allocation')}>
+            <CheckIcon />
+          </span>
+        </Show>
+      ),
+    },
+    {
       c: { key: 'batch' },
       header: t('outbound.edit.column.batch'),
       cell: info => info.getValue<string | null>() ?? '—',
@@ -357,11 +370,6 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       c: { key: 'availablePacks' },
       header: t('outbound.edit.column.available'),
       ...getNumberCell(),
-    },
-    {
-      c: { accessor: line => isBarred(line), id: 'onHold' },
-      header: t('outbound.edit.column.on-hold'),
-      ...getBooleanCell(),
     },
     {
       // The one editable cell: packs issued from this batch (AC-I5).
@@ -531,6 +539,18 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               if (parsed != null && parsed >= 0) onIssueInput(issueText());
             }}
           />
+          {/* Placeholder notice (info) — to the right of Issue / Allocate-in,
+              matching the old app; shown when a shortfall became a placeholder. */}
+          <Show when={placeholderUnits() > 0}>
+            <div class={styles.placeholderNotice}>
+              <Alert severity="info">
+                {t('outbound.edit.placeholder-notice', {
+                  requested: formatNumber(issuedUnits() + placeholderUnits()),
+                  placeholder: formatNumber(placeholderUnits()),
+                })}
+              </Alert>
+            </div>
+          </Show>
         </div>
 
         {/* Batch grid: one row per available batch, FEFO-ordered; barred rows

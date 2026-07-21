@@ -2824,6 +2824,8 @@
   "outbound.edit.warn-on-hold": "Des lots inutilisables (en attente, expirés ou PCV inutilisable) ont été ignorés.",
   "outbound.edit.warn-over-allocated": "Packs entiers uniquement — {{ count }} unité(s) de plus que demandé seront émises.",
   "outbound.edit.warn-placeholder": "La quantité au-delà du stock disponible a été ajoutée en réservation.",
+  "outbound.edit.placeholder-notice": "Stock insuffisant pour allouer les {{ requested }} unités. Une réservation de {{ placeholder }} unités a été ajoutée.",
+  "outbound.edit.used-in-auto-allocation": "Sera utilisé dans l'allocation automatique",
   "outbound.edit.zero-confirm": "Il n'y aucune quantité allouée pour cet article ! Cliquer sur OK pour confirmer.",
   "outbound.empty": "Il n'y aucune livraison sortante à afficher.",
   "outbound.export.action": "Exporter en CSV",
