@@ -29,7 +29,7 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { Pagination } from '../../../ui/elements/table/Pagination';
-import { CloseIcon, DownloadIcon, PlusCircleIcon } from '../../../ui/icons';
+import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
 import {
@@ -41,8 +41,11 @@ import { UpdateOutboundShipment } from '../detail/outboundDetail.generated';
 import { filterFields, type OutboundFilter } from './listFilters';
 import { isEditable, statusColour, statusLabel } from '../outboundStatus';
 import { CustomerSearchModal } from './CustomerSearchModal';
-import { DeleteShipmentsAction, DuplicateShipmentAction } from './actions';
-import { exportShipmentsCsv } from './exportCsv';
+import {
+  DeleteShipmentsAction,
+  DuplicateShipmentAction,
+  ExportShipmentsAction,
+} from './actions';
 
 // The outbound-shipments list view (spec/outbound-shipments S1 +
 // ui-standards/list-views): the standard list screen — filters (customer /
@@ -79,7 +82,6 @@ const OutboundShipmentsList: Component = () => {
     useUrlQueryState<OutboundListState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
-  const [exporting, setExporting] = createSignal(false);
 
   // Column config per breakpoint (kdd/table-state). Narrow viewports default
   // to card view and hide the columns the spec marks hidden-by-default
@@ -174,17 +176,6 @@ const OutboundShipmentsList: Component = () => {
     rows()
       .filter(row => selectedIds().includes(row.id))
       .map(row => ({ id: row.id, status: row.status }));
-
-  const exportCsv = async () => {
-    setExporting(true);
-    await exportShipmentsCsv(
-      params.storeId,
-      variables().filter,
-      // Full set, newest first, respecting the active filters (AC-L4).
-      [{ key: 'createdDatetime', desc: true }]
-    );
-    setExporting(false);
-  };
 
   const columns = (): Column<ShipmentRow, SortKey>[] => [
     {
@@ -286,15 +277,10 @@ const OutboundShipmentsList: Component = () => {
             >
               {t('outbound.new')}
             </Button>
-            <Button
-              variant="secondary"
-              icon={<DownloadIcon />}
-              data-testid="export-csv-main"
-              loading={exporting()}
-              onClick={() => void exportCsv()}
-            >
-              {t('outbound.export.action')}
-            </Button>
+            <ExportShipmentsAction
+              storeId={params.storeId}
+              filter={() => variables().filter}
+            />
           </HeaderButtons>
           <Toolbar>
             <FilterBar
