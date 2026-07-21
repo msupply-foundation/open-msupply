@@ -32,7 +32,7 @@
 }
 
 .control:focus-within {
-  border-color: var(--primary-main);
+  border-color: var(--secondary-main);
   box-shadow: var(--focus-ring);
 }
 
@@ -173,7 +173,7 @@
   margin-inline-start: auto;
   display: inline-flex;
   font-size: 1rem;
-  color: var(--primary-main);
+  color: var(--secondary-main);
 }
 
 .status {

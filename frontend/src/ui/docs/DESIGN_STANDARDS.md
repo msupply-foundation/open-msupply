@@ -35,7 +35,7 @@ Run this per standards section (per component), smallest useful unit first:
 | ----------------- | ----------- | ----------- | ------------------------------------------------------------------------ |
 | Typography        | Not started | —           |                                                                          |
 | Tables            | Not started | —           |                                                                          |
-| Input Fields      | Not started | —           |                                                                          |
+| Input Fields      | In review   | 2026-07-21  | Focus ring → blue done (app-wide); other diffs awaiting decision (below) |
 | Buttons           | Reconciled  | 2026-07-21  | Adopted in full (decisions #1–#4); see ledger for deviations + deferrals |
 | Search            | Not started | —           |                                                                          |
 | Modals & Drawers  | Not started | —           |                                                                          |
@@ -107,8 +107,23 @@ Raw source: `#btn-variants`, `#btn-sizes`, `#btn-layout`, `#btn-states` (fetched
 **Deferred follow-ups (recorded so they aren't lost):**
 
 - **CheckboxButton still uses the old shadowed-orange pill** — inconsistent beside the flat buttons. Restyle in a dedicated pass. (SplitButton is now done — see below.)
-- **App-wide focus treatment isn't unified** — the Button/SplitButton now use an `outline` ring, while inputs/IconButton use the orange box-shadow `--focus-ring`. A focus pass could align the treatment (outline vs glow) and the per-variant colour logic across the library.
+- **Focus-ring _treatment_ still varies** — the focus _colour_ is now unified blue everywhere (`--focus-ring` token + per-component focus borders/outlines all flipped, 2026-07-21), but the mechanism differs: Button/SplitButton use an `outline`, inputs use border + box-shadow glow, IconButton uses a box-shadow glow. A future pass could align the treatment itself (outline vs glow). Not a colour issue anymore.
 
 ### Split button (`#btn-split`) — _reconciled 2026-07-21_
 
 `SplitButton` gains a `variant` prop — `primary` (filled blue, default) or `secondary` (outlined) — matching the standard, which builds the split from the same `.btn` variants. It stays its **own** CSS module (the caret is a Kobalte `DropdownMenu.Trigger`, so it composes rather than literally reusing `<Button>`) but shares the flat tokens: `--radius-sm`, blue → `--secondary-dark` fill, a hairline seam between the halves, the 48px touch growth, and a **whole-group** focus ring via `:has(:focus-visible)` so it wraps both halves. The dropdown is a dense, edge-to-edge list with a hairline divider between items (per the spec's `#btn-split` menu), not inset rounded pills; the current-item marker uses the action tone (`--secondary-main`) instead of orange. Verified light + dark, both variants, menu open. Real callers (Export, status footer, header, finalise) keep the default primary; the showcase renders each behavioural demo (pick-runs + select-then-confirm) in **both** variants side by side, so the tone reads as independent of the behaviour.
+
+### Input Fields (`#field-*`) — _in review 2026-07-21_
+
+Carl's read: mostly already matches. **Done:** the focus ring is now **blue** (action tone), not orange — the `--focus-ring` glow token flipped to blue (light `#3e7bfa` / dark `#5b8def`, app-wide) and every focus **border/outline** that was `--primary-main` flipped to `--secondary-main` (TextField, TextArea, DateTimeFields, Select, Combobox, MultiSelect, FilterBar, ColourTag, StoreSelector, RadioGroup, DatePickerPanel focus states). Verified inputs + selectors, light + dark.
+
+**Resolved 2026-07-21 (Carl):**
+
+- **Form-control accent → blue (default).** The checked/selected accents (checkbox tick, radio dot, toggle "on", Select/MultiSelect item indicator, DatePickerPanel/DateTimeFields calendar accents, FilterBar active chip, StoreSelector selected row) flipped from `--primary-main` to `--secondary-main`. **Exception:** `ToggleSwitch` gains a `variant` prop — `default` (blue "on") or `caution` (orange "on"), for a setting to be careful with (e.g. "on hold"). Off is always neutral grey.
+- **Default border → `#c0c0c4`** (spec). `--input-border` changed `#e4e4e7 → #c0c0c4`; because that token was shared with the button family, the secondary Button/SplitButton/IconButton borders (and the DocumentUpload hairline) were repointed to `--color-border-value` (`≈ #e4e4eb`, the button spec's `#E0E0E0`) so they keep their lighter edge.
+
+**Open (awaiting Carl's decision):**
+
+- **Hover border** — spec darkens the border to `#a1a1aa` on hover; our inputs have no hover state.
+- **Touch sizing** — ours uses `pointer: coarse` + 48px height only; spec uses `≤1023px` width + raises font to 16px (prevents iOS Safari zoom-on-focus).
+- Minor: focus-glow alpha 0.25 (ours) vs 0.15 (spec).

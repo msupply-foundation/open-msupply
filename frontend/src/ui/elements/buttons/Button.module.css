@@ -127,7 +127,7 @@
 
 .button[data-variant='secondary'] {
   background: var(--bg-white);
-  border-color: var(--input-border);
+  border-color: var(--color-border-value);
   color: var(--button-text);
   --ripple-color: color-mix(in srgb, var(--secondary-main) 22%, transparent);
 }

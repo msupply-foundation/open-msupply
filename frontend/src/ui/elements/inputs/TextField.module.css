@@ -70,7 +70,7 @@
 
 .input:focus {
   outline: none;
-  border-color: var(--primary-main);
+  border-color: var(--secondary-main);
   box-shadow: var(--focus-ring);
 }
 
@@ -129,7 +129,7 @@
 }
 
 .inputWrap[data-adorned]:focus-within {
-  border-color: var(--primary-main);
+  border-color: var(--secondary-main);
   box-shadow: var(--focus-ring);
 }
 

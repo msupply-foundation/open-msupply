@@ -62,7 +62,7 @@
 }
 
 .control:focus-within {
-  border-color: var(--primary-main);
+  border-color: var(--secondary-main);
   box-shadow: var(--focus-ring);
 }
 
@@ -127,7 +127,7 @@
 }
 
 .dateTrigger:hover .calendarIcon {
-  color: var(--primary-main);
+  color: var(--secondary-main);
 }
 
 /* Typed date entry: a bare text input filling the frame + a calendar icon
@@ -169,7 +169,7 @@
 }
 
 .iconBtn:hover {
-  color: var(--primary-main);
+  color: var(--secondary-main);
 }
 
 /* Frame's :focus-within ring is the single indicator — suppress the icon
@@ -234,7 +234,7 @@
 }
 
 .timeSeg:focus {
-  background: var(--primary-main);
+  background: var(--secondary-main);
   color: var(--primary-contrast);
 }
 

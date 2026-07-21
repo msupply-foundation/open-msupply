@@ -46,7 +46,7 @@
   --color-border-value: #e4e4eb;
   --color-divider: #eaeaea;
   --outline-main: #555770;
-  --input-border: #e4e4e7; /* input field edge (company spec default border) */
+  --input-border: #c0c0c4; /* input field edge (ui-standards #field default border) */
 
   /* backgrounds (theme.ts → palette.background) */
   --bg-white: #fff;
@@ -97,7 +97,7 @@
   --shadow-drawer: 4px 0 16px 0 rgba(96, 97, 112, 0.18);
 
   /* 3px orange glow focus ring; error variant for invalid fields (red glow) */
-  --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.25);
+  --focus-ring: 0 0 0 0.1875rem rgba(62, 123, 250, 0.25); /* action blue (#3e7bfa) */
   --focus-ring-error: 0 0 0 0.1875rem rgba(230, 53, 53, 0.2);
 
   /* Scrim behind the mobile nav overlay / modals */
@@ -275,7 +275,7 @@
   --shadow-drawer: 4px 0 20px 0 rgba(0, 0, 0, 0.55);
 
   /* Stronger focus glows + darker scrim read better on dark */
-  --focus-ring: 0 0 0 0.1875rem rgba(233, 92, 48, 0.45);
+  --focus-ring: 0 0 0 0.1875rem rgba(91, 141, 239, 0.45); /* action blue (#5b8def, dark) */
   --focus-ring-error: 0 0 0 0.1875rem rgba(255, 95, 95, 0.4);
   --overlay-scrim: rgba(0, 0, 0, 0.6);
 

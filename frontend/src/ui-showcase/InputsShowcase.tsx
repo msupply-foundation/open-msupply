@@ -106,6 +106,7 @@ export const InputsShowcase = () => {
   const [countZero, setCountZero] = createSignal(true);
   const [confirmed, setConfirmed] = createSignal(false);
   const [showFinalised, setShowFinalised] = createSignal(false);
+  const [onHold, setOnHold] = createSignal(true);
   // Date & time demos (ISO strings / UTC instant in/out).
   const [expiry, setExpiry] = createSignal<string | null>('2027-03-01');
   const [invoiceDate, setInvoiceDate] = createSignal<string | null>(
@@ -150,7 +151,7 @@ export const InputsShowcase = () => {
             two heights and the short/long width caps. Every colour is a theme
             token (the red error glow is <code>--focus-ring-error</code>, themed
             for dark alongside <code>--focus-ring</code>). Click into a field
-            for the orange focus ring; error and required are never conveyed by
+            for the blue focus ring; error and required are never conveyed by
             colour alone.
           </>
         }
@@ -160,7 +161,7 @@ export const InputsShowcase = () => {
             <TextField
               label="Item Code"
               placeholder="e.g. AMX500"
-              helperText="Click to focus — orange ring appears"
+              helperText="Click to focus — blue ring appears"
             />
           </Field>
           <Field caption="Filled">
@@ -584,6 +585,9 @@ export const InputsShowcase = () => {
             ): a custom track + sliding thumb, the state carried by the thumb
             position. Space toggles it; the label click toggles it. For a binary
             on/off setting where a slider reads more naturally than a tick box.
+            The <code>on</code> state is the action blue by default;{' '}
+            <code>variant="caution"</code> makes it brand orange for a setting
+            to be careful with (e.g. putting stock on hold).
           </>
         }
       >
@@ -592,6 +596,12 @@ export const InputsShowcase = () => {
             label="Show finalised stocktakes"
             checked={showFinalised()}
             onChange={setShowFinalised}
+          />
+          <ToggleSwitch
+            label="On hold"
+            variant="caution"
+            checked={onHold()}
+            onChange={setOnHold}
           />
           <ToggleSwitch label="Disabled switch" disabled checked />
         </div>
