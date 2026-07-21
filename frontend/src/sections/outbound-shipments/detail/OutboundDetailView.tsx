@@ -111,12 +111,11 @@ const OutboundDetailView: Component = () => {
   const [data, { mutate, refetch }] = createResource(
     () => ({ storeId: params.storeId, id: params.invoiceId }),
     async variables => {
-      const result = await graphqlFetch(OutboundDetail, variables, {
-        mapSuccessToError: d =>
-          d.invoice.__typename === 'NodeError'
-            ? d.invoice.error.description
-            : undefined,
-      });
+      // A not-found NodeError is NOT routed to the global error modal (which
+      // would offer a useless reload of the same bad id, and shadow the local
+      // notice); it falls through to `undefined` here and the view shows the
+      // AC-L5 "not found" blocking notice → back to list.
+      const result = await graphqlFetch(OutboundDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
@@ -441,14 +440,15 @@ const OutboundDetailView: Component = () => {
                 <Header>
                   <Breadcrumb crumbs={crumbs(current())} />
                   <HeaderButtons>
-                    <Button
-                      icon={<PlusCircleIcon />}
-                      data-testid="add-item-button"
-                      disabled={!editable()}
-                      onClick={openAdd}
-                    >
-                      {t('outbound.detail.add-item')}
-                    </Button>
+                    <Show when={editable()}>
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        data-testid="add-item-button"
+                        onClick={openAdd}
+                      >
+                        {t('outbound.detail.add-item')}
+                      </Button>
+                    </Show>
                     <AddFromMasterListAction
                       storeId={params.storeId}
                       shipmentId={current().id}
