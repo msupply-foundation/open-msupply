@@ -98,7 +98,7 @@ else
     *)
       echo "The server on host :8000 does not carry the cookie-session auth contract — its me query returned:" >&2
       echo "  ${ME_RESPONSE:-<no response>}" >&2
-      echo "Login cannot work against it. Run a host server built from the legacy repo's develop branch (contract merged 2026-07-21; kdd/android/android-spec.md)." >&2
+      echo "Login cannot work against it. Run a host server built from the legacy repo's develop branch (kdd/android/android-spec.md)." >&2
       exit 1
       ;;
   esac
