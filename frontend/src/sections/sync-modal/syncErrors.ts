@@ -64,6 +64,9 @@ const SUMMARY_BY_VARIANT: Record<SyncErrorVariant, SyncErrorSummary> = {
     hint: 'error.v7-upgrade-failed-hint',
   },
   SITE_IS_NOT_V7: { summary: 'error.site-is-not-v7' },
+  WAITING_FOR_CENTRAL_V7_UPGRADE: {
+    summary: 'error.waiting-for-central-v7-upgrade',
+  },
   // Integration.
   INTEGRATION_TIMEOUT_REACHED: INTEGRATION_TIMEOUT,
   // Server-side faults the user can't act on — the app's "internal error".

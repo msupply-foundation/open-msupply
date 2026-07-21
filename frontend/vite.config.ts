@@ -35,6 +35,11 @@ const appVersion = (): string => {
 
 export default defineConfig(({ mode }) => ({
   plugins: [solid()],
+  // Lets the same build be mounted at a non-root path (the demo server's
+  // /spec track, deploy/build-and-deploy-spec.sh) — Vite rewrites every
+  // asset reference to match and exposes it at runtime as
+  // import.meta.env.BASE_URL (read by <Router base> in src/App.tsx).
+  base: process.env.VITE_BASE_PATH || '/',
   define: {
     LANG_VERSION: JSON.stringify(
       mode === 'production' ? String(Date.now()) : 'dev'

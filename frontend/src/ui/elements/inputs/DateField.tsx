@@ -1,4 +1,5 @@
 import { createEffect, createSignal, createUniqueId, on } from 'solid-js';
+import { locale } from '../../../intl';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import { FieldShell } from './FieldShell';
@@ -7,6 +8,7 @@ import {
   DEFAULT_DATE_FORMAT,
   dateToIsoDate,
   formatIsoDate,
+  formatPlaceholder,
   isoDateToDate,
   parseDateInput,
 } from './dateTimeConvert';
@@ -14,6 +16,8 @@ import styles from './DateTimeFields.module.css';
 
 export interface DateFieldProps {
   label: string;
+  /** Max-width cap: `short` (default) or `full` (see FieldShell). */
+  width?: 'short' | 'full';
   /** ISO calendar date `YYYY-MM-DD`, or null/undefined when empty. */
   value?: string | null;
   /** Fired with the new ISO date, or null when cleared. */
@@ -53,14 +57,12 @@ export const DateField = (props: DateFieldProps) => {
   const id = () => props.id ?? autoId;
   const fmt = () => props.format ?? DEFAULT_DATE_FORMAT;
 
-  // Local text buffer for typing; resynced from the external value only when IT
-  // changes (never mid-typing), so keystrokes don't get clobbered.
+  // Local text buffer for typing; resynced from the external value only when
+  // IT (or the app language — month names, ui-standards/inputs.md) changes,
+  // never mid-typing, so keystrokes don't get clobbered.
   const [text, setText] = createSignal(formatIsoDate(props.value, fmt()));
   createEffect(
-    on(
-      () => props.value,
-      v => setText(formatIsoDate(v, fmt()))
-    )
+    on([() => props.value, locale], ([v]) => setText(formatIsoDate(v, fmt())))
   );
 
   // Apply a committed value: notify the parent AND write the local text buffer
@@ -84,6 +86,7 @@ export const DateField = (props: DateFieldProps) => {
   return (
     <FieldShell
       label={props.label}
+      width={props.width}
       hideLabel={props.hideLabel}
       required={props.required}
       error={props.error}
@@ -102,7 +105,7 @@ export const DateField = (props: DateFieldProps) => {
             type="text"
             class={styles.dateInput}
             value={text()}
-            placeholder={fmt()}
+            placeholder={formatPlaceholder(fmt())}
             disabled={props.disabled}
             required={props.required}
             aria-describedby={describedBy}

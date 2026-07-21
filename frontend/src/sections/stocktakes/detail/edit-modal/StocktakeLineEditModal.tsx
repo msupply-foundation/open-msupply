@@ -28,6 +28,7 @@ import {
 import { ItemSearch } from '../../../../domain/item';
 import { VvmStatusSelect } from '../../../../domain/vvmStatus';
 import { NameSearch } from '../../../../domain/name';
+import { CampaignOrProgramSelect } from '../../../../domain/campaign';
 import { stocktakePreferences } from '../../../../store/storeContext';
 import { dosesCounted } from '../lines/doses';
 import {
@@ -209,12 +210,15 @@ const buildDraft = async (
     volumePerPack: sl.volumePerPack,
     location: sl.location,
     reasonOption: null,
-    // Seed VVM / donor (preference-gated) and manufacturer (ungated) from the
-    // stock line the batch opts in, so ticking an existing batch pre-fills them.
+    // Seed VVM / donor (preference-gated) and manufacturer / campaign / program
+    // (ungated) from the stock line the batch opts in, so ticking an existing
+    // batch pre-fills them.
     vvmStatus: sl.vvmStatus,
     donorId: sl.donor?.id ?? null,
     donorName: sl.donor?.name ?? null,
     manufacturer: sl.manufacturer,
+    campaign: sl.campaign,
+    program: sl.program,
   }));
   return [...fromExisting, ...fromStock];
 };
@@ -579,13 +583,16 @@ const StocktakeLineEditContent = (
           volumePerPack: null,
           location: null,
           reasonOption: null,
-          // A fresh batch has no VVM / donor / manufacturer yet — the user fills
-          // them in via the VVM / donor (preference-gated) and manufacturer
-          // (ungated) fields on the Batch / Other tabs.
+          // A fresh batch has no VVM / donor / manufacturer / campaign /
+          // program yet — the user fills them in via the VVM / donor
+          // (preference-gated) and manufacturer / campaign-or-program (ungated)
+          // fields on the Batch / Other tabs.
           vvmStatus: null,
           donorId: null,
           donorName: null,
           manufacturer: null,
+          campaign: null,
+          program: null,
         })
       )
     );
@@ -668,6 +675,10 @@ const StocktakeLineEditContent = (
           vvmStatusId: line.vvmStatus?.id ?? null,
           donorId: line.donorId ?? null,
           manufacturerId: line.manufacturer?.id ?? null,
+          // Campaign / program (ungated) — plain scalars on INSERT, mutually
+          // exclusive (only one is ever set; the picker clears the other).
+          campaignId: line.campaign?.id ?? null,
+          programId: line.program?.id ?? null,
         });
         continue;
       }
@@ -691,6 +702,11 @@ const StocktakeLineEditContent = (
         vvmStatusId: { value: line.vvmStatus?.id ?? null },
         donorId: { value: line.donorId ?? null },
         manufacturerId: { value: line.manufacturer?.id ?? null },
+        // Campaign / program (ungated) — NullableStringUpdate wrapper on
+        // UPDATE: { value: id | null } sets/clears. Mutually exclusive: setting
+        // one sends the other as null so a stale opposite value is cleared.
+        campaignId: { value: line.campaign?.id ?? null },
+        programId: { value: line.program?.id ?? null },
       });
     }
     return { insert, update, delete: deletes.map(id => ({ id })) };
@@ -1119,6 +1135,35 @@ const StocktakeLineEditContent = (
           } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
+    // Campaign / program (Other tab) — UNGATED (spec S4 lists it alongside
+    // donor and manufacturer, no store-preference gate). ONE combined picker
+    // over the store's campaigns + this item's programs; the two are mutually
+    // exclusive on the line, so a choice sets one of campaign/program and
+    // clears the other. buildBatch sends campaignId/programId accordingly.
+    {
+      c: { id: 'campaignOrProgram' },
+      header: t('label.campaign'),
+      tabsAndCardGroups: ['other'],
+      cell: info => {
+        const line = info.row.original;
+        return (
+          <CampaignOrProgramSelect
+            label={t('label.campaign')}
+            hideLabel
+            storeId={props.storeId}
+            itemId={line.item.id}
+            disabled={!line.countThisLine}
+            campaignId={line.campaign?.id}
+            programId={line.program?.id}
+            placeholder={t('label.none')}
+            onChange={choice => {
+              update(line.id, 'campaign', choice?.campaign ?? null);
+              update(line.id, 'program', choice?.program ?? null);
+            }}
+          />
+        );
+      },
+    },
     // Manufacturer (Other tab) — UNGATED (no store preference; spec S4 lists it
     // alongside donor but without a gate). An async manufacturer picker
     // (NameSearch role="manufacturer") over the draft's manufacturer NameNode;
