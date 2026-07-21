@@ -464,6 +464,9 @@ mod tests {
                 standalone_admin_username: None,
                 standalone_admin_password: None,
                 workers: None,
+                inactivity_timeout_seconds: crate::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
+                token_refresh_interval_seconds: crate::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                frontend_dir: "frontend".to_string(),
             },
             database: db_settings,
             sync: None,
@@ -472,6 +475,7 @@ mod tests {
             mail: None,
             features: None,
             changelog_partition: Default::default(),
+            changelog_dedup: None,
         };
         service_provider.settings = Box::new(SettingsService::new(Some(test_settings)));
 

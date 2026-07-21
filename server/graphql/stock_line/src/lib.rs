@@ -34,6 +34,7 @@ pub enum StockLineSortFieldInput {
     CostPricePerPack,
     SellPricePerPack,
     VvmStatusThenExpiry,
+    Campaign,
 }
 #[derive(InputObject)]
 pub struct StockLineSortInput {
@@ -62,6 +63,7 @@ pub struct StockLineFilterInput {
     pub master_list: Option<MasterListFilterInput>,
     pub is_active: Option<bool>,
     pub is_program_stock_line: Option<bool>,
+    pub campaign_id: Option<EqualFilterStringInput>,
 }
 
 impl From<StockLineFilterInput> for StockLineFilter {
@@ -83,6 +85,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             master_list: f.master_list.map(|f| f.to_domain()),
             is_active: f.is_active,
             is_program_stock_line: f.is_program_stock_line,
+            campaign_id: f.campaign_id.map(EqualFilter::from),
         }
     }
 }

@@ -94,8 +94,10 @@ pub enum RefreshTokenResponse {
 }
 
 /// Sliding-window refresh. The session token doesn't change — the server just bumps `expires_at`
-/// forward. The query is kept for backwards compatibility; web clients no longer need to call it
-/// (the session slides on every authenticated request).
+/// forward. Kept for backwards compatibility with token-based clients, and doubles as the
+/// keep-alive "ping" for cookie-session front ends: calling it with a valid session cookie slides
+/// the server-side session and re-emits `Set-Cookie` with a fresh `Max-Age`. (Any authenticated
+/// request slides the session too — this operation just does nothing else.)
 pub fn refresh_token(ctx: &Context<'_>) -> RefreshTokenResponse {
     let auth_data = ctx.get_auth_data();
 

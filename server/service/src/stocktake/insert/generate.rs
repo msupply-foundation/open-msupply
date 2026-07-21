@@ -163,6 +163,7 @@ fn generate_stocktake_lines(
                  barcode_row: _,
                  item_variant_row: _,
                  vvm_status_row: _,
+                 campaign_row: _,
              }| {
                 StocktakeLineRow {
                     id: uuid(),

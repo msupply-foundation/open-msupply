@@ -52,6 +52,10 @@ pub struct UpdateInput {
     pub charges_foreign_currency: Option<f64>,
     pub default_donor: Option<UpdateDonorInput>,
     pub received_datetime: Option<DateTime<FixedOffset>>,
+    /// Patch of customFields key -> value (JSON object) merged into the
+    /// invoice's custom properties; a `null` value clears that key, keys absent
+    /// from the patch are left unchanged.
+    pub custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -133,6 +137,7 @@ impl UpdateInput {
             charges_foreign_currency,
             default_donor,
             received_datetime,
+            custom_fields,
         } = self;
 
         ServiceInput {
@@ -155,6 +160,7 @@ impl UpdateInput {
                 apply_to_lines: donor.apply_to_lines.to_domain(),
             }),
             received_datetime,
+            custom_fields: custom_fields.map(|json| json.0),
         }
     }
 }
@@ -227,7 +233,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotMoveReceivedDateForward
         | ServiceError::ExceedsMaximumBackdatingDays
         | ServiceError::CannotSetShippedStatusOnManualInboundShipment
-        | ServiceError::CurrencyRateMustBePositive => BadUserInput(formatted_error),
+        | ServiceError::CurrencyRateMustBePositive
+        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
         ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
@@ -597,6 +604,7 @@ mod test {
                     charges_foreign_currency: None,
                     default_donor: None,
                     received_datetime: None,
+                    custom_fields: None,
                 }
             );
             Ok(Invoice {

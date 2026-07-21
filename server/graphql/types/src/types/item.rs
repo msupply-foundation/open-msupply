@@ -9,13 +9,13 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     loader::{
-        AncillaryItemsByAncillaryIdLoader, AncillaryItemsByItemIdLoader,
-        ItemCategoryLoader, ItemDirectionsByItemIdLoader, ItemStatsLoaderInput,
-        ItemStoreJoinLoader, ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader,
-        ItemsStatsForItemLoader, ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput,
-        LocationTypeLoader, MasterListByItemIdLoader, MasterListByItemIdLoaderInput,
-        ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
-        StockLineByItemAndStoreIdLoaderInput, WarningLoader,
+        AllowedCustomFieldKeysByScopeLoader, AncillaryItemsByAncillaryIdLoader,
+        AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDirectionsByItemIdLoader,
+        ItemStatsLoaderInput, ItemStoreJoinLoader, ItemStoreJoinLoaderInput,
+        ItemVariantsByItemIdLoader, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
+        ItemsStockOnHandLoaderInput, LocationTypeLoader, MasterListByItemIdLoader,
+        MasterListByItemIdLoaderInput, ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput,
+        StockLineByItemAndStoreIdLoader, StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
@@ -80,6 +80,25 @@ impl ItemNode {
 
     pub async fn restricted_location_type_id(&self) -> &Option<String> {
         &self.row().restricted_location_type_id
+    }
+
+    /// Properties v2 values for this item. The raw `item.custom_fields` JSONB
+    /// blob is filtered server-side to keys that are (a) defined in
+    /// `custom_field` and not soft-deleted, (b) marked visible for the `item`
+    /// table via `custom_field_scope`. Stray keys never reach the client.
+    /// Imported from legacy mSupply `[item]user_field_1..7`; read-only.
+    pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.row().custom_fields.clone() else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
+        let allowed_keys = loader
+            .load_one("item".to_string())
+            .await?
+            .unwrap_or_default();
+
+        Ok(Some(crate::types::filter_custom_fields(raw, &allowed_keys)))
     }
 
     pub async fn restricted_location_type(
@@ -153,6 +172,22 @@ impl ItemNode {
         let result = loader
             .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
             .await?
+            .map(|soh| soh.available_stock_on_hand)
+            .unwrap_or(0);
+
+        Ok(result)
+    }
+
+    /// Total stock on hand (all packs, not just available) for this item + store.
+    /// Backed by the same batched `ItemsStockOnHandLoader` as `availableStockOnHand`,
+    /// so unlike `stats { stockOnHand }` it does not trigger the item-stats / AMC
+    /// backend-plugin path.
+    pub async fn stock_on_hand(&self, ctx: &Context<'_>, store_id: String) -> Result<u32> {
+        let loader = ctx.get_loader::<DataLoader<ItemsStockOnHandLoader>>();
+        let result = loader
+            .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
+            .await?
+            .map(|soh| soh.total_stock_on_hand)
             .unwrap_or(0);
 
         Ok(result)
@@ -219,7 +254,10 @@ impl ItemNode {
             .await?
             .unwrap_or_default();
 
-        Ok(result.into_iter().map(ItemCategoryNode::from_domain).collect())
+        Ok(result
+            .into_iter()
+            .map(ItemCategoryNode::from_domain)
+            .collect())
     }
 
     #[graphql(deprecation = "Since 2.16.0. Use universalCode instead")]

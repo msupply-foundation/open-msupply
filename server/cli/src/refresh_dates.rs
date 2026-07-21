@@ -64,8 +64,10 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("purchase_order", "request_approval_datetime"),
         ("purchase_order", "finalised_datetime"),
         ("stock_relocation", "created_datetime"),
+        ("stock_relocation", "confirmed_datetime"),
         ("stock_relocation", "finalised_datetime"),
         ("plugin_data", "datetime"),
+        ("help_document", "created_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -116,6 +118,9 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log_v7", "integration_finished_datetime"),
         ("sync_request", "created_datetime"),
         ("sync_request", "finished_datetime"),
+        ("site", "last_connection_datetime"),
+        ("site", "last_sync_datetime"),
+        ("site", "first_sync_datetime"),
         ("user_account", "last_successful_sync"),
         ("activity_log", "datetime"),
         ("asset_log", "log_datetime"),

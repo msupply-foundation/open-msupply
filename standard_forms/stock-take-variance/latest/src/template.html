@@ -4,10 +4,23 @@
 </style>
 
 <body>
+  {# Blind stock take: the variance reveals theoretical stock, so it is hidden
+  while counting (status NEW) and becomes available once finalised. #}
+  {% set is_blind = data.preferences.blindStocktake | default(value=false) %}
+  {% set is_new = data.stocktake.status == "NEW" %}
+  {% if is_blind and is_new %}
+  <p class="blind-notice">{{t(k="report.variance-hidden-blind", f="Variance is hidden during a blind stock take. It will be available once the stock take is finalised.")}}</p>
+  {% else %}
   {% set_global VvalueIncrease=0 %}
   {% set_global VvalueDecrease=0 %}
   {% set_global VnetVarience=0 %}
-  {% set_global Vnumofpackscounted=0 %} 
+  {% set_global Vnumofpackscounted=0 %}
+
+  {# Only show the campaign column when at least one line has a campaign #}
+  {% set_global has_campaign = false %}
+  {% for line in data.stocktakeLines.nodes %}
+  {% if line.campaign.name %}{% set_global has_campaign = true %}{% endif %}
+  {% endfor %}
 
 <table class="center">
   <thead>
@@ -23,6 +36,9 @@
       <td width="60" class="borderline"><span class="table_header">{{t(k="report.variance-packs",f="Variance (packs)")}}</span></td>
       <td width="60" class="borderline"><span class="table_header">{{t(k="report.variance-value",f="Variance (Value)")}}</span></td>
       <td width="100"class="borderline"><span class="table_header">{{t(k="label.reason",f="Reason")}}</span></td>
+      {% if has_campaign %}
+      <td width="80" class="borderline"><span class="table_header">{{t(k="label.campaign-only",f="Campaign")}}</span></td>
+      {% endif %}
       <td width="100"class="borderline"><span class="table_header">{{t(k="label.comment",f="Comment")}}</span></td>
     </tr>
   </thead>
@@ -65,6 +81,9 @@
     {% else %}
     <td  class="table_text">N/A</td>
     {% endif %}
+    {% if has_campaign %}
+    <td  class="table_text">{{line.campaign.name | default(value='')}}</td>
+    {% endif %}
     <td  class="table_text">{{line.comment}}</td>
 
     {% if VvarianceValue > 0 %}
@@ -78,14 +97,14 @@
   {% set_global VnetVarience=VvalueIncrease + VvalueDecrease %}
 
   <tr>
-    <td colspan="12"  class="borderline" />
+    <td colspan="{% if has_campaign %}13{% else %}12{% endif %}"  class="borderline" />
   </tr>
 
 
 
 
   <tr>
-    <td colspan="10" class="no-border" />
+    <td colspan="{% if has_campaign %}11{% else %}10{% endif %}" class="no-border" />
     <td  class="borderline"><span class="table_text">{{t(k="report.net-increase",f="Net Increase")}}</span></td>
     <td class="borderline"><span class="table_text">{{VvalueIncrease | round( precision=2)}}</span></td>
   </tr>
@@ -93,16 +112,17 @@
 
 
   <tr>
-    <td colspan="10" class="no-border" />
+    <td colspan="{% if has_campaign %}11{% else %}10{% endif %}" class="no-border" />
     <td class="borderline"><span class="table_text">{{t(k="report.net-decrease",f="Net Decrease")}}</span></td>
     <td class="borderline"><span class="table_text">{{VvalueDecrease | round( precision=2)}}</span></td>
   </tr>
 
   <tr>
-    <td colspan="10"  class="no-border" />
+    <td colspan="{% if has_campaign %}11{% else %}10{% endif %}"  class="no-border" />
     <td  class="borderline"><span class="table_text">{{t(k="report.net-variance",f="Net Variance")}}</span></td>
     <td  class="borderline"><span class="table_text">{{VnetVarience | round( precision=2)}}</span></td>
   </tr>
 </table>
+  {% endif %}
 
 </body>

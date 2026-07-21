@@ -122,6 +122,14 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
             .filter(vaccine_course_dose::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
+
+    pub fn check_exists_by_id(&self, record_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            vaccine_course_dose::table.filter(vaccine_course_dose::id.eq(record_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
 }
 
 impl Upsert for VaccineCourseDoseRow {

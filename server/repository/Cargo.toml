@@ -17,11 +17,13 @@ diesel = { version = "2.3.7", default-features = false, features = [
     "r2d2",
     "numeric",
     "chrono",
+    "serde_json",
     "64-column-tables",
     "with-deprecated",
 ] }
 diesel-derive-enum = { version = "2.1.0", default-features = false }
 futures-util = { workspace = true }
+heck = { workspace = true }
 libsqlite3-sys = { version = "0.36.0", features = ["bundled"], optional = true }
 rusqlite = "0.38.0"
 regex = { workspace = true }

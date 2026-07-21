@@ -30,6 +30,7 @@ export const StocktakeLockButton: FC = () => {
 
   return (
     <ToggleButton
+      data-testid="on-hold-button"
       disabled={status !== StocktakeNodeStatus.New}
       value={isLocked}
       selected={isLocked}

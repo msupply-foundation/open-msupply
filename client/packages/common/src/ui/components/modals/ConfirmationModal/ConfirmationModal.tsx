@@ -59,7 +59,13 @@ export const ConfirmationModal = ({
   );
 
   return (
-    <BasicModal width={width} height={height} open={open} onClose={onCancel}>
+    <BasicModal
+      width={width}
+      height={height}
+      open={open}
+      onClose={onCancel}
+      data-testid="confirmation-modal"
+    >
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
         <Grid container gap={1} flexDirection="row">
           <Grid>
@@ -101,6 +107,7 @@ export const ConfirmationModal = ({
               color="secondary"
               startIcon={<CheckIcon />}
               isLoading={loading}
+              data-testid="confirmation-modal-ok"
               onClick={async () => {
                 const result = onConfirm && onConfirm();
                 if (result instanceof Promise) {

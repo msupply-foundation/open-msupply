@@ -6,8 +6,8 @@ import {
   useTranslation,
   AppFooterPortal,
   useDeleteConfirmation,
-  StockRelocationNodeStatus,
 } from '@openmsupply-client/common';
+import { canDeleteStockMovement } from '../utils';
 import { StockMovementRowFragment, useDeleteStockMovements } from '../api';
 
 export const FooterComponent = ({
@@ -26,9 +26,7 @@ export const FooterComponent = ({
       await deleteStockMovements(selectedRows.map(row => row.id));
       resetRowSelection();
     },
-    canDelete: selectedRows.every(
-      row => row.status === StockRelocationNodeStatus.New
-    ),
+    canDelete: selectedRows.every(row => canDeleteStockMovement(row.status)),
     messages: {
       confirmMessage: t('messages.confirm-delete-stock-movements', {
         count: selectedRows.length,

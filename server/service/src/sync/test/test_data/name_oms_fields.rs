@@ -15,6 +15,7 @@ const NAME_OMS_FIELDS_1: (&str, &str) = (
 fn name_oms_fields_1() -> NameOmsFieldsRow {
     NameOmsFieldsRow {
         id: NAME_OMS_FIELDS_1.0.to_owned(),
+        // Wire format keeps the historical "properties" JSON key (see serde rename).
         properties: Some("{\"key\":\"test\"}".to_string()),
     }
 }

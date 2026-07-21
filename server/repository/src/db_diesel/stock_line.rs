@@ -1,5 +1,6 @@
 use super::{
     barcode_row::barcode,
+    campaign_row::campaign,
     item_row::item,
     item_variant::item_variant_row::{item_variant, ItemVariantRow},
     location_row::location,
@@ -11,6 +12,7 @@ use super::{
 };
 
 use crate::{
+    campaign_row::CampaignRow,
     diesel_extensions::OrderByExtensions,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
@@ -33,6 +35,7 @@ pub struct StockLine {
     pub barcode_row: Option<BarcodeRow>,
     pub item_variant_row: Option<ItemVariantRow>,
     pub vvm_status_row: Option<VVMStatusRow>,
+    pub campaign_row: Option<CampaignRow>,
 }
 
 pub enum StockLineSortField {
@@ -48,6 +51,7 @@ pub enum StockLineSortField {
     CostPricePerPack,
     SellPricePerPack,
     VvmStatusThenExpiry,
+    Campaign,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -68,6 +72,7 @@ pub struct StockLineFilter {
     pub master_list: Option<MasterListFilter>,
     pub is_active: Option<bool>,
     pub is_program_stock_line: Option<bool>,
+    pub campaign_id: Option<EqualFilter<String>>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -80,6 +85,7 @@ type StockLineJoin = (
     Option<NameRow>,
     Option<BarcodeRow>,
     Option<VVMStatusRow>,
+    Option<CampaignRow>,
 );
 pub struct StockLineRepository<'a> {
     connection: &'a StorageConnection,
@@ -154,6 +160,9 @@ impl<'a> StockLineRepository<'a> {
                 }
                 StockLineSortField::SellPricePerPack => {
                     apply_sort!(query, sort, stock_line::sell_price_per_pack);
+                }
+                StockLineSortField::Campaign => {
+                    apply_sort_no_case!(query, sort, campaign::name);
                 }
                 StockLineSortField::VvmStatusThenExpiry => {
                     // Complex sort, not using apply_sort
@@ -286,6 +295,7 @@ impl<'a> StockLineRepository<'a> {
                 master_list,
                 is_active,
                 is_program_stock_line,
+                campaign_id,
             } = f;
 
             // OR filters must come first
@@ -318,6 +328,7 @@ impl<'a> StockLineRepository<'a> {
             apply_date_filter!(query, expiry_date, stock_line::expiry_date);
             apply_equal_filter!(query, store_id, stock_line::store_id);
             apply_equal_filter!(query, vvm_status_id, stock_line::vvm_status_id);
+            apply_equal_filter!(query, campaign_id, stock_line::campaign_id);
 
             if let Some(is_active) = is_active {
                 query = query.filter(item::is_active.eq(is_active));
@@ -370,6 +381,7 @@ fn query() -> _ {
         .left_join(name::table)
         .left_join(barcode::table)
         .left_join(vvm_status::table)
+        .left_join(campaign::table)
 }
 
 type BoxedStockLineQuery = IntoBoxed<'static, query, DBType>;
@@ -383,6 +395,7 @@ fn to_domain(
         supplier_name_row,
         barcode_row,
         vvm_status_row,
+        campaign_row,
     ): StockLineJoin,
 ) -> StockLine {
     StockLine {
@@ -393,6 +406,7 @@ fn to_domain(
         barcode_row,
         item_variant_row,
         vvm_status_row,
+        campaign_row,
     }
 }
 
@@ -453,6 +467,11 @@ impl StockLineFilter {
 
     pub fn is_program_stock_line(mut self, filter: bool) -> Self {
         self.is_program_stock_line = Some(filter);
+        self
+    }
+
+    pub fn campaign_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.campaign_id = Some(filter);
         self
     }
 }

@@ -53,6 +53,9 @@ query StocktakeQuery(
             id
           }
         }
+        campaign {
+          name
+        }
       }
     }
   }
@@ -72,5 +75,8 @@ query StocktakeQuery(
         }
       }
     }
+  }
+  preferences(storeId: $storeId) {
+    blindStocktake
   }
 }

@@ -60,6 +60,31 @@ describe('custom translations helpers', () => {
         { id: 'button.ok', key: 'button.ok', default: 'OK', custom: 'Okay' },
       ]);
     });
+    it('resolves defaults through getDefault when provided (namespaced keys)', () => {
+      const translations = { 'Daily Tally': 'دفتر روزانه' };
+      const result = mapTranslationsToArray(translations, t, {
+        includeUnknownKeys: true,
+        getDefault: key => key,
+      });
+      expect(result).toEqual([
+        {
+          id: 'Daily Tally',
+          key: 'Daily Tally',
+          default: 'Daily Tally',
+          custom: 'دفتر روزانه',
+        },
+      ]);
+    });
+    it('applies the unknown-key filter using getDefault', () => {
+      const desktopBundle: Record<string, string> = { help: 'Help' };
+      const translations = { help: 'Potions', unknown: 'Dropped' };
+      const result = mapTranslationsToArray(translations, t, {
+        getDefault: key => desktopBundle[key] ?? '',
+      });
+      expect(result).toEqual([
+        { id: 'help', key: 'help', default: 'Help', custom: 'Potions' },
+      ]);
+    });
   });
 
   describe('mapTranslationsToObject', () => {
@@ -296,7 +321,10 @@ describe('custom translations helpers', () => {
 
     describe('replace mode', () => {
       it('replaces all existing translations with imported ones', () => {
-        const imported = [tr('button.ok', 'Sure', 'OK'), tr('label.new', 'New!', 'New')];
+        const imported = [
+          tr('button.ok', 'Sure', 'OK'),
+          tr('label.new', 'New!', 'New'),
+        ];
         const result = mergeTranslations(existing, imported, 'replace');
         expect(result).toEqual(imported);
       });
@@ -316,8 +344,8 @@ describe('custom translations helpers', () => {
     describe('keep-existing mode', () => {
       it('adds new keys without modifying existing ones', () => {
         const imported = [
-          tr('button.ok', 'Sure', 'OK'),     // exists — should be skipped
-          tr('label.new', 'Nouveau', 'New'),  // new — should be added
+          tr('button.ok', 'Sure', 'OK'), // exists — should be skipped
+          tr('label.new', 'Nouveau', 'New'), // new — should be added
         ];
         const result = mergeTranslations(existing, imported, 'keep-existing');
         expect(result).toEqual([
@@ -357,15 +385,15 @@ describe('custom translations helpers', () => {
     describe('overwrite mode', () => {
       it('overwrites existing keys and adds new ones', () => {
         const imported = [
-          tr('button.ok', 'Sure', 'OK'),     // exists — should be overwritten
-          tr('label.new', 'Nouveau', 'New'),  // new — should be added
+          tr('button.ok', 'Sure', 'OK'), // exists — should be overwritten
+          tr('label.new', 'Nouveau', 'New'), // new — should be added
         ];
         const result = mergeTranslations(existing, imported, 'overwrite');
         expect(result).toEqual([
-          tr('button.ok', 'Sure', 'OK'),       // overwritten
+          tr('button.ok', 'Sure', 'OK'), // overwritten
           tr('button.cancel', 'Annuler', 'Cancel'), // untouched
-          tr('label.name', 'Nom', 'Name'),     // untouched
-          tr('label.new', 'Nouveau', 'New'),   // added
+          tr('label.name', 'Nom', 'Name'), // untouched
+          tr('label.new', 'Nouveau', 'New'), // added
         ]);
       });
 
@@ -380,10 +408,20 @@ describe('custom translations helpers', () => {
 
       it('only updates the custom field, preserving other properties', () => {
         const existingWithMeta: Translation[] = [
-          { id: 'button.ok', key: 'button.ok', default: 'OK', custom: 'Okay', isNew: true },
+          {
+            id: 'button.ok',
+            key: 'button.ok',
+            default: 'OK',
+            custom: 'Okay',
+            isNew: true,
+          },
         ];
         const imported = [tr('button.ok', 'Sure', 'OK')];
-        const result = mergeTranslations(existingWithMeta, imported, 'overwrite');
+        const result = mergeTranslations(
+          existingWithMeta,
+          imported,
+          'overwrite'
+        );
         expect(result[0]).toEqual({
           id: 'button.ok',
           key: 'button.ok',
@@ -427,7 +465,10 @@ describe('custom translations helpers', () => {
 
     describe('collectNamespaces', () => {
       it('returns the unique namespaces across all languages', () => {
-        expect(collectNamespaces(sample()).sort()).toEqual(['common', 'report']);
+        expect(collectNamespaces(sample()).sort()).toEqual([
+          'common',
+          'report',
+        ]);
       });
       it('returns empty for an empty structure', () => {
         expect(collectNamespaces({})).toEqual([]);
@@ -450,14 +491,14 @@ describe('custom translations helpers', () => {
       });
       it('keeps other namespaces when removing one', () => {
         const result = setNamespaceTranslations(sample(), 'fr', 'report', {});
-        expect(result.fr).toEqual({
+        expect(result['fr']).toEqual({
           common: { 'button.ok': 'Oui', 'button.cancel': 'Annuler' },
         });
       });
       it('does not mutate the input', () => {
         const start = sample();
         setNamespaceTranslations(start, 'fr', 'common', {});
-        expect(start.fr?.common).toBeDefined();
+        expect(start['fr']?.['common']).toBeDefined();
       });
     });
 
@@ -477,8 +518,8 @@ describe('custom translations helpers', () => {
           imported,
           'keep-existing'
         );
-        expect(result.fr?.common?.['button.ok']).toBe('Oui'); // kept
-        expect(result.fr?.common?.['button.new']).toBe('Nouveau'); // added
+        expect(result['fr']?.['common']?.['button.ok']).toBe('Oui'); // kept
+        expect(result['fr']?.['common']?.['button.new']).toBe('Nouveau'); // added
       });
       it('overwrite replaces overlapping keys and merges the rest', () => {
         const imported: CustomTranslationsV2 = {
@@ -486,10 +527,10 @@ describe('custom translations helpers', () => {
           es: { common: { hola: 'Hola' } },
         };
         const result = mergeNestedTranslations(sample(), imported, 'overwrite');
-        expect(result.fr?.common?.['button.ok']).toBe('CHANGED');
-        expect(result.fr?.common?.['button.cancel']).toBe('Annuler'); // untouched
-        expect(result.es?.common?.hola).toBe('Hola'); // new language
-        expect(result.en?.common?.['button.ok']).toBe('OK'); // untouched language
+        expect(result['fr']?.['common']?.['button.ok']).toBe('CHANGED');
+        expect(result['fr']?.['common']?.['button.cancel']).toBe('Annuler'); // untouched
+        expect(result['es']?.['common']?.['hola']).toBe('Hola'); // new language
+        expect(result['en']?.['common']?.['button.ok']).toBe('OK'); // untouched language
       });
     });
 

@@ -154,11 +154,6 @@ export const PrescriptionLineEditView = () => {
   const itemIdList = items.map(item => item.id);
   if (!isDisabled) itemIdList.push('new');
 
-  const canSave =
-    !!item?.id &&
-    allocationIsDirty &&
-    !(allocatedQuantity === 0 && prescribedUnits === 0);
-
   return (
     <>
       <AppBarButtons invoiceId={data?.id} />
@@ -172,7 +167,7 @@ export const PrescriptionLineEditView = () => {
               .addPart(invoiceId)}
             enteredLineIds={enteredLineIds}
             showNew={!isDisabled}
-            isDirty={canSave}
+            isDirty={isDirty.current}
             handleSaveNew={onSave}
             scrollRef={scrollRef}
           />
@@ -205,7 +200,11 @@ export const PrescriptionLineEditView = () => {
       />
       <Footer
         isSaving={isSavingLines}
-        disabled={!canSave}
+        disabled={
+          !item?.id ||
+          !allocationIsDirty ||
+          (allocatedQuantity === 0 && prescribedUnits === 0)
+        }
         handleSave={onSave}
         handleCancel={() =>
           navigate(

@@ -1,3 +1,8 @@
+use crate::db_diesel::{
+    barcode_row::barcode, item_row::item, item_variant::item_variant_row::item_variant,
+    location_row::location, name_row::name, stock_line_row::stock_line,
+    vvm_status::vvm_status_row::vvm_status,
+};
 use crate::{
     ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
@@ -15,6 +20,14 @@ table! {
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
+
+allow_tables_to_appear_in_same_query!(campaign, stock_line);
+allow_tables_to_appear_in_same_query!(campaign, item);
+allow_tables_to_appear_in_same_query!(campaign, item_variant);
+allow_tables_to_appear_in_same_query!(campaign, location);
+allow_tables_to_appear_in_same_query!(campaign, name);
+allow_tables_to_appear_in_same_query!(campaign, barcode);
+allow_tables_to_appear_in_same_query!(campaign, vvm_status);
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
@@ -70,12 +83,11 @@ impl<'a> CampaignRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, campaign_id: &str) -> Result<bool, RepositoryError> {
-        let result: Option<String> = campaign::table
-            .filter(campaign::id.eq(campaign_id))
-            .select(campaign::id)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result.is_some())
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            campaign::table.filter(campaign::id.eq(campaign_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CampaignRow>, RepositoryError> {

@@ -2,7 +2,7 @@ import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
 import { Formatter } from '@common/utils';
 import { AssetPropertyFragment, MasterListRowFragment } from '.';
 import { LocationRowFragment } from './Location/api';
-import { StockLineRowFragment } from './Stock/api';
+import { StockLineListRowFragment } from './Stock/api';
 import { InvoiceNodeType, PropertyNode } from '@common/types';
 
 export const locationsToCsv = (
@@ -50,37 +50,53 @@ export const masterListsToCsv = (
 };
 
 export const stockLinesToCsv = (
-  stockLines: StockLineRowFragment[],
+  stockLines: StockLineListRowFragment[],
   t: TypedTFunction<LocaleKey>,
   manageVvmStatusForStock: boolean
 ) => {
   const fields: string[] = [
     t('label.code'),
     t('label.name'),
+    t('label.master-lists'),
     t('label.batch'),
     t('label.expiry'),
+    t('label.manufacture-date'),
     ...(manageVvmStatusForStock ? [t('label.vvm-status')] : []),
-    t('label.location'),
+    t('label.location-code'),
+    t('label.location-name'),
     t('label.unit'),
     t('label.pack-size'),
-    t('label.num-packs'),
-    t('label.available-in-packs'),
+    t('label.pack-quantity'),
+    t('label.soh'),
+    t('label.available-soh'),
     t('label.pack-cost-price'),
+    t('label.pack-sell-price'),
+    t('label.total'),
+    t('label.manufacturer'),
+    t('label.campaign-only'),
     t('label.supplier'),
   ];
 
   const data = stockLines.map(node => [
     node.item.code,
     node.item.name,
+    node.item.masterLists?.map(m => m.name).join(', '),
     node.batch,
     Formatter.csvDateString(node.expiryDate),
+    Formatter.csvDateString(node.manufactureDate),
     ...(manageVvmStatusForStock ? [node.vvmStatus?.description] : []),
     node.location?.code,
+    node.location?.name,
     node.item.unitName,
     node.packSize,
     node.totalNumberOfPacks,
-    node.availableNumberOfPacks,
+    node.totalNumberOfPacks * node.packSize,
+    node.availableNumberOfPacks * node.packSize,
     node.costPricePerPack,
+    node.sellPricePerPack,
+    node.totalNumberOfPacks * node.costPricePerPack,
+    node.manufacturer?.name,
+    node.campaign?.name,
     node.supplierName,
   ]);
   return Formatter.csv({ fields, data });

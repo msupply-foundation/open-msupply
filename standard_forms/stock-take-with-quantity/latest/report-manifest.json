@@ -1,6 +1,6 @@
 {
   "is_custom": false,
-  "version": "2.6.5",
+  "version": "2.6.7",
   "code": "stock-take-with-quantity",
   "context": "STOCKTAKE",
   "sub_context": "picklist",

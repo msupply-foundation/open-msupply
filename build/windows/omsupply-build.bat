@@ -48,6 +48,10 @@ copy "target\release\test_connection.exe"  "..\omSupply\Server\test-connection-p
 
 @cd..
 
+@ECHO ##### Copying frontend bundle (served from frontend_dir at runtime) #####
+xcopy "client\packages\host\dist" "omSupply\Server\frontend" /e /h /c /i
+@if %errorlevel% neq 0 ( exit /b %errorlevel% )
+
 @REM start /b /wait build\windows\omsupply-android.bat
 @REM @if %errorlevel% neq 0 exit /b %errorlevel%
 

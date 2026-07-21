@@ -1,6 +1,7 @@
 use async_graphql::*;
 use chrono::Utc;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use graphql_types::types::UserNode;
 
 use http2::header::SET_COOKIE;
 use service::{
@@ -11,6 +12,7 @@ use service::{
     },
     session_store::SESSION_LIFETIME,
     sync::CentralServerConfig,
+    user_account::UserAccountService,
 };
 
 pub struct AuthToken {
@@ -18,6 +20,8 @@ pub struct AuthToken {
     pub token: String,
     /// Unix-timestamp [s] when the session expires if no further activity arrives.
     pub expiry_date: usize,
+    /// Id of the user the session was created for; used to resolve the `user` field.
+    pub user_id: String,
 }
 
 #[Object]
@@ -45,6 +49,28 @@ impl AuthToken {
     /// break.
     pub async fn refresh_expiry_date(&self) -> usize {
         self.expiry_date
+    }
+
+    /// The authenticated user, in the same shape as the `me` query. Lets clients fetch user
+    /// details (stores, permissions, language, auth timing durations, ...) in the same round
+    /// trip as the login itself.
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
+        let service_provider = ctx.service_provider();
+        let service_ctx = service_provider.context("".to_string(), self.user_id.clone())?;
+        let user_service = UserAccountService::new(&service_ctx.connection);
+        // Login just verified the user is active on this site (`NoSiteAccess` otherwise), so a
+        // miss here means the account was removed between the two calls.
+        let user = match user_service.find_user_active_on_this_site(&self.user_id) {
+            Ok(Some(user)) => user,
+            Ok(None) => {
+                return Err(StandardGraphqlError::InternalError(
+                    "Can't find user account data".to_string(),
+                )
+                .extend());
+            }
+            Err(err) => return Err(err.into()),
+        };
+        Ok(UserNode::from_domain(user))
     }
 }
 
@@ -183,7 +209,11 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
     let expiry_date = (Utc::now() + SESSION_LIFETIME).timestamp() as usize;
     set_session_cookie(ctx, &token, auth_data);
 
-    Ok(AuthTokenResponse::Response(AuthToken { token, expiry_date }))
+    Ok(AuthTokenResponse::Response(AuthToken {
+        token,
+        expiry_date,
+        user_id,
+    }))
 }
 
 /// How long the browser is allowed to keep the session cookie. Intentionally **much longer** than
