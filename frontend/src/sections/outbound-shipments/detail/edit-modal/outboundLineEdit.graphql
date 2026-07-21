@@ -76,6 +76,7 @@ query outboundItemOptions($storeId: String!) {
         unitName
         isVaccine
         doses
+        availableStockOnHand(storeId: $storeId)
       }
     }
   }

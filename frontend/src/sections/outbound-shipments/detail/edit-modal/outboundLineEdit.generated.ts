@@ -87,10 +87,11 @@ export type OutboundItemOptionsResult = {
   unitName: string | null;
   isVaccine: boolean;
   doses: number;
+  availableStockOnHand: number;
 }>;
 });
 };
 
 export const OutboundItemOptions = {
-  query: "query outboundItemOptions($storeId: String!) {\n  items(\n    storeId: $storeId\n    filter: {isVisible: true, isActive: true, type: {equalTo: STOCK}}\n    page: {first: 1000}\n    sort: {key: name}\n  ) {\n    ... on ItemConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n      }\n    }\n  }\n}",
+  query: "query outboundItemOptions($storeId: String!) {\n  items(\n    storeId: $storeId\n    filter: {isVisible: true, isActive: true, type: {equalTo: STOCK}}\n    page: {first: 1000}\n    sort: {key: name}\n  ) {\n    ... on ItemConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n        availableStockOnHand(storeId: $storeId)\n      }\n    }\n  }\n}",
 } as TypedDocument<OutboundItemOptionsResult, OutboundItemOptionsVariables>;
