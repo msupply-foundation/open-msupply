@@ -6,6 +6,15 @@ export const GRAPHQL_WS_PATH = '/graphql/ws';
 // to the backend in dev (see the dev server proxy in vite.config.ts).
 export const FILES_URL = '/files';
 
+// Sync-file store: per-record document attachments (an inbound shipment's
+// documents, etc.) live behind a REST endpoint, not GraphQL —
+//   POST   /sync_files/<tableName>/<recordId>          (multipart, field "files")
+//   GET    /sync_files/<tableName>/<recordId>/<fileId> (download)
+//   DELETE /sync_files/<tableName>/<recordId>/<fileId>
+// Proxied to the backend in dev (see vite.config.ts). Mirrors the reference
+// app's Environment.SYNC_FILES_URL.
+export const SYNC_FILES_URL = '/sync_files';
+
 // Custom (server-supplied) translations. The server returns a flat key→value
 // map for the requested language, overriding the bundled catalog. Proxied to
 // the backend in dev (see the dev server proxy in vite.config.ts).
