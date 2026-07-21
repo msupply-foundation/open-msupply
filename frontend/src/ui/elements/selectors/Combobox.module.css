@@ -46,6 +46,14 @@
   box-shadow: var(--focus-ring-error);
 }
 
+/* Disabled: the same muted fill the disabled TextField uses (its
+   `.input:disabled`), so a read-only lookup — the locked item in edit mode, or
+   the customer field once the shipment is read-only / requisition-sourced —
+   reads as read-only rather than as an editable white field. */
+.control:has(.input:disabled) {
+  background: var(--bg-input);
+}
+
 .searchIcon {
   display: inline-flex;
   margin-inline-start: var(--input-padding-x);
