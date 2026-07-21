@@ -23,11 +23,15 @@ export interface DuplicateShipmentActionProps {
 // "Make a copy" (rules.md § duplication, AC-X1/X2): any shipment — SHIPPED
 // included — copies into a fresh NEW one whose stock lines became placeholders.
 // Offered for a single selection (list footer) and as a record action (detail
-// side panel). Confirm → duplicate → navigate to the copy. Skipped
-// inactive-catalogue items are reported in the dialog itself (controls ›
-// action feedback); acknowledging the report performs the navigation — the
+// side panel). Confirm → duplicate → navigate to the copy. A typed rejection
+// (AC-X2's inactive customer, or any other) keeps the dialog open with the
+// server's description inline — the confirmation is one of this vertical's
+// dialog-surfaced actions (ui-surface S6), so its failure belongs there too,
+// not the global unexpected-error modal (controls › action feedback, S6
+// inline notices). Skipped inactive-catalogue items are reported in the
+// dialog itself; acknowledging the report performs the navigation — the
 // follow-on happens after the close (controls › dialogs).
-type Phase = 'confirm' | 'working' | 'skipped';
+type Phase = 'confirm' | 'working' | 'error' | 'skipped';
 
 export const DuplicateShipmentAction: Component<
   DuplicateShipmentActionProps
@@ -36,6 +40,7 @@ export const DuplicateShipmentAction: Component<
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = createSignal(false);
   const [phase, setPhase] = createSignal<Phase>('confirm');
+  const [errorMessage, setErrorMessage] = createSignal('');
   const [skippedCount, setSkippedCount] = createSignal(0);
   const [copyId, setCopyId] = createSignal<string>();
 
@@ -56,22 +61,21 @@ export const DuplicateShipmentAction: Component<
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
     setPhase('working');
-    const result = await graphqlFetch(
-      DuplicateOutboundShipment,
-      { storeId: params.storeId, id: props.shipmentId() },
-      {
-        // Inactive customer (or any typed rejection) → surface the server's
-        // description; there is nothing for the user to fix in place.
-        mapSuccessToError: data =>
-          data.duplicateOutboundShipment.__typename ===
-          'DuplicateOutboundShipmentError'
-            ? data.duplicateOutboundShipment.error.description
-            : undefined,
-      }
-    );
+    const result = await graphqlFetch(DuplicateOutboundShipment, {
+      storeId: params.storeId,
+      id: props.shipmentId(),
+    });
+    // Transport/unexpected → the global modal already surfaced it.
     if (result.kind !== 'success') return close();
     const response = result.data.duplicateOutboundShipment;
-    if (response.__typename !== 'DuplicateOutboundShipmentNode') return close();
+    if (response.__typename !== 'DuplicateOutboundShipmentNode') {
+      // A typed rejection (e.g. AC-X2's inactive customer) — keep the dialog
+      // open with the server's description inline, rather than promoting it
+      // to the global unexpected-error/reload modal.
+      setErrorMessage(response.error.description);
+      setPhase('error');
+      return;
+    }
     if (response.skippedItemCount > 0) {
       // Items no longer in the catalogue were not copied — report before
       // navigating, in the initiating dialog rather than a toast (D19).
@@ -112,7 +116,12 @@ export const DuplicateShipmentAction: Component<
                 </Alert>
               }
             >
-              {t('outbound.copy.confirm')}
+              <Show
+                when={phase() !== 'error'}
+                fallback={<Alert severity="error">{errorMessage()}</Alert>}
+              >
+                {t('outbound.copy.confirm')}
+              </Show>
             </Show>
           }
           actions={
@@ -133,25 +142,38 @@ export const DuplicateShipmentAction: Component<
                 </Button>
               }
             >
-              <Show when={phase() === 'confirm'}>
+              <Show
+                when={phase() !== 'error'}
+                fallback={
+                  <Button
+                    variant="secondary"
+                    icon={<XCircleIcon />}
+                    onClick={close}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                }
+              >
+                <Show when={phase() === 'confirm'}>
+                  <Button
+                    variant="secondary"
+                    icon={<XCircleIcon />}
+                    data-testid="dialog-button-cancel"
+                    onClick={close}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                </Show>
                 <Button
                   variant="secondary"
-                  icon={<XCircleIcon />}
-                  data-testid="dialog-button-cancel"
-                  onClick={close}
+                  icon={<CheckIcon />}
+                  data-testid="confirmation-modal-ok"
+                  loading={phase() === 'working'}
+                  onClick={() => void run()}
                 >
-                  {t('common.cancel')}
+                  {t('common.ok')}
                 </Button>
               </Show>
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
-                data-testid="confirmation-modal-ok"
-                loading={phase() === 'working'}
-                onClick={() => void run()}
-              >
-                {t('common.ok')}
-              </Button>
             </Show>
           }
         />
