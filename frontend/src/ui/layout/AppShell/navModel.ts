@@ -1,7 +1,7 @@
 import type { Component } from 'solid-js';
 import type { IconProps } from '../../icons';
 import {
-  HomeIcon,
+  DashboardIcon,
   TruckIcon,
   StockIcon,
   CustomersIcon,
@@ -12,7 +12,7 @@ import {
   ReportsIcon,
   SettingsIcon,
   HelpIcon,
-  DownloadIcon,
+  ReplenishmentIcon,
   RadioIcon,
 } from '../../icons';
 import type { LocaleKey } from '../../../intl';
@@ -62,8 +62,8 @@ export interface NavItem {
 // Section icons, keyed by the top-level navConfig path. Cosmetic; one icon set
 // only (spec DIVERGENCES D4).
 const SECTION_ICONS: Record<string, Component<IconProps>> = {
-  dashboard: HomeIcon,
-  replenishment: DownloadIcon,
+  dashboard: DashboardIcon,
+  replenishment: ReplenishmentIcon,
   inventory: StockIcon,
   distribution: TruckIcon,
   dispensary: CustomersIcon,
