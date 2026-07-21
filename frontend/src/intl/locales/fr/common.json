@@ -3029,6 +3029,7 @@
   "sync-status.pull-v6": "Récupérer V6",
   "sync-status.push": "Envoyer",
   "sync-status.push-v6": "Envoyer V6",
+  "sync.indicator.alert": "Erreur de synchronisation — ouvrir pour plus de détails",
   "table.card-groups": "Groupes de champs",
   "table.collapse-all-groups": "Réduire tous les groupes",
   "table.collapse-group": "Réduire le groupe",

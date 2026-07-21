@@ -3038,6 +3038,7 @@
   "sync-status.push": "Push",
   "sync-status.push-v6": "Push V6",
   "sync-status.waiting-for-integration": "Waiting for integration",
+  "sync.indicator.alert": "Sync error — open for details",
   "table.card-groups": "Field groups",
   "table.collapse-all-groups": "Collapse all groups",
   "table.collapse-group": "Collapse group",

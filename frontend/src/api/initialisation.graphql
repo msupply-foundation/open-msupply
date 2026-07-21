@@ -68,6 +68,9 @@ fragment SyncStatus on FullSyncStatusNode {
   ... on FullSyncStatusV7Node {
     __typename
     isSyncing
+    summary {
+      started
+    }
     warningThreshold
     errorThreshold
     error {
@@ -106,6 +109,9 @@ fragment SyncStatus on FullSyncStatusNode {
   ... on FullSyncStatusV5V6Node {
     __typename
     isSyncing
+    summary {
+      started
+    }
     warningThreshold
     errorThreshold
     error {

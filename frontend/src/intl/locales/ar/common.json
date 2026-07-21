@@ -1704,6 +1704,7 @@
   "sync-status.pull-remote": "السحب عن بُعد",
   "sync-status.pull-v6": "",
   "sync-status.push": "ادفع",
+  "sync.indicator.alert": "خطأ في المزامنة — افتح للتفاصيل",
   "table.card-groups": "مجموعات الحقول",
   "table.collapse-all-groups": "طي كل المجموعات",
   "table.collapse-group": "طي المجموعة",
