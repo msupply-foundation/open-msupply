@@ -1,0 +1,115 @@
+# Stock list view (spec/stock S1). Filter / sort / pagination are carried as the
+# generated GraphQL input types (StockLineFilterInput, StockLineSortInput,
+# PaginationInput) so the URL state maps straight onto them with no remapping
+# (kdd/type-safety). Two shapes of the SAME data: the flat line list
+# (stockLines) and the grouped-by-item list (itemsByStockLineFilter), which
+# reuse one row fragment.
+
+# One stock-line row for the list table (spec/stock S1 columns). The arg-bearing
+# item.masterLists / manufacturer / donor(storeId) fields read the query's
+# $storeId. SOH / Available stock / Total are computed client-side from packs ×
+# pack size (never a stored field).
+fragment StockLineRow on StockLineNode {
+  id
+  itemId
+  itemName
+  batch
+  expiryDate
+  manufactureDate
+  packSize
+  totalNumberOfPacks
+  availableNumberOfPacks
+  costPricePerPack
+  sellPricePerPack
+  onHold
+  supplierName
+  locationName
+  volumePerPack
+  totalVolume
+  location {
+    id
+    code
+    name
+  }
+  vvmStatus {
+    id
+    description
+  }
+  item {
+    id
+    code
+    unitName
+    isVaccine
+    doses
+    masterLists(storeId: $storeId) {
+      id
+      name
+    }
+  }
+  manufacturer(storeId: $storeId) {
+    id
+    name
+  }
+}
+
+# The flat stock-line list. The packs-on-hand gate (total > 0) is the client
+# sending hasPacksInStore: true (spec/stock contract › list). Only the first
+# sort entry is honoured server-side.
+query stockLines(
+  $storeId: String!
+  $filter: StockLineFilterInput
+  $sort: [StockLineSortInput!]
+  $page: PaginationInput
+) {
+  stockLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on StockLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StockLineRow
+      }
+    }
+  }
+}
+
+# The grouped-by-item view (spec/stock S1 › grouped-by-item): one ItemNode per
+# item with >= 1 matching line; the item's lines come from availableBatches. The
+# same StockLineFilterInput narrows it (only item-level filters apply while
+# grouped — enforced by the list); totalCount counts items; item sort keys are
+# name / code only.
+query itemsByStockLineFilter(
+  $storeId: String!
+  $filter: StockLineFilterInput
+  $sort: [ItemSortInput!]
+  $page: PaginationInput
+) {
+  itemsByStockLineFilter(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+  ) {
+    ... on ItemConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        name
+        unitName
+        isVaccine
+        doses
+        masterLists(storeId: $storeId) {
+          id
+          name
+        }
+        availableBatches(storeId: $storeId) {
+          totalCount
+          nodes {
+            ...StockLineRow
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+# The shared activity-log surface (a record's Log tab): the activity-log entries
+# recorded against ONE record, scoped by recordId. Read-only, non-paginated (the
+# log is append-only and short per record — a generous single page). Sorted by
+# id descending = most recent first (activity-log ids are monotonic). `to`/`from`
+# carry the change detail (a scalar or a JSON blob) shown in the Details column;
+# `type` maps to a `log.*` translation key (Formatter parity: TYPE → log.<kebab>).
+fragment ActivityLog on ActivityLogNode {
+  id
+  datetime
+  type
+  to
+  from
+  user {
+    username
+  }
+}
+
+query activityLog(
+  $storeId: String!
+  $recordId: String!
+  $page: PaginationInput
+  $sort: [ActivityLogSortInput!]
+) {
+  activityLogs(
+    storeId: $storeId
+    filter: { recordId: { equalTo: $recordId } }
+    page: $page
+    sort: $sort
+  ) {
+    ... on ActivityLogConnector {
+      __typename
+      totalCount
+      nodes {
+        ...ActivityLog
+      }
+    }
+  }
+}

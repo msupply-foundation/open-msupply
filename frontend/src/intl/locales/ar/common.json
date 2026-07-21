@@ -90,6 +90,7 @@
   "button.return-lines": "معالجة إرجاع الأسطر المحددة",
   "button.save": "حفظ",
   "button.save-and-confirm-status": "تأكيد {{status}}",
+  "button.save-and-next": "حفظ، التالي",
   "button.save-log": "حفظ السجل",
   "button.scan": "فحص",
   "button.select-a-color": "اختيار اللون",

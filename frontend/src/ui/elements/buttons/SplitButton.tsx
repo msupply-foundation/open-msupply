@@ -18,6 +18,12 @@ export interface SplitButtonOption {
 interface SplitButtonProps {
   /** Leading icon for the main action. */
   icon?: JSX.Element;
+  /**
+   * Tone (ui-standards #btn-split): 'primary' (filled action blue, default) for
+   * a dominant action, or 'secondary' (outlined) for a supporting toolbar split
+   * (e.g. Export). Ghost/danger don't apply to split buttons.
+   */
+  variant?: 'primary' | 'secondary';
   options: SplitButtonOption[];
   /**
    * Controlled selected value; omit for uncontrolled (defaults to first
@@ -79,11 +85,14 @@ export const SplitButton = (props: SplitButtonProps) => {
     if (!props.menuSelectsOnly) props.onAction?.(value);
   };
 
+  const variant = () => props.variant ?? 'primary';
+
   return (
-    <div class={styles.split}>
+    <div class={styles.split} data-variant={variant()}>
       <button
         type="button"
         class={styles.main}
+        data-variant={variant()}
         data-testid={props.testId ? `${props.testId}-main` : undefined}
         onClick={() => props.onAction?.(selectedValue())}
         onPointerDown={mainRipple.onPointerDown}
@@ -98,6 +107,7 @@ export const SplitButton = (props: SplitButtonProps) => {
       <DropdownMenu.Root placement="bottom-end" gutter={4}>
         <DropdownMenu.Trigger
           class={styles.caret}
+          data-variant={variant()}
           data-testid={props.testId ? `${props.testId}-dropdown` : undefined}
           aria-label={props.menuLabel ?? 'More options'}
           onPointerDown={caretRipple.onPointerDown}
