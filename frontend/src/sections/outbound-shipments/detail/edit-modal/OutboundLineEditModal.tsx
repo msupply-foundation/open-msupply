@@ -530,12 +530,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           >
             {t('button.ok')}
           </Button>
-          {/* Rapid entry — add mode only (spec S4 § save). */}
-          <Show when={!editMode()}>
+          {/* Rapid entry — add mode only, and shown only once there's a valid
+              entry to save: HIDDEN (not disabled) until an item is chosen and a
+              change made. OK stays visible-but-disabled as the always-
+              discoverable confirm (spec S4 § footer button matrix). */}
+          <Show when={!editMode() && item() && dirty()}>
             <Button
               icon={<ArrowRightIcon />}
               data-testid="dialog-button-next-and-ok"
-              disabled={!item() || !dirty()}
               loading={saving()}
               onClick={onOkNext}
             >
