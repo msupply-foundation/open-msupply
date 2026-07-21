@@ -18,8 +18,7 @@
 # The open-msupply checkout (server + reference datafile only — the
 # suites live here) must be on `develop` — the same branch this front end
 # needs generally: the cookie-session auth contract plus the e2e datafile
-# + CLI support (both merged 2026-07-21 from the former fe-auth-contract
-# branch, since deleted).
+# + CLI support.
 #
 # Knobs (all optional):
 #   OMS_DIR           open-msupply checkout (default: ../open-msupply)
