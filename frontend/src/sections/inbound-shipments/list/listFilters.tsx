@@ -223,6 +223,12 @@ const FILTERS: Filter<InboundFilter>[] = constructFilters<InboundFilter>({
   createdOrBackdatedDatetime: null,
   colour: null,
   requisitionId: null,
+  // Custom-field property filtering (2026-07-21 schema refresh): the wire
+  // vehicle for the current app's user-facing property filter chips (a
+  // condition AST over store properties/custom fields). Dismissed only
+  // because spec/inbound-shipments S1 doesn't spec property filters yet —
+  // REVISIT with the custom-fields work, which should spec and expose it.
+  dynamicFilter: null,
   linkedInvoiceId: null,
   isProgramInvoice: null,
   purchaseOrderId: null,
