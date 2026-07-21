@@ -18,12 +18,21 @@ export type StoreContextResult = {
   stocktakeFrequency: number;
   monthlyConsumptionLookBackPeriod: number;
   monthsLeadTime: number;
+  issueInForeignCurrency: boolean;
 };
   preferences: {
   syncRecordsDisplayThreshold: number;
   manageVaccinesInDoses: boolean;
   manageVvmStatusForStock: boolean;
   allowTrackingOfStockByDonor: boolean;
+  sortByVvmStatusThenExpiry: boolean;
+  expiredStockPreventIssue: boolean;
+  expiredStockIssueThreshold: number;
+  invoiceStatusOptions: Array<"NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED">;
+  backdating: {
+  shipmentsEnabled: boolean;
+  maxDays: number;
+};
 };
   me: ({
   __typename: "UserNode";
@@ -39,5 +48,5 @@ export type StoreContextResult = {
 };
 
 export const StoreContext = {
-  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    omProgramModule\n    vaccineModule\n    monthsOverstock\n    monthsUnderstock\n    monthsItemsExpire\n    stocktakeFrequency\n    monthlyConsumptionLookBackPeriod\n    monthsLeadTime\n  }\n  preferences(storeId: $storeId) {\n    syncRecordsDisplayThreshold\n    manageVaccinesInDoses\n    manageVvmStatusForStock\n    allowTrackingOfStockByDonor\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
+  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    omProgramModule\n    vaccineModule\n    monthsOverstock\n    monthsUnderstock\n    monthsItemsExpire\n    stocktakeFrequency\n    monthlyConsumptionLookBackPeriod\n    monthsLeadTime\n    issueInForeignCurrency\n  }\n  preferences(storeId: $storeId) {\n    syncRecordsDisplayThreshold\n    manageVaccinesInDoses\n    manageVvmStatusForStock\n    allowTrackingOfStockByDonor\n    sortByVvmStatusThenExpiry\n    expiredStockPreventIssue\n    expiredStockIssueThreshold\n    invoiceStatusOptions\n    backdating {\n      shipmentsEnabled\n      maxDays\n    }\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<StoreContextResult, StoreContextVariables>;

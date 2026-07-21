@@ -14,6 +14,9 @@ query storeContext($storeId: String!) {
     stocktakeFrequency
     monthlyConsumptionLookBackPeriod
     monthsLeadTime
+    # Outbound issue-in-foreign-currency gate (spec/outbound-shipments § store
+    # preference gates) — rides on guard 3 like the other display gates.
+    issueInForeignCurrency
   }
   # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
   # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
@@ -25,6 +28,17 @@ query storeContext($storeId: String!) {
     manageVaccinesInDoses
     manageVvmStatusForStock
     allowTrackingOfStockByDonor
+    # Outbound display/affordance gates (spec/outbound-shipments § store
+    # preference gates) — same global PreferencesNode, read by the list filter,
+    # status crumbs, line editor, and allocation policy.
+    sortByVvmStatusThenExpiry
+    expiredStockPreventIssue
+    expiredStockIssueThreshold
+    invoiceStatusOptions
+    backdating {
+      shipmentsEnabled
+      maxDays
+    }
   }
   me {
     ... on UserNode {
