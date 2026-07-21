@@ -201,6 +201,15 @@
   --input-max-compact: 10rem; /* 160px — numbers/money (NumberField default) */
   --input-max-short: 25rem; /* 400px — codes, short text */
   --input-max-long: 37.5rem; /* 600px — names, descriptions */
+
+  /* --- Content measure (reading column caps for ContentContainer) ------ */
+  /* Max inline size a block of content stretches to before it stops growing
+     and centres in the page body — so a two-column form or a column of prose
+     stays readable on wide monitors instead of sprawling edge to edge. The
+     body owns the edge padding; these cap only the growth. */
+  --measure-form: 58rem; /* ~928px — a comfortable two-column form */
+  --measure-prose: 40rem; /* ~640px — single-column reading text */
+  --measure-wide: 80rem; /* ~1280px — wide dashboards / dense forms */
 }
 
 /*

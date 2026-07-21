@@ -44,6 +44,35 @@ const totalUnitsOf = (node: ItemNode): number =>
  * exclusions — e.g. after "OK & next" adds an item, the next search excludes
  * it — without recreating the search primitive.
  */
+/**
+ * Resolve one item by id — the label restore for a picker reopened with only a
+ * stored id (e.g. the report argument form re-opened from URL arguments,
+ * spec/reports S3). Reuses the search operation with an id filter; undefined
+ * when the id doesn't resolve (the picker just shows empty).
+ */
+export const fetchItemById = async (
+  storeId: string,
+  id: string
+): Promise<ItemOption | undefined> => {
+  const result = await graphqlFetch(ItemsWithStock, {
+    storeId,
+    filter: { id: { equalTo: id } },
+    page: { first: 1 },
+  });
+  if (result.kind !== 'success') return undefined;
+  const node = result.data.items.nodes[0];
+  if (!node) return undefined;
+  return {
+    id: node.id,
+    code: node.code,
+    name: node.name,
+    unitName: node.unitName,
+    totalUnits: totalUnitsOf(node),
+    isVaccine: node.isVaccine,
+    doses: node.doses,
+  };
+};
+
 export const itemPageFetcher =
   (storeId: string, excludeItemIds: () => string[], pageSize: number) =>
   async (

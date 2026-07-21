@@ -1,6 +1,7 @@
 import { createUniqueId } from 'solid-js';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
+import { t } from '../../../intl';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
@@ -19,6 +20,8 @@ export interface IsoDateRange {
 
 export interface DateRangeFieldProps {
   label: string;
+  /** Max-width cap: `short` (default) or `full` (see FieldShell). */
+  width?: 'short' | 'full';
   value?: IsoDateRange;
   /** Fired as the range is picked (start first, then end). */
   onChange?: (value: IsoDateRange) => void;
@@ -36,6 +39,8 @@ export interface DateRangeFieldProps {
   size?: 'default' | 'small';
   hideLabel?: boolean;
   id?: string;
+  /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
+  testId?: string;
 }
 
 const EMPTY: IsoDateRange = { start: null, end: null };
@@ -63,6 +68,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
   return (
     <FieldShell
       label={props.label}
+      width={props.width}
       hideLabel={props.hideLabel}
       required={props.required}
       error={props.error}
@@ -79,6 +85,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
           <Popover
             placement="bottom-start"
             triggerClass={styles.dateTrigger}
+            triggerTestId={props.testId}
             triggerProps={{
               id: id(),
               'aria-describedby': describedBy,
@@ -94,7 +101,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
                       : `${styles.dateText} ${styles.placeholder}`
                   }
                 >
-                  {display() ?? props.placeholder ?? 'Select dates'}
+                  {display() ?? props.placeholder ?? t('label.select-dates')}
                 </span>
                 <CalendarIcon class={styles.calendarIcon} />
               </>

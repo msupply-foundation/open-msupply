@@ -88,8 +88,9 @@ export type ParsedField =
       readOnly: boolean;
       required: boolean;
       /**
-       * True for `format: 'date-time'` — rendered as date-only until the
-       * date-time input role exists (spec/reports AC-R5 degradation).
+       * True for `format: 'date-time'` — rendered as the date & time input;
+       * the stored/submitted value is a UTC RFC3339 instant (AC-R5), unlike
+       * plain dates ('YYYY-MM-DD').
        */
       dateTime: boolean;
     }
@@ -114,6 +115,97 @@ export type ParsedField =
       label: string;
       nullable: boolean;
       required: boolean;
+    }
+  /**
+   * The PROGRAM picker (AC-R12; distinct from `program`, the patient-enrolment
+   * registry picker): options are the store's visible programs; the submitted
+   * value is the program's own id, with the elmisCode / fetchAllPrograms
+   * companion writes (contract "Arguments").
+   */
+  | {
+      kind: 'programSearch';
+      key: string;
+      label: string;
+      nullable: boolean;
+      required: boolean;
+      /** uiSchema `options.programType === 'immunisation'` — filter the list. */
+      immunisationOnly: boolean;
+      /** uiSchema `options.allProgramsOption` — append the All-programs entry. */
+      allPrograms: boolean;
+      /** uiSchema `options.clearable` (default false). */
+      clearable: boolean;
+    }
+  /**
+   * The party picker (AC-R13): options are the store's visible names of the
+   * schema-named role, searched by code or name; the submitted value is the
+   * party's id — no companion writes. A NameSearch whose schema names no role
+   * parses as `unsupported` (the captured client rendered nothing; we keep
+   * the filter visible — contract "Arguments").
+   */
+  | {
+      kind: 'nameSearch';
+      key: string;
+      label: string;
+      nullable: boolean;
+      required: boolean;
+      /** uiSchema `options.nameType` — which party role the options carry. */
+      role: 'customer' | 'supplier';
+    }
+  /**
+   * The stock-item picker (AC-R14): a pick writes the scoped key = the item's
+   * id PLUS the hard-coded sibling `itemName` — shipped schemas declare
+   * `itemName` with no control; templates print the side-written name
+   * (contract "Arguments").
+   */
+  | {
+      kind: 'itemSearch';
+      key: string;
+      label: string;
+      nullable: boolean;
+      required: boolean;
+    }
+  /**
+   * The adjustment-reason picker (AC-R15): the active positive/negative
+   * inventory-adjustment reasons only (wastage/return types excluded); the
+   * submitted value is the reason's id.
+   */
+  | {
+      kind: 'reasonOption';
+      key: string;
+      label: string;
+      nullable: boolean;
+      required: boolean;
+    }
+  /**
+   * The period picker (AC-R16). What a pick writes forks on the SCOPED key —
+   * see `periodSearchWrites`. With findByProgram the option list follows the
+   * form's own root `programId` (disabled until set, cleared on change).
+   */
+  | {
+      kind: 'periodSearch';
+      key: string;
+      label: string;
+      nullable: boolean;
+      required: boolean;
+      /** uiSchema `options.findByProgram` — narrow by the form's programId. */
+      findByProgram: boolean;
+      /** uiSchema `options.clearable` (default false). */
+      clearable: boolean;
+    }
+  /**
+   * The schedule cascade (AC-R17): program → schedule → period plus editable
+   * from/to dates. Ignores its scoped key entirely — writes five flat keys
+   * (see `scheduleCascadeWrites`). `requiredKeys` is the schema's required
+   * list restricted to those five keys: the cascade renders the fields that
+   * write them, so they gate OK (AC-R7) even though they sit outside the
+   * element's own scope (the Congo quarterly requisition marks
+   * after/before/programId required this way).
+   */
+  | {
+      kind: 'scheduleForm';
+      key: string;
+      label: string;
+      requiredKeys: string[];
     }
   // Any control the interpreter doesn't render — an unknown element type, or a
   // Control whose jsonSchema property is missing. The original element type is
@@ -228,6 +320,15 @@ const enumOptions = (
   const values = Array.isArray(prop.enum) ? prop.enum : [];
   return values.map(value => ({ value: String(value), label: String(value) }));
 };
+
+/** The five flat keys the schedule cascade writes (AC-R17). */
+export const SCHEDULE_CASCADE_KEYS = [
+  'programId',
+  'scheduleId',
+  'periodId',
+  'after',
+  'before',
+] as const;
 
 /**
  * Parse a report's argument schema into an ordered list of ParsedFields —
@@ -351,9 +452,75 @@ export const parseArgumentSchema = (raw: {
           required: isRequired,
         });
         break;
-      // NameSearch, ItemSearch, ReasonOptionSearch, ScheduleForm,
-      // ProgramSearch, PeriodSearch, and any future type are not yet
-      // rendered — their picker roles are backlog registry rows
+      case 'ProgramSearch':
+        fields.push({
+          kind: 'programSearch',
+          key,
+          label,
+          nullable,
+          required: isRequired,
+          immunisationOnly: options?.programType === 'immunisation',
+          allPrograms: options?.allProgramsOption === true,
+          clearable: options?.clearable === true,
+        });
+        break;
+      case 'NameSearch': {
+        // Renderable only with a party role; a role-less NameSearch degrades
+        // to the visible placeholder (contract "Arguments" — the captured
+        // client rendered nothing at all).
+        const role = options?.nameType;
+        if (role === 'customer' || role === 'supplier') {
+          fields.push({
+            kind: 'nameSearch',
+            key,
+            label,
+            nullable,
+            required: isRequired,
+            role,
+          });
+        } else {
+          fields.push({ kind: 'unsupported', key, label, elementType: type });
+        }
+        break;
+      }
+      case 'ItemSearch':
+        fields.push({
+          kind: 'itemSearch',
+          key,
+          label,
+          nullable,
+          required: isRequired,
+        });
+        break;
+      case 'ReasonOptionSearch':
+        fields.push({
+          kind: 'reasonOption',
+          key,
+          label,
+          nullable,
+          required: isRequired,
+        });
+        break;
+      case 'PeriodSearch':
+        fields.push({
+          kind: 'periodSearch',
+          key,
+          label,
+          nullable,
+          required: isRequired,
+          findByProgram: options?.findByProgram === true,
+          clearable: options?.clearable === true,
+        });
+        break;
+      case 'ScheduleForm':
+        fields.push({
+          kind: 'scheduleForm',
+          key,
+          label,
+          requiredKeys: SCHEDULE_CASCADE_KEYS.filter(k => required.has(k)),
+        });
+        break;
+      // Any future/unknown type degrades to the disabled placeholder
       // (spec/reports S3). Preserve the type name for the unsupported control.
       default:
         fields.push({ kind: 'unsupported', key, label, elementType: type });
@@ -369,6 +536,16 @@ export const parseArgumentSchema = (raw: {
  * preference keys are seeded from prefs — schema fields without a default are
  * left absent (never invented).
  */
+/**
+ * The arguments a report with NO schema is generated with (AC-R11): the
+ * user's IANA timezone alone — shipped templates read `arguments.timezone`
+ * unconditionally, but the preference values travel only through the form
+ * (the captured client sends `{ timezone }` alone on this path).
+ */
+export const timezoneArgument = (): ReportArgs => ({
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+});
+
 export const seedDefaults = (
   fields: ParsedField[],
   prefs: SeedPreferences
@@ -417,10 +594,94 @@ const toDatetimeFilter = (value: unknown): ReportArgs | undefined => {
   const { start, end } = value as { start?: unknown; end?: unknown };
   const filter: ReportArgs = {};
   if (typeof start === 'string' && start !== '')
-    filter.afterOrEqualTo = new Date(`${start}T00:00:00`).toISOString();
+    filter.afterOrEqualTo = dayStartInstant(start);
   if (typeof end === 'string' && end !== '')
-    filter.beforeOrEqualTo = new Date(`${end}T23:59:59.999`).toISOString();
+    filter.beforeOrEqualTo = dayEndInstant(end);
   return Object.keys(filter).length > 0 ? filter : undefined;
+};
+
+/**
+ * A calendar date's first instant in the viewer's zone, as an RFC3339 UTC
+ * instant — the shared start-of-day half of the date widening convention
+ * (AC-R9/R16/R17; the captured client parsed bare dates at UTC midnight —
+ * normalized here, see the contract).
+ */
+export const dayStartInstant = (date: string): string =>
+  new Date(`${date}T00:00:00`).toISOString();
+
+/**
+ * A calendar date's last instant (23:59:59.999 local) as an RFC3339 UTC
+ * instant — the inclusive end-of-day half of the widening convention (the
+ * captured client's hour-24 overflow normalized away, see the contract).
+ */
+export const dayEndInstant = (date: string): string =>
+  new Date(`${date}T23:59:59.999`).toISOString();
+
+/**
+ * An RFC3339 instant → the viewer's local calendar date (`yyyy-mm-dd`), for
+ * date fields that EDIT an instant-valued argument (the schedule cascade's
+ * from/to bounds). '' for absent or garbled values.
+ */
+export const instantToLocalDate = (value: unknown): string => {
+  if (typeof value !== 'string' || value === '') return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+};
+
+/**
+ * The period picker's writes (AC-R16, contract "Arguments") as a key → value
+ * map (undefined = remove the key). Forks on the SCOPED key: `periodId` gets
+ * the period's id; any other key gets the period's span — its start instant
+ * at the scoped key plus the hard-coded sibling `before` (end-of-day
+ * widened). Clearing removes the scoped key and `before` in BOTH modes (the
+ * captured client's exact behaviour).
+ */
+export const periodSearchWrites = (
+  key: string,
+  period: { id: string; startDate: string; endDate: string } | null
+): ReportArgs => {
+  if (!period) return { [key]: undefined, before: undefined };
+  if (key === 'periodId') return { [key]: period.id };
+  return {
+    [key]: dayStartInstant(period.startDate),
+    before: dayEndInstant(period.endDate),
+  };
+};
+
+/**
+ * The schedule cascade's writes (AC-R17, contract "Arguments"): five FLAT
+ * keys regardless of the control's scoped key, each step wiping everything
+ * downstream (undefined = remove). A period pick also fills the date bounds
+ * with the period's span (day-widened); the date fields' own edits write
+ * `after` / `before` directly.
+ */
+export const scheduleCascadeWrites = {
+  program: (programId: string | undefined): ReportArgs => ({
+    programId,
+    scheduleId: undefined,
+    periodId: undefined,
+    after: undefined,
+    before: undefined,
+  }),
+  schedule: (scheduleId: string | undefined): ReportArgs => ({
+    scheduleId,
+    periodId: undefined,
+    after: undefined,
+    before: undefined,
+  }),
+  period: (
+    period: { id: string; startDate: string; endDate: string } | null
+  ): ReportArgs =>
+    period
+      ? {
+          periodId: period.id,
+          after: dayStartInstant(period.startDate),
+          before: dayEndInstant(period.endDate),
+        }
+      : { periodId: undefined, after: undefined, before: undefined },
 };
 
 /**

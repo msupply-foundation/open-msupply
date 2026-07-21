@@ -1,18 +1,23 @@
 /*
  * Spec-build coverage report (report-only — always exits 0).
  *
- * After a nightly spec build, answers "did a build actually happen?" per
- * vertical, in markdown on stdout (the workflow appends it to the job
- * summary). For every vertical in spec/README.md → Verticals it reports
- * whether src/sections/<vertical>/ exists on HEAD, and — because the wipe
- * commit leaves the deleted files one git command away — whether the tree is
+ * After an on-demand spec build, answers "did a build actually happen?" for
+ * the requested verticals, in markdown on stdout (the workflow appends it to
+ * the job summary). For every requested vertical it reports whether
+ * src/sections/<vertical>/ exists on HEAD, and — because the wipe commit
+ * leaves the deleted files one git command away — whether the tree is
  * byte-identical to the pre-wipe baseline, which means it was restored from
  * history rather than regenerated from spec (the run-29715356539 failure
- * mode). The reference implementation is exempt: the wipe keeps it by design.
- * Also flags a missing BUILD_REPORT.md (the spec-build skill's Done bar).
+ * mode). The reference implementation is exempt: the wipe keeps it by
+ * design. Verticals in spec/README.md that were NOT requested are expected
+ * to be untouched by this run and are reported informationally, never as a
+ * failure. Also flags a missing BUILD_REPORT.md (the spec-build skill's Done
+ * bar).
  *
- * Usage: node scripts/spec-build-coverage.mjs <baseline-sha>
- *   baseline-sha — pre-wipe main (the workflow's source_sha output).
+ * Usage: node scripts/spec-build-coverage.mjs <baseline-sha> <requested-csv>
+ *   baseline-sha  — pre-wipe main (the workflow's source_sha output).
+ *   requested-csv — comma-separated verticals the run was scoped to (the
+ *                   workflow's steps.verticals.outputs.csv).
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -22,6 +27,12 @@ if (!baseline) {
   console.log('spec coverage: no baseline SHA given — skipping report.');
   process.exit(0);
 }
+const requested = new Set(
+  (process.argv[3] ?? '')
+    .split(',')
+    .map(v => v.trim())
+    .filter(Boolean)
+);
 
 // The "## Verticals" section of spec/README.md, bullets like
 // "- [`stocktakes/`](./stocktakes/) — … **(reference implementation)**".
@@ -69,6 +80,8 @@ for (const { name, isReference } of verticals) {
     verdict = present
       ? 'reference implementation — kept, not a rebuild target'
       : '❌ missing — the wipe must keep the reference implementation';
+  } else if (!requested.has(name)) {
+    verdict = 'out of scope — untouched by this run';
   } else if (!present) {
     verdict = '❌ not built';
   } else if (identicalToBaseline(name)) {
@@ -89,6 +102,6 @@ console.log(
 );
 if (failures) {
   console.log(
-    `\n⚠️ ${failures} of ${verticals.length} verticals did not get an honest rebuild. This report never fails the job — triage via the branch and the spec-build-claude-transcript artifact.`
+    `\n⚠️ ${failures} of ${requested.size} requested verticals did not get an honest rebuild. This report never fails the job — triage via the branch and the spec-build-claude-transcript artifact.`
   );
 }

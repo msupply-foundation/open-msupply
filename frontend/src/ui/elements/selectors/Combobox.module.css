@@ -96,6 +96,13 @@
   color: var(--text-body);
 }
 
+/* Disabled field: the clear button stays visible but dimmed and inert (the
+   field is read-only, so its value can't be cleared). */
+.clear:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .toggle {
   padding-inline-end: var(--space-3);
 }

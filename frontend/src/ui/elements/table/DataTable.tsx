@@ -685,6 +685,8 @@ export function DataTable<T, K extends string, G extends string = never>(
                           row={row}
                           enableSelection={props.enableSelection ?? false}
                           onRowClick={props.onRowClick}
+                          rowDimmed={props.rowDimmed}
+                          rowTone={props.rowTone}
                           pinnedStyle={pinnedStyle}
                           leadingPinnedStyle={leadingPinnedStyle}
                           cellVisible={cell =>

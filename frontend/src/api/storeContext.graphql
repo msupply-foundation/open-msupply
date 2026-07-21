@@ -4,6 +4,10 @@ query storeContext($storeId: String!) {
   storePreferences(storeId: $storeId) {
     id
     packToOne
+    # Inbound-shipment gates (spec/inbound-shipments › store-preference gates):
+    # foreign-currency issuing and manual internal-order linking.
+    issueInForeignCurrency
+    manuallyLinkInternalOrderToInboundShipment
     omProgramModule
     vaccineModule
     # Threshold defaults the reports argument form seeds (spec/reports/rules
@@ -25,6 +29,21 @@ query storeContext($storeId: String!) {
     manageVaccinesInDoses
     manageVvmStatusForStock
     allowTrackingOfStockByDonor
+    # Outbound display/affordance gates (spec/outbound-shipments § store
+    # preference gates) — same global PreferencesNode, read by the list filter,
+    # status crumbs, line editor, and allocation policy.
+    sortByVvmStatusThenExpiry
+    expiredStockPreventIssue
+    expiredStockIssueThreshold
+    invoiceStatusOptions
+    # Inbound-shipment gates (spec/inbound-shipments): procurement (from-PO
+    # creation option), authorisation lock, and the backdating window.
+    useProcurementFunctionality
+    externalInboundShipmentLinesMustBeAuthorised
+    backdating {
+      shipmentsEnabled
+      maxDays
+    }
   }
   me {
     ... on UserNode {

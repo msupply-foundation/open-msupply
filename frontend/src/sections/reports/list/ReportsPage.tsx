@@ -10,10 +10,11 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { CardGrid } from '../../../ui/layout/CardGrid/CardGrid';
+import { DashboardCard } from '../../../ui/elements/dashboard/DashboardCard';
 import { WidgetCard } from '../../../ui/elements/display/WidgetCard';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { Text } from '../../../ui/elements/typography/Text';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { SidePanelSection } from '../../../ui/layout/SidePanel/SidePanel';
 import {
@@ -112,28 +113,6 @@ const stackStyle = {
   display: 'flex',
   'flex-direction': 'column',
   gap: 'var(--space-3)',
-} as const;
-
-// The category-heading icon chip — same look as the widget card's chip
-// (tinted rounded square, primary-coloured glyph), sitting beside the
-// heading text (spec S1: the heading carries the icon, the cards none).
-const headingRowStyle = {
-  display: 'flex',
-  'align-items': 'center',
-  gap: 'var(--space-3)',
-} as const;
-
-const iconChipStyle = {
-  display: 'inline-flex',
-  'flex-shrink': 0,
-  'align-items': 'center',
-  'justify-content': 'center',
-  'inline-size': '2.5rem',
-  'block-size': '2.5rem',
-  'border-radius': 'var(--radius-md)',
-  background: 'var(--bg-icon)',
-  color: 'var(--primary-main)',
-  'font-size': '1.375rem',
 } as const;
 
 const ReportsPage: Component = () => {
@@ -289,45 +268,29 @@ const ReportsPage: Component = () => {
           </Show>
         }
       >
-        <div
-          style={{
-            display: 'flex',
-            'flex-direction': 'column',
-            gap: 'var(--space-5)',
-          }}
-        >
+        {/* One DashboardCard per category in the generic Card grid, mirroring
+            the landing dashboard (spec S1 layout): the category's captured
+            icon chip on the card title, its iconless report cards stacked as
+            full-width rows inside. */}
+        <CardGrid>
           <For each={visible()}>
             {group => (
-              <section style={stackStyle}>
-                <div style={headingRowStyle}>
-                  <span style={iconChipStyle} aria-hidden="true">
-                    {group.def.icon()}
-                  </span>
-                  <Text variant="heading" level={2}>
-                    {t(group.def.titleKey)}
-                  </Text>
-                </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    'grid-template-columns':
-                      'repeat(auto-fit, minmax(min(100%, 16rem), 1fr))',
-                    gap: 'var(--space-4)',
-                  }}
-                >
-                  <For each={group.nodes}>
-                    {report => (
-                      <WidgetCard
-                        title={reportLabel(report)}
-                        href={`/${params.storeId}/reports/${report.id}`}
-                      />
-                    )}
-                  </For>
-                </div>
-              </section>
+              <DashboardCard
+                title={t(group.def.titleKey)}
+                icon={group.def.icon()}
+              >
+                <For each={group.nodes}>
+                  {report => (
+                    <WidgetCard
+                      title={reportLabel(report)}
+                      href={`/${params.storeId}/reports/${report.id}`}
+                    />
+                  )}
+                </For>
+              </DashboardCard>
             )}
           </For>
-        </div>
+        </CardGrid>
       </Show>
     </Page>
   );
