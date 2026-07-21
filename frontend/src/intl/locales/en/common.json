@@ -2844,6 +2844,8 @@
   "outbound.edit.warn-on-hold": "Unusable batches (on hold, expired or unusable VVM status) were skipped.",
   "outbound.edit.warn-over-allocated": "Whole packs only — {{ count }} more unit(s) than requested will be issued.",
   "outbound.edit.warn-placeholder": "Quantity beyond available stock was added as a placeholder.",
+  "outbound.edit.placeholder-notice": "Not enough stock is available to allocate all {{ requested }} units. A placeholder has been added for {{ placeholder }} units.",
+  "outbound.edit.used-in-auto-allocation": "Will be used in auto allocation",
   "outbound.edit.zero-confirm": "There is no allocated quantity for this item! Click OK again to confirm.",
   "outbound.empty": "There are no outbound shipments to display.",
   "outbound.export.action": "Export CSV",

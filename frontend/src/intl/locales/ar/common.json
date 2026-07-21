@@ -1723,6 +1723,8 @@
   "outbound.edit.warn-on-hold": "تم تخطي دفعات غير صالحة (معلّقة أو منتهية أو بحالة VVM غير صالحة).",
   "outbound.edit.warn-over-allocated": "عبوات كاملة فقط — سيتم صرف {{ count }} وحدة/وحدات زيادة عن المطلوب.",
   "outbound.edit.warn-placeholder": "أُضيفت الكمية الزائدة عن المخزون المتاح كحجز.",
+  "outbound.edit.placeholder-notice": "لا يوجد مخزون كافٍ لتخصيص كل الوحدات البالغة {{ requested }}. تمت إضافة حجز لـ {{ placeholder }} وحدة.",
+  "outbound.edit.used-in-auto-allocation": "سيُستخدم في التوزيع التلقائي",
   "outbound.edit.zero-confirm": "لا توجد كمية مخصصة لهذا العنصر! انقر فوق ”موافق“ مرة أخرى للتأكيد.",
   "outbound.empty": "لا توجد تسليمات خارجة لعرضها.",
   "outbound.export.action": "تصدير CSV",

@@ -22,3 +22,10 @@
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
+
+/* The "placeholder added" info notice sits to the right of the Issue /
+   Allocate-in fields, filling the rest of that row (spec S4). */
+.placeholderNotice {
+  flex: 1;
+  align-self: center;
+}
