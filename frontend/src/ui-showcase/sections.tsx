@@ -18,6 +18,7 @@ import { SyncShowcase } from './SyncShowcase';
 import { TableShowcase } from './TableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
+import { AccordionShowcase } from './AccordionShowcase';
 import { ContentFooterShowcase } from './ContentFooterShowcase';
 import { SidePanelShowcase } from './SidePanelShowcase';
 import { StatisticsShowcase } from './StatisticsShowcase';
@@ -99,6 +100,12 @@ export const sections: SectionDef[] = [
     id: 'tab-bar',
     label: 'Tab bar',
     component: TabBarShowcase,
+    category: 'components',
+  },
+  {
+    id: 'accordion',
+    label: 'Accordion',
+    component: AccordionShowcase,
     category: 'components',
   },
   {
