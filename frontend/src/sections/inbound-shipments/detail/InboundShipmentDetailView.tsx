@@ -660,13 +660,17 @@ const InboundShipmentDetailView: Component = () => {
               </TabPanel>
               <Show when={isExternal()}>
                 <TabPanel value="financial">
-                  <InboundFinancialPanel rows={rows()} />
+                  <InboundFinancialPanel node={node()} rows={rows()} />
                 </TabPanel>
                 <TabPanel value="currency">
-                  <InboundCurrencyPanel node={node()} />
+                  <InboundCurrencyPanel
+                    node={node()}
+                    disabled={isDisabled()}
+                    onSave={saveField}
+                  />
                 </TabPanel>
                 <TabPanel value="delivery">
-                  <InboundDeliveryPanel rows={rows()} />
+                  <InboundDeliveryPanel node={node()} rows={rows()} />
                 </TabPanel>
               </Show>
               <TabPanel value="documents">

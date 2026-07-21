@@ -10,6 +10,7 @@ import {
 import type { JSX } from 'solid-js';
 import {
   createSolidTable,
+  flexRender,
   functionalUpdate,
   getCoreRowModel,
   type Column as TanColumn,
@@ -318,6 +319,13 @@ export function DataTable<T, K extends string, G extends string = never>(
     if (!props.tabsAndCardGroups || cardGroup === undefined) return true;
     return membershipInTab(col?.tabsAndCardGroups, cardGroup);
   };
+
+  // Does any active-tab column declare a `footer`? Drives whether the footer
+  // band renders at all — a table with no summed columns has no <tfoot>.
+  const hasFooter = (): boolean =>
+    props.columns.some(
+      col => col.footer !== undefined && columnInActiveTab(col)
+    );
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
@@ -709,6 +717,50 @@ export function DataTable<T, K extends string, G extends string = never>(
                   </tr>
                 </Show>
               </tbody>
+              {/* Footer band (table view only) — rendered iff a column declares
+                  a `footer` (e.g. a summed total, see the inbound Financial
+                  tab). Mirrors the header row's structure: a leading blank cell
+                  under the selection column, then one cell per active-tab
+                  column carrying its own align. The `footer` render fn owns the
+                  content (a string, or flexRender of a component). */}
+              <Show when={viewMode() === 'table' && hasFooter()}>
+                <tfoot>
+                  <For each={table.getFooterGroups()}>
+                    {footerGroup => (
+                      <tr>
+                        <Show when={props.enableSelection}>
+                          <td
+                            class={`${styles.tf} ${styles.selectCell}`}
+                            aria-hidden="true"
+                          />
+                        </Show>
+                        <For each={footerGroup.headers}>
+                          {header => (
+                            <Show
+                              when={columnInActiveTab(
+                                header.column.columnDef as {
+                                  tabsAndCardGroups?: Membership;
+                                }
+                              )}
+                            >
+                              <td
+                                class={styles.tf}
+                                data-align={header.column.columnDef.meta?.align}
+                                data-testid={`footer-${header.column.id}`}
+                              >
+                                {flexRender(
+                                  header.column.columnDef.footer,
+                                  header.getContext()
+                                )}
+                              </td>
+                            </Show>
+                          )}
+                        </For>
+                      </tr>
+                    )}
+                  </For>
+                </tfoot>
+              </Show>
             </table>
           </Show>
         </div>

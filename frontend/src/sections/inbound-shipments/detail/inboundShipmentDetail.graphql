@@ -64,6 +64,12 @@ fragment InboundInfo on InvoiceNode {
     id
     number
     reference
+    orderTotalAfterDiscount
+    currency {
+      id
+      code
+      isHomeCurrency
+    }
   }
   documents {
     nodes {
@@ -166,9 +172,11 @@ fragment InboundLine on InvoiceLineNode {
     lineNumber
     requestedPackSize
     requestedNumberOfUnits
+    adjustedNumberOfUnits
     shippedNumberOfUnits
     inTransitNumberOfUnits
     receivedNumberOfUnits
+    pricePerPackAfterDiscount
   }
 }
 
