@@ -4,6 +4,13 @@ import { CheckboxButton } from '../ui/elements/buttons/CheckboxButton';
 import { IconButton } from '../ui/elements/buttons/IconButton';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import {
+  OkButton,
+  CancelButton,
+  SaveButton,
+  OkAndNextButton,
+  SaveAndNextButton,
+} from '../ui/elements/buttons/StandardButtons';
+import {
   PlusCircleIcon,
   DownloadIcon,
   SaveIcon,
@@ -46,9 +53,52 @@ export const ButtonsShowcase = () => {
     null
   );
   const [onHold, setOnHold] = createSignal(false);
+  const [lastStandard, setLastStandard] = createSignal<string | null>(null);
 
   return (
     <div class={styles.stack}>
+      <Card
+        title="Standard buttons — pre-composed for common actions"
+        lead={
+          <>
+            The handful of actions that recur in nearly every dialog and form,
+            wrapped once so you don't re-decide the tone or label each time:{' '}
+            <code>&lt;OkButton&gt;</code>, <code>&lt;CancelButton&gt;</code>,{' '}
+            <code>&lt;SaveButton&gt;</code>,{' '}
+            <code>&lt;OkAndNextButton&gt;</code>, and{' '}
+            <code>&lt;SaveAndNextButton&gt;</code>. Each fixes its own{' '}
+            <strong>variant + label</strong> (labels come from the shared intl
+            catalog, so they translate); everything else a <code>Button</code>{' '}
+            takes — <code>onClick</code>, <code>disabled</code>,{' '}
+            <code>loading</code>, <code>size</code> — passes through. Reach for
+            these first; drop to the raw variants below only when you need a
+            different label or tone. <code>Save</code> carries the icon and{' '}
+            <strong>collapses to icon-only on phones</strong> — resize below
+            768px to see it.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <OkButton onClick={() => setLastStandard('OK')} />
+          <CancelButton onClick={() => setLastStandard('Cancel')} />
+          <SaveButton onClick={() => setLastStandard('Save')} />
+          <OkAndNextButton onClick={() => setLastStandard('OK & next')} />
+          <SaveAndNextButton onClick={() => setLastStandard('Save & next')} />
+        </div>
+        <p class={styles.note}>
+          <Show
+            when={lastStandard()}
+            fallback="Click one of the standard buttons…"
+          >
+            {value => (
+              <>
+                You clicked <strong>{value()}</strong>.
+              </>
+            )}
+          </Show>
+        </p>
+      </Card>
+
       <Card
         title="Primary — the main action"
         lead={

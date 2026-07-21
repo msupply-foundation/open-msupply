@@ -157,6 +157,7 @@
   "button.save": "Save",
   "button.save-and-close": "Save and close",
   "button.save-and-confirm-status": "Confirm {{status}}",
+  "button.save-and-next": "Save & next",
   "button.save-log": "Save log",
   "button.save-progress": "Save progress",
   "button.scan": "Scan",

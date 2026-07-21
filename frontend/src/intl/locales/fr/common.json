@@ -148,6 +148,7 @@
   "button.save": "Sauvegarder",
   "button.save-and-close": "Sauvegarder et fermer",
   "button.save-and-confirm-status": "Confirmer {{status}}",
+  "button.save-and-next": "Sauvegarder & Suivant",
   "button.save-log": "Sauvegarder le journal",
   "button.save-progress": "Sauvegarder la progression",
   "button.scan": "Scanner",
