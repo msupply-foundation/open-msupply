@@ -26,7 +26,11 @@ import {
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
+import {
+  SidebarIcon,
+  MinusCircleIcon,
+  PlusCircleIcon,
+} from '../../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -53,6 +57,7 @@ import {
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { StocktakeLogPanel } from './log/StocktakeLogPanel';
 import {
   DeleteLinesAction,
@@ -156,10 +161,15 @@ const StocktakeDetailView: Component = () => {
   };
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  // The details panel is an overlay — it starts CLOSED (like OMS) and the
-  // header info button opens it; its own close button (top inline-end) or the
-  // toggle closes it.
-  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
+  // Details-panel open state: responsive default (open on very wide viewports —
+  // ≥1536px, the captured app's widest breakpoint — closed otherwise), with a
+  // user's explicit open/close choice persisted across reloads (spec
+  // ui-standards/layout.md → page regions). Shared helper so every spec-built
+  // detail view inherits the same behaviour, rather than a bare createSignal.
+  // The header's More button opens it; the panel's own close button (top
+  // inline-end) closes it — both go through setSidePanelOpen, so both count as
+  // an explicit choice.
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   // Per-line errors from the last failed finalise/bulk action, keyed by line
   // id → the error's __typename (the shared LineErrors shape, kept raw). The
   // Snapshot column renders it inline; cleared when a fresh page lands.
@@ -743,10 +753,15 @@ const StocktakeDetailView: Component = () => {
                       stocktakeId={node().id}
                       sort={reportSort()}
                     />
+                    {/* More — the closed-panel reopen affordance, at the end of
+                        the app-bar page-action cluster (spec ui-standards/
+                        layout.md → page regions). Shows ONLY while the panel is
+                        closed; uses the sidebar glyph (not the info icon), and
+                        reopening counts as the user's explicit open choice. */}
                     <Show when={!sidePanelOpen()}>
                       <Button
                         variant="secondary"
-                        icon={<InfoIcon />}
+                        icon={<SidebarIcon />}
                         data-testid="open-detail-panel-button"
                         onClick={() => setSidePanelOpen(true)}
                       >
