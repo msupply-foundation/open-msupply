@@ -9,12 +9,13 @@
  * named after a colour — CLAUDE.md):
  *   primary   — filled action blue (--secondary-main); the one main action.
  *   secondary — outlined; supporting actions. Hover recolours edge + text.
- *   ghost     — text-only brand orange (--primary-main); inline/low-priority.
+ *   ghost     — text-only action blue (--secondary-main); inline/low-priority
+ *               (ui-standards: ghost is blue, matching primary's tone).
  *   danger    — filled brand orange (--primary-main → --primary-dark on hover),
  *               matching the standard's literal CSS. Per Carl (2026-07-21) this
  *               is a "be careful with this" accent, NOT a hard destructive
- *               error-red; the ghost (text) and danger (fill) reuse the same
- *               brand tone but read differently by weight.
+ *               error-red; it's the one orange-toned variant (so the one with a
+ *               matching orange focus ring).
  *
  * Two sizes (medium 36px default, small 28px). At <=1023px (breakpoints
  * navOverlay) medium grows to the 48px WCAG 2.5.5 touch target; small is the
@@ -71,10 +72,10 @@
 }
 
 /* Focus — a 3px ring offset off the button (ui-standards #btn-states). The ring
-   matches the button's own tone: the action blue is the DEFAULT (primary +
-   secondary), and the orange-toned ghost + danger override it below. outline
-   (not box-shadow) so overflow:hidden can't clip it; kept before the hover
-   rules so specificity ascends. */
+   matches the button's own tone: action blue is the DEFAULT (primary, secondary
+   + ghost — all blue-toned), and the orange-filled danger overrides it below.
+   outline (not box-shadow) so overflow:hidden can't clip it; kept before the
+   hover rules so specificity ascends. */
 .button:focus-visible {
   outline: 3px solid var(--secondary-main);
   outline-offset: 0.125rem;
@@ -157,8 +158,8 @@
 
 .button[data-variant='ghost'] {
   background: transparent;
-  color: var(--primary-main);
-  --ripple-color: color-mix(in srgb, var(--primary-main) 22%, transparent);
+  color: var(--secondary-main);
+  --ripple-color: color-mix(in srgb, var(--secondary-main) 22%, transparent);
 }
 
 .button[data-variant='danger'] {
@@ -167,24 +168,23 @@
   --ripple-color: color-mix(in srgb, var(--primary-contrast) 35%, transparent);
 }
 
-/* The orange-toned variants take a brand-orange focus ring so it reads as part
-   of the same button (Carl 2026-07-21) — a deliberate step past the standard,
-   which shows a uniform blue ring. Higher specificity than the base focus and
-   placed after it. */
-.button[data-variant='ghost']:focus-visible,
+/* Danger — the one orange-filled variant — takes a brand-orange focus ring so
+   it reads as part of the same button (Carl 2026-07-21), overriding the base
+   blue. Ghost is blue-toned (ui-standards), so it keeps the base blue ring.
+   Higher specificity than the base focus and placed after it. */
 .button[data-variant='danger']:focus-visible {
   outline-color: var(--primary-main);
 }
 
-/* Ghost hover tint — bare token on a pseudo-overlay driven by opacity, NOT
-   color-mix (older fleet WebViews drop color-mix and the marker vanishes —
-   CLAUDE.md / kdd/ui-styling). Clipped to the radius by the button's overflow. */
+/* Ghost hover tint (action blue) — bare token on a pseudo-overlay driven by
+   opacity, NOT color-mix (older fleet WebViews drop color-mix and the marker
+   vanishes — CLAUDE.md / kdd/ui-styling). Clipped to the radius by overflow. */
 .button[data-variant='ghost']::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: var(--primary-main);
+  background: var(--secondary-main);
   opacity: 0;
   transition: opacity 140ms ease;
   pointer-events: none;

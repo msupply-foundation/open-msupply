@@ -95,14 +95,16 @@ Raw source: `#btn-variants`, `#btn-sizes`, `#btn-layout`, `#btn-states` (fetched
 
 **Adopted in full and verified** by rendering the showcase (`#/showcase/buttons`) in light + dark, at desktop and ≤1023px.
 
-**Danger tone (resolved 2026-07-21, Carl):** the `danger` variant is the brand orange (`--primary-main` → `--primary-dark` on hover), matching the standard's literal CSS (`#e95c30`/`#c43c11`). Per Carl it's a "be careful with this" accent, _not_ a hard destructive error-red — ghost (text) and danger (fill) share the brand tone but read differently by weight. (An earlier pass mapped danger to `--error-main` and added an `--error-dark` token; both reverted.)
+**Corrected 2026-07-22 — ghost is blue, not orange.** The standard was updated after the 2026-07-21 pass: `.btn-ghost` now uses `--highlight-blue` (#3E7BFA) for both text and the 8% hover tint (was `--tmf-orange`). Re-fetched the live spec to confirm (our cached copy was stale). Flipped ghost to `--secondary-main` — text, hover-tint `::before`, ripple — **and its focus ring** (per the "focus matches the button tone" rule below, ghost now takes the base blue ring). **`danger` is now the sole orange-toned variant** (and the only one with an orange focus ring). The decision-table rows and diff below are left as the 2026-07-21 record; this note is the current truth.
+
+**Danger tone (resolved 2026-07-21, Carl):** the `danger` variant is the brand orange (`--primary-main` → `--primary-dark` on hover), matching the standard's literal CSS (`#e95c30`/`#c43c11`). Per Carl it's a "be careful with this" accent, _not_ a hard destructive error-red. (An earlier pass mapped danger to `--error-main` and added an `--error-dark` token; both reverted.)
 
 **Deliberate deviations from the raw standard:**
 
-- **Near-hues resolve to our tokens, not the standard's exact hexes** — ghost/danger orange `--primary-main` (#e95c30) vs `#F26532`; secondary edge `--input-border` (#e4e4e7) vs `#E0E0E0`; secondary text `--button-text` vs charcoal `#2F3D45`. Reconciling the exact palette belongs to a colour/Typography pass, not buttons.
+- **Near-hues resolve to our tokens, not the standard's exact hexes** — danger orange `--primary-main` (#e95c30) vs `#F26532`; secondary edge `--input-border` (#e4e4e7) vs `#E0E0E0`; secondary text `--button-text` vs charcoal `#2F3D45`. Reconciling the exact palette belongs to a colour/Typography pass, not buttons.
 - **Filled-hover elevation is a neutral `--shadow-2`**, where the standard uses a colour-tinted drop shadow — cosmetic.
 - **Loading ≠ disabled-looking (Carl 2026-07-21):** a `loading` button stays `disabled` (click/key-blocked, `aria-busy`) but renders at full opacity with a progress cursor — busy, not dimmed. Disabled (non-loading) still dims to 38%.
-- **Focus ring follows the variant tone (Carl 2026-07-21):** the standard shows a uniform blue focus ring, but a blue ring on an orange button reads as disconnected. So primary + secondary keep the blue ring (`--secondary-main`); ghost + danger take a brand-orange ring (`--primary-main`).
+- **Focus ring follows the variant tone (Carl 2026-07-21):** the standard shows a uniform blue focus ring, but a blue ring on an orange button reads as disconnected. So primary, secondary + ghost keep the blue ring (`--secondary-main`); only `danger` (the sole orange-filled variant) takes a brand-orange ring (`--primary-main`). _(Ghost moved to blue 2026-07-22 — see the correction note above.)_
 
 **Deferred follow-ups (recorded so they aren't lost):**
 
