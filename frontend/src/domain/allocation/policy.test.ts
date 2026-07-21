@@ -134,6 +134,27 @@ describe('unit sums', () => {
     expect(availableUnits(batches)).toBe(45);
     expect(distinctPackSizes(batches)).toEqual([10, 5]);
   });
+
+  it('excludes on-hold batches from available units (old-app parity)', () => {
+    // On-hold stock line or on-hold location → not counted; expired/unusable
+    // are still counted (only hold is excluded).
+    const batches = [
+      { packSize: 10, availablePacks: 2, numberOfPacks: 0 },
+      {
+        packSize: 10,
+        availablePacks: 5,
+        numberOfPacks: 0,
+        stockLineOnHold: true,
+      },
+      {
+        packSize: 10,
+        availablePacks: 3,
+        numberOfPacks: 0,
+        location: { onHold: true },
+      },
+    ];
+    expect(availableUnits(batches)).toBe(20);
+  });
 });
 
 describe('deriveIssueWarnings', () => {

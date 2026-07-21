@@ -30,6 +30,7 @@ import {
 } from './outboundLineEdit.generated';
 import { itemOptionsResource, type ItemOption } from './itemOptionsResource';
 import {
+  availableUnits as sumAvailableUnits,
   barReasons,
   distributeIssue,
   fefoCompare,
@@ -166,9 +167,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const isBarred = (line: DraftLine): boolean =>
     lineBarReasons(line).length > 0;
 
-  const availableUnits = createMemo(() =>
-    draft.reduce((sum, line) => sum + line.availablePacks * line.packSize, 0)
-  );
+  // Available = allocatable units, EXCLUDING on-hold batches (old-app parity;
+  // the shared helper skips on-hold stock/location — kdd/allocation). On-hold
+  // rows still render in the grid, disabled.
+  const availableUnits = createMemo(() => sumAvailableUnits(draft));
 
   // A fresh array whenever the draft's SHAPE changes (rows added on load /
   // cleared on item switch). The DataTable/TanStack memoises its row model on
