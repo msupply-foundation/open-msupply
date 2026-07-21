@@ -223,6 +223,9 @@ const FILTERS: Filter<InboundFilter>[] = constructFilters<InboundFilter>({
   createdOrBackdatedDatetime: null,
   colour: null,
   requisitionId: null,
+  // Plugin-defined dynamic filtering (2026-07-21 schema refresh) —
+  // programmatic, not a user-facing list filter.
+  dynamicFilter: null,
   linkedInvoiceId: null,
   isProgramInvoice: null,
   purchaseOrderId: null,

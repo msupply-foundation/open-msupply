@@ -41,6 +41,8 @@ const EXPECTED: Record<SyncErrorVariant, string> = {
   V7_UPGRADE_FAILED: 'error.v7-upgrade-failed',
   // site not on v7 yet
   SITE_IS_NOT_V7: 'error.site-is-not-v7',
+  // waiting for central upgrade
+  WAITING_FOR_CENTRAL_V7_UPGRADE: 'error.waiting-for-central-v7-upgrade',
   // integration timed out
   INTEGRATION_TIMEOUT_REACHED: 'error.integration-timeout-reached',
   // server problem (internal)
@@ -81,7 +83,7 @@ describe('syncErrorSummary — variant → kind mapping (AC-E1)', () => {
 
   it('is one distinct summary per kind — not a single generic message', () => {
     const distinct = new Set(variants.map(v => syncErrorSummary(v).summary));
-    expect(distinct.size).toBe(17);
+    expect(distinct.size).toBe(18);
   });
 
   it('carries a hint only for the kinds with a known remedy', () => {
