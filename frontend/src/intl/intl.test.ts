@@ -22,6 +22,23 @@ describe('t', () => {
     expect(t('does.not.exist' as never)).toBe('does.not.exist');
   });
 
+  it('falls back to the English string for a key missing from the active locale', () => {
+    // 'label.expiry-date' exists in the English catalog but not the Arabic
+    // one; under Arabic it must resolve to the English string, not leak the
+    // raw key (spec/i18n → translating text, AC-TR19).
+    expect((commonAr as Record<string, string>)['label.expiry-date']).toBe(
+      undefined
+    );
+    setLocale('ar');
+    expect(t('label.expiry-date')).toBe(commonEn['label.expiry-date']);
+  });
+
+  it('still falls back to the raw key when absent from every locale', () => {
+    // English is the base; a key missing there too stays visible as itself.
+    setLocale('ar');
+    expect(t('does.not.exist' as never)).toBe('does.not.exist');
+  });
+
   it('resolves i18next-style $t(key) nested references (#359)', () => {
     setLocale('en');
     // messages.confirm-status-as = "Confirm status as $t({{status}})?" — the
