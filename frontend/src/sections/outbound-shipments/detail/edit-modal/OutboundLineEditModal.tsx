@@ -3,12 +3,10 @@ import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
-import { toNumberOrNull } from '../../../../typeHelpers';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Popover } from '../../../../ui/elements/feedback/Popover';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { Select } from '../../../../ui/elements/selectors/Select';
@@ -103,7 +101,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   );
   const [draft, setDraft] = createStore<DraftLine[]>([]);
   const [placeholderUnits, setPlaceholderUnits] = createSignal(0);
-  const [issueText, setIssueText] = createSignal('');
+  const [issueValue, setIssueValue] = createSignal<number | undefined>();
   const [allocateIn, setAllocateIn] = createSignal<AllocateUnit>({
     kind: 'units',
   });
@@ -129,7 +127,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setLoadingLines(true);
     setErrorMessage(undefined);
     setWarnings([]);
-    setIssueText('');
+    setIssueValue(undefined);
     setDirty(false);
     setZeroConfirm(false);
     const result = await graphqlFetch(DraftStockOutLines, {
@@ -228,9 +226,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setZeroConfirm(false);
   };
 
-  const onIssueInput = (value: string) => {
-    setIssueText(value);
-    const units = lensToUnits(toNumberOrNull(value), allocateIn());
+  // NumberField hands us a committed number (already numeric-only and clamped
+  // to min 0 — negatives and non-numeric input never reach here) or undefined
+  // when the field is cleared.
+  const onIssueChange = (value: number | undefined) => {
+    setIssueValue(value);
+    const units = lensToUnits(value ?? null, allocateIn());
     // Clearing (or blanking) the Issue field distributes 0 — resetting every
     // batch's packs and the placeholder, not leaving the last distribution behind.
     distribute(units ?? 0);
@@ -313,7 +314,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         setItem(undefined);
         setDraft(reconcile([], { key: 'id' }));
         setPlaceholderUnits(0);
-        setIssueText('');
+        setIssueValue(undefined);
         setWarnings([]);
         setDirty(false);
         setZeroConfirm(false);
@@ -607,13 +608,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             'margin-block-end': 'var(--space-3)',
           }}
         >
-          <TextField
+          <NumberField
             label={t('label.issue')}
             size="small"
-            inputmode="decimal"
-            value={issueText()}
+            min={0}
+            value={issueValue()}
             disabled={saving()}
-            onInput={e => onIssueInput(e.currentTarget.value)}
+            onChange={onIssueChange}
           />
           <Select
             label={t('label.units')}
@@ -632,8 +633,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                   ? { kind: 'units' }
                   : { kind: 'packs', size: Number(value.slice(6)) }
               );
-              const parsed = toNumberOrNull(issueText());
-              if (parsed != null && parsed >= 0) onIssueInput(issueText());
+              // Re-interpret the same requested quantity in the new lens.
+              const v = issueValue();
+              if (v != null) onIssueChange(v);
             }}
           />
           {/* Placeholder notice (info) — to the right of Issue / Allocate-in,
