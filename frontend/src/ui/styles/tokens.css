@@ -192,6 +192,10 @@
      denser. Its own token rather than --text-xs (12px, helper/caption) — the
      spec picks 13px specifically for small fields. */
   --input-font-sm: 0.8125rem; /* 13px */
+  /* Vertical gap between a field's stacked parts — label → control → helper
+     (ui-standards .form-field gap). 0.375rem (6px) is off the --space scale
+     (which steps 0.25 / 0.5 / 0.75), so it's its own input token. */
+  --input-field-gap: 0.375rem; /* 6px */
   --input-padding-x: 0.75rem; /* 12px horizontal */
   --input-radius: 0.375rem; /* 6px */
   --input-max-compact: 10rem; /* 160px — numbers/money (NumberField default) */
