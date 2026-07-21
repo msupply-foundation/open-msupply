@@ -52,7 +52,9 @@ const renderRow = (item: ItemOption): JSX.Element => (
       <span data-testid="item-option-name">{item.name}</span>
     </span>
     <span class={styles.total}>
-      {formatNumber(item.totalUnits)} {item.unitName ?? t('label.unit-plural')}
+      {/* Fixed, localised "Units" label for every item (old-app parity — the
+          item's own unitName is untranslatable catalogue data). */}
+      {formatNumber(item.totalUnits)} {t('label.units')}
     </span>
   </span>
 );
