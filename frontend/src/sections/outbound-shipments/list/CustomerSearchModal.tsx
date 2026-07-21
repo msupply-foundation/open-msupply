@@ -88,6 +88,7 @@ export const CustomerSearchModal = (props: {
         placeholder={t('outbound.create.placeholder')}
         disabled={creating()}
         inputTestId="customer-search-input"
+        clearable={false}
         onSelect={customer => void create(customer)}
       />
       <Show when={error()}>
