@@ -6,6 +6,7 @@ import { formatNumber } from '../../../../intl/formatNumber';
 import { toNumberOrNull } from '../../../../typeHelpers';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
+import { Popover } from '../../../../ui/elements/feedback/Popover';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
@@ -352,9 +353,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       header: '',
       cell: info => (
         <Show when={info.getValue<boolean>()}>
-          <span title={t('description.used-in-auto-allocation')}>
-            <CheckIcon />
-          </span>
+          <Popover
+            trigger={<CheckIcon />}
+            triggerLabel={t('description.used-in-auto-allocation')}
+            openOnHover
+            placement="top"
+          >
+            <p>{t('description.used-in-auto-allocation')}</p>
+          </Popover>
         </Show>
       ),
     },
