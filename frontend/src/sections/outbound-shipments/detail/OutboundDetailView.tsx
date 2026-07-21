@@ -500,6 +500,7 @@ const OutboundDetailView: Component = () => {
                         }}
                         disabled={!editable() || current().requisition != null}
                         error={customerError()}
+                        clearable={false}
                         onSelect={customer => {
                           if (customer) void changeCustomer(customer.id);
                         }}

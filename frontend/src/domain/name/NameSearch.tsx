@@ -32,6 +32,8 @@ export interface NameSearchProps {
   error?: string;
   /** Override the input's `data-testid` (defaults to `name-search-input`). */
   inputTestId?: string;
+  /** Whether the selection can be cleared (default true). */
+  clearable?: boolean;
   class?: string;
 }
 
@@ -76,6 +78,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     placeholder={props.placeholder}
     inputTestId={props.inputTestId ?? 'name-search-input'}
     error={props.error}
+    clearable={props.clearable}
     fetchPage={namePageFetcher(
       props.storeId,
       props.role ?? 'supplier',
