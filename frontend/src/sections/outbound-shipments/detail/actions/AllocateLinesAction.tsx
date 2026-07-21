@@ -65,13 +65,23 @@ export const AllocateLinesAction: Component<
         : t('heading.additional-info')
       : t('heading.are-you-sure');
 
-  const openConfirm = () => {
-    setPhase('confirm');
+  // Confirm FIRST only when zero-quantity placeholders are selected — those are
+  // REMOVED by allocation, the one outcome worth confirming (spec S3). Every
+  // other selection (placeholders with quantity, a real line + a placeholder for
+  // the same item, …) allocates straight away with no "Are you sure?" — old-app
+  // parity (it never confirms allocation) — surfacing only the result notice.
+  const onAllocate = () => {
     setIssues([]);
-    setOpen(true);
+    if (zeroQuantity().length > 0) {
+      setPhase('confirm');
+      setOpen(true);
+    } else {
+      void run();
+    }
   };
   const close = () => {
     setOpen(false);
+    setPhase('confirm'); // reset for the next run (also clears the button spinner)
     // Refetch the grid + clear the selection only as the dialog closes. Doing it
     // mid-run clears the selection, which unmounts this action (it lives in the
     // selection-gated bulk bar) and would kill the report dialog before the user
@@ -176,6 +186,7 @@ export const AllocateLinesAction: Component<
     if (found.length === 0) return close();
     setIssues(found);
     setPhase('report');
+    setOpen(true); // ensure the report shows even when we skipped the confirm
   };
 
   return (
@@ -185,7 +196,8 @@ export const AllocateLinesAction: Component<
         icon={<ZapIcon />}
         data-testid="allocate-lines-button"
         disabled={props.disabled || placeholders().length === 0}
-        onClick={openConfirm}
+        loading={phase() === 'working'}
+        onClick={onAllocate}
       >
         {t('button.allocate-lines')}
       </Button>
