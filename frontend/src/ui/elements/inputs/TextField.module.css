@@ -91,6 +91,15 @@
   cursor: not-allowed;
 }
 
+/* Read-only — a display-only value in a field frame (e.g. the reports
+   preferences panel). Same muted fill as disabled so it doesn't invite typing,
+   but the value keeps full text contrast and the field stays focusable. */
+.input[readonly] {
+  background: var(--bg-input);
+  border-color: var(--color-divider);
+  cursor: default;
+}
+
 /*
  * Adornments (currency symbol, unit suffix). Without one, the wrapper is
  * display:contents — zero box, the input renders exactly as it always has.
@@ -133,6 +142,11 @@
 }
 
 .inputWrap[data-adorned]:has(.input:disabled) {
+  background: var(--bg-input);
+  border-color: var(--color-divider);
+}
+
+.inputWrap[data-adorned]:has(.input[readonly]) {
   background: var(--bg-input);
   border-color: var(--color-divider);
 }

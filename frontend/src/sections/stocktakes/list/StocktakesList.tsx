@@ -18,6 +18,7 @@ import {
 } from '../../../ui/elements/table/DataTable';
 import {
   getBooleanCell,
+  getCommentCell,
   getDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -269,6 +270,7 @@ const StocktakesList: Component = () => {
       c: { key: 'comment' },
       sortKey: 'comment',
       header: t('label.comment'),
+      ...getCommentCell(),
     },
     {
       c: { key: 'stocktakeDate' },

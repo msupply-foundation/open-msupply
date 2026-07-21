@@ -1,0 +1,106 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 60rem;
+}
+
+.card {
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--bg-white);
+  box-shadow: var(--shadow-1);
+}
+
+.cardHeader {
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-group-light);
+  border-bottom: 1px solid var(--color-border-value);
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
+.cardBody {
+  padding: var(--space-5);
+}
+
+.lead {
+  margin: 0 0 var(--space-4);
+  max-width: 44rem;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.lead code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+}
+
+/* Placeholder "cards" for the layout demo — plain coloured blocks with a big
+   centred number, given real height so the grid has something to reflow. The
+   colours are purely decorative token tints rotated per block; the demo is
+   about the grid's wrapping, not the block content. */
+.block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 6rem;
+  border-radius: var(--radius-md);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
+.block:nth-child(6n + 1) {
+  background: color-mix(
+    in srgb,
+    var(--primary-main) 16%,
+    var(--surface-raised)
+  );
+}
+
+.block:nth-child(6n + 2) {
+  background: color-mix(
+    in srgb,
+    var(--secondary-main) 16%,
+    var(--surface-raised)
+  );
+}
+
+.block:nth-child(6n + 3) {
+  background: color-mix(
+    in srgb,
+    var(--status-shipped) 16%,
+    var(--surface-raised)
+  );
+}
+
+.block:nth-child(6n + 4) {
+  background: color-mix(
+    in srgb,
+    var(--status-delivered) 16%,
+    var(--surface-raised)
+  );
+}
+
+.block:nth-child(6n + 5) {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 16%,
+    var(--surface-raised)
+  );
+}
+
+.block:nth-child(6n) {
+  background: color-mix(
+    in srgb,
+    var(--color-warning) 16%,
+    var(--surface-raised)
+  );
+}

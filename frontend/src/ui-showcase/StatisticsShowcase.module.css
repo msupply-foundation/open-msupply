@@ -49,11 +49,11 @@
   gap: var(--space-3);
 }
 
-/* Lone Statistic rows — the vertical list a StatsPanel would host. */
+/* Lone Statistic rows — the vertical list a StatsPanel would host (stacked
+   flush, no gap, like the real panel). */
 .statList {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
   max-width: 26rem;
 }
 

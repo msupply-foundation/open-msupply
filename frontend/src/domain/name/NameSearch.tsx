@@ -31,17 +31,22 @@ export interface NameSearchProps {
   class?: string;
 }
 
-// One option row: a kind icon (truck = external party, home = a party that is
-// itself another store in the system), then the code (bold) and name, with an
-// "(On hold)" suffix for an on-hold name (listed but not selectable via
-// itemDisabled). Code and name are separately-marked nodes (e2e/TESTIDS.md
-// item-option-code / -name). The row shows both; the selected input shows only
-// the name (itemToString below).
+// One option row: a kind icon (a house in the PRIMARY colour = a party that is
+// itself another store in the system, a truck in the SECONDARY colour = an
+// external party), then the code (bold) and name, with an "(On hold)" suffix
+// for an on-hold name (listed but not selectable via itemDisabled). Code and
+// name are separately-marked nodes (e2e/TESTIDS.md item-option-code / -name).
+// The row shows both; the selected input shows only the name (itemToString
+// below).
 const renderRow = (name: NameOption): JSX.Element => (
   <span
     style={{ display: 'inline-flex', 'align-items': 'center', gap: '0.5rem' }}
   >
-    {name.isStore ? <HomeIcon /> : <TruckIcon />}
+    {name.isStore ? (
+      <HomeIcon style={{ color: 'var(--primary-main)' }} />
+    ) : (
+      <TruckIcon style={{ color: 'var(--secondary-main)' }} />
+    )}
     <span
       data-testid="item-option-code"
       style={{ 'font-weight': 'var(--weight-bold)' }}
