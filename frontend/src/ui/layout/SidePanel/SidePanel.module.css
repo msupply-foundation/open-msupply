@@ -79,20 +79,17 @@
   border-radius: var(--radius-sm);
 }
 
-/* Chevron points down when open; rotates to point at the inline-start edge when
-   collapsed (RTL-mirrored) — the MenuBar section-chevron convention. */
+/* Chevron points up when open, down when collapsed — the accordion convention
+   (a down chevron reads as "expand", flipping up once expanded). Up/down is
+   symmetric, so no RTL mirroring needed. */
 .disclosureChevron {
   flex-shrink: 0;
   color: var(--gray-dark);
   transition: transform 140ms ease;
 }
 
-.disclosureChevron[data-open='false'] {
-  transform: rotate(-90deg);
-}
-
-:dir(rtl) .disclosureChevron[data-open='false'] {
-  transform: rotate(90deg);
+.disclosureChevron[data-open='true'] {
+  transform: rotate(180deg);
 }
 
 @media (prefers-reduced-motion: reduce) {
