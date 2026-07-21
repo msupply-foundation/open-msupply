@@ -62,11 +62,19 @@ export const OutboundStatusFooter: Component<
   };
   // AC-PR1: a current status the preference EXCLUDES displays as the nearest
   // included EARLIER status — the LAST allowed entry at or before the current
-  // one (allowedStatuses() is already in ascending flow order).
-  const indicatorIndex = () =>
-    allowedStatuses().findLastIndex(
-      status => statusIndex(status) <= currentIndex()
-    );
+  // one (allowedStatuses() is already in ascending flow order). A plain loop
+  // rather than Array#findLastIndex: eslint-plugin-solid doesn't recognise it
+  // as a safe callback host (unlike findIndex/map/etc.), so it misreports the
+  // predicate's currentIndex() read as untracked.
+  const indicatorIndex = () => {
+    const allowed = allowedStatuses();
+    let result = -1;
+    for (let i = 0; i < allowed.length; i++) {
+      if (statusIndex(allowed[i]) <= currentIndex()) result = i;
+      else break;
+    }
+    return result;
+  };
 
   return (
     <ContentFooter>
