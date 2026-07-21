@@ -1,4 +1,11 @@
-import { createSignal, For, onCleanup, Show, type Component } from 'solid-js';
+import {
+  createSignal,
+  For,
+  onCleanup,
+  Show,
+  type Component,
+  type JSX,
+} from 'solid-js';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
@@ -68,7 +75,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   const taxLabel = (pct: number) =>
     `${t('outbound.panel.tax')} (${pct.toFixed(2)}%)`;
 
-  const groupHeading = (label: string, info: string): ReturnType<Component> => (
+  const groupHeading = (label: string, info: string): JSX.Element => (
     <span
       style={{
         display: 'inline-flex',
