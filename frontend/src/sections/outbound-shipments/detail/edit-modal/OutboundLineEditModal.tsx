@@ -163,6 +163,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const availableUnits = createMemo(() =>
     draft.reduce((sum, line) => sum + line.availablePacks * line.packSize, 0)
   );
+
+  // A fresh array whenever the draft's SHAPE changes (rows added on load /
+  // cleared on item switch). The DataTable/TanStack memoises its row model on
+  // the `data` reference, so passing the store proxy directly (whose reference
+  // survives an in-place `reconcile`) leaves the grid stuck on its initial
+  // empty build. Spreading tracks the array's shape, not each row's nested
+  // fields, so per-pack edits still mutate in place without rebuilding the grid
+  // (no remount / focus loss — kdd/solid-reactivity-pitfalls).
+  const draftRows = createMemo(() => [...draft]);
   const issuedUnits = createMemo(() =>
     draft.reduce((sum, line) => sum + line.numberOfPacks * line.packSize, 0)
   );
@@ -528,7 +537,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             disabled (AC-AL2 / AC-AL8). */}
         <DataTable
           columns={columns()}
-          rows={draft}
+          rows={draftRows()}
           rowKey={line => line.id}
           loading={loadingLines()}
           showFullScreen={false}
