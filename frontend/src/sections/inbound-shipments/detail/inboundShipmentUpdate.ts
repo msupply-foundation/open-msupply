@@ -10,6 +10,7 @@ import {
   type InboundInfoFragment,
   type UpdateInboundShipmentVariables,
   type BatchInboundShipmentVariables,
+  type BatchResultFragment,
 } from './inboundShipmentDetail.generated';
 
 // Update/batch helpers for the inbound-shipment detail view. Every mutation is
@@ -94,48 +95,53 @@ export const runInboundBatch = async (
         r.kind === 'success' ? r.data.batchInboundShipment : undefined
       );
   if (!batch) return null;
-  return summariseBatch(batch as BatchResponse);
+  return summariseBatch(batch);
 };
 
-// The shared shape of both batch twins' responses (each is one list of
-// {id, response} per operation kind).
-type WithId = {
-  id: string;
-  response:
-    | { __typename: 'InvoiceNode' | 'DeleteResponse' }
-    | { __typename: string; error: { description: string } };
-};
-type BatchResponse = {
-  insertInboundShipmentLines?: WithId[] | null;
-  updateInboundShipmentLines?: WithId[] | null;
-  deleteInboundShipmentLines?: WithId[] | null;
-  insertFromInternalOrderLines?: WithId[] | null;
-  insertInboundShipmentServiceLines?: WithId[] | null;
-  updateInboundShipmentServiceLines?: WithId[] | null;
-  deleteInboundShipmentServiceLines?: WithId[] | null;
-};
-
-const OK_TYPENAMES = new Set(['InvoiceNode', 'DeleteResponse']);
-
-const summariseBatch = (batch: BatchResponse): BatchOutcome => {
+// Fold one batch twin's response (the generated BatchResultFragment) into
+// {applied, errors}. Each operation array is scanned against its OWN success
+// typename — a line/service-line insert or update commits as InvoiceLineNode, a
+// delete as DeleteResponse — so the else branch narrows to that operation's
+// typed error variant and we read `error.description` directly. Reading the
+// generated union per array (rather than a shared Set<string>) is what makes a
+// wrong success typename a compile error: the earlier flat set checked for
+// 'InvoiceNode' (the shipment-LEVEL twin), which never matched, so `applied`
+// stayed false and a save never refetched the detail page.
+const summariseBatch = (batch: BatchResultFragment): BatchOutcome => {
   const errors: InboundLineErrors = new Map();
   let applied = false;
-  const scan = (items: WithId[] | null | undefined) => {
-    for (const item of items ?? []) {
-      if (OK_TYPENAMES.has(item.response.__typename)) {
-        applied = true;
-      } else if ('error' in item.response) {
-        errors.set(item.id, item.response.error.description);
-      }
-    }
-  };
-  scan(batch.insertInboundShipmentLines);
-  scan(batch.updateInboundShipmentLines);
-  scan(batch.deleteInboundShipmentLines);
-  scan(batch.insertFromInternalOrderLines);
-  scan(batch.insertInboundShipmentServiceLines);
-  scan(batch.updateInboundShipmentServiceLines);
-  scan(batch.deleteInboundShipmentServiceLines);
+
+  for (const { id, response } of batch.insertInboundShipmentLines ?? []) {
+    if (response.__typename === 'InvoiceLineNode') applied = true;
+    else errors.set(id, response.error.description);
+  }
+  for (const { id, response } of batch.updateInboundShipmentLines ?? []) {
+    if (response.__typename === 'InvoiceLineNode') applied = true;
+    else errors.set(id, response.error.description);
+  }
+  for (const { id, response } of batch.deleteInboundShipmentLines ?? []) {
+    if (response.__typename === 'DeleteResponse') applied = true;
+    else errors.set(id, response.error.description);
+  }
+  // insert-from-internal-order has no error arm in the batch result.
+  for (const { response } of batch.insertFromInternalOrderLines ?? []) {
+    if (response.__typename === 'InvoiceLineNode') applied = true;
+  }
+  for (const { id, response } of batch.insertInboundShipmentServiceLines ??
+    []) {
+    if (response.__typename === 'InvoiceLineNode') applied = true;
+    else errors.set(id, response.error.description);
+  }
+  for (const { id, response } of batch.updateInboundShipmentServiceLines ??
+    []) {
+    if (response.__typename === 'InvoiceLineNode') applied = true;
+    else errors.set(id, response.error.description);
+  }
+  for (const { id, response } of batch.deleteInboundShipmentServiceLines ??
+    []) {
+    if (response.__typename === 'DeleteResponse') applied = true;
+    else errors.set(id, response.error.description);
+  }
   return { applied, errors };
 };
 
