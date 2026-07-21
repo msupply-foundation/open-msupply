@@ -1,4 +1,5 @@
 import { createSignal, Show, type Component } from 'solid-js';
+import { A } from '@solidjs/router';
 import { t, localisedDate } from '../../../intl';
 import {
   SidePanelSection,
@@ -19,6 +20,7 @@ import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipme
 import { DefaultDonorModal } from './modals/DefaultDonorModal';
 import { ServiceLineModal } from './modals/ServiceLineModal';
 import { CurrencyModal } from './modals/CurrencyModal';
+import { poLabel, ioLabel, PO_COLOUR, IO_COLOUR } from '../linkedOrder';
 
 export interface InboundShipmentSidePanelProps {
   storeId: string;
@@ -133,17 +135,28 @@ export const InboundShipmentSidePanel: Component<
           when={props.node.purchaseOrder || props.node.requisition}
           fallback={<span>{t('messages.no-related-documents')}</span>}
         >
+          {/* Same kind-coloured PO-/IO- link as the list (spec S1 column 4). */}
           <Show when={props.node.purchaseOrder}>
             {po => (
               <FieldRow label={t('label.purchase-order')}>
-                <span>#{po().number}</span>
+                <A
+                  href={`/${props.storeId}/replenishment/purchase-order/${po().id}`}
+                  style={{ color: PO_COLOUR, 'font-weight': 500 }}
+                >
+                  {poLabel(po().number)}
+                </A>
               </FieldRow>
             )}
           </Show>
           <Show when={props.node.requisition}>
             {req => (
               <FieldRow label={t('internal-order')}>
-                <span>#{req().requisitionNumber}</span>
+                <A
+                  href={`/${props.storeId}/replenishment/internal-order/${req().id}`}
+                  style={{ color: IO_COLOUR, 'font-weight': 500 }}
+                >
+                  {ioLabel(req().requisitionNumber)}
+                </A>
               </FieldRow>
             )}
           </Show>

@@ -16,6 +16,7 @@ import { InboundShipments } from '../inboundShipments.generated';
 import type { InboundShipmentsVariables } from '../inboundShipments.generated';
 import type { InboundFilter } from '../listFilters';
 import { inboundShipmentsToCsv } from '../inboundShipmentsToCsv';
+import { heldInboundQueryScopes } from '../../inboundShipmentScope';
 
 // The inbound-shipments list Export action (spec S1 / AC-L6): a split button
 // offering CSV or Excel, exporting EVERY shipment matching the current filter
@@ -39,10 +40,17 @@ export const ExportInboundShipmentsAction: Component<
   ];
 
   const buildCsv = async (): Promise<string | null> => {
+    // Same scope selector as the list (spec/inbound-shipments › contract →
+    // permissions): request only the query scopes the user holds so the export
+    // spans exactly the inbound shipments they can see, never a scopeless
+    // (generic-permission) request that would pull in other invoice types.
+    const type = heldInboundQueryScopes();
+    if (type.length === 0) return null;
     const variables: InboundShipmentsVariables = {
       storeId: props.storeId,
       filter: stripEmpty(props.filter()),
       sort: [{ key: 'invoiceNumber', desc: true }],
+      type,
     };
     const result = await graphqlFetch(InboundShipments, variables);
     if (result.kind !== 'success') return null;

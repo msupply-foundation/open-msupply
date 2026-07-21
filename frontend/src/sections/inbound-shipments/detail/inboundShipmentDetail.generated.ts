@@ -8,6 +8,11 @@ export type InboundInfoFragment = {
   invoiceNumber: number;
   otherPartyId: string;
   otherPartyName: string;
+  otherParty: {
+  store: {
+  id: string;
+} | null;
+};
   status: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED";
   onHold: boolean;
   inboundType: "FROM_REQUISITION" | "FROM_PURCHASE_ORDER" | "MANUAL_INTERNAL" | "MANUAL_EXTERNAL";
@@ -266,6 +271,7 @@ export type BatchResultFragment = {
 export type InboundShipmentVariables = {
   storeId: string;
   id: string;
+  type?: "OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "INBOUND_SHIPMENT_EXTERNAL" | "PRESCRIPTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | null;
 };
 
 export type InboundShipmentResult = {
@@ -282,12 +288,13 @@ export type InboundShipmentResult = {
 };
 
 export const InboundShipment = {
-  query: "query inboundShipment($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n}",
+  query: "query inboundShipment($storeId: String!, $id: String!, $type: InvoiceTypeInput) {\n  invoice(storeId: $storeId, id: $id, type: $type) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n}",
 } as TypedDocument<InboundShipmentResult, InboundShipmentVariables>;
 
 export type InboundShipmentByNumberVariables = {
   storeId: string;
   invoiceNumber: number;
+  type: "OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "INBOUND_SHIPMENT_EXTERNAL" | "PRESCRIPTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN";
 };
 
 export type InboundShipmentByNumberResult = {
@@ -306,7 +313,7 @@ export type InboundShipmentByNumberResult = {
 };
 
 export const InboundShipmentByNumber = {
-  query: "query inboundShipmentByNumber($storeId: String!, $invoiceNumber: Int!) {\n  invoiceByNumber(\n    storeId: $storeId\n    invoiceNumber: $invoiceNumber\n    type: INBOUND_SHIPMENT\n  ) {\n    __typename\n    ... on InvoiceNode {\n      id\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+  query: "query inboundShipmentByNumber($storeId: String!, $invoiceNumber: Int!, $type: InvoiceTypeInput!) {\n  invoiceByNumber(storeId: $storeId, invoiceNumber: $invoiceNumber, type: $type) {\n    __typename\n    ... on InvoiceNode {\n      id\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<InboundShipmentByNumberResult, InboundShipmentByNumberVariables>;
 
 export type InboundShipmentLinesVariables = {
@@ -610,7 +617,7 @@ export type UpdateInboundShipmentResult = {
 };
 
 export const UpdateInboundShipment = {
-  query: "mutation updateInboundShipment($storeId: String!, $input: UpdateInboundShipmentInput!) {\n  updateInboundShipment(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on UpdateInboundShipmentError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n}",
+  query: "mutation updateInboundShipment($storeId: String!, $input: UpdateInboundShipmentInput!) {\n  updateInboundShipment(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on UpdateInboundShipmentError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n}",
 } as TypedDocument<UpdateInboundShipmentResult, UpdateInboundShipmentVariables>;
 
 export type UpdateInboundShipmentExternalVariables = {
@@ -652,7 +659,7 @@ export type UpdateInboundShipmentExternalResult = {
 };
 
 export const UpdateInboundShipmentExternal = {
-  query: "mutation updateInboundShipmentExternal($storeId: String!, $input: UpdateInboundShipmentInput!) {\n  updateInboundShipmentExternal(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on UpdateInboundShipmentError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n}",
+  query: "mutation updateInboundShipmentExternal($storeId: String!, $input: UpdateInboundShipmentInput!) {\n  updateInboundShipmentExternal(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...InboundInfo\n    }\n    ... on UpdateInboundShipmentError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment InboundInfo on InvoiceNode {\n  __typename\n  id\n  invoiceNumber\n  otherPartyId\n  otherPartyName\n  otherParty(storeId: $storeId) {\n    store {\n      id\n    }\n  }\n  status\n  onHold\n  inboundType\n  comment\n  theirReference\n  transportReference\n  colour\n  createdDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  backdatedDatetime\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  chargesLocalCurrency\n  chargesForeignCurrency\n  purchaseOrderId\n  linkedShipment {\n    id\n  }\n  user {\n    username\n  }\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  defaultDonor(storeId: $storeId) {\n    id\n    name\n  }\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n    reference\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      createdDatetime\n    }\n  }\n  shippingMethod {\n    id\n    method\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    foreignCurrencyTotalAfterTax\n    taxPercentage\n  }\n}",
 } as TypedDocument<UpdateInboundShipmentExternalResult, UpdateInboundShipmentExternalVariables>;
 
 export type BatchInboundShipmentVariables = {

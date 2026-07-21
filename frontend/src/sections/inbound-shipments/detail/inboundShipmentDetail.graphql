@@ -14,6 +14,14 @@ fragment InboundInfo on InvoiceNode {
   invoiceNumber
   otherPartyId
   otherPartyName
+  # A non-null `store` marks a supplier that is itself another store in the
+  # system (internal) vs an external supplier — the kind-icon signal (spec S1
+  # column 1), matching the NameSearch truck-vs-building convention.
+  otherParty(storeId: $storeId) {
+    store {
+      id
+    }
+  }
   status
   onHold
   inboundType
@@ -164,11 +172,19 @@ fragment InboundLine on InvoiceLineNode {
   }
 }
 
-# Header/side-panel/footer fields — one node. No `type` arg on the fetch so a
-# plain OR external (PO-linked) inbound resolves by id (contract → list
-# filtering: single fetch is a discriminated InvoiceResponse).
-query inboundShipment($storeId: String!, $id: String!) {
-  invoice(storeId: $storeId, id: $id) {
+# Header/side-panel/footer fields — one node. `type` is the permission scope
+# selector (contract → permissions): it must be the shipment's OWN scope —
+# INBOUND_SHIPMENT_EXTERNAL for a PO-linked shipment, INBOUND_SHIPMENT
+# otherwise. A wrong-scope fetch returns RecordNotFound (the auth passes but the
+# purchaseOrderId filter excludes it), and omitting `type` falls back to the
+# broader generic QueryInvoice permission — so the caller probes its held scopes
+# rather than omitting it (see InboundShipmentDetailView).
+query inboundShipment(
+  $storeId: String!
+  $id: String!
+  $type: InvoiceTypeInput
+) {
+  invoice(storeId: $storeId, id: $id, type: $type) {
     __typename
     ... on InvoiceNode {
       ...InboundInfo
@@ -182,12 +198,18 @@ query inboundShipment($storeId: String!, $id: String!) {
   }
 }
 
-# Deep-link by human number (spec AC-L5).
-query inboundShipmentByNumber($storeId: String!, $invoiceNumber: Int!) {
+# Deep-link by human number (spec AC-L5). `type` is required here and is the
+# permission scope selector (contract → permissions) — the caller probes its
+# held scopes since the number alone does not reveal the shipment's scope.
+query inboundShipmentByNumber(
+  $storeId: String!
+  $invoiceNumber: Int!
+  $type: InvoiceTypeInput!
+) {
   invoiceByNumber(
     storeId: $storeId
     invoiceNumber: $invoiceNumber
-    type: INBOUND_SHIPMENT
+    type: $type
   ) {
     __typename
     ... on InvoiceNode {

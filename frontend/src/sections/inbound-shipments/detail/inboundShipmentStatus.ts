@@ -1,6 +1,5 @@
 import { t } from '../../../intl';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
-import type { InboundRowFragment } from '../list/inboundShipments.generated';
 
 // The inbound-shipment status lifecycle (spec/inbound-shipments › status
 // lifecycle). Which stages appear depends on the shipment's KIND — the user
@@ -142,10 +141,14 @@ export const statusDatetime = (
   }
 };
 
-// The kind icon shown before the supplier name (spec S1 column 1): a supplier
-// that is itself another store gets the "home"/store glyph, an external
-// supplier the truck. Derived from inboundType (MANUAL_INTERNAL/FROM_* imply a
-// store-linked or system origin).
-export const supplierIsStore = (
-  row: Pick<InboundRowFragment, 'inboundType'>
-): boolean => row.inboundType !== 'MANUAL_EXTERNAL';
+// Whether the shipment's supplier (other party) is itself another store in the
+// system, as opposed to an external supplier. The authoritative signal is a
+// non-null `store` on the other party — matching the NameSearch
+// truck-vs-building convention (see src/domain/name/nameResource.ts). Drives
+// the list + toolbar kind icon (building vs truck, spec S1 column 1), the
+// change-currency gate, and cost locking. NB: this is NOT the same as the
+// shipment's origin/kind — a PO-linked shipment can still be against an
+// external supplier (so it is a truck, not a building).
+export const supplierIsStore = (row: {
+  otherParty: { store?: { id: string } | null };
+}): boolean => row.otherParty.store != null;

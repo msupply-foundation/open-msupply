@@ -1,12 +1,24 @@
 # Inbound-shipment LIST screen (spec/inbound-shipments S1) + list bulk delete.
-# `invoices` is filtered to the inbound-shipment types (plain + external/PO)
-# and the store scope is forced server-side (contract → list filtering).
+# `type` is BOTH a node filter and the permission selector (contract →
+# permissions): the two inbound scopes are disjoint buckets — INBOUND_SHIPMENT
+# is purchaseOrderId IS NULL (manual/transfer), INBOUND_SHIPMENT_EXTERNAL is
+# PO-linked — so the full set is the union of both. Requesting a scope the user
+# lacks refuses the WHOLE list, so the caller passes only the query scopes it
+# holds (see InboundShipmentsList). The store scope is forced server-side.
 
 fragment InboundRow on InvoiceNode {
   id
   invoiceNumber
   otherPartyName
   otherPartyId
+  # A non-null `store` marks a supplier that is itself another store in the
+  # system (internal, building icon) vs an external supplier (truck) — spec S1
+  # column 1, matching the NameSearch truck-vs-building convention.
+  otherParty(storeId: $storeId) {
+    store {
+      id
+    }
+  }
   status
   onHold
   inboundType
@@ -34,13 +46,14 @@ query inboundShipments(
   $page: PaginationInput
   $filter: InvoiceFilterInput
   $sort: [InvoiceSortInput!]
+  $type: [InvoiceTypeInput!]
 ) {
   invoices(
     storeId: $storeId
     page: $page
     filter: $filter
     sort: $sort
-    type: [INBOUND_SHIPMENT, INBOUND_SHIPMENT_EXTERNAL]
+    type: $type
   ) {
     ... on InvoiceConnector {
       __typename

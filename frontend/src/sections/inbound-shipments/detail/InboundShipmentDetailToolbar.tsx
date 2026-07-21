@@ -1,5 +1,5 @@
 import { Show, type Component } from 'solid-js';
-import { t, localisedDate } from '../../../intl';
+import { t } from '../../../intl';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
@@ -167,15 +167,6 @@ export const InboundShipmentDetailToolbar: Component<
         filter={props.filter}
         onChange={props.onFilterChange}
       />
-      {/* Created date, shown for context. */}
-      <span
-        style={{
-          'margin-inline-start': 'auto',
-          color: 'var(--text-secondary)',
-        }}
-      >
-        {t('label.created')}: {localisedDate(props.node.createdDatetime)}
-      </span>
     </>
   );
 };

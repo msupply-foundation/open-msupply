@@ -1,6 +1,6 @@
 import { createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { A, useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -53,6 +53,8 @@ import {
   statusLabel,
   supplierIsStore,
 } from '../detail/inboundShipmentStatus';
+import { heldInboundQueryScopes } from '../inboundShipmentScope';
+import { linkedOrderOf } from '../linkedOrder';
 
 // The inbound-shipments list view (spec S1). Mirrors the stocktakes reference
 // list: URL-backed filter/sort/pagination, the shared DataTable, a selection
@@ -115,20 +117,28 @@ const InboundShipmentsList: Component = () => {
     },
   });
 
+  // `type` is the permission scope selector: request exactly the query scopes
+  // the user holds. The two inbound scopes are disjoint buckets (plain =
+  // manual/transfer, external = PO-linked), so the full set is their union;
+  // requesting a scope the user lacks refuses the whole list, so we never ask
+  // for one they don't hold (spec/inbound-shipments › contract → permissions).
   const variables = () => ({
     storeId: params.storeId,
     filter: stripEmpty(query().filter),
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
+    type: heldInboundQueryScopes(),
   });
 
   const [data, { refetch }] = createResource(
     () => JSON.stringify(variables()),
     async serialised => {
-      const result = await graphqlFetch(
-        InboundShipments,
-        JSON.parse(serialised) as InboundShipmentsVariables
-      );
+      const vars = JSON.parse(serialised) as InboundShipmentsVariables;
+      // No inbound scope held → no access; show the empty state rather than
+      // sending a scopeless request (which would fall back to a different,
+      // generic permission).
+      if (!vars.type || vars.type.length === 0) return undefined;
+      const result = await graphqlFetch(InboundShipments, vars);
       if (result.kind !== 'success') return undefined;
       return result.data.invoices.__typename === 'InvoiceConnector'
         ? result.data.invoices
@@ -180,9 +190,10 @@ const InboundShipmentsList: Component = () => {
 
   const columns = (): Column<Row, SortKey>[] => [
     {
-      // Supplier — kind icon (truck = external supplier, home = a supplier that
-      // is itself another store) + colour swatch + name. (Inline colour edit is
-      // deferred to the detail side panel — see README delta.)
+      // Supplier — colour swatch (editable inline) + kind icon + name (spec S1
+      // column 1): a house icon in the PRIMARY colour when the supplier is
+      // itself another store in the system (internal), a truck in the SECONDARY
+      // colour for an external supplier.
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: t('label.name'),
@@ -204,7 +215,11 @@ const InboundShipmentsList: Component = () => {
                 onSelect={colour => void setColour(row, colour)}
               />
             </span>
-            {supplierIsStore(row) ? <HomeIcon /> : <TruckIcon />}
+            {supplierIsStore(row) ? (
+              <HomeIcon style={{ color: 'var(--primary-main)' }} />
+            ) : (
+              <TruckIcon style={{ color: 'var(--secondary-main)' }} />
+            )}
             <span>{row.otherPartyName}</span>
           </span>
         );
@@ -232,18 +247,31 @@ const InboundShipmentsList: Component = () => {
       ...getNumberCell(),
     },
     {
-      // Linked order — a purchase-order or internal-order number when linked,
-      // blank otherwise (spec S1 column 4).
+      // Linked order (spec S1 column 4) — when linked, a link to the order
+      // prefixed by kind: PO-<number> for a purchase order (SECONDARY colour),
+      // IO-<number> for an internal order (PRIMARY colour); blank otherwise.
       c: {
-        accessor: row =>
-          row.purchaseOrder
-            ? `#${row.purchaseOrder.number}`
-            : row.requisition
-              ? `#${row.requisition.requisitionNumber}`
-              : '',
+        accessor: row => linkedOrderOf(params.storeId, row)?.label ?? '',
         id: 'linkedOrder',
       },
       header: t('label.linked-order'),
+      cell: info => {
+        const linked = linkedOrderOf(params.storeId, info.row.original);
+        return (
+          <Show when={linked}>
+            {l => (
+              // Stop the link's clicks opening the row (it navigates itself).
+              <A
+                href={l().href}
+                onClick={e => e.stopPropagation()}
+                style={{ color: l().colour, 'font-weight': 500 }}
+              >
+                {l().label}
+              </A>
+            )}
+          </Show>
+        );
+      },
     },
     {
       c: { key: 'createdDatetime' },

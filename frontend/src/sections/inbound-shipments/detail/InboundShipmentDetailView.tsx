@@ -56,6 +56,7 @@ import {
   type InboundLineErrors,
 } from './inboundShipmentUpdate';
 import { kindOf, supplierIsStore } from './inboundShipmentStatus';
+import { heldInboundQueryScopes } from '../inboundShipmentScope';
 import type { InboundEditFields } from './inboundShipmentEdit';
 import type { InboundLineFilter } from './inboundShipmentLineFilter';
 import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
@@ -139,21 +140,38 @@ const InboundShipmentDetailView: Component = () => {
     },
   });
 
-  // Header/side-panel/footer node. A NodeError (bad id) is promoted to the
-  // global unexpected-error modal.
+  // Header/side-panel/footer node. `type` is the permission scope selector and
+  // must match the shipment's own scope, which the id alone doesn't reveal
+  // (contract → permissions), so we probe the query scopes the user holds:
+  // INBOUND_SHIPMENT (manual/transfer) then INBOUND_SHIPMENT_EXTERNAL
+  // (PO-linked). The wrong scope returns RecordNotFound (its purchaseOrderId
+  // filter excludes the row), so we advance to the next scope; the last scope
+  // promotes a genuine RecordNotFound to the global unexpected-error modal.
   const [data, { mutate, refetch: refetchInfo }] = createResource(
     () => ({ storeId: params.storeId, id: params.invoiceId }),
-    async variables => {
-      const result = await graphqlFetch(InboundShipment, variables, {
-        mapSuccessToError: d =>
-          d.invoice.__typename === 'NodeError'
-            ? d.invoice.error.description
-            : undefined,
-      });
-      if (result.kind !== 'success') return undefined;
-      return result.data.invoice.__typename === 'InvoiceNode'
-        ? result.data.invoice
-        : undefined;
+    async ({ storeId, id }) => {
+      const scopes = heldInboundQueryScopes();
+      for (let i = 0; i < scopes.length; i++) {
+        const isLast = i === scopes.length - 1;
+        const result = await graphqlFetch(
+          InboundShipment,
+          { storeId, id, type: scopes[i] },
+          isLast
+            ? {
+                mapSuccessToError: d =>
+                  d.invoice.__typename === 'NodeError'
+                    ? d.invoice.error.description
+                    : undefined,
+              }
+            : undefined
+        );
+        if (
+          result.kind === 'success' &&
+          result.data.invoice.__typename === 'InvoiceNode'
+        )
+          return result.data.invoice;
+      }
+      return undefined;
     }
   );
   const info = (): InboundInfoFragment | undefined => data();

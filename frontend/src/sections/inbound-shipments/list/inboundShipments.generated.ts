@@ -7,6 +7,11 @@ export type InboundRowFragment = {
   invoiceNumber: number;
   otherPartyName: string;
   otherPartyId: string;
+  otherParty: {
+  store: {
+  id: string;
+} | null;
+};
   status: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED";
   onHold: boolean;
   inboundType: "FROM_REQUISITION" | "FROM_PURCHASE_ORDER" | "MANUAL_INTERNAL" | "MANUAL_EXTERNAL";
@@ -209,6 +214,7 @@ export type InboundShipmentsVariables = {
     key: "type" | "otherPartyName" | "invoiceNumber" | "comment" | "status" | "createdDatetime" | "invoiceDatetime" | "allocatedDatetime" | "pickedDatetime" | "shippedDatetime" | "deliveredDatetime" | "verifiedDatetime" | "theirReference" | "transportReference";
     desc?: boolean | null;
   }> | null;
+  type?: Array<"OUTBOUND_SHIPMENT" | "INBOUND_SHIPMENT" | "INBOUND_SHIPMENT_EXTERNAL" | "PRESCRIPTION" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN"> | null;
 };
 
 export type InboundShipmentsResult = {
@@ -221,7 +227,7 @@ export type InboundShipmentsResult = {
 };
 
 export const InboundShipments = {
-  query: "query inboundShipments($storeId: String!, $page: PaginationInput, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!]) {\n  invoices(\n    storeId: $storeId\n    page: $page\n    filter: $filter\n    sort: $sort\n    type: [INBOUND_SHIPMENT, INBOUND_SHIPMENT_EXTERNAL]\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundRow\n      }\n    }\n  }\n}\n\nfragment InboundRow on InvoiceNode {\n  id\n  invoiceNumber\n  otherPartyName\n  otherPartyId\n  status\n  onHold\n  inboundType\n  colour\n  comment\n  theirReference\n  createdDatetime\n  deliveredDatetime\n  purchaseOrderId\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n  }\n  pricing {\n    totalAfterTax\n  }\n}",
+  query: "query inboundShipments($storeId: String!, $page: PaginationInput, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $type: [InvoiceTypeInput!]) {\n  invoices(\n    storeId: $storeId\n    page: $page\n    filter: $filter\n    sort: $sort\n    type: $type\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundRow\n      }\n    }\n  }\n}\n\nfragment InboundRow on InvoiceNode {\n  id\n  invoiceNumber\n  otherPartyName\n  otherPartyId\n  otherParty(storeId: $storeId) {\n    store {\n      id\n    }\n  }\n  status\n  onHold\n  inboundType\n  colour\n  comment\n  theirReference\n  createdDatetime\n  deliveredDatetime\n  purchaseOrderId\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n  }\n  pricing {\n    totalAfterTax\n  }\n}",
 } as TypedDocument<InboundShipmentsResult, InboundShipmentsVariables>;
 
 export type DeleteInboundShipmentsVariables = {
