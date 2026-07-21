@@ -83,9 +83,10 @@ if ! nc -z localhost 3005 2>/dev/null; then
 fi
 
 # fail fast on the host backend (mode 2, the default): the app's startup me
-# query must answer with the fe-auth-contract shape ("Unauthenticated" when no
-# session) — any other server boots the app straight into the unexpected-error
-# modal ("Internal error"). See the blocker in kdd/android/android-spec.md.
+# query must answer with the cookie-session auth-contract shape
+# ("Unauthenticated" when no session) — any other server boots the app straight
+# into the unexpected-error modal ("Internal error"). See the blocker in
+# kdd/android/android-spec.md.
 if ! nc -z localhost 8000 2>/dev/null; then
   echo "WARNING: nothing listening on host :8000 — the app's GraphQL calls will fail." >&2
 else
@@ -93,11 +94,11 @@ else
     -H 'content-type: application/json' \
     -d '{"query":"query me { me { ... on UserNode { __typename } } }"}' || true)"
   case "$ME_RESPONSE" in
-    *Unauthenticated* | *UserNode*) ;; # fe-auth-contract server
+    *Unauthenticated* | *UserNode*) ;; # server speaks the auth contract
     *)
-      echo "The server on host :8000 is not an fe-auth-contract build — its me query returned:" >&2
+      echo "The server on host :8000 does not carry the cookie-session auth contract — its me query returned:" >&2
       echo "  ${ME_RESPONSE:-<no response>}" >&2
-      echo "Login cannot work against it. Run a host server built from the legacy repo's fe-auth-contract branch (kdd/android/android-spec.md)." >&2
+      echo "Login cannot work against it. Run a host server built from the legacy repo's develop branch (contract merged 2026-07-21; kdd/android/android-spec.md)." >&2
       exit 1
       ;;
   esac
