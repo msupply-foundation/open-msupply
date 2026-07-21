@@ -31,18 +31,18 @@ Run this per standards section (per component), smallest useful unit first:
 
 ## Status
 
-| Standard section  | Status      | Last synced | Notes                                                                    |
-| ----------------- | ----------- | ----------- | ------------------------------------------------------------------------ |
-| Typography        | Not started | —           |                                                                          |
-| Tables            | Not started | —           |                                                                          |
-| Input Fields      | In review   | 2026-07-21  | Focus ring → blue done (app-wide); other diffs awaiting decision (below) |
-| Buttons           | Reconciled  | 2026-07-21  | Adopted in full (decisions #1–#4); see ledger for deviations + deferrals |
-| Search            | Not started | —           |                                                                          |
-| Modals & Drawers  | Not started | —           |                                                                          |
-| Navigation        | Not started | —           |                                                                          |
-| Tabs              | Not started | —           |                                                                          |
-| Errors & Feedback | Not started | —           |                                                                          |
-| Accessibility     | Not started | —           |                                                                          |
+| Standard section  | Status      | Last synced | Notes                                                                                        |
+| ----------------- | ----------- | ----------- | -------------------------------------------------------------------------------------------- |
+| Typography        | Not started | —           |                                                                                              |
+| Tables            | Not started | —           |                                                                                              |
+| Input Fields      | Reconciled  | 2026-07-22  | Focus blue, accents blue (+caution toggle), border #c0c0c4, touch 16px; deviations in ledger |
+| Buttons           | Reconciled  | 2026-07-21  | Adopted in full (decisions #1–#4); see ledger for deviations + deferrals                     |
+| Search            | Not started | —           |                                                                                              |
+| Modals & Drawers  | Not started | —           |                                                                                              |
+| Navigation        | Not started | —           |                                                                                              |
+| Tabs              | Not started | —           |                                                                                              |
+| Errors & Feedback | Not started | —           |                                                                                              |
+| Accessibility     | Not started | —           |                                                                                              |
 
 Status values: **Not started** → **In review** (report produced, awaiting decisions) → **Reconciled** (implemented + verified).
 
@@ -122,9 +122,9 @@ Carl's read: mostly already matches. **Done:** the focus ring is now **blue** (a
 - **Form-control accent → blue (default).** The checked/selected accents (checkbox tick, radio dot, toggle "on", Select/MultiSelect item indicator, DatePickerPanel/DateTimeFields calendar accents, FilterBar active chip, StoreSelector selected row) flipped from `--primary-main` to `--secondary-main`. **Exception:** `ToggleSwitch` gains a `variant` prop — `default` (blue "on") or `caution` (orange "on"), for a setting to be careful with (e.g. "on hold"). Off is always neutral grey.
 - **Default border → `#c0c0c4`** (spec). `--input-border` changed `#e4e4e7 → #c0c0c4`; because that token was shared with the button family, the secondary Button/SplitButton/IconButton borders (and the DocumentUpload hairline) were repointed to `--color-border-value` (`≈ #e4e4eb`, the button spec's `#E0E0E0`) so they keep their lighter edge.
 
-**Open (awaiting Carl's decision):**
+**Deliberate deviations (not doing):**
 
-- **Hover border** — spec darkens the border to `#a1a1aa` on hover; our inputs have no hover state.
-- Minor: focus-glow alpha 0.25 (ours) vs 0.15 (spec).
+- **No hover border** — the spec darkens the border to `#a1a1aa` on hover; Carl (2026-07-22) chose to leave inputs without a hover state.
+- **Focus-glow alpha** stays 0.25 (spec 0.15) — negligible, left as-is.
 
 **Resolved 2026-07-22 (Carl) — touch font bump (iOS zoom):** default-size text inputs raise their font to **16px on `pointer: coarse`** so iOS Safari doesn't zoom-on-focus. The value is a token, **`--input-font-touch: 16px`** — an ABSOLUTE px (the one input exception to the rem-only rule), because the iOS threshold is absolute and must hold below 600px where the root shrinks to 85%; rationale lives on the token. Applied to TextField, TextArea, Combobox, MultiSelect; the **small** variant is excluded (stays dense, per spec) — verified 16px default / 14px small on a coarse context. Height already bumps to 48px (pre-existing). **Not done:** DateTimeFields (segmented — its parts set their own font; needs a targeted follow-up) and FilterBar search (a dense toolbar field the spec exempts) — both flagged.
