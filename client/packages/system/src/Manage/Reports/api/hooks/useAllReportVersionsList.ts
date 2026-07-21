@@ -37,9 +37,17 @@ export const useCentralReports = ({
     error: installError,
   } = useInstallUploadedReports();
 
+  // UPDATE
+  const {
+    mutateAsync: updateMutation,
+    isPending: updateLoading,
+    error: updateError,
+  } = useUpdateReport();
+
   return {
     query: { data, isFetching, isError },
     install: { installMutation, installLoading, installError },
+    update: { updateMutation, updateLoading, updateError },
   };
 };
 
@@ -131,4 +139,26 @@ const useInstallUploadedReports = () => {
   });
 
   return mutation;
+};
+
+const useUpdateReport = () => {
+  const { reportApi, queryClient } = useCentralServerReportsGraphqQL();
+
+  const mutationFn = async ({
+    id,
+    isActive,
+  }: {
+    id: string;
+    isActive: boolean;
+  }) => {
+    const result = await reportApi.updateReport({ input: { id, isActive } });
+    return result?.centralServer?.reports.updateReport;
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [ALLREPORTVERSIONS] }),
+    onError: e => console.error(e),
+  });
 };

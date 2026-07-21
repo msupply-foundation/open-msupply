@@ -14,12 +14,18 @@
 #   # standalone_admin_username: 'admin'
 #   # standalone_admin_password: 'pass'
 #   # workers: 8 # number of actix-web worker threads; defaults to logical CPU count. Increase to reduce 408 timeouts under heavy load.
+#   # # Auth timing hints exposed to clients via UserNode (both in seconds, advisory only)
+#   # inactivity_timeout_seconds: 900 # inactive for this long -> client forces re-login
+#   # token_refresh_interval_seconds: 60 # active but no API call for this long -> client pings refreshToken
 #   cors_origins: [
 #       http://localhost:3003,
 #       https://demo-open.msupply.org,
 #       http://localhost:8000,
 #     ] # Used to set the allowed Origin in Cross Origin Request Security
 #   base_dir: "app_data"
+#   # Directory the web frontend is served from, relative to the working directory.
+#   # Debug builds fall back to client/packages/host/dist when this doesn't exist.
+#   frontend_dir: "frontend"
 # sync:
 #   # url/username/password_sha256/interval_seconds are all-or-nothing: set them all, or omit them
 #   # all to carry only flags (e.g. on a central server). A partial set is a startup error.
@@ -80,3 +86,12 @@
 #     hours: 0
 #     mins: 1
 #     secs: 0
+# changelog_dedup: # central + postgres only; periodically deletes superseded (duplicate) changelog rows
+#   interval:                    # how often the task wakes to consider a dedup run
+#     hours: 24
+#     mins: 0
+#     secs: 0
+#   time_window:                 # optional; if set, dedup only runs between these local times and stops at 'to'
+#     from: "02:00"
+#     to: "05:00"
+#   batch_size: 50000            # changelog rows deleted per committed batch

@@ -7,6 +7,7 @@
 - **Generate Types From Graphql** `yarn generate`
 - **Lint:** `cd client && yarn eslint` (client), `cd server && cargo fmt` (server)
 - **Single test:** `cargo nextest run test_name` (server), `yarn test --testNamePattern="test_name"` (client)
+- **E2E (hermetic):** `cd client && yarn e2e:local <suite>` — boots its own server + FE from the reference datafile; see `client/playwright/README.md`. The suite definitions live in a sibling open-msupply-frontend checkout (`FE_SUITES_DIR`, default `../open-msupply-frontend`) — the cross-FE test-id contract (`e2e/TESTIDS.md` there) is shared with the rewrite, so change suites there, not here
 - **Install nextest:** `cargo install cargo-nextest --locked --version 0.9.132`
 
 ## Architecture
@@ -14,6 +15,7 @@
 - **Client:** React app with Yarn 4 workspaces, Material-UI, GraphQL client
 - **Server:** Rust with actix-web, async-graphql, PostgreSQL/SQLite support
 - **Database:** SQLite (dev) or PostgreSQL (prod), migrations in server/repository
+- **Migrations:** New fragments live in `server/repository/src/migrations/vMAJOR_MINOR_00/` matching the current `package.json` version (and the `vX.Y.0-RC` branch). Fragments in older folders are skipped on a newer DB (gate is `db_version <= migration.version()`), so a fragment placed in the wrong folder silently fails to run.
 - **API:** GraphQL endpoint at `/graphql`, schema generated from Rust code
 
 ## Code Style

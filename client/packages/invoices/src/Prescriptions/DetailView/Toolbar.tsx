@@ -3,6 +3,7 @@ import {
   AppBarContentPortal,
   InputWithLabelRow,
   Grid,
+  InvoiceNodeType,
   useTranslation,
   DateTimePickerInput,
   Formatter,
@@ -19,6 +20,7 @@ import { ProgramFragment, useProgramList } from '@openmsupply-client/programs';
 
 import { usePrescriptionLines } from '../api/hooks/usePrescriptionLines';
 import { usePrescription } from '../api';
+import { InvoiceToolbarCustomFields } from '../../common';
 
 export const Toolbar = () => {
   const t = useTranslation();
@@ -196,6 +198,14 @@ export const Toolbar = () => {
               minWidth: 220,
             },
           }}
+        />
+      </Grid>
+      <Grid container flexDirection="column" display="flex" gap={1}>
+        <InvoiceToolbarCustomFields
+          invoiceType={InvoiceNodeType.Prescription}
+          customFields={data?.customFields}
+          onUpdate={patch => update({ id, customFields: patch })}
+          disabled={isDisabled}
         />
       </Grid>
     </AppBarContentPortal>

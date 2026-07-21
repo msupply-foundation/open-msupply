@@ -88,6 +88,7 @@ export const StatusCrumbs = <StatusType extends string>(
       }
     >
       <Box
+        data-testid="status-crumbs"
         height="100%"
         display="flex"
         alignItems="center"

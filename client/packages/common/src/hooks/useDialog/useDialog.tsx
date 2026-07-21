@@ -50,6 +50,7 @@ export interface ModalProps {
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
   disableEnforceFocus?: boolean;
+  testId?: string;
 }
 
 export interface DialogProps {
@@ -165,6 +166,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     deleteButton,
     headerActions,
     disableEnforceFocus = false,
+    testId,
   }: ModalProps) => {
     const t = useTranslation();
     // The slide animation is triggered by cloning the next button and wrapping the passed
@@ -173,7 +175,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       isRtl,
       animationTimeout
     );
-    const { keyboardIsOpen } = useKeyboard();
+    const { keyboardIsOpen, keyboardHeight } = useKeyboard();
     const isAndroid = EnvUtils.platform === Platform.Android;
 
     const defaultPreventedOnClick =
@@ -224,6 +226,73 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
 
     const formProps = enableAutocomplete ? { autoComplete: 'on' } : {};
     const { sx: contentSX, ...restOfContentProps } = contentProps ?? {};
+
+    // The Android soft keyboard shrinks the fullscreen modal's viewport. The
+    // rigid flex layout (#11891) has only the inner table scroll, so the focused
+    // input gets trapped under the keyboard. While the keyboard is open, fall
+    // back to a scrollable body so the input can scroll into view. Gated on
+    // isAndroid && keyboardIsOpen (never true off-device), so desktop/web keep
+    // the #11891 layout untouched.
+    const scrollBodyForKeyboard = isAndroid && keyboardIsOpen;
+
+    // Center the focused input in the scroll area so its row and neighbors stay
+    // visible above the keyboard (native-app "scroll on focus" behavior).
+    // scrollIntoView is unreliable in the Android WebView (smooth scroll gets
+    // cancelled by the tap, wrong scroll ancestor picked), so we find the real
+    // scroll container and set scrollTop ourselves.
+    const centerFocusedInScroll = () => {
+      // rAF: measure after layout/paint has settled.
+      requestAnimationFrame(() => {
+        const el = document.activeElement;
+        if (!(el instanceof HTMLElement)) return;
+
+        // Nearest vertically scrollable ancestor.
+        let node = el.parentElement;
+        let scroller: HTMLElement | null = null;
+        while (node) {
+          const { overflowY } = window.getComputedStyle(node);
+          if (
+            /(auto|scroll)/.test(overflowY) &&
+            node.scrollHeight > node.clientHeight
+          ) {
+            scroller = node;
+            break;
+          }
+          node = node.parentElement;
+        }
+        if (!scroller) return;
+
+        const elRect = el.getBoundingClientRect();
+        const scRect = scroller.getBoundingClientRect();
+        const delta =
+          elRect.top -
+          scRect.top -
+          (scroller.clientHeight / 2 - elRect.height / 2);
+        scroller.scrollBy({ top: delta, behavior: 'smooth' });
+      });
+    };
+
+    // Keyboard opening: the focus event fires before scrollBodyForKeyboard
+    // flips, so this handles the first focus (delay = keyboard animation).
+    React.useEffect(() => {
+      if (!scrollBodyForKeyboard) return;
+      const id = setTimeout(centerFocusedInScroll, 150);
+      return () => clearTimeout(id);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scrollBodyForKeyboard, keyboardHeight]);
+
+    // Moving between rows with the keyboard already open: no resize fires, so
+    // re-center on each focus.
+    const handleFormFocus = () => {
+      if (scrollBodyForKeyboard) centerFocusedInScroll();
+    };
+
+    // Children wrapper. Default: fill the modal so the inner table scrolls
+    // internally (#11891). Keyboard open: plain block that flows to its natural
+    // height, padded by the keyboard height so the last rows can scroll clear.
+    const keyboardScrollWrapperStyle: React.CSSProperties = scrollBodyForKeyboard
+      ? { display: 'block', paddingBottom: keyboardHeight }
+      : { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' };
     const dimensions = {
       height: height ? Math.min(window.innerHeight - 50, height) : undefined,
       width: width ? Math.min(window.innerWidth - 50, width) : undefined,
@@ -242,6 +311,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         disableEscapeKeyDown={false}
         fullScreen={defaultFullscreen}
         disableEnforceFocus={disableEnforceFocus}
+        {...(testId ? { 'data-testid': testId } : {})}
       >
         {defaultFullscreen && (
           <IconButton
@@ -269,40 +339,33 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             display: 'flex',
             flexDirection: 'column',
             flex: '1 1 auto',
-            overflow: 'hidden',
+            overflow: scrollBodyForKeyboard ? 'auto' : 'hidden',
             width: defaultFullscreen ? '100%' : dimensions.width,
             margin: '0 auto',
           }}
+          onFocus={handleFormFocus}
           {...formProps}
         >
           <DialogContent
             {...restOfContentProps}
-            sx={{ overflowX: 'hidden', ...contentSX }}
+            sx={{
+              overflowX: 'hidden',
+              ...contentSX,
+              // Override the per-modal overflowY:hidden / display:flex lock so
+              // the body can scroll the focused input above the keyboard.
+              ...(scrollBodyForKeyboard
+                ? { overflowY: 'auto', display: 'block' }
+                : {}),
+            }}
           >
             {slideAnimation ? (
               <Slide in={slideConfig.in} direction={slideConfig.direction}>
-                <div
-                  style={{
-                    flex: 1,
-                    minHeight: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
+                <div style={keyboardScrollWrapperStyle}>
                   {slideConfig.in && children}
                 </div>
               </Slide>
             ) : (
-              <div
-                style={{
-                  flex: 1,
-                  minHeight: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                {children}
-              </div>
+              <div style={keyboardScrollWrapperStyle}>{children}</div>
             )}
           </DialogContent>
           <DialogActions

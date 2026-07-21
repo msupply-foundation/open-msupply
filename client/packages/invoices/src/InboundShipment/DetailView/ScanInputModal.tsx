@@ -154,7 +154,7 @@ export const ScanInputModal = ({
         numberOfPacks: (existingLine?.numberOfPacks || 0) + draftState.quantity,
         item: {
           id: draftState.itemId || '',
-        } as ItemStockOnHandFragment,
+        } as InboundLineFragment['item'],
       };
 
       if (existingLine) {

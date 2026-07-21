@@ -20,11 +20,18 @@ export const BasicModal = ({
   ...dialogProps
 }: DialogProps) => {
   const { isRtl } = useIntlUtils();
+  // Pull data-testid off the dialog spread so it only lands on the visible
+  // Paper element, not also on the portaled Dialog root (which would cause
+  // strict-mode locator failures).
+  const { 'data-testid': testId, ...restDialogProps } = dialogProps as {
+    'data-testid'?: string;
+  } & typeof dialogProps;
   return (
     <Dialog
       fullScreen={fullScreen}
       PaperProps={{
         dir: isRtl ? 'rtl' : 'ltr',
+        ...(testId ? { 'data-testid': testId } : {}),
         sx: {
           borderRadius: fullScreen ? undefined : '20px',
           minHeight: `${height}px`,
@@ -42,9 +49,9 @@ export const BasicModal = ({
           justifyContent: alignModal,
         },
       }}
-      {...dialogProps}
+      {...restDialogProps}
     >
-      {dialogProps.children}
+      {restDialogProps.children}
     </Dialog>
   );
 };

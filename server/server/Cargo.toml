@@ -40,7 +40,6 @@ rustls-pemfile = "2.2.0"
 serde = { workspace = true }
 tokio = { workspace = true }
 clap = { workspace = true }
-rust-embed = "8.11.0"
 mime_guess = "2.0.5"
 futures = { workspace = true }
 simple-log = { workspace = true }
@@ -54,6 +53,7 @@ serde_json = { workspace = true }
 actix-rt = { workspace = true }
 assert-json-diff = { workspace = true }
 httpmock = { workspace = true }
+tempfile = "3.10.1"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1.12"

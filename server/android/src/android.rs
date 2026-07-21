@@ -61,6 +61,11 @@ pub mod android {
                 standalone_admin_username: None,
                 standalone_admin_password: None,
                 workers: None,
+                inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
+                token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                // The app shell copies its APK-bundled web UI here on startup,
+                // before starting the server (see MainActivity.copyFrontendAssets)
+                frontend_dir: files_dir.join("frontend").to_string_lossy().to_string(),
             },
             database: DatabaseSettings {
                 username: "n/a".to_string(),
@@ -87,6 +92,7 @@ pub mod android {
             // Feature flags won't work using tablet as a server. Run in client mode and connect to a desktop server instead
             features: None,
             changelog_partition: None,
+            changelog_dedup: None,
         };
 
         logging_init(settings.logging.clone(), None);

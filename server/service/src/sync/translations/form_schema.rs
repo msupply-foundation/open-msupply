@@ -33,6 +33,7 @@ impl SyncTranslation for FormSchemaTranslation {
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyFormSchemaRow {

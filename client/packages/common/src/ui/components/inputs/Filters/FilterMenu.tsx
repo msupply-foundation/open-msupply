@@ -13,6 +13,10 @@ import {
 import { useTranslation } from '@common/intl';
 import { TextFilter, TextFilterDefinition } from './TextFilter';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
+import {
+  HierarchicalEnumFilter,
+  HierarchicalEnumFilterDefinition,
+} from './HierarchicalEnumFilter';
 import { DateFilterDefinition, DateFilter } from './DateFilter';
 import { NumberFilter, NumberFilterDefinition } from './NumberFilter';
 import { BooleanFilter, BooleanFilterDefinition } from './BooleanFilter';
@@ -32,6 +36,7 @@ export interface GroupFilterDefinition {
 export type FilterDefinition =
   | TextFilterDefinition
   | EnumFilterDefinition
+  | HierarchicalEnumFilterDefinition
   | DateFilterDefinition
   | NumberFilterDefinition
   | BooleanFilterDefinition;
@@ -85,6 +90,14 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
 
   const showRemoveOption = activeFilters.length > 0;
 
+  // Only surface the "Filters" dropdown when it has something actionable: a
+  // filter left to add, or a non-default (removable) filter that's active.
+  // Otherwise — e.g. a view whose only filter is a default, always-visible
+  // search — the dropdown would just offer "Remove all filters", which the
+  // per-input clear button already covers, so hide it entirely.
+  const showFilterMenu =
+    filterOptions.length > 0 || activeFilters.some(fil => !fil.isDefault);
+
   // updating active filters when the filters are changed
   // this allows for dependent data to update the filter options
   // i.e. choosing a filter option in one filter changes the options in another
@@ -108,26 +121,37 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
       })}
     >
       {/* 13px margin to make menu match the individual filter inputs */}
-      <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>
-        {filterOptions.map(option => (
-          <FilterMenuItem
-            key={
-              option.value.type === 'group'
-                ? option.value.name
-                : option.value.urlParameter
-            }
-            onClick={() => handleSelect(option.value)}
-            label={option.label}
-          />
-        ))}
-        {showRemoveOption && <Divider />}
-        {showRemoveOption && (
-          <FilterMenuItem
-            onClick={() => handleSelect(RESET_KEYWORD)}
-            label={t('label.remove-all-filters')}
-          />
-        )}
-      </DropdownMenu>
+      {showFilterMenu && (
+        <DropdownMenu
+          testId="filters-menu"
+          label={t('label.filters')}
+          sx={{ marginTop: '13px' }}
+        >
+          {filterOptions.map(option => (
+            <FilterMenuItem
+              key={
+                option.value.type === 'group'
+                  ? option.value.name
+                  : option.value.urlParameter
+              }
+              testId={`filter-option-${
+                option.value.type === 'group'
+                  ? option.value.name.toLowerCase().replace(/\s+/g, '-')
+                  : option.value.urlParameter
+              }`}
+              onClick={() => handleSelect(option.value)}
+              label={option.label}
+            />
+          ))}
+          {showRemoveOption && <Divider />}
+          {showRemoveOption && (
+            <FilterMenuItem
+              onClick={() => handleSelect(RESET_KEYWORD)}
+              label={t('label.remove-all-filters')}
+            />
+          )}
+        </DropdownMenu>
+      )}
       {activeFilters.map(filter => getFilterComponent(filter, removeFilter))}
     </Box>
   );
@@ -136,11 +160,13 @@ export const FilterMenu = ({ filters }: FilterDefinitions) => {
 const FilterMenuItem = ({
   onClick,
   label,
+  testId,
 }: {
   onClick: () => void;
   label: string;
+  testId?: string;
 }) => (
-  <DropdownMenuItem onClick={onClick} sx={{ fontSize: 14 }}>
+  <DropdownMenuItem data-testid={testId} onClick={onClick} sx={{ fontSize: 14 }}>
     {label}
   </DropdownMenuItem>
 );
@@ -209,8 +235,13 @@ const getFilterComponent = (
         />
       );
     case 'enum':
+      return <EnumFilter key={filter.urlParameter} filterDefinition={filter} />;
+    case 'hierarchicalEnum':
       return (
-        <EnumFilter key={filter.urlParameter} filterDefinition={filter} />
+        <HierarchicalEnumFilter
+          key={filter.urlParameter}
+          filterDefinition={filter}
+        />
       );
     case 'date':
     case 'dateTime':

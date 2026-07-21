@@ -52,6 +52,9 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
             standalone_admin_username: None,
             standalone_admin_password: None,
             workers: None,
+            inactivity_timeout_seconds: crate::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
+            token_refresh_interval_seconds: crate::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+            frontend_dir: "frontend".to_string(),
         },
         database: db_settings,
         sync: None,
@@ -68,6 +71,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         }),
         features: None,
         changelog_partition: None,
+        changelog_dedup: None,
     };
     let (sync_trigger, _) = SynchroniserDriver::init();
     let (ledger_fix_trigger, _) = LedgerFixDriver::init();

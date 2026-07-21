@@ -54,6 +54,7 @@ fragment InboundLine on InvoiceLineNode {
     restrictedLocationTypeId
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
+      margin
     }
     programs(storeId: $storeId) {
       id
@@ -148,6 +149,7 @@ fragment Inbound on InvoiceNode {
   type
   taxPercentage
   expectedDeliveryDate
+  customFields
   defaultDonor(storeId: $storeId) {
     id
     name
@@ -195,6 +197,7 @@ fragment Inbound on InvoiceNode {
     isCustomer
     isSupplier
     isOnHold
+    margin
     store {
       id
       code
@@ -300,6 +303,7 @@ fragment InboundRow on InvoiceNode {
     number
   }
   inboundType
+  customFields
 }
 
 query invoices(

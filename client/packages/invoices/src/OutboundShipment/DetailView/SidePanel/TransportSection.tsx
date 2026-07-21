@@ -77,6 +77,7 @@ export const TransportSectionComponent = () => {
               update({ transportReference: e.target.value });
             }}
             value={referenceBuffer}
+            inputProps={{ 'data-testid': 'transport-reference-field' }}
             slotProps={{
               input: {
                 style: {

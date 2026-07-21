@@ -181,6 +181,8 @@ impl InsertInput {
             item_variant_id: None,
             donor_id: None,
             manufacturer_id: None,
+            received_number_of_packs: None,
+            reason_option_id: None,
         }
     }
 }

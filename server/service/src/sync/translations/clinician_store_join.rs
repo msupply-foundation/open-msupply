@@ -2,14 +2,12 @@ use serde::{Deserialize, Serialize};
 
 use repository::{
     ChangelogRow, ChangelogTableName, ClinicianLinkRowRepository, ClinicianStoreJoinRow,
-    ClinicianStoreJoinRowDelete, StorageConnection, SyncBufferRow,
-    Row,
-
+    ClinicianStoreJoinRowDelete, Row, StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{clinician::ClinicianTranslation, store::StoreTranslation};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyClinicianStoreJoinRow {
@@ -46,7 +44,8 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _connection: &StorageConnection,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyClinicianStoreJoinRow {
@@ -55,10 +54,12 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             prescriber_id,
         } = sync_record.deserialize()?;
 
+        let check_fk = fk_checker.with_table_required(connection, "clinician_store_join", &id);
+
         let result = ClinicianStoreJoinRow {
             id,
-            store_id,
-            clinician_link_id: prescriber_id,
+            store_id: check_fk(store_id, "store_id", FkField::Store)?,
+            clinician_link_id: check_fk(prescriber_id, "clinician_link_id", FkField::ClinicianLink)?,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -93,7 +94,11 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             prescriber_id: clinician_link_row.clinician_id,
         };
 
-        Ok(PushTranslateResult::upsert(changelog, self.table_name(), serde_json::to_value(legacy_row)?))
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
     fn try_translate_from_delete_sync_record(
@@ -119,14 +124,18 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_clinician_store_join_translation",
-            MockDataInserts::none(),
+            MockDataInserts::all(),
         )
         .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

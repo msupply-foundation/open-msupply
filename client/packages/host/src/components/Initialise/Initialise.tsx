@@ -20,6 +20,8 @@ import {
   useNotification,
   MuiLink,
   useIsCentralServerApi,
+  Collapse,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { useInitialiseForm } from './hooks';
@@ -44,6 +46,9 @@ export const Initialise = () => {
 
   const isCentralServer = useIsCentralServerApi();
   const isAndroid = EnvUtils.platform === Platform.Android;
+  // Only offer the standalone-central setup in dev (`yarn start`), not in
+  // production builds.
+  const showCentralTab = !isAndroid && isCentralServer && !EnvUtils.isProduction();
   const isInputDisabled = formState.isInitialising || formState.isLoading;
   const isExtraSmallScreen = useIsExtraSmallScreen();
   const nativeClient = useNativeClient();
@@ -104,7 +109,7 @@ export const Initialise = () => {
             <Stack direction="row" sx={{ justifyContent: 'center' }}>
               <LoginIcon small />
             </Stack>
-            {!isAndroid && isCentralServer && (
+            {showCentralTab && (
               <TabList
                 value={mode}
                 onChange={(_, v) => !isInputDisabled && setMode(v as InitMode)}
@@ -128,7 +133,7 @@ export const Initialise = () => {
                 isCentralServer={isCentralServer}
               />
             )}
-            {mode === 'central' && isCentralServer && <StandaloneCentralTab />}
+            {mode === 'central' && showCentralTab && <StandaloneCentralTab />}
           </Stack>
         </Stack>
         {isAndroid && (
@@ -171,14 +176,22 @@ const RemoteForm: React.FC<RemoteFormProps> = ({
     password,
     url,
     username,
+    batchSize,
     onInitialise,
     onRetry,
     setPassword,
     setUsername,
     setUrl,
+    setBatchSize,
     siteCredentialsError: error,
     syncStatus,
   } = formState;
+
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  useEffect(() => {
+    if (batchSize != null) setShowAdvanced(true);
+  }, [batchSize]);
 
   const t = useTranslation();
   const isExtraSmallScreen = useIsExtraSmallScreen();
@@ -234,6 +247,35 @@ const RemoteForm: React.FC<RemoteFormProps> = ({
               },
             }}
           />
+          <Box sx={{ mt: '-24px !important' }}>
+            <Box display="flex" justifyContent="flex-end">
+              <MuiLink
+                component="button"
+                type="button"
+                onClick={() => setShowAdvanced(s => !s)}
+                underline="hover"
+                sx={{ fontSize: '0.8rem', color: 'gray.main' }}
+              >
+                {showAdvanced
+                  ? t('label.hide-advanced-options')
+                  : t('label.show-advanced-options')}
+              </MuiLink>
+            </Box>
+            <Collapse in={showAdvanced} unmountOnExit>
+              <Box pt={2}>
+                <NumericTextInput
+                  fullWidth
+                  textAlign="left"
+                  label={t('label.sync-batch-size')}
+                  helperText={t('description.sync-batch-size')}
+                  value={batchSize ?? undefined}
+                  disabled={isInputDisabled}
+                  onChange={value => setBatchSize(value ?? null)}
+                  min={1}
+                />
+              </Box>
+            </Collapse>
+          </Box>
           {error && <BoxedErrorWithDetails {...error} />}
           <Box display="flex" justifyContent="flex-end">
             <LoadingButton

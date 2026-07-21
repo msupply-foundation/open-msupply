@@ -15,6 +15,8 @@ RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
 WORKDIR /usr/src/omsupply/server
 COPY --chmod=755 docker/entry.sh .
 COPY server/data data
+# Web frontend, served from server.frontend_dir (default: frontend/ relative to cwd)
+COPY client/packages/host/dist frontend
 
 WORKDIR /usr/src/omsupply/server/configuration
 COPY server/configuration/base.yaml .

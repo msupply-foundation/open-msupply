@@ -2,6 +2,7 @@ use crate::{
     db_diesel::changelog::ChangelogRepository, lower, ChangelogSyncType, Delete, RepositoryError,
     RowActionType, SourceSiteId, StorageConnection, SyncVersion, Upsert,
 };
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -13,8 +14,14 @@ table! {
         name -> Text,
         hashed_password -> Text,
         hardware_id -> Nullable<Text>,
+        is_multi_device -> Bool,
         token -> Nullable<Text>,
         sync_version -> Text,
+        app_name -> Nullable<Text>,
+        app_version -> Nullable<Text>,
+        last_connection_datetime -> Nullable<Timestamp>,
+        last_sync_datetime -> Nullable<Timestamp>,
+        first_sync_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -30,8 +37,23 @@ pub struct SiteRow {
     pub name: String,
     pub hashed_password: String,
     pub hardware_id: Option<String>,
+    /// When true, multiple devices may sync against this site sharing a single
+    /// `token`, and the per-request hardware id check is bypassed.
+    pub is_multi_device: bool,
     pub token: Option<String>,
     pub sync_version: SyncVersion,
+    /// Identifies the client application of the remote site (e.g. "open mSupply").
+    /// Authored on the central server from v7 sync activity; see issue #11784.
+    pub app_name: Option<String>,
+    /// Remote site's application version, as reported during v7 sync.
+    pub app_version: Option<String>,
+    /// Last time the remote made any authenticated v7 API request (throttled to
+    /// once a minute). Authored on central, pushed up to legacy 4D.
+    pub last_connection_datetime: Option<NaiveDateTime>,
+    /// Last time the remote fully pulled from central (throttled to once a minute).
+    pub last_sync_datetime: Option<NaiveDateTime>,
+    /// First time the remote completed an initialising pull. Set once, never updated.
+    pub first_sync_datetime: Option<NaiveDateTime>,
 }
 
 pub struct SiteRowRepository<'a> {
@@ -193,8 +215,10 @@ mod tests {
             name: "site_a".to_string(),
             hashed_password: "hash_a".to_string(),
             hardware_id: Some("hw-id-a".to_string()),
+            is_multi_device: false,
             token: None,
             sync_version: SyncVersion::V5V6,
+            ..Default::default()
         }
     }
 
@@ -206,8 +230,10 @@ mod tests {
             name: "site_b".to_string(),
             hashed_password: "hash_b".to_string(),
             hardware_id: None,
+            is_multi_device: false,
             token: Some("token_b".to_string()),
             sync_version: SyncVersion::V5V6,
+            ..Default::default()
         }
     }
 

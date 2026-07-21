@@ -29,7 +29,7 @@ jobs:
         run: mkdir -p /tmp/schema-diff
 
       - name: Checkout PR head
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
@@ -38,9 +38,12 @@ jobs:
         id: nvm
         run: echo "NVMRC=$(cat ./client/.nvmrc)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '${{ steps.nvm.outputs.NVMRC }}'
+          # Don't auto-cache via packageManager: it runs the global yarn 1
+          # before corepack is enabled (#12508)
+          package-manager-cache: false
 
       - name: Export schema from PR
         working-directory: server

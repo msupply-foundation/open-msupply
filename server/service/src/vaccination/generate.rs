@@ -59,6 +59,8 @@ pub fn generate_create_prescription(
         item_variant_id: None,
         donor_id: None,
         manufacturer_id: None,
+        received_number_of_packs: None,
+        reason_option_id: None,
     };
 
     let finalise_prescription = UpdatePrescription {
@@ -79,6 +81,7 @@ pub fn generate_create_prescription(
         name_insurance_join_id: None,
         insurance_discount_amount: None,
         insurance_discount_percentage: None,
+        custom_fields: None,
     };
 
     CreatePrescription {

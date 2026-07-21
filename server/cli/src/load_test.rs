@@ -490,6 +490,9 @@ impl LoadTest {
                 standalone_admin_username: None,
                 standalone_admin_password: None,
                 workers: Some(2),
+                inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
+                token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                frontend_dir: "frontend".to_string(),
             },
             database: DatabaseSettings {
                 username: "postgres".to_string(),
@@ -509,6 +512,7 @@ impl LoadTest {
             sync: None,
             features: None,
             changelog_partition: None,
+            changelog_dedup: None,
         };
         let base_config_path = self.output_dir.join("base.yaml");
         std::fs::write(base_config_path, serde_yml::to_string(&base_config)?)?;
@@ -585,6 +589,9 @@ impl LoadTest {
                     standalone_admin_username: None,
                     standalone_admin_password: None,
                     workers: Some(1), // We're spawning many remote site in separate processes. Each one of these remote sites don't need several actix workers. Their main runtime will still have num CPU cores workers.
+                    inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
+                    token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                    frontend_dir: "frontend".to_string(),
                 },
                 database: DatabaseSettings {
                     username: "postgres".to_string(),
@@ -619,6 +626,7 @@ impl LoadTest {
                 mail: None,
                 features: None,
                 changelog_partition: None,
+                changelog_dedup: None,
             };
 
             let full_site = TestSite {

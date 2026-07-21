@@ -182,6 +182,11 @@ export const AppDrawer: React.FC = () => {
 
   return (
     <StyledDrawer
+      // A navigation landmark: the deterministic suites treat a visible nav
+      // as the post-login "landed" signal (open-msupply-frontend
+      // e2e/TESTIDS.md § non-testid hooks), and the app's primary menu
+      // should be one for assistive tech regardless.
+      component="nav"
       data-testid="drawer"
       aria-expanded={drawer.isOpen}
       isOpen={drawer.isOpen}

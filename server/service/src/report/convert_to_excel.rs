@@ -9,6 +9,7 @@ use umya_spreadsheet::{
     writer::xlsx,
     Cell, FontSize, Spreadsheet, Worksheet,
 };
+use util::sanitize_filename;
 
 pub fn csv_to_excel(
     base_dir: &str,
@@ -26,11 +27,15 @@ pub fn csv_to_excel(
         .records()
         .collect::<Result<_, _>>()
         .map_err(|e| ReportError::DocGenerationError(e.to_string()))?;
-    let reserved_file = reserve_file(base_dir, filename)?;
+    let sanitized_filename = sanitize_filename(filename.to_string());
+    let reserved_file = reserve_file(base_dir, &sanitized_filename)?;
 
     // Create Excel workbook
     let mut book = umya_spreadsheet::new_file();
-    if let Some(name) = sheet_name.map(sanitize_sheet_name).filter(|n| !n.is_empty()) {
+    if let Some(name) = sheet_name
+        .map(sanitize_sheet_name)
+        .filter(|n| !n.is_empty())
+    {
         // Failure to rename the default sheet is non-fatal — fall through with the default name.
         let _ = book.set_sheet_name(0, &name);
     }
@@ -67,9 +72,10 @@ pub fn export_html_report_to_excel(
     report: GeneratedReport,
     report_name: String,
     template_as_buffer: &Option<Vec<u8>>,
+    sheet_name: Option<&str>,
 ) -> Result<String, ReportError> {
     let reserved_file = reserve_file(base_dir, &report_name)?;
-    let mut book = get_workbook(template_as_buffer, &reserved_file.path)?;
+    let mut book = get_workbook(template_as_buffer, &reserved_file.path, sheet_name)?;
 
     // We work with the first sheet in the book
     let sheet = book
@@ -124,6 +130,7 @@ fn reserve_file(base_dir: &str, report_name: &str) -> Result<StaticFile, ReportE
 fn get_workbook(
     template_as_buffer: &Option<Vec<u8>>,
     path: &str,
+    sheet_name: Option<&str>,
 ) -> Result<Spreadsheet, ReportError> {
     let book = match template_as_buffer {
         Some(template) => {
@@ -131,14 +138,19 @@ fn get_workbook(
             fs::write(path, template)
                 .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
 
-            // Read in the template as a mutable XLSX book
+            // Read in the template as a mutable XLSX book. The template's own
+            // sheet name is kept
             umya_spreadsheet::reader::xlsx::read(path)
                 .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?
         }
         None => {
             // Create a new xlsx file if no template is provided
             let mut book = umya_spreadsheet::new_file();
-            book.set_sheet_name(0, "Report")
+            let name = sheet_name
+                .map(sanitize_sheet_name)
+                .filter(|n| !n.is_empty())
+                .unwrap_or_else(|| "Report".to_string());
+            book.set_sheet_name(0, &name)
                 .map_err(|err| ReportError::DocGenerationError(err.to_string()))?;
             book
         }
@@ -445,6 +457,13 @@ mod report_to_excel_test {
             .unwrap_or_default()
     }
 
+    fn test_base_dir(test_name: &str) -> String {
+        std::env::temp_dir()
+            .join(format!("oms_convert_to_excel_{test_name}"))
+            .to_string_lossy()
+            .to_string()
+    }
+
     #[test]
     fn test_generate_excel_no_attributes() {
         let report: GeneratedReport = GeneratedReport {
@@ -738,13 +757,14 @@ mod report_to_excel_test {
     fn test_csv_to_excel() {
         let csv_data = "Name,Status,Invoice Number\nHarry Potter,Picked,2\nHermione Granger,New,3\nRon Weasley,New,4\n";
 
-        let result = csv_to_excel(".", csv_data, "test_csv_export", None);
+        let base_dir = test_base_dir("csv_export");
+        let result = csv_to_excel(&base_dir, csv_data, "test_csv_export", None);
         assert!(result.is_ok(), "CSV to Excel conversion should succeed");
 
         let file_id = result.unwrap();
         assert!(!file_id.is_empty(), "File ID should not be empty");
 
-        let file_service = StaticFileService::new(".").unwrap();
+        let file_service = StaticFileService::new(&base_dir).unwrap();
         let generated_file = file_service
             .find_file(&file_id, StaticFileCategory::Temporary)
             .unwrap()
@@ -778,18 +798,48 @@ mod report_to_excel_test {
 
     #[test]
     fn test_csv_to_excel_sets_sheet_name() {
+        let base_dir = test_base_dir("sheet_name");
+        let read_sheet_name = |file_id: &str| {
+            let file_service = StaticFileService::new(&base_dir).unwrap();
+            let generated_file = file_service
+                .find_file(file_id, StaticFileCategory::Temporary)
+                .unwrap()
+                .unwrap();
+            let book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+            book.get_sheet(&0).unwrap().get_name().to_string()
+        };
+
+        // sheet after the store code
         let csv_data = "Name,Status\nHarry Potter,Picked\n";
         let file_id =
-            csv_to_excel(".", csv_data, "test_sheet_name", Some("fsmclinic")).unwrap();
+            csv_to_excel(&base_dir, csv_data, "test_sheet_name", Some("fsmclinic")).unwrap();
+        assert_eq!(read_sheet_name(&file_id), "fsmclinic");
 
-        let file_service = StaticFileService::new(".").unwrap();
-        let generated_file = file_service
-            .find_file(&file_id, StaticFileCategory::Temporary)
-            .unwrap()
-            .unwrap();
-        let book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
-        let sheet = book.get_sheet(&0).unwrap();
-        assert_eq!(sheet.get_name(), "fsmclinic");
+        let export = |file_name: &str, store_code: Option<&str>| {
+            let report = GeneratedReport {
+                document: r#"
+              <table>
+                <thead><tr><th>Item</th></tr></thead>
+                <tbody><tr><td>Ibuprofen 200mg tabs</td></tr></tbody>
+              </table>
+            "#
+                .to_string(),
+                header: None,
+                footer: None,
+            };
+            export_html_report_to_excel(&base_dir, report, file_name.to_string(), &None, store_code)
+                .unwrap()
+        };
+
+        assert_eq!(
+            read_sheet_name(&export("test_sheet_store_code", Some("GEN"))),
+            "GEN"
+        );
+        // and falls back to "Report" without one
+        assert_eq!(
+            read_sheet_name(&export("test_sheet_fallback", None)),
+            "Report"
+        );
     }
 
     #[test]
@@ -801,6 +851,25 @@ mod report_to_excel_test {
         // Truncated to 31 chars
         let long = "a".repeat(50);
         assert_eq!(sanitize_sheet_name(&long).len(), 31);
+    }
+
+    #[test]
+    fn test_csv_to_excel_sanitizes_filename() {
+        // mSupply allows store codes with crazy characters — make sure they
+        // can't escape the temp dir or break the path on disk.
+        let csv_data = "Name\nHarry\n";
+        let base_dir = test_base_dir("sanitizes_filename");
+        let file_id =
+            csv_to_excel(&base_dir, csv_data, "../etc/passwd_stock", Some("any")).unwrap();
+
+        let file_service = StaticFileService::new(&base_dir).unwrap();
+        let generated_file = file_service
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        // No path separators survive — the stored name is a plain filename.
+        assert!(!generated_file.name.contains('/'));
+        assert!(!generated_file.name.contains('\\'));
     }
 
     #[test]
@@ -880,25 +949,30 @@ mod report_to_excel_test {
             footer: None,
         };
 
-        // Test the full export function with template
+        // Test the full export function with template. The store code must
+        // NOT override the template's own sheet name
+        let base_dir = test_base_dir("with_template");
         let result = export_html_report_to_excel(
-            ".", // base_dir
+            &base_dir,
             report,
             "test_with_template".to_string(),
             &Some(template_bytes),
+            Some("GEN"),
         );
 
         assert!(result.is_ok(), "Export should succeed with template");
         let file_id = result.unwrap();
 
         // Read back the generated file to verify content
-        let file_service = StaticFileService::new(".").unwrap();
+        let file_service = StaticFileService::new(&base_dir).unwrap();
         let generated_file = file_service
             .find_file(&file_id, StaticFileCategory::Temporary)
             .unwrap()
             .unwrap();
         let generated_book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
         let sheet = generated_book.get_sheet(&0).unwrap();
+
+        assert_eq!(sheet.get_name(), "Report Template");
 
         let get_value = |coord: &str| get_value(sheet, coord);
 

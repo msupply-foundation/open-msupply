@@ -78,6 +78,8 @@ pub mod receive_payments_from_prescriptions;
 pub use receive_payments_from_prescriptions::*;
 pub mod do_not_print_placeholder_line_labels;
 pub use do_not_print_placeholder_line_labels::*;
+pub mod blind_stocktake;
+pub use blind_stocktake::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -102,6 +104,7 @@ pub struct PreferenceProvider {
     pub receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
 
     // Store preferences
+    pub blind_stocktake: BlindStocktake,
     pub manage_vaccines_in_doses: ManageVaccinesInDoses,
     pub manage_vvm_status_for_stock: ManageVvmStatusForStock,
     pub order_in_packs: OrderInPacks,
@@ -154,6 +157,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
 
         // Store preferences
+        blind_stocktake: BlindStocktake,
         manage_vaccines_in_doses: ManageVaccinesInDoses,
         manage_vvm_status_for_stock: ManageVvmStatusForStock,
         order_in_packs: OrderInPacks,

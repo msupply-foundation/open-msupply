@@ -39,6 +39,7 @@ export const ColorSelectButton: FC<ColorSelectButtonProps> = ({
         }}
       />
       <IconButton
+        testId="colour-picker-button"
         label={t('button.select-a-color')}
         height="16px"
         disabled={disabled}
