@@ -106,5 +106,9 @@ Raw source: `#btn-variants`, `#btn-sizes`, `#btn-layout`, `#btn-states` (fetched
 
 **Deferred follow-ups (recorded so they aren't lost):**
 
-- **SplitButton + CheckboxButton still use the old shadowed-orange pill** — they now read as inconsistent beside the flat Button. Restyle in a dedicated pass (the standard has a `#btn-split` section).
-- **App-wide focus treatment isn't unified** — the Button now uses a per-variant `outline` ring, while inputs/IconButton use the orange box-shadow `--focus-ring`. A focus pass could align the treatment (outline vs glow) and the per-variant colour logic across the library.
+- **CheckboxButton still uses the old shadowed-orange pill** — inconsistent beside the flat buttons. Restyle in a dedicated pass. (SplitButton is now done — see below.)
+- **App-wide focus treatment isn't unified** — the Button/SplitButton now use an `outline` ring, while inputs/IconButton use the orange box-shadow `--focus-ring`. A focus pass could align the treatment (outline vs glow) and the per-variant colour logic across the library.
+
+### Split button (`#btn-split`) — _reconciled 2026-07-21_
+
+`SplitButton` gains a `variant` prop — `primary` (filled blue, default) or `secondary` (outlined) — matching the standard, which builds the split from the same `.btn` variants. It stays its **own** CSS module (the caret is a Kobalte `DropdownMenu.Trigger`, so it composes rather than literally reusing `<Button>`) but shares the flat tokens: `--radius-sm`, blue → `--secondary-dark` fill, a hairline seam between the halves, the 48px touch growth, and a **whole-group** focus ring via `:has(:focus-visible)` so it wraps both halves. The menu's current-item marker now uses the action tone (`--secondary-main`) instead of orange. Verified light + dark, both variants, menu open. Real callers (Export, status footer, header, finalise) keep the default primary; the showcase renders Export as `secondary` per the standard's toolbar-export example.

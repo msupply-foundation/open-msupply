@@ -1,52 +1,85 @@
 /*
- * Split button — mirrors the app's SplitButton (MUI ButtonGroup): NO outer
- * border, a shadow[2] drop-shadow, pill radius, and a 1px divider between the
- * main action and the caret. Each half fills orange on hover independently,
- * like the outlined ButtonGroup. Logical borders → mirror in RTL.
+ * Split button — flat, aligned to the standard's #btn-split (adopted 2026-07-21;
+ * see src/ui/docs/DESIGN_STANDARDS.md). Two glued halves in a flex row: the main
+ * action + a caret that opens the menu. Same flat tone tokens as <Button>. This
+ * is a COMPOSED component — the caret is a Kobalte DropdownMenu trigger — so it
+ * keeps its own CSS rather than reusing <Button>, but the look is identical.
+ *
+ * variant (data-variant on the container + both halves): 'primary' (filled
+ * action blue, default) or 'secondary' (outlined). Inner corners squared, outer
+ * corners rounded (--radius-sm); a hairline divider separates the halves. Each
+ * half owns its ripple + hover so they light up independently; a whole-group
+ * focus ring is drawn via :has(:focus-visible) so it wraps the glued pair.
+ *
+ * Rule order is ascending-specificity (no-descending-specificity).
  */
 .split {
   display: inline-flex;
   align-items: stretch;
-  height: var(--nav-item-height);
-  border-radius: var(--radius-button);
-  background: var(--surface-raised);
-  box-shadow: var(--shadow-2);
-  overflow: hidden;
+  border-radius: var(--radius-sm);
 }
 
-/* Both halves — shared base (rest rules first so specificity ascends). */
+/* Outlined (secondary): the outer edge lives on the container, and overflow
+   clips the halves to the radius. Primary needs no container border. */
+.split[data-variant='secondary'] {
+  overflow: hidden;
+  border: 1px solid var(--input-border);
+  background: var(--bg-white);
+}
+
+/* Whole-group focus ring (blue, like <Button>) when either half has keyboard
+   focus — drawn on the container so it wraps both halves. :has() is already
+   relied on elsewhere (CheckboxButton). */
+.split:has(:focus-visible) {
+  outline: 3px solid var(--secondary-main);
+  outline-offset: 0.125rem;
+}
+
+/* Shared half base (rest first; hover/expanded later so specificity ascends). */
 .main,
 .caret {
-  position: relative; /* hosts its own ripple layer */
+  position: relative;
   overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-block-size: var(--button-height);
   border: none;
   background: transparent;
   color: var(--button-text);
   font: inherit;
+  font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   cursor: pointer;
   transition:
     background 140ms ease,
     color 140ms ease;
-  /* Ripple: orange at rest, white when this half is filled */
-  --ripple-color: color-mix(in srgb, var(--primary-main) 22%, transparent);
+}
+
+/* Tablet & below: match the Button's 48px touch growth. */
+@media (max-width: 1023px) {
+  .main,
+  .caret {
+    min-block-size: var(--touch-target);
+  }
 }
 
 .main {
   gap: var(--space-2);
-  padding-inline: 1.25rem;
+  min-inline-size: 4rem;
+  padding-inline: 1rem;
   white-space: nowrap;
+  border-start-start-radius: var(--radius-sm);
+  border-end-start-radius: var(--radius-sm);
 }
 
 .caret {
-  padding-inline: var(--space-2);
-  border-inline-start: 1px solid var(--color-divider);
+  padding-inline: 0.625rem;
+  border-start-end-radius: var(--radius-sm);
+  border-end-end-radius: var(--radius-sm);
 }
 
-/* Content sits above the ripple layer */
+/* Content above the ripple; icon + chevron follow the half's colour. */
 .icon,
 .label,
 .caretIcon {
@@ -57,39 +90,52 @@
 .icon {
   display: inline-flex;
   font-size: 1.25rem;
-  color: var(--primary-main);
 }
 
 .caretIcon {
   font-size: 1.125rem;
-  color: var(--gray-dark);
 }
 
-/* Hover / open — the half fills brand orange, its content + ripple go white. */
-.main:hover,
-.caret:hover,
-.caret[data-expanded] {
-  background: var(--primary-main);
+/* Halves handle their own focus visually via the group ring above. */
+.main:focus-visible,
+.caret:focus-visible {
+  outline: none;
+}
+
+/* Primary — filled action blue, white content, a darker-blue seam. */
+.main[data-variant='primary'],
+.caret[data-variant='primary'] {
+  background: var(--secondary-main);
+  color: var(--primary-contrast);
   --ripple-color: color-mix(in srgb, var(--primary-contrast) 35%, transparent);
 }
 
-.main:hover {
-  color: var(--primary-contrast);
+.caret[data-variant='primary'] {
+  border-inline-start: 1px solid var(--secondary-dark);
 }
 
-.main:hover .icon {
-  color: var(--primary-contrast);
+/* Secondary — outlined (edge on the container), charcoal content, hairline seam. */
+.main[data-variant='secondary'],
+.caret[data-variant='secondary'] {
+  --ripple-color: color-mix(in srgb, var(--secondary-main) 22%, transparent);
 }
 
-.caret:hover .caretIcon,
-.caret[data-expanded] .caretIcon {
-  color: var(--primary-contrast);
+.caret[data-variant='secondary'] {
+  border-inline-start: 1px solid var(--input-border);
 }
 
-.main:focus-visible,
-.caret:focus-visible {
-  outline: 2px solid var(--primary-main);
-  outline-offset: -2px;
+/* Hover / menu-open — primary darkens; secondary recolours to the action tone. */
+.main[data-variant='primary']:hover:not(:disabled),
+.caret[data-variant='primary']:hover:not(:disabled),
+.caret[data-variant='primary'][data-expanded] {
+  background: var(--secondary-dark);
+}
+
+.main[data-variant='secondary']:hover:not(:disabled),
+.caret[data-variant='secondary']:hover:not(:disabled),
+.caret[data-variant='secondary'][data-expanded] {
+  background: var(--bg-group-main);
+  color: var(--secondary-main);
 }
 
 /* --- Menu (portaled to <body>; inherits dir for RTL) ------------------- */
@@ -123,13 +169,14 @@
   background: var(--bg-group-main);
 }
 
+/* Current selection uses the action tone (blue), matching the main action. */
 .item[data-current='true'] {
-  color: var(--primary-main);
+  color: var(--secondary-main);
   font-weight: var(--weight-bold);
 }
 
-/* A disabled entry (a past/current status shown for context) — greyed, not selectable. Placed
-   after the current rule so it wins for a current-and-disabled item (no-descending-specificity). */
+/* A disabled entry (a past/current status shown for context) — greyed, not selectable.
+   Placed after the current rule so it wins for a current-and-disabled item. */
 .item[data-disabled] {
   color: var(--gray-light);
   font-weight: var(--weight-regular);
@@ -143,7 +190,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .split,
   .main,
   .caret {
     transition: none;

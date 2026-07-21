@@ -249,12 +249,16 @@ export const ButtonsShowcase = () => {
             </code>{' '}
             (the caret's menu buys the focus/keyboard/ARIA contract). Picking a
             format selects it <em>and</em> runs it, like the app's export
-            selector. Each half ripples and fills independently.
+            selector. Each half ripples and lights up independently. Same flat
+            language as <code>&lt;Button&gt;</code>; this one is{' '}
+            <code>variant="secondary"</code> (outlined), the toolbar-export tone
+            from the standard.
           </>
         }
       >
         <div class={styles.row}>
           <SplitButton
+            variant="secondary"
             icon={<DownloadIcon />}
             options={EXPORT_OPTIONS}
             menuLabel="Export options"
@@ -283,7 +287,9 @@ export const ButtonsShowcase = () => {
             menu pick only <em>re-targets</em> the main action — the label
             updates, nothing runs until the main half is clicked. Pass{' '}
             <code>menuSelectsOnly</code> +<code>onValueChange</code>; the
-            default (pick = run) stays for export-style menus.
+            default (pick = run) stays for export-style menus. Shown in the
+            default <code>primary</code> tone (filled blue), for contrast with
+            the outlined export split above.
           </>
         }
       >
