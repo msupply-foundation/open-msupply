@@ -25,7 +25,7 @@ import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
   getCurrencyCell,
-  getDateCell,
+  getExpiryDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../api/createTableConfig';
@@ -298,7 +298,7 @@ const OutboundDetailView: Component = () => {
     {
       c: { key: 'expiryDate' },
       header: t('outbound.line.expiry'),
-      ...getDateCell(),
+      ...getExpiryDateCell(),
     },
     ...(vvmOn()
       ? [

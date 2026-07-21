@@ -3,6 +3,8 @@ import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import type { Column } from './columnTypes';
+import { differenceInMonths } from 'date-fns';
+import styles from './tableHelpers.module.css';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their
 // column defs, and the sortKey ⇄ column-id mapping. Kept in one place so a page
@@ -49,19 +51,38 @@ const formatDateCell = (value: string | Date | null | undefined): string =>
   value ? localisedDate(value) : EMPTY_CELL;
 
 // Numbers: right-aligned.
-export const getNumberCell = <T>(meta?: Meta): CellFragment<T> => ({
+export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
 });
 
 // Dates: format the resolved value via localisedDate, blank → em dash.
-export const getDateCell = <T>(meta?: Meta): CellFragment<T> => ({
+export const getDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info =>
     formatDateCell(info.getValue<string | Date | null | undefined>()),
 });
 
+// Expiry dates: like getDateCell, but an almost-expired date (≤3 months to
+// expiry, past included — the old app's isAlmostExpired / MINIMUM_EXPIRY_MONTHS)
+// renders in the error colour, matching the old app's ExpiryDateCell.
+const EXPIRY_WARNING_MONTHS = 3;
+export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
+  meta: { ...meta },
+  cell: info => {
+    const value = info.getValue<string | Date | null | undefined>();
+    if (!value) return EMPTY_CELL;
+    const almostExpired =
+      differenceInMonths(new Date(value), new Date()) <= EXPIRY_WARNING_MONTHS;
+    return (
+      <span class={almostExpired ? styles.expiring : undefined}>
+        {localisedDate(value)}
+      </span>
+    );
+  },
+});
+
 // Booleans: resolved value → localised Yes/No.
-export const getBooleanCell = <T>(meta?: Meta): CellFragment<T> => ({
+export const getBooleanCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info =>
     info.getValue<boolean>() ? t('messages.yes') : t('messages.no'),
@@ -85,7 +106,7 @@ const formatCurrencyCell = (value: number | null | undefined): string =>
         maximumFractionDigits: 2,
       });
 
-export const getCurrencyCell = <T>(meta?: Meta): CellFragment<T> => ({
+export const getCurrencyCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
   aggregationFn: 'sum',
   cell: info => formatCurrencyCell(info.getValue<number | null | undefined>()),
