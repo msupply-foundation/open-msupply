@@ -114,6 +114,13 @@ export const Popover = (props: PopoverProps) => {
     )
       top = below;
 
+    // Final cross-viewport clamp: a panel too tall for either side (CSS caps
+    // its height at 100dvh - 2*EDGE, then it scrolls) would still be placed
+    // off the bottom/top edge by the below/above math above. Pin it inside the
+    // viewport so every row is reachable. max() beats min() when the panel is
+    // exactly viewport-tall, keeping the top edge visible.
+    top = Math.max(EDGE, Math.min(top, window.innerHeight - p.height - EDGE));
+
     panel.style.top = `${Math.round(top)}px`;
     panel.style.left = `${Math.round(left)}px`;
   };

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   cleanArguments,
+  instantToLocalDate,
   parseArgumentSchema,
+  periodSearchWrites,
+  scheduleCascadeWrites,
   seedDefaults,
   type ParsedField,
 } from './schema';
@@ -132,6 +135,53 @@ describe('parseArgumentSchema — item-list shape', () => {
     });
   });
 
+  it('maps ProgramSearch with its option flags (AC-R12)', () => {
+    const parsed = parseArgumentSchema({
+      jsonSchema: {
+        properties: {
+          programId: { type: 'string' },
+          vaccineProgramId: { type: 'string' },
+        },
+      },
+      uiSchema: {
+        elements: [
+          {
+            type: 'ProgramSearch',
+            scope: '#/properties/programId',
+            label: 'Program',
+            options: { allProgramsOption: true },
+          },
+          {
+            type: 'ProgramSearch',
+            scope: '#/properties/vaccineProgramId',
+            label: 'Vaccine program',
+            options: { programType: 'immunisation', clearable: true },
+          },
+        ],
+      },
+    });
+    expect(parsed[0]).toEqual({
+      kind: 'programSearch',
+      key: 'programId',
+      label: 'Program',
+      nullable: false,
+      required: false,
+      immunisationOnly: false,
+      allPrograms: true,
+      clearable: false,
+    });
+    expect(parsed[1]).toEqual({
+      kind: 'programSearch',
+      key: 'vaccineProgramId',
+      label: 'Vaccine program',
+      nullable: false,
+      required: false,
+      immunisationOnly: true,
+      allPrograms: false,
+      clearable: true,
+    });
+  });
+
   it('carries invert on the flagged boolean and not on a plain one', () => {
     const isActive = byKey(fields, 'isActive');
     const onlyOutOfStock = byKey(fields, 'onlyOutOfStock');
@@ -211,9 +261,9 @@ describe('parseArgumentSchema — unsupported fallback', () => {
       uiSchema: {
         elements: [
           {
-            type: 'PeriodSearch',
-            scope: '#/properties/periodId',
-            label: 'Period',
+            type: 'HologramSearch',
+            scope: '#/properties/hologramId',
+            label: 'Hologram',
           },
         ],
       },
@@ -221,9 +271,9 @@ describe('parseArgumentSchema — unsupported fallback', () => {
     expect(fields).toEqual([
       {
         kind: 'unsupported',
-        key: 'periodId',
-        label: 'Period',
-        elementType: 'PeriodSearch',
+        key: 'hologramId',
+        label: 'Hologram',
+        elementType: 'HologramSearch',
       },
     ]);
   });
@@ -484,5 +534,251 @@ describe('seedDefaults', () => {
     expect('monthlyConsumptionLookBackPeriod' in seed).toBe(false);
     // timezone is always seeded.
     expect(typeof seed.timezone).toBe('string');
+  });
+});
+
+// The five search/cascade controls (AC-R13–R17), shaped like the shipped
+// schemas that use them: the standard outbound-shipments NameSearch, the
+// Afghanistan stock-delivery-record ItemSearch (with its control-less
+// `itemName` companion property), the Niger inventory_adjustments
+// ReasonOptionSearch, the standard per-period reports' two PeriodSearch modes,
+// and the Congo quarterly requisition's ScheduleForm.
+const searchControlsSchema = {
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      otherPartyId: { type: ['string', 'null'] },
+      itemId: { type: 'string' },
+      itemName: { type: 'string' },
+      reasonOptionId: { type: ['string', 'null'] },
+      periodId: { type: 'string' },
+      after: { format: 'date-time', type: 'string' },
+      schedule: { type: 'object' },
+    },
+    required: ['itemId'],
+  },
+  uiSchema: {
+    type: 'VerticalLayout',
+    elements: [
+      {
+        type: 'NameSearch',
+        scope: '#/properties/otherPartyId',
+        label: 'Customer',
+        options: { nameType: 'customer' },
+      },
+      { type: 'ItemSearch', scope: '#/properties/itemId', label: 'Item' },
+      {
+        type: 'ReasonOptionSearch',
+        scope: '#/properties/reasonOptionId',
+        label: 'Reason',
+      },
+      {
+        type: 'PeriodSearch',
+        scope: '#/properties/periodId',
+        label: 'Period',
+        options: { findByProgram: true, clearable: true },
+      },
+      {
+        type: 'PeriodSearch',
+        scope: '#/properties/after',
+        label: 'Period (span)',
+        options: { findByProgram: false },
+      },
+      {
+        type: 'ScheduleForm',
+        scope: '#/properties/schedule',
+        label: 'Schedule',
+      },
+    ],
+  },
+};
+
+describe('parseArgumentSchema — search controls (AC-R13–R17)', () => {
+  const fields = parseArgumentSchema(searchControlsSchema);
+
+  it('maps NameSearch with its party role (AC-R13)', () => {
+    expect(byKey(fields, 'otherPartyId')).toEqual({
+      kind: 'nameSearch',
+      key: 'otherPartyId',
+      label: 'Customer',
+      nullable: true,
+      required: false,
+      role: 'customer',
+    });
+  });
+
+  it('degrades a role-less NameSearch to unsupported, not nothing', () => {
+    const parsed = parseArgumentSchema({
+      jsonSchema: { properties: { otherPartyId: { type: 'string' } } },
+      uiSchema: {
+        elements: [
+          {
+            type: 'NameSearch',
+            scope: '#/properties/otherPartyId',
+            label: 'Party',
+          },
+        ],
+      },
+    });
+    expect(parsed[0]).toEqual({
+      kind: 'unsupported',
+      key: 'otherPartyId',
+      label: 'Party',
+      elementType: 'NameSearch',
+    });
+  });
+
+  it('maps ItemSearch, carrying required (AC-R14)', () => {
+    expect(byKey(fields, 'itemId')).toEqual({
+      kind: 'itemSearch',
+      key: 'itemId',
+      label: 'Item',
+      nullable: false,
+      required: true,
+    });
+  });
+
+  it('maps ReasonOptionSearch (AC-R15)', () => {
+    expect(byKey(fields, 'reasonOptionId').kind).toBe('reasonOption');
+  });
+
+  it('maps both PeriodSearch modes with their option flags (AC-R16)', () => {
+    expect(byKey(fields, 'periodId')).toEqual({
+      kind: 'periodSearch',
+      key: 'periodId',
+      label: 'Period',
+      nullable: false,
+      required: false,
+      findByProgram: true,
+      clearable: true,
+    });
+    expect(byKey(fields, 'after')).toMatchObject({
+      kind: 'periodSearch',
+      findByProgram: false,
+      clearable: false,
+    });
+  });
+
+  it('maps ScheduleForm (AC-R17)', () => {
+    expect(byKey(fields, 'schedule')).toEqual({
+      kind: 'scheduleForm',
+      key: 'schedule',
+      label: 'Schedule',
+      requiredKeys: [],
+    });
+  });
+
+  it('collects required cascade keys from the schema, Congo-style (AC-R17)', () => {
+    // The Congo quarterly requisition marks after/before/programId required —
+    // keys OUTSIDE the element's own scope, but rendered by the cascade, so
+    // they gate OK. scheduleId/periodId stay optional there.
+    const parsed = parseArgumentSchema({
+      jsonSchema: {
+        type: 'object',
+        properties: { schedule: { type: 'object' } },
+        required: ['after', 'before', 'programId'],
+      },
+      uiSchema: {
+        elements: [
+          {
+            type: 'ScheduleForm',
+            scope: '#/properties/schedule',
+            label: 'Schedule',
+          },
+        ],
+      },
+    });
+    expect(parsed[0]).toMatchObject({
+      kind: 'scheduleForm',
+      requiredKeys: ['programId', 'after', 'before'],
+    });
+  });
+});
+
+describe('periodSearchWrites (AC-R16)', () => {
+  const period = {
+    id: 'p1',
+    startDate: '2026-06-01',
+    endDate: '2026-06-30',
+  };
+
+  it('writes the id alone when scoped at periodId', () => {
+    expect(periodSearchWrites('periodId', period)).toEqual({
+      periodId: 'p1',
+    });
+  });
+
+  it('writes the span — start instant + before companion — at any other key', () => {
+    expect(periodSearchWrites('after', period)).toEqual({
+      after: new Date('2026-06-01T00:00:00').toISOString(),
+      before: new Date('2026-06-30T23:59:59.999').toISOString(),
+    });
+  });
+
+  it('clears the scoped key and before in both modes', () => {
+    expect(periodSearchWrites('periodId', null)).toEqual({
+      periodId: undefined,
+      before: undefined,
+    });
+    expect(periodSearchWrites('after', null)).toEqual({
+      after: undefined,
+      before: undefined,
+    });
+  });
+});
+
+describe('scheduleCascadeWrites (AC-R17)', () => {
+  it('a program pick wipes everything downstream', () => {
+    expect(scheduleCascadeWrites.program('prog-1')).toEqual({
+      programId: 'prog-1',
+      scheduleId: undefined,
+      periodId: undefined,
+      after: undefined,
+      before: undefined,
+    });
+  });
+
+  it('a schedule pick wipes the period and dates', () => {
+    expect(scheduleCascadeWrites.schedule('sched-1')).toEqual({
+      scheduleId: 'sched-1',
+      periodId: undefined,
+      after: undefined,
+      before: undefined,
+    });
+  });
+
+  it('a period pick fills the day-widened date bounds', () => {
+    expect(
+      scheduleCascadeWrites.period({
+        id: 'p1',
+        startDate: '2026-04-01',
+        endDate: '2026-06-30',
+      })
+    ).toEqual({
+      periodId: 'p1',
+      after: new Date('2026-04-01T00:00:00').toISOString(),
+      before: new Date('2026-06-30T23:59:59.999').toISOString(),
+    });
+  });
+
+  it('clearing the period removes id and both bounds', () => {
+    expect(scheduleCascadeWrites.period(null)).toEqual({
+      periodId: undefined,
+      after: undefined,
+      before: undefined,
+    });
+  });
+});
+
+describe('instantToLocalDate', () => {
+  it('round-trips a day-start instant back to its calendar date', () => {
+    const instant = new Date('2026-06-01T00:00:00').toISOString();
+    expect(instantToLocalDate(instant)).toBe('2026-06-01');
+  });
+
+  it('returns empty for absent or garbled values', () => {
+    expect(instantToLocalDate(undefined)).toBe('');
+    expect(instantToLocalDate('')).toBe('');
+    expect(instantToLocalDate('not-a-date')).toBe('');
   });
 });

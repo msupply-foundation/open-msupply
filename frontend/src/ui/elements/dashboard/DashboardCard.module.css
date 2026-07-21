@@ -10,10 +10,29 @@
 }
 
 .title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   margin: 0;
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
   color: var(--text-body);
+}
+
+/* Optional leading icon chip — the same tinted rounded square as WidgetCard's
+   (bg-icon fill, primary glyph), so a card heading's icon matches the app's
+   card-icon convention. */
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-icon);
+  color: var(--primary-main);
+  font-size: 1.375rem;
 }
 
 .body {

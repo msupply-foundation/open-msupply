@@ -4,6 +4,8 @@ import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Comment } from '../feedback/Comment';
 import type { Column } from './columnTypes';
+import { differenceInMonths } from 'date-fns';
+import styles from './tableHelpers.module.css';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their
 // column defs, and the sortKey ⇄ column-id mapping. Kept in one place so a page
@@ -59,6 +61,25 @@ export const getDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info =>
     formatDateCell(info.getValue<string | Date | null | undefined>()),
+});
+
+// Expiry dates: like getDateCell, but an almost-expired date (≤3 months to
+// expiry, past included — the old app's isAlmostExpired / MINIMUM_EXPIRY_MONTHS)
+// renders in the error colour, matching the old app's ExpiryDateCell.
+const EXPIRY_WARNING_MONTHS = 3;
+export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
+  meta: { ...meta },
+  cell: info => {
+    const value = info.getValue<string | Date | null | undefined>();
+    if (!value) return EMPTY_CELL;
+    const almostExpired =
+      differenceInMonths(new Date(value), new Date()) <= EXPIRY_WARNING_MONTHS;
+    return (
+      <span class={almostExpired ? styles.expiring : undefined}>
+        {localisedDate(value)}
+      </span>
+    );
+  },
 });
 
 // Booleans: resolved value → localised Yes/No.

@@ -127,110 +127,120 @@ export const FinaliseAction: Component<FinaliseActionProps> = props => {
         </ContentFooterActions>
       </Show>
 
-      {/* Finalise confirm → working → success | error. Opened by the SplitButton via pendingStatus. */}
-      <Dialog
-        open={pendingStatus() != null}
-        dismissable={phase() !== 'working'}
-        onClose={close}
-        icon={<ArrowRightIcon />}
-        testId="confirmation-modal"
-        title={t('heading.are-you-sure')}
-        description={
-          <Switch
-            fallback={t('messages.confirm-status-as', {
-              status: 'status.finalised',
-            })}
-          >
-            <Match when={phase() === 'success'}>{t('messages.saved')}</Match>
-            <Match when={phase() === 'error'}>
-              <Alert severity="error">
-                {t('error.finalise-snapshot-mismatch')}
-              </Alert>
-            </Match>
-          </Switch>
-        }
-        actions={
-          <Switch
-            fallback={
-              // confirm / working: Cancel (hidden while working) + the loading
-              // Finalise.
-              <>
-                <Show when={phase() === 'confirm'}>
+      {/* Finalise confirm → working → success | error. Opened by the SplitButton via pendingStatus.
+          Gated by <Show> so the confirm <dialog> isn't in the DOM at all while
+          closed — otherwise this always-mounted `confirmation-modal` testid
+          coexists with a sibling action's confirm (e.g. change-location),
+          tripping the shared e2e suite's strict-mode locator. The phase/status
+          signals live on the parent, so gating never loses in-flight state. */}
+      <Show when={pendingStatus() != null}>
+        <Dialog
+          open
+          dismissable={phase() !== 'working'}
+          onClose={close}
+          icon={<ArrowRightIcon />}
+          testId="confirmation-modal"
+          title={t('heading.are-you-sure')}
+          description={
+            <Switch
+              fallback={t('messages.confirm-status-as', {
+                status: 'status.finalised',
+              })}
+            >
+              <Match when={phase() === 'success'}>{t('messages.saved')}</Match>
+              <Match when={phase() === 'error'}>
+                <Alert severity="error">
+                  {t('error.finalise-snapshot-mismatch')}
+                </Alert>
+              </Match>
+            </Switch>
+          }
+          actions={
+            <Switch
+              fallback={
+                // confirm / working: Cancel (hidden while working) + the loading
+                // Finalise.
+                <>
+                  <Show when={phase() === 'confirm'}>
+                    <Button
+                      variant="secondary"
+                      icon={<XCircleIcon />}
+                      data-testid="dialog-button-cancel"
+                      onClick={close}
+                    >
+                      {t('button.cancel')}
+                    </Button>
+                  </Show>
                   <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
-                    data-testid="dialog-button-cancel"
-                    onClick={close}
+                    variant="primary"
+                    icon={<ArrowRightIcon />}
+                    loading={phase() === 'working'}
+                    data-testid="confirmation-modal-ok"
+                    onClick={() => void run()}
                   >
-                    {t('button.cancel')}
+                    {t('button.save-and-confirm-status', {
+                      status: STATUS_LABELS[nextStatus()],
+                    })}
                   </Button>
-                </Show>
+                </>
+              }
+            >
+              <Match when={phase() === 'success'}>
+                <Button
+                  variant="secondary"
+                  icon={<CheckIcon />}
+                  data-testid="dialog-button-ok"
+                  onClick={close}
+                >
+                  {t('button.ok')}
+                </Button>
+              </Match>
+              <Match when={phase() === 'error'}>
+                <Button
+                  variant="secondary"
+                  icon={<XCircleIcon />}
+                  data-testid="dialog-button-cancel"
+                  onClick={close}
+                >
+                  {t('button.cancel')}
+                </Button>
                 <Button
                   variant="primary"
-                  icon={<ArrowRightIcon />}
-                  loading={phase() === 'working'}
-                  data-testid="confirmation-modal-ok"
-                  onClick={() => void run()}
+                  icon={<SearchIcon />}
+                  onClick={() => {
+                    props.onShowErrors();
+                    close();
+                  }}
                 >
-                  {t('button.save-and-confirm-status', {
-                    status: STATUS_LABELS[nextStatus()],
-                  })}
+                  {t('button.show-error-lines')}
                 </Button>
-              </>
-            }
-          >
-            <Match when={phase() === 'success'}>
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
-                data-testid="dialog-button-ok"
-                onClick={close}
-              >
-                {t('button.ok')}
-              </Button>
-            </Match>
-            <Match when={phase() === 'error'}>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
-                data-testid="dialog-button-cancel"
-                onClick={close}
-              >
-                {t('button.cancel')}
-              </Button>
-              <Button
-                variant="primary"
-                icon={<SearchIcon />}
-                onClick={() => {
-                  props.onShowErrors();
-                  close();
-                }}
-              >
-                {t('button.show-error-lines')}
-              </Button>
-            </Match>
-          </Switch>
-        }
-      />
+              </Match>
+            </Switch>
+          }
+        />
+      </Show>
 
       {/* No counted lines: an info-only dialog (single OK) explaining the finalise can't run yet,
-          shown instead of a silent no-op when the split button is pressed with nothing counted. */}
-      <Dialog
-        open={noLinesOpen()}
-        onClose={() => setNoLinesOpen(false)}
-        icon={<InfoIcon />}
-        title={t('heading.nothing-counted-yet')}
-        description={t('messages.no-lines')}
-        actions={
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
-            onClick={() => setNoLinesOpen(false)}
-          >
-            {t('button.ok')}
-          </Button>
-        }
-      />
+          shown instead of a silent no-op when the split button is pressed with nothing counted.
+          Gated by <Show> for the same reason as the confirm dialog above. */}
+      <Show when={noLinesOpen()}>
+        <Dialog
+          open
+          onClose={() => setNoLinesOpen(false)}
+          icon={<InfoIcon />}
+          title={t('heading.nothing-counted-yet')}
+          description={t('messages.no-lines')}
+          actions={
+            <Button
+              variant="secondary"
+              icon={<CheckIcon />}
+              onClick={() => setNoLinesOpen(false)}
+            >
+              {t('button.ok')}
+            </Button>
+          }
+        />
+      </Show>
     </>
   );
 };

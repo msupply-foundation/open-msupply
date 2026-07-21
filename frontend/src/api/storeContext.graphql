@@ -33,7 +33,14 @@ query storeContext($storeId: String!) {
     # spec/stock: the VVM status FIELD (S2/S3) shows when this OR
     # manageVvmStatusForStock is on; the adjust date control (S4) is gated on
     # backdating.inventoryAdjustmentsEnabled and bounded by maxDays.
+    # (sortByVvmStatusThenExpiry is also an outbound gate — one shared field.)
     sortByVvmStatusThenExpiry
+    # Outbound display/affordance gates (spec/outbound-shipments § store
+    # preference gates) — same global PreferencesNode, read by the list filter,
+    # status crumbs, line editor, and allocation policy.
+    expiredStockPreventIssue
+    expiredStockIssueThreshold
+    invoiceStatusOptions
     # Inbound-shipment gates (spec/inbound-shipments): procurement (from-PO
     # creation option), authorisation lock, and the backdating window.
     useProcurementFunctionality

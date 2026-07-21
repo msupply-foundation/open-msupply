@@ -14,7 +14,8 @@ export interface DocumentFile {
   fileName: string;
   createdDatetime?: string | null;
   totalBytes?: number | null;
-  /** Link to open/download the file; the name renders as plain text without it. */
+  /** Link to open/download the file; the name renders as plain text without it.
+   * */
   url?: string;
   /** Whether this row shows a delete action (default true). */
   canDelete?: boolean;
@@ -22,11 +23,13 @@ export interface DocumentFile {
 
 export interface DocumentUploadPanelProps {
   documents: DocumentFile[];
-  /** Provide to show the upload zone; omit (or set canUpload=false) to hide it. */
+  /** Provide to show the upload zone; omit (or set canUpload=false) to hide it.
+   * */
   onUpload?: (files: File[]) => void;
   onDelete?: (document: DocumentFile) => void;
   onRejected?: (rejections: FileRejection<File>[]) => void;
-  /** Hide the upload zone even when `onUpload` is given (e.g. read-only status). */
+  /** Hide the upload zone even when `onUpload` is given (e.g. read-only
+   * status). */
   canUpload?: boolean;
   /** Accept list + per-file size limit, forwarded to the upload zone. */
   accept?: string;

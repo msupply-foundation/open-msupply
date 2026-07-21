@@ -17,6 +17,7 @@ import {
   lowerNav,
   SYNC_NAV_ID,
   type NavBadge,
+  type NavItem,
   type NavLeaf,
 } from './navModel';
 import { locale, changeLanguage, t } from '../../../intl';
@@ -32,6 +33,16 @@ export interface AppShellProps {
   selected: NavLeaf;
   /** The user picked a menu item. */
   onNavigate: (leaf: NavLeaf) => void;
+  /**
+   * The menu-bar nav model. Defaults to the app's own navModel (upper list +
+   * pinned lower cluster). A host with a different menu supplies its own — the
+   * showcase passes its section registry (MenuBar's contract). Overriding
+   * `upper` replaces the WHOLE model, so `lower` then comes only from the
+   * caller (never the app's lower cluster); pass it too if that host wants a
+   * pinned block-end group.
+   */
+  upper?: NavItem[];
+  lower?: NavItem[];
   /**
    * The user activated the sidebar's Sync entry — the chrome's sync affordance
    * (spec/chrome § sync indicator: opens the sync modal in place, no
@@ -121,6 +132,13 @@ export const AppShell = (props: AppShellProps) => {
   const [fullScreen, setFullScreen] = createSignal(false);
   const isOverlay = useIsNavOverlay();
 
+  // Menu nav model — the app's own navModel by default; a host (the showcase)
+  // can supply its own. Overriding `upper` replaces the whole model, so
+  // `lower` comes only from the caller (a host with its whole menu in one
+  // list gets no lower cluster), never the app's default lowerNav.
+  const menuUpper = () => props.upper ?? upperNav;
+  const menuLower = () => (props.upper ? props.lower : lowerNav);
+
   const nav: MenuBarState = {
     railCollapsed,
     toggleRail: () => setRailCollapsed(c => !c),
@@ -152,8 +170,8 @@ export const AppShell = (props: AppShellProps) => {
             <MenuBar
               nav={nav}
               isOverlay={isOverlay()}
-              upper={upperNav}
-              lower={lowerNav}
+              upper={menuUpper()}
+              lower={menuLower()}
               selectedId={props.selected.id}
               // The Sync entry opens the modal in place — never navigates
               // (spec/chrome AC-CH8).

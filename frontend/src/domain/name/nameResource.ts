@@ -51,6 +51,37 @@ const roleFilter = (role: NameRole) => {
  * createPaginatedSearch a plain (search, offset) => Page fetcher — the same
  * shape ItemSearch uses (reusing the item module's paginated-search primitive).
  */
+// One name node → the option shape (shared by the pager and the by-id fetch).
+const toOption = (node: NameNode): NameOption => ({
+  id: node.id,
+  name: node.name,
+  code: node.code,
+  isSupplier: node.isSupplier,
+  isDonor: node.isDonor,
+  isOnHold: node.isOnHold,
+  isStore: node.store != null,
+});
+
+/**
+ * Resolve one name by id — the label restore for a picker reopened with only a
+ * stored id (e.g. the report argument form re-opened from URL arguments,
+ * spec/reports S3). Undefined when the id doesn't resolve (the picker just
+ * shows empty).
+ */
+export const fetchNameById = async (
+  storeId: string,
+  id: string
+): Promise<NameOption | undefined> => {
+  const result = await graphqlFetch(SearchNames, {
+    storeId,
+    filter: { id: { equalTo: id } },
+    page: { first: 1 },
+  });
+  if (result.kind !== 'success') return undefined;
+  const node = result.data.names.nodes[0];
+  return node ? toOption(node) : undefined;
+};
+
 export const namePageFetcher =
   (storeId: string, role: NameRole, pageSize: number) =>
   async (
@@ -73,15 +104,7 @@ export const namePageFetcher =
 
     const { names } = result.data;
     return {
-      nodes: names.nodes.map((node: NameNode): NameOption => ({
-        id: node.id,
-        name: node.name,
-        code: node.code,
-        isSupplier: node.isSupplier,
-        isDonor: node.isDonor,
-        isOnHold: node.isOnHold,
-        isStore: node.store != null,
-      })),
+      nodes: names.nodes.map(toOption),
       totalCount: names.totalCount,
     };
   };
