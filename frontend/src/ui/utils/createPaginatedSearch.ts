@@ -34,6 +34,17 @@ export interface PaginatedSearch<T> {
   items: () => T[];
   /** A first-page fetch is in flight (the whole list is (re)loading). */
   loading: () => boolean;
+  /**
+   * The typed search text is ahead of `items()`: the last page-0 response the
+   * server answered was for a DIFFERENT text (debounce window / request in
+   * flight), or no page-0 response has been applied yet. While true, `items()`
+   * still holds the previous query's rows — a selector must not present them
+   * as answers to the current text (client-filter them, or blank the list) and
+   * must not conclude "no matches", because the pending fetch can still change
+   * both. Flips false only when a page-0 response for the current text is
+   * applied (stale responses are discarded and don't settle it).
+   */
+  pending: () => boolean;
   /** A subsequent page is in flight (append a spinner row, don't blank the list). */
   loadingMore: () => boolean;
   /** More pages exist for the current search (accumulated < totalCount). */
@@ -73,6 +84,13 @@ export const createPaginatedSearch = <T>(
   const [totalCount, setTotalCount] = createSignal(0);
   const [loading, setLoading] = createSignal(false);
   const [loadingMore, setLoadingMore] = createSignal(false);
+  // The search text whose page-0 response was last APPLIED — i.e. what
+  // `items()` actually answers. Starts undefined (nothing answered yet), and
+  // only advances when a page-0 response survives the request-id guard below,
+  // so a discarded stale response can never mark its text as settled. A failed
+  // fetch (undefined page) still settles: the server did answer (with nothing),
+  // and holding pending forever would suppress "no matches" indefinitely.
+  const [settled, setSettled] = createSignal<string | undefined>(undefined);
 
   // The latest request wins: bump on every fetch, drop any response whose tag
   // is stale by the time it resolves.
@@ -84,6 +102,12 @@ export const createPaginatedSearch = <T>(
   let armed = false;
 
   const hasMore = () => items().length < totalCount();
+
+  // `items()` doesn't answer the CURRENT text yet: the debounce window between
+  // a keystroke and its fetch counts too (search advances immediately in
+  // setSearch, the fetch only fires when the debounce settles), which is why
+  // this compares texts rather than just mirroring `loading`.
+  const pending = () => loading() || search() !== settled();
 
   // Fetch a page. offset 0 = a fresh search (replace + show the full-list
   // spinner); offset > 0 = append the next page (show the more spinner).
@@ -102,6 +126,9 @@ export const createPaginatedSearch = <T>(
     batch(() => {
       if (offset === 0) {
         setItems(page?.nodes ?? []);
+        // This response is now what `items()` answers. Behind the id guard, so
+        // only the latest request can settle its text (see `settled`).
+        setSettled(value);
       } else if (page) {
         setItems(prev => [...prev, ...page.nodes]);
       }
@@ -147,6 +174,7 @@ export const createPaginatedSearch = <T>(
   return {
     items,
     loading,
+    pending,
     loadingMore,
     hasMore,
     setSearch,

@@ -6,6 +6,12 @@ export interface FieldShellProps {
   label: string;
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
   hideLabel?: boolean;
+  /**
+   * Max-width cap, TextField's vocabulary: `short` (default — dates are
+   * short) or `full` to fill the container (e.g. the report argument form,
+   * where every row spans the modal).
+   */
+  width?: 'short' | 'full';
   required?: boolean;
   /** Error message — presence switches the field to the error state. */
   error?: string;
@@ -38,7 +44,7 @@ export const FieldShell = (props: FieldShellProps) => {
   });
 
   return (
-    <div class={styles.field}>
+    <div class={styles.field} data-width={props.width}>
       <label
         class={props.hideLabel ? styles.labelHidden : styles.label}
         for={props.controlId}

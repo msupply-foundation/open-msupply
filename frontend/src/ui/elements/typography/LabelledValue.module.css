@@ -1,7 +1,13 @@
 /*
- * LabelledValue — a stacked label-above-value field. Text sets the type (bodySmall /
- * body); this owns the colours (label muted/secondary, value body) and the vertical
- * stack. min-inline-size lets a row of these wrap intrinsically without any field
+ * LabelledValue — a stacked label-above-value field. Owns its label/value
+ * typography (the value's body type via Text, the colours here — Text never
+ * carries colour), keyed off `data-variant`:
+ *  - card (default): a small, muted label above the value (card / detail panel
+ *    / utility row).
+ *  - field: the label matches an editable input's label (--text-sm, medium,
+ *    --text-body) with the input's label→control gap, so a read-only value sits
+ *    flush beside editable fields in a form (kdd/form-layout).
+ * min-inline-size lets a row of these wrap intrinsically without any field
  * collapsing to nothing.
  */
 .field {
@@ -11,8 +17,22 @@
   min-inline-size: 0;
 }
 
+.field[data-variant='field'] {
+  gap: var(--space-2);
+}
+
 .label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: var(--line-tight);
   color: var(--text-secondary);
+}
+
+/* Matches the input label (TextField .label): a read-only field reads as a
+   field, just without a control box. */
+.field[data-variant='field'] .label {
+  font-size: var(--text-sm);
+  color: var(--text-body);
 }
 
 .value {
