@@ -24,6 +24,14 @@ import { MasterListSelect } from '../masterList/MasterListSelect';
 import { LocationSelect } from '../location/LocationSelect';
 import { fetchLocations, type Location } from '../location/locationResource';
 import { ProgramSelect } from '../program/ProgramSelect';
+import {
+  ProgramListSelect,
+  type ProgramListPick,
+} from '../program/ProgramListSelect';
+import {
+  fetchPrograms,
+  type ProgramListItem,
+} from '../program/programResource';
 import { storeContext, currentStoreId } from '../../store/storeContext';
 import {
   cleanArguments,
@@ -46,14 +54,15 @@ export interface ArgumentSchemaSource {
 // never blocks — the server's typed data-fetch failure reports the miss.
 type RequirableField = Extract<
   ParsedField,
-  { kind: 'text' | 'number' | 'enum' | 'date' | 'program' }
+  { kind: 'text' | 'number' | 'enum' | 'date' | 'program' | 'programSearch' }
 >;
 const isRequirable = (field: ParsedField): field is RequirableField =>
   field.kind === 'text' ||
   field.kind === 'number' ||
   field.kind === 'enum' ||
   field.kind === 'date' ||
-  field.kind === 'program';
+  field.kind === 'program' ||
+  field.kind === 'programSearch';
 
 // S3 — the argument-entry modal (spec/reports S3, AC-R1–R8). The filter form
 // is rendered FROM the report's argument schema: field set, order, labels, and
@@ -96,6 +105,30 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
     locationsData.state === 'ready' || locationsData.state === 'refreshing'
       ? (locationsData.latest ?? [])
       : [];
+
+  // Programs for a `programSearch`-kind argument (AC-R12), fetched locally in
+  // the same style; an immunisation-only field filters this one fetch.
+  const [programsData] = createResource(currentStoreId, fetchPrograms);
+  const programs = (): ProgramListItem[] =>
+    programsData.state === 'ready' || programsData.state === 'refreshing'
+      ? (programsData.latest ?? [])
+      : [];
+
+  // The program picker's three-key write (AC-R12, contract "Arguments"): the
+  // scoped key gets the program id, and the hard-coded companions `elmisCode`
+  // and `fetchAllPrograms` are written alongside — the sibling keys shipped
+  // data queries read. "All programs" leaves id and elmisCode absent.
+  const setProgramSearch = (key: string, pick: ProgramListPick): void => {
+    if (pick === 'all') {
+      setValues(key, undefined);
+      setValues('elmisCode', undefined);
+      setValues('fetchAllPrograms', true);
+    } else {
+      setValues(key, pick?.id);
+      setValues('elmisCode', pick?.elmisCode ?? undefined);
+      setValues('fetchAllPrograms', false);
+    }
+  };
 
   // Local form state as a store, updated field-by-field in place. Seeded fresh
   // each time the modal opens (an interaction never reseeds): from the URL
@@ -354,6 +387,26 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                       setValues(programField.key, contextId ?? undefined)
                     }
                     error={requiredError(programField)}
+                  />
+                )}
+              </Match>
+              <Match
+                when={field.kind === 'programSearch' ? field : undefined}
+                keyed
+              >
+                {psField => (
+                  <ProgramListSelect
+                    label={psField.label}
+                    programs={
+                      psField.immunisationOnly
+                        ? programs().filter(p => p.isImmunisation)
+                        : programs()
+                    }
+                    loading={programsData.loading}
+                    allProgramsOption={psField.allPrograms}
+                    value={selectValue(psField.key)}
+                    error={requiredError(psField)}
+                    onChange={pick => setProgramSearch(psField.key, pick)}
                   />
                 )}
               </Match>

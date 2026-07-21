@@ -13,8 +13,7 @@ import {
   type GenerateResult,
 } from '../reportFiles';
 import { ArgumentsModal } from '../json-forms/ArgumentsModal';
-import { seedDefaults } from '../json-forms/schema';
-import { storeContext } from '../../store/storeContext';
+import { timezoneArgument } from '../json-forms/schema';
 import { listReportsByContext, type Report } from './reportsResource';
 import type { ReportContext } from './reportsResource';
 import {
@@ -109,16 +108,15 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     const report = selected();
     if (!report) return;
     setPhase('generating');
-    // The standard client seed (preference values + timezone) travels even
-    // when the report has no argument form — shipped templates read at least
-    // `arguments.timezone` unconditionally (spec/reports AC-R11). Form args,
-    // when present, already contain the seed and win on key collision.
-    const seed = seedDefaults([], storeContext()?.storePreferences ?? {});
+    // The user's timezone travels even when the report has no argument form —
+    // shipped templates read `arguments.timezone` unconditionally, and the
+    // captured client sends `{ timezone }` alone on this path (AC-R11). Form
+    // args, when present, already contain it and win on key collision.
     const result = await generateReport({
       reportId: report.id,
       dataId: props.dataId,
       format,
-      args: { ...seed, ...args },
+      args: { ...timezoneArgument(), ...args },
       sort: props.sort,
     });
     await deliver(result, format);

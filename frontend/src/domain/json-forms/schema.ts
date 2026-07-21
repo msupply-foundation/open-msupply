@@ -116,6 +116,25 @@ export type ParsedField =
       nullable: boolean;
       required: boolean;
     }
+  /**
+   * The PROGRAM picker (AC-R12; distinct from `program`, the patient-enrolment
+   * registry picker): options are the store's visible programs; the submitted
+   * value is the program's own id, with the elmisCode / fetchAllPrograms
+   * companion writes (contract "Arguments").
+   */
+  | {
+      kind: 'programSearch';
+      key: string;
+      label: string;
+      nullable: boolean;
+      required: boolean;
+      /** uiSchema `options.programType === 'immunisation'` — filter the list. */
+      immunisationOnly: boolean;
+      /** uiSchema `options.allProgramsOption` — append the All-programs entry. */
+      allPrograms: boolean;
+      /** uiSchema `options.clearable` (default false). */
+      clearable: boolean;
+    }
   // Any control the interpreter doesn't render — an unknown element type, or a
   // Control whose jsonSchema property is missing. The original element type is
   // preserved so the modal can show it (and so the degradation is diagnosable).
@@ -352,8 +371,20 @@ export const parseArgumentSchema = (raw: {
           required: isRequired,
         });
         break;
+      case 'ProgramSearch':
+        fields.push({
+          kind: 'programSearch',
+          key,
+          label,
+          nullable,
+          required: isRequired,
+          immunisationOnly: options?.programType === 'immunisation',
+          allPrograms: options?.allProgramsOption === true,
+          clearable: options?.clearable === true,
+        });
+        break;
       // NameSearch, ItemSearch, ReasonOptionSearch, ScheduleForm,
-      // ProgramSearch, PeriodSearch, and any future type are not yet
+      // PeriodSearch, and any future type are not yet
       // rendered — their picker roles are backlog registry rows
       // (spec/reports S3). Preserve the type name for the unsupported control.
       default:
@@ -370,6 +401,16 @@ export const parseArgumentSchema = (raw: {
  * preference keys are seeded from prefs — schema fields without a default are
  * left absent (never invented).
  */
+/**
+ * The arguments a report with NO schema is generated with (AC-R11): the
+ * user's IANA timezone alone — shipped templates read `arguments.timezone`
+ * unconditionally, but the preference values travel only through the form
+ * (the captured client sends `{ timezone }` alone on this path).
+ */
+export const timezoneArgument = (): ReportArgs => ({
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+});
+
 export const seedDefaults = (
   fields: ParsedField[],
   prefs: SeedPreferences

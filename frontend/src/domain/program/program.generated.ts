@@ -22,3 +22,24 @@ export type ProgramRegistriesResult = {
 export const ProgramRegistries = {
   query: "query programRegistries($storeId: String!) {\n  documentRegistries(\n    storeId: $storeId\n    filter: {category: {equalTo: PROGRAM_ENROLMENT}}\n    sort: [{key: documentType}]\n  ) {\n    ... on DocumentRegistryConnector {\n      __typename\n      nodes {\n        id\n        name\n        documentType\n        contextId\n      }\n    }\n  }\n}",
 } as TypedDocument<ProgramRegistriesResult, ProgramRegistriesVariables>;
+
+export type ProgramsVariables = {
+  storeId: string;
+};
+
+export type ProgramsResult = {
+  programs: ({
+  __typename: "ProgramConnector";
+} & {
+  nodes: Array<{
+  id: string;
+  name: string;
+  elmisCode: string | null;
+  isImmunisation: boolean;
+}>;
+});
+};
+
+export const Programs = {
+  query: "query programs($storeId: String!) {\n  programs(\n    storeId: $storeId\n    page: {first: 1000}\n    filter: {existsForStoreId: {equalTo: $storeId}}\n    sort: {key: name}\n  ) {\n    ... on ProgramConnector {\n      __typename\n      nodes {\n        id\n        name\n        elmisCode\n        isImmunisation\n      }\n    }\n  }\n}",
+} as TypedDocument<ProgramsResult, ProgramsVariables>;

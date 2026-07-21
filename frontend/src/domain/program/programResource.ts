@@ -1,7 +1,9 @@
 import { graphqlFetch } from '../../api/graphql';
 import {
   ProgramRegistries,
+  Programs,
   type ProgramRegistriesResult,
+  type ProgramsResult,
 } from './program.generated';
 import { createStoreScopedResource } from '../../api/storeScopedResource';
 import { currentStoreId } from '../../store/storeContext';
@@ -23,3 +25,20 @@ export const programRegistriesResource =
       ? result.data.documentRegistries.nodes
       : undefined;
   });
+
+// One pickable program for the report argument program picker (AC-R12) —
+// exactly the node the Programs operation selects (kdd/type-safety).
+export type ProgramListItem = Extract<
+  ProgramsResult['programs'],
+  { __typename: 'ProgramConnector' }
+>['nodes'][number];
+
+// The store's visible programs, name-sorted. A plain never-throwing fetch in
+// the fetchLocations style: read once when an argument form opens — not a
+// store-scoped singleton (reports are the only consumer today).
+export const fetchPrograms = async (
+  storeId: string
+): Promise<ProgramListItem[]> => {
+  const result = await graphqlFetch(Programs, { storeId });
+  return result.kind === 'success' ? result.data.programs.nodes : [];
+};

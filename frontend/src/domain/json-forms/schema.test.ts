@@ -132,6 +132,53 @@ describe('parseArgumentSchema — item-list shape', () => {
     });
   });
 
+  it('maps ProgramSearch with its option flags (AC-R12)', () => {
+    const parsed = parseArgumentSchema({
+      jsonSchema: {
+        properties: {
+          programId: { type: 'string' },
+          vaccineProgramId: { type: 'string' },
+        },
+      },
+      uiSchema: {
+        elements: [
+          {
+            type: 'ProgramSearch',
+            scope: '#/properties/programId',
+            label: 'Program',
+            options: { allProgramsOption: true },
+          },
+          {
+            type: 'ProgramSearch',
+            scope: '#/properties/vaccineProgramId',
+            label: 'Vaccine program',
+            options: { programType: 'immunisation', clearable: true },
+          },
+        ],
+      },
+    });
+    expect(parsed[0]).toEqual({
+      kind: 'programSearch',
+      key: 'programId',
+      label: 'Program',
+      nullable: false,
+      required: false,
+      immunisationOnly: false,
+      allPrograms: true,
+      clearable: false,
+    });
+    expect(parsed[1]).toEqual({
+      kind: 'programSearch',
+      key: 'vaccineProgramId',
+      label: 'Vaccine program',
+      nullable: false,
+      required: false,
+      immunisationOnly: true,
+      allPrograms: false,
+      clearable: true,
+    });
+  });
+
   it('carries invert on the flagged boolean and not on a plain one', () => {
     const isActive = byKey(fields, 'isActive');
     const onlyOutOfStock = byKey(fields, 'onlyOutOfStock');

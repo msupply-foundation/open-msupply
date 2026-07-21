@@ -20,3 +20,28 @@ query programRegistries($storeId: String!) {
     }
   }
 }
+
+# The store's visible programs, sorted by name — the option source of the
+# report argument PROGRAM picker (spec/reports contract "Arguments", AC-R12;
+# distinct from the enrolment-registry picker above). isImmunisation is
+# selected so an immunisation-only field filters client-side from the same
+# fetch. The picker submits the program's id (plus the elmisCode /
+# fetchAllPrograms companion writes — see the contract).
+query programs($storeId: String!) {
+  programs(
+    storeId: $storeId
+    page: { first: 1000 }
+    filter: { existsForStoreId: { equalTo: $storeId } }
+    sort: { key: name }
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        id
+        name
+        elmisCode
+        isImmunisation
+      }
+    }
+  }
+}
