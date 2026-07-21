@@ -62,6 +62,12 @@ export default defineConfig(({ mode }) => ({
         target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },
+      // Sync-file store (upload/download/delete of record documents, e.g. an
+      // inbound shipment's attachments) — a REST endpoint, not GraphQL.
+      '/sync_files': {
+        target: process.env.GRAPHQL_PROXY_TARGET || 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
 }));

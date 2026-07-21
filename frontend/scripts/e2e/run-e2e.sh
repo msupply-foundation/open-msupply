@@ -151,8 +151,9 @@ for _ in $(seq 1 45); do
   sleep 2
 done
 
-# Serial within a run: the suites share one database and use serial
-# describes; honour an explicit --workers from the caller.
+# Single worker by default: the suites share one database, and the
+# stock-mutating stocktake group must not overlap other stock users; honour
+# an explicit --workers from the caller.
 WORKERS=(--workers 1)
 for arg in "$@"; do [[ "$arg" == --workers* ]] && WORKERS=(); done
 
