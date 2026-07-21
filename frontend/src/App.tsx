@@ -21,6 +21,8 @@ import { navDestinations } from './nav/navConfig';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { reportsRoutes } from './sections/reports';
+import { settingsRoutes } from './sections/settings';
+import { helpRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -39,6 +41,8 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'inventory/stocktakes': stocktakesRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
   reports: reportsRoutes,
+  settings: settingsRoutes,
+  help: helpRoutes,
 };
 
 export const App: Component = () => {

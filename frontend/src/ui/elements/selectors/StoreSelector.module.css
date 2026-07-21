@@ -38,6 +38,8 @@
 }
 
 .row {
+  position: relative;
+  isolation: isolate;
   inline-size: 100%;
   display: flex;
   align-items: center;
@@ -51,19 +53,36 @@
   font-size: var(--text-sm);
   text-align: start;
   cursor: pointer;
-  transition: background-color 0.1s;
 }
 
-.row:hover {
-  background: color-mix(in srgb, var(--primary-main) 4%, transparent);
+/*
+ * Hover/selection tint. Not `background: color-mix(...)` — engines before
+ * Chromium 111 (older Android WebViews in the tablet fleet) drop the whole
+ * declaration and the selected row loses its only visual marker. An overlay
+ * carrying the bare token at low element opacity renders identically and
+ * works everywhere the app does.
+ */
+.row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--primary-main);
+  opacity: 0;
+  transition: opacity 0.1s;
+  pointer-events: none;
 }
 
-.row[data-active] {
-  background: color-mix(in srgb, var(--primary-main) 8%, transparent);
+.row:hover::before {
+  opacity: 0.04;
 }
 
-.row[data-active]:hover {
-  background: color-mix(in srgb, var(--primary-main) 14%, transparent);
+.row[data-active]::before {
+  opacity: 0.08;
+}
+
+.row[data-active]:hover::before {
+  opacity: 0.14;
 }
 
 .row:focus-visible {

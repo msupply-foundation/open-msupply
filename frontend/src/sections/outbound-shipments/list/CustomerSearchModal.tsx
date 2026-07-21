@@ -85,7 +85,6 @@ export const CustomerSearchModal = (props: {
         label={t('outbound.toolbar.customer')}
         placeholder={t('outbound.create.placeholder')}
         disabled={creating()}
-        openOnFocus
         testId="customer-search-input"
         onChange={customer => void create(customer)}
       />

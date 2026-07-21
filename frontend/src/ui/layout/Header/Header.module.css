@@ -33,7 +33,14 @@
 }
 
 .header > [data-tab-bar] {
-  flex-basis: 100%;
+  /* Bleed the strip to both header edges. The strip is a border-box flex item,
+     so a bare `flex-basis: 100%` sizes its box to the header's CONTENT width
+     (padding excluded) — the negative inline margins then shift that box, but a
+     negative margin-inline-end can't widen a box with no following sibling, so
+     the strip fell short by one --space-5 on the end edge. Add both paddings
+     back to the basis so the border-box spans the header's full border-box; the
+     negative margins realign the margin-box with the content. */
+  flex-basis: calc(100% + 2 * var(--space-5));
   margin-inline: calc(-1 * var(--space-5));
   /* row-gap already puts space-3 above; pull back to the demo's space-2 */
   margin-block-start: calc(var(--space-2) - var(--space-3));

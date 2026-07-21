@@ -21,6 +21,9 @@ export type StoreContextResult = {
 };
   preferences: {
   syncRecordsDisplayThreshold: number;
+  manageVaccinesInDoses: boolean;
+  manageVvmStatusForStock: boolean;
+  allowTrackingOfStockByDonor: boolean;
 };
   me: ({
   __typename: "UserNode";
@@ -36,5 +39,5 @@ export type StoreContextResult = {
 };
 
 export const StoreContext = {
-  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    omProgramModule\n    vaccineModule\n    monthsOverstock\n    monthsUnderstock\n    monthsItemsExpire\n    stocktakeFrequency\n    monthlyConsumptionLookBackPeriod\n    monthsLeadTime\n  }\n  preferences(storeId: $storeId) {\n    syncRecordsDisplayThreshold\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
+  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    omProgramModule\n    vaccineModule\n    monthsOverstock\n    monthsUnderstock\n    monthsItemsExpire\n    stocktakeFrequency\n    monthlyConsumptionLookBackPeriod\n    monthsLeadTime\n  }\n  preferences(storeId: $storeId) {\n    syncRecordsDisplayThreshold\n    manageVaccinesInDoses\n    manageVvmStatusForStock\n    allowTrackingOfStockByDonor\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<StoreContextResult, StoreContextVariables>;

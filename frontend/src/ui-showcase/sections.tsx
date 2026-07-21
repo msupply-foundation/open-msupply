@@ -13,13 +13,16 @@ import { SelectorsShowcase } from './SelectorsShowcase';
 import { FeedbackShowcase } from './FeedbackShowcase';
 import { DialogShowcase } from './DialogShowcase';
 import { DisplayShowcase } from './DisplayShowcase';
+import { DocumentUploadShowcase } from './DocumentUploadShowcase';
 import { SyncShowcase } from './SyncShowcase';
 import { TableShowcase } from './TableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
 import { TabBarShowcase } from './TabBarShowcase';
 import { ContentFooterShowcase } from './ContentFooterShowcase';
 import { SidePanelShowcase } from './SidePanelShowcase';
+import { StatisticsShowcase } from './StatisticsShowcase';
 import { InsetPanelShowcase } from './InsetPanelShowcase';
+import { CardGridShowcase } from './CardGridShowcase';
 
 export type SectionCategory = 'components' | 'layout';
 
@@ -27,8 +30,7 @@ export type SectionDef = {
   id: string;
   label: string;
   component: Component;
-  /** Which menu-bar group the section lists under. Omitted for a top-level
-   * section (see `topLevel`). */
+  /** Which menu-bar group the section lists under. */
   category?: SectionCategory;
   /**
    * Render this section as its own top-level menu entry (a leaf link), not
@@ -106,6 +108,12 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
+    id: 'statistics',
+    label: 'Statistics',
+    component: StatisticsShowcase,
+    category: 'components',
+  },
+  {
     id: 'dialog',
     label: 'Dialog / Modal',
     component: DialogShowcase,
@@ -115,6 +123,12 @@ export const sections: SectionDef[] = [
     id: 'display',
     label: 'Display',
     component: DisplayShowcase,
+    category: 'components',
+  },
+  {
+    id: 'document-upload',
+    label: 'Document upload',
+    component: DocumentUploadShowcase,
     category: 'components',
   },
   {
@@ -152,6 +166,12 @@ export const sections: SectionDef[] = [
     id: 'inset-panel',
     label: 'Inset panel',
     component: InsetPanelShowcase,
+    category: 'layout',
+  },
+  {
+    id: 'card-grid',
+    label: 'Card grid',
+    component: CardGridShowcase,
     category: 'layout',
   },
   // A standalone reference page, listed as its own top-level menu entry rather

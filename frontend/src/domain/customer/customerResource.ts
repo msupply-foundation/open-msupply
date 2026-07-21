@@ -1,5 +1,5 @@
 import { graphqlFetch } from '../../api/graphql';
-import type { Page } from '../search/createPaginatedSearch';
+import type { Page } from '../../ui/utils/createPaginatedSearch';
 import { Customers, type CustomersResult } from './customer.generated';
 
 export type Customer = Extract<

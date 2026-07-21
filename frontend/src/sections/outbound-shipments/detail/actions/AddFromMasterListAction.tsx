@@ -114,7 +114,6 @@ export const AddFromMasterListAction: Component<
             loading={lists.loading}
             itemToString={list => list.name}
             itemToValue={list => list.id}
-            openOnFocus
             disabled={adding()}
             onChange={list => {
               if (list) void add(list.id);

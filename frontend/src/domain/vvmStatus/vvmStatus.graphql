@@ -1,0 +1,20 @@
+# Active VVM (vaccine vial monitor) statuses for the current store — an app-wide
+# lookup backed by a store-scoped cache (vvmStatusesResource): fetched once per
+# store, shared by every consumer (the stocktake create-flow VVM filter and the
+# line-editor's VVM-status field, both gated by manageVvmStatusForStock). The
+# list is short and store-scoped, so one cache serves all pickers. `priority`
+# orders the options (lower = earlier in the vial-monitor progression); code +
+# description label the option.
+query activeVvmStatuses($storeId: String!) {
+  activeVvmStatuses(storeId: $storeId) {
+    ... on VvmstatusConnector {
+      __typename
+      nodes {
+        id
+        code
+        description
+        priority
+      }
+    }
+  }
+}

@@ -23,6 +23,11 @@ query itemsWithStock(
         code
         name
         unitName
+        # isVaccine/doses let a consumer that counts vaccines in doses
+        # (spec/stocktakes › store-preference gates) carry the per-item doses
+        # factor from the picker straight onto a new line, without a re-fetch.
+        isVaccine
+        doses
         availableBatches(storeId: $storeId) {
           ... on StockLineConnector {
             __typename

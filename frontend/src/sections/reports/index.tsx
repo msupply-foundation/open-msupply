@@ -8,10 +8,10 @@ import { Route } from '@solidjs/router';
 const ReportsPage = lazy(() => import('./list/ReportsPage'));
 const ReportDetailView = lazy(() => import('./detail/ReportDetailView'));
 
-// S4 — the record-screen report selector lives at ./selector/ReportSelectorModal.
-// Host verticals must lazy-import that module directly behind their own
-// Export/Print trigger — a re-export here would pull the selector (and its
-// Dialog/Combobox graph) into the eager shell bundle.
+// S4 — the record-screen report selector is domain/reports' SelectReportModal
+// (cross-vertical: hosts like stocktakes lazy-import it behind their own
+// Export/Print trigger — see stocktakes' ExportPrintAction). Nothing selector-
+// related lives in this section.
 
 export const reportsRoutes = () => (
   <>

@@ -25,11 +25,16 @@ import type { LocaleKey } from '../../../intl';
 import { DownloadIcon, PrinterIcon, SlidersIcon } from '../../../ui/icons';
 import { Report as ReportDocument } from '../api/reports.generated';
 import type { ReportResult, ReportVariables } from '../api/reports.generated';
-import type { GenerateReportVariables } from '../api/generate';
-import { generateReport } from '../api/generate';
-import { downloadBlob, fetchReportFile, printHtml } from '../api/files';
-import { ArgumentsModal } from '../arguments/ArgumentsModal';
-import { reportName } from '../reportName';
+// Generation and the label helper are the cross-vertical ones owned by
+// domain/reports (shared with the S4 record-screen selector); dataId is
+// omitted — S2's standalone reports render against the store, not a record.
+import { generateReport, reportLabel } from '../../../domain/reports';
+import {
+  downloadBlob,
+  fetchReportFile,
+  printHtml,
+} from '../../../domain/reportFiles';
+import { ArgumentsModal } from '../../../domain/json-forms/ArgumentsModal';
 
 // S2 — the single-report detail (spec/reports S2, AC-U1–U3, AC-R1, AC-G1/G4).
 // Fetches the report (name + argument schema), then generates its HTML and
@@ -82,7 +87,7 @@ const ReportDetailView: Component = () => {
   const report = (): ReportNode | undefined => reportRes.latest;
   const displayName = (): string => {
     const r = report();
-    return r ? reportName(r) : '';
+    return r ? reportLabel(r) : '';
   };
   // The report node when it declares an argument schema (drives whether the
   // arguments modal + Filters button exist).
@@ -104,32 +109,40 @@ const ReportDetailView: Component = () => {
   // The generation request. Undefined while there is no report yet, or while a
   // schema'd report is still waiting for its arguments — a falsy resource
   // source simply doesn't fetch, so generation waits for the modal (AC-R1).
-  const generateVars = createMemo<GenerateReportVariables | undefined>(() => {
+  // Carries `language` even though the domain wrapper reads locale() itself:
+  // the serialised object is the resource key, and a language switch must
+  // re-generate (AC-U3).
+  const generateVars = createMemo<
+    | { reportId: string; args?: Record<string, unknown>; language: string }
+    | undefined
+  >(() => {
     const r = report();
     if (!r) return undefined;
     const args = reportArgs();
     if (r.argumentSchema && args === undefined) return undefined;
-    return {
-      storeId: params.storeId,
-      reportId: r.id,
-      format: 'HTML',
-      arguments: args,
-      currentLanguage: locale(),
-      dataId: undefined,
-    };
+    return { reportId: r.id, args, language: locale() };
   });
 
-  // Regenerates whenever the serialised request changes (new report or new
-  // arguments). `.latest` keeps the current document on screen during a
-  // regenerate rather than tearing the frame down
+  // Regenerates whenever the serialised request changes (new report, new
+  // arguments, or language). `.latest` keeps the current document on screen
+  // during a regenerate rather than tearing the frame down
   // (kdd/solid-reactivity-pitfalls).
   const [generated] = createResource(
     () => {
       const vars = generateVars();
       return vars ? JSON.stringify(vars) : undefined;
     },
-    async serialised =>
-      generateReport(JSON.parse(serialised) as GenerateReportVariables)
+    async serialised => {
+      const vars = JSON.parse(serialised) as {
+        reportId: string;
+        args?: Record<string, unknown>;
+      };
+      return generateReport({
+        reportId: vars.reportId,
+        format: 'HTML',
+        args: vars.args,
+      });
+    }
   );
   const result = () => generated.latest;
 
@@ -164,6 +177,16 @@ const ReportDetailView: Component = () => {
     setSearchParams({ reportArgs: JSON.stringify(args) });
   };
 
+  // Cancel from S3: with no URL arguments nothing has been generated (the
+  // modal auto-opened on entry), so closing would strand the user on an empty
+  // detail screen — return to the Reports page instead (spec S3). With
+  // arguments present (a re-filter from the Filters button) just close; the
+  // current document stays.
+  const onArgsClose = () => {
+    setArgsModalOpen(false);
+    if (reportArgs() === undefined) navigate(`/${params.storeId}/reports`);
+  };
+
   // Print (desktop path): fetch the current HTML file and open the system print
   // dialog (spec/reports "Printing and exporting"). Only meaningful once a
   // document exists.
@@ -185,12 +208,9 @@ const ReportDetailView: Component = () => {
     if (!r) return;
     setActionError(undefined);
     const gen = await generateReport({
-      storeId: params.storeId,
       reportId: r.id,
       format: 'EXCEL',
-      arguments: reportArgs(),
-      currentLanguage: locale(),
-      dataId: undefined,
+      args: reportArgs(),
     });
     if (gen.kind !== 'fileId') {
       setActionError('error.failed-to-generate-report');
@@ -294,7 +314,7 @@ const ReportDetailView: Component = () => {
             report={r()}
             open={argsModalOpen()}
             initialValues={reportArgs()}
-            onClose={() => setArgsModalOpen(false)}
+            onClose={onArgsClose}
             onSubmit={onArgsSubmit}
           />
         )}

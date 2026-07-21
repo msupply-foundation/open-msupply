@@ -19,7 +19,13 @@ import {
   masterListsResource,
   MasterListSelect,
 } from '../../../domain/masterList';
-import { locationsResource, LocationSelect } from '../../../domain/location';
+import {
+  fetchLocations,
+  LocationSelect,
+  type Location,
+} from '../../../domain/location';
+import { VvmStatusSelect } from '../../../domain/vvmStatus';
+import { stocktakePreferences } from '../../../store/storeContext';
 import { PlusCircleIcon, XCircleIcon } from '../../../ui/icons';
 import { t, tPlural } from '../../../intl';
 import { shallowEqual } from '../../../typeHelpers';
@@ -51,6 +57,7 @@ type FormState = {
   type: StocktakeType;
   masterListId: string;
   locationId: string;
+  vvmStatusId: string;
   expiryDate: string;
   includeAllItems: boolean;
 };
@@ -59,6 +66,7 @@ const EMPTY_FORM: FormState = {
   type: 'full',
   masterListId: '',
   locationId: '',
+  vvmStatusId: '',
   expiryDate: '',
   includeAllItems: false,
 };
@@ -81,6 +89,17 @@ export const CreateStocktakeModal = (props: {
 }) => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
+
+  // Locations for the picker, fetched locally (the domain widget owns no cache —
+  // spec/ui-standards/components.md). Volume-blind here: the picker only scopes
+  // which stock to count, so capacity is irrelevant. Read WITHOUT suspending
+  // (this modal renders under AppShell's <Suspense>; a pending read there would
+  // remount + reset the form — see the estimate resource below).
+  const [locationsData] = createResource(() => params.storeId, fetchLocations);
+  const locations = (): Location[] =>
+    locationsData.state === 'ready' || locationsData.state === 'refreshing'
+      ? (locationsData.latest ?? [])
+      : [];
 
   const [form, setForm] = createSignal<FormState>(EMPTY_FORM);
   const [creating, setCreating] = createSignal(false);
@@ -187,9 +206,7 @@ export const CreateStocktakeModal = (props: {
     const masterList = masterListsResource
       .noSuspense()
       .find(m => m.id === masterListId);
-    const location = locationsResource
-      .noSuspense()
-      .find(l => l.id === locationId);
+    const location = locations().find(l => l.id === locationId);
     if (masterList)
       parts.push(
         t('stocktake.master-list-template', { masterList: masterList.name })
@@ -207,8 +224,14 @@ export const CreateStocktakeModal = (props: {
   // fields; the id is client-generated so the create can navigate to the new
   // stocktake.
   const buildInput = (): InsertStocktakeVariables['input'] => {
-    const { type, masterListId, locationId, expiryDate, includeAllItems } =
-      form();
+    const {
+      type,
+      masterListId,
+      locationId,
+      vvmStatusId,
+      expiryDate,
+      includeAllItems,
+    } = form();
     const base = { id: crypto.randomUUID(), comment: generatedComment() };
     switch (type) {
       case 'full':
@@ -218,6 +241,9 @@ export const CreateStocktakeModal = (props: {
           ...base,
           masterListId: masterListId || undefined,
           locationId: locationId || undefined,
+          // VVM status filter — gated by manageVvmStatusForStock (the field only
+          // appears when the pref is on, so vvmStatusId is otherwise always '').
+          vvmStatusId: vvmStatusId || undefined,
           expiresBefore: expiryDate ? dayBefore(expiryDate) : undefined,
           includeAllMasterListItems: includeAllItems,
         };
@@ -302,10 +328,7 @@ export const CreateStocktakeModal = (props: {
         >
           <Alert severity="info" testId="stocktake-line-estimate">
             <span>
-              <Show
-                when={!countLoading()}
-                fallback={t('messages.counting')}
-              >
+              <Show when={!countLoading()} fallback={t('messages.counting')}>
                 {tPlural('message.lines-estimated', estimatedLines())}
               </Show>
             </span>
@@ -395,12 +418,31 @@ export const CreateStocktakeModal = (props: {
               <LocationSelect
                 label={t('label.location')}
                 hideLabel
+                locations={locations()}
+                loading={locationsData.loading}
                 disabled={creating()}
                 placeholder={t('label.any')}
                 value={form().locationId || undefined}
                 onChange={l => setForm({ ...form(), locationId: l?.id ?? '' })}
               />
             </FieldRow>
+            {/* VVM status filter — gated by manageVvmStatusForStock
+                (spec/stocktakes › store-preference gates). Sits between location
+                and expiry, matching the reference create flow. */}
+            <Show when={stocktakePreferences().manageVvmStatusForStock}>
+              <FieldRow label={t('label.vvm-status')}>
+                <VvmStatusSelect
+                  label={t('label.vvm-status')}
+                  hideLabel
+                  disabled={creating()}
+                  placeholder={t('label.any')}
+                  value={form().vvmStatusId || undefined}
+                  onChange={s =>
+                    setForm({ ...form(), vvmStatusId: s?.id ?? '' })
+                  }
+                />
+              </FieldRow>
+            </Show>
             <FieldRow label={t('label.items-expiring-before')}>
               <TextField
                 label={t('label.items-expiring-before')}

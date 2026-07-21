@@ -1,5 +1,5 @@
-import { createMemo, createResource, createSignal, For, Show } from 'solid-js';
-import type { Component } from 'solid-js';
+import { createMemo, createResource, For, Show } from 'solid-js';
+import type { Component, JSX } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { locale, t } from '../../../intl';
@@ -7,17 +7,32 @@ import type { LocaleKey } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
+import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
+import { Button } from '../../../ui/elements/buttons/Button';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { WidgetCard } from '../../../ui/elements/display/WidgetCard';
 import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Text } from '../../../ui/elements/typography/Text';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { SidePanelSection } from '../../../ui/layout/SidePanel/SidePanel';
-import { ReportsIcon } from '../../../ui/icons';
+import {
+  BarIcon,
+  FileIcon,
+  SidebarIcon,
+  SuppliersIcon,
+  TruckIcon,
+} from '../../../ui/icons';
 import { storeContext } from '../../../store/storeContext';
-import { Reports } from '../api/reports.generated';
-import type { ReportsResult, ReportsVariables } from '../api/reports.generated';
-import { reportName } from '../reportName';
+// The list operation and label helper are the cross-vertical ones owned by
+// domain/reports (shared with the S4 record-screen selector) — the section
+// only adds its own filter (general contexts, active only).
+import { Reports } from '../../../domain/reports/reports.generated';
+import type {
+  ReportsResult,
+  ReportsVariables,
+} from '../../../domain/reports/reports.generated';
+import { reportLabel } from '../../../domain/reports';
 
 // S1 — the Reports dashboard (spec/reports S1, AC-X1/X3). NOT a list screen: a
 // widget dashboard of clickable report cards grouped into category panels by
@@ -43,6 +58,8 @@ type CategoryDef = {
   titleKey: LocaleKey;
   subContexts: readonly string[];
   gate: CategoryGate;
+  /** The category-heading icon (spec S1: headings carry the icon, cards none). */
+  icon: () => JSX.Element;
 };
 
 const CATEGORIES: readonly CategoryDef[] = [
@@ -50,22 +67,31 @@ const CATEGORIES: readonly CategoryDef[] = [
     titleKey: 'heading.stock-and-items',
     subContexts: ['StockAndItems'],
     gate: 'primary',
+    icon: () => <BarIcon />,
   },
   {
     titleKey: 'distribution',
     subContexts: ['Distribution'],
     gate: 'primary',
+    icon: () => <TruckIcon />,
   },
   {
     titleKey: 'replenishment',
     subContexts: ['Replenishment'],
     gate: 'primary',
+    icon: () => <SuppliersIcon />,
   },
-  { titleKey: 'heading.other', subContexts: ['Other'], gate: 'ifAny' },
+  {
+    titleKey: 'heading.other',
+    subContexts: ['Other'],
+    gate: 'ifAny',
+    icon: () => <FileIcon />,
+  },
   {
     titleKey: 'label.programs',
     subContexts: ['HIVCareProgram', 'Vaccinations', 'Encounters'],
     gate: 'programs',
+    icon: () => <FileIcon />,
   },
 ];
 
@@ -88,13 +114,37 @@ const stackStyle = {
   gap: 'var(--space-3)',
 } as const;
 
+// The category-heading icon chip — same look as the widget card's chip
+// (tinted rounded square, primary-coloured glyph), sitting beside the
+// heading text (spec S1: the heading carries the icon, the cards none).
+const headingRowStyle = {
+  display: 'flex',
+  'align-items': 'center',
+  gap: 'var(--space-3)',
+} as const;
+
+const iconChipStyle = {
+  display: 'inline-flex',
+  'flex-shrink': 0,
+  'align-items': 'center',
+  'justify-content': 'center',
+  'inline-size': '2.5rem',
+  'block-size': '2.5rem',
+  'border-radius': 'var(--radius-md)',
+  background: 'var(--bg-icon)',
+  color: 'var(--primary-main)',
+  'font-size': '1.375rem',
+} as const;
+
 const ReportsPage: Component = () => {
   // storeId is guaranteed present (StoreGuardLayout resolves it before
   // routing).
   const params = useParams<{ storeId: string }>();
-  // The preferences side panel opens by default and is closable (spec S1). S1
-  // has no page actions, so there is no reopen affordance — closing hides it.
-  const [panelOpen, setPanelOpen] = createSignal(true);
+  // The preferences side panel: open by default on wide viewports, closed
+  // below; the user's explicit choice wins and persists across reloads. While
+  // closed, the app bar's More button is the reopen affordance (spec S1
+  // layout, AC-U6, ui-standards/layout.md → page regions).
+  const [panelOpen, setPanelOpen] = createSidePanelOpen();
 
   // Only the standalone (general-context) reports, active ones. userLanguage is
   // the current UI locale so schema/name strings arrive translated (AC-R2).
@@ -208,6 +258,20 @@ const ReportsPage: Component = () => {
       header={
         <Header>
           <Breadcrumb crumbs={[{ label: t('reports') }]} />
+          <HeaderButtons>
+            {/* A labelled "More" button (sidebar glyph + text) that reopens the
+                closed side panel; it hides while the panel is open — the
+                panel's own close button takes over (AC-U6). */}
+            <Show when={!panelOpen()}>
+              <Button
+                variant="secondary"
+                icon={<SidebarIcon />}
+                onClick={() => setPanelOpen(true)}
+              >
+                {t('button.more')}
+              </Button>
+            </Show>
+          </HeaderButtons>
         </Header>
       }
     >
@@ -235,9 +299,14 @@ const ReportsPage: Component = () => {
           <For each={visible()}>
             {group => (
               <section style={stackStyle}>
-                <Text variant="heading" level={2}>
-                  {t(group.def.titleKey)}
-                </Text>
+                <div style={headingRowStyle}>
+                  <span style={iconChipStyle} aria-hidden="true">
+                    {group.def.icon()}
+                  </span>
+                  <Text variant="heading" level={2}>
+                    {t(group.def.titleKey)}
+                  </Text>
+                </div>
                 <div
                   style={{
                     display: 'grid',
@@ -249,8 +318,7 @@ const ReportsPage: Component = () => {
                   <For each={group.nodes}>
                     {report => (
                       <WidgetCard
-                        title={reportName(report)}
-                        icon={<ReportsIcon />}
+                        title={reportLabel(report)}
                         href={`/${params.storeId}/reports/${report.id}`}
                       />
                     )}

@@ -1,6 +1,6 @@
 import { graphqlFetch } from '../../api/graphql';
 import { ItemsWithStock, type ItemsWithStockResult } from './item.generated';
-import type { Page } from '../search/createPaginatedSearch';
+import type { Page } from '../../ui/utils/createPaginatedSearch';
 
 // One item option: the fields the search selector shows/needs. The row shows
 // "code - name" and a total (Σ batch packs * packSize) + unit; id feeds the
@@ -12,6 +12,10 @@ export type ItemOption = {
   unitName: string | null;
   /** Total units in store = Σ availableBatches (totalNumberOfPacks * packSize). */
   totalUnits: number;
+  /** Whether the item is a vaccine — gates the doses / VVM display downstream. */
+  isVaccine: boolean;
+  /** The item's configured doses-per-unit — the doses-display multiplier. */
+  doses: number;
 };
 
 type ItemNode = Extract<
@@ -71,6 +75,8 @@ export const itemPageFetcher =
         name: node.name,
         unitName: node.unitName,
         totalUnits: totalUnitsOf(node),
+        isVaccine: node.isVaccine,
+        doses: node.doses,
       })),
       totalCount: items.totalCount,
     };
