@@ -28,6 +28,7 @@ export interface NameSearchProps {
   placeholder?: string;
   hideLabel?: boolean;
   disabled?: boolean;
+  error?: string;
   class?: string;
 }
 
@@ -69,6 +70,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     hideLabel={props.hideLabel}
     class={props.class}
     disabled={props.disabled}
+    error={props.error}
     placeholder={props.placeholder}
     inputTestId="name-search-input"
     fetchPage={namePageFetcher(

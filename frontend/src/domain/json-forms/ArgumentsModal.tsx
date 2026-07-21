@@ -16,6 +16,7 @@ import { TextField } from '../../ui/elements/inputs/TextField';
 import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { Select } from '../../ui/elements/selectors/Select';
+import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { RadioGroup } from '../../ui/elements/inputs/RadioGroup';
 import { DateField } from '../../ui/elements/inputs/DateField';
 import { DateTimeField } from '../../ui/elements/inputs/DateTimeField';
@@ -28,14 +29,28 @@ import {
   ProgramListSelect,
   type ProgramListPick,
 } from '../program/ProgramListSelect';
+import { PeriodSelect } from '../program/PeriodSelect';
 import {
+  fetchPeriods,
   fetchPrograms,
+  type PeriodItem,
   type ProgramListItem,
 } from '../program/programResource';
+import { NameSearch } from '../name/NameSearch';
+import { fetchNameById, type NameOption } from '../name/nameResource';
+import { ItemSearch } from '../item/ItemSearch';
+import { fetchItemById, type ItemOption } from '../item/itemResource';
+import {
+  reasonOptionsResource,
+  type ReasonOption,
+} from '../reasonOptions/reasonOptionsResource';
+import { ScheduleFormFields } from './ScheduleFormFields';
 import { storeContext, currentStoreId } from '../../store/storeContext';
 import {
   cleanArguments,
+  dayStartInstant,
   parseArgumentSchema,
+  periodSearchWrites,
   seedDefaults,
   type ParsedField,
   type ReportArgs,
@@ -54,7 +69,19 @@ export interface ArgumentSchemaSource {
 // never blocks — the server's typed data-fetch failure reports the miss.
 type RequirableField = Extract<
   ParsedField,
-  { kind: 'text' | 'number' | 'enum' | 'date' | 'program' | 'programSearch' }
+  {
+    kind:
+      | 'text'
+      | 'number'
+      | 'enum'
+      | 'date'
+      | 'program'
+      | 'programSearch'
+      | 'nameSearch'
+      | 'itemSearch'
+      | 'reasonOption'
+      | 'periodSearch';
+  }
 >;
 const isRequirable = (field: ParsedField): field is RequirableField =>
   field.kind === 'text' ||
@@ -62,7 +89,78 @@ const isRequirable = (field: ParsedField): field is RequirableField =>
   field.kind === 'enum' ||
   field.kind === 'date' ||
   field.kind === 'program' ||
-  field.kind === 'programSearch';
+  field.kind === 'programSearch' ||
+  field.kind === 'nameSearch' ||
+  field.kind === 'itemSearch' ||
+  field.kind === 'reasonOption' ||
+  field.kind === 'periodSearch';
+
+// The period argument field (AC-R16): owns its own periods fetch — narrowed
+// by the form's root `programId` when the schema says findByProgram (waiting
+// disabled until one exists, clearing the pick when it changes) — and the
+// selection restore for both write modes: an id-mode value IS the period id;
+// a span-mode value is the start instant, matched back to a period.
+const PeriodArgumentField = (props: {
+  field: Extract<ParsedField, { kind: 'periodSearch' }>;
+  storeId: string | undefined;
+  /** The form's resolved sibling programId (undefined until picked). */
+  programId: string | undefined;
+  /** The raw stored value at the scoped key. */
+  value: unknown;
+  error?: string;
+  onPick: (period: PeriodItem | null) => void;
+}) => {
+  const [periodsData] = createResource(
+    () => {
+      if (!props.storeId) return undefined;
+      if (props.field.findByProgram && !props.programId) return undefined;
+      return JSON.stringify({
+        storeId: props.storeId,
+        programId: props.field.findByProgram ? props.programId : null,
+      });
+    },
+    async serialised => {
+      const vars = JSON.parse(serialised) as {
+        storeId: string;
+        programId: string | null;
+      };
+      return fetchPeriods(vars.storeId, vars.programId ?? undefined);
+    }
+  );
+  const periods = (): PeriodItem[] => periodsData.latest ?? [];
+
+  const selectedId = (): string | undefined => {
+    const value = props.value;
+    if (typeof value !== 'string' || value === '') return undefined;
+    if (props.field.key === 'periodId') return value;
+    return periods().find(p => dayStartInstant(p.startDate) === value)?.id;
+  };
+
+  // The find-by-program cascade: any change to the program pick (including a
+  // clear) drops the period selection (AC-R16). Deferred so the initial
+  // mount/restore never wipes URL-restored values.
+  createEffect(
+    on(
+      () => props.programId,
+      () => {
+        if (props.field.findByProgram) props.onPick(null);
+      },
+      { defer: true }
+    )
+  );
+
+  return (
+    <PeriodSelect
+      label={props.field.label}
+      periods={periods()}
+      loading={periodsData.loading}
+      value={selectedId()}
+      disabled={props.field.findByProgram && !props.programId}
+      error={props.error}
+      onChange={props.onPick}
+    />
+  );
+};
 
 // S3 — the argument-entry modal (spec/reports S3, AC-R1–R8). The filter form
 // is rendered FROM the report's argument schema: field set, order, labels, and
@@ -130,6 +228,37 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
     }
   };
 
+  // Apply a multi-key write map from the pure helpers (periodSearchWrites /
+  // scheduleCascadeWrites) — undefined removes the key from the store.
+  const applyWrites = (writes: ReportArgs): void => {
+    for (const [key, value] of Object.entries(writes))
+      setValues(key, value as never);
+  };
+
+  // The adjustment-reason options (AC-R15): the global active list narrowed to
+  // the two inventory-adjustment types — wastage/return reasons excluded
+  // (contract "Arguments").
+  const adjustmentReasons = (): ReasonOption[] =>
+    reasonOptionsResource
+      .noSuspense()
+      .filter(
+        reason =>
+          reason.type === 'POSITIVE_INVENTORY_ADJUSTMENT' ||
+          reason.type === 'NEGATIVE_INVENTORY_ADJUSTMENT'
+      );
+
+  // The async pickers (name/item) are controlled by OBJECT, but the argument
+  // store holds only the id — these maps carry each field's picked object for
+  // label display. Reopening pre-filled (URL args) resolves labels with a
+  // by-id fetch; a failed resolve just leaves the picker showing empty while
+  // the id still submits.
+  const [pickedNames, setPickedNames] = createStore<
+    Record<string, NameOption | undefined>
+  >({});
+  const [pickedItems, setPickedItems] = createStore<
+    Record<string, ItemOption | undefined>
+  >({});
+
   // Local form state as a store, updated field-by-field in place. Seeded fresh
   // each time the modal opens (an interaction never reseeds): from the URL
   // arguments when reopening pre-filled, otherwise from store preferences +
@@ -148,6 +277,25 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
         const prefs = storeContext()?.storePreferences ?? {};
         const seed = props.initialValues ?? seedDefaults(fields(), prefs);
         setValues(reconcile({ ...seed }));
+        // Label restore for the async pickers: a reopened form holds only ids
+        // — resolve each to its object so the picker shows the selection.
+        setPickedNames(reconcile({}));
+        setPickedItems(reconcile({}));
+        const storeId = currentStoreId();
+        if (!storeId) return;
+        for (const field of fields()) {
+          const value = seed[field.key];
+          if (typeof value !== 'string' || value === '') continue;
+          if (field.kind === 'nameSearch') {
+            void fetchNameById(storeId, value).then(name => {
+              if (name) setPickedNames(field.key, name);
+            });
+          } else if (field.kind === 'itemSearch') {
+            void fetchItemById(storeId, value).then(item => {
+              if (item) setPickedItems(field.key, item);
+            });
+          }
+        }
       }
     )
   );
@@ -175,6 +323,13 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
   const selectValue = (key: string): string | undefined => {
     const value = values[key];
     return typeof value === 'string' ? value : undefined;
+  };
+  // The period picker's find-by-program sibling: the form's own root
+  // `programId` value — the captured client's All-programs sentinel counts as
+  // no program (contract "Arguments").
+  const programIdArg = (): string | undefined => {
+    const value = selectValue('programId');
+    return value && value !== 'AllProgramsSelector' ? value : undefined;
   };
   const rangeValue = (key: string): { start: string; end: string } => {
     const value = values[key];
@@ -409,6 +564,104 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     onChange={pick => setProgramSearch(psField.key, pick)}
                   />
                 )}
+              </Match>
+              <Match
+                when={field.kind === 'nameSearch' ? field : undefined}
+                keyed
+              >
+                {nameField => (
+                  /* AC-R13: the party picker writes the scoped key = the
+                     name's id, nothing else; the picked object lives in
+                     pickedNames for label display only. */
+                  <NameSearch
+                    label={nameField.label}
+                    storeId={currentStoreId() ?? ''}
+                    role={nameField.role}
+                    selected={pickedNames[nameField.key]}
+                    error={requiredError(nameField)}
+                    onSelect={name => {
+                      setPickedNames(nameField.key, name ?? undefined);
+                      setValues(nameField.key, name?.id ?? undefined);
+                    }}
+                  />
+                )}
+              </Match>
+              <Match
+                when={field.kind === 'itemSearch' ? field : undefined}
+                keyed
+              >
+                {itemField => (
+                  /* AC-R14: the item picker's two-key write — the scoped key
+                     = the item's id plus the hard-coded sibling `itemName`
+                     shipped templates print (contract "Arguments"). */
+                  <ItemSearch
+                    label={itemField.label}
+                    storeId={currentStoreId() ?? ''}
+                    value={selectValue(itemField.key)}
+                    selectedItem={pickedItems[itemField.key]}
+                    error={requiredError(itemField)}
+                    onSelect={item => {
+                      setPickedItems(itemField.key, item ?? undefined);
+                      setValues(itemField.key, item?.id ?? undefined);
+                      setValues('itemName', item?.name ?? undefined);
+                    }}
+                  />
+                )}
+              </Match>
+              <Match
+                when={field.kind === 'reasonOption' ? field : undefined}
+                keyed
+              >
+                {reasonField => (
+                  /* AC-R15: active inventory-adjustment reasons only. */
+                  <Combobox<ReasonOption>
+                    label={reasonField.label}
+                    items={adjustmentReasons()}
+                    loading={reasonOptionsResource.loading()}
+                    itemToString={reason => reason.reason}
+                    itemToValue={reason => reason.id}
+                    value={selectValue(reasonField.key)}
+                    error={requiredError(reasonField)}
+                    onChange={reason =>
+                      setValues(reasonField.key, reason?.id ?? undefined)
+                    }
+                  />
+                )}
+              </Match>
+              <Match
+                when={field.kind === 'periodSearch' ? field : undefined}
+                keyed
+              >
+                {periodField => (
+                  /* AC-R16: the write forks on the scoped key — id at
+                     `periodId`, span (+ `before` companion) anywhere else
+                     (periodSearchWrites). */
+                  <PeriodArgumentField
+                    field={periodField}
+                    storeId={currentStoreId()}
+                    programId={programIdArg()}
+                    value={values[periodField.key]}
+                    error={requiredError(periodField)}
+                    onPick={period =>
+                      applyWrites(periodSearchWrites(periodField.key, period))
+                    }
+                  />
+                )}
+              </Match>
+              <Match when={field.kind === 'scheduleForm'}>
+                {/* AC-R17: the cascade ignores its scoped key and writes the
+                    five flat keys via scheduleCascadeWrites. */}
+                <ScheduleFormFields
+                  storeId={currentStoreId() ?? ''}
+                  programs={programs()}
+                  programsLoading={programsData.loading}
+                  programId={selectValue('programId')}
+                  scheduleId={selectValue('scheduleId')}
+                  periodId={selectValue('periodId')}
+                  after={selectValue('after')}
+                  before={selectValue('before')}
+                  onWrites={applyWrites}
+                />
               </Match>
               <Match when={field.kind === 'masterList'}>
                 <MasterListSelect

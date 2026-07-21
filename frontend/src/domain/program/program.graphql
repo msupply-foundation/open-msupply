@@ -45,3 +45,51 @@ query programs($storeId: String!) {
     }
   }
 }
+
+# Periods that have already begun (startDate <= the given day), optionally
+# narrowed to a program — the option source of the report argument PERIOD
+# picker (spec/reports contract "Arguments", AC-R16). $today is the viewer's
+# current calendar date; the query has no sort input (server default order).
+query periods($storeId: String!, $programId: String, $today: NaiveDate!) {
+  periods(
+    storeId: $storeId
+    programId: $programId
+    page: { first: 100 }
+    filter: { startDate: { beforeOrEqualTo: $today } }
+  ) {
+    ... on PeriodConnector {
+      __typename
+      nodes {
+        id
+        name
+        startDate
+        endDate
+      }
+    }
+  }
+}
+
+# A program's period schedules, each with its CLOSED periods (ended on or
+# before today — server-enforced) — the schedule + period steps of the report
+# argument schedule cascade (spec/reports contract "Arguments", AC-R17). A
+# consumed read owned by R&R forms.
+query schedulesWithPeriods($storeId: String!, $programId: String!) {
+  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
+    ... on PeriodSchedulesConnector {
+      __typename
+      nodes {
+        id
+        name
+        periods {
+          id
+          period {
+            id
+            name
+            startDate
+            endDate
+          }
+        }
+      }
+    }
+  }
+}

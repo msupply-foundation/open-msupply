@@ -43,3 +43,55 @@ export type ProgramsResult = {
 export const Programs = {
   query: "query programs($storeId: String!) {\n  programs(\n    storeId: $storeId\n    page: {first: 1000}\n    filter: {existsForStoreId: {equalTo: $storeId}}\n    sort: {key: name}\n  ) {\n    ... on ProgramConnector {\n      __typename\n      nodes {\n        id\n        name\n        elmisCode\n        isImmunisation\n      }\n    }\n  }\n}",
 } as TypedDocument<ProgramsResult, ProgramsVariables>;
+
+export type PeriodsVariables = {
+  storeId: string;
+  programId?: string | null;
+  today: string;
+};
+
+export type PeriodsResult = {
+  periods: ({
+  __typename: "PeriodConnector";
+} & {
+  nodes: Array<{
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+}>;
+});
+};
+
+export const Periods = {
+  query: "query periods($storeId: String!, $programId: String, $today: NaiveDate!) {\n  periods(\n    storeId: $storeId\n    programId: $programId\n    page: {first: 100}\n    filter: {startDate: {beforeOrEqualTo: $today}}\n  ) {\n    ... on PeriodConnector {\n      __typename\n      nodes {\n        id\n        name\n        startDate\n        endDate\n      }\n    }\n  }\n}",
+} as TypedDocument<PeriodsResult, PeriodsVariables>;
+
+export type SchedulesWithPeriodsVariables = {
+  storeId: string;
+  programId: string;
+};
+
+export type SchedulesWithPeriodsResult = {
+  schedulesWithPeriodsByProgram: ({
+  __typename: "PeriodSchedulesConnector";
+} & {
+  nodes: Array<{
+  id: string;
+  name: string;
+  periods: Array<{
+  id: string;
+  period: {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+};
+}>;
+}>;
+});
+};
+
+export const SchedulesWithPeriods = {
+  query: "query schedulesWithPeriods($storeId: String!, $programId: String!) {\n  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {\n    ... on PeriodSchedulesConnector {\n      __typename\n      nodes {\n        id\n        name\n        periods {\n          id\n          period {\n            id\n            name\n            startDate\n            endDate\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<SchedulesWithPeriodsResult, SchedulesWithPeriodsVariables>;
