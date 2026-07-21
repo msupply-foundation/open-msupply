@@ -569,8 +569,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               <span data-testid="item-option-name">{option.name}</span>
             </span>
             <span class={styles.itemStock}>
-              {formatNumber(option.availableStockOnHand)}{' '}
-              {option.unitName ?? t('label.unit-plural')}
+              {/* A fixed, localised "Units" label for every item — the item's
+                  own unitName is untranslatable catalogue data, so the old app's
+                  item search shows t('label.units') here for all items (the
+                  specific unit is used on the Available line / lens, not here). */}
+              {formatNumber(option.availableStockOnHand)} {t('label.units')}
             </span>
           </span>
         )}
