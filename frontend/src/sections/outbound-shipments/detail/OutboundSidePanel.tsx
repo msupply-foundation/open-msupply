@@ -17,7 +17,7 @@ import { CopyIcon, EditIcon, InfoIcon } from '../../../ui/icons';
 import { ShippingMethodSelect } from '../../../domain/shippingMethod';
 import { DeleteShipmentAction } from './actions';
 import { DuplicateShipmentAction } from '../list/actions/DuplicateShipmentAction';
-import { isDeletable } from '../outboundStatus';
+import { isDeletable, statusLabel } from '../outboundStatus';
 import type { OutboundNode } from './outboundUpdate';
 import type { OutboundFieldEdit } from './outboundEdit';
 
@@ -99,7 +99,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
     const text = [
       `${t('nav.distribution.outbound-shipment')} #${node.invoiceNumber}`,
       `${t('outbound.toolbar.customer')}: ${node.otherParty.name}`,
-      `${t('outbound.column.status')}: ${node.status}`,
+      `${t('outbound.column.status')}: ${statusLabel(node.status)}`,
       `${t('outbound.panel.created')}: ${localisedDate(node.createdDatetime)}`,
       `${t('outbound.panel.grand-total')}: ${money(pricing().totalAfterTax)}`,
     ].join('\n');
