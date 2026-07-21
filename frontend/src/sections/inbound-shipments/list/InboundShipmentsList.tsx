@@ -18,6 +18,7 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
+  getCommentCell,
   getCurrencyCell,
   getDateCell,
   getNumberCell,
@@ -289,7 +290,7 @@ const InboundShipmentsList: Component = () => {
       c: { key: 'comment' },
       sortKey: 'comment',
       header: t('label.comment'),
-      meta: { wrapLines: 2 },
+      ...getCommentCell(),
     },
     {
       c: { key: 'theirReference' },
