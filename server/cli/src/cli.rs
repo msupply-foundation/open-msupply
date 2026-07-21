@@ -14,7 +14,7 @@ use repository::{
     migrations::{migrate, MigrationConfig},
     schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
     KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
-    ReportRowRepository, StringFilter, SyncBufferRepository, SyncBufferRowInsert,
+    ReportRowRepository, StringFilter, SyncBufferRepository, SyncBufferRowInsert, SyncVersion,
 };
 use serde::{Deserialize, Serialize};
 use server::{configuration, logging_init};
@@ -30,6 +30,10 @@ use service::{
     sync::{
         settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
+    },
+    sync_v7::{
+        synchroniser::SynchroniserV7,
+        validate_translate_integrate::integrate_pending_sync_buffer_v7,
     },
 };
 use std::{
@@ -100,6 +104,21 @@ enum Action {
         /// Users to sync in format "username:password,username2:password2"
         #[clap(short, long)]
         users: String,
+        /// Prettify json output
+        #[clap(long, action = ArgAction::SetTrue)]
+        pretty: bool,
+    },
+    /// Initialise from OMS central server via sync v7 (uses configuration/.*yaml for sync credentials), drops existing database,
+    /// creates new database with latest schema and initialises (syncs) initial data from central server.
+    /// Unlike the v5/v6 variant no users are needed — user accounts, store joins and permissions sync as regular v7 records.
+    InitialiseFromCentralV7,
+    /// Export initialisation data pulled from OMS central server via sync v7 (uses configuration/.*yaml for sync credentials).
+    /// Unlike the v5/v6 variant no users are needed — user accounts sync as regular v7 records and end up in the exported sync buffer.
+    /// IMPORTANT: Should not be used on large data files
+    ExportInitialisationV7 {
+        /// Name for export of initialisation data (will be saved inside `data` folder)
+        #[clap(short, long)]
+        name: String,
         /// Prettify json output
         #[clap(long, action = ArgAction::SetTrue)]
         pretty: bool,
@@ -297,10 +316,15 @@ enum Action {
 #[derive(Serialize, Deserialize)]
 struct InitialisationData {
     sync_buffer_rows: Vec<repository::SyncBufferRow>,
+    #[serde(default)]
     users: Vec<(LoginInput, LoginUserInfoV4)>,
     site_id: i32,
-    /// Set for v7 exports: the central site id the buffer rows are stamped
-    /// with (`source_site_id`). Presence switches integration to the v7 path.
+    /// Which sync transport produced this export. Defaults to V5_V6 so that export files
+    /// created before this field existed keep loading.
+    #[serde(default)]
+    sync_version: SyncVersion,
+    /// The central server's site id — v7 buffer rows are stamped with it as `source_site_id`
+    /// and v7 integration filters on it. Only present in v7 exports.
     #[serde(default)]
     central_site_id: Option<i32>,
 }
@@ -355,6 +379,59 @@ async fn initialise_from_central(
             .await
             .map_err(|_| anyhow!("Cannot login with user {input:?}"))?;
     }
+    info!("Initialisation finished");
+    Ok((service_provider, service_context))
+}
+
+/// V7 counterpart of [`initialise_from_central`]. No user syncing step: with v7, user
+/// accounts (including password hashes), store joins and permissions arrive with the
+/// initial pull like any other record.
+async fn initialise_from_central_v7(
+    settings: Settings,
+) -> anyhow::Result<(Arc<ServiceProvider>, ServiceContext)> {
+    info!("Reseting database");
+    test_db::setup(&settings.database).await;
+    info!("Finished database reset");
+
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
+
+    let sync_settings = settings
+        .clone()
+        .sync
+        .filter(|s| s.has_core_sync_settings())
+        .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
+
+    let service_context = service_provider.basic_context()?;
+    // A fresh database defaults to the v5/v6 transport — select v7 before requesting site
+    // auth and syncing, both dispatch on the stored SyncVersion.
+    SyncVersion::set(&service_context.connection, SyncVersion::V7)?;
+
+    info!("Initialising from central (sync v7)");
+    service_provider
+        .site_auth_service
+        .request_and_set_site_auth(&service_provider, &sync_settings)
+        .await?;
+    service_provider
+        .settings
+        .update_sync_settings(&service_context, &sync_settings)?;
+
+    SynchroniserV7::new(sync_settings, service_provider.clone())
+        .sync()
+        .await
+        .map_err(|e| anyhow!("V7 sync failed: {e:?}"))?;
+
+    // The v7 synchroniser writes the sync log's 'done' (finished_datetime) itself on success —
+    // the server relies on that log to start as initialised, so verify rather than assume.
+    if !service_provider
+        .sync_status_service
+        .is_initialised(&service_context)?
+    {
+        return Err(anyhow!(
+            "V7 sync finished but site is not reported as initialised (no successful sync_log_v7 entry)"
+        ));
+    }
+
     info!("Initialisation finished");
     Ok((service_provider, service_context))
 }
@@ -441,6 +518,49 @@ async fn main() -> anyhow::Result<()> {
         Action::InitialiseFromCentral { users } => {
             initialise_from_central(settings, &users).await?;
         }
+        Action::InitialiseFromCentralV7 => {
+            initialise_from_central_v7(settings).await?;
+        }
+        Action::ExportInitialisationV7 { name, pretty } => {
+            let (service_provider, ctx) = initialise_from_central_v7(settings).await?;
+
+            let central_site_id = KeyValueStoreRepository::new(&ctx.connection)
+                .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+                .ok_or(anyhow!(
+                    "Central server site id not set after v7 initialisation"
+                ))?;
+
+            let data = InitialisationData {
+                sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
+                // No users in a v7 export — user accounts sync as regular records and are
+                // already part of the sync buffer rows above.
+                users: Vec::new(),
+                site_id: service_provider
+                    .site_auth_service
+                    .get_site_id(&ctx)?
+                    .unwrap(),
+                sync_version: SyncVersion::V7,
+                central_site_id: Some(central_site_id),
+            };
+
+            let data_string = if pretty {
+                serde_json::to_string_pretty(&data)
+            } else {
+                serde_json::to_string(&data)
+            }?;
+
+            info!("Saving export");
+            let (folder, export_file, users_file) = export_paths(&name);
+            if fs::create_dir(&folder).is_err() {
+                info!("Export directory already exists, replacing {folder:#?}")
+            };
+            fs::write(export_file, data_string)?;
+            fs::write(
+                users_file,
+                "(v7 export — users sync as part of the data, log in with any user that has access to this site)",
+            )?;
+            info!("Export saved in {}", folder.to_str().unwrap());
+        }
         Action::ExportInitialisation {
             name,
             users,
@@ -479,8 +599,7 @@ async fn main() -> anyhow::Result<()> {
                     .site_auth_service
                     .get_site_id(&ctx)?
                     .unwrap(),
-                // export-initialisation captures via the v5/v6 flow; v7
-                // exports are produced externally (see client/playwright/scripts).
+                sync_version: SyncVersion::V5V6,
                 central_site_id: None,
             };
 
@@ -531,26 +650,39 @@ async fn main() -> anyhow::Result<()> {
                 .collect();
             buffer_repo.insert_many(&buffer_rows)?;
 
-            let mut logger = SyncLogger::start(&ctx.connection).unwrap();
-            integrate_and_translate_sync_buffer(&ctx.connection, Some(&mut logger), 0, true)?;
+            match data.sync_version {
+                SyncVersion::V5V6 => {
+                    let mut logger = SyncLogger::start(&ctx.connection).unwrap();
+                    integrate_and_translate_sync_buffer(
+                        &ctx.connection,
+                        Some(&mut logger),
+                        0,
+                        true,
+                    )?;
 
-            // V7 exports: buffer rows are stamped with the central site id and
-            // only integrate through the v7 path (the call above is V5_V6-only).
-            if let Some(central_site_id) = data.central_site_id {
-                info!("Integrating v7 sync buffer (central site {central_site_id})");
-                KeyValueStoreRepository::new(&ctx.connection).set_i32(
-                    KeyType::SettingsSyncCentralServerSiteId,
-                    Some(central_site_id),
-                )?;
-                service::sync_v7::validate_translate_integrate::integrate_v7_sync_buffer_offline(
-                    &ctx.connection,
-                    central_site_id,
-                )?;
-            }
+                    info!("Initialising users");
+                    for (input, user_info) in data.users {
+                        LoginService::update_user(&ctx, &input.password, user_info).unwrap();
+                    }
+                }
+                SyncVersion::V7 => {
+                    // Match the exporting site's transport — login and any future sync
+                    // dispatch on the stored SyncVersion.
+                    SyncVersion::set(&ctx.connection, SyncVersion::V7)?;
+                    // v7 buffer rows are stamped with the central server's site id as
+                    // `source_site_id`, and integration filters on it.
+                    let central_site_id = data.central_site_id.ok_or(anyhow!(
+                        "v7 export is missing central_site_id — re-create it with export-initialisation-v7"
+                    ))?;
+                    KeyValueStoreRepository::new(&ctx.connection).set_i32(
+                        KeyType::SettingsSyncCentralServerSiteId,
+                        Some(central_site_id),
+                    )?;
 
-            info!("Initialising users");
-            for (input, user_info) in data.users {
-                LoginService::update_user(&ctx, &input.password, user_info).unwrap();
+                    integrate_pending_sync_buffer_v7(&ctx.connection, central_site_id)?;
+                    // No user initialisation step — user accounts (with password hashes)
+                    // came through the buffer like any other record.
+                }
             }
 
             if refresh {

@@ -479,19 +479,19 @@ pub(crate) fn validate_translate_integrate_in_memory(
         .map_err(|e| e.to_inner_error())
 }
 
-/// Integrate pending V7 sync-buffer rows outside a network sync, as if this
-/// site were initialising from the central server whose site id stamped the
-/// rows (`source_site_id`). Used by the CLI's `initialise-from-export` for v7
-/// exports — the v5/v6 integration it runs only processes `V5_V6` buffer rows.
+/// Offline/CLI entry point: integrate whatever is pending in the sync buffer for
+/// `source_site_id`, mirroring the remote `integrate` step during initialisation but without an
+/// API session or logger. Used by the CLI's `initialise-from-export` for v7 exports, where the
+/// buffer rows come from a file rather than a pull.
 ///
 /// Requires `SettingsSyncSiteId` to be set (the CLI sets it from the export
 /// before calling this).
-pub fn integrate_v7_sync_buffer_offline(
+pub fn integrate_pending_sync_buffer_v7(
     connection: &StorageConnection,
     source_site_id: i32,
 ) -> Result<(), RepositoryError> {
     let active_stores = ActiveStoresOnSite::get(connection)
-        .map_err(|e| RepositoryError::as_db_error("Getting active stores on site", e))?;
+        .map_err(|e| RepositoryError::as_db_error("Failed to load active stores", e))?;
 
     // Mirrors the v7 synchroniser's integrate step (see `sync.rs`).
     let is_multi_device = KeyValueStoreRepository::new(connection)
