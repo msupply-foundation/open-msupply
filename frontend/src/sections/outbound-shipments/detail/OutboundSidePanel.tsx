@@ -262,6 +262,8 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
               size="small"
               type="number"
               min="0"
+              max="100"
+              step="0.01"
               disabled={
                 props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
               }
@@ -269,7 +271,10 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
               onChange={e => {
                 const raw = e.currentTarget.value;
                 const parsed = raw === '' ? null : Number(raw);
-                if (parsed == null || (Number.isFinite(parsed) && parsed >= 0))
+                if (
+                  parsed == null ||
+                  (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100)
+                )
                   props.onSaveField({ tax: { percentage: parsed } });
               }}
             />
