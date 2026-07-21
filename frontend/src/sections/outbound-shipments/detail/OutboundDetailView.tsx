@@ -135,6 +135,13 @@ const OutboundDetailView: Component = () => {
   const stockAndPlaceholderLines = () =>
     lines().filter(line => line.type !== 'SERVICE');
   const serviceLines = () => lines().filter(line => line.type === 'SERVICE');
+  // Default line-table order: item name ascending (ui-surface S3 § line table;
+  // matches the old app). A flat client-side sort — all lines are loaded, and
+  // the table is un-grouped (D29).
+  const sortedLines = () =>
+    [...stockAndPlaceholderLines()].sort((a, b) =>
+      a.itemName.localeCompare(b.itemName)
+    );
 
   const editable = () => {
     const current = node();
@@ -585,7 +592,7 @@ const OutboundDetailView: Component = () => {
               <TabPanel value="details">
                 <DataTable
                   columns={columns()}
-                  rows={stockAndPlaceholderLines()}
+                  rows={sortedLines()}
                   rowKey={line => line.id}
                   loading={data.loading}
                   onRowClick={editable() ? openRow : undefined}
