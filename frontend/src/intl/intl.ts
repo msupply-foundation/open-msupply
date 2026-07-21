@@ -21,7 +21,37 @@ const [dictionaries, setDictionaries] = createSignal<
 // primitive calls it on every lookup, reading the signals fresh, so it stays
 // correct both inside a reactive root (UI re-renders on change) and outside one
 // (tests).
-const activeDict = (): FlatDict => dictionaries()[locale()] ?? {};
+//
+// Missing-key fallback ladder (spec/i18n/behaviours.md → translating text):
+// active-locale string → the English (DEFAULT_LOCALE) string → the raw key.
+// A non-English catalog is partial (e.g. Arabic lacks ~1400 keys), so we layer
+// the active locale OVER the English base rather than reading it alone — a key
+// absent from the active locale then resolves to its English string instead of
+// leaking the raw key into the UI. English keys still absent everywhere fall
+// through to the key itself (t()'s `?? key`), keeping a truly-missing key
+// visible, never blank. When the active locale IS English, the merge is a
+// harmless self-merge.
+//
+// The translator calls this on EVERY t() lookup (a hot path), so the two-
+// dictionary merge is cached and rebuilt only when its inputs actually change —
+// keyed on the current locale plus the `dictionaries` object identity (a fresh
+// reference on every setDictionaries). A plain identity cache, not createMemo:
+// t() is also called ownerless (tests, and outside any reactive root), where a
+// memo would have no owner to track.
+let cache: { locale: SupportedLocale; dicts: object; merged: FlatDict } | null =
+  null;
+const activeDict = (): FlatDict => {
+  const current = locale();
+  const dicts = dictionaries();
+  if (cache && cache.locale === current && cache.dicts === dicts)
+    return cache.merged;
+  const merged: FlatDict = {
+    ...(dicts[DEFAULT_LOCALE] ?? {}),
+    ...(dicts[current] ?? {}),
+  };
+  cache = { locale: current, dicts, merged };
+  return merged;
+};
 
 // The primitive: a reactive translator with {{ token }} interpolation. It reads
 // activeDict (which reads the signals), so every t() call site updates on
