@@ -608,6 +608,7 @@ export type UpdateInboundShipmentVariables = {
     applyToLines: "NONE" | "UPDATE_EXISTING_DONOR" | "ASSIGN_IF_NONE" | "ASSIGN_TO_ALL";
   } | null;
     receivedDatetime?: string | null;
+    customFields?: unknown | null;
   };
 };
 
@@ -650,6 +651,7 @@ export type UpdateInboundShipmentExternalVariables = {
     applyToLines: "NONE" | "UPDATE_EXISTING_DONOR" | "ASSIGN_IF_NONE" | "ASSIGN_TO_ALL";
   } | null;
     receivedDatetime?: string | null;
+    customFields?: unknown | null;
   };
 };
 
@@ -711,6 +713,7 @@ export type BatchInboundShipmentVariables = {
     volumePerPack?: number | null;
     shippedPackSize?: number | null;
     purchaseOrderLineId?: string | null;
+    reasonOptionId?: string | null;
   }> | null;
     insertFromInternalOrderLines?: Array<{
     invoiceId: string;
@@ -811,6 +814,7 @@ export type BatchInboundShipmentVariables = {
     applyToLines: "NONE" | "UPDATE_EXISTING_DONOR" | "ASSIGN_IF_NONE" | "ASSIGN_TO_ALL";
   } | null;
     receivedDatetime?: string | null;
+    customFields?: unknown | null;
   }> | null;
     deleteInboundShipments?: Array<{
     id: string;
@@ -868,6 +872,7 @@ export type BatchInboundShipmentExternalVariables = {
     volumePerPack?: number | null;
     shippedPackSize?: number | null;
     purchaseOrderLineId?: string | null;
+    reasonOptionId?: string | null;
   }> | null;
     insertFromInternalOrderLines?: Array<{
     invoiceId: string;
@@ -968,6 +973,7 @@ export type BatchInboundShipmentExternalVariables = {
     applyToLines: "NONE" | "UPDATE_EXISTING_DONOR" | "ASSIGN_IF_NONE" | "ASSIGN_TO_ALL";
   } | null;
     receivedDatetime?: string | null;
+    customFields?: unknown | null;
   }> | null;
     deleteInboundShipments?: Array<{
     id: string;

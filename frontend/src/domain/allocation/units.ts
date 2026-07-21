@@ -23,12 +23,25 @@ export interface UnitCountableBatch {
   packSize: number;
   availablePacks: number;
   numberOfPacks: number;
+  // On-hold batches (the stock line or its location) are excluded from the
+  // available total — old-app parity (sumAvailableUnits skips on-hold stock;
+  // expired / unusable-VVM batches are still counted). They stay visible in
+  // the grid, disabled. Optional: callers that don't track hold omit them and
+  // nothing is excluded.
+  stockLineOnHold?: boolean;
+  location?: { onHold: boolean } | null;
 }
 
 export const availableUnits = (
   batches: readonly UnitCountableBatch[]
 ): number =>
-  batches.reduce((sum, line) => sum + line.availablePacks * line.packSize, 0);
+  batches.reduce(
+    (sum, line) =>
+      line.stockLineOnHold || line.location?.onHold
+        ? sum
+        : sum + line.availablePacks * line.packSize,
+    0
+  );
 
 export const issuedUnits = (batches: readonly UnitCountableBatch[]): number =>
   batches.reduce((sum, line) => sum + line.numberOfPacks * line.packSize, 0);

@@ -1,0 +1,66 @@
+# New-stock modal (spec/stock S3). Picking an item seeds the form from its
+# defaults and offers its variants; confirming introduces a new stock line via a
+# finalised inventory-addition (insertStockLine).
+
+# The chosen item's defaults + variants, fetched when an item is picked (the
+# ItemSearch option carries only id/code/name/unit/vaccine/doses, not the
+# pack-size / price / location-restriction / variant data S3 seeds from).
+query newStockItem($storeId: String!, $itemId: EqualFilterStringInput) {
+  items(storeId: $storeId, filter: { id: $itemId }) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+        unitName
+        isVaccine
+        doses
+        defaultPackSize
+        restrictedLocationTypeId
+        restrictedLocationType {
+          id
+          name
+        }
+        itemStoreProperties(storeId: $storeId) {
+          defaultSellPricePerPack
+        }
+        variants {
+          id
+          name
+          manufacturerId
+          manufacturer(storeId: $storeId) {
+            id
+            name
+          }
+          packagingVariants {
+            id
+            packagingLevel
+            packSize
+            volumePerUnit
+          }
+        }
+      }
+    }
+  }
+}
+
+# Introduce a new stock line (spec/stock › introducing new stock). Mechanically a
+# finalised inventory addition; success returns the new StockLineNode whose id
+# the modal navigates to (S2). The only typed error member is
+# AdjustmentReasonNotProvided; field validations surface as Internal errors so
+# the UI must pre-validate (contract ⚠️ trap).
+mutation insertStockLine($storeId: String!, $input: InsertStockLineInput!) {
+  insertStockLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on StockLineNode {
+      id
+    }
+    ... on InsertStockLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

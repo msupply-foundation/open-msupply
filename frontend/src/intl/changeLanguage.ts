@@ -1,7 +1,18 @@
 import { setLocale } from './intl';
-import { isSupported, type SupportedLocale } from './locales';
+import { DEFAULT_LOCALE, isSupported, type SupportedLocale } from './locales';
 import { loadDictionary } from './loadDictionary';
 import { persistUserLocale, rememberLastLocale } from './detectLocale';
+
+// Load the target locale AND the English base together (spec/i18n → translating
+// text): a partial non-English catalog falls back through English, so English
+// must be resident for that fallback to resolve. When the target IS English
+// this is a single load. loadDictionary is cache-first and never throws, so the
+// extra load is cheap and safe.
+const loadWithEnglishBase = async (locale: SupportedLocale): Promise<void> => {
+  await (locale === DEFAULT_LOCALE
+    ? loadDictionary(locale)
+    : Promise.all([loadDictionary(DEFAULT_LOCALE), loadDictionary(locale)]));
+};
 
 /**
  * Switch the active language. Direct call — click-through traceable — awaited
@@ -16,7 +27,7 @@ export const changeLanguage = async (
   if (!isSupported(code)) return;
   const locale: SupportedLocale = code;
 
-  await loadDictionary(locale);
+  await loadWithEnglishBase(locale);
   setLocale(locale);
 
   if (username) persistUserLocale(username, locale);
@@ -31,7 +42,7 @@ export const changeLanguage = async (
 export const initialiseLocale = async (
   locale: SupportedLocale
 ): Promise<void> => {
-  await loadDictionary(locale);
+  await loadWithEnglishBase(locale);
   setLocale(locale);
   rememberLastLocale(locale);
 };

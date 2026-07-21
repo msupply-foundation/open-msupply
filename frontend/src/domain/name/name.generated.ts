@@ -68,6 +68,7 @@ export type SearchNamesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    dynamicFilter?: unknown | null;
   } | null;
   page?: {
     first?: number | null;
