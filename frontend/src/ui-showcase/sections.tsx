@@ -13,6 +13,7 @@ import { SelectorsShowcase } from './SelectorsShowcase';
 import { FeedbackShowcase } from './FeedbackShowcase';
 import { DialogShowcase } from './DialogShowcase';
 import { DisplayShowcase } from './DisplayShowcase';
+import { DocumentUploadShowcase } from './DocumentUploadShowcase';
 import { SyncShowcase } from './SyncShowcase';
 import { TableShowcase } from './TableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
@@ -21,6 +22,7 @@ import { ContentFooterShowcase } from './ContentFooterShowcase';
 import { SidePanelShowcase } from './SidePanelShowcase';
 import { StatisticsShowcase } from './StatisticsShowcase';
 import { InsetPanelShowcase } from './InsetPanelShowcase';
+import { CardGridShowcase } from './CardGridShowcase';
 
 export type SectionCategory = 'components' | 'layout';
 
@@ -124,6 +126,12 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
+    id: 'document-upload',
+    label: 'Document upload',
+    component: DocumentUploadShowcase,
+    category: 'components',
+  },
+  {
     id: 'sync',
     label: 'Sync',
     component: SyncShowcase,
@@ -158,6 +166,12 @@ export const sections: SectionDef[] = [
     id: 'inset-panel',
     label: 'Inset panel',
     component: InsetPanelShowcase,
+    category: 'layout',
+  },
+  {
+    id: 'card-grid',
+    label: 'Card grid',
+    component: CardGridShowcase,
     category: 'layout',
   },
   // A standalone reference page, listed as its own top-level menu entry rather

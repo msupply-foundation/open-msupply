@@ -50,13 +50,17 @@ const ReplenishmentCard = () => (
       title="Inbound Shipments"
       titleHref="/demo"
       icon={<StockIcon />}
-      state="ready"
+      state={{ status: 'ready' }}
     >
       <Statistic label="Today" value="0" href="/demo" />
       <Statistic label="This week" value="0" href="/demo" />
       <Statistic label="Not delivered" value="15" href="/demo" />
     </StatsPanel>
-    <StatsPanel title="Internal Orders" icon={<StockIcon />} state="ready">
+    <StatsPanel
+      title="Internal Orders"
+      icon={<StockIcon />}
+      state={{ status: 'ready' }}
+    >
       <Statistic label="Draft" value="3" href="/demo" />
     </StatsPanel>
   </DashboardCard>
@@ -75,11 +79,15 @@ const DistributionCard = () => (
       title="Outbound Shipments"
       titleHref="/demo"
       icon={<StockIcon />}
-      state="ready"
+      state={{ status: 'ready' }}
     >
       <Statistic label="Have not been shipped" value="7" href="/demo" />
     </StatsPanel>
-    <StatsPanel title="Requisitions" icon={<StockIcon />} state="ready">
+    <StatsPanel
+      title="Requisitions"
+      icon={<StockIcon />}
+      state={{ status: 'ready' }}
+    >
       <Statistic label="New" value="16" href="/demo" />
       <Statistic
         label="Emergency"
@@ -105,7 +113,7 @@ const InventoryCard = () => (
       title="Expiring stock"
       titleHref="/demo"
       icon={<StockIcon />}
-      state="ready"
+      state={{ status: 'ready' }}
     >
       <Statistic label="Expired batches" value="2" href="/demo" />
       <Statistic label="Batches expiring in a month" value="2" href="/demo" />
@@ -114,7 +122,7 @@ const InventoryCard = () => (
       title="Stock levels"
       titleHref="/demo"
       icon={<StockIcon />}
-      state="ready"
+      state={{ status: 'ready' }}
     >
       <Statistic label="Out of stock (all items)" value="42" href="/demo" />
       <Statistic
@@ -214,7 +222,7 @@ const Demo = () => (
           title="Inbound Shipments"
           titleHref="/demo"
           icon={<StockIcon />}
-          state="ready"
+          state={{ status: 'ready' }}
         >
           <Statistic label="Today" value="0" href="/demo" />
           <Statistic label="This week" value="0" href="/demo" />
@@ -223,14 +231,15 @@ const Demo = () => (
         <StatsPanel
           title="Expiring stock"
           icon={<StockIcon />}
-          state="loading"
-          loadingMessage="Loading…"
+          state={{ status: 'loading', loadingMessage: 'Loading…' }}
         />
         <StatsPanel
           title="Stock levels"
           icon={<StockIcon />}
-          state="error"
-          errorMessage="You do not have permission to view stock counts"
+          state={{
+            status: 'error',
+            errorMessage: 'You do not have permission to view stock counts',
+          }}
         />
       </div>
     </Card>

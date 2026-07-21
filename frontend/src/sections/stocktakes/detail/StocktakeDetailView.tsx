@@ -762,6 +762,7 @@ const StocktakeDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<SidebarIcon />}
+                        data-testid="open-detail-panel-button"
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
@@ -814,7 +815,7 @@ const StocktakeDetailView: Component = () => {
                   }
                 >
                   <ContentFooter>
-                    <strong>
+                    <strong data-testid="selected-rows-count">
                       {selectedIds().length} {t('label.selected')}
                     </strong>
                     {/* Each action owns its own button + confirm/working/success/

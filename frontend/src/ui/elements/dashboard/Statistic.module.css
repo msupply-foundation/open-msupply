@@ -4,17 +4,19 @@
 .stat {
   display: flex;
   flex-direction: column;
+  /* Gap here is only between the value/label row and the alert chip below it;
+     the spacing between stats is 0 (the panel stacks them flush). */
   gap: var(--space-1);
-  padding-block: var(--space-2);
-  border-radius: var(--radius-sm);
   color: var(--text-body);
   text-decoration: none;
 }
 
+/* The label sits vertically centred against the big value (current app), not on
+   its baseline — so a short label reads level with the middle of the number. */
 .main {
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
 }
 
