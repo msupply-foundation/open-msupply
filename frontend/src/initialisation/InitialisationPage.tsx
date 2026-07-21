@@ -10,6 +10,7 @@ import {
   type SyncStatusFragment,
 } from '../api/initialisation.generated';
 import { subscribe } from '../api/subscription';
+import { isCentralServer } from '../api/serverInfo';
 import { toSyncOverview, type SyncOverview } from './syncStatus';
 import { SyncProgress } from './SyncProgress';
 import { TextField } from '../ui/elements/inputs/TextField';
@@ -46,7 +47,7 @@ export const InitialisationPage: Component<{
   onCleanup(() => disposeWatch?.());
 
   const handleStatus = (status: SyncStatusFragment | null | undefined) => {
-    const next = toSyncOverview(status);
+    const next = toSyncOverview(status, isCentralServer());
     if (!next) return;
     setOverview(next);
     if (next.errorMessage != null) {

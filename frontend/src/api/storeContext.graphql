@@ -4,6 +4,10 @@ query storeContext($storeId: String!) {
   storePreferences(storeId: $storeId) {
     id
     packToOne
+    # Inbound-shipment gates (spec/inbound-shipments › store-preference gates):
+    # foreign-currency issuing and manual internal-order linking.
+    issueInForeignCurrency
+    manuallyLinkInternalOrderToInboundShipment
     omProgramModule
     vaccineModule
     # Threshold defaults the reports argument form seeds (spec/reports/rules
@@ -30,8 +34,13 @@ query storeContext($storeId: String!) {
     # manageVvmStatusForStock is on; the adjust date control (S4) is gated on
     # backdating.inventoryAdjustmentsEnabled and bounded by maxDays.
     sortByVvmStatusThenExpiry
+    # Inbound-shipment gates (spec/inbound-shipments): procurement (from-PO
+    # creation option), authorisation lock, and the backdating window.
+    useProcurementFunctionality
+    externalInboundShipmentLinesMustBeAuthorised
     backdating {
       inventoryAdjustmentsEnabled
+      shipmentsEnabled
       maxDays
     }
   }
