@@ -180,6 +180,13 @@
   /* --- Inputs (company design spec) ----------------------------------- */
   --input-height: 2.5rem; /* 40px default */
   --input-height-sm: 2.25rem; /* 36px small */
+  /* Font size on touch — an ABSOLUTE 16px, the one input exception to the
+     rem-only rule (px, not rem). iOS Safari zooms the page on focus when a
+     field's font is under 16px, and that threshold is absolute, so this must
+     hold even below 600px where index.css shrinks the root to 85%. Applied to
+     default-size fields on coarse pointers (ui-standards #field-touch-sizing);
+     the small variant stays dense. */
+  --input-font-touch: 16px;
   --input-padding-x: 0.75rem; /* 12px horizontal */
   --input-radius: 0.375rem; /* 6px */
   --input-max-compact: 10rem; /* 160px — numbers/money (NumberField default) */

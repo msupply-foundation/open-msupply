@@ -125,5 +125,6 @@ Carl's read: mostly already matches. **Done:** the focus ring is now **blue** (a
 **Open (awaiting Carl's decision):**
 
 - **Hover border** — spec darkens the border to `#a1a1aa` on hover; our inputs have no hover state.
-- **Touch sizing** — ours uses `pointer: coarse` + 48px height only; spec uses `≤1023px` width + raises font to 16px (prevents iOS Safari zoom-on-focus).
 - Minor: focus-glow alpha 0.25 (ours) vs 0.15 (spec).
+
+**Resolved 2026-07-22 (Carl) — touch font bump (iOS zoom):** default-size text inputs raise their font to **16px on `pointer: coarse`** so iOS Safari doesn't zoom-on-focus. The value is a token, **`--input-font-touch: 16px`** — an ABSOLUTE px (the one input exception to the rem-only rule), because the iOS threshold is absolute and must hold below 600px where the root shrinks to 85%; rationale lives on the token. Applied to TextField, TextArea, Combobox, MultiSelect; the **small** variant is excluded (stays dense, per spec) — verified 16px default / 14px small on a coarse context. Height already bumps to 48px (pre-existing). **Not done:** DateTimeFields (segmented — its parts set their own font; needs a targeted follow-up) and FilterBar search (a dense toolbar field the spec exempts) — both flagged.

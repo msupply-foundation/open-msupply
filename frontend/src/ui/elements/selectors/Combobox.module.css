@@ -203,6 +203,11 @@
     min-height: var(--touch-target);
   }
 
+  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). */
+  .input {
+    font-size: var(--input-font-touch);
+  }
+
   .item {
     min-height: var(--touch-target);
   }

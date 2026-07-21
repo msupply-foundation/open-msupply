@@ -213,6 +213,12 @@
     min-height: var(--touch-target);
   }
 
+  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus).
+     Default size only; the small variant stays dense (ui-standards). */
+  .input:not([data-size='small']) {
+    font-size: var(--input-font-touch);
+  }
+
   .inputWrap[data-adorned] .input {
     min-height: 0;
   }
