@@ -78680,5 +78680,6 @@
  ],
  "users": [],
  "site_id": 900,
- "central_site_id": 6
+ "central_site_id": 6,
+ "sync_version": "V7"
 }
