@@ -128,6 +128,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     setWarnings([]);
     setIssueText('');
     setDirty(false);
+    setZeroConfirm(false);
     const result = await graphqlFetch(DraftStockOutLines, {
       storeId: props.storeId,
       itemId: picked.id,
@@ -216,6 +217,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       notes.push(t('outbound.edit.warn-on-hold'));
     setWarnings(notes);
     setDirty(true);
+    // The allocation just changed — any earlier zero-allocation confirmation
+    // no longer applies (spec S4 § save; it must be re-earned against the
+    // current quantity, e.g. after raising it back above zero).
+    setZeroConfirm(false);
   };
 
   const onIssueInput = (value: string) => {
@@ -235,6 +240,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     const bounded = Math.max(0, Math.min(value ?? 0, line.availablePacks));
     setDraft(index, 'numberOfPacks', bounded);
     setDirty(true);
+    // As in distribute() — a direct per-batch edit also invalidates a stale
+    // zero-allocation confirmation.
+    setZeroConfirm(false);
   };
 
   const save = async (): Promise<boolean> => {
