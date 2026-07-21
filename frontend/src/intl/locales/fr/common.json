@@ -2872,7 +2872,7 @@
   "outbound.lines.delete-confirm_other": "Cela supprimera définitivement {{ count }} lignes de cette transaction",
   "outbound.lines.delete-title": "Continuer ?",
   "outbound.lines.return": "Retourner les lignes sélectionnées",
-  "outbound.lines.return-blocked": "Impossible de traiter un retour tant que le statut n'est pas \"Expédié(e)\"",
+  "outbound.lines.return-blocked": "Le flux de retour client n'est pas encore disponible.",
   "outbound.lines.selected_one": "{{ count }} article sélectionné",
   "outbound.lines.selected_other": "{{ count }} articles sélectionnés",
   "outbound.log.datetime": "Date heure",

@@ -1771,7 +1771,7 @@
   "outbound.lines.delete-confirm_other": "سيؤدي ذلك إلى إزالة {{ count }} أسطر من هذه الفاتورة بشكل دائم",
   "outbound.lines.delete-title": "هل أنت متأكد؟",
   "outbound.lines.return": "إرجاع البنود المحددة",
-  "outbound.lines.return-blocked": "لا يمكن معالجة إرجاع الخطوط حتى يتم تعيين الحالة إلى ”تم التسليم\"",
+  "outbound.lines.return-blocked": "تدفق إرجاع العميل غير متوفر بعد.",
   "outbound.lines.selected_one": "{{ count }} عنصر مختار",
   "outbound.lines.selected_other": "{{ count }} عناصر مختارة",
   "outbound.log.datetime": "وقت تاريخ",

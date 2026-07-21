@@ -156,7 +156,10 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
       </SidePanelSection>
 
       {/* 2 — Related documents: the originating customer requisition. */}
-      <SidePanelSection title={t('outbound.panel.related-documents')} collapsible>
+      <SidePanelSection
+        title={t('outbound.panel.related-documents')}
+        collapsible
+      >
         <Show
           when={requisition()}
           fallback={
@@ -291,7 +294,8 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
         {/* Foreign currency — always shown (rules.md § pricing): code · rate
             (a zero rate displays as 1) · total (dash until a real foreign
             currency is set). The change-currency control is deferred with the
-            FC preference (impl gap recorded in the spec). */}
+            FC preference — the dev store has it off, so it isn't built/
+            verifiable yet (ui-surface § side panel notes this gap). */}
         <FieldRow label={t('outbound.panel.foreign-currency')}>
           <span />
         </FieldRow>
@@ -316,7 +320,10 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
 
       {/* 4 — Transport details: shipping method · expected delivery ·
           transport reference. */}
-      <SidePanelSection title={t('outbound.panel.transport-details')} collapsible>
+      <SidePanelSection
+        title={t('outbound.panel.transport-details')}
+        collapsible
+      >
         <FieldRow label={t('outbound.panel.shipping-method')}>
           <ShippingMethodSelect
             label={t('outbound.panel.shipping-method')}

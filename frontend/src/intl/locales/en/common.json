@@ -2892,7 +2892,7 @@
   "outbound.lines.delete-confirm_other": "This will permanently remove {{ count }} lines from this invoice",
   "outbound.lines.delete-title": "Are you sure?",
   "outbound.lines.return": "Return selected lines",
-  "outbound.lines.return-blocked": "Cannot process return of lines until the status is 'Shipped'",
+  "outbound.lines.return-blocked": "The customer-return flow is not yet available.",
   "outbound.lines.selected_one": "{{ count }} item selected",
   "outbound.lines.selected_other": "{{ count }} items selected",
   "outbound.log.datetime": "Date time",
