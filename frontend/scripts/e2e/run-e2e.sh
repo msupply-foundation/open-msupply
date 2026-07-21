@@ -16,10 +16,9 @@
 # by e2e/specs/data.setup.ts through the API.
 #
 # The open-msupply checkout (server + reference datafile only — the
-# suites live here) must be on the `fe-auth-contract` branch — the same
-# branch this front end needs generally: the cookie-session auth contract
-# plus the e2e datafile + CLI support. (Once fe-auth-contract lands in
-# develop, `develop` works too.)
+# suites live here) must be on `develop` — the same branch this front end
+# needs generally: the cookie-session auth contract plus the e2e datafile
+# + CLI support.
 #
 # Knobs (all optional):
 #   OMS_DIR           open-msupply checkout (default: ../open-msupply)
@@ -36,9 +35,9 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 FE_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
 OMS_DIR=${OMS_DIR:-$FE_DIR/../open-msupply}
 if [[ ! -d "$OMS_DIR/server/data/e2e" ]]; then
-  echo "OMS_DIR ($OMS_DIR) is not an open-msupply checkout on the fe-auth-contract branch" >&2
-  echo "  git clone https://github.com/msupply-foundation/open-msupply --branch fe-auth-contract" >&2
-  echo "  (or: git -C <checkout> switch fe-auth-contract) — then set OMS_DIR if it isn't ../open-msupply" >&2
+  echo "OMS_DIR ($OMS_DIR) is not an open-msupply checkout on the develop branch" >&2
+  echo "  git clone https://github.com/msupply-foundation/open-msupply --branch develop" >&2
+  echo "  (or: git -C <checkout> switch develop) — then set OMS_DIR if it isn't ../open-msupply" >&2
   exit 1
 fi
 OMS_DIR=$(cd "$OMS_DIR" && pwd)
