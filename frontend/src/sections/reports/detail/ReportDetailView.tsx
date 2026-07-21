@@ -35,6 +35,8 @@ import {
   printHtml,
 } from '../../../domain/reportFiles';
 import { ArgumentsModal } from '../../../domain/json-forms/ArgumentsModal';
+import { seedDefaults } from '../../../domain/json-forms/schema';
+import { storeContext } from '../../../store/storeContext';
 
 // S2 — the single-report detail (spec/reports S2, AC-U1–U3, AC-R1, AC-G1/G4).
 // Fetches the report (name + argument schema), then generates its HTML and
@@ -120,7 +122,12 @@ const ReportDetailView: Component = () => {
     if (!r) return undefined;
     const args = reportArgs();
     if (r.argumentSchema && args === undefined) return undefined;
-    return { reportId: r.id, args, language: locale() };
+    // A schema-less report generates immediately, but still with the standard
+    // client seed (preference values + timezone) — shipped templates read
+    // `arguments.timezone` unconditionally (AC-R11).
+    const seeded =
+      args ?? seedDefaults([], storeContext()?.storePreferences ?? {});
+    return { reportId: r.id, args: seeded, language: locale() };
   });
 
   // Regenerates whenever the serialised request changes (new report, new
@@ -210,7 +217,9 @@ const ReportDetailView: Component = () => {
     const gen = await generateReport({
       reportId: r.id,
       format: 'EXCEL',
-      args: reportArgs(),
+      args:
+        reportArgs() ??
+        seedDefaults([], storeContext()?.storePreferences ?? {}),
     });
     if (gen.kind !== 'fileId') {
       setActionError('error.failed-to-generate-report');

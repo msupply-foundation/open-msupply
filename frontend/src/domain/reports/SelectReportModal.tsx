@@ -13,9 +13,15 @@ import {
   type GenerateResult,
 } from '../reportFiles';
 import { ArgumentsModal } from '../json-forms/ArgumentsModal';
+import { seedDefaults } from '../json-forms/schema';
+import { storeContext } from '../../store/storeContext';
 import { listReportsByContext, type Report } from './reportsResource';
 import type { ReportContext } from './reportsResource';
-import { generateReport, type PrintFormat, type ReportSort } from './generateReport';
+import {
+  generateReport,
+  type PrintFormat,
+  type ReportSort,
+} from './generateReport';
 import { reportLabel } from './reportLabel';
 
 // S4 — the record-screen report selector (spec/reports S4). The reports
@@ -103,11 +109,16 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     const report = selected();
     if (!report) return;
     setPhase('generating');
+    // The standard client seed (preference values + timezone) travels even
+    // when the report has no argument form — shipped templates read at least
+    // `arguments.timezone` unconditionally (spec/reports AC-R11). Form args,
+    // when present, already contain the seed and win on key collision.
+    const seed = seedDefaults([], storeContext()?.storePreferences ?? {});
     const result = await generateReport({
       reportId: report.id,
       dataId: props.dataId,
       format,
-      args,
+      args: { ...seed, ...args },
       sort: props.sort,
     });
     await deliver(result, format);
@@ -175,10 +186,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
           </>
         }
       >
-        <Show
-          when={!reports.loading}
-          fallback={<Spinner center />}
-        >
+        <Show when={!reports.loading} fallback={<Spinner center />}>
           <Show
             when={options().length > 0}
             fallback={<div>{t('error.no-forms-available')}</div>}
@@ -195,7 +203,9 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
             />
           </Show>
           <Show when={phase() === 'error'}>
-            <Alert severity="error">{t('messages.error-printing-report')}</Alert>
+            <Alert severity="error">
+              {t('messages.error-printing-report')}
+            </Alert>
           </Show>
           <Show when={busy()}>
             <Spinner center />

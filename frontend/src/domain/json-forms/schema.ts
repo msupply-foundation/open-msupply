@@ -88,8 +88,9 @@ export type ParsedField =
       readOnly: boolean;
       required: boolean;
       /**
-       * True for `format: 'date-time'` — rendered as date-only until the
-       * date-time input role exists (spec/reports AC-R5 degradation).
+       * True for `format: 'date-time'` — rendered as the date & time input;
+       * the stored/submitted value is a UTC RFC3339 instant (AC-R5), unlike
+       * plain dates ('YYYY-MM-DD').
        */
       dateTime: boolean;
     }

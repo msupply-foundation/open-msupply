@@ -18,6 +18,7 @@ import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { Select } from '../../ui/elements/selectors/Select';
 import { RadioGroup } from '../../ui/elements/inputs/RadioGroup';
 import { DateField } from '../../ui/elements/inputs/DateField';
+import { DateTimeField } from '../../ui/elements/inputs/DateTimeField';
 import { DateRangeField } from '../../ui/elements/inputs/DateRangeField';
 import { MasterListSelect } from '../masterList/MasterListSelect';
 import { LocationSelect } from '../location/LocationSelect';
@@ -243,7 +244,12 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                   />
                 )}
               </Match>
-              <Match when={field.kind === 'date' ? field : undefined} keyed>
+              <Match
+                when={
+                  field.kind === 'date' && !field.dateTime ? field : undefined
+                }
+                keyed
+              >
                 {dateField => (
                   <DateField
                     label={dateField.label}
@@ -252,6 +258,30 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     required={dateField.required}
                     error={requiredError(dateField)}
                     onChange={value => setValues(dateField.key, value ?? '')}
+                  />
+                )}
+              </Match>
+              <Match
+                when={
+                  field.kind === 'date' && field.dateTime ? field : undefined
+                }
+                keyed
+              >
+                {/* format: 'date-time' — the value is a UTC RFC3339 instant
+                    (AC-R5): the field owns the local-wall-clock⇄UTC boundary,
+                    and the instant passes to the data query's DateTime
+                    variables verbatim (a bare calendar date would fail their
+                    parsing — spec/reports rules "Arguments"). */}
+                {dateTimeField => (
+                  <DateTimeField
+                    label={dateTimeField.label}
+                    value={textValue(dateTimeField.key) || null}
+                    disabled={dateTimeField.readOnly}
+                    required={dateTimeField.required}
+                    error={requiredError(dateTimeField)}
+                    onChange={value =>
+                      setValues(dateTimeField.key, value ?? '')
+                    }
                   />
                 )}
               </Match>
