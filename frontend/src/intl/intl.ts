@@ -23,10 +23,40 @@ const [dictionaries, setDictionaries] = createSignal<
 // (tests).
 const activeDict = (): FlatDict => dictionaries()[locale()] ?? {};
 
-// The primitive: a reactive translator with {{ token }} interpolation. It reads
-// activeDict (which reads the signals), so every t() call site updates on
-// locale change or when a dictionary loads.
-const translate = i18n.translator(activeDict, i18n.resolveTemplate);
+// Matches i18next-style nested references — `$t(some.key)` — that some source
+// strings use to embed one translation inside another (e.g. "Confirm status as
+// $t(status.finalised)?"). @solid-primitives/i18n's resolveTemplate only knows
+// `{{ tokens }}`, so without this the raw `$t(...)` leaked to the UI (#359).
+const NESTED_REF = /\$t\(\s*([\w.-]+)\s*\)/g;
+
+/**
+ * Resolve i18next-style `$t(key)` nested references against the active
+ * dictionary, recursively (a referenced string may itself contain `$t(...)` —
+ * e.g. description.doses-quantity), with a depth cap so a self/cyclic reference
+ * can't loop forever. An unknown key is left as-is so a missing translation is
+ * still visible rather than silently blanked.
+ */
+const resolveNested = (input: string, depth = 0): string => {
+  if (depth >= 5 || !input.includes('$t(')) return input;
+  const dict = activeDict();
+  return input.replace(NESTED_REF, (raw, key: string) => {
+    const value = dict[key as LocaleKey];
+    return value === undefined ? raw : resolveNested(value, depth + 1);
+  });
+};
+
+// Our template resolver: run the primitive's `{{ token }}` interpolation first
+// (so `$t({{status}})` becomes `$t(status.finalised)`), then resolve any
+// `$t(...)` nested references. Kept as one resolver passed to the translator so
+// every t()/tPlural() call gets both behaviours.
+const resolveTemplate: typeof i18n.resolveTemplate = (template, ...args) =>
+  resolveNested(i18n.resolveTemplate(template, ...args));
+
+// The primitive: a reactive translator with {{ token }} interpolation plus
+// $t(...) nesting (resolveTemplate above). It reads activeDict (which reads the
+// signals), so every t() call site updates on locale change or when a
+// dictionary loads.
+const translate = i18n.translator(activeDict, resolveTemplate);
 
 /**
  * Translate a key, interpolating {{ tokens }}. Falls back to the key itself.
@@ -52,7 +82,7 @@ export const tPlural = (
   const resolved =
     translate(pluralKey) ?? translate(`${key}_other` as LocaleKey);
   if (resolved === undefined) return key;
-  return i18n.resolveTemplate(resolved, { count, ...vars });
+  return resolveTemplate(resolved, { count, ...vars });
 };
 
 export { locale, setLocale, dictionaries, setDictionaries };
