@@ -4,8 +4,9 @@
  * carries colour), keyed off `data-variant`:
  *  - card (default): a small, muted label above the value (card / detail panel
  *    / utility row).
- *  - field: the label matches an editable input's label (--text-sm, medium,
- *    --text-body) with the input's label→control gap, so a read-only value sits
+ *  - field: the label matches an editable input's label exactly (TextField
+ *    .label — --text-sm, medium, --text-body, line-height 1) with the same
+ *    label→control gap token (--input-field-gap), so a read-only value sits
  *    flush beside editable fields in a form (kdd/form-layout).
  * min-inline-size lets a row of these wrap intrinsically without any field
  * collapsing to nothing.
@@ -18,7 +19,7 @@
 }
 
 .field[data-variant='field'] {
-  gap: var(--space-2);
+  gap: var(--input-field-gap);
 }
 
 .label {
@@ -28,10 +29,11 @@
   color: var(--text-secondary);
 }
 
-/* Matches the input label (TextField .label): a read-only field reads as a
-   field, just without a control box. */
+/* Matches the input label (TextField .label) exactly — size, line-height and
+   colour — so a read-only field reads as a field, just without a control box. */
 .field[data-variant='field'] .label {
   font-size: var(--text-sm);
+  line-height: 1;
   color: var(--text-body);
 }
 
