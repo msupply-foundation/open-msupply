@@ -54,8 +54,9 @@ export const createSyncIndicator = (): {
       now()
     );
     if (!model) return undefined;
-    if (model.kind === 'alert')
-      return { kind: 'alert', title: t('sync.indicator.alert') };
+    // The error glyph is a bare marker (as the current app); it reuses the
+    // entry's own "Sync" label rather than a dedicated accessible string.
+    if (model.kind === 'alert') return { kind: 'alert', title: t('sync') };
     // Counts above 99 display as "99+"; the hover/accessible text keeps the
     // exact count (spec DIVERGENCES D9).
     return {
