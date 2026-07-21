@@ -1,0 +1,485 @@
+# Inbound-shipment DETAIL (spec/inbound-shipments S3–S6). Mirrors the stocktake
+# detail split: one `info` query (header/footer/side-panel/charges — a single
+# node) and one server-paginated `lines` query. Header saves mutate `info` in
+# place; a line change refetches the lines page. Fragments are per-file
+# (codegen generates each .graphql in isolation) so they live here.
+#
+# donor/manufacturer/defaultDonor take a storeId arg — the fragments reference
+# the operation's $storeId variable, so every operation spreading them supplies
+# it.
+
+fragment InboundInfo on InvoiceNode {
+  __typename
+  id
+  invoiceNumber
+  otherPartyId
+  otherPartyName
+  status
+  onHold
+  inboundType
+  comment
+  theirReference
+  transportReference
+  colour
+  createdDatetime
+  shippedDatetime
+  deliveredDatetime
+  receivedDatetime
+  verifiedDatetime
+  backdatedDatetime
+  expectedDeliveryDate
+  taxPercentage
+  currencyRate
+  chargesLocalCurrency
+  chargesForeignCurrency
+  purchaseOrderId
+  linkedShipment {
+    id
+  }
+  user {
+    username
+  }
+  currency {
+    id
+    code
+    isHomeCurrency
+  }
+  defaultDonor(storeId: $storeId) {
+    id
+    name
+  }
+  requisition {
+    id
+    requisitionNumber
+  }
+  purchaseOrder {
+    id
+    number
+    reference
+  }
+  documents {
+    nodes {
+      id
+      fileName
+      createdDatetime
+    }
+  }
+  shippingMethod {
+    id
+    method
+  }
+  pricing {
+    totalBeforeTax
+    totalAfterTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalBeforeTax
+    serviceTotalAfterTax
+    foreignCurrencyTotalAfterTax
+    taxPercentage
+  }
+}
+
+fragment InboundLine on InvoiceLineNode {
+  id
+  type
+  itemId
+  itemName
+  itemCode
+  batch
+  expiryDate
+  manufactureDate
+  packSize
+  numberOfPacks
+  shippedNumberOfPacks
+  shippedPackSize
+  costPricePerPack
+  sellPricePerPack
+  foreignCurrencyPriceBeforeTax
+  totalBeforeTax
+  totalAfterTax
+  taxPercentage
+  note
+  volumePerPack
+  status
+  linkedInvoiceId
+  locationId
+  location {
+    id
+    code
+    name
+  }
+  vvmStatusId
+  vvmStatus {
+    id
+    code
+    description
+  }
+  stockLine {
+    id
+    availableNumberOfPacks
+    totalNumberOfPacks
+  }
+  item {
+    id
+    code
+    name
+    unitName
+    isVaccine
+    doses
+    defaultPackSize
+  }
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+  manufacturer(storeId: $storeId) {
+    id
+    name
+  }
+  reasonOption {
+    id
+    reason
+  }
+  campaign {
+    id
+    name
+  }
+  program {
+    id
+    name
+  }
+  itemVariant {
+    id
+    name
+  }
+  purchaseOrderLine {
+    id
+    lineNumber
+    requestedPackSize
+    requestedNumberOfUnits
+    shippedNumberOfUnits
+    inTransitNumberOfUnits
+    receivedNumberOfUnits
+  }
+}
+
+# Header/side-panel/footer fields — one node. No `type` arg on the fetch so a
+# plain OR external (PO-linked) inbound resolves by id (contract → list
+# filtering: single fetch is a discriminated InvoiceResponse).
+query inboundShipment($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id) {
+    __typename
+    ... on InvoiceNode {
+      ...InboundInfo
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Deep-link by human number (spec AC-L5).
+query inboundShipmentByNumber($storeId: String!, $invoiceNumber: Int!) {
+  invoiceByNumber(
+    storeId: $storeId
+    invoiceNumber: $invoiceNumber
+    type: INBOUND_SHIPMENT
+  ) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# One server-paginated page of the shipment's STOCK_IN lines (the detail table).
+query inboundShipmentLines(
+  $storeId: String!
+  $filter: InvoiceLineFilterInput
+  $sort: [InvoiceLineSortInput!]
+  $page: PaginationInput
+) {
+  invoiceLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...InboundLine
+      }
+    }
+  }
+}
+
+# The store's SERVICE items — for the service-charge modal's Add charge (spec
+# S6; disabled when none exist). First visible service item is the default.
+query serviceItems($storeId: String!) {
+  items(
+    storeId: $storeId
+    filter: { type: { equalTo: SERVICE }, isVisible: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}
+
+# Service lines (SERVICE type) for the service-charge modal (S6). Few per
+# shipment — fetched unpaginated.
+query inboundServiceLines($storeId: String!, $filter: InvoiceLineFilterInput) {
+  invoiceLines(storeId: $storeId, filter: $filter) {
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        itemId
+        itemName
+        totalBeforeTax
+        totalAfterTax
+        taxPercentage
+        note
+      }
+    }
+  }
+}
+
+# Header edits (supplier, reference, comment, colour, hold, tax, currency,
+# charges, default donor, received date, status). Returns the whole node so the
+# view can splice it in place (tax/charge/currency cascades reflect on refetch
+# of the lines page).
+mutation updateInboundShipment(
+  $storeId: String!
+  $input: UpdateInboundShipmentInput!
+) {
+  updateInboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      ...InboundInfo
+    }
+    ... on UpdateInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# `...External` twin — required whenever the shipment has a purchaseOrderId
+# (contract → creation wire trap: the type check gates every twinned mutation).
+mutation updateInboundShipmentExternal(
+  $storeId: String!
+  $input: UpdateInboundShipmentInput!
+) {
+  updateInboundShipmentExternal(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      ...InboundInfo
+    }
+    ... on UpdateInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Line + service-line CRUD, batched (spec → batch operation). All-or-nothing by
+# default. External twin for PO-linked shipments.
+mutation batchInboundShipment(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipment(storeId: $storeId, input: $input) {
+    ...BatchResult
+  }
+}
+
+mutation batchInboundShipmentExternal(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipmentExternal(storeId: $storeId, input: $input) {
+    ...BatchResult
+  }
+}
+
+fragment BatchResult on BatchInboundShipmentResponse {
+  insertInboundShipmentLines {
+    id
+    response {
+      __typename
+      ... on InvoiceLineNode {
+        id
+        stockLine {
+          id
+          totalNumberOfPacks
+        }
+      }
+      ... on InsertInboundShipmentLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  updateInboundShipmentLines {
+    id
+    response {
+      __typename
+      ... on InvoiceLineNode {
+        id
+      }
+      ... on UpdateInboundShipmentLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  deleteInboundShipmentLines {
+    id
+    response {
+      __typename
+      ... on DeleteResponse {
+        id
+      }
+      ... on DeleteInboundShipmentLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  insertFromInternalOrderLines {
+    id
+    response {
+      __typename
+      ... on InvoiceLineNode {
+        id
+      }
+    }
+  }
+  insertInboundShipmentServiceLines {
+    id
+    response {
+      __typename
+      ... on InvoiceLineNode {
+        id
+      }
+      ... on InsertInboundShipmentServiceLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  updateInboundShipmentServiceLines {
+    id
+    response {
+      __typename
+      ... on InvoiceLineNode {
+        id
+      }
+      ... on UpdateInboundShipmentServiceLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  deleteInboundShipmentServiceLines {
+    id
+    response {
+      __typename
+      ... on DeleteResponse {
+        id
+      }
+      ... on DeleteInboundShipmentServiceLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+# Bulk-add empty stock lines from a master list (spec AC-ML1; internal
+# shipments only — server-enforced).
+mutation addToInboundShipmentFromMasterList(
+  $storeId: String!
+  $input: AddToShipmentFromMasterListInput!
+) {
+  addToInboundShipmentFromMasterList(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceLineConnector {
+      totalCount
+    }
+    ... on AddToInboundShipmentFromMasterListError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Delete a whole shipment (side panel; cascades to lines + stock). Uses the
+# plain vs external twin per purchaseOrderId.
+mutation deleteInboundShipment(
+  $storeId: String!
+  $input: DeleteInboundShipmentInput!
+) {
+  deleteInboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeleteInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+mutation deleteInboundShipmentExternal(
+  $storeId: String!
+  $input: DeleteInboundShipmentInput!
+) {
+  deleteInboundShipmentExternal(storeId: $storeId, input: $input) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeleteInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

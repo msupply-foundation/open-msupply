@@ -1,0 +1,82 @@
+# Inbound-shipment LIST screen (spec/inbound-shipments S1) + list bulk delete.
+# `invoices` is filtered to the inbound-shipment types (plain + external/PO)
+# and the store scope is forced server-side (contract → list filtering).
+
+fragment InboundRow on InvoiceNode {
+  id
+  invoiceNumber
+  otherPartyName
+  otherPartyId
+  status
+  onHold
+  inboundType
+  colour
+  comment
+  theirReference
+  createdDatetime
+  deliveredDatetime
+  purchaseOrderId
+  requisition {
+    id
+    requisitionNumber
+  }
+  purchaseOrder {
+    id
+    number
+  }
+  pricing {
+    totalAfterTax
+  }
+}
+
+query inboundShipments(
+  $storeId: String!
+  $page: PaginationInput
+  $filter: InvoiceFilterInput
+  $sort: [InvoiceSortInput!]
+) {
+  invoices(
+    storeId: $storeId
+    page: $page
+    filter: $filter
+    sort: $sort
+    type: [INBOUND_SHIPMENT, INBOUND_SHIPMENT_EXTERNAL]
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      totalCount
+      nodes {
+        ...InboundRow
+      }
+    }
+  }
+}
+
+# Bulk delete from the list (spec AC-L3). One batch, all-or-nothing by default
+# (spec AC-BA1). Per-id typed error surfaces on DeleteInboundShipmentError.
+mutation deleteInboundShipments(
+  $storeId: String!
+  $ids: [DeleteInboundShipmentInput!]!
+) {
+  batchInboundShipment(
+    storeId: $storeId
+    input: { deleteInboundShipments: $ids }
+  ) {
+    deleteInboundShipments {
+      id
+      response {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteInboundShipmentError {
+          __typename
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}

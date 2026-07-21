@@ -19,6 +19,7 @@ import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
 import { stocktakesRoutes } from './sections/stocktakes';
+import { inboundShipmentsRoutes } from './sections/inbound-shipments';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { helpRoutes } from './sections/help';
@@ -38,6 +39,7 @@ type Phase = 'loading' | 'initialisation' | 'operational';
 // lazy. Every other destination falls back to EntryPage.
 const sectionRoutes: Record<string, () => JSX.Element> = {
   'inventory/stocktakes': stocktakesRoutes,
+  'replenishment/inbound-shipment': inboundShipmentsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,
