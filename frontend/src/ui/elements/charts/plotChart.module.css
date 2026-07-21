@@ -1,0 +1,130 @@
+/* Shared styling for the hand-rolled SVG plots (Consumption History, Stock
+   evolution). We own the SVG markup; every colour resolves to a theme token
+   so the charts track light/dark. */
+
+.chartBlock {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Positioning context for the (HTML) tooltip that overlays the SVG. */
+.plotWrap {
+  position: relative;
+  line-height: 0;
+}
+
+.chart {
+  display: block;
+  overflow: visible;
+}
+
+.empty {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* --- Series --- */
+.historic {
+  fill: var(--gray-light);
+}
+
+.current,
+.past {
+  fill: var(--gray-main);
+}
+
+.projected {
+  fill: color-mix(in srgb, var(--primary-main) 45%, transparent);
+}
+
+.movingAvg {
+  stroke: var(--secondary-main);
+  stroke-width: 2px;
+  fill: none;
+}
+
+.maxLine {
+  stroke: var(--success-main);
+  stroke-width: 2px;
+  stroke-dasharray: 4;
+  fill: none;
+}
+
+.minLine {
+  stroke: var(--error-main);
+  stroke-width: 2px;
+  stroke-dasharray: 4;
+  fill: none;
+}
+
+/* --- Axis chrome --- */
+.grid {
+  stroke: var(--color-border-value);
+  stroke-width: 1px;
+}
+
+.axisLabel {
+  fill: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.cursor {
+  stroke: var(--gray-main);
+  stroke-width: 1px;
+  stroke-dasharray: 3;
+}
+
+/* Transparent per-band hit target for hover — a paint (not `none`) so it
+   still captures pointer events. */
+.hover {
+  fill: transparent;
+}
+
+/* --- Tooltip (an HTML div overlaying the chart) --- */
+.tooltip {
+  position: absolute;
+  transform: translateX(-50%);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-white);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-2);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--text-body);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tooltipHead {
+  margin-bottom: var(--space-1);
+  font-weight: var(--weight-bold);
+}
+
+/* --- Legend swatch colours (paired with ChartLegend's mark shapes) --- */
+.swatchHistoric {
+  background: var(--gray-light);
+}
+
+.swatchCurrent,
+.swatchPast {
+  background: var(--gray-main);
+}
+
+.swatchProjected {
+  background: color-mix(in srgb, var(--primary-main) 45%, transparent);
+}
+
+.swatchMovingAvg {
+  border-block-start-color: var(--secondary-main);
+}
+
+.swatchMax {
+  border-block-start-color: var(--success-main);
+}
+
+.swatchMin {
+  border-block-start-color: var(--error-main);
+}
