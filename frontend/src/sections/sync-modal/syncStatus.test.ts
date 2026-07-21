@@ -30,6 +30,7 @@ const v7 = (overrides: Partial<V7> = {}): SyncStatusFragment => ({
   pull: null,
   integration: null,
   lastSuccessfulSync: null,
+  linkedDescriptions: [],
   ...overrides,
 });
 
@@ -234,6 +235,36 @@ describe('toSyncOverview — phase list with progress (AC-S2)', () => {
       MODAL
     )?.steps;
     expect(idle?.every(s => s.finished)).toBe(true);
+  });
+});
+
+describe('toSyncOverview — backfill "Special syncs" descriptions (AC-S6)', () => {
+  it('surfaces V7 linkedDescriptions in order, mapping each kind', () => {
+    const ov = toSyncOverview(
+      v7({
+        linkedDescriptions: [
+          {
+            __typename: 'AllStoreDataDescription',
+            storeName: 'Central Warehouse',
+          },
+          { __typename: 'TableNameDescription', tableName: 'item' },
+        ],
+      }),
+      MODAL
+    );
+    expect(ov?.backfills).toEqual([
+      { kind: 'all-store-data', storeName: 'Central Warehouse' },
+      { kind: 'table-name', tableName: 'item' },
+    ]);
+  });
+
+  it('is empty for an ordinary V7 run', () => {
+    expect(toSyncOverview(v7(), MODAL)?.backfills).toEqual([]);
+  });
+
+  it('is always empty on the legacy generation (V7 only)', () => {
+    expect(toSyncOverview(v5v6(), MODAL)?.backfills).toEqual([]);
+    expect(toSyncOverview(v5v6(), INIT)?.backfills).toEqual([]);
   });
 });
 

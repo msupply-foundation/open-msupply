@@ -41,6 +41,15 @@ export type SyncStep = {
 
 export type SyncError = { variant: SyncErrorVariant; fullError: string };
 
+// A backfill description a run can be linked to — a central-initiated re-send
+// of a store transfer's data or a whole table (spec/sync-modal/rules.md §
+// backfill). The modal lists these under "Special syncs"; ordinary runs carry
+// none. V7 only (the wire's `linkedDescriptions`); the label is resolved with
+// its interpolation at render, so a language switch re-translates it.
+export type SyncBackfill =
+  | { kind: 'all-store-data'; storeName: string }
+  | { kind: 'table-name'; tableName: string };
+
 // The two client-side axes of the phase-visibility matrix; the generation axis
 // is the status union branch.
 export type SyncSurfaceContext = {
@@ -64,6 +73,9 @@ export type SyncOverview = {
   // The most recent successful run, tracked independently of the latest run
   // (spec/sync-modal/rules.md: a failed run never erases it).
   lastSuccessful: { started: string; finished: string } | undefined;
+  // Backfill descriptions for the "Special syncs" list — empty for an ordinary
+  // run, and always empty on the legacy generation (V7 only).
+  backfills: SyncBackfill[];
 };
 
 type ProgressPart =
@@ -105,6 +117,7 @@ export const toSyncOverview = (
 
   let steps: SyncStep[];
   let error: SyncError | undefined;
+  let backfills: SyncBackfill[] = [];
 
   if (status.__typename === 'FullSyncStatusV7Node') {
     steps = [
@@ -128,6 +141,11 @@ export const toSyncOverview = (
             variant: status.error.variantV7,
             fullError: status.error.fullError,
           };
+    backfills = status.linkedDescriptions.map(d =>
+      d.__typename === 'AllStoreDataDescription'
+        ? { kind: 'all-store-data', storeName: d.storeName }
+        : { kind: 'table-name', tableName: d.tableName }
+    );
   } else {
     steps = [
       ...(!operational
@@ -164,6 +182,7 @@ export const toSyncOverview = (
     warningThresholdDays: status.warningThreshold,
     errorThresholdDays: status.errorThreshold,
     lastSuccessful,
+    backfills,
   };
 };
 
@@ -225,13 +244,33 @@ export const durationUnits = (parts: {
 // the run's first status frame — a STALE pre-run tick carries the SAME
 // signature and must not release it — until the run ends. A run has ended once
 // a NOT-syncing status arrives whose signature differs from the one captured at
-// the click: a new run always carries new phase timestamps, so this releases
-// even when the run errors before any in-progress frame is observed, and even
-// when a retry re-fails with an identical error. Keyed on the run status only —
-// the push-queue count is a separate signal and cannot release it.
+// the click: a new run always carries a fresh `summary.started`, so this
+// releases even when the run errors before any in-progress frame is observed,
+// and even when a retry re-fails with an identical error. Keyed on the run
+// status only — the push-queue count is a separate signal and cannot release
+// it.
+//
+// The signature is a small, STABLE subset of the run — its start stamp, its
+// terminal error, and the last-successful stamp — deliberately NOT the whole
+// fragment: it must not churn on the per-phase done/total that ticks through a
+// run, yet two frames of the SAME run (a stale pre-run redelivery) must still
+// hash identically so the busy state holds.
 export const syncRunSignature = (
   status: SyncStatusFragment | null | undefined
-): string => (status == null ? '' : JSON.stringify(status));
+): string => {
+  if (status == null) return '';
+  const variant = status.error
+    ? status.__typename === 'FullSyncStatusV7Node'
+      ? status.error.variantV7
+      : status.error.variant
+    : '';
+  return [
+    status.summary.started,
+    variant,
+    status.error?.fullError ?? '',
+    status.lastSuccessfulSync?.finished ?? '',
+  ].join(' ');
+};
 
 export type TriggerState = { active: boolean; sig: string };
 

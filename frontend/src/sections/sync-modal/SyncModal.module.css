@@ -62,6 +62,26 @@
   overflow-wrap: anywhere;
 }
 
+/* "Special syncs" disclosure below the phase list — the run's backfill
+   descriptions, using the same expandable pattern as .moreInfo. */
+.specialSyncs {
+  align-self: stretch;
+  margin-block-start: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.specialSyncs summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+}
+
+.specialSyncsList {
+  margin-block: var(--space-2) 0;
+  padding-inline-start: var(--space-4);
+  color: var(--text-body);
+}
+
 /* The last-successful message text carries the success tint; the banner itself
    stays neutral (spec § Layout). */
 .successText {

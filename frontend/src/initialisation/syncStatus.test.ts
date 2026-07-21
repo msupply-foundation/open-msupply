@@ -18,6 +18,7 @@ const v7 = (
   waitingForIntegration: null,
   integration: null,
   lastSuccessfulSync: null,
+  linkedDescriptions: [],
   ...overrides,
 });
 

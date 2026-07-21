@@ -2,6 +2,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  For,
   Match,
   onCleanup,
   Show,
@@ -34,6 +35,7 @@ import {
   statusLineKind,
   syncDurationParts,
   toSyncOverview,
+  type SyncBackfill,
   type TriggerState,
 } from './syncStatus';
 import { syncErrorSummary } from './syncErrors';
@@ -141,6 +143,15 @@ export const SyncModal: Component<{
       icon: syncStepIcon[s.kind],
     })) ?? [];
 
+  // The run's backfill descriptions (V7 only; empty for an ordinary run). Shown
+  // under a "Special syncs" disclosure below the phase list, the same expandable
+  // pattern as the error panel's "More information".
+  const backfills = (): SyncBackfill[] => overview()?.backfills ?? [];
+  const backfillLabel = (b: SyncBackfill): string =>
+    b.kind === 'all-store-data'
+      ? t('sync-status.description.all-store-data', { storeName: b.storeName })
+      : t('sync-status.description.table-name', { tableName: b.tableName });
+
   return (
     <Dialog
       open={props.open}
@@ -177,6 +188,20 @@ export const SyncModal: Component<{
                 error={ov().error != null}
               />
             )}
+          </Show>
+          {/* "Special syncs" — the run's backfill descriptions, behind the same
+              disclosure the error panel uses. Only when the run carries any. */}
+          <Show when={backfills().length}>
+            <details class={styles.specialSyncs}>
+              <summary>
+                {t('sync-status.linked-sync-requests', {
+                  count: backfills().length,
+                })}
+              </summary>
+              <ul class={styles.specialSyncsList}>
+                <For each={backfills()}>{b => <li>{backfillLabel(b)}</li>}</For>
+              </ul>
+            </details>
           </Show>
         </div>
 
