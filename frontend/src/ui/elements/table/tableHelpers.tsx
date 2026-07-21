@@ -2,6 +2,7 @@ import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
+import { Comment } from '../feedback/Comment';
 import type { Column } from './columnTypes';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their
@@ -49,22 +50,30 @@ const formatDateCell = (value: string | Date | null | undefined): string =>
   value ? localisedDate(value) : EMPTY_CELL;
 
 // Numbers: right-aligned.
-export const getNumberCell = <T>(meta?: Meta): CellFragment<T> => ({
+export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
 });
 
 // Dates: format the resolved value via localisedDate, blank → em dash.
-export const getDateCell = <T>(meta?: Meta): CellFragment<T> => ({
+export const getDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info =>
     formatDateCell(info.getValue<string | Date | null | undefined>()),
 });
 
 // Booleans: resolved value → localised Yes/No.
-export const getBooleanCell = <T>(meta?: Meta): CellFragment<T> => ({
+export const getBooleanCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info =>
     info.getValue<boolean>() ? t('messages.yes') : t('messages.no'),
+});
+
+// Comment: the resolved string value behind a comment icon + popover (blank →
+// nothing). The Comment component renders null when there's no value, so an
+// empty cell stays empty. Centre-aligned — the icon is the whole cell.
+export const getCommentCell = <T,>(meta?: Meta): CellFragment<T> => ({
+  meta: { align: 'center', ...meta },
+  cell: info => <Comment comment={info.getValue<string | null>()} />,
 });
 
 // Money: symbol + always two decimals (spec/ui-standards/conventions.md),
@@ -85,7 +94,7 @@ const formatCurrencyCell = (value: number | null | undefined): string =>
         maximumFractionDigits: 2,
       });
 
-export const getCurrencyCell = <T>(meta?: Meta): CellFragment<T> => ({
+export const getCurrencyCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
   aggregationFn: 'sum',
   cell: info => formatCurrencyCell(info.getValue<number | null | undefined>()),
