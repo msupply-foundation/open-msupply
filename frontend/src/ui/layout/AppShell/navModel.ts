@@ -7,13 +7,13 @@ import {
   CustomersIcon,
   ThermometerIcon,
   FileIcon,
-  ListIcon,
+  CatalogueIcon,
   SlidersIcon,
   ReportsIcon,
   SettingsIcon,
   HelpIcon,
   ReplenishmentIcon,
-  RadioIcon,
+  SyncIcon,
 } from '../../icons';
 import type { LocaleKey } from '../../../intl';
 import {
@@ -69,7 +69,7 @@ const SECTION_ICONS: Record<string, Component<IconProps>> = {
   dispensary: CustomersIcon,
   'cold-chain': ThermometerIcon,
   programs: FileIcon,
-  catalogue: ListIcon,
+  catalogue: CatalogueIcon,
   manage: SlidersIcon,
   reports: ReportsIcon,
   settings: SettingsIcon,
@@ -105,7 +105,7 @@ const syncNavItem: NavItem = {
   id: SYNC_NAV_ID,
   labelKey: 'sync',
   to: 'sync',
-  icon: RadioIcon,
+  icon: SyncIcon,
 };
 
 export const upperNav: NavItem[] = items.filter(
