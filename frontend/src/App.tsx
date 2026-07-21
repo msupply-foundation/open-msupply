@@ -98,7 +98,10 @@ export const App: Component = () => {
         </Match>
         <Match when={phase() === 'operational'}>
           <Show when={authUser()} fallback={<LoginPage />}>
-            <Router>
+            {/* base matches Vite's `base` config (import.meta.env.BASE_URL) so the
+                same build can be mounted at a non-root path, e.g. the demo
+                server's /spec track. */}
+            <Router base={import.meta.env.BASE_URL}>
               {/* Store guard wraps the routed app shell; the shell mounts once and
                   pages swap inside it. One route per nav destination renders its
                   (empty) entry page until a real section is registered above. */}
