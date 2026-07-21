@@ -31,18 +31,18 @@ Run this per standards section (per component), smallest useful unit first:
 
 ## Status
 
-| Standard section  | Status      | Last synced | Notes                                          |
-| ----------------- | ----------- | ----------- | ---------------------------------------------- |
-| Typography        | Not started | —           |                                                |
-| Tables            | Not started | —           |                                                |
-| Input Fields      | Not started | —           |                                                |
-| Buttons           | Not started | —           | First candidate for a demo reconciliation pass |
-| Search            | Not started | —           |                                                |
-| Modals & Drawers  | Not started | —           |                                                |
-| Navigation        | Not started | —           |                                                |
-| Tabs              | Not started | —           |                                                |
-| Errors & Feedback | Not started | —           |                                                |
-| Accessibility     | Not started | —           |                                                |
+| Standard section  | Status      | Last synced | Notes                                                                    |
+| ----------------- | ----------- | ----------- | ------------------------------------------------------------------------ |
+| Typography        | Not started | —           |                                                                          |
+| Tables            | Not started | —           |                                                                          |
+| Input Fields      | Not started | —           |                                                                          |
+| Buttons           | Reconciled  | 2026-07-21  | Adopted in full (decisions #1–#4); see ledger for deviations + deferrals |
+| Search            | Not started | —           |                                                                          |
+| Modals & Drawers  | Not started | —           |                                                                          |
+| Navigation        | Not started | —           |                                                                          |
+| Tabs              | Not started | —           |                                                                          |
+| Errors & Feedback | Not started | —           |                                                                          |
+| Accessibility     | Not started | —           |                                                                          |
 
 Status values: **Not started** → **In review** (report produced, awaiting decisions) → **Reconciled** (implemented + verified).
 
@@ -50,9 +50,12 @@ Status values: **Not started** → **In review** (report produced, awaiting deci
 
 Brand/UX conflicts that need a human ruling before implementation. Each is resolved in place (don't delete — record the decision) so the reasoning survives.
 
-| #   | Section | Question                                                                                                                                                                                                                                                                   | Status |
-| --- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 1   | Buttons | The standard appears to describe the **primary** button as a blue contained fill, but in our tokens primary is orange (`--primary-main`) and blue is `--secondary`. Is the primary action button becoming blue? _(To confirm against raw source during the Buttons pass.)_ | Open   |
+| #   | Section | Question                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Status                                                                                                                                                                                                                                                                                                                                               |
+| --- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Buttons | **Primary colour flips to blue; brand orange demotes to ghost.** Confirmed against raw source: the standard's primary is a blue contained fill (`--highlight-blue` #3E7BFA — our `--secondary-main`), and the ghost (tertiary) variant is the one that carries brand orange (`--tmf-orange` #F26532 ≈ our `--primary-main`). So "primary action = orange" is no longer the model. Adopt the flip?                                                                                                                                             | **Resolved 2026-07-21 — adopted** (Carl). Primary → `--secondary-main` (blue) fill; new ghost variant carries `--primary-main` (orange).                                                                                                                                                                                                             |
+| 2   | Buttons | **Adopt the flat button language, retiring the shadowed-orange-pill?** The standard is flat: 4px radius (`0.25rem`), a solid fill at rest for primary, an outlined secondary (1px `#E0E0E0` border, charcoal text), and a text-only ghost. Ours is the current app's `BaseButton` — a 24px pill (`--radius-button`) on a raised white surface + `--shadow-2`, no fill at rest, inverting to a coloured fill only on hover. These are incompatible looks; matching the standard means replacing our button's core visual model, not tuning it. | **Resolved 2026-07-21 — adopted** (Carl). Flat `--radius-sm` (4px), filled primary/danger, outlined secondary, text ghost; rest elevation removed (shadow only on filled hover).                                                                                                                                                                     |
+| 3   | Buttons | **Two sizes + a ≤1023px touch-growth, reversing our deliberate no-bump?** Standard has medium (36px) + small (28px), and grows `.btn:not(.btn-sm)` to 48px / 1rem font at ≤1023px. Our Button is a single fixed 40px height with **no** size prop and a documented decision to _remove_ the touch bump (it made buttons taller than the SplitButton in device-emulation — see the note at the foot of `Button.module.css`). Re-introduce the small size and the touch growth?                                                                 | **Resolved 2026-07-21 — adopted** (Carl). Added a `size` prop (medium 36px / small 28px); medium grows to `--touch-target` (48px) at ≤1023px via a width query (= `breakpoints.navOverlay`), not `pointer:coarse` — which sidesteps the device-emulation inflation that got the old bump removed.                                                    |
+| 4   | Buttons | **Match the standard's focus ring and disabled treatment?** Standard focus = 3px blue glow (`outline: 3px solid rgba(62,123,250,0.5)`); disabled = whole-button `opacity: 0.38` + `not-allowed` cursor + `pointer-events: none`. Ours = 2px solid `--primary-main` (orange) outline, and disabled greys only the label/icon to `--gray-light` while the pill keeps its surface + shadow. Both are token-level and follow from #1–#2, but flagged so they aren't lost.                                                                         | **Resolved 2026-07-21 — adopted** (Carl). Disabled → whole-button `opacity: 0.38` + `not-allowed`. Focus → a 3px `outline` (not box-shadow, so overflow:hidden can't clip it) in `--secondary-main`, danger in `--error-main`. NB button focus is now blue while the rest of the app's focus ring is still orange — reconcile in a later focus pass. |
 
 ## Ledger
 
@@ -66,4 +69,42 @@ One subsection per reconciled standards section. Fill it as step 7 of the loop. 
 
 Status per row: `match` / `conflict → resolved (see decision #N)` / `gap → added token` / `gap → deferred`.
 
-_No sections reconciled yet._
+### Buttons — _reconciled 2026-07-21_
+
+Raw source: `#btn-variants`, `#btn-sizes`, `#btn-layout`, `#btn-states` (fetched literal, not summarised). Component compared: [`../elements/buttons/Button.module.css`](../elements/buttons/Button.module.css). **Headline:** this is not a token tweak — the standard describes a different button design language from our current shadowed-orange-pill `BaseButton`. Most rest-state values conflicted by design. All were resolved by adopting the standard (decisions #1–#4); the table below is the before→after diff (the "Ours (before)" column is the pre-adoption state), with deliberate deviations + deferrals listed after it.
+
+| Property            | Standard value                                     | Ours (before)                                                      | Status                    |
+| ------------------- | -------------------------------------------------- | ------------------------------------------------------------------ | ------------------------- |
+| Font size (medium)  | `0.875rem`                                         | `--text-sm` (0.875rem)                                             | match                     |
+| Font weight         | 500                                                | `--weight-medium` (500)                                            | match                     |
+| Gap between buttons | `0.5rem`                                           | `--space-2` (0.5rem)                                               | match                     |
+| Label case          | sentence case (no transform)                       | no transform                                                       | match                     |
+| Loading state       | spinner + label swap ("Saving…")                   | spinner (currentColor ring)                                        | match (shape differs)     |
+| **Primary tone**    | filled **blue** `#3E7BFA` at rest, white text      | orange accent (`--primary-main`), white bg at rest, fills on hover | conflict → decision #1    |
+| **Ghost variant**   | text-only, **orange** `#F26532`, 8% tint on hover  | _no ghost variant_                                                 | gap → decision #1         |
+| **Secondary tone**  | outlined: 1px `#E0E0E0`, charcoal text, hover→blue | white bg + blue label, fills blue on hover                         | conflict → decision #2    |
+| **Danger variant**  | filled red `#e95c30`, hover `#c43c11`              | _no danger variant_                                                | gap → decision #2         |
+| **Shape / radius**  | flat, `0.25rem` (4px)                              | pill, `--radius-button` (1.5rem / 24px)                            | conflict → decision #2    |
+| **Rest elevation**  | none (flat)                                        | `--shadow-2` raised surface                                        | conflict → decision #2    |
+| **Height / size**   | medium 36px, small 28px (`btn-sm`)                 | single fixed 40px (`--nav-item-height`), no size prop              | conflict → decision #3    |
+| **Touch (≤1023px)** | non-small grows to 48px / 1rem font                | none (bump deliberately removed)                                   | conflict → decision #3    |
+| **Min width**       | `4rem` (64px)                                      | `7.1875rem` (115px)                                                | conflict → decision #2/#3 |
+| Padding (medium)    | `0.375rem 1rem`                                    | fixed height + `padding-inline: 1.25rem`                           | conflict → decision #2/#3 |
+| **Focus ring**      | 3px blue glow, offset 2px                          | 2px solid `--primary-main` (orange), offset 2px                    | conflict → decision #4    |
+| **Disabled**        | whole button `opacity: 0.38`, `not-allowed`        | label/icon → `--gray-light`, pill keeps surface + shadow           | conflict → decision #4    |
+
+**Adopted in full and verified** by rendering the showcase (`#/showcase/buttons`) in light + dark, at desktop and ≤1023px.
+
+**Danger tone (resolved 2026-07-21, Carl):** the `danger` variant is the brand orange (`--primary-main` → `--primary-dark` on hover), matching the standard's literal CSS (`#e95c30`/`#c43c11`). Per Carl it's a "be careful with this" accent, _not_ a hard destructive error-red — ghost (text) and danger (fill) share the brand tone but read differently by weight. (An earlier pass mapped danger to `--error-main` and added an `--error-dark` token; both reverted.)
+
+**Deliberate deviations from the raw standard:**
+
+- **Near-hues resolve to our tokens, not the standard's exact hexes** — ghost/danger orange `--primary-main` (#e95c30) vs `#F26532`; secondary edge `--input-border` (#e4e4e7) vs `#E0E0E0`; secondary text `--button-text` vs charcoal `#2F3D45`. Reconciling the exact palette belongs to a colour/Typography pass, not buttons.
+- **Filled-hover elevation is a neutral `--shadow-2`**, where the standard uses a colour-tinted drop shadow — cosmetic.
+- **Loading ≠ disabled-looking (Carl 2026-07-21):** a `loading` button stays `disabled` (click/key-blocked, `aria-busy`) but renders at full opacity with a progress cursor — busy, not dimmed. Disabled (non-loading) still dims to 38%.
+- **Focus ring follows the variant tone (Carl 2026-07-21):** the standard shows a uniform blue focus ring, but a blue ring on an orange button reads as disconnected. So primary + secondary keep the blue ring (`--secondary-main`); ghost + danger take a brand-orange ring (`--primary-main`).
+
+**Deferred follow-ups (recorded so they aren't lost):**
+
+- **SplitButton + CheckboxButton still use the old shadowed-orange pill** — they now read as inconsistent beside the flat Button. Restyle in a dedicated pass (the standard has a `#btn-split` section).
+- **App-wide focus treatment isn't unified** — the Button now uses a per-variant `outline` ring, while inputs/IconButton use the orange box-shadow `--focus-ring`. A focus pass could align the treatment (outline vs glow) and the per-variant colour logic across the library.

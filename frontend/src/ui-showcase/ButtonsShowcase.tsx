@@ -50,17 +50,18 @@ export const ButtonsShowcase = () => {
   return (
     <div class={styles.stack}>
       <Card
-        title="Primary — the brand tone"
+        title="Primary — the main action"
         lead={
           <>
             The default action button (<code>variant="primary"</code>): plain{' '}
-            <code>&lt;button&gt;</code> + CSS, no component library. White pill,
-            no border, a shadow does the lifting; the icon carries the brand
-            tone (orange in the current theme) and the whole pill
-            <strong> fills with it on hover</strong> (label + icon go white).
-            Press one to see the click <strong>ripple</strong> — the single spot
-            we use JS for interaction (it needs the pointer coordinates). Tab to
-            one for the focus ring.
+            <code>&lt;button&gt;</code> + CSS, no component library. Flat, a{' '}
+            <strong>solid action-blue fill</strong> (ui-standards) — the single
+            most important action on a page or dialog. Most views have{' '}
+            <strong>one</strong>. Hover darkens and lifts it slightly. Press one
+            to see the click <strong>ripple</strong> — the single spot we use JS
+            for interaction (it needs the pointer coordinates). Tab to one for
+            the focus ring. Variants are named semantically — never after a
+            colour — the palette lives only in the tokens.
           </>
         }
       >
@@ -74,25 +75,120 @@ export const ButtonsShowcase = () => {
       </Card>
 
       <Card
-        title="Secondary — the action tone"
+        title="Secondary — supporting actions"
         lead={
           <>
-            The same button, <code>variant="secondary"</code>: the action tone
-            (blue in the current theme) for the app's edit/footer actions (Save,
-            Delete, Cancel…). Fills with its tone on hover; the focus ring
-            follows it too. Variants are named semantically — never after a
-            colour — the palette lives only in the tokens.
+            <code>variant="secondary"</code>: an <strong>outlined</strong>{' '}
+            button for actions that sit alongside a primary — Print, Export,
+            Cancel, Edit. A hairline edge at rest; hover recolours the edge and
+            label to the action tone. Use when there's a primary present;
+            promote it to primary if it's the only action.
           </>
         }
       >
         <div class={styles.row}>
           <Button variant="secondary" icon={<SaveIcon />}>
-            Save
+            Print
           </Button>
-          <Button variant="secondary" icon={<TrashIcon />}>
-            Delete
+          <Button variant="secondary" icon={<DownloadIcon />}>
+            Export
           </Button>
           <Button variant="secondary">Cancel</Button>
+          <Button variant="secondary" disabled>
+            Disabled
+          </Button>
+        </div>
+      </Card>
+
+      <Card
+        title="Ghost — low-priority & inline"
+        lead={
+          <>
+            <code>variant="ghost"</code>: text only, carrying the brand tone,
+            with a faint tint on hover. Its home is inline table actions,
+            overflow menus, and dialogs where space is tight — anywhere a
+            bordered button would be too heavy. Avoid it as the only action on a
+            view (users may not read it as interactive).
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <Button variant="ghost">View details</Button>
+          <Button variant="ghost" icon={<CopyIcon />}>
+            Duplicate
+          </Button>
+          <Button variant="ghost" size="small">
+            Edit
+          </Button>
+          <Button variant="ghost" disabled>
+            Disabled
+          </Button>
+        </div>
+      </Card>
+
+      <Card
+        title="Danger — the high-caution action"
+        lead={
+          <>
+            <code>variant="danger"</code>: a filled{' '}
+            <strong>brand-orange</strong> tone for actions to be careful with —
+            Delete, Remove, Void. It's a "stop and think" accent, <em>not</em> a
+            hard error-red (it reuses the brand tone, matching the standard's
+            own CSS). Never adjacent to a primary without a spacer. Ghost and
+            danger share the orange but read differently by weight — text vs
+            fill.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <Button variant="danger" icon={<TrashIcon />}>
+            Delete shipment
+          </Button>
+          <Button variant="danger" disabled>
+            Disabled
+          </Button>
+        </div>
+      </Card>
+
+      <Card
+        title="Sizes"
+        lead={
+          <>
+            Two sizes (ui-standards #btn-sizes): <code>medium</code> (default,
+            36px) for page and toolbar actions, <code>size="small"</code> (28px)
+            for dense tables and compact panels. At tablet widths (≤1023px)
+            medium grows to the 48px touch target automatically — resize the
+            window to see it; small is the deliberate exception.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <Button icon={<SaveIcon />}>Medium</Button>
+          <Button size="small" icon={<SaveIcon />}>
+            Small
+          </Button>
+        </div>
+      </Card>
+
+      <Card
+        title="States"
+        lead={
+          <>
+            The interaction states (ui-standards #btn-states).{' '}
+            <strong>Hover</strong> any button to see it darken/lift;{' '}
+            <strong>tab</strong> to one for the real focus ring. The{' '}
+            <em>Focus</em> swatch below is shown statically for reference.{' '}
+            <code>loading</code> swaps the icon for a spinner and blocks
+            re-firing while staying at full opacity (busy, not disabled);{' '}
+            <code>disabled</code> dims to 38% but stays visible.
+          </>
+        }
+      >
+        <div class={styles.row}>
+          <Button>Default</Button>
+          <Button class={styles.focusDemo}>Focus</Button>
+          <Button loading>Saving…</Button>
+          <Button disabled>Disabled</Button>
         </div>
       </Card>
 

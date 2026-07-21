@@ -173,6 +173,10 @@
   --footer-height: 2rem; /* 32px */
   --touch-target: 3rem; /* 48px — spec target */
 
+  /* --- Buttons (ui-standards #btn-sizes) ------------------------------ */
+  --button-height: 2.25rem; /* 36px — medium (default) */
+  --button-height-sm: 1.75rem; /* 28px — small (dense/inline) */
+
   /* --- Inputs (company design spec) ----------------------------------- */
   --input-height: 2.5rem; /* 40px default */
   --input-height-sm: 2.25rem; /* 36px small */

@@ -6,11 +6,21 @@ import styles from './Button.module.css';
 export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: JSX.Element;
   /**
-   * Semantic tone: 'primary' (default — the brand tone) or 'secondary' (the
-   * action tone; footer edit actions). Never named after a colour — the
-   * variant maps to palette tokens in the CSS (Carl, 2026-07-09).
+   * Semantic tone (ui-standards #btn-variants). Never named after a colour —
+   * the variant maps to palette tokens in the CSS (Carl, 2026-07-09):
+   *   'primary'   (default) — the single most important action; filled.
+   *   'secondary' — supporting actions (Print, Export, Cancel…); outlined.
+   *   'ghost'     — optional/low-priority + inline table actions; text only.
+   *   'danger'    — a strong "be careful with this" action (delete, void);
+   *                 filled brand-orange tone, not a hard error-red.
    */
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  /**
+   * Size (ui-standards #btn-sizes): 'medium' (default) for page/toolbar
+   * actions, 'small' for dense tables and compact panels. Medium grows to the
+   * touch target at tablet widths; small stays dense.
+   */
+  size?: 'medium' | 'small';
   /** Which side of the label the icon sits on (mirrors in RTL). */
   iconPosition?: 'start' | 'end';
   /**
@@ -21,17 +31,16 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
 }
 
 /*
- * Reusable action button — plain <button> + CSS, no component library (Solid
- * port of the RnD prototype's <Button>). Mirrors the current app's outlined
- * ButtonWithIcon: white pill, no border, shadow[2], coloured icon; fills with
- * its colour on hover (text + icon go white); a subtle ripple on click
- * (createRipple). `variant` picks the tone: primary (brand) or secondary
- * (footer actions).
+ * Reusable action button — plain <button> + CSS, no component library. Flat
+ * per ui-standards (#btn-variants): filled primary/danger, outlined secondary,
+ * text-only ghost; two sizes; a subtle ripple on click (createRipple). Tone +
+ * shape live entirely in Button.module.css; this file is just structure.
  */
 export const Button = (props: ButtonProps) => {
   const [local, rest] = splitProps(props, [
     'icon',
     'variant',
+    'size',
     'iconPosition',
     'loading',
     'children',
@@ -52,6 +61,7 @@ export const Button = (props: ButtonProps) => {
       type={local.type ?? 'button'}
       class={local.class ? `${styles.button} ${local.class}` : styles.button}
       data-variant={local.variant ?? 'primary'}
+      data-size={local.size ?? 'medium'}
       data-icon-position={local.iconPosition ?? 'start'}
       disabled={local.disabled || local.loading}
       aria-busy={local.loading || undefined}

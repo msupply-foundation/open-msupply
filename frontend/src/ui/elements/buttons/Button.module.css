@@ -1,14 +1,29 @@
 /*
- * Faithful to the current app's BaseButton (outlined): NO border; a shadow[2]
- * drop-shadow does the lifting; pill radius; white (raised-surface) bg;
- * coloured icon; fills with its colour on hover. `data-variant` picks the
- * tone — 'primary' (brand, --primary-main) or 'secondary' (actions,
- * --secondary-main); variants are named semantically, never after colours.
+ * Flat action button — ui-standards (#btn-variants/#btn-sizes/#btn-states),
+ * adopted 2026-07-21 (see src/ui/docs/DESIGN_STANDARDS.md). Replaces the
+ * current app's shadowed-orange-pill BaseButton with the standard's flat
+ * model: small radius, a solid fill at rest for the emphatic variants, no
+ * elevation until hover.
  *
- * Hover: inverts (coloured bg, white text/icon) with a short transition.
- * Click: a subtle ripple (createRipple) in --ripple-color — coloured at rest,
- * white while hover-filled — clipped to the pill. The ripple tints are derived
- * from the palette tokens via color-mix, so they track the theme.
+ * Four variants, tone mapped to palette tokens (variants are semantic, never
+ * named after a colour — CLAUDE.md):
+ *   primary   — filled action blue (--secondary-main); the one main action.
+ *   secondary — outlined; supporting actions. Hover recolours edge + text.
+ *   ghost     — text-only brand orange (--primary-main); inline/low-priority.
+ *   danger    — filled brand orange (--primary-main → --primary-dark on hover),
+ *               matching the standard's literal CSS. Per Carl (2026-07-21) this
+ *               is a "be careful with this" accent, NOT a hard destructive
+ *               error-red; the ghost (text) and danger (fill) reuse the same
+ *               brand tone but read differently by weight.
+ *
+ * Two sizes (medium 36px default, small 28px). At <=1023px (breakpoints
+ * navOverlay) medium grows to the 48px WCAG 2.5.5 touch target; small is the
+ * deliberate exception. Width-based (not pointer:coarse) so device-emulation
+ * doesn't inflate it past the split button — the reason the old bump was
+ * removed. Icon + label share currentColor, so the tone flows to both.
+ *
+ * Rule order is ascending-specificity (no-descending-specificity): base →
+ * sizes/focus/disabled/tone-rest → danger focus override → hover fills.
  */
 .button {
   position: relative;
@@ -17,34 +32,72 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  height: var(--nav-item-height);
-  min-width: 7.1875rem;
-  padding-inline: 1.25rem;
-  border: none;
-  border-radius: var(--radius-button);
-  background: var(--surface-raised);
-  color: var(--button-text);
+  border: 1px solid transparent; /* outlined variants colour it; keeps box size equal */
+  border-radius: var(--radius-sm); /* 0.25rem / 4px — flat */
   font-family: inherit;
-  font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: var(--shadow-2);
   transition:
     background 140ms ease,
-    color 140ms ease;
+    color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
+/* --- Sizes ------------------------------------------------------------ */
+.button[data-size='medium'] {
+  min-block-size: var(--button-height);
+  min-inline-size: 4rem; /* 64px — never collapse to the icon (ui-standards) */
+  padding-block: 0.375rem;
+  padding-inline: 1rem;
+  font-size: var(--text-sm);
+}
+
+.button[data-size='small'] {
+  min-block-size: var(--button-height-sm);
+  padding-block: 0.125rem;
+  padding-inline: 0.625rem;
+  font-size: var(--text-xs);
+}
+
+/* Tablet & below: medium reaches the 48px touch target; small stays dense. */
+@media (max-width: 1023px) {
+  .button[data-size='medium'] {
+    min-block-size: var(--touch-target);
+    padding-block: 0.75rem;
+    font-size: var(--text-md);
+  }
+}
+
+/* Focus — a 3px ring offset off the button (ui-standards #btn-states). The ring
+   matches the button's own tone: the action blue is the DEFAULT (primary +
+   secondary), and the orange-toned ghost + danger override it below. outline
+   (not box-shadow) so overflow:hidden can't clip it; kept before the hover
+   rules so specificity ascends. */
 .button:focus-visible {
-  outline: 2px solid var(--primary-main);
-  outline-offset: 2px;
+  outline: 3px solid var(--secondary-main);
+  outline-offset: 0.125rem;
 }
 
+/* Disabled — whole button dims to 38% (ui-standards); still visible, not
+   hidden. Only opacity/cursor, so it never fights the tone rules for colour. */
 .button:disabled {
-  cursor: default;
+  opacity: 0.38;
+  cursor: not-allowed;
 }
 
-/* Content sits above the ripple layer */
+/* Loading — the button is still `disabled` (so clicks/keys can't re-fire the
+   in-flight action), but it reads as BUSY, not disabled: full opacity + a
+   progress cursor. Same specificity as :disabled and placed after it, so it
+   wins the opacity for a loading button. */
+.button[aria-busy='true'] {
+  opacity: 1;
+  cursor: progress;
+}
+
+/* Content sits above the ripple layer. Icon + label inherit the button's
+   colour (currentColor), so each variant only sets `color` once. */
 .icon {
   position: relative;
   z-index: 1;
@@ -52,7 +105,6 @@
   align-items: center;
   font-size: 1.25rem;
   flex-shrink: 0;
-  transition: color 140ms ease;
 }
 
 .label {
@@ -66,63 +118,80 @@
   order: 1;
 }
 
-/*
- * Tone at rest — dark/coloured label, coloured icon. Primary keeps the dark
- * --button-text; secondary recolours the label too. (Rest rules first, hover
- * fills grouped below, so specificity ascends — no-descending-specificity.)
- */
+/* --- Variant tone at rest -------------------------------------------- */
 .button[data-variant='primary'] {
-  --ripple-color: color-mix(in srgb, var(--primary-main) 22%, transparent);
-}
-
-.button[data-variant='primary'] .icon {
-  color: var(--primary-main);
-}
-
-.button[data-variant='secondary'] {
-  color: var(--secondary-main);
-  --ripple-color: color-mix(in srgb, var(--secondary-main) 22%, transparent);
-}
-
-.button[data-variant='secondary'] .icon {
-  color: var(--secondary-main);
-}
-
-.button[data-variant='secondary']:focus-visible {
-  outline-color: var(--secondary-main);
-}
-
-/*
- * Disabled: the pill keeps its raised surface and shadow — only the content
- * (label + icon) greys out. Placed after the tone rules so it wins the cascade
- * over the per-colour label/icon colours.
- */
-.button:disabled,
-.button:disabled .icon {
-  color: var(--gray-light);
-}
-
-/* Hover fills — the pill inverts (coloured bg, white label + icon + ripple). */
-.button[data-variant='primary']:hover:not(:disabled) {
-  background: var(--primary-main);
-  color: var(--primary-contrast);
-  --ripple-color: color-mix(in srgb, var(--primary-contrast) 35%, transparent);
-}
-
-.button[data-variant='secondary']:hover:not(:disabled) {
   background: var(--secondary-main);
   color: var(--primary-contrast);
   --ripple-color: color-mix(in srgb, var(--primary-contrast) 35%, transparent);
 }
 
-.button[data-variant='primary']:hover:not(:disabled) .icon,
-.button[data-variant='secondary']:hover:not(:disabled) .icon {
-  color: var(--primary-contrast);
+.button[data-variant='secondary'] {
+  background: var(--bg-white);
+  border-color: var(--input-border);
+  color: var(--button-text);
+  --ripple-color: color-mix(in srgb, var(--secondary-main) 22%, transparent);
 }
 
-/* Loading spinner — replaces the icon while the button's action is in flight. A ring
-   that spins; sized to match the icon so the button doesn't reflow. Colour follows the
-   button text (currentColor) so it works on both rest and hover fills. */
+.button[data-variant='ghost'] {
+  background: transparent;
+  color: var(--primary-main);
+  --ripple-color: color-mix(in srgb, var(--primary-main) 22%, transparent);
+}
+
+.button[data-variant='danger'] {
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+  --ripple-color: color-mix(in srgb, var(--primary-contrast) 35%, transparent);
+}
+
+/* The orange-toned variants take a brand-orange focus ring so it reads as part
+   of the same button (Carl 2026-07-21) — a deliberate step past the standard,
+   which shows a uniform blue ring. Higher specificity than the base focus and
+   placed after it. */
+.button[data-variant='ghost']:focus-visible,
+.button[data-variant='danger']:focus-visible {
+  outline-color: var(--primary-main);
+}
+
+/* Ghost hover tint — bare token on a pseudo-overlay driven by opacity, NOT
+   color-mix (older fleet WebViews drop color-mix and the marker vanishes —
+   CLAUDE.md / kdd/ui-styling). Clipped to the radius by the button's overflow. */
+.button[data-variant='ghost']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--primary-main);
+  opacity: 0;
+  transition: opacity 140ms ease;
+  pointer-events: none;
+}
+
+.button[data-variant='ghost']:hover:not(:disabled)::before {
+  opacity: 0.08;
+}
+
+/* Filled variants darken + lift on hover. box-shadow is painted outside the
+   border box, so overflow:hidden (ripple clip) doesn't touch it. */
+.button[data-variant='primary']:hover:not(:disabled) {
+  background: var(--secondary-dark);
+  box-shadow: var(--shadow-2);
+}
+
+.button[data-variant='danger']:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: var(--shadow-2);
+}
+
+/* Outlined secondary — edge + text take the action tone on hover. */
+.button[data-variant='secondary']:hover:not(:disabled) {
+  border-color: var(--secondary-main);
+  color: var(--secondary-main);
+}
+
+/* Loading spinner — replaces the icon while the action is in flight. A ring
+   that spins; sized to match the icon so the button doesn't reflow. Colour
+   follows currentColor so it works on filled and outlined variants alike. */
 .spinner {
   position: relative;
   z-index: 1;
@@ -143,7 +212,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .button,
-  .icon {
+  .icon,
+  .button[data-variant='ghost']::before {
     transition: none;
   }
 
@@ -151,7 +221,3 @@
     animation-duration: 2s;
   }
 }
-
-/* NB: no pointer:coarse min-height bump. It inflated buttons to 48px in touch /
-   device-emulation mode (taller than the split button, which never had it). We
-   keep the consistent 40px height instead. */
