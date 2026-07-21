@@ -324,6 +324,23 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const editMode = () => props.initialItem != null;
 
+  // In edit mode the item is excluded from `pickerItems` (it's already on the
+  // shipment), so the combobox can't resolve its label from `items`. Supply the
+  // selected option directly so the locked field shows the item name.
+  const selectedItemOption = createMemo<ItemOption | undefined>(() => {
+    const it = item();
+    if (!editMode() || !it) return undefined;
+    return {
+      id: it.id,
+      code: '',
+      name: it.name,
+      unitName: it.unitName ?? null,
+      isVaccine: it.isVaccine ?? false,
+      doses: it.doses ?? 0,
+      availableStockOnHand: 0,
+    };
+  });
+
   const columns = (): Column<DraftLine, never>[] => [
     {
       // "Will be used in auto-allocation": a check on usable (not barred)
@@ -553,6 +570,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           </span>
         )}
         value={item()?.id ?? ''}
+        selectedItem={selectedItemOption()}
         disabled={editMode() || saving()}
         inputTestId="item-search-input"
         placeholder={t('outbound.create.placeholder')}
@@ -568,22 +586,24 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         }}
       />
 
-      {/* Issue row: "Available: N unit" + the issue quantity + allocate-in. */}
+      {/* Available on its own line, then the issue row: quantity + allocate-in. */}
       <Show when={item()}>
-        <div
-          style={{
-            display: 'flex',
-            'align-items': 'end',
-            gap: 'var(--space-4)',
-            'margin-block': 'var(--space-3)',
-          }}
-        >
+        <div style={{ 'margin-block': 'var(--space-3) var(--space-2)' }}>
           <span>
             {t('outbound.edit.available', {
               count: formatNumber(availableUnits()),
               unit: unitName(),
             })}
           </span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            'align-items': 'end',
+            gap: 'var(--space-4)',
+            'margin-block-end': 'var(--space-3)',
+          }}
+        >
           <TextField
             label={t('outbound.edit.issue')}
             size="small"
@@ -661,7 +681,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           </span>
           <span>
             {t('outbound.edit.total-units', {
-              count: formatNumber(issuedUnits()),
+              count: formatNumber(issuedUnits() + placeholderUnits()),
             })}
           </span>
         </div>
