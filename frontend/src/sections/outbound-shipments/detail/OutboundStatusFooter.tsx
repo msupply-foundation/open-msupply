@@ -60,9 +60,12 @@ export const OutboundStatusFooter: Component<
       date: stamps[status],
     }));
   };
+  // AC-PR1: a current status the preference EXCLUDES displays as the nearest
+  // included EARLIER status — the LAST allowed entry at or before the current
+  // one (allowedStatuses() is already in ascending flow order).
   const indicatorIndex = () =>
-    allowedStatuses().findIndex(
-      status => statusIndex(status) >= currentIndex()
+    allowedStatuses().findLastIndex(
+      status => statusIndex(status) <= currentIndex()
     );
 
   return (
