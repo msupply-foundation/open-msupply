@@ -7,6 +7,7 @@ import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CheckIcon, CopyIcon, XCircleIcon } from '../../../../ui/icons';
 import { DuplicateOutboundShipment } from '../outboundShipments.generated';
+import { hasPermission } from '../../../../store/storeContext';
 
 export interface DuplicateShipmentActionProps {
   /** The shipment to copy. */
@@ -37,6 +38,11 @@ export const DuplicateShipmentAction: Component<
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [skippedCount, setSkippedCount] = createSignal(0);
   const [copyId, setCopyId] = createSignal<string>();
+
+  // Duplication needs the mutate permission. Disabled (never hidden) without it,
+  // per rules.md's disable-with-reason model (the shared hasPermission is
+  // reactive to the entered store).
+  const canMutate = () => hasPermission('OUTBOUND_SHIPMENT_MUTATE');
 
   const openConfirm = () => {
     setPhase('confirm');
@@ -83,6 +89,8 @@ export const DuplicateShipmentAction: Component<
         variant={props.variant === 'panel' ? 'primary' : 'secondary'}
         icon={<CopyIcon />}
         data-testid="duplicate-shipment-button"
+        disabled={!canMutate()}
+        title={canMutate() ? undefined : t('auth.permission-denied')}
         onClick={openConfirm}
       >
         {t('outbound.copy.action')}

@@ -2793,6 +2793,7 @@
   "outbound.detail.add-from-master-list": "Ajouter depuis une liste maîtresse",
   "outbound.detail.add-item": "Ajouter un article",
   "outbound.detail.empty": "Aucun article n'a été ajouté à la livraison.",
+  "outbound.detail.not-found": "Cette expédition sortante est introuvable — elle a peut-être été supprimée.",
   "outbound.detail.side-panel": "Détails",
   "outbound.detail.tab-details": "Détails",
   "outbound.detail.tab-log": "Journal",
