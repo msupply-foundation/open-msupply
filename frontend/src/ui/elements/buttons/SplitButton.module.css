@@ -141,28 +141,34 @@
 /* --- Menu (portaled to <body>; inherits dir for RTL) ------------------- */
 .content {
   z-index: 50;
-  min-inline-size: 12.5rem;
+  min-inline-size: 11.25rem;
   max-block-size: 21.25rem;
   overflow-y: auto;
-  padding: var(--space-2);
   border: 1px solid var(--color-border-value);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   background: var(--surface-raised);
-  box-shadow: var(--shadow-4);
+  box-shadow: var(--shadow-3);
   color: var(--text-body);
   font-size: var(--text-sm);
 }
 
+/* Dense, edge-to-edge rows with a hairline between them (ui-standards
+   #btn-split menu) — not inset rounded pills. overflow on .content clips the
+   full-width rows to the corner radius. */
 .item {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
+  padding-block: 0.625rem;
+  padding-inline: 1rem;
   cursor: pointer;
   user-select: none;
   outline: none;
   white-space: nowrap;
+}
+
+.item + .item {
+  border-block-start: 1px solid var(--color-divider);
 }
 
 .item[data-highlighted] {

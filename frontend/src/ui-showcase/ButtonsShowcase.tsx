@@ -250,13 +250,19 @@ export const ButtonsShowcase = () => {
             (the caret's menu buys the focus/keyboard/ARIA contract). Picking a
             format selects it <em>and</em> runs it, like the app's export
             selector. Each half ripples and lights up independently. Same flat
-            language as <code>&lt;Button&gt;</code>; this one is{' '}
-            <code>variant="secondary"</code> (outlined), the toolbar-export tone
-            from the standard.
+            language as <code>&lt;Button&gt;</code>, shown here in both{' '}
+            <code>primary</code> (filled) and <code>secondary</code> (outlined)
+            — the variant is independent of the pick-behaviour.
           </>
         }
       >
         <div class={styles.row}>
+          <SplitButton
+            icon={<DownloadIcon />}
+            options={EXPORT_OPTIONS}
+            menuLabel="Export options"
+            onAction={value => setLastExport(value)}
+          />
           <SplitButton
             variant="secondary"
             icon={<DownloadIcon />}
@@ -287,14 +293,24 @@ export const ButtonsShowcase = () => {
             menu pick only <em>re-targets</em> the main action — the label
             updates, nothing runs until the main half is clicked. Pass{' '}
             <code>menuSelectsOnly</code> +<code>onValueChange</code>; the
-            default (pick = run) stays for export-style menus. Shown in the
-            default <code>primary</code> tone (filled blue), for contrast with
-            the outlined export split above.
+            default (pick = run) stays for export-style menus. Again in both{' '}
+            <code>primary</code> and <code>secondary</code> — the tone is
+            independent of the behaviour.
           </>
         }
       >
         <div class={styles.row}>
           <SplitButton
+            icon={<SaveIcon />}
+            options={STATUS_OPTIONS}
+            value={pendingStatus()}
+            menuSelectsOnly
+            onValueChange={setPendingStatus}
+            menuLabel="Change status"
+            onAction={value => setConfirmedStatus(value)}
+          />
+          <SplitButton
+            variant="secondary"
             icon={<SaveIcon />}
             options={STATUS_OPTIONS}
             value={pendingStatus()}
