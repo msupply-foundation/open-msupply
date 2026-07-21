@@ -154,11 +154,12 @@ export const ButtonsShowcase = () => {
         title="Ghost — low-priority & inline"
         lead={
           <>
-            <code>variant="ghost"</code>: text only, carrying the brand tone,
-            with a faint tint on hover. Its home is inline table actions,
-            overflow menus, and dialogs where space is tight — anywhere a
-            bordered button would be too heavy. Avoid it as the only action on a
-            view (users may not read it as interactive).
+            <code>variant="ghost"</code>: text only, in the{' '}
+            <strong>action-blue</strong> tone (ui-standards — ghost shares
+            primary's blue), with a faint tint on hover. Its home is inline
+            table actions, overflow menus, and dialogs where space is tight —
+            anywhere a bordered button would be too heavy. Avoid it as the only
+            action on a view (users may not read it as interactive).
           </>
         }
       >
@@ -174,6 +175,10 @@ export const ButtonsShowcase = () => {
             Disabled
           </Button>
         </div>
+        <p class={styles.note}>
+          The <strong>Edit</strong> button here is the <code>size="small"</code>{' '}
+          variant (the dense/inline size) — the others are the default medium.
+        </p>
       </Card>
 
       <Card
@@ -184,9 +189,9 @@ export const ButtonsShowcase = () => {
             <strong>brand-orange</strong> tone for actions to be careful with —
             Delete, Remove, Void. It's a "stop and think" accent, <em>not</em> a
             hard error-red (it reuses the brand tone, matching the standard's
-            own CSS). Never adjacent to a primary without a spacer. Ghost and
-            danger share the orange but read differently by weight — text vs
-            fill.
+            own CSS). Never adjacent to a primary without a spacer. It's the{' '}
+            <strong>one orange-toned variant</strong> — so the only one whose
+            focus ring is orange rather than the app-wide blue.
           </>
         }
       >
