@@ -1,0 +1,37 @@
+/* Holds the trigger + panel; only there to catch click bubbling (see the
+   component). inline-flex so it sits inline with cell text without adding box
+   height. */
+.wrapper {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* Comment-cell icon trigger: quiet grey, brand on hover (matches the current
+   app's PopoverCell). Sizing follows the icon's font-size (1em). */
+.trigger {
+  padding: var(--space-1);
+  font-size: 1.125rem;
+  color: var(--gray-main);
+}
+
+.trigger:hover {
+  color: var(--primary-main);
+}
+
+/* The comment text can run long — cap the bubble and let it wrap. */
+.panel {
+  max-width: 25rem;
+}
+
+.heading {
+  font-weight: var(--weight-bold);
+  margin-block-end: var(--space-2);
+}
+
+.body {
+  margin: 0;
+  /* Preserve the author's line breaks; break overly long tokens rather than
+     overflow the bubble. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

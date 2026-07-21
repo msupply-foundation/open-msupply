@@ -1,0 +1,29 @@
+/*
+ * FormSection — titled field group (see FormSection.tsx). A flex column: the
+ * ruled heading, then the field children stacked with a consistent gap. Fields
+ * are direct children (single fields, or a FormRow wrapping a two-up pair), so
+ * the gap between the heading and the first field matches field-to-field.
+ */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.heading {
+  margin: 0;
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--color-divider);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--line-tight);
+  color: var(--text-body);
+}
+
+/* A nested sub-group heading (headingLevel="h3") sits quieter under its parent
+   section: smaller, no rule — so it reads as a sub-heading, not a peer group. */
+h3.heading {
+  padding-block-end: 0;
+  border-block-end: none;
+  font-size: var(--text-sm);
+}
