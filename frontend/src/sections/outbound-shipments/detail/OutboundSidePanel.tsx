@@ -14,6 +14,7 @@ import {
   SidePanelSection,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -255,27 +256,20 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
               gap: 'var(--space-2)',
             }}
           >
-            <TextField
+            <NumberField
               label={t('label.tax')}
               hideLabel
               size="small"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
+              min={0}
+              max={100}
+              decimalLimit={2}
               disabled={
                 props.disabled || (pricing().stockTotalAfterTax ?? 0) === 0
               }
-              value={pricing().taxPercentage ?? ''}
-              onChange={e => {
-                const raw = e.currentTarget.value;
-                const parsed = raw === '' ? null : Number(raw);
-                if (
-                  parsed == null ||
-                  (Number.isFinite(parsed) && parsed >= 0 && parsed <= 100)
-                )
-                  props.onSaveField({ tax: { percentage: parsed } });
-              }}
+              value={pricing().taxPercentage ?? undefined}
+              onChange={value =>
+                props.onSaveField({ tax: { percentage: value ?? null } })
+              }
             />
             <Text variant="body">
               {money(

@@ -72,8 +72,15 @@ export const AllocateLinesAction: Component<
         storeId: props.storeId,
         lineId: line.id,
       });
-      // Transport/unexpected → the global modal already surfaced it.
-      if (result.kind !== 'success') return close();
+      // Transport/unexpected → the global modal already surfaced it. Each line
+      // is its own mutation (allocateOutboundShipmentUnallocatedLine), so lines
+      // earlier in the loop may already be allocated server-side; refetch on a
+      // mid-loop failure so the grid isn't left stale, then bail.
+      if (result.kind !== 'success') {
+        if (allocated > 0 || partial.count > 0 || failed.count > 0)
+          props.onCommitted();
+        return close();
+      }
       const response = result.data.allocateOutboundShipmentUnallocatedLine;
       if (
         response.__typename === 'AllocateOutboundShipmentUnallocatedLineError'

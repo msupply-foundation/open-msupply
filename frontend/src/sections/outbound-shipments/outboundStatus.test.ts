@@ -4,6 +4,8 @@ import {
   STATUS_FLOW,
   isDeletable,
   isEditable,
+  statusColour,
+  statusLabel,
   statusIndex,
 } from './outboundStatus';
 
@@ -34,6 +36,7 @@ describe('outboundStatus', () => {
     expect(isEditable('PICKED')).toBe(true);
     expect(isEditable('SHIPPED')).toBe(false);
     expect(isEditable('DELIVERED')).toBe(false);
+    expect(isEditable('RECEIVED')).toBe(false);
     expect(isEditable('VERIFIED')).toBe(false);
   });
 
@@ -47,5 +50,15 @@ describe('outboundStatus', () => {
   // settable — NEW is unreachable by update, DELIVERED+ transfer-mirrored.
   it('client-settable statuses exclude NEW and the transfer-mirrored tail', () => {
     expect([...CLIENT_SETTABLE]).toEqual(['ALLOCATED', 'PICKED', 'SHIPPED']);
+  });
+
+  // statusLabel/statusColour resolve via the map, else fall back: the raw
+  // status string for the label, the default token for the colour.
+  it('statusLabel/statusColour fall back for an unknown status', () => {
+    // Unknown status → the ?? fallback fires (not in either map).
+    expect(statusLabel('BOGUS')).toBe('BOGUS');
+    expect(statusColour('BOGUS')).toBe('var(--status-new)');
+    // CANCELLED sits outside the flow but has its own mapped chip token.
+    expect(statusColour('CANCELLED')).toBe('var(--status-cancelled)');
   });
 });
