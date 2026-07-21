@@ -8,17 +8,6 @@ import {
 } from '../ui/elements/charts';
 import styles from './ChartsShowcase.module.css';
 
-/*
- * EXAMPLE 2 — the S4 line-editor context charts (spec/internal-orders ›
- * ui-surface S4 › "Below — context charts"), as library components under
- * src/ui/elements/charts/. Consumption History and Stock evolution are
- * HAND-ROLLED SVG over tree-shaken d3 (only scaleBand/scaleLinear from
- * d3-scale + line from d3-shape are imported — not a chart library); the
- * Target-quantity breakdown reproduces the app's StockDistribution, hand-
- * composed from value bars. This section only supplies sample data and prose —
- * the charts themselves live in the library.
- */
-
 // --- Sample data, shaped like the wire nodes the real charts consume. ---
 
 const consumptionData: ConsumptionHistoryPoint[] = (() => {
@@ -91,18 +80,6 @@ const Card = (props: {
 
 export const ChartsShowcase = () => (
   <div class={styles.stack}>
-    <p class={styles.intro}>
-      <strong>Example 2 — hand-rolled SVG.</strong> Real library components in{' '}
-      <code>src/ui/elements/charts/</code>. Consumption History and Stock
-      evolution are plain SVG we own, leaning only on{' '}
-      <strong>tree-shaken d3</strong> — just <code>scaleBand</code> /{' '}
-      <code>scaleLinear</code> from <code>d3-scale</code> and <code>line</code>{' '}
-      from <code>d3-shape</code>, no chart library. Every fill, stroke and label
-      is a <code>class</code> resolved to a theme token, so the look tracks
-      light/dark. The Target-quantity breakdown reproduces the app's{' '}
-      <code>StockDistribution</code>, hand-composed from value bars.
-    </p>
-
     <Card
       title="Target quantity"
       lead={
@@ -112,9 +89,8 @@ export const ChartsShowcase = () => (
           the reorder threshold and target MOS called out) above horizontal
           value bars for stock on hand + suggested order, proportioned to the
           target. When stock exceeds the target the axis shrinks and the stock
-          bar fills the row — the Vaccine1 case (SOH 21). With no average
-          monthly consumption it shows an <em>Unable to calculate</em> line
-          instead (second panel).
+          bar fills the row. With no average monthly consumption it shows an{' '}
+          <em>Unable to calculate</em> line instead (second panel).
         </>
       }
     >
