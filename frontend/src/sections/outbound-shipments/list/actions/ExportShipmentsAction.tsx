@@ -32,6 +32,14 @@ export interface ExportShipmentsActionProps {
   filter: () => OutboundShipmentsVariables['filter'];
 }
 
+// The invoices resolver defaults to a bounded page when `page` is omitted, so
+// the export passes an explicit page large enough to cover any realistic
+// store's filtered set (ui-standards/list-views.md § regions, D12: export
+// covers every row matching the active filters, across all pages). If a
+// store somehow exceeds the cap the export is still (very largely)
+// truncated, so that's logged rather than silently shipped.
+const EXPORT_PAGE_SIZE = 10000;
+
 export const ExportShipmentsAction: Component<
   ExportShipmentsActionProps
 > = props => {
@@ -42,16 +50,22 @@ export const ExportShipmentsAction: Component<
     { value: 'excel', label: t('button.export-excel') },
   ];
 
-  // Fetch every matching shipment (no page cap), newest first, and build the
-  // CSV. Returns null when there's nothing to export.
+  // Fetch every matching shipment (bounded by EXPORT_PAGE_SIZE above), newest
+  // first, and build the CSV. Returns null when there's nothing to export.
   const buildCsv = async (): Promise<string | null> => {
     const result = await graphqlFetch(OutboundShipments, {
       storeId: props.storeId,
       filter: props.filter(),
       sort: [{ key: 'createdDatetime', desc: true }],
+      page: { first: EXPORT_PAGE_SIZE },
     });
     if (result.kind !== 'success') return null;
-    const nodes = result.data.invoices.nodes;
+    const { nodes, totalCount } = result.data.invoices;
+    if (totalCount > nodes.length) {
+      console.warn(
+        `outbound-shipments export: truncated to ${nodes.length} of ${totalCount} matching rows (cap ${EXPORT_PAGE_SIZE}).`
+      );
+    }
     return nodes.length ? shipmentsToCsv(nodes) : null;
   };
 
