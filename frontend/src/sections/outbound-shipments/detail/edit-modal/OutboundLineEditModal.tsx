@@ -71,6 +71,11 @@ interface OutboundLineEditModalProps {
   initialItem?: LineEditItem;
   /** Items already on the shipment — excluded from the picker (S4). */
   existingItemIds: string[];
+  /**
+   * Whether the shipment's customer is itself a store (a transfer). Non-store
+   * (external) customers additionally get the received-packs / difference columns.
+   */
+  customerIsStore: boolean;
   /** A save committed — the view refetches the shipment. */
   onCommitted: () => void;
 }
@@ -336,10 +341,6 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       header: t('outbound.edit.column.expiry'),
       ...getDateCell(),
     },
-    {
-      c: { accessor: line => line.location?.code ?? '', id: 'location' },
-      header: t('outbound.edit.column.location'),
-    },
     ...(prefs()?.manageVvmStatusForStock
       ? [
           {
@@ -352,6 +353,35 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         ]
       : []),
     {
+      c: {
+        accessor: line => line.campaign?.name ?? line.program?.name ?? '',
+        id: 'campaign',
+      },
+      header: t('label.campaign'),
+    },
+    {
+      c: { accessor: line => line.location?.code ?? '', id: 'location' },
+      header: t('outbound.edit.column.location'),
+    },
+    ...(prefs()?.allowTrackingOfStockByDonor
+      ? [
+          {
+            c: {
+              accessor: (line: DraftLine) => line.donor?.name ?? '',
+              id: 'donor',
+            },
+            header: t('label.donor'),
+          } as Column<DraftLine, never>,
+        ]
+      : []),
+    {
+      c: {
+        accessor: line => line.manufacturer?.name ?? '',
+        id: 'manufacturer',
+      },
+      header: t('label.manufacturer'),
+    },
+    {
       c: { key: 'sellPricePerPack' },
       header: t('outbound.edit.column.sell-price'),
       ...getCurrencyCell(),
@@ -361,6 +391,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       header: t('outbound.edit.column.pack-size'),
       ...getNumberCell(),
     },
+    ...(prefs()?.manageVaccinesInDoses
+      ? [
+          {
+            c: { key: 'dosesPerUnit' },
+            header: t('label.doses-per-unit'),
+            ...getNumberCell(),
+          } as Column<DraftLine, never>,
+        ]
+      : []),
     {
       c: { key: 'inStorePacks' },
       header: t('outbound.edit.column.in-store'),
@@ -395,6 +434,37 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         );
       },
     },
+    {
+      c: {
+        accessor: line => line.numberOfPacks * line.packSize,
+        id: 'unitsIssued',
+      },
+      header: t('label.units-issued', { unit: unitName() }),
+      ...getNumberCell(),
+    },
+    ...(props.customerIsStore
+      ? []
+      : [
+          {
+            c: {
+              accessor: (line: DraftLine) =>
+                line.receivedNumberOfPacks ?? line.numberOfPacks,
+              id: 'receivedNumberOfPacks',
+            },
+            header: t('label.packs-received'),
+            ...getNumberCell(),
+          } as Column<DraftLine, never>,
+          {
+            c: {
+              accessor: (line: DraftLine) =>
+                (line.receivedNumberOfPacks ?? line.numberOfPacks) -
+                line.numberOfPacks,
+              id: 'difference',
+            },
+            header: t('label.difference'),
+            ...getNumberCell(),
+          } as Column<DraftLine, never>,
+        ]),
   ];
 
   return (

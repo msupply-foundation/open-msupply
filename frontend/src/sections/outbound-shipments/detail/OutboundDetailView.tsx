@@ -633,6 +633,7 @@ const OutboundDetailView: Component = () => {
                 storeId={params.storeId}
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
+                customerIsStore={current().otherParty.store != null}
                 initialItem={editorItem()}
                 existingItemIds={stockAndPlaceholderLines().map(
                   line => line.item.id
