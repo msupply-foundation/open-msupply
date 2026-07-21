@@ -242,6 +242,21 @@
   color: var(--gray-main);
 }
 
+/* Small size (ui-standards Size Variations): the inner text and the label drop
+   to 13px, matching TextField; the frame height already shrinks via
+   .control[data-size='small'] above. :has() reaches the label (a sibling of the
+   sized .control) — the same :has() route TextField uses in this input family.
+   Placed after the base part rules so specificity ascends. */
+.field:has(.control[data-size='small']) .label {
+  font-size: var(--input-font-sm);
+}
+
+.control[data-size='small'] .dateTrigger,
+.control[data-size='small'] .dateInput,
+.control[data-size='small'] .timeSegs {
+  font-size: var(--input-font-sm);
+}
+
 .helper {
   margin: 0;
   font-size: var(--text-xs);

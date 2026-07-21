@@ -39,6 +39,11 @@
   color: var(--text-body);
 }
 
+/* Small fields drop the label to 13px too (ui-standards field-label--small). */
+.field[data-size='small'] .label {
+  font-size: var(--input-font-sm);
+}
+
 .required {
   margin-inline-start: 0.125em;
   color: var(--error-main);
@@ -60,8 +65,11 @@
     box-shadow 120ms ease;
 }
 
+/* Small (ui-standards Size Variations): denser height AND a 13px text/label
+   (the label + adornment follow via the .field[data-size='small'] rules). */
 .input[data-size='small'] {
   height: var(--input-height-sm);
+  font-size: var(--input-font-sm);
 }
 
 .input::placeholder {
@@ -182,6 +190,11 @@
 /* An end adornment pads against the field's end edge instead. */
 .input ~ .adornment {
   padding-inline: 0 var(--input-padding-x);
+}
+
+/* Adornment tracks the small field's 13px text so symbol + value read as one. */
+.field[data-size='small'] .adornment {
+  font-size: var(--input-font-sm);
 }
 
 .helper {

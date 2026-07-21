@@ -187,6 +187,11 @@
      default-size fields on coarse pointers (ui-standards #field-touch-sizing);
      the small variant stays dense. */
   --input-font-touch: 16px;
+  /* Small-field text (ui-standards "Text Fields — Size Variations"): 13px, a
+     notch under the 14px default (--text-sm) so a small input + its label read
+     denser. Its own token rather than --text-xs (12px, helper/caption) — the
+     spec picks 13px specifically for small fields. */
+  --input-font-sm: 0.8125rem; /* 13px */
   --input-padding-x: 0.75rem; /* 12px horizontal */
   --input-radius: 0.375rem; /* 6px */
   --input-max-compact: 10rem; /* 160px — numbers/money (NumberField default) */

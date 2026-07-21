@@ -203,6 +203,63 @@ export const InputsShowcase = () => {
       </Card>
 
       <Card
+        title="Size variations — default & small"
+        lead={
+          <>
+            Two sizes (ui-standards "Text Fields — Size Variations"):{' '}
+            <strong>default</strong> (2.5rem / 40px, 14px text) for standalone
+            form fields, modals and drawers; <code>size="small"</code> (2.25rem
+            / 36px, <strong>13px</strong> text <em>and</em> label) for dense
+            contexts — table inline editing, filter bars, toolbars, sidebars.
+            Small shrinks the height <em>and</em> the type; on touch the default
+            grows to the 48px target while small stays dense (density is the
+            point). The one <code>size</code> prop flows to{' '}
+            <code>NumberField</code>, <code>CurrencyField</code> and the date
+            fields — compare each pair below.
+          </>
+        }
+      >
+        <div class={styles.grid}>
+          <Field caption="Default — 40px · 14px">
+            <TextField label="Item Name" value="Amoxicillin 500mg" />
+          </Field>
+          <Field caption="Small — 36px · 13px">
+            <TextField
+              label="Item Name"
+              size="small"
+              value="Amoxicillin 500mg"
+            />
+          </Field>
+          <Field caption="Default — number">
+            <NumberField
+              label="Pack size"
+              value={packSize()}
+              onChange={setPackSize}
+            />
+          </Field>
+          <Field caption="Small — number">
+            <NumberField
+              label="Pack size"
+              size="small"
+              value={packSize()}
+              onChange={setPackSize}
+            />
+          </Field>
+          <Field caption="Default — date">
+            <DateField label="Expiry" value={expiry()} onChange={setExpiry} />
+          </Field>
+          <Field caption="Small — date">
+            <DateField
+              label="Expiry"
+              size="small"
+              value={expiry()}
+              onChange={setExpiry}
+            />
+          </Field>
+        </div>
+      </Card>
+
+      <Card
         title="Multi-line text — native <textarea>"
         lead={
           <>
