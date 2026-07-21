@@ -568,9 +568,11 @@ const OutboundDetailView: Component = () => {
                       disabled={!editable()}
                       onCommitted={onLineOpsCommitted}
                     />
-                    {/* Return selected lines: before SHIPPED an explanatory
-                        notice (AC-V3); the return flow itself is owned by the
-                        returns vertical (not built). */}
+                    {/* Return selected lines: the customer-return flow is owned
+                        by the returns vertical (not built yet), so this shows a
+                        "not yet available" notice at any status. AC-V3's status
+                        gating (SHIPPED/DELIVERED/VERIFIED) applies once that
+                        vertical exists. */}
                     <Button
                       variant="secondary"
                       onClick={() => setReturnNoticeOpen(true)}
