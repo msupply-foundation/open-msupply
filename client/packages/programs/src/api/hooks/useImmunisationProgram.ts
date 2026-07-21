@@ -24,8 +24,11 @@ const useGet = (id: string) => {
     });
 
     if (result.programs.__typename === 'ProgramConnector') {
-      return result.programs.nodes[0];
+      // Coalesce to null: TanStack Query forbids a queryFn resolving to
+      // undefined (empty nodes / non-connector result would crash the page).
+      return result.programs.nodes[0] ?? null;
     }
+    return null;
   };
 
   const query = useQuery({

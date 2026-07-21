@@ -23,6 +23,9 @@
 #       http://localhost:8000,
 #     ] # Used to set the allowed Origin in Cross Origin Request Security
 #   base_dir: "app_data"
+#   # Directory the web frontend is served from, relative to the working directory.
+#   # Debug builds fall back to client/packages/host/dist when this doesn't exist.
+#   frontend_dir: "frontend"
 # sync:
 #   # url/username/password_sha256/interval_seconds are all-or-nothing: set them all, or omit them
 #   # all to carry only flags (e.g. on a central server). A partial set is a startup error.
