@@ -13,6 +13,7 @@ import { SelectorsShowcase } from './SelectorsShowcase';
 import { FeedbackShowcase } from './FeedbackShowcase';
 import { DialogShowcase } from './DialogShowcase';
 import { DisplayShowcase } from './DisplayShowcase';
+import { DocumentUploadShowcase } from './DocumentUploadShowcase';
 import { SyncShowcase } from './SyncShowcase';
 import { TableShowcase } from './TableShowcase';
 import { HeaderShowcase } from './HeaderShowcase';
@@ -122,6 +123,12 @@ export const sections: SectionDef[] = [
     id: 'display',
     label: 'Display',
     component: DisplayShowcase,
+    category: 'components',
+  },
+  {
+    id: 'document-upload',
+    label: 'Document upload',
+    component: DocumentUploadShowcase,
     category: 'components',
   },
   {

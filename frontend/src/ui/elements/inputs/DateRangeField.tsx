@@ -39,6 +39,8 @@ export interface DateRangeFieldProps {
   size?: 'default' | 'small';
   hideLabel?: boolean;
   id?: string;
+  /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
+  testId?: string;
 }
 
 const EMPTY: IsoDateRange = { start: null, end: null };
@@ -83,6 +85,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
           <Popover
             placement="bottom-start"
             triggerClass={styles.dateTrigger}
+            triggerTestId={props.testId}
             triggerProps={{
               id: id(),
               'aria-describedby': describedBy,

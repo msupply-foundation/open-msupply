@@ -28,6 +28,13 @@
   inset: auto;
   margin: 0;
   max-width: 25rem;
+  /* A panel taller than the viewport (a long column-settings list, a date
+     picker on a short window) must not clip: cap its height to the viewport
+     minus the EDGE gap kept on each side (see EDGE in Popover.tsx) and scroll
+     internally. Content shorter than this is unaffected. place() also clamps
+     `top` so the (now-bounded) panel stays fully on-screen. */
+  max-block-size: calc(100dvh - 16px);
+  overflow-y: auto;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-border-value);
   border-radius: var(--radius-md);

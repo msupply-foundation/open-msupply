@@ -1,0 +1,5 @@
+/* An almost-expired / expired date cell (getExpiryDateCell): the date text in
+   the error tone, matching the old app's ExpiryDateCell (error.main). */
+.expiring {
+  color: var(--error-main);
+}

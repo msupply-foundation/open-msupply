@@ -1,0 +1,35 @@
+# The inbound-shipment detail "Log" tab: activity-log entries for THIS shipment,
+# its own server-paginated query (mirrors the stocktake log). Scoped by
+# recordId; sorted by id descending so the newest entry is first.
+fragment InboundLog on ActivityLogNode {
+  id
+  datetime
+  type
+  to
+  from
+  user {
+    username
+  }
+}
+
+query inboundShipmentLog(
+  $storeId: String!
+  $recordId: String!
+  $page: PaginationInput
+  $sort: [ActivityLogSortInput!]
+) {
+  activityLogs(
+    storeId: $storeId
+    filter: { recordId: { equalTo: $recordId } }
+    page: $page
+    sort: $sort
+  ) {
+    ... on ActivityLogConnector {
+      __typename
+      totalCount
+      nodes {
+        ...InboundLog
+      }
+    }
+  }
+}

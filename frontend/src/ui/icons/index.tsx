@@ -121,8 +121,17 @@ export const PlusCircleIcon = (props: IconProps) => (
   </Stroke>
 );
 
-/* Export / download */
+/* Export / download — arrow pointing down into the tray */
 export const DownloadIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </Stroke>
+);
+
+/* Import / upload — arrow pointing up out of the tray */
+export const UploadIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
     <polyline points="17 8 12 3 7 8" />
@@ -323,6 +332,15 @@ export const FileIcon = (props: IconProps) => (
     <line x1="16" y1="13" x2="8" y2="13" />
     <line x1="16" y1="17" x2="8" y2="17" />
     <polyline points="10 9 9 9 8 9" />
+  </Stroke>
+);
+
+/* Upload zone glyph — a document with an up-arrow (drag & drop target). */
+export const FileUploadIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M9 22H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h7l7 7v11a2 2 0 0 1-2 2h-3" />
+    <polyline points="17 16 12 11 7 16" />
+    <line x1="12" y1="11" x2="12" y2="23" />
   </Stroke>
 );
 
