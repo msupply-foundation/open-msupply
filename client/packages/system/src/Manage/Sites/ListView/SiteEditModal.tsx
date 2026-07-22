@@ -250,7 +250,7 @@ export const SiteEditModal = ({
                 <Box display="flex" justifyContent="flex-end" flex={1}>
                   <Tooltip
                     title={
-                      !enable_multi_device_site
+                      !isMultiDevice && !enable_multi_device_site
                         ? t('messages.multi-device-requires-flag')
                         : ''
                     }
