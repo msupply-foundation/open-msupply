@@ -1,9 +1,11 @@
-import { createSignal, type Component } from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { graphqlFetch } from '../../../api/graphql';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { Popover } from '../../../ui/elements/feedback/Popover';
+import { InfoIcon } from '../../../ui/icons';
 import { OutboundStocktakeConflict } from './outboundDetail.generated';
 import { outboundPrefs } from '../outboundPreferencesResource';
 import type { OutboundNode } from './outboundUpdate';
@@ -57,10 +59,6 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
       panelDisabled: props.disabled,
     });
   const enabled = () => gate().enabled;
-  const disabledReason = (): string | undefined => {
-    const key = gate().reasonKey;
-    return key ? t(key) : undefined;
-  };
 
   // The effective "as of" day: the backdated day if set, else picked, else the
   // creation day.
@@ -116,19 +114,42 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
 
   return (
     <>
-      <TextField
-        label={t('label.picked-date')}
-        hideLabel
-        type="date"
-        width="short"
-        data-testid="picked-date-field"
-        value={shown()}
-        min={enabled() ? bounds().min : undefined}
-        max={enabled() ? bounds().max : undefined}
-        disabled={!enabled()}
-        helperText={disabledReason()}
-        onChange={e => void onPick(e.currentTarget.value)}
-      />
+      <span
+        style={{
+          display: 'inline-flex',
+          'align-items': 'center',
+          gap: 'var(--space-2)',
+        }}
+      >
+        <TextField
+          label={t('label.picked-date')}
+          hideLabel
+          type="date"
+          width="short"
+          data-testid="picked-date-field"
+          value={shown()}
+          min={enabled() ? bounds().min : undefined}
+          max={enabled() ? bounds().max : undefined}
+          disabled={!enabled()}
+          onChange={e => void onPick(e.currentTarget.value)}
+        />
+        {/* When a backdating gate disables the field (pref off / past NEW), an
+            info popover explains why on hover / focus / tap — disable-with-
+            reason (spec S3), reusing the ported reason messages. */}
+        <Show when={gate().reasonKey}>
+          {key => (
+            <Popover
+              trigger={<InfoIcon />}
+              triggerLabel={t(key())}
+              triggerTestId="picked-date-reason"
+              openOnHover
+              placement="top"
+            >
+              <p>{t(key())}</p>
+            </Popover>
+          )}
+        </Show>
+      </span>
       <ConfirmDialog
         open={pending() != null}
         title={t('heading.are-you-sure')}

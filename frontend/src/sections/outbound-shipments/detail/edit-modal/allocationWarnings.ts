@@ -1,16 +1,35 @@
-import type { IssueWarning } from '../../../../domain/allocation';
+import type { BarReason, IssueWarning } from '../../../../domain/allocation';
 
 // The line editor's inline warning banners, as message descriptors the editor
 // resolves via t()/formatNumber (spec/stock-allocation § reporting, AC-AL2/AL3).
 // Derived from the shared deriveIssueWarnings output: over-allocation surfaces
-// (AC-AL3) and EACH skipped category maps to its own banner — on-hold /
-// expired / unusable-VVM (AC-AL2), never collapsed into one. The shortfall is
-// surfaced separately (the placeholder notice), so it produces no banner here.
+// (AC-AL3), and every skipped category is reported (AC-AL2) — reusing the same
+// ported vocabulary the bulk "Allocate placeholder lines" report uses
+// (`messages.allocated-lines-skipped-line-reasons` + the `label.*` reason
+// tokens), so the two surfaces read identically. The shortfall is surfaced
+// separately (the placeholder notice), so it produces no banner here.
+
+/** The ported label key each barred category is reported under. */
+export type SkipReasonLabel =
+  'label.on-hold' | 'label.expired' | 'label.unusable-vvm-status';
+
 export type IssueWarningMessage =
   | { key: 'messages.over-allocated'; quantity: number; issueQuantity: number }
-  | { key: 'messages.stock-on-hold' }
-  | { key: 'messages.stock-expired' }
-  | { key: 'messages.stock-unusable-vvm' };
+  | {
+      key: 'messages.allocated-lines-skipped-line-reasons';
+      reasons: SkipReasonLabel[];
+    };
+
+const skipReasonLabel = (reason: BarReason): SkipReasonLabel => {
+  switch (reason) {
+    case 'on-hold':
+      return 'label.on-hold';
+    case 'expired':
+      return 'label.expired';
+    case 'unusable-vvm':
+      return 'label.unusable-vvm-status';
+  }
+};
 
 export const issueWarningMessages = (
   derived: readonly IssueWarning[],
@@ -27,16 +46,12 @@ export const issueWarningMessages = (
           },
         ];
       case 'skipped-barred':
-        return warning.reasons.map((reason): IssueWarningMessage => {
-          switch (reason) {
-            case 'on-hold':
-              return { key: 'messages.stock-on-hold' };
-            case 'expired':
-              return { key: 'messages.stock-expired' };
-            case 'unusable-vvm':
-              return { key: 'messages.stock-unusable-vvm' };
-          }
-        });
+        return [
+          {
+            key: 'messages.allocated-lines-skipped-line-reasons',
+            reasons: warning.reasons.map(skipReasonLabel),
+          },
+        ];
       case 'shortfall':
         return [];
     }
