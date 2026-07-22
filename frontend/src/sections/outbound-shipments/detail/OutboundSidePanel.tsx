@@ -187,13 +187,30 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           }
         >
           {req => (
-            // TODO: link the specific requisition
-            // (…/customer-requisition/${req().id}) once the requisitions
-            // vertical exists — until then the path below is the nav
-            // placeholder EntryPage, so this links the section generically.
-            <A href={`/${props.storeId}/distribution/customer-requisition`}>
-              {t('label.requisition')} #{req().requisitionNumber}
-            </A>
+            // Hovering the whole entry (label included) explains the document
+            // — the old app's tooltip: "Customer requisition created on
+            // {date} by {username}" (native title, the library's hover-text
+            // convention — see the inbound currency panel).
+            // TODO: requisition.createdDatetime + user.username are not on
+            // the OutboundInfo fragment yet — add them (hand-edit the
+            // .graphql + generated pair; CI codegen reproduces) and replace
+            // the em-dash placeholders with the real values.
+            <Text
+              variant="body"
+              title={`${t('messages.customer-requisition-created-on', {
+                date: '—',
+              })} ${t('messages.by-user', { username: '—' })}`}
+            >
+              {t('label.requisition')}{' '}
+              {/* Only the number is the link (old-app parity).
+                  TODO: target the specific requisition
+                  (…/customer-requisition/${req().id}) once the requisitions
+                  vertical exists — until then the path is the section's nav
+                  placeholder EntryPage, linked generically. */}
+              <A href={`/${props.storeId}/distribution/customer-requisition`}>
+                #{req().requisitionNumber}
+              </A>
+            </Text>
           )}
         </Show>
       </SidePanelSection>
