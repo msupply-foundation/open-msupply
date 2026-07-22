@@ -123,6 +123,8 @@ interface DialogHeaderProps {
 // title/actions then mounts its popup into the dialog (top layer), not <body>
 // (where the top-layer dialog would hide it). Each element prop is read once
 // via children() (§3): a guard-plus-insert would otherwise create it twice.
+// DialogBody below exists for the same reason, covering the other element
+// props (description / footer / actions / actionsLead).
 const DialogHeader = (props: DialogHeaderProps): JSX.Element => {
   const icon = children(() => props.icon);
   const title = children(() => props.title);
@@ -150,6 +152,52 @@ const DialogHeader = (props: DialogHeaderProps): JSX.Element => {
         <div class={styles.headerActions}>{headerActions()}</div>
       </Show>
     </header>
+  );
+};
+
+interface DialogBodyProps {
+  descriptionId: string;
+  description?: JSX.Element;
+  footer?: JSX.Element;
+  actions?: JSX.Element;
+  actionsLead?: JSX.Element;
+  children?: JSX.Element;
+}
+
+// The body content, as its own component for the same reason as DialogHeader:
+// its JSX-element props are resolved UNDER PortalMountContext, so a combobox
+// in the description or actions (e.g. the reduce-to-zero reason select)
+// mounts its popup into the dialog rather than portaling to <body>, where the
+// top-layer dialog would paint over it AND leave it inert (unclickable).
+const DialogBody = (props: DialogBodyProps): JSX.Element => {
+  const description = children(() => props.description);
+  const footer = children(() => props.footer);
+  const actions = children(() => props.actions);
+  const actionsLead = children(() => props.actionsLead);
+  return (
+    <>
+      <Show when={description()}>
+        <p class={styles.description} id={props.descriptionId}>
+          {description()}
+        </p>
+      </Show>
+      {props.children}
+      <Show when={footer()}>
+        <div class={styles.footer}>{footer()}</div>
+      </Show>
+      <Show when={actions()}>
+        <div
+          class={styles.actions}
+          data-has-lead={actionsLead() ? '' : undefined}
+        >
+          {/* Lead content sits at the inline-start; the buttons group at the inline-end. */}
+          <Show when={actionsLead()}>
+            <div class={styles.actionsLead}>{actionsLead()}</div>
+          </Show>
+          <div class={styles.actionsButtons}>{actions()}</div>
+        </div>
+      </Show>
+    </>
   );
 };
 
@@ -182,25 +230,17 @@ export const Dialog = (props: DialogProps) => {
   // data-fullscreen drives the CSS. The 600px cutoff lives once in
   // breakpoints.ts (createMediaQuery).
   const compact = useIsCompact();
-  // JSX-element props are lazy getters: every read builds a fresh element, so
-  // a <Show when> test plus an insertion is two creations (a ref/onMount on
-  // the passed element would land on the discarded copy). Resolve each one
-  // once (kdd/solid-reactivity-pitfalls §3); `children` is read exactly once
-  // below, so it needs no helper.
-  const description = children(() => props.description);
-  const footer = children(() => props.footer);
-  const actions = children(() => props.actions);
-  const actionsLead = children(() => props.actionsLead);
   // A string title doubles as the accessible name (aria-labelledby → the <h2>).
   // A component title can't be an accessible name, so callers pass `ariaLabel`
   // and we use aria-label instead.
   const titleIsString = () => typeof props.title === 'string';
-  // NB: `icon`, `headerActions` and `title` are resolved INSIDE the header
-  // (DialogHeader), not hoisted here — a component in `title`/`headerActions`
-  // (e.g. an inline combobox) must be created UNDER PortalMountContext so its
-  // popup mounts into this dialog (top layer, non-inert), not portaled to
-  // <body> where the top-layer dialog would hide it. Resolving them here (above
-  // the Provider) would create them outside that context.
+  // NB: EVERY JSX-element prop is resolved INSIDE an inner component
+  // (DialogHeader / DialogBody), never hoisted here — a component in any of
+  // them (e.g. a combobox in the description) must be created UNDER
+  // PortalMountContext so its popup mounts into this dialog (top layer,
+  // non-inert), not portaled to <body> where the top-layer dialog would hide
+  // it AND leave it inert. Resolving them here (above the Provider) would
+  // create them outside that context.
 
   createEffect(() => {
     if (props.open && !dialog.open) dialog.showModal();
@@ -239,7 +279,11 @@ export const Dialog = (props: DialogProps) => {
       // ariaLabel.
       aria-labelledby={titleIsString() ? titleId : undefined}
       aria-label={titleIsString() ? undefined : props.ariaLabel}
-      aria-describedby={description() ? descriptionId : undefined}
+      // Presence check via `in` — reading the getter here would CREATE the
+      // description element outside the Provider (the §3 hazard DialogBody
+      // exists to avoid). A caller passing an explicit `undefined` gets a
+      // dangling idref, which assistive tech ignores.
+      aria-describedby={'description' in props ? descriptionId : undefined}
       // Escape arrives as `cancel` before the dialog closes — a blocking
       // dialog swallows it here, so the element never closes underneath the
       // parent's `open` state.
@@ -257,7 +301,14 @@ export const Dialog = (props: DialogProps) => {
       }
     >
       <PortalMountContext.Provider value={dialogEl}>
-        <div class={styles.body}>
+        {/* Initial focus lands HERE, not on the first field (ui-standards ›
+            accessibility › keyboard): showModal() focuses the first
+            autofocus-bearing element, and without this the first field takes
+            it — which pops an autocomplete's listbox open unprompted
+            (Combobox opens on focus by design). tabindex=-1 makes the panel
+            programmatically focusable; the first Tab reaches the first
+            control. */}
+        <div class={styles.body} tabindex="-1" autofocus>
           <Show when={props.closeButton && props.dismissable !== false}>
             <button
               type="button"
@@ -276,27 +327,15 @@ export const Dialog = (props: DialogProps) => {
             icon={props.icon}
             headerActions={props.headerActions}
           />
-          <Show when={description()}>
-            <p class={styles.description} id={descriptionId}>
-              {description()}
-            </p>
-          </Show>
-          {props.children}
-          <Show when={footer()}>
-            <div class={styles.footer}>{footer()}</div>
-          </Show>
-          <Show when={actions()}>
-            <div
-              class={styles.actions}
-              data-has-lead={actionsLead() ? '' : undefined}
-            >
-              {/* Lead content sits at the inline-start; the buttons group at the inline-end. */}
-              <Show when={actionsLead()}>
-                <div class={styles.actionsLead}>{actionsLead()}</div>
-              </Show>
-              <div class={styles.actionsButtons}>{actions()}</div>
-            </div>
-          </Show>
+          <DialogBody
+            descriptionId={descriptionId}
+            description={props.description}
+            footer={props.footer}
+            actions={props.actions}
+            actionsLead={props.actionsLead}
+          >
+            {props.children}
+          </DialogBody>
         </div>
       </PortalMountContext.Provider>
     </dialog>

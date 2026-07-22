@@ -54,6 +54,8 @@ fragment UserInfo on UserNode {
   __typename
   userId
   username
+  firstName
+  lastName
   inactivityTimeoutSeconds
   tokenRefreshIntervalSeconds
   defaultStore {

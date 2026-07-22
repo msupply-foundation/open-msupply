@@ -23,6 +23,7 @@ import { SidePanelShowcase } from './SidePanelShowcase';
 import { StatisticsShowcase } from './StatisticsShowcase';
 import { InsetPanelShowcase } from './InsetPanelShowcase';
 import { CardGridShowcase } from './CardGridShowcase';
+import { FormsShowcase } from './FormsShowcase';
 
 export type SectionCategory = 'components' | 'layout';
 
@@ -173,6 +174,13 @@ export const sections: SectionDef[] = [
     label: 'Card grid',
     component: CardGridShowcase,
     category: 'layout',
+  },
+  {
+    id: 'forms',
+    label: 'Forms',
+    component: FormsShowcase,
+    category: 'layout',
+    fill: true,
   },
   // A standalone reference page, listed as its own top-level menu entry rather
   // than inside a category group.

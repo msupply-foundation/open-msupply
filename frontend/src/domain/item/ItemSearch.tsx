@@ -35,6 +35,7 @@ export interface ItemSearchProps {
   hideLabel?: boolean;
   /** Read-only: show the selected item but don't allow searching/changing it. */
   disabled?: boolean;
+  error?: string;
   /** Passed through to the underlying combobox field (sizing/placement). */
   class?: string;
 }
@@ -77,6 +78,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       label={props.label}
       hideLabel={props.hideLabel}
       disabled={props.disabled}
+      error={props.error}
       class={props.class}
       placeholder={props.placeholder}
       // Every ItemSearch IS the contract's item search — the fixed id is
