@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   blankDraft,
   clampQuantity,
+  existingLinesBeingRemoved,
   reasonStepLines,
   seedDrafts,
   toLineInputs,
   validateStep1,
-  zeroQuantityDeletes,
   type DraftReturnLine,
 } from './returnLineLogic';
 
@@ -73,15 +73,8 @@ describe('toLineInputs — the upsert batch set (AC-E1)', () => {
 });
 
 describe('validateStep1 — the quantity-step gates', () => {
-  // AC-E2's UI half — nothing to return: create mode blocks, edit mode warns
-  // that existing lines will be removed (zeroQuantityDeletes distinguishes).
-  it('flags an all-zero draft, and whether proceeding would delete', () => {
-    const drafts = [draft(), draft({ id: 'l2' })];
-    expect(validateStep1(drafts)).toBe('no-quantity');
-    expect(zeroQuantityDeletes(drafts)).toBe(false);
-    expect(
-      zeroQuantityDeletes([draft({ existing: true }), draft({ id: 'l2' })])
-    ).toBe(true);
+  it('flags an all-zero draft', () => {
+    expect(validateStep1([draft(), draft({ id: 'l2' })])).toBe('no-quantity');
   });
 
   // AC-E3's UI half — pack size ≥ 1 for RETURNED lines only; a zeroed line's
@@ -96,6 +89,33 @@ describe('validateStep1 — the quantity-step gates', () => {
         draft({ id: 'l2', numberOfPacksReturned: 0, packSize: 0 }),
       ])
     ).toBe('ok');
+  });
+});
+
+describe('existingLinesBeingRemoved — the destructive-save warning (AC-E2)', () => {
+  it('is empty when nothing to return is all NEW (a create-mode block, not a delete)', () => {
+    expect(existingLinesBeingRemoved([draft(), draft({ id: 'l2' })])).toEqual(
+      []
+    );
+  });
+
+  it('flags every existing line zeroed when the whole set is zero', () => {
+    const removed = existingLinesBeingRemoved([
+      draft({ id: 'e1', existing: true }),
+      draft({ id: 'l2' }),
+    ]);
+    expect(removed.map(l => l.id)).toEqual(['e1']);
+  });
+
+  // The mixed case: another line still carries quantity, so the verdict is
+  // 'ok' — the zeroed existing line would still be a silent delete.
+  it('flags a zeroed existing line even when other lines carry quantity', () => {
+    const drafts = [
+      draft({ id: 'keep', numberOfPacksReturned: 4 }),
+      draft({ id: 'e2', existing: true, numberOfPacksReturned: 0 }),
+    ];
+    expect(validateStep1(drafts)).toBe('ok');
+    expect(existingLinesBeingRemoved(drafts).map(l => l.id)).toEqual(['e2']);
   });
 });
 

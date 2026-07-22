@@ -37,8 +37,9 @@ export interface StatusChangeActionProps {
 // The dropdown offers the forward statuses (rules § status lifecycle —
 // RECEIVED / VERIFIED, forward-only), filtered by the invoice-status-options
 // preference; hidden when the return offers no advance (terminal, or a
-// transfer still in the sender's hands). While ON HOLD the button is disabled
-// — hold blocks exactly this (AC-S5); releasing re-enables it.
+// transfer still in the sender's hands). While ON HOLD (or with no lines) the
+// button stays active-and-explaining — the click surfaces the block instead of
+// acting (D39); hold blocks exactly this advance (AC-S5), releasing clears it.
 //
 // Every rejection is NON-typed (contract § advancing status):
 // advanceReturnStatus maps extensions.details to translated copy shown in the

@@ -1,4 +1,10 @@
-import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+  type GraphqlErrorItem,
+} from '../../../api/graphql';
 import { t, type LocaleKey } from '../../../intl';
 import {
   UpdateCustomerReturn,
@@ -147,7 +153,13 @@ export const saveReturnLines = async (
 // --- Delete -----------------------------------------------------------------
 
 export type DeleteReturnResult =
-  { kind: 'deleted' } | { kind: 'error'; message: string } | { kind: 'failed' };
+  | { kind: 'deleted' }
+  // The server rejected the write as Forbidden — the global permission-denied
+  // modal has already been raised (D38); callers just stop, they don't
+  // re-surface it.
+  | { kind: 'forbidden' }
+  | { kind: 'error'; message: string }
+  | { kind: 'failed' };
 
 export const deleteReturn = async (
   storeId: string,
@@ -158,8 +170,17 @@ export const deleteReturn = async (
     { storeId, id },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
+  if (result.kind === 'graphqlError') {
+    // returnGraphqlErrors is on so the per-row bulk path can count failures —
+    // but that opt-in also suppresses the default Forbidden→modal routing, so
+    // route it here ourselves (rules § permission gates: server-rejected writes
+    // surface through the global modal, never a toast/inline notice — D38).
+    if (isForbidden(result.errors)) {
+      reportPermissionDenied(missingPermissions(result.errors));
+      return { kind: 'forbidden' };
+    }
     return { kind: 'error', message: result.message };
+  }
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.deleteCustomerReturn;
   if (response.__typename === 'DeleteResponse') return { kind: 'deleted' };

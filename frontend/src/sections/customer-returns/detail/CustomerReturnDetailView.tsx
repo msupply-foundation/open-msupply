@@ -45,6 +45,7 @@ import {
 import { isReturnDisabled } from './returnStatus';
 import { saveReturnFields } from './returnUpdate';
 import type { ReturnEditFields } from './returnEdit';
+import { ExportPrintAction } from './actions/ExportPrintAction';
 
 // The customer-return detail view (spec/customer-returns/ui-surface.md S3):
 // toolbar (customer / reference / kind banner), Details | Log tabs, the
@@ -300,6 +301,11 @@ const CustomerReturnDetailView: Component = () => {
                         {t('button.add-item')}
                       </Button>
                     </Show>
+                    {/* Export/Print — the reports vertical's record-screen
+                        selector (reports S4), available at every status;
+                        same self-contained action + tone as the stocktake
+                        detail. */}
+                    <ExportPrintAction returnId={node().id} />
                     <Show when={!sidePanelOpen()}>
                       <Button
                         variant="secondary"

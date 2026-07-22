@@ -59,10 +59,16 @@ export const validateStep1 = (drafts: DraftReturnLine[]): Step1Verdict => {
   return 'ok';
 };
 
-// True when proceeding at zero quantity would DELETE persisted lines (edit
-// mode's confirm-to-remove path) rather than just having nothing to do.
-export const zeroQuantityDeletes = (drafts: DraftReturnLine[]): boolean =>
-  drafts.some(d => d.existing);
+// Existing (persisted) lines whose quantity is now zero — saving deletes each
+// of them server-side (rules § line rules). The UI warns before applying this,
+// whether or not OTHER lines in the set still carry quantity: the destructive
+// save must be confirmed even in the mixed case, where a zeroed existing line
+// would otherwise never reach the reason step and be removed silently (AC-E2).
+// New lines at zero are simply dropped, so they never count here.
+export const existingLinesBeingRemoved = (
+  drafts: DraftReturnLine[]
+): DraftReturnLine[] =>
+  drafts.filter(d => d.existing && d.numberOfPacksReturned <= 0);
 
 // Only lines with quantity appear on the reason step (ui-surface S4 step 2).
 export const reasonStepLines = (drafts: DraftReturnLine[]): DraftReturnLine[] =>
