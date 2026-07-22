@@ -3,6 +3,7 @@ import {
   SlidersIcon,
   CopyIcon,
   CardViewIcon,
+  FileIcon,
   type IconProps,
 } from '../ui/icons';
 import { TypographyShowcase } from './TypographyShowcase';
@@ -27,7 +28,7 @@ import { CardGridShowcase } from './CardGridShowcase';
 import { ChartsShowcase } from './ChartsShowcase';
 import { FormsShowcase } from './FormsShowcase';
 
-export type SectionCategory = 'components' | 'layout';
+export type SectionCategory = 'components' | 'layout' | 'pages';
 
 export type SectionDef = {
   id: string;
@@ -55,8 +56,11 @@ export type SectionDef = {
 
 /*
  * The menu-bar groups the sections divide into (Carl, 2026-07-08): basic
- * components / layout elements. The showcase shell derives its MenuBar nav
- * model from this list + the registry below.
+ * components / layout elements — plus Pages (2026-07-23): the full-page
+ * `fill` demos showing the elements assembled into a real page, one entry
+ * per page pattern. Element pages explain one thing in demo cards; Pages
+ * entries show the assembly in use, cross-linked both ways. The showcase
+ * shell derives its MenuBar nav model from this list + the registry below.
  */
 export const categories: {
   id: SectionCategory;
@@ -65,6 +69,7 @@ export const categories: {
 }[] = [
   { id: 'components', label: 'Components', icon: SlidersIcon },
   { id: 'layout', label: 'Layout Elements', icon: CopyIcon },
+  { id: 'pages', label: 'Pages', icon: FileIcon },
 ];
 
 /*
@@ -153,13 +158,6 @@ export const sections: SectionDef[] = [
     category: 'components',
   },
   {
-    id: 'table',
-    label: 'Table',
-    component: TableShowcase,
-    category: 'components',
-    fill: true,
-  },
-  {
     id: 'header',
     label: 'Header',
     component: HeaderShowcase,
@@ -189,11 +187,22 @@ export const sections: SectionDef[] = [
     component: CardGridShowcase,
     category: 'layout',
   },
+  // The Pages group: full-page `fill` demos of the elements assembled into a
+  // real page pattern, labelled by the pattern. Ids predate the group and stay
+  // as-is — they double as URL hashes, and #/showcase/table / #/showcase/forms
+  // links are in circulation.
+  {
+    id: 'table',
+    label: 'List page',
+    component: TableShowcase,
+    category: 'pages',
+    fill: true,
+  },
   {
     id: 'forms',
-    label: 'Forms',
+    label: 'Detail form',
     component: FormsShowcase,
-    category: 'layout',
+    category: 'pages',
     fill: true,
   },
   // A standalone reference page, listed as its own top-level menu entry rather
