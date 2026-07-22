@@ -1,4 +1,4 @@
-// Disable camelcase should be removed once enable_multi_site feature flag is removed from the central server's configuration. See issue #12522.
+// Disable camelcase should be removed once enable_multi_device_site feature flag is removed from the central server's configuration. See issue #12522.
 /* eslint-disable camelcase */
 
 import React from 'react';
@@ -70,9 +70,9 @@ export const SiteEditModal = ({
   const { data: syncSettings } = useSync.settings.syncSettings();
   const currentSiteId = syncSettings?.syncSiteId;
   // Multi-device sync is not ready for general use (some data, e.g. stock, does
-  // not sync), so the toggle is gated behind the `enable_multi_site` feature flag
-  // in the central server's configuration. See issue #12522.
-  const { enable_multi_site } = useFeatureFlags();
+  // not sync), so the toggle is gated behind the `enable_multi_device_site`
+  // feature flag in the central server's configuration. See issue #12522.
+  const { enable_multi_device_site } = useFeatureFlags();
   // Hardware id / token are only safe to clear once the site has transitioned to
   // v7 (legacy v5/v6 sites still manage these via 4D). See issue #11784.
   const isV7 = syncVersion === SyncVersionNode.V7;
@@ -250,7 +250,7 @@ export const SiteEditModal = ({
                 <Box display="flex" justifyContent="flex-end" flex={1}>
                   <Tooltip
                     title={
-                      !enable_multi_site
+                      !enable_multi_device_site
                         ? t('messages.multi-device-requires-flag')
                         : ''
                     }
@@ -262,8 +262,8 @@ export const SiteEditModal = ({
                         onChange={() => confirmSetMultiDevice()}
                         // Don't allow a multi device site to become a single device site again
                         // TODO: Need to implement re-syncing of skipped changelog entries - #12401
-                        // Also disabled unless the enable_multi_site feature flag is set - #12522
-                        disabled={isMultiDevice || !enable_multi_site}
+                        // Also disabled unless the enable_multi_device_site feature flag is set - #12522
+                        disabled={isMultiDevice || !enable_multi_device_site}
                       />
                     </span>
                   </Tooltip>

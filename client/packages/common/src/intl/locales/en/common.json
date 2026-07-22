@@ -2491,7 +2491,7 @@
   "messages.no-stock-available": "There is no stock available",
   "messages.no-stock-movements": "No stock movements have been created yet.",
   "messages.move-all-or-partial": "Move all or a partial quantity (max {{max}}).",
-  "messages.multi-device-requires-flag": "Multi-device sync must be enabled in the server configuration (features: enable_multi_site) before it can be turned on here.",
+  "messages.multi-device-requires-flag": "Multi-device sync must be enabled in the server configuration (features: enable_multi_device_site) before it can be turned on here.",
   "messages.no-stock-movement-lines": "No lines have been added to this stock movement yet.",
   "messages.confirm-delete-stock-movement-lines_one": "Are you sure you want to delete this line?",
   "messages.confirm-delete-stock-movement-lines_other": "Are you sure you want to delete these {{count}} lines?",
