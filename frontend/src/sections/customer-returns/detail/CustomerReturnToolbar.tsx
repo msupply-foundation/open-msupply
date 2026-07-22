@@ -3,7 +3,7 @@ import { t } from '../../../intl';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { CustomerSelect } from '../../../domain/customer';
+import { NameSearch } from '../../../domain/name';
 import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
 import { returnKind } from './returnStatus';
 import type { ReturnFieldEdit } from './returnEdit';
@@ -35,21 +35,28 @@ export const CustomerReturnToolbar: Component<
   return (
     <>
       <FieldRow label={t('label.customer-name')}>
-        <CustomerSelect
+        <NameSearch
           storeId={props.storeId}
+          role="customer"
           label={t('label.customer-name')}
           hideLabel
-          value={props.node.otherPartyId}
+          // Seed the record's current customer so the selection's label
+          // resolves before (or regardless of) its page. The detail fragment
+          // carries only the party's id + name; the seed's other fields are
+          // display hints the input text doesn't use.
           selected={{
             id: props.node.otherPartyId,
             code: '',
             name: props.node.otherPartyName,
             isOnHold: false,
-            store: null,
+            isStore: false,
+            isSupplier: false,
+            isDonor: false,
           }}
           disabled={props.disabled || kind() === 'transfer'}
           error={props.customerError}
-          onChange={customer => {
+          clearable={false}
+          onSelect={customer => {
             if (customer) props.onChangeCustomer(customer.id);
           }}
         />
