@@ -85,11 +85,9 @@ pub async fn pull(
         response.site_id,
         is_initialised,
     )?;
-    let total_records = changelog_repo.count_outgoing_sync_records_from_central(
-        cursor,
-        response.site_id,
-        is_initialised,
-    )?;
+    // A short batch means the changelog tail is exhausted (= last batch). Avoids a full count, which
+    // scans the changelog on every pull and exhausts the DB pool under concurrent multi-site init.
+    let num_changelogs = changelogs.len();
     // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
     // changelog cursor. The non-empty path is already safe because the query is clamped.
     let max_cursor = changelog_repo.latest_cursor()?;
@@ -116,7 +114,9 @@ pub async fn pull(
     );
     log::debug!("Sending records as central server: {records:#?}");
 
-    let is_last_batch = total_records <= batch_size as u64;
+    let is_last_batch = num_changelogs < batch_size as usize;
+    // Cheap progress-bar estimate (over-estimates, but monotonic and snaps to done on the last batch).
+    let total_records = max_cursor.saturating_sub(cursor);
 
     Ok(SyncBatchV6 {
         total_records,
@@ -240,11 +240,8 @@ pub async fn patient_pull(
         response.site_id,
         fetch_patient_id.clone(),
     )?;
-    let total_records = changelog_repo.count_outgoing_patient_sync_records_from_central(
-        cursor,
-        response.site_id,
-        fetch_patient_id,
-    )?;
+    // See `pull`: short batch = last batch; avoids a full count and uses a cheap progress estimate.
+    let num_changelogs = changelogs.len();
     // Clamp the empty-batch fallback so we don't advance past an in-flight (uncommitted, lower)
     // changelog cursor. The non-empty path is already safe because the query is clamped.
     let max_cursor = changelog_repo.latest_cursor()?;
@@ -271,7 +268,8 @@ pub async fn patient_pull(
     );
     log::debug!("Patient Pull: Sending records as central server: {records:#?}");
 
-    let is_last_batch = total_records <= batch_size as u64;
+    let is_last_batch = num_changelogs < batch_size as usize;
+    let total_records = max_cursor.saturating_sub(cursor);
 
     Ok(SyncBatchV6 {
         total_records,
