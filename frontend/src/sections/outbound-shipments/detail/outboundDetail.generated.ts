@@ -150,6 +150,7 @@ export type UpdateOutboundShipmentVariables = {
     value?: string | null;
   } | null;
     backdatedDatetime?: string | null;
+    customFields?: unknown | null;
   };
 };
 
