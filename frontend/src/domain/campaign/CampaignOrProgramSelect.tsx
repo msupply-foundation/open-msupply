@@ -15,8 +15,7 @@ export type CampaignOrProgram =
 // the onChange can route the choice to the right field. The value key is
 // prefixed by kind so a campaign and a program sharing an id never collide.
 type Option =
-  | { kind: 'campaign'; node: Campaign }
-  | { kind: 'program'; node: ItemProgram };
+  { kind: 'campaign'; node: Campaign } | { kind: 'program'; node: ItemProgram };
 
 const optionValue = (o: Option): string => `${o.kind}:${o.node.id}`;
 
@@ -61,10 +60,21 @@ export const CampaignOrProgramSelect = (
     () => ({ storeId: props.storeId, itemId: props.itemId }),
     ({ storeId, itemId }) => fetchItemPrograms(storeId, itemId)
   );
+  // No-suspend read (mirrors storeScopedResource.noSuspense): reading
+  // `programs()` — OR `programs.latest` — trips an ancestor <Suspense> on the
+  // FIRST pending read, collapsing the boundary to its fallback and remounting
+  // whatever renders this picker. In a line-edit modal that tears down the
+  // native <dialog>, which loses the top layer on re-attach and drops into the
+  // page flow (kdd/solid-reactivity-pitfalls › No remounts on interaction).
+  // Gate on state: keep the prior value while refreshing, `[]` until first ready.
+  const programList = (): ItemProgram[] =>
+    programs.state === 'ready' || programs.state === 'refreshing'
+      ? (programs.latest ?? [])
+      : [];
 
   const options = (): Option[] => [
     ...campaigns().map(node => ({ kind: 'campaign' as const, node })),
-    ...(programs() ?? []).map(node => ({ kind: 'program' as const, node })),
+    ...programList().map(node => ({ kind: 'program' as const, node })),
   ];
 
   // The current selection resolved to its merged-list value key (or undefined).

@@ -314,8 +314,17 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         : [];
     }
   );
+  // No-suspend read (mirrors storeScopedResource.noSuspense): reading
+  // `poLines()` — OR `poLines.latest` — trips the page <Suspense> on the first
+  // pending read, collapsing the boundary and remounting this dialog, which
+  // then loses the native top layer and drops into the page flow
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). Gate on state.
+  const poLineList = () =>
+    poLines.state === 'ready' || poLines.state === 'refreshing'
+      ? (poLines.latest ?? [])
+      : [];
   const choosePoLine = (id: string) => {
-    const line = (poLines() ?? []).find(l => l.id === id);
+    const line = poLineList().find(l => l.id === id);
     if (!line) return;
     setPoLineId(id);
     // The PO-line lookup carries only id/code/name for the item; unit/vaccine
@@ -998,7 +1007,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.purchase-order')}
             value={poLineId()}
             onValueChange={choosePoLine}
-            options={(poLines() ?? [])
+            options={poLineList()
               .filter(l => !props.existingItemIds.includes(l.item.id))
               .map(l => ({
                 value: l.id,
