@@ -406,6 +406,7 @@ export const InboundShipmentSidePanel: Component<
               storeId={props.storeId}
               invoiceId={props.node.id}
               isExternal={props.isExternal}
+              number={() => props.node.invoiceNumber}
               disabled={false}
               onDeleted={props.onDeleted}
             />

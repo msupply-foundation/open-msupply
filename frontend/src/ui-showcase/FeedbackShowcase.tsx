@@ -4,6 +4,8 @@ import { Badge } from '../ui/elements/feedback/Badge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Popover } from '../ui/elements/feedback/Popover';
 import { Comment } from '../ui/elements/feedback/Comment';
+import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
+import { TextField } from '../ui/elements/inputs/TextField';
 import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
 import { Card, Col, Row, Stack } from './common';
 import styles from './FeedbackShowcase.module.css';
@@ -149,6 +151,30 @@ export const FeedbackShowcase = () => {
           </span>
           <Comment comment={null} />
         </div>
+      </Card>
+
+      <Card
+        title="InfoTooltip — help text behind an icon"
+        lead={
+          <>
+            The help-text sibling of <code>Comment</code>: a quiet{' '}
+            <code>InfoOutlineIcon</code> that reveals a short gloss on hover /
+            focus / tap. Pass it to an input's <code>labelInfo</code> slot to
+            explain a field (below), or drop it inline beside any term.
+          </>
+        }
+      >
+        <div class={styles.popoverRow}>
+          <span>Standalone: </span>
+          <InfoTooltip text="The number of local (home) currency units per one PO currency unit." />
+        </div>
+        <TextField
+          label="Currency rate"
+          labelInfo={
+            <InfoTooltip text="The number of local (home) currency units per one PO currency unit — e.g. a rate of 1.6 means 1 USD = 1.6 NZD." />
+          }
+          value="1.6"
+        />
       </Card>
     </Stack>
   );
