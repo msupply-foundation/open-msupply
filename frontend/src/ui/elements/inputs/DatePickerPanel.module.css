@@ -34,8 +34,8 @@
 }
 
 .navBtn:hover {
-  background: color-mix(in srgb, var(--primary-main) 12%, transparent);
-  color: var(--primary-main);
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+  color: var(--secondary-main);
 }
 
 .navBtn:focus-visible {
@@ -68,7 +68,7 @@
 
 .headingBtn:focus-visible {
   outline: none;
-  border-color: var(--primary-main);
+  border-color: var(--secondary-main);
   box-shadow: var(--focus-ring);
 }
 
@@ -99,7 +99,7 @@
 }
 
 .pickCell:hover {
-  background: color-mix(in srgb, var(--primary-main) 12%, transparent);
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
 }
 
 .pickCell:focus-visible {
@@ -108,7 +108,7 @@
 }
 
 .pickCell[data-selected] {
-  background: var(--primary-main);
+  background: var(--secondary-main);
   color: var(--primary-contrast);
   font-weight: var(--weight-semibold);
 }
@@ -148,7 +148,7 @@
 }
 
 .day:hover {
-  background: color-mix(in srgb, var(--primary-main) 12%, transparent);
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
 }
 
 .day:focus-visible {
@@ -158,25 +158,25 @@
 
 /* Today: ringed, not filled (fill is reserved for the selection). */
 .day[data-today] {
-  box-shadow: inset 0 0 0 1px var(--primary-main);
+  box-shadow: inset 0 0 0 1px var(--secondary-main);
 }
 
 /* Selected: brand fill, contrast text. */
 .day[data-selected] {
-  background: var(--primary-main);
+  background: var(--secondary-main);
   color: var(--primary-contrast);
   font-weight: var(--weight-semibold);
 }
 
 /* Range: interior days get a light tint, the two ends the brand fill. */
 .day[data-in-range] {
-  background: color-mix(in srgb, var(--primary-main) 14%, transparent);
+  background: color-mix(in srgb, var(--secondary-main) 14%, transparent);
   border-radius: 0;
 }
 
 .day[data-range-start],
 .day[data-range-end] {
-  background: var(--primary-main);
+  background: var(--secondary-main);
   color: var(--primary-contrast);
   font-weight: var(--weight-semibold);
 }

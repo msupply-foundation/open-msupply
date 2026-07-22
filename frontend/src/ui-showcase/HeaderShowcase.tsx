@@ -1,4 +1,3 @@
-import type { JSX } from 'solid-js';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
@@ -6,21 +5,7 @@ import { Toolbar } from '../ui/layout/Header/Toolbar';
 import { Button } from '../ui/elements/buttons/Button';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
 import { TruckIcon, PlusCircleIcon, DownloadIcon } from '../ui/icons';
-import styles from './HeaderShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
+import { Card, PageBody, PageFrame, Stack, ToolbarStub } from './common';
 
 const EXPORT_OPTIONS = [
   { value: 'csv', label: 'Export CSV' },
@@ -28,7 +13,7 @@ const EXPORT_OPTIONS = [
 ];
 
 export const HeaderShowcase = () => (
-  <div class={styles.stack}>
+  <Stack>
     <Card
       title="Page header — the Outbound Shipments demo"
       lead={
@@ -44,7 +29,7 @@ export const HeaderShowcase = () => (
         </>
       }
     >
-      <div class={styles.pageFrame}>
+      <PageFrame>
         <Header>
           <Breadcrumb
             icon={<TruckIcon />}
@@ -59,11 +44,11 @@ export const HeaderShowcase = () => (
             />
           </HeaderButtons>
           <Toolbar>
-            <span class={styles.toolbarStub}>Toolbar</span>
+            <ToolbarStub>Toolbar</ToolbarStub>
           </Toolbar>
         </Header>
-        <div class={styles.pageBody} aria-hidden="true" />
-      </div>
+        <PageBody />
+      </PageFrame>
     </Card>
 
     <Card
@@ -82,7 +67,7 @@ export const HeaderShowcase = () => (
         </>
       }
     >
-      <div class={styles.pageFrame}>
+      <PageFrame>
         <Header>
           <Breadcrumb
             icon={<TruckIcon />}
@@ -100,8 +85,8 @@ export const HeaderShowcase = () => (
             />
           </HeaderButtons>
         </Header>
-        <div class={styles.pageBody} aria-hidden="true" />
-      </div>
+        <PageBody />
+      </PageFrame>
     </Card>
-  </div>
+  </Stack>
 );
