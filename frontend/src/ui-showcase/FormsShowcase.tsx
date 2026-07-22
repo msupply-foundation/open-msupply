@@ -22,7 +22,11 @@ import { Alert } from '../ui/elements/feedback/Alert';
 import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../ui/elements/buttons/Button';
-import { CopyIcon, PlusCircleIcon, SaveIcon, XCircleIcon } from '../ui/icons';
+import {
+  CancelButton,
+  SaveButton,
+} from '../ui/elements/buttons/StandardButtons';
+import { CopyIcon, PlusCircleIcon } from '../ui/icons';
 
 const LOCATIONS = [
   { value: 's4', label: 'S4 – S4 (Ambient)' },
@@ -103,12 +107,8 @@ export const FormsShowcase = () => {
         contentFooter={
           <ContentFooter>
             <ContentFooterActions>
-              <Button variant="secondary" icon={<XCircleIcon />}>
-                Cancel
-              </Button>
-              <Button variant="secondary" icon={<SaveIcon />}>
-                Save
-              </Button>
+              <CancelButton />
+              <SaveButton />
             </ContentFooterActions>
           </ContentFooter>
         }
