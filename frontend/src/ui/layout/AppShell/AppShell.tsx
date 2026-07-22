@@ -6,7 +6,7 @@ import {
   type Component,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { StockIcon, CentralIcon, type IconProps } from '../../icons';
+import { HomeIcon, CentralIcon, type IconProps } from '../../icons';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
 import { MenuBar, type MenuBarState } from './MenuBar';
 import { LanguageSelector } from './LanguageSelector';
@@ -199,7 +199,7 @@ export const AppShell = (props: AppShellProps) => {
                 data-central={props.isCentralServer ? '' : undefined}
               >
                 <FooterCell
-                  icon={StockIcon}
+                  icon={HomeIcon}
                   label={props.storeName}
                   onClick={props.onStoreClick}
                 />
