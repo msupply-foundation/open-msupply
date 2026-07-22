@@ -162,6 +162,15 @@ export const clearForbiddenError = (): void => {
   setForbiddenError(undefined);
 };
 
+// Spec (Permission denied): surface the global permission-denied modal from a
+// client-side affordance check — a role the user's loaded permissions lack,
+// caught before the action is fired (spec/ui-standards/validation.md
+// § permission gating). Names are the PascalCase form the modal humanises,
+// matching the wire's HasPermission(...) names an actual Forbidden would carry.
+export const reportPermissionDenied = (permissions: string[]): void => {
+  setForbiddenError(permissions);
+};
+
 // Spec (Token refresh): track when the last GraphQL call happened.
 let lastCallAt = Date.now();
 export const msSinceLastGqlCall = (): number => Date.now() - lastCallAt;

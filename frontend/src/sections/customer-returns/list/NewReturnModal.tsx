@@ -47,6 +47,13 @@ const Body: Component<{ onClose: () => void }> = props => {
       },
     });
     setCreating(false);
+    if (result.kind === 'forbidden') {
+      // Permission lost since the list gated the affordance (a mid-session
+      // revoke). The global permission-denied modal already showed; close so
+      // this isn't a dead end behind it — no misleading generic notice.
+      props.onClose();
+      return;
+    }
     if (result.kind !== 'success') {
       // Transport / non-typed rejection → the global modal already showed it;
       // give the modal its own inline notice so the flow isn't a dead end.

@@ -13,7 +13,10 @@ import {
   DataTable,
   type Column,
 } from '../../../../ui/elements/table/DataTable';
-import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
+import {
+  getDateCell,
+  getNumberCell,
+} from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ItemSearch } from '../../../../domain/item';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
@@ -442,9 +445,12 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     },
     { c: { key: 'batch' }, header: t('label.batch') },
     {
-      c: { key: 'numberOfPacksReturned' },
-      header: t('label.quantity-returned'),
-      ...getNumberCell(),
+      // Expiry, read-only here (edited in the quantity step) — matches the
+      // current app's reason-step table (ReturnReasonsTable: batch · expiry ·
+      // reason · comment; no quantity column).
+      c: { key: 'expiryDate' },
+      header: t('label.expiry'),
+      ...getDateCell(),
     },
     {
       c: { id: 'returnReasonInput' },
@@ -570,18 +576,21 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 </Button>
               </Match>
             </Switch>
-            {/* OK & next is present on BOTH steps (matching the running app)
-                but actionable only on the reason step with a next item to
-                advance to — until then it's disabled, never hidden. */}
-            <Button
-              icon={<ArrowRightIcon />}
-              loading={saving()}
-              disabled={step() !== 'reason' || !hasNext()}
-              data-testid="dialog-button-next-and-ok"
-              onClick={() => void onOkNext()}
-            >
-              {t('button.ok-and-next')}
-            </Button>
+            {/* OK & next is actionable only on the reason step with a next
+                item to advance to; anywhere else the action is permanently
+                dead in-context (the quantity step can't save-and-advance, the
+                last item has nowhere to advance to), so it's HIDDEN, not
+                disabled — the blocked-affordances ladder (D25). */}
+            <Show when={step() === 'reason' && hasNext()}>
+              <Button
+                icon={<ArrowRightIcon />}
+                loading={saving()}
+                data-testid="dialog-button-next-and-ok"
+                onClick={() => void onOkNext()}
+              >
+                {t('button.ok-and-next')}
+              </Button>
+            </Show>
           </Show>
         </>
       }

@@ -18,10 +18,11 @@ import { deleteReturn } from './returnUpdate';
 import type { ReturnFieldEdit } from './returnEdit';
 
 // The detail side panel (spec/customer-returns/ui-surface.md S3 § side panel):
-// Additional info (edited-by / colour / comment), Related documents (the
-// originating outbound shipment, when there is one), and the record actions —
-// Delete (offered only while NEW — rules § deletion, AC-D3) and Copy to
-// clipboard.
+// Additional info (edited-by / colour / comment) and Related documents (the
+// originating outbound shipment, when there is one) are collapsible info
+// sections (open by default); the record actions — Delete (offered only while
+// NEW — rules § deletion, AC-D3) and Copy to clipboard — are pinned at the
+// panel's end, below them.
 
 export interface CustomerReturnSidePanelProps {
   node: CustomerReturnInfoFragment;
@@ -68,7 +69,7 @@ export const CustomerReturnSidePanel: Component<
 
   return (
     <>
-      <SidePanelSection title={t('heading.additional-info')}>
+      <SidePanelSection title={t('heading.additional-info')} collapsible>
         <FieldRow label={t('label.edited-by')}>
           <Text variant="body">{props.node.user?.username ?? '—'}</Text>
         </FieldRow>
@@ -101,7 +102,7 @@ export const CustomerReturnSidePanel: Component<
       {/* Related documents (rules § creation — the originating-shipment link is
           permanent; contract § manual vs transfer): a dated, attributed link to
           the outbound shipment a manual return was created from. */}
-      <SidePanelSection title={t('heading.related-documents')}>
+      <SidePanelSection title={t('heading.related-documents')} collapsible>
         <Show
           when={props.node.originalShipment}
           fallback={

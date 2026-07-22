@@ -7,6 +7,7 @@ import { CustomerSelect } from '../../../domain/customer';
 import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
 import { returnKind } from './returnStatus';
 import type { ReturnFieldEdit } from './returnEdit';
+import styles from './CustomerReturnToolbar.module.css';
 
 // The detail toolbar (spec/customer-returns/ui-surface.md S3 § header fields):
 // the customer lookup, the in-place customer reference, and the kind banner.
@@ -71,9 +72,13 @@ export const CustomerReturnToolbar: Component<
           waits until it is received (AC-T1). */}
       <Show
         when={kind() === 'transfer'}
-        fallback={<Alert severity="info">{t('info.manual-return')}</Alert>}
+        fallback={
+          <Alert severity="info" class={styles.kindBanner}>
+            {t('info.manual-return')}
+          </Alert>
+        }
       >
-        <Alert severity="info">
+        <Alert severity="info" class={styles.kindBanner}>
           {t('info.automatic-return')}
           <Show when={props.disabled && props.node.status !== 'VERIFIED'}>
             {' '}

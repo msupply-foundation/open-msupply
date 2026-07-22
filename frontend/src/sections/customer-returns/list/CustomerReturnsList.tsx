@@ -1,7 +1,8 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { graphqlFetch } from '../../../api/graphql';
+import { graphqlFetch, reportPermissionDenied } from '../../../api/graphql';
+import { hasStorePermission } from '../../../store/storeContext';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -167,8 +168,21 @@ const CustomerReturnsList: Component = () => {
   const filters = createFilters(() => prefs.latest?.invoiceStatusOptions ?? []);
 
   const onNewReturn = () => {
-    if (manualReturnsDisabled()) setDisabledNoticeOpen(true);
-    else setCreateOpen(true);
+    // Preference gate first (rules § preference & permission gates): with manual
+    // returns disabled the notice shows even to a user lacking the permission.
+    if (manualReturnsDisabled()) {
+      setDisabledNoticeOpen(true);
+      return;
+    }
+    // Then the standing permission mirror (validation § permission gating):
+    // creating requires CUSTOMER_RETURN_MUTATE. Lacking it, the global
+    // permission-denied modal shows at once — never a toast, and no customer
+    // picker opens. The server enforces the same resource on the write regardless.
+    if (!hasStorePermission('CUSTOMER_RETURN_MUTATE')) {
+      reportPermissionDenied(['CustomerReturnMutate']);
+      return;
+    }
+    setCreateOpen(true);
   };
 
   const currentSort = (): SortState<SortKey> | undefined => {

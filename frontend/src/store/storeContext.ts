@@ -57,9 +57,24 @@ const currentStoreId = () => loadedStoreId();
 // `me?.userId`; undefined between store switches.
 const currentUserId = () => storeContext()?.me?.userId;
 
+// The permissions the current user holds in the entered store (Guard 3's
+// storeContext read; the query already scopes `permissions` to the store, so
+// this flattens its nodes). Empty until the context resolves — the store guard
+// loads it before any store page renders, so a page read never races it.
+const currentStorePermissions = (): string[] =>
+  storeContext()?.me?.permissions.nodes.flatMap(n => n.permissions) ?? [];
+
+// Whether the current user holds a given permission in the entered store. For
+// mirroring a role-restricted affordance (a standing capability, not an
+// action's verdict — spec/ui-standards/validation.md § permission gating); the
+// server still enforces the same resource on every write.
+const hasStorePermission = (permission: string): boolean =>
+  currentStorePermissions().includes(permission);
+
 export {
   storeContext,
   refetch as refetchStoreContext,
   currentStoreId,
   currentUserId,
+  hasStorePermission,
 };
