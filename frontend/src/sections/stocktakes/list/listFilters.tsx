@@ -1,8 +1,6 @@
 import { t } from '../../../intl';
 import {
   FilterSelect,
-  FilterTextInput,
-  FilterNumberInput,
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
@@ -35,9 +33,10 @@ const localDay = (utc: string | null | undefined) =>
   utcToLocalParts(utc)?.date ?? null;
 
 /*
- * Type-driven, EXHAUSTIVE filter definitions for the stocktakes list (the
- * spec's deliberate-filters requirement, preserved from the reference
- * vertical). The map passed to `constructFilters` is keyed by EVERY key of the
+ * Type-driven, EXHAUSTIVE filter definitions for the stocktakes list. The list
+ * surfaces only Status + Created (aligned to the real client — see the
+ * dismissed section below). The map passed to `constructFilters` is keyed by
+ * EVERY key of the
  * generated StocktakeFilterInput: a key maps to a definition to expose it, or
  * `null` to dismiss it (not user-facing). Being a Record over all of
  * `StocktakeFilter`, it can't compile with a key missing — when the schema
@@ -89,118 +88,6 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
       />
     ),
   },
-  description: {
-    label: () => t('label.description'),
-    render: props => (
-      <FilterTextInput
-        label={t('label.description')}
-        testId={props.testId}
-        placeholder={t('label.description')}
-        value={props.filter().description?.like ?? ''}
-        // Blank box → null, never { like: '' }: an empty `like` would wrongly
-        // match (the server treats "" as a real substring).
-        onInput={value =>
-          props.setPartialFilter({
-            description: value ? { like: value } : null,
-          })
-        }
-      />
-    ),
-  },
-  comment: {
-    label: () => t('label.comment'),
-    render: props => (
-      <FilterTextInput
-        label={t('label.comment')}
-        testId={props.testId}
-        placeholder={t('label.comment')}
-        value={props.filter().comment?.like ?? ''}
-        onInput={value =>
-          props.setPartialFilter({ comment: value ? { like: value } : null })
-        }
-      />
-    ),
-  },
-  isLocked: {
-    label: () => t('label.locked'),
-    render: props => (
-      <FilterSelect
-        label={t('label.locked')}
-        testId={props.testId}
-        value={
-          props.filter().isLocked == null
-            ? ''
-            : props.filter().isLocked
-              ? 'true'
-              : 'false'
-        }
-        options={[
-          { value: '', label: t('label.any') },
-          { value: 'true', label: t('messages.yes') },
-          { value: 'false', label: t('messages.no') },
-        ]}
-        onChange={value =>
-          props.setPartialFilter({
-            isLocked: value === '' ? null : value === 'true',
-          })
-        }
-      />
-    ),
-  },
-  stocktakeNumber: {
-    label: () => t('label.number'),
-    render: props => (
-      <FilterNumberInput
-        label={t('label.number')}
-        testId={props.testId}
-        placeholder={t('label.number')}
-        // stocktakeNumber is an integer — NumberField edits (and commits) a real
-        // number, so no string parsing / NaN guard here. `?? undefined` keeps
-        // the box blank when unset.
-        value={props.filter().stocktakeNumber?.equalTo ?? undefined}
-        // Server honours stocktakeNumber.equalTo (verified). A committed number
-        // → { equalTo }; clearing the box (undefined) → null so the chip stays
-        // with no filter applied (never { equalTo: NaN }).
-        onChange={value =>
-          props.setPartialFilter({
-            stocktakeNumber: value === undefined ? null : { equalTo: value },
-          })
-        }
-      />
-    ),
-  },
-
-  // Stocktake date — a `DateFilterInput` over the `NaiveDate` field: the picked
-  // calendar dates go straight onto afterOrEqualTo/beforeOrEqualTo unchanged
-  // (no timezone widening — the field has no time). Both ends empty → null so
-  // the chip stays (present-as-null) with no filter applied; stripEmpty drops
-  // it before the query. A one-sided range keeps just the bound that is set.
-  stocktakeDate: {
-    label: () => t('label.stocktake-date'),
-    render: props => (
-      <DateRangeField
-        label={t('label.stocktake-date')}
-        hideLabel
-        size="small"
-        testId={props.testId}
-        value={{
-          start: props.filter().stocktakeDate?.afterOrEqualTo ?? null,
-          end: props.filter().stocktakeDate?.beforeOrEqualTo ?? null,
-        }}
-        onChange={({ start, end }) =>
-          props.setPartialFilter({
-            stocktakeDate:
-              start || end
-                ? {
-                    ...(start ? { afterOrEqualTo: start } : {}),
-                    ...(end ? { beforeOrEqualTo: end } : {}),
-                  }
-                : null,
-          })
-        }
-      />
-    ),
-  },
   // Created — a `DatetimeFilterInput` over the `DateTime` field: a picked day is
   // widened to an inclusive instant (day-start … day-end) in the viewer's local
   // zone, because a bare calendar date is not a valid DateTime. Same
@@ -236,6 +123,17 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
 
   // ─ dismissed (not user-facing)
   // ───────────────────────────────────────────────
+  // Aligned to the real client (Stocktake/ListView): its list surfaces ONLY
+  // Status + Created, so Description / Comment / Locked / Number / Stocktake-date
+  // are dismissed here even though the schema declares them (they stay
+  // contract-declared and could be re-surfaced — see spec/stocktakes README's
+  // "List filter set aligned to the real client"). The fields remain filterable
+  // on the wire; we simply don't offer a control.
+  description: null,
+  comment: null,
+  isLocked: null,
+  stocktakeNumber: null,
+  stocktakeDate: null,
   // Program stocktake — a boolean the schema exposes, but not surfaced as a
   // list filter for now (dismissed by product decision).
   isProgramStocktake: null,
