@@ -1,9 +1,12 @@
 import { createSignal, createUniqueId } from 'solid-js';
+import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../ui/layout/Stack/Stack';
+import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import {
   DocumentUploadPanel,
   type DocumentFile,
 } from '../ui/elements/display/DocumentUploadPanel';
-import { Card, Stack } from './common';
+import { Lead } from './common';
 import styles from './DocumentUploadShowcase.module.css';
 
 // The mockup's sample documents (filename, uploaded date, size).
@@ -59,51 +62,43 @@ export const DocumentUploadShowcase = () => {
     setDocuments(prev => prev.filter(doc => doc.id !== document.id));
 
   return (
-    <Stack>
-      <Card
-        title="Document upload — the whole Documents tab"
-        lead={
-          <>
+    <ContentContainer size="form" align="start">
+      <Stack gap="lg">
+        <DashboardCard title="Document upload — the whole Documents tab">
+          <Lead>
             A drag & drop upload zone above a plain file list — file-type icon,
             name link, date uploaded, size, per-row delete. Not a table: a
             semantic <code>&lt;ul&gt;</code> on a shared grid. Presentational
             and callback-driven (<code>onUpload</code> / <code>onDelete</code>);
             the caller owns the transport. Try dropping a file, or delete a row.
-          </>
-        }
-      >
-        <div class={styles.frame}>
-          <DocumentUploadPanel
-            documents={documents()}
-            onUpload={onUpload}
-            onDelete={onDelete}
-          />
-        </div>
-      </Card>
+          </Lead>
+          <div class={styles.frame}>
+            <DocumentUploadPanel
+              documents={documents()}
+              onUpload={onUpload}
+              onDelete={onDelete}
+            />
+          </div>
+        </DashboardCard>
 
-      <Card
-        title="Read-only — no upload zone, no delete"
-        lead={
-          <>
+        <DashboardCard title="Read-only — no upload zone, no delete">
+          <Lead>
             Omit <code>onUpload</code> (or set <code>canUpload=false</code>) to
             hide the zone, and <code>onDelete</code> to drop the delete action —
             e.g. a finalised record.
-          </>
-        }
-      >
-        <div class={styles.frame}>
-          <DocumentUploadPanel documents={INITIAL_DOCUMENTS} />
-        </div>
-      </Card>
+          </Lead>
+          <div class={styles.frame}>
+            <DocumentUploadPanel documents={INITIAL_DOCUMENTS} />
+          </div>
+        </DashboardCard>
 
-      <Card
-        title="Empty state"
-        lead="No documents yet — the zone invites the first upload."
-      >
-        <div class={styles.frame}>
-          <DocumentUploadPanel documents={[]} onUpload={() => {}} />
-        </div>
-      </Card>
-    </Stack>
+        <DashboardCard title="Empty state">
+          <Lead>No documents yet — the zone invites the first upload.</Lead>
+          <div class={styles.frame}>
+            <DocumentUploadPanel documents={[]} onUpload={() => {}} />
+          </div>
+        </DashboardCard>
+      </Stack>
+    </ContentContainer>
   );
 };

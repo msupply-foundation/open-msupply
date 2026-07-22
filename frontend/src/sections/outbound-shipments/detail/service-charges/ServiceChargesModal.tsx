@@ -352,15 +352,7 @@ const ServiceChargesContent = (
     >
       <Show
         when={rows().length > 0}
-        fallback={
-          <p>
-            {t('error.no-service-charges')}
-            <Show when={!defaultServiceItem() && !serviceItems.loading}>
-              {' — '}
-              {t('error.no-service-charges')}
-            </Show>
-          </p>
-        }
+        fallback={<p>{t('error.no-service-charges')}</p>}
       >
         <DataTable
           columns={columns()}

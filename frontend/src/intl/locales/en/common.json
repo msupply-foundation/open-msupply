@@ -2556,6 +2556,7 @@
   "messages.line-errors_other": "{{ count }} lines have errors.",
   "messages.loading-report": "Loading report...",
   "messages.location": "Location:",
+  "messages.location-in-use": "Location {{code}} is in use and cannot be deleted ({{stockLines}} stock lines, {{invoiceLines}} invoice lines)",
   "messages.locations-restricted": "Some selected items can only be stored in specific locations. Available options may be limited below.",
   "messages.log-saved-successfully": "Log saved successfully",
   "messages.logout-confirm": "This will log you out.",
@@ -3303,5 +3304,8 @@
   "error.pack-size-min": "Pack size must be at least 1.",
   "button.new": "New",
   "messages.no-ledger-entries": "There are no ledger entries to display.",
-  "messages.no-vvm-history": "There is no VVM status history to display."
+  "messages.no-vvm-history": "There is no VVM status history to display.",
+  "heading.batches-and-dates": "Batches and dates",
+  "heading.storage-and-pack": "Storage & pack",
+  "heading.supply-chain": "Supply chain"
 }
