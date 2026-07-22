@@ -54,6 +54,15 @@ export const backdateBounds = (
   return { min: toDateInput(earliest), max: toDateInput(now) };
 };
 
+// AC-B1 rejection on the SAVE path: the native min/max only constrain the
+// picker UI — a typed-in out-of-range day still fires change — so the chosen
+// day is re-checked against the window before anything saves. YYYY-MM-DD
+// compares lexicographically, so plain string comparison is exact.
+export const withinBackdateBounds = (
+  bounds: { min: string; max: string },
+  day: string
+): boolean => day >= bounds.min && day <= bounds.max;
+
 // A chosen day → an ISO datetime on that day at `now`'s time (recorded "as of"
 // that day; the picker bounds it to the window above).
 export const backdatedDatetimeFor = (now: Date, day: string): string => {

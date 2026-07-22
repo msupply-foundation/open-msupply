@@ -15,6 +15,7 @@ import {
   backdatedDatetimeFor,
   backdatingGate,
   toDateInput,
+  withinBackdateBounds,
   type BackdateWarningKey,
 } from './backdating';
 
@@ -83,13 +84,18 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
     setDraft(day);
     const backdatedDatetime = backdatedDatetimeFor(new Date(), day);
     // Stocktake-conflict check (AC-B4): any stocktake counted on or after the
-    // chosen day.
+    // chosen day. A non-success is UNKNOWN, not "no conflict" — fail closed:
+    // revert the pick and let the global unexpected-error modal (already
+    // raised by graphqlFetch) explain, rather than backdating unconfirmed.
     const result = await graphqlFetch(OutboundStocktakeConflict, {
       storeId: props.storeId,
       onOrAfter: day,
     });
-    const stocktakeConflict =
-      result.kind === 'success' && result.data.stocktakes.totalCount > 0;
+    if (result.kind !== 'success') {
+      setDraft(undefined);
+      return;
+    }
+    const stocktakeConflict = result.data.stocktakes.totalCount > 0;
     const warningKeys = backdateWarnings({
       hasLines: hasLines(),
       stocktakeConflict,
@@ -131,7 +137,17 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
           min={enabled() ? bounds().min : undefined}
           max={enabled() ? bounds().max : undefined}
           disabled={!enabled()}
-          onChange={e => void onPick(e.currentTarget.value)}
+          onChange={e => {
+            // AC-B1 rejection on the save path: min/max only constrain the
+            // picker UI — a TYPED out-of-range day still fires change with
+            // the value — so re-check the window here and snap the input
+            // back to the last effective day instead of picking.
+            if (!withinBackdateBounds(bounds(), e.currentTarget.value)) {
+              e.currentTarget.value = shown();
+              return;
+            }
+            void onPick(e.currentTarget.value);
+          }}
         />
         {/* When a backdating gate disables the field (pref off / past NEW), an
             info popover explains why on hover / focus / tap — disable-with-
