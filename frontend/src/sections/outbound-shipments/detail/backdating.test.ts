@@ -5,6 +5,7 @@ import {
   backdatedDatetimeFor,
   backdatingGate,
   toDateInput,
+  withinBackdateBounds,
 } from './backdating';
 
 describe('backdatingGate (AC-B1)', () => {
@@ -69,6 +70,30 @@ describe('backdateBounds (AC-B1 picker window)', () => {
     const b = backdateBounds(new Date(2026, 6, 22, 12, 0, 0), 0);
     expect(b.min).toBe('2026-07-22');
     expect(b.max).toBe('2026-07-22');
+  });
+});
+
+describe('withinBackdateBounds (AC-B1 save-path rejection)', () => {
+  const bounds = { min: '2026-06-22', max: '2026-07-22' };
+
+  it('accepts a day inside the window, including both edges', () => {
+    expect(withinBackdateBounds(bounds, '2026-07-01')).toBe(true);
+    expect(withinBackdateBounds(bounds, '2026-06-22')).toBe(true);
+    expect(withinBackdateBounds(bounds, '2026-07-22')).toBe(true);
+  });
+
+  it('rejects a future day (beyond max)', () => {
+    expect(withinBackdateBounds(bounds, '2026-07-23')).toBe(false);
+    expect(withinBackdateBounds(bounds, '2027-01-01')).toBe(false);
+  });
+
+  it('rejects a day before the maximum-backdate window', () => {
+    expect(withinBackdateBounds(bounds, '2026-06-21')).toBe(false);
+    expect(withinBackdateBounds(bounds, '2025-12-31')).toBe(false);
+  });
+
+  it('rejects an empty value (a cleared input)', () => {
+    expect(withinBackdateBounds(bounds, '')).toBe(false);
   });
 });
 
