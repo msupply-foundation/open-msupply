@@ -17,11 +17,11 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getBooleanCell,
   getCommentCell,
   getDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
@@ -287,7 +287,9 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'isLocked' },
       header: t('label.locked'),
-      ...getBooleanCell(),
+      // Yes/No text — the Locked column shows both states (spec/stocktakes
+      // ui-surface S1 col 6). A tick/dot would only mark the locked state.
+      ...getBooleanCell({ display: 'yesNo' }),
     },
   ];
 
