@@ -31,13 +31,16 @@ import { itemOptionsResource, type ItemOption } from './itemOptionsResource';
 import {
   availableUnits as sumAvailableUnits,
   barReasons,
+  deriveIssueWarnings,
   distributeIssue,
   fefoCompare,
   lensToUnits,
   type AllocateUnit,
   type AllocationPreferences,
+  type IssueWarning,
 } from '../../../../domain/allocation';
 import { outboundPrefs } from '../../outboundPreferencesResource';
+import { issueWarningMessages } from './allocationWarnings';
 
 // The line editor (spec S4): the SINGLE surface for issuing an item — set the
 // quantity to issue and distribute it across batches. The batch grid is the
@@ -94,6 +97,29 @@ export const OutboundLineEditModal = (
 // Issue-entry lens (spec/stock-allocation § the allocate-in lens): units,
 // packs-of-‹size›; doses stay display-only in this build (entry mode needs
 // the doses preference, off on the dev store).
+
+// Resolve the shared distribution warnings (src/domain/allocation
+// deriveIssueWarnings) to the editor's inline banner strings. The mapping —
+// over-allocation surfaced (AC-AL3) and every skipped category reported
+// (AC-AL2) — is the pure issueWarningMessages (unit-tested in
+// ./allocationWarnings); here we only resolve its keys/params via t(), reusing
+// the same ported vocabulary the bulk allocate report uses. The shortfall is
+// NOT reported here — outbound surfaces it as the dedicated placeholder notice
+// (NEW only) — so deriveIssueWarnings runs reportShortfall:false.
+const warningMessages = (
+  derived: readonly IssueWarning[],
+  requestedUnits: number
+): string[] =>
+  issueWarningMessages(derived, requestedUnits).map(message =>
+    message.key === 'messages.over-allocated'
+      ? t(message.key, {
+          quantity: formatNumber(message.quantity),
+          issueQuantity: formatNumber(message.issueQuantity),
+        })
+      : t(message.key, {
+          reasons: message.reasons.map(reason => t(reason)).join(', '),
+        })
+  );
 
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
@@ -216,9 +242,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       setDraft(index, 'numberOfPacks', packs);
     }
     setPlaceholderUnits(props.isNew ? result.shortfallUnits : 0);
-    const notes: string[] = [];
-    if (result.skippedReasons.size > 0) notes.push(t('messages.stock-expired'));
-    setWarnings(notes);
+    // Structured per-category + over-allocation warnings from the shared policy
+    // (AC-AL2/AL3). Shortfall is surfaced separately as the placeholder notice,
+    // so it is excluded here (reportShortfall:false).
+    setWarnings(
+      warningMessages(
+        deriveIssueWarnings(result, { reportShortfall: false }),
+        units
+      )
+    );
     setDirty(true);
     // The allocation just changed — any earlier zero-allocation confirmation
     // no longer applies (spec S4 § save; it must be re-earned against the

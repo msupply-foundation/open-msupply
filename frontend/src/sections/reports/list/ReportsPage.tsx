@@ -20,8 +20,8 @@ import { SidePanelSection } from '../../../ui/layout/SidePanel/SidePanel';
 import {
   BarIcon,
   FileIcon,
+  ReplenishmentIcon,
   SidebarIcon,
-  SuppliersIcon,
   TruckIcon,
 } from '../../../ui/icons';
 import { storeContext } from '../../../store/storeContext';
@@ -80,7 +80,7 @@ const CATEGORIES: readonly CategoryDef[] = [
     titleKey: 'replenishment',
     subContexts: ['Replenishment'],
     gate: 'primary',
-    icon: () => <SuppliersIcon />,
+    icon: () => <ReplenishmentIcon />,
   },
   {
     titleKey: 'heading.other',
@@ -191,6 +191,7 @@ const ReportsPage: Component = () => {
   const sidePanelContent = (
     <>
       <SidePanelSection
+        value="notification-preferences"
         title={t('heading.notification-preferences')}
         collapsible
       >
@@ -209,7 +210,7 @@ const ReportsPage: Component = () => {
           />
         </div>
       </SidePanelSection>
-      <SidePanelSection title={t('heading.custom')} collapsible>
+      <SidePanelSection value="custom" title={t('heading.custom')} collapsible>
         <div style={stackStyle}>
           <PrefField
             label={t('label.stocktake-frequency')}
