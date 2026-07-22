@@ -40,8 +40,8 @@ export interface ItemSearchProps {
   class?: string;
 }
 
-// One option row: "code - name" at the inline-start, "{total} {unit}" at the
-// end (unit falls back to the generic "units" when the item has no unit name).
+// One option row: "code - name" at the inline-start, "{total} Units" at the
+// end — a fixed, localised "Units" label for every item (see the note below).
 // Code and name are separately-marked nodes (e2e/TESTIDS.md item-option-code /
 // -name) so the suites can read either regardless of the datafile's format.
 const renderRow = (item: ItemOption): JSX.Element => (
