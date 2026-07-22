@@ -5,6 +5,8 @@ import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
 import { Tabs, TabList, TabPanel } from '../ui/elements/tabs/Tabs';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../ui/layout/Stack/Stack';
+import { IdentityHeader } from '../ui/layout/IdentityHeader/IdentityHeader';
 import { FormColumns } from '../ui/layout/Form/FormColumns';
 import { FormColumn } from '../ui/layout/Form/FormColumn';
 import { FormSection } from '../ui/layout/Form/FormSection';
@@ -42,13 +44,15 @@ const CAMPAIGNS = [
  * Storybook of the form-layout vocabulary (kdd/form-layout) — the whole stock
  * detail form, the way a real vertical assembles it:
  *
- *   Page                     ← the normal Page frame (geometry only)
- *   └─ ContentContainer      ← the reading-column measure (caps + centres)
- *      └─ FormColumns        ← the row of section stacks (wraps to one column)
- *         └─ FormColumn      ← one vertical stack of sections
- *            └─ FormSection  ← a titled group: heading + rule + field stack
- *               ├─ <field>   ← one-per-line at full width (the default)
- *               └─ FormRow   ← the two-up rows (opt-in pairing)
+ *   Page                        ← the normal Page frame (geometry only)
+ *   └─ ContentContainer         ← the reading-column measure (caps + centres)
+ *      └─ Stack                 ← vertical rhythm between the sibling blocks
+ *         ├─ IdentityHeader     ← record name + muted subtitle
+ *         └─ FormColumns        ← the row of section stacks (wraps to one column)
+ *            └─ FormColumn      ← one vertical stack of sections
+ *               └─ FormSection  ← a titled group: heading + rule + field stack
+ *                  ├─ <field>   ← one-per-line at full width (the default)
+ *                  └─ FormRow   ← the two-up rows (opt-in pairing)
  *
  * Every control is a standard src/ui input — the layout adds arrangement only,
  * never styling. Editable fields are inputs; read-only facts are LabelledValue
@@ -101,137 +105,149 @@ export const FormsShowcase = () => {
       >
         <TabPanel value="details">
           <ContentContainer size="form">
-            <FormColumns>
-              <FormColumn>
-                <FormSection title="Stock Levels">
-                  <FormRow>
-                    <LabelledValue variant="field" label="Pack qty">
-                      580
-                    </LabelledValue>
-                    <LabelledValue variant="field" label="Available packs">
-                      530
-                    </LabelledValue>
-                  </FormRow>
-                  <FormRow>
-                    <LabelledValue variant="field" label="Available stock">
-                      53,000 tablets
-                    </LabelledValue>
-                    <LabelledValue variant="field" label="Stock on hand">
-                      58,000 tablets
-                    </LabelledValue>
-                  </FormRow>
-                </FormSection>
-
-                <FormSection title="Batch & Dates">
-                  <TextField
-                    label="Batch number"
-                    width="full"
-                    value={batch()}
-                    onInput={e => setBatch(e.currentTarget.value)}
-                  />
-                  <TextField
-                    label="Barcode"
-                    width="full"
-                    placeholder="Scan or enter barcode"
-                    value={barcode()}
-                    onInput={e => setBarcode(e.currentTarget.value)}
-                  />
-                  <FormRow>
-                    <DateField
-                      label="Expiry date"
-                      width="full"
-                      format="dd/MM/yyyy"
-                      value={expiry()}
-                      onChange={setExpiry}
-                    />
-                    <DateField
-                      label="Manufacture date"
-                      width="full"
-                      format="dd/MM/yyyy"
-                      value={manufactured()}
-                      onChange={setManufactured}
-                    />
-                  </FormRow>
-                </FormSection>
-
-                <FormSection title="Pricing">
-                  <FormRow>
-                    <CurrencyField
-                      label="Cost price"
-                      currency="USD"
-                      value={cost()}
-                      onChange={setCost}
-                    />
-                    <CurrencyField
-                      label="Sell price"
-                      currency="USD"
-                      value={sell()}
-                      onChange={setSell}
-                    />
-                  </FormRow>
-                </FormSection>
-              </FormColumn>
-
-              <FormColumn>
-                <FormSection title="Storage & Pack">
-                  <Select
-                    label="Location"
-                    options={LOCATIONS}
-                    value={location()}
-                    onValueChange={setLocation}
-                  />
-                  <FormRow>
-                    <LabelledValue variant="field" label="Pack size">
-                      100
-                    </LabelledValue>
-                    <Checkbox
-                      label="On hold"
-                      checked={onHold()}
-                      onChange={setOnHold}
-                    />
-                  </FormRow>
-                  <FormRow>
-                    <LabelledValue variant="field" label="Volume per pack (m³)">
-                      0.00036
-                    </LabelledValue>
-                    <LabelledValue variant="field" label="Total volume">
-                      0.2088
-                    </LabelledValue>
-                  </FormRow>
-                </FormSection>
-
-                <FormSection title="Supply Chain">
-                  <Select
-                    label="Manufacturer"
-                    options={MANUFACTURERS}
-                    value={manufacturer()}
-                    placeholder="Select a manufacturer"
-                    onValueChange={setManufacturer}
-                  />
-                  <LabelledValue variant="field" label="Supplier">
-                    —
-                  </LabelledValue>
-
-                  <FormSection headingLevel="h3" title="Inventory adjustments">
+            <Stack>
+              <IdentityHeader
+                title="Acetylsalicylic Acid 300mg Tablet"
+                subtitle="Code: 030453 · Unit: tablet"
+              />
+              <FormColumns>
+                <FormColumn>
+                  <FormSection title="Stock Levels">
                     <FormRow>
-                      <Select
-                        label="Donor"
-                        options={DONORS}
-                        value={donor()}
-                        onValueChange={setDonor}
+                      <LabelledValue variant="field" label="Pack qty">
+                        580
+                      </LabelledValue>
+                      <LabelledValue variant="field" label="Available packs">
+                        530
+                      </LabelledValue>
+                    </FormRow>
+                    <FormRow>
+                      <LabelledValue variant="field" label="Available stock">
+                        53,000 tablets
+                      </LabelledValue>
+                      <LabelledValue variant="field" label="Stock on hand">
+                        58,000 tablets
+                      </LabelledValue>
+                    </FormRow>
+                  </FormSection>
+
+                  <FormSection title="Batch & Dates">
+                    <TextField
+                      label="Batch number"
+                      width="full"
+                      value={batch()}
+                      onInput={e => setBatch(e.currentTarget.value)}
+                    />
+                    <TextField
+                      label="Barcode"
+                      width="full"
+                      placeholder="Scan or enter barcode"
+                      value={barcode()}
+                      onInput={e => setBarcode(e.currentTarget.value)}
+                    />
+                    <FormRow>
+                      <DateField
+                        label="Expiry date"
+                        width="full"
+                        format="dd/MM/yyyy"
+                        value={expiry()}
+                        onChange={setExpiry}
                       />
-                      <Select
-                        label="Campaign / program"
-                        options={CAMPAIGNS}
-                        value={campaign()}
-                        placeholder="None"
-                        onValueChange={setCampaign}
+                      <DateField
+                        label="Manufacture date"
+                        width="full"
+                        format="dd/MM/yyyy"
+                        value={manufactured()}
+                        onChange={setManufactured}
                       />
                     </FormRow>
                   </FormSection>
-                </FormSection>
-              </FormColumn>
-            </FormColumns>
+
+                  <FormSection title="Pricing">
+                    <FormRow>
+                      <CurrencyField
+                        label="Cost price"
+                        currency="USD"
+                        value={cost()}
+                        onChange={setCost}
+                      />
+                      <CurrencyField
+                        label="Sell price"
+                        currency="USD"
+                        value={sell()}
+                        onChange={setSell}
+                      />
+                    </FormRow>
+                  </FormSection>
+                </FormColumn>
+
+                <FormColumn>
+                  <FormSection title="Storage & Pack">
+                    <Select
+                      label="Location"
+                      options={LOCATIONS}
+                      value={location()}
+                      onValueChange={setLocation}
+                    />
+                    <FormRow>
+                      <LabelledValue variant="field" label="Pack size">
+                        100
+                      </LabelledValue>
+                      <Checkbox
+                        label="On hold"
+                        checked={onHold()}
+                        onChange={setOnHold}
+                      />
+                    </FormRow>
+                    <FormRow>
+                      <LabelledValue
+                        variant="field"
+                        label="Volume per pack (m³)"
+                      >
+                        0.00036
+                      </LabelledValue>
+                      <LabelledValue variant="field" label="Total volume">
+                        0.2088
+                      </LabelledValue>
+                    </FormRow>
+                  </FormSection>
+
+                  <FormSection title="Supply Chain">
+                    <Select
+                      label="Manufacturer"
+                      options={MANUFACTURERS}
+                      value={manufacturer()}
+                      placeholder="Select a manufacturer"
+                      onValueChange={setManufacturer}
+                    />
+                    <LabelledValue variant="field" label="Supplier">
+                      —
+                    </LabelledValue>
+
+                    <FormSection
+                      headingLevel="h3"
+                      title="Inventory adjustments"
+                    >
+                      <FormRow>
+                        <Select
+                          label="Donor"
+                          options={DONORS}
+                          value={donor()}
+                          onValueChange={setDonor}
+                        />
+                        <Select
+                          label="Campaign / program"
+                          options={CAMPAIGNS}
+                          value={campaign()}
+                          placeholder="None"
+                          onValueChange={setCampaign}
+                        />
+                      </FormRow>
+                    </FormSection>
+                  </FormSection>
+                </FormColumn>
+              </FormColumns>
+            </Stack>
           </ContentContainer>
         </TabPanel>
 
