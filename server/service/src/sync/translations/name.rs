@@ -16,7 +16,7 @@ use crate::sync::{
 };
 
 use super::{
-    utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
+    utils::{merge_legacy_custom_fields, skip_name_relay_to_legacy, LegacyCustomFieldsBuilder},
     FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
     ToSyncRecordTranslationType,
 };
@@ -28,8 +28,9 @@ use super::{
 ///
 /// The category keys are editable on patients (the first editable OPTIONs); like
 /// `custom_1/2/3` they remain OG-owned, so a re-pull of a changed OG record
-/// refreshes them — last-writer-wins, identical to the custom fields (push-back
-/// to OG is inert behind the `PushToLegacyCentral` guard).
+/// refreshes them — last-writer-wins, identical to the custom fields. Push-back
+/// to OG is live for rows central relays (rows authored on this server or on a
+/// V7 site, see `skip_name_relay_to_legacy`).
 const LEGACY_NAME_OWNED_KEYS: &[&str] = &[
     keys::NAME_CUSTOM_1,
     keys::NAME_CUSTOM_2,
@@ -299,24 +300,12 @@ impl SyncTranslation for NameTranslation {
         r#type: &ToSyncRecordTranslationType,
     ) -> bool {
         match r#type {
+            // Which name rows central relays to OG is decided per row in
+            // `try_translate_to_upsert/delete_sync_record` via
+            // `skip_name_relay_to_legacy` (#9430, #12106) — it needs a database
+            // connection, which this method doesn't receive.
             ToSyncRecordTranslationType::PushToLegacyCentral => {
-                let is_name_record = self.change_log_type().as_ref() == Some(&row.table_name);
-
-                if !is_name_record {
-                    return false;
-                }
-
-                // Check if we're the central server, if we are don't push changes received from remote sites
-                // Otherwise we could end up syncing changes back to the site they came from
-                if CentralServerConfig::is_central_server() && row.source_site_id.is_some() {
-                    log::debug!(
-                        "Not pushing name update from remote site back to central for id: {}",
-                        row.record_id
-                    );
-                    return false;
-                }
-
-                true
+                self.change_log_type().as_ref() == Some(&row.table_name)
             }
             // We are also pushing to omsupply central so that it's available for
             // cross site patient details sharing, same for names_store_join
@@ -483,10 +472,16 @@ impl SyncTranslation for NameTranslation {
 
     fn try_translate_to_upsert_sync_record(
         &self,
-        _connection: &StorageConnection,
+        connection: &StorageConnection,
         changelog: &ChangelogRow,
         row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        if skip_name_relay_to_legacy(connection, changelog)? {
+            return Ok(PushTranslateResult::Ignored(
+                "Source site pushes name records to legacy itself".to_string(),
+            ));
+        }
+
         let Row::Name(name_row) = row else {
             return Ok(PushTranslateResult::NotMatched);
         };
@@ -586,17 +581,15 @@ impl SyncTranslation for NameTranslation {
             custom_data: None,
             // Reverse of `build_legacy_custom_fields`: carry the patient's
             // `custom_fields` custom fields back into the legacy custom1/2/3 wire
-            // columns. This wiring is currently INERT for OMS-originated names —
-            // the `PushToLegacyCentral` guard (see `should_translate_to_sync_record`,
-            // added by #9430 for the patient-DOB round-trip bug) blocks the push.
-            // It's wired here so that if/when the general patient → OG sync path is
-            // re-enabled, patient custom field edits flow back to OG automatically.
+            // columns. Which rows actually ship to OG is decided per row by
+            // `skip_name_relay_to_legacy` above (#9430, #12106): rows authored on
+            // this server or on a V7 site are pushed, rows from V5/V6 sites are not.
             custom_1: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CUSTOM_1),
             custom_2: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CUSTOM_2),
             custom_3: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CUSTOM_3),
-            // Same inert reverse-mapping for the category dimensions: the stored
-            // option id is the leaf `categoryN_ID`. Carried back behind the same
-            // `PushToLegacyCentral` guard as the custom fields.
+            // Same reverse-mapping for the category dimensions: the stored
+            // option id is the leaf `categoryN_ID`. Carried back under the same
+            // per-row routing as the custom fields.
             category1_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_1),
             category2_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_2),
             category3_id: legacy_value_from_custom_fields(&custom_fields, keys::NAME_CATEGORY_3),
@@ -615,9 +608,15 @@ impl SyncTranslation for NameTranslation {
     // TODO soft delete
     fn try_translate_to_delete_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
+        if skip_name_relay_to_legacy(connection, changelog)? {
+            return Ok(PushTranslateResult::Ignored(
+                "Source site pushes name records to legacy itself".to_string(),
+            ));
+        }
+
         Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
@@ -795,6 +794,115 @@ mod tests {
 
         // Reset shared state for other tests (cargo test runs in-process).
         test_util_set_is_central_server(false);
+    }
+
+    /// #9430/#12106 routing: on central, name rows relay to OG only when authored
+    /// on this server or on a V7 site; rows from V5/V6 (or unknown) sites are
+    /// ignored. Off central the guard is inert.
+    #[actix_rt::test]
+    async fn name_relay_to_legacy_routed_by_source_site() {
+        use crate::sync::test_util_set_is_central_server;
+        use repository::{KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion};
+
+        let (_, connection, _, _) = setup_all(
+            "name_relay_to_legacy_routed_by_source_site",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let current_site_id = 1;
+        let v5v6_site_id = 2;
+        let v7_site_id = 3;
+        let unknown_site_id = 4;
+
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(current_site_id))
+            .unwrap();
+        let site_repo = SiteRowRepository::new(&connection);
+        site_repo
+            .upsert(&SiteRow {
+                id: v5v6_site_id,
+                code: "site2".to_string(),
+                name: "V5V6 site".to_string(),
+                sync_version: SyncVersion::V5V6,
+                ..Default::default()
+            })
+            .unwrap();
+        site_repo
+            .upsert(&SiteRow {
+                id: v7_site_id,
+                code: "site3".to_string(),
+                name: "V7 site".to_string(),
+                sync_version: SyncVersion::V7,
+                ..Default::default()
+            })
+            .unwrap();
+
+        let translator = NameTranslation {};
+        let patient = NameRow {
+            id: "patient1".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        let changelog_from = |source_site_id: Option<i32>| ChangelogRow {
+            table_name: ChangelogTableName::Name,
+            record_id: patient.id.clone(),
+            source_site_id,
+            ..Default::default()
+        };
+
+        test_util_set_is_central_server(true);
+
+        // Central-authored and V7-site rows relay to OG. (A None source can't
+        // reach translation on central — the v5 push filter excludes it — but
+        // the guard leaves it alone.)
+        for source in [Some(current_site_id), Some(v7_site_id), None] {
+            let result = translator
+                .try_translate_to_upsert_sync_record(
+                    &connection,
+                    &changelog_from(source),
+                    Row::Name(patient.clone()),
+                )
+                .unwrap();
+            assert!(
+                matches!(result, PushTranslateResult::PushRecord(_)),
+                "source {source:?} should push"
+            );
+        }
+
+        // V5/V6-site and unknown-site rows are ignored, on both push paths.
+        for source in [Some(v5v6_site_id), Some(unknown_site_id)] {
+            let result = translator
+                .try_translate_to_upsert_sync_record(
+                    &connection,
+                    &changelog_from(source),
+                    Row::Name(patient.clone()),
+                )
+                .unwrap();
+            assert!(
+                matches!(result, PushTranslateResult::Ignored(_)),
+                "source {source:?} should be ignored"
+            );
+            let result = translator
+                .try_translate_to_delete_sync_record(&connection, &changelog_from(source))
+                .unwrap();
+            assert!(
+                matches!(result, PushTranslateResult::Ignored(_)),
+                "delete from source {source:?} should be ignored"
+            );
+        }
+
+        // Off central the guard is inert: a remote pushes its own edits to OG
+        // exactly as before.
+        test_util_set_is_central_server(false);
+        let result = translator
+            .try_translate_to_upsert_sync_record(
+                &connection,
+                &changelog_from(Some(v5v6_site_id)),
+                Row::Name(patient.clone()),
+            )
+            .unwrap();
+        assert!(matches!(result, PushTranslateResult::PushRecord(_)));
     }
 
     #[actix_rt::test]
