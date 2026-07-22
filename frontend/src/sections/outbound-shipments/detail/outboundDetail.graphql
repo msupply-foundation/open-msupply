@@ -38,6 +38,10 @@ fragment OutboundInfo on InvoiceNode {
   requisition {
     id
     requisitionNumber
+    createdDatetime
+    user {
+      username
+    }
   }
   linkedShipment {
     id

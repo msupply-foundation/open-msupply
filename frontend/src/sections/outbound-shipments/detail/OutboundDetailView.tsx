@@ -138,7 +138,7 @@ const OutboundDetailView: Component = () => {
   const serviceLines = () => lines().filter(line => line.type === 'SERVICE');
   // Default line-table order: item name ascending (ui-surface S3 § line table;
   // matches the old app). A flat client-side sort — all lines are loaded, and
-  // the table is un-grouped (D29).
+  // the table is un-grouped (D34).
   const sortedLines = () =>
     [...stockAndPlaceholderLines()].sort((a, b) =>
       a.itemName.localeCompare(b.itemName)
