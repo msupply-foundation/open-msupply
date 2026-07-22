@@ -1,23 +1,10 @@
-import { createSignal, createUniqueId, type JSX } from 'solid-js';
+import { createSignal, createUniqueId } from 'solid-js';
 import {
   DocumentUploadPanel,
   type DocumentFile,
 } from '../ui/elements/display/DocumentUploadPanel';
+import { Card, Stack } from './common';
 import styles from './DocumentUploadShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 // The mockup's sample documents (filename, uploaded date, size).
 const INITIAL_DOCUMENTS: DocumentFile[] = [
@@ -72,7 +59,7 @@ export const DocumentUploadShowcase = () => {
     setDocuments(prev => prev.filter(doc => doc.id !== document.id));
 
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Document upload — the whole Documents tab"
         lead={
@@ -117,6 +104,6 @@ export const DocumentUploadShowcase = () => {
           <DocumentUploadPanel documents={[]} onUpload={() => {}} />
         </div>
       </Card>
-    </div>
+    </Stack>
   );
 };
