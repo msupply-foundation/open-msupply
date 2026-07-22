@@ -2,12 +2,14 @@
  * Minimum-browser consistency check (spec/startup/rules.md § Minimum
  * browser, AC-BR6).
  *
- * The Chromium floor is declared in three places that cannot share a
- * constant — package.json's browserslist (read by stylelint/eslint plugins),
- * vite.config.ts's build target, and the pre-boot warning script inlined in
- * index.html. This script fails when they disagree, so the floor is one
- * decision, not three. Exit code 1 with a report on failure. Run via
- * `npm run check`.
+ * The Chromium floor is declared in two places that cannot share a
+ * constant — package.json's browserslist (read by the stylelint/eslint
+ * plugins) and the pre-boot warning script inlined in index.html. This
+ * script fails when they disagree, so the floor is one decision, not two.
+ * Deliberately NOT checked: a Vite build target — the floor is
+ * warn-don't-block, so the bundle keeps Vite's conservative default and
+ * stays runnable on engines below the floor. Exit code 1 with a report on
+ * failure. Run via `npm run check`.
  */
 import { readFileSync } from 'node:fs';
 
@@ -18,11 +20,6 @@ const declared = [
     file: 'package.json',
     pattern: /"chrome >= (\d+)"/,
     what: 'browserslist query',
-  },
-  {
-    file: 'vite.config.ts',
-    pattern: /target: 'chrome(\d+)'/,
-    what: 'build target',
   },
   {
     file: 'index.html',

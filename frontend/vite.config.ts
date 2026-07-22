@@ -35,10 +35,6 @@ const appVersion = (): string => {
 
 export default defineConfig(({ mode }) => ({
   plugins: [solid()],
-  // Minimum supported browser is Chromium 138 (the newest WebView installable
-  // on Android 9) — see browserslist in package.json. Vite's default target
-  // is far more conservative, so raising it skips unneeded transpilation.
-  build: { target: 'chrome138' },
   // Lets the same build be mounted at a non-root path (the demo server's
   // /spec track, deploy/build-and-deploy-spec.sh) — Vite rewrites every
   // asset reference to match and exposes it at runtime as
