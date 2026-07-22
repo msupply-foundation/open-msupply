@@ -1,0 +1,19 @@
+/* Stack — vertical run of sibling blocks (see Stack.tsx). Gap presets only, so
+ * block rhythm stays consistent app-wide. */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.stack[data-gap='sm'] {
+  gap: var(--space-2);
+}
+
+.stack[data-gap='md'] {
+  gap: var(--space-4);
+}
+
+.stack[data-gap='lg'] {
+  gap: var(--space-6);
+}

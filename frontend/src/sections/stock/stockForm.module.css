@@ -1,39 +1,15 @@
-/* Section-local pieces of the stock forms (S2 detail / S3 new-stock). The form
- * arrangement itself is the shared sectioned edit form (ContentContainer +
- * FormColumns/FormSection/FormRow — spec/ui-standards detail-views); this
- * module carries only the bits around it. Values are rem/tokens only — no
- * colour literals, no px spacing. */
+/* The stock detail form's identity header (S2): the item NAME as a heading,
+ * with CODE + UNIT stacked below as a muted subtitle. Interim section-local
+ * CSS — to be replaced by a shared identity-header component (FormHeader) once
+ * its shape is agreed; everything else in the form composes shared layout
+ * (ContentContainer + Stack + FormColumns/FormSection/FormRow). */
 
-/* The vertical stack inside the content measure: identity header / alerts /
- * item row / divider / form columns. */
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4, 1rem);
-}
-
-/* Identity header: the item NAME as a heading, with CODE + UNIT stacked below
- * as a muted subtitle. */
 .identity {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1, 0.25rem);
+  gap: var(--space-1);
 }
 
 .identitySub {
   color: var(--text-secondary);
-}
-
-/* The divider between the item row and the field form (S3). */
-.divider {
-  border: 0;
-  border-block-start: 1px solid var(--color-divider);
-  margin: 0;
-  width: 100%;
-}
-
-.itemRow {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 0.5rem);
 }
