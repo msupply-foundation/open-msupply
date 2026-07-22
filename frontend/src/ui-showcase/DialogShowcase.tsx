@@ -1,4 +1,4 @@
-import { createSignal, For, Show, type JSX } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
@@ -9,21 +9,8 @@ import {
   type StoreOption,
 } from '../ui/elements/selectors/StoreSelector';
 import { PlusCircleIcon, SaveIcon, XCircleIcon } from '../ui/icons';
+import { Card, Note, Stack } from './common';
 import styles from './DialogShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 /* A stand-in line list for the large "workbench" dialog — enough rows that the
    body overflows and scrolls internally while the header/footer/actions stay
@@ -67,7 +54,7 @@ export const DialogShowcase = () => {
   const [chosen, setChosen] = createSignal('');
 
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Confirm dialog — Save → are you sure?"
         lead={
@@ -254,9 +241,7 @@ export const DialogShowcase = () => {
       >
         <Button onClick={() => setStoreOpen(true)}>Open store selection</Button>
         <Show when={chosen()}>
-          <p class={styles.lead} style={{ 'margin-block-start': '0.75rem' }}>
-            {chosen()}
-          </p>
+          <Note>{chosen()}</Note>
         </Show>
         <Dialog
           open={storeOpen()}
@@ -276,6 +261,6 @@ export const DialogShowcase = () => {
           />
         </Dialog>
       </Card>
-    </div>
+    </Stack>
   );
 };
