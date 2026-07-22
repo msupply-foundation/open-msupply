@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
-  max-width: 60rem;
+  max-width: 44rem;
 }
 
 .card {
@@ -10,13 +10,15 @@
   border-radius: var(--radius-md);
   background: var(--bg-white);
   box-shadow: var(--shadow-1);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .cardHeader {
   padding: var(--space-3) var(--space-4);
   background: var(--bg-group-light);
   border-bottom: 1px solid var(--color-border-value);
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
   color: var(--text-body);
@@ -28,7 +30,6 @@
 
 .lead {
   margin: 0 0 var(--space-4);
-  max-width: 44rem;
   font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--text-secondary);
@@ -41,11 +42,18 @@
   border-radius: var(--radius-sm);
 }
 
-/* A dialog/panel-like frame around the InsetPanel demo, so the recessed panel
-   and the inline label rows read the way they do in a real modal. */
-.formPreview {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  max-width: 34rem;
+.panelText {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}
+
+/* The closed-state preview text shown beside a trigger's label. */
+.preview {
+  overflow: hidden;
+  margin-inline-start: var(--space-2);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }

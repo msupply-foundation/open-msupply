@@ -1,4 +1,4 @@
-import { createSignal, type JSX } from 'solid-js';
+import { createSignal } from 'solid-js';
 import {
   SidePanel,
   SidePanelActions,
@@ -7,21 +7,8 @@ import {
 import { Button } from '../ui/elements/buttons/Button';
 import { CopyIcon, TrashIcon } from '../ui/icons';
 import { useIsNavOverlay } from '../ui/utils/createMediaQuery';
+import { Card, Stack } from './common';
 import styles from './SidePanelShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 export const SidePanelShowcase = () => {
   const [open, setOpen] = createSignal(false);
@@ -31,7 +18,7 @@ export const SidePanelShowcase = () => {
   const isOverlay = useIsNavOverlay();
 
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Details panel — slide it out over the page"
         lead={
@@ -61,7 +48,7 @@ export const SidePanelShowcase = () => {
         </Button>
         <div class={styles.panelHolder} data-open={open() ? 'true' : 'false'}>
           <SidePanel label="Shipment details">
-            <SidePanelSection title="Additional info">
+            <SidePanelSection value="additional-info" title="Additional info">
               <dl>
                 <dt>Status</dt>
                 <dd>New</dd>
@@ -73,16 +60,20 @@ export const SidePanelShowcase = () => {
                 <dd>(none)</dd>
               </dl>
             </SidePanelSection>
-            <SidePanelSection title="Related documents">
+            <SidePanelSection
+              value="related-documents"
+              title="Related documents"
+            >
               <dl>
                 <dt>Requisition</dt>
                 <dd>RQ-0042</dd>
               </dl>
             </SidePanelSection>
-            <SidePanelSection title="Comment">
+            <SidePanelSection value="comment" title="Comment">
               <p>Placeholder — comments land with the Feedback work.</p>
             </SidePanelSection>
             <SidePanelSection
+              value="related-documents-collapsible"
               title="Related documents (collapsible)"
               collapsible
             >
@@ -93,20 +84,8 @@ export const SidePanelShowcase = () => {
                 <dd>PO-1042</dd>
               </dl>
             </SidePanelSection>
-            {/* Record actions (the registry's record-actions section):
-                SidePanelActions stacks them one per row, aligned
-                inline-start, each button sized to its label. */}
-            <SidePanelSection title="Actions">
-              <SidePanelActions>
-                <Button icon={<TrashIcon />} onClick={() => {}}>
-                  Delete
-                </Button>
-                <Button icon={<CopyIcon />} onClick={() => {}}>
-                  Make a copy
-                </Button>
-              </SidePanelActions>
-            </SidePanelSection>
             <SidePanelSection
+              value="history"
               title="History (collapsed by default)"
               collapsible
               defaultOpen={false}
@@ -116,9 +95,22 @@ export const SidePanelShowcase = () => {
                 content expands.
               </p>
             </SidePanelSection>
+            {/* Record actions (the registry's record-actions section):
+                SidePanelActions stacks them one per row, aligned
+                inline-start, each button sized to its label. */}
+            <SidePanelSection value="actions" title="Actions">
+              <SidePanelActions>
+                <Button icon={<TrashIcon />} onClick={() => {}}>
+                  Delete
+                </Button>
+                <Button icon={<CopyIcon />} onClick={() => {}}>
+                  Make a copy
+                </Button>
+              </SidePanelActions>
+            </SidePanelSection>
           </SidePanel>
         </div>
       </Card>
-    </div>
+    </Stack>
   );
 };

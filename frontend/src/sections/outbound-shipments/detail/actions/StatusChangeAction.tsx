@@ -20,6 +20,7 @@ import {
 import {
   CLIENT_SETTABLE,
   STATUS_LABELS,
+  STATUS_LABEL_KEYS,
   statusIndex,
   isEditable,
   type SettableStatus,
@@ -174,7 +175,12 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
           description={
             <>
               {t('messages.confirm-status-as', {
-                status: pendingStatus() ? STATUS_LABELS[pendingStatus()!] : '',
+                // $t({{status}}) resolves the KEY against the dictionary — pass
+                // the label key, not the resolved string (else it renders the
+                // literal "$t(Allocated)").
+                status: pendingStatus()
+                  ? STATUS_LABEL_KEYS[pendingStatus()!]
+                  : '',
               })}
               <Show when={props.zeroQuantityItems.length > 0}>
                 <Alert severity="warning">

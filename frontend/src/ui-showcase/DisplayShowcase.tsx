@@ -1,24 +1,11 @@
-import { createSignal, type JSX } from 'solid-js';
+import { createSignal } from 'solid-js';
 import { WidgetCard } from '../ui/elements/display/WidgetCard';
 import { DocumentFrame } from '../ui/elements/display/DocumentFrame';
 import { StatComparisonTile } from '../ui/elements/display/StatComparisonTile';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { ReportsIcon, StockIcon, TruckIcon, PrinterIcon } from '../ui/icons';
+import { Card, Note, Stack } from './common';
 import styles from './DisplayShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 /* A small self-contained HTML document (no scripts) to show the sandboxed
    frame rendering server-style report output. */
@@ -53,7 +40,7 @@ export const DisplayShowcase = () => {
       ? undefined
       : String(CURRENT_PACKS - (adjustBy() ?? 0));
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Stat comparison tile — current → adjusted preview"
         lead={
@@ -131,9 +118,9 @@ export const DisplayShowcase = () => {
             href="#/showcase/icons"
           />
         </div>
-        <p class={styles.lead} role="status">
+        <Note role="status">
           {lastClicked() ? `Clicked: ${lastClicked()}` : '\u00a0'}
-        </p>
+        </Note>
       </Card>
 
       <Card
@@ -152,6 +139,6 @@ export const DisplayShowcase = () => {
           <DocumentFrame title="Stock on hand report" srcdoc={REPORT_HTML} />
         </div>
       </Card>
-    </div>
+    </Stack>
   );
 };

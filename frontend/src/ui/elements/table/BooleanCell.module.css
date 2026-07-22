@@ -1,0 +1,31 @@
+/* BooleanCell — the boolean table-cell marker (registry role "boolean cell
+   (flag in a table)"). One cell renders one marker (dot/check) or Yes/No text;
+   the fragment centres the marker columns via meta.align. The marker's
+   accessible name is carried by the component's aria-label, never colour or
+   shape alone (ui-standards § assistive-tech parity). Pure CSS — own the
+   simple. */
+
+/* Dot (default) — a small filled circle: the reference app's boolean glyph,
+   kept by DIVERGENCES D8 (which diverges only on accessibility, not the glyph).
+   Sized to the cell font; colour follows the body-text token so it clears AA
+   contrast in both themes — the meaning is the dot's presence, not its
+   colour. */
+.dot {
+  display: inline-block;
+  vertical-align: middle;
+  inline-size: 0.5em;
+  block-size: 0.5em;
+  border-radius: var(--radius-pill);
+  background: var(--text-body);
+}
+
+/* Check — a tick, a touch larger than the cell font so it reads at a glance
+   without dominating the row; colour as above. */
+.check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  font-size: 1.15em;
+  color: var(--text-body);
+}

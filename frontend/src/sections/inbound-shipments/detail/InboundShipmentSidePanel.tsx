@@ -146,7 +146,10 @@ export const InboundShipmentSidePanel: Component<
   return (
     <>
       {/* Additional info ---------------------------------------------------- */}
-      <SidePanelSection title={t('heading.additional-info')}>
+      <SidePanelSection
+        value="additional-info"
+        title={t('heading.additional-info')}
+      >
         <Show when={props.donorTracking}>
           <FieldRow label={t('label.donor')}>
             <span
@@ -195,7 +198,10 @@ export const InboundShipmentSidePanel: Component<
       </SidePanelSection>
 
       {/* Related documents -------------------------------------------------- */}
-      <SidePanelSection title={t('heading.related-documents')}>
+      <SidePanelSection
+        value="related-documents"
+        title={t('heading.related-documents')}
+      >
         <Show
           when={props.node.purchaseOrder || props.node.requisition}
           fallback={<span>{t('messages.no-related-documents')}</span>}
@@ -229,7 +235,7 @@ export const InboundShipmentSidePanel: Component<
       </SidePanelSection>
 
       {/* Charges ------------------------------------------------------------ */}
-      <SidePanelSection title={t('heading.charges')}>
+      <SidePanelSection value="charges" title={t('heading.charges')}>
         {/* Stock charges: sub-total · tax (inline rate editor + amount, gated
             off when not editable or the stock sub-total is zero) · total. */}
         <FieldRow label={t('heading.stock-charges')}>
@@ -369,7 +375,10 @@ export const InboundShipmentSidePanel: Component<
 
       {/* Transport details (transfers only, read-only) ---------------------- */}
       <Show when={isTransfer()}>
-        <SidePanelSection title={t('heading.transport-details')}>
+        <SidePanelSection
+          value="transport-details"
+          title={t('heading.transport-details')}
+        >
           <FieldRow label={t('label.shipping-method')}>
             <span>{props.node.shippingMethod?.method ?? '—'}</span>
           </FieldRow>
@@ -389,7 +398,7 @@ export const InboundShipmentSidePanel: Component<
       {/* Actions — the record-action cluster, its own titled section at the
           panel's end (spec S3 side panel → Actions), so it carries the same
           heading + padding as the info sections above. */}
-      <SidePanelSection title={t('heading.actions')}>
+      <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
           {/* Delete only while New (client narrowing). */}
           <Show when={props.node.status === 'NEW'}>
