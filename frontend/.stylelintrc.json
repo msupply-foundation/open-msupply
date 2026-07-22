@@ -1,7 +1,18 @@
 {
   "extends": ["stylelint-config-standard"],
-  "plugins": ["stylelint-value-no-unknown-custom-properties"],
+  "plugins": [
+    "stylelint-value-no-unknown-custom-properties",
+    "stylelint-no-unsupported-browser-features"
+  ],
   "rules": {
+    "plugin/no-unsupported-browser-features": [
+      true,
+      {
+        "severity": "error",
+        "ignorePartialSupport": true,
+        "ignore": ["extended-system-fonts"]
+      }
+    ],
     "csstools/value-no-unknown-custom-properties": [
       true,
       {
