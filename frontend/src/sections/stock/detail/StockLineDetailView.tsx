@@ -40,7 +40,7 @@ import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { CurrencyField } from '../../../ui/elements/inputs/CurrencyField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
-import { Text } from '../../../ui/elements/typography/Text';
+import { IdentityHeader } from '../../../ui/layout/IdentityHeader/IdentityHeader';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
 import { LocationSelect } from '../../../domain/location';
@@ -64,7 +64,6 @@ import { VvmHistoryPanel } from './VvmHistoryPanel';
 import { AdjustModal } from './AdjustModal';
 import { RepackModal } from './RepackModal';
 import { VvmStatusEntryModal } from './VvmStatusEntryModal';
-import formStyles from '../stockForm.module.css';
 
 // The stock-line detail view (spec/stock S2). Inspect one line, edit its
 // attributes (buffered locally, committed on an explicit Save with a pre-save
@@ -440,17 +439,15 @@ const StockLineDetailView: Component = () => {
               <TabPanel value="details">
                 <ContentContainer size="form">
                   <Stack>
-                    {/* Identity header: item name as a heading, code + unit as a
-                      muted subtitle below it. */}
-                    <div class={formStyles.identity}>
-                      <Text variant="heading" level={2}>
-                        {l().itemName}
-                      </Text>
-                      <Text variant="subtitle" class={formStyles.identitySub}>
-                        {t('label.code')}: {l().item.code} · {t('label.unit')}:{' '}
-                        {l().item.unitName ?? '—'}
-                      </Text>
-                    </div>
+                    <IdentityHeader
+                      title={l().itemName}
+                      subtitle={
+                        <>
+                          {t('label.code')}: {l().item.code} · {t('label.unit')}
+                          : {l().item.unitName ?? '—'}
+                        </>
+                      }
+                    />
 
                     <Show when={invalidLocation(l())}>
                       <Alert
