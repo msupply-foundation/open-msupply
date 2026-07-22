@@ -2,6 +2,7 @@ import { createSignal, For, type Component } from 'solid-js';
 import * as iconsModule from '../ui/icons';
 import type { IconProps } from '../ui/icons';
 import { RadioGroup, type RadioOption } from '../ui/elements/inputs/RadioGroup';
+import { Intro, Stack } from './common';
 import styles from './IconsShowcase.module.css';
 
 /*
@@ -42,13 +43,13 @@ export const IconsShowcase = () => {
   const [colour, setColour] = createSignal('body');
 
   return (
-    <div class={styles.stack}>
-      <p class={styles.lead}>
+    <Stack>
+      <Intro>
         Every icon in <code>src/ui/icons</code>. Each is a plain SVG that paints
         with <code>currentColor</code> and sizes to <code>1em</code>, so colour
         follows the surrounding text and size follows font-size — use the
         switches to preview any size and theme colour.
-      </p>
+      </Intro>
       <div class={styles.controls}>
         <RadioGroup
           label="Size"
@@ -68,7 +69,7 @@ export const IconsShowcase = () => {
       <ul class={styles.grid}>
         <For each={icons}>
           {([name, Icon]) => (
-            <li class={styles.card}>
+            <li class={styles.tile}>
               <span
                 class={styles.glyph}
                 data-size={size()}
@@ -81,6 +82,6 @@ export const IconsShowcase = () => {
           )}
         </For>
       </ul>
-    </div>
+    </Stack>
   );
 };

@@ -62,7 +62,7 @@
 }
 
 .input:checked + .track {
-  background: var(--primary-main);
+  background: var(--secondary-main);
 }
 
 .input:checked + .track .thumb {
@@ -76,6 +76,13 @@
 .input:focus-visible + .track {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+/* Caution variant — an orange "on" for a setting to be careful with (e.g. "on
+   hold"). Off stays neutral grey. Higher specificity than the default checked
+   rule and placed after the other .track-subject rules so specificity ascends. */
+.root[data-variant='caution'] .input:checked + .track {
+  background: var(--primary-main);
 }
 
 .label {

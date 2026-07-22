@@ -76,6 +76,7 @@ export const TextField = (props: TextFieldProps) => {
     <div
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
       data-width={local.width ?? 'short'}
+      data-size={local.size ?? 'default'}
     >
       {/* hideLabel names the input via aria-label INSTEAD of rendering a
           visually-hidden <label>: the accessible name is identical, but no

@@ -1,22 +1,18 @@
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  max-width: 60rem;
-}
-
+/* No `overflow: hidden` — demos host popovers/menus that must overhang the
+   card; the header rounds its own top corners instead. */
 .card {
   border: 1px solid var(--color-border-value);
   border-radius: var(--radius-md);
   background: var(--bg-white);
   box-shadow: var(--shadow-1);
-  overflow: hidden;
 }
 
 .cardHeader {
   padding: var(--space-3) var(--space-4);
   background: var(--bg-group-light);
   border-bottom: 1px solid var(--color-border-value);
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
   color: var(--text-body);
@@ -39,13 +35,4 @@
   padding: 0.1em 0.3em;
   background: var(--bg-group-main);
   border-radius: var(--radius-sm);
-}
-
-/* A dialog/panel-like frame around the InsetPanel demo, so the recessed panel
-   and the inline label rows read the way they do in a real modal. */
-.formPreview {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  max-width: 34rem;
 }

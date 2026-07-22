@@ -257,6 +257,10 @@ const OutboundDetailView: Component = () => {
     stockAndPlaceholderLines()
       .concat(serviceLines())
       .filter(line => selectedIds().includes(line.id));
+  // Bulk-action visibility (spec S3 § bulk line actions matrix): state-disallowed
+  // actions are HIDDEN, not disabled.
+  const hasSelectedPlaceholder = () =>
+    selectedLines().some(line => line.type === 'UNALLOCATED_STOCK');
 
   const prefs = () => outboundPrefs()?.prefs;
   const dosesOn = () => prefs()?.manageVaccinesInDoses ?? false;
@@ -570,23 +574,33 @@ const OutboundDetailView: Component = () => {
                     <strong data-testid="selected-rows-count">
                       {tPlural('label.items-selected', selectedIds().length)}
                     </strong>
-                    <DeleteLinesAction
-                      storeId={params.storeId}
-                      selectedLines={selectedLines}
-                      disabled={!editable()}
-                      onCommitted={onLineOpsCommitted}
-                    />
-                    <AllocateLinesAction
-                      storeId={params.storeId}
-                      selectedLines={selectedLines}
-                      disabled={!editable()}
-                      onCommitted={onLineOpsCommitted}
-                    />
-                    {/* Return selected lines: the customer-return flow is owned
-                        by the returns vertical (not built yet), so this shows a
-                        "not yet available" notice at any status. AC-V3's status
-                        gating (SHIPPED/DELIVERED/VERIFIED) applies once that
-                        vertical exists. */}
+                    {/* Delete: hidden (not disabled) when read-only — editable
+                        only (NEW/ALLOCATED/PICKED). S3 bulk-action matrix. */}
+                    <Show when={editable()}>
+                      <DeleteLinesAction
+                        storeId={params.storeId}
+                        selectedLines={selectedLines}
+                        disabled={false}
+                        onCommitted={onLineOpsCommitted}
+                      />
+                    </Show>
+                    {/* Allocate placeholder lines: only while editable AND a
+                        placeholder line is in the selection. */}
+                    <Show when={editable() && hasSelectedPlaceholder()}>
+                      <AllocateLinesAction
+                        storeId={params.storeId}
+                        selectedLines={selectedLines}
+                        disabled={false}
+                        onCommitted={onLineOpsCommitted}
+                      />
+                    </Show>
+                    {/* Return selected lines (AC-V3): shown at EVERY status (not
+                        hidden, not disabled) — the return flow opens at SHIPPED /
+                        DELIVERED / VERIFIED, and any other status (RECEIVED
+                        included) gets an explanatory notice. A stub for now: the
+                        customer-return flow is the returns vertical's (not built
+                        yet), so this shows a "not yet available" notice
+                        regardless. See the S3 bulk-action matrix. */}
                     <Button
                       variant="secondary"
                       onClick={() => setReturnNoticeOpen(true)}

@@ -67,7 +67,7 @@
 }
 
 .swatch:focus-visible {
-  outline: 2px solid var(--primary-main);
+  outline: 2px solid var(--secondary-main);
   outline-offset: 2px;
 }
 

@@ -3,14 +3,33 @@ import { createRipple } from '../../utils/createRipple';
 import { Ripple } from './Ripple';
 import styles from './Button.module.css';
 
+/*
+ * Whether a labelled Button sheds its label down to just the icon on phone
+ * widths (≤767px, ui-standards #btn-icons) WITHOUT an explicit `collapsible`
+ * prop. Off for now — collapsing is opt-in per button. This is the single
+ * switch to make collapse the app-wide default later: flip it to `true` and
+ * every labelled button collapses on phones unless it passes `collapsible={false}`.
+ */
+const COLLAPSIBLE_BY_DEFAULT = false;
+
 export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: JSX.Element;
   /**
-   * Semantic tone: 'primary' (default — the brand tone) or 'secondary' (the
-   * action tone; footer edit actions). Never named after a colour — the
-   * variant maps to palette tokens in the CSS (Carl, 2026-07-09).
+   * Semantic tone (ui-standards #btn-variants). Never named after a colour —
+   * the variant maps to palette tokens in the CSS (Carl, 2026-07-09):
+   *   'primary'   (default) — the single most important action; filled.
+   *   'secondary' — supporting actions (Print, Export, Cancel…); outlined.
+   *   'ghost'     — optional/low-priority + inline table actions; text only.
+   *   'danger'    — a strong "be careful with this" action (delete, void);
+   *                 filled brand-orange tone, not a hard error-red.
    */
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  /**
+   * Size (ui-standards #btn-sizes): 'medium' (default) for page/toolbar
+   * actions, 'small' for dense tables and compact panels. Medium grows to the
+   * touch target at tablet widths; small stays dense.
+   */
+  size?: 'medium' | 'small';
   /** Which side of the label the icon sits on (mirrors in RTL). */
   iconPosition?: 'start' | 'end';
   /**
@@ -18,22 +37,31 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    * marks it
    *  aria-busy (so a click can't re-fire an in-flight action). */
   loading?: boolean;
+  /**
+   * Collapse to just the icon on phone widths (≤767px) to save toolbar space
+   * (ui-standards #btn-icons). Opt-in, and only meaningful with an `icon`. The
+   * label stays in the DOM (visually hidden), so the button keeps its
+   * accessible name — no aria-label needed. Omit to use the app default
+   * (COLLAPSIBLE_BY_DEFAULT, currently off); `collapsible={false}` always opts
+   * out even if that default flips.
+   */
+  collapsible?: boolean;
 }
 
 /*
- * Reusable action button — plain <button> + CSS, no component library (Solid
- * port of the RnD prototype's <Button>). Mirrors the current app's outlined
- * ButtonWithIcon: white pill, no border, shadow[2], coloured icon; fills with
- * its colour on hover (text + icon go white); a subtle ripple on click
- * (createRipple). `variant` picks the tone: primary (brand) or secondary
- * (footer actions).
+ * Reusable action button — plain <button> + CSS, no component library. Flat
+ * per ui-standards (#btn-variants): filled primary/danger, outlined secondary,
+ * text-only ghost; two sizes; a subtle ripple on click (createRipple). Tone +
+ * shape live entirely in Button.module.css; this file is just structure.
  */
 export const Button = (props: ButtonProps) => {
   const [local, rest] = splitProps(props, [
     'icon',
     'variant',
+    'size',
     'iconPosition',
     'loading',
+    'collapsible',
     'children',
     'class',
     'type',
@@ -52,7 +80,11 @@ export const Button = (props: ButtonProps) => {
       type={local.type ?? 'button'}
       class={local.class ? `${styles.button} ${local.class}` : styles.button}
       data-variant={local.variant ?? 'primary'}
+      data-size={local.size ?? 'medium'}
       data-icon-position={local.iconPosition ?? 'start'}
+      data-collapsible={
+        (local.collapsible ?? COLLAPSIBLE_BY_DEFAULT) ? '' : undefined
+      }
       disabled={local.disabled || local.loading}
       aria-busy={local.loading || undefined}
       onPointerDown={event => {

@@ -1,4 +1,3 @@
-import type { JSX } from 'solid-js';
 import {
   ConsumptionHistoryChart,
   StockEvolutionChart,
@@ -6,7 +5,7 @@ import {
   type ConsumptionHistoryPoint,
   type StockEvolutionPoint,
 } from '../ui/elements/charts';
-import styles from './ChartsShowcase.module.css';
+import { Card, Row, Stack } from './common';
 
 // --- Sample data, shaped like the wire nodes the real charts consume. ---
 
@@ -64,22 +63,8 @@ const stockData: StockEvolutionPoint[] = (() => {
   }));
 })();
 
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
-
 export const ChartsShowcase = () => (
-  <div class={styles.stack}>
+  <Stack>
     <Card
       title="Target quantity"
       lead={
@@ -94,7 +79,7 @@ export const ChartsShowcase = () => (
         </>
       }
     >
-      <div class={styles.row}>
+      <Row>
         <TargetQuantityBreakdown
           averageMonthlyConsumption={15.5}
           availableStockOnHand={21}
@@ -109,7 +94,7 @@ export const ChartsShowcase = () => (
           thresholdMonths={1}
           targetMonths={3}
         />
-      </div>
+      </Row>
     </Card>
 
     <Card
@@ -137,5 +122,5 @@ export const ChartsShowcase = () => (
     >
       <StockEvolutionChart data={stockData} />
     </Card>
-  </div>
+  </Stack>
 );
