@@ -80,12 +80,15 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
   ) => (taxAmount(before, after) / ((before ?? 0) || 1)) * 100;
   const taxLabel = (pct: number) => `${t('label.tax')} (${pct.toFixed(2)}%)`;
 
+  // Group headings sit a weight above the FieldRow labels' medium, so the
+  // pricing groups read as groups.
   const groupHeading = (label: string, info: string): JSX.Element => (
     <span
       style={{
         display: 'inline-flex',
         'align-items': 'center',
         gap: 'var(--space-1)',
+        'font-weight': 'var(--weight-bold)',
       }}
     >
       <Popover
@@ -339,7 +342,14 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <Text variant="body">{money(pricing().stockTotalAfterTax)}</Text>
         </FieldRow>
 
-        <FieldRow label={t('heading.grand-total')}>
+        <FieldRow
+          // Bold like the group headings — the shipment-level summary row.
+          label={
+            <span style={{ 'font-weight': 'var(--weight-bold)' }}>
+              {t('heading.grand-total')}
+            </span>
+          }
+        >
           <Text variant="body">{money(pricing().totalAfterTax)}</Text>
         </FieldRow>
 
