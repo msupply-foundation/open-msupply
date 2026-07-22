@@ -311,7 +311,10 @@ const ServiceChargesContent = (
       dismissable={!saving()}
       testId="service-charges-modal"
       title={t('heading.service-charges')}
-      widthRem={48}
+      // Workbench-size, like the line editor: the charges DataTable gets the
+      // flexing body, and the modal goes full-screen at the compact breakpoint
+      // (size="large" is what opts a Dialog into that).
+      size="large"
       headerActions={
         <Button
           variant="secondary"
