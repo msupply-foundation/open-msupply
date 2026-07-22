@@ -1,4 +1,4 @@
-import { For, Show, type JSX } from 'solid-js';
+import { For, Show } from 'solid-js';
 import {
   Accordion,
   AccordionItem,
@@ -6,21 +6,8 @@ import {
   AccordionContent,
   useAccordionItemExpanded,
 } from '../ui/elements/accordion/Accordion';
+import { Card, Stack } from './common';
 import styles from './AccordionShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 const SINGLE_OPEN_ITEMS = [
   {
@@ -60,7 +47,7 @@ const PreviewTriggerLabel = (props: { label: string; preview: string }) => {
 
 export const AccordionShowcase = () => {
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Single-open group"
         lead={
@@ -149,6 +136,6 @@ export const AccordionShowcase = () => {
           </AccordionItem>
         </Accordion>
       </Card>
-    </div>
+    </Stack>
   );
 };
