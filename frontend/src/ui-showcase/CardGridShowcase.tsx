@@ -1,20 +1,7 @@
-import { For, type JSX } from 'solid-js';
+import { For } from 'solid-js';
 import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
+import { Card, Stack } from './common';
 import styles from './CardGridShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 // Generic placeholder "cards" — plain coloured blocks so it's the grid's own
 // wrapping/reflow on show, not any particular card content.
@@ -34,7 +21,7 @@ const Block = (props: { n: number }) => (
  * demoed under Statistics laying out DashboardCards.)
  */
 export const CardGridShowcase = () => (
-  <div class={styles.stack}>
+  <Stack>
     <Card
       title="CardGrid — responsive intrinsic grid (default 20rem columns)"
       lead={
@@ -67,5 +54,5 @@ export const CardGridShowcase = () => (
         <For each={blocks}>{n => <Block n={n} />}</For>
       </CardGrid>
     </Card>
-  </div>
+  </Stack>
 );

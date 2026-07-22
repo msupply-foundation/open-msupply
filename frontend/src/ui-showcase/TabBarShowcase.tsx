@@ -1,4 +1,4 @@
-import { createSignal, type JSX } from 'solid-js';
+import { createSignal } from 'solid-js';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
@@ -6,21 +6,8 @@ import { Toolbar } from '../ui/layout/Header/Toolbar';
 import { Tabs, TabList, TabPanel, type TabDef } from '../ui/elements/tabs/Tabs';
 import { Button } from '../ui/elements/buttons/Button';
 import { TruckIcon, PlusCircleIcon } from '../ui/icons';
+import { Card, PageFrame, Stack, ToolbarStub } from './common';
 import styles from './TabBarShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 const PAGE_TABS: TabDef[] = [
   { value: 'general', label: 'General' },
@@ -39,7 +26,7 @@ export const TabBarShowcase = () => {
   const [pageTab, setPageTab] = createSignal('general');
 
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Tab bar — the header's bottom edge"
         lead={
@@ -55,7 +42,7 @@ export const TabBarShowcase = () => {
           </>
         }
       >
-        <div class={styles.pageFrame}>
+        <PageFrame>
           <Tabs value={pageTab()} onValueChange={setPageTab}>
             <Header>
               <Breadcrumb
@@ -69,11 +56,11 @@ export const TabBarShowcase = () => {
                 <Button icon={<PlusCircleIcon />}>Add item</Button>
               </HeaderButtons>
               <Toolbar>
-                <span class={styles.toolbarStub}>Toolbar</span>
+                <ToolbarStub>Toolbar</ToolbarStub>
               </Toolbar>
               <TabList tabs={PAGE_TABS} />
             </Header>
-            <div class={styles.pageBody}>
+            <div class={styles.panelBody}>
               <TabPanel value="general">
                 <p class={styles.panelText}>
                   General — the shipment's status, customer and dates.
@@ -97,7 +84,7 @@ export const TabBarShowcase = () => {
               </TabPanel>
             </div>
           </Tabs>
-        </div>
+        </PageFrame>
       </Card>
 
       <Card
@@ -137,6 +124,6 @@ export const TabBarShowcase = () => {
           </TabPanel>
         </Tabs>
       </Card>
-    </div>
+    </Stack>
   );
 };

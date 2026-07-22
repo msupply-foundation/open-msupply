@@ -1,0 +1,391 @@
+# Outbound shipment detail (spec/outbound-shipments S3). One fragment pair —
+# header info + line — shared by the fetch and every mutation that returns the
+# node, so saves can replace the resource in place or refetch cheaply.
+
+fragment OutboundInfo on InvoiceNode {
+  id
+  status
+  invoiceNumber
+  onHold
+  createdDatetime
+  allocatedDatetime
+  pickedDatetime
+  shippedDatetime
+  deliveredDatetime
+  receivedDatetime
+  verifiedDatetime
+  colour
+  comment
+  theirReference
+  transportReference
+  expectedDeliveryDate
+  taxPercentage
+  currencyRate
+  currency {
+    id
+    code
+    isHomeCurrency
+  }
+  shippingMethod {
+    id
+    method
+  }
+  user {
+    username
+    email
+  }
+  requisition {
+    id
+    requisitionNumber
+  }
+  linkedShipment {
+    id
+  }
+  otherParty(storeId: $storeId) {
+    id
+    name
+    code
+    isOnHold
+    store {
+      id
+    }
+  }
+  pricing {
+    totalBeforeTax
+    totalAfterTax
+    foreignCurrencyTotalAfterTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalBeforeTax
+    serviceTotalAfterTax
+    taxPercentage
+  }
+}
+
+fragment OutboundLine on InvoiceLineNode {
+  id
+  type
+  itemId
+  itemName
+  itemCode
+  item {
+    id
+    code
+    name
+    unitName
+    isVaccine
+    doses
+  }
+  packSize
+  numberOfPacks
+  shippedNumberOfPacks
+  receivedNumberOfPacks
+  batch
+  expiryDate
+  sellPricePerPack
+  totalBeforeTax
+  totalAfterTax
+  taxPercentage
+  foreignCurrencyPriceBeforeTax
+  note
+  locationName
+  location {
+    id
+    code
+  }
+  stockLine {
+    id
+  }
+  vvmStatus {
+    id
+    description
+  }
+  volumePerPack
+}
+
+query outboundDetail($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id, type: OUTBOUND_SHIPMENT) {
+    __typename
+    ... on InvoiceNode {
+      ...OutboundInfo
+      lines {
+        nodes {
+          ...OutboundLine
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        description
+      }
+    }
+  }
+}
+
+# Header / status / hold / transport / pricing updates. Returns the full node
+# (with lines — leaving NEW trims zero-quantity rows server-side, so the lines
+# must come back too). Typed errors are selected so status-change rejections
+# translate (AC-S1, AC-H1, AC-T1, AC-P3 — the unallocated-lines member carries
+# the offending lines).
+mutation updateOutboundShipment(
+  $storeId: String!
+  $input: UpdateOutboundShipmentInput!
+) {
+  updateOutboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      ...OutboundInfo
+      lines {
+        nodes {
+          ...OutboundLine
+        }
+      }
+    }
+    ... on UpdateOutboundShipmentError {
+      error {
+        __typename
+        description
+        ... on CannotChangeStatusOfInvoiceOnHold {
+          description
+        }
+        ... on CannotReverseInvoiceStatus {
+          description
+        }
+        ... on InvoiceIsNotEditable {
+          description
+        }
+        ... on CannotHaveEstimatedDeliveryDateBeforeShippedDate {
+          description
+        }
+        ... on CannotIssueInForeignCurrency {
+          description
+        }
+        ... on CanOnlyChangeToAllocatedWhenNoUnallocatedLines {
+          invoiceLines {
+            nodes {
+              id
+              itemName
+            }
+          }
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        description
+      }
+    }
+  }
+}
+
+# Change the customer (AC-N1): the response is the NEW identity (fresh id, same
+# number) — the caller renavigates to it; the old id stops resolving.
+mutation updateOutboundShipmentName(
+  $storeId: String!
+  $input: UpdateOutboundShipmentNameInput!
+) {
+  updateOutboundShipmentName(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on UpdateOutboundShipmentNameError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Delete the shipment from its detail (AC-D1/D2).
+mutation deleteOutboundShipment($storeId: String!, $id: String!) {
+  deleteOutboundShipment(storeId: $storeId, id: $id) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeleteOutboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Bulk line delete (detail selection footer): stock, placeholder, and service
+# lines each go through their own batch array in one call.
+mutation deleteOutboundLines(
+  $storeId: String!
+  $stockLines: [DeleteOutboundShipmentLineInput!]
+  $placeholders: [DeleteOutboundShipmentUnallocatedLineInput!]
+  $serviceLines: [DeleteOutboundShipmentServiceLineInput!]
+) {
+  batchOutboundShipment(
+    storeId: $storeId
+    input: {
+      deleteOutboundShipmentLines: $stockLines
+      deleteOutboundShipmentUnallocatedLines: $placeholders
+      deleteOutboundShipmentServiceLines: $serviceLines
+    }
+  ) {
+    deleteOutboundShipmentLines {
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+    deleteOutboundShipmentUnallocatedLines {
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+    deleteOutboundShipmentServiceLines {
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+
+# Auto-allocate one placeholder (FEFO — the shared policy, spec/stock-allocation AC-AL1..AL5). The warning connectors feed
+# the skip/expiring-soon notices; the view refetches the shipment afterwards
+# (placeholder, lines, and pricing all move server-side).
+mutation allocateOutboundLine($storeId: String!, $lineId: String!) {
+  allocateOutboundShipmentUnallocatedLine(storeId: $storeId, lineId: $lineId) {
+    __typename
+    ... on AllocateOutboundShipmentUnallocatedLineNode {
+      inserts {
+        totalCount
+      }
+      updates {
+        totalCount
+      }
+      deletes {
+        id
+      }
+      skippedExpiredStockLines {
+        nodes {
+          batch
+          expiryDate
+        }
+      }
+      skippedOnHoldStockLines {
+        nodes {
+          batch
+        }
+      }
+      skippedUnusableVvmStatusLines {
+        nodes {
+          batch
+        }
+      }
+      issuedExpiringSoonStockLines {
+        nodes {
+          batch
+          expiryDate
+        }
+      }
+    }
+    ... on AllocateOutboundShipmentUnallocatedLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Zero a placeholder's quantity (the allocate flow's zero-quantity cleanup
+# offers deletion instead; this covers the "zero it" path from the editor).
+mutation updateOutboundUnallocatedLine(
+  $storeId: String!
+  $input: UpdateOutboundShipmentUnallocatedLineInput!
+) {
+  updateOutboundShipmentUnallocatedLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceLineNode {
+      id
+      numberOfPacks
+    }
+    ... on UpdateOutboundShipmentUnallocatedLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Add every stock item of a master list as zero-quantity placeholders (AC-P5).
+mutation addToOutboundFromMasterList(
+  $storeId: String!
+  $shipmentId: String!
+  $masterListId: String!
+) {
+  addToOutboundShipmentFromMasterList(
+    storeId: $storeId
+    input: { shipmentId: $shipmentId, masterListId: $masterListId }
+  ) {
+    __typename
+    ... on InvoiceLineConnector {
+      totalCount
+    }
+    ... on AddToOutboundShipmentFromMasterListError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Master lists joined to the CUSTOMER (rules.md § adding from a master list —
+# the list must be visible to the customer, not just the store).
+query customerMasterLists($storeId: String!, $customerNameId: String!) {
+  masterLists(
+    storeId: $storeId
+    filter: { existsForNameId: { equalTo: $customerNameId } }
+  ) {
+    ... on MasterListConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}
+
+# The Log tab (AC-S7): the shipment's activity history.
+query outboundActivityLogs($storeId: String!, $recordId: String!) {
+  activityLogs(
+    storeId: $storeId
+    filter: { recordId: { equalTo: $recordId } }
+  ) {
+    ... on ActivityLogConnector {
+      __typename
+      nodes {
+        id
+        type
+        datetime
+        to
+        user {
+          username
+        }
+      }
+    }
+  }
+}

@@ -20,10 +20,12 @@ mutation initialiseSite($input: SyncSettingsInput!) {
     }
     ... on SyncErrorNode {
       __typename
+      variant
       fullError
     }
     ... on SyncErrorV7Node {
       __typename
+      variantV7: variant
       fullError
     }
   }
@@ -68,6 +70,9 @@ fragment SyncStatus on FullSyncStatusNode {
   ... on FullSyncStatusV7Node {
     __typename
     isSyncing
+    summary {
+      started
+    }
     warningThreshold
     errorThreshold
     error {
@@ -102,10 +107,25 @@ fragment SyncStatus on FullSyncStatusNode {
       started
       finished
     }
+    # Backfill descriptions for a central-initiated re-send (a store transfer's
+    # data, or a whole table) — the modal's "Special syncs" list. Empty for an
+    # ordinary run. V7 only (spec/sync-modal/contract.md § Sync runs and status).
+    linkedDescriptions {
+      __typename
+      ... on AllStoreDataDescription {
+        storeName
+      }
+      ... on TableNameDescription {
+        tableName
+      }
+    }
   }
   ... on FullSyncStatusV5V6Node {
     __typename
     isSyncing
+    summary {
+      started
+    }
     warningThreshold
     errorThreshold
     error {

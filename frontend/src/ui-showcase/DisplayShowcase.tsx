@@ -1,22 +1,11 @@
-import { createSignal, type JSX } from 'solid-js';
+import { createSignal } from 'solid-js';
 import { WidgetCard } from '../ui/elements/display/WidgetCard';
 import { DocumentFrame } from '../ui/elements/display/DocumentFrame';
+import { StatComparisonTile } from '../ui/elements/display/StatComparisonTile';
+import { NumberField } from '../ui/elements/inputs/NumberField';
 import { ReportsIcon, StockIcon, TruckIcon, PrinterIcon } from '../ui/icons';
+import { Card, Note, Stack } from './common';
 import styles from './DisplayShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 /* A small self-contained HTML document (no scripts) to show the sandboxed
    frame rendering server-style report output. */
@@ -43,8 +32,53 @@ const REPORT_HTML = `<!doctype html>
  */
 export const DisplayShowcase = () => {
   const [lastClicked, setLastClicked] = createSignal('');
+  // Stat-comparison-tile demo: a live "adjust by N" input drives the preview.
+  const CURRENT_PACKS = 120;
+  const [adjustBy, setAdjustBy] = createSignal<number | undefined>();
+  const adjusted = () =>
+    adjustBy() === undefined
+      ? undefined
+      : String(CURRENT_PACKS - (adjustBy() ?? 0));
   return (
-    <div class={styles.stack}>
+    <Stack>
+      <Card
+        title="Stat comparison tile — current → adjusted preview"
+        lead={
+          <>
+            A labelled tile showing a value beside its adjusted/preview
+            counterpart (the stock adjustment modal's Available packs / Packs on
+            hand). The preview side is{' '}
+            <strong>blank until there is an input</strong>. An optional sub-note
+            carries secondary context (e.g. the dose equivalent).
+          </>
+        }
+      >
+        <div style={{ 'max-width': '18rem', 'margin-bottom': '1rem' }}>
+          <NumberField
+            label="Reduce packs by"
+            value={adjustBy()}
+            onChange={setAdjustBy}
+          />
+        </div>
+        <div class={styles.grid}>
+          <StatComparisonTile
+            label="Available packs"
+            current={String(CURRENT_PACKS)}
+            adjusted={adjusted()}
+          />
+          <StatComparisonTile
+            label="Packs on hand"
+            current={String(CURRENT_PACKS)}
+            currentNote="6,000 doses"
+            adjusted={adjusted()}
+            adjustedNote={
+              adjusted() === undefined
+                ? undefined
+                : `${Number(adjusted()) * 50} doses`
+            }
+          />
+        </div>
+      </Card>
       <Card
         title="Widget card — clickable dashboard tile"
         lead={
@@ -84,9 +118,9 @@ export const DisplayShowcase = () => {
             href="#/showcase/icons"
           />
         </div>
-        <p class={styles.lead} role="status">
+        <Note role="status">
           {lastClicked() ? `Clicked: ${lastClicked()}` : '\u00a0'}
-        </p>
+        </Note>
       </Card>
 
       <Card
@@ -105,6 +139,6 @@ export const DisplayShowcase = () => {
           <DocumentFrame title="Stock on hand report" srcdoc={REPORT_HTML} />
         </div>
       </Card>
-    </div>
+    </Stack>
   );
 };

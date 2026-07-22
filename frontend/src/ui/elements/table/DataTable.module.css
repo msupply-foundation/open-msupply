@@ -164,6 +164,33 @@
   white-space: nowrap;
 }
 
+/* Footer cells (a column's `footer` — e.g. a summed total). A single band
+   pinned to the block-end of the scroll area so a summed total stays visible
+   while the rows scroll, styled like the header band (toolbar grey, medium
+   weight) with a rule above it. Alignment + pinning mirror the body cell
+   (data-align / data-pinned), so a right-aligned money total lines up under
+   its column. */
+.tf {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 2;
+  padding: var(--space-2) var(--space-3);
+  border-block-start: 1px solid var(--color-divider);
+  background: var(--bg-toolbar);
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  text-align: start;
+}
+
+.tf[data-align='right'] {
+  text-align: end;
+}
+
+.tf[data-align='center'] {
+  text-align: center;
+}
+
 /* De-emphasised (read-only) rows — data-dimmed stamped by TableRow when the
    page's rowDimmed predicate matches (e.g. SHIPPED+ shipments). Opacity, not a
    colour, so every cell treatment (chips, swatches) dims consistently. */

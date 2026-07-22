@@ -1,24 +1,12 @@
-import { For, type JSX } from 'solid-js';
+import { For } from 'solid-js';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { Badge } from '../ui/elements/feedback/Badge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Popover } from '../ui/elements/feedback/Popover';
+import { Comment } from '../ui/elements/feedback/Comment';
 import { CheckCircleIcon, HelpIcon, MessageSquareIcon } from '../ui/icons';
+import { Card, Col, Row, Stack } from './common';
 import styles from './FeedbackShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 /* Chip colours come from the --status-* contract tokens (with dark
    overrides) — never literals here, per the no-hard-coded-colours rule. */
@@ -33,7 +21,7 @@ const STATUS_CHIPS: { label: string; colour: string }[] = [
 
 export const FeedbackShowcase = () => {
   return (
-    <div class={styles.stack}>
+    <Stack>
       <Card
         title="Status chips"
         lead={
@@ -47,11 +35,11 @@ export const FeedbackShowcase = () => {
           </>
         }
       >
-        <div class={styles.chipRow}>
+        <Row gap="sm">
           <For each={STATUS_CHIPS}>
             {chip => <StatusChip label={chip.label} colour={chip.colour} />}
           </For>
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -65,12 +53,12 @@ export const FeedbackShowcase = () => {
           </>
         }
       >
-        <div class={styles.chipRow}>
+        <Row gap="sm">
           <Badge label="3" title="3 records to push" />
           <Badge label="99+" title="250 records to push" />
           <Badge label="42" tone="warning" title="42 records to push" />
           <Badge label="!" tone="error" title="Sync error" />
-        </div>
+        </Row>
       </Card>
 
       <Card
@@ -86,7 +74,7 @@ export const FeedbackShowcase = () => {
           </>
         }
       >
-        <div class={styles.alertStack}>
+        <Col gap="sm" align="start">
           <Alert severity="error">
             Cannot delete: this shipment has already been shipped.
           </Alert>
@@ -101,7 +89,7 @@ export const FeedbackShowcase = () => {
             Last successful sync 09:37 (completed in 1 second) — the untinted
             notice, glyph overridden by intent.
           </Alert>
-        </div>
+        </Col>
       </Card>
 
       <Card
@@ -140,6 +128,28 @@ export const FeedbackShowcase = () => {
           </Popover>
         </div>
       </Card>
-    </div>
+
+      <Card
+        title="Comment — a note behind an icon"
+        lead={
+          <>
+            The list table's comment column (and any note that hides behind an
+            icon): a quiet <code>MessageSquareIcon</code> that reveals its text
+            in a popover — a bold heading over the body — on hover / focus, and
+            on click / tap too (so it opens on touch). A thin wrapper over{' '}
+            <code>Popover</code>; renders nothing when there is no comment, so a
+            cell can drop it in unconditionally.
+          </>
+        }
+      >
+        <div class={styles.popoverRow}>
+          <Comment comment="Split delivery agreed with the customer — second carton follows on Thursday's flight to Buka." />
+          <span>
+            ← hover or tap the icon. An empty comment renders nothing:{' '}
+          </span>
+          <Comment comment={null} />
+        </div>
+      </Card>
+    </Stack>
   );
 };

@@ -26,10 +26,14 @@ export interface PopoverProps {
   /** Close when a button inside the panel is clicked  */
   closeOnClickInside?: boolean;
   /**
-   * Open on hover (and focus) as well as click — for content bubbles whose
-   * trigger IS the
-   * content (a status row), where hover reads more naturally than a click.
-   * Click still works.
+   * Open on hover (and focus) — for content bubbles whose trigger IS the
+   * content (a status row, a comment icon), where hover reads more naturally
+   * than a click. Click/tap opens it too (the only way on touch, which has no
+   * hover); in this mode click is OPEN-ONLY — it never toggles closed, so an
+   * instinctive click after a hover-open doesn't dismiss it, and a touch tap
+   * opens on the FIRST tap rather than needing a second (a plain toggle would
+   * fight the synthetic hover the tap also fires). Dismiss via pointer-leave,
+   * click-outside (light dismiss) or Escape.
    */
   openOnHover?: boolean;
   class?: string;
@@ -110,6 +114,13 @@ export const Popover = (props: PopoverProps) => {
     )
       top = below;
 
+    // Final cross-viewport clamp: a panel too tall for either side (CSS caps
+    // its height at 100dvh - 2*EDGE, then it scrolls) would still be placed
+    // off the bottom/top edge by the below/above math above. Pin it inside the
+    // viewport so every row is reachable. max() beats min() when the panel is
+    // exactly viewport-tall, keeping the top edge visible.
+    top = Math.max(EDGE, Math.min(top, window.innerHeight - p.height - EDGE));
+
     panel.style.top = `${Math.round(top)}px`;
     panel.style.left = `${Math.round(left)}px`;
   };
@@ -155,8 +166,12 @@ export const Popover = (props: PopoverProps) => {
 
   // Hover-open: show on pointer-enter / focus of the trigger, hide once the
   // pointer has left BOTH the trigger and the panel (a small delay lets the
-  // pointer travel across the gap). Click still toggles (native popovertarget).
-  // Keyboard focus opens it too, so it's not hover-only (a11y).
+  // pointer travel across the gap). Keyboard focus opens it too, so it's not
+  // hover-only (a11y). Click is OPEN-ONLY here — see `show` on onClick below
+  // and the openOnHover doc: the native popovertarget TOGGLE is dropped in this
+  // mode because it fights hover (desktop: a click after hover-open would close
+  // it; touch: the tap's synthetic mouseenter opens, then the toggle closes,
+  // needing a second tap). show() is idempotent, so click/tap only ever opens.
   let hideTimer: ReturnType<typeof setTimeout> | undefined;
   const show = () => {
     if (hideTimer) {
@@ -180,6 +195,7 @@ export const Popover = (props: PopoverProps) => {
         onMouseLeave: scheduleHide,
         onFocus: show,
         onBlur: scheduleHide,
+        onClick: show,
       }
     : {};
 
@@ -188,7 +204,12 @@ export const Popover = (props: PopoverProps) => {
       <button
         ref={trigger}
         type="button"
-        popovertarget={panelId}
+        // Click toggles via the platform for a plain popover; in hover mode the
+        // toggle is dropped (see hoverHandlers) so click stays open-only, and
+        // aria-controls/-expanded are wired by hand instead of by popovertarget.
+        popovertarget={props.openOnHover ? undefined : panelId}
+        aria-controls={panelId}
+        aria-expanded={props.openOnHover ? false : undefined}
         class={
           props.triggerClass
             ? `${styles.trigger} ${props.triggerClass}`

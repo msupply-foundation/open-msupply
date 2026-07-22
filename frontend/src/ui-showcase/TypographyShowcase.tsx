@@ -1,20 +1,7 @@
-import { For, type JSX } from 'solid-js';
+import { For } from 'solid-js';
 import { Text, type TextVariant } from '../ui/elements/typography/Text';
+import { Card, Stack } from './common';
 import styles from './TypographyShowcase.module.css';
-
-const Card = (props: {
-  title: string;
-  lead: JSX.Element;
-  children: JSX.Element;
-}) => (
-  <section class={styles.card}>
-    <header class={styles.cardHeader}>{props.title}</header>
-    <div class={styles.cardBody}>
-      <p class={styles.lead}>{props.lead}</p>
-      {props.children}
-    </div>
-  </section>
-);
 
 /*
  * The three root-relative variants, largest → smallest. `subtitle` is left out
@@ -45,7 +32,7 @@ const VARIANTS: {
 ];
 
 export const TypographyShowcase = () => (
-  <div class={styles.stack}>
+  <Stack>
     <Card
       title="The type scale"
       lead={
@@ -193,5 +180,5 @@ export const TypographyShowcase = () => (
         </div>
       </div>
     </Card>
-  </div>
+  </Stack>
 );
