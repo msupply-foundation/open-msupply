@@ -17,6 +17,12 @@ export interface SelectOption {
 
 interface SelectProps {
   label: string;
+  /**
+   * Name the trigger via `aria-label` instead of rendering a visible label —
+   * for dense contexts (a table cell) where a column header already names the
+   * control. The accessible name is unchanged. Mirrors TextField/Combobox.
+   */
+  hideLabel?: boolean;
   options: SelectOption[];
   value?: string;
   defaultValue?: string;
@@ -98,8 +104,14 @@ export const Select = (props: SelectProps) => {
         </KSelect.Item>
       )}
     >
-      <KSelect.Label class={styles.label}>{props.label}</KSelect.Label>
-      <KSelect.Trigger class={styles.trigger} data-testid={props.testId}>
+      <Show when={!props.hideLabel}>
+        <KSelect.Label class={styles.label}>{props.label}</KSelect.Label>
+      </Show>
+      <KSelect.Trigger
+        class={styles.trigger}
+        data-testid={props.testId}
+        aria-label={props.hideLabel ? props.label : undefined}
+      >
         <KSelect.Value<SelectOption> class={styles.value}>
           {state => state.selectedOption().label}
         </KSelect.Value>

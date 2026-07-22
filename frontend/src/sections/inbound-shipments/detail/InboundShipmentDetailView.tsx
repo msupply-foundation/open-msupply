@@ -41,7 +41,6 @@ import {
 } from '../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { stripEmpty } from '../../../typeHelpers';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { fetchLocations, type Location } from '../../../domain/location';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
@@ -60,7 +59,6 @@ import {
 } from './inboundShipmentUpdate';
 import { heldInboundQueryScopes } from '../inboundShipmentScope';
 import type { InboundEditFields } from './inboundShipmentEdit';
-import type { InboundLineFilter } from './inboundShipmentLineFilter';
 import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
 import { InboundShipmentSidePanel } from './InboundShipmentSidePanel';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
@@ -85,8 +83,9 @@ import {
 // The inbound-shipment detail view (spec S3). Mirrors the stocktake detail
 // reference: TWO resources — `info` (header/footer/side-panel, a single node,
 // spliced in place on a header save) and `lines` (one server-paginated page of
-// STOCK_IN lines, refetched on any line change). A Verified shipment is
-// read-only (the global edit gate); on-hold blocks only status changes.
+// the shipment's stock lines, refetched on any line change). A Verified
+// shipment is read-only (the global edit gate); on-hold blocks only status
+// changes.
 
 type Line = InboundLineFragment;
 type SortKey = NonNullable<
@@ -96,13 +95,11 @@ type SortKey = NonNullable<
 const DEFAULT_PAGE_SIZE = 20;
 
 type DetailUrlState = {
-  filter: InboundLineFilter;
   sort: NonNullable<InboundShipmentLinesVariables['sort']>;
   offset: number;
   first: number;
 };
 const DEFAULT_URL_STATE: DetailUrlState = {
-  filter: {},
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -113,7 +110,6 @@ const InboundShipmentDetailView: Component = () => {
   const navigate = useNavigate();
   const { query, setQuery } =
     useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
-  const filter = () => query().filter;
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // Details-panel open state: responsive default (open on very wide viewports —
@@ -186,15 +182,19 @@ const InboundShipmentDetailView: Component = () => {
   );
   const info = (): InboundInfoFragment | undefined => data();
 
-  // One server-paginated page of STOCK_IN lines (invoiceId + type forced;
-  // user filter/sort/page from the URL). Keyed on serialised variables so
-  // identical content doesn't refetch.
+  // One server-paginated page of the shipment's stock lines (invoiceId + type
+  // forced; user filter/sort/page from the URL). Keyed on serialised variables
+  // so identical content doesn't refetch. Both STOCK_IN and UNALLOCATED_STOCK
+  // are pulled: a line REJECTED during authorisation flips server-side from
+  // STOCK_IN to UNALLOCATED_STOCK, and it must stay on the table so its "Auth
+  // status" column reads Rejected and the row-selection Approve/Reject/Pending
+  // actions can un-reject it (spec ui-surface col 16 / AC-E6). SERVICE lines
+  // stay out — they belong to the service-charge modal, not this table.
   const linesVariables = createMemo<InboundShipmentLinesVariables>(() => ({
     storeId: params.storeId,
     filter: {
-      ...stripEmpty(query().filter),
       invoiceId: { equalTo: params.invoiceId },
-      type: { equalTo: 'STOCK_IN' },
+      type: { equalAny: ['STOCK_IN', 'UNALLOCATED_STOCK'] },
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
@@ -289,10 +289,6 @@ const InboundShipmentDetailView: Component = () => {
   };
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
-  const onFilterChange = (next: InboundLineFilter) => {
-    setQuery({ ...query(), filter: next, offset: 0 });
-    setSelectedIds([]);
-  };
 
   const openRow = (line: Line) => setEditState({ itemId: line.itemId });
   const openAdd = () => setEditState({});
@@ -695,8 +691,6 @@ const InboundShipmentDetailView: Component = () => {
                       edit={edit}
                       backdatingEnabled={prefs().backdatingEnabled}
                       backdatingMaxDays={prefs().backdatingMaxDays}
-                      filter={filter()}
-                      onFilterChange={onFilterChange}
                       onSaveField={saveField}
                     />
                   </Toolbar>
@@ -875,6 +869,8 @@ const InboundShipmentDetailView: Component = () => {
                   vvm: prefs().manageVvmStatusForStock,
                   donor: prefs().allowTrackingOfStockByDonor,
                   doses: prefs().manageVaccinesInDoses,
+                  authorisation:
+                    prefs().externalInboundShipmentLinesMustBeAuthorised,
                 }}
                 onSaved={onLinesChanged}
                 onRequestNext={advanceToNextItem}
