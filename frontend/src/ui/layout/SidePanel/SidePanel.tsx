@@ -88,7 +88,11 @@ export const SidePanelSection = (props: SidePanelSectionProps) => {
   return (
     <section
       class={styles.section}
-      data-testid={`panel-section-${props.value}`}
+      // panel-section-<value> per e2e/TESTIDS.md: value lowercased,
+      // spaces → '-' (the tab-<value> normalisation)
+      data-testid={`panel-section-${props.value
+        .toLowerCase()
+        .replace(/\s+/g, '-')}`}
     >
       <Show
         when={props.collapsible}
