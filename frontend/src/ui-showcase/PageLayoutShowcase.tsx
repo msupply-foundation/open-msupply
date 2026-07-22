@@ -18,7 +18,6 @@ import {
   AnatomyTree,
   Intro,
   Lead,
-  PageBody,
   PageFrame,
   Row,
   type AnatomyNode,
@@ -149,7 +148,11 @@ export const PageLayoutShowcase = () => (
                   <Button icon={<PlusCircleIcon />}>New shipment</Button>
                 </HeaderButtons>
               </Header>
-              <PageBody />
+              <div class={styles.miniBody}>
+                <div class={styles.stub}>
+                  page content — scrolls between the pinned regions
+                </div>
+              </div>
               <ContentFooter>
                 <Button variant="secondary" icon={<ClockIcon />}>
                   History

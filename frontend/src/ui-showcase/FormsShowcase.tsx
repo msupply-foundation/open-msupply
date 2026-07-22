@@ -18,8 +18,11 @@ import { Checkbox } from '../ui/elements/inputs/Checkbox';
 import { Select } from '../ui/elements/selectors/Select';
 import { LabelledValue } from '../ui/elements/typography/LabelledValue';
 import { EmptyState } from '../ui/elements/feedback/EmptyState';
+import { Alert } from '../ui/elements/feedback/Alert';
+import { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../ui/elements/buttons/Button';
-import { CopyIcon, PlusCircleIcon } from '../ui/icons';
+import { CopyIcon, PlusCircleIcon, SaveIcon, XCircleIcon } from '../ui/icons';
 
 const LOCATIONS = [
   { value: 's4', label: 'S4 – S4 (Ambient)' },
@@ -96,6 +99,18 @@ export const FormsShowcase = () => {
               ]}
             />
           </Header>
+        }
+        contentFooter={
+          <ContentFooter>
+            <ContentFooterActions>
+              <Button variant="secondary" icon={<XCircleIcon />}>
+                Cancel
+              </Button>
+              <Button variant="secondary" icon={<SaveIcon />}>
+                Save
+              </Button>
+            </ContentFooterActions>
+          </ContentFooter>
         }
       >
         <TabPanel value="details">
@@ -242,6 +257,10 @@ export const FormsShowcase = () => {
                   </FormSection>
                 </FormColumn>
               </FormColumns>
+              <Alert severity="info">
+                See the anatomy of this page on the{' '}
+                <a href="#/showcase/form-layout">"Form layout" page</a>.
+              </Alert>
             </Stack>
           </ContentContainer>
         </TabPanel>
