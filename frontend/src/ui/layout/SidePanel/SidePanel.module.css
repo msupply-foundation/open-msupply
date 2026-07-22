@@ -99,6 +99,20 @@
   font-size: var(--text-sm);
 }
 
+/* The section holding the record-actions cluster pins at the panel's end
+   (the original app keeps it in a non-scrolling footer row): the panel is a
+   scrolling flex column, so margin-block-start: auto glues the section to the
+   foot when content is short, and sticky keeps it visible over the content
+   when the panel scrolls. Opaque background for the content passing beneath;
+   the divider comes from the .section + .section rule. */
+.section:has(> .actions) {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 1;
+  margin-block-start: auto;
+  background: var(--surface-raised);
+}
+
 /* Record actions (the registry's record-actions section): one action per
    row, each button sized to its label and aligned inline-start. */
 .actions {

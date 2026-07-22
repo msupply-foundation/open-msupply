@@ -97,6 +97,17 @@ export const SidePanelShowcase = () => {
                 <dd>PO-1042</dd>
               </dl>
             </SidePanelSection>
+            <SidePanelSection
+              value="history"
+              title="History (collapsed by default)"
+              collapsible
+              defaultOpen={false}
+            >
+              <p>
+                Opened this section from its heading — the chevron rotates and
+                content expands.
+              </p>
+            </SidePanelSection>
             {/* Record actions (the registry's record-actions section):
                 SidePanelActions stacks them one per row, aligned
                 inline-start, each button sized to its label. */}
@@ -109,17 +120,6 @@ export const SidePanelShowcase = () => {
                   Make a copy
                 </Button>
               </SidePanelActions>
-            </SidePanelSection>
-            <SidePanelSection
-              value="history"
-              title="History (collapsed by default)"
-              collapsible
-              defaultOpen={false}
-            >
-              <p>
-                Opened this section from its heading — the chevron rotates and
-                content expands.
-              </p>
             </SidePanelSection>
           </SidePanel>
         </div>
