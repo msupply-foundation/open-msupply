@@ -12,6 +12,7 @@ export { Row } from './Row';
 export { Col } from './Col';
 export { Note } from './Note';
 export { Intro } from './Intro';
+export { Lead } from './Lead';
 export { PageFrame, PageBody } from './PageFrame';
 export { ToolbarStub } from './ToolbarStub';
 export { FormPreview } from './FormPreview';
