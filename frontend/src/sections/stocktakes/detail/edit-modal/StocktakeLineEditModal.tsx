@@ -1079,13 +1079,6 @@ const StocktakeLineEditContent = (
             disabled={!line.countThisLine}
             value={line.location?.id}
             placeholder={t('label.none')}
-            // Required volume = this line's volume (volumePerPack × counted). A
-            // missing volume-per-pack or count means no requirement (0) — the
-            // filter still lets the user browse Empty / Available, and the
-            // already-chosen location always passes (LocationVolumeSelect).
-            volumeRequired={
-              (line.volumePerPack ?? 0) * (line.countedNumberOfPacks ?? 0)
-            }
             onChange={l =>
               update(
                 line.id,

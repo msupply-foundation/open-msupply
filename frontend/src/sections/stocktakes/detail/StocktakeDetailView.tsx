@@ -838,7 +838,6 @@ const StocktakeDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled(node())}
                       locations={locations()}
-                      rows={rows()}
                       onCommit={onLinesChanged}
                       onError={stampErrors}
                       onShowErrors={showErrors}

@@ -18,9 +18,25 @@ export const getVolumeUsedPercentage = (
   return (volumeUsed / volume) * 100;
 };
 
-// The free capacity remaining in a location (never negative for the check's
-// purpose — an over-full location simply has 0 free). Used by the "Available"
-// fullness filter: a location fits when free ≥ the required volume.
+// The free capacity remaining in a location (negative when over capacity).
 export const availableVolume = (
   location: Pick<LocationWithVolume, 'volume' | 'volumeUsed'>
 ): number => location.volume - location.volumeUsed;
+
+// The two fullness-filter predicates behind the picker's tabs (All / Empty /
+// Available — spec/ui-standards/components.md → Location lookup). Pure and
+// undefined-agnostic so they're unit-testable in isolation from the widget.
+
+// "Empty" — the location holds no stock.
+export const isEmpty = (location: Pick<LocationWithVolume, 'stock'>): boolean =>
+  location.stock.totalCount === 0;
+
+// "Available" — the location can take more stock: it is NOT on hold and NOT
+// full. A location with no recorded capacity (volume 0) counts as having room
+// rather than being excluded — unknown capacity is not a reason to hide it,
+// mirroring the list's fullness rule where such a location shows no bar.
+export const isAvailable = (
+  location: Pick<LocationWithVolume, 'volume' | 'volumeUsed' | 'onHold'>
+): boolean =>
+  !location.onHold &&
+  (location.volume === 0 || location.volumeUsed < location.volume);
