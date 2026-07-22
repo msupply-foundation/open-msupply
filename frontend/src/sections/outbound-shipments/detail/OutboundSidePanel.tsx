@@ -202,12 +202,17 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
               })} ${t('messages.by-user', { username: '—' })}`}
             >
               {t('label.requisition')}{' '}
-              {/* Only the number is the link (old-app parity).
-                  TODO: target the specific requisition
-                  (…/customer-requisition/${req().id}) once the requisitions
-                  vertical exists — until then the path is the section's nav
-                  placeholder EntryPage, linked generically. */}
-              <A href={`/${props.storeId}/distribution/customer-requisition`}>
+              {/* Only the number is the link (old-app parity), targeting the
+                  requisition's real record route with the requisition-kind
+                  styling — the same pattern (and primary colour) as the
+                  inbound side panel's internal-order link. The requisitions
+                  vertical isn't built yet, so today this lands on the
+                  not-found EntryPage; it goes live once that vertical
+                  registers its routes (no change needed here). */}
+              <A
+                href={`/${props.storeId}/distribution/customer-requisition/${req().id}`}
+                style={{ color: 'var(--primary-main)', 'font-weight': 500 }}
+              >
                 #{req().requisitionNumber}
               </A>
             </Text>
