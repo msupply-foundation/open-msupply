@@ -61,9 +61,9 @@ use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
-use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
-use graphql_requisition_line::RequisitionLineMutations;
+use graphql_requisition_line::{RequisitionLineMutations, RequisitionLineQueries};
+use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stock_relocation::{StockRelocationMutations, StockRelocationQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
@@ -210,6 +210,7 @@ pub struct Queries(
     pub StocktakeLineQueries,
     pub GeneralQueries,
     pub RequisitionQueries,
+    pub RequisitionLineQueries,
     pub ReportQueries,
     pub StockLineQueries,
     pub StockRelocationQueries,
@@ -248,6 +249,7 @@ impl Queries {
             StocktakeLineQueries,
             GeneralQueries,
             RequisitionQueries,
+            RequisitionLineQueries,
             ReportQueries,
             StockLineQueries,
             StockRelocationQueries,

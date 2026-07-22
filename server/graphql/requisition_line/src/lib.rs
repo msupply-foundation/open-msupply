@@ -1,9 +1,33 @@
 pub mod mutations;
+pub mod requisition_line_queries;
 use self::mutations::{
     request_requisition_line::{delete::*, insert::*, refresh_ancillary::*, update::*},
     response_requisition_line,
 };
+use self::requisition_line_queries::{
+    requisition_lines, RequisitionLineFilterInput, RequisitionLineSortInput,
+    RequisitionLinesResponse,
+};
 use async_graphql::*;
+use graphql_core::pagination::PaginationInput;
+
+#[derive(Default, Clone)]
+pub struct RequisitionLineQueries;
+
+#[Object]
+impl RequisitionLineQueries {
+    pub async fn requisition_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<RequisitionLineFilterInput>,
+        sort: Option<Vec<RequisitionLineSortInput>>,
+    ) -> Result<RequisitionLinesResponse> {
+        requisition_lines(ctx, &store_id, page, filter, sort)
+    }
+}
+
 #[derive(Default, Clone)]
 pub struct RequisitionLineMutations;
 

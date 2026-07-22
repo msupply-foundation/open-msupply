@@ -1,7 +1,7 @@
 use super::{
-    item_row::item, location_row::location, name_row::name,
+    campaign_row::campaign, item_row::item, location_row::location, name_row::name,
     reason_option_row::reason_option, stock_line_row::stock_line,
-    stocktake_line_row::stocktake_line, LocationRow, NameRow, ReasonOptionRow,
+    stocktake_line_row::stocktake_line, CampaignRow, LocationRow, NameRow, ReasonOptionRow,
     StockLineRow, StocktakeLineRow, StorageConnection,
 };
 
@@ -9,10 +9,11 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
     diesel_macros::{
-        apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
+        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
+        apply_sort_no_case, apply_string_filter,
     },
-    DBType, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination, RepositoryError, Sort,
-    StringFilter,
+    DBType, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination,
+    RepositoryError, Sort, StringFilter,
 };
 
 #[derive(Clone, Default)]
@@ -23,6 +24,11 @@ pub struct StocktakeLineFilter {
     pub item_code_or_name: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub stock_line_id: Option<EqualFilter<String>>,
+    pub donor_id: Option<EqualFilter<String>>,
+    pub campaign_id: Option<EqualFilter<String>>,
+    pub batch: Option<StringFilter>,
+    pub manufacture_date: Option<DateFilter>,
+    pub campaign_name: Option<EqualFilter<String>>,
 }
 
 impl StocktakeLineFilter {
@@ -54,6 +60,31 @@ impl StocktakeLineFilter {
         self.stock_line_id = Some(filter);
         self
     }
+
+    pub fn donor_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.donor_id = Some(filter);
+        self
+    }
+
+    pub fn campaign_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.campaign_id = Some(filter);
+        self
+    }
+
+    pub fn batch(mut self, filter: StringFilter) -> Self {
+        self.batch = Some(filter);
+        self
+    }
+
+    pub fn manufacture_date(mut self, filter: DateFilter) -> Self {
+        self.manufacture_date = Some(filter);
+        self
+    }
+
+    pub fn campaign_name(mut self, filter: EqualFilter<String>) -> Self {
+        self.campaign_name = Some(filter);
+        self
+    }
 }
 
 pub enum StocktakeLineSortField {
@@ -66,6 +97,9 @@ pub enum StocktakeLineSortField {
     SnapshotNumberOfPacks,
     CountedNumberOfPacks,
     ReasonOption,
+    ManufactureDate,
+    Donor,
+    Campaign,
 }
 
 pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
@@ -77,6 +111,7 @@ type StocktakeLineJoin = (
     Option<LocationRow>,
     Option<NameRow>,
     Option<ReasonOptionRow>,
+    Option<CampaignRow>,
 );
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -87,6 +122,7 @@ pub struct StocktakeLine {
     pub location: Option<LocationRow>,
     pub donor: Option<NameRow>,
     pub reason_option: Option<ReasonOptionRow>,
+    pub campaign: Option<CampaignRow>,
 }
 
 pub struct StocktakeLineRepository<'a> {
@@ -159,6 +195,15 @@ impl<'a> StocktakeLineRepository<'a> {
                 StocktakeLineSortField::ReasonOption => {
                     apply_sort_no_case!(query, sort, reason_option::reason);
                 }
+                StocktakeLineSortField::ManufactureDate => {
+                    apply_sort_asc_nulls_last!(query, sort, stocktake_line::manufacture_date);
+                }
+                StocktakeLineSortField::Donor => {
+                    apply_sort_asc_nulls_last!(query, sort, name::name_);
+                }
+                StocktakeLineSortField::Campaign => {
+                    apply_sort_no_case!(query, sort, campaign::name);
+                }
             };
         }
 
@@ -182,6 +227,11 @@ impl<'a> StocktakeLineRepository<'a> {
             apply_equal_filter!(query, f.location_id, stocktake_line::location_id);
             apply_equal_filter!(query, f.item_id, item::id);
             apply_equal_filter!(query, f.stock_line_id, stocktake_line::stock_line_id);
+            apply_equal_filter!(query, f.donor_id, stocktake_line::donor_id);
+            apply_equal_filter!(query, f.campaign_id, stocktake_line::campaign_id);
+            apply_string_filter!(query, f.batch, stocktake_line::batch);
+            apply_date_filter!(query, f.manufacture_date, stocktake_line::manufacture_date);
+            apply_equal_filter!(query, f.campaign_name, campaign::name);
         }
 
         query
@@ -196,12 +246,13 @@ fn query() -> _ {
         .left_join(location::table)
         .left_join(name::table)
         .left_join(reason_option::table)
+        .left_join(campaign::table)
 }
 
 type BoxedStocktakeLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn to_domain(
-    (line, item, stock_line, location, donor, reason_option): StocktakeLineJoin,
+    (line, item, stock_line, location, donor, reason_option, campaign): StocktakeLineJoin,
 ) -> StocktakeLine {
     StocktakeLine {
         line,
@@ -210,6 +261,7 @@ fn to_domain(
         location,
         donor,
         reason_option,
+        campaign,
     }
 }
 

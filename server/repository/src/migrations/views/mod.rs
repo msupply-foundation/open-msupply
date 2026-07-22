@@ -22,6 +22,7 @@ mod report_patient;
 mod report_program_enrolment;
 mod report_program_event;
 mod report_store;
+mod requisition_line_months_of_stock;
 mod requisitions_in_period;
 mod stock_line_ledger;
 mod stock_line_ledger_discrepancy;
@@ -73,6 +74,7 @@ fn all_views() -> Vec<Box<dyn ViewMigrationFragment>> {
         Box::new(invoice_line_stats::ViewMigration),
         Box::new(contact_trace_name_link_view::ViewMigration),
         Box::new(link_views::ViewMigration),
+        Box::new(requisition_line_months_of_stock::ViewMigration),
     ]
 }
 

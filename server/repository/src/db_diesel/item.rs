@@ -1,8 +1,9 @@
 use super::{
-    item_category_row::item_category_join, item_row::item,
+    invoice_line_row::invoice_line, item_category_row::item_category_join, item_row::item,
     master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
-    master_list_row::master_list, program_row::program, stock_on_hand::store_stock_on_hand,
-    store_row::store, unit_row::unit, DBType, ItemRow, ItemType, StorageConnection, UnitRow,
+    master_list_row::master_list, program_row::program, requisition_line_row::requisition_line,
+    stock_on_hand::store_stock_on_hand, stocktake_line_row::stocktake_line, store_row::store,
+    unit_row::unit, DBType, ItemRow, ItemType, StorageConnection, UnitRow,
 };
 
 use diesel::{
@@ -82,12 +83,28 @@ pub struct ItemFilter {
     #[ts(optional)]
     pub products_at_risk_of_being_out_of_stock: Option<bool>,
     pub universal_code: Option<StringFilter>,
+    #[ts(optional)]
+    pub not_in_record: Option<ItemNotInRecordFilter>,
 
     /// Client-provided dynamic filter AST (currently property conditions only).
     /// ANDs with the other filters. Keys must be validated against the "item"
     /// table scope's allowed property keys in the service layer.
     #[ts(skip)]
     pub dynamic_filter: Option<ItemCondition::Inner>,
+}
+
+/// Excludes items already present as a line on the given record.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TS)]
+pub struct ItemNotInRecordFilter {
+    pub record: ItemNotInRecordType,
+    pub id: String,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, TS)]
+pub enum ItemNotInRecordType {
+    Stocktake,
+    Requisition,
+    Invoice,
 }
 
 // Dynamic query filter for the item table, applied to joined queries via an
@@ -180,6 +197,11 @@ impl ItemFilter {
 
     pub fn dynamic_filter(mut self, condition: ItemCondition::Inner) -> Self {
         self.dynamic_filter = Some(condition);
+        self
+    }
+
+    pub fn not_in_record(mut self, filter: ItemNotInRecordFilter) -> Self {
+        self.not_in_record = Some(filter);
         self
     }
 }
@@ -285,6 +307,7 @@ impl<'a> ItemRepository<'a> {
                 is_program_item,
                 ignore_for_orders,
                 universal_code,
+                not_in_record,
                 dynamic_filter,
                 // Implementing these MOS filters requires consumption data, so they are handled in the service layer.
                 max_months_of_stock: _,
@@ -455,6 +478,36 @@ impl<'a> ItemRepository<'a> {
                     .into_boxed();
 
                 query = query.filter(item::id.eq_any(item_ids_for_ignore_for_orders));
+            }
+
+            if let Some(ItemNotInRecordFilter {
+                record,
+                id: record_id,
+            }) = not_in_record
+            {
+                query = match record {
+                    ItemNotInRecordType::Stocktake => {
+                        let item_ids_in_stocktake = stocktake_line::table
+                            .select(stocktake_line::item_id)
+                            .filter(stocktake_line::stocktake_id.eq(record_id))
+                            .into_boxed();
+                        query.filter(item::id.ne_all(item_ids_in_stocktake))
+                    }
+                    ItemNotInRecordType::Requisition => {
+                        let item_ids_in_requisition = requisition_line::table
+                            .select(requisition_line::item_id)
+                            .filter(requisition_line::requisition_id.eq(record_id))
+                            .into_boxed();
+                        query.filter(item::id.ne_all(item_ids_in_requisition))
+                    }
+                    ItemNotInRecordType::Invoice => {
+                        let item_ids_in_invoice = invoice_line::table
+                            .select(invoice_line::item_id)
+                            .filter(invoice_line::invoice_id.eq(record_id))
+                            .into_boxed();
+                        query.filter(item::id.ne_all(item_ids_in_invoice))
+                    }
+                };
             }
         }
         query

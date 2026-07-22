@@ -328,6 +328,61 @@ macro_rules! apply_date_filter {
 /// Example expand, when called with:
 ///
 /// ```
+/// apply_float_filter!(query, filter.months_of_stock, requisition_line_months_of_stock::months_of_stock)
+/// ```
+///
+/// ```
+/// if let Some(float_filter) = filter.months_of_stock {
+///     if let Some(value) = float_filter.equal_to {
+///         query = query.filter(requisition_line_months_of_stock::months_of_stock.eq(value));
+///     }
+///
+///     if let Some(value) = float_filter.below_or_equal_to {
+///         query = query.filter(requisition_line_months_of_stock::months_of_stock.le(value));
+///     }
+///
+///     if let Some(value) = float_filter.above_or_equal_to {
+///         query = query.filter(requisition_line_months_of_stock::months_of_stock.ge(value));
+///     }
+///
+///     if let Some(value) = float_filter.below_than {
+///         query = query.filter(requisition_line_months_of_stock::months_of_stock.lt(value));
+///     }
+///
+///     if let Some(value) = float_filter.above_than {
+///         query = query.filter(requisition_line_months_of_stock::months_of_stock.gt(value));
+///     }
+/// }
+/// ```
+macro_rules! apply_float_filter {
+    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
+        if let Some(float_filter) = $filter_field {
+            if let Some(value) = float_filter.equal_to {
+                $query = $query.filter($dsl_field.eq(value));
+            }
+
+            if let Some(value) = float_filter.below_or_equal_to {
+                $query = $query.filter($dsl_field.le(value));
+            }
+
+            if let Some(value) = float_filter.above_or_equal_to {
+                $query = $query.filter($dsl_field.ge(value));
+            }
+
+            if let Some(value) = float_filter.below_than {
+                $query = $query.filter($dsl_field.lt(value));
+            }
+
+            if let Some(value) = float_filter.above_than {
+                $query = $query.filter($dsl_field.gt(value));
+            }
+        }
+    }};
+}
+
+/// Example expand, when called with:
+///
+/// ```
 /// apply_sort_no_case!(query, sort, location_dsl, name)
 /// ```
 ///
@@ -948,6 +1003,7 @@ pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
 pub(crate) use apply_equal_or_filter;
+pub(crate) use apply_float_filter;
 pub(crate) use apply_number_filter;
 pub(crate) use apply_sort;
 pub(crate) use apply_sort_asc_nulls_first;
@@ -1049,8 +1105,7 @@ mod diesel_string_enum_test {
     #[test]
     fn verbatim_db_case_captures_unknown_as_is() {
         assert_eq!(
-            serde_json::from_value::<VerbatimFallback>(serde_json::json!("FutureVariant"))
-                .unwrap(),
+            serde_json::from_value::<VerbatimFallback>(serde_json::json!("FutureVariant")).unwrap(),
             VerbatimFallback::Other("FutureVariant".to_string())
         );
     }

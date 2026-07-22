@@ -335,6 +335,7 @@ mod test {
                 requisition_line_row: mock_sent_request_requisition_line(),
                 requisition_row: mock_request_draft_requisition(),
                 item_row: mock_item_a(),
+                months_of_stock_row: Default::default(),
             }])
         }));
 

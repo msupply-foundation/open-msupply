@@ -1,17 +1,24 @@
 use repository::EqualFilter;
+use repository::PaginationOption;
 use repository::{
     RepositoryError, RequisitionLine, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionLineSort,
 };
 
-use crate::{i64_to_u32, service_provider::ServiceContext, ListError, ListResult};
+use crate::{
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+};
 
 pub fn get_requisition_lines(
     ctx: &ServiceContext,
+    pagination: Option<PaginationOption>,
     filter: Option<RequisitionLineFilter>,
+    sort: Option<RequisitionLineSort>,
 ) -> Result<ListResult<RequisitionLine>, ListError> {
+    let pagination = get_pagination_or_default(pagination)?;
     let repository = RequisitionLineRepository::new(&ctx.connection);
     Ok(ListResult {
-        rows: repository.query(filter.clone())?,
+        rows: repository.query(pagination, filter.clone(), sort)?,
         count: i64_to_u32(repository.count(filter)?),
     })
 }
@@ -50,6 +57,7 @@ mod test {
         let result = service
             .get_requisition_lines(
                 &context,
+                None,
                 Some(
                     RequisitionLineFilter::new()
                         .id(EqualFilter::equal_to(
@@ -61,6 +69,7 @@ mod test {
                                 .to_owned(),
                         )),
                 ),
+                None,
             )
             .unwrap();
 

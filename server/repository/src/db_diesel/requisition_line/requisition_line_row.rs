@@ -57,9 +57,26 @@ define_linked_tables! {
 joinable!(requisition_line -> item (item_id));
 joinable!(requisition_line -> requisition (requisition_id));
 
-#[derive(
-    TS, Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize,
-)]
+table! {
+    requisition_line_months_of_stock (requisition_line_id) {
+        requisition_line_id -> Text,
+        months_of_stock -> Nullable<Double>,
+    }
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Default)]
+#[diesel(table_name = requisition_line_months_of_stock)]
+pub struct RequisitionLineMonthsOfStockRow {
+    pub requisition_line_id: String,
+    pub months_of_stock: Option<f64>,
+}
+
+joinable!(requisition_line -> requisition_line_months_of_stock (id));
+allow_tables_to_appear_in_same_query!(requisition_line, requisition_line_months_of_stock);
+allow_tables_to_appear_in_same_query!(requisition_line_months_of_stock, item);
+allow_tables_to_appear_in_same_query!(requisition_line_months_of_stock, requisition);
+
+#[derive(TS, Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(table_name = requisition_line)]
 pub struct RequisitionLineRow {
     pub id: String,
@@ -191,7 +208,10 @@ impl<'a> RequisitionLineRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
         Ok(requisition_line::table
             .filter(requisition_line::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
@@ -282,7 +302,10 @@ mod tests {
         };
 
         let json = serde_json::to_value(&row).unwrap();
-        assert_eq!(json.get("item_link_id").and_then(|v| v.as_str()), Some("item"));
+        assert_eq!(
+            json.get("item_link_id").and_then(|v| v.as_str()),
+            Some("item")
+        );
         assert!(json.get("item_id").is_none());
 
         // And it round-trips back from the `item_link_id` key.

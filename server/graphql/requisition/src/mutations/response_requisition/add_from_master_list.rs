@@ -308,6 +308,7 @@ mod test {
                 requisition_line_row: mock_new_response_requisition_for_update_test_line(),
                 requisition_row: mock_new_response_requisition_for_update_test(),
                 item_row: mock_item_a(),
+                months_of_stock_row: Default::default(),
             }])
         }));
 

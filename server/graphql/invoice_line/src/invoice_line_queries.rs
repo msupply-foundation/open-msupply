@@ -1,7 +1,8 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{
-        DatetimeFilterInput, EqualFilterBigFloatingNumberInput, EqualFilterStringInput,
+        DateFilterInput, DatetimeFilterInput, EqualFilterBigFloatingNumberInput,
+        EqualFilterStringInput, StringFilterInput,
     },
     generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput},
     map_filter,
@@ -14,8 +15,8 @@ use graphql_types::types::{
     InvoiceLineConnector, InvoiceLineNodeType,
 };
 use repository::{
-    DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField,
-    InvoiceLineType, InvoiceStatus, InvoiceType, PaginationOption,
+    DateFilter, DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineSort,
+    InvoiceLineSortField, InvoiceLineType, InvoiceStatus, InvoiceType, PaginationOption,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -49,6 +50,10 @@ pub struct InvoiceLineFilterInput {
     pub verified_datetime: Option<DatetimeFilterInput>,
     pub program_id: Option<EqualFilterStringInput>,
     pub is_program_invoice: Option<bool>,
+    pub batch: Option<StringFilterInput>,
+    pub expiry_date: Option<DateFilterInput>,
+    pub location_code: Option<StringFilterInput>,
+    pub manufacture_date: Option<DateFilterInput>,
 }
 
 impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
@@ -78,6 +83,10 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
             delivered_datetime: None,
             has_prescribed_quantity: None,
             has_note: None,
+            batch: f.batch.map(StringFilterInput::into),
+            expiry_date: f.expiry_date.map(DateFilter::from),
+            location_code: f.location_code.map(StringFilterInput::into),
+            manufacture_date: f.manufacture_date.map(DateFilter::from),
         }
     }
 }
@@ -97,6 +106,8 @@ pub enum InvoiceLineSortFieldInput {
     PackSize,
     /// Invoice line item stock location name
     LocationName,
+    /// Invoice line manufacture date
+    ManufactureDate,
 }
 
 #[derive(InputObject)]
