@@ -353,13 +353,14 @@ const ServiceChargesContent = (
       <Show
         when={rows().length > 0}
         fallback={
-          <p>
-            {t('error.no-service-charges')}
+          <>
+            <p>{t('error.no-service-charges')}</p>
+            {/* When the catalogue has no default service item, Add charge is
+                disabled — say why (distinct from the empty-state line). */}
             <Show when={!defaultServiceItem() && !serviceItems.loading}>
-              {' — '}
-              {t('error.no-service-charges')}
+              <p>{t('messages.no-default-service-item')}</p>
             </Show>
-          </p>
+          </>
         }
       >
         <DataTable
