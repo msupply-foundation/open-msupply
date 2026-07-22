@@ -27,6 +27,10 @@ query storeContext($storeId: String!) {
   # the whole stock vertical (list/detail/new-stock/adjust).
   preferences(storeId: $storeId) {
     syncRecordsDisplayThreshold
+    # Patient gender picker (spec/patients § configuration gates › gender
+    # options): the configured subset of GenderTypeNode every gender picker
+    # (create/edit form, list gender filter) offers.
+    genderOptions
     manageVaccinesInDoses
     manageVvmStatusForStock
     allowTrackingOfStockByDonor

@@ -22,6 +22,7 @@ import { stocktakesRoutes } from './sections/stocktakes';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
+import { patientsRoutes } from './sections/patients';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { helpRoutes } from './sections/help';
@@ -44,6 +45,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'inventory/stock': stockRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
+  'dispensary/patients': patientsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,

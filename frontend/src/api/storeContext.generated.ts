@@ -23,6 +23,7 @@ export type StoreContextResult = {
 };
   preferences: {
   syncRecordsDisplayThreshold: number;
+  genderOptions: Array<"FEMALE" | "MALE" | "TRANSGENDER" | "TRANSGENDER_MALE" | "TRANSGENDER_MALE_HORMONE" | "TRANSGENDER_MALE_SURGICAL" | "TRANSGENDER_FEMALE" | "TRANSGENDER_FEMALE_HORMONE" | "TRANSGENDER_FEMALE_SURGICAL" | "UNKNOWN" | "NON_BINARY">;
   manageVaccinesInDoses: boolean;
   manageVvmStatusForStock: boolean;
   allowTrackingOfStockByDonor: boolean;
@@ -52,5 +53,5 @@ export type StoreContextResult = {
 };
 
 export const StoreContext = {
-  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    issueInForeignCurrency\n    manuallyLinkInternalOrderToInboundShipment\n    omProgramModule\n    vaccineModule\n    monthsOverstock\n    monthsUnderstock\n    monthsItemsExpire\n    stocktakeFrequency\n    monthlyConsumptionLookBackPeriod\n    monthsLeadTime\n  }\n  preferences(storeId: $storeId) {\n    syncRecordsDisplayThreshold\n    manageVaccinesInDoses\n    manageVvmStatusForStock\n    allowTrackingOfStockByDonor\n    sortByVvmStatusThenExpiry\n    expiredStockPreventIssue\n    expiredStockIssueThreshold\n    invoiceStatusOptions\n    useProcurementFunctionality\n    externalInboundShipmentLinesMustBeAuthorised\n    backdating {\n      inventoryAdjustmentsEnabled\n      shipmentsEnabled\n      maxDays\n    }\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
+  query: "query storeContext($storeId: String!) {\n  storePreferences(storeId: $storeId) {\n    id\n    packToOne\n    issueInForeignCurrency\n    manuallyLinkInternalOrderToInboundShipment\n    omProgramModule\n    vaccineModule\n    monthsOverstock\n    monthsUnderstock\n    monthsItemsExpire\n    stocktakeFrequency\n    monthlyConsumptionLookBackPeriod\n    monthsLeadTime\n  }\n  preferences(storeId: $storeId) {\n    syncRecordsDisplayThreshold\n    genderOptions\n    manageVaccinesInDoses\n    manageVvmStatusForStock\n    allowTrackingOfStockByDonor\n    sortByVvmStatusThenExpiry\n    expiredStockPreventIssue\n    expiredStockIssueThreshold\n    invoiceStatusOptions\n    useProcurementFunctionality\n    externalInboundShipmentLinesMustBeAuthorised\n    backdating {\n      inventoryAdjustmentsEnabled\n      shipmentsEnabled\n      maxDays\n    }\n  }\n  me {\n    ... on UserNode {\n      __typename\n      userId\n      permissions(storeId: $storeId) {\n        nodes {\n          storeId\n          permissions\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<StoreContextResult, StoreContextVariables>;
