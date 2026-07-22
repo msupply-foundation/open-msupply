@@ -25,6 +25,7 @@ import { customerReturnsRoutes } from './sections/customer-returns';
 import { stockRoutes } from './sections/stock';
 import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
+import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { helpRoutes } from './sections/help';
@@ -50,6 +51,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'inventory/stock': stockRoutes,
   'distribution/outbound-shipment': outboundShipmentsRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
+  'catalogue/master-lists': masterListsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
   help: helpRoutes,
