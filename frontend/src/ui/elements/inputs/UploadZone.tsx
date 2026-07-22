@@ -1,6 +1,6 @@
 import { createSignal, splitProps, type JSX } from 'solid-js';
 import { t } from '../../../intl';
-import { FileUploadIcon } from '../../icons';
+import { UploadIcon } from '../../icons';
 import {
   partitionFiles,
   type FileRejection,
@@ -104,7 +104,7 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
           event.currentTarget.value = '';
         }}
       />
-      <FileUploadIcon class={styles.icon} />
+      <UploadIcon class={styles.icon} />
       <p class={styles.invite}>{t('messages.upload-invite')}</p>
       <p class={styles.or}>{t('messages.upload-or')}</p>
       {/* The keyboard-operable control; its click bubbles to the zone's

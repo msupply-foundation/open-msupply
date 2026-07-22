@@ -1,0 +1,9 @@
+/*
+ * The kind banner breaks onto its own full-width line in the header toolbar
+ * (a wrapping flex row): flex-basis 100% forces it below the customer/reference
+ * field rows and lets it span the full width, the same mechanism the Toolbar
+ * itself uses to claim its row within the Header.
+ */
+.kindBanner {
+  flex-basis: 100%;
+}

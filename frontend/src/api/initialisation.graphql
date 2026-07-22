@@ -20,10 +20,12 @@ mutation initialiseSite($input: SyncSettingsInput!) {
     }
     ... on SyncErrorNode {
       __typename
+      variant
       fullError
     }
     ... on SyncErrorV7Node {
       __typename
+      variantV7: variant
       fullError
     }
   }
