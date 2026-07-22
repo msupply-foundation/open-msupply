@@ -15,7 +15,7 @@ import { Lead } from './common';
  * that folder group, as every showcase section mirrors its ui/ group.
  */
 export const SyncShowcase = () => (
-  <ContentContainer size="form">
+  <ContentContainer size="form" align="start">
     <Stack gap="lg">
       <DashboardCard title="Progress list — determinate sync steps">
         <Lead>

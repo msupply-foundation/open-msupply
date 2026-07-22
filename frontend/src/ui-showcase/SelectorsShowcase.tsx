@@ -206,7 +206,7 @@ export const SelectorsShowcase = () => {
   };
 
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <DashboardCard title="Styled drop-down — Kobalte Select">
           <Lead>

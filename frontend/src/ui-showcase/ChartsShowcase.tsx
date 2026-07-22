@@ -67,7 +67,7 @@ const stockData: StockEvolutionPoint[] = (() => {
 })();
 
 export const ChartsShowcase = () => (
-  <ContentContainer size="form">
+  <ContentContainer size="form" align="start">
     <Stack gap="lg">
       <DashboardCard title="Target quantity">
         <Lead>

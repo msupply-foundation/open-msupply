@@ -131,7 +131,7 @@ export const InputsShowcase = () => {
   const [sbdPrice, setSbdPrice] = createSignal<number | undefined>();
 
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <DashboardCard title="Text field states">
           <Lead>

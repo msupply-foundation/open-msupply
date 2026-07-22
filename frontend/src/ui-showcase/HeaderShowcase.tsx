@@ -21,7 +21,7 @@ const EXPORT_OPTIONS = [
  * + app Stack, demo sections are the app's DashboardCard with a <Lead> child.
  */
 export const HeaderShowcase = () => (
-  <ContentContainer size="form">
+  <ContentContainer size="form" align="start">
     <Stack gap="lg">
       <DashboardCard title="Page header — the Outbound Shipments demo">
         <Lead>

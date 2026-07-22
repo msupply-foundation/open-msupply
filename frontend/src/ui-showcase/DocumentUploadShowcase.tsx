@@ -62,7 +62,7 @@ export const DocumentUploadShowcase = () => {
     setDocuments(prev => prev.filter(doc => doc.id !== document.id));
 
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <DashboardCard title="Document upload — the whole Documents tab">
           <Lead>

@@ -29,7 +29,7 @@ export const TabBarShowcase = () => {
   const [pageTab, setPageTab] = createSignal('general');
 
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <DashboardCard title="Tab bar — the header's bottom edge">
           <Lead>

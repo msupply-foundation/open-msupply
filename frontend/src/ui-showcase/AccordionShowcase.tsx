@@ -50,7 +50,7 @@ const PreviewTriggerLabel = (props: { label: string; preview: string }) => {
 
 export const AccordionShowcase = () => {
   return (
-    <ContentContainer size="form">
+    <ContentContainer size="form" align="start">
       <Stack gap="lg">
         <DashboardCard title="Single-open group">
           <Lead>

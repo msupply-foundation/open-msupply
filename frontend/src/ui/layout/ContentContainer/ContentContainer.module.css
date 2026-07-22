@@ -1,11 +1,16 @@
 /*
- * ContentContainer — a centred content measure (see ContentContainer.tsx).
- * Grows to fill its parent up to the size cap, then centres. No padding — the
- * Page body owns that; this only bounds the growth.
+ * ContentContainer — a content measure (see ContentContainer.tsx). Grows to
+ * fill its parent up to the size cap, then centres (default) or hugs the
+ * inline-start edge. No padding — the Page body owns that; this only bounds
+ * the growth.
  */
 .container {
   inline-size: 100%;
   margin-inline: auto;
+}
+
+.container[data-align='start'] {
+  margin-inline: 0;
 }
 
 .container[data-size='form'] {
