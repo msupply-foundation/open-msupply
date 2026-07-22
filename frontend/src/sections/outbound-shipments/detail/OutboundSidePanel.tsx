@@ -187,21 +187,29 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           }
         >
           {req => (
-            // Hovering the whole entry (label included) explains the document
-            // — the old app's tooltip: "Customer requisition created on
-            // {date} by {username}" (native title, the library's hover-text
-            // convention — see the inbound currency panel).
-            // TODO: requisition.createdDatetime + user.username are not on
-            // the OutboundInfo fragment yet — add them (hand-edit the
-            // .graphql + generated pair; CI codegen reproduces) and replace
-            // the em-dash placeholders with the real values.
-            <Text
-              variant="body"
-              title={`${t('messages.customer-requisition-created-on', {
-                date: '—',
-              })} ${t('messages.by-user', { username: '—' })}`}
-            >
-              {t('label.requisition')}{' '}
+            <Text variant="body">
+              {/* The label is a hover popover explaining the document — the
+                  old app's tooltip: "Customer requisition created on {date}
+                  by {username}". The label (not the whole entry) triggers it
+                  because the Popover trigger is a button, and the entry's
+                  number is a link — nesting one interactive in another is
+                  invalid.
+                  TODO: requisition.createdDatetime + user.username are not on
+                  the OutboundInfo fragment yet — add them (hand-edit the
+                  .graphql + generated pair; CI codegen reproduces) and
+                  replace the em-dash placeholders with the real values. */}
+              <Popover
+                trigger={t('label.requisition')}
+                openOnHover
+                placement="top"
+              >
+                <p>
+                  {t('messages.customer-requisition-created-on', {
+                    date: '—',
+                  })}{' '}
+                  {t('messages.by-user', { username: '—' })}
+                </p>
+              </Popover>{' '}
               {/* Only the number is the link (old-app parity), targeting the
                   requisition's real record route with the requisition-kind
                   styling — the same pattern (and primary colour) as the
