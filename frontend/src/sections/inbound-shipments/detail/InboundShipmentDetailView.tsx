@@ -43,7 +43,10 @@ import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import { stripEmpty } from '../../../typeHelpers';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
-import { fetchLocations, type Location } from '../../../domain/location';
+import {
+  fetchLocationsWithVolume,
+  type LocationWithVolume,
+} from '../../../domain/location';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipment,
@@ -215,8 +218,15 @@ const InboundShipmentDetailView: Component = () => {
   const rows = (): Line[] => linesData.latest?.nodes ?? [];
   const totalCount = () => linesData.latest?.totalCount ?? 0;
 
-  const [locationsData] = createResource(params.storeId, fetchLocations);
-  const locations = (): Location[] => locationsData.latest ?? [];
+  // Volume-aware: inbound places received stock at a location, so the picker
+  // shows each location's % used and offers the All / Empty / Available filter
+  // (same picker as stocktakes). Fetched once per view; a plain (non-cached)
+  // read, so figures are fresh on each visit — see fetchLocationsWithVolume.
+  const [locationsData] = createResource(
+    params.storeId,
+    fetchLocationsWithVolume
+  );
+  const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
   const current = () => info();
   const isDisabled = () => current()?.status === 'VERIFIED';

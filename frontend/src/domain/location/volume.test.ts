@@ -1,10 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { availableVolume, getVolumeUsedPercentage } from './volume';
+import {
+  availableVolume,
+  getVolumeUsedPercentage,
+  isAvailable,
+  isEmpty,
+} from './volume';
 
 // A minimal location shape for the pure volume helpers (the real node has more).
-const loc = (volume: number, volumeUsed: number, totalCount: number) => ({
+const loc = (
+  volume: number,
+  volumeUsed: number,
+  totalCount: number,
+  onHold = false
+) => ({
   volume,
   volumeUsed,
+  onHold,
   stock: { __typename: 'StockLineConnector' as const, totalCount },
 });
 
@@ -38,7 +49,42 @@ describe('availableVolume', () => {
     expect(availableVolume(loc(10, 3, 2))).toBe(7);
   });
 
-  it('goes negative when over-full (the caller compares against a requirement)', () => {
+  it('goes negative when over-full', () => {
     expect(availableVolume(loc(2, 5, 1))).toBe(-3);
+  });
+});
+
+describe('isEmpty', () => {
+  it('is true only when no stock is held', () => {
+    expect(isEmpty(loc(10, 0, 0))).toBe(true);
+    expect(isEmpty(loc(0, 0, 0))).toBe(true);
+  });
+
+  it('is false as soon as any stock is held', () => {
+    expect(isEmpty(loc(10, 2, 1))).toBe(false);
+    // Even stock without volume data (volumeUsed 0 but totalCount > 0) is stock.
+    expect(isEmpty(loc(10, 0, 3))).toBe(false);
+  });
+});
+
+describe('isAvailable', () => {
+  it('is true when not on hold and not full', () => {
+    expect(isAvailable(loc(10, 3, 2))).toBe(true);
+  });
+
+  it('treats a location with no recorded capacity as having room', () => {
+    expect(isAvailable(loc(0, 0, 0))).toBe(true);
+    expect(isAvailable(loc(0, 0, 5))).toBe(true);
+  });
+
+  it('is false when full or over-full', () => {
+    expect(isAvailable(loc(10, 10, 4))).toBe(false);
+    expect(isAvailable(loc(10, 12, 4))).toBe(false);
+  });
+
+  it('is false when on hold, even with free space', () => {
+    expect(isAvailable(loc(10, 1, 1, true))).toBe(false);
+    // On hold with no recorded capacity is still unavailable.
+    expect(isAvailable(loc(0, 0, 0, true))).toBe(false);
   });
 });
