@@ -50,6 +50,7 @@
     "prettier": "3.9.5",
     "stylelint": "^17.14.0",
     "stylelint-config-standard": "^40.0.0",
+    "stylelint-no-unsupported-browser-features": "^8.1.1",
     "stylelint-value-no-unknown-custom-properties": "^6.1.1",
     "typed-css-modules": "^0.9.1",
     "typescript": "~6.0.2",
@@ -62,5 +63,8 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
-  }
+  },
+  "browserslist": [
+    "chrome >= 138"
+  ]
 }
